@@ -37,12 +37,10 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/user/add",
-					"protocol": "http",
+					"raw": "{{rootRegistry}}/user/add",
 					"host": [
-						"localhost"
+						"{{rootRegistry}}"
 					],
-					"port": "5000",
 					"path": [
 						"user",
 						"add"
@@ -57,12 +55,10 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/admin/add",
-					"protocol": "http",
+					"raw": "{{rootRegistry}}/admin/add",
 					"host": [
-						"localhost"
+						"{{rootRegistry}}"
 					],
-					"port": "5000",
 					"path": [
 						"admin",
 						"add"
@@ -86,12 +82,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/user/add",
-					"protocol": "http",
+					"raw": "{{rootAttestation}}/user/add",
 					"host": [
-						"localhost"
+						"{{rootAttestation}}"
 					],
-					"port": "5000",
 					"path": [
 						"user",
 						"add"
@@ -115,12 +109,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/admin/check",
-					"protocol": "http",
+					"raw": "{{rootAttestation}}/admin/check",
 					"host": [
-						"localhost"
+						"{{rootAttestation}}"
 					],
-					"port": "5000",
 					"path": [
 						"admin",
 						"check"
@@ -144,12 +136,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/user/enter",
-					"protocol": "http",
+					"raw": "{{rootAccess}}/user/enter",
 					"host": [
-						"localhost"
+						"{{rootAccess}}"
 					],
-					"port": "5000",
 					"path": [
 						"user",
 						"enter"
@@ -173,12 +163,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/user/exit",
-					"protocol": "http",
+					"raw": "{{rootAccess}}/user/exit",
 					"host": [
-						"localhost"
+						"{{rootAccess}}"
 					],
-					"port": "5000",
 					"path": [
 						"user",
 						"exit"
@@ -202,12 +190,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/admin/stats",
-					"protocol": "http",
+					"raw": "{{rootAccess}}/admin/stats",
 					"host": [
-						"localhost"
+						"{{rootAccess}}"
 					],
-					"port": "5000",
 					"path": [
 						"admin",
 						"stats"
@@ -231,12 +217,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/admin/enter",
-					"protocol": "http",
+					"raw": "{{rootAccess}}/admin/enter",
 					"host": [
-						"localhost"
+						"{{rootAccess}}"
 					],
-					"port": "5000",
 					"path": [
 						"admin",
 						"enter"
@@ -260,12 +244,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/admin/exit",
-					"protocol": "http",
+					"raw": "{{rootAccess}}/admin/exit",
 					"host": [
-						"localhost"
+						"{{rootAccess}}"
 					],
-					"port": "5000",
 					"path": [
 						"admin",
 						"exit"
@@ -289,12 +271,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/locations/getAll",
-					"protocol": "http",
+					"raw": "{{rootLookup}}/locations/getAll",
 					"host": [
-						"localhost"
+						"{{rootLookup}}"
 					],
-					"port": "5000",
 					"path": [
 						"locations",
 						"getAll"
@@ -318,12 +298,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/attestation/getConfig",
-					"protocol": "http",
+					"raw": "{{rootLookup}}/attestation/getConfig",
 					"host": [
-						"localhost"
+						"{{rootLookup}}"
 					],
-					"port": "5000",
 					"path": [
 						"attestation",
 						"getConfig"
@@ -347,12 +325,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/user/connect",
-					"protocol": "http",
+					"raw": "{{rootEnterprise}}/user/connect",
 					"host": [
-						"localhost"
+						"{{rootEnterprise}}"
 					],
-					"port": "5000",
 					"path": [
 						"user",
 						"connect"
@@ -376,12 +352,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/user/disconnect",
-					"protocol": "http",
+					"raw": "{{rootEnterprise}}/user/disconnect",
 					"host": [
-						"localhost"
+						"{{rootEnterprise}}"
 					],
-					"port": "5000",
 					"path": [
 						"user",
 						"disconnect"
@@ -405,12 +379,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/admin/auth/signIn/request",
-					"protocol": "http",
+					"raw": "{{rootEnterprise}}/admin/auth/signIn/request",
 					"host": [
-						"localhost"
+						"{{rootEnterprise}}"
 					],
-					"port": "5000",
 					"path": [
 						"admin",
 						"auth",
@@ -436,12 +408,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/admin/auth/signIn/process",
-					"protocol": "http",
+					"raw": "{{rootEnterprise}}/admin/auth/signIn/process",
 					"host": [
-						"localhost"
+						"{{rootEnterprise}}"
 					],
-					"port": "5000",
 					"path": [
 						"admin",
 						"auth",
@@ -477,12 +447,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/admin/team/status",
-					"protocol": "http",
+					"raw": "{{rootEnterprise}}/admin/team/status",
 					"host": [
-						"localhost"
+						"{{rootEnterprise}}"
 					],
-					"port": "5000",
 					"path": [
 						"admin",
 						"team",
@@ -517,12 +485,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/admin/team/review",
-					"protocol": "http",
+					"raw": "{{rootEnterprise}}/admin/team/review",
 					"host": [
-						"localhost"
+						"{{rootEnterprise}}"
 					],
-					"port": "5000",
 					"path": [
 						"admin",
 						"team",
@@ -557,12 +523,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/admin/billing/stats",
-					"protocol": "http",
+					"raw": "{{rootEnterprise}}/admin/billing/stats",
 					"host": [
-						"localhost"
+						"{{rootEnterprise}}"
 					],
-					"port": "5000",
 					"path": [
 						"admin",
 						"billing",
