@@ -15,8 +15,8 @@ class Validation
         // First check for auth header
         if (authHeader !== null)
         {
-            console.log("HELLO!?")
-            console.log(req.headers)
+            // console.log("HELLO!?")
+            // console.log(req.headers)
 
             // By default
             validates = false;
