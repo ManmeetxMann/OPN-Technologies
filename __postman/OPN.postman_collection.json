@@ -7,15 +7,12 @@
 	"item": [
 		{
 			"name": "Config",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"registrationToken\" : \"987654321\"\t\n}",
+					"raw": "{\n\t\"registrationToken\" : \"987654321\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -23,12 +20,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/",
-					"protocol": "http",
+					"raw": "{{rootConfig}}/",
 					"host": [
-						"localhost"
+						"{{rootConfig}}"
 					],
-					"port": "5000",
 					"path": [
 						""
 					]
@@ -39,7 +34,7 @@
 		{
 			"name": "Registry > User > Add",
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"url": {
 					"raw": "http://localhost:5000/user/add",
@@ -59,7 +54,7 @@
 		{
 			"name": "Registry > Admin > Add",
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"url": {
 					"raw": "http://localhost:5000/admin/add",
@@ -78,11 +73,8 @@
 		},
 		{
 			"name": "Attestation > User > Add",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -110,11 +102,8 @@
 		},
 		{
 			"name": "Attestation > Admin > Check",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -142,11 +131,8 @@
 		},
 		{
 			"name": "Access > User > Enter",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -174,11 +160,8 @@
 		},
 		{
 			"name": "Access > User > Exit",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -206,11 +189,8 @@
 		},
 		{
 			"name": "Access > Admin > Stats",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -238,11 +218,8 @@
 		},
 		{
 			"name": "Access > Admin > Enter",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -270,11 +247,8 @@
 		},
 		{
 			"name": "Access > Admin > Exit",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -302,11 +276,8 @@
 		},
 		{
 			"name": "Lookup > Locations > GetAll",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -334,11 +305,8 @@
 		},
 		{
 			"name": "Lookup > Attestation > Get Config",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -366,11 +334,8 @@
 		},
 		{
 			"name": "Enterprise > User > Connect",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -398,11 +363,8 @@
 		},
 		{
 			"name": "Enterprise > User > Disconnect",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -430,11 +392,8 @@
 		},
 		{
 			"name": "Enterprise > Admin > Sign In Link Request",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -464,11 +423,8 @@
 		},
 		{
 			"name": "Enterprise > Admin > Sign In Link",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -498,9 +454,6 @@
 		},
 		{
 			"name": "Enterprise > Admin > Team Status",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -512,7 +465,7 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -541,9 +494,6 @@
 		},
 		{
 			"name": "Enterprise > Admin > Team Review",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -555,7 +505,7 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -584,9 +534,6 @@
 		},
 		{
 			"name": "Enterprise > Admin > Billing > Stats",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -598,7 +545,7 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -620,40 +567,6 @@
 						"admin",
 						"billing",
 						"stats"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Config",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"auth": {
-					"type": "noauth"
-				},
-				"method": "GET",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"registrationToken\" : \"987654321\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:5000/",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "5000",
-					"path": [
-						""
 					]
 				}
 			},
