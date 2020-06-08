@@ -15,7 +15,7 @@ class RootController implements IControllerBase
 
     public initRoutes() 
     {
-        this.router.get('/', this.index)
+        this.router.get('/root', this.index)
     }
 
     index = (req: Request, res: Response) => 

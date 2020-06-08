@@ -49,6 +49,11 @@ class App {
         {
             console.log(`App listening on the http://localhost:${this.port}`)
         })
+
+        // this.app.listen(() => 
+        // {
+        //     console.log(`App listening!`)
+        // })
     }
 }
 

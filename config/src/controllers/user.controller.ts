@@ -27,7 +27,7 @@ class UserController implements IControllerBase
         {
             return
         }
-
+        
         const response = 
         {
             data : {

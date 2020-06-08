@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node src/server.ts",
-    "start": "ts-node dist/server.js",
+    "start": "node server.js",
     "build": "tsc -p .",
     "clean": "rimraf \"dist\"",
     "prepare": "copyfiles app.yaml dist; copyfiles package.json dist",
