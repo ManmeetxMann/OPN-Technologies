@@ -40,6 +40,7 @@ class Validation
         }
         
         // Check through the inputs
+        console.log(vars)
         for (var v of vars)
         {
             let validateVar = ((v in req.body) && (req.body[v] !== ""))

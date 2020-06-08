@@ -7,8 +7,10 @@ import AdminController from './controllers/admin.controller'
 import UserController from  './controllers/user.controller'
 import RootController from  './controllers/root.controller'
 
+const PORT = Number(process.env.PORT) || 5000;
+
 const app = new App({
-    port: 5000,
+    port: PORT,
     controllers: [
         new RootController(),
         new UserController(),
