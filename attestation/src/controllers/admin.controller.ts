@@ -16,9 +16,9 @@ class AdminController implements IControllerBase
 
     public initRoutes() 
     {
-        this.router.get(this.path + '/stats', this.stats)
-        this.router.get(this.path + '/enter', this.enter)
-        this.router.get(this.path + '/exit', this.exit)
+        this.router.post(this.path + '/stats', this.stats)
+        this.router.post(this.path + '/enter', this.enter)
+        this.router.post(this.path + '/exit', this.exit)
     }
 
     stats = (req: Request, res: Response) => 

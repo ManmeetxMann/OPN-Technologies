@@ -18,24 +18,6 @@ class AdminController implements IControllerBase
     {
         // this.router.get(this.path + '/check', this.check)
     }
-
-    // check = (req: Request, res: Response) => 
-    // {
-    //     if (!Validation.validate(["attestationToken"], req, res))
-    //     {
-    //         return
-    //     }
-
-    //     const response = 
-    //     {
-    //         data : {
-    //             badge : "green"
-    //         },
-    //         status : "complete"
-    //     }
-
-    //     res.json(response);
-    // }
 }
 
 export default AdminController

@@ -16,11 +16,11 @@ class AdminController implements IControllerBase
 
     public initRoutes() 
     {
-        this.router.get(this.path + '/auth/signIn/request', this.authSignInLinkRequest)
-        this.router.get(this.path + '/auth/signIn/process', this.authSignIn)
-        this.router.get(this.path + '/team/status', this.teamStatus)
-        this.router.get(this.path + '/team/review', this.teamReview)
-        this.router.get(this.path + '/billing/stats', this.billingStats)
+        this.router.post(this.path + '/auth/signIn/request', this.authSignInLinkRequest)
+        this.router.post(this.path + '/auth/signIn/process', this.authSignIn)
+        this.router.post(this.path + '/team/status', this.teamStatus)
+        this.router.post(this.path + '/team/review', this.teamReview)
+        this.router.post(this.path + '/billing/stats', this.billingStats)
     }
 
     authSignInLinkRequest = (req: Request, res: Response) => 

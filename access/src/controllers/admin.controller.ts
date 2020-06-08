@@ -16,7 +16,7 @@ class AdminController implements IControllerBase
 
     public initRoutes() 
     {
-        this.router.get(this.path + '/check', this.check)
+        this.router.post(this.path + '/check', this.check)
     }
 
     check = (req: Request, res: Response) => 

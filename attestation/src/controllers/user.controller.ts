@@ -18,8 +18,8 @@ class UserController implements IControllerBase
 
     public initRoutes() 
     {
-        this.router.get(this.path + '/enter', this.enter)
-        this.router.get(this.path + '/exit', this.exit)
+        this.router.post(this.path + '/enter', this.enter)
+        this.router.post(this.path + '/exit', this.exit)
     }
 
     enter = (req: Request, res: Response) => 

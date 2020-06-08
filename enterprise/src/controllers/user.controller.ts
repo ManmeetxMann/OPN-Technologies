@@ -18,8 +18,8 @@ class UserController implements IControllerBase
 
     public initRoutes() 
     {
-        this.router.get(this.path + '/connect', this.connect)
-        this.router.get(this.path + '/disconnect', this.disconnect)
+        this.router.post(this.path + '/connect', this.connect)
+        this.router.post(this.path + '/disconnect', this.disconnect)
     }
 
     connect = (req: Request, res: Response) => 
