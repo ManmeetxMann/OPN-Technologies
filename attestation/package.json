@@ -5,11 +5,12 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node src/server.ts",
-    "start": "ts-node dist/server.js",
+    "start": "node server.js",
     "build": "tsc -p .",
     "clean": "rimraf \"dist\"",
     "prepare": "copyfiles app.yaml dist; copyfiles package.json dist",
-    "deploy": "gcloud app deploy ./dist --quiet"
+    "deploy": "gcloud app deploy ./dist --quiet",
+    "build_deploy" : "npm run clean; npm run build; npm run prepare; npm run deploy"
   },
   "author": "",
   "license": "ISC",
