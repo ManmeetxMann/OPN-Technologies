@@ -18,43 +18,23 @@ class UserController implements IControllerBase
 
     public initRoutes() 
     {
-        this.router.post(this.path + '/enter', this.enter)
-        this.router.post(this.path + '/exit', this.exit)
+        this.router.post(this.path + '/add', this.add)
     }
 
-    enter = (req: Request, res: Response) => 
+    add = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["accessToken", "locationId"], req, res))
+        if (!Validation.validate(["attestationId", "answer"], req, res))
         {
             return
         }
 
-        console.log(req.body.accessToken);
-        console.log(req.body.locationId);
+        console.log(req.body.attestationId);
+        console.log(req.body.answer);
         const response = 
         {
-            // data : {
-            //     locations: []
-            // },
-            status : "complete"
-        }
-
-        res.json(response);
-    }
-
-    exit = (req: Request, res: Response) => 
-    {
-        if (!Validation.validate(["accessToken", "locationId"], req, res))
-        {
-            return
-        }
-
-        console.log(req.body.accessToken);
-        const response = 
-        {
-            // data : {
-            //     locations: []
-            // },
+            data : {
+                updatedBadge : "green"
+            },
             status : "complete"
         }
 

@@ -14,23 +14,66 @@ class AdminController implements IControllerBase
         this.initRoutes()
     }
 
-    public initRoutes() 
+    public initRoutes()
     {
-        this.router.post(this.path + '/check', this.check)
+        this.router.post(this.path + '/stats', this.stats)
+        this.router.post(this.path + '/enter', this.enter)
+        this.router.post(this.path + '/exit', this.exit)
     }
 
-    check = (req: Request, res: Response) => 
+    stats = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["attestationToken"], req, res))
+        if (!Validation.validate(["locationId"], req, res))
         {
             return
         }
 
+        console.log(req.body.locationId);
         const response = 
         {
             data : {
-                badge : "green"
+                peopleOnPremises : 213,
+                accessDenied: 8
             },
+            status : "complete"
+        }
+
+        res.json(response);
+    }
+
+    enter = (req: Request, res: Response) => 
+    {
+        if (!Validation.validate(["accessToken", "locationId"], req, res))
+        {
+            return
+        }
+
+        console.log(req.body.accessToken);
+        console.log(req.body.locationId);
+        const response = 
+        {
+            // data : {
+            //     locations: []
+            // },
+            status : "complete"
+        }
+
+        res.json(response);
+    }
+
+    exit = (req: Request, res: Response) => 
+    {
+        if (!Validation.validate(["accessToken", "locationId"], req, res))
+        {
+            return
+        }
+
+        console.log(req.body.accessToken);
+        const response = 
+        {
+            // data : {
+            //     locations: []
+            // },
             status : "complete"
         }
 
