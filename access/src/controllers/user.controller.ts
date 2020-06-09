@@ -20,6 +20,7 @@ class UserController implements IControllerBase
     {
         this.router.post(this.path + '/enter', this.enter)
         this.router.post(this.path + '/exit', this.exit)
+        this.router.post(this.path + '/exposure/verify', this.exposureVerification)
     }
 
     enter = (req: Request, res: Response) => 
@@ -55,6 +56,25 @@ class UserController implements IControllerBase
             // data : {
             //     locations: []
             // },
+            status : "complete"
+        }
+
+        res.json(response);
+    }
+
+    exposureVerification = (req: Request, res: Response) => 
+    {
+        if (!Validation.validate(["accessToken", "locationId"], req, res))
+        {
+            return
+        }
+
+        console.log(req.body.accessToken);
+        const response = 
+        {
+            data : {
+                exposed: false
+            },
             status : "complete"
         }
 
