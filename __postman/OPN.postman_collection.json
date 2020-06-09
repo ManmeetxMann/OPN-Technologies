@@ -6,6 +6,594 @@
 	},
 	"item": [
 		{
+			"name": "Registry Service",
+			"item": [
+				{
+					"name": "Registry > User > Add",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"registrationToken\" : \"12345678987654321\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootRegistry}}/user/add",
+							"host": [
+								"{{rootRegistry}}"
+							],
+							"path": [
+								"user",
+								"add"
+							]
+						},
+						"description": "Add a User to the Registry. This is to be called once per app install. The registrationToken is what you get from FCM within the iOS or Android app.\n\nFor the Admin User use the Registry > Admin > Add"
+					},
+					"response": []
+				},
+				{
+					"name": "Registry > Admin > Add",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{rootRegistry}}/admin/add",
+							"host": [
+								"{{rootRegistry}}"
+							],
+							"path": [
+								"admin",
+								"add"
+							]
+						},
+						"description": "Add a Admin to the Registry. This is to be called once per app install.\n\nFor the Admin User use the Registry > User > Add"
+					},
+					"response": []
+				}
+			],
+			"description": "Initial Registry of apps.",
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Attestation Service",
+			"item": [
+				{
+					"name": "Attestation > User > Add",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"attestationId\": \"987654321\",\n\t\"answer\" : {\n\t\t\"symptoms\" : false,\n\t\t\"travel\" : false,\n\t\t\"contact\" : false,\n\t\t\"clear\" : false\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootAttestation}}/user/add",
+							"host": [
+								"{{rootAttestation}}"
+							],
+							"path": [
+								"user",
+								"add"
+							]
+						},
+						"description": "Records a User's attestation. To be called once per any attestation done."
+					},
+					"response": []
+				},
+				{
+					"name": "Attestation > Admin > Verify",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"attestationToken\": \"987654321\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootAttestation}}/admin/verify",
+							"host": [
+								"{{rootAttestation}}"
+							],
+							"path": [
+								"admin",
+								"verify"
+							]
+						},
+						"description": "Verifies an attestation and the current User's badge status / color."
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Access Service",
+			"item": [
+				{
+					"name": "Access > User > Enter",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"accessToken\" : \"987654321\",\n\t\"locationId\" : \"9876543200\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootAccess}}/user/enter",
+							"host": [
+								"{{rootAccess}}"
+							],
+							"path": [
+								"user",
+								"enter"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Access > User > Exit",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"accessToken\" : \"987654321\",\n\t\"locationId\" : \"9876543200\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootAccess}}/user/exit",
+							"host": [
+								"{{rootAccess}}"
+							],
+							"path": [
+								"user",
+								"exit"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Access > User > Exposure Check",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"accessToken\" : \"987654321\",\n\t\"locationId\" : \"9876543200\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootAccess}}/user/exposure/verify",
+							"host": [
+								"{{rootAccess}}"
+							],
+							"path": [
+								"user",
+								"exposure",
+								"verify"
+							]
+						},
+						"description": "Verify if the specified accessToken has been exposed to others."
+					},
+					"response": []
+				},
+				{
+					"name": "Access > Admin > Stats",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"locationId\" : \"9876543200\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootAccess}}/admin/stats",
+							"host": [
+								"{{rootAccess}}"
+							],
+							"path": [
+								"admin",
+								"stats"
+							]
+						},
+						"description": "Access Stats for Admin"
+					},
+					"response": []
+				},
+				{
+					"name": "Access > Admin > Enter",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"accessToken\" : \"987654321\",\n\t\"locationId\" : \"9876543200\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootAccess}}/admin/enter",
+							"host": [
+								"{{rootAccess}}"
+							],
+							"path": [
+								"admin",
+								"enter"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Access > Admin > Exit",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"accessToken\" : \"987654321\",\n\t\"locationId\" : \"9876543200\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootAccess}}/admin/exit",
+							"host": [
+								"{{rootAccess}}"
+							],
+							"path": [
+								"admin",
+								"exit"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Lookup Service",
+			"item": [
+				{
+					"name": "Lookup > Locations > Get All",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"longitude\" : \"40.3\",\n\t\"latitude\" : \"30.2\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootLookup}}/locations/list",
+							"host": [
+								"{{rootLookup}}"
+							],
+							"path": [
+								"locations",
+								"list"
+							]
+						},
+						"description": "Provides all the locations available to check in. This includes both public sites and sites from connected sites."
+					},
+					"response": []
+				},
+				{
+					"name": "Lookup > Attestation > Get Template / Config",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"locationId\" : \"9876543200\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootLookup}}/attestation/get",
+							"host": [
+								"{{rootLookup}}"
+							],
+							"path": [
+								"attestation",
+								"get"
+							]
+						},
+						"description": "Get the attestation template / config for a site."
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Enterprise Service",
+			"item": [
+				{
+					"name": "Enterprise > User > Connect",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"key\" : \"9876543200\",\n\t\"photo\" : \"data:image/jpeg;base64,/9j/4SbGRXhpZgAASUkqAAgAAAAOAAABAwABAAAAsAkAAAEBAwABAAAAtA0AAAIBAwAEAAAAtgAAAAMBAwABAAAAsoAAAAYBAwABAAAAAgAAABIBAwABAAAAAQAA........AA33//2/Q==\",\n\t\"firstName\" : \"Sean\",\n\t\"lastNameInitial\" : \"S\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootEnterprise}}/user/connect",
+							"host": [
+								"{{rootEnterprise}}"
+							],
+							"path": [
+								"user",
+								"connect"
+							]
+						},
+						"description": "Enterprise feature. Connect an anonymous user to connected user."
+					},
+					"response": []
+				},
+				{
+					"name": "Enterprise > User > Disconnect",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"key\" : \"9876543200\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootEnterprise}}/user/disconnect",
+							"host": [
+								"{{rootEnterprise}}"
+							],
+							"path": [
+								"user",
+								"disconnect"
+							]
+						},
+						"description": "Enterprise feature. Disconnect an anonymous user to connected user."
+					},
+					"response": []
+				},
+				{
+					"name": "Enterprise > Admin > Sign In Link Request",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\" : \"sean@stayopn.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootEnterprise}}/admin/auth/signIn/request",
+							"host": [
+								"{{rootEnterprise}}"
+							],
+							"path": [
+								"admin",
+								"auth",
+								"signIn",
+								"request"
+							]
+						},
+						"description": "Enterprise feature. Request a sign-in link aka magic link."
+					},
+					"response": []
+				},
+				{
+					"name": "Enterprise > Admin > Sign In Link",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"authRequestToken\" : \"987654321\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootEnterprise}}/admin/auth/signIn/process",
+							"host": [
+								"{{rootEnterprise}}"
+							],
+							"path": [
+								"admin",
+								"auth",
+								"signIn",
+								"process"
+							]
+						},
+						"description": "Enterprise feature. Sign-in using an auth request token which you could have gotten from a sign-in link request."
+					},
+					"response": []
+				},
+				{
+					"name": "Enterprise > Admin > Team Status",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "987654321",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootEnterprise}}/admin/team/status",
+							"host": [
+								"{{rootEnterprise}}"
+							],
+							"path": [
+								"admin",
+								"team",
+								"status"
+							]
+						},
+						"description": "Enterprise feature. Badge status for each team member."
+					},
+					"response": []
+				},
+				{
+					"name": "Enterprise > Admin > Team Review",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "987654321",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"conectedId\" : \"987654321\",\n\t\"approval\" : true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootEnterprise}}/admin/team/review",
+							"host": [
+								"{{rootEnterprise}}"
+							],
+							"path": [
+								"admin",
+								"team",
+								"review"
+							]
+						},
+						"description": "Enterprise feature. Approve or Reject a user's yellow or red badge to go back to gray."
+					},
+					"response": []
+				},
+				{
+					"name": "Enterprise > Admin > Billing > Stats",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "987654321",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"conectedId\" : \"987654321\",\n\t\"approval\" : true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootEnterprise}}/admin/billing/stats",
+							"host": [
+								"{{rootEnterprise}}"
+							],
+							"path": [
+								"admin",
+								"billing",
+								"stats"
+							]
+						},
+						"description": "Enterprise feature. Get billing stats."
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
 			"name": "Config",
 			"request": {
 				"method": "POST",
@@ -27,512 +615,8 @@
 					"path": [
 						""
 					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Registry > User > Add",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"url": {
-					"raw": "{{rootRegistry}}/user/add",
-					"host": [
-						"{{rootRegistry}}"
-					],
-					"path": [
-						"user",
-						"add"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Registry > Admin > Add",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"url": {
-					"raw": "{{rootRegistry}}/admin/add",
-					"host": [
-						"{{rootRegistry}}"
-					],
-					"path": [
-						"admin",
-						"add"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Attestation > User > Add",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"attestationId\": \"987654321\",\n\t\"answer\" : {\n\t\t\"symptoms\" : false,\n\t\t\"travel\" : false,\n\t\t\"contact\" : false,\n\t\t\"clear\" : false\n\t}\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
 				},
-				"url": {
-					"raw": "{{rootAttestation}}/user/add",
-					"host": [
-						"{{rootAttestation}}"
-					],
-					"path": [
-						"user",
-						"add"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Attestation > Admin > Check",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"attestationToken\": \"987654321\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootAttestation}}/admin/check",
-					"host": [
-						"{{rootAttestation}}"
-					],
-					"path": [
-						"admin",
-						"check"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Access > User > Enter",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"accessToken\" : \"987654321\",\n\t\"locationId\" : \"9876543200\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootAccess}}/user/enter",
-					"host": [
-						"{{rootAccess}}"
-					],
-					"path": [
-						"user",
-						"enter"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Access > User > Exit",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"accessToken\" : \"987654321\",\n\t\"locationId\" : \"9876543200\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootAccess}}/user/exit",
-					"host": [
-						"{{rootAccess}}"
-					],
-					"path": [
-						"user",
-						"exit"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Access > Admin > Stats",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"locationId\" : \"9876543200\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootAccess}}/admin/stats",
-					"host": [
-						"{{rootAccess}}"
-					],
-					"path": [
-						"admin",
-						"stats"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Access > Admin > Enter",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"accessToken\" : \"987654321\",\n\t\"locationId\" : \"9876543200\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootAccess}}/admin/enter",
-					"host": [
-						"{{rootAccess}}"
-					],
-					"path": [
-						"admin",
-						"enter"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Access > Admin > Exit",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"accessToken\" : \"987654321\",\n\t\"locationId\" : \"9876543200\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootAccess}}/admin/exit",
-					"host": [
-						"{{rootAccess}}"
-					],
-					"path": [
-						"admin",
-						"exit"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Lookup > Locations > GetAll",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"longitude\" : \"40.3\",\n\t\"latitude\" : \"30.2\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootLookup}}/locations/getAll",
-					"host": [
-						"{{rootLookup}}"
-					],
-					"path": [
-						"locations",
-						"getAll"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Lookup > Attestation > Get Config",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"locationId\" : \"9876543200\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootLookup}}/attestation/getConfig",
-					"host": [
-						"{{rootLookup}}"
-					],
-					"path": [
-						"attestation",
-						"getConfig"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Enterprise > User > Connect",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"key\" : \"9876543200\",\n\t\"photo\" : \"data:image/jpeg;base64,/9j/4SbGRXhpZgAASUkqAAgAAAAOAAABAwABAAAAsAkAAAEBAwABAAAAtA0AAAIBAwAEAAAAtgAAAAMBAwABAAAAsoAAAAYBAwABAAAAAgAAABIBAwABAAAAAQAA........AA33//2/Q==\",\n\t\"firstName\" : \"Sean\",\n\t\"lastNameInitial\" : \"S\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootEnterprise}}/user/connect",
-					"host": [
-						"{{rootEnterprise}}"
-					],
-					"path": [
-						"user",
-						"connect"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Enterprise > User > Disconnect",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"key\" : \"9876543200\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootEnterprise}}/user/disconnect",
-					"host": [
-						"{{rootEnterprise}}"
-					],
-					"path": [
-						"user",
-						"disconnect"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Enterprise > Admin > Sign In Link Request",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"email\" : \"sean@stayopn.com\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootEnterprise}}/admin/auth/signIn/request",
-					"host": [
-						"{{rootEnterprise}}"
-					],
-					"path": [
-						"admin",
-						"auth",
-						"signIn",
-						"request"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Enterprise > Admin > Sign In Link",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"authRequestToken\" : \"987654321\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootEnterprise}}/admin/auth/signIn/process",
-					"host": [
-						"{{rootEnterprise}}"
-					],
-					"path": [
-						"admin",
-						"auth",
-						"signIn",
-						"process"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Enterprise > Admin > Team Status",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "987654321",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootEnterprise}}/admin/team/status",
-					"host": [
-						"{{rootEnterprise}}"
-					],
-					"path": [
-						"admin",
-						"team",
-						"status"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Enterprise > Admin > Team Review",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "987654321",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"conectedId\" : \"987654321\",\n\t\"approval\" : true\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootEnterprise}}/admin/team/review",
-					"host": [
-						"{{rootEnterprise}}"
-					],
-					"path": [
-						"admin",
-						"team",
-						"review"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Enterprise > Admin > Billing > Stats",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "987654321",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"conectedId\" : \"987654321\",\n\t\"approval\" : true\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{rootEnterprise}}/admin/billing/stats",
-					"host": [
-						"{{rootEnterprise}}"
-					],
-					"path": [
-						"admin",
-						"billing",
-						"stats"
-					]
-				}
+				"description": "Config call to get all remote configurable settings."
 			},
 			"response": []
 		}
