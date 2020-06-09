@@ -34,9 +34,9 @@ class UserController implements IControllerBase
         console.log(req.body.locationId);
         const response = 
         {
-            // data : {
-            //     locations: []
-            // },
+            data : {
+                accessTimestamp: (new Date()).toISOString()
+            },
             status : "complete"
         }
 
@@ -53,9 +53,9 @@ class UserController implements IControllerBase
         console.log(req.body.accessToken);
         const response = 
         {
-            // data : {
-            //     locations: []
-            // },
+            data : {
+                accessTimestamp: (new Date()).toISOString()
+            },
             status : "complete"
         }
 

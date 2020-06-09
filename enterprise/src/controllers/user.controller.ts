@@ -2,6 +2,7 @@ import * as express from 'express'
 import { Request, Response } from 'express'
 import IControllerBase from 'interfaces/IControllerBase.interface'
 import { request } from 'http'
+import { v4 as uuid } from 'uuid';
 
 import Validation from '../utils/validation'
 
@@ -36,7 +37,8 @@ class UserController implements IControllerBase
         const response = 
         {
             data : {
-                connectedId : "987654321"
+                orgId : uuid(),
+                connectedId : uuid()
             },
             status : "complete"
         }
