@@ -33,6 +33,7 @@ class UserController implements IControllerBase
         const response = 
         {
             data : {
+                attestationToken : "T987654321",
                 updatedBadge : "green"
             },
             status : "complete"
