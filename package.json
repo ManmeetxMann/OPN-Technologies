@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "build_deploy_access": "cd access; npm run build_deploy",
-    "build_deploy_attestation": "cd attestation; npm run build_deploy",
+    "build_deploy_passport": "cd passport; npm run build_deploy",
     "build_deploy_config": "cd config; npm run build_deploy",
     "build_deploy_enterprise": "cd enterprise; npm run build_deploy",
     "build_deploy_lookup": "cd lookup; npm run build_deploy",
