@@ -16,7 +16,7 @@ class AdminController implements IControllerBase
 
     public initRoutes()
     {
-        this.router.post(this.path + '/verify', this.check)
+        this.router.post(this.path + '/attestation/verify', this.check)
     }
 
     check = (req: Request, res: Response) => 
