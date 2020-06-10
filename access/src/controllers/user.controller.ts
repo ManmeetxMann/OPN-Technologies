@@ -2,6 +2,7 @@ import * as express from 'express'
 import { Request, Response } from 'express'
 import IControllerBase from 'interfaces/IControllerBase.interface'
 import { request } from 'http'
+import { v4 as uuid } from 'uuid';
 
 import Validation from '../utils/validation'
 
@@ -25,7 +26,7 @@ class UserController implements IControllerBase
 
     enter = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["accessToken", "locationId"], req, res))
+        if (!Validation.validate(["locationId"], req, res))
         {
             return
         }
@@ -35,6 +36,7 @@ class UserController implements IControllerBase
         const response = 
         {
             data : {
+                accessToken: uuid(),
                 accessTimestamp: (new Date()).toISOString()
             },
             status : "complete"
