@@ -37,7 +37,8 @@ class UserController implements IControllerBase
                     access : "https://access.platform.stayopn.com",
                     lookup : "https://lookup.platform.stayopn.com",
                     enterprise : "https://enterprise.platform.stayopn.com"
-                } 
+                },
+                badgeValidityPeriod : 60 * 60 * 24
             },
             status : "complete"
         }
