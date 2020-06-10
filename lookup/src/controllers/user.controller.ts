@@ -37,6 +37,7 @@ class UserController implements IControllerBase
                 registeredLocations : [
                     {
                         id: "987654321",
+                        title :  "Royal Ontario Museum",
                         address: "95 Queen's Park",
                         address2: "Suite 403",
                         city: "Toronto",
@@ -56,6 +57,7 @@ class UserController implements IControllerBase
                 publicLocations : [
                     {
                         id: "987654321",
+                        title :  "Royal Ontario Museum",
                         address: "95 Queen's Park",
                         address2: "Suite 403",
                         city: "Toronto",
@@ -66,6 +68,7 @@ class UserController implements IControllerBase
                     },
                     {
                         id: "987654321",
+                        title :  "Royal Ontario Museum",
                         address: "95 Queen's Park",
                         address2: "Suite 403",
                         city: "Toronto",
