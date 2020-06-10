@@ -19,13 +19,15 @@ class UserController implements IControllerBase
 
     public initRoutes() 
     {
-        this.router.post(this.path + '/connect', this.connect)
-        this.router.post(this.path + '/disconnect', this.disconnect)
+        this.router.post(this.path + '/connect/add', this.connect)
+        this.router.post(this.path + '/connect/remove', this.disconnect)
+        this.router.post(this.path + '/connect/locations', this.connectedLocations)
     }
 
     connect = (req: Request, res: Response) => 
     {
         if (!Validation.validate(["key", "photo", "firstName", "lastNameInitial", "yearOfBirthIfLessThan18"], req, res))
+            // TODO: yearOfBirthIfLessThan18 should be optional
         {
             return
         }
@@ -59,6 +61,44 @@ class UserController implements IControllerBase
             // data : {
                 
             // },
+            status : "complete"
+        }
+
+        res.json(response);
+    }
+
+    connectedLocations = (req: Request, res: Response) => 
+    {
+        if (!Validation.validate(["connectedToken"], req, res))
+        {
+            return
+        }
+
+        console.log(req.body.connectedToken);
+        const response = 
+        {
+            data : {
+                registeredLocations : [
+                    {
+                        id: "987654321",
+                        title :  "Royal Ontario Museum",
+                        address: "95 Queen's Park",
+                        address2: "Suite 403",
+                        city: "Toronto",
+                        state: "Ontario",
+                        zip: "M7V 1P9",
+                        country: "Canada",
+                        divisions: [{
+                            id : "987654321A",
+                            title :  "Floor 1"
+                        }, 
+                        {
+                            id : "987654321B",
+                            title :  "Floor 2"
+                        }]
+                    },
+                ]
+            },
             status : "complete"
         }
 
