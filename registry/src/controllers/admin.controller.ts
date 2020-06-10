@@ -2,6 +2,7 @@ import * as express from 'express'
 import { Request, Response } from 'express'
 import IControllerBase from 'interfaces/IControllerBase.interface'
 
+import Validation from '../utils/validation'
 
 class AdminController implements IControllerBase
 {
@@ -20,7 +21,11 @@ class AdminController implements IControllerBase
 
     add = (req: Request, res: Response) => 
     {
-        
+        if (!Validation.validate(["registrationToken"], req, res))
+        {
+            return
+        }
+
         const response = 
         {
             // data : {
