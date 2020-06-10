@@ -25,7 +25,7 @@ class UserController implements IControllerBase
 
     connect = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["key", "photo", "firstName", "lastNameInitial"], req, res))
+        if (!Validation.validate(["key", "photo", "firstName", "lastNameInitial", "yearOfBirthIfLessThan18"], req, res))
         {
             return
         }
