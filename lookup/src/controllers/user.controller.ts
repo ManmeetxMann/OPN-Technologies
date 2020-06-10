@@ -100,19 +100,19 @@ class UserController implements IControllerBase
                 questions : {
                     1 : {
                         question : "Are you experiencing any new symptoms of COVID-19 (e.g. new onset shortness of breath, new onset cough, sore throat, fever, runny nose or feeling unwell)?",
-                        answer: "boolean"
+                        answer: ["boolean"]
                     },
                     2 : {
                         question : "Have you traveled outside of Canada in the last 14 days?",
-                        answer: "boolean"
+                        answer: ["boolean"]
                     },
                     3 : {
                         question : "Have you been in close contact with a person with acute respiratory illness or has confirmed COVID-19 in the past 14 days?",
-                        answer: "boolean"
+                        answer: ["boolean"]
                     },
                     4 : {
                         question : "Have you answered yes to one of the above questions, but already contacted public health and determined you are not at risk for COVID-19 and/or do not ...",
-                        answer: "boolean"
+                        answer: ["boolean", "datetime"]
                     }
                 }
             },
