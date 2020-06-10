@@ -40,7 +40,7 @@ class UserController implements IControllerBase
         {
             data : {
                 orgId : uuid(),
-                connectedId : uuid()
+                connectedToken : uuid()
             },
             status : "complete"
         }
