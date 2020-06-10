@@ -19,7 +19,30 @@ class UserController implements IControllerBase
 
     public initRoutes() 
     {
-        this.router.post(this.path + '/add', this.add)
+        this.router.post(this.path + '/check', this.add)
+        this.router.post(this.path + '/attestation/add', this.add)
+    }
+
+    check = (req: Request, res: Response) => 
+    {
+        if (!Validation.validate(["currentStatusToken"], req, res))
+        {
+            return
+        }
+
+        console.log(req.body.attestationId);
+        console.log(req.body.answer);
+        const response = 
+        {
+            data : {
+                newStatusToken : uuid(),
+                updatedBadge : "green",
+                validUntil : (new Date(new Date().getTime() + 60 * 60 * 24 * 1000)).toISOString()
+            },
+            status : "complete"
+        }
+
+        res.json(response);
     }
 
     add = (req: Request, res: Response) => 

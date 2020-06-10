@@ -9,7 +9,7 @@
     "build_deploy_enterprise": "cd enterprise; npm run build_deploy",
     "build_deploy_lookup": "cd lookup; npm run build_deploy",
     "build_deploy_registry": "cd registry; npm run build_deploy",
-    "build_deploy_all" : "npm run build_deploy_access; npm run build_deploy_attestation; npm run build_deploy_config; npm run build_deploy_enterprise; npm run build_deploy_lookup; npm run build_deploy_registry"
+    "build_deploy_all" : "npm run build_deploy_access; npm run build_deploy_passport; npm run build_deploy_config; npm run build_deploy_enterprise; npm run build_deploy_lookup; npm run build_deploy_registry"
   },
   "author": "",
   "license": "ISC"
