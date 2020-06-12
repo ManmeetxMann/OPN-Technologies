@@ -105,6 +105,7 @@ class UserController implements IControllerBase
                 ]
             },
             morePagedContent: true, // TODO: paging
+            serverTimestamp: (new Date()).toISOString(),
             status : "complete"
         }
 
@@ -113,7 +114,7 @@ class UserController implements IControllerBase
 
     getAttestationConfig = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["locationId"], req, res))
+        if (!Validation.validate(["statusToken", "locationId"], req, res))
         {
             return
         }
@@ -122,6 +123,7 @@ class UserController implements IControllerBase
         const response = 
         {
             data : {
+                id: uuid(),
                 questions : {
                     1 : {
                         question : "Are you experiencing any new symptoms of COVID-19 (e.g. new onset shortness of breath, new onset cough, sore throat, fever, runny nose or feeling unwell)?",
@@ -141,6 +143,7 @@ class UserController implements IControllerBase
                     }
                 }
             },
+            serverTimestamp: (new Date()).toISOString(),
             status : "complete"
         }
 
