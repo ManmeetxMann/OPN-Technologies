@@ -2,6 +2,7 @@ import * as express from 'express'
 import { Request, Response } from 'express'
 import IControllerBase from 'interfaces/IControllerBase.interface'
 import { request } from 'http'
+import { v4 as uuid } from 'uuid';
 
 import Validation from '../utils/validation'
 
@@ -36,29 +37,52 @@ class UserController implements IControllerBase
             data : {
                 registeredLocations : [
                     {
-                        id: "987654321",
+                        id: uuid(),
+                        orgId: uuid(),
                         title :  "Royal Ontario Museum",
-                        address: "95 Queen's Park",
+                        address: "100 Queen's Park",
                         address2: "Suite 403",
                         city: "Toronto",
                         state: "Ontario",
                         zip: "M7V 1P9",
                         country: "Canada",
                         divisions: [{
-                            id : "987654321A",
-                            title :  "Floor 1"
+                            id : uuid(),
+                            title :  "Floor 1",
+                            address: "100 Queen's Park",
+                            address2: "Suite 403",
+                            city: "Toronto",
+                            state: "Ontario",
+                            zip: "M7V 1P9",
+                            country: "Canada"
                         }, 
                         {
-                            id : "987654321B",
-                            title :  "Floor 2"
+                            id : uuid(),
+                            title :  "Floor 2",
+                            address: "100 Queen's Park",
+                            address2: "Suite 403",
+                            city: "Toronto",
+                            state: "Ontario",
+                            zip: "M7V 1P9",
+                            country: "Canada"
+                        },
+                        {
+                            id : uuid(),
+                            title :  "Second Building",
+                            address: "95 Queen's Park",
+                            city: "Toronto",
+                            state: "Ontario",
+                            zip: "M7V 1P9",
+                            country: "Canada"
                         }]
-                    },
+                    }
                 ],
                 publicLocations : [
                     {
-                        id: "987654321",
+                        id: uuid(),
+                        orgId: uuid(),
                         title :  "Royal Ontario Museum",
-                        address: "95 Queen's Park",
+                        address: "100 Queen's Park",
                         address2: "Suite 403",
                         city: "Toronto",
                         state: "Ontario",
@@ -67,9 +91,10 @@ class UserController implements IControllerBase
                         divisions: []
                     },
                     {
-                        id: "987654321",
+                        id: uuid(),
+                        orgId: uuid(),
                         title :  "Royal Ontario Museum",
-                        address: "95 Queen's Park",
+                        address: "100 Queen's Park",
                         address2: "Suite 403",
                         city: "Toronto",
                         state: "Ontario",
