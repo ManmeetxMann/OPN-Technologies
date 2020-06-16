@@ -35,6 +35,7 @@ class AdminController implements IControllerBase
                 peopleOnPremises : 213,
                 accessDenied: 8
             },
+            serverTimestamp: (new Date()).toISOString(),
             status : "complete"
         }
 
@@ -52,9 +53,7 @@ class AdminController implements IControllerBase
         console.log(req.body.locationId);
         const response = 
         {
-            // data : {
-            //     locations: []
-            // },
+            serverTimestamp: (new Date()).toISOString(),
             status : "complete"
         }
 
@@ -71,9 +70,7 @@ class AdminController implements IControllerBase
         console.log(req.body.accessToken);
         const response = 
         {
-            // data : {
-            //     locations: []
-            // },
+            serverTimestamp: (new Date()).toISOString(),
             status : "complete"
         }
 

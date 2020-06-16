@@ -16,7 +16,7 @@ class AdminController implements IControllerBase
 
     public initRoutes()
     {
-        this.router.post(this.path + '/attestation/verify', this.check)
+        this.router.post(this.path + '/status/verify', this.check)
     }
 
     check = (req: Request, res: Response) => 
@@ -31,6 +31,7 @@ class AdminController implements IControllerBase
             data : {
                 badge : "green"
             },
+            serverTimestamp: (new Date()).toISOString(),
             status : "complete"
         }
 

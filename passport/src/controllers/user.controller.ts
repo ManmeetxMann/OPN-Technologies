@@ -20,7 +20,7 @@ class UserController implements IControllerBase
     public initRoutes() 
     {
         this.router.post(this.path + '/status/get', this.check)
-        this.router.post(this.path + '/attestation/update', this.update)
+        this.router.post(this.path + '/status/update', this.update)
     }
 
     check = (req: Request, res: Response) => 
@@ -48,7 +48,7 @@ class UserController implements IControllerBase
 
     update = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["attestationId", "answer"], req, res))
+        if (!Validation.validate(["attestationId", "statusToken", "answer"], req, res))
         {
             return
         }
@@ -61,6 +61,7 @@ class UserController implements IControllerBase
                 attestationToken : uuid(),
                 updatedBadge : "green"
             },
+            serverTimestamp: (new Date()).toISOString(),
             status : "complete"
         }
 

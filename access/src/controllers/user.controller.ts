@@ -26,7 +26,7 @@ class UserController implements IControllerBase
 
     enter = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["locationId"], req, res))
+        if (!Validation.validate(["attestationToken", "locationId"], req, res))
         {
             return
         }
@@ -39,6 +39,7 @@ class UserController implements IControllerBase
                 accessToken: uuid(),
                 accessTimestamp: (new Date()).toISOString()
             },
+            serverTimestamp: (new Date()).toISOString(),
             status : "complete"
         }
 
@@ -58,6 +59,7 @@ class UserController implements IControllerBase
             data : {
                 accessTimestamp: (new Date()).toISOString()
             },
+            serverTimestamp: (new Date()).toISOString(),
             status : "complete"
         }
 
@@ -77,6 +79,7 @@ class UserController implements IControllerBase
             data : {
                 exposed: false
             },
+            serverTimestamp: (new Date()).toISOString(),
             status : "complete"
         }
 
