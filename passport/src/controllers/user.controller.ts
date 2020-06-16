@@ -55,11 +55,18 @@ class UserController implements IControllerBase
 
         console.log(req.body.locationId);
         console.log(req.body.answer);
+
+        const date = new Date()
         const response = 
         {
             data : {
                 attestationToken : uuid(),
-                updatedBadge : "green"
+                statusUpdate : {
+                    newStatusToken : uuid(),
+                    updatedBadge : "green",
+                    validFrom: date.toISOString(),
+                    validUntil : (new Date(date.getTime() + 60 * 60 * 24 * 1000)).toISOString()
+                }
             },
             serverTimestamp: (new Date()).toISOString(),
             status : "complete"
