@@ -44,7 +44,7 @@ class AdminController implements IControllerBase
 
     enter = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["accessToken", "locationId"], req, res))
+        if (!Validation.validate(["statusToken", "attestationToken", "locationId"], req, res))
         {
             return
         }
@@ -53,6 +53,9 @@ class AdminController implements IControllerBase
         console.log(req.body.locationId);
         const response = 
         {
+            data : {
+                userStatusBadge: "proceed"
+            },
             serverTimestamp: (new Date()).toISOString(),
             status : "complete"
         }
