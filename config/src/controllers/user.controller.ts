@@ -38,7 +38,14 @@ class UserController implements IControllerBase
                     lookup : "https://lookup.platform.stayopn.com",
                     enterprise : "https://enterprise.platform.stayopn.com"
                 },
-                badgeValidityPeriod : 60 * 60 * 24
+                badgeValidityPeriod : 60 * 60 * 24,
+                badges:
+                {
+                    pending: "Pending",
+                    caution: "Caution",
+                    stop: "Stop",
+                    proceed: "Proceed"
+                }
             },
             status : "complete"
         }
