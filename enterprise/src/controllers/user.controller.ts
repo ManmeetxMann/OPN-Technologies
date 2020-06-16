@@ -32,10 +32,16 @@ class UserController implements IControllerBase
             return
         }
 
+        /**
+         * Implementaiton Notes:
+         * - Make sure that last name initial is only one character
+         * - Ensure that a key is mapped to an org and a location (for now)
+         */
+
         console.log(req.body.key);
         console.log(req.body.photo);
         console.log(req.body.firstName);
-        console.log(req.body.lastNameInitial);
+        console.log(req.body.lastNameInitial); // TODO: Make sure that this is only one character long
         const response = 
         {
             data : {
