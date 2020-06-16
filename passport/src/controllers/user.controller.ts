@@ -61,6 +61,7 @@ class UserController implements IControllerBase
         {
             data : {
                 attestationToken : uuid(),
+                accessToken : uuid(),
                 statusUpdate : {
                     newStatusToken : uuid(),
                     updatedBadge : "green",
