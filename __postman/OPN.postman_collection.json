@@ -15,7 +15,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"registrationToken\" : \"12345678987654321\"\n}",
+							"raw": "{\n\t\"registrationToken\" : \"07893aea-d893-4b18-bb87-101d39b2a88e\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -32,7 +32,7 @@
 								"add"
 							]
 						},
-						"description": "Add a User to the Registry. This is to be called once per app install. The registrationToken is what you get from FCM within the iOS or Android app.\n\nFor the Admin User use the Registry > Admin > Add"
+						"description": "Add a User to the Registry. This is to be called once per app install. The registrationToken is what you get from FCM within the iOS or Android app and then pass it to this API call.\n- https://firebase.google.com/docs/cloud-messaging/ios/client\n- https://firebase.google.com/docs/cloud-messaging/android/client\n- https://firebase.google.com/docs/cloud-messaging/js/client\n\nFor the Admin User use the Registry > Admin > Add"
 					},
 					"response": []
 				},
@@ -41,6 +41,15 @@
 					"request": {
 						"method": "POST",
 						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"registrationToken\" : \"bb363755-21c7-4218-b8e6-26e5eedd99de\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
 						"url": {
 							"raw": "{{rootRegistry}}/admin/add",
 							"host": [
@@ -60,16 +69,16 @@
 			"protocolProfileBehavior": {}
 		},
 		{
-			"name": "Attestation Service",
+			"name": "Passport Service",
 			"item": [
 				{
-					"name": "Attestation > User > Add",
+					"name": "Passport > User > Status > Get",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"attestationId\": \"987654321\",\n\t\"answer\" : {\n\t\t\"symptoms\" : false,\n\t\t\"travel\" : false,\n\t\t\"contact\" : false,\n\t\t\"clear\" : false\n\t}\n}",
+							"raw": "{\n\t\"statusToken\": \"07893aea-d893-4b18-bb87-101d39b2a89a\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -77,13 +86,43 @@
 							}
 						},
 						"url": {
-							"raw": "{{rootAttestation}}/user/add",
+							"raw": "{{rootPassport}}/user/status/get",
 							"host": [
-								"{{rootAttestation}}"
+								"{{rootPassport}}"
 							],
 							"path": [
 								"user",
-								"add"
+								"status",
+								"get"
+							]
+						},
+						"description": "Checks on the validity of the status token provided. newStatusToken is provided to scramble the token over time. newStatusToken will equal the statusToken provided when the status does not change or when queried less than the validity period (24 hours)"
+					},
+					"response": []
+				},
+				{
+					"name": "Passport > User > Status > Update",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"attestationId\": \"d0a6cfb9-bccb-453f-ab4f-034664f4836a\",\n\t\"statusToken\": \"648abc04-f9ce-4f96-8778-1b566f8bcfc7\",\n\t\"answer\" : {\n\t\t\"1\" : {\"1\": false},\n\t\t\"2\" : {\"1\": false},\n\t\t\"3\" : {\"1\": false},\n\t\t\"4\" : {\"1\" : true, \"2\" : \"2020-06-10T05:05:32.217Z\"}\n\t}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootPassport}}/user/status/update",
+							"host": [
+								"{{rootPassport}}"
+							],
+							"path": [
+								"user",
+								"status",
+								"update"
 							]
 						},
 						"description": "Records a User's attestation. To be called once per any attestation done."
@@ -91,7 +130,7 @@
 					"response": []
 				},
 				{
-					"name": "Attestation > Admin > Verify",
+					"name": "Passport > Admin > Status > Verify",
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -105,12 +144,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{rootAttestation}}/admin/verify",
+							"raw": "{{rootPassport}}/admin/status/verify",
 							"host": [
-								"{{rootAttestation}}"
+								"{{rootPassport}}"
 							],
 							"path": [
 								"admin",
+								"status",
 								"verify"
 							]
 						},
@@ -131,7 +171,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"accessToken\" : \"987654321\",\n\t\"locationId\" : \"9876543200\"\n}",
+							"raw": "{\n\t\"attestationToken\" : \"ecf35e1a-d1b2-4b75-bab1-674891645f56\",\n\t\"locationId\" : \"9876543200\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -158,7 +198,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"accessToken\" : \"987654321\",\n\t\"locationId\" : \"9876543200\"\n}",
+							"raw": "{\n\t\"accessToken\" : \"13193407-428a-459b-b793-bbc146edfccb\",\n\t\"locationId\" : \"9876543200\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -203,7 +243,7 @@
 								"verify"
 							]
 						},
-						"description": "Verify if the specified accessToken has been exposed to others."
+						"description": "Verify if the specified accessToken has been exposed to others. This is to be called daily either through a timer or through a push notification."
 					},
 					"response": []
 				},
@@ -330,7 +370,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"locationId\" : \"9876543200\"\n}",
+							"raw": "{\n\t\"statusToken\" : \"12893aea-d893-4b18-bb87-101d39b2a11a\",\n\t\"locationId\" : \"1bd99713-0e28-4926-8e05-479d2204d0b4\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -364,7 +404,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"key\" : \"9876543200\",\n\t\"photo\" : \"data:image/jpeg;base64,/9j/4SbGRXhpZgAASUkqAAgAAAAOAAABAwABAAAAsAkAAAEBAwABAAAAtA0AAAIBAwAEAAAAtgAAAAMBAwABAAAAsoAAAAYBAwABAAAAAgAAABIBAwABAAAAAQAA........AA33//2/Q==\",\n\t\"firstName\" : \"Sean\",\n\t\"lastNameInitial\" : \"S\"\n}",
+							"raw": "{\n\t\"key\" : \"9876543200\",\n\t\"photo\" : \"data:image/jpeg;base64,/9j/4SbGRXhpZgAASUkqAAgAAAAOAAABAwABAAAAsAkAAAEBAwABAAAAtA0AAAIBAwAEAAAAtgAAAAMBAwABAAAAsoAAAAYBAwABAAAAAgAAABIBAwABAAAAAQAA........AA33//2/Q==\",\n\t\"firstName\" : \"Sean\",\n\t\"lastNameInitial\" : \"S\",\n\t\"yearOfBirthIfLessThan18\" : 2005\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -372,13 +412,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{rootEnterprise}}/user/connect",
+							"raw": "{{rootEnterprise}}/user/connect/add",
 							"host": [
 								"{{rootEnterprise}}"
 							],
 							"path": [
 								"user",
-								"connect"
+								"connect",
+								"add"
 							]
 						},
 						"description": "Enterprise feature. Connect an anonymous user to connected user."
@@ -400,16 +441,46 @@
 							}
 						},
 						"url": {
-							"raw": "{{rootEnterprise}}/user/disconnect",
+							"raw": "{{rootEnterprise}}/user/connect/remove",
 							"host": [
 								"{{rootEnterprise}}"
 							],
 							"path": [
 								"user",
-								"disconnect"
+								"connect",
+								"remove"
 							]
 						},
 						"description": "Enterprise feature. Disconnect an anonymous user to connected user."
+					},
+					"response": []
+				},
+				{
+					"name": "Enterprise > User > Connect > Locations",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"connectedToken\" : \"07893aea-d893-4b18-bb87-101d39b2a89a\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootEnterprise}}/user/connect/locations",
+							"host": [
+								"{{rootEnterprise}}"
+							],
+							"path": [
+								"user",
+								"connect",
+								"locations"
+							]
+						},
+						"description": "Enterprise feature. Connect an anonymous user to connected user."
 					},
 					"response": []
 				},
@@ -600,7 +671,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"registrationToken\" : \"987654321\"\n}",
+					"raw": "{\n\t\"registrationToken\" : \"13193407-428a-459b-b793-bbc146edfe342\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
