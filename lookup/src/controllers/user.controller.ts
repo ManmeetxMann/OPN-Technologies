@@ -25,7 +25,7 @@ class UserController implements IControllerBase
 
     getAll = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["longitude", "latitude"], req, res))
+        if (!Validation.validate(["connectedToken"], req, res))
         {
             return
         }
@@ -124,6 +124,7 @@ class UserController implements IControllerBase
         {
             data : {
                 id: uuid(),
+                attestation: true, // TODO: Can be true or false
                 questions : {
                     1 : {
                         question : "Are you experiencing any new symptoms of COVID-19 (e.g. new onset shortness of breath, new onset cough, sore throat, fever, runny nose or feeling unwell)?",
