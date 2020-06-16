@@ -48,12 +48,12 @@ class UserController implements IControllerBase
 
     update = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["attestationId", "statusToken", "answer"], req, res))
+        if (!Validation.validate(["locationId", "statusToken", "answer"], req, res))
         {
             return
         }
 
-        console.log(req.body.attestationId);
+        console.log(req.body.locationId);
         console.log(req.body.answer);
         const response = 
         {

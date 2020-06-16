@@ -123,7 +123,7 @@ class UserController implements IControllerBase
         const response = 
         {
             data : {
-                id: uuid(),
+                // id: uuid(),
                 attestation: true, // TODO: Can be true or false
                 questions : {
                     1 : {
