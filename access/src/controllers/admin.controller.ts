@@ -54,7 +54,9 @@ class AdminController implements IControllerBase
         const response = 
         {
             data : {
-                userStatusBadge: "proceed"
+                userPassport : {
+                    badge: "proceed"
+                }
             },
             serverTimestamp: (new Date()).toISOString(),
             status : "complete"

@@ -27,7 +27,7 @@ class UserController implements IControllerBase
 
     createToken = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["locationId"], req, res))
+        if (!Validation.validate(["statusToken", "locationId"], req, res))
         {
             return
         }
