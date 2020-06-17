@@ -20,7 +20,7 @@ class AdminController implements IControllerBase
         this.router.post(this.path + '/auth/signIn/process', this.authSignIn)
         this.router.post(this.path + '/team/status', this.teamStatus)
         this.router.post(this.path + '/team/review', this.teamReview)
-        this.router.post(this.path + '/billing/stats', this.billingStats)
+        this.router.post(this.path + '/billing/config', this.billingConfig)
     }
 
     authSignInLinkRequest = (req: Request, res: Response) => 
@@ -134,7 +134,7 @@ class AdminController implements IControllerBase
         res.json(response);
     }
 
-    billingStats = (req: Request, res: Response) => 
+    billingConfig = (req: Request, res: Response) => 
     {
         if (!Validation.validate([], req, res, "authRequestToken"))
         {
@@ -144,11 +144,16 @@ class AdminController implements IControllerBase
         const response = 
         {
             data : {
-                numberOfUsers : 10,
-                lastBillingDate : "765434567765434567",
-                amountPaid : "$ 100.23 USD",
-                nextBillingDate : "765434567765434567",
-                amountDue : "$ 100.23 USD"
+                billing: {
+                    enabled: true,
+                    statement: {
+                        numberOfUsers : 10,
+                        lastBillingDate : "765434567765434567",
+                        amountPaid : "$ 100.23 USD",
+                        nextBillingDate : "765434567765434567",
+                        amountDue : "$ 100.23 USD"
+                    }
+                }
             },
             serverTimestamp: (new Date()).toISOString(),
             status : "complete"
