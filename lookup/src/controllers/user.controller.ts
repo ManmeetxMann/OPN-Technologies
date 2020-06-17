@@ -46,6 +46,7 @@ class UserController implements IControllerBase
                         state: "Ontario",
                         zip: "M7V 1P9",
                         country: "Canada",
+                        attestation: true,
                         divisions: [{
                             id : uuid(),
                             title :  "Floor 1",
@@ -54,7 +55,8 @@ class UserController implements IControllerBase
                             city: "Toronto",
                             state: "Ontario",
                             zip: "M7V 1P9",
-                            country: "Canada"
+                            country: "Canada",
+                            attestation: true
                         }, 
                         {
                             id : uuid(),
@@ -64,7 +66,8 @@ class UserController implements IControllerBase
                             city: "Toronto",
                             state: "Ontario",
                             zip: "M7V 1P9",
-                            country: "Canada"
+                            country: "Canada",
+                            attestation: true
                         },
                         {
                             id : uuid(),
@@ -73,7 +76,8 @@ class UserController implements IControllerBase
                             city: "Toronto",
                             state: "Ontario",
                             zip: "M7V 1P9",
-                            country: "Canada"
+                            country: "Canada",
+                            attestation: true
                         }]
                     }
                 ],
@@ -88,7 +92,8 @@ class UserController implements IControllerBase
                         state: "Ontario",
                         zip: "M7V 1P9",
                         country: "Canada",
-                        divisions: []
+                        divisions: [],
+                        attestation: true
                     },
                     {
                         id: uuid(),
@@ -100,7 +105,8 @@ class UserController implements IControllerBase
                         state: "Ontario",
                         zip: "M7V 1P9",
                         country: "Canada",
-                        divisions: []
+                        divisions: [],
+                        attestation: true
                     },
                 ]
             },

@@ -34,10 +34,13 @@ class UserController implements IControllerBase
         const response = 
         {
             data : {
-                newStatusToken : uuid(),
-                updatedBadge : "green",
-                validFrom: date.toISOString(),
-                validUntil : (new Date(date.getTime() + 60 * 60 * 24 * 1000)).toISOString()
+                passport : {
+                    updated: true,
+                    statusToken : uuid(),
+                    badge : "proceed",
+                    validFrom: date.toISOString(),
+                    validUntil : (new Date(date.getTime() + 60 * 60 * 24 * 1000)).toISOString()
+                }
             },
             serverTimestamp: date.toISOString(),
             status : "complete"
@@ -61,10 +64,10 @@ class UserController implements IControllerBase
         {
             data : {
                 attestationToken : uuid(),
-                accessToken : uuid(),
-                statusUpdate : {
-                    newStatusToken : uuid(),
-                    updatedBadge : "green",
+                passport : {
+                    updated: true,
+                    statusToken : uuid(),
+                    badge : "proceed",
                     validFrom: date.toISOString(),
                     validUntil : (new Date(date.getTime() + 60 * 60 * 24 * 1000)).toISOString()
                 }

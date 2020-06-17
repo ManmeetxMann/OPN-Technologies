@@ -75,19 +75,19 @@ class AdminController implements IControllerBase
                         id : "987654321",
                         firstName : "Sean",
                         lastNameInitial : "S",
-                        status: "green"
+                        badge: "proceed"
                     },
                     {
                         id : "987654321",
                         firstName : "Sean",
                         lastNameInitial : "S",
-                        status: "green"
+                        badge: "proceed"
                     },
                     {
                         id : "987654321",
                         firstName : "Sean",
                         lastNameInitial : "S",
-                        status: "green"
+                        badge: "proceed"
                     }
                 ],
                 attestationDue : [

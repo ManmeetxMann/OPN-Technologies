@@ -44,7 +44,7 @@ class AdminController implements IControllerBase
 
     enter = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["statusToken", "attestationToken", "locationId"], req, res))
+        if (!Validation.validate(["accessToken", "locationId"], req, res))
         {
             return
         }
