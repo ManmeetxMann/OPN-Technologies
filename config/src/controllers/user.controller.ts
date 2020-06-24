@@ -31,6 +31,12 @@ class UserController implements IControllerBase
         const response = 
         {
             data : {
+                updates : {
+                    force: "1.0",
+                    optional: "1.2",
+                    iosUrl: "http://itunes.com/apps/opn",
+                    androidUrl: "http://play.google.com/store/apps/details?id=com.opn.app"
+                },
                 services : {
                     registry : "https://registry.platform.stayopn.com",
                     attestation : "https://attestation.platform.stayopn.com",

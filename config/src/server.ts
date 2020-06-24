@@ -2,6 +2,7 @@ import App from './app'
 
 import * as bodyParser from 'body-parser'
 import loggerMiddleware from './middleware/logger'
+import errorMiddleware from './middleware/error'
 
 import AdminController from './controllers/admin.controller'
 import UserController from  './controllers/user.controller'
@@ -19,7 +20,8 @@ const app = new App({
     middleWares: [
         bodyParser.json(),
         bodyParser.urlencoded({ extended: true }),
-        loggerMiddleware
+        loggerMiddleware,
+        errorMiddleware
     ]
 })
 
