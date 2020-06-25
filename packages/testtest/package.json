@@ -1,0 +1,32 @@
+{
+  "name": "@opn/testtest",
+  "version": "0.0.0",
+  "description": "> TODO: description",
+  "author": "sepsepsep <git@i239.co>",
+  "homepage": "",
+  "license": "ISC",
+  "main": "dist/index",
+  "types": "dist/index",
+  "files": [
+      "dist"
+  ],
+  "scripts": {
+      "dev": "ts-node src/index.ts",
+      "build": "npm run clean && npm run compile",
+      "clean": "rimraf -rf ./dist",
+      "compile": "tsc -p tsconfig.build.json",
+      "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+      "express": "^4.17.1",
+      "pug": "^3.0.0"
+  },
+  "devDependencies": {
+      "copyfiles": "^2.3.0",
+      "rimraf": "^3.0.2",
+      "ts-node": "^8.10.2",
+      "typescript": "^3.9.5",
+      "@types/express": "^4.17.6",
+      "@types/node": "^14.0.14"
+  }
+}
