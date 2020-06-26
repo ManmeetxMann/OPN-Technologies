@@ -13,7 +13,7 @@ const scriptsToKeep = process.argv[3].split(',');
 
 
 // Define absolute paths for original pkg and temporary pkg.
-const ORIG_PKG_PATH = path.resolve(__dirname, `./packages/${packagePath}/dist/package.json`);
+const ORIG_PKG_PATH = path.resolve(__dirname, `../packages/${packagePath}/dist/package.json`);
 // const CACHED_PKG_PATH = path.resolve(__dirname, './dist/cached-package.json');
 
 // Obtain original `package.json` contents.
