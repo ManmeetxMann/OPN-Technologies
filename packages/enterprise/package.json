@@ -1,0 +1,27 @@
+{
+    "name": "@opn/enterprise",
+    "private": true,
+    "version": "0.0.0",
+    "scripts": {
+        "start": "node enterprise/src/server.js",
+        "dev": "ts-node src/server.ts",
+        "clean": "rimraf -rf ./dist",
+        "prepare": "copyfiles app.yaml dist && copyfiles package.json dist && node ../../__devops/package-cleaner.js enterprise start",
+        "compile": "tsc -p tsconfig.build.json",
+        "build": "npm run clean && npm run prepare && npm run compile",
+        "gcloud_deploy": "gcloud app deploy ./dist --quiet",
+        "deploy": "npm run build && npm run gcloud_deploy"
+    },
+    "dependencies": {
+        "express": "^4.17.1",
+        "pug": "^3.0.0"
+    },
+    "devDependencies": {
+        "copyfiles": "^2.3.0",
+        "rimraf": "^3.0.2",
+        "ts-node": "^8.10.2",
+        "typescript": "^3.9.5",
+        "@types/express": "^4.17.6",
+        "@types/node": "^14.0.14"
+    }
+}
