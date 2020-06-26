@@ -9,7 +9,7 @@ if (process.argv.length <= 3)
 // Get list of arguments passed to script.
 const packagePath = process.argv[2];
 const scriptsToKeep = process.argv[3].split(',');
-const devDepsToRemove = process.argv[4] ? process.argv[3].split(',') : [];
+// const devDepsToKeep = process.argv[4] ? process.argv[3].split(',') : [];
 
 
 // Define absolute paths for original pkg and temporary pkg.
@@ -33,10 +33,16 @@ Object.keys(pkgData.scripts).forEach(function (scriptName) {
     }
 });
 
+// Remove holistically
+delete pkgData.devDependencies;
+
 // Remove the specified named pkgs from the devDependencies section.
-devDepsToRemove.forEach(function (pkgName) {
-  delete pkgData.devDependencies[pkgName];
-});
+// Object.keys(pkgData.devDependencies).forEach(function (pkgName) {
+//   if (!devDepsToKeep.includes(pkgName))
+//   {
+//       delete pkgData.devDependencies[pkgName];
+//   }
+// });
 
 // Overwrite original `package.json` with new data (i.e. minus the specific data).
 fs.writeFile(ORIG_PKG_PATH, JSON.stringify(pkgData, null, 2), function (err) {
