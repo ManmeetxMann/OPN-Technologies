@@ -1,4 +1,5 @@
 import App from '../../common/src/express/app'
+// import App from '@opn/common/src/express/app'
 
 import * as bodyParser from 'body-parser'
 import loggerMiddleware from './middleware/logger'
