@@ -1,6 +1,13 @@
 {
 	"name": "root",
 	"private": true,
+	"scripts": {
+		"clean-all": "lerna clean --yes && lerna run clean",
+		"install-all": "lerna bootstrap --hoist",
+		"build-all": "lerna run build",
+		"deploy-all": "lerna run deploy --stream",
+		"runlocally-all": "lerna run dev --stream"
+    },
 	"devDependencies": {
 		"lerna": "^3.22.1",
 		"ts-node": "^8.10.2",

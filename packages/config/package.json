@@ -1,21 +1,18 @@
 {
-    "name": "@opn/common",
+    "name": "@opn/config",
     "private": true,
-    "version": "0.0.1",
-    "description": "> TODO: description",
-    "author": "sepsepsep <git@i239.co>",
-    "homepage": "",
-    "license": "ISC",
-    "main": "dist/index",
-    "types": "dist/index",
-    "files": [
-        "dist"
-    ],
+    "version": "0.0.0",
     "scripts": {
-        "build": "npm run clean && npm run compile",
+        "start": "node server.js",
+        
+        "dev": "ts-node src/server.ts",
         "clean": "rimraf -rf ./dist",
+        "prepare": "copyfiles app.yaml dist; copyfiles package.json dist",
         "compile": "tsc -p tsconfig.build.json",
-        "prepublishOnly": "npm run build"
+        "build": "npm run clean && npm run prepare && npm run compile",
+        
+        "gcloud_deploy": "gcloud app deploy ./dist --quiet",
+        "deploy": "npm run build && npm run gcloud_deploy"
     },
     "dependencies": {
         "express": "^4.17.1",
