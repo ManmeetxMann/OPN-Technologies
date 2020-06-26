@@ -1,6 +1,6 @@
 import * as express from 'express'
 import { Request, Response } from 'express'
-import IControllerBase from 'interfaces/IControllerBase.interface'
+import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 
 
 class RootController implements IControllerBase 

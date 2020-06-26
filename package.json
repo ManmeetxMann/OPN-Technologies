@@ -4,9 +4,9 @@
 	"scripts": {
 		"clean-all": "lerna clean --yes && lerna run clean",
 		"install-all": "lerna bootstrap --hoist",
-		"build-all": "lerna run build",
-		"deploy-all": "lerna run deploy --stream",
-		"runlocally-all": "lerna run dev --stream"
+		"dev-all": "lerna run dev --stream",
+		"build-all": "lerna run build --stream",
+		"deploy-all": "lerna run deploy --stream"
     },
 	"devDependencies": {
 		"lerna": "^3.22.1",

@@ -1,8 +1,8 @@
 import * as express from 'express'
 import { Request, Response } from 'express'
-import IControllerBase from 'interfaces/IControllerBase.interface'
+import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 
-import Validation from '../utils/validation'
+import Validation from '../../../common/src/utils/validation'
 
 class AdminController implements IControllerBase
 {

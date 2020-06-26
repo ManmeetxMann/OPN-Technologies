@@ -2,8 +2,8 @@ import App from '../../common/src/express/app'
 // import App from '@opn/common/src/express/app'
 
 import * as bodyParser from 'body-parser'
-import loggerMiddleware from './middleware/logger'
-import errorMiddleware from './middleware/error'
+import loggerMiddleware from '../../common/src/middlewares/logger'
+import errorMiddleware from '../../common/src/middlewares/error'
 
 import AdminController from './controllers/admin.controller'
 import UserController from  './controllers/user.controller'
