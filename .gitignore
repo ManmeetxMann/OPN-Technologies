@@ -17,6 +17,7 @@ packages/*/node_modules/
 *.tsbuildinfo
 
 # Build directories
+dist
 */dist
 */dist/*.*
 packages/*/dist
