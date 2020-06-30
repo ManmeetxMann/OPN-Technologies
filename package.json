@@ -4,6 +4,8 @@
 	"scripts": {
 		"clean-all": "lerna clean --yes && lerna run clean",
 		"lint-all": "eslint 'packages/**/**/*.ts'",
+		"test-all": "lerna run test --stream",
+		"coverage-all": "lerna run coverage --stream",
 		"install-all": "lerna bootstrap --hoist",
 		"dev-all": "lerna run dev --stream",
 		"build-all": "lerna run build --stream",
