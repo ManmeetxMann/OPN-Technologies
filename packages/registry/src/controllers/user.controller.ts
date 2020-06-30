@@ -4,6 +4,9 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 
 import Validation from '../../../common/src/utils/validation'
 
+import DataStore from "../../../common/src/data/datastore"
+import { RegistrationType, RegistrationModel } from "../../../common/src/data/registration"
+
 class UserController implements IControllerBase 
 {
     public path = '/user'
@@ -20,12 +23,26 @@ class UserController implements IControllerBase
         this.router.post(this.path + '/addNoPush', this.addNoPush)
     }
 
-    add = (req: Request, res: Response) => 
+    add = async (req: Request, res: Response) => 
     {
         if (!Validation.validate(["registrationToken"], req, res))
         {
             return
         }
+
+        // Add
+        // Create DataStore
+        const datastore = new DataStore()
+
+        // Create
+        const registration = new RegistrationModel(datastore)
+    
+        // Add
+        const id1 = await registration.add({
+            type: RegistrationType.User,
+            pushToken: req.body.registrationToken
+        })
+
 
         const response = 
         {
