@@ -13,7 +13,7 @@ lerna-debug.log*
 node_modules/
 packages/*/node_modules/
 package-lock.json
-packages/*/__test__/coverage
+coverage/
 
 # TypeScript cache
 *.tsbuildinfo
