@@ -17,6 +17,8 @@ abstract class DataModel<T extends HasId>
      */
     reset() : void
     {
+        // Delete all
+
         // Add all intial values
         for (const record of this.zeroSet)
         {
@@ -31,7 +33,7 @@ abstract class DataModel<T extends HasId>
      */
     async add(data: OptionalIdStorable<T>) : Promise<string>
     {
-        const dao = this.datastore.firestoreSimple.collection<T>({ path: this.rootPath })
+        const dao = this.datastore.firestoreORM.collection<T>({ path: this.rootPath })
         const id = await dao.add(data)
         return id
     }
@@ -42,8 +44,40 @@ abstract class DataModel<T extends HasId>
      */
     async update(data: Storable<T>) : Promise<void>
     {
-        const dao = this.datastore.firestoreSimple.collection<T>({ path: this.rootPath })
+        const dao = this.datastore.firestoreORM.collection<T>({ path: this.rootPath })
         await dao.set(data)
+    }
+
+    /**
+     * Increments the given property of the specified document by the count given
+     * @param id identifier for the document in the collection
+     * @param fieldName field / property name to increment
+     * @param byCount how much to increment
+     */
+    async increment(id: string, fieldName: string, byCount: number) : Promise<void>
+    {
+        const dao = this.datastore.firestoreORM.collection<T>({ path: this.rootPath })
+        const obj = {};
+        obj['id'] = id;
+        obj[fieldName] = this.datastore.firestoreAdmin.firestore.FieldValue.increment(byCount)
+    }
+
+    /**
+     * Gets a document using it's identifier
+     * @param id identifier for a document in the collection
+     */
+    async get(id: string) : Promise<T>
+    {
+        const dao = this.datastore.firestoreORM.collection<T>({ path: this.rootPath })
+        const result : T = await dao.fetch(id)
+        return result
+    }
+
+    async deleteAll() : Promise<void>
+    {
+        const dao = this.datastore.firestoreORM.collection<T>({ path: this.rootPath })
+        const results = await dao.fetchAll()
+        await dao.bulkDelete(results.map(o => o.id))
     }
 }
 
