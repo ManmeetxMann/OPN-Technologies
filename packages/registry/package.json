@@ -7,7 +7,7 @@
         "test": "jest",
         "test:coverage": "jest --coverage",
         "dev": "ts-node src/server.ts",
-        "dev:debug": "nodemon --inspect src/server.ts",
+        "dev:debug": "nodemon --inspect=3006 src/server.ts",
         "clean": "rimraf -rf ./dist",
         "prepare": "copyfiles app.yaml dist && copyfiles package.json dist && node ../../__devops/package-cleaner.js registry start",
         "compile": "tsc -p tsconfig.build.json",
