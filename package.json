@@ -5,7 +5,7 @@
 		"clean-all": "lerna clean --yes && lerna run clean",
 		"lint-all": "eslint 'packages/**/**/*.ts'",
 		"test-all": "lerna run test --stream",
-		"coverage-all": "lerna run coverage --stream",
+		"test:coverage-all": "lerna run coverage --stream",
 		"install-all": "lerna bootstrap --hoist",
 		"dev-all": "lerna run dev --stream",
 		"dev:debug-all": "lerna run dev:debug --stream",
