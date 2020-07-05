@@ -4,6 +4,8 @@
     "version": "0.0.0",
     "scripts": {
         "start": "node enterprise/src/server.js",
+        "test": "jest",
+        "test:coverage": "jest --coverage",
         "dev": "ts-node src/server.ts",
         "clean": "rimraf -rf ./dist",
         "prepare": "copyfiles app.yaml dist && copyfiles package.json dist && node ../../__devops/package-cleaner.js enterprise start",
@@ -22,6 +24,9 @@
         "ts-node": "^8.10.2",
         "typescript": "^3.9.5",
         "@types/express": "^4.17.6",
-        "@types/node": "^14.0.14"
+        "@types/node": "^14.0.14",
+        "jest": "^26.1.0",
+        "ts-jest": "^26.1.1",
+        "@types/jest": "^26.0.3"
     }
 }
