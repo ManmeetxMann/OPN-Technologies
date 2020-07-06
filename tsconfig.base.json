@@ -1,11 +1,16 @@
 {
     "compilerOptions": {
         "sourceMap": true,
-        "target": "es6",
+        "target": "ESNext",
         "module": "commonjs",
         "resolveJsonModule": true,
         "esModuleInterop": true
     },
+
+    "lib": [
+        "ESNext",
+        "dom"
+    ],
 
     "exclude": [
         "node_modules",
