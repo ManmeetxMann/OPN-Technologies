@@ -20,35 +20,43 @@ The following are important elements to the engineering principles of the OPN Pl
 
 ### Architecture
 
-The services are architected into service groupings which are intended to be separately hosted cloud-based applicatons. The following services are available for the OPN platform:
+The services are architected into service groupings which are intended to be separately hosted cloud-based applicatons. Each service grouping is designed to be isolated and to maximize the privacy of data. 
+
+#### Available Services and Components
+
+The following services are available for the OPN platform:
 
 | Service | Package | Description |
 |---------|:-----------:|:-----------:|
-| Registry | @opn/registry | TBD... |
-| Access   | @opn/access   | TBD... |
-| Config   | @opn/config   | TBD... |
-| Enterprise   | @opn/enterprice   | TBD... |
-| Lookup   | @opn/lookup   | TBD... |
-| Passport   | @opn/passport   | TBD... |
+| Config   | @opn/config   | Config services with all exposed app settings |
+| Registry | @opn/registry | Registry for users of the admin - both users and admins |
+| Lookup   | @opn/lookup   | Lookup / CMS service for apps |
+| Enterprise   | @opn/enterprice   | Enterprise side APIs - mostly for connected users |
+| Passport   | @opn/passport   | Passport services to manage digital health passports |
+| Access   | @opn/access   | Access services for gating in and out |
+
 
 And we our common software / code sits in the following packages:
 
 | Service | Package | Description |
 |---------|:-----------:|:-----------:|
-| Common   | @opn/common   | Common classes |
+| Common   | @opn/common   | Common classes and types |
+
+
+#### Technologies Leveraged
 
 OPN Services use the following technologies:
 
 | Tech | Purpose | Description |
 |---------|:-----------:|:-----------:|
-| GCP | All | TBD... |
-| Node.js / JS | All | TBD... |
-| NPM | All | TBD... |
-| Typescript | Dev | TBD... |
-| Lerna | Dev | TBD... |
-| Eslint | Dev | TBD... |
-| Jest | Dev | TBD... |
-| Swagger | Dev | TBD... |
+| GCP | All | [More Info](https://cloud.google.com/gcp) |
+| Node.js / JS | All | [More Info](https://nodejs.org) |
+| NPM | All | [More Info](http://npmjs.com) |
+| Typescript | Dev | [More Info](http://typescriptlang.org) |
+| Lerna | Dev | [More Info](http://lerna.js.org) |
+| Eslint | Dev | [More Info](http://eslint.org) |
+| Jest | Dev | [More Info](http://jestjs.io) |
+| Open API / Swagger | Dev | [More Info](https://swagger.io) |
 
 
 ## DevOps Usage
