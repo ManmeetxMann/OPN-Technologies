@@ -5,7 +5,8 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import Validation from '../../../common/src/utils/validation'
 
 import DataStore from "../../../common/src/data/datastore"
-import { RegistrationType, RegistrationModel } from "../../../common/src/data/registration"
+import { RegistrationModel } from "../../../common/src/data/registration"
+import { RegistrationType } from "../../../common/src/schemas/registration"
 
 class UserController implements IControllerBase 
 {

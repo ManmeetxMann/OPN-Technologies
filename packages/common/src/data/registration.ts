@@ -1,17 +1,6 @@
 import DataModel from "./datamodel.base"
+import { RegistrationType, RegistrationSchema } from "../schemas/registration"
 
-export enum RegistrationType
-{
-    User = "User",
-    Admin = "Admin"
-}
-
-export interface RegistrationSchema
-{
-    id: string,
-    type: RegistrationType,
-    pushToken: string
-}
 
 export class RegistrationModel extends DataModel<RegistrationSchema>
 {

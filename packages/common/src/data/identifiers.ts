@@ -1,11 +1,7 @@
 import DataModel from "./datamodel.base"
 import crypto from "crypto"
+import { IdentifiersSchema } from "../schemas/identifiers"
 
-export interface IdentifiersSchema
-{
-    id: string,
-    count: number
-}
 
 export class IdentifiersModel extends DataModel<IdentifiersSchema>
 {
