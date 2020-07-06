@@ -7,7 +7,7 @@ export const errorMiddleware = (error: HttpException, req: Request, resp: Respon
     console.log("Error!")
     console.error(error)
 
-    const status = error.status || 500;
+    const status = error.status || error["statusCode"] || 500;
     const message = error.message || 'Something went wrong';
     resp
         .status(status)
