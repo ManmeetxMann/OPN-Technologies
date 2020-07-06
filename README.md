@@ -1,10 +1,48 @@
-# `services`
+# OPN Platform Services
 
-> Service for the OPN Plaform
+> Services for the OPN Plaform
+
+## About
+
+### Overview
+
+TBD....
+
+### Architecture
+
+The services are architected into service groupings which are intended to be separately hosted cloud-based applicatons.
+
+The following services are available for the OPN platform:
+
+| Service | Package | Description |
+|---------|:-----------:|:-----------:|
+| Registry | @opn/registry | TBD... |
+| Access   | @opn/access   | TBD... |
+| Config   | @opn/config   | TBD... |
+| Enterprise   | @opn/enterprice   | TBD... |
+| Lookup   | @opn/lookup   | TBD... |
+| Passport   | @opn/passport   | TBD... |
+| Common   | @opn/common   | TBD... |
+
+The services use the following technologies:
+
+| Tech | Distro/Dev | Description |
+|---------|:-----------:|:-----------:|
+| Node.js | TBD... | TBD... |
+| NPM | TBD... | TBD... |
+| Typescript | TBD... | TBD... |
+| Lerna | TBD... | TBD... |
+| Eslint | TBD... | TBD... |
+| Jest | TBD... | TBD... |
+| Swagger | TBD... | TBD... |
+| GCP | TBD... | TBD... |
+
 
 ## Usage
 
-CLEAN PROJECTS
+### Clean Projects
+
+Delete all distro packages, dependencies and etc
 
 ```
 npm run clean-all
@@ -15,7 +53,7 @@ lerna run --scope @opn/registry clean --stream
 ```
 
 
-INSTALL DEPENDECIES
+### Install Dependecies
 ```
 npm run install-all
 ```
@@ -26,7 +64,7 @@ npm install
 ```
 
 
-RUN IN DEBUG MODE LOCALLY
+### Run in Debug Mode Locally
 ```
 npm run dev:debug-all
 ```
@@ -36,7 +74,7 @@ lerna run --scope @opn/registry dev:debug --stream
 ```
 
 
-DO A BUILD
+### Build Distro: Transpile Typescript to pure Javascript
 ```
 npm run build-all
 ```
@@ -46,14 +84,14 @@ lerna run --scope @opn/registry build --stream
 ```
 
 
-RUN DISTRO VERSION
+### Run Distro
 ```
 cd packages/registry
 npm start
 ```
 
 
-DEPLOY TO GCP
+### Deploy to GCP
 ```
 npm run deploy-all
 ```
