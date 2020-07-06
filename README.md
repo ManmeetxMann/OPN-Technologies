@@ -39,19 +39,19 @@ And we our common software / code sits in the following packages:
 
 OPN Services use the following technologies:
 
-| Tech | Distro/Dev | Description |
+| Tech | Purpose | Description |
 |---------|:-----------:|:-----------:|
-| Node.js | TBD... | TBD... |
-| NPM | TBD... | TBD... |
-| Typescript | TBD... | TBD... |
-| Lerna | TBD... | TBD... |
-| Eslint | TBD... | TBD... |
-| Jest | TBD... | TBD... |
-| Swagger | TBD... | TBD... |
-| GCP | TBD... | TBD... |
+| GCP | All | TBD... |
+| Node.js / JS | All | TBD... |
+| NPM | All | TBD... |
+| Typescript | Dev | TBD... |
+| Lerna | Dev | TBD... |
+| Eslint | Dev | TBD... |
+| Jest | Dev | TBD... |
+| Swagger | Dev | TBD... |
 
 
-## Usage
+## DevOps Usage
 
 ### Clean Projects
 
