@@ -1,5 +1,6 @@
 import express from 'express'
 import { Application } from 'express'
+import { errorMiddleware, error404Middleware } from "../middlewares/error"
 
 class App 
 {
@@ -13,6 +14,7 @@ class App
 
         this.middlewares(appInit.middleWares)
         this.routes(appInit.controllers)
+        this.errorHandling()
         // this.assets()
         // this.template()
     }
@@ -27,10 +29,19 @@ class App
 
     private routes(controllers: { forEach: (arg0: (controller: any) => void) => void; }) 
     {
+        // Handle all registered ones
         controllers.forEach(controller => 
         {
             this.app.use('/', controller.router)
         })
+
+        // At the end append one for pages not found
+        this.app.use(error404Middleware)
+    }
+
+    private errorHandling()
+    {
+        this.app.use(errorMiddleware)
     }
 
     // private assets() 
