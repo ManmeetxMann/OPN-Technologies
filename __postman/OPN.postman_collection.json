@@ -15,7 +15,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"registrationToken\" : \"07893aea-d893-4b18-bb87-101d39b2a88e\"\n}",
+							"raw": "{\n\t\"registrationToken\" : \"07893aea-d893-4b18-bb87-101d39b2a82f\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -33,6 +33,34 @@
 							]
 						},
 						"description": "Add a User to the Registry. This is to be called once per app install. The registrationToken is what you get from FCM within the iOS or Android app and then pass it to this API call.\n- https://firebase.google.com/docs/cloud-messaging/ios/client\n- https://firebase.google.com/docs/cloud-messaging/android/client\n- https://firebase.google.com/docs/cloud-messaging/js/client\n\nFor the Admin User use the Registry > Admin > Add"
+					},
+					"response": []
+				},
+				{
+					"name": "Registry > User > Add No Push",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootRegistry}}/user/addNoPush",
+							"host": [
+								"{{rootRegistry}}"
+							],
+							"path": [
+								"user",
+								"addNoPush"
+							]
+						},
+						"description": "Add a User to the Registry when push is not activated"
 					},
 					"response": []
 				},
@@ -107,7 +135,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"attestationId\": \"d0a6cfb9-bccb-453f-ab4f-034664f4836a\",\n\t\"statusToken\": \"648abc04-f9ce-4f96-8778-1b566f8bcfc7\",\n\t\"answer\" : {\n\t\t\"1\" : {\"1\": false},\n\t\t\"2\" : {\"1\": false},\n\t\t\"3\" : {\"1\": false},\n\t\t\"4\" : {\"1\" : true, \"2\" : \"2020-06-10T05:05:32.217Z\"}\n\t}\n}",
+							"raw": "{\n\t\"locationId\": \"d0a6cfb9-bccb-453f-ab4f-034664f4836a\",\n\t\"statusToken\": \"648abc04-f9ce-4f96-8778-1b566f8bcfc7\",\n\t\"answer\" : {\n\t\t\"1\" : {\"1\": false},\n\t\t\"2\" : {\"1\": false},\n\t\t\"3\" : {\"1\": false},\n\t\t\"4\" : {\"1\" : true, \"2\" : \"2020-06-10T05:05:32.217Z\"}\n\t}\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -136,7 +164,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"attestationToken\": \"987654321\"\n}",
+							"raw": "{\n\t\"attestationToken\": \"848abc04-f9ce-4f96-8778-1b566f8bcfb2\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -165,13 +193,13 @@
 			"name": "Access Service",
 			"item": [
 				{
-					"name": "Access > User > Enter",
+					"name": "Access > User > Create Token",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"attestationToken\" : \"ecf35e1a-d1b2-4b75-bab1-674891645f56\",\n\t\"locationId\" : \"9876543200\"\n}",
+							"raw": "{\n\t\"statusToken\": \"98853e28-9dac-4656-af73-d753215ae8b6\",\n\t\"locationId\" : \"9876543200\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -179,40 +207,13 @@
 							}
 						},
 						"url": {
-							"raw": "{{rootAccess}}/user/enter",
+							"raw": "{{rootAccess}}/user/createToken",
 							"host": [
 								"{{rootAccess}}"
 							],
 							"path": [
 								"user",
-								"enter"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Access > User > Exit",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"accessToken\" : \"13193407-428a-459b-b793-bbc146edfccb\",\n\t\"locationId\" : \"9876543200\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{rootAccess}}/user/exit",
-							"host": [
-								"{{rootAccess}}"
-							],
-							"path": [
-								"user",
-								"exit"
+								"createToken"
 							]
 						}
 					},
@@ -248,41 +249,13 @@
 					"response": []
 				},
 				{
-					"name": "Access > Admin > Stats",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"locationId\" : \"9876543200\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{rootAccess}}/admin/stats",
-							"host": [
-								"{{rootAccess}}"
-							],
-							"path": [
-								"admin",
-								"stats"
-							]
-						},
-						"description": "Access Stats for Admin"
-					},
-					"response": []
-				},
-				{
 					"name": "Access > Admin > Enter",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"accessToken\" : \"987654321\",\n\t\"locationId\" : \"9876543200\"\n}",
+							"raw": "{\n\t\"accessToken\" : \"ecf35e1a-d1b2-4b75-bab1-674891645f56\",\n\t\"locationId\" : \"9876543200\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -309,7 +282,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"accessToken\" : \"987654321\",\n\t\"locationId\" : \"9876543200\"\n}",
+							"raw": "{\n\t\"accessToken\" : \"ecf35e1a-d1b2-4b75-bab1-674891645f56\",\n\t\"locationId\" : \"9876543200\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -328,6 +301,34 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Access > Admin > Stats",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"locationId\" : \"9876543200\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootAccess}}/admin/stats",
+							"host": [
+								"{{rootAccess}}"
+							],
+							"path": [
+								"admin",
+								"stats"
+							]
+						},
+						"description": "Access Stats for Admin"
+					},
+					"response": []
 				}
 			],
 			"protocolProfileBehavior": {}
@@ -342,7 +343,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"longitude\" : \"40.3\",\n\t\"latitude\" : \"30.2\"\n}",
+							"raw": "{\n\t\"connectedToken\" : \"12893aea-d893-4b18-bb87-101d39b2a11b\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -623,7 +624,7 @@
 					"response": []
 				},
 				{
-					"name": "Enterprise > Admin > Billing > Stats",
+					"name": "Enterprise > Admin > Billing > Config",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -639,7 +640,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"conectedId\" : \"987654321\",\n\t\"approval\" : true\n}",
+							"raw": "{\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -647,17 +648,77 @@
 							}
 						},
 						"url": {
-							"raw": "{{rootEnterprise}}/admin/billing/stats",
+							"raw": "{{rootEnterprise}}/admin/billing/config",
 							"host": [
 								"{{rootEnterprise}}"
 							],
 							"path": [
 								"admin",
 								"billing",
-								"stats"
+								"config"
 							]
 						},
 						"description": "Enterprise feature. Get billing stats."
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "__FUTURE",
+			"item": [
+				{
+					"name": "Access > User > Exit",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"accessToken\" : \"13193407-428a-459b-b793-bbc146edfccb\",\n\t\"locationId\" : \"9876543200\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootAccess}}/user/exit",
+							"host": [
+								"{{rootAccess}}"
+							],
+							"path": [
+								"user",
+								"exit"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Access > User > Enter",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"accessToken\" : \"ecf35e1a-d1b2-4b75-bab1-674891645f56\",\n\t\"locationId\" : \"9876543200\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{rootAccess}}/user/enter",
+							"host": [
+								"{{rootAccess}}"
+							],
+							"path": [
+								"user",
+								"enter"
+							]
+						}
 					},
 					"response": []
 				}
