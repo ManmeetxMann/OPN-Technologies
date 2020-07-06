@@ -3,6 +3,7 @@
 > Services for the OPN Plaform that are used by the iOS and Android Apps
 
 ## About
+------
 
 ### Philosophy
 
@@ -60,6 +61,7 @@ OPN Services use the following technologies:
 
 
 ## DevOps Usage
+------
 
 ### Clean Projects
 
