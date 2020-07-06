@@ -1,0 +1,41 @@
+{
+	"folders": [
+		{
+			"name": "✨ root",
+			"path": "."
+		},
+		{
+			"name": "📦 @opn/access",
+			"path": "packages/access"
+		},
+		{
+			"name": "🚀 @opn/apidocs",
+			"path": "packages/apidocs"
+		},
+		{
+			"name": "📦 @opn/common",
+			"path": "packages/common"
+		},
+		{
+			"name": "📦 @opn/config",
+			"path": "packages/config"
+		},
+		{
+			"name": "📦 @opn/enterprise",
+			"path": "packages/enterprise"
+		},
+		{
+			"name": "📦 @opn/lookup",
+			"path": "packages/lookup"
+		},
+		{
+			"name": "📦 @opn/passport",
+			"path": "packages/passport"
+		},
+		{
+			"name": "📦 @opn/registry",
+			"path": "packages/registry"
+		}
+	],
+	"settings": {}
+}
