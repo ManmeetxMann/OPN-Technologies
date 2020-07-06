@@ -1,6 +1,11 @@
 import express from 'express'
-import { Application } from 'express'
+import { Application } from "express"
 import { errorMiddleware, error404Middleware } from "../middlewares/error"
+
+import { OpenApiValidator } from "express-openapi-validate"
+import jsYaml from "js-yaml"
+import fs from "fs"
+
 
 class App 
 {
@@ -13,8 +18,9 @@ class App
         this.port = appInit.port
 
         this.middlewares(appInit.middleWares)
+        this.setupValidation()
         this.routes(appInit.controllers)
-        this.errorHandling()
+        this.setupErrorHandling()
         // this.assets()
         // this.template()
     }
@@ -35,11 +41,20 @@ class App
             this.app.use('/', controller.router)
         })
 
-        // At the end append one for pages not found
+        // At the end of all registered routes, append one for 404 errors
         this.app.use(error404Middleware)
     }
 
-    private errorHandling()
+    private setupValidation()
+    {
+        const openApiDocument = jsYaml.safeLoad(
+            fs.readFileSync("openapi.yaml", "utf-8"),
+        );
+        const validator = new OpenApiValidator(openApiDocument)
+        this.app.use(validator.match())
+    }
+
+    private setupErrorHandling()
     {
         this.app.use(errorMiddleware)
     }

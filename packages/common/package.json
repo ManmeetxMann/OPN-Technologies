@@ -23,7 +23,9 @@
         "express": "^4.17.1",
         "pug": "^3.0.0",
         "@firestore-simple/admin": "^7.0.1",
-        "crypto": "^1.0.1"
+        "crypto": "^1.0.1",
+        "express-openapi-validate": "^0.5.1",
+        "js-yaml": "^3.14.0"
     },
     "devDependencies": {
         "copyfiles": "^2.3.0",

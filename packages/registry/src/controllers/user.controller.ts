@@ -26,12 +26,6 @@ class UserController implements IControllerBase
 
     add = async (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["registrationToken"], req, res))
-        {
-            return
-        }
-
-        // Add
         // Create DataStore
         const datastore = new DataStore()
 
@@ -55,7 +49,7 @@ class UserController implements IControllerBase
 
     addNoPush = (req: Request, res: Response) => 
     {
-        const response = 
+        const response =
         {
             status : "complete"
         }
