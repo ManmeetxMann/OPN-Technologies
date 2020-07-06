@@ -1,11 +1,3 @@
 # `common`
 
-> TODO: description
-
-## Usage
-
-```
-const common = require('common');
-
-// TODO: DEMONSTRATE API
-```
+> Common package to be used by the other Services
