@@ -1,18 +1,26 @@
 # OPN Platform Services
 
-> Services for the OPN Plaform
+> Services for the OPN Plaform that are used by the iOS and Android Apps
 
 ## About
 
-### Overview
+### Philosophy
 
-TBD....
+The following are important elements to the engineering principles of the OPN Platform:
+
+- Anonyimity and Privacy First Design
+- Mobile Wallet
+    - Store all PII (personally identifialble information) and PHI (personal health information)
+    - For now all data is kept indefinitely however soon there'll be a wipe of data
+- Cloud "Agents"
+    - Contains tokens
+- TDD (Test Driven Development)
+    - All classes must have unit tests using Jest
+    - All services must have stub-based tests at the interface
 
 ### Architecture
 
-The services are architected into service groupings which are intended to be separately hosted cloud-based applicatons.
-
-The following services are available for the OPN platform:
+The services are architected into service groupings which are intended to be separately hosted cloud-based applicatons. The following services are available for the OPN platform:
 
 | Service | Package | Description |
 |---------|:-----------:|:-----------:|
@@ -22,9 +30,14 @@ The following services are available for the OPN platform:
 | Enterprise   | @opn/enterprice   | TBD... |
 | Lookup   | @opn/lookup   | TBD... |
 | Passport   | @opn/passport   | TBD... |
-| Common   | @opn/common   | TBD... |
 
-The services use the following technologies:
+And we our common software / code sits in the following packages:
+
+| Service | Package | Description |
+|---------|:-----------:|:-----------:|
+| Common   | @opn/common   | Common classes |
+
+OPN Services use the following technologies:
 
 | Tech | Distro/Dev | Description |
 |---------|:-----------:|:-----------:|
