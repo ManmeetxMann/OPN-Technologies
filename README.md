@@ -27,7 +27,7 @@ The services are architected into service groupings which are intended to be sep
 The following services are available for the OPN platform:
 
 | Service | Package | Description |
-|---------|:-----------:|:-----------:|
+|---------|-------------|-------------|
 | Config   | @opn/config   | Config services with all exposed app settings |
 | Registry | @opn/registry | Registry for users of the admin - both users and admins |
 | Lookup   | @opn/lookup   | Lookup / CMS service for apps |
@@ -39,7 +39,7 @@ The following services are available for the OPN platform:
 And we our common software / code sits in the following packages:
 
 | Service | Package | Description |
-|---------|:-----------:|:-----------:|
+|---------|-------------|-------------|
 | Common   | @opn/common   | Common classes and types |
 
 
