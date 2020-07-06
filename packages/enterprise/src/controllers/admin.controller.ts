@@ -117,7 +117,7 @@ class AdminController implements IControllerBase
 
     teamReview = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["conectedId", "approval"], req, res, "authRequestToken"))
+        if (!Validation.validate(["connectedId", "approval"], req, res, "authRequestToken"))
         {
             return
         }
