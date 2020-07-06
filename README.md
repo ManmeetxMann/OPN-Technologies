@@ -3,7 +3,6 @@
 > Services for the OPN Plaform that are used by the iOS and Android Apps
 
 ## About
-------
 
 ### Philosophy
 
@@ -60,10 +59,20 @@ OPN Services use the following technologies:
 | Open API / Swagger | Dev | [More Info](https://swagger.io) |
 
 
-## DevOps Usage
-------
+## Developers
 
-### Clean Projects
+
+### Developer Tools
+
+1. Use Microsoft Visual Studio Code to manage the project
+2. /.vscode/launch.json included for debugging
+    - First run command line debu
+
+
+### DevOps Usage
+
+
+#### Clean Projects
 
 Delete all distro packages, dependencies and etc
 
@@ -76,7 +85,7 @@ lerna run --scope @opn/registry clean --stream
 ```
 
 
-### Install Dependecies
+#### Install Dependecies
 ```
 npm run install-all
 ```
@@ -87,7 +96,7 @@ npm install
 ```
 
 
-### Run in Debug Mode Locally
+#### Run in Debug Mode Locally
 ```
 npm run dev:debug-all
 ```
@@ -97,7 +106,7 @@ lerna run --scope @opn/registry dev:debug --stream
 ```
 
 
-### Build Distro: Transpile Typescript to pure Javascript
+#### Build Distro: Transpile Typescript to pure Javascript
 ```
 npm run build-all
 ```
@@ -107,14 +116,17 @@ lerna run --scope @opn/registry build --stream
 ```
 
 
-### Run Distro
+#### Run Distro
 ```
 cd packages/registry
 npm start
 ```
 
 
-### Deploy to GCP
+#### Deploy to GCP
+
+** Requires proper services accounts to deploy
+
 ```
 npm run deploy-all
 ```
