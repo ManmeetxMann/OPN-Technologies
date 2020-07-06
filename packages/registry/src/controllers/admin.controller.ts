@@ -21,11 +21,6 @@ class AdminController implements IControllerBase
 
     add = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["registrationToken"], req, res))
-        {
-            return
-        }
-
         const response = 
         {
             // data : {
