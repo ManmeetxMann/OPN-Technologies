@@ -11,6 +11,7 @@ const PORT = Number(process.env.PORT) || 5005;
 
 const app = new App({
     port: PORT,
+    validation: true,
     controllers: [
         new RootController(),
         new UserController(),

@@ -11,11 +11,13 @@ class App
 {
     public app: Application
     public port: number
+    public validation: boolean
 
-    constructor(appInit: { port: number; middleWares: any; controllers: any; }) 
+    constructor(appInit: { validation: boolean; port: number; middleWares: any; controllers: any; }) 
     {
         this.app = express()
         this.port = appInit.port
+        this.validation = appInit.validation
 
         this.middlewares(appInit.middleWares)
         this.setupValidation()
@@ -47,11 +49,14 @@ class App
 
     private setupValidation()
     {
-        const openApiDocument = jsYaml.safeLoad(
-            fs.readFileSync("openapi.yaml", "utf-8"),
-        );
-        const validator = new OpenApiValidator(openApiDocument)
-        this.app.use(validator.match())
+        if (this.validation)
+        {
+            const openApiDocument = jsYaml.safeLoad(
+                fs.readFileSync("openapi.yaml", "utf-8"),
+            );
+            const validator = new OpenApiValidator(openApiDocument)
+            this.app.use(validator.match())
+        }
     }
 
     private setupErrorHandling()
