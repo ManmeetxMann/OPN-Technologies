@@ -66,7 +66,8 @@ OPN Services use the following technologies:
 
 1. Use Microsoft Visual Studio Code to manage the project
 2. /.vscode/launch.json included for debugging
-    - First run command line debu
+    - First run command line debug (which uses nodemon)
+    - Then hit play button in debug tools to connect to proper running instance. It will reload automateically
 
 
 ### DevOps Usage
