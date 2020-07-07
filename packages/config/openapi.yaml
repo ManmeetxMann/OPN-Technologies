@@ -1,0 +1,128 @@
+openapi: 3.0.1
+info:
+  title: Registry Endpoint
+  version: 1.0.0
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            status:
+              type: integer
+            message:
+              type: string
+          required:
+            - status
+            - message
+      required:
+        - error
+  responses:
+    error:
+      description: Default error response with error object
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+paths:
+  /user/add:
+    post:
+      description: Register new app
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                registrationToken:
+                    type: string
+                    minLength: 5
+                    maxLength: 40
+              required:
+                - registrationToken
+      responses:
+        "200":
+          description: Successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - complete
+                      - error
+        default:
+          $ref: "#/components/responses/error"
+
+  /user/addNoPush:
+    post:
+      description: Register new app w/out push token
+      responses:
+        "200":
+          description: Successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - complete
+                      - error
+        default:
+          $ref: "#/components/responses/error"
+
+  /admin/add:
+    post:
+      description: Register new app
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                registrationToken:
+                    type: string
+                    minLength: 5
+                    maxLength: 40
+              required:
+                - registrationToken
+      responses:
+        "200":
+          description: Successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - complete
+                      - error
+        default:
+          $ref: "#/components/responses/error"
+          
+  /admin/addNoPush:
+    post:
+      description: Register new app w/out push token
+      responses:
+        "200":
+          description: Successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - complete
+                      - error
+        default:
+          $ref: "#/components/responses/error"

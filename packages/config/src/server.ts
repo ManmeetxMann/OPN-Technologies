@@ -3,7 +3,6 @@ import App from '../../common/src/express/app'
 
 import * as bodyParser from 'body-parser'
 import loggerMiddleware from '../../common/src/middlewares/logger'
-import errorMiddleware from '../../common/src/middlewares/error'
 
 import AdminController from './controllers/admin.controller'
 import UserController from  './controllers/user.controller'
@@ -22,8 +21,7 @@ const app = new App({
     middleWares: [
         bodyParser.json(),
         bodyParser.urlencoded({ extended: true }),
-        loggerMiddleware,
-        errorMiddleware
+        loggerMiddleware
     ]
 })
 
