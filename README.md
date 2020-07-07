@@ -41,6 +41,7 @@ And we our common software / code sits in the following packages:
 | Service | Package | Description |
 |---------|-------------|-------------|
 | Common   | @opn/common   | Common classes and types |
+| ApiDocs   | @opn/apidocs   | Swagger / Open API Docs |
 
 
 #### Technologies Leveraged
@@ -119,7 +120,7 @@ lerna run --scope @opn/registry build --stream
 
 #### Run Distro
 ```
-cd packages/registry
+cd packages/registry/dist
 npm start
 ```
 
