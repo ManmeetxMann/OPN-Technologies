@@ -107,3 +107,22 @@ paths:
                       - error
         default:
           $ref: "#/components/responses/error"
+          
+  /admin/addNoPush:
+    post:
+      description: Register new app w/out push token
+      responses:
+        "200":
+          description: Successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - complete
+                      - error
+        default:
+          $ref: "#/components/responses/error"
