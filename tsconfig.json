@@ -1,11 +1,3 @@
 {
     "extends": "./tsconfig.base.json",
-    "compilerOptions": 
-    {
-        "paths":
-        {
-            "@opn/common": ["packages/common/src"],
-            "@opn/*": ["packages/*/src"]
-        }
-    }
 }
