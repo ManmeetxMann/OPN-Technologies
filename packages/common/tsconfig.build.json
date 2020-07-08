@@ -2,12 +2,15 @@
     "extends": "../../tsconfig.build.json",
 
     "compilerOptions": {
-        "outDir": "./dist",
-        "baseUrl": "./src"
+        // "outDir": "./dist",
+        "baseUrl": "./src",
+        "outFile": "./dist/opn-common.js",
+        "composite": true
     },
 
     "include": [
-        "./src/**/*.ts"
+        "./src/**/*.ts",
+        "./__secrets__/opn-platform-dev-firebase-adminsdk.json"
     ],
     
     "exclude" : [
