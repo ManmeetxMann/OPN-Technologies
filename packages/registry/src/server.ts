@@ -2,6 +2,7 @@ import App from '../../common/src/express/app'
 
 import * as bodyParser from 'body-parser'
 import loggerMiddleware from '../../common/src/middlewares/logger'
+// import loggerMiddleware from "@opn/common/src/middlewares/logger"
 
 import AdminController from './controllers/admin.controller'
 import UserController from  './controllers/user.controller'

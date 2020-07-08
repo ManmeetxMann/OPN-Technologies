@@ -17,8 +17,7 @@
     },
     "dependencies": {
         "express": "^4.17.1",
-        "pug": "^3.0.0",
-        "@opn/common": "^1.0.0"
+        "pug": "^3.0.0"
     },
     "devDependencies": {
         "copyfiles": "^2.3.0",
