@@ -19,22 +19,20 @@ class UserController implements IControllerBase {
     this.router.post(this.path + '/addNoPush', this.addNoPush)
   }
 
-  add = (req: Request, res: Response) => {
+  add = async (req: Request, res: Response): Promise<void> => {
     // Create DataStore
     const datastore = new DataStore()
 
     // Create
     const registration = new RegistrationModel(datastore)
-    registration
-      .add({
-        type: RegistrationType.User,
-        pushToken: req.body.registrationToken,
-      })
-      .then(() =>
-        res.json({
-          status: 'complete',
-        }),
-      )
+    await registration.add({
+      type: RegistrationType.User,
+      pushToken: req.body.registrationToken,
+    })
+
+    res.json({
+      status: 'complete',
+    })
   }
 
   addNoPush = (req: Request, res: Response) => {
