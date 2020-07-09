@@ -2,6 +2,14 @@ openapi: 3.0.1
 info:
   title: Registry Endpoint
   version: 1.0.0
+
+servers:
+  - url: https://registry-dot-opn-platform-dev.nn.r.appspot.com
+    description: Production server
+
+  - url: http://localhost:5006
+    description: Development server
+
 components:
   schemas:
     Error:
@@ -30,6 +38,8 @@ paths:
   /user/add:
     post:
       description: Register new app
+      tags:
+        - Registry > User
       requestBody:
         content:
           application/json:
@@ -61,6 +71,8 @@ paths:
   /user/addNoPush:
     post:
       description: Register new app w/out push token
+      tags:
+        - Registry > User
       responses:
         "200":
           description: Successfully registered
@@ -80,6 +92,8 @@ paths:
   /admin/add:
     post:
       description: Register new app
+      tags:
+        - Registry > Admin
       requestBody:
         content:
           application/json:
