@@ -2,14 +2,14 @@ import {app as server} from '../src/server'
 import request from 'supertest'
 import {actionFailed, actionSucceed, of} from '../../common/src/utils/response-wrapper'
 import {ResponseStatusCodes} from '../../common/src/types/response-status'
-import admin from 'firebase-admin'
 import {FirebaseError, FirebaseMessagingErrors} from '../../common/src/types/firebase'
+import {FirebaseMessagingService} from '../../common/src/service/messaging/firebase-messaging-service'
 
 describe('UserController', () => {
   describe('Function: add', () => {
     const url = '/user/add'
     const registrationToken = 'a-registration-token'
-    const spy = jest.spyOn(admin.messaging(), 'send')
+    const spy = jest.spyOn(FirebaseMessagingService.prototype, 'send')
 
     it('should return validation_error when registrationToken is blank', () => {
       return request(server.app)

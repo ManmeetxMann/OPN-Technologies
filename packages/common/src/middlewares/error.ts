@@ -5,7 +5,7 @@ import {ErrorMiddleware, Middleware} from '../types/middleware'
 import {ValidationError} from 'express-openapi-validate'
 
 export const handleValidationError: ErrorMiddleware<ValidationError> = (error, req, resp, _next) => {
-  console.log(error)
+  console.error(error)
   const response: ResponseWrapper<null> = {
     data: null,
     status: {
@@ -17,7 +17,7 @@ export const handleValidationError: ErrorMiddleware<ValidationError> = (error, r
 }
 
 export const handleHttpException: ErrorMiddleware<HttpException> = (error, req, resp, _next) => {
-  console.log('Error!', error)
+  console.error('Error!', error)
   const {status, code, message} = error
   const response: ResponseWrapper<null> = {
     data: null,

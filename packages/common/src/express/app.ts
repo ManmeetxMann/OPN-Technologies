@@ -1,12 +1,10 @@
 import express from 'express'
 import {Application} from 'express'
-import {handleHttpException, handleRouteNotFound} from '../middlewares/error'
-
+import {handleHttpException, handleRouteNotFound, handleValidationError} from '../middlewares/error'
 import {OpenApiValidator} from 'express-openapi-validate'
 import cors from 'cors'
 import jsYaml from 'js-yaml'
 import fs from 'fs'
-
 
 class App {
   public app: Application
@@ -14,7 +12,13 @@ class App {
   public validation: boolean
   public cors: boolean | string
 
-  constructor(appInit: {validation: boolean; cors: boolean | string; port: number; middleWares: any; controllers: any}) {
+  constructor(appInit: {
+    validation: boolean
+    cors: boolean | string
+    port: number
+    middleWares: any
+    controllers: any
+  }) {
     this.app = express()
     this.port = appInit.port
     this.validation = appInit.validation
@@ -60,10 +64,9 @@ class App {
 
   private setupCors() {
     if (typeof this.cors === 'string') {
-        this.app.options(this.cors, cors())
-    }
-    else if (this.cors === true) {
-        this.app.options("*", cors())
+      this.app.options(this.cors, cors())
+    } else if (this.cors === true) {
+      this.app.options('*', cors())
     }
   }
 

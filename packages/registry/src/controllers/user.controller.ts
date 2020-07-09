@@ -1,19 +1,17 @@
 import * as express from 'express'
 import {Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import admin from 'firebase-admin'
 import DataStore from '../../../common/src/data/datastore'
 import {RegistrationModel} from '../../../common/src/data/registration'
 import {RegistrationType} from '../../../common/src/schemas/registration'
-import {FirebaseError, FirebaseMessagingErrors} from '../../../common/src/types/firebase'
-import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
-import {HttpException} from '../../../common/src/exceptions/httpexception'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
+import {MessagingFactory} from '../../../common/src/service/messaging/messaging-service'
 
 class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
   private dataStore = new DataStore()
+  private messaging = MessagingFactory.getDefault()
 
   constructor() {
     this.initRoutes()
@@ -27,19 +25,7 @@ class UserController implements IControllerBase {
   add = async (req: Request, res: Response): Promise<void> => {
     // Check token
     const token = req.body.registrationToken
-    await admin
-      .messaging()
-      .send({token}, true)
-      .catch((error: FirebaseError) => {
-        console.log(`Something went wrong when validating token [${token}];`, error)
-        if (
-          error.code === FirebaseMessagingErrors.InvalidArgument ||
-          error.code === FirebaseMessagingErrors.Unregistered
-        ) {
-          throw new BadRequestException(`Invalid token: ${error.message}`)
-        }
-        throw new HttpException()
-      })
+    await this.messaging.validatePushToken(token)
 
     // Save token
     const registration = new RegistrationModel(this.dataStore)
