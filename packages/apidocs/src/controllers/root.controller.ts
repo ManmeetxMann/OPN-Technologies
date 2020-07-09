@@ -21,15 +21,14 @@ class RootController implements IControllerBase
         // Swagger definition
         const swaggerDefinition = 
         {
-            swagger: '2.0',
+            openapi: '3.0.1',
             info: 
             {
                 title: "OPN REST API Documentation",
                 version: "1.0.0",
                 description: "OPN API docs using Open API / Swagger",
             },
-            host: "localhost:3000",
-            basePath: "/api",
+            basePath: "",
         };
 
         // options for the swagger docs
@@ -38,15 +37,15 @@ class RootController implements IControllerBase
             // import swaggerDefinitions
             swaggerDefinition,
             // path to the API docs
-            apis: ["./docs/*.yaml"],
+            apis: ["./src/docs/*.yaml"],
         };
         // initialize swagger-jsdoc
         const swaggerSpec = swaggerJSDoc(options);
 
         // use swagger-Ui-express for your app documentation endpoint
-        this.router.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+        this.router.use("/", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-        this.router.get("/", this.index)
+        // this.router.get("/", this.index)
     }
 
     index = (req: Request, res: Response) => 
