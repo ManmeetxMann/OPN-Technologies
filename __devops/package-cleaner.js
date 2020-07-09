@@ -1,23 +1,27 @@
 const fs = require('fs');
 const path = require('path');
 
-if (process.argv.length <= 3) 
-{
+const localPath = (packagePath) => {
+    return `../packages/${packagePath}/package.json`
+}
+
+// Make sure that we have two arguments that we can get
+if (process.argv.length <= 3) {
     throw new Error('Missing npm scripts key/name argument(s)');
 }
 
-// Get list of arguments passed to script.
+// Grab the two arguments
 const packagePath = process.argv[2];
 const scriptsToKeep = process.argv[3].split(',');
-// const devDepsToKeep = process.argv[4] ? process.argv[3].split(',') : [];
 
-
-// Define absolute paths for original pkg and temporary pkg.
-const ORIG_PKG_PATH = path.resolve(__dirname, `../packages/${packagePath}/package.json`);
-const NEW_PKG_PATH = path.resolve(__dirname, `../packages/${packagePath}/dist/package.json`);
-
-// Obtain original `package.json` contents.
+// Grab the package we are focusing on
+const ORIG_PKG_PATH = path.resolve(__dirname, localPath(`${packagePath}`));
+const DIST_PKG_PATH = path.resolve(__dirname, localPath(`${packagePath}/dist`));
 const pkgData = require(ORIG_PKG_PATH);
+
+// Grab the common package
+const COMMON_PKG_PATH = path.resolve(__dirname, localPath("common"));
+const commonData = require(COMMON_PKG_PATH);
 
 // Remove the specified named scripts from the scripts section.
 Object.keys(pkgData.scripts).forEach(function (scriptName) {
@@ -27,10 +31,19 @@ Object.keys(pkgData.scripts).forEach(function (scriptName) {
     }
 });
 
-// Remove holistically
+// Remove dev depenedecies completely
 delete pkgData.devDependencies;
 
+// Add in dependecies from common package
+const currentDependecies = Object.keys(pkgData.dependencies);
+Object.keys(commonData.dependencies).forEach(function (dependecy) {
+    console.log(dependecy);
+    if (!currentDependecies.includes(dependecy)) {
+        pkgData.dependencies[dependecy] = commonData.dependencies[dependecy];
+    }
+});
+
 // Overwrite original `package.json` with new data (i.e. minus the specific data).
-fs.writeFile(NEW_PKG_PATH, JSON.stringify(pkgData, null, 2), function (err) {
+fs.writeFile(DIST_PKG_PATH, JSON.stringify(pkgData, null, 2), function (err) {
   if (err) throw err;
 });
