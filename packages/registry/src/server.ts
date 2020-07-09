@@ -12,6 +12,7 @@ const PORT = Number(process.env.PORT) || 5006;
 const app = new App({
     port: PORT,
     validation: true,
+    cors: "*",
     controllers: [
         new RootController(),
         new UserController(),
