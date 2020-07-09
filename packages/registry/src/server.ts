@@ -9,7 +9,7 @@ import RootController from  './controllers/root.controller'
 
 const PORT = Number(process.env.PORT) || 5006;
 
-const app = new App({
+export const app = new App({
     port: PORT,
     validation: true,
     cors: "*",

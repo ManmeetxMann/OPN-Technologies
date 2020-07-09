@@ -1,11 +1,11 @@
 import express from 'express'
 import {Application} from 'express'
+import {handleHttpException, handleRouteNotFound} from '../middlewares/error'
+
 import {OpenApiValidator} from 'express-openapi-validate'
 import cors from 'cors'
 import jsYaml from 'js-yaml'
 import fs from 'fs'
-
-import {handleHttpException, handleRouteNotFound} from '../middlewares/error'
 
 
 class App {
@@ -54,6 +54,7 @@ class App {
   }
 
   private setupErrorHandling() {
+    this.app.use(handleValidationError)
     this.app.use(handleHttpException)
   }
 
