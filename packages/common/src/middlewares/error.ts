@@ -1,30 +1,32 @@
-import { Request, Response, NextFunction } from "express"
-import { HttpException } from "../exceptions/httpexception"
+import {HttpException} from '../exceptions/httpexception'
+import {ResponseStatusCodes} from '../types/response-status'
+import {ResponseWrapper} from '../types/response-wrapper'
+import {ErrorMiddleware, Middleware} from '../types/middleware'
 
+export const handleHttpException: ErrorMiddleware<HttpException> = (error, req, resp, _next) => {
+  console.log('Error!')
+  console.error(error)
 
-export const errorMiddleware = (error: HttpException, req: Request, resp: Response, next: NextFunction) => 
-{
-    console.log("Error!")
-    console.error(error)
-
-    const status = error.status || error["statusCode"] || 500
-    const message = error.message || "Something went wrong"
-    resp
-        .status(status)
-        .send({
-            status,
-            message
-        })
+  const {status, code, message} = error
+  const response: ResponseWrapper<null> = {
+    data: null,
+    status: {
+      code,
+      message,
+    },
+  }
+  resp.status(status).send(response)
 }
 
-export const error404Middleware = (req: Request, resp: Response, next: NextFunction) => // Cannot have a error... to be used bottom of stack
-{
-    const status = 404
-    const message = "Not Found"
-    resp
-        .status(status)
-        .send({
-            status,
-            message
-        })
+// Cannot have an error... to be used bottom of stack
+export const handleRouteNotFound: Middleware = (req, resp, _next) => {
+  const status = 404
+  const response: ResponseWrapper<null> = {
+    data: null,
+    status: {
+      code: ResponseStatusCodes.ResourceNotFound,
+      message: 'Not found',
+    },
+  }
+  resp.status(status).send(response)
 }
