@@ -37,7 +37,6 @@ delete pkgData.devDependencies;
 // Add in dependecies from common package
 const currentDependecies = Object.keys(pkgData.dependencies);
 Object.keys(commonData.dependencies).forEach(function (dependecy) {
-    console.log(dependecy);
     if (!currentDependecies.includes(dependecy)) {
         pkgData.dependencies[dependecy] = commonData.dependencies[dependecy];
     }
