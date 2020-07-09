@@ -1,22 +1,23 @@
 {
     "name": "@opn/common",
     "private": true,
-    "version": "0.0.1",
+    "version": "1.0.0",
     "description": "> TODO: description",
     "author": "sepsepsep <git@i239.co>",
     "homepage": "",
     "license": "ISC",
-    "main": "dist/index",
-    "types": "dist/index",
+    "main": "dist/opn-common.js",
+    "types": "dist/opn-common.d.ts",
     "files": [
         "dist"
     ],
     "scripts": {
         "test": "jest",
         "test:coverage": "jest --coverage",
-        "build": "npm run clean && npm run compile",
         "clean": "rimraf -rf ./dist",
-        "compile": "tsc -p tsconfig.build.json",
+        "prepare": "copyfiles package.json dist && node ../../__devops/package-cleaner.js common start && copyfiles ./__secrets__/* dist",
+        "compile": "tsc --module amd -p tsconfig.build.json",
+        "build": "npm run clean && npm run prepare && npm run compile",
         "prepublishOnly": "npm run build"
     },
     "dependencies": {

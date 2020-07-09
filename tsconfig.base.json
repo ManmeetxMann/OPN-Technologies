@@ -3,8 +3,13 @@
         "sourceMap": true,
         "target": "ESNext",
         "module": "commonjs",
+        "moduleResolution": "node",
         "resolveJsonModule": true,
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "baseUrl": ".",
+        "paths" : {
+            "@opn/common": ["packages/common/src"]
+        }
     },
 
     "lib": [
