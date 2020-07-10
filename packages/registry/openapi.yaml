@@ -103,7 +103,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Registration'
+              type: object
+              properties:
+                registrationToken:
+                  type: string
+                  minLength: 5
+                  maxLength: 40
+              required:
+                - registrationToken
+
       responses:
         "200":
           description: Successfully registered
