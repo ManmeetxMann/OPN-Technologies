@@ -4,28 +4,81 @@ info:
   version: 1.0.0
 components:
   schemas:
-    Error:
+    Response:
       type: object
       properties:
-        error:
+        data:
+          nullable: true
+          type: object
+        status:
           type: object
           properties:
-            status:
-              type: integer
-            message:
+            code:
               type: string
-          required:
-            - status
-            - message
+              enum: [
+                succeed,
+                failed,
+                validation_error,
+                internal_server_error,
+                unauthorized,
+                access_denied,
+                resource_not_found
+              ]
+            message:
+              nullable: true
+              type: string
+
+    Registration:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [admin, user]
+        platform:
+          type: string
+          enum: [ios, android]
+        osVersion:
+          type: string
+        pushToken:
+          type: string
+          minLength: 5
+          maxLength: 40
       required:
-        - error
+        - platform
+        - osVersion
+
+    ResponseOfRegistration:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Registration'
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum: [
+                succeed,
+                failed,
+                validation_error,
+                internal_server_error,
+                unauthorized,
+                access_denied,
+                resource_not_found
+              ]
+            message:
+              nullable: true
+              type: string
+
   responses:
-    error:
-      description: Default error response with error object
+    Response:
+      description: Default Response wrapper
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Response'
 paths:
   /user/add:
     post:
@@ -34,48 +87,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                registrationToken:
-                    type: string
-                    minLength: 5
-                    maxLength: 40
-              required:
-                - registrationToken
+              $ref: '#/components/schemas/Registration'
       responses:
         "200":
           description: Successfully registered
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
-
-  /user/addNoPush:
-    post:
-      description: Register new app w/out push token
-      responses:
-        "200":
-          description: Successfully registered
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
+                $ref: '#/components/schemas/ResponseOfRegistration'
 
   /admin/add:
     post:
@@ -84,45 +103,11 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                registrationToken:
-                    type: string
-                    minLength: 5
-                    maxLength: 40
-              required:
-                - registrationToken
+              $ref: '#/components/schemas/Registration'
       responses:
         "200":
           description: Successfully registered
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
-          
-  /admin/addNoPush:
-    post:
-      description: Register new app w/out push token
-      responses:
-        "200":
-          description: Successfully registered
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
+                $ref: '#/components/schemas/ResponseOfRegistration'

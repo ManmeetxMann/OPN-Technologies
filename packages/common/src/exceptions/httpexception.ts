@@ -8,9 +8,9 @@ export class HttpException extends Error {
   message: string
 
   constructor(
+    message = DEFAULT_ERROR_MSG,
     status = 500,
     code = ResponseStatusCodes.InternalServerError,
-    message = DEFAULT_ERROR_MSG,
   ) {
     super(message)
     this.status = status

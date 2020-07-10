@@ -1,16 +1,15 @@
 import * as express from 'express'
-import {Request, Response} from 'express'
+import {NextFunction, Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import DataStore from '../../../common/src/data/datastore'
-import {RegistrationModel} from '../../../common/src/data/registration'
-import {RegistrationType} from '../../../common/src/schemas/registration'
+import {Registration, RegistrationTypes} from '../models/registration'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {MessagingFactory} from '../../../common/src/service/messaging/messaging-service'
+import {RegistrationService} from '../service/registration-service'
 
 class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
-  private dataStore = new DataStore()
+  private registrationService = new RegistrationService()
   private messaging = MessagingFactory.getDefault()
 
   constructor() {
@@ -19,30 +18,28 @@ class UserController implements IControllerBase {
 
   public initRoutes() {
     this.router.post(this.path + '/add', this.add)
-    this.router.post(this.path + '/addNoPush', this.addNoPush)
   }
 
-  add = async (req: Request, res: Response): Promise<void> => {
-    // Check token
-    const token = req.body.registrationToken
-    await this.messaging.validatePushToken(token)
+  add = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // Check token
+      const {platform, osVersion, pushToken} = req.body as Registration
+      if (pushToken) {
+        await this.messaging.validatePushToken(pushToken)
+      }
 
-    // Save token
-    const registration = new RegistrationModel(this.dataStore)
-    await registration.add({
-      type: RegistrationType.User,
-      pushToken: req.body.registrationToken,
-    })
+      // Save token
+      const registration = await this.registrationService.create({
+        type: RegistrationTypes.User,
+        platform,
+        osVersion,
+        pushToken: pushToken ?? null,
+      } as Registration)
 
-    res.json(actionSucceed())
-  }
-
-  addNoPush = (req: Request, res: Response) => {
-    const response = {
-      status: 'complete',
+      res.json(actionSucceed(registration))
+    } catch (error) {
+      next(error)
     }
-
-    res.json(response)
   }
 }
 
