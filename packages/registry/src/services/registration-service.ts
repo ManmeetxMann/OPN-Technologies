@@ -5,7 +5,7 @@ export class RegistrationService {
   private repository = new RegistrationModel(new DataStore())
 
   create(registration: Registration): Promise<Registration> {
-    return this.repository.add(registration).then((id) => this.repository.get(id))
+    return this.repository.add(registration)
   }
 
   findOneByToken(token: string): Promise<Registration> {
@@ -15,6 +15,6 @@ export class RegistrationService {
   }
 
   update(registration: Registration): Promise<Registration> {
-    return this.repository.update(registration).then(() => this.repository.get(registration.id))
+    return this.repository.update(registration)
   }
 }

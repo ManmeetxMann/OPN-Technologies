@@ -27,19 +27,35 @@ abstract class DataModel<T extends HasId> {
    * Adds data to the collection
    * @param data Data to add - id does not need to be present.
    */
-  async add(data: OptionalIdStorable<T>): Promise<string> {
-    const dao = this.datastore.firestoreORM.collection<T>({path: this.rootPath})
-    const id = await dao.add(data)
-    return id
+  async add(data: OptionalIdStorable<T>): Promise<T> {
+    return this.datastore.firestoreORM
+      .collection<T>({path: this.rootPath})
+      .addOrSet(data)
+      .then((id) => this.get(id))
+  }
+
+  async addAll(data: Array<OptionalIdStorable<T>>): Promise<T[]> {
+    return this.datastore.firestoreORM
+      .collection<T>({path: this.rootPath})
+      .bulkAdd(data)
+      .then(() => this.fetchAll())
+  }
+
+  async fetchAll(): Promise<T[]> {
+    return this.datastore.firestoreORM
+      .collection<T>({path: this.rootPath})
+      .fetchAll()
   }
 
   /**
    * Updates data in the collection
    * @param data Data to update – id property must be present
    */
-  async update(data: Storable<T>): Promise<void> {
-    const dao = this.datastore.firestoreORM.collection<T>({path: this.rootPath})
-    await dao.set(data)
+  async update(data: Storable<T>): Promise<T> {
+    return this.datastore.firestoreORM
+      .collection<T>({path: this.rootPath})
+      .set(data)
+      .then((id) => this.get(id))
   }
 
   /**
@@ -48,11 +64,13 @@ abstract class DataModel<T extends HasId> {
    * @param fieldName field / property name to increment
    * @param byCount how much to increment
    */
-  async increment(id: string, fieldName: string, byCount: number): Promise<void> {
-    const dao = this.datastore.firestoreORM.collection<T>({path: this.rootPath})
-    const obj = {}
-    obj['id'] = id
-    obj[fieldName] = this.datastore.firestoreAdmin.firestore.FieldValue.increment(byCount)
+  async increment(id: string, fieldName: string, byCount: number): Promise<T> {
+    return this.get(id).then((data) =>
+      this.update({
+        ...data,
+        [fieldName]: data[fieldName] + byCount,
+      } as Storable<T>),
+    )
   }
 
   /**
