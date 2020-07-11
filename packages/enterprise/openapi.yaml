@@ -15,15 +15,16 @@ components:
           properties:
             code:
               type: string
-              enum: [
-                succeed,
-                failed,
-                validation_error,
-                internal_server_error,
-                unauthorized,
-                access_denied,
-                resource_not_found
-              ]
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
             message:
               nullable: true
               type: string
@@ -110,6 +111,83 @@ components:
         - value
         - type
 
+    OrganizationConnectionRequest:
+      type: object
+      properties:
+        key:
+          type: number
+        firstName:
+          type: string
+        lastNameInitial:
+          type: string
+          minLength: 1
+          maxLength: 1
+        birthYear:
+          type: number
+        base64Photo:
+          type: string
+          nullable: true
+      required:
+        - firstName
+        - lastNameInitial
+        - birthYear
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastNameInitial:
+          type: string
+          minLength: 1
+          maxLength: 1
+        birthYear:
+          type: number
+          minLength: 4
+          maxLength: 4
+        base64Photo:
+          type: string
+          nullable: true
+        organizationIds:
+          type: array
+          nullable: true
+          items:
+            type: string
+      required:
+        - firstName
+        - lastNameInitial
+        - birthYear
+
+    ResponseOfOrganizationConnection:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            organization:
+              $ref: '#/components/schemas/Organization'
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
 
     ResponseOfOrganization:
       type: object
@@ -121,15 +199,16 @@ components:
           properties:
             code:
               type: string
-              enum: [
-                succeed,
-                failed,
-                validation_error,
-                internal_server_error,
-                unauthorized,
-                access_denied,
-                resource_not_found
-              ]
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
             message:
               nullable: true
               type: string
@@ -146,15 +225,16 @@ components:
           properties:
             code:
               type: string
-              enum: [
-                succeed,
-                failed,
-                validation_error,
-                internal_server_error,
-                unauthorized,
-                access_denied,
-                resource_not_found
-              ]
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
             message:
               nullable: true
               type: string
@@ -176,13 +256,13 @@ paths:
             schema:
               $ref: '#/components/schemas/Organization'
       responses:
-        "200":
+        '200':
           description: Successfully created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfOrganization'
-  /organizations/{id}/locations:
+  /organizations/{organizationId}/locations:
     post:
       description: Add locations to an organization
       parameters:
@@ -190,6 +270,7 @@ paths:
           name: id
           schema:
             type: string
+#          required: true
       requestBody:
         content:
           application/json:
@@ -198,7 +279,7 @@ paths:
               items:
                 $ref: '#/components/schemas/OrganizationLocation'
       responses:
-        "200":
+        '200':
           description: Successfully added
           content:
             application/json:
@@ -213,8 +294,9 @@ paths:
           name: id
           schema:
             type: string
+#          required: false
       responses:
-        "200":
+        '200':
           description: Successfully retrieved
           content:
             application/json:
@@ -222,3 +304,18 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationLocations'
+  /user/connect/add:
+    post:
+      description: Connect a user to an organization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationConnectionRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfOrganizationConnection'

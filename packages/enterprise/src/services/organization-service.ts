@@ -46,10 +46,10 @@ export class OrganizationService {
     })
   }
 
-  findOneByKey(key: string): Promise<Organization> {
+  findOneByKey(key: number): Promise<Organization> {
     return this.organizationRepository.findWhereEqual('key', key).then((results) => {
       if (results?.length === 0) {
-        throw new ResourceNotFoundException(notFoundMessage(key, 'Key'))
+        throw new ResourceNotFoundException(notFoundMessage(String(key), 'Key'))
       }
       return results[0]
     })
