@@ -23,10 +23,10 @@ class UserController implements IControllerBase
 
     config = (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["registrationToken"], req, res))
-        {
-            return
-        }
+        // if (!Validation.validate(["registrationToken"], req, res))
+        // {
+        //     return
+        // }
         
         const response = 
         {

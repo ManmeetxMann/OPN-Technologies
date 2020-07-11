@@ -4,6 +4,10 @@
     "version": "0.0.0",
     "copyFiles": [
         {
+            "from" : "../config/openapi.yaml",
+            "to": "./docs/config.yaml"
+        },
+        {
             "from" : "../registry/openapi.yaml",
             "to": "./docs/registry.yaml"
         },

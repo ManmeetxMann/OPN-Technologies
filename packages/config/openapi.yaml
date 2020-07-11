@@ -28,23 +28,9 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
 paths:
-  /user/add:
+  /:
     post:
-      description: Register new app
-      tags:
-        - Registry > User
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                registrationToken:
-                    type: string
-                    minLength: 5
-                    maxLength: 40
-              required:
-                - registrationToken
+      description: Get Config
       responses:
         "200":
           description: Successfully registered
@@ -58,78 +44,16 @@ paths:
                     enum:
                       - complete
                       - error
-        default:
-          $ref: "#/components/responses/error"
-
-  /user/addNoPush:
-    post:
-      description: Register new app w/out push token
-      tags:
-        - Registry > User
-      responses:
-        "200":
-          description: Successfully registered
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
-
-  /admin/add:
-    post:
-      description: Register new app
-      tags:
-        - Registry > Admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                registrationToken:
-                    type: string
-                    minLength: 5
-                    maxLength: 40
-              required:
-                - registrationToken
-      responses:
-        "200":
-          description: Successfully registered
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
-          
-  /admin/addNoPush:
-    post:
-      description: Register new app w/out push token
-      responses:
-        "200":
-          description: Successfully registered
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
+                  data:
+                    type: object
+                    properties:
+                        updates:
+                          type: object
+                        services:
+                          type: object
+                        badgeValidityPeriod:
+                          type: object
+                        badges:
+                          type: object
         default:
           $ref: "#/components/responses/error"
