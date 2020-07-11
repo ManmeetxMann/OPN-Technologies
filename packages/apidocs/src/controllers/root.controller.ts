@@ -71,11 +71,15 @@ class RootController implements IControllerBase
                     servers: [
                         {
                             url: "https://registry-dot-opn-platform-dev.nn.r.appspot.com",
-                            description: "Production server"
+                            description: "Production Server"
+                        },
+                        {
+                            url: "https://registry-staging-dot-opn-platform-dev.nn.r.appspot.com",
+                            description: "Staging Server"
                         },
                         {
                             url: "http://localhost:5006",
-                            description: "Development server"
+                            description: "Development Server"
                         }
                     ],
                     yamlPath: "registry.yaml"
@@ -90,11 +94,15 @@ class RootController implements IControllerBase
                     servers: [
                         {
                             url: "https://enterprise-dot-opn-platform-dev.nn.r.appspot.com",
-                            description: "Production server"
+                            description: "Production Server"
+                        },
+                        {
+                            url: "https://enterprise-staging-dot-opn-platform-dev.nn.r.appspot.com",
+                            description: "Staging Server"
                         },
                         {
                             url: "http://localhost:5003",
-                            description: "Development server"
+                            description: "Development Server"
                         }
                     ],
                     yamlPath: "enterprise.yaml"
