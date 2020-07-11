@@ -1,128 +1,224 @@
 openapi: 3.0.1
 info:
-  title: Registry Endpoint
+  title: Enterprise API
   version: 1.0.0
 components:
   schemas:
-    Error:
+    Response:
       type: object
       properties:
-        error:
+        data:
+          nullable: true
+          type: object
+        status:
           type: object
           properties:
-            status:
-              type: integer
-            message:
+            code:
               type: string
-          required:
-            - status
-            - message
+              enum: [
+                succeed,
+                failed,
+                validation_error,
+                internal_server_error,
+                unauthorized,
+                access_denied,
+                resource_not_found
+              ]
+            message:
+              nullable: true
+              type: string
+
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
       required:
-        - error
+        - name
+
+    OrganizationLocation:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        country:
+          type: string
+        attestationRequired:
+          type: boolean
+        questions:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/OrganizationQuestion'
+        zones:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/OrganizationLocationZone'
+      required:
+        - title
+        - address
+        - city
+        - state
+        - country
+        - attestationRequired
+
+    OrganizationLocationZone:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        address:
+          type: string
+        attestationRequired:
+          type: boolean
+        questions:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/OrganizationQuestion'
+      required:
+        - title
+        - address
+        - attestationRequired
+
+    OrganizationQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+        value:
+          type: string
+        type:
+          type: string
+          enum: [boolean, date]
+      required:
+        - value
+        - type
+
+
+    ResponseOfOrganization:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Organization'
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum: [
+                succeed,
+                failed,
+                validation_error,
+                internal_server_error,
+                unauthorized,
+                access_denied,
+                resource_not_found
+              ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfOrganizationLocations:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationLocation'
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum: [
+                succeed,
+                failed,
+                validation_error,
+                internal_server_error,
+                unauthorized,
+                access_denied,
+                resource_not_found
+              ]
+            message:
+              nullable: true
+              type: string
+
   responses:
-    error:
-      description: Default error response with error object
+    Response:
+      description: Default Response wrapper
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Response'
 paths:
-  /user/add:
+  /organizations:
     post:
-      description: Register new app
+      description: Create new organization
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                registrationToken:
-                    type: string
-                    minLength: 5
-                    maxLength: 40
-              required:
-                - registrationToken
+              $ref: '#/components/schemas/Organization'
       responses:
         "200":
-          description: Successfully registered
+          description: Successfully created
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
-
-  /user/addNoPush:
+                $ref: '#/components/schemas/ResponseOfOrganization'
+  /organizations/{id}/locations:
     post:
-      description: Register new app w/out push token
-      responses:
-        "200":
-          description: Successfully registered
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
-
-  /admin/add:
-    post:
-      description: Register new app
+      description: Add locations to an organization
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                registrationToken:
-                    type: string
-                    minLength: 5
-                    maxLength: 40
-              required:
-                - registrationToken
+              type: array
+              items:
+                $ref: '#/components/schemas/OrganizationLocation'
       responses:
         "200":
-          description: Successfully registered
+          description: Successfully added
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
-          
-  /admin/addNoPush:
-    post:
-      description: Register new app w/out push token
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationLocations'
+    get:
+      description: Get organization locations
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
       responses:
         "200":
-          description: Successfully registered
+          description: Successfully retrieved
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationLocations'
