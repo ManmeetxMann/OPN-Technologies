@@ -14,7 +14,7 @@ export interface SwaggerServer {
 }
 
 export class SwaggerService {
-    private readonly yamlRootPath = "./src/docs/"
+    private readonly yamlRootPath = "./docs/"
 
     private openApiVersion: string
     private info: SwaggerInfo
