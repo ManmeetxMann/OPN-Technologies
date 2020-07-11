@@ -60,25 +60,45 @@ class RootController implements IControllerBase
         // this.router.use("/", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
         const factory = new SwaggerServiceFactory({
-            services: [new SwaggerService({
-                openApiVersion: "3.0.1",
-                info: {
-                    title: "Registry API",
-                    version: "1.0.0",
-                    description: "OPN API docs using Open API / Swagger"
-                },
-                servers: [
-                    {
-                        url: "https://registry-dot-opn-platform-dev.nn.r.appspot.com",
-                        description: "Production server"
+            services: [
+                new SwaggerService({
+                    openApiVersion: "3.0.1",
+                    info: {
+                        title: "Registry API",
+                        version: "1.0.0",
+                        description: "OPN API docs using Open API / Swagger"
                     },
-                    {
-                        url: "http://localhost:5006",
-                        description: "Development server"
-                    }
-                ],
-                yamlPath: "registry.yaml"
-            })],
+                    servers: [
+                        {
+                            url: "https://registry-dot-opn-platform-dev.nn.r.appspot.com",
+                            description: "Production server"
+                        },
+                        {
+                            url: "http://localhost:5006",
+                            description: "Development server"
+                        }
+                    ],
+                    yamlPath: "registry.yaml"
+                }),
+                new SwaggerService({
+                    openApiVersion: "3.0.1",
+                    info: {
+                        title: "Enterprise API",
+                        version: "1.0.0",
+                        description: "OPN API docs using Open API / Swagger"
+                    },
+                    servers: [
+                        {
+                            url: "https://enterprise-dot-opn-platform-dev.nn.r.appspot.com",
+                            description: "Production server"
+                        },
+                        {
+                            url: "http://localhost:5003",
+                            description: "Development server"
+                        }
+                    ],
+                    yamlPath: "enterprise.yaml"
+                })],
             router: this.router
         })
         factory.setupRoutes()
