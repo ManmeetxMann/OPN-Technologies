@@ -32,10 +32,18 @@ class UserController implements IControllerBase
         {
             data : {
                 updates : {
-                    force: "1.0",
-                    optional: "1.2",
-                    iosUrl: "http://itunes.com/apps/opn",
-                    androidUrl: "http://play.google.com/store/apps/details?id=com.opn.app"
+                    ios :
+                    {
+                        force: "0.1",
+                        optional: "0.1",
+                        url: "http://itunes.com/apps/opn"
+                    },
+                    android :
+                    {
+                        force: "0.1",
+                        optional: "0.1",
+                        url: "http://play.google.com/store/apps/details?id=com.opn.app"
+                    }
                 },
                 services : {
                     registry : "https://registry.platform.stayopn.com",
