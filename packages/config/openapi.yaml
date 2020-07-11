@@ -3,13 +3,6 @@ info:
   title: Registry Endpoint
   version: 1.0.0
 
-servers:
-  - url: https://registry-dot-opn-platform-dev.nn.r.appspot.com
-    description: Production server
-
-  - url: http://localhost:5006
-    description: Development server
-
 components:
   schemas:
     Error:
@@ -38,12 +31,6 @@ paths:
   /user/add:
     post:
       description: Register new app
-      servers:
-      - url: https://registry-dot-opn-platform-dev.nn.r.appspot.com
-        description: Production server
-
-      - url: http://localhost:5006
-        description: Development server
       tags:
         - Registry > User
       requestBody:
