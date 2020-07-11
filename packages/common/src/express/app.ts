@@ -11,11 +11,11 @@ class App {
   public app: Application
   public port: number
   public validation: boolean
-  public corsOptions: boolean | string
+  public corsOptions?: string
 
   constructor(appInit: {
     validation: boolean
-    corsOptions: boolean | string
+    corsOptions?: string
     port: number
     middleWares: any
     controllers: any
@@ -64,10 +64,9 @@ class App {
   }
 
   private setupCors() {
-    if (typeof this.corsOptions === 'string') {
+    if (!!this.corsOptions)
+    {
       this.app.use(cors({origin: this.corsOptions}))
-    } else if (this.corsOptions === true) {
-      this.app.use(cors({origin: "*"}))
     }
   }
 
