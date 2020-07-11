@@ -11,12 +11,12 @@ class RootController implements IControllerBase
     public path = "/"
     public router = express.Router()
     
-    constructor() 
+    constructor()
     {
         this.initRoutes()
     }
 
-    public initRoutes() 
+    public initRoutes()
     {
         // Swagger definition
         const swaggerDefinition = 
@@ -28,7 +28,16 @@ class RootController implements IControllerBase
                 version: "1.0.0",
                 description: "OPN API docs using Open API / Swagger",
             },
-            basePath: "",
+            servers: [
+                {
+                    url: "https://registry-dot-opn-platform-dev.nn.r.appspot.com",
+                    description: "Production server"
+                },
+                {
+                    url: "http://localhost:5006",
+                    description: "Development server"
+                }
+            ]
         };
 
         // options for the swagger docs
@@ -37,10 +46,13 @@ class RootController implements IControllerBase
             // import swaggerDefinitions
             swaggerDefinition,
             // path to the API docs
-            apis: ["./src/docs/*.yaml"],
+            apis: ["./src/docs/openapi.yaml"],
+            explorer: true
         };
         // initialize swagger-jsdoc
         const swaggerSpec = swaggerJSDoc(options);
+
+        console.log(swaggerSpec)
 
         // use swagger-Ui-express for your app documentation endpoint
         this.router.use("/", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
