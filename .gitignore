@@ -28,3 +28,4 @@ dist
 */dist/*.*
 packages/*/dist
 packages/*/dist/*.*
+packages/apidocs/docs/*.yaml
