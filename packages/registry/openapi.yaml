@@ -44,7 +44,7 @@ components:
         pushToken:
           type: string
           minLength: 5
-          maxLength: 40
+          maxLength: 400
       required:
         - platform
         - osVersion
@@ -108,7 +108,7 @@ paths:
                 registrationToken:
                   type: string
                   minLength: 5
-                  maxLength: 40
+                  maxLength: 400
               required:
                 - registrationToken
 
