@@ -2,13 +2,21 @@
     "name": "@opn/apidocs",
     "private": true,
     "version": "0.0.0",
+    "copyFiles": [
+        {
+            "from" : "../registry/openapi.yaml",
+            "to": "./src/docs/registry.yaml"
+        }
+    ],
     "scripts": {
         "start": "node apidocs/src/server.js",
         "test": "jest",
         "test:coverage": "jest --coverage",
+        "predev": "npm run copy_yamls",
         "dev": "ts-node src/server.ts",
         "dev:debug": "nodemon --inspect=3007 src/server.ts",
         "clean": "rimraf -rf ./dist",
+        "copy_yamls": "copy-files-from-to",
         "prepare": "copyfiles app.yaml dist && copyfiles package.json dist && node ../../__devops/package-cleaner.js apidocs start",
         "compile": "tsc -p tsconfig.build.json",
         "build": "npm run clean && npm run prepare && npm run compile",
@@ -23,6 +31,7 @@
     },
     "devDependencies": {
         "copyfiles": "^2.3.0",
+        "copy-files-from-to": "^3.1.2",
         "rimraf": "^3.0.2",
         "nodemon": "^2.0.4",
         "ts-node": "^8.10.2",
