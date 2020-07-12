@@ -16,9 +16,9 @@ jobs:
       with:
         node-version: 10.x
     - name: Setup GCloud
-      uses: GoogleCloudPlatform/github-actions@master
+      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
       with:
-        credentials: ${{ secrets.GCP_SA_KEY }}
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
     - run: npm install
     - run: npm run install-all
     # - run: npm run test-all
