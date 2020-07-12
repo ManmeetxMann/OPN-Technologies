@@ -15,7 +15,8 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 10.x
-      uses: GoogleCloudPlatform/github-actions/appengine-deploy@master
+    - name: Setup GCloud
+      uses: GoogleCloudPlatform/github-actions@master
       with:
         credentials: ${{ secrets.GCP_SA_KEY }}
     - run: npm install
