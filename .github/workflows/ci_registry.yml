@@ -18,5 +18,5 @@ jobs:
     - run: npm install
     - run: npm run install-all
     # - run: npm run test-all
-    - run: lerna run --scope @opn/registry deploy --stream
-    - run: lerna run --scope @opn/apidocs deploy --stream
+    - run: npm run deploy-registry
+    - run: npm run deploy-apidocs

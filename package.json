@@ -10,7 +10,9 @@
 		"dev-all": "lerna run dev --stream",
 		"dev:debug-all": "lerna run dev:debug --stream",
 		"build-all": "lerna run build --stream",
-		"deploy-all": "lerna run deploy --stream"
+		"deploy-all": "lerna run deploy --stream",
+		"deploy-apidocs": "lerna run --scope @opn/apidocs deploy --stream",
+		"deploy-registry": "lerna run --scope @opn/registry deploy --stream"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
