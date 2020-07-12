@@ -1,128 +1,97 @@
 openapi: 3.0.1
 info:
-  title: Registry Endpoint
+  title: Passport API
   version: 1.0.0
 components:
   schemas:
-    Error:
+    Response:
       type: object
       properties:
-        error:
+        data:
+          nullable: true
+          type: object
+        status:
           type: object
           properties:
-            status:
-              type: integer
-            message:
+            code:
               type: string
-          required:
-            - status
-            - message
-      required:
-        - error
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    Passport:
+      type: object
+      properties:
+        id:
+          type: string
+        statusToken:
+          type: string
+        status:
+          type: string
+          enum: [pending,proceed,caution,stop]
+        validFrom:
+          type: string
+        validUntil:
+          type: string
+
+    ResponseOfPassport:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Passport'
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
   responses:
-    error:
-      description: Default error response with error object
+    Response:
+      description: Default Response wrapper
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Response'
 paths:
-  /user/add:
+  /user/status/get:
     post:
-      description: Register new app
+      description: Get user's passport by statusToken or create a pending one if any
       requestBody:
         content:
           application/json:
             schema:
-              type: object
               properties:
-                registrationToken:
-                    type: string
-                    minLength: 5
-                    maxLength: 40
-              required:
-                - registrationToken
-      responses:
-        "200":
-          description: Successfully registered
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
+                statustoken:
+                  type: string
+                  nullable: true
 
-  /user/addNoPush:
-    post:
-      description: Register new app w/out push token
       responses:
-        "200":
-          description: Successfully registered
+        '200':
+          description: Found or successfully created
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
-
-  /admin/add:
-    post:
-      description: Register new app
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                registrationToken:
-                    type: string
-                    minLength: 5
-                    maxLength: 40
-              required:
-                - registrationToken
-      responses:
-        "200":
-          description: Successfully registered
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
-          
-  /admin/addNoPush:
-    post:
-      description: Register new app w/out push token
-      responses:
-        "200":
-          description: Successfully registered
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - complete
-                      - error
-        default:
-          $ref: "#/components/responses/error"
+                $ref: '#/components/schemas/ResponseOfPassport'
