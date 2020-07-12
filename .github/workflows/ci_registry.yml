@@ -1,9 +1,9 @@
-name: OPN Services CI Action
+name: OPN Services CD Action
 
 on:
   push:
-    branches: [ development ]
-  pull_request:
+    paths:
+      - "packages/registry/**"
     branches: [ development ]
 
 jobs:
@@ -17,6 +17,5 @@ jobs:
         node-version: 10.x
     - run: npm install
     - run: npm run install-all
-    - run: npm run build-all
     # - run: npm run test-all
-    # - run: lerna run --scope @opn/registry
+    - run: lerna run --scope @opn/registry deploy --stream
