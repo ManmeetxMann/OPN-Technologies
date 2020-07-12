@@ -88,4 +88,6 @@ class App {
   }
 }
 
+const test = 1
+
 export default App
