@@ -1,7 +1,7 @@
 name: OPN Registry Service CD Action
 
 on:
-  push:
+  push: # Needs to be pull_request
     paths:
       - "packages/common/**"
       - "packages/registry/**"
