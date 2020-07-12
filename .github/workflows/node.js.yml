@@ -16,10 +16,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Setup Node.js
       uses: actions/setup-node@v1
       with:
         node-version: 10.x
+    - run: npm install
     - run: npm run install-all
     - run: npm run test-all
     # - run: lerna run --scope @opn/registry
