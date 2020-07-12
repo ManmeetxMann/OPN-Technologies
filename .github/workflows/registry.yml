@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: Registry CI
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -8,7 +8,7 @@ on:
   push:
     paths:
       - 'packages/registry/**'
-  #   branches: [ development ]
+    branches: [ development ]
   # pull_request:
   #   paths:
   #     - 'packages/registry/*'
