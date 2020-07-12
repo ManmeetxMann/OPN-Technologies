@@ -27,5 +27,3 @@ const app = new App({
 })
 
 app.listen()
-
-const i = 3
