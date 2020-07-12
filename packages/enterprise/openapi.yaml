@@ -126,11 +126,11 @@ components:
           type: number
         base64Photo:
           type: string
-          nullable: true
       required:
         - firstName
         - lastNameInitial
         - birthYear
+        - base64Photo
 
     User:
       type: object
@@ -149,7 +149,6 @@ components:
           maxLength: 4
         base64Photo:
           type: string
-          nullable: true
         organizationIds:
           type: array
           nullable: true
@@ -159,6 +158,7 @@ components:
         - firstName
         - lastNameInitial
         - birthYear
+        - base64Photo
 
     ResponseOfOrganizationConnection:
       type: object
