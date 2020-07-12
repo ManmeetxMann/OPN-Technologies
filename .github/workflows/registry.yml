@@ -6,9 +6,11 @@ name: Registry CI
 # events but only for the master branch
 on:
   push:
+    branches:
+      - development
     paths:
       - 'packages/registry/**'
-    branches: [ development ]
+    
   # pull_request:
   #   paths:
   #     - 'packages/registry/*'
