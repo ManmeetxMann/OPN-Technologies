@@ -18,6 +18,7 @@ jobs:
     - name: Setup GCloud
       uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
       with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
         service_account_key: ${{ secrets.GCP_SA_KEY }}
     - run: npm install
     - run: npm run install-all
