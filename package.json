@@ -12,7 +12,12 @@
 		"build-all": "lerna run build --stream",
 		"deploy-all": "lerna run deploy --stream",
 		"deploy-apidocs": "lerna run --scope @opn/apidocs deploy --stream",
-		"deploy-registry": "lerna run --scope @opn/registry deploy --stream"
+		"deploy-registry": "lerna run --scope @opn/registry deploy --stream",
+		"deploy-passport": "lerna run --scope @opn/passport deploy --stream",
+		"deploy-enterprise": "lerna run --scope @opn/enterprise deploy --stream",
+		"deploy-config": "lerna run --scope @opn/config deploy --stream",
+		"deploy-lookup": "lerna run --scope @opn/lookup deploy --stream",
+		"deploy-access": "lerna run --scope @opn/access deploy --stream"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
