@@ -1,4 +1,4 @@
-name: OPN Services CD Action
+name: OPN Registry Service CD Action
 
 on:
   push:
@@ -15,6 +15,9 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 10.x
+      uses: GoogleCloudPlatform/github-actions/appengine-deploy@master
+      with:
+        credentials: ${{ secrets.GCP_SA_KEY }}
     - run: npm install
     - run: npm run install-all
     # - run: npm run test-all
