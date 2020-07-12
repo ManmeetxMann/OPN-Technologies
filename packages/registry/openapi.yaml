@@ -43,6 +43,7 @@ components:
           type: string
         pushToken:
           type: string
+          nullable: true
           minLength: 5
           maxLength: 400
       required:
