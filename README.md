@@ -2,6 +2,20 @@
 
 > Services for the OPN Plaform that are used by the iOS and Android Apps
 
+![OPN API Docs CD Action](https://github.com/OPN-Technologies/services/workflows/OPN%20API%20Docs%20CD%20Action/badge.svg?branch=development)
+
+![OPN Config Service CD Action](https://github.com/OPN-Technologies/services/workflows/OPN%20Config%20Service%20CD%20Action/badge.svg?branch=development)
+
+![OPN Registry Service CD Action](https://github.com/OPN-Technologies/services/workflows/OPN%20Registry%20Service%20CD%20Action/badge.svg?branch=development)
+
+![OPN Passport Service CD Action](https://github.com/OPN-Technologies/services/workflows/OPN%20Passport%20Service%20CD%20Action/badge.svg?branch=development)
+
+![OPN Enterprise Service CD Action](https://github.com/OPN-Technologies/services/workflows/OPN%20Enterprise%20Service%20CD%20Action/badge.svg?branch=development)
+
+![OPN Access Service CD Action](https://github.com/OPN-Technologies/services/workflows/OPN%20Access%20Service%20CD%20Action/badge.svg?branch=development)
+
+![OPN Lookup Service CD Action](https://github.com/OPN-Technologies/services/workflows/OPN%20Lookup%20Service%20CD%20Action/badge.svg?branch=development)
+
 ## About
 
 ### Philosophy
