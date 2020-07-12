@@ -2,6 +2,8 @@
 
 > Services for the OPN Plaform that are used by the iOS and Android Apps
 
+![OPN Registry Service CD Action](https://github.com/OPN-Technologies/services/workflows/OPN%20Registry%20Service%20CD%20Action/badge.svg?branch=development)
+
 ## About
 
 ### Philosophy
