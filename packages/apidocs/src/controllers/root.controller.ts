@@ -136,7 +136,7 @@ class RootController implements IControllerBase
                             description: "Development Server"
                         }
                     ],
-                    yamlPath: "passport.yaml"
+                    yamlPath: "lookup.yaml"
                 })],
             router: this.router
         })
