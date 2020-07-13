@@ -1,12 +1,11 @@
 import DataStore from '../../../common/src/data/datastore'
+import {Organization, OrganizationLocation} from '../models/organization'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {
-  Organization,
-  OrganizationLocation,
+  OrganizationKeySequenceModel,
   OrganizationLocationModel,
   OrganizationModel,
-} from '../models/organization'
-import {OrganizationKeySequenceModel} from '../models/organization'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+} from '../repository/organization.repository'
 
 const notFoundMessage = (organizationId: string, identifier?: string) =>
   `Cannot find organization with ${identifier ?? 'ID'} [${organizationId}]`
@@ -29,12 +28,9 @@ export class OrganizationService {
     organizationId: string,
     locations: OrganizationLocation[],
   ): Promise<OrganizationLocation[]> {
-    return this.organizationRepository.get(organizationId).then((organization) => {
-      if (!organization) {
-        throw new ResourceNotFoundException(notFoundMessage(organizationId))
-      }
-      return new OrganizationLocationModel(this.dataStore, organizationId).addAll(locations)
-    })
+    return this.getOrganization(organizationId).then((_organization) =>
+      new OrganizationLocationModel(this.dataStore, organizationId).addAll(locations),
+    )
   }
 
   getLocations(organizationId: string): Promise<OrganizationLocation[]> {
@@ -66,5 +62,15 @@ export class OrganizationService {
           : this.organizationKeySequenceRepository.add({id: sequenceId, value: 10000}),
       )
       .then((sequence) => sequence.value)
+  }
+
+  private getOrganization(organizationId: string): Promise<Organization> {
+    return this.organizationRepository.get(organizationId).then((organization) => {
+      if (organization) {
+        return organization
+      }
+
+      throw new ResourceNotFoundException(notFoundMessage(organizationId))
+    })
   }
 }
