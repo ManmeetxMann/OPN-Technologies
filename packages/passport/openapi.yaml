@@ -95,3 +95,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfPassport'
+  /user/status/update:
+    post:
+      description: Solve badge status based on user's questionnaire answers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                answers:
+                  type: object
+              example: {answers: { 1:{1: false},2:{1: false},3:{1: false},4:{1: false, 2: "2020-06-10T05:05:32.217Z"}}}
+
+      responses:
+        '200':
+          description: Found or successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfPassport'
