@@ -1,9 +1,6 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import {v4 as uuid} from 'uuid'
-
-import Validation from '../../../common/src/utils/validation'
 import {PassportService} from '../services/passport-service'
 import {PassportStatuses} from '../models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
@@ -43,31 +40,23 @@ class UserController implements IControllerBase {
     }
   }
 
-  update = (req: Request, res: Response) => {
-    if (!Validation.validate(['locationId', 'statusToken', 'answer'], req, res)) {
-      return
-    }
+  update = async (req: Request, res: Response) => {
+    // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
+    const answers: Record<number, Record<number, boolean>> = req.body.answers
+    const a1 = answers[1][1]
+    const a2 = answers[2][1]
+    const a3 = answers[3][1]
+    const a4 = answers[4][1]
 
-    console.log(req.body.locationId)
-    console.log(req.body.answer)
+    const passportStatus =
+      a2 || a3 || a4
+        ? PassportStatuses.Stop
+        : a1
+        ? PassportStatuses.Caution
+        : PassportStatuses.Proceed
 
-    const date = new Date()
-    const response = {
-      data: {
-        attestationToken: uuid(),
-        passport: {
-          updated: true,
-          statusToken: uuid(),
-          badge: 'proceed',
-          validFrom: date.toISOString(),
-          validUntil: new Date(date.getTime() + 60 * 60 * 24 * 1000).toISOString(),
-        },
-      },
-      serverTimestamp: new Date().toISOString(),
-      status: 'complete',
-    }
-
-    res.json(response)
+    const passport = await this.passportService.create(passportStatus)
+    return res.json(actionSucceed(passport))
   }
 }
 
