@@ -18,6 +18,10 @@
         {
             "from" : "../passport/openapi.yaml",
             "to": "./docs/passport.yaml"
+        },
+        {
+            "from" : "../lookup/openapi.yaml",
+            "to": "./docs/lookup.yaml"
         }
     ],
     "copyFilesSettings" : {

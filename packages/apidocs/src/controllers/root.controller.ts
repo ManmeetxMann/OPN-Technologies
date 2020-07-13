@@ -114,6 +114,29 @@ class RootController implements IControllerBase
                         }
                     ],
                     yamlPath: "passport.yaml"
+                }),
+                new SwaggerService({
+                    openApiVersion: "3.0.1",
+                    info: {
+                        title: "Lookup API",
+                        version: "1.0.0",
+                        description: "OPN API docs using Open API / Swagger"
+                    },
+                    servers: [
+                        {
+                            url: "https://lookup-dot-opn-platform-dev.nn.r.appspot.com",
+                            description: "Production Server"
+                        },
+                        {
+                            url: "https://lookup-staging-dot-opn-platform-dev.nn.r.appspot.com",
+                            description: "Staging Server"
+                        },
+                        {
+                            url: "http://localhost:5004",
+                            description: "Development Server"
+                        }
+                    ],
+                    yamlPath: "passport.yaml"
                 })],
             router: this.router
         })
