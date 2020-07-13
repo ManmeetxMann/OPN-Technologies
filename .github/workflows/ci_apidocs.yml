@@ -25,7 +25,7 @@ jobs:
     # - run: npm run test-all
     - run: npm run deploy-apidocs
     - name: Let Slack know
-    - uses: 8398a7/action-slack@v3
+      uses: 8398a7/action-slack@v3
       with:
         status: custom
         fields: workflow,job,commit,repo,ref,author,took
