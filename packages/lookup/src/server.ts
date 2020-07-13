@@ -4,25 +4,23 @@ import * as bodyParser from 'body-parser'
 import loggerMiddleware from '../../common/src/middlewares/logger'
 
 import AdminController from './controllers/admin.controller'
-import UserController from  './controllers/user.controller'
-import RootController from  './controllers/root.controller'
+import UserController from './controllers/user.controller'
+import RootController from './controllers/root.controller'
+import QuestionnaireController from './controllers/questionnaire.controller'
 
-const PORT = Number(process.env.PORT) || 5004;
+const PORT = Number(process.env.PORT) || 5004
 
 const app = new App({
-    port: PORT,
-    validation: true,
-    corsOptions: "*",
-    controllers: [
-        new RootController(),
-        new UserController(),
-        new AdminController()
-    ],
-    middleWares: [
-        bodyParser.json(),
-        bodyParser.urlencoded({ extended: true }),
-        loggerMiddleware
-    ]
+  port: PORT,
+  validation: true,
+  corsOptions: '*',
+  controllers: [
+    new RootController(),
+    new UserController(),
+    new AdminController(),
+    new QuestionnaireController(),
+  ],
+  middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })
 
 app.listen()
