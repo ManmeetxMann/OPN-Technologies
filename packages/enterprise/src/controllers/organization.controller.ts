@@ -6,7 +6,6 @@ import {Organization, OrganizationLocation} from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 
-const BASE_PATH = '/organizations'
 class OrganizationController implements IControllerBase {
   public router = express.Router()
   private organizationService = new OrganizationService()
@@ -16,9 +15,13 @@ class OrganizationController implements IControllerBase {
   }
 
   public initRoutes() {
-    this.router.post(BASE_PATH, this.create)
-    this.router.post(`${BASE_PATH}/:organizationId/locations`, this.addLocations)
-    this.router.get(`${BASE_PATH}/:organizationId/locations`, this.getLocations)
+    const childRouter = express
+      .Router()
+      .post('/', this.create)
+      .post('/:organizationId/locations', this.addLocations)
+      .get('/:organizationId/locations', this.getLocations)
+
+    this.router.use('/organizations', childRouter)
   }
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
