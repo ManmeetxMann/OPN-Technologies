@@ -15,7 +15,7 @@ export type OrganizationLocation = {
   zip: string
   state: string
   country: string
-  zones: OrganizationLocationZone[]
+  zones?: OrganizationLocationZone[]
 } & OrganizationConfiguration
 
 export type OrganizationLocationZone = {

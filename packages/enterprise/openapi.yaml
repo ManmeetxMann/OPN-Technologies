@@ -58,11 +58,9 @@ components:
           type: string
         attestationRequired:
           type: boolean
-        questions:
-          type: array
+        questionnaireId:
+          type: string
           nullable: true
-          items:
-            $ref: '#/components/schemas/OrganizationQuestion'
         zones:
           type: array
           nullable: true
@@ -87,29 +85,13 @@ components:
           type: string
         attestationRequired:
           type: boolean
-        questions:
-          type: array
+        questionnaireId:
+          type: string
           nullable: true
-          items:
-            $ref: '#/components/schemas/OrganizationQuestion'
       required:
         - title
         - address
         - attestationRequired
-
-    OrganizationQuestion:
-      type: object
-      properties:
-        id:
-          type: string
-        value:
-          type: string
-        type:
-          type: string
-          enum: [boolean, date]
-      required:
-        - value
-        - type
 
     OrganizationConnectionRequest:
       type: object
