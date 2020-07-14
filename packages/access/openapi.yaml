@@ -34,14 +34,85 @@ components:
       properties:
         token:
           type: string
+        statusToken:
+          type: string
+        locationId:
+          type: string
         createdAt:
           type: string
+        enteredAt:
+          type: string
+          nullable: true
+        exitAt:
+          type: string
+          nullable: true
+
+    Passport:
+      type: object
+      properties:
+        id:
+          type: string
+        statusToken:
+          type: string
+        status:
+          type: string
+          enum: [pending,proceed,caution,stop]
+        validFrom:
+          type: string
+        validUntil:
+          type: string
+
+    AccessRequest:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        locationId:
+          type: string
+      required:
+        - accessToken
+        - locationId
+
+    StatusTokenExchangeRequest:
+      type: object
+      properties:
+        statusToken:
+          type: string
+        locationId:
+          type: string
+      required:
+        - statusToken
+        - locationId
 
     ResponseOfAccess:
       type: object
       properties:
         data:
           $ref: '#/components/schemas/Access'
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfPassport:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Passport'
         status:
           type: object
           properties:
@@ -76,12 +147,7 @@ paths:
         content:
           application/json:
             schema:
-              properties:
-                statustoken:
-                  type: string
-              required:
-                - statusToken
-
+              $ref: '#/components/schemas/StatusTokenExchangeRequest'
       responses:
         '200':
           description: Successfully exchanged
@@ -89,3 +155,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfAccess'
+
+  /admin/enter:
+    post:
+      description: Handle user's entrance with access-token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessRequest'
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfPassport'
+
+
+  /admin/exit:
+    post:
+      description: Handle user's exit with access-token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessRequest'
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfPassport'

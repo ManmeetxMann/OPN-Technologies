@@ -1,86 +1,80 @@
 import * as express from 'express'
-import { Request, Response } from 'express'
+import {NextFunction, Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 
 import Validation from '../../../common/src/utils/validation'
+import {PassportService} from '../../../passport/src/services/passport-service'
+import {AccessService} from '../service/access.service'
+import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wrapper'
+import {PassportStatuses} from '../../../passport/src/models/passport'
+import {isPassed} from '../../../common/src/utils/datetime-util'
 
-class AdminController implements IControllerBase
-{
-    public path = '/admin'
-    public router = express.Router()
-    
-    constructor()
-    {
-        this.initRoutes()
+class AdminController implements IControllerBase {
+  private router = express.Router()
+  private passportService = new PassportService()
+  private accessService = new AccessService()
+
+  constructor() {
+    this.initRoutes()
+  }
+
+  public initRoutes() {
+    const routes = express
+      .Router()
+      .post('/stats', this.stats)
+      .post('/enter', this.enter)
+      .post('/exit', this.exit)
+    this.router.use('/admin', routes)
+  }
+
+  stats = (req: Request, res: Response) => {
+    if (!Validation.validate(['locationId'], req, res)) {
+      return
     }
 
-    public initRoutes()
-    {
-        this.router.post(this.path + '/stats', this.stats)
-        this.router.post(this.path + '/enter', this.enter)
-        this.router.post(this.path + '/exit', this.exit)
+    console.log(req.body.locationId)
+    const response = {
+      data: {
+        peopleOnPremises: 213,
+        accessDenied: 8,
+      },
+      serverTimestamp: new Date().toISOString(),
+      status: 'complete',
     }
 
-    stats = (req: Request, res: Response) => 
-    {
-        if (!Validation.validate(["locationId"], req, res))
-        {
-            return
-        }
+    res.json(response)
+  }
 
-        console.log(req.body.locationId);
-        const response = 
-        {
-            data : {
-                peopleOnPremises : 213,
-                accessDenied: 8
-            },
-            serverTimestamp: (new Date()).toISOString(),
-            status : "complete"
-        }
+  enter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {accessToken, locationId} = req.body
+      const access = await this.accessService.findOneByToken(accessToken)
+      const passport = await this.passportService.findOneByToken(access.statusToken)
 
-        res.json(response);
+      if (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil)) {
+        await this.accessService.handleEnter(access, locationId)
+        res.json(actionSucceed(passport))
+      }
+
+      res.status(400).json(actionFailed('Access denied for access-token', passport))
+    } catch (error) {
+      next(error)
     }
+  }
 
-    enter = (req: Request, res: Response) => 
-    {
-        if (!Validation.validate(["accessToken", "locationId"], req, res))
-        {
-            return
-        }
+  exit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {accessToken, locationId} = req.body
+      const access = await this.accessService.findOneByToken(accessToken)
+      const passport = await this.passportService.findOneByToken(access.statusToken)
 
-        console.log(req.body.accessToken);
-        console.log(req.body.locationId);
-        const response = 
-        {
-            data : {
-                userPassport : {
-                    badge: "proceed"
-                }
-            },
-            serverTimestamp: (new Date()).toISOString(),
-            status : "complete"
-        }
+      await this.accessService.handleExit(access, locationId)
 
-        res.json(response);
+      res.json(actionSucceed(passport))
+    } catch (error) {
+      next(error)
     }
-
-    exit = (req: Request, res: Response) => 
-    {
-        if (!Validation.validate(["accessToken", "locationId"], req, res))
-        {
-            return
-        }
-
-        console.log(req.body.accessToken);
-        const response = 
-        {
-            serverTimestamp: (new Date()).toISOString(),
-            status : "complete"
-        }
-
-        res.json(response);
-    }
+  }
 }
 
 export default AdminController
