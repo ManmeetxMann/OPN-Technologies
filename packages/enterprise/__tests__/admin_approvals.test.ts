@@ -7,7 +7,7 @@ describe('admin tests', () => {
     // Create
     const adminApprovalService = new AdminApprovalService()
     await adminApprovalService.create({
-        email: "testo2@i239.co",
+        email: "sep@stayopn.com",
         enabled: true,
         adminForLocationIds: [
             "organizations/6J2JhcUIKE3JyagfKCor/locations/7okpD6yrbuZxAeCUukMo"
