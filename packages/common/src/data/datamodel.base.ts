@@ -91,6 +91,14 @@ abstract class DataModel<T extends HasId> {
       .fetch()
   }
 
+  async findWhereMapHasKeyValueEqual(map: string, key: string, value: any): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
+    return await this.datastore.firestoreORM
+      .collection<T>({path: this.rootPath})
+      .where(fieldPath, '==', value)
+      .fetch()
+  }
+
   async deleteAll(): Promise<void> {
     const dao = this.datastore.firestoreORM.collection<T>({path: this.rootPath})
     const results = await dao.fetchAll()
