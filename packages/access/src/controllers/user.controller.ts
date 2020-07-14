@@ -1,7 +1,6 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import {v4 as uuid} from 'uuid'
 
 import Validation from '../../../common/src/utils/validation'
 import {PassportService} from '../../../passport/src/services/passport-service'
@@ -24,18 +23,17 @@ class UserController implements IControllerBase {
       .Router()
       .post('/createToken', this.createToken)
       .post('/exposure/verify', this.exposureVerification)
-
     this.router.use('/user', routes)
   }
 
   createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const statusToken = req.body.statusToken
+      const {statusToken, locationId} = req.body
       const access = await this.passportService
         .findOneByToken(statusToken)
         .then((passport) =>
           passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil)
-            ? this.accessService.create()
+            ? this.accessService.create(statusToken, locationId)
             : null,
         )
       const response = access
@@ -46,42 +44,6 @@ class UserController implements IControllerBase {
     } catch (error) {
       next(error)
     }
-  }
-
-  enter = (req: Request, res: Response) => {
-    if (!Validation.validate(['accessToken', 'locationId'], req, res)) {
-      return
-    }
-
-    console.log(req.body.accessToken)
-    console.log(req.body.locationId)
-    const response = {
-      data: {
-        accessToken: uuid(),
-        accessTimestamp: new Date().toISOString(),
-      },
-      serverTimestamp: new Date().toISOString(),
-      status: 'complete',
-    }
-
-    res.json(response)
-  }
-
-  exit = (req: Request, res: Response) => {
-    if (!Validation.validate(['accessToken', 'locationId'], req, res)) {
-      return
-    }
-
-    console.log(req.body.accessToken)
-    const response = {
-      data: {
-        accessTimestamp: new Date().toISOString(),
-      },
-      serverTimestamp: new Date().toISOString(),
-      status: 'complete',
-    }
-
-    res.json(response)
   }
 
   exposureVerification = (req: Request, res: Response) => {

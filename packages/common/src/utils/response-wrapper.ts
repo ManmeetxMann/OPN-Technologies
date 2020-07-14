@@ -12,5 +12,5 @@ export const of = <T>(data: T, statusCode: string, message: string = null): Resp
 export const actionSucceed = <T>(data: T = null): ResponseWrapper<T> =>
   of(data, ResponseStatusCodes.Succeed)
 
-export const actionFailed = (message?: string): ResponseWrapper<null> =>
-  of(null, ResponseStatusCodes.Failed, message)
+export const actionFailed = <T>(message?: string, data: T = null): ResponseWrapper<T> =>
+  of(data, ResponseStatusCodes.Failed, message)
