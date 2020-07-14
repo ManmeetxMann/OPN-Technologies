@@ -22,6 +22,10 @@
         {
             "from" : "../lookup/openapi.yaml",
             "to": "./docs/lookup.yaml"
+        },
+        {
+            "from" : "../access/openapi.yaml",
+            "to": "./docs/access.yaml"
         }
     ],
     "copyFilesSettings" : {
