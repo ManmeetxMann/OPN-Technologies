@@ -123,8 +123,8 @@ components:
           type: string
       required:
         - email
-        
-    
+
+
     AuthLinkProcessRequest:
       type: object
       properties:
@@ -278,7 +278,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Response'
-            
+
 paths:
   /organizations:
     post:
