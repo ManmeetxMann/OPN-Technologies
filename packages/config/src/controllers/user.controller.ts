@@ -6,29 +6,29 @@ import { request } from 'http'
 import Validation from '../../../common/src/utils/validation'
 
 
-class UserController implements IControllerBase 
+class UserController implements IControllerBase
 {
     public path = ''
     public router = express.Router()
-    
+
     constructor()
     {
         this.initRoutes()
     }
 
-    public initRoutes() 
+    public initRoutes()
     {
         this.router.post(this.path + '/', this.config)
     }
 
-    config = (req: Request, res: Response) => 
+    config = (req: Request, res: Response) =>
     {
         // if (!Validation.validate(["registrationToken"], req, res))
         // {
         //     return
         // }
-        
-        const response = 
+
+        const response =
         {
             data : {
                 updates : {
@@ -40,8 +40,8 @@ class UserController implements IControllerBase
                     },
                     android :
                     {
-                        force: "0.1",
-                        optional: "0.1",
+                        force: "1.0.0",
+                        optional: "1.0.0",
                         url: "http://play.google.com/store/apps/details?id=com.opn.app"
                     }
                 },
