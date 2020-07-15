@@ -12,4 +12,9 @@ export class UserService {
   findOne(id: string): Promise<User> {
     return this.userRepository.get(id)
   }
+
+  async findOneById(id: string): Promise<User> {
+    const user = await this.userRepository.get(id)
+    return !!user ? user : null
+  }
 }
