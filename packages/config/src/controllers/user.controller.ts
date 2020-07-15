@@ -40,8 +40,8 @@ class UserController implements IControllerBase
                     },
                     android :
                     {
-                        force: "0.1",
-                        optional: "0.1",
+                        force: "1.0.0",
+                        optional: "1.0.0",
                         url: "http://play.google.com/store/apps/details?id=com.opn.app"
                     }
                 },
