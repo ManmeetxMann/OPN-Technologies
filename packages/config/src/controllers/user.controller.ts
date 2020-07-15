@@ -6,29 +6,29 @@ import { request } from 'http'
 import Validation from '../../../common/src/utils/validation'
 
 
-class UserController implements IControllerBase 
+class UserController implements IControllerBase
 {
     public path = ''
     public router = express.Router()
-    
+
     constructor()
     {
         this.initRoutes()
     }
 
-    public initRoutes() 
+    public initRoutes()
     {
         this.router.post(this.path + '/', this.config)
     }
 
-    config = (req: Request, res: Response) => 
+    config = (req: Request, res: Response) =>
     {
         // if (!Validation.validate(["registrationToken"], req, res))
         // {
         //     return
         // }
-        
-        const response = 
+
+        const response =
         {
             data : {
                 updates : {
@@ -46,11 +46,11 @@ class UserController implements IControllerBase
                     }
                 },
                 services : {
-                    registry : "https://registry.platform.stayopn.com",
-                    attestation : "https://attestation.platform.stayopn.com",
-                    access : "https://access.platform.stayopn.com",
-                    lookup : "https://lookup.platform.stayopn.com",
-                    enterprise : "https://enterprise.platform.stayopn.com"
+                    registry : "https://registry-staging-dot-opn-platform-dev.nn.r.appspot.com",
+                    attestation : "https://attestation-staging-dot-opn-platform-dev.nn.r.appspot.com/",
+                    access : "https://access-staging-dot-opn-platform-dev.nn.r.appspot.com/",
+                    lookup : "https://lookup-staging-dot-opn-platform-dev.nn.r.appspot.com/",
+                    enterprise : "https://enterprise-staging-dot-opn-platform-dev.nn.r.appspot.com/"
                 },
                 badgeValidityPeriod : 60 * 60 * 24,
                 badges:
