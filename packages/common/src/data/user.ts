@@ -1,5 +1,5 @@
 import DataModel from '../../../common/src/data/datamodel.base'
-import {AdminProfile} from "./user-admin"
+import {AdminProfile} from "./admin"
 
 export type User = {
   id: string

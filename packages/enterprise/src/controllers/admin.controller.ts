@@ -4,7 +4,7 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 
 import Validation from '../../../common/src/utils/validation'
 
-import { AuthService } from '../../../common/src/service/auth'
+import { AuthService } from '../../../common/src/service/auth/auth-service'
 import {AuthLinkRequest} from '../models/auth-link-request'
 
 class AdminController implements IControllerBase
