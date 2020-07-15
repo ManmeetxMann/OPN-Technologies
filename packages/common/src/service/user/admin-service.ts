@@ -18,4 +18,8 @@ export class AdminApprovalService {
     .findWhereMapHasKeyValueEqual('profile', 'email', email)
     .then((results) => (results.length > 0 ? results[0] : null))
   }
+
+  updateExpiry(id: string, expired: boolean) : Promise<AdminApproval> {
+    return this.adminApprovalRepository.updateProperty(id, "expired", expired)
+  }
 }
