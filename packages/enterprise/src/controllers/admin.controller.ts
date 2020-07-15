@@ -4,10 +4,14 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 
 import Validation from '../../../common/src/utils/validation'
 
+import { AuthService } from '../../../common/src/service/auth'
+import {AuthLinkRequest} from '../models/auth-link-request'
+
 class AdminController implements IControllerBase
 {
     public path = '/admin'
     public router = express.Router()
+    private authService = new AuthService()
     
     constructor()
     {
@@ -23,20 +27,23 @@ class AdminController implements IControllerBase
         this.router.post(this.path + '/billing/config', this.billingConfig)
     }
 
-    authSignInLinkRequest = (req: Request, res: Response) => 
+    authSignInLinkRequest = async (req: Request, res: Response) => 
     {
-        if (!Validation.validate(["email"], req, res))
-        {
-            return
-        }
+        const {
+            email,
+            connectedId
+        } = req.body as AuthLinkRequest
+        
+        // Create the user if not created
+        const userCreated = await this.authService.createUser(email)
+
+        // Send the email
+        const link = await this.authService.sendEmailSignInLink(email)
+
 
         const response = 
         {
-            data : {
-                magicLink : "https://app.platform.stayopn.com/admin/auth/987654321234567890",
-                authRequestToken : "987654321234567890"
-            },
-            status : "complete"
+            status : "succeeded"
         }
 
         res.json(response);
