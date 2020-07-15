@@ -11,7 +11,7 @@ describe("auth tests", () => {
 
     test("auth email login sending", async (done) => {
         const authService = new AuthService()
-        const userCreated = await authService.sendEmailSignInLink("sep@stayopn.com")
+        const userCreated = await authService.sendEmailSignInLink("sep@stayopn.com", "Sep Seyedi")
         expect(userCreated)
         done()
     });
