@@ -59,6 +59,20 @@ abstract class DataModel<T extends HasId> {
   }
 
   /**
+   * Updates one field in a document
+   * @param id identifier for the document in the collection
+   * @param fieldName field / property name to increment
+   */
+  async updateProperty(id: string, fieldName: string): Promise<T> {
+    return this.get(id).then((data) =>
+      this.update({
+        ...data,
+        [fieldName]: data[fieldName],
+      } as Storable<T>),
+    )
+  }
+
+  /**
    * Increments the given property of the specified document by the count given
    * @param id identifier for the document in the collection
    * @param fieldName field / property name to increment
