@@ -28,7 +28,8 @@
         "express-openapi-validate": "^0.5.1",
         "js-yaml": "^3.14.0",
         "cors": "^2.8.5",
-        "moment": "^2.27.0"
+        "moment": "^2.27.0",
+        "node-fetch": "^2.6.0"
     },
     "devDependencies": {
         "copyfiles": "^2.3.0",
