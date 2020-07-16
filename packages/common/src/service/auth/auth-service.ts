@@ -15,16 +15,16 @@ export class AuthService {
         }
     }
 
-    async sendEmailSignInLink(email: string, name: string) : Promise<void> {
-        const signInLink = await this.firebaseAuth.generateSignInWithEmailLink(email, {
+    async sendEmailSignInLink(info: {email: string, name?: string}) : Promise<void> {
+        const signInLink = await this.firebaseAuth.generateSignInWithEmailLink(info.email, {
             url: "https://www.stayopn.com/DONE"
         })
 
         console.log(`Sending url: ${signInLink}`)
 
         const magiclinkMail = new MagicLinkMail({
-            email: email,
-            name: name,
+            email: info.email,
+            name: info.name,
             parameters: {
                 link: signInLink
             }

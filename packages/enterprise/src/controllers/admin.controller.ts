@@ -65,8 +65,8 @@ class AdminController implements IControllerBase
             const userCreated = await this.authService.createUser(email)
 
             // Send the email
-            const name = [connectedUser.firstName,connectedUser.lastNameInitial].join(" ")
-            const link = await this.authService.sendEmailSignInLink(email, name)
+            // const name = [connectedUser.firstName,connectedUser.lastNameInitial].join(" ")
+            const link = await this.authService.sendEmailSignInLink({email: email})
             
             res.json(actionSucceed());
         } 

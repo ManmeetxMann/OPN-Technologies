@@ -2,7 +2,7 @@ import fetch from 'node-fetch'
 
 export interface MailInfo {
     email: string,
-    name: string,
+    name?: string,
     parameters: any
 }
 
