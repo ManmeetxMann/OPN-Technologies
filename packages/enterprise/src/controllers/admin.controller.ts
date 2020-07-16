@@ -5,7 +5,7 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import Validation from '../../../common/src/utils/validation'
 
 import { AuthService } from '../../../common/src/service/auth/auth-service'
-import { AuthLinkRequest } from '../models/auth-link-request'
+import { AuthLinkRequestRequest, AuthLinkProcessRequest } from '../models/auth-link-request'
 import { actionSucceed } from '../../../common/src/utils/response-wrapper'
 import { AdminApprovalService } from '../../../common/src/service/user/admin-service'
 import { UnauthorizedException } from '../../../common/src/exceptions/unauthorized-exception'
@@ -34,9 +34,8 @@ class AdminController implements IControllerBase
     authSignInLinkRequest = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const {
-                email,
-                connectedId
-            } = req.body as AuthLinkRequest
+                email
+            } = req.body as AuthLinkRequestRequest
 
             // Check if we have approval for this admin
             const adminApprovalService = new AdminApprovalService()
@@ -46,26 +45,10 @@ class AdminController implements IControllerBase
                 throw new UnauthorizedException("Invalid Operation")
             }
 
-            // Get connected Id and name + last initial
-            const userService = new UserService()
-            const connectedUser = await userService.findOneById(connectedId)
-            if (connectedUser == null)
-            {
-                throw new UnauthorizedException("Invalid Operation")
-            }
-
-            // We good now...
-
-            // We have it so let's mark it as expired
-            // adminApprovalService.updateExpiry(approval.id, true) // TODO: DO THIS ON APPROVED
-            
-            DO ABOVE AFTER approval AND CREATE LANDING PAGE FOR APPROVED AND APP REDIRECT...
-
             // Create the user if not created
             const userCreated = await this.authService.createUser(email)
 
             // Send the email
-            // const name = [connectedUser.firstName,connectedUser.lastNameInitial].join(" ")
             const link = await this.authService.sendEmailSignInLink({email: email})
             
             res.json(actionSucceed());
@@ -75,22 +58,56 @@ class AdminController implements IControllerBase
         }
     }
 
-    authSignIn = (req: Request, res: Response) => 
+    authSignIn = async (req: Request, res: Response, next: NextFunction) => 
     {
-        if (!Validation.validate(["authRequestToken"], req, res))
-        {
-            return
-        }
+        try {
+            const {
+                authToken,
+                connectedId
+            } = req.body as AuthLinkProcessRequest
 
-        const response = 
-        {
-            data : {
-                authToken : "987654321234567890"
-            },
-            status : "complete"
-        }
+            // Validate the token first and get the Auth user Id from it
+            // FYI: AuthUserId != connectedUserId
+            // (one is FB Auth User and other Firestore Custom User)
+            const authService = new AuthService()
+            const validatedAuthUser = await authService.verifyAuthToken(authToken)
+            if (validatedAuthUser === null || validatedAuthUser.email === null) {
+                throw new UnauthorizedException("Invalid Operation")
+            }
 
-        res.json(response);
+            // Check if auth user is connected to someone else
+            const userService = new UserService()
+            var connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
+            if (connectedUser !== null && connectedUser.id !== connectedId) {
+                throw new UnauthorizedException("Invalid Operation")
+            }
+            
+            // Check if the first time -> Let's connect Auth + Connected User
+            if (connectedUser === null) {
+                // Get the admin's email, so we can get the approval + expire
+                const email = validatedAuthUser.email! //await authService.getUserEmail(validatedAuthUser.uid)
+                const adminApprovalService = new AdminApprovalService()
+                const approval = await adminApprovalService.findOneByEmail(email)
+                adminApprovalService.updateExpiry(approval.id, true)
+
+                // Get connected user + Update
+                connectedUser = await userService.findOneById(connectedId)
+
+                // Set the connection
+                connectedUser.authUserId = validatedAuthUser.uid
+                connectedUser.admin = approval.profile
+                await userService.update(connectedUser)
+
+                // Change the display name
+                const name = [connectedUser.firstName, connectedUser.lastNameInitial].join(" ")
+                authService.updateUser(validatedAuthUser.uid, {displayName: name})
+            }
+
+            res.json(actionSucceed());
+        } 
+        catch (error) {
+            next(error)
+        }
     }
 
     teamStatus = (req: Request, res: Response) => 
