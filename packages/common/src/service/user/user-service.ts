@@ -9,6 +9,14 @@ export class UserService {
     return this.userRepository.add(user)
   }
 
+  async update(user: User) : Promise<void> {
+    await this.userRepository.update(user)
+  }
+  
+  async updateProperty(id: string, fieldName: string, fieldValue: string) : Promise<void> {
+    await this.userRepository.updateProperty(id, fieldName, fieldValue)
+  }
+
   findOne(id: string): Promise<User> {
     return this.userRepository.get(id)
   }
@@ -16,5 +24,14 @@ export class UserService {
   async findOneById(id: string): Promise<User> {
     const user = await this.userRepository.get(id)
     return !!user ? user : null
+  }
+
+  async findOneByAuthUserId(authUserid: string): Promise<User> {
+    const results = await this.userRepository.findWhereEqual("authUserId", authUserid)
+    if (results.length > 0) {
+      return results[0]
+    } else {
+      return null
+    }
   }
 }
