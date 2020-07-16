@@ -47,7 +47,7 @@ class UserController implements IControllerBase
                 },
                 services : {
                     registry : "https://registry-staging-dot-opn-platform-dev.nn.r.appspot.com/",
-                    attestation : "https://attestation-staging-dot-opn-platform-dev.nn.r.appspot.com/",
+                    attestation : "https://passport-staging-dot-opn-platform-dev.nn.r.appspot.com/",
                     access : "https://access-staging-dot-opn-platform-dev.nn.r.appspot.com/",
                     lookup : "https://lookup-staging-dot-opn-platform-dev.nn.r.appspot.com/",
                     enterprise : "https://enterprise-staging-dot-opn-platform-dev.nn.r.appspot.com/"
