@@ -1,6 +1,7 @@
 import * as express from 'express'
 import { Request, Response, NextFunction } from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
+import { Middleware } from '../../../common/src/types/middleware'
 
 import Validation from '../../../common/src/utils/validation'
 
@@ -26,9 +27,9 @@ class AdminController implements IControllerBase
     {
         this.router.post(this.path + '/auth/signIn/request', this.authSignInLinkRequest)
         this.router.post(this.path + '/auth/signIn/process', this.authSignIn)
-        this.router.post(this.path + '/team/status', this.teamStatus)
-        this.router.post(this.path + '/team/review', this.teamReview)
-        this.router.post(this.path + '/billing/config', this.billingConfig)
+        this.router.post(this.path + '/team/status', this.authMiddleware, this.teamStatus)
+        this.router.post(this.path + '/team/review', this.authMiddleware, this.teamReview)
+        this.router.post(this.path + '/billing/config', this.authMiddleware, this.billingConfig)
     }
 
     authSignInLinkRequest = async (req: Request, res: Response, next: NextFunction) => {
@@ -42,7 +43,8 @@ class AdminController implements IControllerBase
             const approval = await adminApprovalService.findOneByEmail(email)
             if (approval === null || approval.expired === true)
             {
-                throw new UnauthorizedException("Invalid Operation")
+                console.error(`Admin approval for ${email} does not exist`)
+                throw new UnauthorizedException("Unauthorized Access")
             }
 
             // Create the user if not created
@@ -52,7 +54,7 @@ class AdminController implements IControllerBase
             const link = await this.authService.sendEmailSignInLink({email: email})
             
             res.json(actionSucceed());
-        } 
+        }
         catch (error) {
             next(error)
         }
@@ -72,22 +74,25 @@ class AdminController implements IControllerBase
             const authService = new AuthService()
             const validatedAuthUser = await authService.verifyAuthToken(authToken)
             if (validatedAuthUser === null || validatedAuthUser.email === null) {
-                throw new UnauthorizedException("Invalid Operation")
+                console.error("Invalid auth token provided")
+                throw new UnauthorizedException("Unauthorized access")
             }
 
             // Check if auth user is connected to someone else
             const userService = new UserService()
             var connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
             if (connectedUser !== null && connectedUser.id !== connectedId) {
-                throw new UnauthorizedException("Invalid Operation")
+                console.error("Auth token seems to already be connected")
+                throw new UnauthorizedException("Unauthorized access")
             }
             
-            // Check if the first time -> Let's connect Auth + Connected User
+            // Check if the first time, if so let's:
+            // Interconnect Auth + Connected User
             if (connectedUser === null) {
-                // Get the admin's email, so we can get the approval + expire
-                const email = validatedAuthUser.email! //await authService.getUserEmail(validatedAuthUser.uid)
+                // Get the original admin approval:
+                // So we can get the approval + expire
                 const adminApprovalService = new AdminApprovalService()
-                const approval = await adminApprovalService.findOneByEmail(email)
+                const approval = await adminApprovalService.findOneByEmail(validatedAuthUser.email!)
                 adminApprovalService.updateExpiry(approval.id, true)
 
                 // Get connected user + Update
@@ -100,7 +105,16 @@ class AdminController implements IControllerBase
 
                 // Change the display name
                 const name = [connectedUser.firstName, connectedUser.lastNameInitial].join(" ")
-                authService.updateUser(validatedAuthUser.uid, {displayName: name})
+                authService.updateUser(validatedAuthUser.uid, {
+                    displayName: name
+                })
+
+                // Commented below... as the claim would apply to the next login...
+                // // Set the connectedId
+                // await authService.setClaims(validatedAuthUser.uid, {
+                //     connecteduserId: connectedUser.id,
+                //     admin: true
+                // })
             }
 
             res.json(actionSucceed());
@@ -110,12 +124,50 @@ class AdminController implements IControllerBase
         }
     }
 
-    teamStatus = (req: Request, res: Response) => 
-    {
-        if (!Validation.validate([], req, res, "authToken"))
-        {
+    authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+        const bearerHeader = req.headers['authorization'];
+        if (!bearerHeader) {
+            // Forbidden
+            res.sendStatus(403)
             return
         }
+        
+        // Get the bearer
+        const bearer = bearerHeader.split(' ');
+        const authToken = bearer[1];
+
+        // Validate
+        const authService = new AuthService()
+        const validatedAuthUser = await authService.verifyAuthToken(authToken)
+        if (validatedAuthUser === null) {
+            // Forbidden
+            res.sendStatus(403)
+            return
+        }
+
+        // Grab our claim
+        // TODO: using claims to get the id and then calling a get(...) instead of query
+        //       would have been faster... but the claim won't propogate because they already
+        //       had their claim... To be researched :-)
+        const userService = new UserService()
+        const connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
+        if (connectedUser === null) {
+            // Forbidden
+            res.sendStatus(403)
+            return
+        }
+
+        // Set it for the actual route
+        res.locals.connectedUser = connectedUser
+            
+        // Done
+        next();
+    }
+
+    teamStatus = (req: Request, res: Response) => 
+    {
+        // Test
+        console.log(res.locals.connectedUser)
 
         const response = 
         {
