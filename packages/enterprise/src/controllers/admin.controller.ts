@@ -64,7 +64,7 @@ class AdminController implements IControllerBase
     {
         try {
             const {
-                authToken,
+                idToken,
                 connectedId
             } = req.body as AuthLinkProcessRequest
 
@@ -72,7 +72,7 @@ class AdminController implements IControllerBase
             // FYI: AuthUserId != connectedUserId
             // (one is FB Auth User and other Firestore Custom User)
             const authService = new AuthService()
-            const validatedAuthUser = await authService.verifyAuthToken(authToken)
+            const validatedAuthUser = await authService.verifyAuthToken(idToken)
             if (validatedAuthUser === null || validatedAuthUser.email === null) {
                 console.error("Invalid auth token provided")
                 throw new UnauthorizedException("Unauthorized access")
@@ -134,11 +134,11 @@ class AdminController implements IControllerBase
         
         // Get the bearer
         const bearer = bearerHeader.split(' ');
-        const authToken = bearer[1];
+        const idToken = bearer[1];
 
         // Validate
         const authService = new AuthService()
-        const validatedAuthUser = await authService.verifyAuthToken(authToken)
+        const validatedAuthUser = await authService.verifyAuthToken(idToken)
         if (validatedAuthUser === null) {
             // Forbidden
             res.sendStatus(403)
