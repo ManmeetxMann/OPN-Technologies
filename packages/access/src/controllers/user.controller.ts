@@ -32,7 +32,8 @@ class UserController implements IControllerBase {
       const access = await this.passportService
         .findOneByToken(statusToken)
         .then((passport) =>
-          passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil)
+          passport.status === PassportStatuses.Pending ||
+          (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
             ? this.accessService.create(statusToken, locationId)
             : null,
         )
