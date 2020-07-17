@@ -3,8 +3,11 @@ import { MagicLinkMail } from "../messaging/magiclink-service"
 
 export interface AuthUser {
     uid: string
-    email?: string;
+    email?: string
+    customClaims? : AuthClaims
 }
+
+export type AuthClaims = {[key: string]: any}
 
 /**
  * Authorization Service
@@ -34,9 +37,24 @@ export class AuthService {
     }
 
     async sendEmailSignInLink(info: {email: string, name?: string}) : Promise<void> {
-        const signInLink = await this.firebaseAuth.generateSignInWithEmailLink(info.email, {
-            url: "https://www.stayopn.com/DONE"
-        })
+        // Setup action
+        const actionCodeSettings = {
+            url: "https://www.stayopn.com/DONE",
+            handleCodeInApp: true,
+            iOS: {
+                bundleId: 'com.stayopn'
+            },
+            android: {
+                packageName: 'com.stayopn',
+                installApp: true,
+                minimumVersion: '12'
+            },
+            // FDL custom domain.
+            dynamicLinkDomain: 'stayopn.page.link'
+        }
+
+        const signInLink = await this.firebaseAuth
+            .generateSignInWithEmailLink(info.email, actionCodeSettings)
 
         console.log(`Sending url: ${signInLink}`)
 
@@ -58,7 +76,12 @@ export class AuthService {
             }
         } catch (error) {
         }
-        
+
         return null
+    }
+
+    async setClaims(authUserId: string, claims: AuthClaims) : Promise<void> {
+        await this.firebaseAuth
+            .setCustomUserClaims(authUserId, claims)
     }
 }
