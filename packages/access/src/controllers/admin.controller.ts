@@ -47,19 +47,20 @@ class AdminController implements IControllerBase {
 
   enter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {accessToken, locationId} = req.body
+      const {accessToken, locationId, base64Photo} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
       const passport = await this.passportService.findOneByToken(access.statusToken)
+      const responseBody = {passport, base64Photo}
       const canEnter =
         passport.status === PassportStatuses.Pending ||
         (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
 
       if (canEnter) {
         await this.accessService.handleEnter(access, locationId)
-        res.json(actionSucceed(passport))
+        res.json(actionSucceed(responseBody))
       }
 
-      res.status(400).json(actionFailed('Access denied for access-token', passport))
+      res.status(400).json(actionFailed('Access denied for access-token', responseBody))
     } catch (error) {
       next(error)
     }
@@ -67,13 +68,13 @@ class AdminController implements IControllerBase {
 
   exit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {accessToken, locationId} = req.body
+      const {accessToken, locationId, base64Photo} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
       const passport = await this.passportService.findOneByToken(access.statusToken)
 
       await this.accessService.handleExit(access, locationId)
 
-      res.json(actionSucceed(passport))
+      res.json(actionSucceed({passport, base64Photo}))
     } catch (error) {
       next(error)
     }

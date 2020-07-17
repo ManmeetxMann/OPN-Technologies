@@ -69,9 +69,12 @@ components:
           type: string
         locationId:
           type: string
+        base64Photo:
+          type: string
       required:
         - accessToken
         - locationId
+        - base64Photo
 
     StatusTokenExchangeRequest:
       type: object
