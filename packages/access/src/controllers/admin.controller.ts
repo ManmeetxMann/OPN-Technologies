@@ -50,8 +50,11 @@ class AdminController implements IControllerBase {
       const {accessToken, locationId} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
       const passport = await this.passportService.findOneByToken(access.statusToken)
+      const canEnter =
+        passport.status === PassportStatuses.Pending ||
+        (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
 
-      if (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil)) {
+      if (canEnter) {
         await this.accessService.handleEnter(access, locationId)
         res.json(actionSucceed(passport))
       }
