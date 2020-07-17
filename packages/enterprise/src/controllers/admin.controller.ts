@@ -1,6 +1,7 @@
 import * as express from 'express'
 import { Request, Response, NextFunction } from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
+import { Middleware } from '../../../common/src/types/middleware'
 
 import Validation from '../../../common/src/utils/validation'
 
