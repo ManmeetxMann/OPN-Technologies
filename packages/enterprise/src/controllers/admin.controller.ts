@@ -1,7 +1,7 @@
 import * as express from 'express'
 import { Request, Response, NextFunction } from 'express'
+
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import { Middleware } from '../../../common/src/types/middleware'
 
 import Validation from '../../../common/src/utils/validation'
 
@@ -11,6 +11,7 @@ import { actionSucceed } from '../../../common/src/utils/response-wrapper'
 import { AdminApprovalService } from '../../../common/src/service/user/admin-service'
 import { UnauthorizedException } from '../../../common/src/exceptions/unauthorized-exception'
 import { UserService } from '../../../common/src/service/user/user-service'
+import { TokenService } from '../../../common/src/service/auth/token-service'
 
 class AdminController implements IControllerBase
 {
