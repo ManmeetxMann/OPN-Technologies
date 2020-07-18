@@ -18,13 +18,13 @@ class AdminController implements IControllerBase
     public path = '/admin'
     public router = express.Router()
     private authService = new AuthService()
-    
+
     constructor()
     {
         this.initRoutes()
     }
 
-    public initRoutes() 
+    public initRoutes()
     {
         this.router.post(this.path + '/auth/signIn/request', this.authSignInLinkRequest)
         this.router.post(this.path + '/auth/signIn/process', this.authSignIn)
@@ -53,7 +53,7 @@ class AdminController implements IControllerBase
 
             // Send the email
             const link = await this.authService.sendEmailSignInLink({email: email})
-            
+
             res.json(actionSucceed());
         }
         catch (error) {
@@ -61,7 +61,7 @@ class AdminController implements IControllerBase
         }
     }
 
-    authSignIn = async (req: Request, res: Response, next: NextFunction) => 
+    authSignIn = async (req: Request, res: Response, next: NextFunction) =>
     {
         try {
             const {
@@ -86,7 +86,7 @@ class AdminController implements IControllerBase
                 console.error("Auth token seems to already be connected")
                 throw new UnauthorizedException("Unauthorized access")
             }
-            
+
             // Check if the first time, if so let's:
             // Interconnect Auth + Connected User
             if (connectedUser === null) {
@@ -119,7 +119,7 @@ class AdminController implements IControllerBase
             }
 
             res.json(actionSucceed());
-        } 
+        }
         catch (error) {
             next(error)
         }
@@ -132,7 +132,7 @@ class AdminController implements IControllerBase
             res.sendStatus(403)
             return
         }
-        
+
         // Get the bearer
         const bearer = bearerHeader.split(' ');
         const idToken = bearer[1];
@@ -160,17 +160,17 @@ class AdminController implements IControllerBase
 
         // Set it for the actual route
         res.locals.connectedUser = connectedUser
-            
+
         // Done
         next();
     }
 
-    teamStatus = (req: Request, res: Response) => 
+    teamStatus = (req: Request, res: Response) =>
     {
         // Test
         console.log(res.locals.connectedUser)
 
-        const response = 
+        const response =
         {
             data : {
                 status : [
@@ -218,14 +218,14 @@ class AdminController implements IControllerBase
         res.json(response)
     }
 
-    teamReview = (req: Request, res: Response) => 
+    teamReview = (req: Request, res: Response) =>
     {
         if (!Validation.validate(["connectedId", "approval"], req, res, "authRequestToken"))
         {
             return
         }
 
-        const response = 
+        const response =
         {
             // data : {
             //     authToken : "987654321234567890"
@@ -237,14 +237,14 @@ class AdminController implements IControllerBase
         res.json(response);
     }
 
-    billingConfig = (req: Request, res: Response) => 
+    billingConfig = (req: Request, res: Response) =>
     {
         if (!Validation.validate([], req, res, "authRequestToken"))
         {
             return
         }
 
-        const response = 
+        const response =
         {
             data : {
                 billing: {

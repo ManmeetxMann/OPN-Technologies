@@ -1,14 +1,6 @@
 import DataModel from '../../../common/src/data/datamodel.base'
 import {AdminProfile} from "./admin"
 
-export type AdminProfile = {
-  approvalUsed: boolean
-  email: string
-  enabled: boolean
-  adminForLocationIds: string[]
-  superAdminForOrganizationIds: string[]
-}
-
 export type User = {
   id: string
   firstName: string
