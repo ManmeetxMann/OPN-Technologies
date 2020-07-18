@@ -35,6 +35,10 @@
 		{
 			"name": "📦 @opn/registry",
 			"path": "packages/registry"
+		},
+		{
+			"name": "📦 @opn/admin-tools",
+			"path": "packages/tools"
 		}
 	],
 	"settings": {}

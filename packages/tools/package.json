@@ -1,0 +1,12 @@
+{
+    "name": "@opn/admin-tools",
+    "private": true,
+    "version": "0.0.0",
+    "scripts": {
+        "deploy": "firebase deploy --project opn-platform-dev --only hosting",
+        "login": "firebase login"
+    },
+    "devDependencies": {
+        "firebase-tools": "^8.6.0"
+    }
+}
