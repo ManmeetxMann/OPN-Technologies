@@ -42,7 +42,7 @@ class AdminController implements IControllerBase
             // Check if we have approval for this admin
             const adminApprovalService = new AdminApprovalService()
             const approval = await adminApprovalService.findOneByEmail(email)
-            if (approval === null || approval.expired === true)
+            if (!approval || approval.expired === true)
             {
                 console.error(`Admin approval for ${email} does not exist`)
                 throw new UnauthorizedException("Unauthorized Access")
@@ -74,7 +74,7 @@ class AdminController implements IControllerBase
             // (one is FB Auth User and other Firestore Custom User)
             const authService = new AuthService()
             const validatedAuthUser = await authService.verifyAuthToken(idToken)
-            if (validatedAuthUser === null || validatedAuthUser.email === null) {
+            if (!(validatedAuthUser?.email)) {
                 console.error("Invalid auth token provided")
                 throw new UnauthorizedException("Unauthorized access")
             }
@@ -82,14 +82,14 @@ class AdminController implements IControllerBase
             // Check if auth user is connected to someone else
             const userService = new UserService()
             var connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
-            if (connectedUser !== null && connectedUser.id !== connectedId) {
+            if (!connectedUser && connectedUser.id !== connectedId) {
                 console.error("Auth token seems to already be connected")
                 throw new UnauthorizedException("Unauthorized access")
             }
 
             // Check if the first time, if so let's:
             // Interconnect Auth + Connected User
-            if (connectedUser === null) {
+            if (!connectedUser) {
                 // Get the original admin approval:
                 // So we can get the approval + expire
                 const adminApprovalService = new AdminApprovalService()
@@ -98,7 +98,7 @@ class AdminController implements IControllerBase
 
                 // Get connected user + Update
                 connectedUser = await userService.findOneById(connectedId)
-                if (validatedAuthUser === null || validatedAuthUser.email === null) {
+                if (!(validatedAuthUser?.email)) {
                     console.error("ConnectedId is non-existent")
                     throw new UnauthorizedException("Unauthorized access")
                 }
@@ -144,7 +144,7 @@ class AdminController implements IControllerBase
         // Validate
         const authService = new AuthService()
         const validatedAuthUser = await authService.verifyAuthToken(idToken)
-        if (validatedAuthUser === null) {
+        if (!validatedAuthUser) {
             // Forbidden
             res.sendStatus(403)
             return
@@ -156,7 +156,7 @@ class AdminController implements IControllerBase
         //       had their claim... To be researched :-)
         const userService = new UserService()
         const connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
-        if (connectedUser === null) {
+        if (!connectedUser) {
             // Forbidden
             res.sendStatus(403)
             return
