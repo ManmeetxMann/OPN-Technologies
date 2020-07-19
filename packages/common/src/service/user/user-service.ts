@@ -28,10 +28,6 @@ export class UserService {
 
   async findOneByAuthUserId(authUserid: string): Promise<User> {
     const results = await this.userRepository.findWhereEqual("authUserId", authUserid)
-    if (results.length > 0) {
-      return results[0]
-    } else {
-      return null
-    }
+    return results.length > 0 ? results.shift() : null
   }
 }
