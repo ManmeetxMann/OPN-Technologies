@@ -98,6 +98,10 @@ class AdminController implements IControllerBase
 
                 // Get connected user + Update
                 connectedUser = await userService.findOneById(connectedId)
+                if (validatedAuthUser === null || validatedAuthUser.email === null) {
+                    console.error("ConnectedId is non-existent")
+                    throw new UnauthorizedException("Unauthorized access")
+                }
 
                 // Set the connection
                 connectedUser.authUserId = validatedAuthUser.uid
