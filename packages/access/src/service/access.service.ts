@@ -5,11 +5,14 @@ import {Access} from '../models/access'
 import {firestore} from 'firebase-admin'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {AccessStats} from '../models/access-stats'
+import {AttestationService} from '../../../passport/src/services/attestation-service'
 
 export class AccessService {
   private dataStore = new DataStore()
   private identifier = new IdentifiersModel(this.dataStore)
   private accessRepository = new AccessRepository(this.dataStore)
+  private attestationService = new AttestationService()
 
   create(statusToken: string, locationId: string): Promise<Access> {
     return this.identifier
@@ -31,7 +34,7 @@ export class AccessService {
       }))
   }
 
-  handleEnter(access: AccessModel): Promise<Access> {
+  handleEnter(access: AccessModel, locationId: string): Promise<Access> {
     if (!!access.enteredAt || !!access.exitAt) {
       throw new BadRequestException('Token already used to enter or exit')
     }

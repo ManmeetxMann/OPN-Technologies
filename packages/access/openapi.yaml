@@ -84,6 +84,14 @@ components:
         - statusToken
         - locationId
 
+    Statistics:
+      type: object
+      properties:
+        peopleOnPremises:
+          type: number
+        accessDenied:
+          type: number
+
     ResponseOfAccess:
       type: object
       properties:
@@ -113,6 +121,31 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Passport'
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+
+    ResponseOfStatistics:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Statistics'
         status:
           type: object
           properties:
@@ -217,3 +250,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfEnterOrExit'
+
+
+  /admin/stats:
+    post:
+      description: Stats for a location
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                locationId:
+                  type: string
+              required:
+                - locationId
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfPassport'

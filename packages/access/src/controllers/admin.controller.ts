@@ -30,22 +30,15 @@ class AdminController implements IRouteController {
     this.router.use('/admin', routes)
   }
 
-  stats = (req: Request, res: Response): void => {
-    if (!Validation.validate(['locationId'], req, res)) {
-      return
-    }
+  stats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {locationId} = req.body
+      const statistics  = await this.accessService.getStatsForLocation(locationId)
 
-    console.log(req.body.locationId)
-    const response = {
-      data: {
-        peopleOnPremises: 213,
-        accessDenied: 8,
-      },
-      serverTimestamp: new Date().toISOString(),
-      status: 'complete',
+      res.json(actionSucceed(statistics))
+    } catch (error) {
+      next(error)
     }
-
-    res.json(response)
   }
 
   enter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
