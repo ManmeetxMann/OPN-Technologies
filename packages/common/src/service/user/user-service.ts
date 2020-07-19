@@ -23,7 +23,7 @@ export class UserService {
 
   async findOneById(id: string): Promise<User> {
     const user = await this.userRepository.get(id)
-    return !!user ? user : null
+    return !user ? null : user
   }
 
   async findOneByAuthUserId(authUserid: string): Promise<User> {
