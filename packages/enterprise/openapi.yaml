@@ -36,6 +36,8 @@ components:
           type: string
         name:
           type: string
+        logoUrl:
+          type: string
       required:
         - name
 
@@ -221,6 +223,32 @@ components:
               nullable: true
               type: string
 
+    ResponseOfOrganizations:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organization'
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
   responses:
     Response:
       description: Default Response wrapper
@@ -301,3 +329,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfOrganizationConnection'
+  /user/connect/locations:
+    post:
+      description: Find all the user's connected-organizations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                userId:
+                  type: string
+              required:
+                - userId
+      responses:
+        '200':
+          description: Successfully found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfOrganizations'
