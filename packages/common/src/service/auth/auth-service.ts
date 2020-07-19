@@ -4,10 +4,8 @@ import { MagicLinkMail } from "../messaging/magiclink-service"
 export interface AuthUser {
     uid: string
     email?: string
-    customClaims? : AuthClaims
+    customClaims? : Record<string,any>
 }
-
-export type AuthClaims = {[key: string]: any}
 
 /**
  * Authorization Service
