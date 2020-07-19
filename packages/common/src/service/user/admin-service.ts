@@ -9,7 +9,7 @@ export class AdminApprovalService {
     return this.adminApprovalRepository
     .add({
         expired: false,
-        profile: profile
+        profile
     })
   }
 
