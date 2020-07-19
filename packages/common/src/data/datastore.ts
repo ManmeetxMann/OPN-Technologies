@@ -7,9 +7,9 @@ class DataStore
     private static readonly rootPath = "/"
 
     // Properties
-    private readonly firestore : firebaseAdmin.firestore.Firestore
     readonly firestoreORM : FirestoreSimple
     readonly firestoreAdmin = FirebaseManager.getInstance().getAdmin()
+    private readonly firestore : firebaseAdmin.firestore.Firestore
 
     constructor()
     {
