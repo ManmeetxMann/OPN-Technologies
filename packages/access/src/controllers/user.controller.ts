@@ -1,6 +1,6 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
-import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
+import IRouteController from '../../../common/src/interfaces/IRouteController.interface'
 
 import Validation from '../../../common/src/utils/validation'
 import {PassportService} from '../../../passport/src/services/passport-service'
@@ -9,8 +9,8 @@ import {isPassed} from '../../../common/src/utils/datetime-util'
 import {AccessService} from '../service/access.service'
 import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wrapper'
 
-class UserController implements IControllerBase {
-  private router = express.Router()
+class UserController implements IRouteController {
+  public router = express.Router()
   private passportService = new PassportService()
   private accessService = new AccessService()
 
