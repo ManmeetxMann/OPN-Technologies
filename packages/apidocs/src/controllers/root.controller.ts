@@ -1,5 +1,5 @@
 import * as express from 'express'
-import { Request, Response } from 'express'
+// import { Request, Response } from 'express'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {SwaggerServiceFactory, SwaggerService} from '../service/swagger-service'
@@ -18,7 +18,7 @@ class RootController implements IControllerBase
         this.initRoutes()
     }
 
-    public initRoutes()
+    public initRoutes(): void
     {
         // Swagger definition
         const factory = new SwaggerServiceFactory({

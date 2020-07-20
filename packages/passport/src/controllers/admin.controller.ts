@@ -14,12 +14,12 @@ class AdminController implements IControllerBase
         this.initRoutes()
     }
 
-    public initRoutes()
+    public initRoutes(): void
     {
         this.router.post(this.path + '/status/verify', this.check)
     }
 
-    check = (req: Request, res: Response) => 
+    check = (req: Request, res: Response): void => 
     {
         if (!Validation.validate(["attestationToken"], req, res))
         {

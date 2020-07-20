@@ -14,7 +14,7 @@ class AdminController implements IControllerBase
         this.initRoutes()
     }
 
-    public initRoutes() 
+    public initRoutes(): void
     {
         this.router.post(this.path + '/auth/signIn/request', this.authSignInLinkRequest)
         this.router.post(this.path + '/auth/signIn/process', this.authSignIn)
@@ -23,7 +23,7 @@ class AdminController implements IControllerBase
         this.router.post(this.path + '/billing/stats', this.billingStats)
     }
 
-    authSignInLinkRequest = (req: Request, res: Response) => 
+    authSignInLinkRequest = (req: Request, res: Response): void => 
     {
         if (!Validation.validate(["email"], req, res))
         {
@@ -42,7 +42,7 @@ class AdminController implements IControllerBase
         res.json(response);
     }
 
-    authSignIn = (req: Request, res: Response) => 
+    authSignIn = (req: Request, res: Response): void => 
     {
         if (!Validation.validate(["authRequestToken"], req, res))
         {
@@ -60,7 +60,7 @@ class AdminController implements IControllerBase
         res.json(response);
     }
 
-    teamStatus = (req: Request, res: Response) => 
+    teamStatus = (req: Request, res: Response): void => 
     {
         if (!Validation.validate([], req, res, "authToken"))
         {
@@ -115,7 +115,7 @@ class AdminController implements IControllerBase
         res.json(response)
     }
 
-    teamReview = (req: Request, res: Response) => 
+    teamReview = (req: Request, res: Response): void => 
     {
         if (!Validation.validate(["connectedId", "approval"], req, res, "authRequestToken"))
         {
@@ -133,7 +133,7 @@ class AdminController implements IControllerBase
         res.json(response);
     }
 
-    billingStats = (req: Request, res: Response) => 
+    billingStats = (req: Request, res: Response): void => 
     {
         if (!Validation.validate([], req, res, "authRequestToken"))
         {

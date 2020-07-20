@@ -8,7 +8,7 @@ describe('registration tests', () => {
     const datastore = new DataStore()
 
     // Create
-    const registration = new RegistrationModel(datastore)
+    new RegistrationModel(datastore)
   })
 
   test('registration > reset', async () => {
@@ -30,13 +30,13 @@ describe('registration tests', () => {
     const registration = new RegistrationModel(datastore)
 
     // Add
-    const id1 = await registration.add({
+    await registration.add({
       type: RegistrationTypes.User,
       pushToken: 'S1234567898765431',
       platform: Platforms.IOS,
       osVersion: '13',
     })
-    const id2 = await registration.add({
+    await registration.add({
       type: RegistrationTypes.Admin,
       pushToken: 'S1234567898765432',
       platform: Platforms.Android,

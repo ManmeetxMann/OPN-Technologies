@@ -2,8 +2,8 @@ module.exports = {
   parser: '@typescript-eslint/parser', // Specifies ESLint parser
   extends: [
     'plugin:@typescript-eslint/recommended',
-    'prettier/@typescript-eslint',
-    'plugin:prettier/recommended',
+    // 'prettier/@typescript-eslint',
+    // 'plugin:prettier/recommended',
   ],
   plugins: ['@typescript-eslint'],
   parserOptions: {
@@ -12,5 +12,6 @@ module.exports = {
   },
   rules: {
     '@typescript-eslint/no-explicit-any': 2,
+    '@typescript-eslint/no-unused-vars': ['error', { 'ignoreRestSiblings': true }]
   },
 }

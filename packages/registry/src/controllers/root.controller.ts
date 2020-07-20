@@ -13,12 +13,12 @@ class RootController implements IControllerBase
         this.initRoutes()
     }
 
-    public initRoutes() 
+    public initRoutes(): void
     {
         this.router.get('/', this.index)
     }
 
-    index = (req: Request, res: Response) => 
+    index = (req: Request, res: Response): void => 
     {
         res.send("")
     }

@@ -1,7 +1,6 @@
 import * as express from 'express'
 import { Request, Response } from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import { request } from 'http'
 import { v4 as uuid } from 'uuid';
 
 import Validation from '../../../common/src/utils/validation'
@@ -17,13 +16,13 @@ class UserController implements IControllerBase
         this.initRoutes()
     }
 
-    public initRoutes() 
+    public initRoutes(): void
     {
         this.router.post(this.path + '/locations/list', this.getAll)
         this.router.post(this.path + '/attestation/get', this.getAttestationConfig)
     }
 
-    getAll = (req: Request, res: Response) => 
+    getAll = (req: Request, res: Response): void => 
     {
         if (!Validation.validate(["connectedToken"], req, res))
         {
@@ -118,7 +117,7 @@ class UserController implements IControllerBase
         res.json(response);
     }
 
-    getAttestationConfig = (req: Request, res: Response) => 
+    getAttestationConfig = (req: Request, res: Response): void => 
     {
         if (!Validation.validate(["statusToken", "locationId"], req, res))
         {

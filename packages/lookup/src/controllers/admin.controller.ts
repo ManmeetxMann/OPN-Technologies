@@ -1,8 +1,7 @@
 import * as express from 'express'
-import { Request, Response } from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 
-import Validation from '../../../common/src/utils/validation'
+// import Validation from '../../../common/src/utils/validation'
 
 class AdminController implements IControllerBase
 {
@@ -14,7 +13,7 @@ class AdminController implements IControllerBase
         this.initRoutes()
     }
 
-    public initRoutes() 
+    public initRoutes(): void
     {
         // this.router.get(this.path + '/check', this.check)
     }

@@ -17,8 +17,9 @@ class App {
     validation: boolean
     corsOptions?: string
     port: number
-    middleWares: any
-    controllers: any
+    middleWares: RequestHandler[]
+    // DAVID - NEED BETTER TYPE
+    controllers: unknown[]
   }) {
     this.app = express()
     this.port = appInit.port
@@ -34,16 +35,18 @@ class App {
     // this.template()
   }
 
-  private middlewares(middleWares: {forEach: (arg0: (middleWare: any) => void) => void}) {
+  private middlewares(middleWares: RequestHandler[]) {
     middleWares.forEach((middleWare) => {
       this.app.use(middleWare)
     })
   }
 
-  private routes(controllers: {forEach: (arg0: (controller: any) => void) => void}) {
+  private routes(controllers: unknown[]) {
     // Handle all registered ones
     controllers.forEach((controller) => {
-      this.app.use('/', controller.router)
+      if (controller.router) {
+        this.app.use('/', controller.router)
+      }
     })
 
     // At the end of all registered routes, append one for 404 errors
@@ -81,13 +84,14 @@ class App {
   //     this.app.set('view engine', 'pug')
   // }
 
-  public listen() {
+  public listen(): void {
     this.app.listen(this.port, () => {
       console.log(`App listening on the http://localhost:${this.port}`)
     })
   }
 }
 
-const test = 1
+// DAVID - what is this for?
+// const test = 1
 
 export default App

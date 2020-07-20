@@ -1,4 +1,4 @@
-import { Request, Response, Router } from 'express'
+import { Request, Response, Router, RequestHandler } from 'express'
 import swaggerJSDoc from "swagger-jsdoc"
 import swaggerUi from "swagger-ui-express"
 
@@ -21,7 +21,8 @@ export class SwaggerService {
     private servers: SwaggerServer[]
     private yamlPath: string
 
-    private swaggerSpec: any
+    // per library, correct type is 'object'
+    private swaggerSpec: unknown
 
     constructor(init: {openApiVersion: string, info: SwaggerInfo, servers: SwaggerServer[], yamlPath: string}) {
         // Initialize
@@ -48,19 +49,19 @@ export class SwaggerService {
         this.swaggerSpec = swaggerJSDoc(options)
     }
 
-    serve() : any {
+    serve(): RequestHandler[] {
         return swaggerUi.serve
     }
 
-    setup() : any {
+    setup(): RequestHandler {
         return swaggerUi.setup(this.swaggerSpec)
     }
 
-    title() : string {
+    title(): string {
         return this.info.title
     }
 
-    path() : string {
+    path(): string {
         return this.yamlPath.replace(".yaml", "")
     }
 }
@@ -74,7 +75,7 @@ export class SwaggerServiceFactory {
         this.router = init.router
     }
 
-    setupRoutes() {
+    setupRoutes(): void {
         const prefix = "/docs/"
 
         // Setup index

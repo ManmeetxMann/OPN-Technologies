@@ -83,7 +83,7 @@ abstract class DataModel<T extends HasId> {
     return result
   }
 
-  async findWhereEqual(property: string, value: any): Promise<T[]> {
+  async findWhereEqual(property: string, value: unknown): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
     return await this.datastore.firestoreORM
       .collection<T>({path: this.rootPath})

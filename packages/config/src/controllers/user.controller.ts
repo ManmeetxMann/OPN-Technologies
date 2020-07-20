@@ -1,9 +1,9 @@
 import * as express from 'express'
 import { Request, Response } from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import { request } from 'http'
+// import { request } from 'http'
 
-import Validation from '../../../common/src/utils/validation'
+// import Validation from '../../../common/src/utils/validation'
 
 
 class UserController implements IControllerBase
@@ -16,12 +16,12 @@ class UserController implements IControllerBase
         this.initRoutes()
     }
 
-    public initRoutes()
+    public initRoutes(): void
     {
         this.router.post(this.path + '/', this.config)
     }
 
-    config = (req: Request, res: Response) =>
+    config = (req: Request, res: Response): void =>
     {
         // if (!Validation.validate(["registrationToken"], req, res))
         // {

@@ -18,7 +18,7 @@ class UserController implements IControllerBase {
     this.initRoutes()
   }
 
-  public initRoutes() {
+  public initRoutes(): void {
     const routes = express
       .Router()
       .post('/createToken', this.createToken)
@@ -47,7 +47,7 @@ class UserController implements IControllerBase {
     }
   }
 
-  exposureVerification = (req: Request, res: Response) => {
+  exposureVerification = (req: Request, res: Response): void => {
     if (!Validation.validate(['accessToken', 'locationId'], req, res)) {
       return
     }

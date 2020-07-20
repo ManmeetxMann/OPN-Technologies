@@ -16,7 +16,7 @@ export class IdentifiersModel extends DataModel<IdentifiersSchema>
      * For now increments a counter and converts it to hex
      * @param identifierName name of the identifier
      */
-    async getUniqueValue(identifierName : string) : Promise<string>
+    async getUniqueValue(identifierName : string): Promise<string>
     {
         // Increment by 1
         await this.increment(identifierName, "count", 1)

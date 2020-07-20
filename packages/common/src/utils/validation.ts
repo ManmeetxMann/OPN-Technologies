@@ -3,14 +3,14 @@ import { Request, Response } from 'express'
 class Validation 
 {
     public static errors = [];
-    public static validate(vars: string[], req: Request, res: Response, authHeader: string | null = null) : Boolean
+    public static validate(vars: string[], req: Request, res: Response, authHeader: string | null = null): boolean
     {
         // Wipe
         Validation.errors = [];
 
         // Compute
-        var validates = true;
-        var authError = false;
+        let validates = true;
+        let authError = false;
 
         // First check for auth header
         if (authHeader !== null)
@@ -23,14 +23,14 @@ class Validation
             authError = true;
             
             // Now check
-            var headerName = "authorization";
+            const headerName = "authorization";
             if (req.headers && req.headers[headerName]) 
             {
-                let partsString = req.headers[headerName] as string
-                var parts = partsString.split(' ');
+                const partsString = req.headers[headerName] as string
+                const parts = partsString.split(' ');
                 if (parts.length === 2 && parts[0] === "Bearer") 
                 {
-                    let token = parts[1]
+                    const token = parts[1]
                     console.log(token)
     
                     validates = true;
@@ -41,9 +41,9 @@ class Validation
         
         // Check through the inputs
         console.log(vars)
-        for (var v of vars)
+        for (const v of vars)
         {
-            let validateVar = ((v in req.body) && (req.body[v] !== ""))
+            const validateVar = ((v in req.body) && (req.body[v] !== ""))
             if (validateVar === false)
             {
                 Validation.errors.push(v)

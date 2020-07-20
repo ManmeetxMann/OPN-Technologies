@@ -18,7 +18,7 @@ class AdminController implements IControllerBase {
     this.initRoutes()
   }
 
-  public initRoutes() {
+  public initRoutes(): void {
     const routes = express
       .Router()
       .post('/stats', this.stats)
@@ -27,7 +27,7 @@ class AdminController implements IControllerBase {
     this.router.use('/admin', routes)
   }
 
-  stats = (req: Request, res: Response) => {
+  stats = (req: Request, res: Response): void => {
     if (!Validation.validate(['locationId'], req, res)) {
       return
     }
