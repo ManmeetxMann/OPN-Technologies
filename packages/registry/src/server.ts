@@ -26,5 +26,3 @@ export const app = new App({
 })
 
 app.listen()
-// DAVID - WHAT IS THIS FOR
-// const t = 10

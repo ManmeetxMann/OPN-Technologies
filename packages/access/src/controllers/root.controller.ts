@@ -3,7 +3,7 @@ import { Request, Response } from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 
 
-class RootController implements IControllerBase 
+class RootController implements IControllerBase
 {
     public path = '/'
     public router = express.Router()

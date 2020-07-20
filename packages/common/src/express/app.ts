@@ -6,6 +6,7 @@ import jsYaml from 'js-yaml'
 import fs from 'fs'
 
 import {handleHttpException, handleRouteNotFound, handleValidationError} from '../middlewares/error'
+import {IRouteController} from 'interfaces/IControllerBase.interface'
 
 class App {
   public app: Application
@@ -19,7 +20,7 @@ class App {
     port: number
     middleWares: RequestHandler[]
     // DAVID - NEED BETTER TYPE
-    controllers: unknown[]
+    controllers: IRouteController[]
   }) {
     this.app = express()
     this.port = appInit.port
@@ -41,12 +42,10 @@ class App {
     })
   }
 
-  private routes(controllers: unknown[]) {
+  private routes(controllers: IRouteController[]) {
     // Handle all registered ones
     controllers.forEach((controller) => {
-      if (controller.router) {
-        this.app.use('/', controller.router)
-      }
+      this.app.use('/', controller.router)
     })
 
     // At the end of all registered routes, append one for 404 errors
@@ -90,8 +89,5 @@ class App {
     })
   }
 }
-
-// DAVID - what is this for?
-// const test = 1
 
 export default App
