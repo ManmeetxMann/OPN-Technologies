@@ -1,7 +1,6 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import {v4 as uuid} from 'uuid'
 
 import Validation from '../../../common/src/utils/validation'
 import {OrganizationService} from '../services/organization-service'
@@ -9,6 +8,8 @@ import {OrganizationConnectionRequest} from '../models/organization-connection-r
 import {UserService} from '../../../common/src/service/user/user-service'
 import {User} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {Organization} from '../models/organization'
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -72,63 +73,23 @@ class UserController implements IControllerBase {
     res.json(response)
   }
 
-  connectedLocations = (req: Request, res: Response): void => {
-    if (!Validation.validate(['connectedToken'], req, res)) {
-      return
-    }
+  connectedLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {userId} = req.body
+      const user = await this.userService.findOne(userId)
+      if (!user) {
+        throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
+      }
 
-    console.log(req.body.connectedToken)
-    const response = {
-      data: {
-        registeredLocations: [
-          {
-            id: uuid(),
-            orgId: uuid(),
-            title: 'Royal Ontario Museum',
-            address: "100 Queen's Park",
-            address2: 'Suite 403',
-            city: 'Toronto',
-            state: 'Ontario',
-            zip: 'M7V 1P9',
-            country: 'Canada',
-            divisions: [
-              {
-                id: uuid(),
-                title: 'Floor 1',
-                address: "100 Queen's Park",
-                address2: 'Suite 403',
-                city: 'Toronto',
-                state: 'Ontario',
-                zip: 'M7V 1P9',
-                country: 'Canada',
-              },
-              {
-                id: uuid(),
-                title: 'Floor 2',
-                address: "100 Queen's Park",
-                address2: 'Suite 403',
-                city: 'Toronto',
-                state: 'Ontario',
-                zip: 'M7V 1P9',
-                country: 'Canada',
-              },
-              {
-                id: uuid(),
-                title: 'Second Building',
-                address: "95 Queen's Park",
-                city: 'Toronto',
-                state: 'Ontario',
-                zip: 'M7V 1P9',
-                country: 'Canada',
-              },
-            ],
-          },
-        ],
-      },
-      status: 'complete',
+      const organizations: Organization[] = await Promise.all(
+        user.organizationIds
+          .map((organizationId) => this.organizationService.findOneById(organizationId))
+          .filter((org) => !!org),
+      )
+      res.json(actionSucceed(organizations))
+    } catch (error) {
+      next(error)
     }
-
-    res.json(response)
   }
 }
 

@@ -2,6 +2,7 @@ export type Organization = {
   id: string
   key: number
   name: string
+  logoUrl: string
 }
 
 export type OrganizationLocation = {

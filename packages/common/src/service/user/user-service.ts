@@ -8,4 +8,8 @@ export class UserService {
   create(user: User): Promise<User> {
     return this.userRepository.add(user)
   }
+
+  findOne(id: string): Promise<User> {
+    return this.userRepository.get(id)
+  }
 }

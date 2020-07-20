@@ -50,6 +50,9 @@ export class OrganizationService {
       return results[0]
     })
   }
+  findOneById(id: string): Promise<Organization> {
+    return this.organizationRepository.get(id)
+  }
 
   // TODO: To be replaced with a proper solution that generates a 5 digits code for by user and organization with an expiry
   private generateNewKey(): Promise<number> {

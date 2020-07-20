@@ -12,6 +12,9 @@ lerna-debug.log*
 # iCloud files
 *.icloud
 
+# Firebase files
+packages/tools/.firebase/**
+
 # Dependency directories
 node_modules/
 packages/*/node_modules/
