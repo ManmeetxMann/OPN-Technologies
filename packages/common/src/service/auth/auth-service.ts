@@ -78,7 +78,7 @@ export class AuthService {
         return null
     }
 
-    async setClaims(authUserId: string, claims: AuthClaims) : Promise<void> {
+    async setClaims(authUserId: string, claims: Record<string,any>) : Promise<void> {
         await this.firebaseAuth
             .setCustomUserClaims(authUserId, claims)
     }
