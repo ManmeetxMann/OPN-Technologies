@@ -19,7 +19,6 @@ class App {
     corsOptions?: string
     port: number
     middleWares: RequestHandler[]
-    // DAVID - NEED BETTER TYPE
     controllers: IRouteController[]
   }) {
     this.app = express()
