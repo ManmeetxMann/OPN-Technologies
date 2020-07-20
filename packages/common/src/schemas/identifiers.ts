@@ -1,7 +1,4 @@
-
-
-export interface IdentifiersSchema
-{
-    id: string,
-    count: number
+export interface IdentifiersSchema {
+  id: string
+  count: number
 }

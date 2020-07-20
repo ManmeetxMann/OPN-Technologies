@@ -65,8 +65,7 @@ class App {
   }
 
   private setupCors() {
-    if (!!this.corsOptions)
-    {
+    if (!!this.corsOptions) {
       this.app.use(cors({origin: this.corsOptions}))
     }
   }

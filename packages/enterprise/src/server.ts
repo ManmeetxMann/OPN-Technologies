@@ -11,20 +11,16 @@ import OrganizationController from './controllers/organization.controller'
 const PORT = Number(process.env.PORT) || 5003
 
 const app = new App({
-    port: PORT,
-    validation: true,
-    corsOptions: "*",
-    controllers: [
-        new RootController(),
-        new UserController(),
-        new AdminController(),
-        new OrganizationController(),
-    ],
-    middleWares: [
-        bodyParser.json(),
-        bodyParser.urlencoded({ extended: true }),
-        loggerMiddleware
-    ]
+  port: PORT,
+  validation: true,
+  corsOptions: '*',
+  controllers: [
+    new RootController(),
+    new UserController(),
+    new AdminController(),
+    new OrganizationController(),
+  ],
+  middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })
 
 app.listen()

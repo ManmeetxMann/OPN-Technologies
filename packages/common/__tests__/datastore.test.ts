@@ -1,10 +1,9 @@
+import DataStore from '../src/data/datastore'
 
-import DataStore from "../src/data/datastore"
+test('datastore class instantiates', () => {
+  // Create
+  const datastore = new DataStore()
 
-test("datastore class instantiates", () => {
-    // Create
-    const datastore = new DataStore()
-
-    // Test
-    expect(datastore)
-});
+  // Test
+  expect(datastore)
+})

@@ -3,20 +3,17 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 
 // import Validation from '../../../common/src/utils/validation'
 
-class AdminController implements IControllerBase
-{
-    public path = '/admin'
-    public router = express.Router()
-    
-    constructor()
-    {
-        this.initRoutes()
-    }
+class AdminController implements IControllerBase {
+  public path = '/admin'
+  public router = express.Router()
 
-    public initRoutes(): void
-    {
-        // this.router.get(this.path + '/check', this.check)
-    }
+  constructor() {
+    this.initRoutes()
+  }
+
+  public initRoutes(): void {
+    // this.router.get(this.path + '/check', this.check)
+  }
 }
 
 export default AdminController
