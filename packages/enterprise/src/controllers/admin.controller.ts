@@ -82,7 +82,7 @@ class AdminController implements IControllerBase
             // Check if auth user is connected to someone else
             const userService = new UserService()
             var connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
-            if (!connectedUser && connectedUser.id !== connectedId) {
+            if (!!connectedUser && connectedUser.id !== connectedId) {
                 console.error("Auth token seems to already be connected")
                 throw new UnauthorizedException("Unauthorized access")
             }
