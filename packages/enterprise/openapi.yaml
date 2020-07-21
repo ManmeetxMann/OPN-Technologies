@@ -116,6 +116,28 @@ components:
         - birthYear
         - base64Photo
 
+    AuthLinkRequestRequest:
+      type: object
+      properties:
+        email:
+          type: string
+      required:
+        - email
+
+
+    AuthLinkProcessRequest:
+      type: object
+      properties:
+        idToken:
+          type: string
+          description: Id Token from Firebase Auth
+        connectedId:
+          type: string
+          description: Your connected user Id
+      required:
+        - idToken
+        - connectedId
+
     User:
       type: object
       properties:
@@ -256,6 +278,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Response'
+
 paths:
   /organizations:
     post:
@@ -314,6 +337,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationLocations'
+
   /user/connect/add:
     post:
       description: Connect a user to an organization
@@ -329,6 +353,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfOrganizationConnection'
+
   /user/connect/locations:
     post:
       description: Find all the user's connected-organizations
@@ -348,3 +373,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfOrganizations'
+
+                
+
+  /admin/auth/signIn/request:
+    post:
+      description: Admin Auth Sign In Request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthLinkRequestRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /admin/auth/signIn/process:
+    post:
+      description: Admin Auth Sign In Process
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthLinkProcessRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
