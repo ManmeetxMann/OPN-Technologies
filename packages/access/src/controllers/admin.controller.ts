@@ -1,6 +1,6 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
-import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
+import IRouteController from '../../../common/src/interfaces/IRouteController.interface'
 
 import Validation from '../../../common/src/utils/validation'
 import {PassportService} from '../../../passport/src/services/passport-service'
@@ -11,8 +11,8 @@ import {isPassed} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
-class AdminController implements IControllerBase {
-  private router = express.Router()
+class AdminController implements IRouteController {
+  public router = express.Router()
   private passportService = new PassportService()
   private accessService = new AccessService()
   private userService = new UserService()
@@ -21,7 +21,7 @@ class AdminController implements IControllerBase {
     this.initRoutes()
   }
 
-  public initRoutes() {
+  public initRoutes(): void {
     const routes = express
       .Router()
       .post('/stats', this.stats)
@@ -30,7 +30,7 @@ class AdminController implements IControllerBase {
     this.router.use('/admin', routes)
   }
 
-  stats = (req: Request, res: Response) => {
+  stats = (req: Request, res: Response): void => {
     if (!Validation.validate(['locationId'], req, res)) {
       return
     }

@@ -15,7 +15,7 @@ class QuestionnaireController implements IControllerBase {
     this.initRoutes()
   }
 
-  public initRoutes() {
+  public initRoutes(): void {
     const childRouter = express
       .Router()
       .post('/', this.create)

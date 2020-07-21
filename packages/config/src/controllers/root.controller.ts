@@ -1,27 +1,22 @@
 import * as express from 'express'
-import { Request, Response } from 'express'
+import {Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 
+class RootController implements IControllerBase {
+  public path = '/'
+  public router = express.Router()
 
-class RootController implements IControllerBase 
-{
-    public path = '/'
-    public router = express.Router()
-    
-    constructor() 
-    {
-        this.initRoutes()
-    }
+  constructor() {
+    this.initRoutes()
+  }
 
-    public initRoutes() 
-    {
-        this.router.get('/root', this.index)
-    }
+  public initRoutes(): void {
+    this.router.get('/root', this.index)
+  }
 
-    index = (req: Request, res: Response) => 
-    {
-        res.send("")
-    }
+  index = (req: Request, res: Response): void => {
+    res.send('')
+  }
 }
 
 export default RootController

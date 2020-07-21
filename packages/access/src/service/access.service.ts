@@ -11,7 +11,7 @@ export class AccessService {
   private identifier = new IdentifiersModel(this.dataStore)
   private accessRepository = new AccessRepository(this.dataStore)
 
-  create(statusToken, locationId: string): Promise<Access> {
+  create(statusToken: string, locationId: string): Promise<Access> {
     return this.identifier
       .getUniqueValue('access')
       .then((token) =>

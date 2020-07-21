@@ -23,6 +23,7 @@ jobs:
         service_account_key: ${{ secrets.GCP_SA_KEY }}
     - run: npm install
     - run: npm run install-all
+    - run: npm run lint-all
     # - run: npm run test-all
     - run: npm run deploy-registry
     - run: npm run deploy-apidocs

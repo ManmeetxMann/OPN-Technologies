@@ -21,7 +21,7 @@ class UserController implements IControllerBase {
     this.initRoutes()
   }
 
-  public initRoutes() {
+  public initRoutes(): void {
     this.router.post(this.path + '/connect/add', this.connect)
     this.router.post(this.path + '/connect/remove', this.disconnect)
     this.router.post(this.path + '/connect/locations', this.connectedLocations)
@@ -57,7 +57,7 @@ class UserController implements IControllerBase {
     }
   }
 
-  disconnect = (req: Request, res: Response) => {
+  disconnect = (req: Request, res: Response): void => {
     if (!Validation.validate(['key'], req, res)) {
       return
     }

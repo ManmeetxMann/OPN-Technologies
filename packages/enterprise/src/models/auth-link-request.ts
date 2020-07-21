@@ -1,9 +1,9 @@
 export type AuthLinkRequestRequest = {
-    email: string
-    connectedId: string
+  email: string
+  connectedId: string
 }
 
 export type AuthLinkProcessRequest = {
-    idToken: string
-    connectedId: string
+  idToken: string
+  connectedId: string
 }

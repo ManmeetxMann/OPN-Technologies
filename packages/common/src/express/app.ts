@@ -1,10 +1,11 @@
-import express, {Application} from 'express'
+import express, {Application, RequestHandler} from 'express'
 import {OpenApiValidator} from 'express-openapi-validate'
 import cors from 'cors'
 import jsYaml from 'js-yaml'
 import fs from 'fs'
 
 import {handleErrors, handleRouteNotFound} from '../middlewares/error'
+import IRouteController from '../interfaces/IRouteController.interface'
 
 class App {
   public app: Application
@@ -16,8 +17,8 @@ class App {
     validation: boolean
     corsOptions?: string
     port: number
-    middleWares: any
-    controllers: any
+    middleWares: RequestHandler[]
+    controllers: IRouteController[]
   }) {
     this.app = express()
     this.port = appInit.port
@@ -33,13 +34,13 @@ class App {
     // this.template()
   }
 
-  private middlewares(middleWares: {forEach: (arg0: (middleWare: any) => void) => void}) {
+  private middlewares(middleWares: RequestHandler[]) {
     middleWares.forEach((middleWare) => {
       this.app.use(middleWare)
     })
   }
 
-  private routes(controllers: {forEach: (arg0: (controller: any) => void) => void}) {
+  private routes(controllers: IRouteController[]) {
     // Handle all registered ones
     controllers.forEach((controller) => {
       this.app.use('/', controller.router)
@@ -78,13 +79,11 @@ class App {
   //     this.app.set('view engine', 'pug')
   // }
 
-  public listen() {
+  public listen(): void {
     this.app.listen(this.port, () => {
       console.log(`App listening on the http://localhost:${this.port}`)
     })
   }
 }
-
-const test = 1
 
 export default App

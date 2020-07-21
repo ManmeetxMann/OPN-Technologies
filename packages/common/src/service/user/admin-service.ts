@@ -6,20 +6,19 @@ export class AdminApprovalService {
   private adminApprovalRepository = new AdminApprovalModel(this.dataStore)
 
   create(profile: AdminProfile): Promise<AdminApproval> {
-    return this.adminApprovalRepository
-    .add({
-        expired: false,
-        profile
+    return this.adminApprovalRepository.add({
+      expired: false,
+      profile,
     })
   }
 
-  findOneByEmail(email: string) : Promise<AdminApproval> {
+  findOneByEmail(email: string): Promise<AdminApproval> {
     return this.adminApprovalRepository
-    .findWhereMapHasKeyValueEqual('profile', 'email', email)
-    .then((results) => (results.length > 0 ? results[0] : null))
+      .findWhereMapHasKeyValueEqual('profile', 'email', email)
+      .then((results) => (results.length > 0 ? results[0] : null))
   }
 
-  updateExpiry(id: string, expired: boolean) : Promise<AdminApproval> {
-    return this.adminApprovalRepository.updateProperty(id, "expired", expired)
+  updateExpiry(id: string, expired: boolean): Promise<AdminApproval> {
+    return this.adminApprovalRepository.updateProperty(id, 'expired', expired)
   }
 }

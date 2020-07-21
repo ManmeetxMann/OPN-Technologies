@@ -15,7 +15,7 @@ class UserController implements IControllerBase {
     this.initRoutes()
   }
 
-  public initRoutes() {
+  public initRoutes(): void {
     this.router.post(this.path + '/status/get', this.check)
     this.router.post(this.path + '/status/update', this.update)
   }

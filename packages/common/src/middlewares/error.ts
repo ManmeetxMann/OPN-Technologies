@@ -8,7 +8,6 @@ export const handleErrors: ErrorMiddleware<HttpException | ValidationError> = (
   error,
   req,
   resp,
-  _next,
 ) => {
   console.error('Error!', error)
   if (error instanceof ValidationError) {
@@ -34,7 +33,7 @@ export const handleErrors: ErrorMiddleware<HttpException | ValidationError> = (
 }
 
 // Cannot have an error... to be used bottom of stack
-export const handleRouteNotFound: Middleware = (req, resp, _next) => {
+export const handleRouteNotFound: Middleware = (req, resp) => {
   const status = 404
   const response: ResponseWrapper<null> = {
     data: null,

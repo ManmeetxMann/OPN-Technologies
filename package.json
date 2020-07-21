@@ -3,7 +3,7 @@
 	"private": true,
 	"scripts": {
 		"clean-all": "lerna clean --yes && lerna run clean",
-		"lint-all": "eslint 'packages/**/**/*.ts'",
+		"lint-all": "eslint 'packages/**/**/*.ts' --ignore-path .gitignore --max-warnings=0",
 		"test-all": "lerna run test --stream",
 		"test:coverage-all": "lerna run coverage --stream",
 		"install-all": "lerna bootstrap --hoist",
@@ -27,6 +27,8 @@
 		"babel-cli": "^6.26.0",
 		"babel-preset-env": "^1.7.0",
 		"eslint": "^7.3.1",
+		"eslint-config-prettier": "^6.11.0",
+		"eslint-plugin-prettier": "^3.1.4",
 		"jest": "^26.1.0",
 		"lerna": "^3.22.1",
 		"prettier": "2.0.5",

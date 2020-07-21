@@ -28,7 +28,7 @@ export class OrganizationService {
     organizationId: string,
     locations: OrganizationLocation[],
   ): Promise<OrganizationLocation[]> {
-    return this.getOrganization(organizationId).then((_organization) =>
+    return this.getOrganization(organizationId).then(() =>
       new OrganizationLocationModel(this.dataStore, organizationId).addAll(locations),
     )
   }

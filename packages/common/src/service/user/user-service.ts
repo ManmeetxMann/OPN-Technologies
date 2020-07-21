@@ -9,11 +9,11 @@ export class UserService {
     return this.userRepository.add(user)
   }
 
-  async update(user: User) : Promise<void> {
+  async update(user: User): Promise<void> {
     await this.userRepository.update(user)
   }
-  
-  async updateProperty(id: string, fieldName: string, fieldValue: string) : Promise<void> {
+
+  async updateProperty(id: string, fieldName: string, fieldValue: string): Promise<void> {
     await this.userRepository.updateProperty(id, fieldName, fieldValue)
   }
 
@@ -27,7 +27,7 @@ export class UserService {
   }
 
   async findOneByAuthUserId(authUserid: string): Promise<User> {
-    const results = await this.userRepository.findWhereEqual("authUserId", authUserid)
+    const results = await this.userRepository.findWhereEqual('authUserId', authUserid)
     return results.length > 0 ? results.shift() : null
   }
 }

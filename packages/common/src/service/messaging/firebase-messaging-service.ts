@@ -9,11 +9,11 @@ type FirebaseSendParams = {
 }
 
 export class FirebaseMessagingService implements MessagingService<admin.messaging.Message> {
-  public send(message: admin.messaging.Message, params?: FirebaseSendParams): Promise<any> {
+  public send(message: admin.messaging.Message, params?: FirebaseSendParams): Promise<unknown> {
     return admin.messaging().send(message, params?.dryRun)
   }
 
-  public validatePushToken(token: string): Promise<any> {
+  public validatePushToken(token: string): Promise<unknown> {
     return this.send({token}, {dryRun: true}).catch((error: FirebaseError) => {
       console.log(`Something went wrong when validating token [${token}];`, error)
       if (
