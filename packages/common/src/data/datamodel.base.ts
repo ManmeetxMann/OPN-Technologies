@@ -1,5 +1,6 @@
 import DataStore from './datastore'
 import {HasId, OptionalIdStorable, Storable} from '@firestore-simple/admin/dist/types'
+import {firestore} from 'firebase-admin'
 
 abstract class DataModel<T extends HasId> {
   abstract readonly rootPath: string
@@ -80,12 +81,14 @@ abstract class DataModel<T extends HasId> {
    * @param byCount how much to increment
    */
   async increment(id: string, fieldName: string, byCount: number): Promise<T> {
-    return this.get(id).then((data) =>
-      this.update({
-        ...data,
-        [fieldName]: data[fieldName] + byCount,
-      } as Storable<T>),
-    )
+    return this.datastore.firestoreAdmin
+      .firestore()
+      .collection(this.rootPath)
+      .doc(id)
+      .update({
+        [fieldName]: firestore.FieldValue.increment(byCount),
+      })
+      .then((_) => this.get(id))
   }
 
   /**

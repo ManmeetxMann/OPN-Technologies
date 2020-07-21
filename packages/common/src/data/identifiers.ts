@@ -16,14 +16,9 @@ export class IdentifiersModel extends DataModel<IdentifiersSchema> {
    */
   async getUniqueValue(identifierName: string): Promise<string> {
     // Increment by 1
-    await this.increment(identifierName, 'count', 1)
-
-    // Get result
-    const result = await this.get(identifierName)
-    const idValue = result.count
-
     // Return hashed version
-    const idValueHashed = crypto.createHash('sha1').update(idValue.toString()).digest('base64')
-    return idValueHashed
+    return this.increment(identifierName, 'count', 1).then(({count}) =>
+      crypto.createHash('sha1').update(count.toString()).digest('base64'),
+    )
   }
 }
