@@ -1,10 +1,11 @@
-import express, {Application} from 'express'
+import express, {Application, RequestHandler} from 'express'
 import {OpenApiValidator} from 'express-openapi-validate'
 import cors from 'cors'
 import jsYaml from 'js-yaml'
 import fs from 'fs'
 
 import {handleErrors, handleRouteNotFound} from '../middlewares/error'
+import IRouteController from '../interfaces/IRouteController.interface'
 
 class App {
   public app: Application
