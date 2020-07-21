@@ -59,6 +59,21 @@ abstract class DataModel<T extends HasId> {
   }
 
   /**
+   * Updates one field in a document
+   * @param id identifier for the document in the collection
+   * @param fieldName field / property name to update
+   * @param fieldValue field / property value to update
+   */
+  async updateProperty(id: string, fieldName: string, fieldValue: any): Promise<T> {
+    return this.get(id).then((data) =>
+      this.update({
+        ...data,
+        [fieldName]: fieldValue,
+      } as Storable<T>),
+    )
+  }
+
+  /**
    * Increments the given property of the specified document by the count given
    * @param id identifier for the document in the collection
    * @param fieldName field / property name to increment
@@ -85,6 +100,14 @@ abstract class DataModel<T extends HasId> {
 
   async findWhereEqual(property: string, value: unknown): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+    return await this.datastore.firestoreORM
+      .collection<T>({path: this.rootPath})
+      .where(fieldPath, '==', value)
+      .fetch()
+  }
+
+  async findWhereMapHasKeyValueEqual(map: string, key: string, value: any): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
     return await this.datastore.firestoreORM
       .collection<T>({path: this.rootPath})
       .where(fieldPath, '==', value)

@@ -84,7 +84,7 @@ paths:
           application/json:
             schema:
               properties:
-                statustoken:
+                statusToken:
                   type: string
                   nullable: true
 

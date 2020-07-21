@@ -1,4 +1,5 @@
 import DataModel from '../../../common/src/data/datamodel.base'
+import {AdminProfile} from "./admin"
 
 export type User = {
   id: string
@@ -7,6 +8,8 @@ export type User = {
   birthYear: number
   base64Photo: string
   organizationIds?: string[]
+  admin?: AdminProfile
+  authUserId?: string
 }
 
 export class UserModel extends DataModel<User> {
