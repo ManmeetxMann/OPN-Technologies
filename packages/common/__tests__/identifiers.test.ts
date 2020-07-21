@@ -7,10 +7,10 @@ describe('identifier tests', () => {
     const datastore = new DataStore()
 
     // Create Identifier
-    /* const identifier = */ new IdentifiersModel(datastore)
+    const identifier = new IdentifiersModel(datastore)
 
     // Test wipe
-    // identifier.deleteAll()
+    return identifier.deleteAll()
   })
 
   test('identifier > reset', async () => {

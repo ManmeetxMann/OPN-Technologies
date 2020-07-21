@@ -17,8 +17,18 @@ export class IdentifiersModel extends DataModel<IdentifiersSchema> {
   async getUniqueValue(identifierName: string): Promise<string> {
     // Increment by 1
     // Return hashed version
-    return this.increment(identifierName, 'count', 1).then(({count}) =>
-      crypto.createHash('sha1').update(count.toString()).digest('base64'),
-    )
+    const zeroValue = this.zeroSet.find(({id}) => id === identifierName)
+    if (zeroValue === undefined) {
+      throw new Error(`${identifierName} cannot be incremented`)
+    }
+    let uniqueValue = zeroValue.count
+    try {
+      // increment the existing value and retrieve the new value
+      uniqueValue = await this.increment(identifierName, 'count', 1).then(({count}) => count)
+    } catch {
+      // initialize to the zero value
+      await this.update(zeroValue)
+    }
+    return crypto.createHash('sha1').update(uniqueValue.toString()).digest('base64')
   }
 }
