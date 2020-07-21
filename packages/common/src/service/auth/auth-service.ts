@@ -1,10 +1,10 @@
-import {FirebaseManager, firebaseAdmin} from '../../utils/firebase'
+import {FirebaseManager} from '../../utils/firebase'
 import {MagicLinkMail} from '../messaging/magiclink-service'
 
 export interface AuthUser {
   uid: string
   email?: string
-  customClaims?: Record<string, any>
+  customClaims?: Record<string, unknown>
 }
 
 /**
@@ -24,7 +24,7 @@ export class AuthService {
     }
   }
 
-  async updateUser(userId: string, properties: any): Promise<void> {
+  async updateUser(userId: string, properties: unknown): Promise<void> {
     await this.firebaseAuth.updateUser(userId, properties)
   }
 
@@ -78,7 +78,7 @@ export class AuthService {
     return null
   }
 
-  async setClaims(authUserId: string, claims: Record<string, any>): Promise<void> {
+  async setClaims(authUserId: string, claims: Record<string, unknown>): Promise<void> {
     await this.firebaseAuth.setCustomUserClaims(authUserId, claims)
   }
 }

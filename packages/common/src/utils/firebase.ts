@@ -17,11 +17,11 @@ export class FirebaseManager {
     // this.firestore = this.admin.firestore()
   }
 
-  getAdmin() {
+  getAdmin(): typeof admin {
     return this.admin
   }
 
-  static getInstance() {
+  static getInstance(): FirebaseManager {
     if (FirebaseManager.__instance === null) {
       FirebaseManager.__instance = new FirebaseManager()
     }

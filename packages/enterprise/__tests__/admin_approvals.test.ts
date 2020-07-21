@@ -1,4 +1,3 @@
-import {AdminApproval} from '../../common/src/data/admin'
 import {AdminApprovalService} from '../../common/src/service/user/admin-service'
 
 describe('admin tests', () => {

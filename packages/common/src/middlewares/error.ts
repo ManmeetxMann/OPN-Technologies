@@ -8,7 +8,6 @@ export const handleErrors: ErrorMiddleware<HttpException | ValidationError> = (
   error,
   req,
   resp,
-  _next,
 ) => {
   console.error('Error!', error)
   if (error instanceof ValidationError) {

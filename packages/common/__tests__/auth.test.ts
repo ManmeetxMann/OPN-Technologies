@@ -1,5 +1,4 @@
 import {AuthService} from '../src/service/auth/auth-service'
-import {doesNotMatch} from 'assert'
 
 describe('auth tests', () => {
   test('auth user creation', async (done) => {

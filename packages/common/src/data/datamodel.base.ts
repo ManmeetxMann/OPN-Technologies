@@ -64,7 +64,7 @@ abstract class DataModel<T extends HasId> {
    * @param fieldName field / property name to update
    * @param fieldValue field / property value to update
    */
-  async updateProperty(id: string, fieldName: string, fieldValue: any): Promise<T> {
+  async updateProperty(id: string, fieldName: string, fieldValue: unknown): Promise<T> {
     return this.get(id).then((data) =>
       this.update({
         ...data,
@@ -106,7 +106,7 @@ abstract class DataModel<T extends HasId> {
       .fetch()
   }
 
-  async findWhereMapHasKeyValueEqual(map: string, key: string, value: any): Promise<T[]> {
+  async findWhereMapHasKeyValueEqual(map: string, key: string, value: unknown): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
     return await this.datastore.firestoreORM
       .collection<T>({path: this.rootPath})

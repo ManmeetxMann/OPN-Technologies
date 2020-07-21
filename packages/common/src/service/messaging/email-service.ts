@@ -3,7 +3,7 @@ import fetch from 'node-fetch'
 export interface MailInfo {
   email: string
   name?: string
-  parameters: any
+  parameters: unknown
 }
 
 export abstract class Mail {
@@ -17,7 +17,7 @@ export abstract class Mail {
     this.recipient = recipient
   }
 
-  async send() {
+  async send(): Promise<void> {
     const email = {
       to: [
         {
