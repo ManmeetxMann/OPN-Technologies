@@ -67,14 +67,11 @@ components:
       properties:
         accessToken:
           type: string
-        locationId:
-          type: string
-        base64Photo:
+        userId:
           type: string
       required:
         - accessToken
-        - locationId
-        - base64Photo
+        - userId
 
     StatusTokenExchangeRequest:
       type: object
@@ -135,6 +132,35 @@ components:
               nullable: true
               type: string
 
+    ResponseOfEnterOrExit:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            passport:
+              $ref: '#/components/schemas/Passport'
+            base64Photo:
+              type: string
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
   responses:
     Response:
       description: Default Response wrapper
@@ -173,7 +199,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseOfPassport'
+                $ref: '#/components/schemas/ResponseOfEnterOrExit'
 
 
   /admin/exit:
@@ -190,4 +216,4 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseOfPassport'
+                $ref: '#/components/schemas/ResponseOfEnterOrExit'

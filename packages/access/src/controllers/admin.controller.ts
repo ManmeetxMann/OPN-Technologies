@@ -8,11 +8,14 @@ import {AccessService} from '../service/access.service'
 import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
+import {UserService} from '../../../common/src/service/user/user-service'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 class AdminController implements IControllerBase {
   private router = express.Router()
   private passportService = new PassportService()
   private accessService = new AccessService()
+  private userService = new UserService()
 
   constructor() {
     this.initRoutes()
@@ -47,16 +50,20 @@ class AdminController implements IControllerBase {
 
   enter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {accessToken, locationId, base64Photo} = req.body
+      const {accessToken, userId} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
       const passport = await this.passportService.findOneByToken(access.statusToken)
-      const responseBody = {passport, base64Photo}
+      const user = await this.userService.findOne(userId)
+      if (!user) {
+        throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
+      }
+      const responseBody = {passport, base64Photo: user.base64Photo}
       const canEnter =
         passport.status === PassportStatuses.Pending ||
         (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
 
       if (canEnter) {
-        await this.accessService.handleEnter(access, locationId)
+        await this.accessService.handleEnter(access)
         res.json(actionSucceed(responseBody))
       }
 
@@ -68,13 +75,16 @@ class AdminController implements IControllerBase {
 
   exit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {accessToken, locationId, base64Photo} = req.body
+      const {accessToken, userId} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
       const passport = await this.passportService.findOneByToken(access.statusToken)
+      const user = await this.userService.findOne(userId)
+      if (!user) {
+        throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
+      }
+      await this.accessService.handleExit(access)
 
-      await this.accessService.handleExit(access, locationId)
-
-      res.json(actionSucceed({passport, base64Photo}))
+      res.json(actionSucceed({passport, base64Photo: user.base64Photo}))
     } catch (error) {
       next(error)
     }
