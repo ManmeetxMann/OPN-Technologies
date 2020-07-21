@@ -254,7 +254,7 @@ paths:
 
   /admin/stats:
     post:
-      description: Stats for a location
+      description: Daily stats for a location
       requestBody:
         content:
           application/json:
@@ -271,4 +271,4 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseOfPassport'
+                $ref: '#/components/schemas/ResponseOfStatistics'

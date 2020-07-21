@@ -33,15 +33,17 @@ class AdminController implements IRouteController {
   stats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {locationId} = req.body
-      const statistics  = await this.accessService.getStatsForLocation(locationId)
+      const {peopleOnPremises, accessDenied} = await this.accessService.getTodayStatsForLocation(
+        locationId,
+      )
 
-      res.json(actionSucceed(statistics))
+      res.json(actionSucceed({peopleOnPremises, accessDenied}))
     } catch (error) {
       next(error)
     }
   }
 
-  enter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
     try {
       const {accessToken, userId} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
@@ -57,7 +59,7 @@ class AdminController implements IRouteController {
 
       if (canEnter) {
         await this.accessService.handleEnter(access)
-        res.json(actionSucceed(responseBody))
+        return res.json(actionSucceed(responseBody))
       }
 
       res.status(400).json(actionFailed('Access denied for access-token', responseBody))

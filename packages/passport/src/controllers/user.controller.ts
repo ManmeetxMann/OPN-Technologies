@@ -7,12 +7,14 @@ import {isPassed} from '../../../common/src/utils/datetime-util'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Attestation} from '../models/attestation'
 import {AttestationService} from '../services/attestation-service'
+import {AccessService} from '../../../access/src/service/access.service'
 
 class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
   private passportService = new PassportService()
   private attestationService = new AttestationService()
+  private accessService = new AccessService()
 
   constructor() {
     this.initRoutes()
@@ -65,6 +67,10 @@ class UserController implements IControllerBase {
         locationId,
         status: passportStatus,
       } as Attestation)
+
+      if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
+        await this.accessService.incrementAccessDenied(locationId)
+      }
 
       const passport = await this.passportService.create(passportStatus)
       res.json(actionSucceed(passport))

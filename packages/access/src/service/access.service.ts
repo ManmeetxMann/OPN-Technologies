@@ -5,14 +5,14 @@ import {Access} from '../models/access'
 import {firestore} from 'firebase-admin'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
-import {AccessStats} from '../models/access-stats'
-import {AttestationService} from '../../../passport/src/services/attestation-service'
+import {AccessStatsModel, AccessStatsRepository} from '../repository/access-stats.repository'
+import moment from 'moment'
 
 export class AccessService {
   private dataStore = new DataStore()
   private identifier = new IdentifiersModel(this.dataStore)
   private accessRepository = new AccessRepository(this.dataStore)
-  private attestationService = new AttestationService()
+  private accessStatsRepository = new AccessStatsRepository(this.dataStore)
 
   create(statusToken: string, locationId: string): Promise<Access> {
     return this.identifier
@@ -39,20 +39,25 @@ export class AccessService {
       throw new BadRequestException('Token already used to enter or exit')
     }
 
-    return this.accessRepository.update({
-      ...access,
-      enteredAt: firestore.FieldValue.serverTimestamp(),
-    })
+    return this.accessRepository
+      .update({
+        ...access,
+        enteredAt: firestore.FieldValue.serverTimestamp(),
+      })
+      .then((saved) => this.incrementPeopleOnPremises(locationId).then((_) => saved))
   }
 
   handleExit(access: AccessModel): Promise<Access> {
     if (!!access.exitAt) {
       throw new BadRequestException('Token already used to exit')
     }
-    return this.accessRepository.update({
-      ...access,
-      exitAt: firestore.FieldValue.serverTimestamp(),
-    })
+
+    return this.accessRepository
+      .update({
+        ...access,
+        exitAt: firestore.FieldValue.serverTimestamp(),
+      })
+      .then((saved) => this.decreasePeopleOnPremises(access.locationId).then((_) => saved))
   }
 
   findOneByToken(token: string): Promise<AccessModel> {
@@ -62,5 +67,59 @@ export class AccessService {
       }
       throw new ResourceNotFoundException(`Cannot find access with token [${token}]`)
     })
+  }
+
+  getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
+    const today = moment().startOf('day').toDate()
+    return this.dataStore.firestoreORM
+      .collection<AccessStatsModel>({path: this.accessStatsRepository.rootPath})
+      .where('locationId', '==', locationId)
+      .where('createdAt', '>=', today)
+      .fetch()
+      .then((results) =>
+        results.length === 0
+          ? this.accessStatsRepository.add({
+              locationId,
+              peopleOnPremises: 0,
+              accessDenied: 0,
+              createdAt: firestore.FieldValue.serverTimestamp(),
+            } as AccessStatsModel)
+          : results[0],
+      )
+  }
+
+  incrementPeopleOnPremises(locationId: string): Promise<AccessStatsModel> {
+    return this.getTodayStatsForLocation(locationId).then((stats) =>
+      this.accessStatsRepository.update({
+        ...stats,
+        peopleOnPremises: stats.peopleOnPremises + 1,
+      }),
+    )
+  }
+
+  decreasePeopleOnPremises(locationId: string): Promise<AccessStatsModel> {
+    return this.getTodayStatsForLocation(locationId).then((stats) =>
+      this.accessStatsRepository.update({
+        ...stats,
+        peopleOnPremises: Math.max(0, stats.peopleOnPremises - 1),
+      }),
+    )
+  }
+
+  incrementAccessDenied(locationId: string): Promise<AccessStatsModel> {
+    return this.getTodayStatsForLocation(locationId).then((stats) =>
+      this.accessStatsRepository.update({
+        ...stats,
+        accessDenied: stats.accessDenied + 1,
+      }),
+    )
+  }
+}
+
+const assertHasSameLocation = (access: Access, locationId: string): void => {
+  if (access.locationId !== locationId) {
+    throw new BadRequestException(
+      `Access location doesn't match the given location [${locationId}]`,
+    )
   }
 }
