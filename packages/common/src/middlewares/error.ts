@@ -4,20 +4,24 @@ import {ResponseWrapper} from '../types/response-wrapper'
 import {ErrorMiddleware, Middleware} from '../types/middleware'
 import {ValidationError} from 'express-openapi-validate'
 
-export const handleValidationError: ErrorMiddleware<ValidationError> = (error, req, resp, _next) => {
-  console.error(error)
-  const response: ResponseWrapper<null> = {
-    data: null,
-    status: {
-      code: ResponseStatusCodes.ValidationError,
-      message: error.message,
-    },
-  }
-  resp.status(400).send(response)
-}
-
-export const handleHttpException: ErrorMiddleware<HttpException> = (error, req, resp, _next) => {
+export const handleErrors: ErrorMiddleware<HttpException | ValidationError> = (
+  error,
+  req,
+  resp,
+  _next,
+) => {
   console.error('Error!', error)
+  if (error instanceof ValidationError) {
+    const response: ResponseWrapper<null> = {
+      data: null,
+      status: {
+        code: ResponseStatusCodes.ValidationError,
+        message: error.message,
+      },
+    }
+    return resp.status(400).send(response)
+  }
+
   const {status, code, message} = error
   const response: ResponseWrapper<null> = {
     data: null,
@@ -26,7 +30,7 @@ export const handleHttpException: ErrorMiddleware<HttpException> = (error, req, 
       message,
     },
   }
-  resp.status(status).send(response)
+  return resp.status(status).send(response)
 }
 
 // Cannot have an error... to be used bottom of stack
