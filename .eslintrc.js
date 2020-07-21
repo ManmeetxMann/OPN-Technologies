@@ -13,6 +13,6 @@ module.exports = {
   rules: {
     '@typescript-eslint/no-explicit-any': 2,
     '@typescript-eslint/no-unused-vars': ['error', {ignoreRestSiblings: true}],
-    '@typescript-eslint/ban-ts-comment': 'warn',
+    '@typescript-eslint/ban-ts-comment': 'off',
   },
 }
