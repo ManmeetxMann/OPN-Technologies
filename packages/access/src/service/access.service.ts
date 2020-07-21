@@ -31,11 +31,10 @@ export class AccessService {
       }))
   }
 
-  handleEnter(access: AccessModel, locationId: string): Promise<Access> {
+  handleEnter(access: AccessModel): Promise<Access> {
     if (!!access.enteredAt || !!access.exitAt) {
       throw new BadRequestException('Token already used to enter or exit')
     }
-    this.assertHasSameLocation(access, locationId)
 
     return this.accessRepository.update({
       ...access,
@@ -43,11 +42,10 @@ export class AccessService {
     })
   }
 
-  handleExit(access: AccessModel, locationId: string): Promise<Access> {
+  handleExit(access: AccessModel): Promise<Access> {
     if (!!access.exitAt) {
       throw new BadRequestException('Token already used to exit')
     }
-    this.assertHasSameLocation(access, locationId)
     return this.accessRepository.update({
       ...access,
       exitAt: firestore.FieldValue.serverTimestamp(),
@@ -61,13 +59,5 @@ export class AccessService {
       }
       throw new ResourceNotFoundException(`Cannot find access with token [${token}]`)
     })
-  }
-
-  private assertHasSameLocation(access: Access, locationId: string): void {
-    if (access.locationId !== locationId) {
-      throw new BadRequestException(
-        `Access location doesn't match the given location [${locationId}]`,
-      )
-    }
   }
 }
