@@ -1,8 +1,6 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import IRouteController from '../../../common/src/interfaces/IRouteController.interface'
-
-import Validation from '../../../common/src/utils/validation'
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {AccessService} from '../service/access.service'
 import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wrapper'

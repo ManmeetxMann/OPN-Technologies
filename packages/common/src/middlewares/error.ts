@@ -8,6 +8,7 @@ export const handleErrors: ErrorMiddleware<HttpException | ValidationError> = (
   error,
   req,
   resp,
+  next,
 ) => {
   console.error('Error!', error)
   if (error instanceof ValidationError) {
@@ -18,7 +19,9 @@ export const handleErrors: ErrorMiddleware<HttpException | ValidationError> = (
         message: error.message,
       },
     }
-    return resp.status(400).send(response)
+    resp.status(400).send(response)
+    next()
+    return
   }
 
   const {status, code, message} = error
@@ -29,7 +32,9 @@ export const handleErrors: ErrorMiddleware<HttpException | ValidationError> = (
       message,
     },
   }
-  return resp.status(status).send(response)
+  resp.status(status).send(response)
+  next()
+  return
 }
 
 // Cannot have an error... to be used bottom of stack

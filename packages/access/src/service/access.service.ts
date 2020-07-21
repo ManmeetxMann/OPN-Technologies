@@ -34,7 +34,7 @@ export class AccessService {
       }))
   }
 
-  handleEnter(access: AccessModel, locationId: string): Promise<Access> {
+  handleEnter(access: AccessModel): Promise<Access> {
     if (!!access.enteredAt || !!access.exitAt) {
       throw new BadRequestException('Token already used to enter or exit')
     }
@@ -44,7 +44,7 @@ export class AccessService {
         ...access,
         enteredAt: firestore.FieldValue.serverTimestamp(),
       })
-      .then((saved) => this.incrementPeopleOnPremises(locationId).then((_) => saved))
+      .then((saved) => this.incrementPeopleOnPremises(access.locationId).then(() => saved))
   }
 
   handleExit(access: AccessModel): Promise<Access> {
@@ -57,7 +57,7 @@ export class AccessService {
         ...access,
         exitAt: firestore.FieldValue.serverTimestamp(),
       })
-      .then((saved) => this.decreasePeopleOnPremises(access.locationId).then((_) => saved))
+      .then((saved) => this.decreasePeopleOnPremises(access.locationId).then(() => saved))
   }
 
   findOneByToken(token: string): Promise<AccessModel> {
@@ -90,36 +90,21 @@ export class AccessService {
 
   incrementPeopleOnPremises(locationId: string): Promise<AccessStatsModel> {
     return this.getTodayStatsForLocation(locationId).then((stats) =>
-      this.accessStatsRepository.update({
-        ...stats,
-        peopleOnPremises: stats.peopleOnPremises + 1,
-      }),
+      this.accessStatsRepository.increment(stats.id, 'peopleOnPremises', 1),
     )
   }
 
   decreasePeopleOnPremises(locationId: string): Promise<AccessStatsModel> {
     return this.getTodayStatsForLocation(locationId).then((stats) =>
-      this.accessStatsRepository.update({
-        ...stats,
-        peopleOnPremises: Math.max(0, stats.peopleOnPremises - 1),
-      }),
+      stats.peopleOnPremises > 0
+        ? this.accessStatsRepository.increment(stats.id, 'peopleOnPremises', -1)
+        : stats,
     )
   }
 
   incrementAccessDenied(locationId: string): Promise<AccessStatsModel> {
     return this.getTodayStatsForLocation(locationId).then((stats) =>
-      this.accessStatsRepository.update({
-        ...stats,
-        accessDenied: stats.accessDenied + 1,
-      }),
-    )
-  }
-}
-
-const assertHasSameLocation = (access: Access, locationId: string): void => {
-  if (access.locationId !== locationId) {
-    throw new BadRequestException(
-      `Access location doesn't match the given location [${locationId}]`,
+      this.accessStatsRepository.increment(stats.id, 'accessDenied', 1),
     )
   }
 }
