@@ -83,7 +83,7 @@ abstract class DataModel<T extends HasId> {
     return this.get(id).then((data) =>
       this.update({
         ...data,
-        [fieldName]: this.datastore.firestoreAdmin.firestore.FieldValue.increment(byCount),
+        [fieldName]: data[fieldName] + byCount,
       } as Storable<T>),
     )
   }
