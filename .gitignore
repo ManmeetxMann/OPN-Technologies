@@ -35,3 +35,4 @@ packages/apidocs/docs/*.yaml
 
 # IntelliJ
 /.idea/
+packages/tools-admin/.firebase/hosting.cHVibGlj.cache
