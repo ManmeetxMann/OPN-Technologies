@@ -20,15 +20,6 @@ export class Timestamp {}
 
 const collections: Record<string, Record<string, Storable>> = {
   users: {
-    david: {
-      id: 'david',
-      uid: 'david',
-      email: 'davidw@evenset.com',
-      emailVerified: true,
-      name: 'David Walker',
-      displayName: 'David Walker',
-      photoURL: 'www.google.com',
-    },
     sep: {
       id: 'sep',
       uid: 'sep',
