@@ -1,11 +1,13 @@
 # `@opn/tools-pages`
 
-> TODO: description
+> Page Hosting Tool
 
 ## Usage
 
 ```
-const toolsPages = require('@opn/tools-pages');
-
-// TODO: DEMONSTRATE API
+lerna run --scope @opn/tools-pages deploy --stream
+```
+or
+```
+npm run deploy
 ```
