@@ -148,7 +148,7 @@ components:
           description: Organization Id
         locationId:
           type: string
-          description: Location Id within Organizaiton
+          description: Location Id within Organization
       required:
         - email
         - organizationId
