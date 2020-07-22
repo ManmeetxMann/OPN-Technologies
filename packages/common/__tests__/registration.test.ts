@@ -11,17 +11,6 @@ describe('registration tests', () => {
     new RegistrationModel(datastore)
   })
 
-  test('registration > reset', async () => {
-    // Create DataStore
-    const datastore = new DataStore()
-
-    // Create Identifier
-    const registration = new RegistrationModel(datastore)
-
-    // Test reset
-    registration.reset()
-  })
-
   test('registration > add', async () => {
     // Create DataStore
     const datastore = new DataStore()
