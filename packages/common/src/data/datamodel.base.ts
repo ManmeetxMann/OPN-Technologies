@@ -4,9 +4,8 @@ import {firestore} from 'firebase-admin'
 
 abstract class DataModel<T extends HasId> {
   abstract readonly rootPath: string
-  protected abstract zeroSet: Array<Storable<T>>
+  protected abstract readonly zeroSet: Array<Storable<T>>
   private datastore: DataStore
-  readonly ready: Promise<unknown>
 
   constructor(datastore: DataStore) {
     this.datastore = datastore
