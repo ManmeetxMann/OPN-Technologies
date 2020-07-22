@@ -67,8 +67,8 @@ const admin = {
       return users.find((u) => u.uid === token)
     },
     // no op
-    setCustomUserClaims: async (token: string): Promise<unknown> => {
-      return users.find((u) => u.uid === token)
+    setCustomUserClaims: async (): Promise<unknown> => {
+      return
     },
   }),
 }
