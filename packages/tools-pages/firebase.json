@@ -1,0 +1,9 @@
+{
+    "hosting": {
+        "target": "dev-pages-opn",
+        "public": "public",
+        "ignore": [
+            "firebase.json"
+        ]
+    }
+}
