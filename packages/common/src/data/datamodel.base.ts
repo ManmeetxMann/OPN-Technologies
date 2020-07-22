@@ -8,18 +8,17 @@ abstract class DataModel<T extends HasId> {
   private datastore: DataStore
   readonly ready: Promise<unknown>
 
-  constructor(datastore: DataStore, zeroSet: Array<Storable<T>> = []) {
+  constructor(datastore: DataStore) {
     this.datastore = datastore
-    this.ready = this.initialize(zeroSet)
   }
 
   /**
    * Resets the collection
    */
-  private initialize(zeroSet: Array<Storable<T>>): Promise<unknown> {
+  public initialize(): Promise<unknown> {
     // Add all intial values
     return Promise.all(
-      zeroSet.map(
+      this.zeroSet.map(
         async (record): Promise<void> => {
           const currentDocument = await this.datastore.firestoreAdmin
             .firestore()
@@ -27,11 +26,10 @@ abstract class DataModel<T extends HasId> {
             .doc(record.id)
             .get()
           if (currentDocument.exists) {
-            console.log(`Initializing even though document ${record.id} already exists`)
+            console.log(`${record.id} already exists, skipping initialization`)
           } else {
-            await this.datastore.firestoreORM
-              .collection<T>({path: this.rootPath})
-              .set(record)
+            console.log(`initializing ${record.id}`)
+            await this.update(record)
           }
         },
       ),
@@ -43,7 +41,6 @@ abstract class DataModel<T extends HasId> {
    * @param data Data to add - id does not need to be present.
    */
   async add(data: OptionalIdStorable<T>): Promise<T> {
-    await this.ready
     return this.datastore.firestoreORM
       .collection<T>({path: this.rootPath})
       .addOrSet(data)
@@ -51,7 +48,6 @@ abstract class DataModel<T extends HasId> {
   }
 
   async addAll(data: Array<OptionalIdStorable<T>>): Promise<T[]> {
-    await this.ready
     return this.datastore.firestoreORM
       .collection<T>({path: this.rootPath})
       .bulkAdd(data)
@@ -59,7 +55,6 @@ abstract class DataModel<T extends HasId> {
   }
 
   async fetchAll(): Promise<T[]> {
-    await this.ready
     return this.datastore.firestoreORM
       .collection<T>({path: this.rootPath})
       .fetchAll()
@@ -70,7 +65,6 @@ abstract class DataModel<T extends HasId> {
    * @param data Data to update – id property must be present
    */
   async update(data: Storable<T>): Promise<T> {
-    await this.ready
     return this.datastore.firestoreORM
       .collection<T>({path: this.rootPath})
       .set(data)
@@ -84,7 +78,6 @@ abstract class DataModel<T extends HasId> {
    * @param fieldValue field / property value to update
    */
   async updateProperty(id: string, fieldName: string, fieldValue: unknown): Promise<T> {
-    await this.ready
     return this.get(id).then((data) =>
       this.update({
         ...data,
@@ -100,7 +93,6 @@ abstract class DataModel<T extends HasId> {
    * @param byCount how much to increment
    */
   async increment(id: string, fieldName: string, byCount: number): Promise<T> {
-    await this.ready
     return this.datastore.firestoreAdmin
       .firestore()
       .collection(this.rootPath)
@@ -116,14 +108,12 @@ abstract class DataModel<T extends HasId> {
    * @param id identifier for a document in the collection
    */
   async get(id: string): Promise<T> {
-    await this.ready
     const dao = this.datastore.firestoreORM.collection<T>({path: this.rootPath})
     const result: T = await dao.fetch(id)
     return result
   }
 
   async findWhereEqual(property: string, value: unknown): Promise<T[]> {
-    await this.ready
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
     return await this.datastore.firestoreORM
       .collection<T>({path: this.rootPath})
@@ -132,7 +122,6 @@ abstract class DataModel<T extends HasId> {
   }
 
   async findWhereMapHasKeyValueEqual(map: string, key: string, value: unknown): Promise<T[]> {
-    await this.ready
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
     return await this.datastore.firestoreORM
       .collection<T>({path: this.rootPath})
@@ -141,7 +130,6 @@ abstract class DataModel<T extends HasId> {
   }
 
   async deleteAll(): Promise<void> {
-    await this.ready
     const dao = this.datastore.firestoreORM.collection<T>({path: this.rootPath})
     const results = await dao.fetchAll()
     await dao.bulkDelete(results.map((o) => o.id))

@@ -1,5 +1,4 @@
 import DataModel from './datamodel.base'
-import DataStore from './datastore'
 import crypto from 'crypto'
 import {IdentifiersSchema} from '../schemas/identifiers'
 
@@ -10,9 +9,6 @@ export class IdentifiersModel extends DataModel<IdentifiersSchema> {
     {id: 'access', count: 10000},
     {id: 'attestation', count: 10000},
   ]
-  constructor(ds: DataStore) {
-    super(ds)
-  }
 
   /**
    * For now increments a counter and converts it to hex
@@ -25,14 +21,8 @@ export class IdentifiersModel extends DataModel<IdentifiersSchema> {
     if (zeroValue === undefined) {
       throw new Error(`${identifierName} cannot be incremented`)
     }
-    let uniqueValue = zeroValue.count
-    try {
-      // increment the existing value and retrieve the new value
-      uniqueValue = await this.increment(identifierName, 'count', 1).then(({count}) => count)
-    } catch {
-      // initialize to the zero value
-      await this.update(zeroValue)
-    }
+    // increment the existing value and retrieve the new value
+    const uniqueValue = await this.increment(identifierName, 'count', 1).then(({count}) => count)
     return crypto.createHash('sha1').update(uniqueValue.toString()).digest('base64')
   }
 }

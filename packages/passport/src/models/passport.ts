@@ -1,5 +1,4 @@
 import DataModel from '../../../common/src/data/datamodel.base'
-import DataStore from '../../../common/src/data/datastore'
 
 export type Passport = {
   id: string
@@ -21,7 +20,4 @@ export enum PassportStatuses {
 export class PassportModel extends DataModel<Passport> {
   public readonly rootPath = 'passports'
   readonly zeroSet = []
-  constructor(ds: DataStore) {
-    super(ds)
-  }
 }

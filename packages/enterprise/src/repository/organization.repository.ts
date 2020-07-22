@@ -5,16 +5,13 @@ import {Organization, OrganizationKeySequence, OrganizationLocation} from '../mo
 export class OrganizationModel extends DataModel<Organization> {
   public readonly rootPath = 'organizations'
   readonly zeroSet = []
-  constructor(ds: DataStore) {
-    super(ds)
-  }
 }
 
 export class OrganizationLocationModel extends DataModel<OrganizationLocation> {
   public rootPath
   readonly zeroSet = []
-  constructor(ds: DataStore, organizationId: string) {
-    super(ds)
+  constructor(dataStore: DataStore, organizationId: string) {
+    super(dataStore)
     this.rootPath = `organizations/${organizationId}/locations`
   }
 }
@@ -22,7 +19,4 @@ export class OrganizationLocationModel extends DataModel<OrganizationLocation> {
 export class OrganizationKeySequenceModel extends DataModel<OrganizationKeySequence> {
   public readonly rootPath = 'organizations/keys/sequence'
   readonly zeroSet = []
-  constructor(ds: DataStore) {
-    super(ds)
-  }
 }

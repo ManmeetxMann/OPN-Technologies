@@ -7,6 +7,10 @@ import fs from 'fs'
 import {handleErrors, handleRouteNotFound} from '../middlewares/error'
 import IRouteController from '../interfaces/IRouteController.interface'
 
+interface Initializer {
+  initialize: () => Promise<unknown>
+}
+
 class App {
   public app: Application
   public port: number
@@ -19,6 +23,7 @@ class App {
     port: number
     middleWares: RequestHandler[]
     controllers: IRouteController[]
+    initializers: Initializer[]
   }) {
     this.app = express()
     this.port = appInit.port
@@ -29,6 +34,7 @@ class App {
     this.middlewares(appInit.middleWares)
     this.setupValidation()
     this.routes(appInit.controllers)
+    this.initialize(appInit.initializers)
     this.setupErrorHandling()
     // this.assets()
     // this.template()
@@ -38,6 +44,10 @@ class App {
     middleWares.forEach((middleWare) => {
       this.app.use(middleWare)
     })
+  }
+
+  private initialize(initializers: Initializer[]) {
+    initializers.forEach((initializer) => initializer.initialize())
   }
 
   private routes(controllers: IRouteController[]) {

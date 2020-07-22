@@ -1,5 +1,4 @@
 import DataModel from '../../../common/src/data/datamodel.base'
-import DataStore from '../../../common/src/data/datastore'
 import {AdminProfile} from './admin'
 
 export type User = {
@@ -16,7 +15,4 @@ export type User = {
 export class UserModel extends DataModel<User> {
   public readonly rootPath = 'users'
   readonly zeroSet = []
-  constructor(ds: DataStore) {
-    super(ds)
-  }
 }

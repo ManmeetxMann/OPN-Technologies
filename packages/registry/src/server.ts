@@ -15,6 +15,7 @@ export const app = new App({
   corsOptions: '*',
   controllers: [new RootController(), new UserController(), new AdminController()],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
+  initializers: [],
 })
 
 app.listen()

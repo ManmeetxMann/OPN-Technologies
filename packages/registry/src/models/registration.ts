@@ -1,5 +1,4 @@
 import DataModel from '../../../common/src/data/datamodel.base'
-import DataStore from '../../../common/src/data/datastore'
 import {Platform} from '../../../common/src/types/platform'
 
 export type Registration = {
@@ -20,7 +19,4 @@ export enum RegistrationTypes {
 export class RegistrationModel extends DataModel<Registration> {
   public readonly rootPath = 'registration'
   readonly zeroSet = []
-  constructor(ds: DataStore) {
-    super(ds)
-  }
 }
