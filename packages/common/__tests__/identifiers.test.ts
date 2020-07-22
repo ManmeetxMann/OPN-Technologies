@@ -2,7 +2,6 @@ import DataStore from '../src/data/datastore'
 import {IdentifiersModel} from '../src/data/identifiers'
 
 describe('identifier tests', () => {
-
   test('identifier > reset', async () => {
     // Create DataStore
     const datastore = new DataStore()
