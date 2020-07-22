@@ -1,5 +1,9 @@
 {
     "hosting": {
-        "public": "public"
+        "target": "dev-tools-admin-opn",
+        "public": "public",
+        "ignore": [
+            "firebase.json"
+        ]
     }
 }
