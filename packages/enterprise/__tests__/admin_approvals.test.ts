@@ -1,7 +1,7 @@
 import {AdminApprovalService} from '../../common/src/service/user/admin-service'
 
 describe('admin tests', () => {
-  test.skip('Admin Approval > Create', async () => {
+  test('Admin Approval > Create', async () => {
     // Create
     const adminApprovalService = new AdminApprovalService()
     await adminApprovalService.create({
