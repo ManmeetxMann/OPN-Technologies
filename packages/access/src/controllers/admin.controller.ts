@@ -1,8 +1,6 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import IRouteController from '../../../common/src/interfaces/IRouteController.interface'
-
-import Validation from '../../../common/src/utils/validation'
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {AccessService} from '../service/access.service'
 import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wrapper'
@@ -30,25 +28,20 @@ class AdminController implements IRouteController {
     this.router.use('/admin', routes)
   }
 
-  stats = (req: Request, res: Response): void => {
-    if (!Validation.validate(['locationId'], req, res)) {
-      return
-    }
+  stats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {locationId} = req.body
+      const {peopleOnPremises, accessDenied} = await this.accessService.getTodayStatsForLocation(
+        locationId,
+      )
 
-    console.log(req.body.locationId)
-    const response = {
-      data: {
-        peopleOnPremises: 213,
-        accessDenied: 8,
-      },
-      serverTimestamp: new Date().toISOString(),
-      status: 'complete',
+      res.json(actionSucceed({peopleOnPremises, accessDenied}))
+    } catch (error) {
+      next(error)
     }
-
-    res.json(response)
   }
 
-  enter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
     try {
       const {accessToken, userId} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
@@ -64,7 +57,7 @@ class AdminController implements IRouteController {
 
       if (canEnter) {
         await this.accessService.handleEnter(access)
-        res.json(actionSucceed(responseBody))
+        return res.json(actionSucceed(responseBody))
       }
 
       res.status(400).json(actionFailed('Access denied for access-token', responseBody))
