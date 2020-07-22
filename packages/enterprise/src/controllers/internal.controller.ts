@@ -7,6 +7,7 @@ import {AuthService} from '../../../common/src/service/auth/auth-service'
 import {InternalAdminApprovalCreateRequest} from '../models/internal-request'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
+import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 
 class InternalController implements IControllerBase {
   public path = '/internal'
@@ -29,8 +30,16 @@ class InternalController implements IControllerBase {
     try {
       const {email, organizationId, locationId} = req.body as InternalAdminApprovalCreateRequest
 
-      // Check if we have approval for this admin
+      // Our service
       const adminApprovalService = new AdminApprovalService()
+
+      // Make sure that it does not exist
+      const approval = await adminApprovalService.findOneByEmail(email)
+      if (approval) {
+        throw new UnauthorizedException('Unauthorized Access')
+      }
+
+      // Check if we have approval for this admin
       await adminApprovalService.create({
         email: email.toLowerCase(),
         enabled: true,
