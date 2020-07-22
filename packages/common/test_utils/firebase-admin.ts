@@ -11,14 +11,12 @@ const users = [
   },
 ]
 
-interface F {
-  (): unknown
-  FieldValue: unknown
-  FieldPath: unknown
-  Timestamp: unknown
-}
+const mockMessaging = (): unknown => ({
+  send: async () => null,
+})
 
-export const mockFirestore = <F>(): unknown => ({
+mockMessaging.Message = class Message {}
+export const mockFirestore = (): unknown => ({
   collection: (path: string) => new FirestoreSimpleMock().collection({path}),
 })
 mockFirestore.FieldValue = FieldValue
@@ -27,6 +25,7 @@ mockFirestore.Timestamp = Timestamp
 
 const admin = {
   apps: [],
+  messaging: mockMessaging,
   initializeApp: (app: unknown): void => {
     admin.apps.push(app)
   },
