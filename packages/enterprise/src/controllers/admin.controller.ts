@@ -36,8 +36,8 @@ class AdminController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      var {email} = req.body as AuthLinkRequestRequest
-      email = email.toLowerCase()
+      const authLinkRequest = req.body as AuthLinkRequestRequest
+      const email = authLinkRequest.email.toLowerCase()
 
       // Check if we have approval for this admin
       const adminApprovalService = new AdminApprovalService()
