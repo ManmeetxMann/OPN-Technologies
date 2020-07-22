@@ -36,7 +36,7 @@ export class AuthService {
   async sendEmailSignInLink(info: {email: string; name?: string}): Promise<void> {
     // Setup action
     const actionCodeSettings = {
-      url: 'https://www.stayopn.com/DONE',
+      url: 'https://devopn.page.link/auth-finished',
       handleCodeInApp: true,
       iOS: {
         bundleId: 'com.stayopn',
@@ -47,7 +47,7 @@ export class AuthService {
         minimumVersion: '12',
       },
       // FDL custom domain.
-      dynamicLinkDomain: 'stayopn.page.link',
+      dynamicLinkDomain: 'devopn.page.link',
     }
 
     const signInLink = await this.firebaseAuth.generateSignInWithEmailLink(
