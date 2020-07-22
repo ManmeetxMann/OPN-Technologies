@@ -43,8 +43,7 @@ export class AuthService {
       },
       android: {
         packageName: 'com.stayopn',
-        installApp: true,
-        minimumVersion: '12',
+        installApp: true
       },
       // FDL custom domain.
       dynamicLinkDomain: 'devopn.page.link',
