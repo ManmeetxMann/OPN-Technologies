@@ -1,4 +1,5 @@
 import DataModel from '../../../common/src/data/datamodel.base'
+import DataStore from '../../../common/src/data/datastore'
 
 export type AdminProfile = {
   email: string
@@ -16,4 +17,7 @@ export type AdminApproval = {
 export class AdminApprovalModel extends DataModel<AdminApproval> {
   public readonly rootPath = 'config/admin/approvals'
   readonly zeroSet = []
+  constructor(ds: DataStore) {
+    super(ds)
+  }
 }

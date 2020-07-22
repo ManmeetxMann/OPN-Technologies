@@ -1,4 +1,5 @@
 import DataModel from './datamodel.base'
+import DataStore from './datastore'
 
 export enum RegistrationType {
   User = 'User',
@@ -14,4 +15,7 @@ export interface RegistrationSchema {
 export class RegistrationModel extends DataModel<RegistrationSchema> {
   readonly rootPath = 'registration'
   readonly zeroSet = []
+  constructor(ds: DataStore) {
+    super(ds)
+  }
 }

@@ -1,4 +1,5 @@
 import DataModel from './datamodel.base'
+import DataStore from './datastore'
 import crypto from 'crypto'
 import {IdentifiersSchema} from '../schemas/identifiers'
 
@@ -9,6 +10,9 @@ export class IdentifiersModel extends DataModel<IdentifiersSchema> {
     {id: 'access', count: 10000},
     {id: 'attestation', count: 10000},
   ]
+  constructor(ds: DataStore) {
+    super(ds)
+  }
 
   /**
    * For now increments a counter and converts it to hex
