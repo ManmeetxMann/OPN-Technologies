@@ -1,11 +1,13 @@
 # `@opn/tools`
 
-> TODO: description
+> Admin Tools
 
 ## Usage
 
 ```
-const tools = require('@opn/tools');
-
-// TODO: DEMONSTRATE API
+lerna run --scope @opn/admin-tools deploy --stream
+```
+or
+```
+npm run deploy
 ```
