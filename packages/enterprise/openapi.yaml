@@ -124,7 +124,6 @@ components:
       required:
         - email
 
-
     AuthLinkProcessRequest:
       type: object
       properties:
@@ -137,6 +136,23 @@ components:
       required:
         - idToken
         - connectedId
+
+    InternalAdminApprovalCreateRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Email for admin
+        organizationId:
+          type: string
+          description: Organization Id
+        locationId:
+          type: string
+          description: Location Id within Organization
+      required:
+        - email
+        - organizationId
+        - locationId
 
     User:
       type: object
@@ -400,6 +416,23 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AuthLinkProcessRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+
+  /internal/adminApproval/create:
+    post:
+      description: Internal Admin Approval Creation API
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalAdminApprovalCreateRequest'
       responses:
         '200':
           description: Successfully added
