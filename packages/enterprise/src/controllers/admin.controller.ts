@@ -24,7 +24,7 @@ class AdminController implements IControllerBase {
 
   public initRoutes(): void {
     this.router.post(this.path + '/auth/signIn/request', this.authSignInLinkRequest)
-    this.router.post(this.path + '/auth/signIn/process', this.authSignIn)
+    this.router.post(this.path + '/auth/signIn/process', this.authSignInProcess)
     this.router.post(this.path + '/team/status', this.authMiddleware, this.teamStatus)
     this.router.post(this.path + '/team/review', this.authMiddleware, this.teamReview)
     this.router.post(this.path + '/billing/config', this.authMiddleware, this.billingConfig)
@@ -36,7 +36,8 @@ class AdminController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {email} = req.body as AuthLinkRequestRequest
+      var {email} = req.body as AuthLinkRequestRequest
+      email = email.toLowerCase()
 
       // Check if we have approval for this admin
       const adminApprovalService = new AdminApprovalService()
@@ -58,12 +59,12 @@ class AdminController implements IControllerBase {
     }
   }
 
-  authSignIn = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  authSignInProcess = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {idToken, connectedId} = req.body as AuthLinkProcessRequest
 
       // Validate the token first and get the Auth user Id from it
-      // FYI: AuthUserId != connectedUserId
+      // FYI: AuthUserId is not a ConnectedUserId
       // (one is FB Auth User and other Firestore Custom User)
       const authService = new AuthService()
       const validatedAuthUser = await authService.verifyAuthToken(idToken)
