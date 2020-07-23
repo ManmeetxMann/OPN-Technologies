@@ -38,7 +38,7 @@
 		},
 		{
 			"name": "📦 @opn/tools-admin",
-			"path": "packages/tools"
+			"path": "packages/tools-admin"
 		},
 		{
 			"name": "📦 @opn/tools-pages",
