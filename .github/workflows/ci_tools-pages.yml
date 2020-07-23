@@ -1,0 +1,48 @@
+name: OPN Registry Service CD Action
+
+on:
+  push: # Needs to be pull_request
+    paths:
+      - "packages/tools-pages/**"
+    branches: [ development ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 10.x
+    - name: Setup GCloud
+      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+    - name: Setup Firebase
+      uses: w9jds/firebase-action@master
+      env:
+        GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+    - run: npm install
+    - run: npm run install-all
+    - run: npm run deploy-tools-pages
+    - name: Let Slack know
+      uses: 8398a7/action-slack@v3
+      with:
+        status: custom
+        fields: workflow,job,commit,repo,ref,author,took
+        custom_payload: |
+          {
+            username: 'action-slack',
+            icon_emoji: ':octocat:',
+            attachments: [{
+              color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
+              text: `Latest Build of Pages hosting succeeded.`,
+            }]
+          }
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      
