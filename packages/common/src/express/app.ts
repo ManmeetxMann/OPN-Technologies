@@ -16,7 +16,7 @@ class App {
   public port: number
   public validation: boolean
   public corsOptions?: string
-
+  public initializers: Initializer[]
   constructor(appInit: {
     validation: boolean
     corsOptions?: string
@@ -29,12 +29,13 @@ class App {
     this.port = appInit.port
     this.validation = appInit.validation
     this.corsOptions = appInit.corsOptions
+    this.initializers = appInit.initializers || []
+    // console.log(this.initializers)
 
     this.setupCors()
     this.middlewares(appInit.middleWares)
     this.setupValidation()
     this.routes(appInit.controllers)
-    this.initialize(appInit.initializers ?? [])
     this.setupErrorHandling()
     // this.assets()
     // this.template()
@@ -46,8 +47,12 @@ class App {
     })
   }
 
-  private initialize(initializers: Initializer[]) {
-    initializers.forEach((initializer) => initializer.initialize())
+  public initialize(): void {
+    console.log(this)
+    // console.log(this.initializers)
+    // console.log(this.port)
+    console.log('running init', this.initializers)
+    this.initializers.forEach((initializer) => initializer.initialize())
   }
 
   private routes(controllers: IRouteController[]) {

@@ -15,3 +15,5 @@ const app = new App({
 })
 
 app.listen()
+
+export const init = (): void => app.initialize()
