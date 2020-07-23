@@ -1,4 +1,4 @@
-name: OPN Registry Service CD Action
+name: OPN Pages Tool CD Action
 
 on:
   push: # Needs to be pull_request
