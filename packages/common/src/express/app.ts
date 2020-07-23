@@ -23,7 +23,7 @@ class App {
     port: number
     middleWares: RequestHandler[]
     controllers: IRouteController[]
-    initializers: Initializer[]
+    initializers?: Initializer[]
   }) {
     this.app = express()
     this.port = appInit.port
@@ -34,7 +34,7 @@ class App {
     this.middlewares(appInit.middleWares)
     this.setupValidation()
     this.routes(appInit.controllers)
-    this.initialize(appInit.initializers)
+    this.initialize(appInit.initializers ?? [])
     this.setupErrorHandling()
     // this.assets()
     // this.template()

@@ -12,7 +12,6 @@ const app = new App({
   validation: false,
   controllers: [new RootController()],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
-  initializers: [],
 })
 
 app.listen()

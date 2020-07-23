@@ -21,7 +21,6 @@ const app = new App({
     new QuestionnaireController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
-  initializers: [],
 })
 
 app.listen()

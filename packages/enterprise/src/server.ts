@@ -21,7 +21,6 @@ const app = new App({
     new OrganizationController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
-  initializers: [],
 })
 
 app.listen()
