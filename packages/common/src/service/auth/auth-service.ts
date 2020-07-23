@@ -39,10 +39,10 @@ export class AuthService {
       url: 'https://devopn.page.link/auth-finished',
       handleCodeInApp: true,
       iOS: {
-        bundleId: 'com.stayopn',
+        bundleId: 'com.opentech.stayopn',
       },
       android: {
-        packageName: 'com.stayopn',
+        packageName: 'com.stayopn.debug',
         installApp: true,
       },
       // FDL custom domain.
