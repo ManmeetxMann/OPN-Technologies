@@ -1,0 +1,11 @@
+{
+  "targets": {
+    "opn-platform-dev": {
+      "hosting": {
+        "dev-tools-admin-opn": [
+          "dev-tools-admin-opn"
+        ]
+      }
+    }
+  }
+}

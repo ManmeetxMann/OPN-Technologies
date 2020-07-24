@@ -103,9 +103,14 @@ paths:
           application/json:
             schema:
               properties:
+                locationId:
+                  type: string
                 answers:
                   type: object
-              example: {answers: { 1:{1: false},2:{1: false},3:{1: false},4:{1: false, 2: "2020-06-10T05:05:32.217Z"}}}
+              required:
+                - locationId
+                - answers
+              example: {locationId: "location-id", answers: { 1:{1: false},2:{1: false},3:{1: false},4:{1: false, 2: "2020-06-10T05:05:32.217Z"}}}
 
       responses:
         '200':

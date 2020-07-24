@@ -5,8 +5,6 @@ describe('identifier tests', () => {
   test.skip('identifier > initialization', async () => {
     // Create DataStore
     const datastore = new DataStore()
-
-    // Create Identifier
     const identifier = new IdentifiersModel(datastore)
 
     expect((await identifier.get('status')).count).toEqual(10000)

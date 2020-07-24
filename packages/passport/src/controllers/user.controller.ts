@@ -5,11 +5,16 @@ import {PassportService} from '../services/passport-service'
 import {PassportStatuses} from '../models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
+import {Attestation} from '../models/attestation'
+import {AttestationService} from '../services/attestation-service'
+import {AccessService} from '../../../access/src/service/access.service'
 
 class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
   private passportService = new PassportService()
+  private attestationService = new AttestationService()
+  private accessService = new AccessService()
 
   constructor() {
     this.initRoutes()
@@ -43,6 +48,7 @@ class UserController implements IControllerBase {
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
+      const locationId = req.body.locationId
       const answers: Record<number, Record<number, boolean>> = req.body.answers
       const a1 = answers[1][1]
       const a2 = answers[2][1]
@@ -55,6 +61,16 @@ class UserController implements IControllerBase {
           : a1
           ? PassportStatuses.Caution
           : PassportStatuses.Proceed
+
+      await this.attestationService.save({
+        answers,
+        locationId,
+        status: passportStatus,
+      } as Attestation)
+
+      if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
+        await this.accessService.incrementAccessDenied(locationId)
+      }
 
       const passport = await this.passportService.create(passportStatus)
       res.json(actionSucceed(passport))

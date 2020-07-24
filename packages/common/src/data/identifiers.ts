@@ -21,8 +21,8 @@ export class IdentifiersModel extends DataModel<IdentifiersSchema> {
     if (zeroValue === undefined) {
       throw new Error(`${identifierName} cannot be incremented`)
     }
-    // increment the existing value and retrieve the new value
-    const uniqueValue = await this.increment(identifierName, 'count', 1).then(({count}) => count)
-    return crypto.createHash('sha1').update(uniqueValue.toString()).digest('base64')
+    return this.increment(identifierName, 'count', 1).then(({count}) =>
+      crypto.createHash('sha1').update(`${count}_${Date.now()}`).digest('base64'),
+    )
   }
 }

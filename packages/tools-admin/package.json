@@ -1,8 +1,9 @@
 {
-    "name": "@opn/admin-tools",
+    "name": "@opn/tools-admin",
     "private": true,
     "version": "0.0.0",
     "scripts": {
+        "predeploy" : "firebase use --add opn-platform-dev; firebase target:apply hosting dev-tools-admin-opn dev-tools-admin-opn",
         "deploy": "firebase deploy --project opn-platform-dev --only hosting",
         "login": "firebase login"
     },
