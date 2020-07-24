@@ -358,7 +358,7 @@ paths:
       description: Add locations to an organization
       parameters:
         - in: path
-          name: id
+          name: organizationId
           schema:
             type: string
 #          required: true
@@ -382,7 +382,7 @@ paths:
       description: Get organization locations
       parameters:
         - in: path
-          name: id
+          name: organizationId
           schema:
             type: string
 #          required: false
