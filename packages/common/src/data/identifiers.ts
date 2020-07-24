@@ -18,7 +18,7 @@ export class IdentifiersModel extends DataModel<IdentifiersSchema> {
     // Increment by 1
     // Return hashed version
     return this.increment(identifierName, 'count', 1).then(({count}) =>
-      crypto.createHash('sha1').update(count.toString()).digest('base64'),
+      crypto.createHash('sha1').update(`${count}_${Date.now()}`).digest('base64'),
     )
   }
 }
