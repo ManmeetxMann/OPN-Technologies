@@ -2,7 +2,8 @@ import DataStore from '../src/data/datastore'
 import {IdentifiersModel} from '../src/data/identifiers'
 
 describe('identifier tests', () => {
-  test('identifier > reset', async () => {
+  test.skip('identifier > initialization', async () => {
+    // Create DataStore
     const datastore = new DataStore()
     const identifier = new IdentifiersModel(datastore)
 
@@ -20,7 +21,6 @@ describe('identifier tests', () => {
 
     // Getting Value
     const id = await identifier.getUniqueValue('status')
-    console.log(id)
 
     // Test
     expect(typeof id).toBe('string')

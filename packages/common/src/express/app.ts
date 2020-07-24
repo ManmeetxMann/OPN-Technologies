@@ -7,23 +7,30 @@ import fs from 'fs'
 import {handleErrors, handleRouteNotFound} from '../middlewares/error'
 import IRouteController from '../interfaces/IRouteController.interface'
 
+interface Initializer {
+  initialize: () => Promise<unknown>
+}
+
 class App {
   public app: Application
   public port: number
   public validation: boolean
   public corsOptions?: string
-
+  public initializers: Initializer[]
   constructor(appInit: {
     validation: boolean
     corsOptions?: string
     port: number
     middleWares: RequestHandler[]
     controllers: IRouteController[]
+    initializers?: Initializer[]
   }) {
     this.app = express()
     this.port = appInit.port
     this.validation = appInit.validation
     this.corsOptions = appInit.corsOptions
+    this.initializers = appInit.initializers || []
+    // console.log(this.initializers)
 
     this.setupCors()
     this.middlewares(appInit.middleWares)
@@ -38,6 +45,14 @@ class App {
     middleWares.forEach((middleWare) => {
       this.app.use(middleWare)
     })
+  }
+
+  public initialize(): void {
+    console.log(this)
+    // console.log(this.initializers)
+    // console.log(this.port)
+    console.log('running init', this.initializers)
+    this.initializers.forEach((initializer) => initializer.initialize())
   }
 
   private routes(controllers: IRouteController[]) {

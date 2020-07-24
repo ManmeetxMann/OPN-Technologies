@@ -14,14 +14,25 @@ abstract class DataModel<T extends HasId> {
   /**
    * Resets the collection
    */
-  reset(): void {
-    // Delete all
-
+  public initialize(): Promise<unknown> {
     // Add all intial values
-    for (const record of this.zeroSet) {
-      // Create
-      this.update(record)
-    }
+    return Promise.all(
+      this.zeroSet.map(
+        async (record): Promise<void> => {
+          const currentDocument = await this.datastore.firestoreAdmin
+            .firestore()
+            .collection(this.rootPath)
+            .doc(record.id)
+            .get()
+          if (currentDocument.exists) {
+            console.log(`${record.id} already exists, skipping initialization`)
+          } else {
+            console.log(`initializing ${record.id}`)
+            await this.update(record)
+          }
+        },
+      ),
+    )
   }
 
   /**
