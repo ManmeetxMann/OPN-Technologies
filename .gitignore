@@ -35,3 +35,7 @@ packages/apidocs/docs/*.yaml
 
 # IntelliJ
 /.idea/
+
+# Environment Files
+.env
+*/.env
