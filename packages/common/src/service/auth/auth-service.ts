@@ -42,17 +42,17 @@ export class AuthService {
   async sendEmailSignInLink(info: {email: string; name?: string}): Promise<void> {
     // Setup action
     const actionCodeSettings = {
-      url: process.env.AUTH_EMAIL_SIGNIN_LINK, //'https://devopn.page.link/auth-finished',
+      url: process.env.AUTH_EMAIL_SIGNIN_LINK,
       handleCodeInApp: true,
       iOS: {
-        bundleId: process.env.AUTH_EMAIL_SIGNIN_IOS, //'com.opentech.stayopn',
+        bundleId: process.env.AUTH_EMAIL_SIGNIN_IOS,
       },
       android: {
-        packageName: process.env.AUTH_EMAIL_SIGNIN_ANDROID, //'com.stayopn.debug',
+        packageName: process.env.AUTH_EMAIL_SIGNIN_ANDROID,
         installApp: true,
       },
       // FDL custom domain.
-      dynamicLinkDomain: process.env.AUTH_EMAIL_SIGNIN_DOMAIN, //'devopn.page.link',
+      dynamicLinkDomain: process.env.AUTH_EMAIL_SIGNIN_DOMAIN,
     }
 
     const signInLink = await this.firebaseAuth.generateSignInWithEmailLink(
