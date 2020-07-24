@@ -1,7 +1,10 @@
 import fetch from 'node-fetch'
-import path from 'path'
+
+// Load up environment vars
 import dotenv from 'dotenv'
+import path from 'path'
 dotenv.config({path: path.resolve(__dirname, '../../../.env')})
+
 
 export interface MailInfo {
   email: string
