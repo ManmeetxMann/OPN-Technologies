@@ -11,6 +11,7 @@ import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wr
 import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {UserService} from '../../../common/src/service/user/user-service'
+import {authMiddleware} from '../../../common/src/middlewares/auth'
 
 // import { TokenService } from '../../../common/src/service/auth/token-service'
 
@@ -26,9 +27,9 @@ class AdminController implements IControllerBase {
   public initRoutes(): void {
     this.router.post(this.path + '/auth/signIn/request', this.authSignInLinkRequest)
     this.router.post(this.path + '/auth/signIn/process', this.authSignInProcess)
-    this.router.post(this.path + '/team/status', this.authMiddleware, this.teamStatus)
-    this.router.post(this.path + '/team/review', this.authMiddleware, this.teamReview)
-    this.router.post(this.path + '/billing/config', this.authMiddleware, this.billingConfig)
+    this.router.post(this.path + '/team/status', authMiddleware, this.teamStatus)
+    this.router.post(this.path + '/team/review', authMiddleware, this.teamReview)
+    this.router.post(this.path + '/billing/config', authMiddleware, this.billingConfig)
   }
 
   authSignInLinkRequest = async (
@@ -77,7 +78,7 @@ class AdminController implements IControllerBase {
       // Check if auth user is connected to someone else
       const userService = new UserService()
       let connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
-      if (connectedUser?.id !== connectedId) {
+      if (!!connectedUser && connectedUser?.id !== connectedId) {
         console.error('Auth token seems to already be connected')
         throw new UnauthorizedException('Unauthorized access')
       }
@@ -123,46 +124,6 @@ class AdminController implements IControllerBase {
     } catch (error) {
       next(error)
     }
-  }
-
-  authMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const bearerHeader = req.headers['authorization']
-    if (!bearerHeader) {
-      // Forbidden
-      res.sendStatus(403)
-      return
-    }
-
-    // Get the bearer
-    const bearer = bearerHeader.split(' ')
-    const idToken = bearer[1]
-
-    // Validate
-    const authService = new AuthService()
-    const validatedAuthUser = await authService.verifyAuthToken(idToken)
-    if (!validatedAuthUser) {
-      // Forbidden
-      res.sendStatus(403)
-      return
-    }
-
-    // Grab our claim
-    // TODO: using claims to get the id and then calling a get(...) instead of query
-    //       would have been faster... but the claim won't propogate because they already
-    //       had their claim... To be researched :-)
-    const userService = new UserService()
-    const connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
-    if (!connectedUser) {
-      // Forbidden
-      res.sendStatus(403)
-      return
-    }
-
-    // Set it for the actual route
-    res.locals.connectedUser = connectedUser
-
-    // Done
-    next()
   }
 
   teamStatus = (req: Request, res: Response): void => {

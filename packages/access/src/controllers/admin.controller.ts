@@ -8,6 +8,7 @@ import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {authMiddleware} from '../../../common/src/middlewares/auth'
 
 class AdminController implements IRouteController {
   public router = express.Router()
@@ -22,9 +23,9 @@ class AdminController implements IRouteController {
   public initRoutes(): void {
     const routes = express
       .Router()
-      .post('/stats', this.stats)
-      .post('/enter', this.enter)
-      .post('/exit', this.exit)
+      .post('/stats', authMiddleware, this.stats)
+      .post('/enter', authMiddleware, this.enter)
+      .post('/exit', authMiddleware, this.exit)
     this.router.use('/admin', routes)
   }
 
