@@ -3,6 +3,11 @@ info:
   title: Access API
   version: 1.0.0
 components:
+  securitySchemes:
+    bearerAuthJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     Response:
       type: object
@@ -221,6 +226,8 @@ paths:
   /admin/enter:
     post:
       description: Handle user's entrance with access-token
+      security:
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:
@@ -238,6 +245,8 @@ paths:
   /admin/exit:
     post:
       description: Handle user's exit with access-token
+      security:
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:
@@ -255,6 +264,8 @@ paths:
   /admin/stats:
     post:
       description: Daily stats for a location
+      security:
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:

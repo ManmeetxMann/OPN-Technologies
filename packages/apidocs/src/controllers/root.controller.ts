@@ -151,7 +151,7 @@ class RootController implements IControllerBase {
               description: 'Staging Server',
             },
             {
-              url: 'http://localhost:5004',
+              url: 'http://localhost:5002',
               description: 'Development Server',
             },
           ],
