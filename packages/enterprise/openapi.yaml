@@ -3,6 +3,12 @@ info:
   title: Enterprise API
   version: 1.0.0
 components:
+  securitySchemes:
+    bearerAuthJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     Response:
       type: object
