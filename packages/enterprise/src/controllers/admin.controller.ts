@@ -90,7 +90,9 @@ class AdminController implements IControllerBase {
         // So we can get the approval + expire
         const adminApprovalService = new AdminApprovalService()
         const approval = await adminApprovalService.findOneByEmail(validatedAuthUser.email)
-        adminApprovalService.updateExpiry(approval.id, true)
+
+        // TODO: Undo this on going live!
+        // adminApprovalService.updateExpiry(approval.id, true)
 
         // Get connected user + Update
         connectedUser = await userService.findOneById(connectedId)
