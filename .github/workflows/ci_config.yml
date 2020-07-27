@@ -29,14 +29,14 @@ jobs:
     - name: Create Environment File
       uses: DamianReeves/write-file-action@v1.0
       with:
-        path: ${{ env.home}}/packages/config/dist/.env
+        path: ./packages/config/dist/.env
         contents: |
           echo 'Hello "World"!'
         write-mode: overwrite
     - uses: pCYSl5EDgo/cat@master
       id: hello
       with:
-        path: ${{ env.home}}/packages/config/dist/.env
+        path: ./packages/config/dist/.env
     - run: npm run cd-deploy-config
     - run: npm run cd-deploy-apidocs
     - name: Let Slack know
