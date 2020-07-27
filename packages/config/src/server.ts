@@ -22,4 +22,4 @@ app.listen()
 
 export const init = (): void => app.initialize()
 
-const test = 1
+const test = 2
