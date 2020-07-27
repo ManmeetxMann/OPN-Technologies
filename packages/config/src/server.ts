@@ -23,3 +23,4 @@ app.listen()
 export const init = (): void => app.initialize()
 
 const test = 2
+console.log(test)
