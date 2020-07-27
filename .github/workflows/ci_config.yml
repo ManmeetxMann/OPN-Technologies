@@ -32,7 +32,7 @@ jobs:
       if: github.ref == 'refs/heads/development'
       uses: DamianReeves/write-file-action@v1.0
       with:
-        path: ./packages/config/dist/.env
+        path: ./packages/config/dist/common/.env
         contents: |
           # Environment Config for Dev Access
           # Firebase:
