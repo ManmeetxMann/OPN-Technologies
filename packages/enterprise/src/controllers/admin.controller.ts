@@ -80,7 +80,7 @@ class AdminController implements IControllerBase {
       const adminApprovalService = new AdminApprovalService()
       const approval = await adminApprovalService.findOneByEmail(validatedAuthUser.email)
       if (!approval) {
-        console.error('ConnectedId is non-existent')
+        console.error(`Admin approval for ${validatedAuthUser.email} does not exist`)
         throw new UnauthorizedException('Unauthorized access')
       }
 
