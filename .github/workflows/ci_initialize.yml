@@ -11,6 +11,32 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 10.x
+    - name: Setup GCloud
+      if: github.ref == 'refs/heads/development'
+      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        project_id: ${{ secrets.DEV_GCP_PROJECT_ID }}
+        service_account_key: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY }}
+    - name: Create Environment Parameters
+      if: github.ref == 'refs/heads/development'
+      uses: DamianReeves/write-file-action@v1.0
+      with:
+        path: ./packages/common/.env
+        contents: |
+          # Environment Config for Dev Access
+          # Firebase:
+          FIREBASE_ADMINSDK_SA=${{ secrets.DEV_GCP_FIREBASEADMIN_SA_KEY_NOCR }}
+
+          # Firebase Auth Sign App Code Settings:
+          AUTH_EMAIL_SIGNIN_LINK=https://devopn.page.link/auth-finished
+          AUTH_EMAIL_SIGNIN_IOS=com.opentech.stayopn
+          AUTH_EMAIL_SIGNIN_ANDROID=com.stayopn.debug
+          AUTH_EMAIL_SIGNIN_DOMAIN=devopn.page.link
+
+          # Email / SMTP Provider:
+          EMAIL_PROVIDER_API_KEY=${{ secrets.DEV_EMAILPROVIDER_KEY }}
+          EMAIL_PROVIDER_API_URL=https://api.sendinblue.com/v3/smtp/email
+        write-mode: overwrite
     - run: npm install
     - run: npm run install-all
     - run: npm run lint-all
