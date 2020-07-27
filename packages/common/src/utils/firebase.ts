@@ -1,4 +1,5 @@
 import admin, {ServiceAccount} from 'firebase-admin'
+import {FieldValue} from '@google-cloud/firestore'
 
 // Load up environment vars
 import dotenv from 'dotenv'
