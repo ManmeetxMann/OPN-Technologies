@@ -2,6 +2,8 @@ import {NextFunction, Request, Response} from 'express'
 
 import {AuthService} from '../service/auth/auth-service'
 import {UserService} from '../service/user/user-service'
+import {of} from '../utils/response-wrapper'
+import {ResponseStatusCodes} from '../types/response-status'
 
 export const authMiddleware = async (
   req: Request,
@@ -10,8 +12,9 @@ export const authMiddleware = async (
 ): Promise<void> => {
   const bearerHeader = req.headers['authorization']
   if (!bearerHeader) {
-    // Forbidden
-    res.sendStatus(403)
+    res
+      .sendStatus(401)
+      .json(of(null, ResponseStatusCodes.Unauthorized, 'Authorization token required'))
     return
   }
 
@@ -19,7 +22,11 @@ export const authMiddleware = async (
   const bearer = bearerHeader.split(' ')
   if (!bearer || bearer.length < 2 || bearer[0] == '' || bearer[0].toLowerCase() !== 'bearer') {
     // Forbidden
-    res.sendStatus(403)
+    res
+      .sendStatus(401)
+      .json(
+        of(null, ResponseStatusCodes.Unauthorized, 'Unexpected format for Authorization header'),
+      )
     return
   }
 
@@ -29,8 +36,7 @@ export const authMiddleware = async (
   const authService = new AuthService()
   const validatedAuthUser = await authService.verifyAuthToken(idToken)
   if (!validatedAuthUser) {
-    // Forbidden
-    res.sendStatus(403)
+    res.sendStatus(401).json(of(null, ResponseStatusCodes.Unauthorized, 'Invalid access-token'))
     return
   }
 
@@ -42,7 +48,15 @@ export const authMiddleware = async (
   const connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
   if (!connectedUser) {
     // Forbidden
-    res.sendStatus(403)
+    res
+      .sendStatus(403)
+      .json(
+        of(
+          null,
+          ResponseStatusCodes.AccessDenied,
+          `Cannot find user with auth-uid [${validatedAuthUser.uid}]`,
+        ),
+      )
     return
   }
 
