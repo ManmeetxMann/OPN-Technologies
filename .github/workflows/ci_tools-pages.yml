@@ -26,7 +26,7 @@ jobs:
         GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
     - run: npm install
     - run: npm run install-all
-    - run: npm run deploy-tools-pages
+    - run: npm run cd-deploy-tools-pages
     - name: Let Slack know
       uses: 8398a7/action-slack@v3
       with:

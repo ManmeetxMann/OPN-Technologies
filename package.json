@@ -12,14 +12,23 @@
 		"dev:debug-all": "lerna run dev:debug --stream",
 		"build-all": "lerna run build --stream",
 		"deploy-all": "lerna run deploy --stream",
-		"deploy-apidocs": "lerna run --scope @opn/apidocs deploy --stream",
-		"deploy-registry": "lerna run --scope @opn/registry deploy --stream",
-		"deploy-passport": "lerna run --scope @opn/passport deploy --stream",
-		"deploy-enterprise": "lerna run --scope @opn/enterprise deploy --stream",
-		"deploy-config": "lerna run --scope @opn/config deploy --stream",
-		"deploy-lookup": "lerna run --scope @opn/lookup deploy --stream",
-		"deploy-access": "lerna run --scope @opn/access deploy --stream",
-		"deploy-tools-pages": "lerna run --scope @opn/tools-pages deploy --stream"
+		
+		"cd-build-registry": "lerna run --scope @opn/registry build --stream",
+		"cd-build-passport": "lerna run --scope @opn/passport build --stream",
+		"cd-build-enterprise": "lerna run --scope @opn/enterprise build --stream",
+		"cd-build-config": "lerna run --scope @opn/config build --stream",
+		"cd-build-lookup": "lerna run --scope @opn/lookup build --stream",
+		"cd-build-access": "lerna run --scope @opn/access build --stream",
+		
+		"cd-deploy-registry": "lerna run --scope @opn/registry gcloud_deploy --stream",
+		"cd-deploy-passport": "lerna run --scope @opn/passport gcloud_deploy --stream",
+		"cd-deploy-enterprise": "lerna run --scope @opn/enterprise gcloud_deploy --stream",
+		"cd-deploy-config": "lerna run --scope @opn/config gcloud_deploy --stream",
+		"cd-deploy-lookup": "lerna run --scope @opn/lookup gcloud_deploy --stream",
+		"cd-deploy-access": "lerna run --scope @opn/access gcloud_deploy --stream",
+
+		"cd-deploy-tools-pages": "lerna run --scope @opn/tools-pages deploy --stream",
+		"cd-deploy-apidocs": "lerna run --scope @opn/apidocs deploy --stream"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
