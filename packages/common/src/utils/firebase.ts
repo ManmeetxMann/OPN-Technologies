@@ -1,5 +1,6 @@
 import admin, {ServiceAccount} from 'firebase-admin'
 import serviceAccount from '../../__secrets__/opn-platform-dev-firebase-adminsdk.json'
+import {FieldValue} from '@google-cloud/firestore'
 
 export class FirebaseManager {
   // Properties
@@ -21,6 +22,10 @@ export class FirebaseManager {
     return this.admin
   }
 
+  getFirestoreDeleteField(): FieldValue {
+    return this.getAdmin().firestore.FieldValue.delete()
+  }
+
   static getInstance(): FirebaseManager {
     if (FirebaseManager.__instance === null) {
       FirebaseManager.__instance = new FirebaseManager()
@@ -30,3 +35,4 @@ export class FirebaseManager {
 }
 
 export {admin as firebaseAdmin}
+export {FieldValue}

@@ -86,6 +86,23 @@ abstract class DataModel<T extends HasId> {
   }
 
   /**
+   * Updates fields in a document
+   * @param id identifier for the document in the collection
+   * @param fields field name as key and field value as value
+   * @param fieldValue field / property value to update
+   */
+  async updateProperties(id: string, fields: Record<string, unknown>): Promise<T> {
+    return this.datastore.firestoreAdmin
+      .firestore()
+      .collection(this.rootPath)
+      .doc(id)
+      .update({
+        ...fields,
+      })
+      .then(() => this.get(id))
+  }
+
+  /**
    * Increments the given property of the specified document by the count given
    * @param id identifier for the document in the collection
    * @param fieldName field / property name to increment
