@@ -31,7 +31,10 @@ class AdminController implements IRouteController {
 
   stats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {locationId} = req.body
+      const {locationId: locationIdOrPath} = req.body
+      // handle (temporarily) `organizations/{orgId}/locations/{locationId}` as the `locationId`
+      const paths = locationIdOrPath.split('/')
+      const locationId = paths.length > 0 ? paths[paths.length - 1] : locationIdOrPath
       const {peopleOnPremises, accessDenied} = await this.accessService.getTodayStatsForLocation(
         locationId,
       )
