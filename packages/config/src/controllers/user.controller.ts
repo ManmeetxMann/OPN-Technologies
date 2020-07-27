@@ -3,7 +3,6 @@ import {Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {Config} from '../../../common/src/utils/config'
 
-
 class UserController implements IControllerBase {
   public path = ''
   public router = express.Router()
@@ -36,7 +35,7 @@ class UserController implements IControllerBase {
           enterprise: Config('DOMAIN_ENTERPRISE'),
           lookup: Config('DOMAIN_LOOKUP'),
           passport: Config('DOMAIN_PASSPORT'),
-          registry: Config('DOMAIN_REGISTRY')
+          registry: Config('DOMAIN_REGISTRY'),
         },
         badgeValidityPeriod: 60 * 60 * 24,
         badges: {

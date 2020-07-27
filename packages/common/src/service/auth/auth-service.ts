@@ -2,7 +2,6 @@ import {FirebaseManager} from '../../utils/firebase'
 import {MagicLinkMail} from '../messaging/magiclink-service'
 import {Config} from '../../utils/config'
 
-
 export interface AuthUser {
   uid: string
   email?: string

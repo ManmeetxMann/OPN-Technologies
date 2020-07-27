@@ -1,7 +1,6 @@
 import fetch from 'node-fetch'
 import {Config} from '../../utils/config'
 
-
 export interface MailInfo {
   email: string
   name?: string

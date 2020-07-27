@@ -2,7 +2,6 @@ import admin, {ServiceAccount} from 'firebase-admin'
 import {FieldValue} from '@google-cloud/firestore'
 import {Config} from './config'
 
-
 export class FirebaseManager {
   // Properties
   private readonly firestore: admin.firestore.Firestore
