@@ -1,4 +1,4 @@
-name: OPN Config Service CD Action
+name: OPN Dev Config Service CD Action
 
 on:
   push:
@@ -19,8 +19,8 @@ jobs:
     - name: Setup GCloud
       uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
       with:
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        project_id: ${{ secrets.DEV_EMAILPROVIDER_KEY }}
+        service_account_key: ${{ secrets.DEV_GCP_SA_KEY }}
     - run: npm install
     - run: npm run install-all
     - run: npm run lint-all
@@ -33,7 +33,7 @@ jobs:
         contents: |
           # Environment Config for Dev Access
           # Firebase:
-          FIREBASE_ADMINSDK_SA=${{ secrets.GCP_SA_KEY }}
+          FIREBASE_ADMINSDK_SA=${{ secrets.DEV_GCP_SA_KEY }}
 
           # Firebase Auth Sign App Code Settings:
           AUTH_EMAIL_SIGNIN_LINK=https://devopn.page.link/auth-finished
@@ -42,10 +42,9 @@ jobs:
           AUTH_EMAIL_SIGNIN_DOMAIN=devopn.page.link
 
           # Email / SMTP Provider:
-          EMAIL_PROVIDER_API_KEY=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
+          EMAIL_PROVIDER_API_KEY=${{ secrets.DEV_EMAILPROVIDER_KEY }}
           EMAIL_PROVIDER_API_URL=https://api.sendinblue.com/v3/smtp/email
         write-mode: overwrite
-    - run: ls -la ./packages/config/dist/
     - run: npm run cd-deploy-config
     - run: npm run cd-deploy-apidocs
     - name: Let Slack know
@@ -59,7 +58,7 @@ jobs:
             icon_emoji: ':octocat:',
             attachments: [{
               color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
-              text: `Latest Build to succeeded. Check API Docs: https://apidocs-dot-opn-platform-dev.nn.r.appspot.com`,
+              text: `Latest Config Build to succeeded. Check API Docs: https://apidocs-dot-opn-platform-dev.nn.r.appspot.com`,
             }]
           }
       env:
