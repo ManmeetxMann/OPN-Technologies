@@ -33,10 +33,7 @@ jobs:
         contents: |
           echo 'Hello "World"!'
         write-mode: overwrite
-    - uses: pCYSl5EDgo/cat@master
-      id: hello
-      with:
-        path: ./packages/config/dist/.env
+    - run: ls -la ./packages/config/dist/
     - run: npm run cd-deploy-config
     - run: npm run cd-deploy-apidocs
     - name: Let Slack know
