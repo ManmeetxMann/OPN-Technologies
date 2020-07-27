@@ -37,6 +37,10 @@ class UserController implements IControllerBase {
           passport: Config.get('DOMAIN_PASSPORT'),
           registry: Config.get('DOMAIN_REGISTRY'),
         },
+        links: {
+          privacyPolicy: Config('LINK_PRIVACYPOLICY'),
+          termsOfService: Config('LINK_TERMSOFSERVICE'),
+        },
         badgeValidityPeriod: 60 * 60 * 24,
         badges: {
           pending: 'Pending',
