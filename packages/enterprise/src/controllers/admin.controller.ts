@@ -44,7 +44,7 @@ class AdminController implements IControllerBase {
       // Check if we have approval for this admin
       const adminApprovalService = new AdminApprovalService()
       const approval = await adminApprovalService.findOneByEmail(email)
-      if (!approval || approval.expired === true) {
+      if (!approval) {
         console.error(`Admin approval for ${email} does not exist`)
         throw new UnauthorizedException('Unauthorized Access')
       }
@@ -90,9 +90,6 @@ class AdminController implements IControllerBase {
         // So we can get the approval + expire
         const adminApprovalService = new AdminApprovalService()
         const approval = await adminApprovalService.findOneByEmail(validatedAuthUser.email)
-
-        // TODO: Undo this on going live!
-        // adminApprovalService.updateExpiry(approval.id, true)
 
         // Get connected user + Update
         connectedUser = await userService.findOneById(connectedId)
