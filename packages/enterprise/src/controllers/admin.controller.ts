@@ -12,6 +12,7 @@ import {AdminApprovalService} from '../../../common/src/service/user/admin-servi
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
+import {FirebaseManager} from '../../../common/src/utils/firebase'
 
 // import { TokenService } from '../../../common/src/service/auth/token-service'
 
@@ -75,51 +76,55 @@ class AdminController implements IControllerBase {
         throw new UnauthorizedException('Unauthorized access')
       }
 
-      // Check if auth user is connected to someone else
-      const userService = new UserService()
-      let connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
-      if (!!connectedUser && connectedUser?.id !== connectedId) {
-        console.error('Auth token seems to already be connected')
+      // Get the admin approval so we can grab their permissions
+      const adminApprovalService = new AdminApprovalService()
+      const approval = await adminApprovalService.findOneByEmail(validatedAuthUser.email) 
+      if (!approval) {
+        console.error('ConnectedId is non-existent')
         throw new UnauthorizedException('Unauthorized access')
       }
 
-      // Check if the first time, if so let's:
-      // Interconnect Auth + Connected User
-      if (!connectedUser) {
-        // Get the original admin approval:
-        // So we can get the approval + expire
-        const adminApprovalService = new AdminApprovalService()
-        const approval = await adminApprovalService.findOneByEmail(validatedAuthUser.email)
+      // Check if auth user is connected to someone else
+      const userService = new UserService()
+      let connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
+      
+      // If so let's remove if off of them
+      if (!!connectedUser && connectedUser?.id !== connectedId) {
+        await userService.updateProperties(connectedUser.id, {
+          "authUserId" : FirebaseManager.getInstance().getFirestoreDeleteField(),
+          "admin": FirebaseManager.getInstance().getFirestoreDeleteField()
+        })
+      }
 
-        // Get connected user + Update
+      // Get the proper connected user then
+      if (!connectedUser || connectedUser?.id !== connectedId) {
         connectedUser = await userService.findOneById(connectedId)
         if (!validatedAuthUser?.email) {
           console.error('ConnectedId is non-existent')
           throw new UnauthorizedException('Unauthorized access')
         }
-
-        // Set the connection
-        connectedUser.authUserId = validatedAuthUser.uid
-        connectedUser.admin = approval.profile
-        await userService.update(connectedUser)
-
-        // Change the display name
-        const name = [connectedUser.firstName, connectedUser.lastNameInitial].join(' ')
-        authService.updateUser(validatedAuthUser.uid, {
-          displayName: name,
-        })
-
-        // Commented below... as the claim would apply to the next login...
-        // // Set the connectedId
-        // await authService.setClaims(validatedAuthUser.uid, {
-        //     connecteduserId: connectedUser.id,
-        //     admin: true
-        // })
-        res.json(actionSucceed(approval.profile))
-        return
       }
 
-      res.json(actionFailed('No matching condition for processing the sign-in request'))
+      // Set the connection
+      connectedUser.authUserId = validatedAuthUser.uid
+      connectedUser.admin = approval.profile
+      await userService.update(connectedUser)
+
+      // Change the display name
+      const name = [connectedUser.firstName, connectedUser.lastNameInitial].join(' ')
+      authService.updateUser(validatedAuthUser.uid, {
+        displayName: name,
+      })
+
+      // Commented below... as the claim would apply to the next login...
+      // // Set the connectedId
+      // await authService.setClaims(validatedAuthUser.uid, {
+      //     connecteduserId: connectedUser.id,
+      //     admin: true
+      // })
+
+      res.json(actionSucceed(approval.profile))
+      return
     } catch (error) {
       next(error)
     }
