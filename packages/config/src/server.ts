@@ -22,5 +22,5 @@ app.listen()
 
 export const init = (): void => app.initialize()
 
-const test = 2
+const test = 3
 console.log(test)
