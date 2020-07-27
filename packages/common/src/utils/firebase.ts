@@ -35,4 +35,4 @@ export class FirebaseManager {
 }
 
 export {admin as firebaseAdmin}
-export {FieldValue as FieldValue}
+export {FieldValue}

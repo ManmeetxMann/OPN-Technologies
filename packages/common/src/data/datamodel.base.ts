@@ -97,7 +97,7 @@ abstract class DataModel<T extends HasId> {
       .collection(this.rootPath)
       .doc(id)
       .update({
-        ...fields
+        ...fields,
       })
       .then(() => this.get(id))
   }

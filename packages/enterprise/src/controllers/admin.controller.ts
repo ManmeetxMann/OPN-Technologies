@@ -7,7 +7,7 @@ import Validation from '../../../common/src/utils/validation'
 
 import {AuthService} from '../../../common/src/service/auth/auth-service'
 import {AuthLinkProcessRequest, AuthLinkRequestRequest} from '../models/auth-link-request'
-import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wrapper'
+import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {UserService} from '../../../common/src/service/user/user-service'
@@ -78,7 +78,7 @@ class AdminController implements IControllerBase {
 
       // Get the admin approval so we can grab their permissions
       const adminApprovalService = new AdminApprovalService()
-      const approval = await adminApprovalService.findOneByEmail(validatedAuthUser.email) 
+      const approval = await adminApprovalService.findOneByEmail(validatedAuthUser.email)
       if (!approval) {
         console.error('ConnectedId is non-existent')
         throw new UnauthorizedException('Unauthorized access')
@@ -87,12 +87,12 @@ class AdminController implements IControllerBase {
       // Check if auth user is connected to someone else
       const userService = new UserService()
       let connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
-      
+
       // If so let's remove if off of them
       if (!!connectedUser && connectedUser?.id !== connectedId) {
         await userService.updateProperties(connectedUser.id, {
-          "authUserId" : FirebaseManager.getInstance().getFirestoreDeleteField(),
-          "admin": FirebaseManager.getInstance().getFirestoreDeleteField()
+          authUserId: FirebaseManager.getInstance().getFirestoreDeleteField(),
+          admin: FirebaseManager.getInstance().getFirestoreDeleteField(),
         })
       }
 
