@@ -1,5 +1,6 @@
 import DataModel from '../../../common/src/data/datamodel.base'
 import {AdminProfile} from './admin'
+import {FieldValue} from '../utils/firebase'
 
 export type User = {
   id: string
@@ -8,8 +9,8 @@ export type User = {
   birthYear: number
   base64Photo: string
   organizationIds?: string[]
-  admin?: AdminProfile
-  authUserId?: string
+  admin?: AdminProfile | FieldValue
+  authUserId?: string | FieldValue
 }
 
 export class UserModel extends DataModel<User> {
