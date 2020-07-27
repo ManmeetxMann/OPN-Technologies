@@ -1,4 +1,4 @@
-name: OPN Dev Config Service CD Action
+name: OPN Config Service CD Action
 
 on:
   push:
