@@ -13,8 +13,12 @@ export class UserService {
     await this.userRepository.update(user)
   }
 
-  async updateProperty(id: string, fieldName: string, fieldValue: string): Promise<void> {
+  async updateProperty(id: string, fieldName: string, fieldValue: unknown): Promise<void> {
     await this.userRepository.updateProperty(id, fieldName, fieldValue)
+  }
+
+  async updateProperties(id: string, fields: Record<string, unknown>): Promise<void> {
+    await this.userRepository.updateProperties(id, fields)
   }
 
   findOne(id: string): Promise<User> {
