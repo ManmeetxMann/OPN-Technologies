@@ -33,7 +33,7 @@ jobs:
         contents: |
           # Environment Config for Dev Access
           # Firebase:
-          FIREBASE_ADMINSDK_SA=${{ secrets.DEV_GCP_SA_KEY }}
+          FIREBASE_ADMINSDK_SA=${{ secrets.DEV_GCP_SA }}
 
           # Firebase Auth Sign App Code Settings:
           AUTH_EMAIL_SIGNIN_LINK=https://devopn.page.link/auth-finished
