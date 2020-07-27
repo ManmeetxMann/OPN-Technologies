@@ -26,6 +26,17 @@ jobs:
     - run: npm run lint-all
     # - run: npm run test-all
     - run: npm run cd-build-config
+    - name: Create Environment File
+      uses: DamianReeves/write-file-action
+      with:
+        path: ${{ env.home}}/packages/config/dist/.env
+        contents: |
+          echo 'Hello "World"!'
+        write-mode: overwrite
+    - uses: pCYSl5EDgo/cat@master
+      id: hello
+      with:
+        path: ${{ env.home}}/packages/config/dist/.env
     - run: npm run cd-deploy-config
     - run: npm run cd-deploy-apidocs
     - name: Let Slack know
