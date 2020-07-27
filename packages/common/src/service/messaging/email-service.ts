@@ -1,9 +1,5 @@
 import fetch from 'node-fetch'
-
-// Load up environment vars
-import dotenv from 'dotenv'
-import path from 'path'
-dotenv.config({path: path.resolve(__dirname, '../../../.env')})
+import {Config} from '../../utils/config'
 
 
 export interface MailInfo {
@@ -14,8 +10,8 @@ export interface MailInfo {
 
 export abstract class Mail {
   private recipient: MailInfo
-  private static readonly APIKEY = process.env.EMAIL_PROVIDER_API_KEY
-  private static readonly APIURL = process.env.EMAIL_PROVIDER_API_URL
+  private static readonly APIKEY = Config('EMAIL_PROVIDER_API_KEY')
+  private static readonly APIURL = Config('EMAIL_PROVIDER_API_URL')
 
   protected abstract templateId: number
 

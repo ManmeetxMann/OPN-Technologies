@@ -1,9 +1,8 @@
 import * as express from 'express'
 import {Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-// import { request } from 'http'
+import {Config} from '../../../common/src/utils/config'
 
-// import Validation from '../../../common/src/utils/validation'
 
 class UserController implements IControllerBase {
   public path = ''
@@ -18,11 +17,6 @@ class UserController implements IControllerBase {
   }
 
   config = (req: Request, res: Response): void => {
-    // if (!Validation.validate(["registrationToken"], req, res))
-    // {
-    //     return
-    // }
-
     const response = {
       data: {
         updates: {
@@ -38,11 +32,11 @@ class UserController implements IControllerBase {
           },
         },
         services: {
-          registry: 'https://registry-staging-dot-opn-platform-dev.nn.r.appspot.com/',
-          attestation: 'https://passport-staging-dot-opn-platform-dev.nn.r.appspot.com/',
-          access: 'https://access-staging-dot-opn-platform-dev.nn.r.appspot.com/',
-          lookup: 'https://lookup-staging-dot-opn-platform-dev.nn.r.appspot.com/',
-          enterprise: 'https://enterprise-staging-dot-opn-platform-dev.nn.r.appspot.com/',
+          access: Config('DOMAIN_ACCESS'),
+          enterprise: Config('DOMAIN_ENTERPRISE'),
+          lookup: Config('DOMAIN_LOOKUP'),
+          passport: Config('DOMAIN_PASSPORT'),
+          registry: Config('DOMAIN_REGISTRY')
         },
         badgeValidityPeriod: 60 * 60 * 24,
         badges: {

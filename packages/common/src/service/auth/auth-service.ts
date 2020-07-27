@@ -1,10 +1,6 @@
 import {FirebaseManager} from '../../utils/firebase'
 import {MagicLinkMail} from '../messaging/magiclink-service'
-
-// Load up environment vars
-import dotenv from 'dotenv'
-import path from 'path'
-dotenv.config({path: path.resolve(__dirname, '../../../.env')})
+import {Config} from '../../utils/config'
 
 
 export interface AuthUser {
@@ -42,17 +38,17 @@ export class AuthService {
   async sendEmailSignInLink(info: {email: string; name?: string}): Promise<void> {
     // Setup action
     const actionCodeSettings = {
-      url: process.env.AUTH_EMAIL_SIGNIN_LINK,
+      url: Config('AUTH_EMAIL_SIGNIN_LINK'),
       handleCodeInApp: true,
       iOS: {
-        bundleId: process.env.AUTH_EMAIL_SIGNIN_IOS,
+        bundleId: Config('AUTH_EMAIL_SIGNIN_IOS'),
       },
       android: {
-        packageName: process.env.AUTH_EMAIL_SIGNIN_ANDROID,
+        packageName: Config('AUTH_EMAIL_SIGNIN_ANDROID'),
         installApp: true,
       },
       // FDL custom domain.
-      dynamicLinkDomain: process.env.AUTH_EMAIL_SIGNIN_DOMAIN,
+      dynamicLinkDomain: Config('AUTH_EMAIL_SIGNIN_DOMAIN'),
     }
 
     const signInLink = await this.firebaseAuth.generateSignInWithEmailLink(

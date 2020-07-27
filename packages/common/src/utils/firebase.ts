@@ -1,10 +1,6 @@
 import admin, {ServiceAccount} from 'firebase-admin'
 import {FieldValue} from '@google-cloud/firestore'
-
-// Load up environment vars
-import dotenv from 'dotenv'
-import path from 'path'
-dotenv.config({path: path.resolve(__dirname, '../../.env')})
+import {Config} from './config'
 
 
 export class FirebaseManager {
@@ -16,7 +12,7 @@ export class FirebaseManager {
   constructor() {
     // Needed when called from tests.. to ensure that we initialize it only once
     if (!this.admin.apps.length) {
-      const serviceAccount = JSON.parse(process.env.FIREBASE_ADMINSDK_SA) as ServiceAccount
+      const serviceAccount = JSON.parse(Config('FIREBASE_ADMINSDK_SA')) as ServiceAccount
       this.admin.initializeApp({
         credential: this.admin.credential.cert(serviceAccount),
       })
