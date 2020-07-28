@@ -11,7 +11,7 @@ export class FirebaseManager {
   constructor() {
     // Needed when called from tests.. to ensure that we initialize it only once
     if (!this.admin.apps.length) {
-      const serviceAccount = JSON.parse(Config('FIREBASE_ADMINSDK_SA')) as ServiceAccount
+      const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA')) as ServiceAccount
       this.admin.initializeApp({
         credential: this.admin.credential.cert(serviceAccount),
       })

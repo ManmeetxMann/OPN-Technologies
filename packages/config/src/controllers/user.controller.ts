@@ -31,11 +31,11 @@ class UserController implements IControllerBase {
           },
         },
         services: {
-          access: Config('DOMAIN_ACCESS'),
-          enterprise: Config('DOMAIN_ENTERPRISE'),
-          lookup: Config('DOMAIN_LOOKUP'),
-          passport: Config('DOMAIN_PASSPORT'),
-          registry: Config('DOMAIN_REGISTRY'),
+          access: Config.get('DOMAIN_ACCESS'),
+          enterprise: Config.get('DOMAIN_ENTERPRISE'),
+          lookup: Config.get('DOMAIN_LOOKUP'),
+          passport: Config.get('DOMAIN_PASSPORT'),
+          registry: Config.get('DOMAIN_REGISTRY'),
         },
         badgeValidityPeriod: 60 * 60 * 24,
         badges: {
