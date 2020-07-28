@@ -38,4 +38,4 @@ packages/apidocs/docs/*.yaml
 
 # Environment Files
 .env
-*/.env
+*/.env*
