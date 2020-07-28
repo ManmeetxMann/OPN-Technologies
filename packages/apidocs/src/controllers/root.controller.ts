@@ -28,7 +28,7 @@ class RootController implements IControllerBase {
           },
           servers: [
             {
-              url: 'https://config-dot-opn-platform-dev.nn.r.appspot.com',
+              url: 'https://config.services.ca.stayopn.net',
               description: 'Production Server',
             },
             {
@@ -51,7 +51,7 @@ class RootController implements IControllerBase {
           },
           servers: [
             {
-              url: 'https://registry-dot-opn-platform-dev.nn.r.appspot.com',
+              url: 'https://registry.services.ca.stayopn.net',
               description: 'Production Server',
             },
             {
@@ -74,11 +74,11 @@ class RootController implements IControllerBase {
           },
           servers: [
             {
-              url: 'https://enterprise-dot-opn-platform-dev.nn.r.appspot.com',
+              url: 'https://enterprise.services.ca.stayopn.net',
               description: 'Production Server',
             },
             {
-              url: 'https://enterprise-staging-dot-opn-platform-dev.nn.r.appspot.com',
+              url: 'https://enterprise.services.ca.stayopn.net',
               description: 'Staging Server',
             },
             {
@@ -97,7 +97,7 @@ class RootController implements IControllerBase {
           },
           servers: [
             {
-              url: 'https://passport-dot-opn-platform-dev.nn.r.appspot.com',
+              url: 'https://passport.services.ca.stayopn.net',
               description: 'Production Server',
             },
             {
@@ -120,7 +120,7 @@ class RootController implements IControllerBase {
           },
           servers: [
             {
-              url: 'https://lookup-dot-opn-platform-dev.nn.r.appspot.com',
+              url: 'https://lookup.services.ca.stayopn.net',
               description: 'Production Server',
             },
             {
@@ -143,7 +143,7 @@ class RootController implements IControllerBase {
           },
           servers: [
             {
-              url: 'https://access-dot-opn-platform-dev.nn.r.appspot.com',
+              url: 'https://access.services.ca.stayopn.net',
               description: 'Production Server',
             },
             {
