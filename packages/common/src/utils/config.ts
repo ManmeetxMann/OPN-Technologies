@@ -5,7 +5,7 @@ import path from 'path'
 // Class to handle env vars
 export class Config {
   private static loaded = false
-  static load() : void {
+  static load(): void {
     dotenv.config({path: path.resolve(__dirname, '../../.env')})
     Config.loaded = true
   }
