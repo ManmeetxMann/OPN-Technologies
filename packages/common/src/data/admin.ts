@@ -4,6 +4,7 @@ export type AdminProfile = {
   email: string
   enabled: boolean
   adminForLocationIds: string[]
+  adminForOrganizationId: string
   superAdminForOrganizationIds: string[]
 }
 
