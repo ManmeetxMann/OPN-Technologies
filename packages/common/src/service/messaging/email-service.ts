@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import {Config} from '../../utils/config'
 
 export interface MailInfo {
   email: string
@@ -8,8 +9,8 @@ export interface MailInfo {
 
 export abstract class Mail {
   private recipient: MailInfo
-  private static readonly APIKEY =
-    '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'
+  private static readonly APIKEY = Config.get('EMAIL_PROVIDER_API_KEY')
+  private static readonly APIURL = Config.get('EMAIL_PROVIDER_API_URL')
 
   protected abstract templateId: number
 
@@ -27,14 +28,10 @@ export abstract class Mail {
       ],
       templateId: this.templateId,
       params: this.recipient.parameters,
-      // headers: {
-      //     'X-Mailin-custom': 'custom_header_1:custom_value_1|custom_header_2:custom_value_2'
-      // }
     }
 
     // FYI: Their Node and Typescript libraries are garbage!
-
-    await fetch('https://api.sendinblue.com/v3/smtp/email', {
+    await fetch(Mail.APIURL, {
       method: 'post',
       body: JSON.stringify(email),
       headers: {

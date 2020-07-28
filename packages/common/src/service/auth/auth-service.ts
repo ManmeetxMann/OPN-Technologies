@@ -1,5 +1,6 @@
 import {FirebaseManager} from '../../utils/firebase'
 import {MagicLinkMail} from '../messaging/magiclink-service'
+import {Config} from '../../utils/config'
 
 export interface AuthUser {
   uid: string
@@ -36,17 +37,17 @@ export class AuthService {
   async sendEmailSignInLink(info: {email: string; name?: string}): Promise<void> {
     // Setup action
     const actionCodeSettings = {
-      url: 'https://devopn.page.link/auth-finished',
+      url: Config.get('AUTH_EMAIL_SIGNIN_LINK'),
       handleCodeInApp: true,
       iOS: {
-        bundleId: 'com.opentech.stayopn',
+        bundleId: Config.get('AUTH_EMAIL_SIGNIN_IOS'),
       },
       android: {
-        packageName: 'com.stayopn.debug',
+        packageName: Config.get('AUTH_EMAIL_SIGNIN_ANDROID'),
         installApp: true,
       },
       // FDL custom domain.
-      dynamicLinkDomain: 'devopn.page.link',
+      dynamicLinkDomain: Config.get('AUTH_EMAIL_SIGNIN_DOMAIN'),
     }
 
     const signInLink = await this.firebaseAuth.generateSignInWithEmailLink(

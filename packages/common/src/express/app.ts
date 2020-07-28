@@ -1,3 +1,8 @@
+// Load config first
+import {Config} from '../utils/config'
+Config.load()
+
+// Continue...
 import express, {Application, RequestHandler} from 'express'
 import {OpenApiValidator} from 'express-openapi-validate'
 import cors from 'cors'
