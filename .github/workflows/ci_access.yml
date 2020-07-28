@@ -56,7 +56,7 @@ jobs:
           DOMAIN_ENTERPRISE=https://enterprise-staging-dot-opn-platform-dev.nn.r.appspot.com/
           DOMAIN_LOOKUP=https://lookup-staging-dot-opn-platform-dev.nn.r.appspot.com/
           DOMAIN_PASSPORT=https://passport-staging-dot-opn-platform-dev.nn.r.appspot.com/
-          DOMAIN_REGISTRY=https://access-staging-dot-opn-platform-dev.nn.r.appspot.com/
+          DOMAIN_REGISTRY=https://registry-staging-dot-opn-platform-dev.nn.r.appspot.com/
         write-mode: overwrite
     - run: npm run cd-deploy-access
     - run: npm run cd-deploy-apidocs
