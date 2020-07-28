@@ -43,6 +43,10 @@
 		{
 			"name": "📦 @opn/tools-pages",
 			"path": "packages/tools-pages"
+		},
+		{
+			"name": "📦 @opn/web",
+			"path": "packages/web"
 		}
 	],
 	"settings": {}

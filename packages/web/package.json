@@ -1,0 +1,15 @@
+{
+  "name": "@opn/web",
+  "version": "1.0.0",
+  "description": "OPN Platform Site",
+  "author": "sepsepsep <git@i239.co>",
+  "license": "ISC",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "deploy": "gcloud app deploy --quiet"
+  },
+  "dependencies": {
+      "express": "^4.17.1"
+  }
+}
