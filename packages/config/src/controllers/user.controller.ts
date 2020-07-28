@@ -38,8 +38,8 @@ class UserController implements IControllerBase {
           registry: Config.get('DOMAIN_REGISTRY'),
         },
         links: {
-          privacyPolicy: Config('LINK_PRIVACYPOLICY'),
-          termsOfService: Config('LINK_TERMSOFSERVICE'),
+          privacyPolicy: Config.get('LINK_PRIVACYPOLICY'),
+          termsOfService: Config.get('LINK_TERMSOFSERVICE'),
         },
         badgeValidityPeriod: 60 * 60 * 24,
         badges: {
