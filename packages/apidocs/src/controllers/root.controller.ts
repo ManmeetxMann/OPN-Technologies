@@ -78,7 +78,7 @@ class RootController implements IControllerBase {
               description: 'Production Server',
             },
             {
-              url: 'https://enterprise.services.ca.stayopn.net',
+              url: 'https://enterprise-staging-dot-opn-platform-dev.nn.r.appspot.com',
               description: 'Staging Server',
             },
             {
