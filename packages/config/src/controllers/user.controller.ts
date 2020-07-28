@@ -51,7 +51,6 @@ class UserController implements IControllerBase {
       },
       status: 'complete',
     }
-
     res.json(response)
   }
 }
