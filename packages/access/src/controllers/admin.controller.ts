@@ -60,7 +60,7 @@ class AdminController implements IRouteController {
         (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
 
       if (canEnter) {
-        await this.accessService.handleEnter(access)
+        await this.accessService.handleEnter(access, userId)
         return res.json(actionSucceed(responseBody))
       }
 
@@ -79,7 +79,7 @@ class AdminController implements IRouteController {
       if (!user) {
         throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
       }
-      await this.accessService.handleExit(access)
+      await this.accessService.handleExit(access, userId)
 
       res.json(actionSucceed({passport, base64Photo: user.base64Photo}))
     } catch (error) {
