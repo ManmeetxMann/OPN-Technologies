@@ -44,6 +44,11 @@ components:
           type: string
         logoUrl:
           type: string
+        type:
+          type: string
+          anyOf:
+            - default
+            - childcare
       required:
         - name
 

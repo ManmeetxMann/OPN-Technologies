@@ -3,7 +3,10 @@ export type Organization = {
   key: number
   name: string
   logoUrl: string
+  type: OrganizationType
 }
+
+export type OrganizationType = 'default' | 'childcare'
 
 export type OrganizationLocation = {
   id: string

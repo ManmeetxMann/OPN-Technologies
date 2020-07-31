@@ -125,8 +125,7 @@ abstract class DataModel<T extends HasId> {
    */
   async get(id: string): Promise<T> {
     const dao = this.datastore.firestoreORM.collection<T>({path: this.rootPath})
-    const result: T = await dao.fetch(id)
-    return result
+    return await dao.fetch(id)
   }
 
   async findWhereEqual(property: string, value: unknown): Promise<T[]> {
@@ -143,6 +142,12 @@ abstract class DataModel<T extends HasId> {
       .collection<T>({path: this.rootPath})
       .where(fieldPath, '==', value)
       .fetch()
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.datastore.firestoreORM
+      .collection<T>({path: this.rootPath})
+      .delete(id)
   }
 
   async deleteAll(): Promise<void> {

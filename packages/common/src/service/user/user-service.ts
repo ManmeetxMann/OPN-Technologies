@@ -1,5 +1,6 @@
 import DataStore from '../../data/datastore'
-import {User, UserModel} from '../../data/user'
+import {User, UserDependant, UserDependantModel, UserModel} from '../../data/user'
+import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
 
 export class UserService {
   private dataStore = new DataStore()
@@ -30,8 +31,33 @@ export class UserService {
     return !user ? null : user
   }
 
-  async findOneByAuthUserId(authUserid: string): Promise<User> {
-    const results = await this.userRepository.findWhereEqual('authUserId', authUserid)
+  async findOneByAuthUserId(authUserId: string): Promise<User> {
+    const results = await this.userRepository.findWhereEqual('authUserId', authUserId)
     return results.length > 0 ? results.shift() : null
+  }
+
+  getAllDependants(userId: string): Promise<UserDependant[]> {
+    return this.findOneUserOrThrow(userId).then(() =>
+      new UserDependantModel(this.dataStore, userId).fetchAll(),
+    )
+  }
+
+  addDependants(userId: string, members: UserDependant[]): Promise<UserDependant[]> {
+    return this.findOneUserOrThrow(userId).then(() =>
+      new UserDependantModel(this.dataStore, userId).addAll(members),
+    )
+  }
+
+  removeDependant(userId: string, dependantId: string): Promise<void> {
+    return this.findOneUserOrThrow(userId).then(() =>
+      new UserDependantModel(this.dataStore, userId).delete(dependantId),
+    )
+  }
+
+  private findOneUserOrThrow(userId: string): Promise<User> {
+    return this.findOne(userId).then((user) => {
+      if (!user) throw new ResourceNotFoundException(`Cannot find user with Id ${userId}`)
+      return user
+    })
   }
 }
