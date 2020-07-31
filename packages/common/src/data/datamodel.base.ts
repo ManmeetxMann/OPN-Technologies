@@ -13,6 +13,15 @@ abstract class DataModel<T extends HasId> {
   }
 
   /**
+   * Get the path to a colle to a collection (NOT a CollectionReference) at the given path
+   * @param subPath the path, after rootpath, to the collection
+   */
+  private doc(id: string, subPath = ''): firestore.DocumentReference {
+    const path = subPath ? `${this.rootPath}/${subPath}` : this.rootPath
+    return this.datastore.firestoreAdmin.firestore().collection(path).doc(id)
+  }
+
+  /**
    * Get a reference to a collection (NOT a CollectionReference) at the given path
    * @param subPath the path, after rootpath, to the collection
    */
@@ -29,11 +38,7 @@ abstract class DataModel<T extends HasId> {
     return Promise.all(
       this.zeroSet.map(
         async (record): Promise<void> => {
-          const currentDocument = await this.datastore.firestoreAdmin
-            .firestore()
-            .collection(this.rootPath)
-            .doc(record.id)
-            .get()
+          const currentDocument = await this.doc(record.id).get()
           if (currentDocument.exists) {
             console.log(`${record.id} already exists, skipping initialization`)
           } else {
@@ -53,7 +58,7 @@ abstract class DataModel<T extends HasId> {
   async add(data: OptionalIdStorable<T>, subPath = ''): Promise<T> {
     return this.getDAO(subPath)
       .addOrSet(data)
-      .then((id) => this.get(id))
+      .then((id) => this.get(id, subPath))
   }
 
   async addAll(data: Array<OptionalIdStorable<T>>, subPath = ''): Promise<T[]> {
@@ -90,12 +95,10 @@ abstract class DataModel<T extends HasId> {
     fieldValue: unknown,
     subPath = '',
   ): Promise<T> {
-    return this.get(id, subPath).then((data) =>
-      this.update({
-        ...data,
-        [fieldName]: fieldValue,
-      } as Storable<T>),
-    )
+    await this.doc(id, subPath).update({
+      [fieldName]: fieldValue,
+    })
+    return this.get(id, subPath)
   }
 
   /**
@@ -104,15 +107,12 @@ abstract class DataModel<T extends HasId> {
    * @param fields field name as key and field value as value
    * @param fieldValue field / property value to update
    */
-  async updateProperties(id: string, fields: Record<string, unknown>): Promise<T> {
-    return this.datastore.firestoreAdmin
-      .firestore()
-      .collection(this.rootPath)
-      .doc(id)
+  async updateProperties(id: string, fields: Record<string, unknown>, subPath = ''): Promise<T> {
+    return this.doc(id, subPath)
       .update({
         ...fields,
       })
-      .then(() => this.get(id))
+      .then(() => this.get(id, subPath))
   }
 
   /**
@@ -121,11 +121,8 @@ abstract class DataModel<T extends HasId> {
    * @param fieldName field / property name to increment
    * @param byCount how much to increment
    */
-  async increment(id: string, fieldName: string, byCount: number): Promise<T> {
-    return this.datastore.firestoreAdmin
-      .firestore()
-      .collection(this.rootPath)
-      .doc(id)
+  async increment(id: string, fieldName: string, byCount: number, subPath = ''): Promise<T> {
+    return this.doc(id, subPath)
       .update({
         [fieldName]: firestore.FieldValue.increment(byCount),
       })
@@ -143,9 +140,8 @@ abstract class DataModel<T extends HasId> {
     return result
   }
 
-  async findWhereEqual(property: string | string[], value: unknown, subPath = ''): Promise<T[]> {
-    const fieldNames = typeof property === 'string' ? [property] : property
-    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(...fieldNames)
+  async findWhereEqual(property: string, value: unknown, subPath = ''): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
     return await this.getDAO(subPath).where(fieldPath, '==', value).fetch()
   }
 
