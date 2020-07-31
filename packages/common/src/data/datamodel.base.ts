@@ -13,7 +13,7 @@ abstract class DataModel<T extends HasId> {
   }
 
   /**
-   * Get the path to a colle to a collection (NOT a CollectionReference) at the given path
+   * Get the document at the given path
    * @param subPath the path, after rootpath, to the collection
    */
   private doc(id: string, subPath = ''): firestore.DocumentReference {
