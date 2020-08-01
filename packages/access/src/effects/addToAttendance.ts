@@ -1,9 +1,7 @@
 import type {Access} from '../models/access'
 import {AttendanceRepository} from '../repository/attendance.repository'
 import DataStore from '../../../common/src/data/datastore'
-
 import {FieldValue} from '@google-cloud/firestore'
-
 import moment from 'moment'
 
 // access, but with fields we might be able to avoid querying for
