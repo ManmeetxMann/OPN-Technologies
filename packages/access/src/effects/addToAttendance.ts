@@ -4,7 +4,6 @@ import DataStore from '../../../common/src/data/datastore'
 import {FieldValue} from '@google-cloud/firestore'
 import moment from 'moment'
 
-
 const ACC_KEY = 'accesses'
 
 const dateOf = async (a: UserAccess): Promise<string> => {
