@@ -23,7 +23,6 @@ export default class AccessListener {
   }
 
   async addEntry(access: Addable): Promise<unknown> {
-    console.log('adding')
     if (access.exitAt) {
       console.warn('adding entry for an access with an exit time')
     }
@@ -54,7 +53,6 @@ export default class AccessListener {
       console.warn('access already entered')
       return
     }
-    console.log(toAdd)
     // use array union to avoid race conditions
     return this.repo.updateProperties(
       record.id,
