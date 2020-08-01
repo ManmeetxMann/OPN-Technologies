@@ -23,17 +23,19 @@ export default class AccessListener {
   }
 
   async addEntry(access: Addable): Promise<unknown> {
+    console.log('adding')
     if (access.exitAt) {
       console.warn('adding entry for an access with an exit time')
     }
     const date = await dateOf(access)
     // TODO - need to access orgID here?
-    const path = `${access.locationId}/dates`
+    const path = `${access.locationId}/daily-reports`
     let record = (await this.repo.findWhereEqual('date', date, path))[0]
     if (!record) {
       record = await this.repo.add(
         {
           date,
+          accessingUsers: [],
           accesses: [],
         },
         path,
@@ -52,8 +54,16 @@ export default class AccessListener {
       console.warn('access already entered')
       return
     }
+    console.log(toAdd)
     // use array union to avoid race conditions
-    return this.repo.updateProperty(record.id, 'accesses', FieldValue.arrayUnion(toAdd), path)
+    return this.repo.updateProperties(
+      record.id,
+      {
+        accesses: FieldValue.arrayUnion(toAdd),
+        accessingUsers: FieldValue.arrayUnion(access.userId),
+      },
+      path,
+    )
   }
 
   async addExit(access: Addable): Promise<unknown> {
@@ -62,7 +72,7 @@ export default class AccessListener {
     }
     const date = await dateOf(access)
     // TODO - need to access orgID here?
-    const path = `${access.locationId}/dates`
+    const path = `${access.locationId}/daily-reports`
     let record = (await this.repo.findWhereEqual('date', date, path))[0]
     if (!record) {
       // weird but plausible if they stayed overnight
@@ -70,6 +80,7 @@ export default class AccessListener {
       record = await this.repo.add(
         {
           date,
+          accessingUsers: [],
           accesses: [],
         },
         path,
@@ -90,6 +101,13 @@ export default class AccessListener {
       exitAt: access.exitAt,
     }
     // use array union to avoid race conditions
-    return this.repo.updateProperty(record.id, 'accesses', FieldValue.arrayUnion(toAdd), path)
+    return this.repo.updateProperties(
+      record.id,
+      {
+        accesses: FieldValue.arrayUnion(toAdd),
+        accessingUsers: FieldValue.arrayUnion(access.userId),
+      },
+      path,
+    )
   }
 }
