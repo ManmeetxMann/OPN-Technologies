@@ -1,4 +1,5 @@
 import TraceRepository from '../repository/trace.repository'
+import type {ExposureReport} from '../repository/trace.repository'
 import DataStore from '../../../common/src/data/datastore'
 
 const overlap = (a, b) => {
@@ -11,15 +12,6 @@ const overlap = (a, b) => {
   }
 }
 
-type ExposureReport = {
-  date: string
-  overlapping: {
-    userId: string
-    start: Date
-    end: Date
-  }[]
-}
-
 // When triggered, this creates a trace
 export default class TraceListener {
   repo: TraceRepository
@@ -29,7 +21,7 @@ export default class TraceListener {
 
   async traceFor(userId: string): Promise<ExposureReport[]> {
     const accesses = await this.repo.getAccesses(userId)
-    return accesses.map((dailyReport) => {
+    const result = accesses.map((dailyReport) => {
       const mainUser = dailyReport.accesses.filter((access) => access.userId === userId)
       const otherUsers = dailyReport.accesses.filter((access) => access.userId !== userId)
       // TODO: this could be made more efficient with some sorting
@@ -52,5 +44,7 @@ export default class TraceListener {
         overlapping,
       }
     })
+    this.repo.saveTrace(result, userId)
+    return result
   }
 }

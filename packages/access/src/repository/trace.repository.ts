@@ -8,12 +8,22 @@ export type TraceModel = Trace & {
   id: string
 }
 
-type CollisionReport = Attendance & {
+type AugmentedAttendance = Attendance & {
   locationId: string
   reportId: string
 }
 
-const digest = (doc: firestore.QueryDocumentSnapshot): CollisionReport => {
+export type ExposureReport = {
+  date: string
+  locationId: string
+  overlapping: {
+    userId: string
+    start: Date
+    end: Date
+  }[]
+}
+
+const digest = (doc: firestore.QueryDocumentSnapshot): AugmentedAttendance => {
   const [, locationId, , reportId] = doc.ref.path.split('/')
   const data = doc.data()
   return {
@@ -36,11 +46,24 @@ export default class DailyReportAccess {
     return this.datastore.firestoreAdmin.firestore().collectionGroup('daily-reports')
   }
 
-  async getAccesses(userId: string): Promise<CollisionReport[]> {
+  private getDAO(): firestore.CollectionReference {
+    return this.datastore.firestoreAdmin.firestore().collection('traces')
+  }
+
+  async getAccesses(userId: string): Promise<AugmentedAttendance[]> {
     const results = await this.getQuery()
       .where('accessingUsers', 'array-contains', userId)
       .where('date', '>', '1')
       .get()
     return results.docs.map(digest)
+  }
+
+  async saveTrace(reports: ExposureReport[], userId: string): Promise<ExposureReport[]> {
+    const result = await this.getDAO().add({
+      exposures: reports,
+      userId,
+    })
+    const doc = await result.get()
+    return doc.data().exposures
   }
 }
