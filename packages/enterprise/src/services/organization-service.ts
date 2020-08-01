@@ -20,6 +20,8 @@ export class OrganizationService {
       this.organizationRepository.add({
         ...organization,
         key,
+        type: organization.type ?? 'default',
+        allowDependants: organization.allowDependants ?? false,
       }),
     )
   }

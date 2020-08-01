@@ -4,6 +4,7 @@ export type Organization = {
   name: string
   logoUrl: string
   type: OrganizationType
+  allowDependants: boolean
 }
 
 export type OrganizationType = 'default' | 'childcare'

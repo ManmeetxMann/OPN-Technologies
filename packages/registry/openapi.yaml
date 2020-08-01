@@ -63,9 +63,7 @@ components:
           type: string
           enum:
             - child
-            - spouse
             - parent
-            - grandparent
       required:
         - firstName
         - lastNameInitial

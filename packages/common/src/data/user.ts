@@ -21,7 +21,7 @@ export type UserDependant = {
   relation: UserDependantRelation
 }
 
-export type UserDependantRelation = 'child' | 'spouse' | 'parent' | 'grandparent'
+export type UserDependantRelation = 'child' | 'parent'
 
 export class UserModel extends DataModel<User> {
   public readonly rootPath = 'users'

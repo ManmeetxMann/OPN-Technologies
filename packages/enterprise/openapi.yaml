@@ -49,6 +49,8 @@ components:
           anyOf:
             - default
             - childcare
+        allowDependants:
+          type: boolean
       required:
         - name
 
