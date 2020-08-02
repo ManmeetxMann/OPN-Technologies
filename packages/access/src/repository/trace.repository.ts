@@ -1,8 +1,9 @@
+import {Query} from '@firestore-simple/admin'
+import {firestore} from 'firebase-admin'
+
 import DataStore from '../../../common/src/data/datastore'
 import {Trace} from '../models/trace'
 import {Attendance} from '../models/attendance'
-import {Query} from '@firestore-simple/admin'
-import {firestore} from 'firebase-admin'
 
 export type TraceModel = Trace & {
   id: string
@@ -50,18 +51,28 @@ export default class DailyReportAccess {
     return this.datastore.firestoreAdmin.firestore().collection('traces')
   }
 
-  async getAccesses(userId: string): Promise<AugmentedAttendance[]> {
+  async getAccesses(
+    userId: string,
+    earliestDate: string,
+    latestDate: string,
+  ): Promise<AugmentedAttendance[]> {
     const results = await this.getQuery()
       .where('accessingUsers', 'array-contains', userId)
-      .where('date', '>', '1')
+      .where('date', '>=', earliestDate)
+      .where('date', '<=', latestDate)
       .get()
     return results.docs.map(digest)
   }
 
-  async saveTrace(reports: ExposureReport[], userId: string): Promise<ExposureReport[]> {
+  async saveTrace(
+    reports: ExposureReport[],
+    userId: string,
+    severity: string,
+  ): Promise<ExposureReport[]> {
     const result = await this.getDAO().add({
       exposures: reports,
       userId,
+      severity,
     })
     const doc = await result.get()
     return doc.data().exposures
