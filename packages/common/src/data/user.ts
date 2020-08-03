@@ -18,12 +18,6 @@ export type UserDependant = {
   id: string
   firstName: string
   lastNameInitial: string
-  relation: UserDependantRelation
-}
-
-export enum UserDependantRelation {
-  Child = 'child',
-  Parent = 'parent',
 }
 
 export class UserModel extends DataModel<User> {

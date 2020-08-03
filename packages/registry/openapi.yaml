@@ -16,14 +16,14 @@ components:
             code:
               type: string
               enum: [
-                succeed,
-                failed,
-                validation_error,
-                internal_server_error,
-                unauthorized,
-                access_denied,
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
                 resource_not_found
-              ]
+                ]
             message:
               nullable: true
               type: string
@@ -59,11 +59,6 @@ components:
           type: string
         lastNameInitial:
           type: string
-        relation:
-          type: string
-          enum:
-            - child
-            - parent
       required:
         - firstName
         - lastNameInitial
@@ -79,14 +74,14 @@ components:
             code:
               type: string
               enum: [
-                succeed,
-                failed,
-                validation_error,
-                internal_server_error,
-                unauthorized,
-                access_denied,
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
                 resource_not_found
-              ]
+                ]
             message:
               nullable: true
               type: string
@@ -104,14 +99,14 @@ components:
             code:
               type: string
               enum: [
-                succeed,
-                failed,
-                validation_error,
-                internal_server_error,
-                unauthorized,
-                access_denied,
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
                 resource_not_found
-              ]
+                ]
             message:
               nullable: true
               type: string
@@ -172,7 +167,7 @@ paths:
           name: userId
           schema:
             type: string
-#          required: true
+      #          required: true
       responses:
         "200":
           description: Successfully registered
@@ -187,7 +182,7 @@ paths:
           name: userId
           schema:
             type: string
-#          required: true
+      #          required: true
       requestBody:
         content:
           application/json:
@@ -211,7 +206,7 @@ paths:
           name: userId
           schema:
             type: string
-      #          required: true
+        #          required: true
         - in: path
           name: dependantId
           schema:
