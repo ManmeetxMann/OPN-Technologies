@@ -1,5 +1,5 @@
 import DataStore from '../../../common/src/data/datastore'
-import {Organization, OrganizationLocation} from '../models/organization'
+import {Organization, OrganizationLocation, OrganizationType} from '../models/organization'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {
   OrganizationKeySequenceModel,
@@ -20,7 +20,7 @@ export class OrganizationService {
       this.organizationRepository.add({
         ...organization,
         key,
-        type: organization.type ?? 'default',
+        type: organization.type ?? OrganizationType.Default,
         allowDependants: organization.allowDependants ?? false,
       }),
     )

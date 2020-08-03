@@ -7,7 +7,10 @@ export type Organization = {
   allowDependants: boolean
 }
 
-export type OrganizationType = 'default' | 'childcare'
+export enum OrganizationType {
+  Default = 'default',
+  Childcare = 'childcare',
+}
 
 export type OrganizationLocation = {
   id: string

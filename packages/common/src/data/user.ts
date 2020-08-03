@@ -21,7 +21,10 @@ export type UserDependant = {
   relation: UserDependantRelation
 }
 
-export type UserDependantRelation = 'child' | 'parent'
+export enum UserDependantRelation {
+  Child = 'child',
+  Parent = 'parent',
+}
 
 export class UserModel extends DataModel<User> {
   public readonly rootPath = 'users'
