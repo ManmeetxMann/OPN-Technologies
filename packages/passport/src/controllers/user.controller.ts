@@ -12,17 +12,27 @@ import {AttestationService} from '../services/attestation-service'
 import {AccessService} from '../../../access/src/service/access.service'
 import {Config} from '../../../common/src/utils/config'
 
+const TRACE_LENGTH = 48 * 60 * 60 * 1000
+
 class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
   private passportService = new PassportService()
   private attestationService = new AttestationService()
   private accessService = new AccessService()
-  private pubsub: Topic
+  private topic: Topic
   constructor() {
     this.initRoutes()
     try {
-      this.pubsub = (new PubSub()).createTopic(Config.get('PUBSUB_TRACE_TOPIC'))
+      const pubsub = new PubSub()
+      pubsub
+        .createTopic(Config.get('PUBSUB_TRACE_TOPIC'))
+        .catch((err) => {
+          if (err.code !== 6) {
+            throw err
+          }
+        })
+        .then(() => (this.topic = pubsub.topic(Config.get('PUBSUB_TRACE_TOPIC'))))
     } catch (error) {
       if (error.code !== 6) throw error
     }
@@ -85,8 +95,13 @@ class UserController implements IControllerBase {
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
         await this.accessService.incrementAccessDenied(locationId)
         if (userId) {
-          // pub
-          this.pubsub.topic(Config)
+          const nowMillis = new Date().valueOf()
+          this.topic.publish(Buffer.from('trace-required'), {
+            userId,
+            severity: passportStatus,
+            startTime: `${nowMillis - TRACE_LENGTH}`,
+            endTime: `${nowMillis}`,
+          })
         } else {
           console.warn(
             `Could not execute a trace of attestation ${saved.id} because userId was not provided`,
