@@ -1,5 +1,7 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
+import {PubSub, Topic} from '@google-cloud/pubsub'
+
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {PassportService} from '../services/passport-service'
 import {PassportStatuses} from '../models/passport'
@@ -8,6 +10,7 @@ import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Attestation} from '../models/attestation'
 import {AttestationService} from '../services/attestation-service'
 import {AccessService} from '../../../access/src/service/access.service'
+import {Config} from '../../../common/src/utils/config'
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -15,9 +18,14 @@ class UserController implements IControllerBase {
   private passportService = new PassportService()
   private attestationService = new AttestationService()
   private accessService = new AccessService()
-
+  private pubsub: Topic
   constructor() {
     this.initRoutes()
+    try {
+      this.pubsub = (new PubSub()).createTopic(Config.get('PUBSUB_TRACE_TOPIC'))
+    } catch (error) {
+      if (error.code !== 6) throw error
+    }
   }
 
   public initRoutes(): void {
@@ -48,7 +56,12 @@ class UserController implements IControllerBase {
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
-      const locationId = req.body.locationId
+      const {locationId, userId} = req.body
+
+      if (!userId) {
+        console.warn('not including userId is deprecated and will be removed')
+      }
+
       const answers: Record<number, Record<number, boolean>> = req.body.answers
       const a1 = answers[1][1]
       const a2 = answers[2][1]
@@ -62,14 +75,23 @@ class UserController implements IControllerBase {
           ? PassportStatuses.Caution
           : PassportStatuses.Proceed
 
-      await this.attestationService.save({
+      const saved = await this.attestationService.save({
         answers,
         locationId,
+        userId,
         status: passportStatus,
       } as Attestation)
 
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
         await this.accessService.incrementAccessDenied(locationId)
+        if (userId) {
+          // pub
+          this.pubsub.topic(Config)
+        } else {
+          console.warn(
+            `Could not execute a trace of attestation ${saved.id} because userId was not provided`,
+          )
+        }
       }
 
       const passport = await this.passportService.create(passportStatus)
