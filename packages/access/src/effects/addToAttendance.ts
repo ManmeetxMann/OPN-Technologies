@@ -1,4 +1,4 @@
-import type {UserAccess} from '../models/attendance'
+import type {Access} from '../models/access'
 import {AttendanceRepository} from '../repository/attendance.repository'
 import DataStore from '../../../common/src/data/datastore'
 import {FieldValue} from '@google-cloud/firestore'
@@ -6,7 +6,7 @@ import moment from 'moment'
 
 const ACC_KEY = 'accesses'
 
-const dateOf = async (a: UserAccess): Promise<string> => {
+const dateOf = async (a: Access): Promise<string> => {
   // @ts-ignore it's a timestamp, not a string
   return moment(a.enteredAt.toDate()).format('YYYY-MM-DD')
 }
@@ -17,7 +17,7 @@ export default class AccessListener {
     this.repo = new AttendanceRepository(dataStore)
   }
 
-  async addEntry(access: UserAccess): Promise<unknown> {
+  async addEntry(access: Access): Promise<unknown> {
     if (access.exitAt) {
       console.warn('adding entry for an access with an exit time')
     }
@@ -53,7 +53,7 @@ export default class AccessListener {
     return this.repo.updateProperty(record.id, ACC_KEY, FieldValue.arrayUnion(toAdd), path)
   }
 
-  async addExit(access: UserAccess): Promise<unknown> {
+  async addExit(access: Access): Promise<unknown> {
     if (!access.exitAt) {
       throw new Error('called addExit with a non-exiting Access')
     }
