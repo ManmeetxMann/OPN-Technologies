@@ -2,6 +2,7 @@ import DataModel from '../../../common/src/data/datamodel.base'
 
 export type Passport = {
   id: string
+  userId: string
   statusToken: string
   status: PassportStatus
   validFrom: string
