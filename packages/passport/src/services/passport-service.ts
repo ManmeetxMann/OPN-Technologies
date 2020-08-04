@@ -10,7 +10,7 @@ export class PassportService {
   private passportRepository = new PassportModel(this.dataStore)
   private identifierRepository = new IdentifiersModel(this.dataStore)
 
-  create(status: PassportStatuses = PassportStatuses.Pending): Promise<Passport> {
+  create(status: PassportStatuses = PassportStatuses.Pending, userId: string): Promise<Passport> {
     return this.identifierRepository
       .getUniqueValue('status')
       .then((statusToken) =>
@@ -19,6 +19,7 @@ export class PassportService {
           statusToken,
           validFrom: firestore.FieldValue.serverTimestamp(),
           validUntil: null,
+          userId,
         }),
       )
       .then(({validFrom, ...passport}) => ({

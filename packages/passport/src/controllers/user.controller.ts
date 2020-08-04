@@ -109,7 +109,7 @@ class UserController implements IControllerBase {
         }
       }
 
-      const passport = await this.passportService.create(passportStatus)
+      const passport = await this.passportService.create(passportStatus, userId)
       res.json(actionSucceed(passport))
     } catch (error) {
       next(error)
