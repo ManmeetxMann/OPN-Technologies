@@ -47,29 +47,38 @@ class UserController implements IControllerBase {
     try {
       // Fetch passport status token
       // or create a pending one if any
-      const {statusToken} = req.body
-      const passport = await (statusToken
-        ? this.passportService.findOneByToken(statusToken).then((target) =>
-            // Reset proceed passport if expired
-            target.status === PassportStatuses.Proceed && isPassed(target.validUntil)
-              ? this.passportService.create()
-              : target,
-          )
-        : this.passportService.create())
+      const {statusToken, userId} = req.body
+      if (!userId) {
+        console.warn('Not including userId is deprecated and will be removed')
+      }
 
-      res.json(actionSucceed(passport))
+      const existingPassport = statusToken
+        ? await this.passportService.findOneByToken(statusToken)
+        : null
+      if (existingPassport && userId && existingPassport.userId !== userId) {
+        console.error(`${userId} tried to check ${existingPassport.userId}'s passport`)
+        throw new Error('That passport belongs to another user')
+      }
+      const newPassport = existingPassport
+        ? existingPassport.status === PassportStatuses.Proceed &&
+          isPassed(existingPassport.validUntil)
+          (? await this.passportService.create(PassportStatuses.Pending, existingPassport.userId || userId))
+          : existingPassport
+        : this.passportService.create(PassportStatuses.Pending, userId)
+
+      res.json(actionSucceed(newPassport))
     } catch (error) {
       next(error)
     }
   }
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
     try {
-      // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
       const {locationId, userId} = req.body
 
       if (!userId) {
-        console.warn('not including userId is deprecated and will be removed')
+        console.warn('Not including userId is deprecated and will be removed')
       }
 
       const answers: Record<number, Record<number, boolean>> = req.body.answers
