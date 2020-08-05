@@ -21,7 +21,9 @@ const overlap = (a: Access, b: Access, latestTime: number): Overlap | null => {
     return null
   }
   return {
+    // @ts-ignore these are timestamps, not dates
     start: (a.enteredAt < b.enteredAt ? b : a).enteredAt.toDate(),
+    // @ts-ignore these are timestamps, not dates
     end: (a.exitAt > b.exitAt ? b : a).exitAt.toDate(),
   }
 }
