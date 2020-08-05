@@ -62,9 +62,12 @@ class UserController implements IControllerBase {
       const newPassport = existingPassport
         ? existingPassport.status === PassportStatuses.Proceed &&
           isPassed(existingPassport.validUntil)
-          (? await this.passportService.create(PassportStatuses.Pending, existingPassport.userId || userId))
+          ? await this.passportService.create(
+              PassportStatuses.Pending,
+              existingPassport.userId || userId,
+            )
           : existingPassport
-        : this.passportService.create(PassportStatuses.Pending, userId)
+        : await this.passportService.create(PassportStatuses.Pending, userId)
 
       res.json(actionSucceed(newPassport))
     } catch (error) {
