@@ -1,11 +1,12 @@
 import moment from 'moment'
+import {PubSub} from '@google-cloud/pubsub'
 
 import TraceRepository from '../repository/trace.repository'
-import type {ExposureReport} from '../repository/trace.repository'
+import type {ExposureReport} from '../models/trace'
 import type {Access} from '../models/access'
 import DataStore from '../../../common/src/data/datastore'
-import {PubSub} from '@google-cloud/pubsub'
 import {Config} from '../../../common/src/utils/config'
+import {PassportStatuses} from '../../../passport/src/models/passport'
 
 type Overlap = {
   start: Date
@@ -112,7 +113,13 @@ export default class TraceListener {
         overlapping,
       }
     })
-    this.repo.saveTrace(result, userId, severity)
+    this.repo.saveTrace(
+      result,
+      userId,
+      severity as PassportStatuses.Caution | PassportStatuses.Stop,
+      moment(endTime).format('YYYY-MM-DD'),
+      endTime - startTime,
+    )
     return result
   }
 }
