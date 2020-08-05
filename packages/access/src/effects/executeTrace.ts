@@ -2,6 +2,7 @@ import moment from 'moment'
 
 import TraceRepository from '../repository/trace.repository'
 import type {ExposureReport} from '../repository/trace.repository'
+import type {Access} from '../models/access'
 import DataStore from '../../../common/src/data/datastore'
 import {PubSub} from '@google-cloud/pubsub'
 import {Config} from '../../../common/src/utils/config'
@@ -11,8 +12,12 @@ type Overlap = {
   end: Date
 }
 
-const overlap = (a, b): Overlap | null => {
-  if (a.exitAt < b.enteredAt || b.exitAt < a.enteredAt) {
+const overlap = (a: Access, b: Access, latestTime: number): Overlap | null => {
+  const latestStart = a.enteredAt > b.enteredAt ? a.enteredAt : b.enteredAt
+  const end1 = a.exitAt ?? {toDate: () => new Date(latestTime)}
+  const end2 = b.exitAt ?? {toDate: () => new Date(latestTime)}
+  const earliestEnd = end1 < end2 ? end1 : end2
+  if (latestStart < earliestEnd) {
     return null
   }
   return {
@@ -23,6 +28,7 @@ const overlap = (a, b): Overlap | null => {
 
 const topicName = Config.get('PUBSUB_TRACE_TOPIC')
 const subscriptionName = Config.get('PUBSUB_TRACE_SUBSCRIPTION')
+const A_DAY = 24 * 60 * 60 * 1000
 
 // When triggered, this creates a trace
 export default class TraceListener {
@@ -72,31 +78,25 @@ export default class TraceListener {
     severity: string,
   ): Promise<ExposureReport[]> {
     // because of time zones we might be interested in other dates
-    const earliestDate = moment(startTime - 24 * 60 * 60 * 1000).format('YYYY-MM-DD')
-    const latestDate = moment(endTime + 24 * 60 * 60 * 1000).format('YYYY-MM-DD')
+    const earliestDate = moment(startTime - A_DAY).format('YYYY-MM-DD')
+    const latestDate = moment(endTime + A_DAY).format('YYYY-MM-DD')
 
     const accesses = await this.repo.getAccesses(userId, earliestDate, latestDate)
     const result = accesses.map((dailyReport) => {
       const mainUser = dailyReport.accesses.filter((access) => access.userId === userId)
       const otherUsers = dailyReport.accesses.filter((access) => access.userId !== userId)
+      const dateObj = new Date(dailyReport.date)
+      dateObj.setDate(dateObj.getDate() + 1)
+      const endOfDay = dateObj.valueOf()
       // TODO: this could be made more efficient with some sorting
-
       const overlapping = otherUsers
         .map((access) =>
           mainUser
-            .map((contaminated) => overlap(contaminated, access))
-            .filter((range) => {
-              if (!range) {
-                return false
-              }
-              if (range.end.valueOf() < startTime) {
-                return false
-              }
-              if (range.start.valueOf() > endTime) {
-                return false
-              }
-              return true
-            })
+            .map((contaminated) => overlap(contaminated, access, endOfDay))
+            .filter(
+              (range) =>
+                range && range.end.valueOf() > startTime && range.start.valueOf() < endTime,
+            )
             .map((range) => ({
               userId: access.userId,
               ...range,
