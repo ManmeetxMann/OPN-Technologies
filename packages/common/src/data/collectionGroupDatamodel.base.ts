@@ -10,7 +10,7 @@ type RecordWithPath<G> = {
   path: string[]
   value: G
 }
-
+// an extension of a normal datamodel which can also access a collectionGroup
 abstract class CollectionGroupModel<T extends HasId, G> extends DataModel<T> {
   abstract readonly groupId: string
   // shadow of the parent class' private ds
