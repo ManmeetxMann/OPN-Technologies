@@ -16,7 +16,7 @@ export class AccessService {
   private accessStatsRepository = new AccessStatsRepository(this.dataStore)
   private accessListener = new AccessListener(this.dataStore)
 
-  create(statusToken: string, locationId: string): Promise<Access> {
+  create(statusToken: string, locationId: string, userId: string): Promise<Access> {
     return this.identifier
       .getUniqueValue('access')
       .then((token) =>
@@ -24,6 +24,7 @@ export class AccessService {
           token,
           locationId,
           statusToken,
+          userId,
           createdAt: firestore.FieldValue.serverTimestamp(),
         }),
       )
@@ -36,7 +37,7 @@ export class AccessService {
       }))
   }
 
-  handleEnter(access: AccessModel, userId: string): Promise<Access> {
+  handleEnter(access: AccessModel): Promise<Access> {
     if (!!access.enteredAt || !!access.exitAt) {
       throw new BadRequestException('Token already used to enter or exit')
     }
@@ -50,15 +51,12 @@ export class AccessService {
         Promise.all([
           this.incrementPeopleOnPremises(access.locationId),
           // TODO: maybe we don't need to wait for this to resolve
-          this.accessListener.addEntry({
-            userId,
-            ...saved,
-          }),
+          this.accessListener.addEntry(saved),
         ]).then(() => saved),
       )
   }
 
-  handleExit(access: AccessModel, userId: string): Promise<Access> {
+  handleExit(access: AccessModel): Promise<Access> {
     if (!!access.exitAt) {
       throw new BadRequestException('Token already used to exit')
     }
@@ -72,10 +70,7 @@ export class AccessService {
         Promise.all([
           this.decreasePeopleOnPremises(access.locationId),
           // TODO: maybe we don't need to wait for this to resolve
-          this.accessListener.addExit({
-            userId,
-            ...saved,
-          }),
+          this.accessListener.addExit(saved),
         ]).then(() => saved),
       )
   }

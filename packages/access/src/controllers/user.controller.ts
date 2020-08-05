@@ -28,15 +28,14 @@ class UserController implements IRouteController {
 
   createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {statusToken, locationId} = req.body
-      const access = await this.passportService
-        .findOneByToken(statusToken)
-        .then((passport) =>
-          passport.status === PassportStatuses.Pending ||
-          (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
-            ? this.accessService.create(statusToken, locationId)
-            : null,
-        )
+      const {statusToken, locationId, userId} = req.body
+      const access = await this.passportService.findOneByToken(statusToken).then((passport) =>
+        passport.status === PassportStatuses.Pending ||
+        (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
+          ? // userId will be added to passport soon
+            this.accessService.create(statusToken, locationId, /*passport.userId*/ userId)
+          : null,
+      )
       const response = access
         ? actionSucceed(access)
         : actionFailed('Access denied: Cannot grant access for the given status-token')
