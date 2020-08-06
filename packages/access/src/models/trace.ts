@@ -11,6 +11,7 @@ export type Trace = {
 export type ExposureReport = {
   date: string
   locationId: string
+  organizationId: string
   overlapping: {
     start: Date
     end: Date

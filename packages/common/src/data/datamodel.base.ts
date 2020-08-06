@@ -155,6 +155,16 @@ abstract class DataModel<T extends HasId> {
     return await this.getDAO(subPath).where(fieldPath, '==', value).fetch()
   }
 
+  async findWhereMapHasKeyValueIn(
+    map: string,
+    key: string,
+    value: unknown,
+    subPath = '',
+  ): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
+    return await this.getDAO(subPath).where(fieldPath, 'in', value).fetch()
+  }
+
   async deleteAll(subPath = ''): Promise<void> {
     const dao = this.getDAO(subPath)
     const results = await dao.fetchAll()
