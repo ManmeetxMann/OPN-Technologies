@@ -43,6 +43,14 @@ components:
           type: string
         validUntil:
           type: string
+        userId:
+          type: string
+        includesGuardian:
+          type: boolean
+        dependentIds:
+          type: array
+          items:
+            type: string
 
     ResponseOfPassport:
       type: object
@@ -87,6 +95,17 @@ paths:
                 statusToken:
                   type: string
                   nullable: true
+                userId:
+                  type: string
+                dependentIds:
+                  type: array
+                  nullable: true
+                  items:
+                    type: string
+                includeGuardian:
+                  type: boolean
+                  nullable: true
+
 
       responses:
         '200':
@@ -107,10 +126,21 @@ paths:
                   type: string
                 answers:
                   type: object
+                userId:
+                  type: string
+                dependentIds:
+                  type: array
+                  nullable: true
+                  items:
+                    type: string
+                includeGuardian:
+                  type: boolean
+                  nullable: true
               required:
                 - locationId
                 - answers
-              example: {locationId: "location-id", answers: { 1:{1: false},2:{1: false},3:{1: false},4:{1: false, 2: "2020-06-10T05:05:32.217Z"}}}
+                - userId
+              example: {locationId: "location-id", answers: { 1:{1: false},2:{1: false},3:{1: false},4:{1: false, 2: "2020-06-10T05:05:32.217Z"}}, userId: "parentId", dependentIds: ["childOne", "childTwo"]}
 
       responses:
         '200':
