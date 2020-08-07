@@ -2,7 +2,7 @@ import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {PassportService} from '../services/passport-service'
-import {PassportStatuses} from '../models/passport'
+import {PassportStatuses, Passport} from '../models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Attestation} from '../models/attestation'
@@ -26,20 +26,26 @@ class UserController implements IControllerBase {
   }
 
   check = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // TODO: how to handle dependents here?
     try {
       // Fetch passport status token
       // or create a pending one if any
       const {statusToken} = req.body
-      const passport = await (statusToken
-        ? this.passportService.findOneByToken(statusToken).then((target) =>
-            // Reset proceed passport if expired
-            target.status === PassportStatuses.Proceed && isPassed(target.validUntil)
-              ? this.passportService.create()
-              : target,
-          )
-        : this.passportService.create())
-
-      res.json(actionSucceed(passport))
+      const existingPassport = statusToken
+        ? await this.passportService.findOneByToken(statusToken)
+        : null
+      let currentPassport: Passport
+      if (existingPassport) {
+        if (!isPassed(existingPassport.validUntil)) {
+          currentPassport = existingPassport
+        } else if (existingPassport.status !== PassportStatuses.Proceed) {
+          currentPassport = existingPassport
+        }
+      }
+      if (!currentPassport) {
+        currentPassport = await this.passportService.create()
+      }
+      res.json(actionSucceed(currentPassport))
     } catch (error) {
       next(error)
     }
@@ -49,6 +55,15 @@ class UserController implements IControllerBase {
     try {
       // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
       const locationId = req.body.locationId
+      const includeGuardian = req.body.includeGuardian ?? true
+      const dependentIds = req.body.dependentIds ?? []
+
+      if (!includeGuardian && dependentIds.length === 0) {
+        throw new Error('attestation must be for at least one person')
+      }
+
+      // TODO: check that they're the real guardian
+
       const answers: Record<number, Record<number, boolean>> = req.body.answers
       const a1 = answers[1][1]
       const a2 = answers[2][1]
