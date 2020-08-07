@@ -8,6 +8,7 @@ import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 
@@ -79,9 +80,27 @@ class AdminController implements IRouteController {
     try {
       const {accessToken, userId} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
+      const includeGuardian =
+        (req.body.guardianExiting ?? access.includesGuardian) && !access.exitAt
+      // if unspecified, all remaining dependents
+      const dependantIds: string[] = (
+        req.body.exitingDependantIds ?? Object.keys(access.dependants)
+      ).filter((key: string) => !access.dependants[key].exitAt)
+
+      if (!includeGuardian && !dependantIds.length) {
+        // access service would throw an error here, we want to skip the extra queries
+        // and give a more helpful error
+        if (
+          !req.body.hasOwnProperty('guardianExiting') &&
+          !req.body.hasOwnProperty('exitingDependantIds')
+        ) {
+          throw new BadRequestException('Token already used to exit')
+        } else {
+          throw new BadRequestException('All specified users have already exited')
+        }
+      }
+
       const passport = await this.passportService.findOneByToken(access.statusToken)
-      const includeGuardian = req.body.guardianExiting ?? passport.includesGuardian
-      const dependantIds: string[] = req.body.exitingDependantIds ?? passport.dependantIds
       const user = await this.userService.findOne(userId)
       if (!user) {
         throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)

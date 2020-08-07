@@ -8,9 +8,12 @@ export type Access = {
   exitAt?: string
   userId: string
   includesGuardian: boolean
-  dependants: {
-    id: string
-    enteredAt?: string | firestore.FieldValue
-    exitAt?: string | firestore.FieldValue
-  }[]
+  dependants: Record<
+    string,
+    {
+      id: string
+      enteredAt?: string | firestore.FieldValue
+      exitAt?: string | firestore.FieldValue
+    }
+  >
 }

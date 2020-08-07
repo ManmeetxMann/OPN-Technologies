@@ -25,7 +25,7 @@ export class PassportService {
     if (dependantIds.length) {
       const depModel = new UserDependantModel(this.dataStore, userId)
       const allDependants = (await depModel.fetchAll()).map(({id}) => id)
-      const invalidIds = dependantIds.filter((depId) => allDependants.includes(depId))
+      const invalidIds = dependantIds.filter((depId) => !allDependants.includes(depId))
       if (invalidIds.length) {
         throw new Error(`${userId} is not the guardian of ${invalidIds.join(', ')}`)
       }

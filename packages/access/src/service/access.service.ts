@@ -21,9 +21,13 @@ export class AccessService {
     includesGuardian: boolean,
     dependantIds: string[],
   ): Promise<Access> {
-    const dependants = dependantIds.map((id) => ({
-      id,
-    }))
+    const dependants = {}
+    dependantIds.forEach(
+      (id) =>
+        (dependants[id] = {
+          id,
+        }),
+    )
     return this.identifier
       .getUniqueValue('access')
       .then((token) =>
@@ -50,21 +54,32 @@ export class AccessService {
     if (!!access.enteredAt || !!access.exitAt) {
       throw new BadRequestException('Token already used to enter or exit')
     }
-    // all dependants named in the access enter, no need to filter here
-    if (access.dependants.some((dependant) => !!dependant.enteredAt || !!dependant.exitAt)) {
-      throw new BadRequestException('Token already used to enter or exit')
+    // all dependents named in the access enter, no need to filter here
+    for (const id in access.dependants) {
+      if (!!access.dependants[id].enteredAt || !!access.dependants[id].enteredAt) {
+        throw new BadRequestException('Token already used to enter or exit')
+      }
     }
-    const dependants = access.dependants.map((dependant) => ({
-      ...dependant,
-      enteredAt: firestore.FieldValue.serverTimestamp(),
-    }))
-    const count = dependants.length + (access.includesGuardian ? 1 : 0)
-    return this.accessRepository
-      .update({
-        ...access,
+    const dependants = {}
+    for (const id in access.dependants) {
+      dependants[id] = {
+        ...access.dependants[id],
         enteredAt: firestore.FieldValue.serverTimestamp(),
-        dependants,
-      })
+      }
+    }
+    const newAccess = access.includesGuardian
+      ? {
+          ...access,
+          enteredAt: firestore.FieldValue.serverTimestamp(),
+          dependants,
+        }
+      : {
+          ...access,
+          dependants,
+        }
+    const count = Object.keys(dependants).length + (access.includesGuardian ? 1 : 0)
+    return this.accessRepository
+      .update(newAccess)
       .then((saved) => this.incrementPeopleOnPremises(access.locationId, count).then(() => saved))
   }
 
@@ -73,6 +88,9 @@ export class AccessService {
     includesGuardian: boolean,
     dependantIds: string[],
   ): Promise<Access> {
+    if (!includesGuardian && !dependantIds.length) {
+      throw new BadRequestException('Must specify at least one user')
+    }
     if (includesGuardian) {
       if (!!access.exitAt) {
         throw new BadRequestException('Token already used to exit')
@@ -81,27 +99,34 @@ export class AccessService {
         throw new Error('Token does not apply to guardian')
       }
     }
-    if (dependantIds.length) {
-      if (access.dependants.some((dep) => dependantIds.includes(dep.id) && !!dep.exitAt)) {
-        throw new BadRequestException('Token already used to exit')
+    if (dependantIds.some((id) => !access.dependants[id])) {
+      throw new BadRequestException('Token does not include all dependants')
+    }
+    if (dependantIds.some((id) => !!access.dependants[id].exitAt)) {
+      throw new BadRequestException('Token already used to exit')
+    }
+    const newDependants = {}
+    for (const id in access.dependants) {
+      if (dependantIds.includes(id)) {
+        newDependants[id] = {
+          ...access.dependants[id],
+          exitAt: firestore.FieldValue.serverTimestamp(),
+        }
+      } else {
+        newDependants[id] = access.dependants[id]
       }
-      const validIds = access.dependants.map(({id}) => id)
-      if (dependantIds.some((depId) => !validIds.includes(depId))) {
-        throw new BadRequestException('Token does not include all dependants')
-      }
     }
-    const newAccess = {
-      ...access,
-      dependants: access.dependants.map((dep) => ({...dep})),
-    }
-    if (includesGuardian) {
-      // @ts-ignore we are converting to a Storable
-      newAccess.exitAt = firestore.FieldValue.serverTimestamp()
-    }
-    if (dependantIds.length) {
-      // @ts-ignore we are converting to a Storable
-      newAccess.dependants.forEach((dep) => (dep.exitAt = firestore.FieldValue.serverTimestamp()))
-    }
+
+    const newAccess = includesGuardian
+      ? {
+          ...access,
+          dependants: newDependants,
+          exitAt: firestore.FieldValue.serverTimestamp(),
+        }
+      : {
+          ...access,
+          dependants: newDependants,
+        }
     const count = dependantIds.length + (includesGuardian ? 1 : 0)
 
     return this.accessRepository

@@ -40,6 +40,12 @@ class UserController implements IRouteController {
         fail('Access denied: status-token does not link to a passport')
         return
       }
+
+      if (passport.userId !== userId) {
+        // TODO: we could remove userId from this call
+        fail(`Access denied: passport does not belong to ${userId}`)
+        return
+      }
       if (
         !(
           passport.status === PassportStatuses.Pending ||
