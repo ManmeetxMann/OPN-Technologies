@@ -94,18 +94,16 @@ paths:
               properties:
                 statusToken:
                   type: string
-                  nullable: true
                 userId:
                   type: string
                 dependantIds:
                   type: array
-                  nullable: true
                   items:
                     type: string
                 includeGuardian:
                   type: boolean
-                  nullable: true
-
+              required:
+                - userId
 
       responses:
         '200':
@@ -130,12 +128,10 @@ paths:
                   type: string
                 dependantIds:
                   type: array
-                  nullable: true
                   items:
                     type: string
                 includeGuardian:
                   type: boolean
-                  nullable: true
               required:
                 - locationId
                 - answers

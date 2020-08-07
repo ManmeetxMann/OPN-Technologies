@@ -8,6 +8,8 @@ import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 
 class AdminController implements IRouteController {
@@ -54,6 +56,10 @@ class AdminController implements IRouteController {
       if (!user) {
         throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
       }
+      if (userId !== access.userId) {
+        // TODO: we could remove userId from this request
+        throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
+      }
       const responseBody = {passport, base64Photo: user.base64Photo}
       const canEnter =
         passport.status === PassportStatuses.Pending ||
@@ -74,12 +80,36 @@ class AdminController implements IRouteController {
     try {
       const {accessToken, userId} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
+      const includeGuardian =
+        (req.body.guardianExiting ?? access.includesGuardian) && !access.exitAt
+      // if unspecified, all remaining dependents
+      const dependantIds: string[] = (
+        req.body.exitingDependantIds ?? Object.keys(access.dependants)
+      ).filter((key: string) => !access.dependants[key].exitAt)
+
+      if (!includeGuardian && !dependantIds.length) {
+        // access service would throw an error here, we want to skip the extra queries
+        // and give a more helpful error
+        if (
+          !req.body.hasOwnProperty('guardianExiting') &&
+          !req.body.hasOwnProperty('exitingDependantIds')
+        ) {
+          throw new BadRequestException('Token already used to exit')
+        } else {
+          throw new BadRequestException('All specified users have already exited')
+        }
+      }
+
       const passport = await this.passportService.findOneByToken(access.statusToken)
       const user = await this.userService.findOne(userId)
       if (!user) {
         throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
       }
-      await this.accessService.handleExit(access)
+      if (userId !== access.userId) {
+        // TODO: we could remove userId from this request
+        throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
+      }
+      await this.accessService.handleExit(access, includeGuardian, dependantIds)
 
       res.json(actionSucceed({passport, base64Photo: user.base64Photo}))
     } catch (error) {

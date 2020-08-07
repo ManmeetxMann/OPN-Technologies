@@ -39,6 +39,8 @@ components:
       properties:
         token:
           type: string
+        userId:
+          type: string
         statusToken:
           type: string
         locationId:
@@ -51,6 +53,22 @@ components:
         exitAt:
           type: string
           nullable: true
+        includesGuardian:
+          type: boolean
+        dependants:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              id:
+                type: string
+              enteredAt:
+                type: string
+                nullable: true
+              exitAt:
+                type: string
+                nullable: true
+
 
     Passport:
       type: object
