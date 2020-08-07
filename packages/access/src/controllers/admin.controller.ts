@@ -8,6 +8,7 @@ import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 
 class AdminController implements IRouteController {
@@ -54,6 +55,10 @@ class AdminController implements IRouteController {
       if (!user) {
         throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
       }
+      if (userId !== access.userId) {
+        // TODO: we could remove userId from this request
+        throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
+      }
       const responseBody = {passport, base64Photo: user.base64Photo}
       const canEnter =
         passport.status === PassportStatuses.Pending ||
@@ -80,6 +85,10 @@ class AdminController implements IRouteController {
       const user = await this.userService.findOne(userId)
       if (!user) {
         throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
+      }
+      if (userId !== access.userId) {
+        // TODO: we could remove userId from this request
+        throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
       }
       await this.accessService.handleExit(access, includeGuardian, dependantIds)
 
