@@ -3,6 +3,13 @@ export type Organization = {
   key: number
   name: string
   logoUrl: string
+  type: OrganizationType
+  allowDependants: boolean
+}
+
+export enum OrganizationType {
+  Default = 'default',
+  Childcare = 'childcare',
 }
 
 export type OrganizationLocation = {
