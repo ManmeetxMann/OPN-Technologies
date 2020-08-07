@@ -9,12 +9,16 @@ import {Attestation} from '../models/attestation'
 import {AttestationService} from '../services/attestation-service'
 import {AccessService} from '../../../access/src/service/access.service'
 
+import {UserDependantModel} from '../../../common/src/data/user'
+import DataStore from '../../../common/src/data/datastore'
+
 class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
   private passportService = new PassportService()
   private attestationService = new AttestationService()
   private accessService = new AccessService()
+  private datastore = new DataStore()
 
   constructor() {
     this.initRoutes()
@@ -26,24 +30,37 @@ class UserController implements IControllerBase {
   }
 
   check = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // TODO: how to handle dependents here?
     try {
       // Fetch passport status token
       // or create a pending one if any
-      const {statusToken} = req.body
+      const {statusToken, userId} = req.body
+      const includeGuardian = req.body.includeGuardian ?? true
+      const dependantIds: string[] = req.body.dependantIds ?? []
+
       const existingPassport = statusToken
         ? await this.passportService.findOneByToken(statusToken)
         : null
       let currentPassport: Passport
       if (existingPassport) {
-        if (!isPassed(existingPassport.validUntil)) {
+        if (
+          existingPassport.includesGuardian !== includeGuardian ||
+          existingPassport.dependantIds.length !== dependantIds.length ||
+          existingPassport.dependantIds.some((id) => !dependantIds.includes(id))
+        ) {
+          // need to create a new one for different people
+        } else if (!isPassed(existingPassport.validUntil)) {
           currentPassport = existingPassport
         } else if (existingPassport.status !== PassportStatuses.Proceed) {
           currentPassport = existingPassport
         }
       }
       if (!currentPassport) {
-        currentPassport = await this.passportService.create()
+        currentPassport = await this.passportService.create(
+          PassportStatuses.Pending,
+          userId,
+          includeGuardian,
+          dependantIds,
+        )
       }
       res.json(actionSucceed(currentPassport))
     } catch (error) {
@@ -54,15 +71,9 @@ class UserController implements IControllerBase {
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
-      const locationId = req.body.locationId
+      const {locationId, userId} = req.body
       const includeGuardian = req.body.includeGuardian ?? true
-      const dependentIds = req.body.dependentIds ?? []
-
-      if (!includeGuardian && dependentIds.length === 0) {
-        throw new Error('attestation must be for at least one person')
-      }
-
-      // TODO: check that they're the real guardian
+      const dependantIds: string[] = req.body.dependantIds ?? []
 
       const answers: Record<number, Record<number, boolean>> = req.body.answers
       const a1 = answers[1][1]
@@ -84,10 +95,16 @@ class UserController implements IControllerBase {
       } as Attestation)
 
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
-        await this.accessService.incrementAccessDenied(locationId)
+        const count = dependantIds.length + (userId ? 1 : 0)
+        await this.accessService.incrementAccessDenied(locationId, count)
       }
 
-      const passport = await this.passportService.create(passportStatus)
+      const passport = await this.passportService.create(
+        passportStatus,
+        userId,
+        includeGuardian,
+        dependantIds,
+      )
       res.json(actionSucceed(passport))
     } catch (error) {
       next(error)

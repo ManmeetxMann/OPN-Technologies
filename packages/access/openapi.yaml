@@ -85,7 +85,7 @@ components:
           properties:
             guardianExiting:
               type: boolean
-            exitingDependentIds:
+            exitingDependantIds:
               type: array
               items:
                 type: string
@@ -101,7 +101,7 @@ components:
           type: string
         includeGuardian:
           type: boolean
-        dependentIds:
+        dependantIds:
           type: array
           items:
             type: string

@@ -88,23 +88,23 @@ export class AccessService {
       )
   }
 
-  incrementPeopleOnPremises(locationId: string): Promise<AccessStatsModel> {
+  incrementPeopleOnPremises(locationId: string, count = 1): Promise<AccessStatsModel> {
     return this.getTodayStatsForLocation(locationId).then((stats) =>
-      this.accessStatsRepository.increment(stats.id, 'peopleOnPremises', 1),
+      this.accessStatsRepository.increment(stats.id, 'peopleOnPremises', count),
     )
   }
 
-  decreasePeopleOnPremises(locationId: string): Promise<AccessStatsModel> {
+  decreasePeopleOnPremises(locationId: string, count = 1): Promise<AccessStatsModel> {
     return this.getTodayStatsForLocation(locationId).then((stats) =>
       stats.peopleOnPremises > 0
-        ? this.accessStatsRepository.increment(stats.id, 'peopleOnPremises', -1)
+        ? this.accessStatsRepository.increment(stats.id, 'peopleOnPremises', -count)
         : stats,
     )
   }
 
-  incrementAccessDenied(locationId: string): Promise<AccessStatsModel> {
+  incrementAccessDenied(locationId: string, count = 1): Promise<AccessStatsModel> {
     return this.getTodayStatsForLocation(locationId).then((stats) =>
-      this.accessStatsRepository.increment(stats.id, 'accessDenied', 1),
+      this.accessStatsRepository.increment(stats.id, 'accessDenied', count),
     )
   }
 }
