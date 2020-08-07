@@ -47,7 +47,7 @@ components:
           type: string
         includesGuardian:
           type: boolean
-        dependentIds:
+        dependantIds:
           type: array
           items:
             type: string
@@ -97,7 +97,7 @@ paths:
                   nullable: true
                 userId:
                   type: string
-                dependentIds:
+                dependantIds:
                   type: array
                   nullable: true
                   items:
@@ -128,7 +128,7 @@ paths:
                   type: object
                 userId:
                   type: string
-                dependentIds:
+                dependantIds:
                   type: array
                   nullable: true
                   items:
@@ -140,7 +140,7 @@ paths:
                 - locationId
                 - answers
                 - userId
-              example: {locationId: "location-id", answers: { 1:{1: false},2:{1: false},3:{1: false},4:{1: false, 2: "2020-06-10T05:05:32.217Z"}}, userId: "parentId", dependentIds: ["childOne", "childTwo"]}
+              example: {locationId: "location-id", answers: { 1:{1: false},2:{1: false},3:{1: false},4:{1: false, 2: "2020-06-10T05:05:32.217Z"}}, userId: "parentId", dependantIds: ["childOne", "childTwo"]}
 
       responses:
         '200':
