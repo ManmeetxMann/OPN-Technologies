@@ -55,7 +55,7 @@ components:
           nullable: true
         includesGuardian:
           type: boolean
-        dependents:
+        dependants:
           type: object
           additionalProperties:
             type: object
