@@ -94,7 +94,7 @@ class UserController implements IControllerBase {
       } as Attestation)
 
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
-        const count = dependantIds.length + (userId ? 1 : 0)
+        const count = dependantIds.length + (includeGuardian ? 1 : 0)
         await this.accessService.incrementAccessDenied(locationId, count)
       }
 
