@@ -14,7 +14,16 @@ export class AccessService {
   private accessRepository = new AccessRepository(this.dataStore)
   private accessStatsRepository = new AccessStatsRepository(this.dataStore)
 
-  create(statusToken: string, locationId: string): Promise<Access> {
+  create(
+    statusToken: string,
+    locationId: string,
+    userId: string,
+    includesGuardian: boolean,
+    dependantIds: string[],
+  ): Promise<Access> {
+    const dependants = dependantIds.map((id) => ({
+      id,
+    }))
     return this.identifier
       .getUniqueValue('access')
       .then((token) =>
@@ -23,6 +32,9 @@ export class AccessService {
           locationId,
           statusToken,
           createdAt: firestore.FieldValue.serverTimestamp(),
+          userId,
+          includesGuardian,
+          dependants,
         }),
       )
       .then(({id, createdAt, ...access}) => ({
@@ -38,26 +50,63 @@ export class AccessService {
     if (!!access.enteredAt || !!access.exitAt) {
       throw new BadRequestException('Token already used to enter or exit')
     }
-
+    // all dependants named in the access enter, no need to filter here
+    if (access.dependants.some((dependant) => !!dependant.enteredAt || !!dependant.exitAt)) {
+      throw new BadRequestException('Token already used to enter or exit')
+    }
+    const dependants = access.dependants.map((dependant) => ({
+      ...dependant,
+      enteredAt: firestore.FieldValue.serverTimestamp(),
+    }))
+    const count = dependants.length + (access.includesGuardian ? 1 : 0)
     return this.accessRepository
       .update({
         ...access,
         enteredAt: firestore.FieldValue.serverTimestamp(),
+        dependants,
       })
-      .then((saved) => this.incrementPeopleOnPremises(access.locationId).then(() => saved))
+      .then((saved) => this.incrementPeopleOnPremises(access.locationId, count).then(() => saved))
   }
 
-  handleExit(access: AccessModel): Promise<Access> {
-    if (!!access.exitAt) {
-      throw new BadRequestException('Token already used to exit')
+  handleExit(
+    access: AccessModel,
+    includesGuardian: boolean,
+    dependantIds: string[],
+  ): Promise<Access> {
+    if (includesGuardian) {
+      if (!!access.exitAt) {
+        throw new BadRequestException('Token already used to exit')
+      }
+      if (!access.includesGuardian) {
+        throw new Error('Token does not apply to guardian')
+      }
     }
+    if (dependantIds.length) {
+      if (access.dependants.some((dep) => dependantIds.includes(dep.id) && !!dep.exitAt)) {
+        throw new BadRequestException('Token already used to exit')
+      }
+      const validIds = access.dependants.map(({id}) => id)
+      if (dependantIds.some((depId) => !validIds.includes(depId))) {
+        throw new BadRequestException('Token does not include all dependants')
+      }
+    }
+    const newAccess = {
+      ...access,
+      dependants: access.dependants.map((dep) => ({...dep})),
+    }
+    if (includesGuardian) {
+      // @ts-ignore we are converting to a Storable
+      newAccess.exitAt = firestore.FieldValue.serverTimestamp()
+    }
+    if (dependantIds.length) {
+      // @ts-ignore we are converting to a Storable
+      newAccess.dependants.forEach((dep) => (dep.exitAt = firestore.FieldValue.serverTimestamp()))
+    }
+    const count = dependantIds.length + (includesGuardian ? 1 : 0)
 
     return this.accessRepository
-      .update({
-        ...access,
-        exitAt: firestore.FieldValue.serverTimestamp(),
-      })
-      .then((saved) => this.decreasePeopleOnPremises(access.locationId).then(() => saved))
+      .update(newAccess)
+      .then((saved) => this.decreasePeopleOnPremises(access.locationId, count).then(() => saved))
   }
 
   findOneByToken(token: string): Promise<AccessModel> {
