@@ -49,14 +49,11 @@ export class PassportService {
         validFrom: new firestore.Timestamp(validFrom.seconds, validFrom.nanoseconds)
           .toDate()
           .toISOString(),
-        validUntil: new firestore.Timestamp(
-          // @ts-ignore
-          validFrom.seconds + ATTESTATION_SECONDS,
-          // @ts-ignore
-          validFrom.nanoseconds,
-        )
-          .toDate()
-          .toISOString(),
+      }))
+      .then(({validFrom, validUntil, ...passport}) => ({
+        ...passport,
+        validFrom,
+        validUntil: moment(validFrom).add(24, 'hours').toISOString(),
       }))
       .then((passport) => this.passportRepository.update(passport))
   }
