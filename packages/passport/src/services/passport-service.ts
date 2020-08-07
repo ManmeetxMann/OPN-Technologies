@@ -6,8 +6,6 @@ import {UserDependantModel} from '../../../common/src/data/user'
 import moment from 'moment'
 import {firestore} from 'firebase-admin'
 
-const ATTESTATION_SECONDS = 24 * 60 * 60
-
 export class PassportService {
   private dataStore = new DataStore()
   private passportRepository = new PassportModel(this.dataStore)
