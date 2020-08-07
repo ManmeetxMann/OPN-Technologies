@@ -9,7 +9,6 @@ import {Attestation} from '../models/attestation'
 import {AttestationService} from '../services/attestation-service'
 import {AccessService} from '../../../access/src/service/access.service'
 
-import {UserDependantModel} from '../../../common/src/data/user'
 import DataStore from '../../../common/src/data/datastore'
 
 class UserController implements IControllerBase {
@@ -43,9 +42,9 @@ class UserController implements IControllerBase {
       let currentPassport: Passport
       if (existingPassport) {
         if (
-          existingPassport.includesGuardian !== includeGuardian ||
+          (includeGuardian && !existingPassport.includesGuardian) ||
           existingPassport.dependantIds.length !== dependantIds.length ||
-          existingPassport.dependantIds.some((id) => !dependantIds.includes(id))
+          dependantIds.some((depId) => !existingPassport.dependantIds.includes(depId))
         ) {
           // need to create a new one for different people
         } else if (!isPassed(existingPassport.validUntil)) {

@@ -75,8 +75,8 @@ class AdminController implements IRouteController {
       const {accessToken, userId} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
       const passport = await this.passportService.findOneByToken(access.statusToken)
-      const includeGuardian = req.body.includeGuardian ?? passport.includesGuardian
-      const dependantIds: string[] = req.body.dependantIds ?? passport.dependantIds
+      const includeGuardian = req.body.guardianExiting ?? passport.includesGuardian
+      const dependantIds: string[] = req.body.exitingDependantIds ?? passport.dependantIds
       const user = await this.userService.findOne(userId)
       if (!user) {
         throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
