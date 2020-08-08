@@ -36,9 +36,6 @@ class UserController implements IControllerBase {
       const includeGuardian = req.body.includeGuardian ?? true
       const dependantIds: string[] = req.body.dependantIds ?? []
 
-      // console.log(statusToken)
-      // console.log(dependantIds)
-
       const existingPassport = statusToken
         ? await this.passportService.findOneByToken(statusToken)
         : null
