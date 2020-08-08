@@ -94,10 +94,12 @@ paths:
               properties:
                 statusToken:
                   type: string
+                  nullable: true
                 userId:
                   type: string
                 dependantIds:
                   type: array
+                  nullable: true
                   items:
                     type: string
                 includeGuardian:
