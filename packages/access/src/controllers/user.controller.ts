@@ -12,7 +12,7 @@ import {Config} from '../../../common/src/utils/config'
 
 // disables the `includeGuardian` parameter. guardians are never included with dependants
 // and always included otherwise
-const includeGuardianHack = Config.get('INCLUDE_GUARDIAN_DEFAULT_FALSE') === 'enabled'
+const includeGuardianHack = Config.get('FEATURE_AUTOMATIC_INCLUDE_GUARDIAN') === 'enabled'
 
 class UserController implements IRouteController {
   public router = express.Router()
