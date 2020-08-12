@@ -102,11 +102,7 @@ class UserController implements IControllerBase {
         await this.accessService.incrementAccessDenied(locationId, count)
       }
 
-      const passport = await this.passportService.create(
-        passportStatus,
-        userId,
-        dependantIds,
-      )
+      const passport = await this.passportService.create(passportStatus, userId, dependantIds)
       res.json(actionSucceed(passport))
     } catch (error) {
       next(error)
