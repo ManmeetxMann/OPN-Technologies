@@ -47,6 +47,9 @@ jobs:
           DOMAIN_LOOKUP=https://lookup-staging-dot-opn-platform-dev.nn.r.appspot.com/
           DOMAIN_PASSPORT=https://passport-staging-dot-opn-platform-dev.nn.r.appspot.com/
           DOMAIN_REGISTRY=https://registry-staging-dot-opn-platform-dev.nn.r.appspot.com/
+
+          # Features
+          FEATURE_AUTOMATIC_INCLUDE_GUARDIAN=enabled
         write-mode: overwrite
     - run: npm install
     - run: npm run install-all
