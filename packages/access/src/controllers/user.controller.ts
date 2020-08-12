@@ -12,7 +12,7 @@ import {Config} from '../../../common/src/utils/config'
 
 // disables the `includeGuardian` parameter. guardians are never included with dependants
 // and always included otherwise
-const includeGuardianHack = Config.get('INCLUDE_GUARDIAN_DEFAULT_FALSE')
+const includeGuardianHack = Config.get('INCLUDE_GUARDIAN_DEFAULT_FALSE') === 'enabled'
 
 class UserController implements IRouteController {
   public router = express.Router()
@@ -38,7 +38,6 @@ class UserController implements IRouteController {
       const includeGuardian = includeGuardianHack
         ? !dependantIds.length
         : req.body.includeGuardian ?? true
-
       const passport = await this.passportService.findOneByToken(statusToken)
 
       const fail = (reason: string) => res.status(403).json(actionFailed(reason))
