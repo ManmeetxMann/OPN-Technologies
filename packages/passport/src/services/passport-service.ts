@@ -14,12 +14,8 @@ export class PassportService {
   async create(
     status: PassportStatuses = PassportStatuses.Pending,
     userId: string,
-    includesGuardian: boolean,
     dependantIds: string[],
   ): Promise<Passport> {
-    if (!includesGuardian && dependantIds.length === 0) {
-      throw new Error('passport must be for at least one person')
-    }
     if (dependantIds.length) {
       const depModel = new UserDependantModel(this.dataStore, userId)
       const allDependants = (await depModel.fetchAll()).map(({id}) => id)
@@ -35,7 +31,6 @@ export class PassportService {
           status,
           statusToken,
           userId,
-          includesGuardian,
           dependantIds,
           validFrom: firestore.FieldValue.serverTimestamp(),
           validUntil: null,

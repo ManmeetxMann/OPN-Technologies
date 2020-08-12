@@ -34,15 +34,16 @@ class UserController implements IControllerBase {
       // or create a pending one if any
       const {statusToken, userId} = req.body
       const includeGuardian = req.body.includeGuardian ?? true
+      if (!includeGuardian) {
+        throw new Error('Guardian must be included in all passports')
+      }
       const dependantIds: string[] = req.body.dependantIds ?? []
-
       const existingPassport = statusToken
         ? await this.passportService.findOneByToken(statusToken)
         : null
       let currentPassport: Passport
       if (existingPassport) {
         if (
-          (includeGuardian && !existingPassport.includesGuardian) ||
           existingPassport.dependantIds.length !== dependantIds.length ||
           dependantIds.some((depId) => !existingPassport.dependantIds.includes(depId))
         ) {
@@ -57,7 +58,6 @@ class UserController implements IControllerBase {
         currentPassport = await this.passportService.create(
           PassportStatuses.Pending,
           userId,
-          includeGuardian,
           dependantIds,
         )
       }
@@ -72,6 +72,10 @@ class UserController implements IControllerBase {
       // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
       const {locationId, userId} = req.body
       const includeGuardian = req.body.includeGuardian ?? true
+      if (!includeGuardian) {
+        throw new Error('Guardian must be included in all passports')
+      }
+
       const dependantIds: string[] = req.body.dependantIds ?? []
 
       const answers: Record<number, Record<number, boolean>> = req.body.answers
@@ -94,14 +98,13 @@ class UserController implements IControllerBase {
       } as Attestation)
 
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
-        const count = dependantIds.length + (includeGuardian ? 1 : 0)
+        const count = dependantIds.length + 1
         await this.accessService.incrementAccessDenied(locationId, count)
       }
 
       const passport = await this.passportService.create(
         passportStatus,
         userId,
-        includeGuardian,
         dependantIds,
       )
       res.json(actionSucceed(passport))
