@@ -7,7 +7,6 @@ export type Passport = {
   validFrom: string
   validUntil: string
   userId: string
-  includesGuardian: boolean
   dependantIds: string[]
 }
 

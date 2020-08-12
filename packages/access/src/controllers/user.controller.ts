@@ -8,6 +8,11 @@ import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {AccessService} from '../service/access.service'
 import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wrapper'
+import {Config} from '../../../common/src/utils/config'
+
+// disables the `includeGuardian` parameter. guardians are never included with dependants
+// and always included otherwise
+const includeGuardianHack = Config.get('FEATURE_AUTOMATIC_INCLUDE_GUARDIAN') === 'enabled'
 
 class UserController implements IRouteController {
   public router = express.Router()
@@ -29,9 +34,10 @@ class UserController implements IRouteController {
   createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {statusToken, locationId, userId} = req.body
-      const includeGuardian = req.body.includeGuardian ?? true
       const dependantIds: string[] = req.body.dependantIds ?? []
-
+      const includeGuardian = includeGuardianHack
+        ? !dependantIds.length
+        : req.body.includeGuardian ?? true
       const passport = await this.passportService.findOneByToken(statusToken)
 
       const fail = (reason: string) => res.status(403).json(actionFailed(reason))
@@ -53,10 +59,6 @@ class UserController implements IRouteController {
         )
       ) {
         fail('Access denied: this passport does not permit entry')
-        return
-      }
-      if (includeGuardian && !passport.includesGuardian) {
-        fail('Access denied: this passport does not apply to the guardian')
         return
       }
       if (
