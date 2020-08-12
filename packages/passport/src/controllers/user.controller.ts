@@ -43,14 +43,19 @@ class UserController implements IControllerBase {
         : null
       let currentPassport: Passport
       if (existingPassport) {
-        if (
-          existingPassport.dependantIds.length !== dependantIds.length ||
-          dependantIds.some((depId) => !existingPassport.dependantIds.includes(depId))
-        ) {
+        /*
+                REMOVED (TEMPORARILY?) - THIS CALL JUST CHECKS IF A VALID PASSPORT EXISTS, DOESN'T CARE ABOUT DEPENDANTS
+        
+        // some requested dependants are not covered by this passport
+        if (dependantIds.some((depId) => !existingPassport.dependantIds.includes(depId))) {
           // need to create a new one for different people
-        } else if (!isPassed(existingPassport.validUntil)) {
+        } else 
+        */
+        if (!isPassed(existingPassport.validUntil)) {
+          // still valid, no need to recreate
           currentPassport = existingPassport
         } else if (existingPassport.status !== PassportStatuses.Proceed) {
+          // only Proceed passports expire
           currentPassport = existingPassport
         }
       }
