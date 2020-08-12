@@ -73,7 +73,16 @@ export class AuthService {
       if (decodedToken !== undefined) {
         return decodedToken as AuthUser
       }
-    } catch (error) {}
+    } catch (error) {
+      if (Config.get('GUILIBLE_MODE')) {
+        console.warn(
+          'Running in guilible mode, this server is not secure. This log should never appear in a live environment',
+        )
+        return {
+          uid: authToken,
+        }
+      }
+    }
 
     return null
   }
