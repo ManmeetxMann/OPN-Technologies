@@ -5,6 +5,7 @@ on:
     paths:
       - "packages/common/**"
       - "packages/passport/**"
+      - ".github/workflows/ci_passport.yml"
     branches: [ development ]
 
 jobs:

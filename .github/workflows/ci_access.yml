@@ -5,6 +5,7 @@ on:
     paths:
       - "packages/common/**"
       - "packages/access/**"
+      - ".github/workflows/ci_access.yml"
     branches: [ development ]
 
 jobs:

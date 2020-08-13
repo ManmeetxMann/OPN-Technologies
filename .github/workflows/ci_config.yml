@@ -5,6 +5,7 @@ on:
     paths:
       - "packages/common/**"
       - "packages/config/**"
+      - ".github/workflows/ci_config.yml"
     branches: [ development ]
 
 jobs:
