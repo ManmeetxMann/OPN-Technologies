@@ -60,6 +60,7 @@ jobs:
 
           # Features
           FEATURE_AUTOMATIC_INCLUDE_GUARDIAN=enabled
+          FEATURE_CREATE_TOKEN_PERMISSIVE_MODE=enabled
         write-mode: overwrite
     - run: npm run cd-deploy-access
     - run: npm run cd-deploy-apidocs
