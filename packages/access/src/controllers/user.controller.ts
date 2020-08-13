@@ -14,6 +14,8 @@ import {Config} from '../../../common/src/utils/config'
 // and always included otherwise
 const includeGuardianHack = Config.get('FEATURE_AUTOMATIC_INCLUDE_GUARDIAN') === 'enabled'
 
+// allow 'partial success' for requests where the passport verifies only some dependants
+const permissiveMode = Config.get('FEATURE_CREATE_TOKEN_PERMISSIVE_MODE') === 'enabled'
 class UserController implements IRouteController {
   public router = express.Router()
   private passportService = new PassportService()
@@ -61,19 +63,30 @@ class UserController implements IRouteController {
         fail('Access denied: this passport does not permit entry')
         return
       }
-      if (
-        dependantIds.length &&
-        dependantIds.some((depId) => !passport.dependantIds.includes(depId))
-      ) {
+
+      const enteringDependantIds = dependantIds.filter((depId) =>
+        passport.dependantIds.includes(depId),
+      )
+      if (permissiveMode) {
+        if (!enteringDependantIds.length && !includeGuardian) {
+          fail('Access denied: this passport does not apply to any specified users')
+          return
+        } else if (enteringDependantIds.length < dependantIds.length) {
+          console.warn(
+            `Allowing 'partial credit' entry (requested: ${dependantIds.join()} - entering: ${enteringDependantIds.join()})`,
+          )
+        }
+      } else if (enteringDependantIds.length < dependantIds.length) {
         fail('Access denied: this passport does not apply to all dependants')
         return
       }
+
       const access = await this.accessService.create(
         statusToken,
         locationId,
         userId,
         includeGuardian,
-        dependantIds,
+        enteringDependantIds,
       )
 
       const response = access
