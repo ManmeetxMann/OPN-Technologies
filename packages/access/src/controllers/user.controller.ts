@@ -73,7 +73,7 @@ class UserController implements IRouteController {
           return
         } else if (enteringDependantIds.length < dependantIds.length) {
           console.warn(
-            `Allowing 'partial credit' entry (requested: ${dependantIds.join()} - entering requested: ${enteringDependantIds.join()})`,
+            `Allowing 'partial credit' entry (requested: ${dependantIds.join()} - entering: ${enteringDependantIds.join()})`,
           )
         }
       } else if (enteringDependantIds.length < dependantIds.length) {
