@@ -8,7 +8,6 @@ export class Config {
   static load(): void {
     dotenv.config({path: path.resolve(__dirname, '../../.env')})
     Config.loaded = true
-    console.warn(Config.get('FIRESTORE_EMULATOR_HOST'))
   }
 
   static get(parameter: string): string {
