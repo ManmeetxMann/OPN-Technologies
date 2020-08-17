@@ -74,10 +74,12 @@ export class AuthService {
         return decodedToken as AuthUser
       }
     } catch (error) {
-      if (Config.get('GUILIBLE_MODE')) {
-        console.warn(
-          'Running in guilible mode, this server is not secure. This log should never appear in a live environment',
-        )
+      // take the client's word that they are who they say they are
+      if (Config.get('GUILIBLE_MODE') === 'enabled') {
+        if (Config.get('FIRESTORE_EMULATOR_HOST') !== 'localhost:8080') {
+          console.error('Running in guilible mode, but not pointed to an emulated server')
+          throw error
+        }
         return {
           uid: authToken,
         }
