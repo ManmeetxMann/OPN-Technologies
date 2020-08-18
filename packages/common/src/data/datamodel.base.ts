@@ -155,14 +155,23 @@ abstract class DataModel<T extends HasId> {
     return await this.getDAO(subPath).where(fieldPath, '==', value).fetch()
   }
 
-  async delete(id: string): Promise<void> {
-    await this.datastore.firestoreORM
-      .collection<T>({path: this.rootPath})
-      .delete(id)
+  async findWhereMapHasKeyValueIn(
+    map: string,
+    key: string,
+    value: unknown,
+    subPath = '',
+  ): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
+    return await this.getDAO(subPath).where(fieldPath, 'in', value).fetch()
   }
 
-  async deleteAll(): Promise<void> {
-    const dao = this.datastore.firestoreORM.collection<T>({path: this.rootPath})
+  async delete(id: string, subPath = ''): Promise<void> {
+    const dao = this.getDAO(subPath)
+    await dao.delete(id)
+  }
+
+  async deleteAll(subPath = ''): Promise<void> {
+    const dao = this.getDAO(subPath)
     const results = await dao.fetchAll()
     await dao.bulkDelete(results.map((o) => o.id))
   }

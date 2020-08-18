@@ -4,7 +4,7 @@ import {firestore} from 'firebase-admin'
 import DataModel from './datamodel.base'
 import DataStore from './datastore'
 
-type QueryCondition = [string, WhereFilterOp, unknown]
+type QueryCondition = [string | firestore.FieldPath, WhereFilterOp, unknown]
 
 type RecordWithPath<G> = {
   path: string[]
