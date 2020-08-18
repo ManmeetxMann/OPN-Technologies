@@ -220,6 +220,17 @@ components:
               $ref: '#/components/schemas/Passport'
             base64Photo:
               type: string
+            includesGuardian:
+              type: boolean
+            dependants:
+              type: array
+              items:
+                type: object
+                properties:
+                  firstName:
+                    type: string
+                  lastNameInitial:
+                    type: string
         status:
           type: object
           properties:

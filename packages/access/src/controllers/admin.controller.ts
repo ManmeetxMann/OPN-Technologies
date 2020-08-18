@@ -60,13 +60,22 @@ class AdminController implements IRouteController {
         // TODO: we could remove userId from this request
         throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
       }
-      const responseBody = {passport, base64Photo: user.base64Photo}
+      const responseBody = {
+        passport,
+        base64Photo: user.base64Photo,
+        dependants: [],
+        includesGuardian: access.includesGuardian,
+      }
       const canEnter =
         passport.status === PassportStatuses.Pending ||
         (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
 
       if (canEnter) {
-        await this.accessService.handleEnter(access)
+        const result = await this.accessService.handleEnter(access)
+        responseBody.dependants = Object.keys(result.dependants).map((key) => ({
+          firstName: result.dependants[key].firstName,
+          lastNameInitial: result.dependants[key].lastNameInitial,
+        }))
         return res.json(actionSucceed(responseBody))
       }
 
@@ -109,9 +118,22 @@ class AdminController implements IRouteController {
         // TODO: we could remove userId from this request
         throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
       }
-      await this.accessService.handleExit(access, includeGuardian, dependantIds)
+      const responseBody = {
+        passport,
+        base64Photo: user.base64Photo,
+        dependants: [],
+        includesGuardian: includeGuardian,
+      }
+      const result = await this.accessService.handleExit(access, includeGuardian, dependantIds)
+      responseBody.dependants = Object.keys(result.dependants)
+        // we only want to return the dependants *currently* exiting
+        .filter((key) => dependantIds.includes(key))
+        .map((key) => ({
+          firstName: result.dependants[key].firstName,
+          lastNameInitial: result.dependants[key].lastNameInitial,
+        }))
 
-      res.json(actionSucceed({passport, base64Photo: user.base64Photo}))
+      res.json(actionSucceed(responseBody))
     } catch (error) {
       next(error)
     }
