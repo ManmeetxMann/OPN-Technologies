@@ -6,6 +6,7 @@ import {firestore} from 'firebase-admin'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {AccessStatsModel, AccessStatsRepository} from '../repository/access-stats.repository'
+import AccessListener from '../effects/addToAttendance'
 import moment from 'moment'
 
 export class AccessService {
@@ -13,6 +14,7 @@ export class AccessService {
   private identifier = new IdentifiersModel(this.dataStore)
   private accessRepository = new AccessRepository(this.dataStore)
   private accessStatsRepository = new AccessStatsRepository(this.dataStore)
+  private accessListener = new AccessListener(this.dataStore)
 
   create(
     statusToken: string,
@@ -35,8 +37,8 @@ export class AccessService {
           token,
           locationId,
           statusToken,
-          createdAt: firestore.FieldValue.serverTimestamp(),
           userId,
+          createdAt: firestore.FieldValue.serverTimestamp(),
           includesGuardian,
           dependants,
         }),
@@ -80,7 +82,13 @@ export class AccessService {
     const count = Object.keys(dependants).length + (access.includesGuardian ? 1 : 0)
     return this.accessRepository
       .update(newAccess)
-      .then((saved) => this.incrementPeopleOnPremises(access.locationId, count).then(() => saved))
+      .then((saved) =>
+        Promise.all([
+          this.incrementPeopleOnPremises(access.locationId, count),
+          // TODO: maybe we don't need to wait for this to resolve
+          this.accessListener.addEntry(saved),
+        ]).then(() => saved),
+      )
   }
 
   handleExit(
@@ -130,8 +138,17 @@ export class AccessService {
     const count = dependantIds.length + (includesGuardian ? 1 : 0)
 
     return this.accessRepository
-      .update(newAccess)
-      .then((saved) => this.decreasePeopleOnPremises(access.locationId, count).then(() => saved))
+      .update({
+        ...access,
+        exitAt: firestore.FieldValue.serverTimestamp(),
+      })
+      .then((saved) =>
+        Promise.all([
+          this.decreasePeopleOnPremises(access.locationId, count),
+          // TODO: maybe we don't need to wait for this to resolve
+          this.accessListener.addExit(saved),
+        ]).then(() => saved),
+      )
   }
 
   findOneByToken(token: string): Promise<AccessModel> {

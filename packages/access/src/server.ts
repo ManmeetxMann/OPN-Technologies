@@ -1,13 +1,13 @@
-import App from '../../common/src/express/app'
-
 import * as bodyParser from 'body-parser'
-import loggerMiddleware from '../../common/src/middlewares/logger'
 
+import App from '../../common/src/express/app'
+import loggerMiddleware from '../../common/src/middlewares/logger'
 import AdminController from './controllers/admin.controller'
 import UserController from './controllers/user.controller'
 import RootController from './controllers/root.controller'
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
+import TraceListener from '../src/effects/executeTrace'
 
 const PORT = Number(process.env.PORT) || 5002
 
@@ -21,5 +21,8 @@ const app = new App({
 })
 
 app.listen()
+
+const traceListener = new TraceListener(new DataStore())
+traceListener.subscribe()
 
 export const init = (): void => app.initialize()

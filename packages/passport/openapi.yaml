@@ -97,9 +97,6 @@ paths:
                   nullable: true
                 userId:
                   type: string
-<<<<<<< HEAD
-                  nullable: true
-=======
                 dependantIds:
                   type: array
                   nullable: true
@@ -109,7 +106,6 @@ paths:
                   type: boolean
               required:
                 - userId
->>>>>>> c25565a919e33174f400cd858f6f963420bdd309
 
       responses:
         '200':
@@ -126,8 +122,6 @@ paths:
           application/json:
             schema:
               properties:
-                userId:
-                  type: string
                 locationId:
                   type: string
                 answers:

@@ -39,7 +39,6 @@ export class PassportService {
           dependantIds,
           validFrom: firestore.FieldValue.serverTimestamp(),
           validUntil: null,
-          userId,
         }),
       )
       .then(({validFrom, ...passport}) => ({

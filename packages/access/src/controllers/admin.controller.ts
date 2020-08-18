@@ -56,10 +56,15 @@ class AdminController implements IRouteController {
       if (!user) {
         throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
       }
-      if (userId !== access.userId) {
-        // TODO: we could remove userId from this request
-        throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
+
+      if (!access.userId) {
+        // old records might not have these fields
+        console.debug(`dynamically assigning ${userId} to access ${access.id}`)
+        access.userId = userId
+      } else if (userId !== access.userId) {
+        console.warn(`client calims ${userId} but access has ${access.userId}`)
       }
+
       const responseBody = {passport, base64Photo: user.base64Photo}
       const canEnter =
         passport.status === PassportStatuses.Pending ||
@@ -105,9 +110,12 @@ class AdminController implements IRouteController {
       if (!user) {
         throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
       }
-      if (userId !== access.userId) {
-        // TODO: we could remove userId from this request
-        throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
+      if (!access.userId) {
+        // old records might not have these fields
+        console.debug(`dynamically assigning ${userId} to access ${access.id}`)
+        access.userId = userId
+      } else if (userId !== access.userId) {
+        console.warn(`client calims ${userId} but access has ${access.userId}`)
       }
       await this.accessService.handleExit(access, includeGuardian, dependantIds)
 
