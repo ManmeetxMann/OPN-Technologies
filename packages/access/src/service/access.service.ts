@@ -163,9 +163,8 @@ export class AccessService {
         }
     const count = dependantIds.length + (includesGuardian ? 1 : 0)
 
-    return this.accessRepository
-      .update(newAccess)
-      .then((saved) => this.decreasePeopleOnPremises(access.locationId, count).then(async () => {
+    return this.accessRepository.update(newAccess).then((saved) =>
+      this.decreasePeopleOnPremises(access.locationId, count).then(async () => {
         if (!Object.keys(saved.dependants)) {
           return {
             ...saved,
@@ -187,7 +186,8 @@ export class AccessService {
           ...saved,
           dependants: namedDependants,
         }
-      })
+      }),
+    )
   }
 
   findOneByToken(token: string): Promise<AccessModel> {
