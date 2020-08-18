@@ -183,5 +183,31 @@ export default class TraceListener {
       organizationPages.push(allOrganizations.slice(i, i + 10))
     }
     // TODO: map the pages into a deduplicated list of users
+    const locUsers = (
+      await Promise.all(
+        locationPages.map((page) =>
+          this.userRepo.findWhereArrayContainsAny('profile.adminForLocationIds', page),
+        ),
+      )
+    ).flat()
+    const orgUsers = (
+      await Promise.all(
+        organizationPages.map((page) =>
+          this.userRepo.findWhereArrayContainsAny('profile.superAdminForOrganizationIds', page),
+        ),
+      )
+    ).flat()
+    const allUsers = [
+      ...locUsers,
+      ...orgUsers.filter((orgUser) => !locUsers.some((locUser) => locUser.id === orgUser.id)),
+    ]
+      .filter((u) => !u.expired)
+      .map((user) => ({
+        email: user.profile.email,
+        orgReports: user.profile.superAdminForOrganizationIds.map(
+          (id) => reportsForOrganization[id],
+        ),
+        locReports: user.profile.adminForLocationIds.map((id) => reportsForLocation[id]),
+      }))
   }
 }
