@@ -73,7 +73,18 @@ export class AuthService {
       if (decodedToken !== undefined) {
         return decodedToken as AuthUser
       }
-    } catch (error) {}
+    } catch (error) {
+      // take the client's word that they are who they say they are
+      if (Config.get('GUILIBLE_MODE') === 'enabled') {
+        if (Config.get('FIRESTORE_EMULATOR_HOST') !== 'localhost:8080') {
+          console.error('Running in guilible mode, but not pointed to an emulated server')
+          throw error
+        }
+        return {
+          uid: authToken,
+        }
+      }
+    }
 
     return null
   }

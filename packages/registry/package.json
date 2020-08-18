@@ -8,6 +8,7 @@
         "test:coverage": "jest --coverage",
         "dev": "ts-node src/server.ts",
         "dev:debug": "nodemon --inspect=3006 src/server.ts",
+        "dev:local": "FIRESTORE_EMULATOR_HOST=localhost:8080 PUBSUB_EMULATOR_HOST=localhost:8085 GUILIBLE_MODE=enabled ts-node src/server.ts",
         "clean": "rimraf -rf ./dist",
         "prepare": "copyfiles ../common/.env dist/common && copyfiles app.yaml dist && copyfiles openapi.yaml dist && copyfiles package.json dist && node ../../__devops/package-cleaner.js registry start",
         "compile": "tsc -p tsconfig.build.json",

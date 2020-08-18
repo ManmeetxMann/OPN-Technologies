@@ -39,6 +39,8 @@ components:
       properties:
         token:
           type: string
+        userId:
+          type: string
         statusToken:
           type: string
         locationId:
@@ -51,6 +53,22 @@ components:
         exitAt:
           type: string
           nullable: true
+        includesGuardian:
+          type: boolean
+        dependants:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              id:
+                type: string
+              enteredAt:
+                type: string
+                nullable: true
+              exitAt:
+                type: string
+                nullable: true
+
 
     Passport:
       type: object
@@ -67,7 +85,7 @@ components:
         validUntil:
           type: string
 
-    AccessRequest:
+    EntryRequest:
       type: object
       properties:
         accessToken:
@@ -78,6 +96,18 @@ components:
         - accessToken
         - userId
 
+    ExitRequest:
+      allOf:
+        - $ref: '#/components/schemas/EntryRequest'
+        - type: object
+          properties:
+            guardianExiting:
+              type: boolean
+            exitingDependantIds:
+              type: array
+              items:
+                type: string
+
     StatusTokenExchangeRequest:
       type: object
       properties:
@@ -85,9 +115,18 @@ components:
           type: string
         locationId:
           type: string
+        userId:
+          type: string
+        includeGuardian:
+          type: boolean
+        dependantIds:
+          type: array
+          items:
+            type: string
       required:
         - statusToken
         - locationId
+        - userId
 
     Statistics:
       type: object
@@ -232,7 +271,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AccessRequest'
+              $ref: '#/components/schemas/EntryRequest'
       responses:
         '200':
           description: Successfully handled
@@ -251,7 +290,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AccessRequest'
+              $ref: '#/components/schemas/ExitRequest'
       responses:
         '200':
           description: Successfully handled

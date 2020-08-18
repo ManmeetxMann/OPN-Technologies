@@ -16,14 +16,14 @@ components:
             code:
               type: string
               enum: [
-                succeed,
-                failed,
-                validation_error,
-                internal_server_error,
-                unauthorized,
-                access_denied,
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
                 resource_not_found
-              ]
+                ]
             message:
               nullable: true
               type: string
@@ -50,6 +50,19 @@ components:
         - platform
         - osVersion
 
+    UserDependant:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastNameInitial:
+          type: string
+      required:
+        - firstName
+        - lastNameInitial
+
     ResponseOfRegistration:
       type: object
       properties:
@@ -61,14 +74,39 @@ components:
             code:
               type: string
               enum: [
-                succeed,
-                failed,
-                validation_error,
-                internal_server_error,
-                unauthorized,
-                access_denied,
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
                 resource_not_found
-              ]
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfUserDependants:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDependant'
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum: [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                resource_not_found
+                ]
             message:
               nullable: true
               type: string
@@ -120,3 +158,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfRegistration'
+
+  /v2/users/{userId}/dependants:
+    get:
+      description: Get all dependants
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+      #          required: true
+      responses:
+        "200":
+          description: Successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUserDependants'
+    post:
+      description: Add one or multiple dependant(s)
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+      #          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserDependant'
+
+      responses:
+        "200":
+          description: Successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUserDependants'
+  /v2/users/{userId}/dependants/{dependantId}:
+    delete:
+      description: Remove user's dependant
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+        #          required: true
+        - in: path
+          name: dependantId
+          schema:
+            type: string
+            #          required: true
+      responses:
+        "200":
+          description: Successfully removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'

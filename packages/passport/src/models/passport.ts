@@ -7,6 +7,9 @@ export type Passport = {
   status: PassportStatus
   validFrom: string
   validUntil: string
+  userId: string
+  includesGuardian: boolean
+  dependantIds: string[]
 }
 
 export type PassportStatus = 'pending' | 'proceed' | 'caution' | 'stop'

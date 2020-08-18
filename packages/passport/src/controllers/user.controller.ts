@@ -4,7 +4,7 @@ import {PubSub, Topic} from '@google-cloud/pubsub'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {PassportService} from '../services/passport-service'
-import {PassportStatuses} from '../models/passport'
+import {PassportStatuses, Passport} from '../models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Attestation} from '../models/attestation'
@@ -14,6 +14,8 @@ import {Config} from '../../../common/src/utils/config'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
 
+import DataStore from '../../../common/src/data/datastore'
+
 class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
@@ -21,6 +23,8 @@ class UserController implements IControllerBase {
   private attestationService = new AttestationService()
   private accessService = new AccessService()
   private topic: Topic
+  private datastore = new DataStore()
+
   constructor() {
     this.initRoutes()
     try {
@@ -48,28 +52,35 @@ class UserController implements IControllerBase {
       // Fetch passport status token
       // or create a pending one if any
       const {statusToken, userId} = req.body
-      if (!userId) {
-        console.warn('Not including userId is deprecated and will be removed')
-      }
+      const includeGuardian = req.body.includeGuardian ?? true
+      const dependantIds: string[] = req.body.dependantIds ?? []
 
       const existingPassport = statusToken
         ? await this.passportService.findOneByToken(statusToken)
         : null
-      if (existingPassport && userId && existingPassport.userId !== userId) {
-        console.error(`${userId} tried to check ${existingPassport.userId}'s passport`)
-        throw new Error('That passport belongs to another user')
+      let currentPassport: Passport
+      if (existingPassport) {
+        if (
+          (includeGuardian && !existingPassport.includesGuardian) ||
+          existingPassport.dependantIds.length !== dependantIds.length ||
+          dependantIds.some((depId) => !existingPassport.dependantIds.includes(depId))
+        ) {
+          // need to create a new one for different people
+        } else if (!isPassed(existingPassport.validUntil)) {
+          currentPassport = existingPassport
+        } else if (existingPassport.status !== PassportStatuses.Proceed) {
+          currentPassport = existingPassport
+        }
       }
-      const newPassport = existingPassport
-        ? existingPassport.status === PassportStatuses.Proceed &&
-          isPassed(existingPassport.validUntil)
-          ? await this.passportService.create(
-              PassportStatuses.Pending,
-              existingPassport.userId || userId,
-            )
-          : existingPassport
-        : await this.passportService.create(PassportStatuses.Pending, userId)
-
-      res.json(actionSucceed(newPassport))
+      if (!currentPassport) {
+        currentPassport = await this.passportService.create(
+          PassportStatuses.Pending,
+          userId,
+          includeGuardian,
+          dependantIds,
+        )
+      }
+      res.json(actionSucceed(currentPassport))
     } catch (error) {
       next(error)
     }
@@ -78,11 +89,10 @@ class UserController implements IControllerBase {
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
     try {
+      // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
       const {locationId, userId} = req.body
-
-      if (!userId) {
-        console.warn('Not including userId is deprecated and will be removed')
-      }
+      const includeGuardian = req.body.includeGuardian ?? true
+      const dependantIds: string[] = req.body.dependantIds ?? []
 
       const answers: Record<number, Record<number, boolean>> = req.body.answers
       const a1 = answers[1][1]
@@ -105,7 +115,6 @@ class UserController implements IControllerBase {
       } as Attestation)
 
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
-        await this.accessService.incrementAccessDenied(locationId)
         if (userId) {
           const nowMillis = new Date().valueOf()
           this.topic.publish(Buffer.from('trace-required'), {
@@ -121,7 +130,12 @@ class UserController implements IControllerBase {
         }
       }
 
-      const passport = await this.passportService.create(passportStatus, userId)
+      const passport = await this.passportService.create(
+        passportStatus,
+        userId,
+        includeGuardian,
+        dependantIds,
+      )
       res.json(actionSucceed(passport))
     } catch (error) {
       next(error)

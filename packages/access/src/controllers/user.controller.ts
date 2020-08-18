@@ -28,15 +28,52 @@ class UserController implements IRouteController {
 
   createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {statusToken, locationId} = req.body
-      const access = await this.passportService
-        .findOneByToken(statusToken)
-        .then((passport) =>
+      const {statusToken, locationId, userId} = req.body
+      const includeGuardian = req.body.includeGuardian ?? true
+      const dependantIds: string[] = req.body.dependantIds ?? []
+
+      const passport = await this.passportService.findOneByToken(statusToken)
+
+      const fail = (reason: string) => res.status(403).json(actionFailed(reason))
+
+      if (!passport) {
+        fail('Access denied: status-token does not link to a passport')
+        return
+      }
+
+      if (passport.userId !== userId) {
+        // TODO: we could remove userId from this call
+        fail(`Access denied: passport does not belong to ${userId}`)
+        return
+      }
+      if (
+        !(
           passport.status === PassportStatuses.Pending ||
           (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
-            ? this.accessService.create(statusToken, locationId)
-            : null,
         )
+      ) {
+        fail('Access denied: this passport does not permit entry')
+        return
+      }
+      if (includeGuardian && !passport.includesGuardian) {
+        fail('Access denied: this passport does not apply to the guardian')
+        return
+      }
+      if (
+        dependantIds.length &&
+        dependantIds.some((depId) => !passport.dependantIds.includes(depId))
+      ) {
+        fail('Access denied: this passport does not apply to all dependants')
+        return
+      }
+      const access = await this.accessService.create(
+        statusToken,
+        locationId,
+        userId,
+        includeGuardian,
+        dependantIds,
+      )
+
       const response = access
         ? actionSucceed(access)
         : actionFailed('Access denied: Cannot grant access for the given status-token')
