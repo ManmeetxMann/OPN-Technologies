@@ -80,15 +80,13 @@ export class AccessService {
           dependants,
         }
     const count = Object.keys(dependants).length + (access.includesGuardian ? 1 : 0)
-    return this.accessRepository
-      .update(newAccess)
-      .then((saved) =>
-        Promise.all([
-          this.incrementPeopleOnPremises(access.locationId, count),
-          // TODO: maybe we don't need to wait for this to resolve
-          this.accessListener.addEntry(saved),
-        ]).then(() => saved),
-      )
+    return this.accessRepository.update(newAccess).then((saved) =>
+      Promise.all([
+        this.incrementPeopleOnPremises(access.locationId, count),
+        // TODO: maybe we don't need to wait for this to resolve
+        this.accessListener.addEntry(saved),
+      ]).then(() => saved),
+    )
   }
 
   handleExit(

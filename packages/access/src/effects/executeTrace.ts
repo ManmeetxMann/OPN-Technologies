@@ -12,7 +12,9 @@ import {AdminApprovalModel} from '../../../common/src/data/admin'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 
 import {OrganizationModel} from '../../../enterprise/src/repository/organization.repository'
+import {UserModel, User} from '../../../common/src/data/user'
 
+import {getExposureSection} from './exposureTemplate'
 type Overlap = {
   start: Date
   end: Date
@@ -42,11 +44,13 @@ const A_DAY = 24 * 60 * 60 * 1000
 export default class TraceListener {
   repo: TraceRepository
   orgRepo: OrganizationModel
-  userRepo: AdminApprovalModel
+  userApprovalRepo: AdminApprovalModel
+  userRepo: UserModel
   constructor(dataStore: DataStore) {
     this.repo = new TraceRepository(dataStore)
     this.orgRepo = new OrganizationModel(dataStore)
-    this.userRepo = new AdminApprovalModel(dataStore)
+    this.userApprovalRepo = new AdminApprovalModel(dataStore)
+    this.userRepo = new UserModel(dataStore)
   }
 
   async subscribe(): Promise<void> {
@@ -96,7 +100,7 @@ export default class TraceListener {
     const accesses = await this.repo.getAccesses(userId, earliestDate, latestDate)
 
     // promises resolving with the org ID for the given location
-    const locationOrgs: Record<string, Promise<string>> = {}
+    const locationPromises: Record<string, ReturnType<OrganizationModel['getLocation']>> = {}
 
     const result = await Promise.all(
       accesses.map(async (dailyReport) => {
@@ -127,13 +131,13 @@ export default class TraceListener {
           organizationId: '',
         }
 
-        if (!locationOrgs[dailyReport.locationId]) {
+        if (!locationPromises[dailyReport.locationId]) {
           // just push the promise so we only query once per location
-          locationOrgs[dailyReport.locationId] = this.orgRepo
-            .getLocation(dailyReport.locationId)
-            .then((loc) => loc.organizationId)
+          locationPromises[dailyReport.locationId] = this.orgRepo.getLocation(
+            dailyReport.locationId,
+          )
         }
-        result.organizationId = await locationOrgs[dailyReport.locationId]
+        result.organizationId = (await locationPromises[dailyReport.locationId]).organizationId
 
         return result
       }),
@@ -148,66 +152,95 @@ export default class TraceListener {
     return result
   }
 
-  private async sendEmails(reports: ExposureReport[]): Promise<void> {
-    const allLocations = []
-    const allOrganizations = []
+  private async sendEmails(reports: ExposureReport[], userId): Promise<void> {
+    const allLocationsHash = {}
+    const allOrganizationsHash = {}
+    const allUsersHash = {
+      [userId]: true,
+    }
     reports.forEach((report: ExposureReport) => {
       const {locationId, organizationId} = report
-      if (!allLocations.includes(locationId)) {
-        allLocations.push(locationId)
+      if (!allLocationsHash[locationId]) {
+        allLocationsHash[locationId] = true
       }
-      if (!allOrganizations.includes(organizationId)) {
-        allOrganizations.push(organizationId)
+      if (!allOrganizationsHash[organizationId]) {
+        allOrganizationsHash[organizationId] = true
       }
+      report.overlapping.forEach((overlap) => {
+        if (!allUsersHash[overlap.userId]) {
+          allUsersHash[overlap.userId] = true
+        }
+      })
     })
 
-    const reportsForLocation = {}
-    const reportsForOrganization = {}
-    reports.forEach((report) => {
-      if (!reportsForLocation[report.locationId]) {
-        reportsForLocation[report.locationId] = []
-      }
-      reportsForLocation[report.locationId].push(report)
-      if (!reportsForOrganization[report.organizationId]) {
-        reportsForOrganization[report.organizationId] = []
-      }
-      reportsForOrganization[report.organizationId].push(report)
-    })
+    const allLocations = Object.keys(allLocationsHash)
+    const allOrganizations = Object.keys(allOrganizationsHash)
+    const allUsers = Object.keys(allUsersHash)
+
     // paginate the location and org lists
     const locationPages = []
     const organizationPages = []
+    const userPages = []
     for (let i = 0; i < allLocations.length; i += 10) {
       locationPages.push(allLocations.slice(i, i + 10))
     }
     for (let i = 0; i < allOrganizations.length; i += 10) {
       organizationPages.push(allOrganizations.slice(i, i + 10))
     }
-    // TODO: map the pages into a deduplicated list of users
+    for (let i = 0; i < allUsers.length; i += 10) {
+      userPages.push(allUsers.slice(i, i + 10))
+    }
+    // TODO: these three can go in parallel
+    // TODO: get location names as well
     const locUsers = (
       await Promise.all(
         locationPages.map((page) =>
-          this.userRepo.findWhereArrayContainsAny('profile.adminForLocationIds', page),
+          this.userApprovalRepo.findWhereArrayContainsAny('profile.adminForLocationIds', page),
         ),
       )
     ).flat()
     const orgUsers = (
       await Promise.all(
         organizationPages.map((page) =>
-          this.userRepo.findWhereArrayContainsAny('profile.superAdminForOrganizationIds', page),
+          this.userApprovalRepo.findWhereArrayContainsAny(
+            'profile.superAdminForOrganizationIds',
+            page,
+          ),
         ),
       )
     ).flat()
-    const allUsers = [
+    const users = (
+      await Promise.all(userPages.map((page) => this.userRepo.findWhereIn('userId', page)))
+    ).flat()
+
+    const reportsForLocation = {}
+    const reportsForOrganization = {}
+
+    reports.forEach((report) => {
+      if (!reportsForLocation[report.locationId]) {
+        reportsForLocation[report.locationId] = []
+      }
+      reportsForLocation[report.locationId].push(getExposureSection(report, users))
+      if (!reportsForOrganization[report.organizationId]) {
+        reportsForOrganization[report.organizationId] = []
+      }
+      reportsForOrganization[report.organizationId].push(getExposureSection(report, users))
+    })
+
+    const allRecipients = [
       ...locUsers,
       ...orgUsers.filter((orgUser) => !locUsers.some((locUser) => locUser.id === orgUser.id)),
     ]
       .filter((u) => !u.expired)
       .map((user) => ({
         email: user.profile.email,
-        orgReports: user.profile.superAdminForOrganizationIds.map(
+        orgReports: user.profile.superAdminForOrganizationIds.flatMap(
           (id) => reportsForOrganization[id],
         ),
-        locReports: user.profile.adminForLocationIds.map((id) => reportsForLocation[id]),
+        locReports: user.profile.adminForLocationIds.flatMap((id) => reportsForLocation[id]),
       }))
+    allRecipients.forEach(
+      (recipient) => recipient, // send email to recipient
+    )
   }
 }
