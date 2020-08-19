@@ -19,7 +19,7 @@ export class OrganizationModel extends GroupDataModel<Organization, Organization
     if (items.length == 0) {
       return null
     }
-    if (items.length > 0) {
+    if (items.length > 1) {
       console.warn(`multiple ${this.groupId} with id ${id}`)
       console.warn(items)
     }
