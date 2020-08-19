@@ -1,5 +1,9 @@
 import {firestore} from 'firebase-admin'
 import {Config} from './config'
+import {Request, Response} from 'express'
+
+// utility wrapper for time-related values
+// used for testing to change the server timestamp
 
 const manualModeEnabled = Config.get('FEATURE_DEBUG_MANUAL_TIMESTAMPS') === 'enabled'
 let currentTimeMillis = 0
@@ -10,11 +14,15 @@ export const serverTimestamp = (): firestore.FieldValue => {
   }
   return firestore.FieldValue.serverTimestamp()
 }
-export const setTime = (millis: number): void => {
+
+// @ts-ignore this is debug anyway
+export const setTime = (req: Request, res: Response): void => {
   if (!manualModeEnabled) {
-    throw new Error('not in the correct mode for this')
+    res.status(403).send('not in the correct mode for this')
+    return
   }
-  currentTimeMillis = millis
+  currentTimeMillis = req.body.milliseconds
+  res.status(200).send('OK')
 }
 
 export const now = (): Date => {
