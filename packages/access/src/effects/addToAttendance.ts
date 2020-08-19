@@ -39,7 +39,6 @@ export default class AccessListener {
         path,
       )
     })
-    console.log(record)
     const toAdd = {
       userId: access.userId,
       enteredAt: access.enteredAt,
