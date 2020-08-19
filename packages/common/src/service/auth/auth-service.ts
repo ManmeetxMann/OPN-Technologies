@@ -16,6 +16,15 @@ export class AuthService {
   private readonly firebaseAuth = FirebaseManager.getInstance().getAdmin().auth()
 
   async createUser(email: string): Promise<string> {
+    if (Config.get('GUILIBLE_MODE') === 'enabled') {
+      if (Config.get('FIRESTORE_EMULATOR_HOST') !== 'localhost:8080') {
+        console.error('Running in guilible mode, but not pointed to an emulated server')
+        // IGNORE THIS MODE
+      } else {
+        // TODO: if we ever read the return of this, we need to work around this one
+        return email
+      }
+    }
     try {
       const user = await this.firebaseAuth.createUser({email: email})
       return user.uid
@@ -26,6 +35,14 @@ export class AuthService {
   }
 
   async updateUser(userId: string, properties: unknown): Promise<void> {
+    if (Config.get('GUILIBLE_MODE') === 'enabled') {
+      if (Config.get('FIRESTORE_EMULATOR_HOST') !== 'localhost:8080') {
+        console.error('Running in guilible mode, but not pointed to an emulated server')
+        // IGNORE THIS MODE
+      } else {
+        return
+      }
+    }
     await this.firebaseAuth.updateUser(userId, properties)
   }
 
@@ -35,6 +52,14 @@ export class AuthService {
   }
 
   async sendEmailSignInLink(info: {email: string; name?: string}): Promise<void> {
+    if (Config.get('GUILIBLE_MODE') === 'enabled') {
+      if (Config.get('FIRESTORE_EMULATOR_HOST') !== 'localhost:8080') {
+        console.error('Running in guilible mode, but not pointed to an emulated server')
+        // IGNORE THIS MODE
+      } else {
+        return
+      }
+    }
     // Setup action
     const actionCodeSettings = {
       url: Config.get('AUTH_EMAIL_SIGNIN_LINK'),
@@ -80,8 +105,10 @@ export class AuthService {
           console.error('Running in guilible mode, but not pointed to an emulated server')
           throw error
         }
+        const [uid, email] = authToken.split('///')
         return {
-          uid: authToken,
+          uid,
+          email,
         }
       }
     }
