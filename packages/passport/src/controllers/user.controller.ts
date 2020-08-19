@@ -11,6 +11,7 @@ import {Attestation} from '../models/attestation'
 import {AttestationService} from '../services/attestation-service'
 import {AccessService} from '../../../access/src/service/access.service'
 import {Config} from '../../../common/src/utils/config'
+import {now} from '../../../common/src/utils/times'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
 
@@ -116,7 +117,7 @@ class UserController implements IControllerBase {
 
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
         if (userId) {
-          const nowMillis = new Date().valueOf()
+          const nowMillis = now().valueOf()
           this.topic.publish(Buffer.from('trace-required'), {
             userId,
             severity: passportStatus,

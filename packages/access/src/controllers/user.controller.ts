@@ -8,6 +8,7 @@ import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {AccessService} from '../service/access.service'
 import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wrapper'
+import {now} from '../../../common/src/utils/times'
 
 class UserController implements IRouteController {
   public router = express.Router()
@@ -94,7 +95,7 @@ class UserController implements IRouteController {
       data: {
         exposed: false,
       },
-      serverTimestamp: new Date().toISOString(),
+      serverTimestamp: now().toISOString(),
       status: 'complete',
     }
 

@@ -3,6 +3,7 @@ import {Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 
 import Validation from '../../../common/src/utils/validation'
+import {now} from '../../../common/src/utils/times'
 
 class AdminController implements IControllerBase {
   public path = '/admin'
@@ -27,7 +28,7 @@ class AdminController implements IControllerBase {
           badge: 'proceed',
         },
       },
-      serverTimestamp: new Date().toISOString(),
+      serverTimestamp: now().toISOString(),
       status: 'complete',
     }
 

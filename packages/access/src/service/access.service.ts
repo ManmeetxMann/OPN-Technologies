@@ -8,6 +8,7 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {AccessStatsModel, AccessStatsRepository} from '../repository/access-stats.repository'
 import AccessListener from '../effects/addToAttendance'
 import moment from 'moment'
+import {serverTimestamp} from '../../../common/src/utils/times'
 
 export class AccessService {
   private dataStore = new DataStore()
@@ -38,7 +39,7 @@ export class AccessService {
           locationId,
           statusToken,
           userId,
-          createdAt: firestore.FieldValue.serverTimestamp(),
+          createdAt: serverTimestamp(),
           includesGuardian,
           dependants,
         }),
@@ -66,13 +67,13 @@ export class AccessService {
     for (const id in access.dependants) {
       dependants[id] = {
         ...access.dependants[id],
-        enteredAt: firestore.FieldValue.serverTimestamp(),
+        enteredAt: serverTimestamp(),
       }
     }
     const newAccess = access.includesGuardian
       ? {
           ...access,
-          enteredAt: firestore.FieldValue.serverTimestamp(),
+          enteredAt: serverTimestamp(),
           dependants,
         }
       : {
@@ -116,7 +117,7 @@ export class AccessService {
       if (dependantIds.includes(id)) {
         newDependants[id] = {
           ...access.dependants[id],
-          exitAt: firestore.FieldValue.serverTimestamp(),
+          exitAt: serverTimestamp(),
         }
       } else {
         newDependants[id] = access.dependants[id]
@@ -127,7 +128,7 @@ export class AccessService {
       ? {
           ...access,
           dependants: newDependants,
-          exitAt: firestore.FieldValue.serverTimestamp(),
+          exitAt: serverTimestamp(),
         }
       : {
           ...access,
@@ -138,7 +139,7 @@ export class AccessService {
     return this.accessRepository
       .update({
         ...access,
-        exitAt: firestore.FieldValue.serverTimestamp(),
+        exitAt: serverTimestamp(),
       })
       .then((saved) =>
         Promise.all([
@@ -171,7 +172,7 @@ export class AccessService {
               locationId,
               peopleOnPremises: 0,
               accessDenied: 0,
-              createdAt: firestore.FieldValue.serverTimestamp(),
+              createdAt: serverTimestamp(),
             } as AccessStatsModel)
           : results[0],
       )

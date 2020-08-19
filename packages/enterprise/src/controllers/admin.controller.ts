@@ -13,6 +13,7 @@ import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized
 import {UserService} from '../../../common/src/service/user/user-service'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {FirebaseManager} from '../../../common/src/utils/firebase'
+import {now} from '../../../common/src/utils/times'
 
 // import { TokenService } from '../../../common/src/service/auth/token-service'
 
@@ -173,7 +174,7 @@ class AdminController implements IControllerBase {
             lastNameInitial: 'S',
           },
         ],
-        serverTimestamp: new Date().toISOString(),
+        serverTimestamp: now().toISOString(),
       },
       status: 'complete',
     }
@@ -190,7 +191,7 @@ class AdminController implements IControllerBase {
       // data : {
       //     authToken : "987654321234567890"
       // },
-      serverTimestamp: new Date().toISOString(),
+      serverTimestamp: now().toISOString(),
       status: 'complete',
     }
 
@@ -215,7 +216,7 @@ class AdminController implements IControllerBase {
           },
         },
       },
-      serverTimestamp: new Date().toISOString(),
+      serverTimestamp: now().toISOString(),
       status: 'complete',
     }
 

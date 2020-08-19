@@ -3,6 +3,7 @@ import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {UserDependantModel} from '../../../common/src/data/user'
+import {serverTimestamp} from '../../../common/src/utils/times'
 import moment from 'moment'
 import {firestore} from 'firebase-admin'
 
@@ -37,7 +38,7 @@ export class PassportService {
           userId,
           includesGuardian,
           dependantIds,
-          validFrom: firestore.FieldValue.serverTimestamp(),
+          validFrom: serverTimestamp(),
           validUntil: null,
         }),
       )
