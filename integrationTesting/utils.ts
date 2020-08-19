@@ -17,6 +17,7 @@ export const setTime = async (services: Service[], milliseconds: number): Promis
       fetch(`${roots[svc]}/setTIme`, {
         method: 'POST',
         body: JSON.stringify({milliseconds}),
+        headers: {'Content-Type': 'application/json'},
       }),
     ),
   )
@@ -172,17 +173,19 @@ export const createAccess = async (
 
 export const scanEntry = async (
   userId: string,
-  locationId: string,
   accessToken: string,
+  authId: string,
 ): Promise<any> => {
   return fetch(`${roots.Access}/admin/enter`, {
     method: 'POST',
     body: JSON.stringify({
       userId,
-      locationId,
       accessToken,
     }),
-    headers: {'Content-Type': 'application/json'},
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authId}`,
+    },
   })
     .then((r) => r.json())
     .then(({data}) => data)
@@ -190,19 +193,21 @@ export const scanEntry = async (
 
 export const scanExit = async (
   userId: string,
-  locationId: string,
   accessToken: string,
+  authId: string,
 ): Promise<any> => {
-  return fetch(`${roots.Access}/admin/enter`, {
+  return fetch(`${roots.Access}/admin/exit`, {
     method: 'POST',
     body: JSON.stringify({
       userId,
-      locationId,
       accessToken,
       includeGuardian: true,
       dependantIds: [],
     }),
-    headers: {'Content-Type': 'application/json'},
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${authId}`,
+    },
   })
     .then((r) => r.json())
     .then(({data}) => data)

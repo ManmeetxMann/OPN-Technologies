@@ -103,7 +103,7 @@ export default class AccessListener {
     return this.repo.updateProperties(
       record.id,
       {
-        ACC_KEY: FieldValue.arrayUnion(toAdd),
+        [ACC_KEY]: FieldValue.arrayUnion(toAdd),
         accessingUsers: FieldValue.arrayUnion(access.userId),
       },
       path,
