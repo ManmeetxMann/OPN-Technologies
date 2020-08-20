@@ -13,6 +13,7 @@ import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized
 import {UserService} from '../../../common/src/service/user/user-service'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {FirebaseManager} from '../../../common/src/utils/firebase'
+import {AdminProfile} from '../../../common/src/data/admin'
 
 // import { TokenService } from '../../../common/src/service/auth/token-service'
 
@@ -31,6 +32,7 @@ class AdminController implements IControllerBase {
     this.router.post(this.path + '/team/status', authMiddleware, this.teamStatus)
     this.router.post(this.path + '/team/review', authMiddleware, this.teamReview)
     this.router.post(this.path + '/billing/config', authMiddleware, this.billingConfig)
+    this.router.post(this.path + '/profile', authMiddleware, this.adminInfo)
   }
 
   authSignInLinkRequest = async (
@@ -220,6 +222,33 @@ class AdminController implements IControllerBase {
     }
 
     res.json(response)
+  }
+
+  adminInfo = async (req: Request, res: Response): Promise<void> => {
+    const {idToken} = req.body as AuthLinkProcessRequest
+
+    const authService = new AuthService()
+    const validatedAuthUser = await authService.verifyAuthToken(idToken)
+    if (!validatedAuthUser) {
+      throw new UnauthorizedException('Unauthorized access')
+    }
+    const userService = new UserService()
+    const user = await userService.findOneByAuthUserId(validatedAuthUser.uid)
+    if (!user) {
+      throw new UnauthorizedException('Unauthorized access')
+    }
+    const admin = user?.admin as AdminProfile
+    if (!admin) {
+      throw new UnauthorizedException('Not admin of anything')
+    }
+    const {adminForLocationIds, adminForOrganizationId, superAdminForOrganizationIds} = admin
+    if (
+      !superAdminForOrganizationIds.length ||
+      (adminForOrganizationId && adminForLocationIds.length)
+    ) {
+      throw new UnauthorizedException('Not admin of anything')
+    }
+    res.json(admin)
   }
 }
 
