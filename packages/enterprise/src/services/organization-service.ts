@@ -31,7 +31,18 @@ export class OrganizationService {
     locations: OrganizationLocation[],
   ): Promise<OrganizationLocation[]> {
     return this.getOrganization(organizationId).then(() =>
-      new OrganizationLocationModel(this.dataStore, organizationId).addAll(locations),
+      new OrganizationLocationModel(this.dataStore, organizationId)
+        .addAll(locations)
+        .then((locs) => {
+          // add this so we can query for locations by id contained in list
+          const locationsWithId = locs.map((loc) => ({
+            ...loc,
+            locationId: loc.id,
+          }))
+          return new OrganizationLocationModel(this.dataStore, organizationId).updateAll(
+            locationsWithId,
+          )
+        }),
     )
   }
 

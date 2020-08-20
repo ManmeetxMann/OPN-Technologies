@@ -14,7 +14,7 @@ const roots = {
 export const setTime = async (services: Service[], milliseconds: number): Promise<void> => {
   await Promise.all(
     services.map((svc) =>
-      fetch(`${roots[svc]}/setTIme`, {
+      fetch(`${roots[svc]}/setTime`, {
         method: 'POST',
         body: JSON.stringify({milliseconds}),
         headers: {'Content-Type': 'application/json'},

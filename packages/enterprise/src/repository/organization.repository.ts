@@ -11,11 +11,11 @@ export class OrganizationModel extends GroupDataModel<Organization, Organization
   groupId = 'locations'
 
   // retrieve a location by id, and include the id of the organization it belongs to
-  // TODO: need to add id to location document
   public async getLocation(
     id: string,
   ): Promise<null | (OrganizationLocation & {organizationId: string})> {
-    const items = await this.groupGet([['id', '==', id]])
+    // can't query actual ids in a collectionGroup
+    const items = await this.groupGet([['locationId', '==', id]])
     if (items.length == 0) {
       return null
     }

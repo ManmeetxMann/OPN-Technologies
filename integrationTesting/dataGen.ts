@@ -100,7 +100,8 @@ const generate = async () => {
   const activeAccesses = users.map(() => null)
   const locIndexes = users.map(() => null)
 
-  const endTime = now + 1000 * 60 * 60 * 12
+  const endTime = now + 1000 * 60 * 60 * 2
+  // 2 hours of 1 action/minute
   while (now < endTime) {
     now += 60000 // forward one minute
     console.log(now)
@@ -127,6 +128,8 @@ const generate = async () => {
       await scanExit(users[userIndex].id, access.token, authIds[locIndex])
     }
   }
+  const sickUserIndex = Math.floor(Math.random() * users.length)
+  await attest(users[sickUserIndex].id, locs[0].id, true)
 }
 
 generate()

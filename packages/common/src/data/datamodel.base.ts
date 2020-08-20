@@ -67,6 +67,12 @@ abstract class DataModel<T extends HasId> {
       .then(() => this.fetchAll())
   }
 
+  async updateAll(data: Array<Storable<T>>, subPath = ''): Promise<T[]> {
+    return this.getDAO(subPath)
+      .bulkSet(data)
+      .then(() => this.fetchAll())
+  }
+
   async fetchAll(subPath = ''): Promise<T[]> {
     return this.getDAO(subPath).fetchAll()
   }

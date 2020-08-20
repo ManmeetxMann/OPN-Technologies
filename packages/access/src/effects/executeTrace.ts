@@ -25,14 +25,14 @@ const overlap = (a: Access, b: Access, latestTime: number): Overlap | null => {
   const end1 = a.exitAt ?? {toDate: () => new Date(latestTime)}
   const end2 = b.exitAt ?? {toDate: () => new Date(latestTime)}
   const earliestEnd = end1 < end2 ? end1 : end2
-  if (latestStart < earliestEnd) {
+  if (latestStart > earliestEnd) {
     return null
   }
   return {
     // @ts-ignore these are timestamps, not dates
-    start: (a.enteredAt < b.enteredAt ? b : a).enteredAt.toDate(),
+    start: latestStart.toDate(),
     // @ts-ignore these are timestamps, not dates
-    end: (a.exitAt > b.exitAt ? b : a).exitAt.toDate(),
+    end: earliestEnd.toDate(),
   }
 }
 
