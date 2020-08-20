@@ -30,8 +30,18 @@ class UserController implements IRouteController {
     const routes = express
       .Router()
       .post('/createToken', this.createToken)
+      .post('/enter', this.enter)
+      .post('/exit', this.exit)
       .post('/exposure/verify', this.exposureVerification)
     this.router.use('/user', routes)
+  }
+
+  enter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    
+  }
+
+  exit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    
   }
 
   createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
