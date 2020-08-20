@@ -12,6 +12,7 @@ import {Config} from '../../../common/src/utils/config'
 
 // disables the `includeGuardian` parameter. guardians are never included with dependants
 // and always included otherwise
+// Leaving this in, but it shouldn't be used anymore
 const includeGuardianHack = Config.get('FEATURE_AUTOMATIC_INCLUDE_GUARDIAN') === 'enabled'
 
 // allow 'partial success' for requests where the passport verifies only some dependants

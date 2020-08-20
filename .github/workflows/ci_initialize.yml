@@ -49,7 +49,6 @@ jobs:
           DOMAIN_REGISTRY=https://registry-staging-dot-opn-platform-dev.nn.r.appspot.com/
 
           # Features
-          FEATURE_AUTOMATIC_INCLUDE_GUARDIAN=enabled
           FEATURE_CREATE_TOKEN_PERMISSIVE_MODE=enabled
         write-mode: overwrite
     - run: npm install
