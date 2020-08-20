@@ -40,6 +40,9 @@ const nameSegs = [
   'Yankee',
   'Zulu',
 ]
+// Alfa++++
+// November
+// 4 chars variance/word
 const randSeg = () => nameSegs[Math.floor(Math.random() * nameSegs.length)]
 
 // two segments is 99% likely to be unique for 7 elements
@@ -104,7 +107,7 @@ const generate = async () => {
   // 2 hours of 1 action/minute
   while (now < endTime) {
     now += 60000 // forward one minute
-    console.log(now)
+    // console.log(now)
     await setTime(['Access', 'Passport', 'Enterprise'], now)
     // pick a user at random to act
     const userIndex = Math.floor(Math.random() * users.length)

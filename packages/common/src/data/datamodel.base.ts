@@ -151,12 +151,22 @@ abstract class DataModel<T extends HasId> {
     return await this.getDAO(subPath).where(fieldPath, '==', value).fetch()
   }
 
+  async findWhereMapKeyContainsAny(
+    map: string,
+    key: string,
+    value: unknown,
+    subPath = '',
+  ): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
+    return await this.getDAO(subPath).where(fieldPath, 'array-contains-any', value).fetch()
+  }
+
   async findWhereArrayContainsAny(property: string, value: unknown, subPath = ''): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
     return await this.getDAO(subPath).where(fieldPath, 'array-contains-any', value).fetch()
   }
-  async findWhereIn(property: string, value: unknown, subPath = ''): Promise<T[]> {
-    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+  async findWhereIdIn(value: unknown, subPath = ''): Promise<T[]> {
+    const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()
     return await this.getDAO(subPath).where(fieldPath, 'in', value).fetch()
   }
 

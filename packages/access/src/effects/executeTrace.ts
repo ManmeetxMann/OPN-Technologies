@@ -19,6 +19,10 @@ type Overlap = {
   start: Date
   end: Date
 }
+type LocTmp = {
+  title: string
+  organizationId: string
+}
 
 const overlap = (a: Access, b: Access, latestTime: number): Overlap | null => {
   const latestStart = a.enteredAt > b.enteredAt ? a.enteredAt : b.enteredAt
@@ -98,7 +102,13 @@ export default class TraceListener {
     const latestDate = moment(endTime + A_DAY).format('YYYY-MM-DD')
 
     const accesses = await this.repo.getAccesses(userId, earliestDate, latestDate)
-
+    const attendanceLookup = {}
+    accesses.forEach((access) => {
+      if (!attendanceLookup[access.locationId]) {
+        attendanceLookup[access.locationId] = {}
+      }
+      attendanceLookup[access.locationId][access.date] = access.accesses
+    })
     // promises resolving with the org ID for the given location
     const locationPromises: Record<string, ReturnType<OrganizationModel['getLocation']>> = {}
 
@@ -149,10 +159,22 @@ export default class TraceListener {
       moment(endTime).format('YYYY-MM-DD'),
       endTime - startTime,
     )
+    const locations = {}
+    await Promise.all(
+      Object.keys(locationPromises).map(
+        async (key) => (locations[key] = await locationPromises[key]),
+      ),
+    )
+    this.sendEmails(result, userId, locations, attendanceLookup)
     return result
   }
 
-  private async sendEmails(reports: ExposureReport[], userId): Promise<void> {
+  private async sendEmails(
+    reports: ExposureReport[],
+    userId: string,
+    locations: Record<string, LocTmp>,
+    accesses: Record<string, Record<string, Access[]>>,
+  ): Promise<void> {
     const allLocationsHash = {}
     const allOrganizationsHash = {}
     const allUsersHash = {
@@ -176,7 +198,6 @@ export default class TraceListener {
     const allLocations = Object.keys(allLocationsHash)
     const allOrganizations = Object.keys(allOrganizationsHash)
     const allUsers = Object.keys(allUsersHash)
-
     // paginate the location and org lists
     const locationPages = []
     const organizationPages = []
@@ -195,23 +216,26 @@ export default class TraceListener {
     const locUsers = (
       await Promise.all(
         locationPages.map((page) =>
-          this.userApprovalRepo.findWhereArrayContainsAny('profile.adminForLocationIds', page),
+          this.userApprovalRepo.findWhereMapKeyContainsAny('profile', 'adminForLocationIds', page),
         ),
       )
     ).flat()
     const orgUsers = (
       await Promise.all(
         organizationPages.map((page) =>
-          this.userApprovalRepo.findWhereArrayContainsAny(
-            'profile.superAdminForOrganizationIds',
+          this.userApprovalRepo.findWhereMapKeyContainsAny(
+            'profile',
+            'superAdminForOrganizationIds',
             page,
           ),
         ),
       )
     ).flat()
     const users = (
-      await Promise.all(userPages.map((page) => this.userRepo.findWhereIn('userId', page)))
+      await Promise.all(userPages.map((page) => this.userRepo.findWhereIdIn(page)))
     ).flat()
+
+    const sourceUser = users.find(u => u.id === userId)
 
     const reportsForLocation = {}
     const reportsForOrganization = {}
@@ -220,11 +244,27 @@ export default class TraceListener {
       if (!reportsForLocation[report.locationId]) {
         reportsForLocation[report.locationId] = []
       }
-      reportsForLocation[report.locationId].push(getExposureSection(report, users))
+      reportsForLocation[report.locationId].push(
+        getExposureSection(
+          report,
+          accesses[report.locationId][report.date],
+          users,
+          locations[report.locationId].title,
+          sourceUser,
+        ),
+      )
       if (!reportsForOrganization[report.organizationId]) {
         reportsForOrganization[report.organizationId] = []
       }
-      reportsForOrganization[report.organizationId].push(getExposureSection(report, users))
+      reportsForOrganization[report.organizationId].push(
+        getExposureSection(
+          report,
+          accesses[report.locationId][report.date],
+          users,
+          locations[report.locationId].title,
+          sourceUser,
+        ),
+      )
     })
 
     const allRecipients = [
