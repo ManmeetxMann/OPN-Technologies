@@ -120,13 +120,12 @@ class UserController implements IControllerBase {
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
         if (userId) {
           const nowMillis = now().valueOf()
-          this.topic
-            .publish(Buffer.from('trace-required'), {
-              userId,
-              severity: passportStatus,
-              startTime: `${nowMillis - TRACE_LENGTH}`,
-              endTime: `${nowMillis}`,
-            })
+          this.topic.publish(Buffer.from('trace-required'), {
+            userId,
+            severity: passportStatus,
+            startTime: `${nowMillis - TRACE_LENGTH}`,
+            endTime: `${nowMillis}`,
+          })
         } else {
           console.warn(
             `Could not execute a trace of attestation ${saved.id} because userId was not provided`,
