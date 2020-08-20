@@ -3,7 +3,7 @@ import {User} from '../../../common/src/data/user'
 import type {Access} from '../models/access'
 
 const formatName = (user: User): string =>
-  `${user.firstName} ${user.lastNameInitial}.             `.substring(0, 35)
+  `${user.firstName} ${user.lastNameInitial}.                             `.substring(0, 46)
 
 export const getExposureSection = (
   report: ExposureReport,
@@ -15,6 +15,14 @@ export const getExposureSection = (
   if (!report.overlapping.length) {
     return ''
   }
+  const printableAccesses = accesses.map((access) => ({
+    name: formatName(users.find((user) => user.id === access.userId)),
+    // @ts-ignore these are timestamps, not dates
+    start: access.enteredAt.toDate(),
+    // @ts-ignore these are timestamps, not dates
+    end: access.exitAt ? access.exitAt.toDate() : {toLocaleTimeString: () => 'END OF DAY'},
+  }))
+  printableAccesses.sort((a, b) => a.start.valueOf() - b.start.valueOf())
   const overlapping = [...report.overlapping]
   overlapping.sort((a, b) => a.start.valueOf() - b.start.valueOf())
   return `
@@ -27,6 +35,14 @@ ${overlapping
     return `    ${formatName(
       users.find((user) => user.id === overlap.userId),
     )} ${overlap.start.toLocaleTimeString()} - ${overlap.end.toLocaleTimeString()}`
+  })
+  .join('\n')}
+----------------------------------ALL ACCESSES---------------------------------
+${printableAccesses
+  .map((printable) => {
+    return `    ${
+      printable.name
+    } ${printable.start.toLocaleTimeString()} - ${printable.end.toLocaleTimeString()}`
   })
   .join('\n')}
   `

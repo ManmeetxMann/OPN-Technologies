@@ -188,12 +188,17 @@ export default class TraceListener {
       if (!allOrganizationsHash[organizationId]) {
         allOrganizationsHash[organizationId] = true
       }
-      report.overlapping.forEach((overlap) => {
-        if (!allUsersHash[overlap.userId]) {
-          allUsersHash[overlap.userId] = true
-        }
-      })
+      // report.overlapping.forEach((overlap) => {
+      //   if (!allUsersHash[overlap.userId]) {
+      //     allUsersHash[overlap.userId] = true
+      //   }
+      // })
     })
+    Object.keys(accesses).forEach((locationId) =>
+      Object.keys(accesses[locationId]).forEach((date) =>
+        accesses[locationId][date].forEach((access) => (allUsersHash[access.userId] = true)),
+      ),
+    )
 
     const allLocations = Object.keys(allLocationsHash)
     const allOrganizations = Object.keys(allOrganizationsHash)
@@ -235,7 +240,7 @@ export default class TraceListener {
       await Promise.all(userPages.map((page) => this.userRepo.findWhereIdIn(page)))
     ).flat()
 
-    const sourceUser = users.find(u => u.id === userId)
+    const sourceUser = users.find((u) => u.id === userId)
 
     const reportsForLocation = {}
     const reportsForOrganization = {}
