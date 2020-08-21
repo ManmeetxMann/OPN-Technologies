@@ -30,7 +30,7 @@ jobs:
           # Firebase Auth Sign App Code Settings:
           AUTH_EMAIL_SIGNIN_LINK=https://devopn.page.link/auth-finished
           AUTH_EMAIL_SIGNIN_IOS=com.opentech.stayopn
-          AUTH_EMAIL_SIGNIN_ANDROID=com.stayopn.debug
+          AUTH_EMAIL_SIGNIN_ANDROID=com.opntech.stayopn
           AUTH_EMAIL_SIGNIN_DOMAIN=devopn.page.link
 
           # Email / SMTP Provider:
