@@ -36,12 +36,74 @@ class UserController implements IRouteController {
     this.router.use('/user', routes)
   }
 
-  enter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    
+  enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
+    try {
+      const {accessToken, userId} = req.body
+      // check thAT both the organization and location have the 'allowSelfCheckIn' flag enabled
+      // (not yet implemented)
+      const access = await this.accessService.findOneByToken(accessToken)
+      const passport = await this.passportService.findOneByToken(access.statusToken)
+      // need to add this
+      const user = await this.userService.findOne(userId)
+      if (!user) {
+        throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
+      }
+      if (userId !== access.userId) {
+        // TODO: we could remove userId from this request
+        throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
+      }
+      const canEnter =
+        passport.status === PassportStatuses.Pending ||
+        (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
+
+      if (canEnter) {
+        // add a "self" flag as param 2
+        await this.accessService.handleEnter(access, true)
+        return res.json(actionSucceed())
+      }
+
+      res.status(400).json(actionFailed('Access denied for access-token'))
+    } catch (error) {
+      next(error)
+    }
   }
 
   exit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    
+    try {
+      const {accessToken, userId} = req.body
+      const access = await this.accessService.findOneByToken(accessToken)
+      const includeGuardian = (req.body.guardianExiting ?? access.includesGuardian) && !access.exitAt
+      // if unspecified, all remaining dependents
+      const dependantIds: string[] = (
+        req.body.exitingDependantIds ?? Object.keys(access.dependants)
+      ).filter((key: string) => !access.dependants[key].exitAt)
+      // check that BOTH the organization and location have the 'allowSelfCheckIn' flag enabled
+      // (not yet implemented)
+      if (!includeGuardian && !dependantIds.length) {
+        // access service would throw an error here, we want to skip the extra queries
+        // and give a more helpful error
+        if (
+          !req.body.hasOwnProperty('guardianExiting') &&
+          !req.body.hasOwnProperty('exitingDependantIds')
+        ) {
+          throw new BadRequestException('Token already used to exit')
+        } else {
+          throw new BadRequestException('All specified users have already exited')
+        }
+      }
+
+      const user = await this.userService.findOne(userId)
+      if (!user) {
+        throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
+      }
+      if (userId !== access.userId) {
+        throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
+      }
+      // add a "self" flag as param 4
+      await this.accessService.handleExit(access, includeGuardian, dependantIds, true)
+    } catch (error) {
+      next(error)
+    }
   }
 
   createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
