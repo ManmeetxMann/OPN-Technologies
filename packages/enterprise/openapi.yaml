@@ -150,15 +150,6 @@ components:
         - idToken
         - connectedId
 
-    AuthInfo:
-      type: object
-      properties:
-        idToken:
-          type: string
-          description: Id Token from Firebase Auth
-      required:
-        - idToken
-
     InternalAdminApprovalCreateRequest:
       type: object
       properties:
@@ -168,9 +159,11 @@ components:
         organizationId:
           type: string
           description: Organization Id
-        locationId:
-          type: string
-          description: Location Id within Organization
+        locationIds:
+          type: array
+          items:
+            type: string
+          description: Location Ids within Organization
       required:
         - email
         - organizationId
@@ -474,14 +467,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /admin/profile:
-    post:
-      description: Admin Info (which locations you are admin for)
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthInfo'
+  /admin/self:
+    get:
+      description: Authenticated Admin Profile
       responses:
         '200':
           description: The info requested

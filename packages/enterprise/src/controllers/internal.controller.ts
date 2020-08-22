@@ -1,9 +1,7 @@
 import * as express from 'express'
-import {Request, Response, NextFunction} from 'express'
+import {NextFunction, Request, Response} from 'express'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-
-import {AuthService} from '../../../common/src/service/auth/auth-service'
 import {InternalAdminApprovalCreateRequest} from '../models/internal-request'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
@@ -12,7 +10,6 @@ import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized
 class InternalController implements IControllerBase {
   public path = '/internal'
   public router = express.Router()
-  private authService = new AuthService()
 
   constructor() {
     this.initRoutes()
@@ -33,7 +30,7 @@ class InternalController implements IControllerBase {
       // Our service
       const adminApprovalService = new AdminApprovalService()
 
-      // Make sure that it does not exist
+      // Make sure it does not exist
       const approval = await adminApprovalService.findOneByEmail(email)
       if (approval) {
         throw new UnauthorizedException('Unauthorized Access')
