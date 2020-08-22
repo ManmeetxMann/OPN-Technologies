@@ -29,6 +29,7 @@
         "express-openapi-validate": "^0.5.1",
         "firebase-admin": "^9.1.0",
         "js-yaml": "^3.14.0",
+        "lodash": "^4.17.20",
         "moment": "^2.27.0",
         "node-fetch": "^2.6.0",
         "pug": "^3.0.0"

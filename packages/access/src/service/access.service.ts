@@ -1,5 +1,5 @@
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
-import {UserDependantModel} from '../../../common/src/data/user'
+import {UserDependant, UserDependantModel} from '../../../common/src/data/user'
 import DataStore from '../../../common/src/data/datastore'
 import {AccessModel, AccessRepository} from '../repository/access.repository'
 import {Access} from '../models/access'
@@ -8,16 +8,11 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {AccessStatsModel, AccessStatsRepository} from '../repository/access-stats.repository'
 import moment from 'moment'
+import * as _ from 'lodash'
 
 // a regular access, but with the names of dependants fetched
-type AccessWithNames = Access & {
-  dependants: Record<
-    string,
-    {
-      firstName: string
-      lastNameInitial: string
-    }
-  >
+type AccessWithDependantNames = Omit<Access, 'dependants'> & {
+  dependants: UserDependant[]
 }
 
 export class AccessService {
@@ -62,7 +57,7 @@ export class AccessService {
       }))
   }
 
-  handleEnter(access: AccessModel): Promise<AccessWithNames> {
+  handleEnter(access: AccessModel): Promise<AccessWithDependantNames> {
     if (!!access.enteredAt || !!access.exitAt) {
       throw new BadRequestException('Token already used to enter or exit')
     }
@@ -90,30 +85,17 @@ export class AccessService {
           dependants,
         }
     const count = Object.keys(dependants).length + (access.includesGuardian ? 1 : 0)
-    return this.accessRepository.update(newAccess).then((saved) =>
-      this.incrementPeopleOnPremises(access.locationId, count).then(async () => {
-        if (!Object.keys(saved.dependants)) {
-          return {
-            ...saved,
-            dependants: {},
-          }
-        }
-        const depModel = new UserDependantModel(this.dataStore, access.userId)
-        const allDependants = await depModel.fetchAll()
-        const namedDependants = {}
-        Object.keys(saved.dependants).forEach(
-          (key) =>
-            (namedDependants[key] = {
-              ...saved.dependants[key],
-              firstName: allDependants.find((dep) => dep.id === key).firstName,
-              lastNameInitial: allDependants.find((dep) => dep.id === key).lastNameInitial,
-            }),
+    return this.accessRepository.update(newAccess).then((savedAccess) =>
+      this.incrementPeopleOnPremises(access.locationId, count)
+        .then(() =>
+          Object.keys(savedAccess.dependants ?? {}).length > 0
+            ? new UserDependantModel(this.dataStore, access.userId).fetchAll()
+            : ([] as UserDependant[]),
         )
-        return {
-          ...saved,
-          dependants: namedDependants,
-        }
-      }),
+        .then((dependants) => ({
+          ...savedAccess,
+          dependants: (dependants ?? []).filter(({id}) => !!savedAccess.dependants[id]),
+        })),
     )
   }
 
@@ -121,7 +103,7 @@ export class AccessService {
     access: AccessModel,
     includesGuardian: boolean,
     dependantIds: string[],
-  ): Promise<AccessWithNames> {
+  ): Promise<AccessWithDependantNames> {
     if (!includesGuardian && !dependantIds.length) {
       throw new BadRequestException('Must specify at least one user')
     }
@@ -162,31 +144,17 @@ export class AccessService {
           dependants: newDependants,
         }
     const count = dependantIds.length + (includesGuardian ? 1 : 0)
-
-    return this.accessRepository.update(newAccess).then((saved) =>
-      this.decreasePeopleOnPremises(access.locationId, count).then(async () => {
-        if (!Object.keys(saved.dependants)) {
-          return {
-            ...saved,
-            dependants: {},
-          }
-        }
-        const depModel = new UserDependantModel(this.dataStore, access.userId)
-        const allDependants = await depModel.fetchAll()
-        const namedDependants = {}
-        Object.keys(saved.dependants).forEach(
-          (key) =>
-            (namedDependants[key] = {
-              ...saved.dependants[key],
-              firstName: allDependants.find((dep) => dep.id === key).firstName,
-              lastNameInitial: allDependants.find((dep) => dep.id === key).lastNameInitial,
-            }),
+    return this.accessRepository.update(newAccess).then((savedAccess) =>
+      this.decreasePeopleOnPremises(access.locationId, count)
+        .then(() =>
+          _.isEmpty(savedAccess.dependants)
+            ? ([] as UserDependant[])
+            : new UserDependantModel(this.dataStore, access.userId).fetchAll(),
         )
-        return {
-          ...saved,
-          dependants: namedDependants,
-        }
-      }),
+        .then((dependants) =>
+          dependants.filter(({id}) => !!savedAccess.dependants[id] && dependantIds.includes(id)),
+        )
+        .then((dependants) => ({...savedAccess, dependants})),
     )
   }
 

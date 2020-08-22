@@ -71,12 +71,8 @@ class AdminController implements IRouteController {
         (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
 
       if (canEnter) {
-        const result = await this.accessService.handleEnter(access)
-        responseBody.dependants = Object.keys(result.dependants).map((key) => ({
-          firstName: result.dependants[key].firstName,
-          lastNameInitial: result.dependants[key].lastNameInitial,
-        }))
-        return res.json(actionSucceed(responseBody))
+        const {dependants} = await this.accessService.handleEnter(access)
+        return res.json(actionSucceed({...responseBody, dependants}))
       }
 
       res.status(400).json(actionFailed('Access denied for access-token', responseBody))
@@ -89,14 +85,14 @@ class AdminController implements IRouteController {
     try {
       const {accessToken, userId} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
-      const includeGuardian =
+      const includesGuardian =
         (req.body.guardianExiting ?? access.includesGuardian) && !access.exitAt
       // if unspecified, all remaining dependents
       const dependantIds: string[] = (
         req.body.exitingDependantIds ?? Object.keys(access.dependants)
       ).filter((key: string) => !access.dependants[key].exitAt)
 
-      if (!includeGuardian && !dependantIds.length) {
+      if (!includesGuardian && !dependantIds.length) {
         // access service would throw an error here, we want to skip the extra queries
         // and give a more helpful error
         if (
@@ -118,21 +114,18 @@ class AdminController implements IRouteController {
         // TODO: we could remove userId from this request
         throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
       }
+      const {dependants} = await this.accessService.handleExit(
+        access,
+        includesGuardian,
+        dependantIds,
+      )
+
       const responseBody = {
         passport,
         base64Photo: user.base64Photo,
-        dependants: [],
-        includesGuardian: includeGuardian,
+        dependants,
+        includesGuardian,
       }
-      const result = await this.accessService.handleExit(access, includeGuardian, dependantIds)
-      responseBody.dependants = Object.keys(result.dependants)
-        // we only want to return the dependants *currently* exiting
-        .filter((key) => dependantIds.includes(key))
-        .map((key) => ({
-          firstName: result.dependants[key].firstName,
-          lastNameInitial: result.dependants[key].lastNameInitial,
-        }))
-
       res.json(actionSucceed(responseBody))
     } catch (error) {
       next(error)

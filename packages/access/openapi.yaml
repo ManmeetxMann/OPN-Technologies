@@ -227,6 +227,8 @@ components:
               items:
                 type: object
                 properties:
+                  id:
+                    type: string
                   firstName:
                     type: string
                   lastNameInitial:
