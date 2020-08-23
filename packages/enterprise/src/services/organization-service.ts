@@ -36,12 +36,20 @@ export class OrganizationService {
   }
 
   getLocations(organizationId: string): Promise<OrganizationLocation[]> {
-    return this.organizationRepository.get(organizationId).then((organization) => {
-      if (!organization) {
-        throw new ResourceNotFoundException(notFoundMessage(organizationId))
-      }
-      return new OrganizationLocationModel(this.dataStore, organizationId).fetchAll()
-    })
+    return this.getOrganization(organizationId).then(() =>
+      new OrganizationLocationModel(this.dataStore, organizationId).fetchAll(),
+    )
+  }
+
+  getLocation(organizationId: string, locationId: string): Promise<OrganizationLocation> {
+    return this.getOrganization(organizationId)
+      .then(() => new OrganizationLocationModel(this.dataStore, organizationId).get(locationId))
+      .then((location) => {
+        if (location) return location
+        throw new ResourceNotFoundException(
+          `Cannot find location for organization-id [${organizationId}] and location-id [${locationId}]`,
+        )
+      })
   }
 
   findOneByKey(key: number): Promise<Organization> {

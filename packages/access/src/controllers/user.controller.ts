@@ -9,6 +9,12 @@ import {isPassed} from '../../../common/src/utils/datetime-util'
 import {AccessService} from '../service/access.service'
 import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Config} from '../../../common/src/utils/config'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {OrganizationLocation} from '../../../enterprise/src/models/organization'
+import {UserService} from '../../../common/src/service/user/user-service'
+import {AccessModel} from '../repository/access.repository'
+import * as _ from 'lodash'
 
 // disables the `includeGuardian` parameter. guardians are never included with dependants
 // and always included otherwise
@@ -19,8 +25,10 @@ const includeGuardianHack = Config.get('FEATURE_AUTOMATIC_INCLUDE_GUARDIAN') ===
 const permissiveMode = Config.get('FEATURE_CREATE_TOKEN_PERMISSIVE_MODE') === 'enabled'
 class UserController implements IRouteController {
   public router = express.Router()
+  private organizationService = new OrganizationService()
   private passportService = new PassportService()
   private accessService = new AccessService()
+  private userService = new UserService()
 
   constructor() {
     this.initRoutes()
@@ -38,31 +46,24 @@ class UserController implements IRouteController {
 
   enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
     try {
-      const {accessToken, userId} = req.body
-      // check thAT both the organization and location have the 'allowSelfCheckIn' flag enabled
-      // (not yet implemented)
-      const access = await this.accessService.findOneByToken(accessToken)
-      const passport = await this.passportService.findOneByToken(access.statusToken)
-      // need to add this
-      const user = await this.userService.findOne(userId)
-      if (!user) {
-        throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
-      }
-      if (userId !== access.userId) {
-        // TODO: we could remove userId from this request
-        throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
-      }
-      const canEnter =
-        passport.status === PassportStatuses.Pending ||
-        (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
+      const {organizationId, locationId, accessToken, userId} = req.body
+      const location = await this.organizationService.getLocation(organizationId, locationId)
 
-      if (canEnter) {
-        // add a "self" flag as param 2
-        await this.accessService.handleEnter(access, true)
-        return res.json(actionSucceed())
-      }
+      if (!location.allowsSelfCheckInOut)
+        throw new BadRequestException("Location doesn't allow self-check-in")
 
-      res.status(400).json(actionFailed('Access denied for access-token'))
+      if (location.attestationRequired && !accessToken)
+        throw new BadRequestException(
+          'Access-token is missing while self-attestation is required at that location',
+        )
+      if (!location.attestationRequired && !userId)
+        throw new BadRequestException(
+          'User-id must be provided when self-attestation is NOT required',
+        )
+
+      return location.attestationRequired
+        ? await this.enterWithAccessToken(res, location, accessToken)
+        : await this.enterWithoutAttestation(res, location, userId)
     } catch (error) {
       next(error)
     }
@@ -70,37 +71,31 @@ class UserController implements IRouteController {
 
   exit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {accessToken, userId} = req.body
-      const access = await this.accessService.findOneByToken(accessToken)
-      const includeGuardian = (req.body.guardianExiting ?? access.includesGuardian) && !access.exitAt
-      // if unspecified, all remaining dependents
-      const dependantIds: string[] = (
-        req.body.exitingDependantIds ?? Object.keys(access.dependants)
-      ).filter((key: string) => !access.dependants[key].exitAt)
-      // check that BOTH the organization and location have the 'allowSelfCheckIn' flag enabled
-      // (not yet implemented)
-      if (!includeGuardian && !dependantIds.length) {
-        // access service would throw an error here, we want to skip the extra queries
-        // and give a more helpful error
-        if (
-          !req.body.hasOwnProperty('guardianExiting') &&
-          !req.body.hasOwnProperty('exitingDependantIds')
-        ) {
-          throw new BadRequestException('Token already used to exit')
-        } else {
-          throw new BadRequestException('All specified users have already exited')
-        }
-      }
+      const {organizationId, locationId, accessToken, guardianExiting, dependantIds} = req.body
+      const location = await this.organizationService.getLocation(organizationId, locationId)
+      if (!location.allowsSelfCheckInOut)
+        throw new BadRequestException("Location doesn't allow self-check-out")
 
-      const user = await this.userService.findOne(userId)
-      if (!user) {
-        throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
-      }
-      if (userId !== access.userId) {
-        throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
-      }
-      // add a "self" flag as param 4
-      await this.accessService.handleExit(access, includeGuardian, dependantIds, true)
+      const access = await this.accessService.findOneByToken(accessToken)
+      const {userId, statusToken, includesGuardian, dependants, exitAt} = access
+      const exitableDependantIds = (dependantIds ?? _.keys(dependants) ?? []).filter(
+        (id) => !access.dependants[id].exitAt,
+      )
+      if (!!exitAt || (!_.isEmpty(access.dependants) && _.isEmpty(exitableDependantIds)))
+        throw new BadRequestException('Access has already being used to exit')
+
+      if (location.id != access.locationId)
+        throw new BadRequestException('Access-location mismatch with the entering location')
+
+      const passport = await this.passportService.findOneByToken(statusToken)
+      const {base64Photo} = await this.userService.findOne(userId)
+      await this.accessService.handleExit(
+        access,
+        (guardianExiting ?? includesGuardian) && !exitAt,
+        exitableDependantIds,
+      )
+
+      res.json(actionSucceed({passport, base64Photo, dependants, includesGuardian}))
     } catch (error) {
       next(error)
     }
@@ -187,6 +182,44 @@ class UserController implements IRouteController {
     }
 
     res.json(response)
+  }
+
+  private async enterWithAccessToken(
+    res: Response,
+    location: OrganizationLocation,
+    accessToken: string,
+  ): Promise<unknown> {
+    const access = await this.accessService.findOneByToken(accessToken)
+    const passport = await this.passportService.findOneByToken(access.statusToken)
+
+    if (location.id != access.locationId)
+      throw new BadRequestException('Access-location mismatch with the entering location')
+
+    const canEnter =
+      passport.status === PassportStatuses.Pending ||
+      (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
+
+    if (canEnter) {
+      const {dependants, userId, includesGuardian} = await this.accessService.handleEnter(access)
+      const {base64Photo} = await this.userService.findOne(userId)
+      return res.json(actionSucceed({passport, base64Photo, dependants, includesGuardian}))
+    }
+
+    return res.status(400).json(actionFailed('Access denied for access-token'))
+  }
+
+  private async enterWithoutAttestation(
+    res: Response,
+    location: OrganizationLocation,
+    userId: string,
+  ): Promise<unknown> {
+    const {base64Photo} = await this.userService.findOne(userId)
+    const passport = await this.passportService.create(PassportStatuses.Proceed, userId, [])
+    const {includesGuardian, dependants} = await this.accessService
+      .create(passport.statusToken, location.id, userId, false, [])
+      .then((access) => this.accessService.handleEnter(access as AccessModel))
+
+    return res.json(actionSucceed({passport, base64Photo, dependants, includesGuardian}))
   }
 }
 

@@ -31,6 +31,7 @@ export type OrganizationLocationZone = {
 
 export type OrganizationConfiguration = {
   attestationRequired: boolean
+  allowsSelfCheckInOut: boolean
   questionnaireId?: string
 }
 

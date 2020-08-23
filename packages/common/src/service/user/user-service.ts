@@ -23,7 +23,10 @@ export class UserService {
   }
 
   findOne(id: string): Promise<User> {
-    return this.userRepository.get(id)
+    return this.userRepository.get(id).then((user) => {
+      if (!!user) return user
+      throw new ResourceNotFoundException(`Cannot find user with id [${id}]`)
+    })
   }
 
   async findOneById(id: string): Promise<User> {
@@ -37,27 +40,20 @@ export class UserService {
   }
 
   getAllDependants(userId: string): Promise<UserDependant[]> {
-    return this.findOneUserOrThrow(userId).then(() =>
+    return this.findOne(userId).then(() =>
       new UserDependantModel(this.dataStore, userId).fetchAll(),
     )
   }
 
   addDependants(userId: string, members: UserDependant[]): Promise<UserDependant[]> {
-    return this.findOneUserOrThrow(userId).then(() =>
+    return this.findOne(userId).then(() =>
       new UserDependantModel(this.dataStore, userId).addAll(members),
     )
   }
 
   removeDependant(userId: string, dependantId: string): Promise<void> {
-    return this.findOneUserOrThrow(userId).then(() =>
+    return this.findOne(userId).then(() =>
       new UserDependantModel(this.dataStore, userId).delete(dependantId),
     )
-  }
-
-  private findOneUserOrThrow(userId: string): Promise<User> {
-    return this.findOne(userId).then((user) => {
-      if (!user) throw new ResourceNotFoundException(`Cannot find user with Id ${userId}`)
-      return user
-    })
   }
 }

@@ -294,6 +294,30 @@ components:
               nullable: true
               type: string
 
+    ResponseOfOrganizationLocation:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationLocation'
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
     ResponseOfOrganizations:
       type: object
       properties:
@@ -412,6 +436,29 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationLocations'
+  /organizations/{organizationId}/locations/{locationId}:
+    get:
+      description: Get a location
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: false
+        - in: path
+          name: locationId
+          schema:
+            type: string
+      #          required: false
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationLocation'
 
   /user/connect/add:
     post:

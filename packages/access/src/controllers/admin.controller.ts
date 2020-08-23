@@ -7,7 +7,6 @@ import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wr
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
@@ -53,9 +52,6 @@ class AdminController implements IRouteController {
       const access = await this.accessService.findOneByToken(accessToken)
       const passport = await this.passportService.findOneByToken(access.statusToken)
       const user = await this.userService.findOne(userId)
-      if (!user) {
-        throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
-      }
       if (userId !== access.userId) {
         // TODO: we could remove userId from this request
         throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
@@ -107,9 +103,6 @@ class AdminController implements IRouteController {
 
       const passport = await this.passportService.findOneByToken(access.statusToken)
       const user = await this.userService.findOne(userId)
-      if (!user) {
-        throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
-      }
       if (userId !== access.userId) {
         // TODO: we could remove userId from this request
         throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
