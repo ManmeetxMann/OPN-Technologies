@@ -48,6 +48,10 @@ jobs:
           DOMAIN_PASSPORT=https://passport-staging-dot-opn-platform-dev.nn.r.appspot.com/
           DOMAIN_REGISTRY=https://registry-staging-dot-opn-platform-dev.nn.r.appspot.com/
 
+          # Pubsub
+          PUBSUB_TRACE_TOPIC=tracing
+          PUBSUB_TRACE_SUBSCRIPTION=executeTrace
+
           # Features
           FEATURE_CREATE_TOKEN_PERMISSIVE_MODE=enabled
         write-mode: overwrite
