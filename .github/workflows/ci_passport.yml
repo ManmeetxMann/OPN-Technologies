@@ -5,6 +5,7 @@ on:
     paths:
       - "packages/common/**"
       - "packages/passport/**"
+      - ".github/workflows/ci_passport.yml"
     branches: [ development ]
 
 jobs:
@@ -40,7 +41,7 @@ jobs:
           # Firebase Auth Sign App Code Settings:
           AUTH_EMAIL_SIGNIN_LINK=https://devopn.page.link/auth-finished
           AUTH_EMAIL_SIGNIN_IOS=com.opentech.stayopn
-          AUTH_EMAIL_SIGNIN_ANDROID=com.stayopn.debug
+          AUTH_EMAIL_SIGNIN_ANDROID=com.opntech.stayopn
           AUTH_EMAIL_SIGNIN_DOMAIN=devopn.page.link
 
           # Email / SMTP Provider:
@@ -57,6 +58,9 @@ jobs:
           DOMAIN_LOOKUP=https://lookup-staging-dot-opn-platform-dev.nn.r.appspot.com/
           DOMAIN_PASSPORT=https://passport-staging-dot-opn-platform-dev.nn.r.appspot.com/
           DOMAIN_REGISTRY=https://registry-staging-dot-opn-platform-dev.nn.r.appspot.com/
+
+          # Features
+          FEATURE_CREATE_TOKEN_PERMISSIVE_MODE=enabled
         write-mode: overwrite
     - run: npm run cd-deploy-passport
     - run: npm run cd-deploy-apidocs

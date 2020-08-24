@@ -1,4 +1,5 @@
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
+import {UserDependant, UserDependantModel} from '../../../common/src/data/user'
 import DataStore from '../../../common/src/data/datastore'
 import {AccessModel, AccessRepository} from '../repository/access.repository'
 import {Access} from '../models/access'
@@ -9,6 +10,12 @@ import {AccessStatsModel, AccessStatsRepository} from '../repository/access-stat
 import AccessListener from '../effects/addToAttendance'
 import moment from 'moment'
 import {serverTimestamp} from '../../../common/src/utils/times'
+import * as _ from 'lodash'
+
+// a regular access, but with the names of dependants fetched
+type AccessWithDependantNames = Omit<Access, 'dependants'> & {
+  dependants: UserDependant[]
+}
 
 export class AccessService {
   private dataStore = new DataStore()
@@ -53,7 +60,7 @@ export class AccessService {
       }))
   }
 
-  handleEnter(access: AccessModel): Promise<Access> {
+  handleEnter(access: AccessModel): Promise<AccessWithDependantNames> {
     if (!!access.enteredAt || !!access.exitAt) {
       throw new BadRequestException('Token already used to enter or exit')
     }
@@ -81,12 +88,21 @@ export class AccessService {
           dependants,
         }
     const count = Object.keys(dependants).length + (access.includesGuardian ? 1 : 0)
-    return this.accessRepository.update(newAccess).then((saved) =>
-      Promise.all([
-        this.incrementPeopleOnPremises(access.locationId, count),
-        // TODO: maybe we don't need to wait for this to resolve
-        this.accessListener.addEntry(saved),
-      ]).then(() => saved),
+    return this.accessRepository.update(newAccess).then((savedAccess) =>
+      this.incrementPeopleOnPremises(access.locationId, count)
+        .then(() =>
+          Object.keys(savedAccess.dependants ?? {}).length > 0
+            ? new UserDependantModel(this.dataStore, access.userId).fetchAll()
+            : ([] as UserDependant[]),
+        )
+        .then((dependants) => {
+          // we deliberately don't await this, the user doesn't need to know if it goes through
+          this.accessListener.addEntry(savedAccess)
+          return {
+            ...savedAccess,
+            dependants: (dependants ?? []).filter(({id}) => !!savedAccess.dependants[id]),
+          }
+        }),
     )
   }
 
@@ -94,7 +110,7 @@ export class AccessService {
     access: AccessModel,
     includesGuardian: boolean,
     dependantIds: string[],
-  ): Promise<Access> {
+  ): Promise<AccessWithDependantNames> {
     if (!includesGuardian && !dependantIds.length) {
       throw new BadRequestException('Must specify at least one user')
     }
@@ -135,19 +151,21 @@ export class AccessService {
           dependants: newDependants,
         }
     const count = dependantIds.length + (includesGuardian ? 1 : 0)
-
-    return this.accessRepository
-      .update({
-        ...access,
-        exitAt: serverTimestamp(),
-      })
-      .then((saved) =>
-        Promise.all([
-          this.decreasePeopleOnPremises(access.locationId, count),
-          // TODO: maybe we don't need to wait for this to resolve
-          this.accessListener.addExit(saved),
-        ]).then(() => saved),
-      )
+    return this.accessRepository.update(newAccess).then((savedAccess) =>
+      this.decreasePeopleOnPremises(access.locationId, count)
+        .then(() =>
+          _.isEmpty(savedAccess.dependants)
+            ? ([] as UserDependant[])
+            : new UserDependantModel(this.dataStore, access.userId).fetchAll(),
+        )
+        .then((dependants) =>
+          dependants.filter(({id}) => !!savedAccess.dependants[id] && dependantIds.includes(id)),
+        )
+        .then((dependants) => {
+          this.accessListener.addExit(savedAccess)
+          return {...savedAccess, dependants}
+        }),
+    )
   }
 
   findOneByToken(token: string): Promise<AccessModel> {

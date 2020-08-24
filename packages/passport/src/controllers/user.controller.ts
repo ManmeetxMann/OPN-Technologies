@@ -56,22 +56,28 @@ class UserController implements IControllerBase {
       // or create a pending one if any
       const {statusToken, userId} = req.body
       const includeGuardian = req.body.includeGuardian ?? true
+      if (!includeGuardian) {
+        throw new Error('Guardian must be included in all passports')
+      }
       const dependantIds: string[] = req.body.dependantIds ?? []
-
       const existingPassport = statusToken
         ? await this.passportService.findOneByToken(statusToken)
         : null
       let currentPassport: Passport
       if (existingPassport) {
-        if (
-          (includeGuardian && !existingPassport.includesGuardian) ||
-          existingPassport.dependantIds.length !== dependantIds.length ||
-          dependantIds.some((depId) => !existingPassport.dependantIds.includes(depId))
-        ) {
+        /*
+                REMOVED (TEMPORARILY?) - THIS CALL JUST CHECKS IF A VALID PASSPORT EXISTS, DOESN'T CARE ABOUT DEPENDANTS
+        
+        // some requested dependants are not covered by this passport
+        if (dependantIds.some((depId) => !existingPassport.dependantIds.includes(depId))) {
           // need to create a new one for different people
-        } else if (!isPassed(existingPassport.validUntil)) {
+        } else 
+        */
+        if (!isPassed(existingPassport.validUntil)) {
+          // still valid, no need to recreate
           currentPassport = existingPassport
         } else if (existingPassport.status !== PassportStatuses.Proceed) {
+          // only Proceed passports expire
           currentPassport = existingPassport
         }
       }
@@ -79,7 +85,6 @@ class UserController implements IControllerBase {
         currentPassport = await this.passportService.create(
           PassportStatuses.Pending,
           userId,
-          includeGuardian,
           dependantIds,
         )
       }
@@ -95,6 +100,10 @@ class UserController implements IControllerBase {
       // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
       const {locationId, userId} = req.body
       const includeGuardian = req.body.includeGuardian ?? true
+      if (!includeGuardian) {
+        throw new Error('Guardian must be included in all passports')
+      }
+
       const dependantIds: string[] = req.body.dependantIds ?? []
 
       const answers: Record<number, Record<number, boolean>> = req.body.answers
@@ -131,14 +140,11 @@ class UserController implements IControllerBase {
             `Could not execute a trace of attestation ${saved.id} because userId was not provided`,
           )
         }
+        const count = dependantIds.length + 1
+        await this.accessService.incrementAccessDenied(locationId, count)
       }
 
-      const passport = await this.passportService.create(
-        passportStatus,
-        userId,
-        includeGuardian,
-        dependantIds,
-      )
+      const passport = await this.passportService.create(passportStatus, userId, dependantIds)
       res.json(actionSucceed(passport))
     } catch (error) {
       next(error)

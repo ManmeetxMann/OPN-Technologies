@@ -159,9 +159,11 @@ components:
         organizationId:
           type: string
           description: Organization Id
-        locationId:
-          type: string
-          description: Location Id within Organization
+        locationIds:
+          type: array
+          items:
+            type: string
+          description: Location Ids within Organization
       required:
         - email
         - organizationId
@@ -182,6 +184,8 @@ components:
           type: array
           items:
             type: string
+        adminForOrganizationId:
+          type: string
 
     User:
       type: object
@@ -271,6 +275,30 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/OrganizationLocation'
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfOrganizationLocation:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationLocation'
         status:
           type: object
           properties:
@@ -408,6 +436,29 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationLocations'
+  /organizations/{organizationId}/locations/{locationId}:
+    get:
+      description: Get a location
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: false
+        - in: path
+          name: locationId
+          schema:
+            type: string
+      #          required: false
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationLocation'
 
   /user/connect/add:
     post:
@@ -462,6 +513,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+
+  /admin/self:
+    get:
+      description: Authenticated Admin Profile
+      responses:
+        '200':
+          description: The info requested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProfile'
 
   /admin/auth/signIn/process:
     post:

@@ -96,6 +96,23 @@ components:
         - accessToken
         - userId
 
+    SelfEntryRequest:
+      type: object
+      properties:
+        organizationId:
+          type: string
+        locationId:
+          type: string
+        accessToken:
+          type: string
+          description: Must be provided when location requires self-attestation
+        userId:
+          type: string
+          description: Must be provided when location DOESN't require self-attestation
+      required:
+        - organizationId
+        - locationId
+
     ExitRequest:
       allOf:
         - $ref: '#/components/schemas/EntryRequest'
@@ -104,6 +121,18 @@ components:
             guardianExiting:
               type: boolean
             exitingDependantIds:
+              type: array
+              items:
+                type: string
+
+    SelfExitRequest:
+      allOf:
+        - $ref: '#/components/schemas/SelfEntryRequest'
+        - type: object
+          properties:
+            guardianExiting:
+              type: boolean
+            dependantIds:
               type: array
               items:
                 type: string
@@ -119,6 +148,7 @@ components:
           type: string
         includeGuardian:
           type: boolean
+          description: In this version, this argument has no effect. Guardians are never included if the access includes dependants
         dependantIds:
           type: array
           items:
@@ -219,6 +249,19 @@ components:
               $ref: '#/components/schemas/Passport'
             base64Photo:
               type: string
+            includesGuardian:
+              type: boolean
+            dependants:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  firstName:
+                    type: string
+                  lastNameInitial:
+                    type: string
         status:
           type: object
           properties:
@@ -280,7 +323,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfEnterOrExit'
 
-
   /admin/exit:
     post:
       description: Handle user's exit with access-token
@@ -298,7 +340,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfEnterOrExit'
-
 
   /admin/stats:
     post:
@@ -322,3 +363,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfStatistics'
+
+  /user/enter:
+    post:
+      description: Handle self user's entrance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelfEntryRequest'
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfEnterOrExit'
+
+  /user/exit:
+    post:
+      description: Handle self user's exit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelfExitRequest'
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfEnterOrExit'

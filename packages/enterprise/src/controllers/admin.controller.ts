@@ -15,8 +15,6 @@ import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {FirebaseManager} from '../../../common/src/utils/firebase'
 import {now} from '../../../common/src/utils/times'
 
-// import { TokenService } from '../../../common/src/service/auth/token-service'
-
 class AdminController implements IControllerBase {
   public path = '/admin'
   public router = express.Router()
@@ -32,6 +30,7 @@ class AdminController implements IControllerBase {
     this.router.post(this.path + '/team/status', authMiddleware, this.teamStatus)
     this.router.post(this.path + '/team/review', authMiddleware, this.teamReview)
     this.router.post(this.path + '/billing/config', authMiddleware, this.billingConfig)
+    this.router.get(this.path + '/self', authMiddleware, this.adminInfo)
   }
 
   authSignInLinkRequest = async (
@@ -221,6 +220,11 @@ class AdminController implements IControllerBase {
     }
 
     res.json(response)
+  }
+
+  adminInfo = async (req: Request, res: Response): Promise<void> => {
+    const {connectedUser} = res.locals
+    res.json(connectedUser.admin)
   }
 }
 

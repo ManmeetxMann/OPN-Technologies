@@ -7,6 +7,10 @@ import {serverTimestamp} from '../../../common/src/utils/times'
 import moment from 'moment'
 import {firestore} from 'firebase-admin'
 
+// some clients rely on this being defined, but all passports
+// must apply to the user who created them.
+type LegacyPassport = Passport & {includesGuardian: true}
+
 export class PassportService {
   private dataStore = new DataStore()
   private passportRepository = new PassportModel(this.dataStore)
@@ -15,12 +19,8 @@ export class PassportService {
   async create(
     status: PassportStatuses = PassportStatuses.Pending,
     userId: string,
-    includesGuardian: boolean,
     dependantIds: string[],
-  ): Promise<Passport> {
-    if (!includesGuardian && dependantIds.length === 0) {
-      throw new Error('passport must be for at least one person')
-    }
+  ): Promise<LegacyPassport> {
     if (dependantIds.length) {
       const depModel = new UserDependantModel(this.dataStore, userId)
       const allDependants = (await depModel.fetchAll()).map(({id}) => id)
@@ -36,7 +36,6 @@ export class PassportService {
           status,
           statusToken,
           userId,
-          includesGuardian,
           dependantIds,
           validFrom: serverTimestamp(),
           validUntil: null,
@@ -55,14 +54,18 @@ export class PassportService {
         validUntil: moment(validFrom).add(24, 'hours').toISOString(),
       }))
       .then((passport) => this.passportRepository.update(passport))
+      .then((passport) => ({...passport, includesGuardian: true}))
   }
 
-  findOneByToken(token: string): Promise<Passport> {
-    return this.passportRepository.findWhereEqual('statusToken', token).then((results) => {
-      if (results.length > 0) {
-        return results[0]
-      }
-      throw new ResourceNotFoundException(`Cannot find passport with token [${token}]`)
-    })
+  findOneByToken(token: string): Promise<LegacyPassport> {
+    return this.passportRepository
+      .findWhereEqual('statusToken', token)
+      .then((results) => {
+        if (results.length > 0) {
+          return results[0]
+        }
+        throw new ResourceNotFoundException(`Cannot find passport with token [${token}]`)
+      })
+      .then((passport) => ({...passport, includesGuardian: true}))
   }
 }

@@ -25,8 +25,8 @@ class UserController implements IControllerBase {
             url: 'http://itunes.com/apps/opn',
           },
           android: {
-            force: '1.0.0',
-            optional: '1.0.0',
+            force: '1.0.1',
+            optional: '1.0.1',
             url: 'http://play.google.com/store/apps/details?id=com.opn.app',
           },
         },

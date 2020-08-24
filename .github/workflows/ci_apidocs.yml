@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "packages/apidocs/**"
+      - ".github/workflows/ci_apidocs.yml"
     branches: [ development ]
 
 jobs:

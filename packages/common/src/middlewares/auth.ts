@@ -42,7 +42,7 @@ export const authMiddleware = async (
 
   // Grab our claim
   // TODO: using claims to get the id and then calling a get(...) instead of query
-  //       would have been faster... but the claim won't propogate because they already
+  //       would have been faster... but the claim won't propagate because they already
   //       had their claim... To be researched :-)
   const userService = new UserService()
   const connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)

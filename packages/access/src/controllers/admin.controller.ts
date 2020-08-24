@@ -7,9 +7,9 @@ import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wr
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 
 class AdminController implements IRouteController {
@@ -65,14 +65,23 @@ class AdminController implements IRouteController {
         console.warn(`client calims ${userId} but access has ${access.userId}`)
       }
 
-      const responseBody = {passport, base64Photo: user.base64Photo}
+      if (userId !== access.userId) {
+        // TODO: we could remove userId from this request
+        throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
+      }
+      const responseBody = {
+        passport,
+        base64Photo: user.base64Photo,
+        dependants: [],
+        includesGuardian: access.includesGuardian,
+      }
       const canEnter =
         passport.status === PassportStatuses.Pending ||
         (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
 
       if (canEnter) {
-        await this.accessService.handleEnter(access)
-        return res.json(actionSucceed(responseBody))
+        const {dependants} = await this.accessService.handleEnter(access)
+        return res.json(actionSucceed({...responseBody, dependants}))
       }
 
       res.status(400).json(actionFailed('Access denied for access-token', responseBody))
@@ -85,14 +94,14 @@ class AdminController implements IRouteController {
     try {
       const {accessToken, userId} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
-      const includeGuardian =
+      const includesGuardian =
         (req.body.guardianExiting ?? access.includesGuardian) && !access.exitAt
       // if unspecified, all remaining dependents
       const dependantIds: string[] = (
         req.body.exitingDependantIds ?? Object.keys(access.dependants)
       ).filter((key: string) => !access.dependants[key].exitAt)
 
-      if (!includeGuardian && !dependantIds.length) {
+      if (!includesGuardian && !dependantIds.length) {
         // access service would throw an error here, we want to skip the extra queries
         // and give a more helpful error
         if (
@@ -115,11 +124,21 @@ class AdminController implements IRouteController {
         console.debug(`dynamically assigning ${userId} to access ${access.id}`)
         access.userId = userId
       } else if (userId !== access.userId) {
-        console.warn(`client calims ${userId} but access has ${access.userId}`)
+        throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
       }
-      await this.accessService.handleExit(access, includeGuardian, dependantIds)
+      const {dependants} = await this.accessService.handleExit(
+        access,
+        includesGuardian,
+        dependantIds,
+      )
 
-      res.json(actionSucceed({passport, base64Photo: user.base64Photo}))
+      const responseBody = {
+        passport,
+        base64Photo: user.base64Photo,
+        dependants,
+        includesGuardian,
+      }
+      res.json(actionSucceed(responseBody))
     } catch (error) {
       next(error)
     }
