@@ -159,9 +159,11 @@ components:
         organizationId:
           type: string
           description: Organization Id
-        locationId:
-          type: string
-          description: Location Id within Organization
+        locationIds:
+          type: array
+          items:
+            type: string
+          description: Location Ids within Organization
       required:
         - email
         - organizationId
@@ -182,6 +184,8 @@ components:
           type: array
           items:
             type: string
+        adminForOrganizationId:
+          type: string
 
     User:
       type: object
@@ -462,6 +466,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+
+  /admin/self:
+    get:
+      description: Authenticated Admin Profile
+      responses:
+        '200':
+          description: The info requested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProfile'
 
   /admin/auth/signIn/process:
     post:
