@@ -5,6 +5,7 @@ on:
     paths:
       - "packages/common/**"
       - "packages/enterprise/**"
+      - ".github/workflows/ci_enterprise.yml"
     branches: [ development ]
 
 jobs:

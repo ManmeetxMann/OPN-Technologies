@@ -5,6 +5,7 @@ on:
     paths:
       - "packages/common/**"
       - "packages/lookup/**"
+      - ".github/workflows/ci_lookup.yml"
     branches: [ development ]
 
 jobs:

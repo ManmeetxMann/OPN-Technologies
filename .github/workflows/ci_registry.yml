@@ -5,6 +5,7 @@ on:
     paths:
       - "packages/common/**"
       - "packages/registry/**"
+      - ".github/workflows/ci_registry.yml"
     branches: [ development ]
 
 jobs:
