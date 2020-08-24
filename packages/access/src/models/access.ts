@@ -7,7 +7,6 @@ export type Access = {
   createdAt: string
   enteredAt?: string
   exitAt?: string
-  userId: string
   includesGuardian: boolean
   dependants: Record<
     string,
