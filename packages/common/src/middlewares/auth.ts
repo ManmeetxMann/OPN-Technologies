@@ -49,7 +49,7 @@ export const authMiddleware = async (
   if (!connectedUser) {
     // Forbidden
     res
-      .sendStatus(403)
+      .status(403)
       .json(
         of(
           null,

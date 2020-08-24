@@ -12,7 +12,7 @@ import {AdminApprovalModel} from '../../../common/src/data/admin'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 
 import {OrganizationModel} from '../../../enterprise/src/repository/organization.repository'
-import {UserModel, User} from '../../../common/src/data/user'
+import {UserModel} from '../../../common/src/data/user'
 
 import {getExposureSection} from './exposureTemplate'
 type Overlap = {

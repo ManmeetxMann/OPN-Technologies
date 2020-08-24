@@ -64,7 +64,7 @@ export const createAdmin = async (
   firstName: string,
   lastNameInitial: string,
   email: string,
-  locationId: string,
+  locationIds: string[],
   organizationId: string,
   authUserId: string,
 ): Promise<any> => {
@@ -72,7 +72,7 @@ export const createAdmin = async (
     method: 'POST',
     body: JSON.stringify({
       email,
-      locationId,
+      locationIds,
       organizationId,
     }),
     headers: {'Content-Type': 'application/json'},

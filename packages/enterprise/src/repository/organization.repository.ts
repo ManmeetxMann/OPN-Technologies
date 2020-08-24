@@ -3,8 +3,6 @@ import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 import {Organization, OrganizationKeySequence, OrganizationLocation} from '../models/organization'
 
-import {firestore} from 'firebase-admin'
-
 export class OrganizationModel extends GroupDataModel<Organization, OrganizationLocation> {
   public readonly rootPath = 'organizations'
   readonly zeroSet = []

@@ -78,14 +78,14 @@ const generate = async () => {
   //   console.log(locs.length)
   const authIds = locs.map((_, i) => getName(`${i}`, 2))
   const emails = locs.map(() => getEmail())
-  const admins = await Promise.all(
+  await Promise.all(
     locs.map((loc, i) =>
       createAdmin(
         org.key,
         getName('', 1),
         randSeg().substr(0, 1),
         emails[i],
-        loc.id,
+        [loc.id],
         org.id,
         authIds[i],
       ),
