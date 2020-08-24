@@ -246,18 +246,15 @@ components:
           type: object
           properties:
             passport:
-              allOf:
-                - $ref: '#/components/schemas/Passport'
-                - type: object
-                  properties:
-                    firstName:
-                      type: string
-                    lastNameInitial:
-                      type: string
+              $ref: '#/components/schemas/Passport'
             base64Photo:
               type: string
             includesGuardian:
               type: boolean
+            firstName:
+              type: string
+            lastNameInitial:
+              type: string
             dependants:
               type: array
               items:
