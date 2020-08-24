@@ -20,6 +20,7 @@ class OrganizationController implements IControllerBase {
       .post('/', this.create)
       .post('/:organizationId/locations', this.addLocations)
       .get('/:organizationId/locations', this.getLocations)
+      .get('/:organizationId/locations/:locationId', this.getLocation)
 
     this.router.use('/organizations', childRouter)
   }
@@ -57,6 +58,18 @@ class OrganizationController implements IControllerBase {
       const locations = await this.organizationService.getLocations(organizationId)
 
       res.json(actionSucceed(locations))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getLocation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const organizationId = req.params['organizationId']
+      const locationId = req.params['locationId']
+      const location = await this.organizationService.getLocation(organizationId, locationId)
+
+      res.json(actionSucceed(location))
     } catch (error) {
       next(error)
     }

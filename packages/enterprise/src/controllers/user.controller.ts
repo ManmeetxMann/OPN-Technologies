@@ -8,7 +8,6 @@ import {OrganizationConnectionRequest} from '../models/organization-connection-r
 import {UserService} from '../../../common/src/service/user/user-service'
 import {User} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {Organization} from '../models/organization'
 
 class UserController implements IControllerBase {
@@ -77,10 +76,6 @@ class UserController implements IControllerBase {
     try {
       const {userId} = req.body
       const user = await this.userService.findOne(userId)
-      if (!user) {
-        throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
-      }
-
       const organizations: Organization[] = await Promise.all(
         user.organizationIds
           .map((organizationId) => this.organizationService.findOneById(organizationId))
