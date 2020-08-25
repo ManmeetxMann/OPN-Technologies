@@ -6,7 +6,6 @@ import {UserDependantModel} from '../../../common/src/data/user'
 import {serverTimestamp} from '../../../common/src/utils/times'
 import moment from 'moment'
 import {firestore} from 'firebase-admin'
-import {serverTimestamp} from '../../../common/src/utils/times'
 
 // some clients rely on this being defined, but all passports
 // must apply to the user who created them.
