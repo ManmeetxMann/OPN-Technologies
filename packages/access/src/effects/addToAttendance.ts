@@ -7,9 +7,9 @@ import moment from 'moment'
 const ACC_KEY = 'accesses'
 const USER_MEMO_KEY = 'accessingUsers'
 
-const dateOf = async (a: Access): Promise<string> => {
+const dateOf = (access: Access): string => {
   // @ts-ignore it's a timestamp, not a string
-  return moment(a.enteredAt.toDate()).format('YYYY-MM-DD')
+  return moment(access.enteredAt.toDate()).format('YYYY-MM-DD')
 }
 
 export default class AccessListener {
@@ -22,7 +22,7 @@ export default class AccessListener {
     if (access.exitAt) {
       console.warn('adding entry for an access with an exit time')
     }
-    const date = await dateOf(access)
+    const date = dateOf(access)
     // TODO - need to access orgID here?
     const path = `${access.locationId}/daily-reports`
     const record = await this.repo.findWhereEqual('date', date, path).then((existing) => {
@@ -66,7 +66,7 @@ export default class AccessListener {
     if (!access.exitAt) {
       throw new Error('called addExit with a non-exiting Access')
     }
-    const date = await dateOf(access)
+    const date = dateOf(access)
     // TODO - need to access orgID here?
     const path = `${access.locationId}/daily-reports`
     const record = await this.repo.findWhereEqual('date', date, path).then((existing) => {

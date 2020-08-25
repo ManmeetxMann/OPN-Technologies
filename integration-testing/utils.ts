@@ -1,5 +1,13 @@
 import fetch from 'node-fetch'
 
+import type {
+  Organization,
+  OrganizationLocation,
+} from '../packages/enterprise/src/models/organization'
+import type {Passport} from '../packages/passport/src/models/passport'
+import type {Access} from '../packages/access/src/models/access'
+import type {User} from '../packages/common/src/data/user'
+
 type Service = 'Config' | 'Access' | 'Enterprise' | 'Lookup' | 'Passport' | 'Registry'
 
 const roots = {
@@ -12,12 +20,22 @@ const roots = {
 }
 
 // useful for debugging
-const logAndContinue = (param: unknown) => {
-  console.log(param)
-  return param
+// const logAndContinue = (param: unknown) => {
+//   console.log(param)
+//   return param
+// }
+
+type NodeResponse = {
+  json: () => Promise<{
+    data: unknown
+  }>
 }
 
-const getData = (response) => response.json().then(({data}) => data)
+const getData = (response: NodeResponse) => response.json().then(({data}) => data)
+
+const _headers = {'Content-Type': 'application/json'}
+const post = (url: string, body: unknown) =>
+  fetch(url, {method: 'POST', headers, body: JSON.stringify(body)})
 
 export const setTime = async (services: Service[], milliseconds: number): Promise<void> => {
   await Promise.all(
@@ -31,7 +49,7 @@ export const setTime = async (services: Service[], milliseconds: number): Promis
   )
 }
 
-export const createOrg = async (name: string): Promise<any> => {
+export const createOrg = async (name: string): Promise<Organization> => {
   return fetch(`${roots.Enterprise}/organizations`, {
     method: 'POST',
     body: JSON.stringify({name}),
@@ -39,7 +57,10 @@ export const createOrg = async (name: string): Promise<any> => {
   }).then(getData)
 }
 
-export const createLoc = async (organizationId: string, title: string): Promise<any> => {
+export const createLoc = async (
+  organizationId: string,
+  title: string,
+): Promise<OrganizationLocation> => {
   return fetch(`${roots.Enterprise}/organizations/${organizationId}/locations`, {
     method: 'POST',
     body: JSON.stringify([
@@ -56,7 +77,7 @@ export const createLoc = async (organizationId: string, title: string): Promise<
     headers: {'Content-Type': 'application/json'},
   })
     .then(getData)
-    .then((data) => data.find((r) => r.title === title))
+    .then((data) => data.find((r: OrganizationLocation) => r.title === title))
 }
 
 export const createAdmin = async (
@@ -67,7 +88,7 @@ export const createAdmin = async (
   locationIds: string[],
   organizationId: string,
   authUserId: string,
-): Promise<any> => {
+): Promise<User> => {
   await fetch(`${roots.Enterprise}/internal/adminApproval/create`, {
     method: 'POST',
     body: JSON.stringify({
@@ -76,7 +97,7 @@ export const createAdmin = async (
       organizationId,
     }),
     headers: {'Content-Type': 'application/json'},
-  }).then(getData)
+  })
   const user = await createUser(key, firstName, lastNameInitial)
   await fetch(`${roots.Enterprise}/admin/auth/signIn/request`, {
     method: 'POST',
@@ -86,7 +107,7 @@ export const createAdmin = async (
       connectedId: user.id,
     }),
     headers: {'Content-Type': 'application/json'},
-  }).then(getData)
+  })
   await fetch(`${roots.Enterprise}/admin/auth/signIn/process`, {
     method: 'POST',
     body: JSON.stringify({
@@ -95,7 +116,7 @@ export const createAdmin = async (
       connectedId: user.id,
     }),
     headers: {'Content-Type': 'application/json'},
-  }).then(getData)
+  })
   return user
 }
 
@@ -103,7 +124,7 @@ export const createUser = async (
   key: number,
   firstName: string,
   lastNameInitial: string,
-): Promise<any> => {
+): Promise<User> => {
   return fetch(`${roots.Enterprise}/user/connect/add`, {
     method: 'POST',
     body: JSON.stringify({
@@ -123,7 +144,7 @@ export const attest = async (
   userId: string,
   locationId: string,
   exposed: boolean,
-): Promise<any> => {
+): Promise<Passport> => {
   return fetch(`${roots.Passport}/user/status/update`, {
     method: 'POST',
     body: JSON.stringify({
@@ -147,7 +168,7 @@ export const createAccess = async (
   userId: string,
   locationId: string,
   statusToken: string,
-): Promise<any> => {
+): Promise<Access> => {
   return fetch(`${roots.Access}/user/createToken`, {
     method: 'POST',
     body: JSON.stringify({
@@ -158,14 +179,14 @@ export const createAccess = async (
       includeGuardian: true,
     }),
     headers: {'Content-Type': 'application/json'},
-  }).then(logAndContinue).then(getData)
+  }).then(getData)
 }
 
 export const scanEntry = async (
   userId: string,
   accessToken: string,
   authId: string,
-): Promise<any> => {
+): Promise<unknown> => {
   return fetch(`${roots.Access}/admin/enter`, {
     method: 'POST',
     body: JSON.stringify({
@@ -183,7 +204,7 @@ export const scanExit = async (
   userId: string,
   accessToken: string,
   authId: string,
-): Promise<any> => {
+): Promise<unknown> => {
   return fetch(`${roots.Access}/admin/exit`, {
     method: 'POST',
     body: JSON.stringify({
