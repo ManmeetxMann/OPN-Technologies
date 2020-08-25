@@ -5,5 +5,5 @@ export FIRESTORE_EMULATOR_HOST="localhost:8080"
 export PUBSUB_EMULATOR_HOST="localhost:8085"
 
 # treat auth tokens as authUserIds
-export GUILIBLE_MODE="enabled"
+export DEBUG_GUILIBLE_MODE="enabled"
 

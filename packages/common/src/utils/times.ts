@@ -15,8 +15,10 @@ export const serverTimestamp = (): firestore.FieldValue => {
   return firestore.FieldValue.serverTimestamp()
 }
 
-// @ts-ignore this is debug anyway
-export const setTime = (req: Request, res: Response): void => {
+export const setTime: (req: Request, res: Response) => void = (
+  req: Request,
+  res: Response,
+): void => {
   if (!manualModeEnabled) {
     res.status(403).send('not in the correct mode for this')
     return

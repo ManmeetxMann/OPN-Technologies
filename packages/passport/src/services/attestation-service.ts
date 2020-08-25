@@ -1,5 +1,6 @@
 import DataStore from '../../../common/src/data/datastore'
 import {firestore} from 'firebase-admin'
+import {serverTimestamp} from '../../../common/src/utils/times'
 import {Attestation, AttestationModel} from '../models/attestation'
 import {serverTimestamp} from '../../../common/src/utils/times'
 

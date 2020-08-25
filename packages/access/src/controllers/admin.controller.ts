@@ -74,6 +74,8 @@ class AdminController implements IRouteController {
         base64Photo: user.base64Photo,
         dependants: [],
         includesGuardian: access.includesGuardian,
+        firstName: user.firstName,
+        lastNameInitial: user.lastNameInitial,
       }
       const canEnter =
         passport.status === PassportStatuses.Pending ||
@@ -137,6 +139,8 @@ class AdminController implements IRouteController {
         base64Photo: user.base64Photo,
         dependants,
         includesGuardian,
+        firstName: user.firstName,
+        lastNameInitial: user.lastNameInitial,
       }
       res.json(actionSucceed(responseBody))
     } catch (error) {
