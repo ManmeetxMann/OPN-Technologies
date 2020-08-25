@@ -2,7 +2,6 @@ import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import IRouteController from '../../../common/src/interfaces/IRouteController.interface'
 
-import {now} from '../../../common/src/utils/times'
 import Validation from '../../../common/src/utils/validation'
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {PassportStatuses} from '../../../passport/src/models/passport'

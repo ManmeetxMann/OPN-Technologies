@@ -11,7 +11,6 @@ import AccessListener from '../effects/addToAttendance'
 import moment from 'moment'
 import {serverTimestamp} from '../../../common/src/utils/times'
 import * as _ from 'lodash'
-import {serverTimestamp} from '../../../common/src/utils/times'
 
 // a regular access, but with the names of dependants fetched
 type AccessWithDependantNames = Omit<Access, 'dependants'> & {

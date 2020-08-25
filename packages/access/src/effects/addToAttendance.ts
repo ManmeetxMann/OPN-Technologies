@@ -25,7 +25,6 @@ export default class AccessListener {
     const date = await dateOf(access)
     // TODO - need to access orgID here?
     const path = `${access.locationId}/daily-reports`
-    console.log(path)
     const record = await this.repo.findWhereEqual('date', date, path).then((existing) => {
       if (existing.length) {
         return existing[0]

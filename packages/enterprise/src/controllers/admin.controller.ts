@@ -4,7 +4,6 @@ import {NextFunction, Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 
 import Validation from '../../../common/src/utils/validation'
-import {now} from '../../../common/src/utils/times'
 
 import {AuthService} from '../../../common/src/service/auth/auth-service'
 import {AuthLinkProcessRequest, AuthLinkRequestRequest} from '../models/auth-link-request'
