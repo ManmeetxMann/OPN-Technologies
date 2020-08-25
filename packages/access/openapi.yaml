@@ -251,6 +251,10 @@ components:
               type: string
             includesGuardian:
               type: boolean
+            firstName:
+              type: string
+            lastNameInitial:
+              type: string
             dependants:
               type: array
               items:
