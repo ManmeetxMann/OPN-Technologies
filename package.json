@@ -6,10 +6,14 @@
 		"lint-all": "eslint 'packages/**/**/*.ts' --ignore-path .gitignore --max-warnings=0",
 		"test-all": "lerna run test --stream",
 		"test:coverage-all": "lerna run coverage --stream",
+		"integration-test": "ts-node integration-testing/dataGen.ts",
 		"install-all": "lerna bootstrap --hoist",
 		"initialize-all": "lerna run initialize --stream",
 		"dev-all": "lerna run dev --stream",
+		"dev-all:local": "lerna run dev:local --stream",
 		"dev:debug-all": "lerna run dev:debug --stream",
+		"emulate-firebase": "cd firebase-emulation && firebase emulators:start --only firestore,pubsub --import=./rawState/",
+		"save-firebase": "cd firebase-emulation && firebase emulators:export",
 		"build-all": "lerna run build --stream",
 		"deploy-all": "lerna run deploy --stream",
 		
@@ -46,6 +50,8 @@
 		"superagent": "^5.3.1",
 		"supertest": "^4.0.2",
 		"ts-node": "^8.10.2",
-		"typescript": "^3.9.5"
+		"typescript": "^3.9.5",
+		"node-fetch": "^2.6.0",
+		"firebase-tools": "^8.7.0"
 	}
 }

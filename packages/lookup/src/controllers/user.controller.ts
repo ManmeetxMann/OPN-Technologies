@@ -4,6 +4,7 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import {v4 as uuid} from 'uuid'
 
 import Validation from '../../../common/src/utils/validation'
+import {now} from '../../../common/src/utils/times'
 
 class UserController implements IControllerBase {
   public path = ''
@@ -105,7 +106,7 @@ class UserController implements IControllerBase {
         ],
       },
       morePagedContent: true, // TODO: paging
-      serverTimestamp: new Date().toISOString(),
+      serverTimestamp: now().toISOString(),
       status: 'complete',
     }
 
@@ -144,7 +145,7 @@ class UserController implements IControllerBase {
           },
         },
       },
-      serverTimestamp: new Date().toISOString(),
+      serverTimestamp: now().toISOString(),
       status: 'complete',
     }
 

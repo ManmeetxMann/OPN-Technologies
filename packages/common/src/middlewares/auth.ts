@@ -12,9 +12,7 @@ export const authMiddleware = async (
 ): Promise<void> => {
   const bearerHeader = req.headers['authorization']
   if (!bearerHeader) {
-    res
-      .sendStatus(401)
-      .json(of(null, ResponseStatusCodes.Unauthorized, 'Authorization token required'))
+    res.status(401).json(of(null, ResponseStatusCodes.Unauthorized, 'Authorization token required'))
     return
   }
 
@@ -23,7 +21,7 @@ export const authMiddleware = async (
   if (!bearer || bearer.length < 2 || bearer[0] == '' || bearer[0].toLowerCase() !== 'bearer') {
     // Forbidden
     res
-      .sendStatus(401)
+      .status(401)
       .json(
         of(null, ResponseStatusCodes.Unauthorized, 'Unexpected format for Authorization header'),
       )
@@ -36,7 +34,7 @@ export const authMiddleware = async (
   const authService = new AuthService()
   const validatedAuthUser = await authService.verifyAuthToken(idToken)
   if (!validatedAuthUser) {
-    res.sendStatus(401).json(of(null, ResponseStatusCodes.Unauthorized, 'Invalid access-token'))
+    res.status(401).json(of(null, ResponseStatusCodes.Unauthorized, 'Invalid access-token'))
     return
   }
 
@@ -49,7 +47,7 @@ export const authMiddleware = async (
   if (!connectedUser) {
     // Forbidden
     res
-      .sendStatus(403)
+      .status(403)
       .json(
         of(
           null,

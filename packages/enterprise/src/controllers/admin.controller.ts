@@ -4,6 +4,7 @@ import {NextFunction, Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 
 import Validation from '../../../common/src/utils/validation'
+import {now} from '../../../common/src/utils/times'
 
 import {AuthService} from '../../../common/src/service/auth/auth-service'
 import {AuthLinkProcessRequest, AuthLinkRequestRequest} from '../models/auth-link-request'
@@ -172,7 +173,7 @@ class AdminController implements IControllerBase {
             lastNameInitial: 'S',
           },
         ],
-        serverTimestamp: new Date().toISOString(),
+        serverTimestamp: now().toISOString(),
       },
       status: 'complete',
     }
@@ -189,7 +190,7 @@ class AdminController implements IControllerBase {
       // data : {
       //     authToken : "987654321234567890"
       // },
-      serverTimestamp: new Date().toISOString(),
+      serverTimestamp: now().toISOString(),
       status: 'complete',
     }
 
@@ -214,7 +215,7 @@ class AdminController implements IControllerBase {
           },
         },
       },
-      serverTimestamp: new Date().toISOString(),
+      serverTimestamp: now().toISOString(),
       status: 'complete',
     }
 
