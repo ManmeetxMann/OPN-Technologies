@@ -37,17 +37,31 @@ abstract class CollectionGroupModel<T extends HasId, G> extends DataModel<T> {
     if (!queryConditions.length) {
       result = query.get()
     } else {
-      let conditional: firestore.Query<firestore.DocumentData>
-      for (let i = 0; i < queryConditions.length; i += 1) {
-        if (i) {
-          conditional = conditional.where(...queryConditions[i])
-        } else {
-          conditional = query.where(...queryConditions[i])
-        }
-      }
+      const conditional = queryConditions.reduce(
+        (queryBuilder: firestore.Query<firestore.DocumentData>, condition: QueryCondition) => {
+          return queryBuilder.where(...condition)
+        },
+        query.where(...queryConditions[0]),
+      )
       result = conditional.get()
     }
     return (await result).docs.map(this.digest)
+  }
+
+  async groupGetWhereEqual(
+    key: string,
+    value: string | firestore.FieldValue,
+  ): Promise<RecordWithPath<G>> {
+    // can't query actual ids in a collectionGroup
+    const items = await this.groupGet([[key, '==', value]])
+    if (items.length == 0) {
+      return null
+    }
+    if (items.length > 1) {
+      console.warn(`multiple ${this.groupId} with ${key} == ${value}`)
+      console.warn(items)
+    }
+    return items[0]
   }
 }
 

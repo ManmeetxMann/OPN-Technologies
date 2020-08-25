@@ -12,16 +12,8 @@ export class OrganizationModel extends GroupDataModel<Organization, Organization
   public async getLocation(
     id: string,
   ): Promise<null | (OrganizationLocation & {organizationId: string})> {
+    const item = await this.groupGetWhereEqual('locationId', id)
     // can't query actual ids in a collectionGroup
-    const items = await this.groupGet([['locationId', '==', id]])
-    if (items.length == 0) {
-      return null
-    }
-    if (items.length > 1) {
-      console.warn(`multiple ${this.groupId} with id ${id}`)
-      console.warn(items)
-    }
-    const item = items[0]
     return {
       ...item.value,
       organizationId: item.path[1],
