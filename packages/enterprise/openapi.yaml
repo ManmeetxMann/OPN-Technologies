@@ -167,7 +167,7 @@ components:
       required:
         - email
         - organizationId
-        - locationId
+        - locationIds
 
     AdminProfile:
       type: object
