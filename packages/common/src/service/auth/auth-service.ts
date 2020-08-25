@@ -16,7 +16,7 @@ export class AuthService {
   private readonly firebaseAuth = FirebaseManager.getInstance().getAdmin().auth()
 
   async createUser(email: string): Promise<string> {
-    if (Config.get('GUILIBLE_MODE') === 'enabled') {
+    if (Config.get('DEBUG_GUILIBLE_MODE') === 'enabled') {
       if (Config.get('FIRESTORE_EMULATOR_HOST') !== 'localhost:8080') {
         console.error('Running in guilible mode, but not pointed to an emulated server')
         // IGNORE THIS MODE
@@ -35,7 +35,7 @@ export class AuthService {
   }
 
   async updateUser(userId: string, properties: unknown): Promise<void> {
-    if (Config.get('GUILIBLE_MODE') === 'enabled') {
+    if (Config.get('DEBUG_GUILIBLE_MODE') === 'enabled') {
       if (Config.get('FIRESTORE_EMULATOR_HOST') !== 'localhost:8080') {
         console.error('Running in guilible mode, but not pointed to an emulated server')
         // IGNORE THIS MODE
@@ -52,7 +52,7 @@ export class AuthService {
   }
 
   async sendEmailSignInLink(info: {email: string; name?: string}): Promise<void> {
-    if (Config.get('GUILIBLE_MODE') === 'enabled') {
+    if (Config.get('DEBUG_GUILIBLE_MODE') === 'enabled') {
       if (Config.get('FIRESTORE_EMULATOR_HOST') !== 'localhost:8080') {
         console.error('Running in guilible mode, but not pointed to an emulated server')
         // IGNORE THIS MODE
@@ -100,7 +100,7 @@ export class AuthService {
       }
     } catch (error) {
       // take the client's word that they are who they say they are
-      if (Config.get('GUILIBLE_MODE') === 'enabled') {
+      if (Config.get('DEBUG_GUILIBLE_MODE') === 'enabled') {
         if (Config.get('FIRESTORE_EMULATOR_HOST') !== 'localhost:8080') {
           console.error('Running in guilible mode, but not pointed to an emulated server')
           throw error

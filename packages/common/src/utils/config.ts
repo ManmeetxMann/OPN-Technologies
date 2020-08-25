@@ -15,7 +15,7 @@ export class Config {
       Config.load()
     }
     const variable = process.env[parameter]
-    if (!variable && !parameter.startsWith('FEATURE_')) {
+    if (!variable && !parameter.startsWith('FEATURE_') && !parameter.startsWith('DEBUG_')) {
       console.warn(`${parameter} is not defined in this environment. This is likely an error`)
     }
     return process.env[parameter]
