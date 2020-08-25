@@ -4,7 +4,7 @@ import DataStore from '../../../common/src/data/datastore'
 import {FieldValue} from '@google-cloud/firestore'
 import moment from 'moment'
 
-const ACC_KEY = 'accesses'
+const ACCESS_KEY = 'accesses'
 const USER_MEMO_KEY = 'accessingUsers'
 
 const dateOf = (access: Access): string => {
@@ -23,7 +23,6 @@ export default class AccessListener {
       console.warn('adding entry for an access with an exit time')
     }
     const date = dateOf(access)
-    // TODO - need to access orgID here?
     const path = `${access.locationId}/daily-reports`
     const record = await this.repo.findWhereEqual('date', date, path).then((existing) => {
       if (existing.length) {
@@ -32,7 +31,7 @@ export default class AccessListener {
       return this.repo.add(
         {
           date,
-          [ACC_KEY]: [],
+          [ACCESS_KEY]: [],
           [USER_MEMO_KEY]: [],
         },
         path,
@@ -48,14 +47,14 @@ export default class AccessListener {
           pastAccess.userId === toAdd.userId && pastAccess.enteredAt === toAdd.enteredAt,
       )
     ) {
-      console.warn('access already entered')
+      console.warn('This access was already added to the attendance report')
       return
     }
     // use array union to avoid race conditions
     return this.repo.updateProperties(
       record.id,
       {
-        [ACC_KEY]: FieldValue.arrayUnion(toAdd),
+        [ACCESS_KEY]: FieldValue.arrayUnion(toAdd),
         accessingUsers: FieldValue.arrayUnion(access.userId),
       },
       path,
@@ -65,6 +64,9 @@ export default class AccessListener {
   async addExit(access: Access): Promise<unknown> {
     if (!access.exitAt) {
       throw new Error('called addExit with a non-exiting Access')
+    }
+    if (!access.enteredAt) {
+      throw new Error('called addExit with an access which never entered')
     }
     const date = dateOf(access)
     // TODO - need to access orgID here?
@@ -76,7 +78,7 @@ export default class AccessListener {
       return this.repo.add(
         {
           date,
-          [ACC_KEY]: [],
+          [ACCESS_KEY]: [],
           [USER_MEMO_KEY]: [],
         },
         path,
@@ -89,7 +91,7 @@ export default class AccessListener {
     )
     if (toRemove) {
       // removing first and then replacing means we can avoid copying the entire array
-      await this.repo.updateProperty(record.id, ACC_KEY, FieldValue.arrayRemove(toRemove), path)
+      await this.repo.updateProperty(record.id, ACCESS_KEY, FieldValue.arrayRemove(toRemove), path)
     } else {
       console.warn('user is exiting but did not enter on this date')
     }
@@ -102,7 +104,7 @@ export default class AccessListener {
     return this.repo.updateProperties(
       record.id,
       {
-        [ACC_KEY]: FieldValue.arrayUnion(toAdd),
+        [ACCESS_KEY]: FieldValue.arrayUnion(toAdd),
         accessingUsers: FieldValue.arrayUnion(access.userId),
       },
       path,
