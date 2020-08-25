@@ -96,7 +96,6 @@ const generate = async () => {
   const users = await Promise.all(
     userCountArr.map(() => createUser(org.key, getName('user', 3), randSeg().substr(0, 1))),
   )
-  console.log(users[0])
   const attestations = await Promise.all(
     users.map((user, i) => attest(user.id, locs[i % locs.length].id, false)),
   )
