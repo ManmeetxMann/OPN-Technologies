@@ -5,6 +5,7 @@ import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {UserDependantModel} from '../../../common/src/data/user'
 import moment from 'moment'
 import {firestore} from 'firebase-admin'
+import {serverTimestamp} from '../../../common/src/utils/times'
 
 // some clients rely on this being defined, but all passports
 // must apply to the user who created them.
@@ -36,7 +37,7 @@ export class PassportService {
           statusToken,
           userId,
           dependantIds,
-          validFrom: firestore.FieldValue.serverTimestamp(),
+          validFrom: serverTimestamp(),
           validUntil: null,
         }),
       )

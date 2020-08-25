@@ -1,5 +1,6 @@
 import DataStore from '../../../common/src/data/datastore'
 import {firestore} from 'firebase-admin'
+import {serverTimestamp} from '../../../common/src/utils/times'
 import {Attestation, AttestationModel} from '../models/attestation'
 
 export class AttestationService {
@@ -10,7 +11,7 @@ export class AttestationService {
     return this.attestationRepository
       .add({
         ...attestation,
-        attestationTime: firestore.FieldValue.serverTimestamp(),
+        attestationTime: serverTimestamp(),
       })
       .then(({attestationTime: time, ...attestation}) => ({
         ...attestation,
