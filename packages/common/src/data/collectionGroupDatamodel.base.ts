@@ -38,10 +38,9 @@ abstract class CollectionGroupModel<T extends HasId, G> extends DataModel<T> {
       result = query.get()
     } else {
       const conditional = queryConditions.reduce(
-        (queryBuilder: firestore.Query<firestore.DocumentData>, condition: QueryCondition) => {
-          return queryBuilder.where(...condition)
-        },
-        query.where(...queryConditions[0]),
+        (queryBuilder: firestore.Query<firestore.DocumentData>, condition: QueryCondition) =>
+          queryBuilder.where(...condition),
+        query,
       )
       result = conditional.get()
     }
