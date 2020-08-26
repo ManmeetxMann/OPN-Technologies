@@ -21,6 +21,7 @@ type LocationDescription = {
   title: string
   organizationId: string
 }
+type AccessLookup = Record<string, Record<string, Access[]>>
 
 const overlap = (a: Access, b: Access, latestTime: number): Overlap | null => {
   const lastGotIn = a.enteredAt > b.enteredAt ? a.enteredAt : b.enteredAt
@@ -100,13 +101,13 @@ export default class TraceListener {
     const latestDate = moment(endTime).add(1, 'day').format('YYYY-MM-DD')
 
     const accesses = await this.repo.getAccesses(userId, earliestDate, latestDate)
-    const attendanceLookup = accesses.reduce((accessesByLocation, access) => {
+    const accessLookup = accesses.reduce((accessesByLocation, access): AccessLookup => {
       if (!accessesByLocation[access.locationId]) {
         accessesByLocation[access.locationId] = {}
       }
       accessesByLocation[access.locationId][access.date] = access.accesses
       return accessesByLocation
-    })
+    }, {})
     // promises resolving with the org ID for the given location
     const locationPromises: Record<string, ReturnType<OrganizationModel['getLocation']>> = {}
 
@@ -173,7 +174,7 @@ export default class TraceListener {
         async (key) => (locations[key] = await locationPromises[key]),
       ),
     )
-    this.sendEmails(result, userId, locations, attendanceLookup)
+    this.sendEmails(result, userId, locations, accessLookup)
     return result
   }
 
@@ -181,7 +182,7 @@ export default class TraceListener {
     reports: ExposureReport[],
     userId: string,
     locations: Record<string, LocationDescription>,
-    accesses: Record<string, Record<string, Access[]>>,
+    accesses: AccessLookup,
   ): Promise<void> {
     const allLocationsHash = {}
     const allOrganizationsHash = {}
