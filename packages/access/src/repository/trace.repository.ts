@@ -45,7 +45,7 @@ export default class DailyReportAccess extends CollectionGroupModel<TraceModel, 
   async saveTrace(
     reports: ExposureReport[],
     userId: string,
-    severity: PassportStatuses.Caution | PassportStatuses.Stop,
+    passportStatus: PassportStatuses.Caution | PassportStatuses.Stop,
     date: string,
     duration: number,
   ): Promise<void> {
@@ -54,7 +54,7 @@ export default class DailyReportAccess extends CollectionGroupModel<TraceModel, 
       duration,
       exposures: reports,
       userId,
-      severity,
+      passportStatus,
     })
   }
 }

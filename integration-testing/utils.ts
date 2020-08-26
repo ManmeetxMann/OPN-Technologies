@@ -19,12 +19,6 @@ const roots = {
   Registry: 'http://localhost:5006',
 }
 
-// useful for debugging
-// const logAndContinue = (param: unknown) => {
-//   console.log(param)
-//   return param
-// }
-
 type NodeResponse = {
   json: () => Promise<{
     data: unknown
@@ -45,9 +39,8 @@ export const setTime = async (services: Service[], milliseconds: number): Promis
   await Promise.all(services.map((svc) => post(`${roots[svc]}/setTime`, {milliseconds})))
 }
 
-export const createOrg = async (name: string): Promise<Organization> => {
-  return post(`${roots.Enterprise}/organizations`, {name}).then(getData)
-}
+export const createOrg = async (name: string): Promise<Organization> =>
+  post(`${roots.Enterprise}/organizations`, {name}).then(getData)
 
 export const createLoc = async (
   organizationId: string,

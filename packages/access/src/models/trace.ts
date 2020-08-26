@@ -1,8 +1,9 @@
 import {PassportStatuses} from '../../../passport/src/models/passport'
+export type StopStatus = PassportStatuses.Caution | PassportStatuses.Stop
 export type Trace = {
   id?: string
   userId: string
-  severity: PassportStatuses.Caution | PassportStatuses.Stop
+  passportStatus: StopStatus
   date: string
   duration: number
   exposures: ExposureReport[]

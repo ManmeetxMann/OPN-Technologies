@@ -20,7 +20,7 @@ export default class AccessListener {
 
   async addEntry(access: Access): Promise<unknown> {
     if (access.exitAt) {
-      console.warn('adding entry for an access with an exit time')
+      throw new Error('called addEntry on an access which already exited')
     }
     const date = dateOf(access)
     const path = `${access.locationId}/daily-reports`
@@ -69,7 +69,6 @@ export default class AccessListener {
       throw new Error('called addExit with an access which never entered')
     }
     const date = dateOf(access)
-    // TODO - need to access orgID here?
     const path = `${access.locationId}/daily-reports`
     const record = await this.repo.findWhereEqual('date', date, path).then((existing) => {
       if (existing.length) {

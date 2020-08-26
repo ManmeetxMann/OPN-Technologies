@@ -2,14 +2,12 @@ import moment from 'moment'
 import {PubSub} from '@google-cloud/pubsub'
 
 import TraceRepository from '../repository/trace.repository'
-import type {ExposureReport} from '../models/trace'
+import type {ExposureReport, StopStatus} from '../models/trace'
 import type {Access} from '../models/access'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
 import {AdminApprovalModel} from '../../../common/src/data/admin'
-
-import {PassportStatuses} from '../../../passport/src/models/passport'
 
 import {OrganizationModel} from '../../../enterprise/src/repository/organization.repository'
 import {UserModel} from '../../../common/src/data/user'
@@ -19,30 +17,30 @@ type Overlap = {
   start: Date
   end: Date
 }
-type LocTmp = {
+type LocationDescription = {
   title: string
   organizationId: string
 }
 
 const overlap = (a: Access, b: Access, latestTime: number): Overlap | null => {
-  const latestStart = a.enteredAt > b.enteredAt ? a.enteredAt : b.enteredAt
-  const end1 = a.exitAt ?? {toDate: () => new Date(latestTime)}
-  const end2 = b.exitAt ?? {toDate: () => new Date(latestTime)}
-  const earliestEnd = end1 < end2 ? end1 : end2
-  if (latestStart > earliestEnd) {
+  const lastGotIn = a.enteredAt > b.enteredAt ? a.enteredAt : b.enteredAt
+  const aExitAt = a.exitAt ?? {toDate: () => new Date(latestTime)}
+  const bExitAt = b.exitAt ?? {toDate: () => new Date(latestTime)}
+  // @ts-ignore these are timestamps (or fake timestamps), not dates
+  const firstGotOut = aExitAt.toDate() < bExitAt.toDate() ? aExitAt : bExitAt
+  if (lastGotIn > firstGotOut) {
     return null
   }
   return {
     // @ts-ignore these are timestamps, not dates
-    start: latestStart.toDate(),
+    start: lastGotIn.toDate(),
     // @ts-ignore these are timestamps, not dates
-    end: earliestEnd.toDate(),
+    end: firstGotOut.toDate(),
   }
 }
 
 const topicName = Config.get('PUBSUB_TRACE_TOPIC')
 const subscriptionName = Config.get('PUBSUB_TRACE_SUBSCRIPTION')
-const A_DAY = 24 * 60 * 60 * 1000
 
 // When triggered, this creates a trace
 export default class TraceListener {
@@ -84,10 +82,10 @@ export default class TraceListener {
       if (payload !== 'trace-required') {
         return
       }
-      const {userId, severity} = attributes
+      const {userId, passportStatus} = attributes
       const startTime = parseInt(attributes.startTime, 10)
       const endTime = parseInt(attributes.endTime, 10)
-      this.traceFor(userId, startTime, endTime, severity)
+      this.traceFor(userId, startTime, endTime, passportStatus)
     })
   }
 
@@ -95,34 +93,44 @@ export default class TraceListener {
     userId: string,
     startTime: number,
     endTime: number,
-    severity: string,
+    passportStatus: string,
   ): Promise<ExposureReport[]> {
     // because of time zones we might be interested in other dates
-    const earliestDate = moment(startTime - A_DAY).format('YYYY-MM-DD')
-    const latestDate = moment(endTime + A_DAY).format('YYYY-MM-DD')
+    const earliestDate = moment(startTime).add(-1, 'day').format('YYYY-MM-DD')
+    const latestDate = moment(endTime).add(1, 'day').format('YYYY-MM-DD')
 
     const accesses = await this.repo.getAccesses(userId, earliestDate, latestDate)
-    const attendanceLookup = {}
-    accesses.forEach((access) => {
-      if (!attendanceLookup[access.locationId]) {
-        attendanceLookup[access.locationId] = {}
+    const attendanceLookup = accesses.reduce((accessesByLocation, access) => {
+      if (!accessesByLocation[access.locationId]) {
+        accessesByLocation[access.locationId] = {}
       }
-      attendanceLookup[access.locationId][access.date] = access.accesses
+      accessesByLocation[access.locationId][access.date] = access.accesses
+      return accessesByLocation
     })
     // promises resolving with the org ID for the given location
     const locationPromises: Record<string, ReturnType<OrganizationModel['getLocation']>> = {}
 
     const result = await Promise.all(
       accesses.map(async (dailyReport) => {
-        const mainUser = dailyReport.accesses.filter((access) => access.userId === userId)
-        const otherUsers = dailyReport.accesses.filter((access) => access.userId !== userId)
+        // const mainUser
+        const mainUserAccesses = []
+        const otherUsersAccesses = []
+
+        dailyReport.accesses.forEach((access) => {
+          if (access.userId === userId) {
+            mainUserAccesses.push(access)
+          } else {
+            otherUsersAccesses.push(access)
+          }
+        })
+
         const dateObj = new Date(dailyReport.date)
         dateObj.setDate(dateObj.getDate() + 1)
         const endOfDay = dateObj.valueOf()
         // TODO: this could be made more efficient with some sorting
-        const overlapping = otherUsers
+        const overlapping = otherUsersAccesses
           .map((access) =>
-            mainUser
+            mainUserAccesses
               .map((contaminated) => overlap(contaminated, access, endOfDay))
               .filter(
                 (range) =>
@@ -155,7 +163,7 @@ export default class TraceListener {
     this.repo.saveTrace(
       result,
       userId,
-      severity as PassportStatuses.Caution | PassportStatuses.Stop,
+      passportStatus as StopStatus,
       moment(endTime).format('YYYY-MM-DD'),
       endTime - startTime,
     )
@@ -172,7 +180,7 @@ export default class TraceListener {
   private async sendEmails(
     reports: ExposureReport[],
     userId: string,
-    locations: Record<string, LocTmp>,
+    locations: Record<string, LocationDescription>,
     accesses: Record<string, Record<string, Access[]>>,
   ): Promise<void> {
     const allLocationsHash = {}
@@ -188,11 +196,6 @@ export default class TraceListener {
       if (!allOrganizationsHash[organizationId]) {
         allOrganizationsHash[organizationId] = true
       }
-      // report.overlapping.forEach((overlap) => {
-      //   if (!allUsersHash[overlap.userId]) {
-      //     allUsersHash[overlap.userId] = true
-      //   }
-      // })
     })
     Object.keys(accesses).forEach((locationId) =>
       Object.keys(accesses[locationId]).forEach((date) =>

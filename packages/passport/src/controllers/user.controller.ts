@@ -15,8 +15,6 @@ import {now} from '../../../common/src/utils/times'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
 
-import DataStore from '../../../common/src/data/datastore'
-
 class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
@@ -24,7 +22,6 @@ class UserController implements IControllerBase {
   private attestationService = new AttestationService()
   private accessService = new AccessService()
   private topic: Topic
-  private datastore = new DataStore()
 
   constructor() {
     this.initRoutes()
@@ -131,7 +128,7 @@ class UserController implements IControllerBase {
           const nowMillis = now().valueOf()
           this.topic.publish(Buffer.from('trace-required'), {
             userId,
-            severity: passportStatus,
+            passportStatus,
             startTime: `${nowMillis - TRACE_LENGTH}`,
             endTime: `${nowMillis}`,
           })
