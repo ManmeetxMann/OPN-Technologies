@@ -1,7 +1,7 @@
 export type AccessStats = {
   peopleOnPremises: number
   accessDenied: number
-  asOfDate: Date
+  asOfDateTime: Date
   exposures: number
   pendingPassports: number
   proceedPassports: number

@@ -165,7 +165,7 @@ components:
           type: number
         accessDenied:
           type: number
-        asOfDate:
+        asOfDateTime:
           type: string
           description: ISO date (eg. "2020-08-27T13:45:00.141Z")
         exposures:
