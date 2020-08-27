@@ -46,11 +46,48 @@ components:
           type: string
         type:
           type: string
-          anyOf:
+          enum:
             - default
             - childcare
         allowDependants:
           type: boolean
+        registrationQuestions:
+          type: array
+          items:
+            type: object
+            properties:
+              questionText:
+                type: string
+              id: 
+                type: string
+              locale: 
+                type: string
+                enum:
+                  - en-CA 
+                  - fr-CA
+              questionType:
+                type: string
+                enum:
+                  - text
+                  - date
+                  - select
+                  - radio
+                  - checkbox
+                  - file
+                  - button
+              placeholder:
+                type: string
+              options: 
+                type: object
+                properties:
+                  code:
+                    type:
+                      string
+                  value:
+                    type:
+                      array
+                    items:
+                      type: string
       required:
         - name
 
