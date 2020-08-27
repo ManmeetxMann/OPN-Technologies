@@ -10,6 +10,8 @@ import {UserService} from '../../../common/src/service/user/user-service'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
+import moment from 'moment'
+import * as _ from 'lodash'
 
 class AdminController implements IRouteController {
   public router = express.Router()
@@ -36,11 +38,14 @@ class AdminController implements IRouteController {
       // handle (temporarily) `organizations/{orgId}/locations/{locationId}` as the `locationId`
       const paths = locationIdOrPath.split('/')
       const locationId = paths.length > 0 ? paths[paths.length - 1] : locationIdOrPath
-      const {peopleOnPremises, accessDenied} = await this.accessService.getTodayStatsForLocation(
-        locationId,
-      )
 
-      res.json(actionSucceed({peopleOnPremises, accessDenied}))
+      //TODO: Assert admin can access that location
+      const asOfDateTime = new Date().toISOString()
+      const stats = await this.accessService.getTodayStatsForLocation(locationId)
+      const checkInsPerHour = fakeCheckInsPerHour()
+      const responseBody = {..._.omit(stats, ['id', 'createdAt']), asOfDateTime, checkInsPerHour}
+
+      res.json(actionSucceed(responseBody))
     } catch (error) {
       next(error)
     }
@@ -129,5 +134,16 @@ class AdminController implements IRouteController {
     }
   }
 }
+const nowPlusHour = (amount = 1) => moment().startOf('day').add(amount, 'hours')
+
+const fakeCheckInsPerHour = () => [
+  {date: nowPlusHour(7), count: 0},
+  {date: nowPlusHour(8), count: 5},
+  {date: nowPlusHour(9), count: 50},
+  {date: nowPlusHour(10), count: 200},
+  {date: nowPlusHour(11), count: 212},
+  {date: nowPlusHour(12), count: 190},
+  {date: nowPlusHour(13), count: 110},
+]
 
 export default AdminController

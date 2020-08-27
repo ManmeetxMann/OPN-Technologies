@@ -10,6 +10,7 @@ import {AccessStatsModel, AccessStatsRepository} from '../repository/access-stat
 import moment from 'moment'
 import * as _ from 'lodash'
 import {serverTimestamp} from '../../../common/src/utils/times'
+import {PassportStatus} from '../../../passport/src/models/passport'
 
 // a regular access, but with the names of dependants fetched
 type AccessWithDependantNames = Omit<Access, 'dependants'> & {
@@ -181,6 +182,11 @@ export class AccessService {
               locationId,
               peopleOnPremises: 0,
               accessDenied: 0,
+              exposures: 0,
+              pendingPassports: 0,
+              proceedPassports: 0,
+              cautionPassports: 0,
+              stopPassports: 0,
               createdAt: serverTimestamp(),
             } as AccessStatsModel)
           : results[0],
@@ -204,6 +210,16 @@ export class AccessService {
   incrementAccessDenied(locationId: string, count = 1): Promise<AccessStatsModel> {
     return this.getTodayStatsForLocation(locationId).then((stats) =>
       this.accessStatsRepository.increment(stats.id, 'accessDenied', count),
+    )
+  }
+
+  incrementTodayPassportStatusCount(
+    locationId: string,
+    status: PassportStatus,
+    count = 1,
+  ): Promise<AccessStatsModel> {
+    return this.getTodayStatsForLocation(locationId).then((stats) =>
+      this.accessStatsRepository.increment(stats.id, `${status}Passport`, count),
     )
   }
 }
