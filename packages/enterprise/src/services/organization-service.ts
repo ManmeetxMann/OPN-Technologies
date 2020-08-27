@@ -1,5 +1,5 @@
 import DataStore from '../../../common/src/data/datastore'
-import {Organization, OrganizationLocation, OrganizationType} from '../models/organization'
+import {Organization, OrganizationLocation, OrganizationType, RegistrationQuestion} from '../models/organization'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {
   OrganizationKeySequenceModel,
@@ -9,6 +9,14 @@ import {
 
 const notFoundMessage = (organizationId: string, identifier?: string) =>
   `Cannot find organization with ${identifier ?? 'ID'} [${organizationId}]`
+
+// autofill default fields for registration question
+const parsePartialQuestion = (question: RegistrationQuestion): RegistrationQuestion => ({
+  ...question,
+  questionType: question.questionType || 'text',
+  placeholder: question.placeholder || '',
+  options: question.options || [],
+})
 
 export class OrganizationService {
   private dataStore = new DataStore()
@@ -22,6 +30,7 @@ export class OrganizationService {
         key,
         type: organization.type ?? OrganizationType.Default,
         allowDependants: organization.allowDependants ?? false,
+        registrationQuestions: (organization.registrationQuestions ?? []).map(parsePartialQuestion),
       }),
     )
   }

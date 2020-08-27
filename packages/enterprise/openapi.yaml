@@ -78,16 +78,19 @@ components:
               placeholder:
                 type: string
               options: 
-                type: object
-                properties:
-                  code:
-                    type:
-                      string
-                  value:
-                    type:
-                      array
-                    items:
-                      type: string
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      type:
+                        string
+                    value:
+                      type:
+                        string
+            required:
+              - questionText
+              - locale
       required:
         - name
 
