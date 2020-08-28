@@ -12,6 +12,10 @@ export type User = {
   organizationIds?: string[]
   admin?: AdminProfile | FieldValue
   authUserId?: string | FieldValue
+  registrationAnswers: {
+    questionText?: string
+    responseValue: string
+  }[][]
 }
 
 export type UserDependant = {
