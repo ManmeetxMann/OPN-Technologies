@@ -163,6 +163,10 @@ components:
           type: number
         base64Photo:
           type: string
+        responses:
+          type: array
+          items:
+            type: string
       required:
         - firstName
         - lastNameInitial
