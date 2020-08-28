@@ -1,5 +1,10 @@
 import DataStore from '../../../common/src/data/datastore'
-import {Organization, OrganizationLocation, OrganizationType, RegistrationQuestion} from '../models/organization'
+import {
+  Organization,
+  OrganizationLocation,
+  OrganizationType,
+  RegistrationQuestion,
+} from '../models/organization'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {
   OrganizationKeySequenceModel,
