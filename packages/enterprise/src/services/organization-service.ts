@@ -1,11 +1,20 @@
 import DataStore from '../../../common/src/data/datastore'
-import {Organization, OrganizationLocation, OrganizationType} from '../models/organization'
+import {
+  Organization,
+  OrganizationGroup,
+  OrganizationLocation,
+  OrganizationType,
+  OrganizationUsersGroup,
+} from '../models/organization'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {
+  OrganizationGroupModel,
   OrganizationKeySequenceModel,
   OrganizationLocationModel,
   OrganizationModel,
+  OrganizationUsersGroupModel,
 } from '../repository/organization.repository'
+import {QuerySnapshot} from '@google-cloud/firestore'
 
 const notFoundMessage = (organizationId: string, identifier?: string) =>
   `Cannot find organization with ${identifier ?? 'ID'} [${organizationId}]`
@@ -16,14 +25,28 @@ export class OrganizationService {
   private organizationKeySequenceRepository = new OrganizationKeySequenceModel(this.dataStore)
 
   create(organization: Organization): Promise<Organization> {
-    return this.generateNewKey().then((key) =>
-      this.organizationRepository.add({
-        ...organization,
-        key,
-        type: organization.type ?? OrganizationType.Default,
-        allowDependants: organization.allowDependants ?? false,
-      }),
-    )
+    return this.generateKey()
+      .then((key) =>
+        this.organizationRepository.add({
+          ...organization,
+          key,
+          type: organization.type ?? OrganizationType.Default,
+          allowDependants: organization.allowDependants ?? false,
+        }),
+      )
+      .then((organization) => {
+        const groupRepo = this.getGroupsRepositoryFor(organization.id)
+        return groupRepo
+          .count()
+          .then(async (results) => {
+            if (results)
+              await this.addGroup(organization.id, {
+                name: 'All',
+                isDefault: true,
+              } as OrganizationGroup)
+          })
+          .then(() => organization)
+      })
   }
 
   addLocations(
@@ -52,27 +75,137 @@ export class OrganizationService {
       })
   }
 
-  findOneByKey(key: number): Promise<Organization> {
-    return this.organizationRepository.findWhereEqual('key', key).then((results) => {
-      if (results?.length === 0) {
-        throw new ResourceNotFoundException(notFoundMessage(String(key), 'Key'))
-      }
-      return results[0]
-    })
+  findOrganizationAndGroupByKey(
+    key: number,
+  ): Promise<{organization: Organization; group: OrganizationGroup}> {
+    // TODO: to be refactored with `CollectionGroupModel` abstraction coming in PR #191
+    // Here we use collection-groups to fetch all the groups (cross-organizations) matching the key
+    // Then we retrieve the organization using the group parent path
+    const fieldPath = new this.dataStore.firestoreAdmin.firestore.FieldPath('key')
+    const groupsCollectionId = 'groups'
+    return this.dataStore.firestoreORM
+      .collectionGroup({collectionId: groupsCollectionId})
+      .where(fieldPath, '==', key)
+      .query.get()
+      .then(async (snapshot: QuerySnapshot) => {
+        if (snapshot.docs.length === 0)
+          throw new ResourceNotFoundException(`Cannot find organization & group with key ${key}`)
+
+        const doc = snapshot.docs[0]
+        const organizationId = doc.ref.path.split('/')[1]
+        const organization = await this.organizationRepository.get(organizationId)
+
+        if (!organization) throw new Error(`Cannot find organization with id [${organizationId}]`)
+
+        // For some reason Firestore decides to not give back the document.id when using CollectionGroup,
+        // So we need here to re-fetch the `OrganizationGroup` document matching the key
+        const group = await this.getGroupsRepositoryFor(organizationId)
+          .findWhereEqual('key', key)
+          .then((results) => results[0])
+
+        if (!group)
+          throw new Error(`Cannot find group with key [${key}] in organization [${organizationId}]`)
+
+        return {organization, group}
+      })
   }
+
   findOneById(id: string): Promise<Organization> {
     return this.organizationRepository.get(id)
   }
 
+  addGroup(organizationId: string, group: OrganizationGroup): Promise<OrganizationGroup> {
+    return this.generateKey()
+      .then((key) => ({
+        ...group,
+        key,
+        isDefault: group.isDefault ?? false,
+      }))
+      .then((remappedGroup) => this.getGroupsRepositoryFor(organizationId).add(remappedGroup))
+  }
+
+  addGroups(organizationId: string, groups: OrganizationGroup[]): Promise<OrganizationGroup[]> {
+    return this.getOrganization(organizationId).then(() =>
+      Promise.all(groups.map((group) => this.addGroup(organizationId, group))),
+    )
+  }
+
+  getGroups(organizationId: string): Promise<OrganizationGroup[]> {
+    return this.getOrganization(organizationId).then(() =>
+      this.getGroupsRepositoryFor(organizationId).fetchAll(),
+    )
+  }
+
+  getGroup(organizationId: string, groupId: string): Promise<OrganizationGroup> {
+    return this.getOrganization(organizationId).then(() =>
+      this.getGroupsRepositoryFor(organizationId)
+        .get(groupId)
+        .then((target) => {
+          if (target) return target
+          throw new ResourceNotFoundException(`Cannot find organization-group with id [${groupId}]`)
+        }),
+    )
+  }
+
+  getUsersGroups(
+    organizationId: string,
+    groupId?: string,
+    userId?: string,
+  ): Promise<OrganizationUsersGroup[]> {
+    // Firestore doesn't give enough "where" operators to have optional query filters
+    // To have a query-builder, we need here to re-assign the query declaration (of type Collection) with a WhereClause Query
+    // Therefor the TS transpiler complains because of the types conflicts...
+
+    // @ts-ignore
+    return this.getOrganization(organizationId).then(() => {
+      let query = this.getUsersGroupRepositoryFor(organizationId).collection()
+
+      if (groupId) {
+        // @ts-ignore
+        query = query.where('groupId', '==', groupId)
+      }
+
+      if (userId) {
+        // @ts-ignore
+        query = query.where('userId', '==', userId)
+      }
+
+      // @ts-ignore
+      return query.fetch()
+    })
+  }
+
+  addUsersToGroup(organizationId: string, groupId: string, userIds: string[]): Promise<void> {
+    return this.getGroup(organizationId, groupId).then(async () => {
+      for (const userId of userIds) {
+        const existingEntry = await this.getOneUsersGroup(organizationId, groupId, userId)
+        if (!existingEntry) {
+          await this.getUsersGroupRepositoryFor(organizationId).add({userId, groupId})
+        }
+      }
+    })
+  }
+
+  removeUserFromGroup(organizationId: string, groupId: string, userId: string): Promise<void> {
+    return this.getOneUsersGroup(organizationId, groupId, userId).then((target) => {
+      if (target) return this.getUsersGroupRepositoryFor(organizationId).delete(target.id)
+
+      throw new ResourceNotFoundException(
+        `Cannot find relation user-group for groupId [${groupId}] and userId [${userId}]`,
+      )
+    })
+  }
+
   // TODO: To be replaced with a proper solution that generates a 5 digits code for by user and organization with an expiry
-  private generateNewKey(): Promise<number> {
+  private generateKey(): Promise<number> {
     const sequenceId = 'default'
-    return this.organizationKeySequenceRepository
+    const repository = this.organizationKeySequenceRepository
+    return repository
       .get(sequenceId)
       .then((sequence) =>
         !!sequence
-          ? this.organizationKeySequenceRepository.increment(sequenceId, 'value', 1)
-          : this.organizationKeySequenceRepository.add({id: sequenceId, value: 10000}),
+          ? repository.increment(sequenceId, 'value', 1)
+          : repository.add({id: sequenceId, value: 10000}),
       )
       .then((sequence) => sequence.value)
   }
@@ -85,5 +218,23 @@ export class OrganizationService {
 
       throw new ResourceNotFoundException(notFoundMessage(organizationId))
     })
+  }
+
+  private getGroupsRepositoryFor(organizationId: string) {
+    return new OrganizationGroupModel(this.dataStore, organizationId)
+  }
+
+  private getUsersGroupRepositoryFor(organizationId: string) {
+    return new OrganizationUsersGroupModel(this.dataStore, organizationId)
+  }
+
+  private getOneUsersGroup(
+    organizationId: string,
+    groupId?: string,
+    userId?: string,
+  ): Promise<OrganizationUsersGroup | undefined> {
+    return this.getUsersGroups(organizationId, groupId, userId).then((results) =>
+      results.length > 0 ? results[0] : undefined,
+    )
   }
 }

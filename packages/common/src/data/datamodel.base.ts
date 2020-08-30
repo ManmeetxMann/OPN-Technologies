@@ -1,6 +1,7 @@
 import DataStore from './datastore'
 import {HasId, OptionalIdStorable, Storable} from '@firestore-simple/admin/dist/types'
 import {firestore} from 'firebase-admin'
+import {Collection} from '@firestore-simple/admin'
 
 abstract class DataModel<T extends HasId> {
   abstract readonly rootPath: string
@@ -35,37 +36,42 @@ abstract class DataModel<T extends HasId> {
     )
   }
 
+  collection(): Collection<T> {
+    return this.datastore.firestoreORM.collection<T>({path: this.rootPath})
+  }
+
   /**
    * Adds data to the collection
    * @param data Data to add - id does not need to be present.
    */
-  async add(data: OptionalIdStorable<T>): Promise<T> {
-    return this.datastore.firestoreORM
-      .collection<T>({path: this.rootPath})
+  add(data: OptionalIdStorable<T>): Promise<T> {
+    return this.collection()
       .addOrSet(data)
       .then((id) => this.get(id))
   }
 
-  async addAll(data: Array<OptionalIdStorable<T>>): Promise<T[]> {
-    return this.datastore.firestoreORM
-      .collection<T>({path: this.rootPath})
+  addAll(data: Array<OptionalIdStorable<T>>): Promise<T[]> {
+    return this.collection()
       .bulkAdd(data)
       .then(() => this.fetchAll())
   }
 
-  async fetchAll(): Promise<T[]> {
-    return this.datastore.firestoreORM
-      .collection<T>({path: this.rootPath})
+  fetchAll(): Promise<T[]> {
+    return this.collection().fetchAll()
+  }
+
+  count(): Promise<number> {
+    return this.collection()
       .fetchAll()
+      .then((results) => results.length)
   }
 
   /**
    * Updates data in the collection
    * @param data Data to update – id property must be present
    */
-  async update(data: Storable<T>): Promise<T> {
-    return this.datastore.firestoreORM
-      .collection<T>({path: this.rootPath})
+  update(data: Storable<T>): Promise<T> {
+    return this.collection()
       .set(data)
       .then((id) => this.get(id))
   }
@@ -76,7 +82,7 @@ abstract class DataModel<T extends HasId> {
    * @param fieldName field / property name to update
    * @param fieldValue field / property value to update
    */
-  async updateProperty(id: string, fieldName: string, fieldValue: unknown): Promise<T> {
+  updateProperty(id: string, fieldName: string, fieldValue: unknown): Promise<T> {
     return this.get(id).then((data) =>
       this.update({
         ...data,
@@ -89,9 +95,8 @@ abstract class DataModel<T extends HasId> {
    * Updates fields in a document
    * @param id identifier for the document in the collection
    * @param fields field name as key and field value as value
-   * @param fieldValue field / property value to update
    */
-  async updateProperties(id: string, fields: Record<string, unknown>): Promise<T> {
+  updateProperties(id: string, fields: Record<string, unknown>): Promise<T> {
     return this.datastore.firestoreAdmin
       .firestore()
       .collection(this.rootPath)
@@ -108,7 +113,7 @@ abstract class DataModel<T extends HasId> {
    * @param fieldName field / property name to increment
    * @param byCount how much to increment
    */
-  async increment(id: string, fieldName: string, byCount: number): Promise<T> {
+  increment(id: string, fieldName: string, byCount: number): Promise<T> {
     return this.datastore.firestoreAdmin
       .firestore()
       .collection(this.rootPath)
@@ -123,37 +128,24 @@ abstract class DataModel<T extends HasId> {
    * Gets a document using it's identifier
    * @param id identifier for a document in the collection
    */
-  async get(id: string): Promise<T> {
-    const dao = this.datastore.firestoreORM.collection<T>({path: this.rootPath})
-    return await dao.fetch(id)
+  get(id: string): Promise<T> {
+    return this.collection().fetch(id)
   }
 
-  async findWhereEqual(property: string, value: unknown): Promise<T[]> {
+  findWhereEqual(property: string, value: unknown): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
-    return await this.datastore.firestoreORM
-      .collection<T>({path: this.rootPath})
-      .where(fieldPath, '==', value)
-      .fetch()
+    return this.collection().where(fieldPath, '==', value).fetch()
   }
 
-  async findWhereMapHasKeyValueEqual(map: string, key: string, value: unknown): Promise<T[]> {
+  findWhereMapHasKeyValueEqual(map: string, key: string, value: unknown): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
-    return await this.datastore.firestoreORM
-      .collection<T>({path: this.rootPath})
-      .where(fieldPath, '==', value)
-      .fetch()
+    return this.collection().where(fieldPath, '==', value).fetch()
   }
 
-  async delete(id: string): Promise<void> {
-    await this.datastore.firestoreORM
-      .collection<T>({path: this.rootPath})
+  delete(id: string): Promise<void> {
+    return this.collection()
       .delete(id)
-  }
-
-  async deleteAll(): Promise<void> {
-    const dao = this.datastore.firestoreORM.collection<T>({path: this.rootPath})
-    const results = await dao.fetchAll()
-    await dao.bulkDelete(results.map((o) => o.id))
+      .then(() => console.log(`Delete ${this.rootPath}/${id}`))
   }
 }
 

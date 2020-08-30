@@ -31,7 +31,7 @@ class UserController implements IControllerBase {
     try {
       // TODO Assert birthYear meets legal requirements
 
-      // Fetch org by key
+      // Fetch org and group by key
       const {
         key,
         firstName,
@@ -39,7 +39,9 @@ class UserController implements IControllerBase {
         birthYear,
         base64Photo,
       } = req.body as OrganizationConnectionRequest
-      const organization = await this.organizationService.findOneByKey(key)
+      const {organization, group} = await this.organizationService.findOrganizationAndGroupByKey(
+        key,
+      )
 
       // Create user
       const user = await this.userService.create({
@@ -50,7 +52,10 @@ class UserController implements IControllerBase {
         organizationIds: [organization.id],
       } as User)
 
-      res.json(actionSucceed({user, organization}))
+      // Add user to group
+      await this.organizationService.addUsersToGroup(organization.id, group.id, [user.id])
+
+      res.json(actionSucceed({user, organization, group}))
     } catch (error) {
       next(error)
     }
