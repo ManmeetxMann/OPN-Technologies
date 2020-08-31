@@ -6,13 +6,14 @@ export type AdminProfile = {
   adminForLocationIds: string[]
   adminForOrganizationId: string
   superAdminForOrganizationIds: string[]
+  showReporting: boolean
 }
 
 export type AdminApproval = {
   id: string
   expired: boolean
   profile: AdminProfile
-  showReporting: true
+  showReporting: boolean
 }
 
 export class AdminApprovalModel extends DataModel<AdminApproval> {
