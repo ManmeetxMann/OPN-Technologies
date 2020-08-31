@@ -25,7 +25,12 @@ class InternalController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {email, locationIds, organizationId} = req.body as InternalAdminApprovalCreateRequest
+      const {
+        email,
+        locationIds,
+        organizationId,
+        showReporting,
+      } = req.body as InternalAdminApprovalCreateRequest
 
       // Our service
       const adminApprovalService = new AdminApprovalService()
@@ -40,6 +45,7 @@ class InternalController implements IControllerBase {
       await adminApprovalService.create({
         email: email.toLowerCase(),
         enabled: true,
+        showReporting,
         adminForLocationIds: locationIds,
         adminForOrganizationId: organizationId,
         superAdminForOrganizationIds: [],

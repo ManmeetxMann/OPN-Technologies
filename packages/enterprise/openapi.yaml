@@ -230,6 +230,8 @@ components:
             type: string
         adminForOrganizationId:
           type: string
+        showReporting:
+          type: boolean
 
     User:
       type: object

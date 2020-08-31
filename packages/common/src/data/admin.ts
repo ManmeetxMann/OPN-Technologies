@@ -12,6 +12,7 @@ export type AdminApproval = {
   id: string
   expired: boolean
   profile: AdminProfile
+  showReporting: true
 }
 
 export class AdminApprovalModel extends DataModel<AdminApproval> {

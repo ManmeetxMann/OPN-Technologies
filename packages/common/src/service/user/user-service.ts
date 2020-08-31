@@ -6,8 +6,19 @@ export class UserService {
   private dataStore = new DataStore()
   private userRepository = new UserModel(this.dataStore)
 
-  create(user: User): Promise<User> {
-    return this.userRepository.add(user)
+  private digestRecord(user: User, includeResponses = false): User {
+    if (includeResponses) {
+      return user
+    }
+    return {
+      ...user,
+      registrationAnswers: [[]],
+    }
+  }
+
+  async create(user: User): Promise<User> {
+    const result = await this.userRepository.add(user)
+    return this.digestRecord(result)
   }
 
   async update(user: User): Promise<void> {
@@ -22,16 +33,16 @@ export class UserService {
     await this.userRepository.updateProperties(id, fields)
   }
 
-  findOne(id: string): Promise<User> {
+  async findOne(id: string, includeResponses = false): Promise<User> {
     return this.userRepository.get(id).then((user) => {
-      if (!!user) return user
+      if (!!user) return this.digestRecord(user, includeResponses)
       throw new ResourceNotFoundException(`Cannot find user with id [${id}]`)
     })
   }
 
-  async findOneById(id: string): Promise<User> {
+  async findOneById(id: string, includeResponses = false): Promise<User> {
     const user = await this.userRepository.get(id)
-    return !user ? null : user
+    return !user ? null : this.digestRecord(user, includeResponses)
   }
 
   async findOneByAuthUserId(authUserId: string): Promise<User> {
