@@ -53,9 +53,6 @@ class AdminController implements IRouteController {
       const access = await this.accessService.findOneByToken(accessToken)
       const passport = await this.passportService.findOneByToken(access.statusToken)
       const user = await this.userService.findOne(userId)
-      if (!user) {
-        throw new ResourceNotFoundException(`Cannot find user with ID [${userId}]`)
-      }
 
       if (!access.userId) {
         // old records might not have these fields
