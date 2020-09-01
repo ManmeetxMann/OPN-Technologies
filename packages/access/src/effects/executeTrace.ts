@@ -291,13 +291,12 @@ export default class TraceListener {
         ),
         locReports: user.profile.adminForLocationIds.flatMap((id) => reportsForLocation[id]),
       }))
-    allRecipients.forEach(
-      (recipient) =>
-        console.log(
-          `email for ${recipient.email}:\n${recipient.locReports.join(
-            '',
-          )}\n${recipient.orgReports.join('')}`,
-        ), // send email to recipient
+    allRecipients.forEach((recipient) =>
+      send(
+        recipient.email,
+        'Contact trace',
+        `${recipient.locReports.join('')}\n${recipient.orgReports.join('')}`,
+      ),
     )
   }
 }
