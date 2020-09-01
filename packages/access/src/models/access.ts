@@ -1,4 +1,10 @@
 import {firestore} from 'firebase-admin'
+import {PassportStatus} from '../../../passport/src/models/passport'
+
+export type AccessWithPassportStatus = Access & {
+  status: PassportStatus
+}
+
 export type Access = {
   token: string
   statusToken: string
