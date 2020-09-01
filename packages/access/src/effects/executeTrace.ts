@@ -13,6 +13,9 @@ import {OrganizationModel} from '../../../enterprise/src/repository/organization
 import {UserModel} from '../../../common/src/data/user'
 
 import {getExposureSection} from './exposureTemplate'
+
+import {send} from '../../../common/src/service/messaging/send-email'
+
 type Overlap = {
   start: Date
   end: Date
