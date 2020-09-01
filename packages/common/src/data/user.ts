@@ -12,10 +12,15 @@ export type User = {
   organizationIds?: string[]
   admin?: AdminProfile | FieldValue
   authUserId?: string | FieldValue
-  registrationAnswers: {
-    questionText?: string
-    responseValue: string
-  }[][]
+  registrationAnswers: Record<
+    // keyed by organizationId
+    string,
+    {
+      // record the test of the question at time of answering
+      questionText?: string
+      responseValue: string
+    }[]
+  >
 }
 
 export type UserDependant = {
