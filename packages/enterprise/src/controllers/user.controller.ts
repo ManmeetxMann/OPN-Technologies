@@ -75,7 +75,7 @@ class UserController implements IControllerBase {
         birthYear,
         base64Photo,
         organizationIds: [organization.id],
-        registrationAnswers: {[organization.id]: registrationAnswers},
+        registrationAnswersByOrganizationId: {[organization.id]: registrationAnswers},
       } as User)
 
       // Add user to group

@@ -12,7 +12,7 @@ export type User = {
   organizationIds?: string[]
   admin?: AdminProfile | FieldValue
   authUserId?: string | FieldValue
-  registrationAnswers: Record<
+  registrationAnswersByOrganizationId: Record<
     // keyed by organizationId
     string,
     {
