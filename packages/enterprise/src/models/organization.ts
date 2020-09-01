@@ -2,7 +2,6 @@ export type Organization = {
   id: string
   key: number
   name: string
-  logoUrl: string
   type: OrganizationType
   allowDependants: boolean
 }
@@ -10,6 +9,20 @@ export type Organization = {
 export enum OrganizationType {
   Default = 'default',
   Childcare = 'childcare',
+}
+
+export type OrganizationGroup = {
+  id: string
+  name: string
+  key: number
+  isDefault: boolean
+}
+
+// A many-to-x representation of Users belonging to a group
+export type OrganizationUsersGroup = {
+  id: string
+  userId: string
+  groupId: string
 }
 
 export type OrganizationLocation = {
