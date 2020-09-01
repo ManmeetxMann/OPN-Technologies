@@ -25,7 +25,7 @@ abstract class DataModel<T extends HasId> {
    * Get a reference to a collection (NOT a CollectionReference) at the given path
    * @param subPath the path, after rootpath, to the collection
    */
-  private collection(subPath = ''): Collection<T> {
+  public collection(subPath = ''): Collection<T> {
     const path = subPath ? `${this.rootPath}/${subPath}` : this.rootPath
     return this.datastore.firestoreORM.collection<T>({path})
   }
@@ -95,7 +95,7 @@ abstract class DataModel<T extends HasId> {
    * @param fieldValue field / property value to update
    * @param subPath path to the subcollection where we add data. rootPath if left blank
    */
-  updateProperty(id: string, fieldName: string, fieldValue: unknown, subPath=''): Promise<T> {
+  updateProperty(id: string, fieldName: string, fieldValue: unknown, subPath = ''): Promise<T> {
     return this.get(id, subPath).then((data) =>
       this.update({
         ...data,
@@ -182,7 +182,13 @@ abstract class DataModel<T extends HasId> {
   delete(id: string, subPath = ''): Promise<void> {
     return this.collection(subPath)
       .delete(id)
-      .then(() => console.log(`Delete ${this.rootPath}/${subPath ? `${subPath}/`: ''}${id}`))
+      .then(() => console.log(`Delete ${this.rootPath}/${subPath ? `${subPath}/` : ''}${id}`))
+  }
+
+  count(subPath = ''): Promise<number> {
+    return this.collection(subPath)
+      .fetchAll()
+      .then((results) => results.length)
   }
 }
 
