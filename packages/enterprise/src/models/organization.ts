@@ -18,7 +18,7 @@ export type OrganizationGroup = {
   isDefault: boolean
 }
 
-// A Many to One relation of Users belonging to a group
+// A many-to-x representation of Users belonging to a group
 export type OrganizationUsersGroup = {
   id: string
   userId: string

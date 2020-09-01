@@ -82,9 +82,8 @@ export class OrganizationService {
     // Here we use collection-groups to fetch all the groups (cross-organizations) matching the key
     // Then we retrieve the organization using the group parent path
     const fieldPath = new this.dataStore.firestoreAdmin.firestore.FieldPath('key')
-    const groupsCollectionId = 'groups'
     return this.dataStore.firestoreORM
-      .collectionGroup({collectionId: groupsCollectionId})
+      .collectionGroup({collectionId: OrganizationGroupModel.collectionId})
       .where(fieldPath, '==', key)
       .query.get()
       .then(async (snapshot: QuerySnapshot) => {

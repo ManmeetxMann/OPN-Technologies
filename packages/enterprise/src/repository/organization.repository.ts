@@ -24,10 +24,11 @@ export class OrganizationLocationModel extends DataModel<OrganizationLocation> {
 
 export class OrganizationGroupModel extends DataModel<OrganizationGroup> {
   public rootPath
+  public static collectionId = 'organization_groups'
   readonly zeroSet = []
   constructor(dataStore: DataStore, organizationId: string) {
     super(dataStore)
-    this.rootPath = `organizations/${organizationId}/groups`
+    this.rootPath = `organizations/${organizationId}/${OrganizationGroupModel.collectionId}`
   }
 }
 

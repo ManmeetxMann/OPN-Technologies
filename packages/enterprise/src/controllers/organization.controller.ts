@@ -23,7 +23,7 @@ class OrganizationController implements IControllerBase {
     const locations = innerRouter().use(
       '/locations',
       innerRouter()
-        .post('/', this.addLocations) // must be a protected route
+        .post('/', this.addLocations) // TODO: must be a protected route
         .get('/', this.getLocations)
         .get('/:locationId', this.getLocation),
     )
@@ -39,7 +39,7 @@ class OrganizationController implements IControllerBase {
     )
     const organizations = Router().use(
       '/organizations',
-      Router().post('/', this.create),
+      Router().post('/', this.create), // TODO: must be a protected route
       Router().use('/:organizationId', locations, groups),
     )
 
