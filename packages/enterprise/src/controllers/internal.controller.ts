@@ -29,6 +29,7 @@ class InternalController implements IControllerBase {
         email,
         locationIds,
         organizationId,
+        showReporting,
         groupIds,
       } = req.body as InternalAdminApprovalCreateRequest
 
@@ -45,6 +46,7 @@ class InternalController implements IControllerBase {
       await adminApprovalService.create({
         email: email.toLowerCase(),
         enabled: true,
+        showReporting,
         adminForLocationIds: locationIds,
         adminForOrganizationId: organizationId,
         adminForGroupIds: groupIds ?? [],

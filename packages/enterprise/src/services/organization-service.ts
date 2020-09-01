@@ -1,6 +1,7 @@
 import DataStore from '../../../common/src/data/datastore'
 import {
   Organization,
+  RegistrationQuestion,
   OrganizationGroup,
   OrganizationLocation,
   OrganizationType,
@@ -19,6 +20,14 @@ import {QuerySnapshot} from '@google-cloud/firestore'
 const notFoundMessage = (organizationId: string, identifier?: string) =>
   `Cannot find organization with ${identifier ?? 'ID'} [${organizationId}]`
 
+// autofill default fields for registration question
+const parsePartialQuestion = (question: RegistrationQuestion): RegistrationQuestion => ({
+  ...question,
+  questionType: question.questionType || 'text',
+  placeholder: question.placeholder || '',
+  options: question.options || [],
+})
+
 export class OrganizationService {
   private dataStore = new DataStore()
   private organizationRepository = new OrganizationModel(this.dataStore)
@@ -32,6 +41,9 @@ export class OrganizationService {
           key,
           type: organization.type ?? OrganizationType.Default,
           allowDependants: organization.allowDependants ?? false,
+          registrationQuestions: (organization.registrationQuestions ?? []).map(
+            parsePartialQuestion,
+          ),
         }),
       )
       .then((organization) => {

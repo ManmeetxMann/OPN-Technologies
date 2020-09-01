@@ -4,11 +4,24 @@ export type Organization = {
   name: string
   type: OrganizationType
   allowDependants: boolean
+  registrationQuestions?: RegistrationQuestion[]
 }
 
 export enum OrganizationType {
   Default = 'default',
   Childcare = 'childcare',
+}
+
+export type RegistrationQuestion = {
+  id: string
+  questionText: string
+  locale: 'en-CA' | 'fr-CA'
+  questionType: 'text' | 'date' | 'select' | 'radio' | 'checkbox' | 'file' | 'button'
+  placeholder: string
+  options: {
+    code: string
+    value: string
+  }[]
 }
 
 export type OrganizationGroup = {

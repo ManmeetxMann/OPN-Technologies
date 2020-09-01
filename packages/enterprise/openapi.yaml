@@ -46,11 +46,51 @@ components:
           type: string
         type:
           type: string
-          anyOf:
+          enum:
             - default
             - childcare
         allowDependants:
           type: boolean
+        registrationQuestions:
+          type: array
+          items:
+            type: object
+            properties:
+              questionText:
+                type: string
+              id: 
+                type: string
+              locale: 
+                type: string
+                enum:
+                  - en-CA 
+                  - fr-CA
+              questionType:
+                type: string
+                enum:
+                  - text
+                  - date
+                  - select
+                  - radio
+                  - checkbox
+                  - file
+                  - button
+              placeholder:
+                type: string
+              options: 
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      type:
+                        string
+                    value:
+                      type:
+                        string
+            required:
+              - questionText
+              - locale
       required:
         - name
 
@@ -137,6 +177,10 @@ components:
           type: number
         base64Photo:
           type: string
+        responses:
+          type: array
+          items:
+            type: string
       required:
         - firstName
         - lastNameInitial
@@ -209,6 +253,8 @@ components:
             type: string
         adminForOrganizationId:
           type: string
+        showReporting:
+          type: boolean
 
     User:
       type: object
