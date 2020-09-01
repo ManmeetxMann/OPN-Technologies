@@ -30,6 +30,7 @@ class InternalController implements IControllerBase {
         locationIds,
         organizationId,
         showReporting,
+        groupIds,
       } = req.body as InternalAdminApprovalCreateRequest
 
       // Our service
@@ -48,6 +49,7 @@ class InternalController implements IControllerBase {
         showReporting,
         adminForLocationIds: locationIds,
         adminForOrganizationId: organizationId,
+        adminForGroupIds: groupIds ?? [],
         superAdminForOrganizationIds: [],
       })
       res.json(actionSucceed())

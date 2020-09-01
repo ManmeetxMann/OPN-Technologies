@@ -3,4 +3,5 @@ export type InternalAdminApprovalCreateRequest = {
   organizationId: string
   locationIds: string[]
   showReporting: boolean
+  groupIds: string[]
 }

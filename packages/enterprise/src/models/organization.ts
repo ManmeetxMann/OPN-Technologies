@@ -2,7 +2,6 @@ export type Organization = {
   id: string
   key: number
   name: string
-  logoUrl: string
   type: OrganizationType
   allowDependants: boolean
   registrationQuestions?: RegistrationQuestion[]
@@ -23,6 +22,20 @@ export type RegistrationQuestion = {
     code: string
     value: string
   }[]
+}
+
+export type OrganizationGroup = {
+  id: string
+  name: string
+  key: number
+  isDefault: boolean
+}
+
+// A many-to-x representation of Users belonging to a group
+export type OrganizationUsersGroup = {
+  id: string
+  userId: string
+  groupId: string
 }
 
 export type OrganizationLocation = {

@@ -45,11 +45,11 @@ class UserController implements IControllerBase {
       if (existingPassport) {
         /*
                 REMOVED (TEMPORARILY?) - THIS CALL JUST CHECKS IF A VALID PASSPORT EXISTS, DOESN'T CARE ABOUT DEPENDANTS
-        
+
         // some requested dependants are not covered by this passport
         if (dependantIds.some((depId) => !existingPassport.dependantIds.includes(depId))) {
           // need to create a new one for different people
-        } else 
+        } else
         */
         if (!isPassed(existingPassport.validUntil)) {
           // still valid, no need to recreate
@@ -102,12 +102,20 @@ class UserController implements IControllerBase {
         status: passportStatus,
       } as Attestation)
 
+      const passport = await this.passportService.create(passportStatus, userId, dependantIds)
+
+      // Stats
+      const count = dependantIds.length + 1
+      await this.accessService.incrementTodayPassportStatusCount(locationId, passportStatus, count)
+      // await this.accessService.incrementTodayPassportStatusCount(
+      //   locationId,
+      //   PassportStatuses.Pending,
+      //   -count,
+      // )
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
-        const count = dependantIds.length + 1
         await this.accessService.incrementAccessDenied(locationId, count)
       }
 
-      const passport = await this.passportService.create(passportStatus, userId, dependantIds)
       res.json(actionSucceed(passport))
     } catch (error) {
       next(error)

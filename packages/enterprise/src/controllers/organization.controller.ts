@@ -1,13 +1,16 @@
-import * as express from 'express'
-import {NextFunction, Request, Response} from 'express'
+import {NextFunction, Request, Response, Router} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed} from '../../../common/src/utils/response-wrapper'
-import {Organization, OrganizationLocation} from '../models/organization'
+import {actionSucceed, of} from '../../../common/src/utils/response-wrapper'
+import {Organization, OrganizationGroup, OrganizationLocation} from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
+import {authMiddleware} from '../../../common/src/middlewares/auth'
+import {User} from '../../../common/src/data/user'
+import {AdminProfile} from '../../../common/src/data/admin'
+import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 
 class OrganizationController implements IControllerBase {
-  public router = express.Router()
+  public router = Router()
   private organizationService = new OrganizationService()
 
   constructor() {
@@ -15,14 +18,32 @@ class OrganizationController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    const childRouter = express
-      .Router()
-      .post('/', this.create)
-      .post('/:organizationId/locations', this.addLocations)
-      .get('/:organizationId/locations', this.getLocations)
-      .get('/:organizationId/locations/:locationId', this.getLocation)
+    const innerRouter = () => Router({mergeParams: true})
 
-    this.router.use('/organizations', childRouter)
+    const locations = innerRouter().use(
+      '/locations',
+      innerRouter()
+        .post('/', this.addLocations) // TODO: must be a protected route
+        .get('/', this.getLocations)
+        .get('/:locationId', this.getLocation),
+    )
+    const groups = innerRouter().use(
+      '/groups',
+      authMiddleware,
+      innerRouter()
+        .post('/', this.addGroups)
+        .get('/', this.getGroups)
+        .get('/:groupId', this.getGroup)
+        .post('/:groupId/users', this.addUsersToGroup)
+        .delete('/:groupId/users/:userId', this.removeUserFromGroup),
+    )
+    const organizations = Router().use(
+      '/organizations',
+      Router().post('/', this.create), // TODO: must be a protected route
+      Router().use('/:organizationId', locations, groups),
+    )
+
+    this.router.use(organizations)
   }
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -40,7 +61,7 @@ class OrganizationController implements IControllerBase {
 
   addLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const organizationId = req.params['organizationId']
+      const {organizationId} = req.params
       const locations = await this.organizationService
         .addLocations(organizationId, req.body as OrganizationLocation[])
         .catch((error) => {
@@ -54,7 +75,7 @@ class OrganizationController implements IControllerBase {
 
   getLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const organizationId = req.params['organizationId']
+      const {organizationId} = req.params
       const locations = await this.organizationService.getLocations(organizationId)
 
       res.json(actionSucceed(locations))
@@ -65,11 +86,85 @@ class OrganizationController implements IControllerBase {
 
   getLocation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const organizationId = req.params['organizationId']
-      const locationId = req.params['locationId']
+      const {organizationId, locationId} = req.params
       const location = await this.organizationService.getLocation(organizationId, locationId)
 
       res.json(actionSucceed(location))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  addGroups = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const groups = await this.organizationService.addGroups(
+        organizationId,
+        req.body as OrganizationGroup[],
+      )
+      res.json(actionSucceed(groups))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getGroups = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const authenticatedUser = res.locals.connectedUser as User
+      const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
+        throw new HttpException(error.message)
+      })
+      const adminGroupIds = (authenticatedUser.admin as AdminProfile).adminForGroupIds.reduce(
+        (byId, id) => ({...byId, [id]: id}),
+        {},
+      )
+      res.json(actionSucceed(groups.filter((group) => !!adminGroupIds[group.id])))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getGroup = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
+    try {
+      const {organizationId, groupId} = req.params
+      const authenticatedUser = res.locals.connectedUser as User
+      const admin = authenticatedUser.admin as AdminProfile
+      const group = await this.organizationService.getGroup(organizationId, groupId)
+
+      return admin.adminForGroupIds.includes(group.id)
+        ? res.json(actionSucceed(group))
+        : res
+            .status(403)
+            .json(
+              of(
+                null,
+                ResponseStatusCodes.AccessDenied,
+                'Insufficient permissions to fulfil the request',
+              ),
+            )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  addUsersToGroup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId, groupId} = req.params
+      await this.organizationService.addUsersToGroup(organizationId, groupId, req.body as string[])
+
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  removeUserFromGroup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId, groupId, userId} = req.params
+      await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
