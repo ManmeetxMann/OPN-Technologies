@@ -48,14 +48,19 @@ class UserController implements IControllerBase {
         key,
       )
       const registrationQuestions = organization.registrationQuestions ?? []
-      if (registrationQuestions.length !== responses.length) {
-        throw new Error(
-          `${organization.name} expects ${registrationQuestions.length} answers but ${responses.length} were provided`,
-        )
+      if (registrationQuestions.length) {
+        if (!responses) {
+          throw new Error(`${organization.name} requires responses`)
+        }
+        if (responses.length !== registrationQuestions.length) {
+          throw new Error(
+            `${organization.name} expects ${registrationQuestions.length} answers but ${responses.length} were provided`,
+          )
+        }
       }
 
       // validate that responses are present and valid
-      const registrationAnswers = responses.map((responseValue: string, index: number) => {
+      const registrationAnswers = (responses ?? []).map((responseValue: string, index: number) => {
         const question = registrationQuestions[index]
         if (
           question.options &&

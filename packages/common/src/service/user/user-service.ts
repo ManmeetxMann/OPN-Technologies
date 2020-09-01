@@ -6,9 +6,8 @@ export class UserService {
   private dataStore = new DataStore()
   private userRepository = new UserModel(this.dataStore)
 
-  async create(user: User): Promise<User> {
-    const result = await this.userRepository.add(user)
-    return result
+  create(user: User): Promise<User> {
+    return this.userRepository.add(user)
   }
 
   async update(user: User): Promise<void> {
@@ -23,7 +22,7 @@ export class UserService {
     await this.userRepository.updateProperties(id, fields)
   }
 
-  async findOne(id: string): Promise<User> {
+  findOne(id: string): Promise<User> {
     return this.userRepository.get(id).then((user) => {
       if (!!user) return user
       throw new ResourceNotFoundException(`Cannot find user with id [${id}]`)
