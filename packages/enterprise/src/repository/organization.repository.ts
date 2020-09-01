@@ -1,7 +1,13 @@
 import GroupDataModel from '../../../common/src/data/collectionGroupDatamodel.base'
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
-import {Organization, OrganizationKeySequence, OrganizationLocation} from '../models/organization'
+import {
+  Organization,
+  OrganizationGroup,
+  OrganizationKeySequence,
+  OrganizationLocation,
+  OrganizationUsersGroup,
+} from '../models/organization'
 
 export class OrganizationModel extends GroupDataModel<Organization, OrganizationLocation> {
   public readonly rootPath = 'organizations'
@@ -27,6 +33,25 @@ export class OrganizationLocationModel extends DataModel<OrganizationLocation> {
   constructor(dataStore: DataStore, organizationId: string) {
     super(dataStore)
     this.rootPath = `organizations/${organizationId}/locations`
+  }
+}
+
+export class OrganizationGroupModel extends DataModel<OrganizationGroup> {
+  public rootPath
+  public static collectionId = 'organization_groups'
+  readonly zeroSet = []
+  constructor(dataStore: DataStore, organizationId: string) {
+    super(dataStore)
+    this.rootPath = `organizations/${organizationId}/${OrganizationGroupModel.collectionId}`
+  }
+}
+
+export class OrganizationUsersGroupModel extends DataModel<OrganizationUsersGroup> {
+  public rootPath
+  readonly zeroSet = []
+  constructor(dataStore: DataStore, organizationId: string) {
+    super(dataStore)
+    this.rootPath = `organizations/${organizationId}/users_groups`
   }
 }
 

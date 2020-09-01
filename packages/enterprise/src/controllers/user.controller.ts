@@ -31,16 +31,43 @@ class UserController implements IControllerBase {
     try {
       // TODO Assert birthYear meets legal requirements
 
-      // Fetch org by key
-      const {
-        key,
-        firstName,
-        lastNameInitial,
-        birthYear,
-        base64Photo,
-      } = req.body as OrganizationConnectionRequest
-      const organization = await this.organizationService.findOneByKey(key)
+      const {responses, ...body} = req.body
+      body as OrganizationConnectionRequest
+      responses as string[]
+      // Fetch org and group by key
+      const {key, firstName, lastNameInitial, birthYear, base64Photo} = body
 
+      // Fetch org by key
+      const {organization, group} = await this.organizationService.findOrganizationAndGroupByKey(
+        key,
+      )
+      const registrationQuestions = organization.registrationQuestions ?? []
+      if (registrationQuestions.length) {
+        if (!responses) {
+          throw new Error(`${organization.name} requires responses`)
+        }
+        if (responses.length !== registrationQuestions.length) {
+          throw new Error(
+            `${organization.name} expects ${registrationQuestions.length} answers but ${responses.length} were provided`,
+          )
+        }
+      }
+
+      // validate that responses are present and valid
+      const registrationAnswers = (responses ?? []).map((responseValue: string, index: number) => {
+        const question = registrationQuestions[index]
+        if (
+          question.options &&
+          question.options.length &&
+          !question.options.map(({code}) => code).includes(responseValue)
+        ) {
+          throw new Error(`Answer ${responseValue} is not a valid response`)
+        }
+        return {
+          questionText: question.questionText,
+          responseValue,
+        }
+      })
       // Create user
       const user = await this.userService.create({
         firstName,
@@ -48,9 +75,13 @@ class UserController implements IControllerBase {
         birthYear,
         base64Photo,
         organizationIds: [organization.id],
+        registrationAnswersByOrganizationId: {[organization.id]: registrationAnswers},
       } as User)
 
-      res.json(actionSucceed({user, organization}))
+      // Add user to group
+      await this.organizationService.addUsersToGroup(organization.id, group.id, [user.id])
+
+      res.json(actionSucceed({user, organization, group}))
     } catch (error) {
       next(error)
     }

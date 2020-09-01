@@ -46,11 +46,51 @@ components:
           type: string
         type:
           type: string
-          anyOf:
+          enum:
             - default
             - childcare
         allowDependants:
           type: boolean
+        registrationQuestions:
+          type: array
+          items:
+            type: object
+            properties:
+              questionText:
+                type: string
+              id: 
+                type: string
+              locale: 
+                type: string
+                enum:
+                  - en-CA 
+                  - fr-CA
+              questionType:
+                type: string
+                enum:
+                  - text
+                  - date
+                  - select
+                  - radio
+                  - checkbox
+                  - file
+                  - button
+              placeholder:
+                type: string
+              options: 
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      type:
+                        string
+                    value:
+                      type:
+                        string
+            required:
+              - questionText
+              - locale
       required:
         - name
 
@@ -108,6 +148,20 @@ components:
         - address
         - attestationRequired
 
+    OrganizationGroup:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        key:
+          type: string
+        isDefault:
+          type: boolean
+      required:
+        - name
+
     OrganizationConnectionRequest:
       type: object
       properties:
@@ -123,6 +177,10 @@ components:
           type: number
         base64Photo:
           type: string
+        responses:
+          type: array
+          items:
+            type: string
       required:
         - firstName
         - lastNameInitial
@@ -164,6 +222,11 @@ components:
           items:
             type: string
           description: Location Ids within Organization
+        groupIds:
+          type: array
+          items:
+            type: string
+          description: Group Ids within Organization
       required:
         - email
         - organizationId
@@ -176,6 +239,10 @@ components:
           type: string
         enabled:
           type: boolean
+        adminForGroupIds:
+          type: array
+          items:
+            type: string
         adminForLocationIds:
           type: array
           items:
@@ -186,6 +253,8 @@ components:
             type: string
         adminForOrganizationId:
           type: string
+        showReporting:
+          type: boolean
 
     User:
       type: object
@@ -225,6 +294,8 @@ components:
               $ref: '#/components/schemas/User'
             organization:
               $ref: '#/components/schemas/Organization'
+            group:
+              $ref: '#/components/schemas/OrganizationGroup'
         status:
           type: object
           properties:
@@ -344,6 +415,56 @@ components:
               nullable: true
               type: string
 
+    ResponseOfOrganizationGroups:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationGroup'
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfOrganizationGroup:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationGroup'
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
     ResponseOfAdminProfile:
       type: object
       properties:
@@ -394,6 +515,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfOrganization'
+
   /organizations/{organizationId}/locations:
     post:
       description: Add locations to an organization
@@ -436,6 +558,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationLocations'
+
   /organizations/{organizationId}/locations/{locationId}:
     get:
       description: Get a location
@@ -459,6 +582,134 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationLocation'
+
+  /organizations/{organizationId}/groups:
+    post:
+      description: Add groups to an organization (admin access required)
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrganizationGroup'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationGroups'
+    get:
+      description: Get organization groups (admin access required)
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: false
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationGroups'
+
+  /organizations/{organizationId}/groups/{groupId}:
+    get:
+      description: Get one organization-group (admin access required)
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+        - in: path
+          name: groupId
+          schema:
+            type: string
+      #          required: true
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationGroup'
+
+  /organizations/{organizationId}/groups/{groupId}/users:
+    post:
+      description: Add users to a group (admin access required)
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+        - in: path
+          name: groupId
+          schema:
+            type: string
+      #          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                description: the user ids to add in the targeted group
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
+
+  /organizations/{organizationId}/groups/{groupId}/users/{userId}:
+    delete:
+      description: Take a user off a group (admin access required)
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+        - in: path
+          name: groupId
+          schema:
+            type: string
+      #          required: true
+        - in: path
+          name: userId
+          schema:
+            type: string
+      #          required: true
+      responses:
+        '200':
+          description: Successfully removed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
 
   /user/connect/add:
     post:
@@ -495,8 +746,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfOrganizations'
-
-
 
   /admin/auth/signIn/request:
     post:
@@ -540,7 +789,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfAdminProfile'
-
 
   /internal/adminApproval/create:
     post:

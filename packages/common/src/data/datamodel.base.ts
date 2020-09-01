@@ -25,7 +25,7 @@ abstract class DataModel<T extends HasId> {
    * Get a reference to a collection (NOT a CollectionReference) at the given path
    * @param subPath the path, after rootpath, to the collection
    */
-  private getDAO(subPath = ''): Collection<T> {
+  private collection(subPath = ''): Collection<T> {
     const path = subPath ? `${this.rootPath}/${subPath}` : this.rootPath
     return this.datastore.firestoreORM.collection<T>({path})
   }
@@ -55,26 +55,26 @@ abstract class DataModel<T extends HasId> {
    * @param data Data to add - id does not need to be present.
    * @param subPath path to the subcollection where we add data. rootPath if left blank
    */
-  async add(data: OptionalIdStorable<T>, subPath = ''): Promise<T> {
-    return this.getDAO(subPath)
+  add(data: OptionalIdStorable<T>, subPath = ''): Promise<T> {
+    return this.collection(subPath)
       .addOrSet(data)
       .then((id) => this.get(id, subPath))
   }
 
   async addAll(data: Array<OptionalIdStorable<T>>, subPath = ''): Promise<T[]> {
-    return this.getDAO(subPath)
+    return this.collection(subPath)
       .bulkAdd(data)
       .then(() => this.fetchAll())
   }
 
   async updateAll(data: Array<Storable<T>>, subPath = ''): Promise<T[]> {
-    return this.getDAO(subPath)
+    return this.collection(subPath)
       .bulkSet(data)
       .then(() => this.fetchAll())
   }
 
   async fetchAll(subPath = ''): Promise<T[]> {
-    return this.getDAO(subPath).fetchAll()
+    return this.collection(subPath).fetchAll()
   }
 
   /**
@@ -83,7 +83,7 @@ abstract class DataModel<T extends HasId> {
    * @param subPath path to the subcollection the data is found. rootPath if left blank
    */
   async update(data: Storable<T>, subPath = ''): Promise<T> {
-    return this.getDAO(subPath)
+    return this.collection(subPath)
       .set(data)
       .then((id) => this.get(id))
   }
@@ -95,23 +95,19 @@ abstract class DataModel<T extends HasId> {
    * @param fieldValue field / property value to update
    * @param subPath path to the subcollection where we add data. rootPath if left blank
    */
-  async updateProperty(
-    id: string,
-    fieldName: string,
-    fieldValue: unknown,
-    subPath = '',
-  ): Promise<T> {
-    await this.doc(id, subPath).update({
-      [fieldName]: fieldValue,
-    })
-    return this.get(id, subPath)
+  updateProperty(id: string, fieldName: string, fieldValue: unknown, subPath=''): Promise<T> {
+    return this.get(id, subPath).then((data) =>
+      this.update({
+        ...data,
+        [fieldName]: fieldValue,
+      } as Storable<T>),
+    )
   }
 
   /**
    * Updates fields in a document
    * @param id identifier for the document in the collection
    * @param fields field name as key and field value as value
-   * @param fieldValue field / property value to update
    */
   async updateProperties(id: string, fields: Record<string, unknown>, subPath = ''): Promise<T> {
     return this.doc(id, subPath)
@@ -135,22 +131,6 @@ abstract class DataModel<T extends HasId> {
       .then(() => this.get(id))
   }
 
-  /**
-   * Gets a document using it's identifier
-   * @param id identifier for a document in the collection
-   * @param subPath path to the subcollection where the document is found. rootPath if left blank
-   */
-  async get(id: string, subPath = ''): Promise<T> {
-    const dao = this.getDAO(subPath)
-    const result: T = await dao.fetch(id)
-    return result
-  }
-
-  async findWhereEqual(property: string, value: unknown, subPath = ''): Promise<T[]> {
-    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
-    return await this.getDAO(subPath).where(fieldPath, '==', value).fetch()
-  }
-
   async findWhereMapKeyContainsAny(
     map: string,
     key: string,
@@ -158,26 +138,16 @@ abstract class DataModel<T extends HasId> {
     subPath = '',
   ): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
-    return await this.getDAO(subPath).where(fieldPath, 'array-contains-any', value).fetch()
+    return await this.collection(subPath).where(fieldPath, 'array-contains-any', value).fetch()
   }
 
   async findWhereArrayContainsAny(property: string, value: unknown, subPath = ''): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
-    return await this.getDAO(subPath).where(fieldPath, 'array-contains-any', value).fetch()
+    return await this.collection(subPath).where(fieldPath, 'array-contains-any', value).fetch()
   }
   async findWhereIdIn(value: unknown, subPath = ''): Promise<T[]> {
     const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()
-    return await this.getDAO(subPath).where(fieldPath, 'in', value).fetch()
-  }
-
-  async findWhereMapHasKeyValueEqual(
-    map: string,
-    key: string,
-    value: unknown,
-    subPath = '',
-  ): Promise<T[]> {
-    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
-    return await this.getDAO(subPath).where(fieldPath, '==', value).fetch()
+    return await this.collection(subPath).where(fieldPath, 'in', value).fetch()
   }
 
   async findWhereMapHasKeyValueIn(
@@ -187,18 +157,32 @@ abstract class DataModel<T extends HasId> {
     subPath = '',
   ): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
-    return await this.getDAO(subPath).where(fieldPath, 'in', value).fetch()
+    return await this.collection(subPath).where(fieldPath, 'in', value).fetch()
   }
 
-  async delete(id: string, subPath = ''): Promise<void> {
-    const dao = this.getDAO(subPath)
-    await dao.delete(id)
+  get(id: string, subPath = ''): Promise<T> {
+    return this.collection(subPath).fetch(id)
   }
 
-  async deleteAll(subPath = ''): Promise<void> {
-    const dao = this.getDAO(subPath)
-    const results = await dao.fetchAll()
-    await dao.bulkDelete(results.map((o) => o.id))
+  findWhereEqual(property: string, value: unknown, subPath = ''): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+    return this.collection(subPath).where(fieldPath, '==', value).fetch()
+  }
+
+  findWhereMapHasKeyValueEqual(
+    map: string,
+    key: string,
+    value: unknown,
+    subPath = '',
+  ): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
+    return this.collection(subPath).where(fieldPath, '==', value).fetch()
+  }
+
+  delete(id: string, subPath = ''): Promise<void> {
+    return this.collection(subPath)
+      .delete(id)
+      .then(() => console.log(`Delete ${this.rootPath}/${subPath ? `${subPath}/`: ''}${id}`))
   }
 }
 
