@@ -35,13 +35,7 @@ class UserController implements IControllerBase {
       body as OrganizationConnectionRequest
       responses as string[]
       // Fetch org and group by key
-      const {
-        key,
-        firstName,
-        lastNameInitial,
-        birthYear,
-        base64Photo,
-      } = req.body as OrganizationConnectionRequest
+      const {key, firstName, lastNameInitial, birthYear, base64Photo} = body
 
       // Fetch org by key
       const {organization, group} = await this.organizationService.findOrganizationAndGroupByKey(
