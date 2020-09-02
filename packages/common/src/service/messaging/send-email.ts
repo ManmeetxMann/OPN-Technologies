@@ -22,7 +22,7 @@ export async function send(
     ],
     subject,
     textContent: body,
-    htmlContent: htmlBody ?? (body.replace('\n', '<br />')),
+    htmlContent: htmlBody ?? body.replace('\n', '<br />'),
   }
   return fetch(APIURL, {
     method: 'post',
