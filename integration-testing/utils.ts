@@ -82,7 +82,7 @@ export const createAdmin = async (
     connectedId: user.id,
   })
   await post(`${roots.Enterprise}/admin/auth/signIn/process`, {
-    idToken: `Bearer ${authUserId}///${email}`,
+    idToken: `${authUserId}///${email}`,
     // @ts-ignore
     connectedId: user.id,
   })

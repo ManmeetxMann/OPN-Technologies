@@ -44,6 +44,7 @@ export const authMiddleware = async (
   //       had their claim... To be researched :-)
   const userService = new UserService()
   const connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
+
   if (!connectedUser) {
     // Forbidden
     res
