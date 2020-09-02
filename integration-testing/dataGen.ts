@@ -55,6 +55,7 @@ const getName = (prefix: string, segments: number): string => {
 }
 
 const getEmail = () => `${getName('', 2)}@stayopn.com`.toLowerCase()
+// const getEmail = () => `david.walker+${getName('', 2)}@stayopn.com`.toLowerCase()
 
 const LOC_COUNT = 7
 const USER_COUNT = 50
@@ -64,6 +65,7 @@ const generate = async () => {
 
   // servers must be running
   const org = await createOrg('The Daycare Center')
+  const key = org.organization_groups[0].key
   const locs = []
   let i = 0
   // for some reason createLocations isn't thread safe, so this is done serially
@@ -81,7 +83,7 @@ const generate = async () => {
   await Promise.all(
     locs.map((loc, i) =>
       createAdmin(
-        org.key,
+        key,
         getName('', 1),
         randSeg().substr(0, 1),
         emails[i],
@@ -94,7 +96,7 @@ const generate = async () => {
   const userCountArr = new Array(USER_COUNT)
   userCountArr.fill(0, 0, USER_COUNT)
   const users = await Promise.all(
-    userCountArr.map(() => createUser(org.key, getName('user', 3), randSeg().substr(0, 1))),
+    userCountArr.map(() => createUser(key, getName('user', 3), randSeg().substr(0, 1))),
   )
   const attestations = await Promise.all(
     users.map((user, i) => attest(user.id, locs[i % locs.length].id, false)),

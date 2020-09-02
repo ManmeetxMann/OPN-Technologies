@@ -48,16 +48,20 @@ export class OrganizationService {
       )
       .then((organization) => {
         const groupRepo = this.getGroupsRepositoryFor(organization.id)
-        return groupRepo
-          .count()
-          .then(async (results) => {
-            if (results)
-              await this.addGroup(organization.id, {
-                name: 'All',
-                isDefault: true,
-              } as OrganizationGroup)
-          })
-          .then(() => organization)
+        return groupRepo.count().then(async (results) => {
+          if (!results) {
+            const group = await this.addGroup(organization.id, {
+              name: 'All',
+              isDefault: true,
+            } as OrganizationGroup)
+            return {
+              ...organization,
+              organization_groups: [group],
+            }
+          } else {
+            return organization
+          }
+        })
       })
   }
 
