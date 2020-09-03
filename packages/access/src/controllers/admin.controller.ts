@@ -59,7 +59,7 @@ class AdminController implements IRouteController {
       const user = await this.userService.findOne(userId)
 
       if (userId !== access.userId) {
-        console.warn(`client calims ${userId} but access has ${access.userId}`)
+        console.warn(`client claims ${userId} but access has ${access.userId}`)
       }
 
       if (userId !== access.userId) {
