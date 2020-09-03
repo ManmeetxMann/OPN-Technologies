@@ -52,6 +52,8 @@ class UserController implements IRouteController {
 
       if (!location.allowsSelfCheckInOut)
         throw new BadRequestException("Location doesn't allow self-check-in")
+      if (!location.canAccess)
+        throw new BadRequestException("Location can't be directly checked in to")
 
       if (location.attestationRequired && !accessToken)
         throw new BadRequestException(

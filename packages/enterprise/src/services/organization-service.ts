@@ -65,13 +65,39 @@ export class OrganizationService {
       })
   }
 
-  addLocations(
+  async addLocations(
     organizationId: string,
     locations: OrganizationLocation[],
+    parentId?: string | null,
   ): Promise<OrganizationLocation[]> {
+    const parent = parentId ? await this.getLocation(organizationId, parentId) : null
+
+    // TODO: Exception type
+    if (parent && locations.some((location) => !location.canAccess)) {
+      throw new ResourceNotFoundException('locations with parents must be accessible')
+    }
+    if (parent && (parent.canAccess || parent.parentLocationId)) {
+      throw new ResourceNotFoundException(
+        'parent locations must not be accessible and must not have parents',
+      )
+    }
+
+    const locationsToAdd = parent
+      ? locations.map((location) => ({
+          address: parent.address,
+          city: parent.city,
+          zip: parent.zip,
+          state: parent.state,
+          country: parent.country,
+          questionnaireId: parent.questionnaireId,
+          ...location,
+          parentLocationId: parentId,
+          allowAccess: true,
+        }))
+      : locations
     return this.getOrganization(organizationId).then(() =>
       new OrganizationLocationModel(this.dataStore, organizationId)
-        .addAll(locations)
+        .addAll(locationsToAdd)
         .then((locs) => {
           // add this so we can query for locations by id contained in list
           const locationsWithId = locs.map((loc) => ({
@@ -85,9 +111,12 @@ export class OrganizationService {
     )
   }
 
-  getLocations(organizationId: string): Promise<OrganizationLocation[]> {
+  getLocations(organizationId: string, parentId?: string | null): Promise<OrganizationLocation[]> {
     return this.getOrganization(organizationId).then(() =>
-      new OrganizationLocationModel(this.dataStore, organizationId).fetchAll(),
+      new OrganizationLocationModel(this.dataStore, organizationId).findWhereEqual(
+        'parentId',
+        parentId || null,
+      ),
     )
   }
 
@@ -100,6 +129,15 @@ export class OrganizationService {
           `Cannot find location for organization-id [${organizationId}] and location-id [${locationId}]`,
         )
       })
+  }
+
+  // includes organization id
+  async getLocationById(locationId: string): ReturnType<OrganizationModel['getLocation']> {
+    const location = await this.organizationRepository.getLocation(locationId)
+    if (!location) {
+      throw new ResourceNotFoundException(`Cannot find location for location-id [${locationId}]`)
+    }
+    return location
   }
 
   findOrganizationAndGroupByKey(
