@@ -3,6 +3,19 @@ import {Config} from '../../utils/config'
 
 const APIKEY = Config.get('EMAIL_PROVIDER_API_KEY')
 const APIURL = Config.get('EMAIL_PROVIDER_API_URL')
+const FROM_ADDRESS = Config.get('EMAIL_FROM_ADDRESS')
+const FROM_NAME = Config.get('EMAIL_FROM_NAME')
+
+const sendRequest = (body: unknown) =>
+  fetch(APIURL, {
+    method: 'post',
+    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+      accept: 'application/json',
+      'api-key': APIKEY,
+    },
+  })
 
 export async function send(
   toEmail: string,
@@ -12,8 +25,8 @@ export async function send(
 ): Promise<unknown> {
   const email = {
     sender: {
-      email: 'no-reply@email.stayopn.net',
-      name: 'OPN Team',
+      email: FROM_ADDRESS,
+      name: FROM_NAME,
     },
     to: [
       {
@@ -24,15 +37,7 @@ export async function send(
     textContent: body,
     htmlContent: htmlBody ?? body.replace('\n', '<br />'),
   }
-  return fetch(APIURL, {
-    method: 'post',
-    body: JSON.stringify(email),
-    headers: {
-      'Content-Type': 'application/json',
-      accept: 'application/json',
-      'api-key': APIKEY,
-    },
-  })
+  return sendRequest(email)
 }
 
 export async function sendWithTemplate(
@@ -55,13 +60,5 @@ export async function sendWithTemplate(
     templateId,
     params,
   }
-  return fetch(APIURL, {
-    method: 'post',
-    body: JSON.stringify(email),
-    headers: {
-      'Content-Type': 'application/json',
-      accept: 'application/json',
-      'api-key': APIKEY,
-    },
-  })
+  return sendRequest(email)
 }

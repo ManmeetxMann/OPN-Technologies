@@ -184,29 +184,25 @@ export default class TraceListener {
     locations: Record<string, LocationDescription>,
     accesses: AccessLookup,
   ): Promise<void> {
-    const allLocationsHash = {}
-    const allOrganizationsHash = {}
-    const allUsersHash = {
-      [userId]: true,
-    }
+    const allLocationIds: Set<string> = new Set()
+    const allOrganizationIds: Set<string> = new Set()
+    const allUserIds: Set<string> = new Set()
+    allUserIds.add(userId)
+
     reports.forEach((report: ExposureReport) => {
       const {locationId, organizationId} = report
-      if (!allLocationsHash[locationId]) {
-        allLocationsHash[locationId] = true
-      }
-      if (!allOrganizationsHash[organizationId]) {
-        allOrganizationsHash[organizationId] = true
-      }
+      allLocationIds.add(locationId)
+      allOrganizationIds.add(organizationId)
     })
     Object.keys(accesses).forEach((locationId) =>
       Object.keys(accesses[locationId]).forEach((date) =>
-        accesses[locationId][date].forEach((access) => (allUsersHash[access.userId] = true)),
+        accesses[locationId][date].forEach((access) => allUserIds.add(access.userId)),
       ),
     )
 
-    const allLocations = Object.keys(allLocationsHash)
-    const allOrganizations = Object.keys(allOrganizationsHash)
-    const allUsers = Object.keys(allUsersHash)
+    const allLocations = [...allLocationIds]
+    const allOrganizations = [...allOrganizationIds]
+    const allUsers = [...allUserIds]
     // paginate the location and org lists
     const locationPages = []
     const organizationPages = []
@@ -229,7 +225,7 @@ export default class TraceListener {
         ),
       )
     ).flat()
-    const orgUsers = (
+    const organizationAdmins = (
       await Promise.all(
         organizationPages.map((page) =>
           this.userApprovalRepo.findWhereMapKeyContainsAny(
@@ -276,10 +272,16 @@ export default class TraceListener {
       )
     })
 
-    const allRecipients = [
-      ...locationAdmins,
-      ...orgUsers.filter((orgUser) => !locationAdmins.some((locUser) => locUser.id === orgUser.id)),
-    ]
+    const handledIds: Set<string> = new Set()
+    // may contain duplicates...
+    const allRecipients = [...locationAdmins, ...organizationAdmins]
+      .filter((u) => {
+        if (handledIds.has(u.id)) {
+          return false
+        }
+        handledIds.add(u.id)
+        return true
+      })
       .filter((u) => !u.expired)
       .map((user) => ({
         email: user.profile.email,
