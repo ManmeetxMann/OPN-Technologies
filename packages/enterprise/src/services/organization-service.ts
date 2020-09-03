@@ -72,9 +72,11 @@ export class OrganizationService {
   async addLocations(
     organizationId: string,
     locations: OrganizationLocation[],
-    parentId?: string | null,
+    parentLocationId?: string | null,
   ): Promise<OrganizationLocation[]> {
-    const parent = parentId ? await this.getLocation(organizationId, parentId) : null
+    const parent = parentLocationId
+      ? await this.getLocation(organizationId, parentLocationId)
+      : null
 
     // TODO: Exception type
     if (parent && locations.some((location) => !location.allowAccess)) {
@@ -95,7 +97,7 @@ export class OrganizationService {
           country: parent.country,
           questionnaireId: parent.questionnaireId,
           ...location,
-          parentLocationId: parentId,
+          parentLocationId: parentLocationId,
           allowAccess: true,
         }))
       : locations.map((location) => ({
@@ -118,16 +120,19 @@ export class OrganizationService {
     )
   }
 
-  getLocations(organizationId: string, parentId?: string | null): Promise<OrganizationLocation[]> {
+  getLocations(
+    organizationId: string,
+    parentLocationId?: string | null,
+  ): Promise<OrganizationLocation[]> {
     return this.getOrganization(organizationId).then(() => {
-      if (!parentId && HANDLE_LEGACY_LOCATIONS) {
+      if (!parentLocationId && HANDLE_LEGACY_LOCATIONS) {
         return new OrganizationLocationModel(this.dataStore, organizationId)
           .fetchAll()
           .then((results) => results.filter((location) => !location.parentLocationId))
       }
       return new OrganizationLocationModel(this.dataStore, organizationId).findWhereEqual(
         'parentLocationId',
-        parentId || null,
+        parentLocationId || null,
       )
     })
   }

@@ -118,8 +118,9 @@ class OrganizationController implements IControllerBase {
   addLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
+      const {parentLocationId} = req.query
       const locations = await this.organizationService
-        .addLocations(organizationId, req.body as OrganizationLocation[])
+        .addLocations(organizationId, req.body as OrganizationLocation[], parentLocationId)
         .catch((error) => {
           throw new HttpException(error.message)
         })
@@ -131,8 +132,9 @@ class OrganizationController implements IControllerBase {
 
   getLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId, parentId} = req.params
-      const locations = await this.organizationService.getLocations(organizationId, parentId)
+      const {organizationId} = req.params
+      const {parentLocationId} = req.query
+      const locations = await this.organizationService.getLocations(organizationId, parentLocationId)
 
       res.json(actionSucceed(locations))
     } catch (error) {
