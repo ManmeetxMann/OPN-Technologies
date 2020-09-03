@@ -73,10 +73,10 @@ export class OrganizationService {
     const parent = parentId ? await this.getLocation(organizationId, parentId) : null
 
     // TODO: Exception type
-    if (parent && locations.some((location) => !location.canAccess)) {
+    if (parent && locations.some((location) => !location.allowAccess)) {
       throw new ResourceNotFoundException('locations with parents must be accessible')
     }
-    if (parent && (parent.canAccess || parent.parentLocationId)) {
+    if (parent && (parent.allowAccess || parent.parentLocationId)) {
       throw new ResourceNotFoundException(
         'parent locations must not be accessible and must not have parents',
       )

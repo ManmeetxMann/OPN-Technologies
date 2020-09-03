@@ -48,7 +48,7 @@ export type OrganizationLocation = {
   state: string
   country: string
   // true if no location has this location as parentLocationId
-  canAccess: boolean
+  allowAccess: boolean
   // id of location which contains this location
   parentLocationId?: string | null
 } & OrganizationConfiguration
