@@ -7,5 +7,13 @@ export type AccessStats = {
   proceedPassports: number
   cautionPassports: number
   stopPassports: number
-  checkInsPerHour: {date: Date; count: number}[]
+  checkInsPerHour: CheckInsCount[]
+}
+
+export type CheckInsCount = {date: string; count: number}
+
+export type AccessStatsFilter = {
+  locationId: string
+  fromDate?: Date
+  toDate?: Date
 }

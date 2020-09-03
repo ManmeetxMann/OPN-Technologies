@@ -3,7 +3,7 @@ import {User} from '../../../common/src/data/user'
 import type {Access} from '../models/access'
 
 const formatName = (user: User): string =>
-  `${user.firstName} ${user.lastNameInitial}.                             `.substring(0, 46)
+  `${user.firstName} ${user.lastName}                             `.substring(0, 46)
 
 export const getExposureSection = (
   report: ExposureReport,

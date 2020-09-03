@@ -4,14 +4,70 @@ import {actionSucceed, of} from '../../../common/src/utils/response-wrapper'
 import {Organization, OrganizationGroup, OrganizationLocation} from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
-import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {User} from '../../../common/src/data/user'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
+import {UserService} from '../../../common/src/service/user/user-service'
+import {AccessService} from '../../../access/src/service/access.service'
+import moment from 'moment'
+import {Access, AccessWithPassportStatus} from '../../../access/src/models/access'
+import {PassportService} from '../../../passport/src/services/passport-service'
+import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
+import * as _ from 'lodash'
+import {CheckInsCount} from '../../../access/src/models/access-stats'
+import {authMiddleware} from '../../../common/src/middlewares/auth'
+
+const pendingAccess: AccessWithPassportStatus = {
+  status: PassportStatuses.Pending,
+  token: null,
+  statusToken: null,
+  locationId: null,
+  createdAt: null,
+  enteredAt: null,
+  exitAt: null,
+  userId: null,
+  includesGuardian: null,
+  dependants: null,
+}
+
+const replyInsufficientPermission = (res: Response) =>
+  res
+    .status(403)
+    .json(
+      of(null, ResponseStatusCodes.AccessDenied, 'Insufficient permissions to fulfil the request'),
+    )
+
+const getHourlyCheckInsCounts = (accesses: AccessWithPassportStatus[]): CheckInsCount[] => {
+  const countsPerHour: Record<string, number> = {}
+  for (const {enteredAt} of accesses) {
+    if (enteredAt) {
+      const targetedHour = moment(enteredAt).startOf('hour').toISOString()
+      countsPerHour[targetedHour] = (countsPerHour[targetedHour] ?? 0) + 1
+    }
+  }
+  return Object.entries(countsPerHour)
+    .sort(([date1], [date2]) => Date.parse(date1) - Date.parse(date2))
+    .map(([date, count]) => ({date, count}))
+}
+
+const getPassportsCountPerStatus = (
+  accesses: AccessWithPassportStatus[],
+): Record<PassportStatus, number> =>
+  accesses
+    .map(({status}) => status)
+    .reduce((byStatus, status) => ({...byStatus, [status]: byStatus[status] + 1}), {
+      [PassportStatuses.Pending]: 0,
+      [PassportStatuses.Proceed]: 0,
+      [PassportStatuses.Caution]: 0,
+      [PassportStatuses.Stop]: 0,
+    })
 
 class OrganizationController implements IControllerBase {
   public router = Router()
   private organizationService = new OrganizationService()
+  private userService = new UserService()
+  private accessService = new AccessService()
+  private passportService = new PassportService()
 
   constructor() {
     this.initRoutes()
@@ -29,11 +85,11 @@ class OrganizationController implements IControllerBase {
     )
     const groups = innerRouter().use(
       '/groups',
-      authMiddleware,
       innerRouter()
         .post('/', this.addGroups)
-        .get('/', this.getGroups)
-        .get('/:groupId', this.getGroup)
+        .get('/', authMiddleware, this.getGroups)
+        .get('/:groupId', authMiddleware, this.getGroup)
+        .get('/:groupId/stats', authMiddleware, this.getGroupStats)
         .post('/:groupId/users', this.addUsersToGroup)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
@@ -134,15 +190,7 @@ class OrganizationController implements IControllerBase {
 
       return admin.adminForGroupIds.includes(group.id)
         ? res.json(actionSucceed(group))
-        : res
-            .status(403)
-            .json(
-              of(
-                null,
-                ResponseStatusCodes.AccessDenied,
-                'Insufficient permissions to fulfil the request',
-              ),
-            )
+        : replyInsufficientPermission(res)
     } catch (error) {
       next(error)
     }
@@ -168,6 +216,87 @@ class OrganizationController implements IControllerBase {
     } catch (error) {
       next(error)
     }
+  }
+
+  getGroupStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId, groupId} = req.params
+      const {from, to} = req.query
+      const live = !from && !to
+      const authenticatedUser = res.locals.connectedUser as User
+      const admin = authenticatedUser.admin as AdminProfile
+      const group = await this.organizationService.getGroup(organizationId, groupId)
+
+      if (!admin.adminForGroupIds.includes(group.id)) replyInsufficientPermission(res)
+
+      const asOfDateTime = live ? new Date().toISOString() : null
+
+      // Users and accesses
+      const {users, accessesByUserId} = await this.organizationService
+        .getUsersGroups(organizationId, groupId)
+        .then(async (usersGroups) => {
+          const users: User[] = []
+          const accessesByUserId: Record<string, AccessWithPassportStatus[]> = {}
+          for (const {userId} of usersGroups) {
+            const user = await this.userService.findOneSilently(userId)
+
+            if (!!user) {
+              users.push(user)
+              accessesByUserId[userId] = await this.getAccessesForUserId(
+                userId,
+                new Date(from as string),
+                new Date(to as string),
+                live,
+              )
+            }
+          }
+          return {users, accessesByUserId}
+        })
+
+      // Passport count
+      const allAccesses = _.flattenDeep(Object.values(accessesByUserId))
+      const passportsCountByStatus = getPassportsCountPerStatus(allAccesses)
+
+      // Check-ins per hour
+      const hourlyCheckInsCounts = getHourlyCheckInsCounts(allAccesses)
+
+      const response = {
+        group,
+        asOfDateTime,
+        users,
+        accessesByUserId,
+        passportsCountByStatus,
+        hourlyCheckInsCounts,
+      }
+
+      res.json(actionSucceed(response))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  private mapAccessWithPassportStatus(access: Access): Promise<AccessWithPassportStatus> {
+    return this.passportService
+      .findOneByToken(access.statusToken)
+      .then(({status}) => ({...access, status}))
+  }
+
+  private getAccessesForUserId(
+    userId: string,
+    from: Date,
+    to: Date,
+    live: boolean,
+  ): Promise<AccessWithPassportStatus[]> {
+    return this.accessService
+      .findAllByUserIdAndCreatedAtRange(userId, {
+        from: live ? moment().startOf('day').toDate() : from,
+        to: live ? undefined : to,
+      })
+      .then((accesses) =>
+        accesses.length === 0
+          ? [pendingAccess]
+          : Promise.all(accesses.map((access) => this.mapAccessWithPassportStatus(access))),
+      )
   }
 }
 
