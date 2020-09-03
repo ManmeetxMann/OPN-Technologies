@@ -282,7 +282,7 @@ components:
               type: boolean
             firstName:
               type: string
-            lastNameInitial:
+            lastName:
               type: string
             dependants:
               type: array
@@ -293,7 +293,7 @@ components:
                     type: string
                   firstName:
                     type: string
-                  lastNameInitial:
+                  lastName:
                     type: string
         status:
           type: object

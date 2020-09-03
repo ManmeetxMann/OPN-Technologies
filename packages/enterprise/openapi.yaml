@@ -58,12 +58,12 @@ components:
             properties:
               questionText:
                 type: string
-              id: 
+              id:
                 type: string
-              locale: 
+              locale:
                 type: string
                 enum:
-                  - en-CA 
+                  - en-CA
                   - fr-CA
               questionType:
                 type: string
@@ -77,7 +77,7 @@ components:
                   - button
               placeholder:
                 type: string
-              options: 
+              options:
                 type: array
                 items:
                   type: object
@@ -169,12 +169,8 @@ components:
           type: number
         firstName:
           type: string
-        lastNameInitial:
+        lastName:
           type: string
-          minLength: 1
-          maxLength: 1
-        birthYear:
-          type: number
         base64Photo:
           type: string
         responses:
@@ -183,8 +179,7 @@ components:
             type: string
       required:
         - firstName
-        - lastNameInitial
-        - birthYear
+        - lastName
         - base64Photo
 
     AuthLinkRequestRequest:
@@ -263,14 +258,8 @@ components:
           type: string
         firstName:
           type: string
-        lastNameInitial:
+        lastName:
           type: string
-          minLength: 1
-          maxLength: 1
-        birthYear:
-          type: number
-          minLength: 4
-          maxLength: 4
         base64Photo:
           type: string
         organizationIds:
@@ -280,8 +269,7 @@ components:
             type: string
       required:
         - firstName
-        - lastNameInitial
-        - birthYear
+        - lastName
         - base64Photo
 
     ResponseOfOrganizationConnection:

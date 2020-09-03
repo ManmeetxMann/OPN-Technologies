@@ -57,11 +57,11 @@ components:
           type: string
         firstName:
           type: string
-        lastNameInitial:
+        lastName:
           type: string
       required:
         - firstName
-        - lastNameInitial
+        - lastName
 
     ResponseOfRegistration:
       type: object

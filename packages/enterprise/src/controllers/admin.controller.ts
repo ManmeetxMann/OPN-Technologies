@@ -111,7 +111,7 @@ class AdminController implements IControllerBase {
       await userService.update(connectedUser)
 
       // Change the display name
-      const name = [connectedUser.firstName, connectedUser.lastNameInitial].join(' ')
+      const name = [connectedUser.firstName, connectedUser.lastName].join(' ')
       authService.updateUser(validatedAuthUser.uid, {
         displayName: name,
       })
@@ -140,19 +140,19 @@ class AdminController implements IControllerBase {
           {
             id: '987654321',
             firstName: 'Sean',
-            lastNameInitial: 'S',
+            lastName: 'S',
             badge: 'proceed',
           },
           {
             id: '987654321',
             firstName: 'Sean',
-            lastNameInitial: 'S',
+            lastName: 'S',
             badge: 'proceed',
           },
           {
             id: '987654321',
             firstName: 'Sean',
-            lastNameInitial: 'S',
+            lastName: 'S',
             badge: 'proceed',
           },
         ],
@@ -160,17 +160,17 @@ class AdminController implements IControllerBase {
           {
             id: '987654321',
             firstName: 'Sean',
-            lastNameInitial: 'S',
+            lastName: 'S',
           },
           {
             id: '987654321',
             firstName: 'Sean',
-            lastNameInitial: 'S',
+            lastName: 'S',
           },
           {
             id: '987654321',
             firstName: 'Sean',
-            lastNameInitial: 'S',
+            lastName: 'S',
           },
         ],
         serverTimestamp: now().toISOString(),

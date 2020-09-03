@@ -62,19 +62,19 @@ class AdminController implements IControllerBase {
           {
             id: '987654321',
             firstName: 'Sean',
-            lastNameInitial: 'S',
+            lastName: 'S',
             badge: 'proceed',
           },
           {
             id: '987654321',
             firstName: 'Sean',
-            lastNameInitial: 'S',
+            lastName: 'S',
             badge: 'proceed',
           },
           {
             id: '987654321',
             firstName: 'Sean',
-            lastNameInitial: 'S',
+            lastName: 'S',
             badge: 'proceed',
           },
         ],
@@ -82,17 +82,17 @@ class AdminController implements IControllerBase {
           {
             id: '987654321',
             firstName: 'Sean',
-            lastNameInitial: 'S',
+            lastName: 'S',
           },
           {
             id: '987654321',
             firstName: 'Sean',
-            lastNameInitial: 'S',
+            lastName: 'S',
           },
           {
             id: '987654321',
             firstName: 'Sean',
-            lastNameInitial: 'S',
+            lastName: 'S',
           },
         ],
         serverTimestamp: '2345678987654',
