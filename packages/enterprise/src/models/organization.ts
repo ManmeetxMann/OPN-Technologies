@@ -5,6 +5,7 @@ export type Organization = {
   type: OrganizationType
   allowDependants: boolean
   registrationQuestions?: RegistrationQuestion[]
+  organization_groups?: OrganizationGroup[]
 }
 
 export enum OrganizationType {

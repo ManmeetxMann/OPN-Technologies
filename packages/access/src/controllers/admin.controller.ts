@@ -57,6 +57,11 @@ class AdminController implements IRouteController {
       const access = await this.accessService.findOneByToken(accessToken)
       const passport = await this.passportService.findOneByToken(access.statusToken)
       const user = await this.userService.findOne(userId)
+
+      if (userId !== access.userId) {
+        console.warn(`client calims ${userId} but access has ${access.userId}`)
+      }
+
       if (userId !== access.userId) {
         // TODO: we could remove userId from this request
         throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
@@ -111,7 +116,6 @@ class AdminController implements IRouteController {
       const passport = await this.passportService.findOneByToken(access.statusToken)
       const user = await this.userService.findOne(userId)
       if (userId !== access.userId) {
-        // TODO: we could remove userId from this request
         throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
       }
       const {dependants} = await this.accessService.handleExit(

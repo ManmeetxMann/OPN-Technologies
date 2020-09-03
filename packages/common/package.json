@@ -22,6 +22,8 @@
     },
     "dependencies": {
         "@firestore-simple/admin": "^7.0.2",
+        "@google-cloud/firestore": "^4.2.0",
+        "@google-cloud/pubsub": "^2.3.0",
         "cors": "^2.8.5",
         "crypto": "^1.0.1",
         "dotenv": "^8.2.0",

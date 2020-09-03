@@ -4,7 +4,6 @@ import {NextFunction, Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 
 import Validation from '../../../common/src/utils/validation'
-import {now} from '../../../common/src/utils/times'
 
 import {AuthService} from '../../../common/src/service/auth/auth-service'
 import {AuthLinkProcessRequest, AuthLinkRequestRequest} from '../models/auth-link-request'
@@ -14,6 +13,7 @@ import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized
 import {UserService} from '../../../common/src/service/user/user-service'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {FirebaseManager} from '../../../common/src/utils/firebase'
+import {now} from '../../../common/src/utils/times'
 
 class AdminController implements IControllerBase {
   public path = '/admin'

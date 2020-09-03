@@ -1,5 +1,4 @@
-import fetch from 'node-fetch'
-import {Config} from '../../utils/config'
+import {sendWithTemplate} from './send-email'
 
 export interface MailInfo {
   email: string
@@ -9,8 +8,6 @@ export interface MailInfo {
 
 export abstract class Mail {
   private recipient: MailInfo
-  private static readonly APIKEY = Config.get('EMAIL_PROVIDER_API_KEY')
-  private static readonly APIURL = Config.get('EMAIL_PROVIDER_API_URL')
 
   protected abstract templateId: number
 
@@ -19,28 +16,11 @@ export abstract class Mail {
   }
 
   async send(): Promise<void> {
-    const email = {
-      to: [
-        {
-          email: this.recipient.email,
-          name: this.recipient.name,
-        },
-      ],
-      templateId: this.templateId,
-      params: this.recipient.parameters,
-    }
-
-    // FYI: Their Node and Typescript libraries are garbage!
-    await fetch(Mail.APIURL, {
-      method: 'post',
-      body: JSON.stringify(email),
-      headers: {
-        'Content-Type': 'application/json',
-        accept: 'application/json',
-        'api-key': Mail.APIKEY,
-      },
-    })
-    // const json = await response.json();
-    // console.log(json)
+    await sendWithTemplate(
+      this.recipient.name,
+      this.recipient.email,
+      this.templateId,
+      this.recipient.parameters,
+    )
   }
 }
