@@ -23,15 +23,14 @@ export class UserService {
   }
 
   findOne(id: string): Promise<User> {
-    return this.userRepository.get(id).then((user) => {
+    return this.findOneSilently(id).then((user) => {
       if (!!user) return user
       throw new ResourceNotFoundException(`Cannot find user with id [${id}]`)
     })
   }
 
-  async findOneById(id: string): Promise<User> {
-    const user = await this.userRepository.get(id)
-    return !user ? null : user
+  findOneSilently(id: string): Promise<User | undefined> {
+    return this.userRepository.get(id)
   }
 
   async findOneByAuthUserId(authUserId: string): Promise<User> {

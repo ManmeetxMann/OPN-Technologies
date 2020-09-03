@@ -12,11 +12,23 @@ import moment from 'moment'
 import {serverTimestamp} from '../../../common/src/utils/times'
 import * as _ from 'lodash'
 import {PassportStatus} from '../../../passport/src/models/passport'
+import {Range} from '../../../common/src/types/range'
+import {AccessStatsFilter} from '../models/access-stats'
 
 // a regular access, but with the names of dependants fetched
 type AccessWithDependantNames = Omit<Access, 'dependants'> & {
   dependants: UserDependant[]
 }
+
+const mapAccessDates = (access: Access): Access => ({
+  ...access,
+  //@ts-ignore
+  createdAt: access.createdAt.toDate().toISOString(),
+  //@ts-ignore
+  enteredAt: access.enteredAt?.toDate().toISOString(),
+  //@ts-ignore
+  exitAt: access.exitAt?.toDate().toISOString(),
+})
 
 export class AccessService {
   private dataStore = new DataStore()
@@ -39,6 +51,7 @@ export class AccessService {
           id,
         }),
     )
+
     return this.identifier
       .getUniqueValue('access')
       .then((token) =>
@@ -178,28 +191,44 @@ export class AccessService {
     })
   }
 
+  findAllByUserIdAndCreatedAtRange(userId: string, createdAtRange: Range<Date>): Promise<Access[]> {
+    let query = this.accessRepository.collection().where('userId', '==', userId)
+    const {from, to} = createdAtRange
+
+    if (from) {
+      query = query.where('createdAt', '>=', createdAtRange.from)
+    }
+    if (to) {
+      query = query.where('createdAt', '<=', createdAtRange.to)
+    }
+
+    return query.fetch().then((accesses) => accesses.map(mapAccessDates))
+  }
+
   getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
-    const today = moment().startOf('day').toDate()
-    return this.dataStore.firestoreORM
+    const today = moment().startOf('day')
+    const fromDate = today.toDate()
+    const toDate = today.add(1, 'day').add(-1, 'second').toDate()
+
+    return this.getStatsWith({locationId, fromDate, toDate}).then((results) =>
+      results.length ? results[0] : this.newStatsFor(locationId),
+    )
+  }
+
+  getStatsWith({locationId, toDate, fromDate}: AccessStatsFilter): Promise<AccessStatsModel[]> {
+    let query = this.dataStore.firestoreORM
       .collection<AccessStatsModel>({path: this.accessStatsRepository.rootPath})
       .where('locationId', '==', locationId)
-      .where('createdAt', '>=', today)
-      .fetch()
-      .then((results) =>
-        results.length === 0
-          ? this.accessStatsRepository.add({
-              locationId,
-              peopleOnPremises: 0,
-              accessDenied: 0,
-              exposures: 0,
-              pendingPassports: 0,
-              proceedPassports: 0,
-              cautionPassports: 0,
-              stopPassports: 0,
-              createdAt: serverTimestamp(),
-            } as AccessStatsModel)
-          : results[0],
-      )
+
+    if (fromDate) {
+      query = query.where('createdAt', '>=', fromDate)
+    }
+
+    if (toDate) {
+      query = query.where('createdAt', '<=', toDate)
+    }
+
+    return query.fetch()
   }
 
   incrementPeopleOnPremises(locationId: string, count = 1): Promise<AccessStatsModel> {
@@ -230,5 +259,19 @@ export class AccessService {
     return this.getTodayStatsForLocation(locationId).then((stats) =>
       this.accessStatsRepository.increment(stats.id, `${status}Passport`, count),
     )
+  }
+
+  private newStatsFor(locationId: string): Promise<AccessStatsModel> {
+    return this.accessStatsRepository.add({
+      locationId,
+      peopleOnPremises: 0,
+      accessDenied: 0,
+      exposures: 0,
+      pendingPassports: 0,
+      proceedPassports: 0,
+      cautionPassports: 0,
+      stopPassports: 0,
+      createdAt: serverTimestamp(),
+    } as AccessStatsModel)
   }
 }

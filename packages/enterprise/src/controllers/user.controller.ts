@@ -29,13 +29,11 @@ class UserController implements IControllerBase {
   // Note: Doesn't handle multiple organizations per user as well as checking an existing connection
   connect = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // TODO Assert birthYear meets legal requirements
-
       const {responses, ...body} = req.body
       body as OrganizationConnectionRequest
       responses as string[]
       // Fetch org and group by key
-      const {key, firstName, lastNameInitial, birthYear, base64Photo} = body
+      const {key, firstName, lastName, base64Photo} = body
 
       // Fetch org by key
       const {organization, group} = await this.organizationService.findOrganizationAndGroupByKey(
@@ -71,8 +69,7 @@ class UserController implements IControllerBase {
       // Create user
       const user = await this.userService.create({
         firstName,
-        lastNameInitial,
-        birthYear,
+        lastName,
         base64Photo,
         organizationIds: [organization.id],
         registrationAnswersByOrganizationId: {[organization.id]: registrationAnswers},

@@ -6,9 +6,7 @@ import DataStore from './datastore'
 export type User = {
   id: string
   firstName: string
-  // to be changed to lastName
-  lastNameInitial: string
-  birthYear: number
+  lastName: string
   base64Photo: string
   organizationIds?: string[]
   admin?: AdminProfile | FieldValue
@@ -27,7 +25,7 @@ export type User = {
 export type UserDependant = {
   id: string
   firstName: string
-  lastNameInitial: string
+  lastName: string
 }
 
 export class UserModel extends DataModel<User> {
