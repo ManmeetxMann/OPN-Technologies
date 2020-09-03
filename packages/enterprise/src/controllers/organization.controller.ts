@@ -101,6 +101,18 @@ class OrganizationController implements IControllerBase {
 
     this.router.use(organizations)
   }
+  private populateZones = async (location: OrganizationLocation, organizationId: string) => {
+    if (location.allowAccess || location.zones) {
+      // location cannot have children
+      return
+    }
+    const zones = await this.organizationService.getLocations(organizationId, location.id)
+    location.zones = zones.map(({id, title, address}) => ({
+      id,
+      title,
+      address,
+    }))
+  }
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -142,6 +154,9 @@ class OrganizationController implements IControllerBase {
         organizationId,
         parentLocationId as string | null,
       )
+      await Promise.all(
+        locations.map(async (location) => this.populateZones(location, organizationId)),
+      )
 
       res.json(actionSucceed(locations))
     } catch (error) {
@@ -153,7 +168,7 @@ class OrganizationController implements IControllerBase {
     try {
       const {organizationId, locationId} = req.params
       const location = await this.organizationService.getLocation(organizationId, locationId)
-
+      await this.populateZones(location, organizationId)
       res.json(actionSucceed(location))
     } catch (error) {
       next(error)

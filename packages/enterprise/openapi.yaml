@@ -118,6 +118,17 @@ components:
         questionnaireId:
           type: string
           nullable: true
+        zones:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+              address:
+                type: string
       required:
         - title
         - attestationRequired
