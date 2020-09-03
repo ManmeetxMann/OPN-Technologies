@@ -89,8 +89,10 @@ export class OrganizationService {
           zip: parent.zip,
           state: parent.state,
           country: parent.country,
+          questionnaireId: parent.questionnaireId,
           ...location,
           parentLocationId: parentId,
+          allowAccess: true,
         }))
       : locations
     return this.getOrganization(organizationId).then(() =>

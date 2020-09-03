@@ -113,15 +113,13 @@ components:
           type: string
         attestationRequired:
           type: boolean
+        allowAccess:
+          type: boolean
         questionnaireId:
           type: string
           nullable: true
       required:
         - title
-        - address
-        - city
-        - state
-        - country
         - attestationRequired
 
     OrganizationGroup:
