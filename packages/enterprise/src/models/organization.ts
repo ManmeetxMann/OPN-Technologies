@@ -46,6 +46,10 @@ export type OrganizationLocation = {
   zip: string
   state: string
   country: string
+  // true if no location has this location as parentLocationId
+  canAccess: boolean
+  // id of location which contains this location
+  parentLocationId?: string | null
 } & OrganizationConfiguration
 
 export type OrganizationConfiguration = {
