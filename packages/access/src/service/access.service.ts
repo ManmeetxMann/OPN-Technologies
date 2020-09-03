@@ -7,9 +7,10 @@ import {firestore} from 'firebase-admin'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {AccessStatsModel, AccessStatsRepository} from '../repository/access-stats.repository'
+import AccessListener from '../effects/addToAttendance'
 import moment from 'moment'
-import * as _ from 'lodash'
 import {serverTimestamp} from '../../../common/src/utils/times'
+import * as _ from 'lodash'
 import {PassportStatus} from '../../../passport/src/models/passport'
 import {Range} from '../../../common/src/types/range'
 import {AccessStatsFilter} from '../models/access-stats'
@@ -34,6 +35,7 @@ export class AccessService {
   private identifier = new IdentifiersModel(this.dataStore)
   private accessRepository = new AccessRepository(this.dataStore)
   private accessStatsRepository = new AccessStatsRepository(this.dataStore)
+  private accessListener = new AccessListener(this.dataStore)
 
   create(
     statusToken: string,
@@ -57,8 +59,8 @@ export class AccessService {
           token,
           locationId,
           statusToken,
-          createdAt: serverTimestamp(),
           userId,
+          createdAt: serverTimestamp(),
           includesGuardian,
           dependants,
         }),
@@ -107,10 +109,14 @@ export class AccessService {
             ? new UserDependantModel(this.dataStore, access.userId).fetchAll()
             : ([] as UserDependant[]),
         )
-        .then((dependants) => ({
-          ...savedAccess,
-          dependants: (dependants ?? []).filter(({id}) => !!savedAccess.dependants[id]),
-        })),
+        .then((dependants) => {
+          // we deliberately don't await this, the user doesn't need to know if it goes through
+          this.accessListener.addEntry(savedAccess)
+          return {
+            ...savedAccess,
+            dependants: (dependants ?? []).filter(({id}) => !!savedAccess.dependants[id]),
+          }
+        }),
     )
   }
 
@@ -169,7 +175,10 @@ export class AccessService {
         .then((dependants) =>
           dependants.filter(({id}) => !!savedAccess.dependants[id] && dependantIds.includes(id)),
         )
-        .then((dependants) => ({...savedAccess, dependants})),
+        .then((dependants) => {
+          this.accessListener.addExit(savedAccess)
+          return {...savedAccess, dependants}
+        }),
     )
   }
 

@@ -86,7 +86,7 @@ components:
 paths:
   /user/status/get:
     post:
-      description: Get user's passport by statusToken or create a pending one if any
+      description: Get user's passport by statusToken or create a pending one if any. Not including userId is deprecated and will be removed
       requestBody:
         content:
           application/json:
@@ -118,7 +118,7 @@ paths:
                 $ref: '#/components/schemas/ResponseOfPassport'
   /user/status/update:
     post:
-      description: Solve badge status based on user's questionnaire answers
+      description: Solve badge status based on user's questionnaire answers. Not including userId is deprecated and will be removed
       requestBody:
         content:
           application/json:

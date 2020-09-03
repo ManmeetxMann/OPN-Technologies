@@ -4,6 +4,7 @@ import DataModel from '../../../common/src/data/datamodel.base'
 export type Attestation = {
   id: string
   answers: Record<number, Record<number, boolean>>
+  userId: string
   locationId: string
   attestationTime: string
   status: PassportStatus

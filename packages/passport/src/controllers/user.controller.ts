@@ -1,5 +1,7 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
+import {PubSub, Topic} from '@google-cloud/pubsub'
+
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {PassportService} from '../services/passport-service'
 import {PassportStatuses, Passport} from '../models/passport'
@@ -8,8 +10,10 @@ import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Attestation} from '../models/attestation'
 import {AttestationService} from '../services/attestation-service'
 import {AccessService} from '../../../access/src/service/access.service'
+import {Config} from '../../../common/src/utils/config'
+import {now} from '../../../common/src/utils/times'
 
-import DataStore from '../../../common/src/data/datastore'
+const TRACE_LENGTH = 48 * 60 * 60 * 1000
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -17,10 +21,25 @@ class UserController implements IControllerBase {
   private passportService = new PassportService()
   private attestationService = new AttestationService()
   private accessService = new AccessService()
-  private datastore = new DataStore()
+  private topic: Topic
 
   constructor() {
     this.initRoutes()
+    try {
+      const pubsub = new PubSub()
+      pubsub
+        .createTopic(Config.get('PUBSUB_TRACE_TOPIC'))
+        .catch((err) => {
+          if (err.code !== 6) {
+            throw err
+          }
+        })
+        .then(() => {
+          this.topic = pubsub.topic(Config.get('PUBSUB_TRACE_TOPIC'))
+        })
+    } catch (error) {
+      if (error.code !== 6) throw error
+    }
   }
 
   public initRoutes(): void {
@@ -73,6 +92,7 @@ class UserController implements IControllerBase {
   }
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
     try {
       // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
       const {locationId, userId} = req.body
@@ -96,9 +116,10 @@ class UserController implements IControllerBase {
           ? PassportStatuses.Caution
           : PassportStatuses.Proceed
 
-      await this.attestationService.save({
+      const saved = await this.attestationService.save({
         answers,
         locationId,
+        userId,
         status: passportStatus,
       } as Attestation)
 
@@ -113,6 +134,19 @@ class UserController implements IControllerBase {
       //   -count,
       // )
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
+        if (userId) {
+          const nowMillis = now().valueOf()
+          this.topic.publish(Buffer.from('trace-required'), {
+            userId,
+            passportStatus,
+            startTime: `${nowMillis - TRACE_LENGTH}`,
+            endTime: `${nowMillis}`,
+          })
+        } else {
+          console.warn(
+            `Could not execute a trace of attestation ${saved.id} because userId was not provided`,
+          )
+        }
         await this.accessService.incrementAccessDenied(locationId, count)
       }
 

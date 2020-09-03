@@ -46,7 +46,7 @@ class InternalController implements IControllerBase {
       await adminApprovalService.create({
         email: email.toLowerCase(),
         enabled: true,
-        showReporting,
+        showReporting: showReporting ?? false,
         adminForLocationIds: locationIds,
         adminForOrganizationId: organizationId,
         adminForGroupIds: groupIds ?? [],
