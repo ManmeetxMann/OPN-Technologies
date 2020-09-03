@@ -116,36 +116,12 @@ components:
         questionnaireId:
           type: string
           nullable: true
-        zones:
-          type: array
-          nullable: true
-          items:
-            $ref: '#/components/schemas/OrganizationLocationZone'
       required:
         - title
         - address
         - city
         - state
         - country
-        - attestationRequired
-
-    OrganizationLocationZone:
-      type: object
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        address:
-          type: string
-        attestationRequired:
-          type: boolean
-        questionnaireId:
-          type: string
-          nullable: true
-      required:
-        - title
-        - address
         - attestationRequired
 
     OrganizationGroup:
