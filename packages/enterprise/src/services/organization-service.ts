@@ -1,4 +1,5 @@
 import DataStore from '../../../common/src/data/datastore'
+import {Config} from '../../../common/src/utils/config'
 import {
   Organization,
   RegistrationQuestion,
@@ -27,6 +28,8 @@ const parsePartialQuestion = (question: RegistrationQuestion): RegistrationQuest
   placeholder: question.placeholder || '',
   options: question.options || [],
 })
+
+const HANDLE_LEGACY_LOCATIONS = Config.get('FEATURE_PARENT_LOCATION_ID_MAY_BE_MISSING') === 'enabled'
 
 export class OrganizationService {
   private dataStore = new DataStore()
@@ -94,7 +97,10 @@ export class OrganizationService {
           parentLocationId: parentId,
           allowAccess: true,
         }))
-      : locations
+      : locations.map((location) => ({
+          ...location,
+          parentLocationId: null,
+        }))
     return this.getOrganization(organizationId).then(() =>
       new OrganizationLocationModel(this.dataStore, organizationId)
         .addAll(locationsToAdd)
@@ -112,11 +118,17 @@ export class OrganizationService {
   }
 
   getLocations(organizationId: string, parentId?: string | null): Promise<OrganizationLocation[]> {
-    return this.getOrganization(organizationId).then(() =>
-      new OrganizationLocationModel(this.dataStore, organizationId).findWhereEqual(
-        'parentId',
+    return this.getOrganization(organizationId).then(() => {
+      if (!parentId && HANDLE_LEGACY_LOCATIONS) {
+        return new OrganizationLocationModel(this.dataStore, organizationId).fetchAll().then(
+          results => results.filter(location => !location.parentLocationId)
+        )
+      }
+      return new OrganizationLocationModel(this.dataStore, organizationId).findWhereEqual(
+        'parentLocationId',
         parentId || null,
       ),
+    }
     )
   }
 
