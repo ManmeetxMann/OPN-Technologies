@@ -2,6 +2,7 @@ import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import IRouteController from '../../../common/src/interfaces/IRouteController.interface'
 import {PassportService} from '../../../passport/src/services/passport-service'
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {AccessService} from '../service/access.service'
 import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {PassportStatuses} from '../../../passport/src/models/passport'
@@ -18,6 +19,7 @@ class AdminController implements IRouteController {
   private passportService = new PassportService()
   private accessService = new AccessService()
   private userService = new UserService()
+  private organizationService = new OrganizationService()
 
   constructor() {
     this.initRoutes()
@@ -58,14 +60,20 @@ class AdminController implements IRouteController {
       const passport = await this.passportService.findOneByToken(access.statusToken)
       const user = await this.userService.findOne(userId)
 
-      if (userId !== access.userId) {
-        console.warn(`client calims ${userId} but access has ${access.userId}`)
+      const location = await this.organizationService.getLocationById(access.locationId)
+
+      if (!location.canAccess) {
+        throw new BadRequestException('Location does not permit direct check-in')
       }
+
+      // TODO: validate that the logged in admin is and admin for this location,
+      //       or for the location's parent if applicable
 
       if (userId !== access.userId) {
         // TODO: we could remove userId from this request
         throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
       }
+
       const responseBody = {
         passport,
         base64Photo: user.base64Photo,

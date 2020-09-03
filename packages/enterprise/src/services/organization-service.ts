@@ -131,6 +131,15 @@ export class OrganizationService {
       })
   }
 
+  async getLocationById(locationId: string): Promise<OrganizationLocation> {
+    // we throw out organization id here but it could be useful
+    const {organizationId, ...location} = await this.organizationRepository.getLocation(locationId)
+    if (!location) {
+      throw new ResourceNotFoundException(`Cannot find location for location-id [${locationId}]`)
+    }
+    return location
+  }
+
   findOrganizationAndGroupByKey(
     key: number,
   ): Promise<{organization: Organization; group: OrganizationGroup}> {
