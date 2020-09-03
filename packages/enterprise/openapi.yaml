@@ -553,6 +553,12 @@ paths:
           schema:
             type: string
 #          required: true
+        - in: query
+          name: parentLocationId
+          schema:
+            type: string
+          description: The parent of the locations (if there is one)
+          required: false
       requestBody:
         content:
           application/json:
@@ -572,6 +578,12 @@ paths:
     get:
       description: Get organization locations
       parameters:
+        - in: query
+          name: parentLocationId
+          schema:
+            type: string
+          description: The parent of the locations (if there is one)
+          required: false
         - in: path
           name: organizationId
           schema:

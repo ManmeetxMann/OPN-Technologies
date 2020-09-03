@@ -67,6 +67,7 @@ jobs:
 
           # Features
           FEATURE_CREATE_TOKEN_PERMISSIVE_MODE=enabled
+          FEATURE_PARENT_LOCATION_ID_MAY_BE_MISSING=enabled
         write-mode: overwrite
     - run: npm run cd-deploy-enterprise
     - run: npm run cd-deploy-apidocs

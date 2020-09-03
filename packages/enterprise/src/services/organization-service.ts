@@ -1,4 +1,5 @@
 import DataStore from '../../../common/src/data/datastore'
+import {Config} from '../../../common/src/utils/config'
 import {
   Organization,
   RegistrationQuestion,
@@ -27,6 +28,9 @@ const parsePartialQuestion = (question: RegistrationQuestion): RegistrationQuest
   placeholder: question.placeholder || '',
   options: question.options || [],
 })
+
+const HANDLE_LEGACY_LOCATIONS =
+  Config.get('FEATURE_PARENT_LOCATION_ID_MAY_BE_MISSING') === 'enabled'
 
 export class OrganizationService {
   private dataStore = new DataStore()
@@ -68,9 +72,11 @@ export class OrganizationService {
   async addLocations(
     organizationId: string,
     locations: OrganizationLocation[],
-    parentId?: string | null,
+    parentLocationId?: string | null,
   ): Promise<OrganizationLocation[]> {
-    const parent = parentId ? await this.getLocation(organizationId, parentId) : null
+    const parent = parentLocationId
+      ? await this.getLocation(organizationId, parentLocationId)
+      : null
 
     // TODO: Exception type
     if (parent && locations.some((location) => !location.allowAccess)) {
@@ -91,10 +97,13 @@ export class OrganizationService {
           country: parent.country,
           questionnaireId: parent.questionnaireId,
           ...location,
-          parentLocationId: parentId,
+          parentLocationId: parentLocationId,
           allowAccess: true,
         }))
-      : locations
+      : locations.map((location) => ({
+          ...location,
+          parentLocationId: null,
+        }))
     return this.getOrganization(organizationId).then(() =>
       new OrganizationLocationModel(this.dataStore, organizationId)
         .addAll(locationsToAdd)
@@ -111,13 +120,21 @@ export class OrganizationService {
     )
   }
 
-  getLocations(organizationId: string, parentId?: string | null): Promise<OrganizationLocation[]> {
-    return this.getOrganization(organizationId).then(() =>
-      new OrganizationLocationModel(this.dataStore, organizationId).findWhereEqual(
-        'parentId',
-        parentId || null,
-      ),
-    )
+  getLocations(
+    organizationId: string,
+    parentLocationId?: string | null,
+  ): Promise<OrganizationLocation[]> {
+    return this.getOrganization(organizationId).then(() => {
+      if (!parentLocationId && HANDLE_LEGACY_LOCATIONS) {
+        return new OrganizationLocationModel(this.dataStore, organizationId)
+          .fetchAll()
+          .then((results) => results.filter((location) => !location.parentLocationId))
+      }
+      return new OrganizationLocationModel(this.dataStore, organizationId).findWhereEqual(
+        'parentLocationId',
+        parentLocationId || null,
+      )
+    })
   }
 
   getLocation(organizationId: string, locationId: string): Promise<OrganizationLocation> {
