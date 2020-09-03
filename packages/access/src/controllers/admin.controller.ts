@@ -58,11 +58,7 @@ class AdminController implements IRouteController {
       const passport = await this.passportService.findOneByToken(access.statusToken)
       const user = await this.userService.findOne(userId)
 
-      if (!access.userId) {
-        // old records might not have these fields
-        console.debug(`dynamically assigning ${userId} to access ${access.id}`)
-        access.userId = userId
-      } else if (userId !== access.userId) {
+      if (userId !== access.userId) {
         console.warn(`client calims ${userId} but access has ${access.userId}`)
       }
 
@@ -119,11 +115,7 @@ class AdminController implements IRouteController {
 
       const passport = await this.passportService.findOneByToken(access.statusToken)
       const user = await this.userService.findOne(userId)
-      if (!access.userId) {
-        // old records might not have these fields
-        console.debug(`dynamically assigning ${userId} to access ${access.id}`)
-        access.userId = userId
-      } else if (userId !== access.userId) {
+      if (userId !== access.userId) {
         throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
       }
       const {dependants} = await this.accessService.handleExit(
