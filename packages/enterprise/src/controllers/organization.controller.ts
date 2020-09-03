@@ -75,8 +75,8 @@ class OrganizationController implements IControllerBase {
 
   getLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId} = req.params
-      const locations = await this.organizationService.getLocations(organizationId)
+      const {organizationId, parentId} = req.params
+      const locations = await this.organizationService.getLocations(organizationId, parentId)
 
       res.json(actionSucceed(locations))
     } catch (error) {
