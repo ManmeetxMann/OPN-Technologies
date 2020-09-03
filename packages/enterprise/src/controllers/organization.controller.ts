@@ -120,7 +120,11 @@ class OrganizationController implements IControllerBase {
       const {organizationId} = req.params
       const {parentLocationId} = req.query
       const locations = await this.organizationService
-        .addLocations(organizationId, req.body as OrganizationLocation[], parentLocationId)
+        .addLocations(
+          organizationId,
+          req.body as OrganizationLocation[],
+          parentLocationId as string | null,
+        )
         .catch((error) => {
           throw new HttpException(error.message)
         })
@@ -134,7 +138,10 @@ class OrganizationController implements IControllerBase {
     try {
       const {organizationId} = req.params
       const {parentLocationId} = req.query
-      const locations = await this.organizationService.getLocations(organizationId, parentLocationId)
+      const locations = await this.organizationService.getLocations(
+        organizationId,
+        parentLocationId as string | null,
+      )
 
       res.json(actionSucceed(locations))
     } catch (error) {
