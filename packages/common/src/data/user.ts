@@ -6,6 +6,7 @@ import DataStore from './datastore'
 export type User = {
   id: string
   firstName: string
+  // to be changed to lastName
   lastNameInitial: string
   birthYear: number
   base64Photo: string
