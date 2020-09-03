@@ -51,6 +51,11 @@ export type OrganizationLocation = {
   allowAccess: boolean
   // id of location which contains this location
   parentLocationId?: string | null
+  zones?: {
+    id: string
+    address: string
+    title: string
+  }[]
 } & OrganizationConfiguration
 
 export type OrganizationConfiguration = {
