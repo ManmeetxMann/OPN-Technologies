@@ -453,6 +453,72 @@ components:
               nullable: true
               type: string
 
+    ResponseOfOrganizationGroupStats:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            group:
+              $ref: '#/components/schemas/OrganizationGroup'
+            asOfDateTime:
+              type: string
+              description: The ISO date-time when the stats have been computed
+              example: "2020-09-01T23:17:07.657Z"
+            users:
+              type: array
+              items:
+                $ref: '#/components/schemas/User'
+            accessesByUserId:
+              type: object
+              description: A map of accesses per user-id
+            passportsCountByStatus:
+              type: object
+              description: Total badge count per status
+              properties:
+                pending:
+                  type: number
+                proceed:
+                  type: number
+                caution:
+                  type: number
+                stop:
+                  type: number
+              example:
+                pending: 1
+                proceed: 1
+                caution: 0
+                stop: 0
+            hourlyCheckInsCounts:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                  count:
+                    type: number
+                example: [{"date": "2020-09-01T13:00:00.000Z","count": 1},{"date": "2020-09-01T17:00:00.000Z","count": 1}]
+
+        status:
+          type: object
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
     ResponseOfAdminProfile:
       type: object
       properties:
@@ -573,7 +639,7 @@ paths:
 
   /organizations/{organizationId}/groups:
     post:
-      description: Add groups to an organization (admin access required)
+      description: Add groups to an organization
       parameters:
         - in: path
           name: organizationId
@@ -637,6 +703,30 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationGroup'
+
+  /organizations/{organizationId}/groups/{groupId}/stats:
+    get:
+      description: Get stats for one organization-group (admin access required)
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+        - in: path
+          name: groupId
+          schema:
+            type: string
+      #          required: true
+      responses:
+        '200':
+          description: Successfully compute the stats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationGroupStats'
 
   /organizations/{organizationId}/groups/{groupId}/users:
     post:

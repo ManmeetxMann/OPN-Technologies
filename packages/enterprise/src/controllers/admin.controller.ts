@@ -98,7 +98,7 @@ class AdminController implements IControllerBase {
 
       // Get the proper connected user then
       if (!connectedUser || connectedUser?.id !== connectedId) {
-        connectedUser = await userService.findOneById(connectedId)
+        connectedUser = await userService.findOneSilently(connectedId)
         if (!validatedAuthUser?.email) {
           console.error('ConnectedId is non-existent')
           throw new UnauthorizedException('Unauthorized access')
