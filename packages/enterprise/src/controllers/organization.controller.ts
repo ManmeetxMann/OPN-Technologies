@@ -200,7 +200,8 @@ class OrganizationController implements IControllerBase {
       const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
         throw new HttpException(error.message)
       })
-      const adminGroupIds = (authenticatedUser.admin as AdminProfile).adminForGroupIds.reduce(
+      const admin = authenticatedUser.admin as AdminProfile
+      const adminGroupIds = (admin.adminForGroupIds ?? []).reduce(
         (byId, id) => ({...byId, [id]: id}),
         {},
       )
@@ -217,7 +218,7 @@ class OrganizationController implements IControllerBase {
       const admin = authenticatedUser.admin as AdminProfile
       const group = await this.organizationService.getGroup(organizationId, groupId)
 
-      return admin.adminForGroupIds.includes(group.id)
+      return admin.adminForGroupIds?.includes(group.id)
         ? res.json(actionSucceed(group))
         : replyInsufficientPermission(res)
     } catch (error) {
@@ -256,7 +257,7 @@ class OrganizationController implements IControllerBase {
       const admin = authenticatedUser.admin as AdminProfile
       const group = await this.organizationService.getGroup(organizationId, groupId)
 
-      if (!admin.adminForGroupIds.includes(group.id)) replyInsufficientPermission(res)
+      if (!admin.adminForGroupIds?.includes(group.id)) replyInsufficientPermission(res)
 
       const asOfDateTime = live ? new Date().toISOString() : null
 
