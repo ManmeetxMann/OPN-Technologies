@@ -42,7 +42,7 @@ export const setTime = async (services: Service[], milliseconds: number): Promis
 export const createOrg = async (name: string): Promise<Organization> =>
   post(`${roots.Enterprise}/organizations`, {name}).then(getData)
 
-export const createLoc = async (
+export const createLocation = async (
   organizationId: string,
   title: string,
 ): Promise<OrganizationLocation> => {

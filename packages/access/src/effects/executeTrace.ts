@@ -128,9 +128,7 @@ export default class TraceListener {
           }
         })
 
-        const dateObj = new Date(dailyReport.date)
-        dateObj.setDate(dateObj.getDate() + 1)
-        const endOfDay = dateObj.valueOf()
+        const endOfDay = moment(dailyReport.date).add(1, 'day').toDate().valueOf()
         // TODO: this could be made more efficient with some sorting
         const overlapping = otherUsersAccesses
           .map((access) =>
@@ -146,12 +144,6 @@ export default class TraceListener {
               })),
           )
           .flat()
-        const result = {
-          date: dailyReport.date,
-          locationId: dailyReport.locationId,
-          overlapping,
-          organizationId: '',
-        }
 
         if (!locationPromises[dailyReport.locationId]) {
           // just push the promise so we only query once per location
@@ -159,7 +151,12 @@ export default class TraceListener {
             dailyReport.locationId,
           )
         }
-        result.organizationId = (await locationPromises[dailyReport.locationId]).organizationId
+        const result = {
+          date: dailyReport.date,
+          locationId: dailyReport.locationId,
+          overlapping,
+          organizationId: (await locationPromises[dailyReport.locationId]).organizationId,
+        }
 
         return result
       }),
@@ -225,7 +222,7 @@ export default class TraceListener {
     }
     // TODO: these three can go in parallel
     // TODO: get location names as well
-    const locUsers = (
+    const locationAdmins = (
       await Promise.all(
         locationPages.map((page) =>
           this.userApprovalRepo.findWhereMapKeyContainsAny('profile', 'adminForLocationIds', page),
@@ -280,8 +277,8 @@ export default class TraceListener {
     })
 
     const allRecipients = [
-      ...locUsers,
-      ...orgUsers.filter((orgUser) => !locUsers.some((locUser) => locUser.id === orgUser.id)),
+      ...locationAdmins,
+      ...orgUsers.filter((orgUser) => !locationAdmins.some((locUser) => locUser.id === orgUser.id)),
     ]
       .filter((u) => !u.expired)
       .map((user) => ({

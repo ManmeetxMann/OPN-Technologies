@@ -1,7 +1,7 @@
 import {
   attest,
   createOrg,
-  createLoc,
+  createLocation,
   createAdmin,
   createUser,
   createAccess,
@@ -12,7 +12,7 @@ import {
 
 let now = 1080216000000
 
-const nameSegs = [
+const nameSegments = [
   'Alfa',
   'Bravo',
   'Charlie',
@@ -43,21 +43,20 @@ const nameSegs = [
 // Alfa++++
 // November
 // 4 chars variance/word
-const randSeg = () => nameSegs[Math.floor(Math.random() * nameSegs.length)]
+const randomSegment = () => nameSegments[Math.floor(Math.random() * nameSegments.length)]
 
 // two segments is 99% likely to be unique for 7 elements
 // three segments is 99% likely to be unique for 180 elements
 const getName = (prefix: string, segments: number): string => {
   const arr = new Array(segments)
   arr.fill(0, 0, segments)
-  const segs = arr.map(randSeg)
+  const segs = arr.map(randomSegment)
   return [prefix, ...segs].filter((exists) => exists).join('-')
 }
 
 const getEmail = () => `${getName('', 2)}@stayopn.com`.toLowerCase()
-// const getEmail = () => `david.walker+${getName('', 2)}@stayopn.com`.toLowerCase()
 
-const LOC_COUNT = 7
+const LOCATION_COUNT = 7
 const USER_COUNT = 50
 
 const generate = async () => {
@@ -70,9 +69,9 @@ const generate = async () => {
   let i = 0
   // for some reason createLocations isn't thread safe, so this is done serially
   // TODO: figure out why
-  while (i < LOC_COUNT) {
+  while (i < LOCATION_COUNT) {
     const name = getName('location', 2)
-    const newLoc = await createLoc(org.id, name)
+    const newLoc = await createLocation(org.id, name)
     // console.log(i, name, newLoc)
     locs.push(newLoc)
     i++
@@ -85,7 +84,7 @@ const generate = async () => {
       createAdmin(
         key,
         getName('', 1),
-        randSeg().substr(0, 1),
+        randomSegment().substr(0, 1),
         emails[i],
         [loc.id],
         org.id,
@@ -96,7 +95,7 @@ const generate = async () => {
   const userCountArr = new Array(USER_COUNT)
   userCountArr.fill(0, 0, USER_COUNT)
   const users = await Promise.all(
-    userCountArr.map(() => createUser(key, getName('user', 3), randSeg().substr(0, 1))),
+    userCountArr.map(() => createUser(key, getName('user', 3), randomSegment().substr(0, 1))),
   )
   const attestations = await Promise.all(
     users.map((user, i) => attest(user.id, locs[i % locs.length].id, false)),
