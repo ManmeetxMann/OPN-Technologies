@@ -8,6 +8,8 @@ import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wr
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
+import {User} from '../../../common/src/data/user'
+import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
@@ -60,18 +62,33 @@ class AdminController implements IRouteController {
       const passport = await this.passportService.findOneByToken(access.statusToken)
       const user = await this.userService.findOne(userId)
 
-      const location = await this.organizationService.getLocationById(access.locationId)
+      const {organizationId, ...location} = await this.organizationService.getLocationById(
+        access.locationId,
+      )
 
       if (!location.canAccess) {
         throw new BadRequestException('Location does not permit direct check-in')
       }
-
-      // TODO: validate that the logged in admin is and admin for this location,
-      //       or for the location's parent if applicable
-
       if (userId !== access.userId) {
         // TODO: we could remove userId from this request
         throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
+      }
+
+      const authenticatedUser = res.locals.connectedUser as User
+      const adminForLocations = (authenticatedUser.admin as AdminProfile).adminForLocationIds
+      const adminForOrganization = (authenticatedUser.admin as AdminProfile).adminForOrganizationId
+
+      if (adminForOrganization !== organizationId) {
+        throw new UnauthorizedException(`Not an admin for organization ${organizationId}`)
+      }
+
+      if (
+        !(
+          adminForLocations.includes(location.id) ||
+          (location.parentLocationId && adminForLocations.includes(location.parentLocationId))
+        )
+      ) {
+        throw new UnauthorizedException(`Not an admin for location ${location.id}`)
       }
 
       const responseBody = {
