@@ -66,7 +66,7 @@ class AdminController implements IRouteController {
         access.locationId,
       )
 
-      if (!location.canAccess) {
+      if (!location.allowAccess) {
         throw new BadRequestException('Location does not permit direct check-in')
       }
       if (userId !== access.userId) {

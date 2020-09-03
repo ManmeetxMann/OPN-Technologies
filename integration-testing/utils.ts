@@ -64,7 +64,7 @@ export const createLocation = async (
 export const createAdmin = async (
   key: number,
   firstName: string,
-  lastNameInitial: string,
+  lastName: string,
   email: string,
   locationIds: string[],
   organizationId: string,
@@ -75,7 +75,7 @@ export const createAdmin = async (
     locationIds,
     organizationId,
   })
-  const user = await createUser(key, firstName, lastNameInitial)
+  const user = await createUser(key, firstName, lastName)
   await post(`${roots.Enterprise}/admin/auth/signIn/request`, {
     email,
     // @ts-ignore
@@ -92,12 +92,12 @@ export const createAdmin = async (
 export const createUser = async (
   key: number,
   firstName: string,
-  lastNameInitial: string,
+  lastName: string,
 ): Promise<User> => {
   return post(`${roots.Enterprise}/user/connect/add`, {
     key,
     firstName,
-    lastNameInitial,
+    lastName,
     birthYear: 1999,
     base64Photo: 'www.google.com',
   })
