@@ -29,7 +29,8 @@ const parsePartialQuestion = (question: RegistrationQuestion): RegistrationQuest
   options: question.options || [],
 })
 
-const HANDLE_LEGACY_LOCATIONS = Config.get('FEATURE_PARENT_LOCATION_ID_MAY_BE_MISSING') === 'enabled'
+const HANDLE_LEGACY_LOCATIONS =
+  Config.get('FEATURE_PARENT_LOCATION_ID_MAY_BE_MISSING') === 'enabled'
 
 export class OrganizationService {
   private dataStore = new DataStore()
@@ -120,16 +121,15 @@ export class OrganizationService {
   getLocations(organizationId: string, parentId?: string | null): Promise<OrganizationLocation[]> {
     return this.getOrganization(organizationId).then(() => {
       if (!parentId && HANDLE_LEGACY_LOCATIONS) {
-        return new OrganizationLocationModel(this.dataStore, organizationId).fetchAll().then(
-          results => results.filter(location => !location.parentLocationId)
-        )
+        return new OrganizationLocationModel(this.dataStore, organizationId)
+          .fetchAll()
+          .then((results) => results.filter((location) => !location.parentLocationId))
       }
       return new OrganizationLocationModel(this.dataStore, organizationId).findWhereEqual(
         'parentLocationId',
         parentId || null,
-      ),
-    }
-    )
+      )
+    })
   }
 
   getLocation(organizationId: string, locationId: string): Promise<OrganizationLocation> {
