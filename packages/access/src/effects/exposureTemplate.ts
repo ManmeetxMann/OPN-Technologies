@@ -1,13 +1,21 @@
 import {ExposureReport} from '../models/trace'
-import {User} from '../../../common/src/data/user'
-import type {Access} from '../models/access'
+import {User, UserDependant} from '../../../common/src/data/user'
+import type {SinglePersonAccess} from '../models/attendance'
 
-const formatName = (user: User): string =>
-  `${user.firstName} ${user.lastName}                             `.substring(0, 46)
+const formatName = (user: User, dependant?: UserDependant): string => {
+  if (!dependant) {
+    return `${user.firstName} ${user.lastName}                             `.substring(0, 46)
+  } else {
+    return `${dependant.firstName} ${dependant.lastName} (${user.firstName} ${user.lastName})                             `.substring(
+      0,
+      46,
+    )
+  }
+}
 
 export const getExposureSection = (
   report: ExposureReport,
-  accesses: Access[],
+  accesses: SinglePersonAccess[],
   users: User[],
   locationName: string,
   sourceUser: User,
@@ -16,12 +24,21 @@ export const getExposureSection = (
     return ''
   }
   const printableAccesses = accesses.map((access) => ({
-    name: formatName(users.find((user) => user.id === access.userId)),
+    name: formatName(
+      users.find((user) => user.id === access.userId),
+      access.dependant,
+    ),
     // @ts-ignore these are timestamps, not dates
     start: access.enteredAt.toDate(),
     // @ts-ignore these are timestamps, not dates
     end: access.exitAt ? access.exitAt.toDate() : {toLocaleTimeString: () => 'END OF DAY'},
   }))
+  const dependantsById = accesses.reduce((byId, access) => {
+    if (access.dependant) {
+      byId[access.dependant.id] = access.dependant
+    }
+    return byId
+  }, {})
   printableAccesses.sort((a, b) => a.start.valueOf() - b.start.valueOf())
   const overlapping = [...report.overlapping]
   overlapping.sort((a, b) => a.start.valueOf() - b.start.valueOf())

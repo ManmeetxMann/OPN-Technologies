@@ -1,7 +1,9 @@
 import type {Access} from './access'
+import type {UserDependant} from '../../../common/src/data/user'
 
-type SinglePersonAccess = Access & {
+export type SinglePersonAccess = Access & {
   dependantId: string | null
+  dependant: UserDependant | null
 }
 
 export type Attendance = {

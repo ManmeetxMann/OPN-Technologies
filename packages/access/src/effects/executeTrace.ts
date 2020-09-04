@@ -3,7 +3,8 @@ import {PubSub} from '@google-cloud/pubsub'
 
 import TraceRepository from '../repository/trace.repository'
 import type {ExposureReport, StopStatus} from '../models/trace'
-import type {Access} from '../models/access'
+// import type {Access} from '../models/access'
+import type {SinglePersonAccess} from '../models/attendance'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -24,9 +25,13 @@ type LocationDescription = {
   title: string
   organizationId: string
 }
-type AccessLookup = Record<string, Record<string, Access[]>>
+type AccessLookup = Record<string, Record<string, SinglePersonAccess[]>>
 
-const overlap = (a: Access, b: Access, latestTime: number): Overlap | null => {
+const overlap = (
+  a: SinglePersonAccess,
+  b: SinglePersonAccess,
+  latestTime: number,
+): Overlap | null => {
   const lastGotIn = a.enteredAt > b.enteredAt ? a.enteredAt : b.enteredAt
   const aExitAt = a.exitAt ?? {toDate: () => new Date(latestTime)}
   const bExitAt = b.exitAt ?? {toDate: () => new Date(latestTime)}
@@ -116,9 +121,8 @@ export default class TraceListener {
 
     const result = await Promise.all(
       accesses.map(async (dailyReport) => {
-        // const mainUser
-        const mainUserAccesses = []
-        const otherUsersAccesses = []
+        const mainUserAccesses: SinglePersonAccess[] = []
+        const otherUsersAccesses: SinglePersonAccess[] = []
 
         dailyReport.accesses.forEach((access) => {
           if (access.userId === userId) {
@@ -140,6 +144,7 @@ export default class TraceListener {
               )
               .map((range) => ({
                 userId: access.userId,
+                dependant: access.dependant,
                 ...range,
               })),
           )

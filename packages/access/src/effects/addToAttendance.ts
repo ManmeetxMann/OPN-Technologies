@@ -3,6 +3,7 @@ import {AttendanceRepository} from '../repository/attendance.repository'
 import DataStore from '../../../common/src/data/datastore'
 import {FieldValue} from '@google-cloud/firestore'
 import moment from 'moment'
+import { UserDependantModel } from 'packages/common/src/data/user'
 
 const ACCESS_KEY = 'accesses'
 const USER_MEMO_KEY = 'accessingUsers'
@@ -14,8 +15,10 @@ const dateOf = (access: Access): string => {
 
 export default class AccessListener {
   repo: AttendanceRepository
+  dataStore: DataStore
   constructor(dataStore: DataStore) {
     this.repo = new AttendanceRepository(dataStore)
+    this.dataStore = dataStore
   }
 
   async addEntry(access: Access): Promise<unknown> {
@@ -40,12 +43,21 @@ export default class AccessListener {
     })
 
     const peopleEntering = Object.keys(access.dependants)
+
+    const dependantsById = {}
+    if (peopleEntering.length) {
+      // look this up here so we can access it in attendance without n queries at once
+      const dependants = await new UserDependantModel(this.dataStore, access.userId).fetchAll()
+      dependants.forEach((dependant) => (dependantsById[dependant.id] = dependant))
+    }
+
     if (access.includesGuardian) {
       peopleEntering.push(null)
     }
     const toAdd = peopleEntering.map((dependantId) => ({
       userId: access.userId,
       enteredAt: access.enteredAt,
+      dependant: dependantId ? dependantsById[dependantId] : null,
       dependantId,
     }))
     return this.repo.updateProperties(
@@ -85,6 +97,14 @@ export default class AccessListener {
       )
     })
     const peopleExiting = [...(dependantIds ?? [])]
+
+    const dependantsById = {}
+    if (peopleExiting.length) {
+      // look this up here so we can access it in attendance without n queries at once
+      const dependants = await new UserDependantModel(this.dataStore, access.userId).fetchAll()
+      dependants.forEach((dependant) => (dependantsById[dependant.id] = dependant))
+    }
+
     if (includesGuardian) {
       peopleExiting.push(null)
     }
@@ -106,6 +126,7 @@ export default class AccessListener {
         userId: access.userId,
         enteredAt: access.enteredAt,
         exitAt: dependantId ? access.dependants[dependantId].exitAt : access.exitAt,
+        dependant: dependantId ? dependantsById[dependantId] : null,
         dependantId,
       })
     })

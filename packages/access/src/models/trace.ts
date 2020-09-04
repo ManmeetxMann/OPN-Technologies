@@ -1,4 +1,5 @@
 import {PassportStatuses} from '../../../passport/src/models/passport'
+import {UserDependant} from '../../../common/src/data/user'
 export type StopStatus = PassportStatuses.Caution | PassportStatuses.Stop
 export type Trace = {
   id?: string
@@ -17,5 +18,6 @@ export type ExposureReport = {
     start: Date
     end: Date
     userId: string
+    dependant?: UserDependant
   }[]
 }
