@@ -107,11 +107,16 @@ class OrganizationController implements IControllerBase {
       return
     }
     const zones = await this.organizationService.getLocations(organizationId, location.id)
-    location.zones = zones.map(({id, title, address}) => ({
-      id,
-      title,
-      address,
-    }))
+    location.zones = zones.map(
+      ({id, title, address, attestationRequired, questionnaireId, allowsSelfCheckInOut}) => ({
+        id,
+        title,
+        address,
+        attestationRequired,
+        questionnaireId,
+        allowsSelfCheckInOut,
+      }),
+    )
   }
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
