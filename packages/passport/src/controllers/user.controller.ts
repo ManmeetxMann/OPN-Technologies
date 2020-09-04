@@ -7,7 +7,7 @@ import {PassportService} from '../services/passport-service'
 import {PassportStatuses, Passport} from '../models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
-import {Attestation} from '../models/attestation'
+import {Attestation, AttestationAnswers} from '../models/attestation'
 import {AttestationService} from '../services/attestation-service'
 import {AccessService} from '../../../access/src/service/access.service'
 import {Config} from '../../../common/src/utils/config'
@@ -40,6 +40,27 @@ class UserController implements IControllerBase {
     } catch (error) {
       if (error.code !== 6) throw error
     }
+  }
+
+  // TODO: actually test this against questionnaire "answer keys"
+  private async evaluateAnswers(answers: AttestationAnswers): Promise<PassportStatuses> {
+    // note that this switches us to 0-indexing
+    const responses = [1, 2, 3, 4, 5, 6].map((index) => (answers[index] ? answers[index][1] : null))
+    if (responses[4] !== null && responses[5] !== null) {
+      // 6 response case
+      if (responses.some((response) => response)) {
+        return PassportStatuses.Stop
+      }
+      return PassportStatuses.Proceed
+    }
+    // 4 response case
+    if (responses[1] || responses[2] || responses[3]) {
+      return PassportStatuses.Stop
+    }
+    if (responses[0]) {
+      return PassportStatuses.Caution
+    }
+    return PassportStatuses.Proceed
   }
 
   public initRoutes(): void {
@@ -92,9 +113,7 @@ class UserController implements IControllerBase {
   }
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
     try {
-      // Very primitive and temporary solution that assumes 4 boolean answers in the same given order
       const {locationId, userId} = req.body
       const includeGuardian = req.body.includeGuardian ?? true
       if (!includeGuardian) {
@@ -102,19 +121,8 @@ class UserController implements IControllerBase {
       }
 
       const dependantIds: string[] = req.body.dependantIds ?? []
-
-      const answers: Record<number, Record<number, boolean>> = req.body.answers
-      const a1 = answers[1][1]
-      const a2 = answers[2][1]
-      const a3 = answers[3][1]
-      const a4 = answers[4][1]
-
-      const passportStatus =
-        a2 || a3 || a4
-          ? PassportStatuses.Stop
-          : a1
-          ? PassportStatuses.Caution
-          : PassportStatuses.Proceed
+      const answers: AttestationAnswers = req.body.answers
+      const passportStatus = await this.evaluateAnswers(answers)
 
       const saved = await this.attestationService.save({
         answers,

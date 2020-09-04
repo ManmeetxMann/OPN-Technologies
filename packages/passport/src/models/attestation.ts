@@ -1,9 +1,11 @@
 import {PassportStatus} from './passport'
 import DataModel from '../../../common/src/data/datamodel.base'
 
+export type AttestationAnswers = Record<number, Record<number, boolean>>
+
 export type Attestation = {
   id: string
-  answers: Record<number, Record<number, boolean>>
+  answers: AttestationAnswers
   userId: string
   locationId: string
   attestationTime: string
