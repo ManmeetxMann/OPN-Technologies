@@ -65,7 +65,7 @@ export class AccessService {
           dependants,
         }),
       )
-      .then(({id, createdAt, ...access}) => ({
+      .then(({createdAt, ...access}) => ({
         ...access,
         // @ts-ignore
         createdAt: new firestore.Timestamp(createdAt.seconds, createdAt.nanoseconds)
