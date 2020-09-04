@@ -118,6 +118,8 @@ components:
         questionnaireId:
           type: string
           nullable: true
+        allowsSelfCheckInOut:
+          type: boolean
         zones:
           type: array
           items:
@@ -133,6 +135,8 @@ components:
                 type: boolean
               questionnaireId:
                 type: string
+              allowsSelfCheckInOut:
+                type: boolean
       required:
         - title
         - attestationRequired
