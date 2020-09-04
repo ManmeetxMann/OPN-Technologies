@@ -22,6 +22,7 @@ export default class AccessListener {
     if (access.exitAt) {
       throw new Error('called addEntry on an access which already exited')
     }
+
     const date = dateOf(access)
     const path = `${access.locationId}/daily-reports`
     const record = await this.repo.findWhereEqual('date', date, path).then((existing) => {
@@ -37,31 +38,31 @@ export default class AccessListener {
         path,
       )
     })
-    const toAdd = {
+
+    const peopleEntering = Object.keys(access.dependants)
+    if (access.includesGuardian) {
+      peopleEntering.push(null)
+    }
+    const toAdd = peopleEntering.map((dependantId) => ({
       userId: access.userId,
       enteredAt: access.enteredAt,
-    }
-    if (
-      record.accesses.some(
-        (pastAccess) =>
-          pastAccess.userId === toAdd.userId && pastAccess.enteredAt === toAdd.enteredAt,
-      )
-    ) {
-      console.warn('This access was already added to the attendance report')
-      return
-    }
-    // use array union to avoid race conditions
+      dependantId,
+    }))
     return this.repo.updateProperties(
       record.id,
       {
-        [ACCESS_KEY]: FieldValue.arrayUnion(toAdd),
+        [ACCESS_KEY]: FieldValue.arrayUnion(...toAdd),
         accessingUsers: FieldValue.arrayUnion(access.userId),
       },
       path,
     )
   }
 
-  async addExit(access: Access): Promise<unknown> {
+  async addExit(
+    access: Access,
+    includesGuardian: boolean,
+    dependantIds: string[],
+  ): Promise<unknown> {
     if (!access.exitAt) {
       throw new Error('called addExit with a non-exiting Access')
     }
@@ -83,27 +84,45 @@ export default class AccessListener {
         path,
       )
     })
-    const toRemove = record.accesses.find(
-      (pastAccess) =>
-        // @ts-ignore it's a Timestamp, not a string
-        pastAccess.userId === access.userId && pastAccess.enteredAt.isEqual(access.enteredAt),
-    )
-    if (toRemove) {
-      // removing first and then replacing means we can avoid copying the entire array
-      await this.repo.updateProperty(record.id, ACCESS_KEY, FieldValue.arrayRemove(toRemove), path)
-    } else {
-      console.warn('user is exiting but did not enter on this date')
+    const peopleExiting = [...(dependantIds ?? [])]
+    if (includesGuardian) {
+      peopleExiting.push(null)
     }
-    const toAdd = {
-      userId: access.userId,
-      enteredAt: access.enteredAt,
-      exitAt: access.exitAt,
+
+    const toRemove = []
+    const toAdd = []
+    peopleExiting.forEach((dependantId) => {
+      const existingAccess = record.accesses.find(
+        (pastAccess) =>
+          pastAccess.userId === access.userId &&
+          // @ts-ignore it's a Timestamp, not a string
+          pastAccess.enteredAt.isEqual(access.enteredAt) &&
+          pastAccess.dependantId === dependantId,
+      )
+      if (existingAccess) {
+        toRemove.push(existingAccess)
+      }
+      toAdd.push({
+        userId: access.userId,
+        enteredAt: access.enteredAt,
+        exitAt: dependantId ? access.dependants[dependantId].exitAt : access.exitAt,
+        dependantId,
+      })
+    })
+    if (toRemove.length) {
+      // removing first and then replacing means we can avoid copying the entire array
+      await this.repo.updateProperty(
+        record.id,
+        ACCESS_KEY,
+        FieldValue.arrayRemove(...toRemove),
+        path,
+      )
     }
     // use array union to avoid race conditions
     return this.repo.updateProperties(
       record.id,
       {
-        [ACCESS_KEY]: FieldValue.arrayUnion(toAdd),
+        [ACCESS_KEY]: FieldValue.arrayUnion(...toAdd),
         accessingUsers: FieldValue.arrayUnion(access.userId),
       },
       path,

@@ -176,7 +176,7 @@ export class AccessService {
           dependants.filter(({id}) => !!savedAccess.dependants[id] && dependantIds.includes(id)),
         )
         .then((dependants) => {
-          this.accessListener.addExit(savedAccess)
+          this.accessListener.addExit(savedAccess, includesGuardian, dependantIds)
           return {...savedAccess, dependants}
         }),
     )
