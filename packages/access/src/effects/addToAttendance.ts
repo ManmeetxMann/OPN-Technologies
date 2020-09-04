@@ -3,7 +3,7 @@ import {AttendanceRepository} from '../repository/attendance.repository'
 import DataStore from '../../../common/src/data/datastore'
 import {FieldValue} from '@google-cloud/firestore'
 import moment from 'moment'
-import { UserDependantModel } from 'packages/common/src/data/user'
+import { UserDependantModel } from '../../../common/src/data/user'
 
 const ACCESS_KEY = 'accesses'
 const USER_MEMO_KEY = 'accessingUsers'

@@ -54,7 +54,7 @@ const getName = (prefix: string, segments: number): string => {
   return [prefix, ...segs].filter((exists) => exists).join('-')
 }
 
-const getEmail = () => `${getName('', 2)}@stayopn.com`.toLowerCase()
+const getEmail = () => `david.walker+${getName('', 2)}@stayopn.com`.toLowerCase()
 
 const LOCATION_COUNT = 7
 const USER_COUNT = 50
@@ -95,7 +95,7 @@ const generate = async () => {
   const userCountArr = new Array(USER_COUNT)
   userCountArr.fill(0, 0, USER_COUNT)
   const users = await Promise.all(
-    userCountArr.map(() => createUser(key, getName('user', 3), randomSegment().substr(0, 1))),
+    userCountArr.map(() => createUser(key, getName('user', 3), randomSegment())),
   )
   const attestations = await Promise.all(
     users.map((user, i) => attest(user.id, locs[i % locs.length].id, false)),

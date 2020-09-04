@@ -51,6 +51,8 @@ export const createLocation = async (
       title,
       address: 'someAddress',
       attestationRequired: true,
+      allowAccess: true,
+      allowsSelfCheckInOut: true,
       city: 'Toronto',
       country: 'CA',
       state: 'ON',
