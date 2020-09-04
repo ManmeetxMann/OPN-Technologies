@@ -129,6 +129,10 @@ components:
                 type: string
               address:
                 type: string
+              attestationRequired:
+                type: boolean
+              questionnaireId:
+                type: string
       required:
         - title
         - attestationRequired
