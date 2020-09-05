@@ -120,11 +120,9 @@ export class AccessService {
     )
   }
 
-  handleExit(
-    access: AccessModel,
-    includesGuardian: boolean,
-    dependantIds: string[],
-  ): Promise<AccessWithDependantNames> {
+  handleExit(access: AccessModel): Promise<AccessWithDependantNames> {
+    const {includesGuardian} = access
+    const dependantIds = Object.keys(access.dependants)
     if (!includesGuardian && !dependantIds.length) {
       throw new BadRequestException('Must specify at least one user')
     }
@@ -132,27 +130,20 @@ export class AccessService {
       if (!!access.exitAt) {
         throw new BadRequestException('Token already used to exit')
       }
-      if (!access.includesGuardian) {
-        throw new Error('Token does not apply to guardian')
-      }
-    }
-    if (dependantIds.some((id) => !access.dependants[id])) {
-      throw new BadRequestException('Token does not include all dependants')
     }
     if (dependantIds.some((id) => !!access.dependants[id].exitAt)) {
       throw new BadRequestException('Token already used to exit')
     }
-    const newDependants = {}
-    for (const id in access.dependants) {
-      if (dependantIds.includes(id)) {
-        newDependants[id] = {
+    const newDependants = dependantIds.reduce(
+      (byId, id) => ({
+        ...byId,
+        [id]: {
           ...access.dependants[id],
           exitAt: serverTimestamp(),
-        }
-      } else {
-        newDependants[id] = access.dependants[id]
-      }
-    }
+        },
+      }),
+      {},
+    )
 
     const newAccess = includesGuardian
       ? {
