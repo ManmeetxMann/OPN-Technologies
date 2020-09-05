@@ -563,6 +563,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfOrganization'
 
+  /organizations/one:
+    get:
+      description: Find one organization by key
+      parameters:
+        - in: query
+          name: key
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfOrganization'
+
   /organizations/{organizationId}/locations:
     post:
       description: Add locations to an organization

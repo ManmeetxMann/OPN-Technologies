@@ -96,6 +96,7 @@ class OrganizationController implements IControllerBase {
     const organizations = Router().use(
       '/organizations',
       Router().post('/', this.create), // TODO: must be a protected route
+      Router().get('/one', this.findOneByKey),
       Router().use('/:organizationId', locations, groups),
     )
 
@@ -126,6 +127,16 @@ class OrganizationController implements IControllerBase {
         .catch((error) => {
           throw new HttpException(error.message)
         })
+      res.json(actionSucceed(organization))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  findOneByKey = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {key} = req.query as {key: string}
+      const organization = await this.organizationService.findOrganizationByKey(parseInt(key))
       res.json(actionSucceed(organization))
     } catch (error) {
       next(error)

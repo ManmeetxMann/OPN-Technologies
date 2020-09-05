@@ -159,6 +159,13 @@ export class OrganizationService {
     }
   }
 
+  findOrganizationByKey(key: number): Promise<Organization> {
+    return this.organizationRepository.findWhereEqual('key', key).then((results) => {
+      if (results.length) return results[0]
+      throw new ResourceNotFoundException(`Cannot find organization with key ${key}`)
+    })
+  }
+
   findOrganizationAndGroupByKey(
     key: number,
   ): Promise<{organization: Organization; group: OrganizationGroup}> {

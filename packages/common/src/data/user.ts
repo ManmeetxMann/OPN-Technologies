@@ -26,6 +26,7 @@ export type UserDependant = {
   id: string
   firstName: string
   lastName: string
+  groupId: string
 }
 
 export class UserModel extends DataModel<User> {
