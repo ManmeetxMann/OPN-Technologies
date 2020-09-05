@@ -161,7 +161,7 @@ export default class TraceListener {
                 return true
               }),
           )
-          .flat()
+          .reduce((flattened, page) => [...flattened, ...page], [])
 
         if (!locationPromises[dailyReport.locationId]) {
           // just push the promise so we only query once per location
@@ -242,7 +242,7 @@ export default class TraceListener {
     //       this.userApprovalRepo.findWhereMapKeyContainsAny('profile', 'adminForLocationIds', page),
     //     ),
     //   )
-    // ).flat()
+    // ).reduce((flattened, page) => [...flattened, ...page], [])
     const organizationAdmins = (
       await Promise.all(
         organizationPages.map((page) =>
