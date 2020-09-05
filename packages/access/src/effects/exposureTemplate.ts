@@ -30,8 +30,9 @@ export const getExposureSection = (
       users.find((user) => user.id === access.userId),
       access.dependant,
     ),
-    // @ts-ignore these are timestamps, not dates
-    start: access.enteredAt.toDate(),
+    start:
+      // @ts-ignore these are timestamps, not dates
+      access.enteredAt ? access.enteredAt.toDate() : {toLocaleTimeString: () => 'START OF DAY'},
     // @ts-ignore these are timestamps, not dates
     end: access.exitAt ? access.exitAt.toDate() : {toLocaleTimeString: () => 'END OF DAY'},
   }))

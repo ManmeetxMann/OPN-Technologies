@@ -30,11 +30,15 @@ type AccessLookup = Record<string, Record<string, SinglePersonAccess[]>>
 const overlap = (
   a: SinglePersonAccess,
   b: SinglePersonAccess,
+  earliestTime: number,
   latestTime: number,
 ): Overlap | null => {
-  const lastGotIn = a.enteredAt > b.enteredAt ? a.enteredAt : b.enteredAt
+  const aEnterAt = a.enteredAt ?? {toDate: () => new Date(earliestTime)}
+  const bEnterAt = b.enteredAt ?? {toDate: () => new Date(earliestTime)}
   const aExitAt = a.exitAt ?? {toDate: () => new Date(latestTime)}
   const bExitAt = b.exitAt ?? {toDate: () => new Date(latestTime)}
+  // @ts-ignore these are timestamps (or fake timestamps), not dates
+  const lastGotIn = aEnterAt.toDate() > bEnterAt.toDate() ? aEnterAt : bEnterAt
   // @ts-ignore these are timestamps (or fake timestamps), not dates
   const firstGotOut = aExitAt.toDate() < bExitAt.toDate() ? aExitAt : bExitAt
   if (lastGotIn > firstGotOut) {
@@ -132,12 +136,13 @@ export default class TraceListener {
           }
         })
         const includedOverlapJSONs = new Set<string>()
+        const startOfDay = moment(dailyReport.date).toDate().valueOf()
         const endOfDay = moment(dailyReport.date).add(1, 'day').toDate().valueOf()
         // TODO: this could be made more efficient with some sorting
         const overlapping = otherUsersAccesses
           .map((access) =>
             mainUserAccesses
-              .map((contaminated) => overlap(contaminated, access, endOfDay))
+              .map((contaminated) => overlap(contaminated, access, startOfDay, endOfDay))
               .filter(
                 (range) =>
                   range && range.end.valueOf() > startTime && range.start.valueOf() < endTime,
@@ -147,8 +152,8 @@ export default class TraceListener {
                 dependant: access.dependant,
                 ...range,
               }))
-              .filter((overlap) => {
-                const json = JSON.stringify(overlap)
+              .filter((overlapRecord) => {
+                const json = JSON.stringify(overlapRecord)
                 if (includedOverlapJSONs.has(json)) {
                   return false
                 }
