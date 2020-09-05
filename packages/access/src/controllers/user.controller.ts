@@ -76,7 +76,7 @@ class UserController implements IRouteController {
 
   exit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId, locationId, accessToken, guardianExiting, dependantIds} = req.body
+      const {organizationId, locationId, accessToken, dependantIds} = req.body
       const location = await this.organizationService.getLocation(organizationId, locationId)
       if (!location.allowsSelfCheckInOut)
         throw new BadRequestException("Location doesn't allow self-check-out")
@@ -94,11 +94,7 @@ class UserController implements IRouteController {
 
       const passport = await this.passportService.findOneByToken(statusToken)
       const {base64Photo} = await this.userService.findOne(userId)
-      await this.accessService.handleExit(
-        access,
-        (guardianExiting ?? includesGuardian) && !exitAt,
-        exitableDependantIds,
-      )
+      await this.accessService.handleExit(access)
 
       res.json(actionSucceed({passport, base64Photo, dependants, includesGuardian}))
     } catch (error) {

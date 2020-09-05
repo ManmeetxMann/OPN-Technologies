@@ -132,7 +132,6 @@ const generate = async () => {
     ),
   )
 
-  const activeAccesses = users.map(() => null)
   // index 0 is whether or not the user is on location, index n is whether dependant n-1 is on location
   const onLocation = users.map(() => null)
   const locIndexes = users.map(() => null)
@@ -146,7 +145,7 @@ const generate = async () => {
     // pick a user at random to act
     const userIndex = Math.floor(Math.random() * users.length)
     const user = users[userIndex]
-    if (!activeAccesses[userIndex]) {
+    if (locIndexes[userIndex] === null) {
       // user should enter a location
       // pick one at random
       const locationIndex = Math.floor(Math.random() * locs.length)
@@ -163,17 +162,22 @@ const generate = async () => {
         dependantIds,
         involved[0],
       )
-      activeAccesses[userIndex] = access
       await scanEntry(user.id, access.token, authIds[locationIndex])
     } else {
       // user should leave their location
-      const access = activeAccesses[userIndex]
       const locIndex = locIndexes[userIndex]
-      activeAccesses[userIndex] = null
+      locIndexes[userIndex] = null
       const involved = onLocation[userIndex]
       const dependantIds = user.dependants
         .map((dep, index) => involved[index + 1] && dep.id)
         .filter((notNull) => notNull)
+      const access = await createAccess(
+        user.id,
+        locs[locIndex].id,
+        attestations[userIndex].statusToken,
+        dependantIds,
+        involved[0],
+      )
       await scanExit(user.id, access.token, authIds[locIndex], dependantIds, involved[0])
     }
   }

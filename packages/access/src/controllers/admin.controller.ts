@@ -117,36 +117,15 @@ class AdminController implements IRouteController {
     try {
       const {accessToken, userId} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
-      const includesGuardian =
-        (req.body.guardianExiting ?? access.includesGuardian) && !access.exitAt
+      const includesGuardian = access.includesGuardian
       // if unspecified, all remaining dependents
-      const dependantIds: string[] = (
-        req.body.exitingDependantIds ?? Object.keys(access.dependants)
-      ).filter((key: string) => !access.dependants[key].exitAt)
-
-      if (!includesGuardian && !dependantIds.length) {
-        // access service would throw an error here, we want to skip the extra queries
-        // and give a more helpful error
-        if (
-          !req.body.hasOwnProperty('guardianExiting') &&
-          !req.body.hasOwnProperty('exitingDependantIds')
-        ) {
-          throw new BadRequestException('Token already used to exit')
-        } else {
-          throw new BadRequestException('All specified users have already exited')
-        }
-      }
 
       const passport = await this.passportService.findOneByToken(access.statusToken)
       const user = await this.userService.findOne(userId)
       if (userId !== access.userId) {
         throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
       }
-      const {dependants} = await this.accessService.handleExit(
-        access,
-        includesGuardian,
-        dependantIds,
-      )
+      const {dependants} = await this.accessService.handleExit(access)
 
       const responseBody = {
         passport,
