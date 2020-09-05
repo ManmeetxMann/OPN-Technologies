@@ -15,8 +15,6 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {OrganizationLocation} from '../../../enterprise/src/models/organization'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {AccessModel} from '../repository/access.repository'
-import * as _ from 'lodash'
 
 // disables the `includeGuardian` parameter. guardians are never included with dependants
 // and always included otherwise
@@ -49,7 +47,7 @@ class UserController implements IRouteController {
 
   enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
     try {
-      const {organizationId, locationId, accessToken, userId} = req.body
+      const {organizationId, locationId, accessToken} = req.body
       const location = await this.organizationService.getLocation(organizationId, locationId)
 
       if (!location.allowsSelfCheckInOut)
@@ -57,18 +55,9 @@ class UserController implements IRouteController {
       if (!location.allowAccess)
         throw new BadRequestException("Location can't be directly checked in to")
 
-      if (location.attestationRequired && !accessToken)
-        throw new BadRequestException(
-          'Access-token is missing while self-attestation is required at that location',
-        )
-      if (!location.attestationRequired && !userId)
-        throw new BadRequestException(
-          'User-id must be provided when self-attestation is NOT required',
-        )
-
       return location.attestationRequired
-        ? await this.enterWithAccessToken(res, location, accessToken)
-        : await this.enterWithoutAttestation(res, location, userId)
+        ? await this.enterWithAttestation(res, location, accessToken)
+        : await this.enterWithoutAttestation(res, location, accessToken)
     } catch (error) {
       next(error)
     }
@@ -76,18 +65,13 @@ class UserController implements IRouteController {
 
   exit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId, locationId, accessToken, dependantIds} = req.body
+      const {organizationId, locationId, accessToken} = req.body
       const location = await this.organizationService.getLocation(organizationId, locationId)
       if (!location.allowsSelfCheckInOut)
         throw new BadRequestException("Location doesn't allow self-check-out")
 
       const access = await this.accessService.findOneByToken(accessToken)
-      const {userId, statusToken, includesGuardian, dependants, exitAt} = access
-      const exitableDependantIds = (dependantIds ?? _.keys(dependants) ?? []).filter(
-        (id) => !access.dependants[id].exitAt,
-      )
-      if (!!exitAt || (!_.isEmpty(access.dependants) && _.isEmpty(exitableDependantIds)))
-        throw new BadRequestException('Access has already being used to exit')
+      const {userId, statusToken, includesGuardian, dependants} = access
 
       if (location.id != access.locationId)
         throw new BadRequestException('Access-location mismatch with the entering location')
@@ -185,7 +169,7 @@ class UserController implements IRouteController {
     res.json(response)
   }
 
-  private async enterWithAccessToken(
+  private async enterWithAttestation(
     res: Response,
     location: OrganizationLocation,
     accessToken: string,
@@ -212,8 +196,10 @@ class UserController implements IRouteController {
   private async enterWithoutAttestation(
     res: Response,
     location: OrganizationLocation,
-    userId: string,
+    accessToken: string,
   ): Promise<unknown> {
+    const access = await this.accessService.findOneByToken(accessToken)
+    const {userId} = access
     const status = await this.attestationService.latestStatus(userId)
     if (['stop', 'caution'].includes(status)) {
       throw new BadRequestException(`curent status is ${status}`)
@@ -221,11 +207,16 @@ class UserController implements IRouteController {
 
     const {base64Photo} = await this.userService.findOne(userId)
     const passport = await this.passportService.create(PassportStatuses.Proceed, userId, [])
-    const {includesGuardian, dependants} = await this.accessService
-      .create(passport.statusToken, location.id, userId, false, [])
-      .then((access) => this.accessService.handleEnter(access as AccessModel))
+    await this.accessService.handleEnter(access)
 
-    return res.json(actionSucceed({passport, base64Photo, dependants, includesGuardian}))
+    return res.json(
+      actionSucceed({
+        passport,
+        base64Photo,
+        dependants: access.dependants,
+        includesGuardian: access.includesGuardian,
+      }),
+    )
   }
 }
 

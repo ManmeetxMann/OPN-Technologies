@@ -96,7 +96,7 @@ components:
         - accessToken
         - userId
 
-    SelfEntryRequest:
+    SelfEntryOrExitRequest:
       type: object
       properties:
         organizationId:
@@ -105,25 +105,10 @@ components:
           type: string
         accessToken:
           type: string
-          description: Must be provided when location requires self-attestation
-        userId:
-          type: string
-          description: Must be provided when location DOESN't require self-attestation
       required:
         - organizationId
         - locationId
-
-    SelfExitRequest:
-      allOf:
-        - $ref: '#/components/schemas/SelfEntryRequest'
-        - type: object
-          properties:
-            guardianExiting:
-              type: boolean
-            dependantIds:
-              type: array
-              items:
-                type: string
+        - accessToken
 
     StatusTokenExchangeRequest:
       type: object
@@ -392,7 +377,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SelfEntryRequest'
+              $ref: '#/components/schemas/SelfEntryOrExitRequest'
       responses:
         '200':
           description: Successfully handled
@@ -408,7 +393,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SelfExitRequest'
+              $ref: '#/components/schemas/SelfEntryOrExitRequest'
       responses:
         '200':
           description: Successfully handled

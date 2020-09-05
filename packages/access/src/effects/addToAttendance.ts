@@ -137,7 +137,7 @@ export default class AccessListener {
       if (existingAccess) {
         toRemove.push(existingAccess)
       }
-      const startTime = existingAccess?.enteredAt
+      const startTime = existingAccess ? existingAccess.enteredAt : null
       toAdd.push({
         userId: access.userId,
         enteredAt: startTime,
