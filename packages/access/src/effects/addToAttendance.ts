@@ -8,7 +8,6 @@ import {UserDependantModel} from '../../../common/src/data/user'
 const ACCESS_KEY = 'accesses'
 const USER_MEMO_KEY = 'accessingUsers'
 
-// assumes that groups always arrive together
 const getEntryTime = (access: Access) => {
   if (access.enteredAt) {
     return access.enteredAt
@@ -16,9 +15,20 @@ const getEntryTime = (access: Access) => {
   return access.dependants[Object.keys(access.dependants)[0]].enteredAt
 }
 
-const dateOf = (access: Access): string => {
+const getExitTime = (access: Access) => {
+  if (access.exitAt) {
+    return access.exitAt
+  }
+  return access.dependants[Object.keys(access.dependants)[0]].exitAt
+}
+
+const dateOfEntry = (access: Access): string => {
   // @ts-ignore it's a timestamp, not a string
   return moment(getEntryTime(access).toDate()).format('YYYY-MM-DD')
+}
+const dateOfExit = (access: Access): string => {
+  // @ts-ignore it's a timestamp, not a string
+  return moment(getExitTime(access).toDate()).format('YYYY-MM-DD')
 }
 
 export default class AccessListener {
@@ -37,7 +47,7 @@ export default class AccessListener {
       throw new Error('called addEntry on an access which already exited')
     }
 
-    const date = dateOf(access)
+    const date = dateOfEntry(access)
     const path = `${access.locationId}/daily-reports`
     const record = await this.repo.findWhereEqual('date', date, path).then((existing) => {
       if (existing.length) {
@@ -86,10 +96,7 @@ export default class AccessListener {
     includesGuardian: boolean,
     dependantIds: string[],
   ): Promise<unknown> {
-    if (!getEntryTime(access)) {
-      throw new Error('called addExit with an access which never entered')
-    }
-    const date = dateOf(access)
+    const date = dateOfExit(access)
     const path = `${access.locationId}/daily-reports`
     const record = await this.repo.findWhereEqual('date', date, path).then((existing) => {
       if (existing.length) {
@@ -123,16 +130,17 @@ export default class AccessListener {
       const existingAccess = record.accesses.find(
         (pastAccess) =>
           pastAccess.userId === access.userId &&
-          // @ts-ignore it's a Timestamp, not a string
-          pastAccess.enteredAt.isEqual(getEntryTime(access)) &&
+          pastAccess.enteredAt &&
+          !pastAccess.exitAt &&
           pastAccess.dependantId === dependantId,
       )
       if (existingAccess) {
         toRemove.push(existingAccess)
       }
+      const startTime = existingAccess?.enteredAt
       toAdd.push({
         userId: access.userId,
-        enteredAt: getEntryTime(access),
+        enteredAt: startTime,
         exitAt: dependantId ? access.dependants[dependantId].exitAt : access.exitAt,
         dependant: dependantId ? dependantsById[dependantId] : null,
         dependantId,
