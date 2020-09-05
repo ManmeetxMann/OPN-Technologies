@@ -1,7 +1,10 @@
 import {firestore} from 'firebase-admin'
 import {PassportStatus} from '../../../passport/src/models/passport'
+import {Range} from '../../../common/src/types/range'
+import {User} from '../../../common/src/data/user'
 
-export type AccessWithPassportStatus = Access & {
+export type AccessWithPassportStatusAndUser = Access & {
+  user: User
   status: PassportStatus
 }
 
@@ -22,4 +25,10 @@ export type Access = {
       exitAt?: string | firestore.FieldValue
     }
   >
+}
+
+export type AccessFilter = {
+  userId?: string
+  locationId?: string
+  betweenCreatedDate?: Range<Date>
 }
