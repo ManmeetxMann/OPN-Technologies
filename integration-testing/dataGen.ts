@@ -64,7 +64,7 @@ const randomPick = (): boolean[] => {
   return randomPick()
 }
 
-const getEmail = () => `david.walker+${getName('', 2)}@stayopn.com`.toLowerCase()
+const getEmail = () => `${getName('', 2)}@stayopn.com`.toLowerCase()
 
 const LOCATION_COUNT = 7
 const USER_COUNT = 50
