@@ -96,7 +96,7 @@ components:
         - accessToken
         - userId
 
-    SelfEntryRequest:
+    SelfEntryOrExitRequest:
       type: object
       properties:
         organizationId:
@@ -109,18 +109,6 @@ components:
         - organizationId
         - locationId
         - accessToken
-
-    SelfExitRequest:
-      allOf:
-        - $ref: '#/components/schemas/SelfEntryRequest'
-        - type: object
-          properties:
-            guardianExiting:
-              type: boolean
-            dependantIds:
-              type: array
-              items:
-                type: string
 
     StatusTokenExchangeRequest:
       type: object
@@ -405,7 +393,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SelfExitRequest'
+              $ref: '#/components/schemas/SelfEntryRequest'
       responses:
         '200':
           description: Successfully handled

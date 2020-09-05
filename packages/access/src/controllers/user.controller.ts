@@ -57,11 +57,6 @@ class UserController implements IRouteController {
       if (!location.allowAccess)
         throw new BadRequestException("Location can't be directly checked in to")
 
-      if (accessToken)
-        throw new BadRequestException(
-          'Access-token is missing ',
-        )
-
       return location.attestationRequired
         ? await this.enterWithAttestation(res, location, accessToken)
         : await this.enterWithoutAttestation(res, location, accessToken)
@@ -72,18 +67,13 @@ class UserController implements IRouteController {
 
   exit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId, locationId, accessToken, dependantIds} = req.body
+      const {organizationId, locationId, accessToken} = req.body
       const location = await this.organizationService.getLocation(organizationId, locationId)
       if (!location.allowsSelfCheckInOut)
         throw new BadRequestException("Location doesn't allow self-check-out")
 
       const access = await this.accessService.findOneByToken(accessToken)
-      const {userId, statusToken, includesGuardian, dependants, exitAt} = access
-      const exitableDependantIds = (dependantIds ?? _.keys(dependants) ?? []).filter(
-        (id) => !access.dependants[id].exitAt,
-      )
-      if (!!exitAt || (!_.isEmpty(access.dependants) && _.isEmpty(exitableDependantIds)))
-        throw new BadRequestException('Access has already being used to exit')
+      const {userId, statusToken, includesGuardian, dependants} = access
 
       if (location.id != access.locationId)
         throw new BadRequestException('Access-location mismatch with the entering location')
