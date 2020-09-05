@@ -253,10 +253,10 @@ export default class TraceListener {
           ),
         ),
       )
-    ).flat()
+    ).reduce((flattened, page) => [...flattened, ...page], [])
     const users = (
       await Promise.all(userPages.map((page) => this.userRepo.findWhereIdIn(page)))
-    ).flat()
+    ).reduce((flattened, page) => [...flattened, ...page], [])
 
     const sourceUser = users.find((u) => u.id === userId)
 
