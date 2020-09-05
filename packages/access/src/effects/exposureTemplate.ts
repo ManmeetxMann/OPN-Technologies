@@ -1,13 +1,23 @@
 import {ExposureReport} from '../models/trace'
-import {User} from '../../../common/src/data/user'
-import type {Access} from '../models/access'
+import {User, UserDependant} from '../../../common/src/data/user'
+import type {SinglePersonAccess} from '../models/attendance'
 
-const formatName = (user: User): string =>
-  `${user.firstName} ${user.lastName}                             `.substring(0, 46)
+const formatName = (user: User, dependant?: UserDependant): string => {
+  if (!dependant) {
+    return `${user.firstName} ${user.lastName}`
+  } else {
+    return `${dependant.firstName} ${dependant.lastName} (${user.firstName} ${user.lastName})`
+  }
+}
+
+const padTo80 = (line: string): string =>
+  `                                                                                ${line}`.slice(
+    -80,
+  )
 
 export const getExposureSection = (
   report: ExposureReport,
-  accesses: Access[],
+  accesses: SinglePersonAccess[],
   users: User[],
   locationName: string,
   sourceUser: User,
@@ -16,7 +26,10 @@ export const getExposureSection = (
     return ''
   }
   const printableAccesses = accesses.map((access) => ({
-    name: formatName(users.find((user) => user.id === access.userId)),
+    name: formatName(
+      users.find((user) => user.id === access.userId),
+      access.dependant,
+    ),
     // @ts-ignore these are timestamps, not dates
     start: access.enteredAt.toDate(),
     // @ts-ignore these are timestamps, not dates
@@ -26,25 +39,28 @@ export const getExposureSection = (
   const overlapping = [...report.overlapping]
   overlapping.sort((a, b) => a.start.valueOf() - b.start.valueOf())
   return `
-------------------------------POTENTIAL EXPOSURES------------------------------
-${report.date}
-Location: ${locationName}
-Source of exposure: ${formatName(sourceUser)}
+------------------------------POTENTIAL EXPOSURES------------------------------<br>
+${report.date}<br>
+Location: ${locationName}<br>
+Source of exposure: ${formatName(sourceUser)}<br>
 ${overlapping
   .map((overlap) => {
     return `    ${formatName(
       users.find((user) => user.id === overlap.userId),
-    )} ${overlap.start.toLocaleTimeString()} - ${overlap.end.toLocaleTimeString()}`
+      overlap.dependant,
+    )}<br>
+${padTo80(`${overlap.start.toLocaleTimeString()} - ${overlap.end.toLocaleTimeString()}`)}<br>
+`
   })
-  .join('\n')}
-----------------------------------ALL ACCESSES---------------------------------
+  .join('\n<br>')}<br>
+----------------------------------ALL ACCESSES---------------------------------<br>
 ${printableAccesses
   .map((printable) => {
-    return `    ${
-      printable.name
-    } ${printable.start.toLocaleTimeString()} - ${printable.end.toLocaleTimeString()}`
+    return `    ${printable.name}<br>
+${padTo80(`${printable.start.toLocaleTimeString()} - ${printable.end.toLocaleTimeString()}`)}
+<br>`
   })
-  .join('\n')}
+  .join('\n<br>')}<br>
   `
 }
 

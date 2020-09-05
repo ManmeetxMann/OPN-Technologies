@@ -4,6 +4,7 @@ import {
   createLocation,
   createAdmin,
   createUser,
+  createDependants,
   createAccess,
   setTime,
   scanEntry,
@@ -54,6 +55,15 @@ const getName = (prefix: string, segments: number): string => {
   return [prefix, ...segs].filter((exists) => exists).join('-')
 }
 
+// give an array of three booleans where at least one is true
+const randomPick = (): boolean[] => {
+  const pick = [0.5, 0.5, 0.5].map((bias) => Math.random() < bias)
+  if (pick.some((selected) => selected)) {
+    return pick
+  }
+  return randomPick()
+}
+
 const getEmail = () => `${getName('', 2)}@stayopn.com`.toLowerCase()
 
 const LOCATION_COUNT = 7
@@ -95,13 +105,36 @@ const generate = async () => {
   const userCountArr = new Array(USER_COUNT)
   userCountArr.fill(0, 0, USER_COUNT)
   const users = await Promise.all(
-    userCountArr.map(() => createUser(key, getName('user', 3), randomSegment().substr(0, 1))),
+    userCountArr.map(() =>
+      createUser(key, getName('user', 3), randomSegment()).then((user) => ({
+        ...user,
+        dependants: [],
+      })),
+    ),
   )
+  for (const user of users) {
+    user.dependants = await createDependants(
+      user.id,
+      [0, 0].map(() => ({
+        firstName: getName('dep', 3),
+        lastName: user.lastName,
+      })),
+    )
+  }
   const attestations = await Promise.all(
-    users.map((user, i) => attest(user.id, locs[i % locs.length].id, false)),
+    users.map((user, i) =>
+      attest(
+        user.id,
+        locs[i % locs.length].id,
+        false,
+        user.dependants.map(({id}) => id),
+      ),
+    ),
   )
 
   const activeAccesses = users.map(() => null)
+  // index 0 is whether or not the user is on location, index n is whether dependant n-1 is on location
+  const onLocation = users.map(() => null)
   const locIndexes = users.map(() => null)
 
   const endTime = now + 1000 * 60 * 60 * 2
@@ -112,28 +145,40 @@ const generate = async () => {
     await setTime(['Access', 'Passport', 'Enterprise'], now)
     // pick a user at random to act
     const userIndex = Math.floor(Math.random() * users.length)
+    const user = users[userIndex]
     if (!activeAccesses[userIndex]) {
       // user should enter a location
       // pick one at random
       const locationIndex = Math.floor(Math.random() * locs.length)
       locIndexes[userIndex] = locationIndex
+      const involved = randomPick()
+      onLocation[userIndex] = involved
+      const dependantIds = user.dependants
+        .map((dep, index) => involved[index + 1] && dep.id)
+        .filter((notNull) => notNull)
       const access = await createAccess(
-        users[userIndex].id,
+        user.id,
         locs[locationIndex].id,
         attestations[userIndex].statusToken,
+        dependantIds,
+        involved[0],
       )
       activeAccesses[userIndex] = access
-      await scanEntry(users[userIndex].id, access.token, authIds[locationIndex])
+      await scanEntry(user.id, access.token, authIds[locationIndex])
     } else {
       // user should leave their location
       const access = activeAccesses[userIndex]
       const locIndex = locIndexes[userIndex]
       activeAccesses[userIndex] = null
-      await scanExit(users[userIndex].id, access.token, authIds[locIndex])
+      const involved = onLocation[userIndex]
+      const dependantIds = user.dependants
+        .map((dep, index) => involved[index + 1] && dep.id)
+        .filter((notNull) => notNull)
+      await scanExit(user.id, access.token, authIds[locIndex], dependantIds, involved[0])
     }
   }
   const sickUserIndex = Math.floor(Math.random() * users.length)
-  await attest(users[sickUserIndex].id, locs[0].id, true)
+  await attest(users[sickUserIndex].id, locs[0].id, true, [])
 }
 
 generate()

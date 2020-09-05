@@ -40,7 +40,10 @@ export const setTime = async (services: Service[], milliseconds: number): Promis
 }
 
 export const createOrg = async (name: string): Promise<Organization> =>
-  post(`${roots.Enterprise}/organizations`, {name}).then(getData)
+  post(`${roots.Enterprise}/organizations`, {
+    name,
+    allowDependants: true,
+  }).then(getData)
 
 export const createLocation = async (
   organizationId: string,
@@ -51,6 +54,8 @@ export const createLocation = async (
       title,
       address: 'someAddress',
       attestationRequired: true,
+      allowAccess: true,
+      allowsSelfCheckInOut: true,
       city: 'Toronto',
       country: 'CA',
       state: 'ON',
@@ -105,16 +110,27 @@ export const createUser = async (
     .then((data) => data.user)
 }
 
+export const createDependants = async (
+  userId: string,
+  dependants: {
+    firstName: string,
+    lastName: string,
+  }[],
+): Promise<unknown[]> => {
+  return post(`${roots.Registry}/v2/users/${userId}/dependants`, dependants).then(getData)
+}
+
 export const attest = async (
   userId: string,
   locationId: string,
   exposed: boolean,
+  dependantIds: string[],
 ): Promise<Passport> => {
   return post(`${roots.Passport}/user/status/update`, {
     statusToken: '',
     userId,
     includeGuardian: true,
-    dependantIds: [],
+    dependantIds,
     locationId,
     answers: {
       1: {1: exposed},
@@ -129,13 +145,15 @@ export const createAccess = async (
   userId: string,
   locationId: string,
   statusToken: string,
+  dependantIds: string[],
+  includeGuardian: boolean,
 ): Promise<Access> => {
   return post(`${roots.Access}/user/createToken`, {
     userId,
     statusToken,
     locationId,
-    dependantIds: [],
-    includeGuardian: true,
+    dependantIds,
+    includeGuardian,
   }).then(getData)
 }
 
@@ -160,14 +178,16 @@ export const scanExit = async (
   userId: string,
   accessToken: string,
   authId: string,
+  dependantIds: string[],
+  includeGuardian: boolean,
 ): Promise<unknown> => {
   return post(
     `${roots.Access}/admin/exit`,
     {
       userId,
       accessToken,
-      includeGuardian: true,
-      dependantIds: [],
+      includeGuardian,
+      dependantIds,
     },
     {
       Authorization: `Bearer ${authId}`,

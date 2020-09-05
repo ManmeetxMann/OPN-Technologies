@@ -154,7 +154,9 @@ export class OrganizationService {
     if (!location) {
       throw new ResourceNotFoundException(`Cannot find location for location-id [${locationId}]`)
     }
-    return location
+    return {
+      ...location,
+    }
   }
 
   findOrganizationAndGroupByKey(

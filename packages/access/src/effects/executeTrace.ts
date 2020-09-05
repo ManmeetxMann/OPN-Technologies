@@ -3,7 +3,8 @@ import {PubSub} from '@google-cloud/pubsub'
 
 import TraceRepository from '../repository/trace.repository'
 import type {ExposureReport, StopStatus} from '../models/trace'
-import type {Access} from '../models/access'
+// import type {Access} from '../models/access'
+import type {SinglePersonAccess} from '../models/attendance'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -24,9 +25,13 @@ type LocationDescription = {
   title: string
   organizationId: string
 }
-type AccessLookup = Record<string, Record<string, Access[]>>
+type AccessLookup = Record<string, Record<string, SinglePersonAccess[]>>
 
-const overlap = (a: Access, b: Access, latestTime: number): Overlap | null => {
+const overlap = (
+  a: SinglePersonAccess,
+  b: SinglePersonAccess,
+  latestTime: number,
+): Overlap | null => {
   const lastGotIn = a.enteredAt > b.enteredAt ? a.enteredAt : b.enteredAt
   const aExitAt = a.exitAt ?? {toDate: () => new Date(latestTime)}
   const bExitAt = b.exitAt ?? {toDate: () => new Date(latestTime)}
@@ -116,9 +121,8 @@ export default class TraceListener {
 
     const result = await Promise.all(
       accesses.map(async (dailyReport) => {
-        // const mainUser
-        const mainUserAccesses = []
-        const otherUsersAccesses = []
+        const mainUserAccesses: SinglePersonAccess[] = []
+        const otherUsersAccesses: SinglePersonAccess[] = []
 
         dailyReport.accesses.forEach((access) => {
           if (access.userId === userId) {
@@ -127,7 +131,7 @@ export default class TraceListener {
             otherUsersAccesses.push(access)
           }
         })
-
+        const includedOverlapJSONs = new Set<string>()
         const endOfDay = moment(dailyReport.date).add(1, 'day').toDate().valueOf()
         // TODO: this could be made more efficient with some sorting
         const overlapping = otherUsersAccesses
@@ -140,8 +144,17 @@ export default class TraceListener {
               )
               .map((range) => ({
                 userId: access.userId,
+                dependant: access.dependant,
                 ...range,
-              })),
+              }))
+              .filter((overlap) => {
+                const json = JSON.stringify(overlap)
+                if (includedOverlapJSONs.has(json)) {
+                  return false
+                }
+                includedOverlapJSONs.add(json)
+                return true
+              }),
           )
           .flat()
 
@@ -218,13 +231,13 @@ export default class TraceListener {
     }
     // TODO: these three can go in parallel
     // TODO: get location names as well
-    const locationAdmins = (
-      await Promise.all(
-        locationPages.map((page) =>
-          this.userApprovalRepo.findWhereMapKeyContainsAny('profile', 'adminForLocationIds', page),
-        ),
-      )
-    ).flat()
+    // const locationAdmins = (
+    //   await Promise.all(
+    //     locationPages.map((page) =>
+    //       this.userApprovalRepo.findWhereMapKeyContainsAny('profile', 'adminForLocationIds', page),
+    //     ),
+    //   )
+    // ).flat()
     const organizationAdmins = (
       await Promise.all(
         organizationPages.map((page) =>
@@ -274,7 +287,9 @@ export default class TraceListener {
 
     const handledIds: Set<string> = new Set()
     // may contain duplicates...
-    const allRecipients = [...locationAdmins, ...organizationAdmins]
+    // in future when we want to send to location admins as well
+    // const allRecipients = [...locationAdmins, ...organizationAdmins]
+    const allRecipients = [...organizationAdmins]
       .filter((u) => {
         if (handledIds.has(u.id)) {
           return false

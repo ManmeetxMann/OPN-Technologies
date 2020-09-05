@@ -23,6 +23,8 @@ export class OrganizationModel extends GroupDataModel<Organization, Organization
     return {
       ...item.value,
       organizationId: item.path[1],
+      // @ts-ignore this doesn't officially exist
+      id: item.value.locationId,
     }
   }
 }
