@@ -218,7 +218,6 @@ class UserController implements IRouteController {
     location: OrganizationLocation,
     userId: string,
   ): Promise<unknown> {
-
     const status = await this.attestationService.latestStatus(userId)
     if (['stop', 'caution'].includes(status)) {
       throw new BadRequestException(`cureent status is ${status}`)

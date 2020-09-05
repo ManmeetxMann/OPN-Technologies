@@ -2,7 +2,7 @@ import DataStore from '../../../common/src/data/datastore'
 import {firestore} from 'firebase-admin'
 import {serverTimestamp} from '../../../common/src/utils/times'
 import {Attestation, AttestationModel} from '../models/attestation'
-import {PassportStatus, PassportStatuses} from '../models/passport'
+import {PassportStatus} from '../models/passport'
 
 export class AttestationService {
   private dataStore = new DataStore()
@@ -23,7 +23,7 @@ export class AttestationService {
       }))
   }
 
-  async latestStatus(userId: string): Promise<PassportStatus | null> {
+  async latestStatus(userId: string): Promise<PassportStatus> {
     const [attestation] = await this.attestationRepository.findWhereEqualWithMax(
       'userId',
       userId,
