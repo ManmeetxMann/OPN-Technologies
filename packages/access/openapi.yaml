@@ -105,13 +105,10 @@ components:
           type: string
         accessToken:
           type: string
-          description: Must be provided when location requires self-attestation
-        userId:
-          type: string
-          description: Must be provided when location DOESN't require self-attestation
       required:
         - organizationId
         - locationId
+        - acessToken
 
     SelfExitRequest:
       allOf:
