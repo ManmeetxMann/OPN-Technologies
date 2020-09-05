@@ -4,14 +4,16 @@ import type {SinglePersonAccess} from '../models/attendance'
 
 const formatName = (user: User, dependant?: UserDependant): string => {
   if (!dependant) {
-    return `${user.firstName} ${user.lastName}                             `.substring(0, 46)
+    return `${user.firstName} ${user.lastName}`
   } else {
-    return `${dependant.firstName} ${dependant.lastName} (${user.firstName} ${user.lastName})                             `.substring(
-      0,
-      46,
-    )
+    return `${dependant.firstName} ${dependant.lastName} (${user.firstName} ${user.lastName})`
   }
 }
+
+const padTo80 = (line: string): string =>
+  `                                                                                ${line}`.slice(
+    -80
+  )
 
 export const getExposureSection = (
   report: ExposureReport,
@@ -33,35 +35,32 @@ export const getExposureSection = (
     // @ts-ignore these are timestamps, not dates
     end: access.exitAt ? access.exitAt.toDate() : {toLocaleTimeString: () => 'END OF DAY'},
   }))
-  const dependantsById = accesses.reduce((byId, access) => {
-    if (access.dependant) {
-      byId[access.dependant.id] = access.dependant
-    }
-    return byId
-  }, {})
   printableAccesses.sort((a, b) => a.start.valueOf() - b.start.valueOf())
   const overlapping = [...report.overlapping]
   overlapping.sort((a, b) => a.start.valueOf() - b.start.valueOf())
   return `
-------------------------------POTENTIAL EXPOSURES------------------------------
-${report.date}
-Location: ${locationName}
-Source of exposure: ${formatName(sourceUser)}
+------------------------------POTENTIAL EXPOSURES------------------------------<br>
+${report.date}<br>
+Location: ${locationName}<br>
+Source of exposure: ${formatName(sourceUser)}<br>
 ${overlapping
   .map((overlap) => {
     return `    ${formatName(
       users.find((user) => user.id === overlap.userId),
-    )} ${overlap.start.toLocaleTimeString()} - ${overlap.end.toLocaleTimeString()}`
+      overlap.dependant,
+    )}<br>
+${padTo80(`${overlap.start.toLocaleTimeString()} - ${overlap.end.toLocaleTimeString()}`)}<br>
+`
   })
-  .join('\n')}
-----------------------------------ALL ACCESSES---------------------------------
+  .join('\n<br>')}<br>
+----------------------------------ALL ACCESSES---------------------------------<br>
 ${printableAccesses
   .map((printable) => {
-    return `    ${
-      printable.name
-    } ${printable.start.toLocaleTimeString()} - ${printable.end.toLocaleTimeString()}`
+    return `    ${printable.name}
+${padTo80(`${printable.start.toLocaleTimeString()} - ${printable.end.toLocaleTimeString()}`)}
+<br>`
   })
-  .join('\n')}
+  .join('\n<br>')}<br>
   `
 }
 

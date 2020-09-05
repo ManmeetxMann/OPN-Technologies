@@ -8,6 +8,7 @@ import {UserDependantModel} from '../../../common/src/data/user'
 const ACCESS_KEY = 'accesses'
 const USER_MEMO_KEY = 'accessingUsers'
 
+// assumes that groups always arrive together
 const getEntryTime = (access: Access) => {
   if (access.enteredAt) {
     return access.enteredAt
@@ -138,11 +139,11 @@ export default class AccessListener {
       })
     })
     if (toRemove.length) {
-      // removing first and then replacing means we can avoid copying the entire array
-      await this.repo.updateProperty(
+      await this.repo.updateProperties(
         record.id,
-        ACCESS_KEY,
-        FieldValue.arrayRemove(...toRemove),
+        {
+          [ACCESS_KEY]: FieldValue.arrayRemove(...toRemove),
+        },
         path,
       )
     }

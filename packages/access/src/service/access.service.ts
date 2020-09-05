@@ -175,8 +175,8 @@ export class AccessService {
         .then((dependants) =>
           dependants.filter(({id}) => !!savedAccess.dependants[id] && dependantIds.includes(id)),
         )
-        .then((dependants) => {
-          this.accessListener.addExit(savedAccess, includesGuardian, dependantIds)
+        .then(async (dependants) => {
+          await this.accessListener.addExit(savedAccess, includesGuardian, dependantIds)
           return {...savedAccess, dependants}
         }),
     )

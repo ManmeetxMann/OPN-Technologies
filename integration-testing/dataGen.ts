@@ -55,8 +55,9 @@ const getName = (prefix: string, segments: number): string => {
   return [prefix, ...segs].filter((exists) => exists).join('-')
 }
 
+// give an array of three booleans where at least one is true
 const randomPick = (): boolean[] => {
-  const pick = [0, 0, 0].map(() => Math.random() > 0.5)
+  const pick = [0.5, 0.5, 0.5].map((bias) => Math.random() < bias)
   if (pick.some((selected) => selected)) {
     return pick
   }
