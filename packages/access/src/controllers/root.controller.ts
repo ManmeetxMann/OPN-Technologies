@@ -14,6 +14,7 @@ class RootController implements IControllerBase {
   public initRoutes(): void {
     this.router.get('/', this.index)
     this.router.post('/setTime', setTime)
+    this.router.post('/triggerReports', setTime)
   }
 
   index = (req: Request, res: Response): void => {

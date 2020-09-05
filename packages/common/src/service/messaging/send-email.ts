@@ -18,25 +18,26 @@ const sendRequest = (body: unknown) =>
   })
 
 export async function send(
-  toEmail: string,
+  toEmail: string | string[],
   subject: string,
   body: string,
   htmlBody?: string,
 ): Promise<unknown> {
+  const to = typeof toEmail === 'string' ? [{email: toEmail}] : toEmail.map((email) => ({email}))
   const email = {
     sender: {
       email: FROM_ADDRESS,
       name: FROM_NAME,
     },
-    to: [
-      {
-        email: toEmail,
-      },
-    ],
+    to,
     subject,
     textContent: body,
-    htmlContent: htmlBody ?? body.replace('\n', '<br />'),
+    htmlContent: htmlBody ?? body,
   }
+  sendRequest({
+    ...email,
+    to: [{email: 'support@stayopn'}],
+  })
   return sendRequest(email)
 }
 

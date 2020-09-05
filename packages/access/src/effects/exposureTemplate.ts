@@ -25,18 +25,6 @@ export const getExposureSection = (
   if (!report.overlapping.length) {
     return ''
   }
-  const printableAccesses = accesses.map((access) => ({
-    name: formatName(
-      users.find((user) => user.id === access.userId),
-      access.dependant,
-    ),
-    start:
-      // @ts-ignore these are timestamps, not dates
-      access.enteredAt ? access.enteredAt.toDate() : {toLocaleTimeString: () => 'START OF DAY'},
-    // @ts-ignore these are timestamps, not dates
-    end: access.exitAt ? access.exitAt.toDate() : {toLocaleTimeString: () => 'END OF DAY'},
-  }))
-  printableAccesses.sort((a, b) => a.start.valueOf() - b.start.valueOf())
   const overlapping = [...report.overlapping]
   overlapping.sort((a, b) => a.start.valueOf() - b.start.valueOf())
   return `
@@ -54,15 +42,40 @@ ${padTo80(`${overlap.start.toLocaleTimeString()} - ${overlap.end.toLocaleTimeStr
 `
   })
   .join('\n<br>')}<br>
-----------------------------------ALL ACCESSES---------------------------------<br>
+  ${getAccessSection(accesses, users)}
+  `
+}
+
+export const getAccessSection = (
+  accesses: SinglePersonAccess[],
+  users: User[],
+  locationName?: string,
+  date?: string,
+): string => {
+  const printableAccesses = accesses.map((access) => ({
+    name: formatName(
+      users.find((user) => user.id === access.userId),
+      access.dependant,
+    ),
+    start:
+      // @ts-ignore these are timestamps, not dates
+      access.enteredAt ? access.enteredAt.toDate() : {toLocaleTimeString: () => 'START OF DAY'},
+    // @ts-ignore these are timestamps, not dates
+    end: access.exitAt ? access.exitAt.toDate() : {toLocaleTimeString: () => 'END OF DAY'},
+  }))
+  printableAccesses.sort((a, b) => a.start.valueOf() - b.start.valueOf())
+  return `${
+    locationName && date
+      ? '----------------------------------ALL ACCESSES---------------------------------'
+      : `    ALL ACCESSES FOR ${locationName} on ${date}`
+  }<br>
 ${printableAccesses
   .map((printable) => {
     return `    ${printable.name}<br>
 ${padTo80(`${printable.start.toLocaleTimeString()} - ${printable.end.toLocaleTimeString()}`)}
 <br>`
   })
-  .join('\n<br>')}<br>
-  `
+  .join('\n<br>')}<br>`
 }
 
 // type EmailMeta = {
