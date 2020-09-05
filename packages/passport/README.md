@@ -24,3 +24,4 @@ To run distribution version (run inside ./dist)
 ```
 npm start
 ```
+deployed on: 09/05/20
