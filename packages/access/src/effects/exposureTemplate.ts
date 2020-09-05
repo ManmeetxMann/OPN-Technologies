@@ -12,7 +12,7 @@ const formatName = (user: User, dependant?: UserDependant): string => {
 
 const padTo80 = (line: string): string =>
   `                                                                                ${line}`.slice(
-    -80
+    -80,
   )
 
 export const getExposureSection = (
@@ -56,7 +56,7 @@ ${padTo80(`${overlap.start.toLocaleTimeString()} - ${overlap.end.toLocaleTimeStr
 ----------------------------------ALL ACCESSES---------------------------------<br>
 ${printableAccesses
   .map((printable) => {
-    return `    ${printable.name}
+    return `    ${printable.name}<br>
 ${padTo80(`${printable.start.toLocaleTimeString()} - ${printable.end.toLocaleTimeString()}`)}
 <br>`
   })

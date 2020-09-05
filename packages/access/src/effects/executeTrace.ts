@@ -131,7 +131,7 @@ export default class TraceListener {
             otherUsersAccesses.push(access)
           }
         })
-
+        const includedOverlapJSONs = new Set<string>()
         const endOfDay = moment(dailyReport.date).add(1, 'day').toDate().valueOf()
         // TODO: this could be made more efficient with some sorting
         const overlapping = otherUsersAccesses
@@ -146,7 +146,15 @@ export default class TraceListener {
                 userId: access.userId,
                 dependant: access.dependant,
                 ...range,
-              })),
+              }))
+              .filter((overlap) => {
+                const json = JSON.stringify(overlap)
+                if (includedOverlapJSONs.has(json)) {
+                  return false
+                }
+                includedOverlapJSONs.add(json)
+                return true
+              }),
           )
           .flat()
 
