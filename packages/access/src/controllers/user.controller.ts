@@ -220,7 +220,7 @@ class UserController implements IRouteController {
   ): Promise<unknown> {
     const status = await this.attestationService.latestStatus(userId)
     if (['stop', 'caution'].includes(status)) {
-      throw new BadRequestException(`cureent status is ${status}`)
+      throw new BadRequestException(`curent status is ${status}`)
     }
 
     const {base64Photo} = await this.userService.findOne(userId)
