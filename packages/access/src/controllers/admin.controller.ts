@@ -77,7 +77,6 @@ class AdminController implements IRouteController {
       const authenticatedUser = res.locals.connectedUser as User
       const adminForLocations = (authenticatedUser.admin as AdminProfile).adminForLocationIds
       const adminForOrganization = (authenticatedUser.admin as AdminProfile).adminForOrganizationId
-
       if (adminForOrganization !== organizationId) {
         throw new UnauthorizedException(`Not an admin for organization ${organizationId}`)
       }

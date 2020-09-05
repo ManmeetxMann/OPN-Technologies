@@ -3,14 +3,21 @@ import {AttendanceRepository} from '../repository/attendance.repository'
 import DataStore from '../../../common/src/data/datastore'
 import {FieldValue} from '@google-cloud/firestore'
 import moment from 'moment'
-import { UserDependantModel } from '../../../common/src/data/user'
+import {UserDependantModel} from '../../../common/src/data/user'
 
 const ACCESS_KEY = 'accesses'
 const USER_MEMO_KEY = 'accessingUsers'
 
+const getEntryTime = (access: Access) => {
+  if (access.enteredAt) {
+    return access.enteredAt
+  }
+  return access.dependants[Object.keys(access.dependants)[0]].enteredAt
+}
+
 const dateOf = (access: Access): string => {
   // @ts-ignore it's a timestamp, not a string
-  return moment(access.enteredAt.toDate()).format('YYYY-MM-DD')
+  return moment(getEntryTime(access).toDate()).format('YYYY-MM-DD')
 }
 
 export default class AccessListener {
@@ -22,6 +29,9 @@ export default class AccessListener {
   }
 
   async addEntry(access: Access): Promise<unknown> {
+    if (!getEntryTime(access)) {
+      throw new Error('called addEntry on an access which never entered')
+    }
     if (access.exitAt) {
       throw new Error('called addEntry on an access which already exited')
     }
@@ -56,7 +66,7 @@ export default class AccessListener {
     }
     const toAdd = peopleEntering.map((dependantId) => ({
       userId: access.userId,
-      enteredAt: access.enteredAt,
+      enteredAt: getEntryTime(access),
       dependant: dependantId ? dependantsById[dependantId] : null,
       dependantId,
     }))
@@ -75,10 +85,7 @@ export default class AccessListener {
     includesGuardian: boolean,
     dependantIds: string[],
   ): Promise<unknown> {
-    if (!access.exitAt) {
-      throw new Error('called addExit with a non-exiting Access')
-    }
-    if (!access.enteredAt) {
+    if (!getEntryTime(access)) {
       throw new Error('called addExit with an access which never entered')
     }
     const date = dateOf(access)
@@ -116,7 +123,7 @@ export default class AccessListener {
         (pastAccess) =>
           pastAccess.userId === access.userId &&
           // @ts-ignore it's a Timestamp, not a string
-          pastAccess.enteredAt.isEqual(access.enteredAt) &&
+          pastAccess.enteredAt.isEqual(getEntryTime(access)) &&
           pastAccess.dependantId === dependantId,
       )
       if (existingAccess) {
@@ -124,7 +131,7 @@ export default class AccessListener {
       }
       toAdd.push({
         userId: access.userId,
-        enteredAt: access.enteredAt,
+        enteredAt: getEntryTime(access),
         exitAt: dependantId ? access.dependants[dependantId].exitAt : access.exitAt,
         dependant: dependantId ? dependantsById[dependantId] : null,
         dependantId,
