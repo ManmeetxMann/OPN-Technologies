@@ -15,8 +15,6 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {OrganizationLocation} from '../../../enterprise/src/models/organization'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {AccessModel} from '../repository/access.repository'
-import * as _ from 'lodash'
 
 // disables the `includeGuardian` parameter. guardians are never included with dependants
 // and always included otherwise
