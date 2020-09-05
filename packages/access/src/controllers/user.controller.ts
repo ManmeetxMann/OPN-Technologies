@@ -4,6 +4,7 @@ import IRouteController from '../../../common/src/interfaces/IRouteController.in
 
 import Validation from '../../../common/src/utils/validation'
 import {PassportService} from '../../../passport/src/services/passport-service'
+import {AttestationService} from '../../../passport/src/services/attestation-service'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {AccessService} from '../service/access.service'
@@ -28,6 +29,7 @@ class UserController implements IRouteController {
   public router = express.Router()
   private organizationService = new OrganizationService()
   private passportService = new PassportService()
+  private attestationService = new AttestationService()
   private accessService = new AccessService()
   private userService = new UserService()
 
@@ -216,6 +218,11 @@ class UserController implements IRouteController {
     location: OrganizationLocation,
     userId: string,
   ): Promise<unknown> {
+    const status = await this.attestationService.latestStatus(userId)
+    if (['stop', 'caution'].includes(status)) {
+      throw new BadRequestException(`curent status is ${status}`)
+    }
+
     const {base64Photo} = await this.userService.findOne(userId)
     const passport = await this.passportService.create(PassportStatuses.Proceed, userId, [])
     const {includesGuardian, dependants} = await this.accessService

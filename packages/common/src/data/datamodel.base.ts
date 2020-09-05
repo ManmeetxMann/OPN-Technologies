@@ -169,6 +169,20 @@ abstract class DataModel<T extends HasId> {
     return this.collection(subPath).where(fieldPath, '==', value).fetch()
   }
 
+  findWhereEqualWithMax(
+    property: string,
+    value: unknown,
+    sortKey: Exclude<keyof T, 'id'>,
+    subPath = '',
+  ): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+    return this.collection(subPath)
+      .where(fieldPath, '==', value)
+      .orderBy(sortKey, 'desc')
+      .limit(1)
+      .fetch()
+  }
+
   findWhereMapHasKeyValueEqual(
     map: string,
     key: string,
