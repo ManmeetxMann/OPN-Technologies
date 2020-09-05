@@ -231,13 +231,13 @@ export default class TraceListener {
     }
     // TODO: these three can go in parallel
     // TODO: get location names as well
-    const locationAdmins = (
-      await Promise.all(
-        locationPages.map((page) =>
-          this.userApprovalRepo.findWhereMapKeyContainsAny('profile', 'adminForLocationIds', page),
-        ),
-      )
-    ).flat()
+    // const locationAdmins = (
+    //   await Promise.all(
+    //     locationPages.map((page) =>
+    //       this.userApprovalRepo.findWhereMapKeyContainsAny('profile', 'adminForLocationIds', page),
+    //     ),
+    //   )
+    // ).flat()
     const organizationAdmins = (
       await Promise.all(
         organizationPages.map((page) =>
@@ -287,7 +287,9 @@ export default class TraceListener {
 
     const handledIds: Set<string> = new Set()
     // may contain duplicates...
-    const allRecipients = [...locationAdmins, ...organizationAdmins]
+    // in future when we want to send to location admins as well
+    // const allRecipients = [...locationAdmins, ...organizationAdmins]
+    const allRecipients = [...organizationAdmins]
       .filter((u) => {
         if (handledIds.has(u.id)) {
           return false
