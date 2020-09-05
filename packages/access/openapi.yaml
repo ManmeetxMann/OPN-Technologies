@@ -108,7 +108,7 @@ components:
       required:
         - organizationId
         - locationId
-        - acessToken
+        - accessToken
 
     SelfExitRequest:
       allOf:
