@@ -1,5 +1,4 @@
 import moment from 'moment'
-import {PubSub} from '@google-cloud/pubsub'
 
 import TraceRepository from '../repository/trace.repository'
 import type {ExposureReport, StopStatus} from '../models/trace'
@@ -7,7 +6,6 @@ import type {ExposureReport, StopStatus} from '../models/trace'
 import type {SinglePersonAccess} from '../models/attendance'
 
 import DataStore from '../../../common/src/data/datastore'
-import {Config} from '../../../common/src/utils/config'
 import {AdminApprovalModel} from '../../../common/src/data/admin'
 
 import {OrganizationModel} from '../../../enterprise/src/repository/organization.repository'
