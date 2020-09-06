@@ -42,6 +42,17 @@ export default class DailyReportAccess extends CollectionGroupModel<TraceModel, 
     return results.map(digest)
   }
 
+  async getAccessesForLocations(
+    locationIds: string[],
+    date: string,
+  ): Promise<AugmentedAttendance[]> {
+    const results = await this.groupGet([
+      ['locationId', 'in', locationIds],
+      ['date', '==', date],
+    ])
+    return results.map(digest)
+  }
+
   async saveTrace(
     reports: ExposureReport[],
     userId: string,

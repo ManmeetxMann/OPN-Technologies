@@ -13,6 +13,7 @@ import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
+import {now} from '../../../common/src/utils/times'
 import moment from 'moment'
 import * as _ from 'lodash'
 
@@ -141,7 +142,7 @@ class AdminController implements IRouteController {
     }
   }
 }
-const nowPlusHour = (amount = 1) => moment().startOf('day').add(amount, 'hours')
+const nowPlusHour = (amount = 1) => moment(now()).startOf('day').add(amount, 'hours')
 
 const fakeCheckInsPerHour = () => [
   {date: nowPlusHour(7), count: 0},
