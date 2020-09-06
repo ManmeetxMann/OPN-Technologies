@@ -69,10 +69,17 @@ export default class TraceListener {
     this.userRepo = new UserModel(dataStore)
   }
 
-  async handleMessage(message: { ack?: any; data?: any; attributes?: any }): Promise<void> {
+  async handleMessage(message: {
+    data: string
+    attributes: {
+      startTime: string
+      endTime: string
+      passportStatus: string
+      userId: string
+    }
+  }): Promise<void> {
     const {data, attributes} = message
     const payload = Buffer.from(data, 'base64').toString()
-    message.ack()
     if (payload !== 'trace-required') {
       return
     }
