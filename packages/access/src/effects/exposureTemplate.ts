@@ -66,8 +66,8 @@ export const getAccessSection = (
   printableAccesses.sort((a, b) => a.start.valueOf() - b.start.valueOf())
   return `${
     locationName && date
-      ? '----------------------------------ALL ACCESSES---------------------------------'
-      : `    ALL ACCESSES FOR ${locationName} on ${date}`
+      ? `    ALL ACCESSES FOR ${locationName} on ${date}`
+      : '----------------------------------ALL ACCESSES---------------------------------'
   }<br>
 ${printableAccesses
   .map((printable) => {
