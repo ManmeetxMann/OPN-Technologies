@@ -74,7 +74,7 @@ const generate = async () => {
 
   // servers must be running
   const org = await createOrg('The Daycare Center')
-  const key = org.organization_groups[0].key
+  const groupId = org.organization_groups[0].id
   const locs = []
   let i = 0
   // for some reason createLocations isn't thread safe, so this is done serially
@@ -92,13 +92,13 @@ const generate = async () => {
   await Promise.all(
     locs.map((loc, i) =>
       createAdmin(
-        key,
         getName('', 1),
         randomSegment().substr(0, 1),
         emails[i],
         [loc.id],
         org.id,
         authIds[i],
+        groupId,
       ),
     ),
   )
@@ -106,7 +106,7 @@ const generate = async () => {
   userCountArr.fill(0, 0, USER_COUNT)
   const users = await Promise.all(
     userCountArr.map(() =>
-      createUser(key, getName('user', 3), randomSegment()).then((user) => ({
+      createUser(org.id, getName('user', 3), randomSegment(), groupId).then((user) => ({
         ...user,
         dependants: [],
       })),
@@ -118,7 +118,9 @@ const generate = async () => {
       [0, 0].map(() => ({
         firstName: getName('dep', 3),
         lastName: user.lastName,
+        groupId,
       })),
+      org.id,
     )
   }
   const attestations = await Promise.all(

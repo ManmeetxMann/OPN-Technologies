@@ -9,7 +9,7 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {AccessStatsModel, AccessStatsRepository} from '../repository/access-stats.repository'
 import AccessListener from '../effects/addToAttendance'
 import moment from 'moment'
-import {serverTimestamp} from '../../../common/src/utils/times'
+import {serverTimestamp, now} from '../../../common/src/utils/times'
 import * as _ from 'lodash'
 import {PassportStatus} from '../../../passport/src/models/passport'
 import {AccessStatsFilter} from '../models/access-stats'
@@ -210,7 +210,7 @@ export class AccessService {
   }
 
   getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
-    const today = moment().startOf('day')
+    const today = moment(now()).startOf('day')
     const fromDate = today.toDate()
     const toDate = today.add(1, 'day').add(-1, 'second').toDate()
 

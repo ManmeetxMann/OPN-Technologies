@@ -67,20 +67,20 @@ export const createLocation = async (
 }
 
 export const createAdmin = async (
-  key: number,
   firstName: string,
   lastName: string,
   email: string,
   locationIds: string[],
   organizationId: string,
   authUserId: string,
+  groupId: string,
 ): Promise<User> => {
   await post(`${roots.Enterprise}/internal/adminApproval/create`, {
     email,
     locationIds,
     organizationId,
   })
-  const user = await createUser(key, firstName, lastName)
+  const user = await createUser(organizationId, firstName, lastName, groupId)
   await post(`${roots.Enterprise}/admin/auth/signIn/request`, {
     email,
     // @ts-ignore
@@ -95,12 +95,14 @@ export const createAdmin = async (
 }
 
 export const createUser = async (
-  key: number,
+  organizationId: string,
   firstName: string,
   lastName: string,
+  groupId: string,
 ): Promise<User> => {
   return post(`${roots.Enterprise}/user/connect/add`, {
-    key,
+    organizationId,
+    groupId,
     firstName,
     lastName,
     birthYear: 1999,
@@ -113,11 +115,15 @@ export const createUser = async (
 export const createDependants = async (
   userId: string,
   dependants: {
-    firstName: string,
-    lastName: string,
+    firstName: string
+    lastName: string
   }[],
+  organizationId: string,
 ): Promise<unknown[]> => {
-  return post(`${roots.Registry}/v2/users/${userId}/dependants`, dependants).then(getData)
+  return post(`${roots.Registry}/v2/users/${userId}/dependants`, {
+    dependants,
+    organizationId,
+  }).then(getData)
 }
 
 export const attest = async (

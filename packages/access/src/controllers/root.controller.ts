@@ -5,6 +5,7 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import {setTime} from '../../../common/src/utils/times'
 import TraceListener from '../effects/executeTrace'
 import ReportSender from '../effects/sendReports'
+import {now} from '../../../common/src/utils/times'
 
 class RootController implements IControllerBase {
   public path = '/'
@@ -31,7 +32,7 @@ class RootController implements IControllerBase {
     const {organizationId, daysAgo} = req.query
 
     const daysNum = parseInt(daysAgo as string | null) || 0
-    const date = moment()
+    const date = moment(now())
       .subtract(daysNum || 0, 'days')
       .format('YYYY-MM-DD')
     try {

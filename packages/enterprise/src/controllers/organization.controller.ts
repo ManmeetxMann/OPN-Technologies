@@ -16,6 +16,7 @@ import {UserService} from '../../../common/src/service/user/user-service'
 import {AccessService} from '../../../access/src/service/access.service'
 import moment from 'moment'
 import {AccessWithPassportStatusAndUser} from '../../../access/src/models/access'
+import {now} from '../../../common/src/utils/times'
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
@@ -352,7 +353,7 @@ class OrganizationController implements IControllerBase {
           userId,
           locationId,
           betweenCreatedDate: {
-            from: live ? moment().startOf('day').toDate() : new Date(from),
+            from: live ? moment(now()).startOf('day').toDate() : new Date(from),
             to: live ? undefined : new Date(to),
           },
         })
