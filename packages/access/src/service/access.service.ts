@@ -8,11 +8,14 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {AccessStatsModel, AccessStatsRepository} from '../repository/access-stats.repository'
 import AccessListener from '../effects/addToAttendance'
-import moment from 'moment'
+import moment from 'moment-timezone'
 import {serverTimestamp, now} from '../../../common/src/utils/times'
 import * as _ from 'lodash'
 import {PassportStatus} from '../../../passport/src/models/passport'
 import {AccessStatsFilter} from '../models/access-stats'
+import {Config} from '../../../common/src/utils/config'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 // a regular access, but with the names of dependants fetched
 type AccessWithDependantNames = Omit<Access, 'dependants'> & {
@@ -210,7 +213,7 @@ export class AccessService {
   }
 
   getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
-    const today = moment(now()).startOf('day')
+    const today = moment(now()).tz(timeZone).startOf('day')
     const fromDate = today.toDate()
     const toDate = today.add(1, 'day').add(-1, 'second').toDate()
 

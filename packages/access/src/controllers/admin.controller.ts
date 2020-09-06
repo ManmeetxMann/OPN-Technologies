@@ -14,8 +14,11 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {now} from '../../../common/src/utils/times'
-import moment from 'moment'
+import moment from 'moment-timezone'
 import * as _ from 'lodash'
+import {Config} from '../../../common/src/utils/config'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 class AdminController implements IRouteController {
   public router = express.Router()
@@ -142,7 +145,7 @@ class AdminController implements IRouteController {
     }
   }
 }
-const nowPlusHour = (amount = 1) => moment(now()).startOf('day').add(amount, 'hours')
+const nowPlusHour = (amount = 1) => moment(now()).tz(timeZone).startOf('day').add(amount, 'hours')
 
 const fakeCheckInsPerHour = () => [
   {date: nowPlusHour(7), count: 0},
