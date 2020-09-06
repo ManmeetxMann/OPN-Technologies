@@ -9,7 +9,6 @@ import {getAccessSection} from './exposureTemplate'
 import {send} from '../../../common/src/service/messaging/send-email'
 import {AttendanceRepository} from '../repository/attendance.repository'
 
-// When triggered, this creates a trace
 export default class ReportSender {
   repo: AttendanceRepository
   dataStore: DataStore
