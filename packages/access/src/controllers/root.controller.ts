@@ -16,7 +16,7 @@ class RootController implements IControllerBase {
   public initRoutes(): void {
     this.router.get('/', this.index)
     this.router.post('/setTime', setTime)
-    this.router.post('/requestTrace', this.requestTrace)
+    this.router.post('/requestTrace', (req: Request, res: Response) => this.requestTrace(req, res))
   }
 
   private async requestTrace(req: Request, res: Response): Promise<void> {
