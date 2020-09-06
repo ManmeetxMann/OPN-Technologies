@@ -158,19 +158,23 @@ components:
     OrganizationConnectionRequest:
       type: object
       properties:
-        key:
-          type: number
+        organizationId:
+          type: string
         firstName:
           type: string
         lastName:
           type: string
         base64Photo:
           type: string
+        groupId:
+          type: string
         responses:
           type: array
           items:
             type: string
       required:
+        - organizationId
+        - groupId
         - firstName
         - lastName
         - base64Photo
@@ -264,6 +268,41 @@ components:
         - firstName
         - lastName
         - base64Photo
+
+    Access:
+      type: object
+      properties:
+        token:
+          type: string
+        userId:
+          type: string
+        statusToken:
+          type: string
+        locationId:
+          type: string
+        createdAt:
+          type: string
+        enteredAt:
+          type: string
+          nullable: true
+        exitAt:
+          type: string
+          nullable: true
+        includesGuardian:
+          type: boolean
+        dependants:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              id:
+                type: string
+              enteredAt:
+                type: string
+                nullable: true
+              exitAt:
+                type: string
+                nullable: true
 
     ResponseOfOrganizationConnection:
       type: object
@@ -446,25 +485,30 @@ components:
               nullable: true
               type: string
 
-    ResponseOfOrganizationGroupStats:
+    ResponseOfOrganizationStats:
       type: object
       properties:
         data:
           type: object
           properties:
-            group:
-              $ref: '#/components/schemas/OrganizationGroup'
             asOfDateTime:
               type: string
               description: The ISO date-time when the stats have been computed
               example: "2020-09-01T23:17:07.657Z"
-            users:
+            accesses:
               type: array
               items:
-                $ref: '#/components/schemas/User'
-            accessesByUserId:
-              type: object
-              description: A map of accesses per user-id
+                type: object
+                allOf:
+                  - $ref: '#/components/schemas/Access'
+                  - type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      status:
+                        type: string
+                        enum: [pending,proceed,caution,stop]
+
             passportsCountByStatus:
               type: object
               description: Total badge count per status
@@ -555,6 +599,23 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Organization'
+      responses:
+        '200':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfOrganization'
+
+  /organizations/one:
+    get:
+      description: Find one organization by key
+      parameters:
+        - in: query
+          name: key
+          schema:
+            type: string
+          required: true
       responses:
         '200':
           description: Successfully created
@@ -685,6 +746,25 @@ paths:
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationGroups'
 
+  /organizations/{organizationId}/groups/public:
+    get:
+      description: Get organization groups (public)
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: false
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationGroups'
+
   /organizations/{organizationId}/groups/{groupId}:
     get:
       description: Get one organization-group (admin access required)
@@ -709,20 +789,24 @@ paths:
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationGroup'
 
-  /organizations/{organizationId}/groups/{groupId}/stats:
+  /organizations/{organizationId}/stats:
     get:
-      description: Get stats for one organization-group (admin access required)
+      description: Get stats for one organization (admin access required)
       parameters:
         - in: path
           name: organizationId
           schema:
             type: string
       #          required: true
-        - in: path
+        - in: query
           name: groupId
           schema:
             type: string
-      #          required: true
+        - in: query
+          name: locationId
+          schema:
+            type: string
+
       responses:
         '200':
           description: Successfully compute the stats
@@ -731,7 +815,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ResponseOfOrganizationGroupStats'
+                  $ref: '#/components/schemas/ResponseOfOrganizationStats'
 
   /organizations/{organizationId}/groups/{groupId}/users:
     post:

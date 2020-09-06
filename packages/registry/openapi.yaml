@@ -59,9 +59,12 @@ components:
           type: string
         lastName:
           type: string
+        groupId:
+          type: string
       required:
         - firstName
         - lastName
+        - groupId
 
     ResponseOfRegistration:
       type: object
@@ -187,9 +190,14 @@ paths:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/UserDependant'
+              type: object
+              properties:
+                organizationId:
+                  type: string
+                dependants:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/UserDependant'
 
       responses:
         "200":

@@ -33,12 +33,11 @@ class UserController implements IControllerBase {
       body as OrganizationConnectionRequest
       responses as string[]
       // Fetch org and group by key
-      const {key, firstName, lastName, base64Photo} = body
+      const {organizationId, firstName, lastName, base64Photo, groupId} = body
 
       // Fetch org by key
-      const {organization, group} = await this.organizationService.findOrganizationAndGroupByKey(
-        key,
-      )
+      const organization = await this.organizationService.findOneById(organizationId)
+      const group = await this.organizationService.getGroup(organization.id, groupId)
       const registrationQuestions = organization.registrationQuestions ?? []
       if (registrationQuestions.length) {
         if (!responses) {
@@ -76,7 +75,7 @@ class UserController implements IControllerBase {
       } as User)
 
       // Add user to group
-      await this.organizationService.addUsersToGroup(organization.id, group.id, [user.id])
+      await this.organizationService.addUserToGroup(organization.id, group.id, user.id)
 
       res.json(actionSucceed({user, organization, group}))
     } catch (error) {

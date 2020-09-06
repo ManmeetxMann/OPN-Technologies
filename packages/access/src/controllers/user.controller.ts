@@ -52,6 +52,7 @@ class UserController implements IRouteController {
 
       if (!location.allowsSelfCheckInOut)
         throw new BadRequestException("Location doesn't allow self-check-in")
+
       if (!location.allowAccess)
         throw new BadRequestException("Location can't be directly checked in to")
 
@@ -180,9 +181,7 @@ class UserController implements IRouteController {
     if (location.id != access.locationId)
       throw new BadRequestException('Access-location mismatch with the entering location')
 
-    const canEnter =
-      passport.status === PassportStatuses.Pending ||
-      (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
+    const canEnter = passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil)
 
     if (canEnter) {
       const {dependants, userId, includesGuardian} = await this.accessService.handleEnter(access)
@@ -202,11 +201,11 @@ class UserController implements IRouteController {
     const {userId} = access
     const status = await this.attestationService.latestStatus(userId)
     if (['stop', 'caution'].includes(status)) {
-      throw new BadRequestException(`curent status is ${status}`)
+      throw new BadRequestException(`current status is ${status}`)
     }
 
     const {base64Photo} = await this.userService.findOne(userId)
-    const passport = await this.passportService.create(PassportStatuses.Proceed, userId, [])
+    const passport = await this.passportService.create(PassportStatuses.Pending, userId, [])
     await this.accessService.handleEnter(access)
 
     return res.json(

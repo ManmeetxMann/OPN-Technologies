@@ -37,6 +37,7 @@ export type OrganizationUsersGroup = {
   id: string
   userId: string
   groupId: string
+  parentUserId?: string
 }
 
 export type OrganizationLocation = {

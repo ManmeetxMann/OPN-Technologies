@@ -2,7 +2,7 @@ import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {UserDependant, UserDependantModel} from '../../../common/src/data/user'
 import DataStore from '../../../common/src/data/datastore'
 import {AccessModel, AccessRepository} from '../repository/access.repository'
-import {Access} from '../models/access'
+import {Access, AccessFilter} from '../models/access'
 import {firestore} from 'firebase-admin'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -12,7 +12,6 @@ import moment from 'moment'
 import {serverTimestamp} from '../../../common/src/utils/times'
 import * as _ from 'lodash'
 import {PassportStatus} from '../../../passport/src/models/passport'
-import {Range} from '../../../common/src/types/range'
 import {AccessStatsFilter} from '../models/access-stats'
 
 // a regular access, but with the names of dependants fetched
@@ -182,17 +181,31 @@ export class AccessService {
     })
   }
 
-  findAllByUserIdAndCreatedAtRange(userId: string, createdAtRange: Range<Date>): Promise<Access[]> {
-    let query = this.accessRepository.collection().where('userId', '==', userId)
-    const {from, to} = createdAtRange
+  findAllWith({userId, betweenCreatedDate, locationId}: AccessFilter): Promise<Access[]> {
+    // @ts-ignore
+    let query = this.accessRepository.collection()
 
-    if (from) {
-      query = query.where('createdAt', '>=', createdAtRange.from)
+    if (userId) {
+      // @ts-ignore
+      query = query.where('userId', '==', userId)
     }
-    if (to) {
-      query = query.where('createdAt', '<=', createdAtRange.to)
+    if (locationId) {
+      // @ts-ignore
+      query = query.where('locationId', '==', locationId)
+    }
+    if (betweenCreatedDate) {
+      const {from, to} = betweenCreatedDate
+      if (from) {
+        // @ts-ignore
+        query = query.where('createdAt', '>=', from)
+      }
+      if (to) {
+        // @ts-ignore
+        query = query.where('createdAt', '<=', to)
+      }
     }
 
+    // @ts-ignore
     return query.fetch().then((accesses) => accesses.map(mapAccessDates))
   }
 
