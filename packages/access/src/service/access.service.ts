@@ -205,8 +205,11 @@ export class AccessService {
       }
     }
 
+    const hasFilter = userId || locationId || betweenCreatedDate
     // @ts-ignore
-    return query.fetch().then((accesses) => accesses.map(mapAccessDates))
+    return (hasFilter ? query.fetch() : query.fetchAll()).then((accesses) =>
+      accesses.map(mapAccessDates),
+    )
   }
 
   getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
