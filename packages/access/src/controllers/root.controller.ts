@@ -21,6 +21,7 @@ class RootController implements IControllerBase {
 
   private async requestTrace(req: Request, res: Response): Promise<void> {
     try {
+      console.log('Trace requested', req.body)
       await this.trace.handleMessage(req.body)
       res.sendStatus(200)
     } catch (err) {
