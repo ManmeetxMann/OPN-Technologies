@@ -297,7 +297,7 @@ export default class TraceListener {
         locReports: user.profile.adminForLocationIds.reduce(
           (flat, id) => [...flat, ...reportsForLocation[id]],
           [],
-        )
+        ),
       }))
     allRecipients.forEach((recipient) =>
       send(
