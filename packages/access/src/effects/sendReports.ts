@@ -1,8 +1,5 @@
-import moment from 'moment'
-
 import TraceRepository from '../repository/trace.repository'
 import DataStore from '../../../common/src/data/datastore'
-import {Config} from '../../../common/src/utils/config'
 import {AdminApprovalModel} from '../../../common/src/data/admin'
 
 import {OrganizationLocationModel} from '../../../enterprise/src/repository/organization.repository'
@@ -19,10 +16,10 @@ export default class ReportSender {
   userRepo: UserModel
   userApprovalRepo: AdminApprovalModel
 
-  constructor(dataStore: DataStore) {
-    this.repo = new TraceRepository(dataStore)
-    this.userRepo = new UserModel(dataStore)
-    this.dataStore = dataStore
+  constructor() {
+    this.dataStore = new DataStore()
+    this.repo = new TraceRepository(this.dataStore)
+    this.userRepo = new UserModel(this.dataStore)
   }
 
   async mailFor(organizationId: string, date: string): Promise<void> {
@@ -35,7 +32,7 @@ export default class ReportSender {
     const reportPages = await Promise.all(
       idPages.map((page) => this.repo.getAccessesForLocations(page, date)),
     )
-    const reports = reportPages.flat()
+    const reports = reportPages.reduce((flattened, page) => [...flattened, ...page], [])
 
     const userIds = new Set<string>()
     reports.forEach((report) => {
@@ -48,7 +45,7 @@ export default class ReportSender {
     }
     const users = (
       await Promise.all(userPages.map((page) => this.userRepo.findWhereIdIn(page)))
-    ).flat()
+    ).reduce((flattened, page) => [...flattened, ...page], [])
     const message = reports
       .map((report) =>
         getAccessSection(
