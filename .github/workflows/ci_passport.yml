@@ -65,6 +65,9 @@ jobs:
           PUBSUB_TRACE_TOPIC=tracing
           PUBSUB_TRACE_SUBSCRIPTION=executeTrace
 
+          # Timezones
+          DEFAULT_TIME_ZONE=America/Toronto
+
           # Features
           FEATURE_CREATE_TOKEN_PERMISSIVE_MODE=enabled
           FEATURE_PARENT_LOCATION_ID_MAY_BE_MISSING=enabled
