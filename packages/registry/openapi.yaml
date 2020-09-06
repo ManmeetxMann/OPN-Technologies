@@ -59,6 +59,8 @@ components:
           type: string
         lastName:
           type: string
+        groupId:
+          type: string
       required:
         - firstName
         - lastName
