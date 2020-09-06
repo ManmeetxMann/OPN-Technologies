@@ -1,4 +1,3 @@
-import TraceRepository from '../repository/trace.repository'
 import DataStore from '../../../common/src/data/datastore'
 import {AdminApprovalModel} from '../../../common/src/data/admin'
 
@@ -8,32 +7,33 @@ import {UserModel} from '../../../common/src/data/user'
 import {getAccessSection} from './exposureTemplate'
 
 import {send} from '../../../common/src/service/messaging/send-email'
+import {AttendanceRepository} from '../repository/attendance.repository'
 
 // When triggered, this creates a trace
 export default class ReportSender {
-  repo: TraceRepository
+  repo: AttendanceRepository
   dataStore: DataStore
   userRepo: UserModel
   userApprovalRepo: AdminApprovalModel
 
   constructor() {
     this.dataStore = new DataStore()
-    this.repo = new TraceRepository(this.dataStore)
+    this.repo = new AttendanceRepository(this.dataStore)
     this.userRepo = new UserModel(this.dataStore)
+    this.userApprovalRepo = new AdminApprovalModel(this.dataStore)
   }
 
   async mailFor(organizationId: string, date: string): Promise<void> {
     const locations = await new OrganizationLocationModel(this.dataStore, organizationId).fetchAll()
     const allIds = locations.map(({id}) => id)
-    const idPages = []
-    for (let i = 0; i < allIds.length; i += 10) {
-      idPages.push(allIds.slice(i, i + 10))
-    }
     const reportPages = await Promise.all(
-      idPages.map((page) => this.repo.getAccessesForLocations(page, date)),
+      allIds.map((locationId) =>
+        this.repo
+          .findWhereEqual('date', date, `${locationId}/daily-reports`)
+          .then((reports) => reports.map((report) => ({...report, locationId}))),
+      ),
     )
     const reports = reportPages.reduce((flattened, page) => [...flattened, ...page], [])
-
     const userIds = new Set<string>()
     reports.forEach((report) => {
       report.accessingUsers.forEach((userId) => userIds.add(userId))
