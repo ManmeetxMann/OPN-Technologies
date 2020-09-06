@@ -290,10 +290,14 @@ export default class TraceListener {
       .filter((u) => !u.expired)
       .map((user) => ({
         email: user.profile.email,
-        orgReports: user.profile.superAdminForOrganizationIds.flatMap(
-          (id) => reportsForOrganization[id],
+        orgReports: user.profile.superAdminForOrganizationIds.reduce(
+          (flat, id) => [...flat, ...reportsForOrganization[id]],
+          [],
         ),
-        locReports: user.profile.adminForLocationIds.flatMap((id) => reportsForLocation[id]),
+        locReports: user.profile.adminForLocationIds.reduce(
+          (flat, id) => [...flat, ...reportsForLocation[id]],
+          [],
+        )
       }))
     allRecipients.forEach((recipient) =>
       send(
