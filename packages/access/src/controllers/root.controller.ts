@@ -16,6 +16,7 @@ class RootController implements IControllerBase {
   public initRoutes(): void {
     this.router.get('/', this.index)
     this.router.post('/setTime', setTime)
+    // use arrow function to ensure 'this' is defined
     this.router.post('/requestTrace', (req: Request, res: Response) => this.requestTrace(req, res))
   }
 
