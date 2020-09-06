@@ -2,11 +2,11 @@ import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
 import {
   Organization,
-  RegistrationQuestion,
   OrganizationGroup,
   OrganizationLocation,
   OrganizationType,
   OrganizationUsersGroup,
+  RegistrationQuestion,
 } from '../models/organization'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {
@@ -265,13 +265,16 @@ export class OrganizationService {
     })
   }
 
-  addUsersToGroup(organizationId: string, groupId: string, userIds: string[]): Promise<void> {
+  addUserToGroup(
+    organizationId: string,
+    groupId: string,
+    userId: string,
+    parentUserId: string = null,
+  ): Promise<void> {
     return this.getGroup(organizationId, groupId).then(async () => {
-      for (const userId of userIds) {
-        const existingEntry = await this.getOneUsersGroup(organizationId, groupId, userId)
-        if (!existingEntry) {
-          await this.getUsersGroupRepositoryFor(organizationId).add({userId, groupId})
-        }
+      const existingEntry = await this.getOneUsersGroup(organizationId, groupId, userId)
+      if (!existingEntry) {
+        await this.getUsersGroupRepositoryFor(organizationId).add({userId, groupId, parentUserId})
       }
     })
   }

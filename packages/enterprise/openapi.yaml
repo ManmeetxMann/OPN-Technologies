@@ -158,7 +158,7 @@ components:
     OrganizationConnectionRequest:
       type: object
       properties:
-        key:
+        organizationId:
           type: number
         firstName:
           type: string
@@ -166,11 +166,15 @@ components:
           type: string
         base64Photo:
           type: string
+        groupId:
+          type: string
         responses:
           type: array
           items:
             type: string
       required:
+        - organizationId
+        - groupId
         - firstName
         - lastName
         - base64Photo

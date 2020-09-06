@@ -1,7 +1,12 @@
 import {NextFunction, Request, Response, Router} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed, of} from '../../../common/src/utils/response-wrapper'
-import {Organization, OrganizationGroup, OrganizationLocation} from '../models/organization'
+import {
+  Organization,
+  OrganizationGroup,
+  OrganizationLocation,
+  OrganizationUsersGroup,
+} from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 import {User} from '../../../common/src/data/user'
@@ -90,7 +95,7 @@ class OrganizationController implements IControllerBase {
         .post('/', this.addGroups)
         .get('/', this.getGroups)
         .get('/:groupId', authMiddleware, this.getGroup)
-        .post('/:groupId/users', this.addUsersToGroup)
+        .post('/users', this.addUsersToGroups)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
     // prettier-ignore
@@ -243,10 +248,15 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  addUsersToGroup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  addUsersToGroups = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId, groupId} = req.params
-      await this.organizationService.addUsersToGroup(organizationId, groupId, req.body as string[])
+      const {organizationId} = req.params
+      const groups = req.body as OrganizationUsersGroup[]
+      await Promise.all(
+        groups.map(({groupId, userId, parentUserId}) =>
+          this.organizationService.addUserToGroup(organizationId, groupId, userId, parentUserId),
+        ),
+      )
 
       res.json(actionSucceed())
     } catch (error) {
