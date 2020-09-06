@@ -10,15 +10,16 @@ import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {AccessService} from '../../../access/src/service/access.service'
 import moment from 'moment'
-import {Access, AccessWithPassportStatus} from '../../../access/src/models/access'
+import {AccessWithPassportStatusAndUser} from '../../../access/src/models/access'
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
-import * as _ from 'lodash'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
+import {Stats, StatsFilter} from '../models/stats'
 
-const pendingAccess: AccessWithPassportStatus = {
+const pendingAccessForUser = (user: User): AccessWithPassportStatusAndUser => ({
   status: PassportStatuses.Pending,
+  user,
   token: null,
   statusToken: null,
   locationId: null,
@@ -28,7 +29,7 @@ const pendingAccess: AccessWithPassportStatus = {
   userId: null,
   includesGuardian: null,
   dependants: null,
-}
+})
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -37,7 +38,7 @@ const replyInsufficientPermission = (res: Response) =>
       of(null, ResponseStatusCodes.AccessDenied, 'Insufficient permissions to fulfil the request'),
     )
 
-const getHourlyCheckInsCounts = (accesses: AccessWithPassportStatus[]): CheckInsCount[] => {
+const getHourlyCheckInsCounts = (accesses: AccessWithPassportStatusAndUser[]): CheckInsCount[] => {
   const countsPerHour: Record<string, number> = {}
   for (const {enteredAt} of accesses) {
     if (enteredAt) {
@@ -51,7 +52,7 @@ const getHourlyCheckInsCounts = (accesses: AccessWithPassportStatus[]): CheckIns
 }
 
 const getPassportsCountPerStatus = (
-  accesses: AccessWithPassportStatus[],
+  accesses: AccessWithPassportStatusAndUser[],
 ): Record<PassportStatus, number> =>
   accesses
     .map(({status}) => status)
@@ -87,17 +88,22 @@ class OrganizationController implements IControllerBase {
       '/groups',
       innerRouter()
         .post('/', this.addGroups)
-        .get('/', authMiddleware, this.getGroups)
+        .get('/', this.getGroups)
         .get('/:groupId', authMiddleware, this.getGroup)
-        .get('/:groupId/stats', authMiddleware, this.getGroupStats)
         .post('/:groupId/users', this.addUsersToGroup)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
+    )
+    // prettier-ignore
+    const stats = innerRouter().use(
+      '/stats',
+      authMiddleware,
+      innerRouter().get('/', this.getStats),
     )
     const organizations = Router().use(
       '/organizations',
       Router().post('/', this.create), // TODO: must be a protected route
       Router().get('/one', this.findOneByKey),
-      Router().use('/:organizationId', locations, groups),
+      Router().use('/:organizationId', locations, groups, stats),
     )
 
     this.router.use(organizations)
@@ -259,56 +265,49 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getGroupStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId, groupId} = req.params
-      const {from, to} = req.query
+      const {organizationId} = req.params
+      const {groupId, locationId, from, to} = req.query as StatsFilter
       const live = !from && !to
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
-      const group = await this.organizationService.getGroup(organizationId, groupId)
+      const isSuperAdmin =
+        admin.adminForOrganizationId === organizationId ||
+        admin.superAdminForOrganizationIds.includes(organizationId)
 
-      if (!admin.adminForGroupIds?.includes(group.id)) replyInsufficientPermission(res)
+      if (groupId) {
+        const hasGrantedPermission = isSuperAdmin || admin.adminForGroupIds?.includes(groupId)
+        if (!hasGrantedPermission) replyInsufficientPermission(res)
+        // Assert group exists
+        await this.organizationService.getGroup(organizationId, groupId)
+      }
 
-      const asOfDateTime = live ? new Date().toISOString() : null
+      if (locationId) {
+        const hasGrantedPermission = isSuperAdmin || admin.adminForLocationIds.includes(locationId)
+        if (!hasGrantedPermission) replyInsufficientPermission(res)
+        // Assert location exists
+        await this.organizationService.getLocation(organizationId, locationId)
+      }
 
-      // Users and accesses
-      const {users, accessesByUserId} = await this.organizationService
+      // Accesses
+      const accesses = await this.organizationService
         .getUsersGroups(organizationId, groupId)
-        .then(async (usersGroups) => {
-          const users: User[] = []
-          const accessesByUserId: Record<string, AccessWithPassportStatus[]> = {}
-          for (const {userId} of usersGroups) {
-            const user = await this.userService.findOneSilently(userId)
-
-            if (!!user) {
-              users.push(user)
-              accessesByUserId[userId] = await this.getAccessesForUserId(
-                userId,
-                new Date(from as string),
-                new Date(to as string),
-                live,
-              )
-            }
-          }
-          return {users, accessesByUserId}
-        })
-
-      // Passport count
-      const allAccesses = _.flattenDeep(Object.values(accessesByUserId))
-      const passportsCountByStatus = getPassportsCountPerStatus(allAccesses)
-
-      // Check-ins per hour
-      const hourlyCheckInsCounts = getHourlyCheckInsCounts(allAccesses)
+        .then((usersGroups = []) =>
+          Promise.all(
+            usersGroups.map(({userId}) =>
+              this.getAccessesForUser(userId, locationId, from, to, live),
+            ),
+          ),
+        )
+        .then((results) => results.reduce((all, byUsers) => [...all, ...byUsers], []))
 
       const response = {
-        group,
-        asOfDateTime,
-        users,
-        accessesByUserId,
-        passportsCountByStatus,
-        hourlyCheckInsCounts,
-      }
+        accesses,
+        asOfDateTime: live ? new Date().toISOString() : null,
+        passportsCountByStatus: getPassportsCountPerStatus(accesses),
+        hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
+      } as Stats
 
       res.json(actionSucceed(response))
     } catch (error) {
@@ -316,28 +315,36 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  private mapAccessWithPassportStatus(access: Access): Promise<AccessWithPassportStatus> {
-    return this.passportService
-      .findOneByToken(access.statusToken)
-      .then(({status}) => ({...access, status}))
-  }
-
-  private getAccessesForUserId(
+  private getAccessesForUser(
     userId: string,
-    from: Date,
-    to: Date,
+    locationId: string,
+    from: string,
+    to: string,
     live: boolean,
-  ): Promise<AccessWithPassportStatus[]> {
-    return this.accessService
-      .findAllByUserIdAndCreatedAtRange(userId, {
-        from: live ? moment().startOf('day').toDate() : from,
-        to: live ? undefined : to,
-      })
-      .then((accesses) =>
-        accesses.length === 0
-          ? [pendingAccess]
-          : Promise.all(accesses.map((access) => this.mapAccessWithPassportStatus(access))),
-      )
+  ): Promise<AccessWithPassportStatusAndUser[]> {
+    return this.userService.findOneSilently(userId).then((user) => {
+      if (!user) return []
+      return this.accessService
+        .findAllWith({
+          userId,
+          locationId,
+          betweenCreatedDate: {
+            from: live ? moment().startOf('day').toDate() : new Date(from),
+            to: live ? undefined : new Date(to),
+          },
+        })
+        .then((targets) =>
+          targets.length === 0
+            ? [pendingAccessForUser(user)]
+            : Promise.all(
+                targets.map((access) =>
+                  this.passportService
+                    .findOneByToken(access.statusToken)
+                    .then(({status}) => ({...access, status, user})),
+                ),
+              ),
+        )
+    })
   }
 }
 
