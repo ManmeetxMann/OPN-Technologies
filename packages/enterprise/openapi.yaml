@@ -166,6 +166,8 @@ components:
           type: string
         base64Photo:
           type: string
+        groupId:
+          type: string
         responses:
           type: array
           items:
@@ -174,6 +176,7 @@ components:
         - firstName
         - lastName
         - base64Photo
+        - groupId
 
     AuthLinkRequestRequest:
       type: object
