@@ -1,5 +1,4 @@
 import moment from 'moment'
-import {PubSub} from '@google-cloud/pubsub'
 
 import TraceRepository from '../repository/trace.repository'
 import type {ExposureReport, StopStatus} from '../models/trace'
@@ -7,7 +6,6 @@ import type {ExposureReport, StopStatus} from '../models/trace'
 import type {SinglePersonAccess} from '../models/attendance'
 
 import DataStore from '../../../common/src/data/datastore'
-import {Config} from '../../../common/src/utils/config'
 import {AdminApprovalModel} from '../../../common/src/data/admin'
 
 import {OrganizationModel} from '../../../enterprise/src/repository/organization.repository'
@@ -52,8 +50,8 @@ const overlap = (
   }
 }
 
-const topicName = Config.get('PUBSUB_TRACE_TOPIC')
-const subscriptionName = Config.get('PUBSUB_TRACE_SUBSCRIPTION')
+// const topicName = Config.get('PUBSUB_TRACE_TOPIC')
+// const subscriptionName = Config.get('PUBSUB_TRACE_SUBSCRIPTION')
 
 // When triggered, this creates a trace
 export default class TraceListener {
@@ -61,45 +59,32 @@ export default class TraceListener {
   orgRepo: OrganizationModel
   userApprovalRepo: AdminApprovalModel
   userRepo: UserModel
-  constructor(dataStore: DataStore) {
+  constructor() {
+    const dataStore = new DataStore()
     this.repo = new TraceRepository(dataStore)
     this.orgRepo = new OrganizationModel(dataStore)
     this.userApprovalRepo = new AdminApprovalModel(dataStore)
     this.userRepo = new UserModel(dataStore)
   }
 
-  async subscribe(): Promise<void> {
-    const listener = new PubSub()
-    try {
-      await listener.createTopic(topicName)
-    } catch (error) {
-      // already created is an acceptable error here
-      if (error.code !== 6) {
-        throw error
-      }
+  async handleMessage(message: {
+    data: string
+    attributes: {
+      startTime: string
+      endTime: string
+      passportStatus: string
+      userId: string
     }
-    try {
-      await listener.createSubscription(topicName, subscriptionName)
-    } catch (error) {
-      // already created is an acceptable error here
-      if (error.code !== 6) {
-        throw error
-      }
+  }): Promise<void> {
+    const {data, attributes} = message
+    const payload = Buffer.from(data, 'base64').toString()
+    if (payload !== 'trace-required') {
+      return
     }
-
-    const traceSub = listener.subscription(subscriptionName)
-    traceSub.on('message', (message) => {
-      const {data, attributes} = message
-      const payload = Buffer.from(data, 'base64').toString()
-      message.ack()
-      if (payload !== 'trace-required') {
-        return
-      }
-      const {userId, passportStatus} = attributes
-      const startTime = parseInt(attributes.startTime, 10)
-      const endTime = parseInt(attributes.endTime, 10)
-      this.traceFor(userId, startTime, endTime, passportStatus)
-    })
+    const {userId, passportStatus} = attributes
+    const startTime = parseInt(attributes.startTime, 10)
+    const endTime = parseInt(attributes.endTime, 10)
+    await this.traceFor(userId, startTime, endTime, passportStatus)
   }
 
   async traceFor(
