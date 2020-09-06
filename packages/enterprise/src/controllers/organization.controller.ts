@@ -240,7 +240,6 @@ class OrganizationController implements IControllerBase {
       const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
         throw new HttpException(error.message)
       })
-      
       res.json(actionSucceed(groups))
     } catch (error) {
       next(error)
