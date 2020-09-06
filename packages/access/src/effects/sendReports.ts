@@ -1,25 +1,45 @@
+import moment from 'moment-timezone'
+
 import DataStore from '../../../common/src/data/datastore'
 import {AdminApprovalModel} from '../../../common/src/data/admin'
-
-import {OrganizationLocationModel} from '../../../enterprise/src/repository/organization.repository'
+import {
+  OrganizationLocationModel,
+  OrganizationModel,
+} from '../../../enterprise/src/repository/organization.repository'
 import {UserModel} from '../../../common/src/data/user'
+import {AttendanceRepository} from '../repository/attendance.repository'
 
 import {getAccessSection} from './exposureTemplate'
-
 import {send} from '../../../common/src/service/messaging/send-email'
-import {AttendanceRepository} from '../repository/attendance.repository'
+import {now} from '../../../common/src/utils/times'
+import {Config} from '../../../common/src/utils/config'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 export default class ReportSender {
   repo: AttendanceRepository
   dataStore: DataStore
   userRepo: UserModel
   userApprovalRepo: AdminApprovalModel
+  orgRepo: OrganizationModel
 
   constructor() {
     this.dataStore = new DataStore()
     this.repo = new AttendanceRepository(this.dataStore)
     this.userRepo = new UserModel(this.dataStore)
     this.userApprovalRepo = new AdminApprovalModel(this.dataStore)
+    this.orgRepo = new OrganizationModel(this.dataStore)
+  }
+
+  async mailForHour(hour: number): Promise<void> {
+    const organizations = await this.orgRepo.findWhereEqual('hourToSendReport', hour)
+    await Promise.all(
+      organizations.map((org) => {
+        const dayShift = org.dayShift || 0
+        const date = moment(now()).tz(timeZone).subtract(dayShift, 'days').format('YYYY-MM-DD')
+        return this.mailFor(org.id, date)
+      }),
+    )
   }
 
   async mailFor(organizationId: string, date: string): Promise<void> {

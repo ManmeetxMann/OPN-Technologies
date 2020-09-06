@@ -6,6 +6,10 @@ export type Organization = {
   allowDependants: boolean
   registrationQuestions?: RegistrationQuestion[]
   organization_groups?: OrganizationGroup[]
+  // the hour (in default timezone) to send out reports
+  hourToSendReport?: number
+  // The number of days to subtract from today when generating the report (0 or empty for today, 1 for yesterday...)
+  dayShift?: number
 }
 
 export enum OrganizationType {
