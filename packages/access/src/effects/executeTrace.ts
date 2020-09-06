@@ -291,11 +291,11 @@ export default class TraceListener {
       .map((user) => ({
         email: user.profile.email,
         orgReports: user.profile.superAdminForOrganizationIds.reduce(
-          (flat, id) => [...flat, ...reportsForOrganization[id]],
+          (flat, id) => [...flat, ...(reportsForOrganization[id] || [])],
           [],
         ),
         locReports: user.profile.adminForLocationIds.reduce(
-          (flat, id) => [...flat, ...reportsForLocation[id]],
+          (flat, id) => [...flat, ...(reportsForLocation[id] || [])],
           [],
         ),
       }))
