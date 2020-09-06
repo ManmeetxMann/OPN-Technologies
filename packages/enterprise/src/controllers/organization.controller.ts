@@ -94,6 +94,7 @@ class OrganizationController implements IControllerBase {
       innerRouter()
         .post('/', this.addGroups)
         .get('/', this.getGroups)
+        .get('/public', this.getGroupsPublic)
         .get('/:groupId', authMiddleware, this.getGroup)
         .post('/users', this.addUsersToGroups)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
@@ -228,6 +229,18 @@ class OrganizationController implements IControllerBase {
         {},
       )
       res.json(actionSucceed(groups.filter((group) => !!adminGroupIds[group.id])))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getGroupsPublic = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
+        throw new HttpException(error.message)
+      })
+      res.json(actionSucceed(groups))
     } catch (error) {
       next(error)
     }
