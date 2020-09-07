@@ -24,7 +24,8 @@ class RootController implements IControllerBase {
   public initRoutes(): void {
     this.router.get('/', this.index)
     this.router.post('/setTime', setTime)
-    this.router.post('/triggerReports', (req: Request, res: Response) =>
+    // this is a get because it's a cron job
+    this.router.get('/triggerReports', (req: Request, res: Response) =>
       this.triggerReports(req, res),
     )
     // use arrow function to ensure 'this' is defined
