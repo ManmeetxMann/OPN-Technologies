@@ -20,13 +20,13 @@ class UserController implements IControllerBase {
       data: {
         updates: {
           ios: {
-            force: '0.1',
-            optional: '0.1',
+            force: '1.2.0',
+            optional: '1.2.0',
             url: 'http://itunes.com/apps/opn',
           },
           android: {
-            force: '1.0.1',
-            optional: '1.0.1',
+            force: '1.2.0',
+            optional: '1.2.0',
             url: 'http://play.google.com/store/apps/details?id=com.opn.app',
           },
         },
