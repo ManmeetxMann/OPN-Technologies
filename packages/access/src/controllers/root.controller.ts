@@ -1,11 +1,14 @@
 import * as express from 'express'
-import moment from 'moment'
+import moment from 'moment-timezone'
 import {Request, Response} from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {setTime} from '../../../common/src/utils/times'
 import TraceListener from '../effects/executeTrace'
 import ReportSender from '../effects/sendReports'
 import {now} from '../../../common/src/utils/times'
+import {Config} from '../../../common/src/utils/config'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 class RootController implements IControllerBase {
   public path = '/'
@@ -33,6 +36,7 @@ class RootController implements IControllerBase {
 
     const daysNum = parseInt(daysAgo as string | null) || 0
     const date = moment(now())
+      .tz(timeZone)
       .subtract(daysNum || 0, 'days')
       .format('YYYY-MM-DD')
     try {

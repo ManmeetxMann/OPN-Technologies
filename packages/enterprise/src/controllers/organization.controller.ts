@@ -14,7 +14,7 @@ import {AdminProfile} from '../../../common/src/data/admin'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {AccessService} from '../../../access/src/service/access.service'
-import moment from 'moment'
+import moment from 'moment-timezone'
 import {AccessWithPassportStatusAndUser} from '../../../access/src/models/access'
 import {now} from '../../../common/src/utils/times'
 import {PassportService} from '../../../passport/src/services/passport-service'
@@ -22,6 +22,9 @@ import {PassportStatus, PassportStatuses} from '../../../passport/src/models/pas
 import {CheckInsCount} from '../../../access/src/models/access-stats'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {Stats, StatsFilter} from '../models/stats'
+import {Config} from '../../../common/src/utils/config'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 const pendingAccessForUser = (user: User): AccessWithPassportStatusAndUser => ({
   status: PassportStatuses.Pending,
@@ -353,7 +356,7 @@ class OrganizationController implements IControllerBase {
           userId,
           locationId,
           betweenCreatedDate: {
-            from: live ? moment(now()).startOf('day').toDate() : new Date(from),
+            from: live ? moment(now()).tz(timeZone).startOf('day').toDate() : new Date(from),
             to: live ? undefined : new Date(to),
           },
         })

@@ -2,11 +2,14 @@ import type {Access} from '../models/access'
 import {AttendanceRepository} from '../repository/attendance.repository'
 import DataStore from '../../../common/src/data/datastore'
 import {FieldValue} from '@google-cloud/firestore'
-import moment from 'moment'
+import moment from 'moment-timezone'
 import {UserDependantModel} from '../../../common/src/data/user'
+import {Config} from '../../../common/src/utils/config'
 
 const ACCESS_KEY = 'accesses'
 const USER_MEMO_KEY = 'accessingUsers'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 const getEntryTime = (access: Access) => {
   if (access.enteredAt) {
@@ -24,11 +27,11 @@ const getExitTime = (access: Access) => {
 
 const dateOfEntry = (access: Access): string => {
   // @ts-ignore it's a timestamp, not a string
-  return moment(getEntryTime(access).toDate()).format('YYYY-MM-DD')
+  return moment(getEntryTime(access).toDate()).tz(timeZone).format('YYYY-MM-DD')
 }
 const dateOfExit = (access: Access): string => {
   // @ts-ignore it's a timestamp, not a string
-  return moment(getExitTime(access).toDate()).format('YYYY-MM-DD')
+  return moment(getExitTime(access).toDate()).tz(timeZone).format('YYYY-MM-DD')
 }
 
 export default class AccessListener {

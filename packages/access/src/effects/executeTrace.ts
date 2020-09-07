@@ -1,19 +1,18 @@
-import moment from 'moment'
+import moment from 'moment-timezone'
 
 import TraceRepository from '../repository/trace.repository'
 import type {ExposureReport, StopStatus} from '../models/trace'
-// import type {Access} from '../models/access'
 import type {SinglePersonAccess} from '../models/attendance'
-
 import DataStore from '../../../common/src/data/datastore'
 import {AdminApprovalModel} from '../../../common/src/data/admin'
-
 import {OrganizationModel} from '../../../enterprise/src/repository/organization.repository'
 import {UserModel} from '../../../common/src/data/user'
-
 import {getExposureSection} from './exposureTemplate'
 
 import {send} from '../../../common/src/service/messaging/send-email'
+import {Config} from '../../../common/src/utils/config'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 type Overlap = {
   start: Date
@@ -94,8 +93,8 @@ export default class TraceListener {
     passportStatus: string,
   ): Promise<ExposureReport[]> {
     // because of time zones we might be interested in other dates
-    const earliestDate = moment(startTime).add(-1, 'day').format('YYYY-MM-DD')
-    const latestDate = moment(endTime).add(1, 'day').format('YYYY-MM-DD')
+    const earliestDate = moment(startTime).tz(timeZone).format('YYYY-MM-DD')
+    const latestDate = moment(endTime).tz(timeZone).format('YYYY-MM-DD')
 
     const accesses = await this.repo.getAccesses(userId, earliestDate, latestDate)
     const accessLookup = accesses.reduce((accessesByLocation, access): AccessLookup => {
@@ -121,8 +120,8 @@ export default class TraceListener {
           }
         })
         const includedOverlapJSONs = new Set<string>()
-        const startOfDay = moment(dailyReport.date).toDate().valueOf()
-        const endOfDay = moment(dailyReport.date).add(1, 'day').toDate().valueOf()
+        const startOfDay = moment(dailyReport.date).tz(timeZone).toDate().valueOf()
+        const endOfDay = moment(dailyReport.date).tz(timeZone).add(1, 'day').toDate().valueOf()
         // TODO: this could be made more efficient with some sorting
         const overlapping = otherUsersAccesses
           .map((access) =>

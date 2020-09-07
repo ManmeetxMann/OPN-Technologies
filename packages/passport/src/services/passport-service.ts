@@ -4,7 +4,7 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {UserDependantModel} from '../../../common/src/data/user'
 import {serverTimestamp} from '../../../common/src/utils/times'
-import moment from 'moment'
+import moment from 'moment-timezone'
 import {firestore} from 'firebase-admin'
 
 // some clients rely on this being defined, but all passports
