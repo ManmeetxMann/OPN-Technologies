@@ -32,7 +32,6 @@ export type RegistrationQuestion = {
 export type OrganizationGroup = {
   id: string
   name: string
-  key: number
   isDefault: boolean
   checkInDisabled: boolean
 }

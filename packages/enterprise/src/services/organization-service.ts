@@ -16,7 +16,6 @@ import {
   OrganizationModel,
   OrganizationUsersGroupModel,
 } from '../repository/organization.repository'
-import {QuerySnapshot} from '@google-cloud/firestore'
 
 const notFoundMessage = (organizationId: string, identifier?: string) =>
   `Cannot find organization with ${identifier ?? 'ID'} [${organizationId}]`
@@ -57,6 +56,7 @@ export class OrganizationService {
             const group = await this.addGroup(organization.id, {
               name: 'All',
               isDefault: true,
+              checkInDisabled: false,
             } as OrganizationGroup)
             return {
               ...organization,
@@ -177,52 +177,15 @@ export class OrganizationService {
     return this.organizationRepository.updateProperties(id, {hourToSendReport, dayShift})
   }
 
-  findOrganizationAndGroupByKey(
-    key: number,
-  ): Promise<{organization: Organization; group: OrganizationGroup}> {
-    // TODO: to be refactored with `CollectionGroupModel` abstraction coming in PR #191
-    // Here we use collection-groups to fetch all the groups (cross-organizations) matching the key
-    // Then we retrieve the organization using the group parent path
-    const fieldPath = new this.dataStore.firestoreAdmin.firestore.FieldPath('key')
-    return this.dataStore.firestoreORM
-      .collectionGroup({collectionId: OrganizationGroupModel.collectionId})
-      .where(fieldPath, '==', key)
-      .query.get()
-      .then(async (snapshot: QuerySnapshot) => {
-        if (snapshot.docs.length === 0)
-          throw new ResourceNotFoundException(`Cannot find organization & group with key ${key}`)
-
-        const doc = snapshot.docs[0]
-        const organizationId = doc.ref.path.split('/')[1]
-        const organization = await this.organizationRepository.get(organizationId)
-
-        if (!organization) throw new Error(`Cannot find organization with id [${organizationId}]`)
-
-        // For some reason Firestore decides to not give back the document.id when using CollectionGroup,
-        // So we need here to re-fetch the `OrganizationGroup` document matching the key
-        const group = await this.getGroupsRepositoryFor(organizationId)
-          .findWhereEqual('key', key)
-          .then((results) => results[0])
-
-        if (!group)
-          throw new Error(`Cannot find group with key [${key}] in organization [${organizationId}]`)
-
-        return {organization, group}
-      })
-  }
-
   findOneById(id: string): Promise<Organization> {
     return this.organizationRepository.get(id)
   }
 
   addGroup(organizationId: string, group: OrganizationGroup): Promise<OrganizationGroup> {
-    return this.generateKey()
-      .then((key) => ({
-        ...group,
-        key,
-        isDefault: group.isDefault ?? false,
-      }))
-      .then((remappedGroup) => this.getGroupsRepositoryFor(organizationId).add(remappedGroup))
+    return this.getGroupsRepositoryFor(organizationId).add({
+      ...group,
+      isDefault: group.isDefault ?? false,
+    })
   }
 
   addGroups(organizationId: string, groups: OrganizationGroup[]): Promise<OrganizationGroup[]> {
