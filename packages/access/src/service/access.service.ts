@@ -250,7 +250,11 @@ export class AccessService {
   decreasePeopleOnPremises(locationId: string, count = 1): Promise<AccessStatsModel> {
     return this.getTodayStatsForLocation(locationId).then((stats) =>
       stats.peopleOnPremises > 0
-        ? this.accessStatsRepository.increment(stats.id, 'peopleOnPremises', -count)
+        ? this.accessStatsRepository.increment(
+            stats.id,
+            'peopleOnPremises',
+            Math.min(stats.peopleOnPremises, count) * -1,
+          )
         : stats,
     )
   }
