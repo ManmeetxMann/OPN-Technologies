@@ -14,19 +14,15 @@ import {AdminProfile} from '../../../common/src/data/admin'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {AccessService} from '../../../access/src/service/access.service'
-import moment from 'moment-timezone'
-import {AccessWithPassportStatusAndUser} from '../../../access/src/models/access'
-import {now} from '../../../common/src/utils/times'
+import moment from 'moment'
+import {Access, AccessWithPassportStatusAndUser} from '../../../access/src/models/access'
 import {PassportService} from '../../../passport/src/services/passport-service'
-import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
+import {Passport, PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {Stats, StatsFilter} from '../models/stats'
-import {Config} from '../../../common/src/utils/config'
-
-const timeZone = Config.get('DEFAULT_TIME_ZONE')
-
-import {performance} from 'perf_hooks'
+import {Range} from '../../../common/src/types/range'
+import * as _ from 'lodash'
 
 const pendingAccessForUser = (user: User): AccessWithPassportStatusAndUser => ({
   status: PassportStatuses.Pending,
@@ -100,6 +96,7 @@ class OrganizationController implements IControllerBase {
       innerRouter()
         .post('/', this.addGroups)
         .get('/', this.getGroups)
+        .get('/public', this.getGroups) // TODO: to be removed
         .post('/users', this.addUsersToGroups)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
@@ -303,40 +300,27 @@ class OrganizationController implements IControllerBase {
         await this.organizationService.getLocation(organizationId, locationId)
       }
 
-      // Groups
+      // Fetch Groups
       const groupsById: Record<string, OrganizationGroup> = group
         ? {[groupId]: group}
         : await this.organizationService
             .getGroups(organizationId)
             .then((results) => results.reduce((byId, group) => ({...byId, [group.id]: group}), {}))
 
-      // Accesses
-      const accesses = await this.organizationService
-        .getUsersGroups(organizationId, groupId)
-        .then(async (usersGroups = []) => {
-          const userAccesses: AccessWithPassportStatusAndUser[] = []
-          const getUsersAccessesT0 = performance.now()
-          for (const {userId, groupId: currentGroupId, parentUserId} of usersGroups) {
-            const currentGroup = groupsById[currentGroupId]
-            if (!currentGroup.checkInDisabled) {
-              const getUserAccessesT0 = performance.now()
-              userAccesses.push(
-                ...(await this.getAccessesFor(userId, parentUserId, locationId, from, to, live)),
-              )
-              const getUserAccessesT1 = performance.now()
-              console.log(
-                'Metrics: "get-one-user-accesses" time (ms):',
-                getUserAccessesT1 - getUserAccessesT0,
-              )
-            }
-          }
-          const getUsersAccessesT1 = performance.now()
-          console.log(
-            'Metrics: "get-users-accesses" time (ms):',
-            getUsersAccessesT1 - getUsersAccessesT0,
-          )
-          return userAccesses
-        })
+      // Fetch user groups
+      const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
+
+      // Get sharded accesses
+      const shards: OrganizationUsersGroup[][] = _.chunk(usersGroups, 10)
+      const betweenCreatedDate = {
+        from: live ? moment().startOf('day').toDate() : new Date(from),
+        to: live ? undefined : new Date(to),
+      }
+      const accesses = await Promise.all(
+        shards.map((shard) =>
+          this.getAccessesFor(shard, locationId, betweenCreatedDate, groupsById),
+        ),
+      ).then((results) => results.reduce((flatted, shard) => [...flatted, ...shard], []))
 
       const response = {
         accesses,
@@ -351,47 +335,92 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  private getAccessesFor(
-    userId: string,
-    parentUserId: string,
-    locationId: string,
-    from: string,
-    to: string,
-    live: boolean,
+  private async getAccessesFor(
+    usersGroups: OrganizationUsersGroup[],
+    locationId,
+    betweenCreatedDate: Range<Date>,
+    groupsById: Record<string, OrganizationGroup>,
   ): Promise<AccessWithPassportStatusAndUser[]> {
-    // This function takes for ever, mainly because the queries cannot be optimized
-    // with a OR operator and a JOIN between collection, since firestore doesn't support these.
-    // A way to optimize would be to build the stats event-based,
-    // but we would still need to find out the pending users.
-    const userPromise = parentUserId
-      ? this.userService
-          .getDependantAndParentByParentId(parentUserId, userId)
-          .then(({parent, dependant}) => ({...dependant, base64Photo: parent.base64Photo} as User))
-      : this.userService.findOneSilently(userId)
+    // Fetch users
+    const groupsByUserId: Record<string, OrganizationUsersGroup> = (usersGroups ?? []).reduce(
+      (byUserId, {userId, parentUserId, ...group}) => ({
+        ...byUserId,
+        [parentUserId ?? userId]: group,
+      }),
+      {},
+    )
+    const userIds = Object.keys(groupsByUserId)
+    const usersById: Record<string, User> = await this.userService
+      .findAllBy({userIds})
+      .then((results) => results?.reduce((byId, user) => ({...byId, [user.id]: user}), {}))
 
-    return userPromise.then((user) => {
-      if (!user) return []
-      return this.accessService
-        .findAllWith({
-          userId,
-          locationId,
-          betweenCreatedDate: {
-            from: live ? moment(now()).tz(timeZone).startOf('day').toDate() : new Date(from),
-            to: live ? undefined : new Date(to),
-          },
-        })
-        .then((targets) =>
-          targets.length === 0
-            ? [pendingAccessForUser(user)]
-            : Promise.all(
-                targets.map((access) =>
-                  this.passportService
-                    .findOneByToken(access.statusToken)
-                    .then(({status}) => ({...access, status, user})),
-                ),
-              ),
-        )
+    // Fetch dependants
+    const dependantsByParentId: Record<string, User[]> = {}
+    await Promise.all(
+      userIds.map((userId) =>
+        this.userService.getAllDependants(userId).then((results) => {
+          dependantsByParentId[userId] = results.map(
+            (dependant) => ({...dependant, base64Photo: usersById[userId].base64Photo} as User),
+          )
+        }),
+      ),
+    )
+
+    // Fetch accesses
+    const simpleAccesses: Access[] = await this.accessService.findAllWith({
+      userIds,
+      locationId,
+      betweenCreatedDate,
     })
+
+    // Fetch statuses
+    const statusTokens = [...new Set(simpleAccesses.map(({statusToken}) => statusToken))]
+    const statusesByToken: Record<string, PassportStatus> = await Promise.all(
+      _.chunk(statusTokens, 10).map((shard) =>
+        this.passportService.findAllBy({statusTokens: shard}),
+      ) as Passport[][],
+    ).then((results) =>
+      results
+        ?.reduce((flatted, shard) => [...flatted, ...shard], [])
+        .reduce((byToken, {statusToken, status}) => ({...byToken, [statusToken]: status}), {}),
+    )
+
+    // Pending accesses
+    const accessesByUserId = simpleAccesses.reduce(
+      (byUserId, access) => ({...byUserId, [access.userId]: access}),
+      {},
+    )
+    const pendingAccesses: AccessWithPassportStatusAndUser[] = userIds
+      .filter((userId) => !accessesByUserId[userId] && !!usersById[userId])
+      .map((userId) => pendingAccessForUser(usersById[userId]))
+
+    // Augment accesses
+    const augmentedAccesses: AccessWithPassportStatusAndUser[] = simpleAccesses
+      .map(({userId, ...access}) => {
+        const dependants = dependantsByParentId[userId]
+        const mustCountGuardian = !groupsById[groupsByUserId[userId].groupId].checkInDisabled
+        if (dependants?.length) {
+          return (mustCountGuardian ? [...dependants, usersById[userId]] : dependants).map(
+            (dependant) => ({
+              ...access,
+              userId,
+              user: dependant,
+              status: statusesByToken[access.statusToken],
+            }),
+          )
+        }
+        return [
+          {
+            ...access,
+            userId,
+            user: usersById[userId],
+            status: statusesByToken[access.statusToken],
+          },
+        ]
+      })
+      .reduce((flatted, parts) => [...flatted, ...parts], [])
+
+    return [...pendingAccesses, ...augmentedAccesses]
   }
 }
 

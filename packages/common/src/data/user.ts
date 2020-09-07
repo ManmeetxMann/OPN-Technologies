@@ -22,6 +22,10 @@ export type User = {
   >
 }
 
+export type UserFilter = {
+  userIds: string[]
+}
+
 export type UserDependant = {
   id: string
   firstName: string

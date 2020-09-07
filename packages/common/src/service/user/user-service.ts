@@ -1,6 +1,7 @@
 import DataStore from '../../data/datastore'
-import {User, UserDependant, UserDependantModel, UserModel} from '../../data/user'
+import {User, UserDependant, UserDependantModel, UserFilter, UserModel} from '../../data/user'
 import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
+import {firestore} from 'firebase-admin'
 
 export class UserService {
   private dataStore = new DataStore()
@@ -20,6 +21,13 @@ export class UserService {
 
   async updateProperties(id: string, fields: Record<string, unknown>): Promise<void> {
     await this.userRepository.updateProperties(id, fields)
+  }
+
+  findAllBy({userIds}: UserFilter): Promise<User[]> {
+    return this.userRepository
+      .collection()
+      .where(firestore.FieldPath.documentId(), 'in', userIds)
+      .fetch()
   }
 
   findOne(id: string): Promise<User> {
@@ -51,7 +59,9 @@ export class UserService {
     return this.findOne(parentId).then((parent) =>
       new UserDependantModel(this.dataStore, parentId).get(dependantId).then((dependant) => {
         if (!!dependant) return {parent, dependant}
-        throw new ResourceNotFoundException(`Cannot find dependant with id ${dependantId}`)
+        throw new ResourceNotFoundException(
+          `Cannot find dependant with id [${dependantId}] of user [${parentId}]`,
+        )
       }),
     )
   }
