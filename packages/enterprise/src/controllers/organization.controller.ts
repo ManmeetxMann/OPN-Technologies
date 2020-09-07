@@ -214,13 +214,14 @@ class OrganizationController implements IControllerBase {
     const {organizationId} = req.params
     const locations = req.body as OrganizationLocation[]
     try {
-      const updatableLocationIds = await this.organizationService
+      const updatableLocationIds = new Set<string>()
+      await this.organizationService
         .getLocations(organizationId)
-        .then((results) => results.map(({id}) => id))
+        .then((results) => results.forEach(({id}) => updatableLocationIds.add(id)))
 
       const updatedLocations = await this.organizationService.updateLocations(
         organizationId,
-        locations.filter(({id}) => updatableLocationIds.includes(id)),
+        locations.filter(({id}) => updatableLocationIds.has(id)),
       )
 
       res.json(actionSucceed(updatedLocations))
