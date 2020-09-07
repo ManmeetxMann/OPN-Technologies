@@ -32,10 +32,7 @@ class UserController implements IControllerBase {
       const {responses, ...body} = req.body
       body as OrganizationConnectionRequest
       responses as string[]
-      // Fetch org and group by key
       const {organizationId, firstName, lastName, base64Photo, groupId} = body
-
-      // Fetch org by key
       const organization = await this.organizationService.findOneById(organizationId)
       const group = await this.organizationService.getGroup(organization.id, groupId)
       const registrationQuestions = organization.registrationQuestions ?? []

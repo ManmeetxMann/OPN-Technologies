@@ -34,6 +34,7 @@ export type OrganizationGroup = {
   name: string
   key: number
   isDefault: boolean
+  checkInDisabled: boolean
 }
 
 // A many-to-x representation of Users belonging to a group

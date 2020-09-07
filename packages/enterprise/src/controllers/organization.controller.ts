@@ -26,6 +26,8 @@ import {Config} from '../../../common/src/utils/config'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
+import {performance} from 'perf_hooks'
+
 const pendingAccessForUser = (user: User): AccessWithPassportStatusAndUser => ({
   status: PassportStatuses.Pending,
   user,
@@ -98,8 +100,6 @@ class OrganizationController implements IControllerBase {
       innerRouter()
         .post('/', this.addGroups)
         .get('/', this.getGroups)
-        .get('/public', this.getGroupsPublic)
-        .get('/:groupId', authMiddleware, this.getGroup)
         .post('/users', this.addUsersToGroups)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
@@ -241,43 +241,10 @@ class OrganizationController implements IControllerBase {
   getGroups = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const authenticatedUser = res.locals.connectedUser as User
-      const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
-        throw new HttpException(error.message)
-      })
-      const admin = authenticatedUser.admin as AdminProfile
-      const adminGroupIds = (admin.adminForGroupIds ?? []).reduce(
-        (byId, id) => ({...byId, [id]: id}),
-        {},
-      )
-      res.json(actionSucceed(groups.filter((group) => !!adminGroupIds[group.id])))
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  getGroupsPublic = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const {organizationId} = req.params
       const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
         throw new HttpException(error.message)
       })
       res.json(actionSucceed(groups))
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  getGroup = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
-    try {
-      const {organizationId, groupId} = req.params
-      const authenticatedUser = res.locals.connectedUser as User
-      const admin = authenticatedUser.admin as AdminProfile
-      const group = await this.organizationService.getGroup(organizationId, groupId)
-
-      return admin.adminForGroupIds?.includes(group.id)
-        ? res.json(actionSucceed(group))
-        : replyInsufficientPermission(res)
     } catch (error) {
       next(error)
     }
@@ -321,11 +288,12 @@ class OrganizationController implements IControllerBase {
         admin.adminForOrganizationId === organizationId ||
         admin.superAdminForOrganizationIds.includes(organizationId)
 
+      let group: OrganizationGroup
       if (groupId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForGroupIds?.includes(groupId)
         if (!hasGrantedPermission) replyInsufficientPermission(res)
         // Assert group exists
-        await this.organizationService.getGroup(organizationId, groupId)
+        group = await this.organizationService.getGroup(organizationId, groupId)
       }
 
       if (locationId) {
@@ -335,17 +303,40 @@ class OrganizationController implements IControllerBase {
         await this.organizationService.getLocation(organizationId, locationId)
       }
 
+      // Groups
+      const groupsById: Record<string, OrganizationGroup> = group
+        ? {[groupId]: group}
+        : await this.organizationService
+            .getGroups(organizationId)
+            .then((results) => results.reduce((byId, group) => ({...byId, [group.id]: group}), {}))
+
       // Accesses
       const accesses = await this.organizationService
         .getUsersGroups(organizationId, groupId)
-        .then((usersGroups = []) =>
-          Promise.all(
-            usersGroups.map(({userId}) =>
-              this.getAccessesForUser(userId, locationId, from, to, live),
-            ),
-          ),
-        )
-        .then((results) => results.reduce((all, byUsers) => [...all, ...byUsers], []))
+        .then(async (usersGroups = []) => {
+          const userAccesses: AccessWithPassportStatusAndUser[] = []
+          const getUsersAccessesT0 = performance.now()
+          for (const {userId, groupId: currentGroupId, parentUserId} of usersGroups) {
+            const currentGroup = groupsById[currentGroupId]
+            if (!currentGroup.checkInDisabled) {
+              const getUserAccessesT0 = performance.now()
+              userAccesses.push(
+                ...(await this.getAccessesFor(userId, parentUserId, locationId, from, to, live)),
+              )
+              const getUserAccessesT1 = performance.now()
+              console.log(
+                'Metrics: "get-one-user-accesses" time (ms):',
+                getUserAccessesT1 - getUserAccessesT0,
+              )
+            }
+          }
+          const getUsersAccessesT1 = performance.now()
+          console.log(
+            'Metrics: "get-users-accesses" time (ms):',
+            getUsersAccessesT1 - getUsersAccessesT0,
+          )
+          return userAccesses
+        })
 
       const response = {
         accesses,
@@ -360,14 +351,25 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  private getAccessesForUser(
+  private getAccessesFor(
     userId: string,
+    parentUserId: string,
     locationId: string,
     from: string,
     to: string,
     live: boolean,
   ): Promise<AccessWithPassportStatusAndUser[]> {
-    return this.userService.findOneSilently(userId).then((user) => {
+    // This function takes for ever, mainly because the queries cannot be optimized
+    // with a OR operator and a JOIN between collection, since firestore doesn't support these.
+    // A way to optimize would be to build the stats event-based,
+    // but we would still need to find out the pending users.
+    const userPromise = parentUserId
+      ? this.userService
+          .getDependantAndParentByParentId(parentUserId, userId)
+          .then(({parent, dependant}) => ({...dependant, base64Photo: parent.base64Photo} as User))
+      : this.userService.findOneSilently(userId)
+
+    return userPromise.then((user) => {
       if (!user) return []
       return this.accessService
         .findAllWith({
