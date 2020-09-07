@@ -82,7 +82,7 @@ export class AccessService {
     }
     // all dependants named in the access enter, no need to filter here
     for (const id in access.dependants) {
-      if (!!access.dependants[id].enteredAt || !!access.dependants[id].enteredAt) {
+      if (!!access.dependants[id].enteredAt || !!access.dependants[id].exitAt) {
         throw new BadRequestException('Token already used to enter or exit')
       }
     }
