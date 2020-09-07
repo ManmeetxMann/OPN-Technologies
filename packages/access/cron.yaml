@@ -1,5 +1,10 @@
 cron:
 - description: "daily report prompt"
   url: /triggerReports
-  schedule: every 1 minutes
+  schedule: "every 1 hours"
+  target: "access"
+- description: "daily report prompt for staging"
+  url: /triggerReports
+  schedule: "every 1 minutes"
+  target: "access-staging"
 
