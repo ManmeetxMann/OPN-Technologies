@@ -1,4 +1,4 @@
-import {Passport, PassportModel, PassportStatuses} from '../models/passport'
+import {Passport, PassportFilter, PassportModel, PassportStatuses} from '../models/passport'
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
@@ -15,6 +15,19 @@ export class PassportService {
   private dataStore = new DataStore()
   private passportRepository = new PassportModel(this.dataStore)
   private identifierRepository = new IdentifiersModel(this.dataStore)
+
+  findAllBy({statusTokens}: PassportFilter): Promise<Passport[]> {
+    let query = this.passportRepository.collection()
+
+    if (statusTokens?.length) {
+      // @ts-ignore
+      query = query.where('statusToken', 'in', statusTokens)
+    }
+
+    const hasFilter = statusTokens?.length > 0
+    // @ts-ignore
+    return hasFilter ? query.fetch() : query.fetchAll()
+  }
 
   async create(
     status: PassportStatuses = PassportStatuses.Pending,

@@ -737,6 +737,26 @@ paths:
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationLocation'
 
+  /organizations/{organizationId}/groups/public:
+    get:
+      description: Get organization groups
+      deprecated: true
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: false
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationGroups'
+
   /organizations/{organizationId}/groups:
     post:
       description: Add groups to an organization
