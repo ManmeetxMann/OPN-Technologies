@@ -1,6 +1,11 @@
+import moment from 'moment-timezone'
+
 import {ExposureReport} from '../models/trace'
 import {User, UserDependant} from '../../../common/src/data/user'
 import type {SinglePersonAccess} from '../models/attendance'
+import {Config} from '../../../common/src/utils/config'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 const formatName = (user: User, dependant?: UserDependant): string => {
   if (!dependant) {
@@ -9,6 +14,7 @@ const formatName = (user: User, dependant?: UserDependant): string => {
     return `${dependant.firstName} ${dependant.lastName} (${user.firstName} ${user.lastName})`
   }
 }
+const formatTime = (date: Date) => moment(date).tz(timeZone).format('hh:mm a')
 
 const padTo80 = (line: string): string =>
   `                                                                                ${line}`.slice(
@@ -38,7 +44,7 @@ ${overlapping
       users.find((user) => user.id === overlap.userId),
       overlap.dependant,
     )}<br>
-${padTo80(`${overlap.start.toLocaleTimeString()} - ${overlap.end.toLocaleTimeString()}`)}<br>
+${padTo80(`${formatTime(overlap.start)} - ${formatTime(overlap.end)}`)}<br>
 `
   })
   .join('\n<br>')}<br>
@@ -72,7 +78,7 @@ export const getAccessSection = (
 ${printableAccesses
   .map((printable) => {
     return `    ${printable.name}<br>
-${padTo80(`${printable.start.toLocaleTimeString()} - ${printable.end.toLocaleTimeString()}`)}
+${padTo80(`${formatTime(printable.start)} - ${formatTime(printable.end)}`)}
 <br>`
   })
   .join('\n<br>')}<br>`
