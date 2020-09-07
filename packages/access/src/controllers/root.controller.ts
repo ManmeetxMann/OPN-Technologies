@@ -32,15 +32,11 @@ class RootController implements IControllerBase {
   }
 
   private async triggerReports(req: Request, res: Response): Promise<void> {
-    const {organizationId, daysAgo} = req.query
+    // add 5 minutes because we'll round down
+    const thisHour = moment(now()).tz(timeZone).add(5, 'minutes').hour()
 
-    const daysNum = parseInt(daysAgo as string | null) || 0
-    const date = moment(now())
-      .tz(timeZone)
-      .subtract(daysNum || 0, 'days')
-      .format('YYYY-MM-DD')
     try {
-      await this.report.mailFor(organizationId as string, date)
+      await this.report.mailForHour(thisHour)
       res.sendStatus(200)
     } catch (err) {
       console.log(err)

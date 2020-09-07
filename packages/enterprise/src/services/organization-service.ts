@@ -166,6 +166,10 @@ export class OrganizationService {
     })
   }
 
+  updateReporting(id: string, hourToSendReport: number, dayShift: number): Promise<Organization> {
+    return this.organizationRepository.updateProperties(id, {hourToSendReport, dayShift})
+  }
+
   findOrganizationAndGroupByKey(
     key: number,
   ): Promise<{organization: Organization; group: OrganizationGroup}> {

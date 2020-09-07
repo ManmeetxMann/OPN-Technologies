@@ -624,6 +624,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfOrganization'
 
+  /organizations/{organizationId}/scheduling:
+    post:
+      description: Update an organization's mailing schedule
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                forYesterday:
+                  type: boolean
+                  description: true if the report is for the day before it is sent
+                hourToSendReport:
+                  type: number
+                  description: hour of the day to send the report (null to disable reporting)
+                  nullable: true
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationLocations'
+
   /organizations/{organizationId}/locations:
     post:
       description: Add locations to an organization

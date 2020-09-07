@@ -112,6 +112,7 @@ class OrganizationController implements IControllerBase {
     const organizations = Router().use(
       '/organizations',
       Router().post('/', this.create), // TODO: must be a protected route
+      Router().post('/:organizationId/scheduling', this.updateReportInfo), // TODO: must be a protected route
       Router().get('/one', this.findOneByKey),
       Router().use('/:organizationId', locations, groups, stats),
     )
@@ -144,6 +145,23 @@ class OrganizationController implements IControllerBase {
           throw new HttpException(error.message)
         })
       res.json(actionSucceed(organization))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  updateReportInfo = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const {organizationId} = req.params
+    const hourToSendReport = req.body.hourToSendReport ?? null
+    const dayShift = req.body.forYesterday ? 1 : 0
+
+    try {
+      const org = await this.organizationService
+        .updateReporting(organizationId, hourToSendReport, dayShift)
+        .catch((error) => {
+          throw new HttpException(error.message)
+        })
+      res.json(actionSucceed(org))
     } catch (error) {
       next(error)
     }

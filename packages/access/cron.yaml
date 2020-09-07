@@ -1,4 +1,4 @@
 cron:
 - description: "daily report prompt"
-  url: //triggerReports
+  url: /triggerReports
   schedule: every hour
