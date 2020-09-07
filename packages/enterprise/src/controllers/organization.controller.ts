@@ -165,7 +165,9 @@ class OrganizationController implements IControllerBase {
     if (hourToSendReport < 0 || hourToSendReport > 23) {
       res
         .status(400)
-        .json(of(null, ResponseStatusCodes.ValidationError, 'Hour must be between 0 and 23, inclusive'))
+        .json(
+          of(null, ResponseStatusCodes.ValidationError, 'Hour must be between 0 and 23, inclusive'),
+        )
       return
     }
 
