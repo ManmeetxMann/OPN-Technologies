@@ -148,6 +148,13 @@ export class OrganizationService {
       })
   }
 
+  updateLocations(
+    organizationId: string,
+    locations: OrganizationLocation[],
+  ): Promise<OrganizationLocation[]> {
+    return new OrganizationLocationModel(this.dataStore, organizationId).updateAll(locations)
+  }
+
   // includes organization id
   async getLocationById(locationId: string): ReturnType<OrganizationModel['getLocation']> {
     const location = await this.organizationRepository.getLocation(locationId)

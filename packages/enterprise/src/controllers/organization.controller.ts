@@ -89,6 +89,7 @@ class OrganizationController implements IControllerBase {
       innerRouter()
         .post('/', this.addLocations) // TODO: must be a protected route
         .get('/', this.getLocations)
+        .put('/', this.updateLocations)
         .get('/:locationId', this.getLocation),
     )
     const groups = innerRouter().use(
@@ -204,6 +205,25 @@ class OrganizationController implements IControllerBase {
           throw new HttpException(error.message)
         })
       res.json(actionSucceed(locations))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  updateLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const {organizationId} = req.params
+    const locations = req.body as OrganizationLocation[]
+    try {
+      const updatableLocationIds = await this.organizationService
+        .getLocations(organizationId)
+        .then((results) => results.map(({id}) => id))
+
+      const updatedLocations = await this.organizationService.updateLocations(
+        organizationId,
+        locations.filter(({id}) => updatableLocationIds.includes(id)),
+      )
+
+      res.json(actionSucceed(updatedLocations))
     } catch (error) {
       next(error)
     }

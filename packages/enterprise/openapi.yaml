@@ -689,6 +689,30 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationLocations'
+    put:
+      description: Update locations
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+        #          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrganizationLocation'
+      responses:
+        '200':
+          description: Successfully updated
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationLocations'
     get:
       description: Get organization locations
       parameters:
