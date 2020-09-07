@@ -152,6 +152,8 @@ components:
           type: string
         isDefault:
           type: boolean
+        checkInDisabled:
+          type: boolean
       required:
         - name
 
@@ -632,7 +634,7 @@ paths:
           name: organizationId
           schema:
             type: string
-          required: true
+          # required: true
       requestBody:
         content:
           application/json:
@@ -735,6 +737,26 @@ paths:
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationLocation'
 
+  /organizations/{organizationId}/groups/public:
+    get:
+      description: Get organization groups
+      deprecated: true
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: false
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationGroups'
+
   /organizations/{organizationId}/groups:
     post:
       description: Add groups to an organization
@@ -761,7 +783,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationGroups'
     get:
-      description: Get organization groups (admin access required)
+      description: Get organization groups
       parameters:
         - in: path
           name: organizationId
@@ -777,49 +799,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationGroups'
-
-  /organizations/{organizationId}/groups/public:
-    get:
-      description: Get organization groups (public)
-      parameters:
-        - in: path
-          name: organizationId
-          schema:
-            type: string
-      #          required: false
-      responses:
-        '200':
-          description: Successfully retrieved
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ResponseOfOrganizationGroups'
-
-  /organizations/{organizationId}/groups/{groupId}:
-    get:
-      description: Get one organization-group (admin access required)
-      parameters:
-        - in: path
-          name: organizationId
-          schema:
-            type: string
-      #          required: true
-        - in: path
-          name: groupId
-          schema:
-            type: string
-      #          required: true
-      responses:
-        '200':
-          description: Successfully added
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ResponseOfOrganizationGroup'
 
   /organizations/{organizationId}/stats:
     get:

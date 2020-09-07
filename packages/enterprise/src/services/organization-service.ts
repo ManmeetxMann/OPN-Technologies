@@ -251,22 +251,21 @@ export class OrganizationService {
     // Therefor the TS transpiler complains because of the types conflicts...
 
     // @ts-ignore
-    return this.getOrganization(organizationId).then(() => {
-      let query = this.getUsersGroupRepositoryFor(organizationId).collection()
+    let query = this.getUsersGroupRepositoryFor(organizationId).collection()
 
-      if (groupId) {
-        // @ts-ignore
-        query = query.where('groupId', '==', groupId)
-      }
-
-      if (userId) {
-        // @ts-ignore
-        query = query.where('userId', '==', userId)
-      }
-
+    if (!!groupId) {
       // @ts-ignore
-      return query.fetch()
-    })
+      query = query.where('groupId', '==', groupId)
+    }
+
+    if (!!userId) {
+      // @ts-ignore
+      query = query.where('userId', '==', userId)
+    }
+
+    // @ts-ignore
+    // Cannot fetchAll on a `Query` object, only on `Collection`
+    return groupId || userId ? query.fetch() : query.fetchAll()
   }
 
   addUserToGroup(

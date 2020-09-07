@@ -28,7 +28,7 @@ export type Access = {
 }
 
 export type AccessFilter = {
-  userId?: string
+  userIds?: string[]
   locationId?: string
   betweenCreatedDate?: Range<Date>
 }

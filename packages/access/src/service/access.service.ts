@@ -82,7 +82,7 @@ export class AccessService {
     }
     // all dependants named in the access enter, no need to filter here
     for (const id in access.dependants) {
-      if (!!access.dependants[id].enteredAt || !!access.dependants[id].enteredAt) {
+      if (!!access.dependants[id].enteredAt || !!access.dependants[id].exitAt) {
         throw new BadRequestException('Token already used to enter or exit')
       }
     }
@@ -184,13 +184,13 @@ export class AccessService {
     })
   }
 
-  findAllWith({userId, betweenCreatedDate, locationId}: AccessFilter): Promise<Access[]> {
+  findAllWith({userIds, betweenCreatedDate, locationId}: AccessFilter): Promise<Access[]> {
     // @ts-ignore
     let query = this.accessRepository.collection()
 
-    if (userId) {
+    if (userIds?.length) {
       // @ts-ignore
-      query = query.where('userId', '==', userId)
+      query = query.where('userId', 'in', userIds)
     }
     if (locationId) {
       // @ts-ignore
@@ -208,8 +208,11 @@ export class AccessService {
       }
     }
 
+    const hasFilter = userIds || locationId || betweenCreatedDate
     // @ts-ignore
-    return query.fetch().then((accesses) => accesses.map(mapAccessDates))
+    return (hasFilter ? query.fetch() : query.fetchAll()).then((accesses) =>
+      accesses.map(mapAccessDates),
+    )
   }
 
   getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
