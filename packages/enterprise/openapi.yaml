@@ -221,10 +221,14 @@ components:
           items:
             type: string
           description: Group Ids within Organization
+        showReporting:
+          type: boolean
+          description: Show reporting feature
       required:
         - email
         - organizationId
         - locationIds
+        - showReporting
 
     AdminProfile:
       type: object
