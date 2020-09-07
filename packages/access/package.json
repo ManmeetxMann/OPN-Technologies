@@ -13,7 +13,7 @@
         "prepare": "copyfiles ../common/.env dist/common && copyfiles app.yaml dist && copyfiles cron.yaml dist && copyfiles openapi.yaml dist && copyfiles package.json dist && node ../../__devops/package-cleaner.js access start",
         "compile": "tsc -p tsconfig.build.json",
         "build": "npm run clean && npm run prepare && npm run compile",
-        "gcloud_deploy": "gcloud app deploy ./dist --quiet",
+        "gcloud_deploy": "gcloud app deploy ./dist --quiet && gcloud app deploy ./dist/cron.yaml --quiet",
         "deploy": "npm run build && npm run gcloud_deploy",
         "initialize": "ts-node -e \"require('./src/server.ts').init()\""
     },
