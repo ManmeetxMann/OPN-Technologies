@@ -148,8 +148,6 @@ components:
           type: string
         name:
           type: string
-        key:
-          type: string
         isDefault:
           type: boolean
         checkInDisabled:
