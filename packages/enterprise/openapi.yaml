@@ -634,7 +634,7 @@ paths:
           name: organizationId
           schema:
             type: string
-          required: true
+          # required: true
       requestBody:
         content:
           application/json:

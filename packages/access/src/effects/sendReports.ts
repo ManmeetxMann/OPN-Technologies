@@ -37,12 +37,12 @@ export default class ReportSender {
       organizations.map((org) => {
         const dayShift = org.dayShift || 0
         const date = moment(now()).tz(timeZone).subtract(dayShift, 'days').format('YYYY-MM-DD')
-        return this.mailFor(org.id, date)
+        return this.mailFor(org.id, org.name, date)
       }),
     )
   }
 
-  async mailFor(organizationId: string, date: string): Promise<void> {
+  async mailFor(organizationId: string, organizationName: string, date: string): Promise<void> {
     const locations = await new OrganizationLocationModel(this.dataStore, organizationId).fetchAll()
     const allIds = locations.map(({id}) => id)
     const reportPages = await Promise.all(
@@ -81,6 +81,6 @@ export default class ReportSender {
       organizationId,
     )
     const allEmails = recipients.map(({profile}) => profile.email)
-    send(allEmails, 'Daily report', message)
+    send(allEmails, `Access Report ${date}, for ${organizationName}`, message)
   }
 }
