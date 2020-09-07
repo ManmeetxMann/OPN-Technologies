@@ -359,9 +359,10 @@ class OrganizationController implements IControllerBase {
     await Promise.all(
       userIds.map((userId) =>
         this.userService.getAllDependants(userId).then((results) => {
-          dependantsByParentId[userId] = results.map(
-            (dependant) => ({...dependant, base64Photo: usersById[userId].base64Photo} as User),
-          )
+          dependantsByParentId[userId] = results.map((dependant) => ({
+            ...usersById[userId],
+            ...dependant,
+          }))
         }),
       ),
     )
