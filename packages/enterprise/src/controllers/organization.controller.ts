@@ -152,6 +152,22 @@ class OrganizationController implements IControllerBase {
     const hourToSendReport = req.body.hourToSendReport ?? null
     const dayShift = req.body.forYesterday ? 1 : 0
 
+    if (hourToSendReport % 1) {
+      res
+        .status(400)
+        .json(of(null, ResponseStatusCodes.ValidationError, 'Hour must be a whole number'))
+      return
+    }
+
+    if (hourToSendReport < 0 || hourToSendReport > 23) {
+      res
+        .status(400)
+        .json(
+          of(null, ResponseStatusCodes.ValidationError, 'Hour must be between 0 and 23, inclusive'),
+        )
+      return
+    }
+
     try {
       const org = await this.organizationService
         .updateReporting(organizationId, hourToSendReport, dayShift)
