@@ -293,10 +293,13 @@ export default class TraceListener {
           (flat, id) => [...flat, ...(reportsForOrganization[id] || [])],
           [],
         ),
-        locReports: user.profile.adminForLocationIds.reduce(
-          (flat, id) => [...flat, ...(reportsForLocation[id] || [])],
-          [],
-        ),
+        locReports: [],
+        // TODO: we aren't sending reports to location admins for now, but
+        // when we do we need to make sure to deduplicate here before we reenable
+        // locReports: user.profile.adminForLocationIds.reduce(
+        //   (flat, id) => [...flat, ...(reportsForLocation[id] || [])],
+        //   [],
+        // ),
       }))
     allRecipients.forEach((recipient) =>
       send(
