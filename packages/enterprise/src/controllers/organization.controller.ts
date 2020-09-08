@@ -281,7 +281,16 @@ class OrganizationController implements IControllerBase {
       const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
         throw new HttpException(error.message)
       })
-      groups.sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true }))
+      groups.sort((a, b) => {
+        // this is all kinds of temporary
+        if (a.name === 'Parents & Guardians') {
+          return -1
+        }
+        if (b.name === 'Parents & Guardians') {
+          return 1
+        }
+        return a.name.localeCompare(b.name, 'en', {numeric: true})
+      })
       res.json(actionSucceed(groups))
     } catch (error) {
       next(error)
