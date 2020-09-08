@@ -58,16 +58,15 @@ export const getAccessSection = (
   locationName?: string,
   date?: string,
 ): string => {
-  const printableAccesses = accesses.map((access) => ({
+  const printableAccesses = accesses.map((acc) => ({
     name: formatName(
-      users.find((user) => user.id === access.userId),
-      access.dependant,
+      users.find((user) => user.id === acc.userId),
+      acc.dependant,
     ),
-    start:
-      // @ts-ignore these are timestamps, not dates
-      access.enteredAt ? access.enteredAt.toDate() : {toLocaleTimeString: () => 'START OF DAY'},
     // @ts-ignore these are timestamps, not dates
-    end: access.exitAt ? access.exitAt.toDate() : {toLocaleTimeString: () => 'END OF DAY'},
+    start: (acc.enteredAt ?? moment(acc.exitAt.toDate()).tz(timeZone).startOf('day')).toDate(),
+    // @ts-ignore these are timestamps, not dates
+    end: (acc.exitAt ?? moment(acc.enteredAt.toDate()).tz(timeZone).endOf('day')).toDate(),
   }))
   printableAccesses.sort((a, b) => a.start.valueOf() - b.start.valueOf())
   return `${
