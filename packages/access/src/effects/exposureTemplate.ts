@@ -17,7 +17,7 @@ const formatName = (user: User, dependant?: UserDependant): string => {
 }
 const formatTime = (date: Date) => {
   if (moment(date) >= moment(now())) {
-    return '(never left)'
+    return '(not checked out)'
   }
   return moment(date).tz(timeZone).format('hh:mm a')
 }
