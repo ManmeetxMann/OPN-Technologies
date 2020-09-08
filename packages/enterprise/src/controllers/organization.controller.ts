@@ -123,7 +123,7 @@ class OrganizationController implements IControllerBase {
       return
     }
     const zones = await this.organizationService.getLocations(organizationId, location.id)
-    zones.sort((a, b) => a.title.localeCompare(b.title, 'en', { numeric: true }))
+    zones.sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))
     location.zones = zones.map(
       ({id, title, address, attestationRequired, questionnaireId, allowsSelfCheckInOut}) => ({
         id,
@@ -243,7 +243,7 @@ class OrganizationController implements IControllerBase {
         locations.map(async (location) => this.populateZones(location, organizationId)),
       )
 
-      locations.sort((a, b) => a.title.localeCompare(b.title, 'en', { numeric: true }))
+      locations.sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))
 
       res.json(actionSucceed(locations))
     } catch (error) {
