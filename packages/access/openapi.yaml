@@ -386,6 +386,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfEnterOrExit'
 
+  /triggerReports:
+    get:
+      description: Triggers reports to be sent for the current hour. Likely to become inaccessible except via cron. This is a GET request with side effects, be cautious!
+      responses:
+        '200':
+          description: Success
+
+  /requestTrace:
+    post:
+      description: Triggers a contact trace on a user. Likely to become inaccessible except via pubsub
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: string
+                  description: The base64 encoding of "trace-required"
+                  enum:
+                    - dHJhY2UtcmVxdWlyZWQ=
+                startTime:
+                  type: string
+                  description: number of milliseconds since the unix epoch for the beginning of the trace
+                endTime:
+                  type: string
+                  description: number of milliseconds since the unix epoch for the end of the trace
+                passportStatus:
+                  type: string
+                  description: status assigned to the user when they triggered the trace
+                  enum:
+                    - caution
+                    - stop
+                userId:
+                  type: string
+                  description: the is of the user who attested to having symptoms
+
+      responses:
+        '200':
+          description: Success
+
   /user/exit:
     post:
       description: Handle self user's exit
