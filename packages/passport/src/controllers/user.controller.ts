@@ -4,7 +4,7 @@ import {PubSub, Topic} from '@google-cloud/pubsub'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {PassportService} from '../services/passport-service'
-import {PassportStatuses, Passport} from '../models/passport'
+import {Passport, PassportStatuses} from '../models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Attestation, AttestationAnswers} from '../models/attestation'
@@ -12,6 +12,7 @@ import {AttestationService} from '../services/attestation-service'
 import {AccessService} from '../../../access/src/service/access.service'
 import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
 
@@ -21,6 +22,7 @@ class UserController implements IControllerBase {
   private passportService = new PassportService()
   private attestationService = new AttestationService()
   private accessService = new AccessService()
+  private organizationService = new OrganizationService()
   private topic: Topic
 
   constructor() {
@@ -115,10 +117,12 @@ class UserController implements IControllerBase {
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {locationId, userId} = req.body
-      const includeGuardian = req.body.includeGuardian ?? true
-      if (!includeGuardian) {
-        throw new Error('Guardian must be included in all passports')
-      }
+      const {organizationId} = await this.organizationService.getLocationById(locationId)
+      const userGroupId = await this.organizationService
+        .getUsersGroups(organizationId, null, userId)
+        .then((results) => results[0]?.groupId)
+      const group = await this.organizationService.getGroup(organizationId, userGroupId)
+      const includeGuardian = !group.checkInDisabled
 
       const dependantIds: string[] = req.body.dependantIds ?? []
       const answers: AttestationAnswers = req.body.answers
@@ -134,7 +138,7 @@ class UserController implements IControllerBase {
       const passport = await this.passportService.create(passportStatus, userId, dependantIds)
 
       // Stats
-      const count = dependantIds.length + 1
+      const count = dependantIds.length + (includeGuardian ? 1 : 0)
       await this.accessService.incrementTodayPassportStatusCount(locationId, passportStatus, count)
       // await this.accessService.incrementTodayPassportStatusCount(
       //   locationId,
