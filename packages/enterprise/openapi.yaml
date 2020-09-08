@@ -152,6 +152,8 @@ components:
           type: boolean
         checkInDisabled:
           type: boolean
+        priority:
+          type: number
       required:
         - name
 

@@ -281,7 +281,11 @@ class OrganizationController implements IControllerBase {
       const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
         throw new HttpException(error.message)
       })
-      groups.sort((a, b) => a.name.localeCompare(b.name, 'en', {numeric: true}))
+      groups.sort((a, b) => {
+        // if a has higher priority, return a negative number (a comes first)
+        const bias = (b.priority || 0) - (a.priority || 0)
+        return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
+      })
       res.json(actionSucceed(groups))
     } catch (error) {
       next(error)
