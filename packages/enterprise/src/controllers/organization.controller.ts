@@ -282,14 +282,9 @@ class OrganizationController implements IControllerBase {
         throw new HttpException(error.message)
       })
       groups.sort((a, b) => {
-        // this is all kinds of temporary
-        if (a.name === 'Parents & Guardians') {
-          return -1
-        }
-        if (b.name === 'Parents & Guardians') {
-          return 1
-        }
-        return a.name.localeCompare(b.name, 'en', {numeric: true})
+        // if a has higher priority, return a negative number (a comes first)
+        const bias = (b.priority || 0) - (a.priority || 0)
+        return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
       })
       res.json(actionSucceed(groups))
     } catch (error) {
