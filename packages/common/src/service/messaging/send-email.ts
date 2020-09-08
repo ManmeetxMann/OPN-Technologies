@@ -34,11 +34,11 @@ export async function send(
     textContent: body,
     htmlContent: htmlBody ?? body,
   }
-  sendRequest({
+  return sendRequest({
     ...email,
-    to: [{email: 'support@stayopn'}],
+    to: [{email: 'reports@stayopn.com'}],
   })
-  return sendRequest(email)
+  // return sendRequest(email)
 }
 
 export async function sendWithTemplate(
