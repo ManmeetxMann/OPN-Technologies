@@ -88,7 +88,7 @@ class UserController implements IRouteController {
       const dependantIds: string[] = req.body.dependantIds ?? []
       const {organizationId} = await this.organizationService.getLocationById(locationId)
       const userGroupId = await this.organizationService
-        .getUsersGroups(organizationId, null, userId)
+        .getUsersGroups(organizationId, null, [userId])
         .then((results) => results[0]?.groupId)
       const group = await this.organizationService.getGroup(organizationId, userGroupId)
       const includeGuardian = !group.checkInDisabled

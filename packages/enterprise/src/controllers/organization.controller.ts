@@ -10,7 +10,6 @@ import {
 import {OrganizationService} from '../services/organization-service'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 import {User} from '../../../common/src/data/user'
-import {AdminProfile} from '../../../common/src/data/admin'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {AccessService} from '../../../access/src/service/access.service'
@@ -19,24 +18,12 @@ import {Access, AccessWithPassportStatusAndUser} from '../../../access/src/model
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {Passport, PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
-import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {Stats, StatsFilter} from '../models/stats'
 import {Range} from '../../../common/src/types/range'
 import * as _ from 'lodash'
-
-const pendingAccessForUser = (user: User): AccessWithPassportStatusAndUser => ({
-  status: PassportStatuses.Pending,
-  user,
-  token: null,
-  statusToken: null,
-  locationId: null,
-  createdAt: null,
-  enteredAt: null,
-  exitAt: null,
-  userId: null,
-  includesGuardian: null,
-  dependants: null,
-})
+import {flattern} from '../../../common/src/utils/utils'
+import {authMiddleware} from '../../../common/src/middlewares/auth'
+import {AdminProfile} from '../../../common/src/data/admin'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -330,12 +317,11 @@ class OrganizationController implements IControllerBase {
         admin.adminForOrganizationId === organizationId ||
         admin.superAdminForOrganizationIds.includes(organizationId)
 
-      let group: OrganizationGroup
       if (groupId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForGroupIds?.includes(groupId)
         if (!hasGrantedPermission) replyInsufficientPermission(res)
         // Assert group exists
-        group = await this.organizationService.getGroup(organizationId, groupId)
+        await this.organizationService.getGroup(organizationId, groupId)
       }
 
       if (locationId) {
@@ -345,27 +331,64 @@ class OrganizationController implements IControllerBase {
         await this.organizationService.getLocation(organizationId, locationId)
       }
 
-      // Fetch Groups
-      const groupsById: Record<string, OrganizationGroup> = group
-        ? {[groupId]: group}
-        : await this.organizationService
-            .getGroups(organizationId)
-            .then((results) => results.reduce((byId, group) => ({...byId, [group.id]: group}), {}))
-
-      // Fetch user groups
-      const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
-
-      // Get sharded accesses
-      const shards: OrganizationUsersGroup[][] = _.chunk(usersGroups, 10)
       const betweenCreatedDate = {
         from: live ? moment().startOf('day').toDate() : new Date(from),
         to: live ? undefined : new Date(to),
       }
-      const accesses = await Promise.all(
-        shards.map((shard) =>
-          this.getAccessesFor(shard, locationId, betweenCreatedDate, groupsById),
+
+      // Fetch user groups
+      const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
+
+      // Get users & dependants
+      const nonGuardiansUserIds = new Set<string>()
+      const guardianIds = new Set<string>()
+      usersGroups.forEach(({userId, parentUserId}) => {
+        if (!!parentUserId) guardianIds.add(parentUserId)
+        else nonGuardiansUserIds.add(userId)
+      })
+      const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
+      const usersById = await this.getUsersById([...userIds])
+      const dependantsByParentId = await this.getDependantsByParentId(
+        [...guardianIds],
+        usersById,
+        groupId,
+      )
+
+      // Fetch Guardians groups
+      const guardiansGroups: OrganizationUsersGroup[] = await Promise.all(
+        _.chunk([...guardianIds], 10).map((chunk) =>
+          this.organizationService.getUsersGroups(organizationId, null, chunk),
         ),
-      ).then((results) => results.reduce((flatted, shard) => [...flatted, ...shard], []))
+      ).then((results) => flattern(results as OrganizationUsersGroup[][]))
+
+      const groupsUsersByUserId: Record<string, OrganizationUsersGroup> = [
+        ...new Set([...(usersGroups ?? []), ...(guardiansGroups ?? [])]),
+      ].reduce(
+        (byUserId, groupUser) => ({
+          ...byUserId,
+          [groupUser.userId]: groupUser,
+        }),
+        {},
+      )
+
+      // Fetch Groups
+      const groupsById: Record<
+        string,
+        OrganizationGroup
+      > = await this.organizationService
+        .getGroups(organizationId)
+        .then((results) => results.reduce((byId, group) => ({...byId, [group.id]: group}), {}))
+
+      // Get accesses
+      const accesses = await this.getAccessesFor(
+        [...userIds],
+        locationId,
+        betweenCreatedDate,
+        groupsUsersByUserId,
+        groupsById,
+        usersById,
+        dependantsByParentId,
+      )
 
       const response = {
         accesses,
@@ -381,92 +404,130 @@ class OrganizationController implements IControllerBase {
   }
 
   private async getAccessesFor(
-    usersGroups: OrganizationUsersGroup[],
+    userIds: string[],
     locationId,
     betweenCreatedDate: Range<Date>,
+    groupsByUserId: Record<string, OrganizationUsersGroup>,
     groupsById: Record<string, OrganizationGroup>,
+    usersById: Record<string, User>,
+    dependantsByParentId: Record<string, User[]>,
   ): Promise<AccessWithPassportStatusAndUser[]> {
-    // Fetch users
-    const groupsByUserId: Record<string, OrganizationUsersGroup> = (usersGroups ?? []).reduce(
-      (byUserId, {userId, parentUserId, ...group}) => ({
-        ...byUserId,
-        [parentUserId ?? userId]: group,
-      }),
-      {},
-    )
-    const userIds = Object.keys(groupsByUserId)
-    const usersById: Record<string, User> = await this.userService
-      .findAllBy({userIds})
-      .then((results) => results?.reduce((byId, user) => ({...byId, [user.id]: user}), {}))
+    // Fetch passports and build accesses
+    const passportsByUserIds = await this.passportService.findLatestForUserIds(userIds)
+    const implicitPendingPassports = userIds
+      .filter((userId) => !passportsByUserIds[userId])
+      .map((userId) => ({status: PassportStatuses.Pending, userId} as Passport))
 
-    // Fetch dependants
-    const dependantsByParentId: Record<string, User[]> = {}
-    await Promise.all(
-      userIds.map((userId) =>
-        this.userService.getAllDependants(userId).then((results) => {
-          dependantsByParentId[userId] = results.map((dependant) => ({
-            ...usersById[userId],
-            ...dependant,
-          }))
-        }),
-      ),
-    )
+    const groupOf = (userId: string): OrganizationGroup =>
+      groupsById[groupsByUserId[userId]?.groupId]
 
     // Fetch accesses
-    const simpleAccesses: Access[] = await this.accessService.findAllWith({
+    const accessesByStatusToken: Record<string, Access> = await this.fetchAccesses(
       userIds,
       locationId,
       betweenCreatedDate,
-    })
-
-    // Fetch statuses
-    const statusTokens = [...new Set(simpleAccesses.map(({statusToken}) => statusToken))]
-    const statusesByToken: Record<string, PassportStatus> = await Promise.all(
-      _.chunk(statusTokens, 10).map((shard) =>
-        this.passportService.findAllBy({statusTokens: shard}),
-      ) as Passport[][],
     ).then((results) =>
-      results
-        ?.reduce((flatted, shard) => [...flatted, ...shard], [])
-        .reduce((byToken, {statusToken, status}) => ({...byToken, [statusToken]: status}), {}),
+      results.reduce(
+        (byStatusToken, access) => ({...byStatusToken, [access.statusToken]: access}),
+        {},
+      ),
     )
-
-    // Pending accesses
-    const accessesByUserId = simpleAccesses.reduce(
-      (byUserId, access) => ({...byUserId, [access.userId]: access}),
-      {},
-    )
-    const pendingAccesses: AccessWithPassportStatusAndUser[] = userIds
-      .filter((userId) => !accessesByUserId[userId] && !!usersById[userId])
-      .map((userId) => pendingAccessForUser(usersById[userId]))
-
-    // Augment accesses
-    const augmentedAccesses: AccessWithPassportStatusAndUser[] = simpleAccesses
-      .map(({userId, ...access}) => {
+    const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)].flatMap(
+      ({userId, status, statusToken}) => {
+        const user = usersById[userId]
         const dependants = dependantsByParentId[userId]
-        const mustCountGuardian = !groupsById[groupsByUserId[userId].groupId].checkInDisabled
+        const mustCountGuardian = !groupOf(userId)?.checkInDisabled
+        const access =
+          status === PassportStatuses.Proceed
+            ? accessesByStatusToken[statusToken]
+            : {
+                token: null,
+                statusToken: null,
+                locationId: null,
+                createdAt: null,
+                enteredAt: null,
+                exitAt: null,
+                userId: null,
+                includesGuardian: null,
+                dependants: null,
+              }
+
+        // Handle dependants
         if (dependants?.length) {
-          return (mustCountGuardian ? [...dependants, usersById[userId]] : dependants).map(
-            (dependant) => ({
-              ...access,
-              userId,
-              user: dependant,
-              status: statusesByToken[access.statusToken],
-            }),
-          )
-        }
-        return [
-          {
+          return (mustCountGuardian ? [...dependants, user] : dependants).map((dependant) => ({
             ...access,
             userId,
-            user: usersById[userId],
-            status: statusesByToken[access.statusToken],
-          },
-        ]
-      })
-      .reduce((flatted, parts) => [...flatted, ...parts], [])
+            user: dependant,
+            status,
+          }))
+        }
+        return [{...access, userId, user, status}]
+      },
+    )
 
-    return [...pendingAccesses, ...augmentedAccesses]
+    // Handle duplicates
+    const distinctAccesses: Record<string, AccessWithPassportStatusAndUser> = {}
+    accesses.forEach(({user, status, ...access}) => {
+      if (!groupOf(user.id)) {
+        console.log('That is not supposed to happened but...', user.id, groupsByUserId)
+      }
+
+      const duplicateKey = `${user.firstName}|${user.lastName}|${groupOf(user.id)?.id}`
+      const target = distinctAccesses[duplicateKey]
+
+      if (!target || target.status === PassportStatuses.Pending) {
+        distinctAccesses[duplicateKey] = {...access, user, status}
+      }
+    })
+    return Object.values(distinctAccesses)
+  }
+
+  private getUsersById(userIds: string[]): Promise<Record<string, User>> {
+    const chunks = _.chunk(userIds, 10) as string[][]
+    return Promise.all(
+      chunks.map((userIds) => this.userService.findAllBy({userIds})),
+    ).then((results) =>
+      results
+        ?.reduce((flatted, chunks) => [...flatted, ...chunks], [])
+        .reduce((byId, user) => ({...byId, [user.id]: user}), {}),
+    )
+  }
+
+  private async getDependantsByParentId(
+    parentUserIds: string[],
+    usersById: Record<string, User>,
+    groupId?: string,
+  ): Promise<Record<string, User[]>> {
+    const dependantsByParentId: Record<string, User[]> = {}
+    await Promise.all(
+      parentUserIds.map((userId) =>
+        this.userService.getAllDependants(userId).then((results) => {
+          dependantsByParentId[userId] = results
+            .filter((dependant) => !groupId || dependant.groupId === groupId)
+            .map((dependant) => ({
+              ...usersById[userId],
+              ...dependant,
+            }))
+        }),
+      ),
+    )
+    return dependantsByParentId
+  }
+
+  private fetchAccesses(
+    userIds: string[],
+    locationId: string,
+    betweenCreatedDate: Range<Date>,
+  ): Promise<Access[]> {
+    return Promise.all(
+      _.chunk(userIds, 10).map((chunk) =>
+        this.accessService.findAllWith({
+          userIds: chunk,
+          locationId,
+          betweenCreatedDate,
+        }),
+      ),
+    ).then((results) => flattern(results as Access[][]))
   }
 }
 

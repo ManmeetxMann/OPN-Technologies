@@ -13,6 +13,7 @@ import {AccessService} from '../../../access/src/service/access.service'
 import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
 
@@ -119,11 +120,16 @@ class UserController implements IControllerBase {
       const {locationId, userId} = req.body
       const {organizationId} = await this.organizationService.getLocationById(locationId)
       const userGroupId = await this.organizationService
-        .getUsersGroups(organizationId, null, userId)
+        .getUsersGroups(organizationId, null, [userId])
         .then((results) => results[0]?.groupId)
+
+      if (!userGroupId)
+        throw new ResourceNotFoundException(
+          `Cannot find a group for user [${userId}] and location path [organizations/${organizationId}/locations/${locationId}]`,
+        )
+
       const group = await this.organizationService.getGroup(organizationId, userGroupId)
       const includeGuardian = !group.checkInDisabled
-
       const dependantIds: string[] = req.body.dependantIds ?? []
       const answers: AttestationAnswers = req.body.answers
       const passportStatus = await this.evaluateAnswers(answers)
