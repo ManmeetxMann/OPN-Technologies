@@ -16,11 +16,6 @@ import {OrganizationService} from '../../../enterprise/src/services/organization
 import {OrganizationLocation} from '../../../enterprise/src/models/organization'
 import {UserService} from '../../../common/src/service/user/user-service'
 
-// disables the `includeGuardian` parameter. guardians are never included with dependants
-// and always included otherwise
-// Leaving this in, but it shouldn't be used anymore
-const includeGuardianHack = Config.get('FEATURE_AUTOMATIC_INCLUDE_GUARDIAN') === 'enabled'
-
 // allow 'partial success' for requests where the passport verifies only some dependants
 const permissiveMode = Config.get('FEATURE_CREATE_TOKEN_PERMISSIVE_MODE') === 'enabled'
 class UserController implements IRouteController {
@@ -91,9 +86,12 @@ class UserController implements IRouteController {
     try {
       const {statusToken, locationId, userId} = req.body
       const dependantIds: string[] = req.body.dependantIds ?? []
-      const includeGuardian = includeGuardianHack
-        ? !dependantIds.length
-        : req.body.includeGuardian ?? true
+      const {organizationId} = await this.organizationService.getLocationById(locationId)
+      const userGroupId = await this.organizationService
+        .getUsersGroups(organizationId, null, [userId])
+        .then((results) => results[0]?.groupId)
+      const group = await this.organizationService.getGroup(organizationId, userGroupId)
+      const includeGuardian = !group.checkInDisabled
       const passport = await this.passportService.findOneByToken(statusToken)
 
       const fail = (reason: string) => res.status(403).json(actionFailed(reason))

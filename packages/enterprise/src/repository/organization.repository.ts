@@ -8,6 +8,7 @@ import {
   OrganizationLocation,
   OrganizationUsersGroup,
 } from '../models/organization'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 export class OrganizationModel extends GroupDataModel<Organization, OrganizationLocation> {
   public readonly rootPath = 'organizations'
@@ -19,6 +20,9 @@ export class OrganizationModel extends GroupDataModel<Organization, Organization
     id: string,
   ): Promise<null | (OrganizationLocation & {organizationId: string})> {
     const item = await this.groupGetWhereEqual('locationId', id)
+    if (!item) {
+      throw new ResourceNotFoundException(`Cannot find location with ${id}`)
+    }
     // can't query actual ids in a collectionGroup
     return {
       ...item.value,

@@ -214,7 +214,7 @@ export class OrganizationService {
   getUsersGroups(
     organizationId: string,
     groupId?: string,
-    userId?: string,
+    userIds?: string[],
   ): Promise<OrganizationUsersGroup[]> {
     // Firestore doesn't give enough "where" operators to have optional query filters
     // To have a query-builder, we need here to re-assign the query declaration (of type Collection) with a WhereClause Query
@@ -228,14 +228,14 @@ export class OrganizationService {
       query = query.where('groupId', '==', groupId)
     }
 
-    if (!!userId) {
+    if (userIds?.length) {
       // @ts-ignore
-      query = query.where('userId', '==', userId)
+      query = query.where('userId', 'in', userIds)
     }
 
     // @ts-ignore
     // Cannot fetchAll on a `Query` object, only on `Collection`
-    return groupId || userId ? query.fetch() : query.fetchAll()
+    return groupId || userIds?.length > 0 ? query.fetch() : query.fetchAll()
   }
 
   addUserToGroup(
@@ -299,8 +299,10 @@ export class OrganizationService {
     groupId?: string,
     userId?: string,
   ): Promise<OrganizationUsersGroup | undefined> {
-    return this.getUsersGroups(organizationId, groupId, userId).then((results) =>
-      results.length > 0 ? results[0] : undefined,
-    )
+    return this.getUsersGroups(
+      organizationId,
+      groupId,
+      userId ? [userId] : undefined,
+    ).then((results) => (results.length > 0 ? results[0] : undefined))
   }
 }
