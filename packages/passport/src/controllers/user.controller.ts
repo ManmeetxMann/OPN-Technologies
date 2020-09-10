@@ -94,7 +94,8 @@ class UserController implements IControllerBase {
           // need to create a new one for different people
         } else
         */
-        if (!isPassed(existingPassport.validUntil)) {
+        // @ts-ignore
+        if (!isPassed(existingPassport.validUntil.toDate())) {
           // still valid, no need to recreate
           currentPassport = existingPassport
         } else if (existingPassport.status !== PassportStatuses.Proceed) {
@@ -146,11 +147,6 @@ class UserController implements IControllerBase {
       // Stats
       const count = dependantIds.length + (includeGuardian ? 1 : 0)
       await this.accessService.incrementTodayPassportStatusCount(locationId, passportStatus, count)
-      // await this.accessService.incrementTodayPassportStatusCount(
-      //   locationId,
-      //   PassportStatuses.Pending,
-      //   -count,
-      // )
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
         if (userId) {
           const nowMillis = now().valueOf()
