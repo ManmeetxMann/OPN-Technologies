@@ -89,17 +89,12 @@ export class PassportService {
           validUntil: null,
         }),
       )
-      .then(({validFrom, ...passport}) => ({
-        ...passport,
-        // @ts-ignore
-        validFrom: new firestore.Timestamp(validFrom.seconds, validFrom.nanoseconds),
-      }))
       .then(({validFrom, validUntil, ...passport}) => ({
         ...passport,
         validFrom,
-        validUntil: new firestore.Timestamp(
-          moment(validFrom.toDate().toISOString()).add(24, 'hours').seconds(),
-          validFrom.nanoseconds,
+        validUntil: firestore.Timestamp.fromDate(
+          // @ts-ignore
+          moment(validFrom.toDate().toISOString()).add(24, 'hours').toDate(),
         ),
       }))
       .then((passport) => this.passportRepository.update(passport))
