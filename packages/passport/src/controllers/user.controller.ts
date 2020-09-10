@@ -94,8 +94,7 @@ class UserController implements IControllerBase {
           // need to create a new one for different people
         } else
         */
-        // @ts-ignore
-        if (!isPassed(existingPassport.validUntil.toDate())) {
+        if (!isPassed(existingPassport.validUntil)) {
           // still valid, no need to recreate
           currentPassport = existingPassport
         } else if (existingPassport.status !== PassportStatuses.Proceed) {

@@ -14,12 +14,12 @@ import {Config} from '../../../common/src/utils/config'
 // must apply to the user who created them.
 type LegacyPassport = Passport & {includesGuardian: true}
 
-const mapDates = (passport: Passport): Passport => ({
+const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
   ...passport,
   //@ts-ignore
-  validFrom: passport.validFrom.toDate().toISOString(),
+  validFrom: typeof validFrom === 'string' ? validFrom : validFrom.toDate().toISOString(),
   //@ts-ignore
-  validUntil: passport.validUntil.toDate().toISOString(),
+  validUntil: typeof validUntil === 'string' ? validUntil : validUntil.toDate().toISOString(),
 })
 
 export class PassportService {
@@ -56,7 +56,7 @@ export class PassportService {
       flattern(results as Passport[][])?.forEach((passport) => {
         const latestPassport = latestPassportsByUserId[passport.userId]
         if (!latestPassport || passport.validUntil > latestPassport.validUntil) {
-          latestPassportsByUserId[passport.userId] = passport
+          latestPassportsByUserId[passport.userId] = mapDates(passport)
         }
       }),
     )
