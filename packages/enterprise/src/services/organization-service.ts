@@ -55,7 +55,6 @@ export class OrganizationService {
           if (!results) {
             const group = await this.addGroup(organization.id, {
               name: 'All',
-              isDefault: true,
               checkInDisabled: false,
             } as OrganizationGroup)
             return {
@@ -182,10 +181,7 @@ export class OrganizationService {
   }
 
   addGroup(organizationId: string, group: OrganizationGroup): Promise<OrganizationGroup> {
-    return this.getGroupsRepositoryFor(organizationId).add({
-      ...group,
-      isDefault: group.isDefault ?? false,
-    })
+    return this.getGroupsRepositoryFor(organizationId).add(group)
   }
 
   addGroups(organizationId: string, groups: OrganizationGroup[]): Promise<OrganizationGroup[]> {
