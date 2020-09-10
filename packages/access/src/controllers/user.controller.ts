@@ -109,7 +109,8 @@ class UserController implements IRouteController {
       if (
         !(
           passport.status === PassportStatuses.Pending ||
-          (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
+          // @ts-ignore
+          (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil.toDate()))
         )
       ) {
         fail('Access denied: this passport does not permit entry')
@@ -179,7 +180,9 @@ class UserController implements IRouteController {
     if (location.id != access.locationId)
       throw new BadRequestException('Access-location mismatch with the entering location')
 
-    const canEnter = passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil)
+    const canEnter =
+      // @ts-ignore
+      passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil.toDate())
 
     if (canEnter) {
       const {dependants, userId, includesGuardian} = await this.accessService.handleEnter(access)
