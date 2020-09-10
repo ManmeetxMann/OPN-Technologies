@@ -104,8 +104,7 @@ class AdminController implements IRouteController {
       }
       const canEnter =
         passport.status === PassportStatuses.Pending ||
-        // @ts-ignore
-        (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil.toDate()))
+        (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
 
       if (canEnter) {
         const {dependants} = await this.accessService.handleEnter(access)
