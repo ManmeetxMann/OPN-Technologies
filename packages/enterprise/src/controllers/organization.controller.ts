@@ -432,7 +432,7 @@ class OrganizationController implements IControllerBase {
         {},
       ),
     )
-    const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)].flatMap(
+    const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)].map(
       ({userId, status, statusToken}) => {
         const user = usersById[userId]
         const dependants = dependantsByParentId[userId]
@@ -467,7 +467,7 @@ class OrganizationController implements IControllerBase {
 
     // Handle duplicates
     const distinctAccesses: Record<string, AccessWithPassportStatusAndUser> = {}
-    accesses.forEach(({user, status, ...access}) => {
+    flattern(accesses).forEach(({user, status, ...access}) => {
       if (!groupOf(user.id)) {
         console.log('That is not supposed to happened but...', user.id, groupsByUserId)
       }
