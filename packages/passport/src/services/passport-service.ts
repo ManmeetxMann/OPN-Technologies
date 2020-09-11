@@ -94,7 +94,7 @@ export class PassportService {
         validFrom,
         validUntil: firestore.Timestamp.fromDate(
           // @ts-ignore
-          this.shortestTime(validFrom),
+          this.shortestTime(validFrom.toDate()),
         ),
       }))
       .then((passport) => this.passportRepository.update(passport))
@@ -118,11 +118,11 @@ export class PassportService {
    * Calculates the shortest time to an end of day or elapsed time.
    * Ex: end of day: 3am at night and 12 hours – we'd pick which is closer to now()
    */
-  private shortestTime(validFrom) {
+  private shortestTime(validFrom: Date): Date {
     const expiryDuration = parseInt(Config.get('PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
     const expiryMax = parseInt(Config.get('PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS'))
 
-    const date = validFrom.toDate().toISOString()
+    const date = validFrom.toISOString()
     const byDuration = moment(date).add(expiryDuration, 'hours')
     const byMax = moment(date).add(1, 'day').hours(expiryMax).minutes(0).seconds(0).milliseconds(0)
     const shorter = byMax.diff(byDuration) ? byMax : byDuration
