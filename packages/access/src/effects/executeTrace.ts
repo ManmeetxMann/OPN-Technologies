@@ -300,5 +300,8 @@ export default class TraceListener {
           : 'No one was exposed to the user',
       ),
     )
+    if (!allRecipients.length) {
+      send([], 'Exposure report', header + '\nNo one was exposed')
+    }
   }
 }
