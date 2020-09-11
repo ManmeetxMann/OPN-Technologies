@@ -69,6 +69,10 @@ jobs:
           # Timezones
           DEFAULT_TIME_ZONE=America/Toronto
 
+          # Passport Specific 
+          PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS=12
+          PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS=3
+
           # Features
           FEATURE_CREATE_TOKEN_PERMISSIVE_MODE=enabled
           FEATURE_PARENT_LOCATION_ID_MAY_BE_MISSING=enabled

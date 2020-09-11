@@ -41,7 +41,6 @@ class UserController implements IControllerBase {
           privacyPolicy: Config.get('LINK_PRIVACYPOLICY'),
           termsOfService: Config.get('LINK_TERMSOFSERVICE'),
         },
-        badgeValidityPeriod: 60 * 60 * 24,
         badges: {
           pending: 'Pending',
           caution: 'Caution',

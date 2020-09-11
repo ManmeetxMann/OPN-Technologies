@@ -96,7 +96,7 @@ export class PassportService {
         validFrom,
         validUntil: firestore.Timestamp.fromDate(
           // @ts-ignore
-          moment(validFrom.toDate().toISOString()).add(24, 'hours').toDate(),
+          this.shortestTime(validFrom.toDate()),
         ),
       }))
       .then((passport) => this.passportRepository.update(passport))
@@ -113,5 +113,22 @@ export class PassportService {
         throw new ResourceNotFoundException(`Cannot find passport with token [${token}]`)
       })
       .then((passport) => ({...mapDates(passport), includesGuardian: true}))
+  }
+
+  /**
+   * shortestTime
+   * Calculates the shortest time to an end of day or elapsed time.
+   * Ex: end of day: 3am at night and 12 hours – we'd pick which is closer to now()
+   */
+  private shortestTime(validFrom: Date): Date {
+    const expiryDuration = parseInt(Config.get('PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
+    const expiryMax = parseInt(Config.get('PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS'))
+
+    const date = validFrom.toISOString()
+    const byDuration = moment(date).add(expiryDuration, 'hours')
+    const byMax = moment(date).startOf('day').add(1, 'day').add(expiryMax, 'hours')
+    const shorter = byMax.isBefore(byDuration) ? byMax : byDuration
+
+    return shorter.toDate()
   }
 }
