@@ -22,39 +22,49 @@ const formatTime = (date: Date) => {
   return moment(date).tz(timeZone).format('hh:mm a')
 }
 
-const padTo80 = (line: string): string =>
-  `                                                                                ${line}`.slice(
-    -80,
-  )
+export const getHeaderSection = (): string => {
+  return `Hello there,<br>
+<br>
+There is a potential exposure. Please see below for details.<br>
+<br>
+<b><u>SOURCE OF EXPOSURE</u></b><br>
+<br>
+<b>Organization:</b> {}<br>
+<b>Exposed user:</b> {}<br>
+<b>Exposed status:</b> {}<br>
+<b>Time of notification:</b> {}<br>
+<b>Responses to source attestation:</b> {}<br>
+<br>
+<b><u>POSSIBLE EXPOSURE SPREAD</u></b><br>
+`
+}
 
 export const getExposureSection = (
   report: ExposureReport,
   accesses: SinglePersonAccess[],
   users: User[],
   locationName: string,
-  sourceUser: User,
 ): string => {
   if (!report.overlapping.length) {
     return ''
   }
   const overlapping = [...report.overlapping]
   overlapping.sort((a, b) => a.start.valueOf() - b.start.valueOf())
-  return `
-------------------------------POTENTIAL EXPOSURES------------------------------<br>
-${report.date}<br>
-Location: ${locationName}<br>
-Source of exposure: ${formatName(sourceUser)}<br>
+  return `<br>
+<b>Location:</b> ${locationName} on ${report.date}<br>
+<ul>
 ${overlapping
   .map((overlap) => {
-    return `    ${formatName(
+    return `<li>${formatName(
       users.find((user) => user.id === overlap.userId),
       overlap.dependant,
-    )}<br>
-${padTo80(`${formatTime(overlap.start)} - ${formatTime(overlap.end)}`)}<br>
+    )} ($$GROUPID)<br>
+    $$BULLET Overlap of check in: ${`${formatTime(overlap.start)} - ${formatTime(overlap.end)}`}<br>
+</li>
+
 `
   })
   .join('\n<br>')}<br>
-  ${getAccessSection(accesses, users)}
   `
 }
 
@@ -83,7 +93,7 @@ export const getAccessSection = (
 ${printableAccesses
   .map((printable) => {
     return `    ${printable.name}<br>
-${padTo80(`${formatTime(printable.start)} - ${formatTime(printable.end)}`)}
+${`${formatTime(printable.start)} - ${formatTime(printable.end)}`}
 <br>`
   })
   .join('\n<br>')}<br>`
