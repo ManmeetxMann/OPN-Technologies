@@ -22,18 +22,17 @@ const formatTime = (date: Date) => {
   return moment(date).tz(timeZone).format('hh:mm a')
 }
 
-export const getHeaderSection = (): string => {
+// Add org name, responses
+export const getHeaderSection = (user: User, exposureTime: number, status: string): string => {
   return `Hello there,<br>
 <br>
 There is a potential exposure. Please see below for details.<br>
 <br>
 <b><u>SOURCE OF EXPOSURE</u></b><br>
 <br>
-<b>Organization:</b> {}<br>
-<b>Exposed user:</b> {}<br>
-<b>Exposed status:</b> {}<br>
-<b>Time of notification:</b> {}<br>
-<b>Responses to source attestation:</b> {}<br>
+<b>Exposed user:</b> ${formatName(user)}<br>
+<b>Exposed status:</b> ${status}<br>
+<b>Time of notification:</b> ${formatTime(new Date(exposureTime))}<br>
 <br>
 <b><u>POSSIBLE EXPOSURE SPREAD</u></b><br>
 `
@@ -41,7 +40,6 @@ There is a potential exposure. Please see below for details.<br>
 
 export const getExposureSection = (
   report: ExposureReport,
-  accesses: SinglePersonAccess[],
   users: User[],
   locationName: string,
 ): string => {
@@ -50,15 +48,14 @@ export const getExposureSection = (
   }
   const overlapping = [...report.overlapping]
   overlapping.sort((a, b) => a.start.valueOf() - b.start.valueOf())
-  return `<br>
-<b>Location:</b> ${locationName} on ${report.date}<br>
+  return `<b>Location:</b> ${locationName} on ${report.date}<br>
 <ul>
 ${overlapping
   .map((overlap) => {
     return `<li>${formatName(
       users.find((user) => user.id === overlap.userId),
       overlap.dependant,
-    )} ($$GROUPID)<br>
+    )} <br>
     $$BULLET Overlap of check in: ${`${formatTime(overlap.start)} - ${formatTime(overlap.end)}`}<br>
 </li>
 

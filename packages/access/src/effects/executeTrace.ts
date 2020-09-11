@@ -7,7 +7,7 @@ import DataStore from '../../../common/src/data/datastore'
 import {AdminApprovalModel} from '../../../common/src/data/admin'
 import {OrganizationModel} from '../../../enterprise/src/repository/organization.repository'
 import {UserModel} from '../../../common/src/data/user'
-import {getExposureSection} from './exposureTemplate'
+import {getExposureSection, getHeaderSection} from './exposureTemplate'
 
 import {send} from '../../../common/src/service/messaging/send-email'
 import {Config} from '../../../common/src/utils/config'
@@ -176,7 +176,7 @@ export default class TraceListener {
         async (key) => (locations[key] = await locationPromises[key]),
       ),
     )
-    this.sendEmails(result, userId, locations, accessLookup)
+    this.sendEmails(result, userId, locations, accessLookup, endTime, passportStatus)
     return result
   }
 
@@ -185,6 +185,8 @@ export default class TraceListener {
     userId: string,
     locations: Record<string, LocationDescription>,
     accesses: AccessLookup,
+    endTime: number,
+    status: string
   ): Promise<void> {
     const allLocationIds: Set<string> = new Set()
     const allOrganizationIds: Set<string> = new Set()
@@ -246,31 +248,19 @@ export default class TraceListener {
 
     const reportsForLocation = {}
     const reportsForOrganization = {}
-
+    const header = getHeaderSection(sourceUser, endTime, status)
     reports.forEach((report) => {
       if (!reportsForLocation[report.locationId]) {
-        reportsForLocation[report.locationId] = []
+        reportsForLocation[report.locationId] = [header]
       }
       reportsForLocation[report.locationId].push(
-        getExposureSection(
-          report,
-          accesses[report.locationId][report.date],
-          users,
-          locations[report.locationId].title,
-          sourceUser,
-        ),
+        getExposureSection(report, users, locations[report.locationId].title),
       )
       if (!reportsForOrganization[report.organizationId]) {
-        reportsForOrganization[report.organizationId] = []
+        reportsForOrganization[report.organizationId] = [header]
       }
       reportsForOrganization[report.organizationId].push(
-        getExposureSection(
-          report,
-          accesses[report.locationId][report.date],
-          users,
-          locations[report.locationId].title,
-          sourceUser,
-        ),
+        getExposureSection(report, users, locations[report.locationId].title),
       )
     })
 
