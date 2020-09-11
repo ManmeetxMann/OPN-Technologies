@@ -53,10 +53,12 @@ export class PassportService {
           .fetch(),
       ),
     ).then((results) =>
-      flattern(results as Passport[][])?.forEach((passport) => {
+      flattern(results as Passport[][])?.forEach((source) => {
+        const passport = mapDates(source)
         const latestPassport = latestPassportsByUserId[passport.userId]
-        if (!latestPassport || passport.validUntil > latestPassport.validUntil) {
-          latestPassportsByUserId[passport.userId] = mapDates(passport)
+
+        if (!latestPassport || moment(passport.validUntil).isAfter(latestPassport.validUntil)) {
+          latestPassportsByUserId[passport.userId] = passport
         }
       }),
     )
