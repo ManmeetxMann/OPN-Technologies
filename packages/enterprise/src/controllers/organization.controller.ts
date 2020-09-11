@@ -24,6 +24,7 @@ import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
+import { OrganizationGroupModel } from '../repository/organization.repository'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -83,8 +84,8 @@ class OrganizationController implements IControllerBase {
       '/groups',
       innerRouter()
         .post('/', this.addGroups)
-        .get('/', this.getGroups)
-        .get('/public', this.getGroups) // TODO: to be removed
+        .get('/', authMiddleware, this.getGroupsForAdmin)
+        .get('/public', this.getGroupsForPublic)
         .post('/users', this.addUsersToGroups)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
@@ -262,17 +263,27 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getGroups = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getGroupsForAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
-        throw new HttpException(error.message)
-      })
-      groups.sort((a, b) => {
-        // if a has higher priority, return a negative number (a comes first)
-        const bias = (b.priority || 0) - (a.priority || 0)
-        return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
-      })
+      const groups = await this.getGroups(organizationId)
+
+      const authenticatedUser = res.locals.connectedUser as User
+      const admin = authenticatedUser.admin as AdminProfile
+      const adminGroupIds = (admin.adminForGroupIds ?? []).reduce(
+        (byId, id) => ({...byId, [id]: id}),
+        {},
+      )
+      res.json(actionSucceed(groups.filter((group) => !!adminGroupIds[group.id])))		
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getGroupsForPublic = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const groups = await this.getGroups(organizationId)
       res.json(actionSucceed(groups))
     } catch (error) {
       next(error)
@@ -528,6 +539,21 @@ class OrganizationController implements IControllerBase {
         }),
       ),
     ).then((results) => flattern(results as Access[][]))
+  }
+
+  private async getGroups(
+    organizationId: string
+  ): Promise<OrganizationGroup[]> {
+      const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
+        throw new HttpException(error.message)
+      })
+      groups.sort((a, b) => {
+        // if a has higher priority, return a negative number (a comes first)
+        const bias = (b.priority || 0) - (a.priority || 0)
+        return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
+      })
+
+      return groups    
   }
 }
 
