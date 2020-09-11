@@ -6,6 +6,9 @@ import type {SinglePersonAccess} from '../models/attendance'
 import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 
+import {Questionnaire} from '../../../lookup/src/models/questionnaire'
+type Answer = Record<string, boolean | string>
+export type Answers = Record<string, Answer>
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 const formatName = (user: User, dependant?: UserDependant): string => {
@@ -21,9 +24,40 @@ const formatTime = (date: Date) => {
   }
   return moment(date).tz(timeZone).format('hh:mm a')
 }
+const printableAnswers = (answer: Answer): string => {
+  const keys = Object.keys(answer)
+  keys.sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+  return keys
+    .map((a) =>
+      typeof answer[a] === 'boolean'
+        ? answer[a]
+          ? 'Yes'
+          : 'No'
+        : moment(answer[a] as string)
+            .tz(timeZone)
+            .format('LLLL'),
+    )
+    .join(', ')
+}
+const getResponseSection = (questionnaire: Questionnaire, answers: Answers): string => {
+  const questionsKeys = Object.keys(questionnaire.questions)
+  questionsKeys.sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+  return `<ul>${questionsKeys
+    .map(
+      (key) => `<li>${questionnaire.questions[key].value}:<br>
+      ${printableAnswers(answers[key])}</li>`,
+    )
+    .join('\n')}</ul>`
+}
 
 // Add org name, responses
-export const getHeaderSection = (user: User, exposureTime: number, status: string): string => {
+export const getHeaderSection = (
+  user: User,
+  exposureTime: number,
+  status: string,
+  questionnaire: Questionnaire,
+  answers: Answers,
+): string => {
   return `Hello there,<br>
 <br>
 There is a potential exposure. Please see below for details.<br>
@@ -34,6 +68,8 @@ There is a potential exposure. Please see below for details.<br>
 <b>Exposed status:</b> ${status}<br>
 <b>Time of notification:</b> ${formatTime(new Date(exposureTime))}<br>
 <br>
+User responses:
+${getResponseSection(questionnaire, answers)}
 <b><u>POSSIBLE EXPOSURE SPREAD</u></b><br>
 `
 }

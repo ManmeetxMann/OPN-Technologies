@@ -402,26 +402,44 @@ paths:
             schema:
               type: object
               properties:
-                data:
-                  type: string
-                  description: The base64 encoding of "trace-required"
-                  enum:
-                    - dHJhY2UtcmVxdWlyZWQ=
-                startTime:
-                  type: string
-                  description: number of milliseconds since the unix epoch for the beginning of the trace
-                endTime:
-                  type: string
-                  description: number of milliseconds since the unix epoch for the end of the trace
-                passportStatus:
-                  type: string
-                  description: status assigned to the user when they triggered the trace
-                  enum:
-                    - caution
-                    - stop
-                userId:
-                  type: string
-                  description: the is of the user who attested to having symptoms
+                message:
+                  type: object
+                  properties:
+                    data:
+                      type: string
+                      description: The base64 encoding of "trace-required"
+                      enum:
+                        - dHJhY2UtcmVxdWlyZWQ=
+                    attributes:
+                      type: object
+                      properties:
+                        startTime:
+                          type: string
+                          description: number of milliseconds since the unix epoch for the beginning of the trace
+                        endTime:
+                          type: string
+                          description: number of milliseconds since the unix epoch for the end of the trace
+                        passportStatus:
+                          type: string
+                          description: status assigned to the user when they triggered the trace
+                          enum:
+                            - caution
+                            - stop
+                        userId:
+                          type: string
+                          description: the id of the user who attested to having symptoms
+                        locationId:
+                          type: string
+                          description: the id of the location the user wanted to enter
+                        organizationId:
+                          type: string
+                          description: the id of the organizaion the location belongs to
+                        questionnaireId:
+                          type: string
+                          description: The id of the questionnaire the user responded to
+                        answers:
+                          type: string
+                          description: The user's JSON-serialized responses
 
       responses:
         '200':
