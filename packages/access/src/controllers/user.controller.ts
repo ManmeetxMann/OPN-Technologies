@@ -94,7 +94,17 @@ class UserController implements IRouteController {
       const includeGuardian = !group.checkInDisabled
       const passport = await this.passportService.findOneByToken(statusToken)
 
-      const fail = (reason: string) => res.status(403).json(actionFailed(reason))
+      const fail = (reason: string) => {
+        console.warn(reason)
+        console.warn(passport)
+        res
+          .status(403)
+          .json(
+            actionFailed(
+              'Entry into this location is not permitted based on your profile. Please contact your administrator for more information.',
+            ),
+          )
+      }
 
       if (!passport) {
         fail('Access denied: status-token does not link to a passport')
