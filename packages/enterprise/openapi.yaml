@@ -766,7 +766,6 @@ paths:
   /organizations/{organizationId}/groups/public:
     get:
       description: Get organization groups
-      deprecated: true
       parameters:
         - in: path
           name: organizationId
@@ -810,6 +809,8 @@ paths:
                   $ref: '#/components/schemas/ResponseOfOrganizationGroups'
     get:
       description: Get organization groups
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: organizationId
