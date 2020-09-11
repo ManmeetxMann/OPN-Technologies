@@ -118,7 +118,7 @@ class UserController implements IControllerBase {
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {locationId, userId} = req.body
-      const {organizationId} = await this.organizationService.getLocationById(locationId)
+      const {organizationId, questionnaireId} = await this.organizationService.getLocationById(locationId)
       const userGroupId = await this.organizationService
         .getUsersGroups(organizationId, null, [userId])
         .then((results) => results[0]?.groupId)
@@ -154,6 +154,10 @@ class UserController implements IControllerBase {
             passportStatus,
             startTime: `${nowMillis - TRACE_LENGTH}`,
             endTime: `${nowMillis}`,
+            organizationId,
+            locationId,
+            questionnaireId,
+            answers: JSON.stringify(answers),
           })
         } else {
           console.warn(
