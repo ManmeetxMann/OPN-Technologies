@@ -12,7 +12,7 @@ const formatName = (user: User, dependant?: UserDependant): string => {
   if (!dependant) {
     return `${user.firstName} ${user.lastName}`
   } else {
-    return `${dependant.firstName} ${dependant.lastName} (${user.firstName} ${user.lastName})`
+    return `${dependant.firstName} ${dependant.lastName} (dependant of ${user.firstName} ${user.lastName})`
   }
 }
 const formatTime = (date: Date) => {
@@ -56,7 +56,7 @@ ${overlapping
       users.find((user) => user.id === overlap.userId),
       overlap.dependant,
     )} <br>
-    $$BULLET Overlap of check in: ${`${formatTime(overlap.start)} - ${formatTime(overlap.end)}`}<br>
+    \u25e6 Overlap of check in: ${`${formatTime(overlap.start)} - ${formatTime(overlap.end)}`}<br>
 </li>
 
 `
