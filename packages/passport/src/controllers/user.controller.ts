@@ -52,7 +52,7 @@ class UserController implements IControllerBase {
     const questionCount = responses[4] !== null && responses[5] !== null ? 6 : 4
     const [values, caution, stop] = {
       4: [[1, 1, 1, 2], 1, 2],
-      6: [[1, 1, 1, 1, 1, 1], 1, 1],
+      6: [[1, 1, 1, 1, 1, 1], 100, 1],
     }[questionCount]
     const score = (values as number[])
       .map((value: number, index: number) => (responses[index] ? value : 0))
