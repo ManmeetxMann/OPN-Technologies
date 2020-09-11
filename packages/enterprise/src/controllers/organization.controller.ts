@@ -313,9 +313,10 @@ class OrganizationController implements IControllerBase {
       const live = !from && !to
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
-      const isSuperAdmin =
-        admin.adminForOrganizationId === organizationId ||
-        admin.superAdminForOrganizationIds.includes(organizationId)
+      const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
+      const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
+
+      if (!canAccessOrganization) replyInsufficientPermission(res)
 
       if (groupId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForGroupIds?.includes(groupId)
@@ -325,7 +326,7 @@ class OrganizationController implements IControllerBase {
       }
 
       if (locationId) {
-        const hasGrantedPermission = isSuperAdmin || admin.adminForLocationIds.includes(locationId)
+        const hasGrantedPermission = isSuperAdmin || admin.adminForLocationIds?.includes(locationId)
         if (!hasGrantedPermission) replyInsufficientPermission(res)
         // Assert location exists
         await this.organizationService.getLocation(organizationId, locationId)
