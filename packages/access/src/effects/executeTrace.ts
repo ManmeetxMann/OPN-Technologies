@@ -186,7 +186,7 @@ export default class TraceListener {
     locations: Record<string, LocationDescription>,
     accesses: AccessLookup,
     endTime: number,
-    status: string
+    status: string,
   ): Promise<void> {
     const allLocationIds: Set<string> = new Set()
     const allOrganizationIds: Set<string> = new Set()
@@ -295,7 +295,9 @@ export default class TraceListener {
       send(
         recipient.email,
         'Contact trace',
-        `${recipient.locReports.join('')}\n${recipient.orgReports.join('')}`,
+        recipient.locReports.length || recipient.orgReports.length
+          ? `${recipient.locReports.join('')}\n${recipient.orgReports.join('')}`
+          : 'No one was exposed to the user',
       ),
     )
   }
