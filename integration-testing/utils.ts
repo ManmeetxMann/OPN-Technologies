@@ -79,6 +79,7 @@ export const createAdmin = async (
     email,
     locationIds,
     organizationId,
+    showReporting: true,
   })
   const user = await createUser(organizationId, firstName, lastName, groupId)
   await post(`${roots.Enterprise}/admin/auth/signIn/request`, {
