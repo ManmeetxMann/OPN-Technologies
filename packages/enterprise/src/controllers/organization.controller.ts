@@ -24,7 +24,6 @@ import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
-import { OrganizationGroupModel } from '../repository/organization.repository'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -274,7 +273,7 @@ class OrganizationController implements IControllerBase {
         (byId, id) => ({...byId, [id]: id}),
         {},
       )
-      res.json(actionSucceed(groups.filter((group) => !!adminGroupIds[group.id])))		
+      res.json(actionSucceed(groups.filter((group) => !!adminGroupIds[group.id])))
     } catch (error) {
       next(error)
     }
@@ -541,19 +540,16 @@ class OrganizationController implements IControllerBase {
     ).then((results) => flattern(results as Access[][]))
   }
 
-  private async getGroups(
-    organizationId: string
-  ): Promise<OrganizationGroup[]> {
-      const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
-        throw new HttpException(error.message)
-      })
-      groups.sort((a, b) => {
-        // if a has higher priority, return a negative number (a comes first)
-        const bias = (b.priority || 0) - (a.priority || 0)
-        return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
-      })
-
-      return groups    
+  private async getGroups(organizationId: string): Promise<OrganizationGroup[]> {
+    const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
+      throw new HttpException(error.message)
+    })
+    groups.sort((a, b) => {
+      // if a has higher priority, return a negative number (a comes first)
+      const bias = (b.priority || 0) - (a.priority || 0)
+      return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
+    })
+    return groups
   }
 }
 
