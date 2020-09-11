@@ -94,7 +94,7 @@ export class PassportService {
         validFrom,
         validUntil: firestore.Timestamp.fromDate(
           // @ts-ignore
-          moment(validFrom.toDate().toISOString()).add(24, 'hours').toDate(),
+          this.shortestTime(validFrom),
         ),
       }))
       .then((passport) => this.passportRepository.update(passport))
@@ -111,5 +111,22 @@ export class PassportService {
         throw new ResourceNotFoundException(`Cannot find passport with token [${token}]`)
       })
       .then((passport) => ({...mapDates(passport), includesGuardian: true}))
+  }
+
+  private shortestTime(validFrom) {
+    const expiryDuration = parseInt(Config.get('EXPIRY_DURATION_MAX_IN_HOURS'))
+    const expiryMax = parseInt(Config.get('EXPIRY_TIME_DAILY_IN_HOURS'))
+
+    const date = validFrom.toDate().toISOString()
+    const byDuration = moment(date).add(expiryDuration, 'hours')
+    const byMax = moment(date).add(1, 'day').hours(expiryMax).minutes(0).seconds(0).milliseconds(0)
+    const shorter = byMax.diff(byDuration) ? byMax : byDuration
+
+    console.log(moment(date).format())
+    console.log(byDuration.format())
+    console.log(byMax.format())
+    console.log(shorter.format())
+
+    return shorter.toDate()
   }
 }
