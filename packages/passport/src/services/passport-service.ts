@@ -129,6 +129,10 @@ export class PassportService {
     const byMax = moment(date).startOf('day').add(1, 'day').add(expiryMax, 'hours')
     const shorter = byMax.isBefore(byDuration) ? byMax : byDuration
 
+    console.log(byMax.format())
+    console.log(byDuration.format())
+    console.log(shorter.format())
+
     return shorter.toDate()
   }
 }
