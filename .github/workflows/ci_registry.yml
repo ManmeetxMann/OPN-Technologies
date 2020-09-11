@@ -70,7 +70,7 @@ jobs:
 
           # Passport Specific 
           PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS=12
-          PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS=3
+          PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS=7
 
           # Features
           FEATURE_CREATE_TOKEN_PERMISSIVE_MODE=enabled
