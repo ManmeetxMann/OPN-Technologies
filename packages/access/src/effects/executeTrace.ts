@@ -14,8 +14,6 @@ import {Config} from '../../../common/src/utils/config'
 import {OrganizationModel} from '../../../enterprise/src/repository/organization.repository'
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 
-
-
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 type Overlap = {
@@ -27,7 +25,6 @@ type LocationDescription = {
   organizationId: string
 }
 type AccessLookup = Record<string, Record<string, SinglePersonAccess[]>>
-
 
 const overlap = (
   a: SinglePersonAccess,
@@ -79,7 +76,7 @@ export default class TraceListener {
       startTime: string
       endTime: string
       passportStatus: string
-      userId: string,
+      userId: string
       organizationId: string
       locationId: string
       questionnaireId: string

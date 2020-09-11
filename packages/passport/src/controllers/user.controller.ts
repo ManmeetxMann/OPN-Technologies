@@ -118,7 +118,9 @@ class UserController implements IControllerBase {
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {locationId, userId} = req.body
-      const {organizationId, questionnaireId} = await this.organizationService.getLocationById(locationId)
+      const {organizationId, questionnaireId} = await this.organizationService.getLocationById(
+        locationId,
+      )
       const userGroupId = await this.organizationService
         .getUsersGroups(organizationId, null, [userId])
         .then((results) => results[0]?.groupId)
