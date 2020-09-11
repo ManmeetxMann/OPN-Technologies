@@ -148,8 +148,6 @@ components:
           type: string
         name:
           type: string
-        isDefault:
-          type: boolean
         checkInDisabled:
           type: boolean
         priority:
