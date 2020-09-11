@@ -54,13 +54,6 @@ class UserController implements IControllerBase {
       4: [[1, 1, 1, 2], 1, 2],
       6: [[1, 1, 1, 1, 1, 1], 1, 1],
     }[questionCount]
-    if (responses[4] !== null && responses[5] !== null) {
-      // 6 response case
-      if (responses.some((response) => response)) {
-        return PassportStatuses.Stop
-      }
-      return PassportStatuses.Proceed
-    }
     const score = (values as number[])
       .map((value: number, index: number) => (responses[index] ? value : 0))
       .reduce((total, current) => total + current)
