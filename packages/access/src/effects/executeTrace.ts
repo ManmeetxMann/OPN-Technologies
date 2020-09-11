@@ -5,12 +5,16 @@ import type {ExposureReport, StopStatus} from '../models/trace'
 import type {SinglePersonAccess} from '../models/attendance'
 import DataStore from '../../../common/src/data/datastore'
 import {AdminApprovalModel} from '../../../common/src/data/admin'
-import {OrganizationModel} from '../../../enterprise/src/repository/organization.repository'
 import {UserModel} from '../../../common/src/data/user'
 import {getExposureSection, getHeaderSection} from './exposureTemplate'
-
+import type {Answers} from './exposureTemplate'
 import {send} from '../../../common/src/service/messaging/send-email'
 import {Config} from '../../../common/src/utils/config'
+
+import {OrganizationModel} from '../../../enterprise/src/repository/organization.repository'
+import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
+
+
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -23,6 +27,7 @@ type LocationDescription = {
   organizationId: string
 }
 type AccessLookup = Record<string, Record<string, SinglePersonAccess[]>>
+
 
 const overlap = (
   a: SinglePersonAccess,
@@ -58,12 +63,14 @@ export default class TraceListener {
   orgRepo: OrganizationModel
   userApprovalRepo: AdminApprovalModel
   userRepo: UserModel
+  questionnaireService: QuestionnaireService
   constructor() {
     const dataStore = new DataStore()
     this.repo = new TraceRepository(dataStore)
     this.orgRepo = new OrganizationModel(dataStore)
     this.userApprovalRepo = new AdminApprovalModel(dataStore)
     this.userRepo = new UserModel(dataStore)
+    this.questionnaireService = new QuestionnaireService()
   }
 
   async handleMessage(message: {
@@ -72,7 +79,11 @@ export default class TraceListener {
       startTime: string
       endTime: string
       passportStatus: string
-      userId: string
+      userId: string,
+      organizationId: string
+      locationId: string
+      questionnaireId: string
+      answers: string
     }
   }): Promise<void> {
     const {data, attributes} = message
@@ -83,7 +94,16 @@ export default class TraceListener {
     const {userId, passportStatus} = attributes
     const startTime = parseInt(attributes.startTime, 10)
     const endTime = parseInt(attributes.endTime, 10)
-    await this.traceFor(userId, startTime, endTime, passportStatus)
+    await this.traceFor(
+      userId,
+      startTime,
+      endTime,
+      passportStatus,
+      attributes.organizationId,
+      attributes.locationId,
+      attributes.questionnaireId,
+      JSON.parse(attributes.answers),
+    )
   }
 
   async traceFor(
@@ -91,6 +111,10 @@ export default class TraceListener {
     startTime: number,
     endTime: number,
     passportStatus: string,
+    organizationId: string,
+    locationId: string,
+    questionnaireId: string,
+    answers: Answers,
   ): Promise<ExposureReport[]> {
     // because of time zones we might be interested in other dates
     const earliestDate = moment(startTime).tz(timeZone).format('YYYY-MM-DD')
@@ -176,7 +200,18 @@ export default class TraceListener {
         async (key) => (locations[key] = await locationPromises[key]),
       ),
     )
-    this.sendEmails(result, userId, locations, accessLookup, endTime, passportStatus)
+    this.sendEmails(
+      result,
+      userId,
+      locations,
+      accessLookup,
+      endTime,
+      passportStatus,
+      organizationId,
+      locationId,
+      questionnaireId,
+      answers,
+    )
     return result
   }
 
@@ -187,11 +222,14 @@ export default class TraceListener {
     accesses: AccessLookup,
     endTime: number,
     status: string,
+    orgId: string,
+    locId: string,
+    questionnaireId: string,
+    answers: Answers,
   ): Promise<void> {
-    const allLocationIds: Set<string> = new Set()
-    const allOrganizationIds: Set<string> = new Set()
-    const allUserIds: Set<string> = new Set()
-    allUserIds.add(userId)
+    const allLocationIds: Set<string> = new Set([locId])
+    const allOrganizationIds: Set<string> = new Set([orgId])
+    const allUserIds: Set<string> = new Set([userId])
 
     reports.forEach((report: ExposureReport) => {
       const {locationId, organizationId} = report
@@ -203,7 +241,7 @@ export default class TraceListener {
         accesses[locationId][date].forEach((access) => allUserIds.add(access.userId)),
       ),
     )
-
+    const questionnaire = await this.questionnaireService.getQuestionnaire(questionnaireId)
     const allLocations = [...allLocationIds]
     const allOrganizations = [...allOrganizationIds]
     const allUsers = [...allUserIds]
@@ -248,7 +286,7 @@ export default class TraceListener {
 
     const reportsForLocation = {}
     const reportsForOrganization = {}
-    const header = getHeaderSection(sourceUser, endTime, status)
+    const header = getHeaderSection(sourceUser, endTime, status, questionnaire, answers)
     reports.forEach((report) => {
       if (!reportsForLocation[report.locationId]) {
         reportsForLocation[report.locationId] = [header]
@@ -297,11 +335,11 @@ export default class TraceListener {
         'Contact trace',
         recipient.locReports.length || recipient.orgReports.length
           ? `${recipient.locReports.join('')}\n${recipient.orgReports.join('')}`
-          : 'No one was exposed to the user',
+          : header + 'No one was in contact with the user',
       ),
     )
     if (!allRecipients.length) {
-      send([], 'Exposure report', header + '\nNo one was exposed')
+      send([], 'Exposure report', header + '\nNo one was in contact with the user')
     }
   }
 }
