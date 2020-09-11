@@ -124,7 +124,7 @@ export class PassportService {
 
     const date = validFrom.toISOString()
     const byDuration = moment(date).add(expiryDuration, 'hours')
-    const byMax = moment(date).add(1, 'day').hours(expiryMax).minutes(0).seconds(0).milliseconds(0)
+    const byMax = moment(date).startOf('day').add(1, 'day').add(expiryMax, 'hours')
     const shorter = byMax.diff(byDuration) ? byMax : byDuration
 
     console.log(moment(date).format())
