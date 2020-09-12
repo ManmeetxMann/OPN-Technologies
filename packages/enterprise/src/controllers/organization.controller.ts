@@ -89,7 +89,7 @@ class OrganizationController implements IControllerBase {
         .put('/', this.updateMultipleUserGroup)
         .post('/users', this.addUsersToGroups)
         .put('/:groupId/users/:userId', this.updateUserGroup)
-        .delete('/:groupId/users', this.removeDeadUsersInGroups)
+        .delete('/:groupId/zombie-users', this.removeZombieUsersInGroups)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
     // prettier-ignore
@@ -414,7 +414,7 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  removeDeadUsersInGroups = async (
+  removeZombieUsersInGroups = async (
     req: Request,
     res: Response,
     next: NextFunction,
@@ -426,11 +426,32 @@ class OrganizationController implements IControllerBase {
         const groupId = group.id
         const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
         for (const item of usersGroups) {
-          const userId = item.userId
-          const user = await this.userService.findOneSilently(userId)
+          let user : any = null
+          let userId = item.userId
+          let isUser = true
+          let parentUserId = ""
+
+          // If parent is not null then userId represents a dependent id
+          if (item?.parentUserId) {
+            parentUserId = item?.parentUserId
+            const dependants = await this.userService.getAllDependants(parentUserId)
+            isUser = false
+            for (const dependant of dependants) {
+              // Look for dependent
+              if (dependant.id === item.userId) {
+                user = dependant
+                break
+              }
+              // FYI: we may have not found it and thus user = null
+            }
+          } else {
+            const user = await this.userService.findOneSilently(userId)
+          }
+          
+          // Let's see if we need to delete the user group memebership
           if (!user) {
-            console.log(`Deleting user-group ${item.id} for user ${userId} from group ${groupId}`)
-            // await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
+            console.warn(`Deleting user-group ${item.id} for user ${userId} (${isUser}) [${parentUserId}] from group ${groupId}`)
+            await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
           }
         }
       }

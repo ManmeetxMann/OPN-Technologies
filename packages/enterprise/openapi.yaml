@@ -938,7 +938,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Response'
-    
+  
+  /organizations/{organizationId}/groups/{groupId}/zombie-users:
     delete:
       description: Remove dead users (admin access required)
       parameters:
