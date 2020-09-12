@@ -89,6 +89,7 @@ class OrganizationController implements IControllerBase {
         .put('/', this.updateMultipleUserGroup)
         .post('/users', this.addUsersToGroups)
         .put('/:groupId/users/:userId', this.updateUserGroup)
+        .delete('/:groupId/users', this.removeDeadUsersInGroups)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
     // prettier-ignore
@@ -406,6 +407,31 @@ class OrganizationController implements IControllerBase {
     try {
       const {organizationId, groupId, userId} = req.params
       await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
+
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  removeDeadUsersInGroups = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {organizationId, groupId} = req.params
+
+      const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
+      const countOfUsers = usersGroups.length
+      for (const item of usersGroups) {
+        const userId = item.userId
+        const user = await this.userService.findOneSilently(userId)
+        if (!user) {
+          console.log(`Deleting user-group ${item.id} for user ${userId}`)
+          // await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
+        }
+      }
 
       res.json(actionSucceed())
     } catch (error) {

@@ -938,6 +938,29 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Response'
+    
+    delete:
+      description: Remove dead users (admin access required)
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+        - in: path
+          name: groupId
+          schema:
+            type: string
+      #          required: true
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
 
   /organizations/{organizationId}/groups/{groupId}/users/{userId}:
     delete:
