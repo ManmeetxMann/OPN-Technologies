@@ -353,17 +353,16 @@ class OrganizationController implements IControllerBase {
       // Get users & dependants
       const nonGuardiansUserIds = new Set<string>()
       const guardianIds = new Set<string>()
+      const dependantIds = new Set<string>()
       usersGroups.forEach(({userId, parentUserId}) => {
-        if (!!parentUserId) guardianIds.add(parentUserId)
-        else nonGuardiansUserIds.add(userId)
+        if (!!parentUserId) {
+          dependantIds.add(userId)
+          guardianIds.add(parentUserId)
+        } else nonGuardiansUserIds.add(userId)
       })
       const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
       const usersById = await this.getUsersById([...userIds])
-      const dependantsByParentId = await this.getDependantsByParentId(
-        [...guardianIds],
-        usersById,
-        groupId,
-      )
+      const dependantsById = await this.getDependantsById([...guardianIds], usersById, groupId)
 
       // Fetch Guardians groups
       const guardiansGroups: OrganizationUsersGroup[] = await Promise.all(
@@ -393,12 +392,13 @@ class OrganizationController implements IControllerBase {
       // Get accesses
       const accesses = await this.getAccessesFor(
         [...userIds],
+        [...dependantIds],
         locationId,
         betweenCreatedDate,
         groupsUsersByUserId,
         groupsById,
         usersById,
-        dependantsByParentId,
+        dependantsById,
       )
 
       const response = {
@@ -416,16 +416,20 @@ class OrganizationController implements IControllerBase {
 
   private async getAccessesFor(
     userIds: string[],
+    dependantIds: string[],
     locationId,
     betweenCreatedDate: Range<Date>,
     groupsByUserId: Record<string, OrganizationUsersGroup>,
     groupsById: Record<string, OrganizationGroup>,
     usersById: Record<string, User>,
-    dependantsByParentId: Record<string, User[]>,
+    dependantsByIds: Record<string, User>,
   ): Promise<AccessWithPassportStatusAndUser[]> {
     // Fetch passports and build accesses
-    const passportsByUserIds = await this.passportService.findLatestForUserIds(userIds)
-    const implicitPendingPassports = userIds
+    const passportsByUserIds = await this.passportService.findLatestForUserIds(
+      userIds,
+      dependantIds,
+    )
+    const implicitPendingPassports = [...userIds, ...dependantIds]
       .filter((userId) => !passportsByUserIds[userId])
       .map((userId) => ({status: PassportStatuses.Pending, userId} as Passport))
 
@@ -443,11 +447,13 @@ class OrganizationController implements IControllerBase {
         {},
       ),
     )
-    const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)].map(
-      ({userId, status, statusToken}) => {
-        const user = usersById[userId]
-        const dependants = dependantsByParentId[userId]
-        const mustCountGuardian = !groupOf(userId)?.checkInDisabled
+    const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)]
+      .filter(({userId}) => !groupOf(userId)?.checkInDisabled)
+      .map(({userId, status, statusToken}) => {
+        const user = usersById[userId] ?? dependantsByIds[userId]
+        if (!user) {
+          console.error(`Invalid state exception: Cannot find user/dependant for ID [${userId}]`)
+        }
         const access =
           status === PassportStatuses.Proceed
             ? accessesByStatusToken[statusToken]
@@ -462,23 +468,12 @@ class OrganizationController implements IControllerBase {
                 includesGuardian: null,
                 dependants: null,
               }
-
-        // Handle dependants
-        if (dependants?.length) {
-          return (mustCountGuardian ? [...dependants, user] : dependants).map((dependant) => ({
-            ...access,
-            userId,
-            user: dependant,
-            status,
-          }))
-        }
-        return [{...access, userId, user, status}]
-      },
-    )
+        return {...access, userId, user, status}
+      })
 
     // Handle duplicates
     const distinctAccesses: Record<string, AccessWithPassportStatusAndUser> = {}
-    flattern(accesses).forEach(({user, status, ...access}) => {
+    accesses.forEach(({user, status, ...access}) => {
       if (!groupOf(user.id)) {
         console.log('That is not supposed to happened but...', user.id, groupsByUserId)
       }
@@ -504,25 +499,24 @@ class OrganizationController implements IControllerBase {
     )
   }
 
-  private async getDependantsByParentId(
+  private getDependantsById(
     parentUserIds: string[],
     usersById: Record<string, User>,
     groupId?: string,
-  ): Promise<Record<string, User[]>> {
-    const dependantsByParentId: Record<string, User[]> = {}
-    await Promise.all(
+  ): Promise<Record<string, User>> {
+    return Promise.all(
       parentUserIds.map((userId) =>
-        this.userService.getAllDependants(userId).then((results) => {
-          dependantsByParentId[userId] = results
-            .filter((dependant) => !groupId || dependant.groupId === groupId)
-            .map((dependant) => ({
-              ...usersById[userId],
-              ...dependant,
-            }))
-        }),
+        this.userService
+          .getAllDependants(userId)
+          .then((results) =>
+            results
+              .filter((dependant) => !groupId || dependant.groupId === groupId)
+              .map((dependant) => ({...usersById[userId], ...dependant})),
+          ),
       ),
+    ).then((dependants) =>
+      flattern(dependants).reduce((byId, dependant) => ({...byId, [dependant.id]: dependant}), {}),
     )
-    return dependantsByParentId
   }
 
   private fetchAccesses(
