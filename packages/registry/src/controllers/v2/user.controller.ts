@@ -20,6 +20,7 @@ class UserController implements IRouteController {
       Router()
         .get('/:userId/dependants', this.getAllDependants)
         .post('/:userId/dependants', this.addDependants)
+        .delete('/:userId/dependants', this.removeDependants)
         .delete('/:userId/dependants/:dependantId', this.removeDependant),
     )
   }
@@ -64,12 +65,34 @@ class UserController implements IRouteController {
     try {
       const userId = req.params['userId']
       const dependantId = req.params['dependantId']
-      const organizationId = req.query['organizationId'] as string
-      const {groupId} = await this.userService.findOneDependant(userId, dependantId)
+      await this.userService.removeDependant(userId, dependantId)
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
 
-      await this.userService
-        .removeDependant(userId, dependantId)
-        .then(() => this.organizationService.removeUserFromGroup(organizationId, groupId, userId))
+  removeDependants = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.params['userId']
+      const {organizationId, dependants} = req.body as {
+        organizationId: string
+        dependants: UserDependant[]
+      }
+      await Promise.all(
+        dependants.map((dependant) =>
+          this.userService
+            .removeDependant(userId, dependant.id)
+            .then(() =>
+              this.organizationService.removeUserFromGroup(
+                organizationId,
+                dependant.groupId,
+                dependant.id,
+              ),
+            ),
+        ),
+      )
+
       res.json(actionSucceed())
     } catch (error) {
       next(error)

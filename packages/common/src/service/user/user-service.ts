@@ -58,15 +58,6 @@ export class UserService {
     )
   }
 
-  findOneDependant(userId: string, dependantId: string): Promise<UserDependant> {
-    return new UserDependantModel(this.dataStore, userId).get(dependantId).then((target) => {
-      if (target) return target
-      throw new ResourceNotFoundException(
-        `Cannot find dependant ${dependantId} for user with id ${userId}`,
-      )
-    })
-  }
-
   removeDependant(userId: string, dependantId: string): Promise<void> {
     return this.findOne(userId).then(() =>
       new UserDependantModel(this.dataStore, userId).delete(dependantId),
