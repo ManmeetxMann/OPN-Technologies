@@ -1,4 +1,4 @@
-import {Passport, PassportFilter, PassportModel, PassportStatuses} from '../models/passport'
+import {Passport, PassportModel, PassportStatuses} from '../models/passport'
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
@@ -27,20 +27,10 @@ export class PassportService {
   private passportRepository = new PassportModel(this.dataStore)
   private identifierRepository = new IdentifiersModel(this.dataStore)
 
-  findAllBy({statusTokens}: PassportFilter): Promise<Passport[]> {
-    let query = this.passportRepository.collection()
-
-    if (statusTokens?.length) {
-      // @ts-ignore
-      query = query.where('statusToken', 'in', statusTokens)
-    }
-
-    const hasFilter = statusTokens?.length > 0
-    // @ts-ignore
-    return hasFilter ? query.fetch() : query.fetchAll()
-  }
-
-  async findLatestForUserIds(userIds: string[]): Promise<Record<string, Passport>> {
+  async findLatestForUserIds(
+    userIds: string[],
+    dependantIds: string[],
+  ): Promise<Record<string, Passport>> {
     const latestPassportsByUserId: Record<string, Passport> = {}
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
     const today = moment(now()).tz(timeZone).startOf('day').toDate()
@@ -55,10 +45,28 @@ export class PassportService {
     ).then((results) =>
       flattern(results as Passport[][])?.forEach((source) => {
         const passport = mapDates(source)
-        const latestPassport = latestPassportsByUserId[passport.userId]
+        const validFrom = passport.validFrom
+        const matchingDependantIds = _.intersection(dependantIds, passport.dependantIds ?? [])
+        const matchesDependants = !dependantIds?.length || matchingDependantIds.length > 0
 
-        if (!latestPassport || moment(passport.validUntil).isAfter(latestPassport.validUntil)) {
-          latestPassportsByUserId[passport.userId] = passport
+        if (matchesDependants) {
+          const latestUserPassport = latestPassportsByUserId[passport.userId]
+          const isUsersLatest =
+            !latestUserPassport || moment(validFrom).isAfter(latestUserPassport.validFrom)
+          if (isUsersLatest) {
+            latestPassportsByUserId[passport.userId] = passport
+          }
+
+          // Handle Dependants
+          matchingDependantIds.forEach((dependantId) => {
+            const latestDependantPassport = latestPassportsByUserId[dependantId]
+            const isDependantsLatest =
+              !latestDependantPassport ||
+              moment(validFrom).isAfter(latestDependantPassport.validFrom)
+            if (isDependantsLatest) {
+              latestPassportsByUserId[dependantId] = {...passport, userId: dependantId}
+            }
+          })
         }
       }),
     )

@@ -10,10 +10,6 @@ export type Passport = {
   dependantIds: string[]
 }
 
-export type PassportFilter = {
-  statusTokens?: string[]
-}
-
 export type PassportStatus = 'pending' | 'proceed' | 'caution' | 'stop'
 
 export enum PassportStatuses {
