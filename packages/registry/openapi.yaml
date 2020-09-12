@@ -220,6 +220,11 @@ paths:
           schema:
             type: string
             #          required: true
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
       responses:
         "200":
           description: Successfully removed

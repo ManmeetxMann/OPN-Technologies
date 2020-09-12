@@ -64,7 +64,12 @@ class UserController implements IRouteController {
     try {
       const userId = req.params['userId']
       const dependantId = req.params['dependantId']
-      await this.userService.removeDependant(userId, dependantId)
+      const organizationId = req.query['organizationId'] as string
+      const {groupId} = await this.userService.findOneDependant(userId, dependantId)
+
+      await this.userService
+        .removeDependant(userId, dependantId)
+        .then(() => this.organizationService.removeUserFromGroup(organizationId, groupId, userId))
       res.json(actionSucceed())
     } catch (error) {
       next(error)
