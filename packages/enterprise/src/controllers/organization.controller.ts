@@ -10,7 +10,7 @@ import {
 } from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
-import {User} from '../../../common/src/data/user'
+import {User, UserDependant} from '../../../common/src/data/user'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {AccessService} from '../../../access/src/service/access.service'
@@ -426,10 +426,10 @@ class OrganizationController implements IControllerBase {
         const groupId = group.id
         const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
         for (const item of usersGroups) {
-          let user : any = null
-          let userId = item.userId
+          let user: User | UserDependant = null
+          const userId = item.userId
           let isUser = true
-          let parentUserId = ""
+          let parentUserId = ''
 
           // If parent is not null then userId represents a dependent id
           if (item?.parentUserId) {
@@ -445,12 +445,14 @@ class OrganizationController implements IControllerBase {
               // FYI: we may have not found it and thus user = null
             }
           } else {
-            const user = await this.userService.findOneSilently(userId)
+            user = await this.userService.findOneSilently(userId)
           }
-          
+
           // Let's see if we need to delete the user group memebership
           if (!user) {
-            console.warn(`Deleting user-group ${item.id} for user ${userId} (${isUser}) [${parentUserId}] from group ${groupId}`)
+            console.warn(
+              `Deleting user-group ${item.id} for user ${userId} (${isUser}) [${parentUserId}] from group ${groupId}`,
+            )
             await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
           }
         }
