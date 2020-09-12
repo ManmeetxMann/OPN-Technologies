@@ -453,6 +453,7 @@ class OrganizationController implements IControllerBase {
         const user = usersById[userId] ?? dependantsByIds[userId]
         if (!user) {
           console.error(`Invalid state exception: Cannot find user/dependant for ID [${userId}]`)
+          return null
         }
         const access =
           status === PassportStatuses.Proceed
@@ -478,12 +479,14 @@ class OrganizationController implements IControllerBase {
           exitAt: access.exitAt ?? (dependants[userId]?.exitAt as string) ?? null,
         }
       })
+      .filter((access) => !!access)
 
     // Handle duplicates
     const distinctAccesses: Record<string, AccessWithPassportStatusAndUser> = {}
     accesses.forEach(({user, status, ...access}) => {
       if (!groupOf(user.id)) {
         console.log('That is not supposed to happened but...', user.id, groupsByUserId)
+        return
       }
 
       const duplicateKey = `${user.firstName}|${user.lastName}|${groupOf(user.id)?.id}`
