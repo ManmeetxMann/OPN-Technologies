@@ -71,6 +71,7 @@ There is a potential exposure. Please see below for details.<br>
 User responses:
 ${getResponseSection(questionnaire, answers)}
 <b><u>POSSIBLE EXPOSURE SPREAD</u></b><br>
+<br>
 `
 }
 

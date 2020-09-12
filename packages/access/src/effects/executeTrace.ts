@@ -286,13 +286,13 @@ export default class TraceListener {
     const header = getHeaderSection(sourceUser, endTime, status, questionnaire, answers)
     reports.forEach((report) => {
       if (!reportsForLocation[report.locationId]) {
-        reportsForLocation[report.locationId] = [header]
+        reportsForLocation[report.locationId] = []
       }
       reportsForLocation[report.locationId].push(
         getExposureSection(report, users, locations[report.locationId].title),
       )
       if (!reportsForOrganization[report.organizationId]) {
-        reportsForOrganization[report.organizationId] = [header]
+        reportsForOrganization[report.organizationId] = []
       }
       reportsForOrganization[report.organizationId].push(
         getExposureSection(report, users, locations[report.locationId].title),
@@ -330,13 +330,13 @@ export default class TraceListener {
       send(
         recipient.email,
         'Contact trace',
-        recipient.locReports.length || recipient.orgReports.length
-          ? `${recipient.locReports.join('')}\n${recipient.orgReports.join('')}`
-          : header + 'No one was in contact with the user',
+        recipient.orgReports.length
+          ? `${header} ${recipient.orgReports.join('')}`
+          : `${header} No one was in contact with the user`,
       ),
     )
     if (!allRecipients.length) {
-      send([], 'Exposure report', header + '\nNo one was in contact with the user')
+      send([], 'Exposure report', `${header} No one was in contact with the user`)
     }
   }
 }
