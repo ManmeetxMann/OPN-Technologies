@@ -468,7 +468,15 @@ class OrganizationController implements IControllerBase {
                 includesGuardian: null,
                 dependants: null,
               }
-        return {...access, userId, user, status}
+        const dependants = access.dependants ?? {}
+        return {
+          ...access,
+          userId,
+          user,
+          status,
+          enteredAt: access.enteredAt ?? (dependants[userId]?.enteredAt as string) ?? null,
+          exitAt: access.exitAt ?? (dependants[userId]?.exitAt as string) ?? null,
+        }
       })
 
     // Handle duplicates

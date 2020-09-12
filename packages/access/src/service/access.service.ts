@@ -30,6 +30,16 @@ const mapAccessDates = (access: Access): Access => ({
   enteredAt: access.enteredAt?.toDate().toISOString(),
   //@ts-ignore
   exitAt: access.exitAt?.toDate().toISOString(),
+  //@ts-ignore
+  dependants: Object.values(access.dependants)
+    .map(({id, enteredAt, exitAt}) => ({
+      id,
+      //@ts-ignore
+      enteredAt: enteredAt?.toDate().toISOString(),
+      //@ts-ignore
+      exitAt: exitAt?.toDate().toISOString(),
+    }))
+    .reduce((byId, entry) => ({...byId, [entry.id]: entry}), {}),
 })
 
 export class AccessService {
