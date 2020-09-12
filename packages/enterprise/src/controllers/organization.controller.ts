@@ -420,16 +420,18 @@ class OrganizationController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {organizationId, groupId} = req.params
-
-      const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
-      const countOfUsers = usersGroups.length
-      for (const item of usersGroups) {
-        const userId = item.userId
-        const user = await this.userService.findOneSilently(userId)
-        if (!user) {
-          console.log(`Deleting user-group ${item.id} for user ${userId}`)
-          // await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
+      const {organizationId} = req.params
+      const groups = await this.getGroups(organizationId)
+      for (const group of groups) {
+        const groupId = group.id
+        const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
+        for (const item of usersGroups) {
+          const userId = item.userId
+          const user = await this.userService.findOneSilently(userId)
+          if (!user) {
+            console.log(`Deleting user-group ${item.id} for user ${userId} from group ${groupId}`)
+            // await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
+          }
         }
       }
 
