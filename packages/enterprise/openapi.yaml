@@ -941,7 +941,7 @@ paths:
   
   /organizations/{organizationId}/groups/{groupId}/zombie-users:
     delete:
-      description: Remove dead users (admin access required)
+      description: Remove dead users
       parameters:
         - in: path
           name: organizationId
