@@ -434,7 +434,7 @@ class OrganizationController implements IControllerBase {
             const dependants = await this.userService.getAllDependants(parentUserId)
             for (const dependant of dependants) {
               // Look for dependent
-              if (dependant.id === item.userId) {
+              if (dependant.id === userId) {
                 user = dependant
                 break
               }
