@@ -418,8 +418,8 @@ class OrganizationController implements IControllerBase {
   private async getAccessesFor(
     userIds: string[],
     dependantIds: string[],
-    locationId,
-    groupId,
+    locationId: string | undefined,
+    groupId: string | undefined,
     betweenCreatedDate: Range<Date>,
     groupsByUserId: Record<string, OrganizationUsersGroup>,
     groupsById: Record<string, OrganizationGroup>,
@@ -450,10 +450,13 @@ class OrganizationController implements IControllerBase {
       ),
     )
 
+    const isAccessEligibleForUserId = (userId: string) =>
+      !groupOf(userId)?.checkInDisabled && (!groupId || groupOf(userId)?.id === groupId)
+
     // Remap accesses
     const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)]
-      .filter(({userId}) => groupOf(userId)?.id === groupId && !groupOf(userId)?.checkInDisabled)
-      .map(({userId, status, statusToken}) => {
+      .filter(({userId}) => isAccessEligibleForUserId(userId))
+      .map(({id, userId, status, statusToken}) => {
         const user = usersById[userId] ?? dependantsByIds[userId]
         if (!user) {
           console.error(`Invalid state exception: Cannot find user/dependant for ID [${userId}]`)
@@ -473,6 +476,14 @@ class OrganizationController implements IControllerBase {
                 includesGuardian: null,
                 dependants: null,
               }
+
+        if (!access) {
+          console.error(
+            `Invalid state exception: Cannot find access for status token [${statusToken}], passport [${id}] and user [${userId}]`,
+          )
+          return null
+        }
+
         const dependants = access.dependants ?? {}
         return {
           ...access,
@@ -536,7 +547,7 @@ class OrganizationController implements IControllerBase {
 
   private fetchAccesses(
     userIds: string[],
-    locationId: string,
+    locationId: string | undefined,
     betweenCreatedDate: Range<Date>,
   ): Promise<Access[]> {
     return Promise.all(
