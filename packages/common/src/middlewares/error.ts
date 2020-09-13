@@ -19,22 +19,29 @@ export const handleErrors: ErrorMiddleware<HttpException | ValidationError> = (
         message: error.message,
       },
     }
-    resp.status(400).send(response)
+    resp.status(400).json(response)
     next()
     return
   }
 
-  const {status, code, message} = error
-  const response: ResponseWrapper<null> = {
-    data: null,
-    status: {
-      code,
-      message,
-    },
+  if (error instanceof HttpException) {
+    const {status, code, message} = error
+    const response: ResponseWrapper<null> = {
+      data: null,
+      status: {
+        code,
+        message,
+      },
+    }
+    resp.status(status).json(response)
+    next()
+    return
   }
-  resp.status(status).send(response)
-  next()
-  return
+
+  resp.status(500).json({
+    data: null,
+    status: {code: ResponseStatusCodes.InternalServerError, message: 'Something went wrong'},
+  })
 }
 
 // Cannot have an error... to be used bottom of stack
@@ -47,5 +54,5 @@ export const handleRouteNotFound: Middleware = (req, resp) => {
       message: 'Not found',
     },
   }
-  resp.status(status).send(response)
+  resp.status(status).json(response)
 }
