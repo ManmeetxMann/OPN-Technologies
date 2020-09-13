@@ -73,3 +73,15 @@ export type OrganizationKeySequence = {
   id: string
   value: number
 }
+
+export type OrganizationUsersGroupMoveData = {
+  userId: string
+  newGroupId: string
+  oldGroupId: string
+  parentUserId?: string
+}
+
+export type OrganizationUsersGroupMoveOperation = {
+  data: OrganizationUsersGroupMoveData[]
+  dryRun: boolean
+}

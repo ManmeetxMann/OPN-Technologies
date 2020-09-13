@@ -6,6 +6,7 @@ import {
   OrganizationGroup,
   OrganizationLocation,
   OrganizationUsersGroup,
+  OrganizationUsersGroupMoveOperation,
 } from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
@@ -85,6 +86,7 @@ class OrganizationController implements IControllerBase {
         .post('/', this.addGroups)
         .get('/', authMiddleware, this.getGroupsForAdmin)
         .get('/public', this.getGroupsForPublic)
+        .put('/', this.updateMultipleUserGroup)
         .post('/users', this.addUsersToGroups)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
@@ -300,6 +302,84 @@ class OrganizationController implements IControllerBase {
       )
 
       res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  updateMultipleUserGroup = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const operation = req.body as OrganizationUsersGroupMoveOperation
+      const output: string[] = []
+      let counter = 0
+
+      for (const change of operation.data) {
+        const userId = change.userId
+        const parentUserId = change.parentUserId
+        const oldGroupId = change.oldGroupId
+        const newGroupId = change.newGroupId
+        const isMainUser = !parentUserId
+
+        // In case we can't find one OR if it did it already
+        try {
+          // Get group name
+          const newGroup = await this.organizationService.getGroup(organizationId, newGroupId)
+          const oldGroup = await this.organizationService.getGroup(organizationId, oldGroupId)
+
+          let userName = ''
+          let parentName = ''
+          const newGroupName = newGroup.name
+          const oldGroupName = oldGroup.name
+
+          // Get names
+          if (!isMainUser) {
+            const user = await this.userService.findOne(parentUserId)
+            parentName = `${user.firstName} ${user.lastName}`
+            const result = await this.userService.getDependantAndParentByParentId(
+              parentUserId,
+              userId,
+            )
+            userName = `${result.dependant.firstName} ${result.dependant.lastName}`
+          } else {
+            const user = await this.userService.findOne(userId)
+            userName = `${user.firstName} ${user.lastName}`
+          }
+
+          // Output
+          if (!isMainUser) {
+            const message = `[${++counter}] Moving user "${userName}" with parent "${parentName}" from group "${oldGroupName}" to new group "${newGroupName}"`
+            output.push(message)
+            console.log(message)
+          } else {
+            const message = `[${++counter}] Moving user "${userName}" from group "${oldGroupName}" to new group "${newGroupName}"`
+            output.push(message)
+            console.log(message)
+          }
+
+          // Check if we should run
+          if (!operation.dryRun) {
+            await this.organizationService.updateGroupForUser(
+              organizationId,
+              oldGroupId,
+              userId,
+              newGroupId,
+            )
+          }
+        } catch (error) {
+          const message = `[${++counter}] Error on last operation... please investigate: userId: ${userId}, parent: ${parentUserId}, oldGroupId: ${oldGroupId}, newGroupId: ${newGroupId} : Error: ${
+            error.message
+          }`
+          output.push(message)
+          console.log(message)
+        }
+      }
+
+      res.json(actionSucceed(output))
     } catch (error) {
       next(error)
     }
