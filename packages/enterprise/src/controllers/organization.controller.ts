@@ -427,13 +427,11 @@ class OrganizationController implements IControllerBase {
         const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
         for (const item of usersGroups) {
           let user: User | UserDependant = null
-          let isUser = true
           const {id, userId, parentUserId} = item
 
           // If parent is not null then userId represents a dependent id
           if (parentUserId) {
             const dependants = await this.userService.getAllDependants(parentUserId)
-            isUser = false
             for (const dependant of dependants) {
               // Look for dependent
               if (dependant.id === item.userId) {
@@ -446,10 +444,10 @@ class OrganizationController implements IControllerBase {
             user = await this.userService.findOneSilently(userId)
           }
 
-          // Let's see if we need to delete the user group memebership
+          // Let's see if we need to delete the user group membership
           if (!user) {
             console.warn(
-              `Deleting user-group ${item.id} for user ${userId} (${isUser}) [${parentUserId}] from group ${groupId}`,
+              `Deleting user-group [${id}] for user [${userId}] and [${parentUserId}] from group [${groupId}]`,
             )
             await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
           }
