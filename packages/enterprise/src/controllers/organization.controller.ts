@@ -394,6 +394,7 @@ class OrganizationController implements IControllerBase {
         [...userIds],
         [...dependantIds],
         locationId,
+        groupId,
         betweenCreatedDate,
         groupsUsersByUserId,
         groupsById,
@@ -418,13 +419,14 @@ class OrganizationController implements IControllerBase {
     userIds: string[],
     dependantIds: string[],
     locationId,
+    groupId,
     betweenCreatedDate: Range<Date>,
     groupsByUserId: Record<string, OrganizationUsersGroup>,
     groupsById: Record<string, OrganizationGroup>,
     usersById: Record<string, User>,
     dependantsByIds: Record<string, User>,
   ): Promise<AccessWithPassportStatusAndUser[]> {
-    // Fetch passports and build accesses
+    // Fetch passports
     const passportsByUserIds = await this.passportService.findLatestForUserIds(
       userIds,
       dependantIds,
@@ -447,8 +449,10 @@ class OrganizationController implements IControllerBase {
         {},
       ),
     )
+
+    // Remap accesses
     const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)]
-      .filter(({userId}) => !groupOf(userId)?.checkInDisabled)
+      .filter(({userId}) => groupOf(userId)?.id === groupId && !groupOf(userId)?.checkInDisabled)
       .map(({userId, status, statusToken}) => {
         const user = usersById[userId] ?? dependantsByIds[userId]
         if (!user) {
