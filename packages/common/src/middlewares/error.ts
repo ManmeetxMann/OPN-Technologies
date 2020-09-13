@@ -32,7 +32,10 @@ export const handleErrors: ErrorMiddleware<HttpException | ValidationError> = (
       message,
     },
   }
-  resp.status(status).send(response)
+  if (status >= 100 && status < 600)
+    resp.status(status).send(response)
+  else
+    resp.status(500).send(response)
   next()
   return
 }
