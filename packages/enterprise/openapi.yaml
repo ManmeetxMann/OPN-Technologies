@@ -939,7 +939,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Response'
   
-  /organizations/{organizationId}/groups/{groupId}/zombie-users:
+  /organizations/{organizationId}/groups/zombie-users:
     delete:
       description: Remove dead users
       parameters:
