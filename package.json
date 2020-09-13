@@ -3,7 +3,7 @@
 	"private": true,
 	"scripts": {
 		"clean-all": "lerna clean --yes && lerna run clean",
-		"lint-all": "eslint 'packages/**/**/*.ts' --ignore-path .gitignore --max-warnings=0",
+		"lint-all": "eslint 'packages/**/**/*.ts' --ignore-path .gitignore --max-warnings=0 --fix",
 		"test-all": "lerna run test --stream",
 		"test:coverage-all": "lerna run coverage --stream",
 		"integration-test": "ts-node integration-testing/dataGen.ts",

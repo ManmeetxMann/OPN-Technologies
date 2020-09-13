@@ -312,7 +312,12 @@ class OrganizationController implements IControllerBase {
     try {
       const {organizationId, groupId, userId} = req.params
       const {oldGroupId} = req.query
-      await this.organizationService.updateGroupForUser(organizationId, oldGroupId as string, userId, groupId)
+      await this.organizationService.updateGroupForUser(
+        organizationId,
+        oldGroupId as string,
+        userId,
+        groupId,
+      )
       res.json(actionSucceed())
     } catch (error) {
       next(error)
