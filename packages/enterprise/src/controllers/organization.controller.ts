@@ -427,13 +427,11 @@ class OrganizationController implements IControllerBase {
         const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
         for (const item of usersGroups) {
           let user: User | UserDependant = null
-          const userId = item.userId
           let isUser = true
-          let parentUserId = ''
+          const {id, userId, parentUserId} = item
 
           // If parent is not null then userId represents a dependent id
-          if (item?.parentUserId) {
-            parentUserId = item?.parentUserId
+          if (parentUserId) {
             const dependants = await this.userService.getAllDependants(parentUserId)
             isUser = false
             for (const dependant of dependants) {
