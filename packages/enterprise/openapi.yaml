@@ -968,6 +968,40 @@ paths:
                 items:
                   $ref: '#/components/schemas/Response'
 
+    put:
+      description: Update a groupId for a user (admin access required)
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+        - in: path
+          name: groupId
+          schema:
+            type: string
+      #          required: true
+        - in: path
+          name: userId
+          schema:
+            type: string
+      #          required: true
+        - in: query
+          name: oldGroupId
+          schema:
+            type: string
+          required: true
+          
+      responses:
+        '200':
+          description: Successfully removed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
+
   /user/connect/add:
     post:
       description: Connect a user to an organization

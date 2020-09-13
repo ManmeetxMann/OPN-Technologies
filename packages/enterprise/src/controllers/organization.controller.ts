@@ -88,6 +88,7 @@ class OrganizationController implements IControllerBase {
         .get('/public', this.getGroupsForPublic)
         .put('/', this.updateMultipleUserGroup)
         .post('/users', this.addUsersToGroups)
+        .put('/:groupId/users/:userId', this.updateUserGroup)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
     // prettier-ignore
@@ -301,6 +302,17 @@ class OrganizationController implements IControllerBase {
         ),
       )
 
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  updateUserGroup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId, groupId, userId} = req.params
+      const {oldGroupId} = req.query
+      await this.organizationService.updateGroupForUser(organizationId, oldGroupId as string, userId, groupId)
       res.json(actionSucceed())
     } catch (error) {
       next(error)
