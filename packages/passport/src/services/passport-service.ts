@@ -29,7 +29,7 @@ export class PassportService {
 
   async findLatestForUserIds(
     userIds: string[],
-    dependantIds: string[],
+    dependantIds: string[] = [],
   ): Promise<Record<string, Passport>> {
     const latestPassportsByUserId: Record<string, Passport> = {}
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
@@ -46,28 +46,21 @@ export class PassportService {
       flattern(results as Passport[][])?.forEach((source) => {
         const passport = mapDates(source)
         const validFrom = passport.validFrom
-        const matchingDependantIds = _.intersection(dependantIds, passport.dependantIds ?? [])
-        const matchesDependants = !dependantIds?.length || matchingDependantIds.length > 0
-
-        if (matchesDependants) {
-          const latestUserPassport = latestPassportsByUserId[passport.userId]
-          const isUsersLatest =
-            !latestUserPassport || moment(validFrom).isAfter(latestUserPassport.validFrom)
-          if (isUsersLatest) {
-            latestPassportsByUserId[passport.userId] = passport
-          }
-
-          // Handle Dependants
-          matchingDependantIds.forEach((dependantId) => {
-            const latestDependantPassport = latestPassportsByUserId[dependantId]
-            const isDependantsLatest =
-              !latestDependantPassport ||
-              moment(validFrom).isAfter(latestDependantPassport.validFrom)
-            if (isDependantsLatest) {
-              latestPassportsByUserId[dependantId] = {...passport, userId: dependantId}
-            }
-          })
+        const latestUserPassport = latestPassportsByUserId[passport.userId]
+        if (!latestUserPassport || moment(validFrom).isAfter(latestUserPassport.validFrom)) {
+          latestPassportsByUserId[passport.userId] = passport
         }
+
+        // Handle Dependants
+        const matchingDependantIds = _.intersection(dependantIds, passport.dependantIds ?? [])
+        matchingDependantIds.forEach((dependantId) => {
+          const latestDependantPassport = latestPassportsByUserId[dependantId]
+          const isDependantsLatest =
+            !latestDependantPassport || moment(validFrom).isAfter(latestDependantPassport.validFrom)
+          if (isDependantsLatest) {
+            latestPassportsByUserId[dependantId] = {...passport, userId: dependantId}
+          }
+        })
       }),
     )
 
