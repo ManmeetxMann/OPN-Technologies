@@ -178,6 +178,36 @@ components:
         - firstName
         - lastName
         - base64Photo
+    
+    OrganizationUsersGroupMoveData:
+      type: object
+      properties:
+        userId:
+          type: string
+        newGroupId:
+          type: string
+        oldGroupId:
+          type: string
+        parentUserId:
+          type: string
+      required:
+        - userId
+        - newGroupId
+        - oldGroupId
+
+    OrganizationUsersGroupMoveOperationRequest:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationUsersGroupMoveData'
+          description: Location Ids within Organization
+        dryRun:
+          type: boolean
+      required:
+        - data
+        - dryRun
 
     AuthLinkRequestRequest:
       type: object
@@ -826,6 +856,28 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationGroups'
+    put:
+      description: Move users in between groups
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUsersGroupMoveOperationRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationGroups'
 
   /organizations/{organizationId}/stats:
     get:
@@ -906,6 +958,40 @@ paths:
           schema:
             type: string
       #          required: true
+      responses:
+        '200':
+          description: Successfully removed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
+
+    put:
+      description: Update a groupId for a user (admin access required)
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+        - in: path
+          name: groupId
+          schema:
+            type: string
+      #          required: true
+        - in: path
+          name: userId
+          schema:
+            type: string
+      #          required: true
+        - in: query
+          name: oldGroupId
+          schema:
+            type: string
+          required: true
+          
       responses:
         '200':
           description: Successfully removed

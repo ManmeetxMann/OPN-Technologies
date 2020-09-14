@@ -248,6 +248,26 @@ export class OrganizationService {
     })
   }
 
+  updateGroupForUser(
+    organizationId: string,
+    groupId: string,
+    userId: string,
+    newGroupId: string,
+  ): Promise<OrganizationUsersGroup> {
+    return this.getOneUsersGroup(organizationId, groupId, userId).then((target) => {
+      if (target)
+        return this.getUsersGroupRepositoryFor(organizationId).updateProperty(
+          target.id,
+          'groupId',
+          newGroupId,
+        )
+
+      throw new ResourceNotFoundException(
+        `Cannot find relation user-group for groupId [${groupId}] and userId [${userId}]`,
+      )
+    })
+  }
+
   removeUserFromGroup(organizationId: string, groupId: string, userId: string): Promise<void> {
     return this.getOneUsersGroup(organizationId, groupId, userId).then((target) => {
       if (target) return this.getUsersGroupRepositoryFor(organizationId).delete(target.id)
