@@ -66,6 +66,23 @@ export class UserService {
     )
   }
 
+  updateDependant(
+    parentUserId: string,
+    dependantId: string,
+    fields: Record<string, unknown>,
+  ): Promise<void> {
+    return this.findOne(parentUserId).then((parent) =>
+      new UserDependantModel(this.dataStore, parentUserId).get(dependantId).then((dependant) => {
+        if (!!dependant) {
+          new UserDependantModel(this.dataStore, parentUserId).updateProperties(dependant.id, fields)
+        }
+        throw new ResourceNotFoundException(
+          `Cannot find dependant with id [${dependantId}] of user [${parentUserId}]`,
+        )
+      }),
+    )
+  }
+
   addDependants(userId: string, members: UserDependant[]): Promise<UserDependant[]> {
     return this.findOne(userId).then(() =>
       new UserDependantModel(this.dataStore, userId).addAll(members),

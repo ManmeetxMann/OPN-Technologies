@@ -306,9 +306,7 @@ components:
     UserEdit:
       type: object
       properties:
-        id:
-          type: string
-        parentId:
+        parentUserId:
           type: string
         firstName:
           type: string
@@ -316,8 +314,8 @@ components:
           type: string
         base64Photo:
           type: string
-        groupId:
-          type: string
+        # groupId:
+        #   type: string
       required:
         - firstName
         - lastName

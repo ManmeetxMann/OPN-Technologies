@@ -24,7 +24,7 @@ class UserController implements IControllerBase {
     this.router.post(this.path + '/connect/add', this.connect)
     this.router.post(this.path + '/connect/remove', this.disconnect)
     this.router.post(this.path + '/connect/locations', this.connectedLocations)
-    this.router.post(this.path + '/connect/edit/:userId', this.userEdit)
+    this.router.put(this.path + '/connect/edit/:userId', this.userEdit)
   }
 
   // Note: Doesn't handle multiple organizations per user as well as checking an existing connection
@@ -114,12 +114,28 @@ class UserController implements IControllerBase {
 
   userEdit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const {userId} = req.params
       const userEditDetails = req.body as UserEdit
-      const user = await this.userService.findOne(userEditDetails.id)
 
-      // TODO: Check if we are talking about a dependent or not
-      // TODO: Update the details
-      // TODO: Update the group needs update as well
+      let propertiesToUpdate = {
+        "firstName" : userEditDetails.firstName,
+        "lastName" : userEditDetails.lastName,
+      }
+
+      if (!!userEditDetails.base64Photo) {
+        propertiesToUpdate = {...propertiesToUpdate, ...{"base64Photo" : userEditDetails.base64Photo}}
+      }
+
+      // Check if we are talking about a dependent or not
+      if (!!userEditDetails.parentUserId) {
+        await this.userService.updateDependant(
+          userEditDetails.parentUserId,
+          userId,
+          propertiesToUpdate,
+        )
+      } else {
+        await this.userService.updateProperties(userId, propertiesToUpdate)
+      }
       
       res.json(actionSucceed())
     } catch (error) {
