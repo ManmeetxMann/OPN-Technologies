@@ -52,6 +52,7 @@ class App {
 
   private security() {
     if (!!this.securityOptions) {
+      console.log("security on!")
       this.app.use(basicAuth({users: {'admin' : this.securityOptions}, challenge: true}))
     }
   }
