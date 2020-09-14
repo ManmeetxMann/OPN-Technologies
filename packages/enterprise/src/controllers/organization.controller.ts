@@ -601,7 +601,10 @@ class OrganizationController implements IControllerBase {
         return
       }
 
-      const duplicateKey = `${user.firstName}|${user.lastName}|${groupOf(user.id)?.id}`
+      const normalize = (s?: string): string => !!s ? s.toLowerCase().trim() : ''
+      const duplicateKey = `${normalize(user.firstName)}|${normalize(user.lastName)}|${
+        groupOf(user.id)?.id
+      }`
       const target = distinctAccesses[duplicateKey]
 
       if (!target || target.status === PassportStatuses.Pending) {
