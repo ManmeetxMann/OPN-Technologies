@@ -49,6 +49,19 @@ components:
           enum:
             - default
             - childcare
+        allowsSelfCheckInOut:
+          type: boolean
+        hourToSendReport:
+          type: integer
+          minimum: 0
+          maximum: 23
+          description: hour of the day to send the report for this organization
+          nullable: true
+        dayShift:
+          type: integer
+          minimum: 0
+          description: number of days ago to generate the report for (0 to generate it for the day it is sent, 1 for the day before...)
+          nullable: true
         allowDependants:
           type: boolean
         registrationQuestions:
@@ -690,12 +703,16 @@ paths:
             schema:
               type: object
               properties:
-                forYesterday:
-                  type: boolean
-                  description: true if the report is for the day before it is sent
                 hourToSendReport:
-                  type: number
-                  description: hour of the day to send the report (null to disable reporting)
+                  type: integer
+                  minimum: 0
+                  maximum: 23
+                  description: hour of the day to send the report for this organization
+                  nullable: true
+                dayShift:
+                  type: integer
+                  minimum: 0
+                  description: number of days ago to generate the report for (0 to generate it for the day it is sent, 1 for the day before...)
                   nullable: true
       responses:
         '200':
