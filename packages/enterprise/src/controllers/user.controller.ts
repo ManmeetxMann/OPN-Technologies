@@ -118,12 +118,12 @@ class UserController implements IControllerBase {
       const userEditDetails = req.body as UserEdit
 
       let propertiesToUpdate = {
-        "firstName" : userEditDetails.firstName,
-        "lastName" : userEditDetails.lastName,
+        firstName: userEditDetails.firstName,
+        lastName: userEditDetails.lastName,
       }
 
       if (!!userEditDetails.base64Photo) {
-        propertiesToUpdate = {...propertiesToUpdate, ...{"base64Photo" : userEditDetails.base64Photo}}
+        propertiesToUpdate = {...propertiesToUpdate, ...{base64Photo: userEditDetails.base64Photo}}
       }
 
       // Check if we are talking about a dependent or not
@@ -136,7 +136,7 @@ class UserController implements IControllerBase {
       } else {
         await this.userService.updateProperties(userId, propertiesToUpdate)
       }
-      
+
       res.json(actionSucceed())
     } catch (error) {
       next(error)
