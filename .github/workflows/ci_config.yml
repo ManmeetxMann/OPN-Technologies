@@ -76,6 +76,9 @@ jobs:
           # Features
           FEATURE_CREATE_TOKEN_PERMISSIVE_MODE=enabled
           FEATURE_PARENT_LOCATION_ID_MAY_BE_MISSING=enabled
+
+          # Auth Specific
+          APIDOCS_PASSWORD=${{ secrets.DEV_APIDOCS_PWD }}
         write-mode: overwrite
     - run: npm run cd-deploy-config
     - run: npm run cd-deploy-apidocs
