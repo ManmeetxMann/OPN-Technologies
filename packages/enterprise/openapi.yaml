@@ -303,6 +303,25 @@ components:
         - lastName
         - base64Photo
 
+    UserEdit:
+      type: object
+      properties:
+        id:
+          type: string
+        parentId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        base64Photo:
+          type: string
+        groupId:
+          type: string
+      required:
+        - firstName
+        - lastName
+
     Access:
       type: object
       properties:
@@ -1017,6 +1036,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfOrganizationConnection'
+
+  /user/connect/edit/{userId}:
+    put:
+      description: Update info for a user
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+      #          required: true
+      
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserEdit'
+          
+      responses:
+        '200':
+          description: Successfully removed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
 
   /user/connect/locations:
     post:

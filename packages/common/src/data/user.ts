@@ -22,6 +22,14 @@ export type User = {
   >
 }
 
+export type UserEdit = {
+  id: string
+  firstName: string
+  lastName: string
+  base64Photo: string
+  parentId?: string
+}
+
 export type UserFilter = {
   userIds: string[]
 }

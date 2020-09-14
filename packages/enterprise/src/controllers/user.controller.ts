@@ -6,7 +6,7 @@ import Validation from '../../../common/src/utils/validation'
 import {OrganizationService} from '../services/organization-service'
 import {OrganizationConnectionRequest} from '../models/organization-connection-request'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {User} from '../../../common/src/data/user'
+import {User, UserEdit} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Organization} from '../models/organization'
 
@@ -24,6 +24,7 @@ class UserController implements IControllerBase {
     this.router.post(this.path + '/connect/add', this.connect)
     this.router.post(this.path + '/connect/remove', this.disconnect)
     this.router.post(this.path + '/connect/locations', this.connectedLocations)
+    this.router.post(this.path + '/connect/edit/:userId', this.userEdit)
   }
 
   // Note: Doesn't handle multiple organizations per user as well as checking an existing connection
@@ -106,6 +107,21 @@ class UserController implements IControllerBase {
           .filter((org) => !!org),
       )
       res.json(actionSucceed(organizations))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  userEdit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userEditDetails = req.body as UserEdit
+      const user = await this.userService.findOne(userEditDetails.id)
+
+      // TODO: Check if we are talking about a dependent or not
+      // TODO: Update the details
+      // TODO: Update the group needs update as well
+      
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
