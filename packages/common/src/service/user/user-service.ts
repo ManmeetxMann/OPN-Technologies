@@ -78,10 +78,11 @@ export class UserService {
             dependant.id,
             fields,
           )
+        } else {
+          throw new ResourceNotFoundException(
+            `Cannot find dependant with id [${dependantId}] of user [${parentUserId}]`,
+          )
         }
-        throw new ResourceNotFoundException(
-          `Cannot find dependant with id [${dependantId}] of user [${parentUserId}]`,
-        )
       }),
     )
   }
