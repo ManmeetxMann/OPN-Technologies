@@ -128,7 +128,7 @@ class UserController implements IControllerBase {
 
       // Check if we are talking about a dependent or not
       if (!!userEditDetails.parentUserId) {
-        await this.userService.updateDependant(
+        await this.userService.updateDependantProperties(
           userEditDetails.parentUserId,
           userId,
           propertiesToUpdate,

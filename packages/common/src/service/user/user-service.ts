@@ -66,7 +66,7 @@ export class UserService {
     )
   }
 
-  updateDependant(
+  updateDependantProperties(
     parentUserId: string,
     dependantId: string,
     fields: Record<string, unknown>,
