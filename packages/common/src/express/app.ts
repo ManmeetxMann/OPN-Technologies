@@ -4,6 +4,7 @@ Config.load()
 
 // Continue...
 import express, {Application, RequestHandler} from 'express'
+import basicAuth from 'express-basic-auth'
 import {OpenApiValidator} from 'express-openapi-validate'
 import cors from 'cors'
 import jsYaml from 'js-yaml'
@@ -22,6 +23,7 @@ class App {
   public validation: boolean
   public corsOptions?: string
   public initializers: Initializer[]
+  public securityOptions: string
   constructor(appInit: {
     validation: boolean
     corsOptions?: string
@@ -29,14 +31,17 @@ class App {
     middleWares: RequestHandler[]
     controllers: IRouteController[]
     initializers?: Initializer[]
+    securityOptions?: string
   }) {
     this.app = express()
     this.port = appInit.port
     this.validation = appInit.validation
     this.corsOptions = appInit.corsOptions
+    this.securityOptions = appInit.securityOptions || null
     this.initializers = appInit.initializers || []
-    // console.log(this.initializers)
 
+    
+    this.security()
     this.setupCors()
     this.middlewares(appInit.middleWares)
     this.setupValidation()
@@ -44,6 +49,12 @@ class App {
     this.setupErrorHandling()
     // this.assets()
     // this.template()
+  }
+
+  private security() {
+    if (!!this.securityOptions) {
+      this.app.use(basicAuth({users: {'admin' : this.securityOptions}, challenge: true}))
+    }
   }
 
   private middlewares(middleWares: RequestHandler[]) {
