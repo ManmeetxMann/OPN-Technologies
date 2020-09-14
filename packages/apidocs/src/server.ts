@@ -9,6 +9,7 @@ const PORT = Number(process.env.PORT) || 5007
 
 const app = new App({
   port: PORT,
+  securityOptions: "'x_JcpR9-&=5k1!'",
   validation: false,
   controllers: [new RootController()],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
