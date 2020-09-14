@@ -41,7 +41,7 @@ class App {
     this.initializers = appInit.initializers || []
 
     this.setupCors()
-    this.security()
+    // this.security()
     this.middlewares(appInit.middleWares)
     this.setupValidation()
     this.routes(appInit.controllers)
