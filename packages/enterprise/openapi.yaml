@@ -1035,6 +1035,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfOrganizationConnection'
 
+  /user/connect/{organizationId}/users/{userId}:
+    get:
+      description: Get info for a user
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true 
+        - in: path
+          name: userId
+          schema:
+            type: string
+      #          required: true      
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
+
   /user/connect/edit/{userId}:
     put:
       description: Update info for a user

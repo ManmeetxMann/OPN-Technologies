@@ -6,9 +6,9 @@ import Validation from '../../../common/src/utils/validation'
 import {OrganizationService} from '../services/organization-service'
 import {OrganizationConnectionRequest} from '../models/organization-connection-request'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {User, UserEdit} from '../../../common/src/data/user'
+import {User, UserEdit, UserWithGroup} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
-import {Organization} from '../models/organization'
+import {Organization, OrganizationUsersGroup} from '../models/organization'
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -25,6 +25,7 @@ class UserController implements IControllerBase {
     this.router.post(this.path + '/connect/remove', this.disconnect)
     this.router.post(this.path + '/connect/locations', this.connectedLocations)
     this.router.put(this.path + '/connect/edit/:userId', this.userEdit)
+    this.router.get(this.path + '/connect/:organizationId/users/:userId', this.getUser)
   }
 
   // Note: Doesn't handle multiple organizations per user as well as checking an existing connection
@@ -112,6 +113,27 @@ class UserController implements IControllerBase {
     }
   }
 
+  getUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId, userId} = req.params
+      const user = await this.userService.findOne(userId) as UserWithGroup
+      const dependents = await this.userService.getAllDependants(userId)
+      const dependentIds = dependents.map(dependent => dependent.id)
+      
+      const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [user.id, ...dependentIds])
+      
+      // Fill out user one
+      user.groupId = this.getGroupId(user.id, userGroups)
+      for (const dependent of dependents) {
+        dependent.groupId = this.getGroupId(dependent.id, userGroups)
+      }
+      
+      res.json(actionSucceed({profile: user, dependents: dependents}))
+    } catch (error) {
+      next(error)
+    }
+  }
+
   userEdit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {userId} = req.params
@@ -141,6 +163,14 @@ class UserController implements IControllerBase {
     } catch (error) {
       next(error)
     }
+  }
+
+  private getGroupId = (userId: string, userGroups: OrganizationUsersGroup[]) : string => {
+    for (const userGroup of userGroups) {
+      if (userGroup.userId === userId)
+        return userGroup.groupId
+    }
+    return null
   }
 }
 
