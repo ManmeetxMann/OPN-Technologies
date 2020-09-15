@@ -601,7 +601,7 @@ class OrganizationController implements IControllerBase {
         return
       }
 
-      const normalize = (s?: string): string => !!s ? s.toLowerCase().trim() : ''
+      const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
       const duplicateKey = `${normalize(user.firstName)}|${normalize(user.lastName)}|${
         groupOf(user.id)?.id
       }`
