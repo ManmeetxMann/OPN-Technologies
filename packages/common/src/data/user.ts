@@ -22,6 +22,10 @@ export type User = {
   >
 }
 
+export type UserWithGroup = {
+  groupId?: string
+} & User
+
 export type UserEdit = {
   // id: string
   firstName: string
