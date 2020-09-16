@@ -144,7 +144,34 @@ class AdminController implements IRouteController {
       next(error)
     }
   }
+
+  getQuickCheckinLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {userId, statusToken} = req.body
+  
+      // TODO: Get locations that have the same questionairre id as the location id in the status token
+      
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {userId, statusToken} = req.body
+  
+      // TODO: Get locations that have the same questionairre id as the location id in the status token
+      
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+
 }
+
 const nowPlusHour = (amount = 1) => moment(now()).tz(timeZone).startOf('day').add(amount, 'hours')
 
 const fakeCheckInsPerHour = () => [
