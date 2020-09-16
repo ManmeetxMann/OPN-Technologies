@@ -958,6 +958,34 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Response'
+
+  /organizations/{organizationId}/groups/{groupId}:
+    delete:
+      description: Remove a group
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+        - in: path
+          name: groupId
+          schema:
+            type: string
+      #          required: true
+      responses:
+        '200':
+          description: Successfully deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '403':
+          description: Deletion failed because users are still attached. Details will be visible in server logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
   
   /organizations/{organizationId}/groups/zombie-users:
     delete:
