@@ -10,7 +10,7 @@ import {
 } from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
-import {User} from '../../../common/src/data/user'
+import {User, UserDependant} from '../../../common/src/data/user'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {AccessService} from '../../../access/src/service/access.service'
@@ -89,6 +89,7 @@ class OrganizationController implements IControllerBase {
         .put('/', this.updateMultipleUserGroup)
         .post('/users', this.addUsersToGroups)
         .put('/:groupId/users/:userId', this.updateUserGroup)
+        .delete('/zombie-users', this.removeZombieUsersInGroups)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
     // prettier-ignore
@@ -406,6 +407,52 @@ class OrganizationController implements IControllerBase {
     try {
       const {organizationId, groupId, userId} = req.params
       await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
+
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  removeZombieUsersInGroups = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const groups = await this.getGroups(organizationId)
+      for (const group of groups) {
+        const groupId = group.id
+        const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
+        for (const item of usersGroups) {
+          let user: User | UserDependant = null
+          const {id, userId, parentUserId} = item
+
+          // If parent is not null then userId represents a dependent id
+          if (parentUserId) {
+            const dependants = await this.userService.getAllDependants(parentUserId)
+            for (const dependant of dependants) {
+              // Look for dependent
+              if (dependant.id === userId) {
+                user = dependant
+                break
+              }
+              // FYI: we may have not found it and thus user = null
+            }
+          } else {
+            user = await this.userService.findOneSilently(userId)
+          }
+
+          // Let's see if we need to delete the user group membership
+          if (!user) {
+            console.warn(
+              `Deleting user-group [${id}] for user [${userId}] and [${parentUserId}] from group [${groupId}]`,
+            )
+            await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
+          }
+        }
+      }
 
       res.json(actionSucceed())
     } catch (error) {

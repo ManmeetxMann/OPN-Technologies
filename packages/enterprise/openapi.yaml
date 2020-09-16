@@ -958,6 +958,25 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Response'
+  
+  /organizations/{organizationId}/groups/zombie-users:
+    delete:
+      description: Remove dead users
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
 
   /organizations/{organizationId}/groups/{groupId}/users/{userId}:
     delete:
