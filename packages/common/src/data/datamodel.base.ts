@@ -155,6 +155,12 @@ abstract class DataModel<T extends HasId> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
     return await this.collection(subPath).where(fieldPath, 'array-contains-any', value).fetch()
   }
+
+  async findWhereArrayContains(property: string, value: unknown, subPath = ''): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+    return await this.collection(subPath).where(fieldPath, 'array-contains', value).fetch()
+  }
+
   async findWhereIdIn(value: unknown, subPath = ''): Promise<T[]> {
     const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()
     return await this.collection(subPath).where(fieldPath, 'in', value).fetch()
