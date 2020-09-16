@@ -108,12 +108,16 @@ export class OrganizationService {
         .addAll(locationsToAdd)
         .then((locs) => {
           // add this so we can query for locations by id contained in list
-          const locationsWithId = locs.map((loc) => ({
-            ...loc,
-            locationId: loc.id,
-          }))
+          const locationsWithoutId = locs
+            // no need to waste writes on locations that already have ids
+            // @ts-ignore this isn't officially part of the location schema
+            .filter((loc) => !loc.locationId)
+            .map((loc) => ({
+              ...loc,
+              locationId: loc.id,
+            }))
           return new OrganizationLocationModel(this.dataStore, organizationId).updateAll(
-            locationsWithId,
+            locationsWithoutId,
           )
         }),
     )
