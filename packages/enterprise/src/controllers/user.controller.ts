@@ -102,6 +102,7 @@ class UserController implements IControllerBase {
         ),
       ).then((results) => flattern(results as OrganizationUsersGroup[][]))
 
+      // Create a hashmap fo results
       const userGroups: Record<string, string> = userGroupsArray.reduce(function (map, obj) {
         map[obj.userId] = obj.groupId
         return map
