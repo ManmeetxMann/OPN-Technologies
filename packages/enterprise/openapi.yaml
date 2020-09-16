@@ -238,12 +238,17 @@ components:
           description: Email for admin
         organizationId:
           type: string
-          description: Organization Id
+          description: Organization Id to become an admin of. Must be provided if superAdminForOrganizationIds is empty
         locationIds:
           type: array
           items:
             type: string
           description: Location Ids within Organization
+        superAdminForOrganizationIds:
+          type: array
+          items:
+            type: string
+          description: organizaiton ids to become a super admin of. Must be provided if organizationId is empty
         groupIds:
           type: array
           items:
@@ -254,8 +259,6 @@ components:
           description: Show reporting feature
       required:
         - email
-        - organizationId
-        - locationIds
         - showReporting
 
     AdminProfile:
@@ -955,6 +958,25 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Response'
+  
+  /organizations/{organizationId}/groups/zombie-users:
+    delete:
+      description: Remove dead users
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
 
   /organizations/{organizationId}/groups/{groupId}/users/{userId}:
     delete:
@@ -1034,6 +1056,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfOrganizationConnection'
+
+  /user/connect/{organizationId}/users/{userId}:
+    get:
+      description: Get info for a user
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true 
+        - in: path
+          name: userId
+          schema:
+            type: string
+      #          required: true      
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
 
   /user/connect/edit/{userId}:
     put:

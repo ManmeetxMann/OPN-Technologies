@@ -29,6 +29,7 @@ class InternalController implements IControllerBase {
         email,
         locationIds,
         organizationId,
+        superAdminForOrganizationIds,
         showReporting,
         groupIds,
       } = req.body as InternalAdminApprovalCreateRequest
@@ -41,6 +42,12 @@ class InternalController implements IControllerBase {
       if (approval) {
         throw new UnauthorizedException('Unauthorized Access')
       }
+      if (superAdminForOrganizationIds?.length && organizationId) {
+        throw new UnauthorizedException('Cannot be an admin and a super admin')
+      }
+      if (!(superAdminForOrganizationIds?.length || organizationId)) {
+        throw new UnauthorizedException('Must be an admin or a super admin')
+      }
 
       // Check if we have approval for this admin
       await adminApprovalService.create({
@@ -50,7 +57,7 @@ class InternalController implements IControllerBase {
         adminForLocationIds: locationIds,
         adminForOrganizationId: organizationId,
         adminForGroupIds: groupIds ?? [],
-        superAdminForOrganizationIds: [],
+        superAdminForOrganizationIds: superAdminForOrganizationIds ?? [],
       })
       res.json(actionSucceed())
     } catch (error) {
