@@ -116,18 +116,21 @@ class UserController implements IControllerBase {
   getUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId, userId} = req.params
-      const user = await this.userService.findOne(userId) as UserWithGroup
+      const user = (await this.userService.findOne(userId)) as UserWithGroup
       const dependents = await this.userService.getAllDependants(userId)
-      const dependentIds = dependents.map(dependent => dependent.id)
-      
-      const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [user.id, ...dependentIds])
-      
+      const dependentIds = dependents.map((dependent) => dependent.id)
+
+      const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
+        user.id,
+        ...dependentIds,
+      ])
+
       // Fill out user one
       user.groupId = this.getGroupId(user.id, userGroups)
       for (const dependent of dependents) {
         dependent.groupId = this.getGroupId(dependent.id, userGroups)
       }
-      
+
       res.json(actionSucceed({profile: user, dependents: dependents}))
     } catch (error) {
       next(error)
@@ -165,10 +168,9 @@ class UserController implements IControllerBase {
     }
   }
 
-  private getGroupId = (userId: string, userGroups: OrganizationUsersGroup[]) : string => {
+  private getGroupId = (userId: string, userGroups: OrganizationUsersGroup[]): string => {
     for (const userGroup of userGroups) {
-      if (userGroup.userId === userId)
-        return userGroup.groupId
+      if (userGroup.userId === userId) return userGroup.groupId
     }
     return null
   }
