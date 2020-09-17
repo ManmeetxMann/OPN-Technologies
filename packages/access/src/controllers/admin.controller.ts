@@ -37,6 +37,8 @@ class AdminController implements IRouteController {
       .post('/stats', authMiddleware, this.stats)
       .post('/enter', authMiddleware, this.enter)
       .post('/exit', authMiddleware, this.exit)
+      .post('/createToken', authMiddleware, this.createToken)
+      .get('/:organizationId/locations/accessible', this.getAccessibleLocations)
     this.router.use('/admin', routes)
   }
 
@@ -145,13 +147,18 @@ class AdminController implements IRouteController {
     }
   }
 
-  getQuickCheckinLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getAccessibleLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {userId, statusToken} = req.body
+      const {organizationId} = req.body
+      const {userId} = req.query
   
       // TODO: Get locations that have the same questionairre id as the location id in the status token
+
+      // Get all status tokens
+      const statusTokens = await this.passportService.findByValidity(userId as string | null)
+
       
-      res.json(actionSucceed())
+      res.json(actionSucceed(statusTokens))
     } catch (error) {
       next(error)
     }
@@ -159,7 +166,7 @@ class AdminController implements IRouteController {
 
   createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {userId, statusToken} = req.body
+      const {statusToken, locationId, userId} = req.body
   
       // TODO: Get locations that have the same questionairre id as the location id in the status token
       
