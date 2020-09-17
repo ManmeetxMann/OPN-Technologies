@@ -1,4 +1,4 @@
-import {Passport, PassportModel, PassportStatuses} from '../models/passport'
+import {Passport, PassportModel, PassportStatuses, PassportStatus} from '../models/passport'
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
@@ -58,7 +58,7 @@ export class PassportService {
           const isDependantsLatest =
             !latestDependantPassport || moment(validFrom).isAfter(latestDependantPassport.validFrom)
           if (isDependantsLatest) {
-            latestPassportsByUserId[dependantId] = {...passport, userId: dependantId}
+            latestPassportsByUserId[dependantId] = {...passport, userId: dependantId, parentUserId: passport.userId}
           }
         })
       }),
