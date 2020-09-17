@@ -84,7 +84,9 @@ class App {
   private setupValidation() {
     if (this.validation) {
       const openApiDocument = jsYaml.safeLoad(fs.readFileSync('openapi.yaml', 'utf-8'))
-      const validator = new OpenApiValidator(openApiDocument)
+      const validator = new OpenApiValidator(openApiDocument, {
+        ajvOptions: {removeAdditional: 'all'},
+      })
       this.app.use(validator.match())
     }
   }
