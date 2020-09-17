@@ -636,7 +636,8 @@ class OrganizationController implements IControllerBase {
           status,
           enteredAt: access.enteredAt ?? (dependants[userId]?.enteredAt as string) ?? null,
           exitAt: access.exitAt ?? (dependants[userId]?.exitAt as string) ?? null,
-          parentUserId: userId in dependants ? passportsByUserIds[dependants[userId].id].parentUserId : null
+          parentUserId:
+            userId in dependants ? passportsByUserIds[dependants[userId].id].parentUserId : null,
         }
       })
       .filter((access) => !!access)
@@ -689,7 +690,7 @@ class OrganizationController implements IControllerBase {
           ),
       ),
     ).then((dependants) =>
-    flattern(dependants).reduce((byId, dependant) => ({...byId, [dependant.id]: dependant}), {}),
+      flattern(dependants).reduce((byId, dependant) => ({...byId, [dependant.id]: dependant}), {}),
     )
   }
 
