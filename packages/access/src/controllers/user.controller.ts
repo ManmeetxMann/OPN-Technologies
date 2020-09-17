@@ -161,12 +161,12 @@ class UserController implements IRouteController {
     }
   }
 
+  // TODO: this is not in swagger
   exposureVerification = (req: Request, res: Response): void => {
     if (!Validation.validate(['accessToken', 'locationId'], req, res)) {
       return
     }
 
-    console.log(req.body.accessToken)
     const response = {
       data: {
         exposed: false,
