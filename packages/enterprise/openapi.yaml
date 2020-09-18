@@ -51,46 +51,6 @@ components:
             - childcare
         allowDependants:
           type: boolean
-        registrationQuestions:
-          type: array
-          items:
-            type: object
-            properties:
-              questionText:
-                type: string
-              id:
-                type: string
-              locale:
-                type: string
-                enum:
-                  - en-CA
-                  - fr-CA
-              questionType:
-                type: string
-                enum:
-                  - text
-                  - date
-                  - select
-                  - radio
-                  - checkbox
-                  - file
-                  - button
-              placeholder:
-                type: string
-              options:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    code:
-                      type:
-                        string
-                    value:
-                      type:
-                        string
-            required:
-              - questionText
-              - locale
       required:
         - name
 
@@ -178,7 +138,7 @@ components:
         - firstName
         - lastName
         - base64Photo
-    
+
     OrganizationUsersGroupMoveData:
       type: object
       properties:
@@ -958,7 +918,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Response'
-  
+
   /organizations/{organizationId}/groups/zombie-users:
     delete:
       description: Remove dead users
@@ -1030,7 +990,7 @@ paths:
           schema:
             type: string
           required: true
-          
+
       responses:
         '200':
           description: Successfully removed
@@ -1065,12 +1025,12 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true 
+      #          required: true
         - in: path
           name: userId
           schema:
             type: string
-      #          required: true      
+      #          required: true
       responses:
         '200':
           description: Successfully returned
@@ -1090,13 +1050,13 @@ paths:
           schema:
             type: string
       #          required: true
-      
+
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UserEdit'
-          
+
       responses:
         '200':
           description: Successfully removed
