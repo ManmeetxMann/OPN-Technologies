@@ -126,6 +126,8 @@ components:
           type: array
           items:
             type: string
+        delegateAdminUserId:
+          type: string
       required:
         - statusToken
         - locationId
