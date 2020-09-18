@@ -37,35 +37,15 @@ export class OrganizationService {
   private organizationKeySequenceRepository = new OrganizationKeySequenceModel(this.dataStore)
 
   create(organization: Organization): Promise<Organization> {
-    return this.generateKey()
-      .then((key) =>
-        this.organizationRepository.add({
-          ...organization,
-          key,
-          type: organization.type ?? OrganizationType.Default,
-          allowDependants: organization.allowDependants ?? false,
-          registrationQuestions: (organization.registrationQuestions ?? []).map(
-            parsePartialQuestion,
-          ),
-        }),
-      )
-      .then((organization) => {
-        const groupRepo = this.getGroupsRepositoryFor(organization.id)
-        return groupRepo.count().then(async (results) => {
-          if (!results) {
-            const group = await this.addGroup(organization.id, {
-              name: 'All',
-              checkInDisabled: false,
-            } as OrganizationGroup)
-            return {
-              ...organization,
-              organization_groups: [group],
-            }
-          } else {
-            return organization
-          }
-        })
-      })
+    return this.generateKey().then((key) =>
+      this.organizationRepository.add({
+        ...organization,
+        key,
+        type: organization.type ?? OrganizationType.Default,
+        allowDependants: organization.allowDependants ?? false,
+        registrationQuestions: (organization.registrationQuestions ?? []).map(parsePartialQuestion),
+      }),
+    )
   }
 
   async addLocations(
