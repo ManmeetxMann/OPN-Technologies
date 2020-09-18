@@ -688,7 +688,7 @@ class OrganizationController implements IControllerBase {
           ),
       ),
     ).then((dependants) =>
-    flattern(dependants).reduce((byId, dependant) => ({...byId, [dependant.id]: dependant}), {}),
+      flattern(dependants).reduce((byId, dependant) => ({...byId, [dependant.id]: dependant}), {}),
     )
   }
 

@@ -11,23 +11,22 @@ import {AccessService} from '../service/access.service'
 import {AccessTokenService} from '../service/access-token.service'
 import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {now} from '../../../common/src/utils/times'
-import {Config} from '../../../common/src/utils/config'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {OrganizationLocation} from '../../../enterprise/src/models/organization'
 import {UserService} from '../../../common/src/service/user/user-service'
 
-// allow 'partial success' for requests where the passport verifies only some dependants
-const permissiveMode = Config.get('FEATURE_CREATE_TOKEN_PERMISSIVE_MODE') === 'enabled'
 class UserController implements IRouteController {
   public router = express.Router()
   private organizationService = new OrganizationService()
   private passportService = new PassportService()
   private attestationService = new AttestationService()
   private accessService = new AccessService()
-  private accessTokenService = new AccessTokenService(this.organizationService, 
-                                                      this.passportService, 
-                                                      this.accessService)
+  private accessTokenService = new AccessTokenService(
+    this.organizationService,
+    this.passportService,
+    this.accessService,
+  )
   private userService = new UserService()
 
   constructor() {
@@ -91,7 +90,12 @@ class UserController implements IRouteController {
       const {statusToken, locationId, userId} = req.body
       const dependantIds: string[] = req.body.dependantIds ?? []
 
-      const access = await this.accessTokenService.createToken(statusToken, locationId, userId, dependantIds)
+      const access = await this.accessTokenService.createToken(
+        statusToken,
+        locationId,
+        userId,
+        dependantIds,
+      )
 
       const response = access
         ? actionSucceed(access)

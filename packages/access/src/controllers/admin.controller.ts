@@ -17,8 +17,8 @@ import {now} from '../../../common/src/utils/times'
 import moment from 'moment-timezone'
 import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
-import { AccessTokenService } from '../service/access-token.service'
-import { ResponseStatusCodes } from '../../../common/src/types/response-status'
+import {AccessTokenService} from '../service/access-token.service'
+import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -35,9 +35,11 @@ class AdminController implements IRouteController {
   private accessService = new AccessService()
   private userService = new UserService()
   private organizationService = new OrganizationService()
-  private accessTokenService = new AccessTokenService(this.organizationService, 
-    this.passportService, 
-    this.accessService)
+  private accessTokenService = new AccessTokenService(
+    this.organizationService,
+    this.passportService,
+    this.accessService,
+  )
 
   constructor() {
     this.initRoutes()
@@ -159,18 +161,21 @@ class AdminController implements IRouteController {
     }
   }
 
-  getAccessibleLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getAccessibleLocations = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const {organizationId} = req.body
       const {userId} = req.query
-  
+
       // TODO: Get locations that have the same questionairre id as the location id in the status token
 
       // Get all status tokens
-      const statusTokens = await this.passportService.findByValidity(userId as string | null)
+      // const statusTokens = await this.passportService.findByValidity(userId as string | null)
 
-      
-      res.json(actionSucceed(statusTokens))
+      res.json(actionSucceed({organizationId, userId}))
     } catch (error) {
       next(error)
     }
@@ -192,7 +197,12 @@ class AdminController implements IRouteController {
       if (!canAccessOrganization) replyInsufficientPermission(res)
 
       // Get access
-      const access = await this.accessTokenService.createToken(statusToken, locationId, userId, dependantIds)
+      const access = await this.accessTokenService.createToken(
+        statusToken,
+        locationId,
+        userId,
+        dependantIds,
+      )
 
       const response = access
         ? actionSucceed(access)
