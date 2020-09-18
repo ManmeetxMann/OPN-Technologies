@@ -84,6 +84,8 @@ export class AccessTokenService {
       return
     }
 
+    if (!delegateAdminUserId) delegateAdminUserId = null
+
     const access = await this.accessService.create(
       statusToken,
       locationId,
