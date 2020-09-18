@@ -4,7 +4,7 @@ import IRouteController from '../../../common/src/interfaces/IRouteController.in
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {AccessService} from '../service/access.service'
-import {actionFailed, actionSucceed} from '../../../common/src/utils/response-wrapper'
+import {actionFailed, actionSucceed, of} from '../../../common/src/utils/response-wrapper'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
@@ -17,6 +17,15 @@ import {now} from '../../../common/src/utils/times'
 import moment from 'moment-timezone'
 import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
+import {AccessTokenService} from '../service/access-token.service'
+import {ResponseStatusCodes} from '../../../common/src/types/response-status'
+
+const replyInsufficientPermission = (res: Response) =>
+  res
+    .status(403)
+    .json(
+      of(null, ResponseStatusCodes.AccessDenied, 'Insufficient permissions to fulfil the request'),
+    )
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -26,6 +35,11 @@ class AdminController implements IRouteController {
   private accessService = new AccessService()
   private userService = new UserService()
   private organizationService = new OrganizationService()
+  private accessTokenService = new AccessTokenService(
+    this.organizationService,
+    this.passportService,
+    this.accessService,
+  )
 
   constructor() {
     this.initRoutes()
@@ -37,6 +51,8 @@ class AdminController implements IRouteController {
       .post('/stats', authMiddleware, this.stats)
       .post('/enter', authMiddleware, this.enter)
       .post('/exit', authMiddleware, this.exit)
+      .post('/createToken', authMiddleware, this.createToken)
+      .get('/:organizationId/locations/accessible', this.getAccessibleLocations)
     this.router.use('/admin', routes)
   }
 
@@ -144,7 +160,61 @@ class AdminController implements IRouteController {
       next(error)
     }
   }
+
+  getAccessibleLocations = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {organizationId} = req.body
+      const {userId} = req.query
+
+      // TODO: Get locations that have the same questionairre id as the location id in the status token
+
+      // Get all status tokens
+      // const statusTokens = await this.passportService.findByValidity(userId as string | null)
+
+      res.json(actionSucceed({organizationId, userId}))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {statusToken, locationId, userId} = req.body
+      const dependantIds: string[] = req.body.dependantIds ?? []
+
+      // Check access permissions
+      const {organizationId} = await this.organizationService.getLocationById(locationId)
+      const authenticatedUser = res.locals.connectedUser as User
+      const admin = authenticatedUser.admin as AdminProfile
+      const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
+      const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
+
+      // Double check
+      if (!canAccessOrganization) replyInsufficientPermission(res)
+
+      // Get access
+      const access = await this.accessTokenService.createToken(
+        statusToken,
+        locationId,
+        userId,
+        dependantIds,
+      )
+
+      const response = access
+        ? actionSucceed(access)
+        : actionFailed('Access denied: Cannot grant access for the given status-token')
+
+      res.status(access ? 200 : 403).json(response)
+    } catch (error) {
+      next(error)
+    }
+  }
 }
+
 const nowPlusHour = (amount = 1) => moment(now()).tz(timeZone).startOf('day').add(amount, 'hours')
 
 const fakeCheckInsPerHour = () => [
