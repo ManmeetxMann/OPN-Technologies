@@ -6,13 +6,13 @@ import {BadRequest} from 'express-openapi-validator'
 
 // express checks if 'next' is in the signature. DO NOT call next
 export const handleErrors: ErrorMiddleware<HttpException | BadRequest> = (err, req, res, next) => {
-  if (err instanceof BadRequest) {
-    handleValidationErrors(err, req, res, next)
+  if ((err as BadRequest).errors) {
+    handleValidationErrors(err as BadRequest, req, res, next)
     return
   }
   console.error('Error: ', err)
   // format error
-  const {status, code, message} = err
+  const {status, code, message} = err as HttpException
   const response: ResponseWrapper<null> = {
     data: null,
     status: {
