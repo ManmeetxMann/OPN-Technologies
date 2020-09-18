@@ -24,7 +24,8 @@ export type Access = {
       enteredAt?: string | firestore.FieldValue
       exitAt?: string | firestore.FieldValue
     }
-  >
+  >,
+  delegateAdminUserId?: string
 }
 
 export type AccessFilter = {

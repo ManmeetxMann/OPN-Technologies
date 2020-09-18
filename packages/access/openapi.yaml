@@ -314,6 +314,8 @@ paths:
   /admin/createToken:
     post:
       description: Exchange status-token for an access-token
+      security:
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:
