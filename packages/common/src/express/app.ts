@@ -86,7 +86,7 @@ class App {
       const validator = new OpenApiValidator({
         apiSpec: 'openapi.yaml',
         validateRequests: true,
-        validateResponses: Config.get('FEATURE_VALIDATE_RESPONSES') === 'enabled',
+        validateResponses: true, //Config.get('FEATURE_VALIDATE_RESPONSES') === 'enabled',
       })
       return validator.install(this.app)
     }

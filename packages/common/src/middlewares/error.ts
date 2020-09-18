@@ -5,8 +5,11 @@ import {ErrorMiddleware, Middleware} from '../types/middleware'
 import {BadRequest} from 'express-openapi-validator'
 
 // express checks if 'next' is in the signature. DO NOT call next
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const handleErrors: ErrorMiddleware<HttpException> = (err, req, res, _next) => {
+export const handleErrors: ErrorMiddleware<HttpException | BadRequest> = (err, req, res, next) => {
+  if (err instanceof BadRequest) {
+    handleValidationErrors(err, req, res, next)
+    return
+  }
   console.error('Error: ', err)
   // format error
   const {status, code, message} = err
