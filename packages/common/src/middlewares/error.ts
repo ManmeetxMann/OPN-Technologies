@@ -2,17 +2,39 @@ import {HttpException} from '../exceptions/httpexception'
 import {ResponseStatusCodes} from '../types/response-status'
 import {ResponseWrapper} from '../types/response-wrapper'
 import {ErrorMiddleware, Middleware} from '../types/middleware'
-// import {ValidationError} from 'express-openapi-validator'
+import {BadRequest} from 'express-openapi-validator'
 
-export const handleErrors: ErrorMiddleware<HttpException> = (
-  err,
-  req,
-  res,
-  // next,
-) => {
+export const handleErrors: ErrorMiddleware<HttpException> = (err, req, res, next) => {
   // format error
   res.status(err.status || 500).json({
-    message: err.message,
+    // message: err.message,
+    message: JSON.stringify(err),
+  })
+  next()
+}
+
+const combinePropertyErrors = (extra: string[], missing: string[]): string => {
+  const lines = []
+  if (extra.length) {
+    lines.push(`Unexpected properties: ${extra.join(', ')}`)
+  }
+  if (missing.length) {
+    lines.push(`Missing properties: ${missing.join(', ')}`)
+  }
+  return lines.join('    ')
+}
+
+export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, res, next) => {
+  const {errors} = err
+  const extraProperties = errors
+    .filter((error) => error.message === 'should NOT have additional properties')
+    .map((error) => error.path)
+  const missingProperties = errors
+    .filter((error) => error.message.startsWith('should have required property '))
+    .map((error) => error.path)
+  // @ts-ignore
+  res.status(err.status || 500).json({
+    message: combinePropertyErrors(extraProperties, missingProperties),
   })
 }
 

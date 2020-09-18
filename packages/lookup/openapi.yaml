@@ -6,12 +6,14 @@ components:
   schemas:
     Response:
       type: object
+      additionalProperties: false
       properties:
         data:
           nullable: true
           type: object
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -31,6 +33,7 @@ components:
 
     Questionnaire:
       type: object
+      additionalProperties: false
       properties:
         id:
           type: string
@@ -38,14 +41,17 @@ components:
           type: array
           items:
             type: object
+            additionalProperties: false
 
     ResponseOfQuestionnaire:
       type: object
+      additionalProperties: false
       properties:
         data:
           $ref: '#/components/schemas/Questionnaire'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string

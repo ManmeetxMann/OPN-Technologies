@@ -8,7 +8,7 @@ import basicAuth from 'express-basic-auth'
 import {OpenApiValidator} from 'express-openapi-validator'
 import cors from 'cors'
 
-import {handleErrors, handleRouteNotFound} from '../middlewares/error'
+import {handleErrors, handleValidationErrors, handleRouteNotFound} from '../middlewares/error'
 import IRouteController from '../interfaces/IRouteController.interface'
 
 interface Initializer {
@@ -42,6 +42,7 @@ class App {
     this.setupCors()
     this.middlewares(appInit.middleWares)
     this.setupValidation().then(() => {
+      this.setupValidationErrorHandling()
       this.routes(appInit.controllers)
       this.setupErrorHandling()
     })
@@ -91,6 +92,12 @@ class App {
     }
   }
 
+  // this needs to run before routes
+  private setupValidationErrorHandling() {
+    this.app.use(handleValidationErrors)
+  }
+
+  // this needs to run after routes
   private setupErrorHandling() {
     this.app.use(handleErrors)
   }

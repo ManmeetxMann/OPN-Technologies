@@ -6,12 +6,14 @@ components:
   schemas:
     Response:
       type: object
+      additionalProperties: false
       properties:
         data:
           nullable: true
           type: object
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -31,6 +33,7 @@ components:
 
     Passport:
       type: object
+      additionalProperties: false
       properties:
         id:
           type: string
@@ -54,11 +57,13 @@ components:
 
     ResponseOfPassport:
       type: object
+      additionalProperties: false
       properties:
         data:
           $ref: '#/components/schemas/Passport'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -128,6 +133,7 @@ paths:
                   type: string
                 answers:
                   type: object
+                  additionalProperties: false
                 userId:
                   type: string
                 dependantIds:
