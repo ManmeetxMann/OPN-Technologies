@@ -25,6 +25,7 @@ export type Access = {
       exitAt?: string | firestore.FieldValue
     }
   >
+  delegateAdminUserId?: string
 }
 
 export type AccessFilter = {

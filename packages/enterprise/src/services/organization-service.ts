@@ -6,7 +6,6 @@ import {
   OrganizationLocation,
   OrganizationType,
   OrganizationUsersGroup,
-  RegistrationQuestion,
 } from '../models/organization'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {
@@ -20,14 +19,6 @@ import {
 const notFoundMessage = (organizationId: string, identifier?: string) =>
   `Cannot find organization with ${identifier ?? 'ID'} [${organizationId}]`
 
-// autofill default fields for registration question
-const parsePartialQuestion = (question: RegistrationQuestion): RegistrationQuestion => ({
-  ...question,
-  questionType: question.questionType || 'text',
-  placeholder: question.placeholder || '',
-  options: question.options || [],
-})
-
 const HANDLE_LEGACY_LOCATIONS =
   Config.get('FEATURE_PARENT_LOCATION_ID_MAY_BE_MISSING') === 'enabled'
 
@@ -37,35 +28,14 @@ export class OrganizationService {
   private organizationKeySequenceRepository = new OrganizationKeySequenceModel(this.dataStore)
 
   create(organization: Organization): Promise<Organization> {
-    return this.generateKey()
-      .then((key) =>
-        this.organizationRepository.add({
-          ...organization,
-          key,
-          type: organization.type ?? OrganizationType.Default,
-          allowDependants: organization.allowDependants ?? false,
-          registrationQuestions: (organization.registrationQuestions ?? []).map(
-            parsePartialQuestion,
-          ),
-        }),
-      )
-      .then((organization) => {
-        const groupRepo = this.getGroupsRepositoryFor(organization.id)
-        return groupRepo.count().then(async (results) => {
-          if (!results) {
-            const group = await this.addGroup(organization.id, {
-              name: 'All',
-              checkInDisabled: false,
-            } as OrganizationGroup)
-            return {
-              ...organization,
-              organization_groups: [group],
-            }
-          } else {
-            return organization
-          }
-        })
-      })
+    return this.generateKey().then((key) =>
+      this.organizationRepository.add({
+        ...organization,
+        key,
+        type: organization.type ?? OrganizationType.Default,
+        allowDependants: organization.allowDependants ?? false,
+      }),
+    )
   }
 
   async addLocations(

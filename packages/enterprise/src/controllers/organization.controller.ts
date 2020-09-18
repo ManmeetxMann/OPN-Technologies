@@ -602,6 +602,8 @@ class OrganizationController implements IControllerBase {
       .filter(({userId}) => isAccessEligibleForUserId(userId))
       .map(({id, userId, status, statusToken}) => {
         const user = usersById[userId] ?? dependantsByIds[userId]
+        const parentUserId = passportsByUserIds[userId]?.parentUserId
+
         if (!user) {
           console.error(`Invalid state exception: Cannot find user/dependant for ID [${userId}]`)
           return null
@@ -636,6 +638,7 @@ class OrganizationController implements IControllerBase {
           status,
           enteredAt: access.enteredAt ?? (dependants[userId]?.enteredAt as string) ?? null,
           exitAt: access.exitAt ?? (dependants[userId]?.exitAt as string) ?? null,
+          parentUserId,
         }
       })
       .filter((access) => !!access)

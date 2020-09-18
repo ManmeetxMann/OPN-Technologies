@@ -58,7 +58,11 @@ export class PassportService {
           const isDependantsLatest =
             !latestDependantPassport || moment(validFrom).isAfter(latestDependantPassport.validFrom)
           if (isDependantsLatest) {
-            latestPassportsByUserId[dependantId] = {...passport, userId: dependantId}
+            latestPassportsByUserId[dependantId] = {
+              ...passport,
+              userId: dependantId,
+              parentUserId: passport.userId,
+            }
           }
         })
       }),
