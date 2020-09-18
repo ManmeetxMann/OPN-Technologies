@@ -4,13 +4,21 @@ import {ResponseWrapper} from '../types/response-wrapper'
 import {ErrorMiddleware, Middleware} from '../types/middleware'
 import {BadRequest} from 'express-openapi-validator'
 
-export const handleErrors: ErrorMiddleware<HttpException> = (err, req, res, next) => {
+// express checks if 'next' is in the signature. DO NOT call next
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const handleErrors: ErrorMiddleware<HttpException> = (err, req, res, _next) => {
+  console.error('Error: ', err)
   // format error
-  res.status(err.status || 500).json({
-    // message: err.message,
-    message: JSON.stringify(err),
-  })
-  next()
+  const {status, code, message} = err
+  const response: ResponseWrapper<null> = {
+    data: null,
+    status: {
+      code,
+      message,
+    },
+  }
+  res.status(status).json(response)
+  return
 }
 
 const combinePropertyErrors = (extra: string[], missing: string[]): string => {
@@ -24,7 +32,10 @@ const combinePropertyErrors = (extra: string[], missing: string[]): string => {
   return lines.join('    ')
 }
 
-export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, res, next) => {
+// express checks if 'next' is in the signature. DO NOT call next
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, res, _next) => {
+  console.error('Validation Error: ', err)
   const {errors} = err
   const extraProperties = errors
     .filter((error) => error.message === 'should NOT have additional properties')
@@ -32,7 +43,6 @@ export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, re
   const missingProperties = errors
     .filter((error) => error.message.startsWith('should have required property '))
     .map((error) => error.path)
-  // @ts-ignore
   res.status(err.status || 500).json({
     message: combinePropertyErrors(extraProperties, missingProperties),
   })
