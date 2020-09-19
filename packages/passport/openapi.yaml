@@ -102,10 +102,6 @@ paths:
                   nullable: true
                   items:
                     type: string
-                includeGuardian:
-                  type: boolean
-                  deprecated: true
-                  description: Unneeded argument. If this is set to false, the call will fail as all passports must include the guardian
               required:
                 - userId
 
@@ -136,8 +132,6 @@ paths:
                     type: string
                 includeGuardian:
                   type: boolean
-                  deprecated: true
-                  description: Unneeded argument. If this is set to false, the call will fail as all passports must include the guardian
               required:
                 - locationId
                 - answers

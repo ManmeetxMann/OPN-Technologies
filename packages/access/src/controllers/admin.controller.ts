@@ -183,7 +183,7 @@ class AdminController implements IRouteController {
 
   createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {statusToken, locationId, userId} = req.body
+      const {statusToken, locationId, userId, includeGuardian} = req.body
       const dependantIds: string[] = req.body.dependantIds ?? []
 
       // Check access permissions
@@ -202,6 +202,7 @@ class AdminController implements IRouteController {
         locationId,
         userId,
         dependantIds,
+        includeGuardian,
       )
 
       const response = access

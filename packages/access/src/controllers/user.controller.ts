@@ -87,7 +87,7 @@ class UserController implements IRouteController {
 
   createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {statusToken, locationId, userId} = req.body
+      const {statusToken, locationId, userId, includeGuardian} = req.body
       const dependantIds: string[] = req.body.dependantIds ?? []
 
       const access = await this.accessTokenService.createToken(
@@ -95,6 +95,7 @@ class UserController implements IRouteController {
         locationId,
         userId,
         dependantIds,
+        includeGuardian,
       )
 
       const response = access
