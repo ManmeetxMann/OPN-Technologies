@@ -506,7 +506,7 @@ class OrganizationController implements IControllerBase {
       })
       const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
       const usersById = await this.getUsersById([...userIds])
-      const dependantsById = await this.getDependantsById([...guardianIds], usersById, groupId)
+      const dependantsById = await this.getDependantsById([...guardianIds], usersById, dependantIds)
 
       // Fetch Guardians groups
       const guardiansGroups: OrganizationUsersGroup[] = await Promise.all(
@@ -678,7 +678,7 @@ class OrganizationController implements IControllerBase {
   private getDependantsById(
     parentUserIds: string[],
     usersById: Record<string, User>,
-    groupId?: string,
+    dependantIds?: Set<string>,
   ): Promise<Record<string, User>> {
     return Promise.all(
       parentUserIds.map((userId) =>
@@ -686,7 +686,7 @@ class OrganizationController implements IControllerBase {
           .getAllDependants(userId)
           .then((results) =>
             results
-              .filter((dependant) => !groupId || dependant.groupId === groupId)
+              .filter(({id}) => dependantIds.has(id))
               .map((dependant) => ({...usersById[userId], ...dependant})),
           ),
       ),
