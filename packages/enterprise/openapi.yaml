@@ -223,6 +223,20 @@ components:
         - organizationId
         - superAdminForOrganizationIds
 
+    InternalAdminListRequest:
+      type: object
+      properties:
+        organizationId:
+          type: string
+          description: Organization Id
+        scope:
+          type: string
+          description: Look at admin approvals or users admin profiles
+          enum: [approval,user]
+      required:
+        - organizationId
+        - scope
+
     AdminProfile:
       type: object
       properties:
@@ -1132,7 +1146,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfAdminProfile'
 
-  /internal/adminApproval/create:
+  /internal/admin/operations/create:
     post:
       description: Internal Admin Approval Creation API
       requestBody:
@@ -1140,6 +1154,22 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/InternalAdminApprovalCreateRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /internal/admin/operations/list:
+    post:
+      description: Internal Admin List API
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalAdminListRequest'
       responses:
         '200':
           description: Successfully added
