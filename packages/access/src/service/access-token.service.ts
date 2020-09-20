@@ -29,9 +29,14 @@ export class AccessTokenService {
     locationId: string,
     userId: string,
     dependantIds: string[],
-    includeGuardian: boolean,
     delegateAdminUserId?: string,
   ): Promise<Access> {
+    const {organizationId} = await this.organizationService.getLocationById(locationId)
+    const userGroupId = await this.organizationService
+      .getUsersGroups(organizationId, null, [userId])
+      .then((results) => results[0]?.groupId)
+    const group = await this.organizationService.getGroup(organizationId, userGroupId)
+    const includeGuardian = !group.checkInDisabled
     const passport = await this.passportService.findOneByToken(statusToken)
 
     const fail = (reason: string) => {

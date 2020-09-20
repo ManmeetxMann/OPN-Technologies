@@ -13,7 +13,7 @@ import {AccessService} from '../../../access/src/service/access.service'
 import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
-import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
 
@@ -75,12 +75,12 @@ class UserController implements IControllerBase {
     try {
       // Fetch passport status token
       // or create a pending one if any
-      const {statusToken, userId, includeGuardian} = req.body
-      const dependantIds: string[] = req.body.dependantIds ?? []
-      if (!includeGuardian && dependantIds.length === 0) {
-        throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
+      const {statusToken, userId} = req.body
+      const includeGuardian = req.body.includeGuardian ?? true
+      if (!includeGuardian) {
+        throw new Error('Guardian must be included in all passports')
       }
-
+      const dependantIds: string[] = req.body.dependantIds ?? []
       const existingPassport = statusToken
         ? await this.passportService.findOneByToken(statusToken)
         : null
@@ -117,14 +117,22 @@ class UserController implements IControllerBase {
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {locationId, userId, includeGuardian} = req.body
+      const {locationId, userId} = req.body
       const {organizationId, questionnaireId} = await this.organizationService.getLocationById(
         locationId,
       )
+      const userGroupId = await this.organizationService
+        .getUsersGroups(organizationId, null, [userId])
+        .then((results) => results[0]?.groupId)
+
+      if (!userGroupId)
+        throw new ResourceNotFoundException(
+          `Cannot find a group for user [${userId}] and location path [organizations/${organizationId}/locations/${locationId}]`,
+        )
+
+      const group = await this.organizationService.getGroup(organizationId, userGroupId)
+      const includeGuardian = !group.checkInDisabled
       const dependantIds: string[] = req.body.dependantIds ?? []
-      if (!includeGuardian && dependantIds.length === 0) {
-        throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
-      }
       const answers: AttestationAnswers = req.body.answers
       const passportStatus = await this.evaluateAnswers(answers)
 
