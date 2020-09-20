@@ -183,8 +183,11 @@ class AdminController implements IRouteController {
 
   createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {statusToken, locationId, userId} = req.body
+      const {statusToken, locationId, userId, includeGuardian} = req.body
       const dependantIds: string[] = req.body.dependantIds ?? []
+      if (!includeGuardian && dependantIds.length === 0) {
+        throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
+      }
 
       // Check access permissions
       const {organizationId} = await this.organizationService.getLocationById(locationId)
@@ -202,6 +205,7 @@ class AdminController implements IRouteController {
         locationId,
         userId,
         dependantIds,
+        includeGuardian,
       )
 
       const response = access

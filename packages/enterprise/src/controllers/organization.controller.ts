@@ -595,7 +595,7 @@ class OrganizationController implements IControllerBase {
     )
 
     const isAccessEligibleForUserId = (userId: string) =>
-      !groupOf(userId)?.checkInDisabled && (!groupId || groupOf(userId)?.id === groupId)
+      !groupId || groupOf(userId)?.id === groupId
 
     // Remap accesses
     const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)]
