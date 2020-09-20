@@ -3,6 +3,18 @@ import {HasId, OptionalIdStorable, Storable} from '@firestore-simple/admin/dist/
 import {firestore} from 'firebase-admin'
 import {Collection} from '@firestore-simple/admin'
 
+export enum DataModelFieldMapOperatorType {
+  Equals = '==',
+  ArrayContains = 'array-contains',
+}
+
+export type DataModelFieldMap = {
+  map: string
+  key: string
+  operator: DataModelFieldMapOperatorType
+  value: unknown
+}
+
 abstract class DataModel<T extends HasId> {
   abstract readonly rootPath: string
   protected abstract readonly zeroSet: Array<Storable<T>>
@@ -202,14 +214,14 @@ abstract class DataModel<T extends HasId> {
       .fetch()
   }
 
-  findWhereMapHasKeyValueEqual(
-    map: string,
-    key: string,
-    value: unknown,
-    subPath = '',
-  ): Promise<T[]> {
-    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
-    return this.collection(subPath).where(fieldPath, '==', value).fetch()
+  findWhereMapHasKeyValueEqual(fields: DataModelFieldMap[], subPath = ''): Promise<T[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let collection: any = this.collection(subPath)
+    for (const field of fields) {
+      const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(field.map, field.key)
+      collection = collection.where(fieldPath, field.operator, field.value)
+    }
+    return collection.fetch()
   }
 
   delete(id: string, subPath = ''): Promise<void> {
