@@ -5,7 +5,7 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import {InternalAdminApprovalCreateRequest} from '../models/internal-request'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
-import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
+import {BadRequestException} from 'packages/common/src/exceptions/bad-request-exception'
 
 class InternalController implements IControllerBase {
   public path = '/internal'
@@ -40,13 +40,7 @@ class InternalController implements IControllerBase {
       // Make sure it does not exist
       const approval = await adminApprovalService.findOneByEmail(email)
       if (approval) {
-        throw new UnauthorizedException('Unauthorized Access')
-      }
-      if (superAdminForOrganizationIds?.length && organizationId) {
-        throw new UnauthorizedException('Cannot be an admin and a super admin')
-      }
-      if (!(superAdminForOrganizationIds?.length || organizationId)) {
-        throw new UnauthorizedException('Must be an admin or a super admin')
+        throw new BadRequestException('Unauthorized Access')
       }
 
       // Check if we have approval for this admin

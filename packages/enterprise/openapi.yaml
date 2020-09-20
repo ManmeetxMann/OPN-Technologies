@@ -198,7 +198,7 @@ components:
           description: Email for admin
         organizationId:
           type: string
-          description: Organization Id to become an admin of. Must be provided if superAdminForOrganizationIds is empty
+          description: Organization Id to become an admin of. Must be provided.
         locationIds:
           type: array
           items:
@@ -208,7 +208,7 @@ components:
           type: array
           items:
             type: string
-          description: organizaiton ids to become a super admin of. Must be provided if organizationId is empty
+          description: Organizaiton ids to become a super admin of. Must be provided can be empty.
         groupIds:
           type: array
           items:
@@ -220,6 +220,8 @@ components:
       required:
         - email
         - showReporting
+        - organizationId
+        - superAdminForOrganizationIds
 
     AdminProfile:
       type: object
