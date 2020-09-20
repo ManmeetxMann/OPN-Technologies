@@ -13,6 +13,7 @@ import {AccessService} from '../../../access/src/service/access.service'
 import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
 
@@ -74,8 +75,12 @@ class UserController implements IControllerBase {
     try {
       // Fetch passport status token
       // or create a pending one if any
-      const {statusToken, userId} = req.body
+      const {statusToken, userId, includeGuardian} = req.body
       const dependantIds: string[] = req.body.dependantIds ?? []
+      if (!includeGuardian && dependantIds.length === 0) {
+        throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
+      }
+
       const existingPassport = statusToken
         ? await this.passportService.findOneByToken(statusToken)
         : null
@@ -117,6 +122,9 @@ class UserController implements IControllerBase {
         locationId,
       )
       const dependantIds: string[] = req.body.dependantIds ?? []
+      if (!includeGuardian && dependantIds.length === 0) {
+        throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
+      }
       const answers: AttestationAnswers = req.body.answers
       const passportStatus = await this.evaluateAnswers(answers)
 

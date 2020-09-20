@@ -87,9 +87,11 @@ class UserController implements IRouteController {
 
   createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {statusToken, locationId, userId} = req.body
+      const {statusToken, locationId, userId, includeGuardian} = req.body
       const dependantIds: string[] = req.body.dependantIds ?? []
-      const includeGuardian = req.body.includeGuardian ?? dependantIds.length === 0
+      if (!includeGuardian && dependantIds.length === 0) {
+        throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
+      }
 
       const access = await this.accessTokenService.createToken(
         statusToken,

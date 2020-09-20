@@ -129,6 +129,7 @@ components:
         - statusToken
         - locationId
         - userId
+        - includeGuardian
 
     Statistics:
       type: object
