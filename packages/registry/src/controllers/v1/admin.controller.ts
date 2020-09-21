@@ -4,7 +4,7 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {RegistrationTypes} from '../../models/registration'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {RegistrationService} from '../../services/registration-service'
-import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
+// import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 
 class AdminController implements IControllerBase {
   public path = '/admin'
@@ -41,13 +41,11 @@ class AdminController implements IControllerBase {
           ...target,
           type: RegistrationTypes.Admin,
         })
-  
+
         res.json(actionSucceed(registration))
-      }
-      else {
+      } else {
         res.json(actionSucceed())
       }
-      
     } catch (error) {
       next(error)
     }
