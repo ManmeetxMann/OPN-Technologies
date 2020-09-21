@@ -63,46 +63,6 @@ components:
           description: number of days ago to generate the report for (0 to generate it for the day it is sent, 1 for the day before...)
         allowDependants:
           type: boolean
-        registrationQuestions:
-          type: array
-          items:
-            type: object
-            properties:
-              questionText:
-                type: string
-              id:
-                type: string
-              locale:
-                type: string
-                enum:
-                  - en-CA
-                  - fr-CA
-              questionType:
-                type: string
-                enum:
-                  - text
-                  - date
-                  - select
-                  - radio
-                  - checkbox
-                  - file
-                  - button
-              placeholder:
-                type: string
-              options:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    code:
-                      type:
-                        string
-                    value:
-                      type:
-                        string
-            required:
-              - questionText
-              - locale
       required:
         - name
 
@@ -190,7 +150,7 @@ components:
         - firstName
         - lastName
         - base64Photo
-    
+
     OrganizationUsersGroupMoveData:
       type: object
       properties:
@@ -250,12 +210,17 @@ components:
           description: Email for admin
         organizationId:
           type: string
-          description: Organization Id
+          description: Organization Id to become an admin of. Must be provided.
         locationIds:
           type: array
           items:
             type: string
           description: Location Ids within Organization
+        superAdminForOrganizationIds:
+          type: array
+          items:
+            type: string
+          description: Organizaiton ids to become a super admin of. Must be provided can be empty.
         groupIds:
           type: array
           items:
@@ -266,9 +231,23 @@ components:
           description: Show reporting feature
       required:
         - email
-        - organizationId
-        - locationIds
         - showReporting
+        - organizationId
+        - superAdminForOrganizationIds
+
+    InternalAdminListRequest:
+      type: object
+      properties:
+        organizationId:
+          type: string
+          description: Organization Id
+        scope:
+          type: string
+          description: Look at admin approvals or users admin profiles
+          enum: [approval,user]
+      required:
+        - organizationId
+        - scope
 
     AdminProfile:
       type: object
@@ -972,6 +951,25 @@ paths:
                 items:
                   $ref: '#/components/schemas/Response'
 
+  /organizations/{organizationId}/groups/zombie-users:
+    delete:
+      description: Remove dead users
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
+
   /organizations/{organizationId}/groups/{groupId}/users/{userId}:
     delete:
       description: Take a user off a group (admin access required)
@@ -1024,7 +1022,7 @@ paths:
           schema:
             type: string
           required: true
-          
+
       responses:
         '200':
           description: Successfully removed
@@ -1051,6 +1049,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfOrganizationConnection'
 
+  /user/connect/{organizationId}/users/{userId}:
+    get:
+      description: Get info for a user
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+        - in: path
+          name: userId
+          schema:
+            type: string
+      #          required: true
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
+
   /user/connect/edit/{userId}:
     put:
       description: Update info for a user
@@ -1060,13 +1082,13 @@ paths:
           schema:
             type: string
       #          required: true
-      
+
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UserEdit'
-          
+
       responses:
         '200':
           description: Successfully removed
@@ -1140,7 +1162,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfAdminProfile'
 
-  /internal/adminApproval/create:
+  /internal/admin/operations/create:
     post:
       description: Internal Admin Approval Creation API
       requestBody:
@@ -1148,6 +1170,22 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/InternalAdminApprovalCreateRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /internal/admin/operations/list:
+    post:
+      description: Internal Admin List API
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalAdminListRequest'
       responses:
         '200':
           description: Successfully added

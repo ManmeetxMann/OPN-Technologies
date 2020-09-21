@@ -21,8 +21,8 @@ class UserController implements IControllerBase {
         updates: {
           ios: {
             force: '1.2',
-            optional: '1.3.1',
-            url: 'http://itunes.com/apps/opn',
+            optional: '1.3.3',
+            url: 'https://apps.apple.com/app/opn/id1522707869',
           },
           android: {
             force: '1.2.0',

@@ -6,9 +6,9 @@ import Validation from '../../../common/src/utils/validation'
 import {OrganizationService} from '../services/organization-service'
 import {OrganizationConnectionRequest} from '../models/organization-connection-request'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {User, UserEdit} from '../../../common/src/data/user'
+import {User, UserEdit, UserWithGroup} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
-import {Organization} from '../models/organization'
+import {Organization, OrganizationUsersGroup} from '../models/organization'
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -25,6 +25,7 @@ class UserController implements IControllerBase {
     this.router.post(this.path + '/connect/remove', this.disconnect)
     this.router.post(this.path + '/connect/locations', this.connectedLocations)
     this.router.put(this.path + '/connect/edit/:userId', this.userEdit)
+    this.router.get(this.path + '/connect/:organizationId/users/:userId', this.getUser)
   }
 
   // Note: Doesn't handle multiple organizations per user as well as checking an existing connection
@@ -36,40 +37,13 @@ class UserController implements IControllerBase {
       const {organizationId, firstName, lastName, base64Photo, groupId} = body
       const organization = await this.organizationService.findOneById(organizationId)
       const group = await this.organizationService.getGroup(organization.id, groupId)
-      const registrationQuestions = organization.registrationQuestions ?? []
-      if (registrationQuestions.length) {
-        if (!responses) {
-          throw new Error(`${organization.name} requires responses`)
-        }
-        if (responses.length !== registrationQuestions.length) {
-          throw new Error(
-            `${organization.name} expects ${registrationQuestions.length} answers but ${responses.length} were provided`,
-          )
-        }
-      }
 
-      // validate that responses are present and valid
-      const registrationAnswers = (responses ?? []).map((responseValue: string, index: number) => {
-        const question = registrationQuestions[index]
-        if (
-          question.options &&
-          question.options.length &&
-          !question.options.map(({code}) => code).includes(responseValue)
-        ) {
-          throw new Error(`Answer ${responseValue} is not a valid response`)
-        }
-        return {
-          questionText: question.questionText,
-          responseValue,
-        }
-      })
       // Create user
       const user = await this.userService.create({
         firstName,
         lastName,
         base64Photo,
         organizationIds: [organization.id],
-        registrationAnswersByOrganizationId: {[organization.id]: registrationAnswers},
       } as User)
 
       // Add user to group
@@ -112,6 +86,30 @@ class UserController implements IControllerBase {
     }
   }
 
+  getUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId, userId} = req.params
+      const user = (await this.userService.findOne(userId)) as UserWithGroup
+      const dependents = await this.userService.getAllDependants(userId)
+      const dependentIds = dependents.map((dependent) => dependent.id)
+
+      const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
+        user.id,
+        ...dependentIds,
+      ])
+
+      // Fill out user one
+      user.groupId = this.getGroupId(user.id, userGroups)
+      for (const dependent of dependents) {
+        dependent.groupId = this.getGroupId(dependent.id, userGroups)
+      }
+
+      res.json(actionSucceed({profile: user, dependents: dependents}))
+    } catch (error) {
+      next(error)
+    }
+  }
+
   userEdit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {userId} = req.params
@@ -141,6 +139,13 @@ class UserController implements IControllerBase {
     } catch (error) {
       next(error)
     }
+  }
+
+  private getGroupId = (userId: string, userGroups: OrganizationUsersGroup[]): string => {
+    for (const userGroup of userGroups) {
+      if (userGroup.userId === userId) return userGroup.groupId
+    }
+    return null
   }
 }
 
