@@ -129,7 +129,6 @@ components:
           type: string
         includeGuardian:
           type: boolean
-          description: In this version, this argument has no effect. Guardians are never included if the access includes dependants
         dependantIds:
           type: array
           items:
@@ -138,6 +137,7 @@ components:
         - statusToken
         - locationId
         - userId
+        - includeGuardian
 
     Statistics:
       type: object

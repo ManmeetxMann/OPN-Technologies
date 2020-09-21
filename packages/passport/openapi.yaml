@@ -109,10 +109,9 @@ paths:
                     type: string
                 includeGuardian:
                   type: boolean
-                  deprecated: true
-                  description: Unneeded argument. If this is set to false, the call will fail as all passports must include the guardian
               required:
                 - userId
+                - includeGuardian
 
       responses:
         '200':
@@ -142,12 +141,11 @@ paths:
                     type: string
                 includeGuardian:
                   type: boolean
-                  deprecated: true
-                  description: Unneeded argument. If this is set to false, the call will fail as all passports must include the guardian
               required:
                 - locationId
                 - answers
                 - userId
+                - includeGuardian
               example: {locationId: "location-id", answers: { 1:{1: false},2:{1: false},3:{1: false},4:{1: false, 2: "2020-06-10T05:05:32.217Z"}}, userId: "parentId", dependantIds: ["childOne", "childTwo"]}
 
       responses:
