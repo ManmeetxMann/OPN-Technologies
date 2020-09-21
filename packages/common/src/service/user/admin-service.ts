@@ -14,7 +14,7 @@ export class AdminApprovalService {
 
   findOneByEmail(email: string): Promise<AdminApproval> {
     return this.adminApprovalRepository
-      .findWhereMapHasKeyValueEqual('profile', 'email', email)
+      .findWhereEqualInMap('profile', 'email', email)
       .then((results) => (results.length > 0 ? results[0] : null))
   }
 
