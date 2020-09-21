@@ -141,7 +141,7 @@ abstract class DataModel<T extends HasId> {
     return await this.collection(subPath).where(fieldPath, 'array-contains-any', value).fetch()
   }
 
-  async findWhereMapKeyContains(
+  async findWhereArrayInMapContains(
     map: string,
     key: string,
     value: unknown,

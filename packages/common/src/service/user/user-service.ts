@@ -100,6 +100,6 @@ export class UserService {
   }
 
   getAdminsForGroup(groupId: string): Promise<User[]> {
-    return this.userRepository.findWhereMapKeyContains('admin', 'adminForGroupIds', groupId)
+    return this.userRepository.findWhereArrayInMapContains('admin', 'adminForGroupIds', groupId)
   }
 }

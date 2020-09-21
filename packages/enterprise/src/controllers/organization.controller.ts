@@ -90,7 +90,7 @@ class OrganizationController implements IControllerBase {
         .post('/users', this.addUsersToGroups)
         .put('/:groupId/users/:userId', this.updateUserGroup)
         .delete('/zombie-users', this.removeZombieUsersInGroups)
-        .delete('/:groupId/', this.removeGroup)
+        .delete('/:groupId', this.removeGroup)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
     // prettier-ignore
