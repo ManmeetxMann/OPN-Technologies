@@ -51,46 +51,6 @@ components:
             - childcare
         allowDependants:
           type: boolean
-        registrationQuestions:
-          type: array
-          items:
-            type: object
-            properties:
-              questionText:
-                type: string
-              id:
-                type: string
-              locale:
-                type: string
-                enum:
-                  - en-CA
-                  - fr-CA
-              questionType:
-                type: string
-                enum:
-                  - text
-                  - date
-                  - select
-                  - radio
-                  - checkbox
-                  - file
-                  - button
-              placeholder:
-                type: string
-              options:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    code:
-                      type:
-                        string
-                    value:
-                      type:
-                        string
-            required:
-              - questionText
-              - locale
       required:
         - name
 
@@ -178,7 +138,7 @@ components:
         - firstName
         - lastName
         - base64Photo
-    
+
     OrganizationUsersGroupMoveData:
       type: object
       properties:
@@ -238,7 +198,7 @@ components:
           description: Email for admin
         organizationId:
           type: string
-          description: Organization Id to become an admin of. Must be provided if superAdminForOrganizationIds is empty
+          description: Organization Id to become an admin of. Must be provided.
         locationIds:
           type: array
           items:
@@ -248,7 +208,7 @@ components:
           type: array
           items:
             type: string
-          description: organizaiton ids to become a super admin of. Must be provided if organizationId is empty
+          description: Organizaiton ids to become a super admin of. Must be provided can be empty.
         groupIds:
           type: array
           items:
@@ -260,6 +220,22 @@ components:
       required:
         - email
         - showReporting
+        - organizationId
+        - superAdminForOrganizationIds
+
+    InternalAdminListRequest:
+      type: object
+      properties:
+        organizationId:
+          type: string
+          description: Organization Id
+        scope:
+          type: string
+          description: Look at admin approvals or users admin profiles
+          enum: [approval,user]
+      required:
+        - organizationId
+        - scope
 
     AdminProfile:
       type: object
@@ -1058,7 +1034,7 @@ paths:
           schema:
             type: string
           required: true
-          
+
       responses:
         '200':
           description: Successfully removed
@@ -1093,12 +1069,12 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true 
+      #          required: true
         - in: path
           name: userId
           schema:
             type: string
-      #          required: true      
+      #          required: true
       responses:
         '200':
           description: Successfully returned
@@ -1118,13 +1094,13 @@ paths:
           schema:
             type: string
       #          required: true
-      
+
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UserEdit'
-          
+
       responses:
         '200':
           description: Successfully removed
@@ -1198,7 +1174,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfAdminProfile'
 
-  /internal/adminApproval/create:
+  /internal/admin/operations/create:
     post:
       description: Internal Admin Approval Creation API
       requestBody:
@@ -1206,6 +1182,22 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/InternalAdminApprovalCreateRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /internal/admin/operations/list:
+    post:
+      description: Internal Admin List API
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalAdminListRequest'
       responses:
         '200':
           description: Successfully added

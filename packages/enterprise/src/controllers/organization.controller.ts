@@ -536,7 +536,7 @@ class OrganizationController implements IControllerBase {
       })
       const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
       const usersById = await this.getUsersById([...userIds])
-      const dependantsById = await this.getDependantsById([...guardianIds], usersById, groupId)
+      const dependantsById = await this.getDependantsById([...guardianIds], usersById, dependantIds)
 
       // Fetch Guardians groups
       const guardiansGroups: OrganizationUsersGroup[] = await Promise.all(
@@ -625,13 +625,15 @@ class OrganizationController implements IControllerBase {
     )
 
     const isAccessEligibleForUserId = (userId: string) =>
-      !groupOf(userId)?.checkInDisabled && (!groupId || groupOf(userId)?.id === groupId)
+      !groupId || groupOf(userId)?.id === groupId
 
     // Remap accesses
     const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)]
       .filter(({userId}) => isAccessEligibleForUserId(userId))
       .map(({id, userId, status, statusToken}) => {
         const user = usersById[userId] ?? dependantsByIds[userId]
+        const parentUserId = passportsByUserIds[userId]?.parentUserId
+
         if (!user) {
           console.error(`Invalid state exception: Cannot find user/dependant for ID [${userId}]`)
           return null
@@ -666,6 +668,7 @@ class OrganizationController implements IControllerBase {
           status,
           enteredAt: access.enteredAt ?? (dependants[userId]?.enteredAt as string) ?? null,
           exitAt: access.exitAt ?? (dependants[userId]?.exitAt as string) ?? null,
+          parentUserId,
         }
       })
       .filter((access) => !!access)
@@ -705,7 +708,7 @@ class OrganizationController implements IControllerBase {
   private getDependantsById(
     parentUserIds: string[],
     usersById: Record<string, User>,
-    groupId?: string,
+    dependantIds?: Set<string>,
   ): Promise<Record<string, User>> {
     return Promise.all(
       parentUserIds.map((userId) =>
@@ -713,7 +716,7 @@ class OrganizationController implements IControllerBase {
           .getAllDependants(userId)
           .then((results) =>
             results
-              .filter((dependant) => !groupId || dependant.groupId === groupId)
+              .filter(({id}) => dependantIds.has(id))
               .map((dependant) => ({...usersById[userId], ...dependant})),
           ),
       ),
