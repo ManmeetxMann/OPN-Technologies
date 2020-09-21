@@ -37,40 +37,13 @@ class UserController implements IControllerBase {
       const {organizationId, firstName, lastName, base64Photo, groupId} = body
       const organization = await this.organizationService.findOneById(organizationId)
       const group = await this.organizationService.getGroup(organization.id, groupId)
-      const registrationQuestions = organization.registrationQuestions ?? []
-      if (registrationQuestions.length) {
-        if (!responses) {
-          throw new Error(`${organization.name} requires responses`)
-        }
-        if (responses.length !== registrationQuestions.length) {
-          throw new Error(
-            `${organization.name} expects ${registrationQuestions.length} answers but ${responses.length} were provided`,
-          )
-        }
-      }
 
-      // validate that responses are present and valid
-      const registrationAnswers = (responses ?? []).map((responseValue: string, index: number) => {
-        const question = registrationQuestions[index]
-        if (
-          question.options &&
-          question.options.length &&
-          !question.options.map(({code}) => code).includes(responseValue)
-        ) {
-          throw new Error(`Answer ${responseValue} is not a valid response`)
-        }
-        return {
-          questionText: question.questionText,
-          responseValue,
-        }
-      })
       // Create user
       const user = await this.userService.create({
         firstName,
         lastName,
         base64Photo,
         organizationIds: [organization.id],
-        registrationAnswersByOrganizationId: {[organization.id]: registrationAnswers},
       } as User)
 
       // Add user to group

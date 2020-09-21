@@ -22,26 +22,6 @@ type AccessWithDependantNames = Omit<Access, 'dependants'> & {
   dependants: UserDependant[]
 }
 
-const mapAccessDates = (access: Access): Access => ({
-  ...access,
-  //@ts-ignore
-  createdAt: access.createdAt.toDate().toISOString(),
-  //@ts-ignore
-  enteredAt: access.enteredAt?.toDate().toISOString(),
-  //@ts-ignore
-  exitAt: access.exitAt?.toDate().toISOString(),
-  //@ts-ignore
-  dependants: Object.values(access.dependants)
-    .map(({id, enteredAt, exitAt}) => ({
-      id,
-      //@ts-ignore
-      enteredAt: enteredAt?.toDate().toISOString(),
-      //@ts-ignore
-      exitAt: exitAt?.toDate().toISOString(),
-    }))
-    .reduce((byId, entry) => ({...byId, [entry.id]: entry}), {}),
-})
-
 export class AccessService {
   private dataStore = new DataStore()
   private identifier = new IdentifiersModel(this.dataStore)
@@ -49,12 +29,33 @@ export class AccessService {
   private accessStatsRepository = new AccessStatsRepository(this.dataStore)
   private accessListener = new AccessListener(this.dataStore)
 
+  public static mapAccessDates = (access: Access): Access => ({
+    ...access,
+    //@ts-ignore
+    createdAt: access.createdAt.toDate().toISOString(),
+    //@ts-ignore
+    enteredAt: access.enteredAt?.toDate().toISOString(),
+    //@ts-ignore
+    exitAt: access.exitAt?.toDate().toISOString(),
+    //@ts-ignore
+    dependants: Object.values(access.dependants)
+      .map(({id, enteredAt, exitAt}) => ({
+        id,
+        //@ts-ignore
+        enteredAt: enteredAt?.toDate().toISOString(),
+        //@ts-ignore
+        exitAt: exitAt?.toDate().toISOString(),
+      }))
+      .reduce((byId, entry) => ({...byId, [entry.id]: entry}), {}),
+  })
+
   create(
     statusToken: string,
     locationId: string,
     userId: string,
     includesGuardian: boolean,
     dependantIds: string[],
+    delegateAdminUserId?: string,
   ): Promise<Access> {
     const dependants = {}
     dependantIds.forEach(
@@ -75,6 +76,7 @@ export class AccessService {
           createdAt: serverTimestamp(),
           includesGuardian,
           dependants,
+          delegateAdminUserId,
         }),
       )
       .then(({createdAt, ...access}) => ({
@@ -221,7 +223,7 @@ export class AccessService {
     const hasFilter = userIds || locationId || betweenCreatedDate
     // @ts-ignore
     return (hasFilter ? query.fetch() : query.fetchAll()).then((accesses) =>
-      accesses.map(mapAccessDates),
+      accesses.map(AccessService.mapAccessDates),
     )
   }
 
