@@ -703,7 +703,7 @@ paths:
           name: organizationId
           schema:
             type: string
-          # required: true
+          required: true
       requestBody:
         content:
           application/json:
@@ -736,7 +736,7 @@ paths:
           name: organizationId
           schema:
             type: string
-#          required: true
+          required: true
         - in: query
           name: parentLocationId
           schema:
@@ -766,7 +766,7 @@ paths:
           name: organizationId
           schema:
             type: string
-        #          required: true
+          required: true
       requestBody:
         content:
           application/json:
@@ -796,7 +796,7 @@ paths:
           name: organizationId
           schema:
             type: string
-#          required: false
+          required: true
       responses:
         '200':
           description: Successfully retrieved
@@ -815,12 +815,12 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: false
+          required: true
         - in: path
           name: locationId
           schema:
             type: string
-      #          required: false
+          required: true
       responses:
         '200':
           description: Successfully retrieved
@@ -839,7 +839,7 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: false
+          required: true
       responses:
         '200':
           description: Successfully retrieved
@@ -858,7 +858,7 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
       requestBody:
         content:
           application/json:
@@ -884,7 +884,7 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: false
+          required: true
       responses:
         '200':
           description: Successfully retrieved
@@ -901,7 +901,7 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
       requestBody:
         content:
           application/json:
@@ -925,7 +925,7 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: query
           name: groupId
           schema:
@@ -953,12 +953,12 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: path
           name: groupId
           schema:
             type: string
-      #          required: true
+          required: true
       requestBody:
         content:
           application/json:
@@ -985,7 +985,7 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
       responses:
         '200':
           description: Successfully added
@@ -1004,17 +1004,17 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: path
           name: groupId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: path
           name: userId
           schema:
             type: string
-      #          required: true
+          required: true
       responses:
         '200':
           description: Successfully removed
@@ -1032,17 +1032,17 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: path
           name: groupId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: path
           name: userId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: query
           name: oldGroupId
           schema:
@@ -1083,12 +1083,12 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: path
           name: userId
           schema:
             type: string
-      #          required: true
+          required: true
       responses:
         '200':
           description: Successfully returned
@@ -1107,7 +1107,7 @@ paths:
           name: userId
           schema:
             type: string
-      #          required: true
+          required: true
 
       requestBody:
         content:

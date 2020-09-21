@@ -85,7 +85,7 @@ paths:
           name: questionnaireId
           schema:
             type: string
-#          required: true
+          required: true
       responses:
         '200':
           description: Successfully retrieved

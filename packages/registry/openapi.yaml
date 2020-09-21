@@ -179,7 +179,7 @@ paths:
           name: userId
           schema:
             type: string
-      #          required: true
+          required: true
       responses:
         "200":
           description: Successfully registered
@@ -194,7 +194,7 @@ paths:
           name: userId
           schema:
             type: string
-      #          required: true
+          required: true
       requestBody:
         content:
           application/json:
@@ -223,7 +223,7 @@ paths:
           name: userId
           schema:
             type: string
-        #          required: true
+          required: true
       requestBody:
         content:
           application/json:
@@ -254,12 +254,12 @@ paths:
           name: userId
           schema:
             type: string
-        #          required: true
+          required: true
         - in: path
           name: dependantId
           schema:
             type: string
-            #          required: true
+          required: true
       responses:
         "200":
           description: Successfully removed
