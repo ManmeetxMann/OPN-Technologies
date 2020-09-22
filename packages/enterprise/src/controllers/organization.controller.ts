@@ -464,7 +464,7 @@ class OrganizationController implements IControllerBase {
     try {
       const {organizationId} = req.params
       const {groupId, locationId, from, to} = req.query as StatsFilter
-      
+
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
@@ -485,7 +485,7 @@ class OrganizationController implements IControllerBase {
         // Assert location exists
         await this.organizationService.getLocation(organizationId, locationId)
       }
-      
+
       const response = this.getStatsHelper(organizationId, {groupId, locationId, from, to})
 
       res.json(actionSucceed(response))
@@ -494,7 +494,7 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  private async getStatsHelper(organizationId: string, filter?: StatsFilter) : Promise<Stats> {
+  private async getStatsHelper(organizationId: string, filter?: StatsFilter): Promise<Stats> {
     const {groupId, locationId, from, to} = filter
     const live = !from && !to
 
@@ -538,10 +538,7 @@ class OrganizationController implements IControllerBase {
     )
 
     // Fetch Groups
-    const groupsById: Record<
-      string,
-      OrganizationGroup
-    > = await this.organizationService
+    const groupsById: Record<string, OrganizationGroup> = await this.organizationService
       .getGroups(organizationId)
       .then((results) => results.reduce((byId, group) => ({...byId, [group.id]: group}), {}))
 
