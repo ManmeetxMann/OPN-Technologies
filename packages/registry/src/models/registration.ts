@@ -7,6 +7,7 @@ export type Registration = {
   platform: Platform
   osVersion: string
   pushToken?: string
+  userId: string
 }
 
 export type RegistrationType = 'user' | 'admin'

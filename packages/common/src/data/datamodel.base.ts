@@ -2,6 +2,7 @@ import DataStore from './datastore'
 import {HasId, OptionalIdStorable, Storable} from '@firestore-simple/admin/dist/types'
 import {firestore} from 'firebase-admin'
 import {Collection} from '@firestore-simple/admin'
+import * as _ from 'lodash'
 
 export enum DataModelFieldMapOperatorType {
   Equals = '==',
@@ -163,11 +164,16 @@ abstract class DataModel<T extends HasId> {
     return await this.collection(subPath).where(fieldPath, 'array-contains', value).fetch()
   }
 
-  async findWhereArrayContainsAny(property: string, value: unknown, subPath = ''): Promise<T[]> {
+  async findWhereArrayContains(property: string, value: unknown, subPath = ''): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+    return await this.collection(subPath).where(fieldPath, 'array-contains', value).fetch()
+  }
+
+  async findWhereArrayContainsAny(property: string, value: unknown[], subPath = ''): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
     return await this.collection(subPath).where(fieldPath, 'array-contains-any', value).fetch()
   }
-  async findWhereIdIn(value: unknown, subPath = ''): Promise<T[]> {
+  async findWhereIdIn(value: unknown[], subPath = ''): Promise<T[]> {
     const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()
     return await this.collection(subPath).where(fieldPath, 'in', value).fetch()
   }
@@ -189,6 +195,22 @@ abstract class DataModel<T extends HasId> {
   ): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
     return await this.collection(subPath).where(fieldPath, 'in', value).fetch()
+  }
+
+  async findWhereIn(
+    property: string,
+    values: unknown[],
+    subPath = '',
+    identity = (element: T) => element.id,
+  ): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+    const chunks: string[][] = _.chunk([...values], 10)
+    const allResults = await Promise.all(
+      chunks.map((chunk) => this.collection(subPath).where(fieldPath, 'in', chunk).fetch()),
+    )
+    const deduplicated: Record<string, T> = {}
+    allResults.forEach((page) => page.forEach((item) => (deduplicated[identity(item)] = item)))
+    return Object.values(deduplicated)
   }
 
   get(id: string, subPath = ''): Promise<T> {

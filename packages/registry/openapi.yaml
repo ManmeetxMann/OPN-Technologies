@@ -41,6 +41,8 @@ components:
           enum: [ios, android]
         osVersion:
           type: string
+        userId:
+          type: string
         pushToken:
           type: string
           nullable: true

@@ -13,6 +13,7 @@ import {AccessService} from '../../../access/src/service/access.service'
 import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {RegistrationService} from '../../../registry/src/services/registration-service'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
@@ -24,6 +25,7 @@ class UserController implements IControllerBase {
   private attestationService = new AttestationService()
   private accessService = new AccessService()
   private organizationService = new OrganizationService()
+  private registrationService = new RegistrationService()
   private topic: Topic
 
   constructor() {
@@ -153,6 +155,7 @@ class UserController implements IControllerBase {
             questionnaireId,
             answers: JSON.stringify(answers),
           })
+
         } else {
           console.warn(
             `Could not execute a trace of attestation ${saved.id} because userId was not provided`,

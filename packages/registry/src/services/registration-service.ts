@@ -14,6 +14,10 @@ export class RegistrationService {
       .then((results) => (results.length > 0 ? results[0] : null))
   }
 
+  findForUserIds(userIds: string[]): Promise<Registration[]> {
+    return this.repository.findWhereIn('userId', userIds)
+  }
+
   update(registration: Registration): Promise<Registration> {
     return this.repository.update(registration)
   }
