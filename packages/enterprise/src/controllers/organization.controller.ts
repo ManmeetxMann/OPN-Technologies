@@ -7,6 +7,7 @@ import {
   OrganizationLocation,
   OrganizationUsersGroup,
   OrganizationUsersGroupMoveOperation,
+  OrganizationReminderSchedule,
 } from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
@@ -104,6 +105,7 @@ class OrganizationController implements IControllerBase {
       Router().post('/:organizationId/scheduling', this.updateReportInfo), // TODO: must be a protected route
       Router().get('/one', this.findOneByKey),
       Router().use('/:organizationId', locations, groups, stats),
+      Router().get('/:organizationId/config', this.getOrgConfig),
     )
 
     this.router.use(organizations)
@@ -178,6 +180,22 @@ class OrganizationController implements IControllerBase {
       const {key} = req.query as {key: string}
       const organization = await this.organizationService.findOrganizationByKey(parseInt(key))
       res.json(actionSucceed(organization))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getOrgConfig = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const organization = await this.organizationService.findOneById(organizationId)
+      const response: OrganizationReminderSchedule = {
+        enabled: organization?.dailyReminder?.enabled ?? false,
+        enabledOnWeekends: organization?.dailyReminder?.enabledOnWeekends ?? false,
+        timeOfDayMillis: organization?.dailyReminder?.timeOfDayMillis ?? 0,
+      }
+
+      res.json(actionSucceed(response))
     } catch (error) {
       next(error)
     }
