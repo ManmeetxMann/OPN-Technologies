@@ -64,7 +64,7 @@ class UserController implements IControllerBase {
     try {
       const {organizationId} = req.params
       const organization = await this.organizationService.findOneById(organizationId)
-      const response = {
+      const response: OrganizationReminderSchedule = {
         enabled: organization?.dailyReminder?.enabled ?? false,
         enabledOnWeekends: organization?.dailyReminder?.enabledOnWeekends ?? false,
         timeOfDayMillis: organization?.dailyReminder?.timeOfDayMillis ?? 0,

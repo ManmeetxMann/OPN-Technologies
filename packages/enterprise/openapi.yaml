@@ -1037,7 +1037,7 @@ paths:
                   $ref: '#/components/schemas/Response'
 
   /user/config/{organizationId}:
-    post:
+    get:
       description: Get app config info for the organization
       parameters:
         - in: path
