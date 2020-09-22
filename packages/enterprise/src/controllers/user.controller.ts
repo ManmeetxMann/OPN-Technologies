@@ -8,7 +8,11 @@ import {OrganizationConnectionRequest} from '../models/organization-connection-r
 import {UserService} from '../../../common/src/service/user/user-service'
 import {User, UserEdit, UserWithGroup} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
-import {Organization, OrganizationUsersGroup} from '../models/organization'
+import {
+  Organization,
+  OrganizationUsersGroup,
+  OrganizationReminderSchedule,
+} from '../models/organization'
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -26,6 +30,7 @@ class UserController implements IControllerBase {
     this.router.post(this.path + '/connect/locations', this.connectedLocations)
     this.router.put(this.path + '/connect/edit/:userId', this.userEdit)
     this.router.get(this.path + '/connect/:organizationId/users/:userId', this.getUser)
+    this.router.get(this.path + '/config/:organizationId', this.getOrgConfig)
   }
 
   // Note: Doesn't handle multiple organizations per user as well as checking an existing connection
@@ -50,6 +55,22 @@ class UserController implements IControllerBase {
       await this.organizationService.addUserToGroup(organization.id, group.id, user.id)
 
       res.json(actionSucceed({user, organization, group}))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getOrgConfig = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const organization = await this.organizationService.findOneById(organizationId)
+      const response = {
+        enabled: organization?.dailyReminder?.enabled ?? false,
+        enabledOnWeekends: organization?.dailyReminder?.enabledOnWeekends ?? false,
+        timeOfDayMillis: organization?.dailyReminder?.timeOfDayMillis ?? 0,
+      }
+
+      res.json(actionSucceed(response))
     } catch (error) {
       next(error)
     }
