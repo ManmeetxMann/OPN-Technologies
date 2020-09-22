@@ -463,11 +463,15 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getStatsInDetailForGroupsOrLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getStatsInDetailForGroupsOrLocations = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const {organizationId} = req.params
       const {groupId, locationId, from, to} = req.query as StatsFilter
-      
+
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
@@ -504,7 +508,7 @@ class OrganizationController implements IControllerBase {
   getStatsSummary = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      
+
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
@@ -514,36 +518,50 @@ class OrganizationController implements IControllerBase {
 
       const response = await this.getStatsHelper(organizationId)
 
-      res.json(actionSucceed({asOfDateTime: response.asOfDateTime, 
-                              passportsCountByStatus: response.passportsCountByStatus, 
-                              hourlyCheckInsCounts: response.hourlyCheckInsCounts}))
+      res.json(
+        actionSucceed({
+          asOfDateTime: response.asOfDateTime,
+          passportsCountByStatus: response.passportsCountByStatus,
+          hourlyCheckInsCounts: response.hourlyCheckInsCounts,
+        }),
+      )
     } catch (error) {
       next(error)
     }
   }
 
-  getStatsInDetailForHealth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getStatsInDetailForHealth = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const {organizationId} = req.params
-      
+
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
       const isHealthAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
-      const canAccessOrganization = isSuperAdmin || isHealthAdmin || admin.adminForOrganizationId === organizationId
+      const canAccessOrganization =
+        isSuperAdmin || isHealthAdmin || admin.adminForOrganizationId === organizationId
 
       if (!canAccessOrganization) replyInsufficientPermission(res)
-    
+
       const response = await this.getStatsHelper(organizationId)
 
-      const accesses = response.accesses
-        .filter(access => (access.status === PassportStatuses.Caution || 
-                           access.status === PassportStatuses.Stop))
+      const accesses = response.accesses.filter(
+        (access) =>
+          access.status === PassportStatuses.Caution || access.status === PassportStatuses.Stop,
+      )
 
-      res.json(actionSucceed({accesses,
-                              asOfDateTime: response.asOfDateTime, 
-                              passportsCountByStatus: response.passportsCountByStatus, 
-                              hourlyCheckInsCounts: response.hourlyCheckInsCounts}))
+      res.json(
+        actionSucceed({
+          accesses,
+          asOfDateTime: response.asOfDateTime,
+          passportsCountByStatus: response.passportsCountByStatus,
+          hourlyCheckInsCounts: response.hourlyCheckInsCounts,
+        }),
+      )
     } catch (error) {
       next(error)
     }
