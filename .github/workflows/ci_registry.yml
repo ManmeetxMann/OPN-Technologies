@@ -80,6 +80,17 @@ jobs:
           APIDOCS_PASSWORD=${{ secrets.DEV_APIDOCS_PWD }}
         write-mode: overwrite
     - run: npm run cd-deploy-registry
+    - run: npm run cd-build-apidocs
+    - name: Create Environment Parameters for APIDocs
+      if: github.ref == 'refs/heads/development'
+      uses: DamianReeves/write-file-action@v1.0
+      with:
+        path: ./packages/apidocs/dist/common/.env
+        contents: |
+          # Environment Config for Dev Access
+          # Auth Specific
+          APIDOCS_PASSWORD=${{ secrets.DEV_APIDOCS_PWD }}
+        write-mode: overwrite
     - run: npm run cd-deploy-apidocs
     - name: Let Slack know
       uses: 8398a7/action-slack@v3
