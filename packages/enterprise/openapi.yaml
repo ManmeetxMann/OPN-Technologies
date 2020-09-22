@@ -110,6 +110,7 @@ components:
           type: string
         checkInDisabled:
           type: boolean
+          default: false
         priority:
           type: number
       required:
