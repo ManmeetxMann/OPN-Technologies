@@ -1,3 +1,8 @@
+export type OrganizationReminderSchedule = {
+  enabled: boolean
+  enabledOnWeekends: boolean
+  timeOfDayMillis: number
+}
 export type Organization = {
   id: string
   key: number
@@ -9,6 +14,8 @@ export type Organization = {
   hourToSendReport?: number
   // The number of days to subtract from today when generating the report (0 or empty for today, 1 for yesterday...)
   dayShift?: number
+  // The reminder schedule for the apps to prompt for attestations
+  dailyReminder: OrganizationReminderSchedule
 }
 
 export enum OrganizationType {

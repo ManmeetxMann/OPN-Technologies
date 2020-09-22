@@ -35,6 +35,22 @@ components:
               nullable: true
               type: string
 
+    OrganizationReminderSchedule:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        enabledOnWeekends:
+          type: boolean
+        timeOfDayMillis:
+          type: integer
+          minimum: 0
+          maximum: 86400000
+      required:
+        - enabled
+        - enabledOnWeekends
+        - timeOfDayMillis
+
     Organization:
       type: object
       properties:
@@ -51,6 +67,8 @@ components:
             - childcare
         allowDependants:
           type: boolean
+        dailyReminder:
+          $ref: '#/components/schemas/OrganizationReminderSchedule'
       required:
         - name
 
@@ -1017,6 +1035,23 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Response'
+
+  /organizations/{organizationId}/config:
+    get:
+      description: Get app config info for the organization
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+      #          required: true
+      responses:
+        '200':
+          description: The config info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationReminderSchedule'
 
   /user/connect/add:
     post:
