@@ -34,6 +34,7 @@ export class OrganizationService {
         key,
         type: organization.type ?? OrganizationType.Default,
         allowDependants: organization.allowDependants ?? false,
+        sendsPushNotifications: organization.sendsPushNotifications ?? false,
       }),
     )
   }

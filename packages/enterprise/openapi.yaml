@@ -51,6 +51,8 @@ components:
             - childcare
         allowDependants:
           type: boolean
+        sendsPushNotifications:
+          type: boolean
       required:
         - name
 

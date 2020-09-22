@@ -9,6 +9,8 @@ export type Organization = {
   hourToSendReport?: number
   // The number of days to subtract from today when generating the report (0 or empty for today, 1 for yesterday...)
   dayShift?: number
+  // Whether or not this organization should send push notifications
+  sendsPushNotifications?: boolean
 }
 
 export enum OrganizationType {
