@@ -43,13 +43,14 @@ class UserController implements IControllerBase {
       const group = await this.organizationService.getGroup(organization.id, groupId)
 
       // Create user
-      const user = await this.userService.create({
+      // registrationId might be undefined, since this could be the old version
+      const user = await this.userService.create(({
         registrationId: registrationId ?? null,
         firstName,
         lastName,
         base64Photo,
         organizationIds: [organization.id],
-      } as User)
+      } as unknown) as User)
 
       // Add user to group
       await this.organizationService.addUserToGroup(organization.id, group.id, user.id)
