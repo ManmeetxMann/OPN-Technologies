@@ -7,6 +7,7 @@ export type AdminProfile = {
   adminForLocationIds: string[]
   adminForOrganizationId: string
   superAdminForOrganizationIds: string[]
+  healthAdminForOrganizationIds: string[]
   showReporting: boolean
 }
 
