@@ -1,13 +1,13 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {RegistrationService} from '../../services/registration-service'
-import { actionSucceed } from '../../../../common/src/utils/response-wrapper'
+// import {RegistrationService} from '../../../../common/src/service/registry/registration-service'
+import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 
 class AdminController implements IControllerBase {
   public path = '/admin'
   public router = express.Router()
-  private registrationService = new RegistrationService()
+  // private registrationService = new RegistrationService()
 
   constructor() {
     this.initRoutes()
@@ -46,9 +46,8 @@ class AdminController implements IControllerBase {
         res.json(actionSucceed())
       }
       */
-     
-     res.json(actionSucceed())
 
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
