@@ -33,9 +33,6 @@ components:
       properties:
         id:
           type: string
-        type:
-          type: string
-          enum: [admin, user]
         platform:
           type: string
           enum: [ios, android]
