@@ -24,6 +24,10 @@ export class RegistrationService {
 
   async linkUser(registrationId: string, userId: string): Promise<void> {
     const registration = await this.findOne(registrationId)
+    if (!registration) {
+      console.warn(`$registration with id ${registrationId} does not exist, and will not be linked to user ${userId}`)
+      return
+    }
     if (!registration.userIds) {
       registration.userIds = []
     }
