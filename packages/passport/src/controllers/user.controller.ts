@@ -13,7 +13,7 @@ import {AccessService} from '../../../access/src/service/access.service'
 import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
-import {RegistrationService} from '../../../registry/src/services/registration-service'
+import {RegistrationService} from '../../../common/src/service/registry/registration-service'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {User} from '../../../common/src/data/user'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -142,12 +142,7 @@ class UserController implements IControllerBase {
         status: passportStatus,
       } as Attestation)
 
-      const passport = await this.passportService.create(
-        passportStatus,
-        userId,
-        dependantIds,
-        includeGuardian,
-      )
+      const passport = await this.passportService.create(passportStatus, userId, dependantIds, includeGuardian)
 
       // Stats
       const count = dependantIds.length + (includeGuardian ? 1 : 0)
