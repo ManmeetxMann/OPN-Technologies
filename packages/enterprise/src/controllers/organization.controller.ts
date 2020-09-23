@@ -7,6 +7,7 @@ import {
   OrganizationLocation,
   OrganizationUsersGroup,
   OrganizationUsersGroupMoveOperation,
+  OrganizationReminderSchedule,
 } from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
@@ -96,7 +97,9 @@ class OrganizationController implements IControllerBase {
     const stats = innerRouter().use(
       '/stats',
       authMiddleware,
-      innerRouter().get('/', this.getStats),
+      innerRouter()
+        .get('/', this.getStatsInDetailForGroupsOrLocations)
+        .get('/orgwide', this.getStatsForOrg),
     )
     const organizations = Router().use(
       '/organizations',
@@ -104,6 +107,7 @@ class OrganizationController implements IControllerBase {
       Router().post('/:organizationId/scheduling', this.updateReportInfo), // TODO: must be a protected route
       Router().get('/one', this.findOneByKey),
       Router().use('/:organizationId', locations, groups, stats),
+      Router().get('/:organizationId/config', this.getOrgConfig),
     )
 
     this.router.use(organizations)
@@ -178,6 +182,22 @@ class OrganizationController implements IControllerBase {
       const {key} = req.query as {key: string}
       const organization = await this.organizationService.findOrganizationByKey(parseInt(key))
       res.json(actionSucceed(organization))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getOrgConfig = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const organization = await this.organizationService.findOneById(organizationId)
+      const response: OrganizationReminderSchedule = {
+        enabled: organization?.dailyReminder?.enabled ?? false,
+        enabledOnWeekends: organization?.dailyReminder?.enabledOnWeekends ?? false,
+        timeOfDayMillis: organization?.dailyReminder?.timeOfDayMillis ?? 0,
+      }
+
+      res.json(actionSucceed(response))
     } catch (error) {
       next(error)
     }
@@ -460,11 +480,15 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getStatsInDetailForGroupsOrLocations = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const {organizationId} = req.params
       const {groupId, locationId, from, to} = req.query as StatsFilter
-      const live = !from && !to
+
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
@@ -477,6 +501,8 @@ class OrganizationController implements IControllerBase {
         if (!hasGrantedPermission) replyInsufficientPermission(res)
         // Assert group exists
         await this.organizationService.getGroup(organizationId, groupId)
+      } else if (!locationId) {
+        replyInsufficientPermission(res)
       }
 
       if (locationId) {
@@ -484,79 +510,121 @@ class OrganizationController implements IControllerBase {
         if (!hasGrantedPermission) replyInsufficientPermission(res)
         // Assert location exists
         await this.organizationService.getLocation(organizationId, locationId)
+      } else if (!groupId) {
+        replyInsufficientPermission(res)
       }
 
-      const betweenCreatedDate = {
-        from: live ? moment().startOf('day').toDate() : new Date(from),
-        to: live ? undefined : new Date(to),
-      }
-
-      // Fetch user groups
-      const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
-
-      // Get users & dependants
-      const nonGuardiansUserIds = new Set<string>()
-      const guardianIds = new Set<string>()
-      const dependantIds = new Set<string>()
-      usersGroups.forEach(({userId, parentUserId}) => {
-        if (!!parentUserId) {
-          dependantIds.add(userId)
-          guardianIds.add(parentUserId)
-        } else nonGuardiansUserIds.add(userId)
-      })
-      const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
-      const usersById = await this.getUsersById([...userIds])
-      const dependantsById = await this.getDependantsById([...guardianIds], usersById, dependantIds)
-
-      // Fetch Guardians groups
-      const guardiansGroups: OrganizationUsersGroup[] = await Promise.all(
-        _.chunk([...guardianIds], 10).map((chunk) =>
-          this.organizationService.getUsersGroups(organizationId, null, chunk),
-        ),
-      ).then((results) => flattern(results as OrganizationUsersGroup[][]))
-
-      const groupsUsersByUserId: Record<string, OrganizationUsersGroup> = [
-        ...new Set([...(usersGroups ?? []), ...(guardiansGroups ?? [])]),
-      ].reduce(
-        (byUserId, groupUser) => ({
-          ...byUserId,
-          [groupUser.userId]: groupUser,
-        }),
-        {},
-      )
-
-      // Fetch Groups
-      const groupsById: Record<
-        string,
-        OrganizationGroup
-      > = await this.organizationService
-        .getGroups(organizationId)
-        .then((results) => results.reduce((byId, group) => ({...byId, [group.id]: group}), {}))
-
-      // Get accesses
-      const accesses = await this.getAccessesFor(
-        [...userIds],
-        [...dependantIds],
-        locationId,
-        groupId,
-        betweenCreatedDate,
-        groupsUsersByUserId,
-        groupsById,
-        usersById,
-        dependantsById,
-      )
-
-      const response = {
-        accesses,
-        asOfDateTime: live ? new Date().toISOString() : null,
-        passportsCountByStatus: getPassportsCountPerStatus(accesses),
-        hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
-      } as Stats
+      const response = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
 
       res.json(actionSucceed(response))
     } catch (error) {
       next(error)
     }
+  }
+
+  getStatsForOrg = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+
+      const authenticatedUser = res.locals.connectedUser as User
+      const admin = authenticatedUser.admin as AdminProfile
+      const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
+      const isHealthAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
+      const canAccessOrganization =
+        isSuperAdmin || isHealthAdmin || admin.adminForOrganizationId === organizationId
+
+      if (!canAccessOrganization) replyInsufficientPermission(res)
+
+      const response = await this.getStatsHelper(organizationId)
+
+      const accesses = response.accesses.filter(
+        (access) =>
+          access.status === PassportStatuses.Caution || access.status === PassportStatuses.Stop,
+      )
+
+      res.json(
+        actionSucceed({
+          permissionToViewDetail: !!isHealthAdmin,
+          asOfDateTime: response.asOfDateTime,
+          passportsCountByStatus: response.passportsCountByStatus,
+          hourlyCheckInsCounts: response.hourlyCheckInsCounts,
+          ...(!!isHealthAdmin && {accesses}),
+        }),
+      )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  private async getStatsHelper(organizationId: string, filter?: StatsFilter): Promise<Stats> {
+    const {groupId, locationId, from, to} = filter ?? {}
+    const live = !from && !to
+
+    const betweenCreatedDate = {
+      from: live ? moment().startOf('day').toDate() : new Date(from),
+      to: live ? undefined : new Date(to),
+    }
+
+    // Fetch user groups
+    const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
+
+    // Get users & dependants
+    const nonGuardiansUserIds = new Set<string>()
+    const guardianIds = new Set<string>()
+    const dependantIds = new Set<string>()
+    usersGroups.forEach(({userId, parentUserId}) => {
+      if (!!parentUserId) {
+        dependantIds.add(userId)
+        guardianIds.add(parentUserId)
+      } else nonGuardiansUserIds.add(userId)
+    })
+    const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
+    const usersById = await this.getUsersById([...userIds])
+    const dependantsById = await this.getDependantsById([...guardianIds], usersById, dependantIds)
+
+    // Fetch Guardians groups
+    const guardiansGroups: OrganizationUsersGroup[] = await Promise.all(
+      _.chunk([...guardianIds], 10).map((chunk) =>
+        this.organizationService.getUsersGroups(organizationId, null, chunk),
+      ),
+    ).then((results) => flattern(results as OrganizationUsersGroup[][]))
+
+    const groupsUsersByUserId: Record<string, OrganizationUsersGroup> = [
+      ...new Set([...(usersGroups ?? []), ...(guardiansGroups ?? [])]),
+    ].reduce(
+      (byUserId, groupUser) => ({
+        ...byUserId,
+        [groupUser.userId]: groupUser,
+      }),
+      {},
+    )
+
+    // Fetch Groups
+    const groupsById: Record<string, OrganizationGroup> = await this.organizationService
+      .getGroups(organizationId)
+      .then((results) => results.reduce((byId, group) => ({...byId, [group.id]: group}), {}))
+
+    // Get accesses
+    const accesses = await this.getAccessesFor(
+      [...userIds],
+      [...dependantIds],
+      locationId,
+      groupId,
+      betweenCreatedDate,
+      groupsUsersByUserId,
+      groupsById,
+      usersById,
+      dependantsById,
+    )
+
+    const response = {
+      accesses,
+      asOfDateTime: live ? new Date().toISOString() : null,
+      passportsCountByStatus: getPassportsCountPerStatus(accesses),
+      hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
+    } as Stats
+
+    return response
   }
 
   private async getAccessesFor(

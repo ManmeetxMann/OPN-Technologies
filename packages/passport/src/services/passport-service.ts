@@ -10,10 +10,6 @@ import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
 import {Config} from '../../../common/src/utils/config'
 
-// some clients rely on this being defined, but all passports
-// must apply to the user who created them.
-type LegacyPassport = Passport & {includesGuardian: true}
-
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
   ...passport,
   //@ts-ignore
@@ -75,7 +71,8 @@ export class PassportService {
     status: PassportStatuses = PassportStatuses.Pending,
     userId: string,
     dependantIds: string[],
-  ): Promise<LegacyPassport> {
+    includesGuardian: boolean,
+  ): Promise<Passport> {
     if (dependantIds.length) {
       const depModel = new UserDependantModel(this.dataStore, userId)
       const allDependants = (await depModel.fetchAll()).map(({id}) => id)
@@ -92,6 +89,7 @@ export class PassportService {
           statusToken,
           userId,
           dependantIds,
+          includesGuardian,
           validFrom: serverTimestamp(),
           validUntil: null,
         }),
@@ -105,10 +103,10 @@ export class PassportService {
         ),
       }))
       .then((passport) => this.passportRepository.update(passport))
-      .then((passport) => ({...mapDates(passport), includesGuardian: true}))
+      .then(mapDates)
   }
 
-  findOneByToken(token: string): Promise<LegacyPassport> {
+  findOneByToken(token: string): Promise<Passport> {
     return this.passportRepository
       .findWhereEqual('statusToken', token)
       .then((results) => {
@@ -117,7 +115,7 @@ export class PassportService {
         }
         throw new ResourceNotFoundException(`Cannot find passport with token [${token}]`)
       })
-      .then((passport) => ({...mapDates(passport), includesGuardian: true}))
+      .then(mapDates)
   }
 
   /**

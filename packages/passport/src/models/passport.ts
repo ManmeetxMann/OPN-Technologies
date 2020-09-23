@@ -9,6 +9,7 @@ export type Passport = {
   validUntil: string
   dependantIds: string[]
   parentUserId?: string
+  includesGuardian: boolean
 }
 
 export type PassportStatus = 'pending' | 'proceed' | 'caution' | 'stop'

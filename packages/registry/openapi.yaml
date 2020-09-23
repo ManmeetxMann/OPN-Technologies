@@ -33,9 +33,6 @@ components:
       properties:
         id:
           type: string
-        type:
-          type: string
-          enum: [admin, user]
         platform:
           type: string
           enum: [ios, android]
@@ -142,6 +139,7 @@ paths:
 
   /admin/add:
     post:
+      deprecated: true
       description: Register new app
       requestBody:
         content:
