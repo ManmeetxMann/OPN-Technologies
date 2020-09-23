@@ -24,6 +24,7 @@ class UserController implements IControllerBase {
 
   public initRoutes(): void {
     this.router.post(this.path + '/connect/add', this.connect)
+    this.router.post(this.path + '/connect/v2/add', this.connect)
     this.router.post(this.path + '/connect/remove', this.disconnect)
     this.router.post(this.path + '/connect/locations', this.connectedLocations)
     this.router.put(this.path + '/connect/link/:userId', this.userLink)
@@ -43,7 +44,7 @@ class UserController implements IControllerBase {
 
       // Create user
       const user = await this.userService.create({
-        registrationId,
+        registrationId: registrationId ?? null,
         firstName,
         lastName,
         base64Photo,
