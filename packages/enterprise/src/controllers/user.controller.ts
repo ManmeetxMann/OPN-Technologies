@@ -26,7 +26,7 @@ class UserController implements IControllerBase {
     this.router.post(this.path + '/connect/add', this.connect)
     this.router.post(this.path + '/connect/remove', this.disconnect)
     this.router.post(this.path + '/connect/locations', this.connectedLocations)
-    this.router.post(this.path + '/connect/link/:userId', this.userLink)
+    this.router.put(this.path + '/connect/link/:userId', this.userLink)
     this.router.put(this.path + '/connect/edit/:userId', this.userEdit)
     this.router.get(this.path + '/connect/:organizationId/users/:userId', this.getUser)
   }
