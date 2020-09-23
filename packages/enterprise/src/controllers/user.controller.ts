@@ -24,6 +24,7 @@ class UserController implements IControllerBase {
 
   public initRoutes(): void {
     this.router.post(this.path + '/connect/add', this.connect)
+    this.router.post(this.path + '/connect/v2/add', this.connect)
     this.router.post(this.path + '/connect/remove', this.disconnect)
     this.router.post(this.path + '/connect/locations', this.connectedLocations)
     this.router.put(this.path + '/connect/link/:userId', this.userLink)
@@ -42,13 +43,14 @@ class UserController implements IControllerBase {
       const group = await this.organizationService.getGroup(organization.id, groupId)
 
       // Create user
-      const user = await this.userService.create({
-        registrationId,
+      // registrationId might be undefined, since this could be the old version
+      const user = await this.userService.create(({
+        registrationId: registrationId ?? null,
         firstName,
         lastName,
         base64Photo,
         organizationIds: [organization.id],
-      } as User)
+      } as unknown) as User)
 
       // Add user to group
       await this.organizationService.addUserToGroup(organization.id, group.id, user.id)

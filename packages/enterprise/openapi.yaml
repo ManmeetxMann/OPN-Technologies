@@ -134,7 +134,34 @@ components:
       required:
         - name
 
-    OrganizationConnectionRequest:
+    OrganizationConnectionRequestV1:
+      type: object
+      properties:
+        organizationId:
+          type: string
+        registrationId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        base64Photo:
+          type: string
+        groupId:
+          type: string
+        responses:
+          type: array
+          items:
+            type: string
+      required:
+        - organizationId
+        # - registrationId
+        - groupId
+        - firstName
+        - lastName
+        - base64Photo
+
+    OrganizationConnectionRequestV2:
       type: object
       properties:
         organizationId:
@@ -1097,7 +1124,23 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrganizationConnectionRequest'
+              $ref: '#/components/schemas/OrganizationConnectionRequestV1'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfOrganizationConnection'
+
+  /user/connect/v2/add:
+    post:
+      description: Connect a user to an organization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationConnectionRequestV2'
       responses:
         '200':
           description: Successfully added
