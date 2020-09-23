@@ -315,8 +315,6 @@ components:
           type: string
         base64Photo:
           type: string
-        # groupId:
-        #   type: string
       required:
         - firstName
         - lastName
@@ -1112,14 +1110,11 @@ paths:
           name: userId
           schema:
             type: string
-      #          required: true
-
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserEdit'
-
+              $ref: '#/components/schemas/UserLink'
       responses:
         '200':
           description: Successfully removed
