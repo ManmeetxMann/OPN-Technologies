@@ -14,7 +14,10 @@ import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {RegistrationService} from '../../../registry/src/services/registration-service'
+import {UserService} from '../../../common/src/service/user/user-service'
+import {User} from '../../../common/src/data/user'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {sendMessage} from '../../../common/src/service/messaging/push-notify-service'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
 
@@ -26,6 +29,7 @@ class UserController implements IControllerBase {
   private accessService = new AccessService()
   private organizationService = new OrganizationService()
   private registrationService = new RegistrationService()
+  private userService = new UserService()
   private topic: Topic
 
   constructor() {
@@ -155,7 +159,17 @@ class UserController implements IControllerBase {
             questionnaireId,
             answers: JSON.stringify(answers),
           })
-
+          //do not await here, this is a side effect
+          this.userService.findHealthAdminsForOrg(organizationId).then(
+            async (healthAdmins: User[]): Promise<void> => {
+              const ids = healthAdmins.map(({id}) => id)
+              const tokens = (await this.registrationService.findForUserIds(ids))
+                .map((reg) => reg.pushToken)
+                .filter((exists) => exists)
+              sendMessage('uh oh', 'spghetti O', tokens)
+              // generate message and send
+            },
+          )
         } else {
           console.warn(
             `Could not execute a trace of attestation ${saved.id} because userId was not provided`,
