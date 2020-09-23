@@ -14,7 +14,22 @@ export class RegistrationService {
       .then((results) => (results.length > 0 ? results[0] : null))
   }
 
+  findOne(registrationId: string): Promise<Registration> {
+    return this.repository.get(registrationId)
+  }
+
   update(registration: Registration): Promise<Registration> {
     return this.repository.update(registration)
+  }
+
+  async addUser(registrationId: string, userId: string): Promise<void> {
+    const registration = await this.findOne(registrationId)
+    if (!registration.userIds) {
+      registration.userIds = []
+    }
+    if (!(userId in registration.userIds)) {
+      registration.userIds.push(userId)
+    }
+    await this.update(registration)
   }
 }
