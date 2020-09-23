@@ -253,6 +253,18 @@ export class OrganizationService {
     })
   }
 
+  async deleteGroup(organizationId: string, groupId: string): Promise<void> {
+    const repo = this.getGroupsRepositoryFor(organizationId)
+    const target = await repo.findOneById(groupId)
+    if (target) {
+      await repo.delete(groupId)
+    } else {
+      throw new ResourceNotFoundException(
+        `Cannot find group [${groupId}] for organization [${organizationId}]`,
+      )
+    }
+  }
+
   // TODO: To be replaced with a proper solution that generates a 5 digits code for by user and organization with an expiry
   private generateKey(): Promise<number> {
     const sequenceId = 'default'

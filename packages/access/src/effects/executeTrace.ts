@@ -260,14 +260,14 @@ export default class TraceListener {
     // const locationAdmins = (
     //   await Promise.all(
     //     locationPages.map((page) =>
-    //       this.userApprovalRepo.findWhereMapKeyContainsAny('profile', 'adminForLocationIds', page),
+    //       this.userApprovalRepo.findWhereArrayInMapContainsAny('profile', 'adminForLocationIds', page),
     //     ),
     //   )
     // ).reduce((flattened, page) => [...flattened, ...page], [])
     const organizationAdmins = (
       await Promise.all(
         organizationPages.map((page) =>
-          this.userApprovalRepo.findWhereMapKeyContainsAny(
+          this.userApprovalRepo.findWhereArrayInMapContainsAny(
             'profile',
             'superAdminForOrganizationIds',
             page,

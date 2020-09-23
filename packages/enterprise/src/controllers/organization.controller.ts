@@ -91,6 +91,7 @@ class OrganizationController implements IControllerBase {
         .post('/users', this.addUsersToGroups)
         .put('/:groupId/users/:userId', this.updateUserGroup)
         .delete('/zombie-users', this.removeZombieUsersInGroups)
+        .delete('/:groupId', this.removeGroup)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
     // prettier-ignore
@@ -428,6 +429,35 @@ class OrganizationController implements IControllerBase {
       const {organizationId, groupId, userId} = req.params
       await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
 
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  removeGroup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId, groupId} = req.params
+      // check for users in the group
+      const usersInGroup = await this.organizationService.getUsersGroups(organizationId, groupId)
+      if (usersInGroup.length) {
+        console.warn(
+          `Group ${groupId} of organization ${organizationId} has users ${usersInGroup.map(
+            (user) => user.id,
+          )}`,
+        )
+        throw new HttpException('This group has existing users', 403)
+      }
+      const adminsOfGroup = await this.userService.getAdminsForGroup(groupId)
+      if (adminsOfGroup.length) {
+        console.warn(
+          `Group ${groupId} of organization ${organizationId} has admins ${adminsOfGroup.map(
+            (user) => user.id,
+          )}`,
+        )
+        throw new HttpException('This group has existing admins', 403)
+      }
+      await this.organizationService.deleteGroup(organizationId, groupId)
       res.json(actionSucceed())
     } catch (error) {
       next(error)

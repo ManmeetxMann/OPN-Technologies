@@ -143,7 +143,7 @@ abstract class DataModel<T extends HasId> {
       .then(() => this.get(id))
   }
 
-  async findWhereMapKeyContainsAny(
+  async findWhereArrayInMapContainsAny(
     map: string,
     key: string,
     value: unknown,
@@ -153,7 +153,7 @@ abstract class DataModel<T extends HasId> {
     return await this.collection(subPath).where(fieldPath, 'array-contains-any', value).fetch()
   }
 
-  async findWhereMapKeyContains(
+  async findWhereArrayInMapContains(
     map: string,
     key: string,
     value: unknown,
@@ -167,6 +167,7 @@ abstract class DataModel<T extends HasId> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
     return await this.collection(subPath).where(fieldPath, 'array-contains-any', value).fetch()
   }
+
   async findWhereIdIn(value: unknown, subPath = ''): Promise<T[]> {
     const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()
     return await this.collection(subPath).where(fieldPath, 'in', value).fetch()
@@ -214,7 +215,7 @@ abstract class DataModel<T extends HasId> {
       .fetch()
   }
 
-  findWhereMapHasKeyValueEqual(fields: DataModelFieldMap[], subPath = ''): Promise<T[]> {
+  findWhereEqualInMap(fields: DataModelFieldMap[], subPath = ''): Promise<T[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let collection: any = this.collection(subPath)
     for (const field of fields) {

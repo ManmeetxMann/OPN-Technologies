@@ -98,4 +98,8 @@ export class UserService {
       new UserDependantModel(this.dataStore, userId).delete(dependantId),
     )
   }
+
+  getAdminsForGroup(groupId: string): Promise<User[]> {
+    return this.userRepository.findWhereArrayInMapContains('admin', 'adminForGroupIds', groupId)
+  }
 }
