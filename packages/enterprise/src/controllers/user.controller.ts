@@ -54,7 +54,7 @@ class UserController implements IControllerBase {
       await this.organizationService.addUserToGroup(organization.id, group.id, user.id)
 
       // Add to registry
-      await this.registrationService.addUser(registrationId, user.id)
+      await this.registrationService.linkUser(registrationId, user.id)
 
       res.json(actionSucceed({user, organization, group}))
     } catch (error) {
@@ -126,7 +126,7 @@ class UserController implements IControllerBase {
       await this.userService.updateProperties(userId, {registrationId})
 
       // Add to registry
-      await this.registrationService.addUser(registrationId, userId)
+      await this.registrationService.linkUser(registrationId, userId)
 
       res.json(actionSucceed())
     } catch (error) {
