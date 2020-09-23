@@ -140,6 +140,7 @@ paths:
 
   /admin/add:
     post:
+      deprecated: true
       description: Register new app
       requestBody:
         content:
