@@ -910,28 +910,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationStats'
 
-  /organizations/{organizationId}/stats/summary:
-    get:
-      description: Get stats summary for one organization (admin access required)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: organizationId
-          schema:
-            type: string
-              
-      responses:
-        '200':
-          description: Successfully compute the stats
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ResponseOfOrganizationStats'
-
-  /organizations/{organizationId}/stats/health:
+  /organizations/{organizationId}/stats/orgwide:
     get:
       description: Get stats summary for one organization (admin access required)
       security:

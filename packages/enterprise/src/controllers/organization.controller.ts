@@ -98,8 +98,7 @@ class OrganizationController implements IControllerBase {
       authMiddleware,
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
-        .get('/summary', this.getStatsSummary)
-        .get('/health', this.getStatsInDetailForHealth),
+        .get('/orgwide', this.getStatsForOrg),
     )
     const organizations = Router().use(
       '/organizations',
@@ -505,39 +504,14 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getStatsSummary = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const {organizationId} = req.params
-
-      const authenticatedUser = res.locals.connectedUser as User
-      const admin = authenticatedUser.admin as AdminProfile
-      const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
-      const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
-
-      if (!canAccessOrganization) replyInsufficientPermission(res)
-
-      const response = await this.getStatsHelper(organizationId)
-
-      res.json(
-        actionSucceed({
-          asOfDateTime: response.asOfDateTime,
-          passportsCountByStatus: response.passportsCountByStatus,
-          hourlyCheckInsCounts: response.hourlyCheckInsCounts,
-        }),
-      )
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  getStatsInDetailForHealth = async (
+  getStatsForOrg = async (
     req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
     try {
       const {organizationId} = req.params
-
+      
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
@@ -556,10 +530,11 @@ class OrganizationController implements IControllerBase {
 
       res.json(
         actionSucceed({
-          accesses,
+          permissionToViewDetail: !!isHealthAdmin,
           asOfDateTime: response.asOfDateTime,
           passportsCountByStatus: response.passportsCountByStatus,
           hourlyCheckInsCounts: response.hourlyCheckInsCounts,
+          ...(!!isHealthAdmin && {accesses})
         }),
       )
     } catch (error) {
