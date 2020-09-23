@@ -504,14 +504,10 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getStatsForOrg = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  getStatsForOrg = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      
+
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
@@ -534,7 +530,7 @@ class OrganizationController implements IControllerBase {
           asOfDateTime: response.asOfDateTime,
           passportsCountByStatus: response.passportsCountByStatus,
           hourlyCheckInsCounts: response.hourlyCheckInsCounts,
-          ...(!!isHealthAdmin && {accesses})
+          ...(!!isHealthAdmin && {accesses}),
         }),
       )
     } catch (error) {
