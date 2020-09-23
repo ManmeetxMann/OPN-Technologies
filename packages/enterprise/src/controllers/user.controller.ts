@@ -10,6 +10,8 @@ import {RegistrationService} from '../../../common/src/service/registry/registra
 import {User, UserEdit, UserWithGroup} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Organization, OrganizationUsersGroup} from '../models/organization'
+import * as _ from 'lodash'
+import {flattern} from '../../../common/src/utils/utils'
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -102,15 +104,23 @@ class UserController implements IControllerBase {
       const dependents = await this.userService.getAllDependants(userId)
       const dependentIds = dependents.map((dependent) => dependent.id)
 
-      const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
-        user.id,
-        ...dependentIds,
-      ])
+      // Fetch in chunks of 10 (most probably will only do once)
+      const userGroupsArray: OrganizationUsersGroup[] = await Promise.all(
+        _.chunk([user.id, ...dependentIds], 10).map((chunk) =>
+          this.organizationService.getUsersGroups(organizationId, null, chunk),
+        ),
+      ).then((results) => flattern(results as OrganizationUsersGroup[][]))
+
+      // Create a hashmap fo results
+      const userGroups: Record<string, string> = userGroupsArray.reduce(function (map, obj) {
+        map[obj.userId] = obj.groupId
+        return map
+      }, {})
 
       // Fill out user one
-      user.groupId = this.getGroupId(user.id, userGroups)
+      user.groupId = userGroups[user.id]
       for (const dependent of dependents) {
-        dependent.groupId = this.getGroupId(dependent.id, userGroups)
+        dependent.groupId = userGroups[dependent.id]
       }
 
       res.json(actionSucceed({profile: user, dependents: dependents}))
@@ -165,13 +175,6 @@ class UserController implements IControllerBase {
     } catch (error) {
       next(error)
     }
-  }
-
-  private getGroupId = (userId: string, userGroups: OrganizationUsersGroup[]): string => {
-    for (const userGroup of userGroups) {
-      if (userGroup.userId === userId) return userGroup.groupId
-    }
-    return null
   }
 }
 
