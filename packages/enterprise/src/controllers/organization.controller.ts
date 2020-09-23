@@ -95,7 +95,7 @@ class OrganizationController implements IControllerBase {
     // prettier-ignore
     const stats = innerRouter().use(
       '/stats',
-      // authMiddleware,
+      authMiddleware,
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/summary', this.getStatsSummary)
