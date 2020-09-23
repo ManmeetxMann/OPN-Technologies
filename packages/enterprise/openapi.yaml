@@ -139,6 +139,8 @@ components:
       properties:
         organizationId:
           type: string
+        registrationId:
+          type: string
         firstName:
           type: string
         lastName:
@@ -153,6 +155,7 @@ components:
             type: string
       required:
         - organizationId
+        - registrationId
         - groupId
         - firstName
         - lastName
@@ -312,11 +315,17 @@ components:
           type: string
         base64Photo:
           type: string
-        # groupId:
-        #   type: string
       required:
         - firstName
         - lastName
+    
+    UserLink:
+      type: object
+      properties:
+        registrationId:
+          type: string
+      required:
+        - registrationId
 
     Access:
       type: object
@@ -1086,6 +1095,29 @@ paths:
       responses:
         '200':
           description: Successfully returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
+
+  /user/connect/link/{userId}:
+    put:
+      description: Link info for a user
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLink'
+      responses:
+        '200':
+          description: Successfully removed
           content:
             application/json:
               schema:

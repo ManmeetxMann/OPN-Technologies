@@ -1,10 +1,10 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {Registration, RegistrationTypes} from '../../models/registration'
+import {Registration} from '../../../../common/src/data/registration'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {MessagingFactory} from '../../../../common/src/service/messaging/messaging-service'
-import {RegistrationService} from '../../services/registration-service'
+import {RegistrationService} from '../../../../common/src/service/registry/registration-service'
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -30,7 +30,6 @@ class UserController implements IControllerBase {
 
       // Save token
       const registration = await this.registrationService.create({
-        type: RegistrationTypes.User,
         platform,
         osVersion,
         pushToken: pushToken ?? null,

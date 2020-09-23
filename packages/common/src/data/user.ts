@@ -5,6 +5,7 @@ import DataStore from './datastore'
 
 export type User = {
   id: string
+  registrationId: string
   firstName: string
   lastName: string
   base64Photo: string
