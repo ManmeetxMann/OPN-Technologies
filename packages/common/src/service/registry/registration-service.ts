@@ -27,7 +27,7 @@ export class RegistrationService {
     if (!registration.userIds) {
       registration.userIds = []
     }
-    if (!(userId in registration.userIds)) {
+    if (!registration.userIds.includes(userId)) {
       registration.userIds.push(userId)
     }
     await this.update(registration)
