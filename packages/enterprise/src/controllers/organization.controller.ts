@@ -20,7 +20,7 @@ import {Access, AccessWithPassportStatusAndUser} from '../../../access/src/model
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {Passport, PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
-import {Stats, StatsFilter} from '../models/stats'
+import {Stats, StatsFilter, StatsHealthFilter} from '../models/stats'
 import {Range} from '../../../common/src/types/range'
 import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
@@ -97,10 +97,10 @@ class OrganizationController implements IControllerBase {
     // prettier-ignore
     const stats = innerRouter().use(
       '/stats',
-      authMiddleware,
+      // authMiddleware,
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
-        .get('/orgwide', this.getStatsForOrg),
+        .get('/health', this.getStatsHealth),
     )
     const organizations = Router().use(
       '/organizations',
@@ -536,10 +536,13 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getStatsForOrg = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getStatsHealth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
+      const {groupId} = req.query as StatsHealthFilter
 
+      const isHealthAdmin = null
+      /*
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
@@ -548,8 +551,9 @@ class OrganizationController implements IControllerBase {
         isSuperAdmin || isHealthAdmin || admin.adminForOrganizationId === organizationId
 
       if (!canAccessOrganization) replyInsufficientPermission(res)
+      */
 
-      const response = await this.getStatsHelper(organizationId)
+      const response = await this.getStatsHelper(organizationId, {groupId})
 
       const accesses = response.accesses.filter(
         (access) =>
