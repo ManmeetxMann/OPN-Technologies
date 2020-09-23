@@ -22,7 +22,7 @@ export class RegistrationService {
     return this.repository.update(registration)
   }
 
-  async addUser(registrationId: string, userId: string): Promise<void> {
+  async linkUser(registrationId: string, userId: string): Promise<void> {
     const registration = await this.findOne(registrationId)
     if (!registration.userIds) {
       registration.userIds = []
