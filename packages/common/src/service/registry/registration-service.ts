@@ -1,5 +1,5 @@
-import DataStore from '../../../common/src/data/datastore'
-import {Registration, RegistrationModel} from '../models/registration'
+import DataStore from '../../data/datastore'
+import {Registration, RegistrationModel} from '../../data/registration'
 
 export class RegistrationService {
   private repository = new RegistrationModel(new DataStore())
