@@ -177,9 +177,18 @@ class UserController implements IControllerBase {
                 relevantUserIds,
               )
               const allGroups = await this.organizationService.getGroups(organizationId)
-              const groupNames = groups.map(group => allGroups.find(({id}) => id === group.groupId))
-              // sendMessage('uh oh', 'spghetti O', tokens)
-              // generate message and send
+              const groupNames = groups.map(
+                (group) => allGroups.find(({id}) => id === group.groupId).name,
+              )
+              // for org-specific formatting
+              // const organization = this.organizationService.findOneById(organizationId)
+              groupNames.forEach((name) =>
+                sendMessage(
+                  'Potential Exposure',
+                  `A user from the group ${name} has reported that they may have COVID-19`,
+                  tokens,
+                ),
+              )
             },
           )
         } else {
