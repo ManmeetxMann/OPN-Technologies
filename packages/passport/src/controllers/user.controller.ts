@@ -166,7 +166,19 @@ class UserController implements IControllerBase {
               const tokens = (await this.registrationService.findForUserIds(ids))
                 .map((reg) => reg.pushToken)
                 .filter((exists) => exists)
-              sendMessage('uh oh', 'spghetti O', tokens)
+              const relevantUserIds = [...dependantIds]
+              if (includeGuardian) {
+                relevantUserIds.push(userId)
+              }
+              // assume fewer than 10 humans involved
+              const groups = await this.organizationService.getUsersGroups(
+                organizationId,
+                null,
+                relevantUserIds,
+              )
+              const allGroups = await this.organizationService.getGroups(organizationId)
+              const groupNames = groups.map(group => allGroups.find(({id}) => id === group.groupId))
+              // sendMessage('uh oh', 'spghetti O', tokens)
               // generate message and send
             },
           )
