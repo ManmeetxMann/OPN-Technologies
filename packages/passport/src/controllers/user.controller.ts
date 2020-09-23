@@ -107,6 +107,7 @@ class UserController implements IControllerBase {
           PassportStatuses.Pending,
           userId,
           dependantIds,
+          includeGuardian,
         )
       }
       res.json(actionSucceed(currentPassport))
@@ -135,7 +136,12 @@ class UserController implements IControllerBase {
         status: passportStatus,
       } as Attestation)
 
-      const passport = await this.passportService.create(passportStatus, userId, dependantIds)
+      const passport = await this.passportService.create(
+        passportStatus,
+        userId,
+        dependantIds,
+        includeGuardian,
+      )
 
       // Stats
       const count = dependantIds.length + (includeGuardian ? 1 : 0)
