@@ -2,6 +2,7 @@ import DataStore from './datastore'
 import {HasId, OptionalIdStorable, Storable} from '@firestore-simple/admin/dist/types'
 import {firestore} from 'firebase-admin'
 import {Collection} from '@firestore-simple/admin'
+import {serverTimestamp} from '../utils/times'
 
 export enum DataModelFieldMapOperatorType {
   Equals = '==',
@@ -69,35 +70,28 @@ abstract class DataModel<T extends HasId> {
    */
   add(data: OptionalIdStorable<T>, subPath = ''): Promise<T> {
     return this.collection(subPath)
-      .addOrSet(data)
+      .addOrSet({
+        ...data,
+        timestamps: {
+          createdAt: serverTimestamp(),
+          updatedAt: null,
+        },
+      })
       .then((id) => this.get(id, subPath))
   }
 
   async addAll(data: Array<OptionalIdStorable<T>>, subPath = ''): Promise<T[]> {
     return this.collection(subPath)
-      .bulkAdd(data)
+      .bulkAdd(
+        data.map((d) => ({
+          ...d,
+          timestamps: {
+            createdAt: serverTimestamp(),
+            updatedAt: null,
+          },
+        })),
+      )
       .then(() => this.fetchAll())
-  }
-
-  async updateAll(data: Array<Storable<T>>, subPath = ''): Promise<T[]> {
-    return this.collection(subPath)
-      .bulkSet(data)
-      .then(() => this.fetchAll())
-  }
-
-  async fetchAll(subPath = ''): Promise<T[]> {
-    return this.collection(subPath).fetchAll()
-  }
-
-  /**
-   * Updates data in the collection
-   * @param data Data to update – id property must be present
-   * @param subPath path to the subcollection the data is found. rootPath if left blank
-   */
-  async update(data: Storable<T>, subPath = ''): Promise<T> {
-    return this.collection(subPath)
-      .set(data)
-      .then((id) => this.get(id))
   }
 
   /**
@@ -108,12 +102,7 @@ abstract class DataModel<T extends HasId> {
    * @param subPath path to the subcollection where we add data. rootPath if left blank
    */
   updateProperty(id: string, fieldName: string, fieldValue: unknown, subPath = ''): Promise<T> {
-    return this.get(id, subPath).then((data) =>
-      this.update({
-        ...data,
-        [fieldName]: fieldValue,
-      } as Storable<T>),
-    )
+    return this.updateProperties(id, {[fieldName]: fieldValue}, subPath)
   }
 
   /**
@@ -122,11 +111,31 @@ abstract class DataModel<T extends HasId> {
    * @param fields field name as key and field value as value
    */
   async updateProperties(id: string, fields: Record<string, unknown>, subPath = ''): Promise<T> {
+    const {timestamps, ...fieldsWithoutTimestamps} = fields
     return this.doc(id, subPath)
       .update({
-        ...fields,
+        ...fieldsWithoutTimestamps,
+        'timestamps.updatedAt': serverTimestamp(),
       })
       .then(() => this.get(id, subPath))
+  }
+
+  /**
+   * Updates data in the collection
+   * @param data Data to update – id property must be present
+   * @param subPath path to the subcollection the data is found. rootPath if left blank
+   */
+  async update(data: Storable<T>, subPath = ''): Promise<T> {
+    const {id, ...fields} = data
+    return this.updateProperties(id, fields, subPath)
+  }
+
+  async updateAll(data: Array<Storable<T>>, subPath = ''): Promise<T[]> {
+    return Promise.all(data.map((item) => this.update(item, subPath)))
+  }
+
+  async fetchAll(subPath = ''): Promise<T[]> {
+    return this.collection(subPath).fetchAll()
   }
 
   /**
@@ -139,6 +148,7 @@ abstract class DataModel<T extends HasId> {
     return this.doc(id, subPath)
       .update({
         [fieldName]: firestore.FieldValue.increment(byCount),
+        'timestamps.updatedAt': serverTimestamp(),
       })
       .then(() => this.get(id))
   }
