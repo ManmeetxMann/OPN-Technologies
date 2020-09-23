@@ -6,12 +6,14 @@ components:
   schemas:
     Response:
       type: object
+      additionalProperties: false
       properties:
         data:
           nullable: true
           type: object
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -30,6 +32,7 @@ components:
 
     Registration:
       type: object
+      additionalProperties: false
       properties:
         id:
           type: string
@@ -49,6 +52,7 @@ components:
 
     UserDependant:
       type: object
+      additionalProperties: false
       properties:
         id:
           type: string
@@ -65,11 +69,13 @@ components:
 
     ResponseOfRegistration:
       type: object
+      additionalProperties: false
       properties:
         data:
           $ref: '#/components/schemas/Registration'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -88,6 +94,7 @@ components:
 
     ResponseOfUserDependants:
       type: object
+      additionalProperties: false
       properties:
         data:
           type: array
@@ -95,6 +102,7 @@ components:
             $ref: '#/components/schemas/UserDependant'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -144,6 +152,7 @@ paths:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               properties:
                 registrationToken:
                   type: string
@@ -168,7 +177,7 @@ paths:
           name: userId
           schema:
             type: string
-      #          required: true
+          required: true
       responses:
         "200":
           description: Successfully registered
@@ -183,12 +192,13 @@ paths:
           name: userId
           schema:
             type: string
-      #          required: true
+          required: true
       requestBody:
         content:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               properties:
                 organizationId:
                   type: string
@@ -211,12 +221,13 @@ paths:
           name: userId
           schema:
             type: string
-        #          required: true
+          required: true
       requestBody:
         content:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               properties:
                 organizationId:
                   type: string
@@ -241,12 +252,12 @@ paths:
           name: userId
           schema:
             type: string
-        #          required: true
+          required: true
         - in: path
           name: dependantId
           schema:
             type: string
-            #          required: true
+          required: true
       responses:
         "200":
           description: Successfully removed
