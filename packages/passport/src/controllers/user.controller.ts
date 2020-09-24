@@ -173,6 +173,9 @@ class UserController implements IControllerBase {
           this.userService.findHealthAdminsForOrg(organizationId).then(
             async (healthAdmins: User[]): Promise<void> => {
               const ids = healthAdmins.map(({id}) => id)
+              if (!ids && ids.length) {
+                return
+              }
               const tokens = (await this.registrationService.findForUserIds(ids))
                 .map((reg) => reg.pushToken)
                 .filter((exists) => exists)

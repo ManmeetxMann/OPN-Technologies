@@ -100,7 +100,8 @@ export class UserService {
   }
 
   findHealthAdminsForOrg(organizationId: string): Promise<User[]> {
-    return this.userRepository.findWhereArrayContains(
+    return this.userRepository.findWhereArrayInMapContains(
+      'admin',
       'healthAdminForOrganizationIds',
       organizationId,
     )

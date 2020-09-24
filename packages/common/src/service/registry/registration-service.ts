@@ -19,7 +19,7 @@ export class RegistrationService {
   }
 
   findForUserIds(userIds: string[]): Promise<Registration[]> {
-    return this.repository.findWhereArrayContainsAny('userId', userIds)
+    return this.repository.findWhereArrayContainsAny('userIds', userIds)
   }
 
   update(registration: Registration): Promise<Registration> {

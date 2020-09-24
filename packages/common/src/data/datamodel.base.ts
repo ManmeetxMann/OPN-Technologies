@@ -179,9 +179,22 @@ abstract class DataModel<T extends HasId> {
     return await this.collection(subPath).where(fieldPath, 'array-contains', value).fetch()
   }
 
-  async findWhereArrayContainsAny(property: string, value: unknown[], subPath = ''): Promise<T[]> {
+  async findWhereArrayContainsAny(
+    property: string,
+    values: Iterable<unknown>,
+    subPath = '',
+    identity = (element: T) => element.id,
+  ): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
-    return await this.collection(subPath).where(fieldPath, 'array-contains-any', value).fetch()
+    const chunks: unknown[][] = _.chunk([...values], 10)
+    const allResults = await Promise.all(
+      chunks.map((chunk) =>
+        this.collection(subPath).where(fieldPath, 'array-contains-any', chunk).fetch(),
+      ),
+    )
+    const deduplicated: Record<string, T> = {}
+    allResults.forEach((page) => page.forEach((item) => (deduplicated[identity(item)] = item)))
+    return Object.values(deduplicated)
   }
   async findWhereIdIn(value: unknown[], subPath = ''): Promise<T[]> {
     const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()

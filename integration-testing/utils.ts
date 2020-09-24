@@ -90,13 +90,22 @@ export const createAdmin = async (
   authUserId: string,
   groupId: string,
 ): Promise<User> => {
-  await post(`${roots.Enterprise}/internal/adminApproval/create`, {
+  await post(`${roots.Enterprise}/internal/admin/operations/create`, {
     email,
     locationIds,
     organizationId,
+    superAdminForOrganizationIds: [],
+    healthAdminForOrganizationIds: [organizationId],
     showReporting: true,
+    groupIds: [groupId],
   })
-  const user = await createUser(organizationId, firstName, lastName, groupId)
+  const user = await createUser(
+    organizationId,
+    firstName,
+    lastName,
+    groupId,
+    'eBadYtPIRU-EvWbeupP3gN:APA91bGWl-Gix1mODMyXXtohd-PqdIJJwp4x9t9o-oeYjXc1Ljm3qUiTuMgHY5rscslIJsuDEuQ3YeosVT4uUjORql_HhtJwSIF4NokkZ7EaqA52iTvK_Y5Fyy3ARVEo7z0DI70gs0RC',
+  )
   await post(`${roots.Enterprise}/admin/auth/signIn/request`, {
     email,
     // @ts-ignore
@@ -115,7 +124,9 @@ export const createUser = async (
   firstName: string,
   lastName: string,
   groupId: string,
+  token?: string,
 ): Promise<User> => {
+  const reg = token ? await createRegistration(token) : null
   return post(`${roots.Enterprise}/user/connect/add`, {
     organizationId,
     groupId,
@@ -123,9 +134,18 @@ export const createUser = async (
     lastName,
     birthYear: 1999,
     base64Photo: 'www.google.com',
+    registrationId: reg?.id ?? null,
   })
     .then(getData)
     .then((data) => data.user)
+}
+
+export const createRegistration = async (token: string): Promise<User> => {
+  return post(`${roots.Registry}/user/add`, {
+    platform: 'android',
+    osVersion: 11,
+    pushToken: token,
+  }).then(getData)
 }
 
 export const createDependants = async (
