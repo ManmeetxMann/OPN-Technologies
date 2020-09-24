@@ -130,7 +130,7 @@ class UserController implements IControllerBase {
       const passportStatus = await this.evaluateAnswers(answers)
       const appliesTo = [...dependantIds]
       if (includeGuardian) {
-        dependantIds.push(userId)
+        appliesTo.push(userId)
       }
       const saved = await this.attestationService.save({
         answers,
