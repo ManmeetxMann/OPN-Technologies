@@ -168,7 +168,8 @@ class OrganizationController implements IControllerBase {
       const {key, id} = req.query as {key?: string; id?: string}
 
       // Further validation
-      if (!key && !id || (!!key && !!id))  throw new BadRequestException('Key or Id is required independently')
+      if ((!key && !id) || (!!key && !!id))
+        throw new BadRequestException('Key or Id is required independently')
 
       const organization = !!key
         ? await this.organizationService.findOrganizationByKey(parseInt(key))
