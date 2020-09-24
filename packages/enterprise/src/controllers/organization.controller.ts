@@ -539,10 +539,8 @@ class OrganizationController implements IControllerBase {
   getStatsHealth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {groupId} = req.query as StatsHealthFilter
+      const {groupId, locationId, from, to} = req.query as StatsFilter
 
-      const isHealthAdmin = null
-      /*
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
@@ -551,9 +549,8 @@ class OrganizationController implements IControllerBase {
         isSuperAdmin || isHealthAdmin || admin.adminForOrganizationId === organizationId
 
       if (!canAccessOrganization) replyInsufficientPermission(res)
-      */
 
-      const response = await this.getStatsHelper(organizationId, {groupId})
+      const response = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
 
       const accesses = response.accesses.filter(
         (access) =>

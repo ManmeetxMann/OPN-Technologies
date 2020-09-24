@@ -15,7 +15,3 @@ export type StatsFilter = {
   from?: string
   to?: string
 }
-
-export type StatsHealthFilter = {
-  groupId?: string
-}
