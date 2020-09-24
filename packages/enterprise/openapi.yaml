@@ -69,6 +69,10 @@ components:
           type: boolean
         dailyReminder:
           $ref: '#/components/schemas/OrganizationReminderSchedule'
+        notificationFormatStop:
+          type: string
+        notificationFormatCaution:
+          type: string
       required:
         - name
 
