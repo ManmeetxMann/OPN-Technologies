@@ -186,12 +186,20 @@ class UserController implements IControllerBase {
               const groupNames = groups.map(
                 (group) => allGroups.find(({id}) => id === group.groupId).name,
               )
-              // for org-specific formatting
-              // const organization = this.organizationService.findOneById(organizationId)
+              const organization = await this.organizationService.findOneById(organizationId)
+              const stop = passportStatus === PassportStatuses.Stop
+              const defaultFormat = stop
+                ? 'A user from the group __GROUPNAME has reported that they may have COVID-19'
+                : 'A user from the group __GROUPNAME has reported that they may have been exposed to COVID-19'
+              const formatString =
+                (stop
+                  ? organization.notificationFormatStop
+                  : organization.notificationFormatCaution) ?? defaultFormat
+
               groupNames.forEach((name) =>
                 sendMessage(
                   'Potential Exposure',
-                  `A user from the group ${name} has reported that they may have COVID-19`,
+                  formatString.replace('__GROUPNAME', name),
                   tokens,
                 ),
               )

@@ -38,8 +38,10 @@ components:
           enum: [ios, android]
         osVersion:
           type: string
-        userId:
-          type: string
+        userIds:
+          type: array
+          items:
+            type: string
         pushToken:
           type: string
           nullable: true

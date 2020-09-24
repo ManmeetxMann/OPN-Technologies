@@ -23,7 +23,7 @@ class UserController implements IControllerBase {
   add = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Check token
-      const {platform, osVersion, pushToken, userId} = req.body as Registration & {userId: string}
+      const {platform, osVersion, pushToken} = req.body as Registration
       if (pushToken) {
         await this.messaging.validatePushToken(pushToken)
       }
@@ -33,7 +33,7 @@ class UserController implements IControllerBase {
         platform,
         osVersion,
         pushToken: pushToken ?? null,
-        userIds: [userId],
+        userIds: [],
       })
 
       res.json(actionSucceed(registration))

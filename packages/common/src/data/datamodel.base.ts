@@ -199,12 +199,12 @@ abstract class DataModel<T extends HasId> {
 
   async findWhereIn(
     property: string,
-    values: unknown[],
+    values: Iterable<unknown>,
     subPath = '',
     identity = (element: T) => element.id,
   ): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
-    const chunks: string[][] = _.chunk([...values], 10)
+    const chunks: unknown[][] = _.chunk([...values], 10)
     const allResults = await Promise.all(
       chunks.map((chunk) => this.collection(subPath).where(fieldPath, 'in', chunk).fetch()),
     )
