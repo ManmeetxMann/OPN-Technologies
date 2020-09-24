@@ -41,11 +41,11 @@ class App {
     this.security()
     this.setupCors()
     this.middlewares(appInit.middleWares)
-    this.setupValidation().then(() => {
-      this.setupValidationErrorHandling()
-      this.routes(appInit.controllers)
-      this.setupErrorHandling()
-    })
+    if (this.validation) {
+      this.setupValidation().then(() => this.setupValidationErrorHandling())
+    }
+    this.routes(appInit.controllers)
+    this.setupErrorHandling()
     // this.assets()
     // this.template()
   }
@@ -82,14 +82,12 @@ class App {
   }
 
   private setupValidation(): Promise<unknown> {
-    if (this.validation) {
-      const validator = new OpenApiValidator({
-        apiSpec: 'openapi.yaml',
-        validateRequests: true,
-        validateResponses: Config.get('FEATURE_VALIDATE_RESPONSES') === 'enabled',
-      })
-      return validator.install(this.app)
-    }
+    const validator = new OpenApiValidator({
+      apiSpec: 'openapi.yaml',
+      validateRequests: true,
+      validateResponses: Config.get('FEATURE_VALIDATE_RESPONSES') === 'enabled',
+    })
+    return validator.install(this.app)
   }
 
   // this needs to run before routes
