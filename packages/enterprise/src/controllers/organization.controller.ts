@@ -100,7 +100,7 @@ class OrganizationController implements IControllerBase {
       authMiddleware,
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
-        .get('/orgwide', this.getStatsForOrg),
+        .get('/health', this.getStatsHealth),
     )
     const organizations = Router().use(
       '/organizations',
@@ -536,9 +536,10 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getStatsForOrg = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getStatsHealth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
+      const {groupId, locationId, from, to} = req.query as StatsFilter
 
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
@@ -549,7 +550,7 @@ class OrganizationController implements IControllerBase {
 
       if (!canAccessOrganization) replyInsufficientPermission(res)
 
-      const response = await this.getStatsHelper(organizationId)
+      const response = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
 
       const accesses = response.accesses.filter(
         (access) =>

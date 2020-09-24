@@ -1023,7 +1023,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationStats'
 
-  /organizations/{organizationId}/stats/orgwide:
+  /organizations/{organizationId}/stats/health:
     get:
       description: Get stats summary for one organization (admin access required)
       security:
@@ -1031,6 +1031,10 @@ paths:
       parameters:
         - in: path
           name: organizationId
+          schema:
+            type: string
+        - in: query
+          name: groupId
           schema:
             type: string
               
