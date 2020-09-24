@@ -225,6 +225,20 @@ abstract class DataModel<T extends HasId> {
       .fetch()
   }
 
+  findWhereArrayContainsWithMax(
+    property: string,
+    value: unknown,
+    sortKey: Exclude<keyof T, 'id'>,
+    subPath = '',
+  ): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+    return this.collection(subPath)
+      .where(fieldPath, 'array-contains', value)
+      .orderBy(sortKey, 'desc')
+      .limit(1)
+      .fetch()
+  }
+
   findWhereEqualInMap(fields: DataModelFieldMap[], subPath = ''): Promise<T[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let collection: any = this.collection(subPath)
