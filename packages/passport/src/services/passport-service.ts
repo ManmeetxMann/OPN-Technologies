@@ -43,7 +43,10 @@ export class PassportService {
         const passport = mapDates(source)
         const validFrom = passport.validFrom
         const latestUserPassport = latestPassportsByUserId[passport.userId]
-        if (!latestUserPassport || moment(validFrom).isAfter(latestUserPassport.validFrom)) {
+        if (
+          passport.includesGuardian &&
+          (!latestUserPassport || moment(validFrom).isAfter(latestUserPassport.validFrom))
+        ) {
           latestPassportsByUserId[passport.userId] = passport
         }
 

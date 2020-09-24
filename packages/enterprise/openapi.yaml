@@ -1044,6 +1044,7 @@ paths:
           name: organizationId
           schema:
             type: string
+          required: true
         - in: query
           name: groupId
           schema:
@@ -1099,12 +1100,12 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: path
           name: groupId
           schema:
             type: string
-      #          required: true
+          required: true
       responses:
         '200':
           description: Successfully deleted
@@ -1209,7 +1210,7 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
       responses:
         '200':
           description: The config info
@@ -1282,6 +1283,7 @@ paths:
           name: userId
           schema:
             type: string
+          required: true
       requestBody:
         content:
           application/json:
