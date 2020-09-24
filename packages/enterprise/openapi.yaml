@@ -627,6 +627,9 @@ components:
           type: object
           additionalProperties: false
           properties:
+            permissionToViewDetail:
+              type: boolean
+              description: If current admin can view accesses
             asOfDateTime:
               type: string
               description: The ISO date-time when the stats have been computed
