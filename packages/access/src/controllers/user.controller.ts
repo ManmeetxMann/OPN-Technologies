@@ -157,9 +157,15 @@ class UserController implements IRouteController {
   ): Promise<unknown> {
     const access = await this.accessService.findOneByToken(accessToken)
     const {userId} = access
-    const status = await this.attestationService.latestStatus(userId)
-    if (['stop', 'caution'].includes(status)) {
-      throw new BadRequestException(`current status is ${status}`)
+    const allIds = Object.keys(access.dependants)
+    const allStatuses = await Promise.all(
+      allIds.map((id) => this.attestationService.latestStatus(id)),
+    )
+    if (allStatuses.includes('stop')) {
+      throw new BadRequestException(`current status is stop`)
+    }
+    if (allStatuses.includes('caution')) {
+      throw new BadRequestException(`current status is caution`)
     }
 
     const {base64Photo} = await this.userService.findOne(userId)

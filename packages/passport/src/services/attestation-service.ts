@@ -23,10 +23,10 @@ export class AttestationService {
       }))
   }
 
-  async latestStatus(userId: string): Promise<PassportStatus> {
+  async latestStatus(userOrDependantId: string): Promise<PassportStatus> {
     const [attestation] = await this.attestationRepository.findWhereEqualWithMax(
       'userId',
-      userId,
+      userOrDependantId,
       'attestationTime',
     )
     if (attestation) {
