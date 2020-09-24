@@ -8,7 +8,10 @@ import type {
 import type {Passport} from '../packages/passport/src/models/passport'
 import type {Access} from '../packages/access/src/models/access'
 import type {User} from '../packages/common/src/data/user'
-
+const PUSH_TOKEN = ''
+// uncomment to send messages to David
+// or add your own push token FROM STAGING
+// const PUSH_TOKEN = 'eBadYtPIRU-EvWbeupP3gN:APA91bGWl-Gix1mODMyXXtohd-PqdIJJwp4x9t9o-oeYjXc1Ljm3qUiTuMgHY5rscslIJsuDEuQ3YeosVT4uUjORql_HhtJwSIF4NokkZ7EaqA52iTvK_Y5Fyy3ARVEo7z0DI70gs0RC'
 type Service = 'Config' | 'Access' | 'Enterprise' | 'Lookup' | 'Passport' | 'Registry'
 
 const roots = {
@@ -51,7 +54,7 @@ export const createOrg = async (name: string): Promise<Organization> =>
     },
   }).then(getData)
 
-export const createGroup = async (orgId: string, name: string): Promise<Organization> =>
+export const createGroup = async (orgId: string, name: string): Promise<OrganizationGroup> =>
   post(`${roots.Enterprise}/organizations/${orgId}/groups`, [
     {
       name,
@@ -75,6 +78,7 @@ export const createLocation = async (
       country: 'CA',
       state: 'ON',
       zip: 'MV5 1P1',
+      questionnaireId: 'questionnaire1',
     },
   ])
     .then(getData)
@@ -104,7 +108,7 @@ export const createAdmin = async (
     firstName,
     lastName,
     groupId,
-    'eBadYtPIRU-EvWbeupP3gN:APA91bGWl-Gix1mODMyXXtohd-PqdIJJwp4x9t9o-oeYjXc1Ljm3qUiTuMgHY5rscslIJsuDEuQ3YeosVT4uUjORql_HhtJwSIF4NokkZ7EaqA52iTvK_Y5Fyy3ARVEo7z0DI70gs0RC',
+    PUSH_TOKEN,
   )
   await post(`${roots.Enterprise}/admin/auth/signIn/request`, {
     email,
