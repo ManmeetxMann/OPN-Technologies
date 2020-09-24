@@ -158,6 +158,9 @@ class UserController implements IRouteController {
     const access = await this.accessService.findOneByToken(accessToken)
     const {userId} = access
     const allIds = Object.keys(access.dependants)
+    if (access.includesGuardian) {
+      allIds.push(userId)
+    }
     const allStatuses = await Promise.all(
       allIds.map((id) => this.attestationService.latestStatus(id)),
     )
