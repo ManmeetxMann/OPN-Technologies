@@ -26,6 +26,7 @@ import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -106,7 +107,7 @@ class OrganizationController implements IControllerBase {
       '/organizations',
       Router().post('/', this.create), // TODO: must be a protected route
       Router().post('/:organizationId/scheduling', this.updateReportInfo), // TODO: must be a protected route
-      Router().get('/one', this.findOneByKey),
+      Router().get('/one', this.findOneByKeyOrId),
       Router().use('/:organizationId', locations, groups, stats),
       Router().get('/:organizationId/config', this.getOrgConfig),
     )
@@ -162,10 +163,16 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  findOneByKey = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  findOneByKeyOrId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {key} = req.query as {key: string}
-      const organization = await this.organizationService.findOrganizationByKey(parseInt(key))
+      const {key, id} = req.query as {key?: string; id?: string}
+
+      // Further validation
+      if (!key && !id || (!!key && !!id))  throw new BadRequestException('Key or Id is required independently')
+
+      const organization = !!key
+        ? await this.organizationService.findOrganizationByKey(parseInt(key))
+        : await this.organizationService.findOneById(id)
       res.json(actionSucceed(organization))
     } catch (error) {
       next(error)
