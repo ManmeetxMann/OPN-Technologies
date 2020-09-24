@@ -176,7 +176,6 @@ class UserController implements IControllerBase {
               if (includeGuardian) {
                 relevantUserIds.push(userId)
               }
-              // assume fewer than 10 humans involved
               const groups = await this.organizationService.getUsersGroups(
                 organizationId,
                 null,
