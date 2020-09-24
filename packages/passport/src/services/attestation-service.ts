@@ -24,8 +24,8 @@ export class AttestationService {
   }
 
   async latestStatus(userOrDependantId: string): Promise<PassportStatus> {
-    const [attestation] = await this.attestationRepository.findWhereEqualWithMax(
-      'userId',
+    const [attestation] = await this.attestationRepository.findWhereArrayContainsWithMax(
+      'appliesTo',
       userOrDependantId,
       'attestationTime',
     )
