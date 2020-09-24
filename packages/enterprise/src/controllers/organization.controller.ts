@@ -514,25 +514,29 @@ class OrganizationController implements IControllerBase {
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
+      const isHealthAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
       const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
 
       if (!canAccessOrganization) replyInsufficientPermission(res)
 
+      // If group is specified, make sure we are group admin
       if (groupId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForGroupIds?.includes(groupId)
         if (!hasGrantedPermission) replyInsufficientPermission(res)
         // Assert group exists
         await this.organizationService.getGroup(organizationId, groupId)
-      } else if (!locationId) {
-        replyInsufficientPermission(res)
       }
 
+      // If location is specified, make sure we are location admin
       if (locationId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForLocationIds?.includes(locationId)
         if (!hasGrantedPermission) replyInsufficientPermission(res)
         // Assert location exists
         await this.organizationService.getLocation(organizationId, locationId)
-      } else if (!groupId) {
+      }
+
+      // If no group and no location is specified, make sure we are the health admin
+      if (!groupId && !locationId && !isHealthAdmin) {
         replyInsufficientPermission(res)
       }
 
