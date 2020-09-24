@@ -1,6 +1,7 @@
 import {
   attest,
   createOrg,
+  createGroup,
   createLocation,
   createAdmin,
   createUser,
@@ -74,7 +75,8 @@ const generate = async () => {
 
   // servers must be running
   const org = await createOrg('The Daycare Center')
-  const groupId = org.organization_groups[0].id
+  const group = await createGroup(org.id, 'default')
+  const groupId = group.id
   const locs = []
   let i = 0
   // for some reason createLocations isn't thread safe, so this is done serially

@@ -2,6 +2,7 @@ import fetch from 'node-fetch'
 
 import type {
   Organization,
+  OrganizationGroup,
   OrganizationLocation,
 } from '../packages/enterprise/src/models/organization'
 import type {Passport} from '../packages/passport/src/models/passport'
@@ -43,7 +44,21 @@ export const createOrg = async (name: string): Promise<Organization> =>
   post(`${roots.Enterprise}/organizations`, {
     name,
     allowDependants: true,
+    dailyReminder: {
+      enabled: false,
+      enabledOnWeekends: false,
+      timeOfDayMillis: 0,
+    },
   }).then(getData)
+
+export const createGroup = async (orgId: string, name: string): Promise<Organization> =>
+  post(`${roots.Enterprise}/organizations/${orgId}/groups`, [
+    {
+      name,
+    },
+  ])
+    .then(getData)
+    .then(([result]) => result)
 
 export const createLocation = async (
   organizationId: string,

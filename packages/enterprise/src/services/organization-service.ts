@@ -187,7 +187,7 @@ export class OrganizationService {
     )
   }
 
-  getUsersGroups(
+  async getUsersGroups(
     organizationId: string,
     groupId?: string,
     allUserIds?: string[],
@@ -196,21 +196,23 @@ export class OrganizationService {
     // To have a query-builder, we need here to re-assign the query declaration (of type Collection) with a WhereClause Query
     // Therefor the TS transpiler complains because of the types conflicts...
     const userIdPages = _.chunk(allUserIds ?? [], 10)
-    const pagedResults = userIdPages.forEach((userIds: string) => {
-      // @ts-ignore
-      let query = this.getUsersGroupRepositoryFor(organizationId).collection()
-      if (!!groupId) {
+    const pagedResults = await Promise.all(
+      userIdPages.map((userIds: string) => {
         // @ts-ignore
-        query = query.where('groupId', '==', groupId)
-      }
-      if (userIds?.length) {
+        let query = this.getUsersGroupRepositoryFor(organizationId).collection()
+        if (!!groupId) {
+          // @ts-ignore
+          query = query.where('groupId', '==', groupId)
+        }
+        if (userIds?.length) {
+          // @ts-ignore
+          query = query.where('userId', 'in', userIds)
+        }
         // @ts-ignore
-        query = query.where('userId', 'in', userIds)
-      }
-      // @ts-ignore
-      // Cannot fetchAll on a `Query` object, only on `Collection`
-      return groupId || userIds?.length > 0 ? query.fetch() : query.fetchAll()
-    })
+        // Cannot fetchAll on a `Query` object, only on `Collection`
+        return groupId || userIds?.length > 0 ? query.fetch() : query.fetchAll()
+      }),
+    )
     return _.flatten(pagedResults)
   }
 
