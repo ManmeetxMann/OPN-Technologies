@@ -83,12 +83,16 @@ export class OrganizationService {
         .addAll(locationsToAdd)
         .then((locs) => {
           // add this so we can query for locations by id contained in list
-          const locationsWithId = locs.map((loc) => ({
-            ...loc,
-            locationId: loc.id,
-          }))
+          const locationsWithoutId = locs
+            // no need to waste writes on locations that already have ids
+            // @ts-ignore this isn't officially part of the location schema
+            .filter((loc) => !loc.locationId)
+            .map((loc) => ({
+              ...loc,
+              locationId: loc.id,
+            }))
           return new OrganizationLocationModel(this.dataStore, organizationId).updateAll(
-            locationsWithId,
+            locationsWithoutId,
           )
         }),
     )
@@ -251,6 +255,18 @@ export class OrganizationService {
         `Cannot find relation user-group for groupId [${groupId}] and userId [${userId}]`,
       )
     })
+  }
+
+  async deleteGroup(organizationId: string, groupId: string): Promise<void> {
+    const repo = this.getGroupsRepositoryFor(organizationId)
+    const target = await repo.findOneById(groupId)
+    if (target) {
+      await repo.delete(groupId)
+    } else {
+      throw new ResourceNotFoundException(
+        `Cannot find group [${groupId}] for organization [${organizationId}]`,
+      )
+    }
   }
 
   // TODO: To be replaced with a proper solution that generates a 5 digits code for by user and organization with an expiry

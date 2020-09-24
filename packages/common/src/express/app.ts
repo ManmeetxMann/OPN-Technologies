@@ -5,12 +5,10 @@ Config.load()
 // Continue...
 import express, {Application, RequestHandler} from 'express'
 import basicAuth from 'express-basic-auth'
-import {OpenApiValidator} from 'express-openapi-validate'
+import {OpenApiValidator} from 'express-openapi-validator'
 import cors from 'cors'
-import jsYaml from 'js-yaml'
-import fs from 'fs'
 
-import {handleErrors, handleRouteNotFound} from '../middlewares/error'
+import {handleErrors, handleValidationErrors, handleRouteNotFound} from '../middlewares/error'
 import IRouteController from '../interfaces/IRouteController.interface'
 
 interface Initializer {
@@ -43,7 +41,9 @@ class App {
     this.security()
     this.setupCors()
     this.middlewares(appInit.middleWares)
-    this.setupValidation()
+    if (this.validation) {
+      this.setupValidation().then(() => this.setupValidationErrorHandling())
+    }
     this.routes(appInit.controllers)
     this.setupErrorHandling()
     // this.assets()
@@ -81,14 +81,21 @@ class App {
     this.app.use(handleRouteNotFound)
   }
 
-  private setupValidation() {
-    if (this.validation) {
-      const openApiDocument = jsYaml.safeLoad(fs.readFileSync('openapi.yaml', 'utf-8'))
-      const validator = new OpenApiValidator(openApiDocument)
-      this.app.use(validator.match())
-    }
+  private setupValidation(): Promise<unknown> {
+    const validator = new OpenApiValidator({
+      apiSpec: 'openapi.yaml',
+      validateRequests: true,
+      validateResponses: Config.get('FEATURE_VALIDATE_RESPONSES') === 'enabled',
+    })
+    return validator.install(this.app)
   }
 
+  // this needs to run before routes
+  private setupValidationErrorHandling() {
+    this.app.use(handleValidationErrors)
+  }
+
+  // this needs to run after routes
   private setupErrorHandling() {
     this.app.use(handleErrors)
   }

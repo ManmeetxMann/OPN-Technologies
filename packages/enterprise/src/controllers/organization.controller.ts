@@ -26,6 +26,7 @@ import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -91,6 +92,7 @@ class OrganizationController implements IControllerBase {
         .post('/users', this.addUsersToGroups)
         .put('/:groupId/users/:userId', this.updateUserGroup)
         .delete('/zombie-users', this.removeZombieUsersInGroups)
+        .delete('/:groupId', this.removeGroup)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
     // prettier-ignore
@@ -99,13 +101,13 @@ class OrganizationController implements IControllerBase {
       authMiddleware,
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
-        .get('/orgwide', this.getStatsForOrg),
+        .get('/health', this.getStatsHealth),
     )
     const organizations = Router().use(
       '/organizations',
       Router().post('/', this.create), // TODO: must be a protected route
       Router().post('/:organizationId/scheduling', this.updateReportInfo), // TODO: must be a protected route
-      Router().get('/one', this.findOneByKey),
+      Router().get('/one', this.findOneByKeyOrId),
       Router().use('/:organizationId', locations, groups, stats),
       Router().get('/:organizationId/config', this.getOrgConfig),
     )
@@ -147,23 +149,7 @@ class OrganizationController implements IControllerBase {
   updateReportInfo = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const {organizationId} = req.params
     const hourToSendReport = req.body.hourToSendReport ?? null
-    const dayShift = req.body.forYesterday ? 1 : 0
-
-    if (hourToSendReport % 1) {
-      res
-        .status(400)
-        .json(of(null, ResponseStatusCodes.ValidationError, 'Hour must be a whole number'))
-      return
-    }
-
-    if (hourToSendReport < 0 || hourToSendReport > 23) {
-      res
-        .status(400)
-        .json(
-          of(null, ResponseStatusCodes.ValidationError, 'Hour must be between 0 and 23, inclusive'),
-        )
-      return
-    }
+    const dayShift = req.body.dayShift ?? 0
 
     try {
       const org = await this.organizationService
@@ -177,10 +163,17 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  findOneByKey = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  findOneByKeyOrId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {key} = req.query as {key: string}
-      const organization = await this.organizationService.findOrganizationByKey(parseInt(key))
+      const {key, id} = req.query as {key?: string; id?: string}
+
+      // Further validation
+      if ((!key && !id) || (!!key && !!id))
+        throw new BadRequestException('Key or Id is required independently')
+
+      const organization = !!key
+        ? await this.organizationService.findOrganizationByKey(parseInt(key))
+        : await this.organizationService.findOneById(id)
       res.json(actionSucceed(organization))
     } catch (error) {
       next(error)
@@ -434,6 +427,35 @@ class OrganizationController implements IControllerBase {
     }
   }
 
+  removeGroup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId, groupId} = req.params
+      // check for users in the group
+      const usersInGroup = await this.organizationService.getUsersGroups(organizationId, groupId)
+      if (usersInGroup.length) {
+        console.warn(
+          `Group ${groupId} of organization ${organizationId} has users ${usersInGroup.map(
+            (user) => user.id,
+          )}`,
+        )
+        throw new HttpException('This group has existing users', 403)
+      }
+      const adminsOfGroup = await this.userService.getAdminsForGroup(groupId)
+      if (adminsOfGroup.length) {
+        console.warn(
+          `Group ${groupId} of organization ${organizationId} has admins ${adminsOfGroup.map(
+            (user) => user.id,
+          )}`,
+        )
+        throw new HttpException('This group has existing admins', 403)
+      }
+      await this.organizationService.deleteGroup(organizationId, groupId)
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
   removeZombieUsersInGroups = async (
     req: Request,
     res: Response,
@@ -522,9 +544,10 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getStatsForOrg = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getStatsHealth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
+      const {groupId, locationId, from, to} = req.query as StatsFilter
 
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
@@ -535,7 +558,7 @@ class OrganizationController implements IControllerBase {
 
       if (!canAccessOrganization) replyInsufficientPermission(res)
 
-      const response = await this.getStatsHelper(organizationId)
+      const response = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
 
       const accesses = response.accesses.filter(
         (access) =>

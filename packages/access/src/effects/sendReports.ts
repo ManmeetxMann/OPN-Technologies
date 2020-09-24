@@ -75,7 +75,7 @@ export default class ReportSender {
         ),
       )
       .join('\n<br>')
-    const recipients = await this.userApprovalRepo.findWhereMapKeyContains(
+    const recipients = await this.userApprovalRepo.findWhereArrayInMapContains(
       'profile',
       'superAdminForOrganizationIds',
       organizationId,

@@ -105,4 +105,8 @@ export class UserService {
       organizationId,
     )
   }
+
+  getAdminsForGroup(groupId: string): Promise<User[]> {
+    return this.userRepository.findWhereArrayInMapContains('admin', 'adminForGroupIds', groupId)
+  }
 }
