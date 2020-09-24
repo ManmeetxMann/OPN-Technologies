@@ -20,7 +20,7 @@ import {Access, AccessWithPassportStatusAndUser} from '../../../access/src/model
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {Passport, PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
-import {Stats, StatsFilter, StatsHealthFilter} from '../models/stats'
+import {Stats, StatsFilter} from '../models/stats'
 import {Range} from '../../../common/src/types/range'
 import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
@@ -97,7 +97,7 @@ class OrganizationController implements IControllerBase {
     // prettier-ignore
     const stats = innerRouter().use(
       '/stats',
-      // authMiddleware,
+      authMiddleware,
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/health', this.getStatsHealth),
