@@ -19,6 +19,7 @@ import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
 import {AccessTokenService} from '../service/access-token.service'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
+import { AccessStats } from '../models/access'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -49,6 +50,7 @@ class AdminController implements IRouteController {
     const routes = express
       .Router()
       .post('/stats', authMiddleware, this.stats)
+      .post('/stats/v2', authMiddleware, this.statsV2)
       .post('/enter', authMiddleware, this.enter)
       .post('/exit', authMiddleware, this.exit)
       .post('/createToken', authMiddleware, this.createToken)
@@ -63,16 +65,46 @@ class AdminController implements IRouteController {
       const paths = locationIdOrPath.split('/')
       const locationId = paths.length > 0 ? paths[paths.length - 1] : locationIdOrPath
 
-      //TODO: Assert admin can access that location
-      const asOfDateTime = new Date().toISOString()
-      const stats = await this.accessService.getTodayStatsForLocation(locationId)
-      const checkInsPerHour = fakeCheckInsPerHour()
-      const responseBody = {..._.omit(stats, ['id', 'createdAt']), asOfDateTime, checkInsPerHour}
+      // //TODO: Assert admin can access that location
+      // const asOfDateTime = new Date().toISOString()
+      // const stats = await this.accessService.getTodayStatsForLocation(locationId)
+      // const checkInsPerHour = fakeCheckInsPerHour()
+      // const responseBody = {..._.omit(stats, ['id', 'createdAt']), asOfDateTime, checkInsPerHour} as AccessStats
+
+      const responseBody = await this.statsHelper(null, locationId)
 
       res.json(actionSucceed(responseBody))
     } catch (error) {
       next(error)
     }
+  }
+
+  statsV2 = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId, locationId} = req.body
+      const responseBody = await this.statsHelper(organizationId, locationId)
+
+      res.json(actionSucceed(responseBody))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  private statsHelper = async (organizationId?: string, locationId?: string): Promise<AccessStats> => {
+    // Check parameters
+    if (!organizationId && !locationId) throw new BadRequestException("Organization or Location is required")
+
+    //TODO: Assert admin can access that location
+
+    // Get all locations
+    const locationIds = organizationId ? 
+                        (await this.organizationService.getLocations(organizationId)).map(e => e.id) : 
+                        [locationId]
+
+    const asOfDateTime = new Date().toISOString()
+    const stats = await this.accessService.getTodayStatsForLocations(locationIds)
+    const checkInsPerHour = fakeCheckInsPerHour()
+    return {..._.omit(stats, ['id', 'createdAt']), asOfDateTime, checkInsPerHour}
   }
 
   enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
