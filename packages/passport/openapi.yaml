@@ -155,3 +155,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfPassport'
+  /user/testNotify:
+    post:
+      description: Send a notification to the user with the given userId. Used to check connectivity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                userId:
+                  type: string
+                messageTitle:
+                  type: string
+                messageBody:
+                  type: string
+              required:
+                - userId
+                - messageTitle
+                - messageBody
+
+      responses:
+        '200':
+          description: Message sent successfully to at least one token

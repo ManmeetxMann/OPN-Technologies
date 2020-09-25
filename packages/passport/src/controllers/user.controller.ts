@@ -13,10 +13,15 @@ import {AccessService} from '../../../access/src/service/access.service'
 import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {RegistrationService} from '../../../common/src/service/registry/registration-service'
+import {UserService} from '../../../common/src/service/user/user-service'
+import {User} from '../../../common/src/data/user'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {sendMessage} from '../../../common/src/service/messaging/push-notify-service'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
-
+const DEFAULT_IMAGE =
+  'https://firebasestorage.googleapis.com/v0/b/opn-platform-ca-prod.appspot.com/o/OPN-Icon.png?alt=media&token=17b833df-767d-4467-9a77-44c50aad5a33'
 class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
@@ -24,6 +29,8 @@ class UserController implements IControllerBase {
   private attestationService = new AttestationService()
   private accessService = new AccessService()
   private organizationService = new OrganizationService()
+  private registrationService = new RegistrationService()
+  private userService = new UserService()
   private topic: Topic
 
   constructor() {
@@ -69,6 +76,7 @@ class UserController implements IControllerBase {
   public initRoutes(): void {
     this.router.post(this.path + '/status/get', this.check)
     this.router.post(this.path + '/status/update', this.update)
+    this.router.post(this.path + '/testNotify', this.testNotify)
   }
 
   check = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -163,6 +171,54 @@ class UserController implements IControllerBase {
             questionnaireId,
             answers: JSON.stringify(answers),
           })
+          //do not await here, this is a side effect
+          this.userService.findHealthAdminsForOrg(organizationId).then(
+            async (healthAdmins: User[]): Promise<void> => {
+              const ids = healthAdmins.map(({id}) => id)
+              if (!ids && ids.length) {
+                return
+              }
+              const tokens = (await this.registrationService.findForUserIds(ids))
+                .map((reg) => reg.pushToken)
+                .filter((exists) => exists)
+              const relevantUserIds = [...dependantIds]
+              if (includeGuardian) {
+                relevantUserIds.push(userId)
+              }
+              const groups = await this.organizationService.getUsersGroups(
+                organizationId,
+                null,
+                relevantUserIds,
+              )
+              const allGroups = await this.organizationService.getGroups(organizationId)
+              const groupNames = groups.map(
+                (group) => allGroups.find(({id}) => id === group.groupId).name,
+              )
+              const organization = await this.organizationService.findOneById(organizationId)
+              const stop = passportStatus === PassportStatuses.Stop
+              const defaultFormat = stop
+                ? 'A user from the group __GROUPNAME has reported that they may have COVID-19'
+                : 'A user from the group __GROUPNAME has reported that they may have been exposed to COVID-19'
+              const organizationIcon = stop
+                ? organization.notificationIconStop
+                : organization.notificationIconCaution
+              const icon = organizationIcon ?? DEFAULT_IMAGE
+
+              const formatString =
+                (stop
+                  ? organization.notificationFormatStop
+                  : organization.notificationFormatCaution) ?? defaultFormat
+
+              groupNames.forEach((name) =>
+                sendMessage(
+                  'Potential Exposure',
+                  formatString.replace('__GROUPNAME', name),
+                  icon,
+                  tokens,
+                ),
+              )
+            },
+          )
         } else {
           console.warn(
             `Could not execute a trace of attestation ${saved.id} because userId was not provided`,
@@ -172,6 +228,20 @@ class UserController implements IControllerBase {
       }
 
       res.json(actionSucceed(passport))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  testNotify = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {userId, messageTitle, messageBody} = req.body
+      const tokens = (await this.registrationService.findForUserIds([userId]))
+        .map((reg) => reg.pushToken)
+        .filter((exists) => exists)
+      console.log(`${userId} has ${tokens.length} token(s): ${tokens.join()}`)
+      sendMessage(messageTitle, messageBody, DEFAULT_IMAGE, tokens)
+      res.json(actionSucceed({}))
     } catch (error) {
       next(error)
     }

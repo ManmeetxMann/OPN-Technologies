@@ -4,7 +4,7 @@ import {Registration, RegistrationModel} from '../../data/registration'
 export class RegistrationService {
   private repository = new RegistrationModel(new DataStore())
 
-  create(registration: Registration): Promise<Registration> {
+  create(registration: Omit<Registration, 'id'>): Promise<Registration> {
     return this.repository.add(registration)
   }
 
@@ -16,6 +16,10 @@ export class RegistrationService {
 
   findOne(registrationId: string): Promise<Registration> {
     return this.repository.get(registrationId)
+  }
+
+  findForUserIds(userIds: string[]): Promise<Registration[]> {
+    return this.repository.findWhereArrayContainsAny('userIds', userIds)
   }
 
   update(registration: Registration): Promise<Registration> {

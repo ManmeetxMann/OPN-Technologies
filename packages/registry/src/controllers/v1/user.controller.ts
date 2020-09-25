@@ -33,7 +33,8 @@ class UserController implements IControllerBase {
         platform,
         osVersion,
         pushToken: pushToken ?? null,
-      } as Registration)
+        userIds: [],
+      })
 
       res.json(actionSucceed(registration))
     } catch (error) {

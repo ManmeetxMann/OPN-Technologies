@@ -15,6 +15,7 @@ import {
   OrganizationModel,
   OrganizationUsersGroupModel,
 } from '../repository/organization.repository'
+import * as _ from 'lodash'
 
 const notFoundMessage = (organizationId: string, identifier?: string) =>
   `Cannot find organization with ${identifier ?? 'ID'} [${organizationId}]`
@@ -186,31 +187,33 @@ export class OrganizationService {
     )
   }
 
-  getUsersGroups(
+  async getUsersGroups(
     organizationId: string,
     groupId?: string,
-    userIds?: string[],
+    allUserIds?: string[],
   ): Promise<OrganizationUsersGroup[]> {
     // Firestore doesn't give enough "where" operators to have optional query filters
     // To have a query-builder, we need here to re-assign the query declaration (of type Collection) with a WhereClause Query
     // Therefor the TS transpiler complains because of the types conflicts...
-
-    // @ts-ignore
-    let query = this.getUsersGroupRepositoryFor(organizationId).collection()
-
-    if (!!groupId) {
-      // @ts-ignore
-      query = query.where('groupId', '==', groupId)
-    }
-
-    if (userIds?.length) {
-      // @ts-ignore
-      query = query.where('userId', 'in', userIds)
-    }
-
-    // @ts-ignore
-    // Cannot fetchAll on a `Query` object, only on `Collection`
-    return groupId || userIds?.length > 0 ? query.fetch() : query.fetchAll()
+    const userIdPages = _.chunk(allUserIds ?? [], 10)
+    const pagedResults = await Promise.all(
+      userIdPages.map((userIds: string) => {
+        // @ts-ignore
+        let query = this.getUsersGroupRepositoryFor(organizationId).collection()
+        if (!!groupId) {
+          // @ts-ignore
+          query = query.where('groupId', '==', groupId)
+        }
+        if (userIds?.length) {
+          // @ts-ignore
+          query = query.where('userId', 'in', userIds)
+        }
+        // @ts-ignore
+        // Cannot fetchAll on a `Query` object, only on `Collection`
+        return groupId || userIds?.length > 0 ? query.fetch() : query.fetchAll()
+      }),
+    )
+    return _.flatten(pagedResults)
   }
 
   addUserToGroup(

@@ -92,9 +92,9 @@ export class PassportService {
           statusToken,
           userId,
           dependantIds,
-          includesGuardian,
           validFrom: serverTimestamp(),
           validUntil: null,
+          includesGuardian,
         }),
       )
       .then(({validFrom, validUntil, ...passport}) => ({
