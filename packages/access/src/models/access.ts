@@ -33,3 +33,20 @@ export type AccessFilter = {
   locationId?: string
   betweenCreatedDate?: Range<Date>
 }
+
+export type AccessStats = {
+  peopleOnPremises: number
+  accessDenied: number
+  asOfDateTime: string
+  exposures: number
+  pendingPassports: number
+  proceedPassports: number
+  cautionPassports: number
+  stopPassports: number
+  checkInsPerHour: AccessStatsCheckInsPerHour[]
+}
+
+export type AccessStatsCheckInsPerHour = {
+  date: string
+  count: number
+}

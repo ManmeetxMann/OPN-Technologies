@@ -13,7 +13,7 @@ export type AccessStats = {
 export type CheckInsCount = {date: string; count: number}
 
 export type AccessStatsFilter = {
-  locationId: string
+  locationIds: string[]
   fromDate?: Date
   toDate?: Date
 }

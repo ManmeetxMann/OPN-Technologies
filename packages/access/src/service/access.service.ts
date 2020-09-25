@@ -11,6 +11,7 @@ import AccessListener from '../effects/addToAttendance'
 import moment from 'moment-timezone'
 import {serverTimestamp, now} from '../../../common/src/utils/times'
 import * as _ from 'lodash'
+import {flattern} from '../../../common/src/utils/utils'
 import {PassportStatus} from '../../../passport/src/models/passport'
 import {AccessStatsFilter} from '../models/access-stats'
 import {Config} from '../../../common/src/utils/config'
@@ -227,20 +228,87 @@ export class AccessService {
     )
   }
 
-  getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
+  async getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
+    return await this.getTodayStatsForLocations([locationId])
+  }
+
+  async getTodayStatsForLocations(locationIds: string[]): Promise<AccessStatsModel> {
     const today = moment(now()).tz(timeZone).startOf('day')
     const fromDate = today.toDate()
     const toDate = today.add(1, 'day').add(-1, 'second').toDate()
 
-    return this.getStatsWith({locationId, fromDate, toDate}).then((results) =>
-      results.length ? results[0] : this.newStatsFor(locationId),
-    )
+    // Deal with singles
+    if (locationIds.length === 1) {
+      const locationId = locationIds[0]
+      const results = await this.getStats_SingleChunk({locationIds: [locationId], fromDate, toDate})
+      return results.length ? results[0] : this.newStatsFor(locationId)
+    }
+
+    // Multi location
+    const stats = await this.getStatsWith({locationIds, fromDate, toDate})
+
+    // Flatten
+    const statsMap: Record<string, AccessStatsModel> = {}
+    const statsForLocations = stats.reduce((result, item) => {
+      statsMap[item.locationId] = item
+      return result
+    })
+
+    // Add up
+    const sum: AccessStatsModel = {
+      id: '',
+      locationId: '',
+      peopleOnPremises: 0,
+      accessDenied: 0,
+      exposures: 0,
+      pendingPassports: 0,
+      proceedPassports: 0,
+      cautionPassports: 0,
+      stopPassports: 0,
+      asOfDateTime: new Date(),
+      checkInsPerHour: [],
+      createdAt: new firestore.Timestamp(0, 0),
+    }
+    for (const locationId of locationIds) {
+      // Get proper one
+      const current =
+        locationId in statsForLocations
+          ? statsForLocations[locationId]
+          : await this.newStatsFor(locationId)
+
+      // Add up
+      sum.peopleOnPremises += current.peopleOnPremises
+      sum.accessDenied += current.accessDenied
+      sum.exposures += current.exposures
+      sum.pendingPassports += current.pendingPassports
+      sum.proceedPassports += current.proceedPassports
+      sum.cautionPassports += current.cautionPassports
+      sum.stopPassports += current.stopPassports
+    }
+
+    return sum
   }
 
-  getStatsWith({locationId, toDate, fromDate}: AccessStatsFilter): Promise<AccessStatsModel[]> {
+  async getStatsWith({
+    locationIds,
+    toDate,
+    fromDate,
+  }: AccessStatsFilter): Promise<AccessStatsModel[]> {
+    return await Promise.all(
+      _.chunk([...locationIds], 10).map((chunk) =>
+        this.getStats_SingleChunk({locationIds: chunk, fromDate, toDate}),
+      ),
+    ).then((results) => flattern(results as AccessStatsModel[][]))
+  }
+
+  private async getStats_SingleChunk({
+    locationIds,
+    toDate,
+    fromDate,
+  }: AccessStatsFilter): Promise<AccessStatsModel[]> {
     let query = this.dataStore.firestoreORM
       .collection<AccessStatsModel>({path: this.accessStatsRepository.rootPath})
-      .where('locationId', '==', locationId)
+      .where('locationId', 'in', locationIds)
 
     if (fromDate) {
       query = query.where('createdAt', '>=', fromDate)
@@ -250,7 +318,7 @@ export class AccessService {
       query = query.where('createdAt', '<=', toDate)
     }
 
-    return query.fetch()
+    return await query.fetch()
   }
 
   incrementPeopleOnPremises(locationId: string, count = 1): Promise<AccessStatsModel> {
@@ -299,5 +367,18 @@ export class AccessService {
       stopPassports: 0,
       createdAt: serverTimestamp(),
     } as AccessStatsModel)
+  }
+
+  private sumOfStats(stats: AccessStatsModel[]): AccessStatsModel {
+    return stats.reduce((sum, current) => {
+      sum.peopleOnPremises += current.peopleOnPremises
+      sum.accessDenied += current.accessDenied
+      sum.exposures += current.exposures
+      sum.pendingPassports += current.pendingPassports
+      sum.proceedPassports += current.proceedPassports
+      sum.cautionPassports += current.cautionPassports
+      sum.stopPassports += current.stopPassports
+      return sum
+    })
   }
 }
