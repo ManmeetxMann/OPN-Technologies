@@ -20,7 +20,8 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {sendMessage} from '../../../common/src/service/messaging/push-notify-service'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
-
+const DEFAULT_IMAGE =
+  'https://firebasestorage.googleapis.com/v0/b/opn-platform-ca-prod.appspot.com/o/OPN-Icon.png?alt=media&token=17b833df-767d-4467-9a77-44c50aad5a33'
 class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
@@ -75,6 +76,7 @@ class UserController implements IControllerBase {
   public initRoutes(): void {
     this.router.post(this.path + '/status/get', this.check)
     this.router.post(this.path + '/status/update', this.update)
+    this.router.post(this.path + '/testNotify', this.testNotify)
   }
 
   check = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -200,9 +202,8 @@ class UserController implements IControllerBase {
               const organizationIcon = stop
                 ? organization.notificationIconStop
                 : organization.notificationIconCaution
-              const icon =
-                organizationIcon ??
-                'https://firebasestorage.googleapis.com/v0/b/opn-platform-ca-prod.appspot.com/o/OPN-Icon.png?alt=media&token=17b833df-767d-4467-9a77-44c50aad5a33'
+              const icon = organizationIcon ?? DEFAULT_IMAGE
+
               const formatString =
                 (stop
                   ? organization.notificationFormatStop
@@ -227,6 +228,20 @@ class UserController implements IControllerBase {
       }
 
       res.json(actionSucceed(passport))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  testNotify = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {userId, messageTitle, messageBody} = req.body
+      const tokens = (await this.registrationService.findForUserIds([userId]))
+        .map((reg) => reg.pushToken)
+        .filter((exists) => exists)
+      console.log(`${userId} has ${tokens.length} token(s): ${tokens.join()}`)
+      sendMessage(messageTitle, messageBody, DEFAULT_IMAGE, tokens)
+      res.json(actionSucceed({}))
     } catch (error) {
       next(error)
     }
