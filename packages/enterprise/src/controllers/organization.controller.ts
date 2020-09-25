@@ -514,7 +514,7 @@ class OrganizationController implements IControllerBase {
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
-      const isHealthAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
+      const isHealthAdmin = admin.healthAdminForOrganizationIds?.includes(organizationId)
       const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
 
       if (!canAccessOrganization) replyInsufficientPermission(res)
