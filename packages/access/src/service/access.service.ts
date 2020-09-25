@@ -285,7 +285,7 @@ export class AccessService {
     return sum
   }
 
-  async getStatsWith({
+  private async getStatsWith({
     locationIds,
     toDate,
     fromDate,
