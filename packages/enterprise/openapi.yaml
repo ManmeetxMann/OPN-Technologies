@@ -88,6 +88,10 @@ components:
           type: string
         notificationFormatCaution:
           type: string
+        notificationIconStop:
+          type: string
+        notificationIconCaution:
+          type: string
       required:
         - name
 

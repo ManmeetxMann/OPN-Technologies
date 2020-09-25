@@ -17,8 +17,11 @@ export type Organization = {
   // The reminder schedule for the apps to prompt for attestations
   dailyReminder: OrganizationReminderSchedule
   // The format for push notifications to use
-  notificationFormatCaution: string
-  notificationFormatStop: string
+  notificationFormatCaution?: string
+  notificationFormatStop?: string
+  // The icon for push notifications to use
+  notificationIconCaution?: string
+  notificationIconStop?: string
 }
 
 export enum OrganizationType {

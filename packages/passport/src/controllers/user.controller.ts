@@ -197,6 +197,12 @@ class UserController implements IControllerBase {
               const defaultFormat = stop
                 ? 'A user from the group __GROUPNAME has reported that they may have COVID-19'
                 : 'A user from the group __GROUPNAME has reported that they may have been exposed to COVID-19'
+              const organizationIcon = stop
+                ? organization.notificationIconStop
+                : organization.notificationIconCaution
+              const icon =
+                organizationIcon ??
+                'https://firebasestorage.googleapis.com/v0/b/opn-platform-ca-prod.appspot.com/o/OPN-Icon.png?alt=media&token=17b833df-767d-4467-9a77-44c50aad5a33'
               const formatString =
                 (stop
                   ? organization.notificationFormatStop
@@ -206,6 +212,7 @@ class UserController implements IControllerBase {
                 sendMessage(
                   'Potential Exposure',
                   formatString.replace('__GROUPNAME', name),
+                  icon,
                   tokens,
                 ),
               )
