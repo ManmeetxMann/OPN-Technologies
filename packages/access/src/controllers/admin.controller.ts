@@ -19,7 +19,7 @@ import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
 import {AccessTokenService} from '../service/access-token.service'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
-import { AccessStats } from '../models/access'
+import {AccessStats} from '../models/access'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -90,16 +90,20 @@ class AdminController implements IRouteController {
     }
   }
 
-  private statsHelper = async (organizationId?: string, locationId?: string): Promise<AccessStats> => {
+  private statsHelper = async (
+    organizationId?: string,
+    locationId?: string,
+  ): Promise<AccessStats> => {
     // Check parameters
-    if (!organizationId && !locationId) throw new BadRequestException("Organization or Location is required")
+    if ((!organizationId && !locationId) || (!!organizationId && !!locationId))
+      throw new BadRequestException('Organization or Location is required')
 
     //TODO: Assert admin can access that location
 
     // Get all locations
-    const locationIds = organizationId ? 
-                        (await this.organizationService.getLocations(organizationId)).map(e => e.id) : 
-                        [locationId]
+    const locationIds = organizationId
+      ? (await this.organizationService.getLocations(organizationId)).map((e) => e.id)
+      : [locationId]
 
     const asOfDateTime = new Date().toISOString()
     const stats = await this.accessService.getTodayStatsForLocations(locationIds)
