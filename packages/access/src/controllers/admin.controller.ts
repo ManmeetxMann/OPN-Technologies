@@ -65,12 +65,6 @@ class AdminController implements IRouteController {
       const paths = locationIdOrPath.split('/')
       const locationId = paths.length > 0 ? paths[paths.length - 1] : locationIdOrPath
 
-      // //TODO: Assert admin can access that location
-      // const asOfDateTime = new Date().toISOString()
-      // const stats = await this.accessService.getTodayStatsForLocation(locationId)
-      // const checkInsPerHour = fakeCheckInsPerHour()
-      // const responseBody = {..._.omit(stats, ['id', 'createdAt']), asOfDateTime, checkInsPerHour} as AccessStats
-
       const responseBody = await this.statsHelper(null, locationId)
 
       res.json(actionSucceed(responseBody))
