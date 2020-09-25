@@ -228,6 +228,10 @@ export class AccessService {
     )
   }
 
+  async getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
+    return await this.getTodayStatsForLocations([locationId])
+  }
+
   async getTodayStatsForLocations(locationIds: string[]): Promise<AccessStatsModel> {
     const today = moment(now()).tz(timeZone).startOf('day')
     const fromDate = today.toDate()
@@ -285,7 +289,7 @@ export class AccessService {
     return sum
   }
 
-  private async getStatsWith({
+  async getStatsWith({
     locationIds,
     toDate,
     fromDate,
