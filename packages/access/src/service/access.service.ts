@@ -237,88 +237,69 @@ export class AccessService {
     const fromDate = today.toDate()
     const toDate = today.add(1, 'day').add(-1, 'second').toDate()
 
-    // Deal with singles
-    if (locationIds.length === 1) {
-      const locationId = locationIds[0]
-      const results = await this.getStats_SingleChunk({locationIds: [locationId], fromDate, toDate})
-      return results.length ? results[0] : this.newStatsFor(locationId)
-    }
-
-    // Multi location
-    const stats = await this.getStatsWith({locationIds, fromDate, toDate})
-
-    // Flatten
-    const statsMap: Record<string, AccessStatsModel> = {}
-    const statsForLocations = stats.reduce((result, item) => {
-      statsMap[item.locationId] = item
-      return result
-    })
-
-    // Add up
-    const sum: AccessStatsModel = {
-      id: '',
-      locationId: '',
-      peopleOnPremises: 0,
-      accessDenied: 0,
-      exposures: 0,
-      pendingPassports: 0,
-      proceedPassports: 0,
-      cautionPassports: 0,
-      stopPassports: 0,
-      asOfDateTime: new Date(),
-      checkInsPerHour: [],
-      createdAt: new firestore.Timestamp(0, 0),
-    }
-    for (const locationId of locationIds) {
-      // Get proper one
-      const current =
-        locationId in statsForLocations
-          ? statsForLocations[locationId]
-          : await this.newStatsFor(locationId)
-
-      // Add up
-      sum.peopleOnPremises += current.peopleOnPremises
-      sum.accessDenied += current.accessDenied
-      sum.exposures += current.exposures
-      sum.pendingPassports += current.pendingPassports
-      sum.proceedPassports += current.proceedPassports
-      sum.cautionPassports += current.cautionPassports
-      sum.stopPassports += current.stopPassports
-    }
-
-    return sum
-  }
-
-  async getStatsWith({
-    locationIds,
-    toDate,
-    fromDate,
-  }: AccessStatsFilter): Promise<AccessStatsModel[]> {
-    return await Promise.all(
-      _.chunk([...locationIds], 10).map((chunk) =>
-        this.getStats_SingleChunk({locationIds: chunk, fromDate, toDate}),
+    const statsByLocationId = await this.getStatsWith({
+      locationIds,
+      fromDate,
+      toDate,
+    }).then((stats) =>
+      stats.reduce((byLocationId, stat) => ({...byLocationId, [stat.locationId]: stat}), {}),
+    )
+    return Promise.all(
+      locationIds.map((locationId) =>
+        statsByLocationId[locationId]
+          ? statsByLocationId[locationId]
+          : this.newStatsFor(locationId),
       ),
-    ).then((results) => flattern(results as AccessStatsModel[][]))
+    ).then((allStats) =>
+      allStats.length === 1
+        ? allStats[0]
+        : allStats.reduce(
+            (sum, current) => {
+              sum.peopleOnPremises += current.peopleOnPremises
+              sum.accessDenied += current.accessDenied
+              sum.exposures += current.exposures
+              sum.pendingPassports += current.pendingPassports
+              sum.proceedPassports += current.proceedPassports
+              sum.cautionPassports += current.cautionPassports
+              sum.stopPassports += current.stopPassports
+              return sum
+            },
+            {
+              id: '',
+              locationId: '',
+              peopleOnPremises: 0,
+              accessDenied: 0,
+              exposures: 0,
+              pendingPassports: 0,
+              proceedPassports: 0,
+              cautionPassports: 0,
+              stopPassports: 0,
+              asOfDateTime: new Date(),
+              checkInsPerHour: [],
+              createdAt: new firestore.Timestamp(0, 0),
+            },
+          ),
+    )
   }
 
-  private async getStats_SingleChunk({
-    locationIds,
-    toDate,
-    fromDate,
-  }: AccessStatsFilter): Promise<AccessStatsModel[]> {
-    let query = this.dataStore.firestoreORM
-      .collection<AccessStatsModel>({path: this.accessStatsRepository.rootPath})
-      .where('locationId', 'in', locationIds)
+  getStatsWith({locationIds, toDate, fromDate}: AccessStatsFilter): Promise<AccessStatsModel[]> {
+    return Promise.all(
+      _.chunk([...locationIds], 10).map((chunk) => {
+        let query = this.dataStore.firestoreORM
+          .collection<AccessStatsModel>({path: this.accessStatsRepository.rootPath})
+          .where('locationId', 'in', chunk)
 
-    if (fromDate) {
-      query = query.where('createdAt', '>=', fromDate)
-    }
+        if (fromDate) {
+          query = query.where('createdAt', '>=', fromDate)
+        }
 
-    if (toDate) {
-      query = query.where('createdAt', '<=', toDate)
-    }
+        if (toDate) {
+          query = query.where('createdAt', '<=', toDate)
+        }
 
-    return await query.fetch()
+        return query.fetch()
+      }),
+    ).then((results) => flattern(results as AccessStatsModel[][]))
   }
 
   incrementPeopleOnPremises(locationId: string, count = 1): Promise<AccessStatsModel> {
@@ -367,18 +348,5 @@ export class AccessService {
       stopPassports: 0,
       createdAt: serverTimestamp(),
     } as AccessStatsModel)
-  }
-
-  private sumOfStats(stats: AccessStatsModel[]): AccessStatsModel {
-    return stats.reduce((sum, current) => {
-      sum.peopleOnPremises += current.peopleOnPremises
-      sum.accessDenied += current.accessDenied
-      sum.exposures += current.exposures
-      sum.pendingPassports += current.pendingPassports
-      sum.proceedPassports += current.proceedPassports
-      sum.cautionPassports += current.cautionPassports
-      sum.stopPassports += current.stopPassports
-      return sum
-    })
   }
 }
