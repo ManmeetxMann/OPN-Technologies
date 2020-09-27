@@ -195,9 +195,9 @@ export class OrganizationService {
     // Firestore doesn't give enough "where" operators to have optional query filters
     // To have a query-builder, we need here to re-assign the query declaration (of type Collection) with a WhereClause Query
     // Therefor the TS transpiler complains because of the types conflicts...
-    const userIdPages = _.chunk(allUserIds ?? [], 10)
+    const userIdPages = allUserIds ? _.chunk(allUserIds, 10) : [undefined]
     const pagedResults = await Promise.all(
-      userIdPages.map((userIds: string) => {
+      userIdPages.map((userIds: string[]) => {
         // @ts-ignore
         let query = this.getUsersGroupRepositoryFor(organizationId).collection()
         if (!!groupId) {
