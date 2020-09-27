@@ -126,11 +126,21 @@ class UserController implements IControllerBase {
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {locationId, userId, includeGuardian} = req.body
+      // HOT FIX: const -> let to force the includeGuardian change
+      // @ts-ignore
+      let {locationId, userId, includeGuardian} = req.body
       const {organizationId, questionnaireId} = await this.organizationService.getLocationById(
         locationId,
       )
       const dependantIds: string[] = req.body.dependantIds ?? []
+
+      // HOT FIX: if missing (not actually true or false) ... force it to true for now because parents are always implicitly included
+      if (includeGuardian !== true || includeGuardian !== false) {
+        includeGuardian = true
+        locationId = locationId
+        userId = userId
+      }
+
       if (!includeGuardian && dependantIds.length === 0) {
         throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
       }
