@@ -36,9 +36,9 @@ export class OrganizationService {
         type: organization.type ?? OrganizationType.Default,
         allowDependants: organization.allowDependants ?? false,
         dailyReminder: {
-          enabled: organization.dailyReminder.enabled ?? false,
-          enabledOnWeekends: organization.dailyReminder.enabled ?? false,
-          timeOfDayMillis: organization.dailyReminder.timeOfDayMillis ?? 0,
+          enabled: organization.dailyReminder?.enabled ?? false,
+          enabledOnWeekends: organization.dailyReminder?.enabledOnWeekends ?? false,
+          timeOfDayMillis: organization.dailyReminder?.timeOfDayMillis ?? 0,
         },
       }),
     )
