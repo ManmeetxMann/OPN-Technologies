@@ -27,6 +27,7 @@ import {flattern} from '../../../common/src/utils/utils'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {now} from '../../../common/src/utils/times'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -626,11 +627,6 @@ class OrganizationController implements IControllerBase {
       {},
     )
 
-    // Fetch Groups
-    const groupsById: Record<string, OrganizationGroup> = await this.organizationService
-      .getGroups(organizationId)
-      .then((results) => results.reduce((byId, group) => ({...byId, [group.id]: group}), {}))
-
     // Get accesses
     const accesses = await this.getAccessesFor(
       [...userIds],
@@ -639,19 +635,16 @@ class OrganizationController implements IControllerBase {
       groupId,
       betweenCreatedDate,
       groupsUsersByUserId,
-      groupsById,
       usersById,
       dependantsById,
     )
 
-    const response = {
+    return {
       accesses,
-      asOfDateTime: live ? new Date().toISOString() : null,
+      asOfDateTime: live ? now().toISOString() : null,
       passportsCountByStatus: getPassportsCountPerStatus(accesses),
       hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
     } as Stats
-
-    return response
   }
 
   private async getAccessesFor(
@@ -661,7 +654,6 @@ class OrganizationController implements IControllerBase {
     groupId: string | undefined,
     betweenCreatedDate: Range<Date>,
     groupsByUserId: Record<string, OrganizationUsersGroup>,
-    groupsById: Record<string, OrganizationGroup>,
     usersById: Record<string, User>,
     dependantsByIds: Record<string, User>,
   ): Promise<AccessWithPassportStatusAndUser[]> {
@@ -673,9 +665,6 @@ class OrganizationController implements IControllerBase {
     const implicitPendingPassports = [...userIds, ...dependantIds]
       .filter((userId) => !passportsByUserIds[userId])
       .map((userId) => ({status: PassportStatuses.Pending, userId} as Passport))
-
-    const groupOf = (userId: string): OrganizationGroup =>
-      groupsById[groupsByUserId[userId]?.groupId]
 
     // Fetch accesses
     const accessesByStatusToken: Record<string, Access> = await this.fetchAccesses(
@@ -690,7 +679,7 @@ class OrganizationController implements IControllerBase {
     )
 
     const isAccessEligibleForUserId = (userId: string) =>
-      !groupId || groupOf(userId)?.id === groupId
+      !groupId || groupsByUserId[userId]?.groupId === groupId
 
     // Remap accesses
     const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)]
@@ -740,15 +729,15 @@ class OrganizationController implements IControllerBase {
 
     // Handle duplicates
     const distinctAccesses: Record<string, AccessWithPassportStatusAndUser> = {}
+    const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
     accesses.forEach(({user, status, ...access}) => {
-      if (!groupOf(user.id)) {
+      if (!groupsByUserId[user.id]) {
         console.log('That is not supposed to happened but...', user.id, groupsByUserId)
         return
       }
 
-      const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
       const duplicateKey = `${normalize(user.firstName)}|${normalize(user.lastName)}|${
-        groupOf(user.id)?.id
+        groupsByUserId[user.id]?.groupId
       }`
       const target = distinctAccesses[duplicateKey]
 
