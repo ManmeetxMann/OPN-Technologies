@@ -27,6 +27,7 @@ import {flattern} from '../../../common/src/utils/utils'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {now} from '../../../common/src/utils/times'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -640,7 +641,7 @@ class OrganizationController implements IControllerBase {
 
     return {
       accesses,
-      asOfDateTime: live ? new Date().toISOString() : null,
+      asOfDateTime: live ? now().toISOString() : null,
       passportsCountByStatus: getPassportsCountPerStatus(accesses),
       hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
     } as Stats
@@ -728,13 +729,13 @@ class OrganizationController implements IControllerBase {
 
     // Handle duplicates
     const distinctAccesses: Record<string, AccessWithPassportStatusAndUser> = {}
+    const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
     accesses.forEach(({user, status, ...access}) => {
       if (!groupsByUserId[user.id]) {
         console.log('That is not supposed to happened but...', user.id, groupsByUserId)
         return
       }
 
-      const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
       const duplicateKey = `${normalize(user.firstName)}|${normalize(user.lastName)}|${
         groupsByUserId[user.id]?.groupId
       }`
