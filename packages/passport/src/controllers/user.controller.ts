@@ -135,7 +135,7 @@ class UserController implements IControllerBase {
       const dependantIds: string[] = req.body.dependantIds ?? []
 
       // HOT FIX: if missing (not actually true or false) ... force it to true for now because parents are always implicitly included
-      if (includeGuardian !== true || includeGuardian !== false) {
+      if (includeGuardian !== true && includeGuardian !== false) {
         includeGuardian = true
         locationId = locationId
         userId = userId
