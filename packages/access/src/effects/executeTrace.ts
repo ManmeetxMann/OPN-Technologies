@@ -243,14 +243,15 @@ export default class TraceListener {
     const allOrganizations = [...allOrganizationIds]
     const allUsers = [...allUserIds]
     // paginate the location and org lists
-    const locationPages = []
+    // const locationPages = []
     const organizationPages = []
     const userPages = []
     for (let i = 0; i < allLocations.length; i += 10) {
-      locationPages.push(allLocations.slice(i, i + 10))
+      // locationPages.push(allLocations.slice(i, i + 10))
     }
     for (let i = 0; i < allOrganizations.length; i += 10) {
-      organizationPages.push(allOrganizations.slice(i, i + 10))
+      // HACK: PREVENT EMAILS FROM BEING SENT TO ANYONE BUT US
+      // organizationPages.push(allOrganizations.slice(i, i + 10))
     }
     for (let i = 0; i < allUsers.length; i += 10) {
       userPages.push(allUsers.slice(i, i + 10))
@@ -283,25 +284,25 @@ export default class TraceListener {
 
     const reportsForLocation = {}
     const reportsForOrganization = {}
+    const allReports = []
     const header = getHeaderSection(sourceUser, endTime, status, questionnaire, answers)
     reports.forEach((report) => {
+      const section = getExposureSection(report, users, locations[report.locationId].title)
       if (!reportsForLocation[report.locationId]) {
         reportsForLocation[report.locationId] = []
       }
-      reportsForLocation[report.locationId].push(
-        getExposureSection(report, users, locations[report.locationId].title),
-      )
+      reportsForLocation[report.locationId].push(section)
       if (!reportsForOrganization[report.organizationId]) {
         reportsForOrganization[report.organizationId] = []
       }
-      reportsForOrganization[report.organizationId].push(
-        getExposureSection(report, users, locations[report.locationId].title),
-      )
+      reportsForOrganization[report.organizationId].push(section)
+      allReports.push(section)
     })
 
     const handledIds: Set<string> = new Set()
     // may contain duplicates...
     // in future when we want to send to location admins as well
+
     // const allRecipients = [...locationAdmins, ...organizationAdmins]
     const allRecipients = [...organizationAdmins]
       .filter((u) => {
@@ -335,8 +336,13 @@ export default class TraceListener {
           : `${header} No one was in contact with the user`,
       ),
     )
-    if (!allRecipients.length) {
+
+    // HACK: only send one email using an empty array
+    // this keeps email volume down
+    if (!allReports.length) {
       send([], 'Exposure report', `${header} No one was in contact with the user`)
+    } else {
+      send([], `Exposure report for org ${orgId}`, allReports.join(''))
     }
   }
 }

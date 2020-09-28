@@ -81,6 +81,8 @@ export default class ReportSender {
       organizationId,
     )
     const allEmails = recipients.map(({profile}) => profile.email)
-    send(allEmails, `Access Report ${date}, for ${organizationName}`, message)
+    // HACK: only send one email using an empty array
+    // this keeps email volume down
+    send(allEmails[0] ?? [], `Access Report ${date}, for ${organizationName}`, message)
   }
 }
