@@ -15,7 +15,7 @@ import {OrganizationModel} from '../../../enterprise/src/repository/organization
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
-const SUPPRESS_USER_EMAILS = Config.get('FEATURE_ONLY_EMAIL_SUPPORT')
+const SUPPRESS_USER_EMAILS = Config.get('FEATURE_ONLY_EMAIL_SUPPORT') === 'enabled'
 
 type Overlap = {
   start: Date

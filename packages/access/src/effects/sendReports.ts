@@ -15,7 +15,7 @@ import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
-const SUPPRESS_USER_EMAILS = Config.get('FEATURE_ONLY_EMAIL_SUPPORT')
+const SUPPRESS_USER_EMAILS = Config.get('FEATURE_ONLY_EMAIL_SUPPORT') === 'enabled'
 
 export default class ReportSender {
   repo: AttendanceRepository
