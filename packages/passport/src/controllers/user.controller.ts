@@ -92,6 +92,20 @@ class UserController implements IControllerBase {
       const existingPassport = statusToken
         ? await this.passportService.findOneByToken(statusToken)
         : null
+
+      // Handle no passport and pending one
+      if (!existingPassport || existingPassport.status === PassportStatuses.Pending) {
+        const newPassport = await this.passportService.create(
+          PassportStatuses.Pending,
+          userId,
+          dependantIds,
+          includeGuardian,
+        )
+        res.json(actionSucceed(newPassport))
+        return
+      }
+
+      // TODO: Avoid mutation, so avoid using `let`
       let currentPassport: Passport
       if (existingPassport) {
         /*
@@ -118,7 +132,14 @@ class UserController implements IControllerBase {
           includeGuardian,
         )
       }
-      res.json(actionSucceed(currentPassport))
+      // Temporary hot fix until we're aligned on a requirement
+      // Handle old passports that doesn't have `includesGuardian` flag
+      res.json(
+        actionSucceed({
+          ...currentPassport,
+          includesGuardian: currentPassport.includesGuardian ?? true,
+        }),
+      )
     } catch (error) {
       next(error)
     }
@@ -135,7 +156,7 @@ class UserController implements IControllerBase {
       const dependantIds: string[] = req.body.dependantIds ?? []
 
       // HOT FIX: if missing (not actually true or false) ... force it to true for now because parents are always implicitly included
-      if (includeGuardian !== true || includeGuardian !== false) {
+      if (includeGuardian !== true && includeGuardian !== false) {
         includeGuardian = true
         locationId = locationId
         userId = userId
