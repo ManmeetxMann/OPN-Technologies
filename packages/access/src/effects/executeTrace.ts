@@ -398,11 +398,12 @@ export default class TraceListener {
         //   [],
         // ),
       }))
+    const orgName = organizationLookup[orgId].org.name
     if (!SUPPRESS_USER_EMAILS) {
       allRecipients.forEach((recipient) =>
         send(
           recipient.email,
-          'Contact trace',
+          `Contact trace for ${orgName}`,
           recipient.orgReports.length
             ? `${header} ${recipient.orgReports.join('')}`
             : `${header} No one was in contact with the user`,
@@ -413,9 +414,9 @@ export default class TraceListener {
     // Send a dedicated email to support with all of the exposures
     if (!allReports.length) {
       // No reports means that no one was exposed
-      send([], 'Exposure report', `${header} No one was in contact with the user`)
+      send([], `Exposure report for ${orgName}`, `${header} No one was in contact with the user`)
     } else {
-      send([], `Exposure report for org ${orgId}`, allReports.join(''))
+      send([], `Exposure report for ${orgName}`, allReports.join(''))
     }
   }
 }
