@@ -15,6 +15,7 @@ import {OrganizationModel} from '../../../enterprise/src/repository/organization
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
+const SUPPRESS_USER_EMAILS = Config.get('FEATURE_ONLY_EMAIL_SUPPORT')
 
 type Overlap = {
   start: Date
@@ -243,15 +244,14 @@ export default class TraceListener {
     const allOrganizations = [...allOrganizationIds]
     const allUsers = [...allUserIds]
     // paginate the location and org lists
-    // const locationPages = []
+    const locationPages = []
     const organizationPages = []
     const userPages = []
     for (let i = 0; i < allLocations.length; i += 10) {
-      // locationPages.push(allLocations.slice(i, i + 10))
+      locationPages.push(allLocations.slice(i, i + 10))
     }
     for (let i = 0; i < allOrganizations.length; i += 10) {
-      // HACK: PREVENT EMAILS FROM BEING SENT TO ANYONE BUT US
-      // organizationPages.push(allOrganizations.slice(i, i + 10))
+      organizationPages.push(allOrganizations.slice(i, i + 10))
     }
     for (let i = 0; i < allUsers.length; i += 10) {
       userPages.push(allUsers.slice(i, i + 10))
@@ -327,19 +327,21 @@ export default class TraceListener {
         //   [],
         // ),
       }))
-    allRecipients.forEach((recipient) =>
-      send(
-        recipient.email,
-        'Contact trace',
-        recipient.orgReports.length
-          ? `${header} ${recipient.orgReports.join('')}`
-          : `${header} No one was in contact with the user`,
-      ),
-    )
+    if (!SUPPRESS_USER_EMAILS) {
+      allRecipients.forEach((recipient) =>
+        send(
+          recipient.email,
+          'Contact trace',
+          recipient.orgReports.length
+            ? `${header} ${recipient.orgReports.join('')}`
+            : `${header} No one was in contact with the user`,
+        ),
+      )
+    }
 
-    // HACK: only send one email using an empty array
-    // this keeps email volume down
+    // Send a dedicated email to support with all of the exposures
     if (!allReports.length) {
+      // No reports means that no one was exposed
       send([], 'Exposure report', `${header} No one was in contact with the user`)
     } else {
       send([], `Exposure report for org ${orgId}`, allReports.join(''))

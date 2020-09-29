@@ -15,6 +15,7 @@ import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
+const SUPPRESS_USER_EMAILS = Config.get('FEATURE_ONLY_EMAIL_SUPPORT')
 
 export default class ReportSender {
   repo: AttendanceRepository
@@ -81,8 +82,7 @@ export default class ReportSender {
       organizationId,
     )
     const allEmails = recipients.map(({profile}) => profile.email)
-    // HACK: only send one email using an empty array
-    // this keeps email volume down
-    send(allEmails[0] ?? [], `Access Report ${date}, for ${organizationName}`, message)
+    const recipientEmails = SUPPRESS_USER_EMAILS ? [] : allEmails
+    send(recipientEmails, `Access Report ${date}, for ${organizationName}`, message)
   }
 }
