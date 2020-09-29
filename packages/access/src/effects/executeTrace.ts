@@ -307,7 +307,6 @@ export default class TraceListener {
       }),
       {},
     )
-
     // TODO: this is an extremely expensive loop
     const allUsersWithDependantsAndGroups = await Promise.all(
       users.map(async (user) => {
@@ -326,14 +325,16 @@ export default class TraceListener {
       .map((lookup) => ({
         id: lookup.id,
         orgId: lookup.orgId,
-        groupNames: lookup.groups.map((membership) =>
-          organizationLookup[lookup.orgId].groups.find((group) => group.id === membership.groupId),
+        groupNames: lookup.groups.map(
+          (membership) =>
+            organizationLookup[lookup.orgId].groups.find((group) => group.id === membership.groupId)
+              ?.name,
         ),
         dependants: lookup.dependants.map((dep) => ({
           id: dep.id,
           groupName: organizationLookup[lookup.orgId].groups.find(
             (group) => group.id === dep.groupId,
-          ),
+          )?.name,
         })),
       }))
       .reduce((lookup, data) => ({...lookup, [data.id]: data}), {})
@@ -343,9 +344,21 @@ export default class TraceListener {
     const reportsForLocation = {}
     const reportsForOrganization = {}
     const allReports = []
-    const header = getHeaderSection(sourceUser, endTime, status, questionnaire, answers)
+    const header = getHeaderSection(
+      sourceUser,
+      endTime,
+      status,
+      questionnaire,
+      answers,
+      userDependantLookup,
+    )
     reports.forEach((report) => {
-      const section = getExposureSection(report, users, locations[report.locationId].title, userDependantLookup)
+      const section = getExposureSection(
+        report,
+        users,
+        locations[report.locationId].title,
+        userDependantLookup,
+      )
       if (!reportsForLocation[report.locationId]) {
         reportsForLocation[report.locationId] = []
       }
