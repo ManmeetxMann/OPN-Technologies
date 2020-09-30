@@ -81,6 +81,8 @@ export default class TraceListener {
   async handleMessage(message: {
     data: string
     attributes: {
+      includesGuardian: string
+      dependantIds: string
       startTime: string
       endTime: string
       passportStatus: string
@@ -101,6 +103,9 @@ export default class TraceListener {
     const endTime = parseInt(attributes.endTime, 10)
     await this.traceFor(
       userId,
+      // not sure if this comes over the wire in string or boolean form
+      attributes.includesGuardian && attributes.includesGuardian !== 'false',
+      JSON.parse(attributes.dependantIds),
       startTime,
       endTime,
       passportStatus,
@@ -113,6 +118,8 @@ export default class TraceListener {
 
   async traceFor(
     userId: string,
+    includesGuardian: boolean,
+    dependantIds: string[],
     startTime: number,
     endTime: number,
     passportStatus: string,
@@ -142,7 +149,11 @@ export default class TraceListener {
         const otherUsersAccesses: SinglePersonAccess[] = []
 
         dailyReport.accesses.forEach((access) => {
-          if (access.userId === userId) {
+          if (
+            access.userId === userId &&
+            ((includesGuardian && !access.dependantId) ||
+              (!includesGuardian && dependantIds.includes(access.dependantId)))
+          ) {
             mainUserAccesses.push(access)
           } else {
             otherUsersAccesses.push(access)
@@ -208,6 +219,8 @@ export default class TraceListener {
     this.sendEmails(
       result,
       userId,
+      includesGuardian,
+      dependantIds,
       locations,
       accessLookup,
       endTime,
@@ -223,6 +236,8 @@ export default class TraceListener {
   private async sendEmails(
     reports: ExposureReport[],
     userId: string,
+    includesGuardian: boolean,
+    dependantIds: string[],
     locations: Record<string, LocationDescription>,
     accesses: AccessLookup,
     endTime: number,
@@ -323,7 +338,7 @@ export default class TraceListener {
 
     const userDependantLookup: Record<string, UserGroupData> = allUsersWithDependantsAndGroups
       .map((lookup) => ({
-        id: lookup.id,
+        id: lookup.id, // a userId
         orgId: lookup.orgId,
         groupNames: lookup.groups.map(
           (membership) =>
@@ -332,6 +347,8 @@ export default class TraceListener {
         ),
         dependants: lookup.dependants.map((dep) => ({
           id: dep.id,
+          firstName: dep.firstName,
+          lastNameName: dep.lastName,
           groupName: organizationLookup[lookup.orgId].groups.find(
             (group) => group.id === dep.groupId,
           )?.name,
@@ -346,6 +363,8 @@ export default class TraceListener {
     const allReports = []
     const header = getHeaderSection(
       sourceUser,
+      includesGuardian,
+      dependantIds,
       endTime,
       status,
       questionnaire,

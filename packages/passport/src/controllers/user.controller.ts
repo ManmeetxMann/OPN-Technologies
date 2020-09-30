@@ -192,8 +192,11 @@ class UserController implements IControllerBase {
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
         if (userId) {
           const nowMillis = now().valueOf()
+          // TODO: do we have message and attributes swapped?
           this.topic.publish(Buffer.from('trace-required'), {
             userId,
+            dependantIds: JSON.stringify(dependantIds),
+            includesGuardian: includeGuardian,
             passportStatus,
             startTime: `${nowMillis - TRACE_LENGTH}`,
             endTime: `${nowMillis}`,

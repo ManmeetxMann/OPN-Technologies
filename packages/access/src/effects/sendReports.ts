@@ -96,6 +96,8 @@ export default class ReportSender {
         ),
         dependants: lookup.dependants.map((dep) => ({
           id: dep.id,
+          firstName: dep.firstName,
+          lastName: dep.lastName,
           groupName: allGroups.find((group) => group.id === dep.groupId)?.name,
         })),
       }))
