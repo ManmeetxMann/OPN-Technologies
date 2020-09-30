@@ -359,6 +359,9 @@ export default class TraceListener {
         locations[report.locationId].title,
         userDependantLookup,
       )
+      if (!section) {
+        return
+      }
       if (!reportsForLocation[report.locationId]) {
         reportsForLocation[report.locationId] = []
       }
@@ -416,7 +419,7 @@ export default class TraceListener {
       // No reports means that no one was exposed
       send([], `Exposure report for ${orgName}`, `${header} No one was in contact with the user`)
     } else {
-      send([], `Exposure report for ${orgName}`, allReports.join(''))
+      send([], `Exposure report for ${orgName}`, `${header} ${allReports.join('')}`)
     }
   }
 }
