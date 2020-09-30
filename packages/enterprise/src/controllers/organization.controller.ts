@@ -14,17 +14,21 @@ import {User, UserDependant} from '../../../common/src/data/user'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {AccessService} from '../../../access/src/service/access.service'
+import {AttestationService} from '../../../passport/src/services/attestation-service'
 import moment from 'moment'
 import {Access, AccessWithPassportStatusAndUser} from '../../../access/src/models/access'
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {Passport, PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
 import {Stats, StatsFilter} from '../models/stats'
+import {UserContactTraceReportRequest} from '../types/trace-request'
 import {Range} from '../../../common/src/types/range'
 import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
+import {AccessModel} from '../../../access/src/repository/access.repository'
+import {StatusChangesResult} from '../../../passport/src/types/status-changes-result'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -64,6 +68,7 @@ class OrganizationController implements IControllerBase {
   private userService = new UserService()
   private accessService = new AccessService()
   private passportService = new PassportService()
+  private attestationService = new AttestationService()
 
   constructor() {
     this.initRoutes()
@@ -96,7 +101,10 @@ class OrganizationController implements IControllerBase {
     const stats = innerRouter().use(
       '/stats',
       authMiddleware,
-      innerRouter().get('/', this.getStats),
+      innerRouter()
+        .get('/', this.getStats)
+        .get('/contact-traces', this.getUserContactTraceReport)
+      ,
     )
     const organizations = Router().use(
       '/organizations',
@@ -552,6 +560,61 @@ class OrganizationController implements IControllerBase {
         passportsCountByStatus: getPassportsCountPerStatus(accesses),
         hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
       } as Stats
+
+      res.json(actionSucceed(response))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getUserContactTraceReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+
+      let isDependentUser = false
+
+      // if (parentUserId) {
+      //   const user = await this.userService.findOne(parentUserId)
+      //   if (user && user.organizationIds.indexOf(organizationId) > -1) {
+      //     isDependentUser = true
+      //   }
+      // }
+
+      const live = !from && !to
+
+      const betweenCreatedDate = {
+        from: live ? moment().startOf('day').toDate() : new Date(from),
+        to: live ? undefined : new Date(to),
+      }
+
+      const accesses: Access[] = await this.accessService.findAllWith({
+        userIds: [userId],
+        betweenCreatedDate,
+      })
+
+      const accessLocationIds: string[] = accesses.map((item: Access) => item.locationId)
+
+      const locations: OrganizationLocation[] = await this.organizationService.getLocations(
+        organizationId,
+      )
+
+      const accessedLocations: OrganizationLocation[] = locations.filter((location: OrganizationLocation) => accessLocationIds.indexOf(location.id) > -1)
+
+      // fetch attestation array in the time period
+      const statusChangesResult: StatusChangesResult = await this.attestationService.getStatusChangesInPeriod(
+        organizationId,
+        userId,
+        from,
+        to,
+      )
+
+      const response = {
+        locations: accessedLocations,
+        statusChanges: statusChangesResult.statusChanges,
+        answers: statusChangesResult.answersForFailure,
+        exposures: statusChangesResult.exposures,
+      }
 
       res.json(actionSucceed(response))
     } catch (error) {

@@ -5,6 +5,8 @@ import {Collection} from '@firestore-simple/admin'
 
 export enum DataModelFieldMapOperatorType {
   Equals = '==',
+  GreatOrEqual = '>=',
+  LessOrEqual = '<=',
   ArrayContains = 'array-contains',
 }
 
