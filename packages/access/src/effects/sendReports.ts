@@ -75,7 +75,7 @@ export default class ReportSender {
 
     const allGroups = await this.orgService.getGroups(organizationId)
 
-    // TODO: this is an extremely expensive loop
+    // TODO: this is an extremely expensive loo. See issue #429 in github
     const allUsersWithDependantsAndGroups = await Promise.all(
       users.map(async (user) => {
         return {

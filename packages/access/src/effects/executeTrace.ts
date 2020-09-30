@@ -307,7 +307,7 @@ export default class TraceListener {
       }),
       {},
     )
-    // TODO: this is an extremely expensive loop
+    // TODO: this is an extremely expensive loop. See issue #429 in github
     const allUsersWithDependantsAndGroups = await Promise.all(
       users.map(async (user) => {
         return {
