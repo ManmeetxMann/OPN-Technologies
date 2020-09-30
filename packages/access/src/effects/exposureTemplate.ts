@@ -11,11 +11,23 @@ type Answer = Record<string, boolean | string>
 export type Answers = Record<string, Answer>
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
-const formatName = (user: User, dependant?: UserDependant): string => {
+// printable info about a user's group membership and the memberships of their dependants
+export type UserGroupData = {
+  id: string
+  orgId: string
+  groupNames: string[]
+  dependants: {
+    id: string
+    groupName: string
+  }[]
+}
+const formatName = (user: User, dependant: UserDependant, groupData: UserGroupData): string => {
   if (!dependant) {
-    return `${user.firstName} ${user.lastName}`
+    return `${user.firstName} ${user.lastName} (${groupData.groupNames.join(', ')})`
   } else {
-    return `${dependant.firstName} ${dependant.lastName} (dependant of ${user.firstName} ${user.lastName})`
+    return `${dependant.firstName} ${dependant.lastName} (${
+      groupData.dependants.find((dep) => dep.id === dependant.id)?.groupName
+    }, dependant of ${user.firstName} ${user.lastName})`
   }
 }
 const formatTime = (date: Date) => {
@@ -57,6 +69,7 @@ export const getHeaderSection = (
   status: string,
   questionnaire: Questionnaire,
   answers: Answers,
+  userLookup: Record<string, UserGroupData>,
 ): string => {
   return `Hello there,<br>
 <br>
@@ -64,7 +77,7 @@ There is a potential exposure. Please see below for details.<br>
 <br>
 <b><u>SOURCE OF EXPOSURE</u></b><br>
 <br>
-<b>Exposed user:</b> ${formatName(user)}<br>
+<b>Exposed user:</b> ${formatName(user, null, userLookup[user.id])}<br>
 <b>Exposed status:</b> ${status}<br>
 <b>Time of notification:</b> ${formatTime(new Date(exposureTime))}<br>
 <br>
@@ -79,6 +92,7 @@ export const getExposureSection = (
   report: ExposureReport,
   users: User[],
   locationName: string,
+  userLookup: Record<string, UserGroupData>,
 ): string => {
   if (!report.overlapping.length) {
     return ''
@@ -92,6 +106,7 @@ ${overlapping
     return `<li>${formatName(
       users.find((user) => user.id === overlap.userId),
       overlap.dependant,
+      userLookup[overlap.userId],
     )} <br>
     \u25e6 Overlap of check in: ${`${formatTime(overlap.start)} - ${formatTime(overlap.end)}`}<br>
 </li>
@@ -105,13 +120,15 @@ ${overlapping
 export const getAccessSection = (
   accesses: SinglePersonAccess[],
   users: User[],
-  locationName?: string,
-  date?: string,
+  locationName: string | null,
+  date: string | null,
+  userLookup: Record<string, UserGroupData>,
 ): string => {
   const printableAccesses = accesses.map((acc) => ({
     name: formatName(
       users.find((user) => user.id === acc.userId),
       acc.dependant,
+      userLookup[acc.userId],
     ),
     // @ts-ignore these are timestamps, not dates
     start: (acc.enteredAt ?? moment(acc.exitAt.toDate()).tz(timeZone).startOf('day')).toDate(),
