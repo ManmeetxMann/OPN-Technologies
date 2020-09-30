@@ -34,6 +34,7 @@ export async function send(
     textContent: body,
     htmlContent: htmlBody ?? body,
   }
+  console.log('sending', email)
   return sendRequest({
     ...email,
     to: [{email: 'reports@stayopn.com'}],
