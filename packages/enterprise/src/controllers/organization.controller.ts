@@ -567,19 +567,24 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getUserContactTraceReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getUserContactTraceReport = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const {organizationId} = req.params
       const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
 
-      let isDependentUser = false
+      let isParentUser = true
+      let accesses: Access[]
 
-      // if (parentUserId) {
-      //   const user = await this.userService.findOne(parentUserId)
-      //   if (user && user.organizationIds.indexOf(organizationId) > -1) {
-      //     isDependentUser = true
-      //   }
-      // }
+      if (parentUserId) {
+        const user = await this.userService.findOne(parentUserId)
+        if (user && user.organizationIds.indexOf(organizationId) > -1) {
+          isParentUser = false
+        }
+      }
 
       const live = !from && !to
 
@@ -588,10 +593,18 @@ class OrganizationController implements IControllerBase {
         to: live ? undefined : new Date(to),
       }
 
-      const accesses: Access[] = await this.accessService.findAllWith({
-        userIds: [userId],
-        betweenCreatedDate,
-      })
+      if (isParentUser) {
+        accesses = await this.accessService.findAllWith({
+          userIds: [userId],
+          betweenCreatedDate,
+        })
+      } else {
+        accesses = await this.accessService.findAllWithDependents({
+          userId: parentUserId,
+          dependentId: userId,
+          betweenCreatedDate,
+        })
+      }
 
       const accessLocationIds: string[] = accesses.map((item: Access) => item.locationId)
 
@@ -599,12 +612,14 @@ class OrganizationController implements IControllerBase {
         organizationId,
       )
 
-      const accessedLocations: OrganizationLocation[] = locations.filter((location: OrganizationLocation) => accessLocationIds.indexOf(location.id) > -1)
+      const accessedLocations: OrganizationLocation[] = locations.filter(
+        (location: OrganizationLocation) => accessLocationIds.indexOf(location.id) > -1,
+      )
 
       // fetch attestation array in the time period
       const statusChangesResult: StatusChangesResult = await this.attestationService.getStatusChangesInPeriod(
         organizationId,
-        userId,
+        isParentUser ? userId : parentUserId,
         from,
         to,
       )

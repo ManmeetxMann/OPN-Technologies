@@ -14,6 +14,7 @@ import * as _ from 'lodash'
 import {PassportStatus} from '../../../passport/src/models/passport'
 import {AccessStatsFilter} from '../models/access-stats'
 import {Config} from '../../../common/src/utils/config'
+import {AccessFilterWithDependent} from '../types'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -225,6 +226,69 @@ export class AccessService {
     return (hasFilter ? query.fetch() : query.fetchAll()).then((accesses) =>
       accesses.map(AccessService.mapAccessDates),
     )
+  }
+
+  async findAllWithDependents({
+    userId,
+    dependentId,
+    betweenCreatedDate,
+    locationId,
+  }: AccessFilterWithDependent): Promise<Access[]> {
+    // @ts-ignore
+    let query = this.accessRepository.collection()
+
+    if (userId) {
+      // @ts-ignore
+      query = query.where('userId', '==', userId)
+    }
+    if (locationId) {
+      // @ts-ignore
+      query = query.where('locationId', '==', locationId)
+    }
+    if (betweenCreatedDate) {
+      const {from, to} = betweenCreatedDate
+      if (from) {
+        // @ts-ignore
+        query = query.where('createdAt', '>=', from)
+      }
+      if (to) {
+        // @ts-ignore
+        query = query.where('createdAt', '<=', to)
+      }
+    }
+
+    const hasFilter = userId || locationId || betweenCreatedDate
+
+    // @ts-ignore
+    const accesses = hasFilter ? await query.fetch() : await query.fetchAll()
+
+    //@ts-ignore
+    const filteredAccesses = accesses
+      .map(
+        (access: Access): Access => ({
+          ...access,
+          //@ts-ignore
+          createdAt: access.createdAt.toDate().toISOString(),
+          //@ts-ignore
+          enteredAt: access.enteredAt?.toDate().toISOString(),
+          //@ts-ignore
+          exitAt: access.exitAt?.toDate().toISOString(),
+          //@ts-ignore
+          dependants: Object.values(access.dependants).map(({id, enteredAt, exitAt}) => ({
+            id,
+            //@ts-ignore
+            enteredAt: enteredAt?.toDate().toISOString(),
+            //@ts-ignore
+            exitAt: exitAt?.toDate().toISOString(),
+          })),
+        }),
+      )
+      .filter(
+        (item) => item.dependants && item.dependants.map((dep) => dep.id).indexOf(dependentId) > -1,
+      )
+
+    // @ts-ignore
+    return filteredAccesses
   }
 
   getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
