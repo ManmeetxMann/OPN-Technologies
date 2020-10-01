@@ -45,7 +45,7 @@ export class AttestationService {
     from: string,
     to: string,
   ): Promise<StatusChangesResult> {
-    const attestations = await this.attestationRepository.findWhereMapHasKeyValueEqual([
+    const attestations = await this.attestationRepository.findWhereEqualInMap([
       {
         map: '/',
         key: 'organizationId',
