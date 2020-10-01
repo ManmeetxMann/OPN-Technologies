@@ -15,12 +15,14 @@ import {User, UserDependant} from '../../../common/src/data/user'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {AccessService} from '../../../access/src/service/access.service'
+import {AttestationService} from '../../../passport/src/services/attestation-service'
 import moment from 'moment'
 import {Access, AccessWithPassportStatusAndUser} from '../../../access/src/models/access'
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {Passport, PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
 import {Stats, StatsFilter} from '../models/stats'
+import {UserContactTraceReportRequest} from '../types/trace-request'
 import {Range} from '../../../common/src/types/range'
 import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
@@ -28,6 +30,7 @@ import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
+import {StatusChangesResult} from '../../../passport/src/types/status-changes-result'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -67,6 +70,7 @@ class OrganizationController implements IControllerBase {
   private userService = new UserService()
   private accessService = new AccessService()
   private passportService = new PassportService()
+  private attestationService = new AttestationService()
 
   constructor() {
     this.initRoutes()
@@ -102,7 +106,8 @@ class OrganizationController implements IControllerBase {
       authMiddleware,
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
-        .get('/health', this.getStatsHealth),
+        .get('/health', this.getStatsHealth)
+        .get('/contact-traces', this.getUserContactTraceReport)
     )
     const organizations = Router().use(
       '/organizations',
@@ -645,6 +650,76 @@ class OrganizationController implements IControllerBase {
       passportsCountByStatus: getPassportsCountPerStatus(accesses),
       hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
     } as Stats
+  }
+
+  getUserContactTraceReport = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+
+      let isParentUser = true
+      let accesses: Access[]
+
+      if (parentUserId) {
+        const user = await this.userService.findOne(parentUserId)
+        if (user && user.organizationIds.indexOf(organizationId) > -1) {
+          isParentUser = false
+        }
+      }
+
+      const live = !from && !to
+
+      const betweenCreatedDate = {
+        from: live ? moment().startOf('day').toDate() : new Date(from),
+        to: live ? undefined : new Date(to),
+      }
+
+      if (isParentUser) {
+        accesses = await this.accessService.findAllWith({
+          userIds: [userId],
+          betweenCreatedDate,
+        })
+      } else {
+        accesses = await this.accessService.findAllWithDependents({
+          userId: parentUserId,
+          dependentId: userId,
+          betweenCreatedDate,
+        })
+      }
+
+      const accessLocationIds: string[] = accesses.map((item: Access) => item.locationId)
+
+      const locations: OrganizationLocation[] = await this.organizationService.getLocations(
+        organizationId,
+      )
+
+      const accessedLocations: OrganizationLocation[] = locations.filter(
+        (location: OrganizationLocation) => accessLocationIds.indexOf(location.id) > -1,
+      )
+
+      // fetch attestation array in the time period
+      const statusChangesResult: StatusChangesResult = await this.attestationService.getStatusChangesInPeriod(
+        organizationId,
+        isParentUser ? userId : parentUserId,
+        from,
+        to,
+      )
+
+      const response = {
+        locations: accessedLocations,
+        statusChanges: statusChangesResult.statusChanges,
+        answers: statusChangesResult.answersForFailure,
+        exposures: statusChangesResult.exposures,
+      }
+
+      res.json(actionSucceed(response))
+    } catch (error) {
+      next(error)
+    }
   }
 
   private async getAccessesFor(

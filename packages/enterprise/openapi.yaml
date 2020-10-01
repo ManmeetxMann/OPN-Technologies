@@ -1038,6 +1038,37 @@ paths:
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationStats'
 
+  /organizations/{organizationId}/stats/contact-traces:
+    get:
+      description: Get stats summary for user contact traces (admin access required)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: userId
+          schema:
+            type: string
+        - in: query
+          name: parentUserId
+          schema:
+            type: string
+        - in: query
+          name: from
+          schema:
+            type: string
+        - in: query
+          name: to
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully computed (format to come)
+
   /organizations/{organizationId}/stats/health:
     get:
       description: Get stats summary for one organization (admin access required)
