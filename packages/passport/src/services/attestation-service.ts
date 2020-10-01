@@ -45,7 +45,7 @@ export class AttestationService {
     from: string,
     to: string,
   ): Promise<StatusChangesResult> {
-    const attestations = await this.attestationRepository.findWhereEqualInMap([
+    const selector = [
       {
         map: '/',
         key: 'organizationId',
@@ -58,31 +58,44 @@ export class AttestationService {
         operator: DataModelFieldMapOperatorType.Equals,
         value: userId,
       },
-      {
+    ]
+
+    if (from) {
+      selector.push({
         map: '/',
         key: 'attestationTime',
         operator: DataModelFieldMapOperatorType.GreatOrEqual,
         value: from,
-      },
-      {
+      })
+    }
+
+    if (to) {
+      selector.push({
         map: '/',
         key: 'attestationTime',
         operator: DataModelFieldMapOperatorType.LessOrEqual,
         value: to,
-      },
-    ])
+      })
+    }
+
+    const attestations = await this.attestationRepository.findWhereEqualInMap(selector)
 
     const attestationStatuses: PassportStatus[] = attestations.map((attestation: Attestation) => attestation.status)
     const attestationAnswersForFailure: AttestationAnswers[] = attestations
       .filter((attestation: Attestation) => attestation.status === PassportStatuses.Caution || attestation.status === PassportStatuses.Stop)
       .map((attestation: Attestation) => attestation.answers)
 
-    const allTracesForUserInPeriod = await this.traceRepository
-      .collection()
-      .where('userId', '==', userId)
-      .where('date', '>=', from)
-      .where('date', '<=', to)
-      .fetch()
+    const query = this.traceRepository.collection().where('userId', '==', userId)
+
+    if (from) {
+      query.where('date', '>=', from)
+    }
+
+    if (to) {
+      query.where('date', '<=', to)
+    }
+
+    const allTracesForUserInPeriod = await query.fetch()
 
     const riskyTraces = allTracesForUserInPeriod
       .filter((trace: TraceModel) => trace.passportStatus === PassportStatuses.Stop || trace.passportStatus === PassportStatuses.Caution)

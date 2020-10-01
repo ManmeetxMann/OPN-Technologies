@@ -259,7 +259,7 @@ export class AccessService {
     }
 
     // @ts-ignore
-    const accesses = await query.fetchAll()
+    const accesses = await query.fetch()
 
     //@ts-ignore
     const filteredAccesses = accesses
