@@ -6,7 +6,7 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import Validation from '../../../common/src/utils/validation'
 
 import {AuthService} from '../../../common/src/service/auth/auth-service'
-import {AuthLinkProcessRequest, AuthLinkRequestRequest} from '../models/auth-link-request'
+import {AuthLinkProcessRequest} from '../models/auth-link-request'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
@@ -39,8 +39,7 @@ class AdminController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const authLinkRequest = req.body as AuthLinkRequestRequest
-      const email = authLinkRequest.email.toLowerCase()
+      const email = req.body.email.toLowerCase()
 
       // Check if we have approval for this admin
       const adminApprovalService = new AdminApprovalService()

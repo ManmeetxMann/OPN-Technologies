@@ -6,15 +6,19 @@ import type {SinglePersonAccess} from '../models/attendance'
 import DataStore from '../../../common/src/data/datastore'
 import {AdminApprovalModel} from '../../../common/src/data/admin'
 import {UserModel} from '../../../common/src/data/user'
-import {getExposureSection, getHeaderSection} from './exposureTemplate'
+import {getExposureSection, getHeaderSection, UserGroupData} from './exposureTemplate'
 import type {Answers} from './exposureTemplate'
 import {send} from '../../../common/src/service/messaging/send-email'
 import {Config} from '../../../common/src/utils/config'
 
 import {OrganizationModel} from '../../../enterprise/src/repository/organization.repository'
+import {UserService} from '../../../common/src/service/user/user-service'
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
+import {Organization, OrganizationGroup} from '../../../enterprise/src/models/organization'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
+const SUPPRESS_USER_EMAILS = Config.get('FEATURE_ONLY_EMAIL_SUPPORT') === 'enabled'
 
 type Overlap = {
   start: Date
@@ -61,6 +65,8 @@ export default class TraceListener {
   userApprovalRepo: AdminApprovalModel
   userRepo: UserModel
   questionnaireService: QuestionnaireService
+  organizationService: OrganizationService
+  userService: UserService
   constructor() {
     const dataStore = new DataStore()
     this.repo = new TraceRepository(dataStore)
@@ -68,6 +74,8 @@ export default class TraceListener {
     this.userApprovalRepo = new AdminApprovalModel(dataStore)
     this.userRepo = new UserModel(dataStore)
     this.questionnaireService = new QuestionnaireService()
+    this.organizationService = new OrganizationService()
+    this.userService = new UserService()
   }
 
   async handleMessage(message: {
@@ -255,19 +263,20 @@ export default class TraceListener {
     for (let i = 0; i < allUsers.length; i += 10) {
       userPages.push(allUsers.slice(i, i + 10))
     }
+
     // TODO: these three can go in parallel
     // TODO: get location names as well
     // const locationAdmins = (
     //   await Promise.all(
     //     locationPages.map((page) =>
-    //       this.userApprovalRepo.findWhereMapKeyContainsAny('profile', 'adminForLocationIds', page),
+    //       this.userApprovalRepo.findWhereArrayInMapContainsAny('profile', 'adminForLocationIds', page),
     //     ),
     //   )
     // ).reduce((flattened, page) => [...flattened, ...page], [])
     const organizationAdmins = (
       await Promise.all(
         organizationPages.map((page) =>
-          this.userApprovalRepo.findWhereMapKeyContainsAny(
+          this.userApprovalRepo.findWhereArrayInMapContainsAny(
             'profile',
             'superAdminForOrganizationIds',
             page,
@@ -279,29 +288,95 @@ export default class TraceListener {
       await Promise.all(userPages.map((page) => this.userRepo.findWhereIdIn(page)))
     ).reduce((flattened, page) => [...flattened, ...page], [])
 
+    const organizationData = await Promise.all(
+      allOrganizations.map(async (orgId) => {
+        return {
+          org: await this.organizationService.findOneById(orgId),
+          groups: await this.organizationService.getGroups(orgId),
+        }
+      }),
+    )
+
+    const organizationLookup: Record<
+      string,
+      {org: Organization; groups: OrganizationGroup[]}
+    > = organizationData.reduce(
+      (lookup, data) => ({
+        ...lookup,
+        [data.org.id]: data,
+      }),
+      {},
+    )
+    // TODO: this is an extremely expensive loop. See issue #429 in github
+    const allUsersWithDependantsAndGroups = await Promise.all(
+      users.map(async (user) => {
+        return {
+          id: user.id,
+          orgId: user.organizationIds[0],
+          groups: await this.organizationService.getUsersGroups(user.organizationIds[0], null, [
+            user.id,
+          ]),
+          dependants: await this.userService.getAllDependants(user.id),
+        }
+      }),
+    )
+
+    const userDependantLookup: Record<string, UserGroupData> = allUsersWithDependantsAndGroups
+      .map((lookup) => ({
+        id: lookup.id,
+        orgId: lookup.orgId,
+        groupNames: lookup.groups.map(
+          (membership) =>
+            organizationLookup[lookup.orgId].groups.find((group) => group.id === membership.groupId)
+              ?.name,
+        ),
+        dependants: lookup.dependants.map((dep) => ({
+          id: dep.id,
+          groupName: organizationLookup[lookup.orgId].groups.find(
+            (group) => group.id === dep.groupId,
+          )?.name,
+        })),
+      }))
+      .reduce((lookup, data) => ({...lookup, [data.id]: data}), {})
+
     const sourceUser = users.find((u) => u.id === userId)
 
     const reportsForLocation = {}
     const reportsForOrganization = {}
-    const header = getHeaderSection(sourceUser, endTime, status, questionnaire, answers)
+    const allReports = []
+    const header = getHeaderSection(
+      sourceUser,
+      endTime,
+      status,
+      questionnaire,
+      answers,
+      userDependantLookup,
+    )
     reports.forEach((report) => {
+      const section = getExposureSection(
+        report,
+        users,
+        locations[report.locationId].title,
+        userDependantLookup,
+      )
+      if (!section) {
+        return
+      }
       if (!reportsForLocation[report.locationId]) {
         reportsForLocation[report.locationId] = []
       }
-      reportsForLocation[report.locationId].push(
-        getExposureSection(report, users, locations[report.locationId].title),
-      )
+      reportsForLocation[report.locationId].push(section)
       if (!reportsForOrganization[report.organizationId]) {
         reportsForOrganization[report.organizationId] = []
       }
-      reportsForOrganization[report.organizationId].push(
-        getExposureSection(report, users, locations[report.locationId].title),
-      )
+      reportsForOrganization[report.organizationId].push(section)
+      allReports.push(section)
     })
 
     const handledIds: Set<string> = new Set()
     // may contain duplicates...
     // in future when we want to send to location admins as well
+
     // const allRecipients = [...locationAdmins, ...organizationAdmins]
     const allRecipients = [...organizationAdmins]
       .filter((u) => {
@@ -326,17 +401,25 @@ export default class TraceListener {
         //   [],
         // ),
       }))
-    allRecipients.forEach((recipient) =>
-      send(
-        recipient.email,
-        'Contact trace',
-        recipient.orgReports.length
-          ? `${header} ${recipient.orgReports.join('')}`
-          : `${header} No one was in contact with the user`,
-      ),
-    )
-    if (!allRecipients.length) {
-      send([], 'Exposure report', `${header} No one was in contact with the user`)
+    const orgName = organizationLookup[orgId].org.name
+    if (!SUPPRESS_USER_EMAILS) {
+      allRecipients.forEach((recipient) =>
+        send(
+          recipient.email,
+          `Contact trace for ${orgName}`,
+          recipient.orgReports.length
+            ? `${header} ${recipient.orgReports.join('')}`
+            : `${header} No one was in contact with the user`,
+        ),
+      )
+    }
+
+    // Send a dedicated email to support with all of the exposures
+    if (!allReports.length) {
+      // No reports means that no one was exposed
+      send([], `Exposure report for ${orgName}`, `${header} No one was in contact with the user`)
+    } else {
+      send([], `Exposure report for ${orgName}`, `${header} ${allReports.join('')}`)
     }
   }
 }

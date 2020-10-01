@@ -12,12 +12,14 @@ components:
   schemas:
     Response:
       type: object
+      additionalProperties: false
       properties:
         data:
           nullable: true
           type: object
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -35,8 +37,25 @@ components:
               nullable: true
               type: string
 
+    OrganizationReminderSchedule:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        enabledOnWeekends:
+          type: boolean
+        timeOfDayMillis:
+          type: integer
+          minimum: 0
+          maximum: 86400000
+      required:
+        - enabled
+        - enabledOnWeekends
+        - timeOfDayMillis
+
     Organization:
       type: object
+      additionalProperties: false
       properties:
         id:
           type: string
@@ -49,13 +68,36 @@ components:
           enum:
             - default
             - childcare
+        allowsSelfCheckInOut:
+          type: boolean
+        hourToSendReport:
+          type: integer
+          minimum: 0
+          maximum: 23
+          description: hour of the day to send the report for this organization
+          nullable: true
+        dayShift:
+          type: integer
+          minimum: 0
+          description: number of days ago to generate the report for (0 to generate it for the day it is sent, 1 for the day before...)
         allowDependants:
           type: boolean
+        dailyReminder:
+          $ref: '#/components/schemas/OrganizationReminderSchedule'
+        notificationFormatStop:
+          type: string
+        notificationFormatCaution:
+          type: string
+        notificationIconStop:
+          type: string
+        notificationIconCaution:
+          type: string
       required:
         - name
 
     OrganizationLocation:
       type: object
+      additionalProperties: false
       properties:
         id:
           type: string
@@ -84,6 +126,7 @@ components:
           type: array
           items:
             type: object
+            additionalProperties: false
             properties:
               id:
                 type: string
@@ -103,6 +146,7 @@ components:
 
     OrganizationGroup:
       type: object
+      additionalProperties: false
       properties:
         id:
           type: string
@@ -110,15 +154,19 @@ components:
           type: string
         checkInDisabled:
           type: boolean
+          default: false
         priority:
           type: number
       required:
         - name
 
-    OrganizationConnectionRequest:
+    OrganizationConnectionRequestV1:
       type: object
+      additionalProperties: false
       properties:
         organizationId:
+          type: string
+        registrationId:
           type: string
         firstName:
           type: string
@@ -134,6 +182,34 @@ components:
             type: string
       required:
         - organizationId
+        # - registrationId
+        - groupId
+        - firstName
+        - lastName
+        - base64Photo
+
+    OrganizationConnectionRequestV2:
+      type: object
+      properties:
+        organizationId:
+          type: string
+        registrationId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        base64Photo:
+          type: string
+        groupId:
+          type: string
+        responses:
+          type: array
+          items:
+            type: string
+      required:
+        - organizationId
+        - registrationId
         - groupId
         - firstName
         - lastName
@@ -141,6 +217,7 @@ components:
 
     OrganizationUsersGroupMoveData:
       type: object
+      additionalProperties: false
       properties:
         userId:
           type: string
@@ -157,6 +234,7 @@ components:
 
     OrganizationUsersGroupMoveOperationRequest:
       type: object
+      additionalProperties: false
       properties:
         data:
           type: array
@@ -171,6 +249,7 @@ components:
 
     AuthLinkRequestRequest:
       type: object
+      additionalProperties: false
       properties:
         email:
           type: string
@@ -179,6 +258,7 @@ components:
 
     AuthLinkProcessRequest:
       type: object
+      additionalProperties: false
       properties:
         idToken:
           type: string
@@ -192,6 +272,7 @@ components:
 
     InternalAdminApprovalCreateRequest:
       type: object
+      additionalProperties: false
       properties:
         email:
           type: string
@@ -209,6 +290,11 @@ components:
           items:
             type: string
           description: Organizaiton ids to become a super admin of. Must be provided can be empty.
+        healthAdminForOrganizationIds:
+          type: array
+          items:
+            type: string
+          description: Organizaiton ids to become a health admin of. Must be provided can be empty.
         groupIds:
           type: array
           items:
@@ -239,6 +325,7 @@ components:
 
     AdminProfile:
       type: object
+      additionalProperties: false
       properties:
         email:
           type: string
@@ -263,6 +350,7 @@ components:
 
     User:
       type: object
+      additionalProperties: false
       properties:
         id:
           type: string
@@ -284,6 +372,7 @@ components:
 
     UserEdit:
       type: object
+      additionalProperties: false
       properties:
         parentUserId:
           type: string
@@ -293,14 +382,21 @@ components:
           type: string
         base64Photo:
           type: string
-        # groupId:
-        #   type: string
       required:
         - firstName
         - lastName
+    
+    UserLink:
+      type: object
+      properties:
+        registrationId:
+          type: string
+      required:
+        - registrationId
 
     Access:
       type: object
+      additionalProperties: false
       properties:
         token:
           type: string
@@ -324,6 +420,7 @@ components:
           type: object
           additionalProperties:
             type: object
+            additionalProperties: false
             properties:
               id:
                 type: string
@@ -336,9 +433,11 @@ components:
 
     ResponseOfOrganizationConnection:
       type: object
+      additionalProperties: false
       properties:
         data:
           type: object
+          additionalProperties: false
           properties:
             user:
               $ref: '#/components/schemas/User'
@@ -348,6 +447,7 @@ components:
               $ref: '#/components/schemas/OrganizationGroup'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -367,11 +467,13 @@ components:
 
     ResponseOfOrganization:
       type: object
+      additionalProperties: false
       properties:
         data:
           $ref: '#/components/schemas/Organization'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -391,6 +493,7 @@ components:
 
     ResponseOfOrganizationLocations:
       type: object
+      additionalProperties: false
       properties:
         data:
           type: array
@@ -398,6 +501,7 @@ components:
             $ref: '#/components/schemas/OrganizationLocation'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -417,11 +521,13 @@ components:
 
     ResponseOfOrganizationLocation:
       type: object
+      additionalProperties: false
       properties:
         data:
           $ref: '#/components/schemas/OrganizationLocation'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -441,6 +547,7 @@ components:
 
     ResponseOfOrganizations:
       type: object
+      additionalProperties: false
       properties:
         data:
           type: array
@@ -448,6 +555,7 @@ components:
             $ref: '#/components/schemas/Organization'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -467,6 +575,7 @@ components:
 
     ResponseOfOrganizationGroups:
       type: object
+      additionalProperties: false
       properties:
         data:
           type: array
@@ -474,6 +583,7 @@ components:
             $ref: '#/components/schemas/OrganizationGroup'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -493,11 +603,13 @@ components:
 
     ResponseOfOrganizationGroup:
       type: object
+      additionalProperties: false
       properties:
         data:
           $ref: '#/components/schemas/OrganizationGroup'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -517,10 +629,15 @@ components:
 
     ResponseOfOrganizationStats:
       type: object
+      additionalProperties: false
       properties:
         data:
           type: object
+          additionalProperties: false
           properties:
+            permissionToViewDetail:
+              type: boolean
+              description: If current admin can view accesses
             asOfDateTime:
               type: string
               description: The ISO date-time when the stats have been computed
@@ -529,9 +646,11 @@ components:
               type: array
               items:
                 type: object
+                additionalProperties: false
                 allOf:
                   - $ref: '#/components/schemas/Access'
                   - type: object
+                    additionalProperties: false
                     properties:
                       user:
                         $ref: '#/components/schemas/User'
@@ -541,6 +660,7 @@ components:
 
             passportsCountByStatus:
               type: object
+              additionalProperties: false
               description: Total badge count per status
               properties:
                 pending:
@@ -560,6 +680,7 @@ components:
               type: array
               items:
                 type: object
+                additionalProperties: false
                 properties:
                   date:
                     type: string
@@ -569,6 +690,7 @@ components:
 
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -588,6 +710,7 @@ components:
 
     ResponseOfAdminProfile:
       type: object
+      additionalProperties: false
       properties:
         data:
           type: array
@@ -595,6 +718,7 @@ components:
             $ref: '#/components/schemas/AdminProfile'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -639,13 +763,17 @@ paths:
 
   /organizations/one:
     get:
-      description: Find one organization by key
+      description: Find one organization by key or id
       parameters:
         - in: query
           name: key
           schema:
             type: string
-          required: true
+        - in: query
+          name: id
+          schema:
+            type: string
+
       responses:
         '200':
           description: Successfully created
@@ -662,19 +790,24 @@ paths:
           name: organizationId
           schema:
             type: string
-          # required: true
+          required: true
       requestBody:
         content:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               properties:
-                forYesterday:
-                  type: boolean
-                  description: true if the report is for the day before it is sent
                 hourToSendReport:
-                  type: number
-                  description: hour of the day to send the report (null to disable reporting)
+                  type: integer
+                  minimum: 0
+                  maximum: 23
+                  description: hour of the day to send the report for this organization
+                  nullable: true
+                dayShift:
+                  type: integer
+                  minimum: 0
+                  description: number of days ago to generate the report for (0 to generate it for the day it is sent, 1 for the day before...)
                   nullable: true
       responses:
         '200':
@@ -694,7 +827,7 @@ paths:
           name: organizationId
           schema:
             type: string
-#          required: true
+          required: true
         - in: query
           name: parentLocationId
           schema:
@@ -724,7 +857,7 @@ paths:
           name: organizationId
           schema:
             type: string
-        #          required: true
+          required: true
       requestBody:
         content:
           application/json:
@@ -754,7 +887,7 @@ paths:
           name: organizationId
           schema:
             type: string
-#          required: false
+          required: true
       responses:
         '200':
           description: Successfully retrieved
@@ -773,12 +906,12 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: false
+          required: true
         - in: path
           name: locationId
           schema:
             type: string
-      #          required: false
+          required: true
       responses:
         '200':
           description: Successfully retrieved
@@ -797,7 +930,7 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: false
+          required: true
       responses:
         '200':
           description: Successfully retrieved
@@ -816,7 +949,7 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
       requestBody:
         content:
           application/json:
@@ -842,7 +975,7 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: false
+          required: true
       responses:
         '200':
           description: Successfully retrieved
@@ -859,7 +992,7 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
       requestBody:
         content:
           application/json:
@@ -878,12 +1011,14 @@ paths:
   /organizations/{organizationId}/stats:
     get:
       description: Get stats for one organization (admin access required)
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: query
           name: groupId
           schema:
@@ -903,6 +1038,32 @@ paths:
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationStats'
 
+  /organizations/{organizationId}/stats/health:
+    get:
+      description: Get stats summary for one organization (admin access required)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: groupId
+          schema:
+            type: string
+              
+      responses:
+        '200':
+          description: Successfully compute the stats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationStats'
+
   /organizations/{organizationId}/groups/{groupId}/users:
     post:
       description: Add users to a group (admin access required)
@@ -911,12 +1072,12 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: path
           name: groupId
           schema:
             type: string
-      #          required: true
+          required: true
       requestBody:
         content:
           application/json:
@@ -935,6 +1096,34 @@ paths:
                 items:
                   $ref: '#/components/schemas/Response'
 
+  /organizations/{organizationId}/groups/{groupId}:
+    delete:
+      description: Remove a group
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: groupId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '403':
+          description: Deletion failed because users are still attached. Details will be visible in server logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  
   /organizations/{organizationId}/groups/zombie-users:
     delete:
       description: Remove dead users
@@ -943,7 +1132,7 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
       responses:
         '200':
           description: Successfully added
@@ -962,17 +1151,17 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: path
           name: groupId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: path
           name: userId
           schema:
             type: string
-      #          required: true
+          required: true
       responses:
         '200':
           description: Successfully removed
@@ -990,17 +1179,17 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: path
           name: groupId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: path
           name: userId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: query
           name: oldGroupId
           schema:
@@ -1017,6 +1206,23 @@ paths:
                 items:
                   $ref: '#/components/schemas/Response'
 
+  /organizations/{organizationId}/config:
+    get:
+      description: Get app config info for the organization
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: The config info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationReminderSchedule'
+
   /user/connect/add:
     post:
       description: Connect a user to an organization
@@ -1024,7 +1230,23 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrganizationConnectionRequest'
+              $ref: '#/components/schemas/OrganizationConnectionRequestV1'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfOrganizationConnection'
+
+  /user/connect/v2/add:
+    post:
+      description: Connect a user to an organization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationConnectionRequestV2'
       responses:
         '200':
           description: Successfully added
@@ -1041,15 +1263,39 @@ paths:
           name: organizationId
           schema:
             type: string
-      #          required: true
+          required: true
         - in: path
           name: userId
           schema:
             type: string
-      #          required: true
+          required: true
       responses:
         '200':
           description: Successfully returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Response'
+
+  /user/connect/link/{userId}:
+    put:
+      description: Link info for a user
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLink'
+      responses:
+        '200':
+          description: Successfully removed
           content:
             application/json:
               schema:
@@ -1065,7 +1311,7 @@ paths:
           name: userId
           schema:
             type: string
-      #          required: true
+          required: true
 
       requestBody:
         content:

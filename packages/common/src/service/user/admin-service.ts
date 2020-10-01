@@ -15,7 +15,7 @@ export class AdminApprovalService {
 
   findOneByEmail(email: string): Promise<AdminApproval> {
     return this.adminApprovalRepository
-      .findWhereMapHasKeyValueEqual([
+      .findWhereEqualInMap([
         {
           map: 'profile',
           key: 'email',
@@ -27,7 +27,7 @@ export class AdminApprovalService {
   }
 
   async findAllByOrgAndGroup(organizationId: string, groupId: string): Promise<AdminApproval[]> {
-    return await this.adminApprovalRepository.findWhereMapHasKeyValueEqual([
+    return await this.adminApprovalRepository.findWhereEqualInMap([
       {
         map: 'profile',
         key: 'adminForOrganizationId',
@@ -47,7 +47,7 @@ export class AdminApprovalService {
     organizationId: string,
     locationId: string,
   ): Promise<AdminApproval[]> {
-    return await this.adminApprovalRepository.findWhereMapHasKeyValueEqual([
+    return await this.adminApprovalRepository.findWhereEqualInMap([
       {
         map: 'profile',
         key: 'adminForOrganizationId',

@@ -111,12 +111,12 @@ class UserController implements IRouteController {
     }
   }
 
+  // TODO: this is not in swagger
   exposureVerification = (req: Request, res: Response): void => {
     if (!Validation.validate(['accessToken', 'locationId'], req, res)) {
       return
     }
 
-    console.log(req.body.accessToken)
     const response = {
       data: {
         exposed: false,
@@ -157,13 +157,22 @@ class UserController implements IRouteController {
   ): Promise<unknown> {
     const access = await this.accessService.findOneByToken(accessToken)
     const {userId} = access
-    const status = await this.attestationService.latestStatus(userId)
-    if (['stop', 'caution'].includes(status)) {
-      throw new BadRequestException(`current status is ${status}`)
+    const allIds = Object.keys(access.dependants)
+    if (access.includesGuardian) {
+      allIds.push(userId)
+    }
+    const allStatuses = await Promise.all(
+      allIds.map((id) => this.attestationService.latestStatus(id)),
+    )
+    if (allStatuses.includes('stop')) {
+      throw new BadRequestException(`current status is stop`)
+    }
+    if (allStatuses.includes('caution')) {
+      throw new BadRequestException(`current status is caution`)
     }
 
     const {base64Photo} = await this.userService.findOne(userId)
-    const passport = await this.passportService.create(PassportStatuses.Pending, userId, [])
+    const passport = await this.passportService.create(PassportStatuses.Pending, userId, [], true)
     await this.accessService.handleEnter(access)
 
     return res.json(

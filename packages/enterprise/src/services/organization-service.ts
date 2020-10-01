@@ -15,6 +15,7 @@ import {
   OrganizationModel,
   OrganizationUsersGroupModel,
 } from '../repository/organization.repository'
+import * as _ from 'lodash'
 
 const notFoundMessage = (organizationId: string, identifier?: string) =>
   `Cannot find organization with ${identifier ?? 'ID'} [${organizationId}]`
@@ -34,6 +35,11 @@ export class OrganizationService {
         key,
         type: organization.type ?? OrganizationType.Default,
         allowDependants: organization.allowDependants ?? false,
+        dailyReminder: {
+          enabled: organization.dailyReminder?.enabled ?? false,
+          enabledOnWeekends: organization.dailyReminder?.enabledOnWeekends ?? false,
+          timeOfDayMillis: organization.dailyReminder?.timeOfDayMillis ?? 0,
+        },
       }),
     )
   }
@@ -78,12 +84,16 @@ export class OrganizationService {
         .addAll(locationsToAdd)
         .then((locs) => {
           // add this so we can query for locations by id contained in list
-          const locationsWithId = locs.map((loc) => ({
-            ...loc,
-            locationId: loc.id,
-          }))
+          const locationsWithoutId = locs
+            // no need to waste writes on locations that already have ids
+            // @ts-ignore this isn't officially part of the location schema
+            .filter((loc) => !loc.locationId)
+            .map((loc) => ({
+              ...loc,
+              locationId: loc.id,
+            }))
           return new OrganizationLocationModel(this.dataStore, organizationId).updateAll(
-            locationsWithId,
+            locationsWithoutId,
           )
         }),
     )
@@ -177,31 +187,33 @@ export class OrganizationService {
     )
   }
 
-  getUsersGroups(
+  async getUsersGroups(
     organizationId: string,
     groupId?: string,
-    userIds?: string[],
+    allUserIds?: string[],
   ): Promise<OrganizationUsersGroup[]> {
     // Firestore doesn't give enough "where" operators to have optional query filters
     // To have a query-builder, we need here to re-assign the query declaration (of type Collection) with a WhereClause Query
     // Therefor the TS transpiler complains because of the types conflicts...
-
-    // @ts-ignore
-    let query = this.getUsersGroupRepositoryFor(organizationId).collection()
-
-    if (!!groupId) {
-      // @ts-ignore
-      query = query.where('groupId', '==', groupId)
-    }
-
-    if (userIds?.length) {
-      // @ts-ignore
-      query = query.where('userId', 'in', userIds)
-    }
-
-    // @ts-ignore
-    // Cannot fetchAll on a `Query` object, only on `Collection`
-    return groupId || userIds?.length > 0 ? query.fetch() : query.fetchAll()
+    const userIdPages = allUserIds ? _.chunk(allUserIds, 10) : [undefined]
+    const pagedResults = await Promise.all(
+      userIdPages.map((userIds: string[]) => {
+        // @ts-ignore
+        let query = this.getUsersGroupRepositoryFor(organizationId).collection()
+        if (!!groupId) {
+          // @ts-ignore
+          query = query.where('groupId', '==', groupId)
+        }
+        if (userIds?.length) {
+          // @ts-ignore
+          query = query.where('userId', 'in', userIds)
+        }
+        // @ts-ignore
+        // Cannot fetchAll on a `Query` object, only on `Collection`
+        return groupId || userIds?.length > 0 ? query.fetch() : query.fetchAll()
+      }),
+    )
+    return _.flatten(pagedResults)
   }
 
   addUserToGroup(
@@ -246,6 +258,18 @@ export class OrganizationService {
         `Cannot find relation user-group for groupId [${groupId}] and userId [${userId}]`,
       )
     })
+  }
+
+  async deleteGroup(organizationId: string, groupId: string): Promise<void> {
+    const repo = this.getGroupsRepositoryFor(organizationId)
+    const target = await repo.findOneById(groupId)
+    if (target) {
+      await repo.delete(groupId)
+    } else {
+      throw new ResourceNotFoundException(
+        `Cannot find group [${groupId}] for organization [${organizationId}]`,
+      )
+    }
   }
 
   // TODO: To be replaced with a proper solution that generates a 5 digits code for by user and organization with an expiry

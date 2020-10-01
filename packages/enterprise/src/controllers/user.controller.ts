@@ -6,15 +6,19 @@ import Validation from '../../../common/src/utils/validation'
 import {OrganizationService} from '../services/organization-service'
 import {OrganizationConnectionRequest} from '../models/organization-connection-request'
 import {UserService} from '../../../common/src/service/user/user-service'
+import {RegistrationService} from '../../../common/src/service/registry/registration-service'
 import {User, UserEdit, UserWithGroup} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Organization, OrganizationUsersGroup} from '../models/organization'
+import * as _ from 'lodash'
+import {flattern} from '../../../common/src/utils/utils'
 
 class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
   private organizationService = new OrganizationService()
   private userService = new UserService()
+  private registrationService = new RegistrationService()
 
   constructor() {
     this.initRoutes()
@@ -22,8 +26,10 @@ class UserController implements IControllerBase {
 
   public initRoutes(): void {
     this.router.post(this.path + '/connect/add', this.connect)
+    this.router.post(this.path + '/connect/v2/add', this.connect)
     this.router.post(this.path + '/connect/remove', this.disconnect)
     this.router.post(this.path + '/connect/locations', this.connectedLocations)
+    this.router.put(this.path + '/connect/link/:userId', this.userLink)
     this.router.put(this.path + '/connect/edit/:userId', this.userEdit)
     this.router.get(this.path + '/connect/:organizationId/users/:userId', this.getUser)
   }
@@ -34,20 +40,25 @@ class UserController implements IControllerBase {
       const {responses, ...body} = req.body
       body as OrganizationConnectionRequest
       responses as string[]
-      const {organizationId, firstName, lastName, base64Photo, groupId} = body
+      const {organizationId, registrationId, firstName, lastName, base64Photo, groupId} = body
       const organization = await this.organizationService.findOneById(organizationId)
       const group = await this.organizationService.getGroup(organization.id, groupId)
 
       // Create user
-      const user = await this.userService.create({
+      // registrationId might be undefined, since this could be the old version
+      const user = await this.userService.create(({
+        registrationId: registrationId ?? null,
         firstName,
         lastName,
         base64Photo,
         organizationIds: [organization.id],
-      } as User)
+      } as unknown) as User)
 
       // Add user to group
       await this.organizationService.addUserToGroup(organization.id, group.id, user.id)
+
+      // Add to registry
+      await this.registrationService.linkUser(registrationId, user.id)
 
       res.json(actionSucceed({user, organization, group}))
     } catch (error) {
@@ -93,18 +104,43 @@ class UserController implements IControllerBase {
       const dependents = await this.userService.getAllDependants(userId)
       const dependentIds = dependents.map((dependent) => dependent.id)
 
-      const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
-        user.id,
-        ...dependentIds,
-      ])
+      // Fetch in chunks of 10 (most probably will only do once)
+      const userGroupsArray: OrganizationUsersGroup[] = await Promise.all(
+        _.chunk([user.id, ...dependentIds], 10).map((chunk) =>
+          this.organizationService.getUsersGroups(organizationId, null, chunk),
+        ),
+      ).then((results) => flattern(results as OrganizationUsersGroup[][]))
+
+      // Create a hashmap fo results
+      const userGroups: Record<string, string> = userGroupsArray.reduce(function (map, obj) {
+        map[obj.userId] = obj.groupId
+        return map
+      }, {})
 
       // Fill out user one
-      user.groupId = this.getGroupId(user.id, userGroups)
+      user.groupId = userGroups[user.id]
       for (const dependent of dependents) {
-        dependent.groupId = this.getGroupId(dependent.id, userGroups)
+        dependent.groupId = userGroups[dependent.id]
       }
 
       res.json(actionSucceed({profile: user, dependents: dependents}))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  userLink = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {userId} = req.params
+      const {registrationId} = req.body
+
+      // Add to user
+      await this.userService.updateProperties(userId, {registrationId})
+
+      // Add to registry
+      await this.registrationService.linkUser(registrationId, userId)
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
@@ -139,13 +175,6 @@ class UserController implements IControllerBase {
     } catch (error) {
       next(error)
     }
-  }
-
-  private getGroupId = (userId: string, userGroups: OrganizationUsersGroup[]): string => {
-    for (const userGroup of userGroups) {
-      if (userGroup.userId === userId) return userGroup.groupId
-    }
-    return null
   }
 }
 

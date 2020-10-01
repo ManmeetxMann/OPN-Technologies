@@ -2,45 +2,52 @@ import {HttpException} from '../exceptions/httpexception'
 import {ResponseStatusCodes} from '../types/response-status'
 import {ResponseWrapper} from '../types/response-wrapper'
 import {ErrorMiddleware, Middleware} from '../types/middleware'
-import {ValidationError} from 'express-openapi-validate'
+import {BadRequest} from 'express-openapi-validator'
 
-export const handleErrors: ErrorMiddleware<HttpException | ValidationError> = (
-  error,
-  req,
-  resp,
-  next,
-) => {
-  console.error('Error!', error)
-  if (error instanceof ValidationError) {
-    const response: ResponseWrapper<null> = {
-      data: null,
-      status: {
-        code: ResponseStatusCodes.ValidationError,
-        message: error.message,
-      },
-    }
-    resp.status(400).json(response)
-    next()
+// express checks if 'next' is in the signature. DO NOT call next
+export const handleErrors: ErrorMiddleware<HttpException | BadRequest> = (err, req, res, next) => {
+  if ((err as BadRequest).errors) {
+    handleValidationErrors(err as BadRequest, req, res, next)
     return
   }
-
-  if (error instanceof HttpException) {
-    const {status, code, message} = error
-    const response: ResponseWrapper<null> = {
-      data: null,
-      status: {
-        code,
-        message,
-      },
-    }
-    resp.status(status).json(response)
-    next()
-    return
-  }
-
-  resp.status(500).json({
+  console.error('Error: ', err)
+  // format error
+  const {status, code, message} = err as HttpException
+  const response: ResponseWrapper<null> = {
     data: null,
-    status: {code: ResponseStatusCodes.InternalServerError, message: 'Something went wrong'},
+    status: {
+      code,
+      message,
+    },
+  }
+  res.status(status).json(response)
+  return
+}
+
+const combinePropertyErrors = (extra: string[], missing: string[]): string => {
+  const lines = []
+  if (extra.length) {
+    lines.push(`Unexpected properties: ${extra.join(', ')}`)
+  }
+  if (missing.length) {
+    lines.push(`Missing properties: ${missing.join(', ')}`)
+  }
+  return lines.join('    ')
+}
+
+// express checks if 'next' is in the signature. DO NOT call next
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, res, _next) => {
+  console.error('Validation Error: ', err)
+  const {errors} = err
+  const extraProperties = errors
+    .filter((error) => error.message === 'should NOT have additional properties')
+    .map((error) => error.path)
+  const missingProperties = errors
+    .filter((error) => error.message.startsWith('should have required property '))
+    .map((error) => error.path)
+  res.status(err.status || 500).json({
+    message: combinePropertyErrors(extraProperties, missingProperties),
   })
 }
 

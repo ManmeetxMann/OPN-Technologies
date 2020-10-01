@@ -11,12 +11,14 @@ components:
   schemas:
     Response:
       type: object
+      additionalProperties: false
       properties:
         data:
           nullable: true
           type: object
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -36,6 +38,7 @@ components:
 
     Access:
       type: object
+      additionalProperties: false
       properties:
         token:
           type: string
@@ -59,6 +62,7 @@ components:
           type: object
           additionalProperties:
             type: object
+            additionalProperties: false
             properties:
               id:
                 type: string
@@ -72,6 +76,7 @@ components:
 
     Passport:
       type: object
+      additionalProperties: false
       properties:
         id:
           type: string
@@ -87,6 +92,7 @@ components:
 
     EntryOrExitRequest:
       type: object
+      additionalProperties: false
       properties:
         accessToken:
           type: string
@@ -98,6 +104,7 @@ components:
 
     SelfEntryOrExitRequest:
       type: object
+      additionalProperties: false
       properties:
         organizationId:
           type: string
@@ -112,6 +119,7 @@ components:
 
     StatusTokenExchangeRequest:
       type: object
+      additionalProperties: false
       properties:
         statusToken:
           type: string
@@ -133,6 +141,7 @@ components:
 
     Statistics:
       type: object
+      additionalProperties: false
       properties:
         peopleOnPremises:
           type: number
@@ -160,6 +169,7 @@ components:
           type: array
           items:
             type: object
+            additionalProperties: false
             properties:
               date:
                 type: string
@@ -170,11 +180,13 @@ components:
 
     ResponseOfAccess:
       type: object
+      additionalProperties: false
       properties:
         data:
           $ref: '#/components/schemas/Access'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -194,11 +206,13 @@ components:
 
     ResponseOfPassport:
       type: object
+      additionalProperties: false
       properties:
         data:
           $ref: '#/components/schemas/Passport'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -219,11 +233,13 @@ components:
 
     ResponseOfStatistics:
       type: object
+      additionalProperties: false
       properties:
         data:
           $ref: '#/components/schemas/Statistics'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -243,9 +259,11 @@ components:
 
     ResponseOfEnterOrExit:
       type: object
+      additionalProperties: false
       properties:
         data:
           type: object
+          additionalProperties: false
           properties:
             passport:
               $ref: '#/components/schemas/Passport'
@@ -261,6 +279,7 @@ components:
               type: array
               items:
                 type: object
+                additionalProperties: false
                 properties:
                   id:
                     type: string
@@ -270,6 +289,7 @@ components:
                     type: string
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -337,10 +357,12 @@ paths:
           name: organizationId
           schema:
             type: string
+          required: true
         - in: query
           name: userId
           schema:
             type: string
+          required: true
       responses:
         '200':
           description: Successfully returned
@@ -396,11 +418,38 @@ paths:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               properties:
                 locationId:
                   type: string
               required:
                 - locationId
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfStatistics'
+
+  /admin/stats/v2:
+    post:
+      description: Daily and live location stats
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                organizationId:
+                  type: string
+                locationId:
+                  type: string
+              required:
+                - organizationId
       responses:
         '200':
           description: Successfully handled
@@ -440,9 +489,11 @@ paths:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               properties:
                 message:
                   type: object
+                  additionalProperties: false
                   properties:
                     data:
                       type: string
@@ -451,6 +502,7 @@ paths:
                         - dHJhY2UtcmVxdWlyZWQ=
                     attributes:
                       type: object
+                      additionalProperties: false
                       properties:
                         startTime:
                           type: string

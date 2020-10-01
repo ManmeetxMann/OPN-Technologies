@@ -64,6 +64,7 @@ jobs:
           # Features
           FEATURE_CREATE_TOKEN_PERMISSIVE_MODE=enabled
           FEATURE_PARENT_LOCATION_ID_MAY_BE_MISSING=enabled
+          FEATURE_ONLY_EMAIL_SUPPORT=enabled
 
           # Auth Specific
           APIDOCS_PASSWORD=${{ secrets.DEV_APIDOCS_PWD }}

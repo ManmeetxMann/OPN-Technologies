@@ -7,9 +7,11 @@ components:
   schemas:
     Error:
       type: object
+      additionalProperties: false
       properties:
         error:
           type: object
+          additionalProperties: false
           properties:
             status:
               type: integer
@@ -38,6 +40,7 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
                 properties:
                   status:
                     type: string
@@ -46,14 +49,19 @@ paths:
                       - error
                   data:
                     type: object
+                    additionalProperties: false
                     properties:
                         updates:
                           type: object
+                          additionalProperties: false
                         services:
                           type: object
+                          additionalProperties: false
                         badgeValidityPeriod:
                           type: object
+                          additionalProperties: false
                         badges:
                           type: object
+                          additionalProperties: false
         default:
           $ref: "#/components/responses/error"

@@ -6,12 +6,14 @@ components:
   schemas:
     Response:
       type: object
+      additionalProperties: false
       properties:
         data:
           nullable: true
           type: object
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -31,6 +33,7 @@ components:
 
     Passport:
       type: object
+      additionalProperties: false
       properties:
         id:
           type: string
@@ -54,11 +57,13 @@ components:
 
     ResponseOfPassport:
       type: object
+      additionalProperties: false
       properties:
         data:
           $ref: '#/components/schemas/Passport'
         status:
           type: object
+          additionalProperties: false
           properties:
             code:
               type: string
@@ -127,6 +132,7 @@ paths:
                   type: string
                 answers:
                   type: object
+                  additionalProperties: false
                 userId:
                   type: string
                 dependantIds:
@@ -139,7 +145,7 @@ paths:
                 - locationId
                 - answers
                 - userId
-                - includeGuardian
+                # - includeGuardian  # HOTFIX: remove it for now for < 1.4 apps
               example: {locationId: "location-id", answers: { 1:{1: false},2:{1: false},3:{1: false},4:{1: false, 2: "2020-06-10T05:05:32.217Z"}}, userId: "parentId", dependantIds: ["childOne", "childTwo"]}
 
       responses:
@@ -149,3 +155,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfPassport'
+  /user/testNotify:
+    post:
+      description: Send a notification to the user with the given userId. Used to check connectivity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                userId:
+                  type: string
+                messageTitle:
+                  type: string
+                messageBody:
+                  type: string
+              required:
+                - userId
+                - messageTitle
+                - messageBody
+
+      responses:
+        '200':
+          description: Message sent successfully to at least one token

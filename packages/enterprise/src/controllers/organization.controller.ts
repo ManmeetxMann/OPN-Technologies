@@ -7,6 +7,7 @@ import {
   OrganizationLocation,
   OrganizationUsersGroup,
   OrganizationUsersGroupMoveOperation,
+  OrganizationReminderSchedule,
 } from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
@@ -27,6 +28,8 @@ import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {now} from '../../../common/src/utils/times'
 import {AccessModel} from '../../../access/src/repository/access.repository'
 import {StatusChangesResult} from '../../../passport/src/types/status-changes-result'
 
@@ -95,6 +98,7 @@ class OrganizationController implements IControllerBase {
         .post('/users', this.addUsersToGroups)
         .put('/:groupId/users/:userId', this.updateUserGroup)
         .delete('/zombie-users', this.removeZombieUsersInGroups)
+        .delete('/:groupId', this.removeGroup)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
     // prettier-ignore
@@ -102,16 +106,17 @@ class OrganizationController implements IControllerBase {
       '/stats',
       authMiddleware,
       innerRouter()
-        .get('/', this.getStats)
+        .get('/', this.getStatsInDetailForGroupsOrLocations)
+        .get('/health', this.getStatsHealth)
         .get('/contact-traces', this.getUserContactTraceReport)
-      ,
     )
     const organizations = Router().use(
       '/organizations',
       Router().post('/', this.create), // TODO: must be a protected route
       Router().post('/:organizationId/scheduling', this.updateReportInfo), // TODO: must be a protected route
-      Router().get('/one', this.findOneByKey),
+      Router().get('/one', this.findOneByKeyOrId),
       Router().use('/:organizationId', locations, groups, stats),
+      Router().get('/:organizationId/config', this.getOrgConfig),
     )
 
     this.router.use(organizations)
@@ -151,23 +156,7 @@ class OrganizationController implements IControllerBase {
   updateReportInfo = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const {organizationId} = req.params
     const hourToSendReport = req.body.hourToSendReport ?? null
-    const dayShift = req.body.forYesterday ? 1 : 0
-
-    if (hourToSendReport % 1) {
-      res
-        .status(400)
-        .json(of(null, ResponseStatusCodes.ValidationError, 'Hour must be a whole number'))
-      return
-    }
-
-    if (hourToSendReport < 0 || hourToSendReport > 23) {
-      res
-        .status(400)
-        .json(
-          of(null, ResponseStatusCodes.ValidationError, 'Hour must be between 0 and 23, inclusive'),
-        )
-      return
-    }
+    const dayShift = req.body.dayShift ?? 0
 
     try {
       const org = await this.organizationService
@@ -181,11 +170,34 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  findOneByKey = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  findOneByKeyOrId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {key} = req.query as {key: string}
-      const organization = await this.organizationService.findOrganizationByKey(parseInt(key))
+      const {key, id} = req.query as {key?: string; id?: string}
+
+      // Further validation
+      if ((!key && !id) || (!!key && !!id))
+        throw new BadRequestException('Key or Id is required independently')
+
+      const organization = !!key
+        ? await this.organizationService.findOrganizationByKey(parseInt(key))
+        : await this.organizationService.findOneById(id)
       res.json(actionSucceed(organization))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getOrgConfig = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const organization = await this.organizationService.findOneById(organizationId)
+      const response: OrganizationReminderSchedule = {
+        enabled: organization?.dailyReminder?.enabled ?? false,
+        enabledOnWeekends: organization?.dailyReminder?.enabledOnWeekends ?? false,
+        timeOfDayMillis: organization?.dailyReminder?.timeOfDayMillis ?? 0,
+      }
+
+      res.json(actionSucceed(response))
     } catch (error) {
       next(error)
     }
@@ -422,6 +434,35 @@ class OrganizationController implements IControllerBase {
     }
   }
 
+  removeGroup = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId, groupId} = req.params
+      // check for users in the group
+      const usersInGroup = await this.organizationService.getUsersGroups(organizationId, groupId)
+      if (usersInGroup.length) {
+        console.warn(
+          `Group ${groupId} of organization ${organizationId} has users ${usersInGroup.map(
+            (user) => user.id,
+          )}`,
+        )
+        throw new HttpException('This group has existing users', 403)
+      }
+      const adminsOfGroup = await this.userService.getAdminsForGroup(groupId)
+      if (adminsOfGroup.length) {
+        console.warn(
+          `Group ${groupId} of organization ${organizationId} has admins ${adminsOfGroup.map(
+            (user) => user.id,
+          )}`,
+        )
+        throw new HttpException('This group has existing admins', 403)
+      }
+      await this.organizationService.deleteGroup(organizationId, groupId)
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
   removeZombieUsersInGroups = async (
     req: Request,
     res: Response,
@@ -468,18 +509,24 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getStatsInDetailForGroupsOrLocations = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const {organizationId} = req.params
       const {groupId, locationId, from, to} = req.query as StatsFilter
-      const live = !from && !to
+
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
+      const isHealthAdmin = admin.healthAdminForOrganizationIds?.includes(organizationId)
       const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
 
       if (!canAccessOrganization) replyInsufficientPermission(res)
 
+      // If group is specified, make sure we are group admin
       if (groupId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForGroupIds?.includes(groupId)
         if (!hasGrantedPermission) replyInsufficientPermission(res)
@@ -487,6 +534,7 @@ class OrganizationController implements IControllerBase {
         await this.organizationService.getGroup(organizationId, groupId)
       }
 
+      // If location is specified, make sure we are location admin
       if (locationId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForLocationIds?.includes(locationId)
         if (!hasGrantedPermission) replyInsufficientPermission(res)
@@ -494,77 +542,115 @@ class OrganizationController implements IControllerBase {
         await this.organizationService.getLocation(organizationId, locationId)
       }
 
-      const betweenCreatedDate = {
-        from: live ? moment().startOf('day').toDate() : new Date(from),
-        to: live ? undefined : new Date(to),
+      // If no group and no location is specified, make sure we are the health admin
+      if (!groupId && !locationId && !isHealthAdmin) {
+        replyInsufficientPermission(res)
       }
 
-      // Fetch user groups
-      const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
-
-      // Get users & dependants
-      const nonGuardiansUserIds = new Set<string>()
-      const guardianIds = new Set<string>()
-      const dependantIds = new Set<string>()
-      usersGroups.forEach(({userId, parentUserId}) => {
-        if (!!parentUserId) {
-          dependantIds.add(userId)
-          guardianIds.add(parentUserId)
-        } else nonGuardiansUserIds.add(userId)
-      })
-      const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
-      const usersById = await this.getUsersById([...userIds])
-      const dependantsById = await this.getDependantsById([...guardianIds], usersById, dependantIds)
-
-      // Fetch Guardians groups
-      const guardiansGroups: OrganizationUsersGroup[] = await Promise.all(
-        _.chunk([...guardianIds], 10).map((chunk) =>
-          this.organizationService.getUsersGroups(organizationId, null, chunk),
-        ),
-      ).then((results) => flattern(results as OrganizationUsersGroup[][]))
-
-      const groupsUsersByUserId: Record<string, OrganizationUsersGroup> = [
-        ...new Set([...(usersGroups ?? []), ...(guardiansGroups ?? [])]),
-      ].reduce(
-        (byUserId, groupUser) => ({
-          ...byUserId,
-          [groupUser.userId]: groupUser,
-        }),
-        {},
-      )
-
-      // Fetch Groups
-      const groupsById: Record<
-        string,
-        OrganizationGroup
-      > = await this.organizationService
-        .getGroups(organizationId)
-        .then((results) => results.reduce((byId, group) => ({...byId, [group.id]: group}), {}))
-
-      // Get accesses
-      const accesses = await this.getAccessesFor(
-        [...userIds],
-        [...dependantIds],
-        locationId,
-        groupId,
-        betweenCreatedDate,
-        groupsUsersByUserId,
-        groupsById,
-        usersById,
-        dependantsById,
-      )
-
-      const response = {
-        accesses,
-        asOfDateTime: live ? new Date().toISOString() : null,
-        passportsCountByStatus: getPassportsCountPerStatus(accesses),
-        hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
-      } as Stats
+      const response = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
 
       res.json(actionSucceed(response))
     } catch (error) {
       next(error)
     }
+  }
+
+  getStatsHealth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {groupId, locationId, from, to} = req.query as StatsFilter
+
+      const authenticatedUser = res.locals.connectedUser as User
+      const admin = authenticatedUser.admin as AdminProfile
+      const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
+      const isHealthAdmin = admin.healthAdminForOrganizationIds?.includes(organizationId)
+      const canAccessOrganization =
+        isSuperAdmin || isHealthAdmin || admin.adminForOrganizationId === organizationId
+
+      if (!canAccessOrganization) replyInsufficientPermission(res)
+
+      const response = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
+
+      const accesses = response.accesses.filter(
+        (access) =>
+          access.status === PassportStatuses.Caution || access.status === PassportStatuses.Stop,
+      )
+
+      res.json(
+        actionSucceed({
+          permissionToViewDetail: !!isHealthAdmin,
+          asOfDateTime: response.asOfDateTime,
+          passportsCountByStatus: response.passportsCountByStatus,
+          hourlyCheckInsCounts: response.hourlyCheckInsCounts,
+          ...(!!isHealthAdmin && {accesses}),
+        }),
+      )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  private async getStatsHelper(organizationId: string, filter?: StatsFilter): Promise<Stats> {
+    const {groupId, locationId, from, to} = filter ?? {}
+    const live = !from && !to
+
+    const betweenCreatedDate = {
+      from: live ? moment().startOf('day').toDate() : new Date(from),
+      to: live ? undefined : new Date(to),
+    }
+
+    // Fetch user groups
+    const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
+
+    // Get users & dependants
+    const nonGuardiansUserIds = new Set<string>()
+    const guardianIds = new Set<string>()
+    const dependantIds = new Set<string>()
+    usersGroups.forEach(({userId, parentUserId}) => {
+      if (!!parentUserId) {
+        dependantIds.add(userId)
+        guardianIds.add(parentUserId)
+      } else nonGuardiansUserIds.add(userId)
+    })
+    const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
+    const usersById = await this.getUsersById([...userIds])
+    const dependantsById = await this.getDependantsById([...guardianIds], usersById, dependantIds)
+
+    // Fetch Guardians groups
+    const guardiansGroups: OrganizationUsersGroup[] = await Promise.all(
+      _.chunk([...guardianIds], 10).map((chunk) =>
+        this.organizationService.getUsersGroups(organizationId, null, chunk),
+      ),
+    ).then((results) => flattern(results as OrganizationUsersGroup[][]))
+
+    const groupsUsersByUserId: Record<string, OrganizationUsersGroup> = [
+      ...new Set([...(usersGroups ?? []), ...(guardiansGroups ?? [])]),
+    ].reduce(
+      (byUserId, groupUser) => ({
+        ...byUserId,
+        [groupUser.userId]: groupUser,
+      }),
+      {},
+    )
+
+    // Get accesses
+    const accesses = await this.getAccessesFor(
+      [...userIds],
+      [...dependantIds],
+      locationId,
+      groupId,
+      betweenCreatedDate,
+      groupsUsersByUserId,
+      usersById,
+      dependantsById,
+    )
+
+    return {
+      accesses,
+      asOfDateTime: live ? now().toISOString() : null,
+      passportsCountByStatus: getPassportsCountPerStatus(accesses),
+      hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
+    } as Stats
   }
 
   getUserContactTraceReport = async (
@@ -644,7 +730,6 @@ class OrganizationController implements IControllerBase {
     groupId: string | undefined,
     betweenCreatedDate: Range<Date>,
     groupsByUserId: Record<string, OrganizationUsersGroup>,
-    groupsById: Record<string, OrganizationGroup>,
     usersById: Record<string, User>,
     dependantsByIds: Record<string, User>,
   ): Promise<AccessWithPassportStatusAndUser[]> {
@@ -656,9 +741,6 @@ class OrganizationController implements IControllerBase {
     const implicitPendingPassports = [...userIds, ...dependantIds]
       .filter((userId) => !passportsByUserIds[userId])
       .map((userId) => ({status: PassportStatuses.Pending, userId} as Passport))
-
-    const groupOf = (userId: string): OrganizationGroup =>
-      groupsById[groupsByUserId[userId]?.groupId]
 
     // Fetch accesses
     const accessesByStatusToken: Record<string, Access> = await this.fetchAccesses(
@@ -673,7 +755,7 @@ class OrganizationController implements IControllerBase {
     )
 
     const isAccessEligibleForUserId = (userId: string) =>
-      !groupId || groupOf(userId)?.id === groupId
+      !groupId || groupsByUserId[userId]?.groupId === groupId
 
     // Remap accesses
     const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)]
@@ -723,15 +805,15 @@ class OrganizationController implements IControllerBase {
 
     // Handle duplicates
     const distinctAccesses: Record<string, AccessWithPassportStatusAndUser> = {}
+    const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
     accesses.forEach(({user, status, ...access}) => {
-      if (!groupOf(user.id)) {
+      if (!groupsByUserId[user.id]) {
         console.log('That is not supposed to happened but...', user.id, groupsByUserId)
         return
       }
 
-      const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
       const duplicateKey = `${normalize(user.firstName)}|${normalize(user.lastName)}|${
-        groupOf(user.id)?.id
+        groupsByUserId[user.id]?.groupId
       }`
       const target = distinctAccesses[duplicateKey]
 
