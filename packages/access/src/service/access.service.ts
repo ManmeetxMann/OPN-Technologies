@@ -257,10 +257,8 @@ export class AccessService {
       }
     }
 
-    const hasFilter = userId || locationId || betweenCreatedDate
-
     // @ts-ignore
-    const accesses = hasFilter ? await query.fetch() : await query.fetchAll()
+    const accesses = await query.fetchAll()
 
     //@ts-ignore
     const filteredAccesses = accesses
@@ -274,16 +272,19 @@ export class AccessService {
           //@ts-ignore
           exitAt: access.exitAt?.toDate().toISOString(),
           //@ts-ignore
-          dependants: Object.values(access.dependants).map(({id, enteredAt, exitAt}) => ({
-            id,
-            //@ts-ignore
-            enteredAt: enteredAt?.toDate().toISOString(),
-            //@ts-ignore
-            exitAt: exitAt?.toDate().toISOString(),
-          })),
+          dependants: Object.values(access.dependants).map(({id, enteredAt, exitAt}) => {
+            return {
+              id,
+              //@ts-ignore
+              enteredAt: enteredAt?.toDate().toISOString(),
+              //@ts-ignore
+              exitAt: exitAt?.toDate().toISOString(),
+            }
+          }),
         }),
       )
       .filter(
+        //@ts-ignore
         (item) => item.dependants && item.dependants.map((dep) => dep.id).indexOf(dependentId) > -1,
       )
 
