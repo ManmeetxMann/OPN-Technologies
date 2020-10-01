@@ -348,7 +348,7 @@ export default class TraceListener {
         dependants: lookup.dependants.map((dep) => ({
           id: dep.id,
           firstName: dep.firstName,
-          lastNameName: dep.lastName,
+          lastName: dep.lastName,
           groupName: organizationLookup[lookup.orgId].groups.find(
             (group) => group.id === dep.groupId,
           )?.name,
