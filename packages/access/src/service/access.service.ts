@@ -262,7 +262,7 @@ export class AccessService {
     const accesses = await query.fetch()
 
     //@ts-ignore
-    const filteredAccesses = accesses
+    const filteredAccesses = (accesses as Access[])
       .map(
         (access: Access): Access => ({
           ...access,
