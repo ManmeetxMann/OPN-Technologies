@@ -30,7 +30,6 @@ import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
-import {AccessModel} from '../../../access/src/repository/access.repository'
 import {StatusChangesResult} from '../../../passport/src/types/status-changes-result'
 
 const replyInsufficientPermission = (res: Response) =>

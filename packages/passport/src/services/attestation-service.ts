@@ -80,9 +80,15 @@ export class AttestationService {
 
     const attestations = await this.attestationRepository.findWhereEqualInMap(selector)
 
-    const attestationStatuses: PassportStatus[] = attestations.map((attestation: Attestation) => attestation.status)
+    const attestationStatuses: PassportStatus[] = attestations.map(
+      (attestation: Attestation) => attestation.status,
+    )
     const attestationAnswersForFailure: AttestationAnswers[] = attestations
-      .filter((attestation: Attestation) => attestation.status === PassportStatuses.Caution || attestation.status === PassportStatuses.Stop)
+      .filter(
+        (attestation: Attestation) =>
+          attestation.status === PassportStatuses.Caution ||
+          attestation.status === PassportStatuses.Stop,
+      )
       .map((attestation: Attestation) => attestation.answers)
 
     const query = this.traceRepository.collection().where('userId', '==', userId)
@@ -97,8 +103,11 @@ export class AttestationService {
 
     const allTracesForUserInPeriod = await query.fetch()
 
-    const riskyTraces = allTracesForUserInPeriod
-      .filter((trace: TraceModel) => trace.passportStatus === PassportStatuses.Stop || trace.passportStatus === PassportStatuses.Caution)
+    const riskyTraces = allTracesForUserInPeriod.filter(
+      (trace: TraceModel) =>
+        trace.passportStatus === PassportStatuses.Stop ||
+        trace.passportStatus === PassportStatuses.Caution,
+    )
 
     const exposures: ExposureResult[] = riskyTraces.map((trace: TraceModel) => {
       return {
