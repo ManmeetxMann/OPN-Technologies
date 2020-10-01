@@ -519,6 +519,15 @@ paths:
                         userId:
                           type: string
                           description: the id of the user who attested to having symptoms
+                        dependantIds:
+                          type: string
+                          description: JSON-serialized array of strings, the dependants who were included in the attestation
+                        includesGuardian:
+                          type: string
+                          enum:
+                            - "true"
+                            - "false"
+                          description: whether or not the guardian is included in the attestation
                         locationId:
                           type: string
                           description: the id of the location the user wanted to enter

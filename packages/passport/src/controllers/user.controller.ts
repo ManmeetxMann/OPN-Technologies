@@ -196,7 +196,7 @@ class UserController implements IControllerBase {
           this.topic.publish(Buffer.from('trace-required'), {
             userId,
             dependantIds: JSON.stringify(dependantIds),
-            includesGuardian: includeGuardian,
+            includesGuardian: includeGuardian ? 'true' : 'false',
             passportStatus,
             startTime: `${nowMillis - TRACE_LENGTH}`,
             endTime: `${nowMillis}`,
