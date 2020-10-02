@@ -1116,10 +1116,6 @@ paths:
           schema:
             type: string
         - in: query
-          name: parentUserId
-          schema:
-            type: string
-        - in: query
           name: from
           schema:
             type: string
