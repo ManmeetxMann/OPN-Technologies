@@ -798,6 +798,7 @@ class OrganizationController implements IControllerBase {
           enteredAt: access.enteredAt ?? (dependants[userId]?.enteredAt as string) ?? null,
           exitAt: access.exitAt ?? (dependants[userId]?.exitAt as string) ?? null,
           parentUserId,
+          groupId,
         }
       })
       .filter((access) => !!access)
