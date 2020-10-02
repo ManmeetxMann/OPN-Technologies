@@ -595,7 +595,7 @@ class OrganizationController implements IControllerBase {
     const live = !from && !to
 
     const betweenCreatedDate = {
-      from: live ? moment().startOf('day').toDate() : new Date(from),
+      from: live ? moment(now()).startOf('day').toDate() : new Date(from),
       to: live ? undefined : new Date(to),
     }
 
@@ -675,7 +675,7 @@ class OrganizationController implements IControllerBase {
       const live = !from && !to
 
       const betweenCreatedDate = {
-        from: live ? moment().startOf('day').toDate() : new Date(from),
+        from: live ? moment(now()).startOf('day').toDate() : new Date(from),
         to: live ? undefined : new Date(to),
       }
 
