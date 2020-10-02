@@ -279,7 +279,10 @@ abstract class DataModel<T extends HasId> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let collection: any = this.collection(subPath)
     for (const field of fields) {
-      const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(field.map, field.key)
+      const fieldPath =
+        !field.map || field.map === '/'
+          ? new this.datastore.firestoreAdmin.firestore.FieldPath(field.key)
+          : new this.datastore.firestoreAdmin.firestore.FieldPath(field.map, field.key)
       collection = collection.where(fieldPath, field.operator, field.value)
     }
     return collection.fetch()
