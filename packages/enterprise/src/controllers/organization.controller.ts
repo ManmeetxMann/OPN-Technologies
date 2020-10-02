@@ -746,20 +746,12 @@ class OrganizationController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
-      let isParentUser = true
-
-      if (parentUserId) {
-        const user = await this.userService.findOne(parentUserId)
-        if (user && user.organizationIds.indexOf(organizationId) > -1) {
-          isParentUser = false
-        }
-      }
+      const {userId, from, to} = req.query as UserContactTraceReportRequest
 
       // fetch attestation array in the time period
       const attestations = await this.attestationService.getAttestationsInPeriod(
         organizationId,
-        isParentUser ? userId : parentUserId,
+        userId,
         from,
         to,
       )

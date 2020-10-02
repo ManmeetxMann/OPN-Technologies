@@ -84,8 +84,8 @@ export class AttestationService {
       },
       {
         map: '/',
-        key: 'userId',
-        operator: DataModelFieldMapOperatorType.Equals,
+        key: 'appliesTo',
+        operator: DataModelFieldMapOperatorType.ArrayContains,
         value: userId,
       },
     ]
@@ -107,6 +107,7 @@ export class AttestationService {
         value: to,
       })
     }
+
 
     const attestations = await this.attestationRepository.findWhereEqualInMap(selector)
 
