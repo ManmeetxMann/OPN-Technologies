@@ -107,6 +107,9 @@ class OrganizationController implements IControllerBase {
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/health', this.getStatsHealth)
+        .get('/contact-trace-locations', this.getUserContactTraceReportLocations)
+        .get('/contact-trace-exposures', this.getUserContactTraceReport)
+        .get('/contact-trace-relatives', this.getUserContactTraceReport)
         .get('/contact-traces', this.getUserContactTraceReport)
     )
     const organizations = Router().use(
@@ -652,6 +655,61 @@ class OrganizationController implements IControllerBase {
     } as Stats
   }
 
+  getUserContactTraceReportLocations = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+
+      let isParentUser = true
+      let accesses: Access[]
+
+      if (parentUserId) {
+        const user = await this.userService.findOne(parentUserId)
+        if (user && user.organizationIds.indexOf(organizationId) > -1) {
+          isParentUser = false
+        }
+      }
+
+      const live = !from && !to
+
+      const betweenCreatedDate = {
+        from: live ? moment().startOf('day').toDate() : new Date(from),
+        to: live ? undefined : new Date(to),
+      }
+
+      if (isParentUser) {
+        accesses = await this.accessService.findAllWith({
+          userIds: [userId],
+          betweenCreatedDate,
+        })
+      } else {
+        accesses = await this.accessService.findAllWithDependents({
+          userId: parentUserId,
+          dependentId: userId,
+          betweenCreatedDate,
+        })
+      }
+
+      const accessLocationIds: string[] = accesses.map((item: Access) => item.locationId)
+
+      const locations: OrganizationLocation[] = await this.organizationService.getLocations(
+        organizationId,
+      )
+
+      const accessedLocations: OrganizationLocation[] = locations.filter(
+        (location: OrganizationLocation) => accessLocationIds.indexOf(location.id) > -1,
+      )
+
+      res.json(actionSucceed(accessedLocations))
+    } catch (error) {
+      next(error)
+    }
+  }
+
   getUserContactTraceReport = async (
     req: Request,
     res: Response,
@@ -711,6 +769,43 @@ class OrganizationController implements IControllerBase {
 
       const response = {
         locations: accessedLocations,
+        statusChanges: statusChangesResult.statusChanges,
+        answers: statusChangesResult.answersForFailure,
+        exposures: statusChangesResult.exposures,
+      }
+
+      res.json(actionSucceed(response))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getUserContactTraceReport = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+      let isParentUser = true
+
+      if (parentUserId) {
+        const user = await this.userService.findOne(parentUserId)
+        if (user && user.organizationIds.indexOf(organizationId) > -1) {
+          isParentUser = false
+        }
+      }
+
+      // fetch attestation array in the time period
+      const statusChangesResult: StatusChangesResult = await this.attestationService.getStatusChangesInPeriod(
+        organizationId,
+        isParentUser ? userId : parentUserId,
+        from,
+        to,
+      )
+
+      const response = {
         statusChanges: statusChangesResult.statusChanges,
         answers: statusChangesResult.answersForFailure,
         exposures: statusChangesResult.exposures,

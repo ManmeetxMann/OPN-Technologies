@@ -124,4 +124,48 @@ export class AttestationService {
       exposures: exposures,
     }
   }
+
+  async getAttestationsInPeriod(
+    organizationId: string,
+    userId: string,
+    from: string,
+    to: string,
+  ): Promise<Attestation> {
+    const selector = [
+      {
+        map: '/',
+        key: 'organizationId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: organizationId,
+      },
+      {
+        map: '/',
+        key: 'userId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: userId,
+      },
+    ]
+
+    if (from) {
+      selector.push({
+        map: '/',
+        key: 'attestationTime',
+        operator: DataModelFieldMapOperatorType.GreatOrEqual,
+        value: from,
+      })
+    }
+
+    if (to) {
+      selector.push({
+        map: '/',
+        key: 'attestationTime',
+        operator: DataModelFieldMapOperatorType.LessOrEqual,
+        value: to,
+      })
+    }
+
+    const attestations = await this.attestationRepository.findWhereEqualInMap(selector)
+
+    return attestations
+  }
 }
