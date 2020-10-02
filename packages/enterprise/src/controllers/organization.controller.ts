@@ -30,7 +30,6 @@ import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
-import {StatusChangesResult} from '../../../passport/src/types/status-changes-result'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -107,10 +106,9 @@ class OrganizationController implements IControllerBase {
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/health', this.getStatsHealth)
-        .get('/contact-trace-locations', this.getUserContactTraceReportLocations)
-        .get('/contact-trace-exposures', this.getUserContactTraceReport)
-        .get('/contact-trace-relatives', this.getUserContactTraceReport)
-        .get('/contact-traces', this.getUserContactTraceReport)
+        .get('/contact-trace-locations', this.getUserContactTraceLocations)
+        .get('/contact-trace-exposures', this.getUserContactTraceExposures)
+        .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
     )
     const organizations = Router().use(
       '/organizations',
@@ -655,7 +653,7 @@ class OrganizationController implements IControllerBase {
     } as Stats
   }
 
-  getUserContactTraceReportLocations = async (
+  getUserContactTraceLocations = async (
     req: Request,
     res: Response,
     next: NextFunction,
@@ -710,7 +708,7 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getUserContactTraceReport = async (
+  getUserContactTraceExposures = async (
     req: Request,
     res: Response,
     next: NextFunction,
@@ -720,7 +718,6 @@ class OrganizationController implements IControllerBase {
       const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
 
       let isParentUser = true
-      let accesses: Access[]
 
       if (parentUserId) {
         const user = await this.userService.findOne(parentUserId)
@@ -729,58 +726,20 @@ class OrganizationController implements IControllerBase {
         }
       }
 
-      const live = !from && !to
-
-      const betweenCreatedDate = {
-        from: live ? moment().startOf('day').toDate() : new Date(from),
-        to: live ? undefined : new Date(to),
-      }
-
-      if (isParentUser) {
-        accesses = await this.accessService.findAllWith({
-          userIds: [userId],
-          betweenCreatedDate,
-        })
-      } else {
-        accesses = await this.accessService.findAllWithDependents({
-          userId: parentUserId,
-          dependentId: userId,
-          betweenCreatedDate,
-        })
-      }
-
-      const accessLocationIds: string[] = accesses.map((item: Access) => item.locationId)
-
-      const locations: OrganizationLocation[] = await this.organizationService.getLocations(
-        organizationId,
-      )
-
-      const accessedLocations: OrganizationLocation[] = locations.filter(
-        (location: OrganizationLocation) => accessLocationIds.indexOf(location.id) > -1,
-      )
-
       // fetch attestation array in the time period
-      const statusChangesResult: StatusChangesResult = await this.attestationService.getStatusChangesInPeriod(
-        organizationId,
+      const exposures = await this.attestationService.getExposuresInPeriod(
         isParentUser ? userId : parentUserId,
         from,
         to,
       )
 
-      const response = {
-        locations: accessedLocations,
-        statusChanges: statusChangesResult.statusChanges,
-        answers: statusChangesResult.answersForFailure,
-        exposures: statusChangesResult.exposures,
-      }
-
-      res.json(actionSucceed(response))
+      res.json(actionSucceed(exposures))
     } catch (error) {
       next(error)
     }
   }
 
-  getUserContactTraceReport = async (
+  getUserContactTraceAttestations = async (
     req: Request,
     res: Response,
     next: NextFunction,
@@ -798,20 +757,14 @@ class OrganizationController implements IControllerBase {
       }
 
       // fetch attestation array in the time period
-      const statusChangesResult: StatusChangesResult = await this.attestationService.getStatusChangesInPeriod(
+      const attestations = await this.attestationService.getAttestationsInPeriod(
         organizationId,
         isParentUser ? userId : parentUserId,
         from,
         to,
       )
 
-      const response = {
-        statusChanges: statusChangesResult.statusChanges,
-        answers: statusChangesResult.answersForFailure,
-        exposures: statusChangesResult.exposures,
-      }
-
-      res.json(actionSucceed(response))
+      res.json(actionSucceed(attestations))
     } catch (error) {
       next(error)
     }

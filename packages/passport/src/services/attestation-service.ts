@@ -1,11 +1,11 @@
 import DataStore from '../../../common/src/data/datastore'
 import {firestore} from 'firebase-admin'
 import {serverTimestamp} from '../../../common/src/utils/times'
-import {Attestation, AttestationAnswers, AttestationModel} from '../models/attestation'
+import {Attestation, AttestationModel} from '../models/attestation'
 import {PassportStatus, PassportStatuses} from '../models/passport'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {TraceModel, TraceRepository} from '../../../access/src/repository/trace.repository'
-import {ExposureResult, StatusChangesResult} from '../types/status-changes-result'
+import {ExposureResult} from '../types/status-changes-result'
 
 export class AttestationService {
   private dataStore = new DataStore()
@@ -39,58 +39,7 @@ export class AttestationService {
     return 'pending'
   }
 
-  async getStatusChangesInPeriod(
-    organizationId: string,
-    userId: string,
-    from: string,
-    to: string,
-  ): Promise<StatusChangesResult> {
-    const selector = [
-      {
-        map: '/',
-        key: 'organizationId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: organizationId,
-      },
-      {
-        map: '/',
-        key: 'userId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: userId,
-      },
-    ]
-
-    if (from) {
-      selector.push({
-        map: '/',
-        key: 'attestationTime',
-        operator: DataModelFieldMapOperatorType.GreatOrEqual,
-        value: from,
-      })
-    }
-
-    if (to) {
-      selector.push({
-        map: '/',
-        key: 'attestationTime',
-        operator: DataModelFieldMapOperatorType.LessOrEqual,
-        value: to,
-      })
-    }
-
-    const attestations = await this.attestationRepository.findWhereEqualInMap(selector)
-
-    const attestationStatuses: PassportStatus[] = attestations.map(
-      (attestation: Attestation) => attestation.status,
-    )
-    const attestationAnswersForFailure: AttestationAnswers[] = attestations
-      .filter(
-        (attestation: Attestation) =>
-          attestation.status === PassportStatuses.Caution ||
-          attestation.status === PassportStatuses.Stop,
-      )
-      .map((attestation: Attestation) => attestation.answers)
-
+  async getExposuresInPeriod(userId: string, from: string, to: string): Promise<ExposureResult[]> {
     const query = this.traceRepository.collection().where('userId', '==', userId)
 
     if (from) {
@@ -117,12 +66,7 @@ export class AttestationService {
         exposures: trace.exposures,
       } as ExposureResult
     })
-
-    return {
-      statusChanges: attestationStatuses,
-      answersForFailure: attestationAnswersForFailure,
-      exposures: exposures,
-    }
+    return exposures
   }
 
   async getAttestationsInPeriod(
@@ -130,7 +74,7 @@ export class AttestationService {
     userId: string,
     from: string,
     to: string,
-  ): Promise<Attestation> {
+  ): Promise<Attestation[]> {
     const selector = [
       {
         map: '/',
