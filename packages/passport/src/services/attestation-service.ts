@@ -108,7 +108,6 @@ export class AttestationService {
       })
     }
 
-
     const attestations = await this.attestationRepository.findWhereEqualInMap(selector)
 
     return attestations
