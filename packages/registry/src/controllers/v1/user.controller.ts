@@ -47,16 +47,12 @@ class UserController implements IControllerBase {
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {registrationId, pushToken} = req.body as RegistrationUpdate
-      
+
       // Check token
       await this.messaging.validatePushToken(pushToken)
-      
+
       // Save token
-      await this.registrationService.updateProperty(
-        registrationId, 
-        "pushToken", 
-        pushToken
-      ) 
+      await this.registrationService.updateProperty(registrationId, 'pushToken', pushToken)
 
       res.json(actionSucceed())
     } catch (error) {
