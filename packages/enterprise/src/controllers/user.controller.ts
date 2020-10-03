@@ -142,7 +142,7 @@ class UserController implements IControllerBase {
         dependent.groupId = userGroups[dependent.id]
       }
 
-      res.json(actionSucceed({profile: user, dependents: dependents}))
+      res.json(actionSucceed({profile: user, dependents: dependents, parentUserId}))
     } catch (error) {
       next(error)
     }
