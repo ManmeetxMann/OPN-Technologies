@@ -30,7 +30,6 @@ import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
-import {StatusChangesResult} from '../../../passport/src/types/status-changes-result'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -107,7 +106,9 @@ class OrganizationController implements IControllerBase {
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/health', this.getStatsHealth)
-        .get('/contact-traces', this.getUserContactTraceReport)
+        .get('/contact-trace-locations', this.getUserContactTraceLocations)
+        .get('/contact-trace-exposures', this.getUserContactTraceExposures)
+        .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
     )
     const organizations = Router().use(
       '/organizations',
@@ -594,7 +595,7 @@ class OrganizationController implements IControllerBase {
     const live = !from && !to
 
     const betweenCreatedDate = {
-      from: live ? moment().startOf('day').toDate() : new Date(from),
+      from: live ? moment(now()).startOf('day').toDate() : new Date(from),
       to: live ? undefined : new Date(to),
     }
 
@@ -652,7 +653,7 @@ class OrganizationController implements IControllerBase {
     } as Stats
   }
 
-  getUserContactTraceReport = async (
+  getUserContactTraceLocations = async (
     req: Request,
     res: Response,
     next: NextFunction,
@@ -674,7 +675,7 @@ class OrganizationController implements IControllerBase {
       const live = !from && !to
 
       const betweenCreatedDate = {
-        from: live ? moment().startOf('day').toDate() : new Date(from),
+        from: live ? moment(now()).startOf('day').toDate() : new Date(from),
         to: live ? undefined : new Date(to),
       }
 
@@ -701,22 +702,61 @@ class OrganizationController implements IControllerBase {
         (location: OrganizationLocation) => accessLocationIds.indexOf(location.id) > -1,
       )
 
+      res.json(actionSucceed(accessedLocations))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getUserContactTraceExposures = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+
+      let isParentUser = true
+
+      if (parentUserId) {
+        const user = await this.userService.findOne(parentUserId)
+        if (user && user.organizationIds.indexOf(organizationId) > -1) {
+          isParentUser = false
+        }
+      }
+
       // fetch attestation array in the time period
-      const statusChangesResult: StatusChangesResult = await this.attestationService.getStatusChangesInPeriod(
-        organizationId,
+      const exposures = await this.attestationService.getExposuresInPeriod(
         isParentUser ? userId : parentUserId,
         from,
         to,
       )
 
-      const response = {
-        locations: accessedLocations,
-        statusChanges: statusChangesResult.statusChanges,
-        answers: statusChangesResult.answersForFailure,
-        exposures: statusChangesResult.exposures,
-      }
+      res.json(actionSucceed(exposures))
+    } catch (error) {
+      next(error)
+    }
+  }
 
-      res.json(actionSucceed(response))
+  getUserContactTraceAttestations = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {userId, from, to} = req.query as UserContactTraceReportRequest
+
+      // fetch attestation array in the time period
+      const attestations = await this.attestationService.getAttestationsInPeriod(
+        organizationId,
+        userId,
+        from,
+        to,
+      )
+
+      res.json(actionSucceed(attestations))
     } catch (error) {
       next(error)
     }
