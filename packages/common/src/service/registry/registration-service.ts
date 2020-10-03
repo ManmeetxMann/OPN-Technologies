@@ -26,6 +26,10 @@ export class RegistrationService {
     return this.repository.update(registration)
   }
 
+  updateProperty(registrationId: string, fieldName: string, fieldValue: unknown): Promise<Registration> {
+    return this.repository.updateProperty(registrationId, fieldName, fieldValue)
+  }
+
   async linkUser(registrationId: string, userId: string): Promise<void> {
     const registration = await this.findOne(registrationId)
     if (!registration) {

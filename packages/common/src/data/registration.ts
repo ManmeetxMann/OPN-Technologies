@@ -9,6 +9,11 @@ export type Registration = {
   userIds?: string[]
 }
 
+export type RegistrationUpdate = {
+  registrationId: string
+  pushToken: string
+}
+
 export class RegistrationModel extends DataModel<Registration> {
   public readonly rootPath = 'registration'
   readonly zeroSet = []

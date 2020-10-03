@@ -1,7 +1,7 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {Registration} from '../../../../common/src/data/registration'
+import {Registration, RegistrationUpdate} from '../../../../common/src/data/registration'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {MessagingFactory} from '../../../../common/src/service/messaging/messaging-service'
 import {RegistrationService} from '../../../../common/src/service/registry/registration-service'
@@ -18,12 +18,14 @@ class UserController implements IControllerBase {
 
   public initRoutes(): void {
     this.router.post(this.path + '/add', this.add)
+    this.router.put(this.path + '/update', this.update)
   }
 
   add = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // Check token
       const {platform, osVersion, pushToken} = req.body as Registration
+
+      // Check token
       if (pushToken) {
         await this.messaging.validatePushToken(pushToken)
       }
@@ -37,6 +39,26 @@ class UserController implements IControllerBase {
       })
 
       res.json(actionSucceed(registration))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {registrationId, pushToken} = req.body as RegistrationUpdate
+      
+      // Check token
+      await this.messaging.validatePushToken(pushToken)
+      
+      // Save token
+      await this.registrationService.updateProperty(
+        registrationId, 
+        "pushToken", 
+        pushToken
+      ) 
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }

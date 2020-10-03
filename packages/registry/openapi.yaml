@@ -54,6 +54,20 @@ components:
         - platform
         - osVersion
 
+    RegistrationUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        registrationId:
+          type: string
+        pushToken:
+          type: string
+          minLength: 5
+          maxLength: 400
+      required:
+        - registrationId
+        - pushToken
+
     UserDependant:
       type: object
       additionalProperties: false
@@ -142,6 +156,22 @@ paths:
       responses:
         "200":
           description: Successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfRegistration'
+              
+  /user/update:
+    put:
+      description: Update Registry
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationUpdate'
+      responses:
+        "200":
+          description: Successfully updated
           content:
             application/json:
               schema:
