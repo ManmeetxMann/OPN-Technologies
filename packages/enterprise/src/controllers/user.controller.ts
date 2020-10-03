@@ -12,7 +12,7 @@ import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Organization, OrganizationUsersGroup} from '../models/organization'
 import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
-import { ResourceNotFoundException } from '../../../common/src/exceptions/resource-not-found-exception'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -121,8 +121,7 @@ class UserController implements IControllerBase {
         lookupIds = [...lookupIds, ...dependentIds]
       }
 
-      if (!user)
-        throw new ResourceNotFoundException(`Cannot find user with id [${userId}]`)
+      if (!user) throw new ResourceNotFoundException(`Cannot find user with id [${userId}]`)
 
       // Fetch in chunks of 10 (most probably will only do once)
       const userGroupsArray: OrganizationUsersGroup[] = await Promise.all(
