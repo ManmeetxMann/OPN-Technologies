@@ -48,8 +48,6 @@ components:
         pushToken:
           type: string
           nullable: true
-          minLength: 5
-          maxLength: 400
       required:
         - platform
         - osVersion
@@ -62,8 +60,6 @@ components:
           type: string
         pushToken:
           type: string
-          minLength: 5
-          maxLength: 400
       required:
         - registrationId
         - pushToken
