@@ -229,8 +229,8 @@ class UserController implements IControllerBase {
               const organization = await this.organizationService.findOneById(organizationId)
               const stop = passportStatus === PassportStatuses.Stop
               const defaultFormat = stop
-                ? 'A user from the group __GROUPNAME has reported that they may have COVID-19'
-                : 'A user from the group __GROUPNAME has reported that they may have been exposed to COVID-19'
+                ? 'Someone in "__GROUPNAME" received a STOP badge. Tap to view admin dashboard. (__ORGLABEL)'
+                : 'Someone in "__GROUPNAME" received a CAUTION badge. Tap to view admin dashboard. (__ORGLABEL)'
               const organizationIcon = stop
                 ? organization.notificationIconStop
                 : organization.notificationIconCaution
@@ -241,10 +241,14 @@ class UserController implements IControllerBase {
                   ? organization.notificationFormatStop
                   : organization.notificationFormatCaution) ?? defaultFormat
 
+              const organizationLabel = organization.key.toString()
+
               groupNames.forEach((name) =>
                 sendMessage(
-                  'Potential Exposure',
-                  formatString.replace('__GROUPNAME', name),
+                  '⚠️ Potential Exposure Radar',
+                  formatString
+                    .replace('__GROUPNAME', name)
+                    .replace('__ORGLABEL', organizationLabel),
                   icon,
                   tokens,
                 ),
