@@ -55,15 +55,17 @@ class UserController implements IControllerBase {
   // TODO: actually test this against questionnaire "answer keys"
   private async evaluateAnswers(answers: AttestationAnswers): Promise<PassportStatuses> {
     // note that this switches us to 0-indexing
-    const responses = Object.values(answers)
-    const questionCount = responses.length >= 13 ? 13 : responses.length >= 6 ? 6 : 4
+    const answerKeys = Object.keys(answers).sort((a, b) =>
+      a.localeCompare(b, 'en', {numeric: true}),
+    )
+    const questionCount = answerKeys.length >= 13 ? 13 : answerKeys.length >= 6 ? 6 : 4
     const [values, caution, stop] = {
       4: [[1, 1, 1, 2], 1, 2],
       6: [[1, 1, 1, 1, 1, 1], 100, 1],
       13: [[2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2], 1, 2],
     }[questionCount]
     const score = (values as number[])
-      .map((value: number, index: number) => (responses[index][1] ? value : 0))
+      .map((value: number, index: number) => (answers[answerKeys[index]][1] ? value : 0))
       .reduce((total, current) => total + current)
     if (score >= stop) {
       return PassportStatuses.Stop
