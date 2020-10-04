@@ -829,7 +829,7 @@ class OrganizationController implements IControllerBase {
         const dependants = access.dependants ?? {}
         return {
           ...access,
-          userId: user.id,
+          userId,
           user,
           status,
           enteredAt: access.enteredAt ?? (dependants[userId]?.enteredAt as string) ?? null,
