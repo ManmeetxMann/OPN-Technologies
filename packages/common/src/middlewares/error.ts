@@ -40,10 +40,10 @@ const combinePropertyErrors = (extra: string[], missing: string[]): string => {
 export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, res, _next) => {
   console.error('Validation Error: ', err)
   const {errors} = err
-  const extraProperties = errors
+  const extraProperties = (errors ?? [])
     .filter((error) => error.message === 'should NOT have additional properties')
     .map((error) => error.path)
-  const missingProperties = errors
+  const missingProperties = (errors ?? [])
     .filter((error) => error.message.startsWith('should have required property '))
     .map((error) => error.path)
   res.status(err.status || 500).json({
