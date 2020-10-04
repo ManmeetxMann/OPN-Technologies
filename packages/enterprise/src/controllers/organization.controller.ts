@@ -783,7 +783,7 @@ class OrganizationController implements IControllerBase {
 
     // Fetch accesses by status-token
     const proceedStatusTokens = Object.values(passportsByUserIds)
-      .filter(({status}) => status === PassportStatuses.Pending)
+      .filter(({status}) => status === PassportStatuses.Proceed)
       .map(({statusToken}) => statusToken)
     const accessesByStatusToken: Record<string, Access> = await Promise.all(
       _.chunk(proceedStatusTokens, 10).map((chunk) =>
