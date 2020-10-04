@@ -56,7 +56,7 @@ class UserController implements IControllerBase {
   private async evaluateAnswers(answers: AttestationAnswers): Promise<PassportStatuses> {
     // note that this switches us to 0-indexing
     const responses = Object.values(answers)
-    const questionCount = (responses.length >= 13) ? 13 : (responses.length >= 6 ? 6: 4)
+    const questionCount = responses.length >= 13 ? 13 : responses.length >= 6 ? 6 : 4
     const [values, caution, stop] = {
       4: [[1, 1, 1, 2], 1, 2],
       6: [[1, 1, 1, 1, 1, 1], 100, 1],
