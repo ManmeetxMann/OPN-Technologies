@@ -55,11 +55,14 @@ class UserController implements IControllerBase {
   // TODO: actually test this against questionnaire "answer keys"
   private async evaluateAnswers(answers: AttestationAnswers): Promise<PassportStatuses> {
     // note that this switches us to 0-indexing
-    const responses = [1, 2, 3, 4, 5, 6].map((index) => (answers[index] ? answers[index][1] : null))
-    const questionCount = responses[4] !== null && responses[5] !== null ? 6 : 4
+    const responses = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((index) =>
+      answers[index] ? answers[index][1] : null,
+    )
+    const questionCount = responses[6] !== null ? 13 : responses[5] !== null ? 6 : 4
     const [values, caution, stop] = {
       4: [[1, 1, 1, 2], 1, 2],
       6: [[1, 1, 1, 1, 1, 1], 100, 1],
+      13: [[2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2], 1, 2],
     }[questionCount]
     const score = (values as number[])
       .map((value: number, index: number) => (responses[index] ? value : 0))
