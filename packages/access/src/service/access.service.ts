@@ -198,12 +198,7 @@ export class AccessService {
     })
   }
 
-  findAllWith({
-    userIds,
-    statusTokens,
-    betweenCreatedDate,
-    locationId,
-  }: AccessFilter): Promise<Access[]> {
+  findAllWith({userIds, betweenCreatedDate, locationId}: AccessFilter): Promise<Access[]> {
     // @ts-ignore
     let query = this.accessRepository.collection()
 
@@ -211,12 +206,6 @@ export class AccessService {
       // @ts-ignore
       query = query.where('userId', 'in', userIds)
     }
-
-    if (statusTokens?.length) {
-      // @ts-ignore
-      query = query.where('statusToken', 'in', statusTokens)
-    }
-
     if (locationId) {
       // @ts-ignore
       query = query.where('locationId', '==', locationId)
@@ -233,7 +222,7 @@ export class AccessService {
       }
     }
 
-    const hasFilter = userIds || statusTokens || locationId || betweenCreatedDate
+    const hasFilter = userIds || locationId || betweenCreatedDate
     // @ts-ignore
     return (hasFilter ? query.fetch() : query.fetchAll()).then((accesses) =>
       accesses.map(AccessService.mapAccessDates),
