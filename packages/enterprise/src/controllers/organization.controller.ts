@@ -727,13 +727,38 @@ class OrganizationController implements IControllerBase {
       }
 
       // fetch attestation array in the time period
-      const exposures = await this.attestationService.getExposuresInPeriod(
+      const rawExposures = await this.attestationService.getExposuresInPeriod(
         isParentUser ? userId : parentUserId,
         from,
         to,
       )
-
-      res.json(actionSucceed(exposures))
+      // WARNING: adding properties to models may not cause them to appear here
+      const result = rawExposures.map(({userId, date, duration, exposures}) => ({
+        userId,
+        date,
+        duration,
+        exposures: exposures.map(({overlapping, date, organizationId, locationId}) => ({
+          date,
+          organizationId,
+          locationId,
+          overlapping: overlapping.map(({userId, dependant, start, end}) => ({
+            userId,
+            // @ts-ignore this is a firestore timestamp, not a string
+            start: start?.toDate() ?? null,
+            // @ts-ignore this is a firestore timestamp, not a string
+            end: end?.toDate() ?? null,
+            dependant: dependant
+              ? {
+                  id: dependant.id,
+                  firstName: dependant.firstName,
+                  lastName: dependant.lastName,
+                  groupId: dependant.groupId,
+                }
+              : null,
+          })),
+        })),
+      }))
+      res.json(actionSucceed(result))
     } catch (error) {
       next(error)
     }
