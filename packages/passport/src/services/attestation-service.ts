@@ -9,6 +9,11 @@ import {
 } from '../../../common/src/data/datamodel.base'
 import {TraceModel, TraceRepository} from '../../../access/src/repository/trace.repository'
 import {ExposureResult} from '../types/status-changes-result'
+import {Config} from '../../../common/src/utils/config'
+
+import moment from 'moment'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 export class AttestationService {
   private dataStore = new DataStore()
@@ -46,11 +51,11 @@ export class AttestationService {
     const query = this.traceRepository.collection().where('userId', '==', userId)
 
     if (from) {
-      query.where('date', '>=', new Date(from))
+      query.where('date', '>=', moment(from).tz(timeZone).format('YYYY-MM-DD'))
     }
 
     if (to) {
-      query.where('date', '<=', new Date(to))
+      query.where('date', '<=', moment(to).tz(timeZone).format('YYYY-MM-DD'))
     }
 
     const allTracesForUserInPeriod = await query.fetch()
