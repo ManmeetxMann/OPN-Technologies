@@ -3,7 +3,10 @@ import {firestore} from 'firebase-admin'
 import {serverTimestamp} from '../../../common/src/utils/times'
 import {Attestation, AttestationModel} from '../models/attestation'
 import {PassportStatus, PassportStatuses} from '../models/passport'
-import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
+import {
+  DataModelFieldMapOperatorType,
+  DataModelFieldMap,
+} from '../../../common/src/data/datamodel.base'
 import {TraceModel, TraceRepository} from '../../../access/src/repository/trace.repository'
 import {ExposureResult} from '../types/status-changes-result'
 
@@ -43,11 +46,11 @@ export class AttestationService {
     const query = this.traceRepository.collection().where('userId', '==', userId)
 
     if (from) {
-      query.where('date', '>=', from)
+      query.where('date', '>=', new Date(from))
     }
 
     if (to) {
-      query.where('date', '<=', to)
+      query.where('date', '<=', new Date(to))
     }
 
     const allTracesForUserInPeriod = await query.fetch()
@@ -69,19 +72,8 @@ export class AttestationService {
     return exposures
   }
 
-  async getAttestationsInPeriod(
-    organizationId: string,
-    userId: string,
-    from: string,
-    to: string,
-  ): Promise<Attestation[]> {
-    const selector = [
-      {
-        map: '/',
-        key: 'organizationId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: organizationId,
-      },
+  async getAttestationsInPeriod(userId: string, from: string, to: string): Promise<Attestation[]> {
+    const selector: DataModelFieldMap[] = [
       {
         map: '/',
         key: 'appliesTo',
@@ -95,7 +87,7 @@ export class AttestationService {
         map: '/',
         key: 'attestationTime',
         operator: DataModelFieldMapOperatorType.GreatOrEqual,
-        value: from,
+        value: new Date(from),
       })
     }
 
@@ -104,12 +96,11 @@ export class AttestationService {
         map: '/',
         key: 'attestationTime',
         operator: DataModelFieldMapOperatorType.LessOrEqual,
-        value: to,
+        value: new Date(to),
       })
     }
 
     const attestations = await this.attestationRepository.findWhereEqualInMap(selector)
-
     return attestations
   }
 }

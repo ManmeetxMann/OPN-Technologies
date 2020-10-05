@@ -745,16 +745,11 @@ class OrganizationController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {organizationId} = req.params
+      // const {organizationId} = req.params
       const {userId, from, to} = req.query as UserContactTraceReportRequest
 
       // fetch attestation array in the time period
-      const attestations = await this.attestationService.getAttestationsInPeriod(
-        organizationId,
-        userId,
-        from,
-        to,
-      )
+      const attestations = await this.attestationService.getAttestationsInPeriod(userId, from, to)
 
       res.json(actionSucceed(attestations))
     } catch (error) {
