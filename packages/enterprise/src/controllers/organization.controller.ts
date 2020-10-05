@@ -773,7 +773,7 @@ class OrganizationController implements IControllerBase {
     dependantsByIds: Record<string, User>,
   ): Promise<AccessWithPassportStatusAndUser[]> {
     // Fetch passports
-    const passportsByUserIds = await this.passportService.findTheLatestValidPassports(
+    const passportsByUserIds = await this.passportService.findLatestForUserIds(
       userIds,
       dependantIds,
     )
@@ -781,25 +781,17 @@ class OrganizationController implements IControllerBase {
       .filter((userId) => !passportsByUserIds[userId])
       .map((userId) => ({status: PassportStatuses.Pending, userId} as Passport))
 
-    // Fetch accesses by status-token
-    const proceedStatusTokens = Object.values(passportsByUserIds)
-      .filter(({status}) => status === PassportStatuses.Proceed)
-      .map(({statusToken}) => statusToken)
-    const accessesByStatusToken: Record<string, Access> = await Promise.all(
-      _.chunk(proceedStatusTokens, 10).map((chunk) =>
-        this.accessService.findAllWith({
-          statusTokens: chunk,
-          locationId,
-        }),
+    // Fetch accesses
+    const accessesByStatusToken: Record<string, Access> = await this.fetchAccesses(
+      userIds,
+      locationId,
+      betweenCreatedDate,
+    ).then((results) =>
+      results.reduce(
+        (byStatusToken, access) => ({...byStatusToken, [access.statusToken]: access}),
+        {},
       ),
     )
-      .then((results) => flattern(results as Access[][]))
-      .then((results) =>
-        results.reduce(
-          (byStatusToken, access) => ({...byStatusToken, [access.statusToken]: access}),
-          {},
-        ),
-      )
 
     const isAccessEligibleForUserId = (userId: string) =>
       !groupId || groupsByUserId[userId]?.groupId === groupId
@@ -807,7 +799,7 @@ class OrganizationController implements IControllerBase {
     // Remap accesses
     const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)]
       .filter(({userId}) => isAccessEligibleForUserId(userId))
-      .map(({userId, status, statusToken}) => {
+      .map(({id, userId, status, statusToken}) => {
         const user = usersById[userId] ?? dependantsByIds[userId]
         const parentUserId = passportsByUserIds[userId]?.parentUserId
 
@@ -815,15 +807,26 @@ class OrganizationController implements IControllerBase {
           console.error(`Invalid state exception: Cannot find user/dependant for ID [${userId}]`)
           return null
         }
-        const access = accessesByStatusToken[statusToken] ?? {
-          token: null,
-          statusToken: null,
-          locationId: null,
-          createdAt: null,
-          enteredAt: null,
-          exitAt: null,
-          includesGuardian: null,
-          dependants: null,
+        const access =
+          status === PassportStatuses.Proceed
+            ? accessesByStatusToken[statusToken]
+            : {
+                token: null,
+                statusToken: null,
+                locationId: null,
+                createdAt: null,
+                enteredAt: null,
+                exitAt: null,
+                userId: null,
+                includesGuardian: null,
+                dependants: null,
+              }
+
+        if (!access) {
+          console.error(
+            `Invalid state exception: Cannot find access for status token [${statusToken}], passport [${id}] and user [${userId}]`,
+          )
+          return null
         }
 
         const dependants = access.dependants ?? {}
@@ -845,7 +848,7 @@ class OrganizationController implements IControllerBase {
     const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
     accesses.forEach(({user, status, ...access}) => {
       if (!groupsByUserId[user.id]) {
-        console.log('Invalid state: Cannot find group for user: ', user.id)
+        console.log('That is not supposed to happened but...', user.id, groupsByUserId)
         return
       }
 
@@ -890,6 +893,22 @@ class OrganizationController implements IControllerBase {
     ).then((dependants) =>
       flattern(dependants).reduce((byId, dependant) => ({...byId, [dependant.id]: dependant}), {}),
     )
+  }
+
+  private fetchAccesses(
+    userIds: string[],
+    locationId: string | undefined,
+    betweenCreatedDate: Range<Date>,
+  ): Promise<Access[]> {
+    return Promise.all(
+      _.chunk(userIds, 10).map((chunk) =>
+        this.accessService.findAllWith({
+          userIds: chunk,
+          locationId,
+          betweenCreatedDate,
+        }),
+      ),
+    ).then((results) => flattern(results as Access[][]))
   }
 
   private async getGroups(organizationId: string): Promise<OrganizationGroup[]> {
