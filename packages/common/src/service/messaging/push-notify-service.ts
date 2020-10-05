@@ -1,14 +1,21 @@
 import admin from 'firebase-admin'
 import * as _ from 'lodash'
+
+type Recipient = {
+  token: string
+  data?: Record<string, string>
+}
+
 export const sendMessage = (
   title: string,
   body: string,
   imageUrl: string,
-  tokens: string[],
+  recipients: Recipient[],
 ): Promise<unknown> => {
-  const messages = tokens.map(
-    (token: string): admin.messaging.Message => ({
+  const messages = recipients.map(
+    ({token, data}): admin.messaging.Message => ({
       token,
+      data,
       notification: {
         title,
         body,
@@ -16,16 +23,19 @@ export const sendMessage = (
       },
     }),
   )
-  const chunks = _.chunk(messages, 500)
+  const chunks: admin.messaging.Message[][] = _.chunk(messages, 500)
   if (!chunks.length) {
     console.log('no tokens were provided for message', title, body)
     return
   }
   console.log('sending push notification', title, body)
-  if (tokens.length < 10) {
-    console.log('to tokens', tokens)
+  if (recipients.length < 10) {
+    console.log(
+      'to tokens',
+      recipients.map(({token}) => token),
+    )
   } else {
-    console.log(`to ${tokens.length} tokens`)
+    console.log(`to ${recipients.length} tokens`)
   }
   const messaging = admin.messaging()
   chunks.forEach((chunk) =>

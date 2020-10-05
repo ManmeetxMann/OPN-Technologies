@@ -17,6 +17,7 @@ import {RegistrationService} from '../../../common/src/service/registry/registra
 import {UserService} from '../../../common/src/service/user/user-service'
 import {User} from '../../../common/src/data/user'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {sendMessage} from '../../../common/src/service/messaging/push-notify-service'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
@@ -253,7 +254,7 @@ class UserController implements IControllerBase {
                       .replace('__GROUPNAME', name)
                       .replace('__ORGLABEL', organizationLabel),
                     icon,
-                    tokens,
+                    tokens.map((token) => ({token})),
                   ),
                 )
               },
@@ -275,12 +276,20 @@ class UserController implements IControllerBase {
 
   testNotify = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {userId, messageTitle, messageBody} = req.body
+      const {userId, messageTitle, messageBody, link} = req.body
       const tokens = (await this.registrationService.findForUserIds([userId]))
         .map((reg) => reg.pushToken)
         .filter((exists) => exists)
+      if (!tokens.length) {
+        throw new ResourceNotFoundException('No pushTokens found for user')
+      }
       console.log(`${userId} has ${tokens.length} token(s): ${tokens.join()}`)
-      sendMessage(messageTitle, messageBody, DEFAULT_IMAGE, tokens)
+      sendMessage(
+        messageTitle,
+        messageBody,
+        DEFAULT_IMAGE,
+        tokens.map((token) => ({token, data: {link}})),
+      )
       res.json(actionSucceed({}))
     } catch (error) {
       next(error)
