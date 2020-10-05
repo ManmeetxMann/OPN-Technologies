@@ -1,7 +1,7 @@
 import moment from 'moment-timezone'
 
 import {ExposureReport} from '../models/trace'
-import {User, UserDependant} from '../../../common/src/data/user'
+import {User} from '../../../common/src/data/user'
 import type {SinglePersonAccess} from '../models/attendance'
 import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
