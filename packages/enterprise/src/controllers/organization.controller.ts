@@ -727,13 +727,38 @@ class OrganizationController implements IControllerBase {
       }
 
       // fetch attestation array in the time period
-      const exposures = await this.attestationService.getExposuresInPeriod(
+      const rawExposures = await this.attestationService.getExposuresInPeriod(
         isParentUser ? userId : parentUserId,
         from,
         to,
       )
-
-      res.json(actionSucceed(exposures))
+      // WARNING: adding properties to models may not cause them to appear here
+      const result = rawExposures.map(({userId, date, duration, exposures}) => ({
+        userId,
+        date,
+        duration,
+        exposures: exposures.map(({overlapping, date, organizationId, locationId}) => ({
+          date,
+          organizationId,
+          locationId,
+          overlapping: overlapping.map(({userId, dependant, start, end}) => ({
+            userId,
+            // @ts-ignore this is a firestore timestamp, not a string
+            start: start?.toDate() ?? null,
+            // @ts-ignore this is a firestore timestamp, not a string
+            end: end?.toDate() ?? null,
+            dependant: dependant
+              ? {
+                  id: dependant.id,
+                  firstName: dependant.firstName,
+                  lastName: dependant.lastName,
+                  groupId: dependant.groupId,
+                }
+              : null,
+          })),
+        })),
+      }))
+      res.json(actionSucceed(result))
     } catch (error) {
       next(error)
     }
@@ -745,18 +770,18 @@ class OrganizationController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {organizationId} = req.params
+      // const {organizationId} = req.params
       const {userId, from, to} = req.query as UserContactTraceReportRequest
 
       // fetch attestation array in the time period
-      const attestations = await this.attestationService.getAttestationsInPeriod(
-        organizationId,
-        userId,
-        from,
-        to,
-      )
-
-      res.json(actionSucceed(attestations))
+      const attestations = await this.attestationService.getAttestationsInPeriod(userId, from, to)
+      // @ts-ignore 'timestamps' does not exist in typescript
+      const response = attestations.map(({timestamps, attestationTime, ...passThrough}) => ({
+        ...passThrough,
+        // @ts-ignore attestationTime is a server timestamp, not a string
+        attestationTime: attestationTime.toDate(),
+      }))
+      res.json(actionSucceed(response))
     } catch (error) {
       next(error)
     }

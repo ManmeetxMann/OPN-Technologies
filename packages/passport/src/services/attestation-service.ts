@@ -3,9 +3,17 @@ import {firestore} from 'firebase-admin'
 import {serverTimestamp} from '../../../common/src/utils/times'
 import {Attestation, AttestationModel} from '../models/attestation'
 import {PassportStatus, PassportStatuses} from '../models/passport'
-import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
+import {
+  DataModelFieldMapOperatorType,
+  DataModelFieldMap,
+} from '../../../common/src/data/datamodel.base'
 import {TraceModel, TraceRepository} from '../../../access/src/repository/trace.repository'
 import {ExposureResult} from '../types/status-changes-result'
+import {Config} from '../../../common/src/utils/config'
+
+import moment from 'moment'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 export class AttestationService {
   private dataStore = new DataStore()
@@ -43,11 +51,11 @@ export class AttestationService {
     const query = this.traceRepository.collection().where('userId', '==', userId)
 
     if (from) {
-      query.where('date', '>=', from)
+      query.where('date', '>=', moment(from).tz(timeZone).format('YYYY-MM-DD'))
     }
 
     if (to) {
-      query.where('date', '<=', to)
+      query.where('date', '<=', moment(to).tz(timeZone).format('YYYY-MM-DD'))
     }
 
     const allTracesForUserInPeriod = await query.fetch()
@@ -69,19 +77,8 @@ export class AttestationService {
     return exposures
   }
 
-  async getAttestationsInPeriod(
-    organizationId: string,
-    userId: string,
-    from: string,
-    to: string,
-  ): Promise<Attestation[]> {
-    const selector = [
-      {
-        map: '/',
-        key: 'organizationId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: organizationId,
-      },
+  async getAttestationsInPeriod(userId: string, from: string, to: string): Promise<Attestation[]> {
+    const selector: DataModelFieldMap[] = [
       {
         map: '/',
         key: 'appliesTo',
@@ -95,7 +92,7 @@ export class AttestationService {
         map: '/',
         key: 'attestationTime',
         operator: DataModelFieldMapOperatorType.GreatOrEqual,
-        value: from,
+        value: new Date(from),
       })
     }
 
@@ -104,12 +101,11 @@ export class AttestationService {
         map: '/',
         key: 'attestationTime',
         operator: DataModelFieldMapOperatorType.LessOrEqual,
-        value: to,
+        value: new Date(to),
       })
     }
 
     const attestations = await this.attestationRepository.findWhereEqualInMap(selector)
-
     return attestations
   }
 }
