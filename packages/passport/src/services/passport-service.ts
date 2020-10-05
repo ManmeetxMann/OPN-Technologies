@@ -23,19 +23,18 @@ export class PassportService {
   private passportRepository = new PassportModel(this.dataStore)
   private identifierRepository = new IdentifiersModel(this.dataStore)
 
-  async findLatestForUserIds(
+  async findTheLatestValidPassports(
     userIds: string[],
     dependantIds: string[] = [],
   ): Promise<Record<string, Passport>> {
     const latestPassportsByUserId: Record<string, Passport> = {}
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
-    const today = moment(now()).tz(timeZone).startOf('day').toDate()
     await Promise.all(
       _.chunk([...new Set(userIds)], 10).map((chunk) =>
         this.passportRepository
           .collection()
           .where('userId', 'in', chunk)
-          .where('validFrom', '>=', today)
+          .where('validUntil', '>', moment(now()).tz(timeZone).toDate())
           .fetch(),
       ),
     ).then((results) =>
