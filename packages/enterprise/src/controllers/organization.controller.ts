@@ -750,8 +750,13 @@ class OrganizationController implements IControllerBase {
 
       // fetch attestation array in the time period
       const attestations = await this.attestationService.getAttestationsInPeriod(userId, from, to)
-
-      res.json(actionSucceed(attestations))
+      // @ts-ignore 'timestamps' does not exist in typescript
+      const response = attestations.map(({timestamps, attestationTime, ...passThrough}) => ({
+        ...passThrough,
+        // @ts-ignore attestationTime is a server timestamp, not a string
+        attestationTime: attestationTime.toDate(),
+      }))
+      res.json(actionSucceed(response))
     } catch (error) {
       next(error)
     }
