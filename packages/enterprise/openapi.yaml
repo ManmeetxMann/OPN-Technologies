@@ -115,6 +115,9 @@ components:
           type: string
         type:
           type: string
+          enum:
+            - default
+            - event
         attestationRequired:
           type: boolean
         allowAccess:
@@ -149,6 +152,7 @@ components:
       required:
         - title
         - attestationRequired
+        - type
 
     OrganizationGroup:
       type: object
