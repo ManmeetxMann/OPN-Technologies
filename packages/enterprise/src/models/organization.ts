@@ -29,6 +29,11 @@ export enum OrganizationType {
   Childcare = 'childcare',
 }
 
+export enum OrganizationLocationType {
+  Default = 'default',
+  Event = 'event',
+}
+
 export type OrganizationGroup = {
   id: string
   name: string
@@ -52,6 +57,7 @@ export type OrganizationLocation = {
   zip: string
   state: string
   country: string
+  type?: OrganizationLocationType
   // true if no location has this location as parentLocationId
   allowAccess: boolean
   // id of location which contains this location
@@ -61,6 +67,8 @@ export type OrganizationLocation = {
     address: string
     title: string
   } & OrganizationConfiguration)[]
+  validFrom?: string
+  validUntil?: string
 } & OrganizationConfiguration
 
 export type OrganizationConfiguration = {
