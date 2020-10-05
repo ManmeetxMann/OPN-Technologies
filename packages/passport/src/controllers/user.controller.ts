@@ -247,7 +247,7 @@ class UserController implements IControllerBase {
 
               groupNames.forEach((name) =>
                 sendMessage(
-                  '⚠️ Potential Exposure Radar',
+                  '⚠️ Potential Exposure',
                   formatString
                     .replace('__GROUPNAME', name)
                     .replace('__ORGLABEL', organizationLabel),
