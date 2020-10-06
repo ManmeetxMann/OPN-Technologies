@@ -227,7 +227,7 @@ class AdminController implements IRouteController {
       const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
 
       // Double check
-      if (!canAccessOrganization){
+      if (!canAccessOrganization) {
         replyInsufficientPermission(res)
         return
       }
