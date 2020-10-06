@@ -3,7 +3,7 @@ import * as _ from 'lodash'
 
 type Recipient = {
   token: string
-  data?: Record<string, string>
+  data?: Record<string, string | null | undefined>
 }
 
 export const sendMessage = (
@@ -15,7 +15,11 @@ export const sendMessage = (
   const messages = recipients.map(
     ({token, data}): admin.messaging.Message => ({
       token,
-      data,
+      data: Object.keys(data).reduce(
+        // filter out nulls and empty strings
+        (result, key) => (data[key] ? {...result, [key]: data[key]} : result),
+        {},
+      ),
       notification: {
         title,
         body,
