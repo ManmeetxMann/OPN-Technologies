@@ -1,21 +1,50 @@
 import admin from 'firebase-admin'
+import * as _ from 'lodash'
+
+type Recipient = {
+  token: string
+  data?: Record<string, string>
+}
 
 export const sendMessage = (
   title: string,
   body: string,
   imageUrl: string,
-  tokens: string[],
+  recipients: Recipient[],
 ): Promise<unknown> => {
-  return admin.messaging().sendAll(
-    tokens.map(
-      (token: string): admin.messaging.Message => ({
-        token,
-        notification: {
-          title,
-          body,
-          imageUrl,
-        },
-      }),
-    ),
+  const messages = recipients.map(
+    ({token, data}): admin.messaging.Message => ({
+      token,
+      data,
+      notification: {
+        title,
+        body,
+        imageUrl,
+      },
+    }),
+  )
+  const chunks: admin.messaging.Message[][] = _.chunk(messages, 500)
+  if (!chunks.length) {
+    console.log('no tokens were provided for message', title, body)
+    return
+  }
+  console.log('sending push notification', title, body)
+  if (recipients.length < 10) {
+    console.log(
+      'to tokens',
+      recipients.map(({token}) => token),
+    )
+  } else {
+    console.log(`to ${recipients.length} tokens`)
+  }
+  const messaging = admin.messaging()
+  chunks.forEach((chunk) =>
+    messaging.sendAll(chunk).then((result) => {
+      if (result.failureCount) {
+        console.error(`${result.failureCount} messages failed`)
+        const failures = result.responses.filter((response) => response.error)
+        console.error(failures.map((failed) => `${failed.messageId}: ${failed.error.toJSON()}`))
+      }
+    }),
   )
 }

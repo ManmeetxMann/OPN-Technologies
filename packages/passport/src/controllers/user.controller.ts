@@ -17,6 +17,7 @@ import {RegistrationService} from '../../../common/src/service/registry/registra
 import {UserService} from '../../../common/src/service/user/user-service'
 import {User} from '../../../common/src/data/user'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {sendMessage} from '../../../common/src/service/messaging/push-notify-service'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
@@ -205,58 +206,60 @@ class UserController implements IControllerBase {
             questionnaireId,
             answers: JSON.stringify(answers),
           })
-          //do not await here, this is a side effect
-          this.userService.findHealthAdminsForOrg(organizationId).then(
-            async (healthAdmins: User[]): Promise<void> => {
-              const ids = healthAdmins.map(({id}) => id)
-              if (!ids && ids.length) {
-                return
-              }
-              const tokens = (await this.registrationService.findForUserIds(ids))
-                .map((reg) => reg.pushToken)
-                .filter((exists) => exists)
-              const relevantUserIds = [...dependantIds]
-              if (includeGuardian) {
-                relevantUserIds.push(userId)
-              }
-              const groups = await this.organizationService.getUsersGroups(
-                organizationId,
-                null,
-                relevantUserIds,
-              )
-              const allGroups = await this.organizationService.getGroups(organizationId)
-              const groupNames = groups.map(
-                (group) => allGroups.find(({id}) => id === group.groupId).name,
-              )
-              const organization = await this.organizationService.findOneById(organizationId)
-              const stop = passportStatus === PassportStatuses.Stop
-              const defaultFormat = stop
-                ? 'Someone in "__GROUPNAME" received a STOP badge. Tap to view admin dashboard. (__ORGLABEL)'
-                : 'Someone in "__GROUPNAME" received a CAUTION badge. Tap to view admin dashboard. (__ORGLABEL)'
-              const organizationIcon = stop
-                ? organization.notificationIconStop
-                : organization.notificationIconCaution
-              const icon = organizationIcon ?? DEFAULT_IMAGE
+          const organization = await this.organizationService.findOneById(organizationId)
+          if (organization.enablePushNotifications) {
+            //do not await here, this is a side effect
+            this.userService.findHealthAdminsForOrg(organizationId).then(
+              async (healthAdmins: User[]): Promise<void> => {
+                const ids = healthAdmins.map(({id}) => id)
+                if (!ids && ids.length) {
+                  return
+                }
+                const tokens = (await this.registrationService.findForUserIds(ids))
+                  .map((reg) => reg.pushToken)
+                  .filter((exists) => exists)
+                const relevantUserIds = [...dependantIds]
+                if (includeGuardian) {
+                  relevantUserIds.push(userId)
+                }
+                const groups = await this.organizationService.getUsersGroups(
+                  organizationId,
+                  null,
+                  relevantUserIds,
+                )
+                const allGroups = await this.organizationService.getGroups(organizationId)
+                const groupNames = groups.map(
+                  (group) => allGroups.find(({id}) => id === group.groupId).name,
+                )
+                const stop = passportStatus === PassportStatuses.Stop
+                const defaultFormat = stop
+                  ? 'Someone in "__GROUPNAME" received a STOP badge. Tap to view admin dashboard. (__ORGLABEL)'
+                  : 'Someone in "__GROUPNAME" received a CAUTION badge. Tap to view admin dashboard. (__ORGLABEL)'
+                const organizationIcon = stop
+                  ? organization.notificationIconStop
+                  : organization.notificationIconCaution
+                const icon = organizationIcon ?? DEFAULT_IMAGE
 
-              const formatString =
-                (stop
-                  ? organization.notificationFormatStop
-                  : organization.notificationFormatCaution) ?? defaultFormat
+                const formatString =
+                  (stop
+                    ? organization.notificationFormatStop
+                    : organization.notificationFormatCaution) ?? defaultFormat
 
-              const organizationLabel = organization.key.toString()
+                const organizationLabel = organization.key.toString()
 
-              groupNames.forEach((name) =>
-                sendMessage(
-                  '⚠️ Potential Exposure',
-                  formatString
-                    .replace('__GROUPNAME', name)
-                    .replace('__ORGLABEL', organizationLabel),
-                  icon,
-                  tokens,
-                ),
-              )
-            },
-          )
+                groupNames.forEach((name) =>
+                  sendMessage(
+                    '⚠️ Potential Exposure',
+                    formatString
+                      .replace('__GROUPNAME', name)
+                      .replace('__ORGLABEL', organizationLabel),
+                    icon,
+                    tokens.map((token) => ({token})),
+                  ),
+                )
+              },
+            )
+          }
         } else {
           console.warn(
             `Could not execute a trace of attestation ${saved.id} because userId was not provided`,
@@ -273,12 +276,20 @@ class UserController implements IControllerBase {
 
   testNotify = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {userId, messageTitle, messageBody} = req.body
+      const {userId, messageTitle, messageBody, link} = req.body
       const tokens = (await this.registrationService.findForUserIds([userId]))
         .map((reg) => reg.pushToken)
         .filter((exists) => exists)
+      if (!tokens.length) {
+        throw new ResourceNotFoundException('No pushTokens found for user')
+      }
       console.log(`${userId} has ${tokens.length} token(s): ${tokens.join()}`)
-      sendMessage(messageTitle, messageBody, DEFAULT_IMAGE, tokens)
+      sendMessage(
+        messageTitle,
+        messageBody,
+        DEFAULT_IMAGE,
+        tokens.map((token) => ({token, data: {link}})),
+      )
       res.json(actionSucceed({}))
     } catch (error) {
       next(error)

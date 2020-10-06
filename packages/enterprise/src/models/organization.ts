@@ -16,6 +16,8 @@ export type Organization = {
   dayShift?: number
   // The reminder schedule for the apps to prompt for attestations
   dailyReminder: OrganizationReminderSchedule
+  // Whether or not this organization sends pushes
+  enablePushNotifications?: boolean
   // The format for push notifications to use
   notificationFormatCaution?: string
   notificationFormatStop?: string
