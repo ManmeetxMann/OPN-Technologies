@@ -17,7 +17,7 @@ export const sendMessage = (
       token,
       data: Object.keys(data).reduce(
         // filter out nulls and empty strings
-        (result, key) => (data[key] ? {...result, [key]: data[key]} : result),
+        (result, key) => (typeof data[key] === 'string' ? {...result, [key]: data[key]} : result),
         {},
       ),
       notification: {
