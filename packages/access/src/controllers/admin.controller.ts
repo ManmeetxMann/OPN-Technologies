@@ -227,7 +227,10 @@ class AdminController implements IRouteController {
       const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
 
       // Double check
-      if (!canAccessOrganization) replyInsufficientPermission(res)
+      if (!canAccessOrganization){
+        replyInsufficientPermission(res)
+        return
+      }
 
       // Get access
       const access = await this.accessTokenService.createToken(
