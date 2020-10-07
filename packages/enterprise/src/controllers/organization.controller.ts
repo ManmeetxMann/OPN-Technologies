@@ -833,9 +833,13 @@ class OrganizationController implements IControllerBase {
         }
       }
 
-      const parent = await await this.userService.findOne(isParentUser ? userId : parentUserId)
+      const parent = await this.userService.findOne(isParentUser ? userId : parentUserId)
       const parentGroup = await this.organizationService.getUserGroup(
         organizationId,
+        isParentUser ? userId : parentUserId,
+      )
+
+      const parentStatus = await this.attestationService.latestStatus(
         isParentUser ? userId : parentUserId,
       )
 
@@ -846,10 +850,12 @@ class OrganizationController implements IControllerBase {
       const dependentsWithGroup = await Promise.all(
         dependents.map(async (dependent: UserDependant) => {
           const group = await this.organizationService.getGroup(organizationId, dependent.groupId)
+          const dependentStatus = await this.attestationService.latestStatus(dependent.id)
 
           return {
             ...dependent,
             groupName: group.name,
+            status: dependentStatus,
           }
         }),
       )
@@ -860,6 +866,7 @@ class OrganizationController implements IControllerBase {
           lastName: parent.lastName,
           groupName: parentGroup.name,
           base64Photo: parent.base64Photo,
+          status: parentStatus,
         },
         dependents: dependentsWithGroup,
       }
