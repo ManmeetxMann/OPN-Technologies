@@ -4,6 +4,7 @@ import {
   Organization,
   OrganizationGroup,
   OrganizationLocation,
+  OrganizationLocationType,
   OrganizationType,
   OrganizationUsersGroup,
 } from '../models/organization'
@@ -107,7 +108,16 @@ export class OrganizationService {
       if (!parentLocationId && HANDLE_LEGACY_LOCATIONS) {
         return new OrganizationLocationModel(this.dataStore, organizationId)
           .fetchAll()
-          .then((results) => results.filter((location) => !location.parentLocationId))
+          .then((results) => {
+            return results
+              .filter((location) => !location.parentLocationId)
+              .map((location) => {
+                return {
+                  ...location,
+                  type: location.type ? location.type : OrganizationLocationType.Default,
+                }
+              })
+          })
       }
       return new OrganizationLocationModel(this.dataStore, organizationId).findWhereEqual(
         'parentLocationId',
@@ -120,7 +130,11 @@ export class OrganizationService {
     return this.getOrganization(organizationId)
       .then(() => new OrganizationLocationModel(this.dataStore, organizationId).get(locationId))
       .then((location) => {
-        if (location) return location
+        if (location)
+          return {
+            ...location,
+            type: location.type ? location.type : OrganizationLocationType.Default,
+          }
         throw new ResourceNotFoundException(
           `Cannot find location for organization-id [${organizationId}] and location-id [${locationId}]`,
         )

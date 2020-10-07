@@ -113,6 +113,11 @@ components:
           type: string
         country:
           type: string
+        type:
+          type: string
+          enum:
+            - default
+            - event
         attestationRequired:
           type: boolean
         allowAccess:
@@ -140,9 +145,14 @@ components:
                 type: string
               allowsSelfCheckInOut:
                 type: boolean
+        validFrom:
+          type: string
+        validUntil:
+          type: string
       required:
         - title
         - attestationRequired
+        - type
 
     OrganizationGroup:
       type: object
