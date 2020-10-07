@@ -107,7 +107,7 @@ class OrganizationController implements IControllerBase {
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/health', this.getStatsHealth)
         .get('/contact-trace-locations', this.getUserContactTraceLocations)
-        .get('/contact-trace-exposures', this.getUserContactTraceExposures)
+        .get('/contact-trace-traces', this.getUserContactTraceExposures)
         .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
     )
     const organizations = Router().use(
@@ -732,6 +732,33 @@ class OrganizationController implements IControllerBase {
         from,
         to,
       )
+
+      const allUserIds = new Set<string>()
+      rawExposures.forEach(({exposures}) =>
+        exposures.forEach((exposure) => {
+          exposure.overlapping.forEach((overlap) => allUserIds.add(overlap.userId))
+        }),
+      )
+
+      const allUsers = await this.userService.findAllBy({userIds: [...allUserIds]})
+      const usersById: Record<string, User> = allUsers.reduce(
+        (lookup, user) => ({...lookup, [user.id]: user}),
+        {},
+      )
+
+      const allGroups = await this.organizationService.getGroups(organizationId)
+      const groupsById: Record<string, OrganizationGroup> = allGroups.reduce(
+        (lookup, group) => ({...lookup, [group.id]: group}),
+        {},
+      )
+      const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
+        ...allUserIds,
+      ])
+      const groupsByUserId: Record<string, OrganizationGroup> = userGroups.reduce(
+        (lookup, groupLink) => ({...lookup, [groupLink.userId]: groupsById[groupLink.groupId]}),
+        {},
+      )
+
       // WARNING: adding properties to models may not cause them to appear here
       const result = rawExposures.map(({userId, date, duration, exposures}) => ({
         userId,
@@ -743,6 +770,10 @@ class OrganizationController implements IControllerBase {
           locationId,
           overlapping: overlapping.map(({userId, dependant, start, end}) => ({
             userId,
+            group: groupsByUserId[userId],
+            firstName: usersById[userId].firstName,
+            lastName: usersById[userId].lastName,
+            base64Photo: usersById[userId].base64Photo,
             // @ts-ignore this is a firestore timestamp, not a string
             start: start?.toDate() ?? null,
             // @ts-ignore this is a firestore timestamp, not a string
@@ -752,7 +783,7 @@ class OrganizationController implements IControllerBase {
                   id: dependant.id,
                   firstName: dependant.firstName,
                   lastName: dependant.lastName,
-                  groupId: dependant.groupId,
+                  group: groupsById[dependant.groupId],
                 }
               : null,
           })),
