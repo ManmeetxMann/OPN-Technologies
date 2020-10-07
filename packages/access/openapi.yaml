@@ -287,6 +287,8 @@ components:
                     type: string
                   lastName:
                     type: string
+            access:
+              $ref: '#/components/schemas/Access'
         status:
           type: object
           additionalProperties: false
