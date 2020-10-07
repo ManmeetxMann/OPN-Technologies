@@ -22,7 +22,7 @@ import {PassportService} from '../../../passport/src/services/passport-service'
 import {Passport, PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
 import {Stats, StatsFilter} from '../models/stats'
-import {UserContactTraceReportRequest} from '../types/trace-request'
+import {FamilyStatusReportRequest, UserContactTraceReportRequest} from '../types/trace-request'
 import {Range} from '../../../common/src/types/range'
 import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
@@ -109,6 +109,7 @@ class OrganizationController implements IControllerBase {
         .get('/contact-trace-locations', this.getUserContactTraceLocations)
         .get('/contact-traces', this.getUserContactTraces)
         .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
+        .get('/family', this.getFamilyStats)
     )
     const organizations = Router().use(
       '/organizations',
@@ -812,6 +813,64 @@ class OrganizationController implements IControllerBase {
         // @ts-ignore attestationTime is a server timestamp, not a string
         attestationTime: attestationTime.toDate(),
       }))
+      res.json(actionSucceed(response))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getFamilyStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {userId, parentUserId} = req.query as FamilyStatusReportRequest
+
+      let isParentUser = true
+
+      if (parentUserId) {
+        const user = await this.userService.findOne(parentUserId)
+        if (user && user.organizationIds.indexOf(organizationId) > -1) {
+          isParentUser = false
+        }
+      }
+
+      const parent = await this.userService.findOne(isParentUser ? userId : parentUserId)
+      const parentGroup = await this.organizationService.getUserGroup(
+        organizationId,
+        isParentUser ? userId : parentUserId,
+      )
+
+      const parentStatus = await this.attestationService.latestStatus(
+        isParentUser ? userId : parentUserId,
+      )
+
+      const dependents = await this.userService.getAllDependants(
+        isParentUser ? userId : parentUserId,
+      )
+
+      const dependentsWithGroup = await Promise.all(
+        dependents.map(async (dependent: UserDependant) => {
+          const group = await this.organizationService.getGroup(organizationId, dependent.groupId)
+          const dependentStatus = await this.attestationService.latestStatus(dependent.id)
+
+          return {
+            ...dependent,
+            groupName: group.name,
+            status: dependentStatus,
+          }
+        }),
+      )
+
+      const response = {
+        parent: {
+          firstName: parent.firstName,
+          lastName: parent.lastName,
+          groupName: parentGroup.name,
+          base64Photo: parent.base64Photo,
+          status: parentStatus,
+        },
+        dependents: dependentsWithGroup,
+      }
+
       res.json(actionSucceed(response))
     } catch (error) {
       next(error)
