@@ -65,6 +65,7 @@ export default class DailyReportAccess extends CollectionGroupModel<TraceModel, 
     passportStatus: PassportStatuses.Caution | PassportStatuses.Stop,
     date: string,
     duration: number,
+    exposedIds: string[],
   ): Promise<void> {
     await this.add({
       date,
@@ -72,6 +73,7 @@ export default class DailyReportAccess extends CollectionGroupModel<TraceModel, 
       exposures: reports,
       userId,
       passportStatus,
+      exposedIds,
     })
   }
 }

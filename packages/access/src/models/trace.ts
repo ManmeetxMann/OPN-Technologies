@@ -8,6 +8,7 @@ export type Trace = {
   date: string
   duration: number
   exposures: ExposureReport[]
+  exposedIds: string[]
 }
 
 export type ExposureReport = {

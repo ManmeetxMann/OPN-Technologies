@@ -142,6 +142,7 @@ export default class TraceListener {
     }, {})
     // promises resolving with the org ID for the given location
     const locationPromises: Record<string, ReturnType<OrganizationModel['getLocation']>> = {}
+    const impactedUsersAndDependants = new Set<string>()
 
     const result = await Promise.all(
       accesses.map(async (dailyReport) => {
@@ -159,7 +160,9 @@ export default class TraceListener {
             otherUsersAccesses.push(access)
           }
         })
+
         const includedOverlapJSONs = new Set<string>()
+
         const startOfDay = moment(dailyReport.date).tz(timeZone).toDate().valueOf()
         const endOfDay = moment(dailyReport.date).tz(timeZone).add(1, 'day').toDate().valueOf()
         // TODO: this could be made more efficient with some sorting
@@ -187,6 +190,14 @@ export default class TraceListener {
           )
           .reduce((flattened, page) => [...flattened, ...page], [])
 
+        overlapping.forEach((overlap) => {
+          if (overlap.dependant) {
+            impactedUsersAndDependants.add(overlap.dependant.id)
+          } else {
+            impactedUsersAndDependants.add(overlap.userId)
+          }
+        })
+
         if (!locationPromises[dailyReport.locationId]) {
           // just push the promise so we only query once per location
           locationPromises[dailyReport.locationId] = this.orgRepo.getLocation(
@@ -209,6 +220,7 @@ export default class TraceListener {
       passportStatus as StopStatus,
       moment(endTime).format('YYYY-MM-DD'),
       endTime - startTime,
+      [...impactedUsersAndDependants],
     )
     const locations = {}
     await Promise.all(
