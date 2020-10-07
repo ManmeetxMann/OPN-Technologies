@@ -97,8 +97,11 @@ class UserController implements IControllerBase {
         ? await this.passportService.findOneByToken(statusToken)
         : null
 
-      // Handle no passport and pending one
-      if (!existingPassport || existingPassport.status === PassportStatuses.Pending) {
+      const mustReset = ({status, validUntil}: Passport): boolean =>
+        status === PassportStatuses.Pending ||
+        (isPassed(validUntil) && status === PassportStatuses.Proceed)
+
+      if (!existingPassport || mustReset(existingPassport)) {
         const newPassport = await this.passportService.create(
           PassportStatuses.Pending,
           userId,
@@ -109,39 +112,11 @@ class UserController implements IControllerBase {
         return
       }
 
-      // TODO: Avoid mutation, so avoid using `let`
-      let currentPassport: Passport
-      if (existingPassport) {
-        /*
-                REMOVED (TEMPORARILY?) - THIS CALL JUST CHECKS IF A VALID PASSPORT EXISTS, DOESN'T CARE ABOUT DEPENDANTS
-
-        // some requested dependants are not covered by this passport
-        if (dependantIds.some((depId) => !existingPassport.dependantIds.includes(depId))) {
-          // need to create a new one for different people
-        } else
-        */
-        if (!isPassed(existingPassport.validUntil)) {
-          // still valid, no need to recreate
-          currentPassport = existingPassport
-        } else if (existingPassport.status !== PassportStatuses.Proceed) {
-          // only Proceed passports expire
-          currentPassport = existingPassport
-        }
-      }
-      if (!currentPassport) {
-        currentPassport = await this.passportService.create(
-          PassportStatuses.Pending,
-          userId,
-          dependantIds,
-          includeGuardian,
-        )
-      }
-      // Temporary hot fix until we're aligned on a requirement
       // Handle old passports that doesn't have `includesGuardian` flag
       res.json(
         actionSucceed({
-          ...currentPassport,
-          includesGuardian: currentPassport.includesGuardian ?? true,
+          ...existingPassport,
+          includesGuardian: existingPassport.includesGuardian ?? true,
         }),
       )
     } catch (error) {

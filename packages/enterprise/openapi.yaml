@@ -113,6 +113,11 @@ components:
           type: string
         country:
           type: string
+        type:
+          type: string
+          enum:
+            - default
+            - event
         attestationRequired:
           type: boolean
         allowAccess:
@@ -140,9 +145,14 @@ components:
                 type: string
               allowsSelfCheckInOut:
                 type: boolean
+        validFrom:
+          type: string
+        validUntil:
+          type: string
       required:
         - title
         - attestationRequired
+        - type
 
     OrganizationGroup:
       type: object
@@ -1069,7 +1079,7 @@ paths:
         '200':
           description: Successfully computed (format to come)
 
-  /organizations/{organizationId}/stats/contact-trace-exposures:
+  /organizations/{organizationId}/stats/contact-traces:
     get:
       description: Get contact traces exposures (admin access required)
       security:

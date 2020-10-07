@@ -147,6 +147,7 @@ class AdminController implements IRouteController {
         includesGuardian: access.includesGuardian,
         firstName: user.firstName,
         lastName: user.lastName,
+        access,
       }
       const canEnter =
         passport.status === PassportStatuses.Pending ||
@@ -184,6 +185,7 @@ class AdminController implements IRouteController {
         includesGuardian,
         firstName: user.firstName,
         lastName: user.lastName,
+        access,
       }
       res.json(actionSucceed(responseBody))
     } catch (error) {

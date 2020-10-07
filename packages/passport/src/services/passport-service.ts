@@ -1,4 +1,4 @@
-import {Passport, PassportModel, PassportStatuses} from '../models/passport'
+import {Passport, PassportModel, PassportStatus} from '../models/passport'
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
@@ -70,7 +70,7 @@ export class PassportService {
   }
 
   async create(
-    status: PassportStatuses = PassportStatuses.Pending,
+    status: PassportStatus,
     userId: string,
     dependantIds: string[],
     includesGuardian: boolean,

@@ -198,9 +198,16 @@ abstract class DataModel<T extends HasId> {
     allResults.forEach((page) => page.forEach((item) => (deduplicated[identity(item)] = item)))
     return Object.values(deduplicated)
   }
-  async findWhereIdIn(value: unknown[], subPath = ''): Promise<T[]> {
+
+  async findWhereIdIn(values: unknown[], subPath = ''): Promise<T[]> {
     const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()
-    return await this.collection(subPath).where(fieldPath, 'in', value).fetch()
+    const chunks: unknown[][] = _.chunk([...values], 10)
+    const allResults = await Promise.all(
+      chunks.map((chunk) => this.collection(subPath).where(fieldPath, 'in', chunk).fetch()),
+    )
+    const deduplicated: Record<string, T> = {}
+    allResults.forEach((page) => page.forEach((item) => (deduplicated[item.id] = item)))
+    return Object.values(deduplicated)
   }
 
   async findOneById(value: unknown, subPath = ''): Promise<T> {
