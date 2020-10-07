@@ -1069,7 +1069,7 @@ paths:
         '200':
           description: Successfully computed (format to come)
 
-  /organizations/{organizationId}/stats/contact-trace-traces:
+  /organizations/{organizationId}/stats/contact-traces:
     get:
       description: Get contact traces exposures (admin access required)
       security:

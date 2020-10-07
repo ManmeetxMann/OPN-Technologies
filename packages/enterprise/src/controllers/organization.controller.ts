@@ -107,7 +107,7 @@ class OrganizationController implements IControllerBase {
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/health', this.getStatsHealth)
         .get('/contact-trace-locations', this.getUserContactTraceLocations)
-        .get('/contact-trace-traces', this.getUserContactTraceExposures)
+        .get('/contact-traces', this.getUserContactTraces)
         .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
     )
     const organizations = Router().use(
@@ -708,11 +708,7 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getUserContactTraceExposures = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  getUserContactTraces = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
       const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
@@ -726,13 +722,15 @@ class OrganizationController implements IControllerBase {
         }
       }
 
-      // fetch attestation array in the time period
+      // fetch exposures in the time period
       const rawExposures = await this.attestationService.getExposuresInPeriod(
         isParentUser ? userId : parentUserId,
         from,
         to,
       )
 
+      // ids of all the users we need more information about
+      // dependant info is already included in the trace
       const allUserIds = new Set<string>()
       rawExposures.forEach(({exposures}) =>
         exposures.forEach((exposure) => {
@@ -745,12 +743,14 @@ class OrganizationController implements IControllerBase {
         (lookup, user) => ({...lookup, [user.id]: user}),
         {},
       )
-
+      // every group this organization contains
       const allGroups = await this.organizationService.getGroups(organizationId)
       const groupsById: Record<string, OrganizationGroup> = allGroups.reduce(
         (lookup, group) => ({...lookup, [group.id]: group}),
         {},
       )
+
+      // group memberships for all the users we're interested in
       const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
         ...allUserIds,
       ])
