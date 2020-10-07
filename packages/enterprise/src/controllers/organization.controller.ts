@@ -733,10 +733,31 @@ class OrganizationController implements IControllerBase {
       // ids of all the users we need more information about
       // dependant info is already included in the trace
       const allUserIds = new Set<string>()
+      const allDependantIds = new Set<string>()
       rawExposures.forEach(({exposures}) =>
         exposures.forEach((exposure) => {
-          exposure.overlapping.forEach((overlap) => allUserIds.add(overlap.userId))
+          exposure.overlapping.forEach((overlap) => {
+            allUserIds.add(overlap.userId)
+            if (overlap.dependant) {
+              allDependantIds.add(overlap.dependant.id)
+            }
+          })
         }),
+      )
+
+      // N queries
+      const statuses = await Promise.all(
+        [...allDependantIds, ...allUserIds].map(
+          async (id): Promise<{id: string; status: PassportStatus}> => ({
+            id,
+            status: await this.attestationService.latestStatus(id),
+          }),
+        ),
+      )
+
+      const statusLookup: Record<string, PassportStatus> = statuses.reduce(
+        (lookup, curr) => ({...lookup, [curr.id]: curr.status}),
+        {},
       )
 
       const allUsers = await this.userService.findAllBy({userIds: [...allUserIds]})
@@ -761,8 +782,7 @@ class OrganizationController implements IControllerBase {
       )
 
       // WARNING: adding properties to models may not cause them to appear here
-      const result = rawExposures.map(({userId, date, duration, exposures}) => ({
-        userId,
+      const result = rawExposures.map(({date, duration, exposures}) => ({
         date,
         duration,
         exposures: exposures.map(({overlapping, date, organizationId, locationId}) => ({
@@ -771,6 +791,7 @@ class OrganizationController implements IControllerBase {
           locationId,
           overlapping: overlapping.map(({userId, dependant, start, end}) => ({
             userId,
+            status: statusLookup[userId] ?? PassportStatuses.Pending,
             group: groupsByUserId[userId],
             firstName: usersById[userId].firstName,
             lastName: usersById[userId].lastName,
@@ -785,6 +806,7 @@ class OrganizationController implements IControllerBase {
                   firstName: dependant.firstName,
                   lastName: dependant.lastName,
                   group: groupsById[dependant.groupId],
+                  status: statusLookup[dependant.id] ?? PassportStatuses.Pending,
                 }
               : null,
           })),
