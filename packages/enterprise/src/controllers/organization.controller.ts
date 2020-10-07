@@ -691,18 +691,31 @@ class OrganizationController implements IControllerBase {
           betweenCreatedDate,
         })
       }
+      accesses.sort((a, b) => {
+        // never exited is very recent
+        if (a.exitAt && !b.exitAt) {
+          return 1
+        } else if (b.exitAt && !a.exitAt) {
+          return -1
+        } else if (a.exitAt < b.exitAt) {
+          return -1
+        } else if (b.exitAt < a.exitAt) {
+          return 1
+        }
+        return 0
+      })
+      const accessedLocationIds = new Set(accesses.map((item: Access) => item.locationId))
 
-      const accessLocationIds: string[] = accesses.map((item: Access) => item.locationId)
+      const accessedLocations: OrganizationLocation[] = (
+        await this.organizationService.getLocations(organizationId)
+      ).filter((location) => accessedLocationIds.has(location.id))
 
-      const locations: OrganizationLocation[] = await this.organizationService.getLocations(
-        organizationId,
-      )
+      const locationsWithAccesses = accessedLocations.map((location) => ({
+        ...location,
+        access: accesses.find((access) => access.locationId === location.id),
+      }))
 
-      const accessedLocations: OrganizationLocation[] = locations.filter(
-        (location: OrganizationLocation) => accessLocationIds.indexOf(location.id) > -1,
-      )
-
-      res.json(actionSucceed(accessedLocations))
+      res.json(actionSucceed(locationsWithAccesses))
     } catch (error) {
       next(error)
     }
