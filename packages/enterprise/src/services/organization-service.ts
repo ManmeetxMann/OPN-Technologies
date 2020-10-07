@@ -187,6 +187,20 @@ export class OrganizationService {
     )
   }
 
+  async getUserGroup(organizationId: string, userId: string): Promise<OrganizationGroup> {
+    const groupsForOrg = await new OrganizationUsersGroupModel(
+      this.dataStore,
+      organizationId,
+    ).fetchAll()
+    const groupForUser = groupsForOrg.find((group: OrganizationUsersGroup) => group.userId === userId)
+
+    if (!groupForUser) {
+      throw new ResourceNotFoundException(`Cannot find organization-group for [${userId}]`)
+    }
+
+    return await this.getGroup(organizationId, groupForUser.groupId)
+  }
+
   async getUsersGroups(
     organizationId: string,
     groupId?: string,

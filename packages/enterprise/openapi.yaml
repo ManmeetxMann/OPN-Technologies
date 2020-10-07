@@ -1127,6 +1127,30 @@ paths:
         '200':
           description: Successfully computed (format to come)
 
+  /organizations/{organizationId}/stats/family:
+    get:
+      description: Get family data for the given userId
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: userId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: parentUserId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully computed
+
   /organizations/{organizationId}/stats/health:
     get:
       description: Get stats summary for one organization (admin access required)
