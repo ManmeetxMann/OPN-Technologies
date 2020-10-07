@@ -2,6 +2,7 @@ import CollectionGroupModel from '../../../common/src/data/collectionGroupDatamo
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {Trace, ExposureReport} from '../models/trace'
 import {Attendance} from '../models/attendance'
+import DataModel from '../../../common/src/data/datamodel.base'
 
 export type TraceModel = Trace & {
   id: string
@@ -10,6 +11,11 @@ export type TraceModel = Trace & {
 type AugmentedAttendance = Attendance & {
   locationId: string
   reportId: string
+}
+
+export class TraceRepository extends DataModel<TraceModel> {
+  public readonly rootPath = 'traces'
+  readonly zeroSet = []
 }
 
 const digest = (record: {path: string[]; value: Attendance}): AugmentedAttendance => {

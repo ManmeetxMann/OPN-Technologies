@@ -4,6 +4,7 @@ import {
   Organization,
   OrganizationGroup,
   OrganizationLocation,
+  OrganizationLocationType,
   OrganizationType,
   OrganizationUsersGroup,
 } from '../models/organization'
@@ -107,7 +108,16 @@ export class OrganizationService {
       if (!parentLocationId && HANDLE_LEGACY_LOCATIONS) {
         return new OrganizationLocationModel(this.dataStore, organizationId)
           .fetchAll()
-          .then((results) => results.filter((location) => !location.parentLocationId))
+          .then((results) => {
+            return results
+              .filter((location) => !location.parentLocationId)
+              .map((location) => {
+                return {
+                  ...location,
+                  type: location.type ? location.type : OrganizationLocationType.Default,
+                }
+              })
+          })
       }
       return new OrganizationLocationModel(this.dataStore, organizationId).findWhereEqual(
         'parentLocationId',
@@ -116,11 +126,20 @@ export class OrganizationService {
     })
   }
 
+  // get with or without parent id
+  getAllLocations(organizationId: string): Promise<OrganizationLocation[]> {
+    return new OrganizationLocationModel(this.dataStore, organizationId).fetchAll()
+  }
+
   getLocation(organizationId: string, locationId: string): Promise<OrganizationLocation> {
     return this.getOrganization(organizationId)
       .then(() => new OrganizationLocationModel(this.dataStore, organizationId).get(locationId))
       .then((location) => {
-        if (location) return location
+        if (location)
+          return {
+            ...location,
+            type: location.type ? location.type : OrganizationLocationType.Default,
+          }
         throw new ResourceNotFoundException(
           `Cannot find location for organization-id [${organizationId}] and location-id [${locationId}]`,
         )
@@ -185,6 +204,16 @@ export class OrganizationService {
           throw new ResourceNotFoundException(`Cannot find organization-group with id [${groupId}]`)
         }),
     )
+  }
+
+  async getUserGroup(organizationId: string, userId: string): Promise<OrganizationGroup> {
+    const groupsForUser = await this.getUsersGroups(organizationId, null, [userId])
+
+    if (groupsForUser.length === 0) {
+      throw new ResourceNotFoundException(`Cannot find organization-group for [${userId}]`)
+    }
+
+    return await this.getGroup(organizationId, groupsForUser[0].groupId)
   }
 
   async getUsersGroups(

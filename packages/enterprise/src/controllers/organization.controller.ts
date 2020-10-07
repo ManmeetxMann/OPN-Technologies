@@ -15,12 +15,14 @@ import {User, UserDependant} from '../../../common/src/data/user'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {AccessService} from '../../../access/src/service/access.service'
+import {AttestationService} from '../../../passport/src/services/attestation-service'
 import moment from 'moment'
 import {Access, AccessWithPassportStatusAndUser} from '../../../access/src/models/access'
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {Passport, PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
 import {Stats, StatsFilter} from '../models/stats'
+import {FamilyStatusReportRequest, UserContactTraceReportRequest} from '../types/trace-request'
 import {Range} from '../../../common/src/types/range'
 import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
@@ -67,6 +69,7 @@ class OrganizationController implements IControllerBase {
   private userService = new UserService()
   private accessService = new AccessService()
   private passportService = new PassportService()
+  private attestationService = new AttestationService()
 
   constructor() {
     this.initRoutes()
@@ -102,7 +105,11 @@ class OrganizationController implements IControllerBase {
       authMiddleware,
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
-        .get('/health', this.getStatsHealth),
+        .get('/health', this.getStatsHealth)
+        .get('/contact-trace-locations', this.getUserContactTraceLocations)
+        .get('/contact-traces', this.getUserContactTraces)
+        .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
+        .get('/family', this.getFamilyStats)
     )
     const organizations = Router().use(
       '/organizations',
@@ -589,7 +596,7 @@ class OrganizationController implements IControllerBase {
     const live = !from && !to
 
     const betweenCreatedDate = {
-      from: live ? moment().startOf('day').toDate() : new Date(from),
+      from: live ? moment(now()).startOf('day').toDate() : new Date(from),
       to: live ? undefined : new Date(to),
     }
 
@@ -647,6 +654,274 @@ class OrganizationController implements IControllerBase {
     } as Stats
   }
 
+  getUserContactTraceLocations = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+
+      let isParentUser = true
+      let accesses: Access[]
+
+      if (parentUserId) {
+        const user = await this.userService.findOne(parentUserId)
+        if (user && user.organizationIds.indexOf(organizationId) > -1) {
+          isParentUser = false
+        }
+      }
+
+      const live = !from && !to
+
+      const betweenCreatedDate = {
+        from: live ? moment(now()).startOf('day').toDate() : new Date(from),
+        to: live ? undefined : new Date(to),
+      }
+
+      if (isParentUser) {
+        accesses = await this.accessService.findAllWith({
+          userIds: [userId],
+          betweenCreatedDate,
+        })
+      } else {
+        accesses = await this.accessService.findAllWithDependents({
+          userId: parentUserId,
+          dependentId: userId,
+          betweenCreatedDate,
+        })
+      }
+      const enteringAccesses = accesses.filter((access) => access.enteredAt)
+      const exitingAccesses = accesses.filter((access) => access.exitAt)
+      enteringAccesses.sort((a, b) => {
+        if (a.enteredAt < b.enteredAt) {
+          return -1
+        } else if (b.enteredAt < a.enteredAt) {
+          return 1
+        }
+        return 0
+      })
+      exitingAccesses.sort((a, b) => {
+        if (a.exitAt < b.exitAt) {
+          return -1
+        } else if (b.exitAt < a.exitAt) {
+          return 1
+        }
+        return 0
+      })
+      const accessedLocationIds = new Set(
+        [...enteringAccesses, ...exitingAccesses].map((item: Access) => item.locationId),
+      )
+      const accessedLocations: OrganizationLocation[] = (
+        await this.organizationService.getAllLocations(organizationId)
+      ).filter((location) => accessedLocationIds.has(location.id))
+
+      const locationsWithAccesses = accessedLocations.map((location) => {
+        const entry = enteringAccesses.find((access) => access.locationId === location.id)
+        const exit = exitingAccesses.find((access) => access.locationId === location.id)
+        return {
+          location,
+          entry,
+          exit: entry && exit && new Date(entry.enteredAt) < new Date(entry.exitAt) ? exit : null,
+        }
+      })
+      res.json(actionSucceed(locationsWithAccesses))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getUserContactTraces = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+
+      let isParentUser = true
+
+      if (parentUserId) {
+        const user = await this.userService.findOne(parentUserId)
+        if (user && user.organizationIds.indexOf(organizationId) > -1) {
+          isParentUser = false
+        }
+      }
+
+      // fetch exposures in the time period
+      const rawExposures = await this.attestationService.getExposuresInPeriod(
+        isParentUser ? userId : parentUserId,
+        from,
+        to,
+      )
+
+      // ids of all the users we need more information about
+      // dependant info is already included in the trace
+      const allUserIds = new Set<string>()
+      const allDependantIds = new Set<string>()
+      rawExposures.forEach(({exposures}) =>
+        exposures.forEach((exposure) => {
+          exposure.overlapping.forEach((overlap) => {
+            allUserIds.add(overlap.userId)
+            if (overlap.dependant) {
+              allDependantIds.add(overlap.dependant.id)
+            }
+          })
+        }),
+      )
+
+      // N queries
+      const statuses = await Promise.all(
+        [...allDependantIds, ...allUserIds].map(
+          async (id): Promise<{id: string; status: PassportStatus}> => ({
+            id,
+            status: await this.attestationService.latestStatus(id),
+          }),
+        ),
+      )
+
+      const statusLookup: Record<string, PassportStatus> = statuses.reduce(
+        (lookup, curr) => ({...lookup, [curr.id]: curr.status}),
+        {},
+      )
+
+      const allUsers = await this.userService.findAllBy({userIds: [...allUserIds]})
+      const usersById: Record<string, User> = allUsers.reduce(
+        (lookup, user) => ({...lookup, [user.id]: user}),
+        {},
+      )
+      // every group this organization contains
+      const allGroups = await this.organizationService.getGroups(organizationId)
+      const groupsById: Record<string, OrganizationGroup> = allGroups.reduce(
+        (lookup, group) => ({...lookup, [group.id]: group}),
+        {},
+      )
+
+      // group memberships for all the users we're interested in
+      const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
+        ...allUserIds,
+      ])
+      const groupsByUserId: Record<string, OrganizationGroup> = userGroups.reduce(
+        (lookup, groupLink) => ({...lookup, [groupLink.userId]: groupsById[groupLink.groupId]}),
+        {},
+      )
+
+      // WARNING: adding properties to models may not cause them to appear here
+      const result = rawExposures.map(({date, duration, exposures}) => ({
+        date,
+        duration,
+        exposures: exposures.map(({overlapping, date, organizationId, locationId}) => ({
+          date,
+          organizationId,
+          locationId,
+          overlapping: overlapping.map(({userId, dependant, start, end}) => ({
+            userId,
+            status: statusLookup[userId] ?? PassportStatuses.Pending,
+            group: groupsByUserId[userId],
+            firstName: usersById[userId].firstName,
+            lastName: usersById[userId].lastName,
+            base64Photo: usersById[userId].base64Photo,
+            // @ts-ignore this is a firestore timestamp, not a string
+            start: start?.toDate() ?? null,
+            // @ts-ignore this is a firestore timestamp, not a string
+            end: end?.toDate() ?? null,
+            dependant: dependant
+              ? {
+                  id: dependant.id,
+                  firstName: dependant.firstName,
+                  lastName: dependant.lastName,
+                  group: groupsById[dependant.groupId],
+                  status: statusLookup[dependant.id] ?? PassportStatuses.Pending,
+                }
+              : null,
+          })),
+        })),
+      }))
+      res.json(actionSucceed(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getUserContactTraceAttestations = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      // const {organizationId} = req.params
+      const {userId, from, to} = req.query as UserContactTraceReportRequest
+
+      // fetch attestation array in the time period
+      const attestations = await this.attestationService.getAttestationsInPeriod(userId, from, to)
+      // @ts-ignore 'timestamps' does not exist in typescript
+      const response = attestations.map(({timestamps, attestationTime, ...passThrough}) => ({
+        ...passThrough,
+        // @ts-ignore attestationTime is a server timestamp, not a string
+        attestationTime: attestationTime.toDate(),
+      }))
+      res.json(actionSucceed(response))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getFamilyStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {userId, parentUserId} = req.query as FamilyStatusReportRequest
+
+      let isParentUser = true
+
+      if (parentUserId) {
+        const user = await this.userService.findOne(parentUserId)
+        if (user && user.organizationIds.indexOf(organizationId) > -1) {
+          isParentUser = false
+        }
+      }
+
+      const parent = await this.userService.findOne(isParentUser ? userId : parentUserId)
+      const parentGroup = await this.organizationService.getUserGroup(
+        organizationId,
+        isParentUser ? userId : parentUserId,
+      )
+
+      const parentStatus = await this.attestationService.latestStatus(
+        isParentUser ? userId : parentUserId,
+      )
+
+      const dependents = await this.userService.getAllDependants(
+        isParentUser ? userId : parentUserId,
+      )
+
+      const dependentsWithGroup = await Promise.all(
+        dependents.map(async (dependent: UserDependant) => {
+          const group = await this.organizationService.getGroup(organizationId, dependent.groupId)
+          const dependentStatus = await this.attestationService.latestStatus(dependent.id)
+
+          return {
+            ...dependent,
+            groupName: group.name,
+            status: dependentStatus,
+          }
+        }),
+      )
+
+      const response = {
+        parent: {
+          firstName: parent.firstName,
+          lastName: parent.lastName,
+          groupName: parentGroup.name,
+          base64Photo: parent.base64Photo,
+          status: parentStatus,
+        },
+        dependents: dependentsWithGroup,
+      }
+
+      res.json(actionSucceed(response))
+    } catch (error) {
+      next(error)
+    }
+  }
+
   private async getAccessesFor(
     userIds: string[],
     dependantIds: string[],
@@ -658,7 +933,7 @@ class OrganizationController implements IControllerBase {
     dependantsByIds: Record<string, User>,
   ): Promise<AccessWithPassportStatusAndUser[]> {
     // Fetch passports
-    const passportsByUserIds = await this.passportService.findLatestForUserIds(
+    const passportsByUserIds = await this.passportService.findTheLatestValidPassports(
       userIds,
       dependantIds,
     )
@@ -666,17 +941,25 @@ class OrganizationController implements IControllerBase {
       .filter((userId) => !passportsByUserIds[userId])
       .map((userId) => ({status: PassportStatuses.Pending, userId} as Passport))
 
-    // Fetch accesses
-    const accessesByStatusToken: Record<string, Access> = await this.fetchAccesses(
-      userIds,
-      locationId,
-      betweenCreatedDate,
-    ).then((results) =>
-      results.reduce(
-        (byStatusToken, access) => ({...byStatusToken, [access.statusToken]: access}),
-        {},
+    // Fetch accesses by status-token
+    const proceedStatusTokens = Object.values(passportsByUserIds)
+      .filter(({status}) => status === PassportStatuses.Proceed)
+      .map(({statusToken}) => statusToken)
+    const accessesByStatusToken: Record<string, Access> = await Promise.all(
+      _.chunk(proceedStatusTokens, 10).map((chunk) =>
+        this.accessService.findAllWith({
+          statusTokens: chunk,
+          locationId,
+        }),
       ),
     )
+      .then((results) => flattern(results as Access[][]))
+      .then((results) =>
+        results.reduce(
+          (byStatusToken, access) => ({...byStatusToken, [access.statusToken]: access}),
+          {},
+        ),
+      )
 
     const isAccessEligibleForUserId = (userId: string) =>
       !groupId || groupsByUserId[userId]?.groupId === groupId
@@ -684,7 +967,7 @@ class OrganizationController implements IControllerBase {
     // Remap accesses
     const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)]
       .filter(({userId}) => isAccessEligibleForUserId(userId))
-      .map(({id, userId, status, statusToken}) => {
+      .map(({userId, status, statusToken}) => {
         const user = usersById[userId] ?? dependantsByIds[userId]
         const parentUserId = passportsByUserIds[userId]?.parentUserId
 
@@ -692,26 +975,15 @@ class OrganizationController implements IControllerBase {
           console.error(`Invalid state exception: Cannot find user/dependant for ID [${userId}]`)
           return null
         }
-        const access =
-          status === PassportStatuses.Proceed
-            ? accessesByStatusToken[statusToken]
-            : {
-                token: null,
-                statusToken: null,
-                locationId: null,
-                createdAt: null,
-                enteredAt: null,
-                exitAt: null,
-                userId: null,
-                includesGuardian: null,
-                dependants: null,
-              }
-
-        if (!access) {
-          console.error(
-            `Invalid state exception: Cannot find access for status token [${statusToken}], passport [${id}] and user [${userId}]`,
-          )
-          return null
+        const access = accessesByStatusToken[statusToken] ?? {
+          token: null,
+          statusToken: null,
+          locationId: null,
+          createdAt: null,
+          enteredAt: null,
+          exitAt: null,
+          includesGuardian: null,
+          dependants: null,
         }
 
         const dependants = access.dependants ?? {}
@@ -723,6 +995,7 @@ class OrganizationController implements IControllerBase {
           enteredAt: access.enteredAt ?? (dependants[userId]?.enteredAt as string) ?? null,
           exitAt: access.exitAt ?? (dependants[userId]?.exitAt as string) ?? null,
           parentUserId,
+          groupId,
         }
       })
       .filter((access) => !!access)
@@ -732,7 +1005,7 @@ class OrganizationController implements IControllerBase {
     const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
     accesses.forEach(({user, status, ...access}) => {
       if (!groupsByUserId[user.id]) {
-        console.log('That is not supposed to happened but...', user.id, groupsByUserId)
+        console.log('Invalid state: Cannot find group for user: ', user.id)
         return
       }
 
@@ -777,22 +1050,6 @@ class OrganizationController implements IControllerBase {
     ).then((dependants) =>
       flattern(dependants).reduce((byId, dependant) => ({...byId, [dependant.id]: dependant}), {}),
     )
-  }
-
-  private fetchAccesses(
-    userIds: string[],
-    locationId: string | undefined,
-    betweenCreatedDate: Range<Date>,
-  ): Promise<Access[]> {
-    return Promise.all(
-      _.chunk(userIds, 10).map((chunk) =>
-        this.accessService.findAllWith({
-          userIds: chunk,
-          locationId,
-          betweenCreatedDate,
-        }),
-      ),
-    ).then((results) => flattern(results as Access[][]))
   }
 
   private async getGroups(organizationId: string): Promise<OrganizationGroup[]> {

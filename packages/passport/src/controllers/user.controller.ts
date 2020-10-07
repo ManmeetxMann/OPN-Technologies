@@ -17,6 +17,7 @@ import {RegistrationService} from '../../../common/src/service/registry/registra
 import {UserService} from '../../../common/src/service/user/user-service'
 import {User} from '../../../common/src/data/user'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {sendMessage} from '../../../common/src/service/messaging/push-notify-service'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
@@ -55,14 +56,17 @@ class UserController implements IControllerBase {
   // TODO: actually test this against questionnaire "answer keys"
   private async evaluateAnswers(answers: AttestationAnswers): Promise<PassportStatuses> {
     // note that this switches us to 0-indexing
-    const responses = [1, 2, 3, 4, 5, 6].map((index) => (answers[index] ? answers[index][1] : null))
-    const questionCount = responses[4] !== null && responses[5] !== null ? 6 : 4
+    const answerKeys = Object.keys(answers).sort((a, b) =>
+      a.localeCompare(b, 'en', {numeric: true}),
+    )
+    const questionCount = answerKeys.length >= 13 ? 13 : answerKeys.length >= 6 ? 6 : 4
     const [values, caution, stop] = {
       4: [[1, 1, 1, 2], 1, 2],
       6: [[1, 1, 1, 1, 1, 1], 100, 1],
+      13: [[2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 100], 1, 100],
     }[questionCount]
     const score = (values as number[])
-      .map((value: number, index: number) => (responses[index] ? value : 0))
+      .map((value: number, index: number) => (answers[answerKeys[index]][1] ? value : 0))
       .reduce((total, current) => total + current)
     if (score >= stop) {
       return PassportStatuses.Stop
@@ -93,8 +97,11 @@ class UserController implements IControllerBase {
         ? await this.passportService.findOneByToken(statusToken)
         : null
 
-      // Handle no passport and pending one
-      if (!existingPassport || existingPassport.status === PassportStatuses.Pending) {
+      const mustReset = ({status, validUntil}: Passport): boolean =>
+        status === PassportStatuses.Pending ||
+        (isPassed(validUntil) && status === PassportStatuses.Proceed)
+
+      if (!existingPassport || mustReset(existingPassport)) {
         const newPassport = await this.passportService.create(
           PassportStatuses.Pending,
           userId,
@@ -105,39 +112,11 @@ class UserController implements IControllerBase {
         return
       }
 
-      // TODO: Avoid mutation, so avoid using `let`
-      let currentPassport: Passport
-      if (existingPassport) {
-        /*
-                REMOVED (TEMPORARILY?) - THIS CALL JUST CHECKS IF A VALID PASSPORT EXISTS, DOESN'T CARE ABOUT DEPENDANTS
-
-        // some requested dependants are not covered by this passport
-        if (dependantIds.some((depId) => !existingPassport.dependantIds.includes(depId))) {
-          // need to create a new one for different people
-        } else
-        */
-        if (!isPassed(existingPassport.validUntil)) {
-          // still valid, no need to recreate
-          currentPassport = existingPassport
-        } else if (existingPassport.status !== PassportStatuses.Proceed) {
-          // only Proceed passports expire
-          currentPassport = existingPassport
-        }
-      }
-      if (!currentPassport) {
-        currentPassport = await this.passportService.create(
-          PassportStatuses.Pending,
-          userId,
-          dependantIds,
-          includeGuardian,
-        )
-      }
-      // Temporary hot fix until we're aligned on a requirement
       // Handle old passports that doesn't have `includesGuardian` flag
       res.json(
         actionSucceed({
-          ...currentPassport,
-          includesGuardian: currentPassport.includesGuardian ?? true,
+          ...existingPassport,
+          includesGuardian: existingPassport.includesGuardian ?? true,
         }),
       )
     } catch (error) {
@@ -205,54 +184,60 @@ class UserController implements IControllerBase {
             questionnaireId,
             answers: JSON.stringify(answers),
           })
-          //do not await here, this is a side effect
-          this.userService.findHealthAdminsForOrg(organizationId).then(
-            async (healthAdmins: User[]): Promise<void> => {
-              const ids = healthAdmins.map(({id}) => id)
-              if (!ids && ids.length) {
-                return
-              }
-              const tokens = (await this.registrationService.findForUserIds(ids))
-                .map((reg) => reg.pushToken)
-                .filter((exists) => exists)
-              const relevantUserIds = [...dependantIds]
-              if (includeGuardian) {
-                relevantUserIds.push(userId)
-              }
-              const groups = await this.organizationService.getUsersGroups(
-                organizationId,
-                null,
-                relevantUserIds,
-              )
-              const allGroups = await this.organizationService.getGroups(organizationId)
-              const groupNames = groups.map(
-                (group) => allGroups.find(({id}) => id === group.groupId).name,
-              )
-              const organization = await this.organizationService.findOneById(organizationId)
-              const stop = passportStatus === PassportStatuses.Stop
-              const defaultFormat = stop
-                ? 'A user from the group __GROUPNAME has reported that they may have COVID-19'
-                : 'A user from the group __GROUPNAME has reported that they may have been exposed to COVID-19'
-              const organizationIcon = stop
-                ? organization.notificationIconStop
-                : organization.notificationIconCaution
-              const icon = organizationIcon ?? DEFAULT_IMAGE
+          const organization = await this.organizationService.findOneById(organizationId)
+          if (organization.enablePushNotifications) {
+            //do not await here, this is a side effect
+            this.userService.findHealthAdminsForOrg(organizationId).then(
+              async (healthAdmins: User[]): Promise<void> => {
+                const ids = healthAdmins.map(({id}) => id)
+                if (!ids && ids.length) {
+                  return
+                }
+                const tokens = (await this.registrationService.findForUserIds(ids))
+                  .map((reg) => reg.pushToken)
+                  .filter((exists) => exists)
+                const relevantUserIds = [...dependantIds]
+                if (includeGuardian) {
+                  relevantUserIds.push(userId)
+                }
+                const groups = await this.organizationService.getUsersGroups(
+                  organizationId,
+                  null,
+                  relevantUserIds,
+                )
+                const allGroups = await this.organizationService.getGroups(organizationId)
+                const groupNames = groups.map(
+                  (group) => allGroups.find(({id}) => id === group.groupId).name,
+                )
+                const stop = passportStatus === PassportStatuses.Stop
+                const defaultFormat = stop
+                  ? 'Someone in "__GROUPNAME" received a STOP badge. Tap to view admin dashboard. (__ORGLABEL)'
+                  : 'Someone in "__GROUPNAME" received a CAUTION badge. Tap to view admin dashboard. (__ORGLABEL)'
+                const organizationIcon = stop
+                  ? organization.notificationIconStop
+                  : organization.notificationIconCaution
+                const icon = organizationIcon ?? DEFAULT_IMAGE
 
-              const formatString =
-                (stop
-                  ? organization.notificationFormatStop
-                  : organization.notificationFormatCaution) ?? defaultFormat
+                const formatString =
+                  (stop
+                    ? organization.notificationFormatStop
+                    : organization.notificationFormatCaution) ?? defaultFormat
 
-              groupNames.forEach((name) =>
-                sendMessage(
-                  'Potential Exposure',
-                  formatString.replace('__GROUPNAME', name),
-                  icon,
-                  tokens,
-                ),
-              )
-            },
-          )
+                const organizationLabel = organization.key.toString()
+
+                groupNames.forEach((name) =>
+                  sendMessage(
+                    '⚠️ Potential Exposure',
+                    formatString
+                      .replace('__GROUPNAME', name)
+                      .replace('__ORGLABEL', organizationLabel),
+                    icon,
+                    tokens.map((token) => ({token})),
+                  ),
+                )
+              },
+            )
+          }
         } else {
           console.warn(
             `Could not execute a trace of attestation ${saved.id} because userId was not provided`,
@@ -269,12 +254,20 @@ class UserController implements IControllerBase {
 
   testNotify = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {userId, messageTitle, messageBody} = req.body
+      const {userId, messageTitle, messageBody, link} = req.body
       const tokens = (await this.registrationService.findForUserIds([userId]))
         .map((reg) => reg.pushToken)
         .filter((exists) => exists)
+      if (!tokens.length) {
+        throw new ResourceNotFoundException('No pushTokens found for user')
+      }
       console.log(`${userId} has ${tokens.length} token(s): ${tokens.join()}`)
-      sendMessage(messageTitle, messageBody, DEFAULT_IMAGE, tokens)
+      sendMessage(
+        messageTitle,
+        messageBody,
+        DEFAULT_IMAGE,
+        tokens.map((token) => ({token, data: {link}})),
+      )
       res.json(actionSucceed({}))
     } catch (error) {
       next(error)

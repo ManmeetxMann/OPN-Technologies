@@ -2,11 +2,23 @@ import DataStore from '../../../common/src/data/datastore'
 import {firestore} from 'firebase-admin'
 import {serverTimestamp} from '../../../common/src/utils/times'
 import {Attestation, AttestationModel} from '../models/attestation'
-import {PassportStatus} from '../models/passport'
+import {PassportStatus, PassportStatuses} from '../models/passport'
+import {
+  DataModelFieldMapOperatorType,
+  DataModelFieldMap,
+} from '../../../common/src/data/datamodel.base'
+import {TraceModel, TraceRepository} from '../../../access/src/repository/trace.repository'
+import {ExposureResult} from '../types/status-changes-result'
+import {Config} from '../../../common/src/utils/config'
+
+import moment from 'moment'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 export class AttestationService {
   private dataStore = new DataStore()
   private attestationRepository = new AttestationModel(this.dataStore)
+  private traceRepository = new TraceRepository(this.dataStore)
 
   save(attestation: Attestation): Promise<Attestation> {
     return this.attestationRepository
@@ -33,5 +45,67 @@ export class AttestationService {
       return attestation.status
     }
     return 'pending'
+  }
+
+  async getExposuresInPeriod(userId: string, from: string, to: string): Promise<ExposureResult[]> {
+    const query = this.traceRepository.collection().where('userId', '==', userId)
+
+    if (from) {
+      query.where('date', '>=', moment(from).tz(timeZone).format('YYYY-MM-DD'))
+    }
+
+    if (to) {
+      query.where('date', '<=', moment(to).tz(timeZone).format('YYYY-MM-DD'))
+    }
+
+    const allTracesForUserInPeriod = await query.fetch()
+
+    const riskyTraces = allTracesForUserInPeriod.filter(
+      (trace: TraceModel) =>
+        trace.passportStatus === PassportStatuses.Stop ||
+        trace.passportStatus === PassportStatuses.Caution,
+    )
+
+    const exposures: ExposureResult[] = riskyTraces.map((trace: TraceModel) => {
+      return {
+        userId: userId,
+        date: trace.date,
+        duration: trace.duration,
+        exposures: trace.exposures,
+      } as ExposureResult
+    })
+    return exposures
+  }
+
+  async getAttestationsInPeriod(userId: string, from: string, to: string): Promise<Attestation[]> {
+    const selector: DataModelFieldMap[] = [
+      {
+        map: '/',
+        key: 'appliesTo',
+        operator: DataModelFieldMapOperatorType.ArrayContains,
+        value: userId,
+      },
+    ]
+
+    if (from) {
+      selector.push({
+        map: '/',
+        key: 'attestationTime',
+        operator: DataModelFieldMapOperatorType.GreatOrEqual,
+        value: new Date(from),
+      })
+    }
+
+    if (to) {
+      selector.push({
+        map: '/',
+        key: 'attestationTime',
+        operator: DataModelFieldMapOperatorType.LessOrEqual,
+        value: new Date(to),
+      })
+    }
+
+    const attestations = await this.attestationRepository.findWhereEqualInMap(selector)
+    return attestations
   }
 }

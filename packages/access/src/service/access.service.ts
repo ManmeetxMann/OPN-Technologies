@@ -15,6 +15,7 @@ import {flattern} from '../../../common/src/utils/utils'
 import {PassportStatus} from '../../../passport/src/models/passport'
 import {AccessStatsFilter} from '../models/access-stats'
 import {Config} from '../../../common/src/utils/config'
+import {AccessFilterWithDependent} from '../types'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -197,13 +198,60 @@ export class AccessService {
     })
   }
 
-  findAllWith({userIds, betweenCreatedDate, locationId}: AccessFilter): Promise<Access[]> {
+  findAllWith({
+    userIds,
+    statusTokens,
+    betweenCreatedDate,
+    locationId,
+  }: AccessFilter): Promise<Access[]> {
     // @ts-ignore
     let query = this.accessRepository.collection()
 
     if (userIds?.length) {
       // @ts-ignore
       query = query.where('userId', 'in', userIds)
+    }
+
+    if (statusTokens?.length) {
+      // @ts-ignore
+      query = query.where('statusToken', 'in', statusTokens)
+    }
+
+    if (locationId) {
+      // @ts-ignore
+      query = query.where('locationId', '==', locationId)
+    }
+    if (betweenCreatedDate) {
+      const {from, to} = betweenCreatedDate
+      if (from) {
+        // @ts-ignore
+        query = query.where('createdAt', '>=', from)
+      }
+      if (to) {
+        // @ts-ignore
+        query = query.where('createdAt', '<=', to)
+      }
+    }
+
+    const hasFilter = userIds || statusTokens || locationId || betweenCreatedDate
+    // @ts-ignore
+    return (hasFilter ? query.fetch() : query.fetchAll()).then((accesses) =>
+      accesses.map(AccessService.mapAccessDates),
+    )
+  }
+
+  async findAllWithDependents({
+    userId,
+    dependentId,
+    betweenCreatedDate,
+    locationId,
+  }: AccessFilterWithDependent): Promise<Access[]> {
+    // @ts-ignore
+    let query = this.accessRepository.collection()
+
+    if (userId) {
+      // @ts-ignore
+      query = query.where('userId', '==', userId)
     }
     if (locationId) {
       // @ts-ignore
@@ -221,11 +269,39 @@ export class AccessService {
       }
     }
 
-    const hasFilter = userIds || locationId || betweenCreatedDate
     // @ts-ignore
-    return (hasFilter ? query.fetch() : query.fetchAll()).then((accesses) =>
-      accesses.map(AccessService.mapAccessDates),
-    )
+    const accesses = await query.fetch()
+
+    //@ts-ignore
+    const filteredAccesses = (accesses as Access[])
+      .map(
+        (access: Access): Access => ({
+          ...access,
+          //@ts-ignore
+          createdAt: access.createdAt.toDate().toISOString(),
+          //@ts-ignore
+          enteredAt: access.enteredAt?.toDate().toISOString(),
+          //@ts-ignore
+          exitAt: access.exitAt?.toDate().toISOString(),
+          //@ts-ignore
+          dependants: Object.values(access.dependants).map(({id, enteredAt, exitAt}) => {
+            return {
+              id,
+              //@ts-ignore
+              enteredAt: enteredAt?.toDate().toISOString(),
+              //@ts-ignore
+              exitAt: exitAt?.toDate().toISOString(),
+            }
+          }),
+        }),
+      )
+      .filter(
+        //@ts-ignore
+        (item) => item.dependants && item.dependants.map((dep) => dep.id).indexOf(dependentId) > -1,
+      )
+
+    // @ts-ignore
+    return filteredAccesses
   }
 
   async getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {

@@ -7,6 +7,8 @@ import {serverTimestamp} from '../utils/times'
 
 export enum DataModelFieldMapOperatorType {
   Equals = '==',
+  GreatOrEqual = '>=',
+  LessOrEqual = '<=',
   ArrayContains = 'array-contains',
 }
 
@@ -196,9 +198,16 @@ abstract class DataModel<T extends HasId> {
     allResults.forEach((page) => page.forEach((item) => (deduplicated[identity(item)] = item)))
     return Object.values(deduplicated)
   }
-  async findWhereIdIn(value: unknown[], subPath = ''): Promise<T[]> {
+
+  async findWhereIdIn(values: unknown[], subPath = ''): Promise<T[]> {
     const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()
-    return await this.collection(subPath).where(fieldPath, 'in', value).fetch()
+    const chunks: unknown[][] = _.chunk([...values], 10)
+    const allResults = await Promise.all(
+      chunks.map((chunk) => this.collection(subPath).where(fieldPath, 'in', chunk).fetch()),
+    )
+    const deduplicated: Record<string, T> = {}
+    allResults.forEach((page) => page.forEach((item) => (deduplicated[item.id] = item)))
+    return Object.values(deduplicated)
   }
 
   async findOneById(value: unknown, subPath = ''): Promise<T> {
@@ -277,7 +286,10 @@ abstract class DataModel<T extends HasId> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let collection: any = this.collection(subPath)
     for (const field of fields) {
-      const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(field.map, field.key)
+      const fieldPath =
+        !field.map || field.map === '/'
+          ? new this.datastore.firestoreAdmin.firestore.FieldPath(field.key)
+          : new this.datastore.firestoreAdmin.firestore.FieldPath(field.map, field.key)
       collection = collection.where(fieldPath, field.operator, field.value)
     }
     return collection.fetch()

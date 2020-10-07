@@ -16,6 +16,8 @@ export type Organization = {
   dayShift?: number
   // The reminder schedule for the apps to prompt for attestations
   dailyReminder: OrganizationReminderSchedule
+  // Whether or not this organization sends pushes
+  enablePushNotifications?: boolean
   // The format for push notifications to use
   notificationFormatCaution?: string
   notificationFormatStop?: string
@@ -27,6 +29,11 @@ export type Organization = {
 export enum OrganizationType {
   Default = 'default',
   Childcare = 'childcare',
+}
+
+export enum OrganizationLocationType {
+  Default = 'default',
+  Event = 'event',
 }
 
 export type OrganizationGroup = {
@@ -52,6 +59,7 @@ export type OrganizationLocation = {
   zip: string
   state: string
   country: string
+  type?: OrganizationLocationType
   // true if no location has this location as parentLocationId
   allowAccess: boolean
   // id of location which contains this location
@@ -61,6 +69,8 @@ export type OrganizationLocation = {
     address: string
     title: string
   } & OrganizationConfiguration)[]
+  validFrom?: string
+  validUntil?: string
 } & OrganizationConfiguration
 
 export type OrganizationConfiguration = {

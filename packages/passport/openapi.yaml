@@ -169,6 +169,8 @@ paths:
                   type: string
                 messageBody:
                   type: string
+                link:
+                  type: string
               required:
                 - userId
                 - messageTitle
@@ -176,4 +178,6 @@ paths:
 
       responses:
         '200':
-          description: Message sent successfully to at least one token
+          description: Message sent to at least one token.
+        '404':
+          description: No Registrations with pushToken !== null exist for that user.

@@ -7,11 +7,12 @@ import {OrganizationService} from '../services/organization-service'
 import {OrganizationConnectionRequest} from '../models/organization-connection-request'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
-import {User, UserEdit, UserWithGroup} from '../../../common/src/data/user'
+import {User, UserEdit, UserWithGroup, UserDependant} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Organization, OrganizationUsersGroup} from '../models/organization'
 import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -100,13 +101,31 @@ class UserController implements IControllerBase {
   getUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId, userId} = req.params
-      const user = (await this.userService.findOne(userId)) as UserWithGroup
-      const dependents = await this.userService.getAllDependants(userId)
-      const dependentIds = dependents.map((dependent) => dependent.id)
+      const {parentUserId} = req.query as {parentUserId?: string}
+      let user: UserWithGroup | UserDependant
+      let dependents: UserDependant[] = []
+      let lookupIds: string[] = [userId]
+
+      // Get appropriately Dependent vs User
+      if (parentUserId) {
+        // Get User
+        const pickDependents = await this.userService.getAllDependants(parentUserId)
+        user = pickDependents.filter((dependent) => dependent.id === userId)[0]
+      } else {
+        // Get User
+        user = (await this.userService.findOne(userId)) as UserWithGroup
+
+        // Get dependents (if any)
+        dependents = await this.userService.getAllDependants(userId)
+        const dependentIds = dependents.map((dependent) => dependent.id)
+        lookupIds = [...lookupIds, ...dependentIds]
+      }
+
+      if (!user) throw new ResourceNotFoundException(`Cannot find user with id [${userId}]`)
 
       // Fetch in chunks of 10 (most probably will only do once)
       const userGroupsArray: OrganizationUsersGroup[] = await Promise.all(
-        _.chunk([user.id, ...dependentIds], 10).map((chunk) =>
+        _.chunk(lookupIds, 10).map((chunk) =>
           this.organizationService.getUsersGroups(organizationId, null, chunk),
         ),
       ).then((results) => flattern(results as OrganizationUsersGroup[][]))
@@ -118,12 +137,12 @@ class UserController implements IControllerBase {
       }, {})
 
       // Fill out user one
-      user.groupId = userGroups[user.id]
+      user.groupId = userGroups[userId]
       for (const dependent of dependents) {
         dependent.groupId = userGroups[dependent.id]
       }
 
-      res.json(actionSucceed({profile: user, dependents: dependents}))
+      res.json(actionSucceed({profile: user, dependents: dependents, parentUserId}))
     } catch (error) {
       next(error)
     }

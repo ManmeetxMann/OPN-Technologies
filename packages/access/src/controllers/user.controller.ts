@@ -79,7 +79,7 @@ class UserController implements IRouteController {
       const {base64Photo} = await this.userService.findOne(userId)
       await this.accessService.handleExit(access)
 
-      res.json(actionSucceed({passport, base64Photo, dependants, includesGuardian}))
+      res.json(actionSucceed({passport, base64Photo, dependants, includesGuardian, access}))
     } catch (error) {
       next(error)
     }
@@ -144,7 +144,7 @@ class UserController implements IRouteController {
     if (canEnter) {
       const {dependants, userId, includesGuardian} = await this.accessService.handleEnter(access)
       const {base64Photo} = await this.userService.findOne(userId)
-      return res.json(actionSucceed({passport, base64Photo, dependants, includesGuardian}))
+      return res.json(actionSucceed({passport, base64Photo, dependants, includesGuardian, access}))
     }
 
     return res.status(400).json(actionFailed('Access denied for access-token'))
@@ -181,6 +181,7 @@ class UserController implements IRouteController {
         base64Photo,
         dependants: access.dependants,
         includesGuardian: access.includesGuardian,
+        access,
       }),
     )
   }

@@ -113,6 +113,11 @@ components:
           type: string
         country:
           type: string
+        type:
+          type: string
+          enum:
+            - default
+            - event
         attestationRequired:
           type: boolean
         allowAccess:
@@ -140,9 +145,14 @@ components:
                 type: string
               allowsSelfCheckInOut:
                 type: boolean
+        validFrom:
+          type: string
+        validUntil:
+          type: string
       required:
         - title
         - attestationRequired
+        - type
 
     OrganizationGroup:
       type: object
@@ -1038,6 +1048,119 @@ paths:
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationStats'
 
+  /organizations/{organizationId}/stats/contact-trace-locations:
+    get:
+      description: Get contact traces locations (admin access required)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: userId
+          schema:
+            type: string
+        - in: query
+          name: parentUserId
+          schema:
+            type: string
+        - in: query
+          name: from
+          schema:
+            type: string
+        - in: query
+          name: to
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully computed (format to come)
+
+  /organizations/{organizationId}/stats/contact-traces:
+    get:
+      description: Get contact traces exposures (admin access required)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: userId
+          schema:
+            type: string
+        - in: query
+          name: parentUserId
+          schema:
+            type: string
+        - in: query
+          name: from
+          schema:
+            type: string
+        - in: query
+          name: to
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully computed (format to come)
+
+  /organizations/{organizationId}/stats/contact-trace-attestations:
+    get:
+      description: Get contact traces attestations (admin access required)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: userId
+          schema:
+            type: string
+        - in: query
+          name: from
+          schema:
+            type: string
+        - in: query
+          name: to
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully computed (format to come)
+
+  /organizations/{organizationId}/stats/family:
+    get:
+      description: Get family data for the given userId
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: userId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: parentUserId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully computed
+
   /organizations/{organizationId}/stats/health:
     get:
       description: Get stats summary for one organization (admin access required)
@@ -1269,6 +1392,10 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: parentUserId
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully returned
