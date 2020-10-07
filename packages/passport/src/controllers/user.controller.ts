@@ -23,6 +23,27 @@ import {sendMessage} from '../../../common/src/service/messaging/push-notify-ser
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
 const DEFAULT_IMAGE =
   'https://firebasestorage.googleapis.com/v0/b/opn-platform-ca-prod.appspot.com/o/OPN-Icon.png?alt=media&token=17b833df-767d-4467-9a77-44c50aad5a33'
+
+const correctDateString = (rawDate: string): string => {
+  try {
+    const standardParse = new Date(rawDate)
+    if (!isNaN(standardParse.getTime())) {
+      return rawDate
+    }
+    console.warn(`received bad date ${rawDate}`)
+    // we expect a format like 2020-10-279T00:00:00.000-0400
+    const dayOfYear = parseInt(rawDate.substring(8).split('T')[0], 10)
+    const year = parseInt(rawDate.substring(0, 4), 10)
+    const realDate = new Date(year, dayOfYear)
+    const realDayOfMonth = realDate.getDate()
+    const rebuilt = rawDate.replace(`${dayOfYear}T`, `${realDayOfMonth}T`)
+    return rebuilt
+  } catch (err) {
+    console.warn(err)
+  }
+  return rawDate
+}
+
 class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
@@ -53,6 +74,17 @@ class UserController implements IControllerBase {
     }
   }
 
+  private reformatAnswers(answers: AttestationAnswers): void {
+    const allAnswers = Object.values(answers)
+    allAnswers.forEach((answer) =>
+      Object.keys(answer).forEach((key) => {
+        if (typeof answer[key] === 'string') {
+          answer[key] = correctDateString(answer[key])
+        }
+      }),
+    )
+  }
+
   // TODO: actually test this against questionnaire "answer keys"
   private async evaluateAnswers(answers: AttestationAnswers): Promise<PassportStatuses> {
     // note that this switches us to 0-indexing
@@ -75,6 +107,46 @@ class UserController implements IControllerBase {
       return PassportStatuses.Caution
     }
     return PassportStatuses.Proceed
+  }
+
+  private dateFromAnswer(answer: Record<number, boolean | string>): Date | null {
+    const answerKeys = Object.keys(answer).sort((a, b) => a.localeCompare(b, 'en', {numeric: true}))
+    if (!answerKeys[0]) {
+      // answer was false, no relevant date
+      return null
+    }
+    if (answerKeys.length === 1) {
+      // no follow up answer
+      return null
+    }
+    if (typeof answer[answerKeys[1]] !== 'string') {
+      // no follow up answer
+      return null
+    }
+    const date = new Date(answer[answerKeys[1]])
+    if (isNaN(date.getTime())) {
+      console.warn(`${answer[answerKeys[1]]} is not a parseable date`)
+      return null
+    }
+    return date
+  }
+
+  private findTestDate(answers: AttestationAnswers): Date | null {
+    const earliestDate = Object.values(answers)
+      .map(this.dateFromAnswer)
+      .reduce((earliest, curr) => {
+        if (!curr) {
+          return earliest
+        }
+        if (!earliest) {
+          return curr
+        }
+        if (curr < earliest) {
+          return curr
+        }
+        return earliest
+      })
+    return earliestDate
   }
 
   public initRoutes(): void {
@@ -145,6 +217,8 @@ class UserController implements IControllerBase {
         throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
       }
       const answers: AttestationAnswers = req.body.answers
+      // WARNING: modifies data
+      this.reformatAnswers(answers)
       const passportStatus = await this.evaluateAnswers(answers)
       const appliesTo = [...dependantIds]
       if (includeGuardian) {
@@ -169,12 +243,13 @@ class UserController implements IControllerBase {
       const count = dependantIds.length + (includeGuardian ? 1 : 0)
       await this.accessService.incrementTodayPassportStatusCount(locationId, passportStatus, count)
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
+        const dateOfTest = this.findTestDate(answers)
         if (userId) {
           const nowMillis = now().valueOf()
           this.topic.publish(Buffer.from('trace-required'), {
             userId,
             passportStatus,
-            startTime: `${nowMillis - TRACE_LENGTH}`,
+            startTime: `${(dateOfTest ? dateOfTest.getTime() : nowMillis) - TRACE_LENGTH}`,
             endTime: `${nowMillis}`,
             organizationId,
             locationId,
