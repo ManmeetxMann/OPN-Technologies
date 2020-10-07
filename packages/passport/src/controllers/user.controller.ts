@@ -24,6 +24,8 @@ const TRACE_LENGTH = 48 * 60 * 60 * 1000
 const DEFAULT_IMAGE =
   'https://firebasestorage.googleapis.com/v0/b/opn-platform-ca-prod.appspot.com/o/OPN-Icon.png?alt=media&token=17b833df-767d-4467-9a77-44c50aad5a33'
 
+// iOS can send a format like 2020-10-279T00:00:00.000-0400
+// the date is the number of days into the year instead of the month
 const correctDateString = (rawDate: string): string => {
   try {
     const standardParse = new Date(rawDate)
@@ -34,9 +36,9 @@ const correctDateString = (rawDate: string): string => {
     // we expect a format like 2020-10-279T00:00:00.000-0400
     const dayOfYear = parseInt(rawDate.substring(8).split('T')[0], 10)
     const year = parseInt(rawDate.substring(0, 4), 10)
-    const realDate = new Date(year, dayOfYear)
+    const realDate = new Date(year, 0, dayOfYear)
     const realDayOfMonth = realDate.getDate()
-    const rebuilt = rawDate.replace(`${dayOfYear}T`, `${realDayOfMonth}T`)
+    const rebuilt = rawDate.replace(`${dayOfYear}T`, `0${realDayOfMonth}T`.slice(-3))
     return rebuilt
   } catch (err) {
     console.warn(err)
