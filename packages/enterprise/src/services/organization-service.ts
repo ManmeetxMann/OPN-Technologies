@@ -126,6 +126,11 @@ export class OrganizationService {
     })
   }
 
+  // get with or without parent id
+  getAllLocations(organizationId: string): Promise<OrganizationLocation[]> {
+    return new OrganizationLocationModel(this.dataStore, organizationId).fetchAll()
+  }
+
   getLocation(organizationId: string, locationId: string): Promise<OrganizationLocation> {
     return this.getOrganization(organizationId)
       .then(() => new OrganizationLocationModel(this.dataStore, organizationId).get(locationId))

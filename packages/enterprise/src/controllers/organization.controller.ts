@@ -692,18 +692,41 @@ class OrganizationController implements IControllerBase {
           betweenCreatedDate,
         })
       }
-
-      const accessLocationIds: string[] = accesses.map((item: Access) => item.locationId)
-
-      const locations: OrganizationLocation[] = await this.organizationService.getLocations(
-        organizationId,
+      const enteringAccesses = accesses.filter((access) => access.enteredAt)
+      const exitingAccesses = accesses.filter((access) => access.exitAt)
+      enteringAccesses.sort((a, b) => {
+        if (a.enteredAt < b.enteredAt) {
+          return -1
+        } else if (b.enteredAt < a.enteredAt) {
+          return 1
+        }
+        return 0
+      })
+      exitingAccesses.sort((a, b) => {
+        if (a.exitAt < b.exitAt) {
+          return -1
+        } else if (b.exitAt < a.exitAt) {
+          return 1
+        }
+        return 0
+      })
+      const accessedLocationIds = new Set(
+        [...enteringAccesses, ...exitingAccesses].map((item: Access) => item.locationId),
       )
+      const accessedLocations: OrganizationLocation[] = (
+        await this.organizationService.getAllLocations(organizationId)
+      ).filter((location) => accessedLocationIds.has(location.id))
 
-      const accessedLocations: OrganizationLocation[] = locations.filter(
-        (location: OrganizationLocation) => accessLocationIds.indexOf(location.id) > -1,
-      )
-
-      res.json(actionSucceed(accessedLocations))
+      const locationsWithAccesses = accessedLocations.map((location) => {
+        const entry = enteringAccesses.find((access) => access.locationId === location.id)
+        const exit = exitingAccesses.find((access) => access.locationId === location.id)
+        return {
+          location,
+          entry,
+          exit: entry && exit && new Date(entry.enteredAt) < new Date(entry.exitAt) ? exit : null,
+        }
+      })
+      res.json(actionSucceed(locationsWithAccesses))
     } catch (error) {
       next(error)
     }
