@@ -760,8 +760,7 @@ class OrganizationController implements IControllerBase {
       )
 
       // WARNING: adding properties to models may not cause them to appear here
-      const result = rawExposures.map(({userId, date, duration, exposures}) => ({
-        userId,
+      const result = rawExposures.map(({date, duration, exposures}) => ({
         date,
         duration,
         exposures: exposures.map(({overlapping, date, organizationId, locationId}) => ({
@@ -770,6 +769,7 @@ class OrganizationController implements IControllerBase {
           locationId,
           overlapping: overlapping.map(({userId, dependant, start, end}) => ({
             userId,
+            status: PassportStatuses.Pending,
             group: groupsByUserId[userId],
             firstName: usersById[userId].firstName,
             lastName: usersById[userId].lastName,
@@ -784,6 +784,7 @@ class OrganizationController implements IControllerBase {
                   firstName: dependant.firstName,
                   lastName: dependant.lastName,
                   group: groupsById[dependant.groupId],
+                  status: PassportStatuses.Pending,
                 }
               : null,
           })),
