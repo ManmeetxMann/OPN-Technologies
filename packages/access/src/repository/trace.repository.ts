@@ -2,7 +2,7 @@ import CollectionGroupModel from '../../../common/src/data/collectionGroupDatamo
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {Trace, ExposureReport} from '../models/trace'
 import {Attendance} from '../models/attendance'
-import DataModel from '../../../common/src/data/datamodel.base'
+import DataModel, {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 
 export type TraceModel = Trace & {
   id: string
@@ -75,5 +75,36 @@ export default class DailyReportAccess extends CollectionGroupModel<TraceModel, 
       passportStatus,
       exposedIds,
     })
+  }
+  async getTracesFor(
+    userOrDependantId: string,
+    from: string, // YYYY-MM-DD
+    to: string, // YYYY-MM-DD
+  ): Promise<Trace[]> {
+    const conditions = [
+      {
+        map: '/',
+        key: 'exposedIds',
+        operator: DataModelFieldMapOperatorType.ArrayContains,
+        value: userOrDependantId,
+      },
+    ]
+    if (from) {
+      conditions.push({
+        map: '/',
+        key: 'date',
+        operator: DataModelFieldMapOperatorType.GreatOrEqual,
+        value: from,
+      })
+    }
+    if (to) {
+      conditions.push({
+        map: '/',
+        key: 'date',
+        operator: DataModelFieldMapOperatorType.LessOrEqual,
+        value: to,
+      })
+    }
+    return this.findWhereEqualInMap(conditions)
   }
 }
