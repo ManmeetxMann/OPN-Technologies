@@ -78,41 +78,29 @@ export default class TraceListener {
     this.userService = new UserService()
   }
 
-  async handleMessage(message: {
-    data: string
-    attributes: {
-      startTime: string
-      endTime: string
-      passportStatus: string
-      userId: string
-      organizationId: string
-      locationId: string
-      questionnaireId: string
-      answers: string
-    }
-  }): Promise<void> {
-    const {data, attributes} = message
-    const payload = Buffer.from(data, 'base64').toString()
-    if (payload !== 'trace-required') {
-      return
-    }
-    const {userId, passportStatus} = attributes
-    const startTime = parseInt(attributes.startTime, 10)
-    const endTime = parseInt(attributes.endTime, 10)
+  async handleMessage(message: {data: string}): Promise<void> {
+    const {data} = message
+    const payload = JSON.parse(Buffer.from(data, 'base64').toString())
+    const {userId, passportStatus} = payload
     await this.traceFor(
       userId,
-      startTime,
-      endTime,
+      // not sure if this comes over the wire in string or boolean form
+      payload.includesGuardian,
+      payload.dependantIds,
+      payload.startTime,
+      payload.endTime,
       passportStatus,
-      attributes.organizationId,
-      attributes.locationId,
-      attributes.questionnaireId,
-      JSON.parse(attributes.answers),
+      payload.organizationId,
+      payload.locationId,
+      payload.questionnaireId,
+      payload.answers,
     )
   }
 
   async traceFor(
     userId: string,
+    includesGuardian: boolean,
+    dependantIds: string[],
     startTime: number,
     endTime: number,
     passportStatus: string,
@@ -142,7 +130,11 @@ export default class TraceListener {
         const otherUsersAccesses: SinglePersonAccess[] = []
 
         dailyReport.accesses.forEach((access) => {
-          if (access.userId === userId) {
+          if (
+            access.userId === userId &&
+            ((includesGuardian && !access.dependantId) ||
+              (!includesGuardian && dependantIds.includes(access.dependantId)))
+          ) {
             mainUserAccesses.push(access)
           } else {
             otherUsersAccesses.push(access)
@@ -208,6 +200,8 @@ export default class TraceListener {
     this.sendEmails(
       result,
       userId,
+      includesGuardian,
+      dependantIds,
       locations,
       accessLookup,
       endTime,
@@ -223,6 +217,8 @@ export default class TraceListener {
   private async sendEmails(
     reports: ExposureReport[],
     userId: string,
+    includesGuardian: boolean,
+    dependantIds: string[],
     locations: Record<string, LocationDescription>,
     accesses: AccessLookup,
     endTime: number,
@@ -323,7 +319,7 @@ export default class TraceListener {
 
     const userDependantLookup: Record<string, UserGroupData> = allUsersWithDependantsAndGroups
       .map((lookup) => ({
-        id: lookup.id,
+        id: lookup.id, // a userId
         orgId: lookup.orgId,
         groupNames: lookup.groups.map(
           (membership) =>
@@ -332,6 +328,8 @@ export default class TraceListener {
         ),
         dependants: lookup.dependants.map((dep) => ({
           id: dep.id,
+          firstName: dep.firstName,
+          lastName: dep.lastName,
           groupName: organizationLookup[lookup.orgId].groups.find(
             (group) => group.id === dep.groupId,
           )?.name,
@@ -346,6 +344,8 @@ export default class TraceListener {
     const allReports = []
     const header = getHeaderSection(
       sourceUser,
+      includesGuardian,
+      dependantIds,
       endTime,
       status,
       questionnaire,
