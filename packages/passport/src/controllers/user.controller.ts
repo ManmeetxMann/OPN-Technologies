@@ -63,16 +63,12 @@ class UserController implements IControllerBase {
   ): Promise<PassportStatuses> {
     // note that this switches us to 0-indexing
     const responses = [1, 2, 3, 4, 5, 6].map((index) => (answers[index] ? answers[index][1] : null))
-    const questionCount = responses[4] !== null && responses[5] !== null ? 6 : 4
 
     const {
       values,
       caution,
       stop,
-    }: EvaluationCriteria = await this.questionnaireService.getAnswerLogic(
-      questionnaireId,
-      questionCount,
-    )
+    }: EvaluationCriteria = await this.questionnaireService.getAnswerLogic(questionnaireId)
 
     const score = (values as number[])
       .map((value: number, index: number) => (responses[index] ? value : 0))

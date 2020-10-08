@@ -1,6 +1,7 @@
 import DataStore from '../../../common/src/data/datastore'
 import {QuestionnaireModel} from '../repository/questionnaire.repository'
 import {EvaluationCriteria, Questionnaire} from '../models/questionnaire'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 export class QuestionnaireService {
   private dataStore = new DataStore()
@@ -22,16 +23,23 @@ export class QuestionnaireService {
     await this.questionnaireRepository.updateProperty(questionnaireId, fieldName, fieldValue)
   }
 
-  async getAnswerLogic(
-    questionnaireId: string,
-    questionCount: number,
-  ): Promise<EvaluationCriteria> {
-    const answerLogic = this.questionnaireRepository.getFireStore(questionCount)
-
-    await this.updateProperty(questionnaireId, 'answerLogic', answerLogic)
-
+  async getAnswerLogic(questionnaireId: string): Promise<EvaluationCriteria> {
     const questionnaire: Questionnaire = await this.questionnaireRepository.get(questionnaireId)
 
-    return questionnaire.answerLogic
+    if (!questionnaire) {
+      throw new ResourceNotFoundException(`Cannot find questionnaire with ID [${questionnaireId}]`)
+    }
+
+    let answerLogic = questionnaire.answerLogic
+
+    if (!answerLogic) {
+      const questionCount = Object.keys(questionnaire.questions).length
+
+      answerLogic = await this.questionnaireRepository.getEvaluationCriteria(questionCount)
+
+      await this.updateProperty(questionnaireId, 'answerLogic', answerLogic)
+    }
+
+    return answerLogic
   }
 }
