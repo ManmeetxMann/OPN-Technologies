@@ -912,7 +912,11 @@ class OrganizationController implements IControllerBase {
         {},
       )
       const allDependantsById = (_.flatten(allDependants) as UserDependant[])
-        .map((dependant) => ({...dependant, group: groupsByUserOrDependantId[dependant.id]}))
+        .map((dependant) => ({
+          ...dependant,
+          group: groupsByUserOrDependantId[dependant.id],
+          status: statusLookup[dependant.id],
+        }))
         .reduce(
           (lookup, dependant) => ({
             ...lookup,
