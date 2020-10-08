@@ -169,16 +169,20 @@ export default class TraceListener {
         const overlapping = otherUsersAccesses
           .map((access) =>
             mainUserAccesses
-              .map((contaminated) => overlap(contaminated, access, startOfDay, endOfDay))
+              .map((contaminated) => {
+                const intersection = overlap(contaminated, access, startOfDay, endOfDay)
+                return {
+                  ...intersection,
+                  sourceUserId: contaminated.userId,
+                  sourceDependantId: contaminated.dependantId ?? null,
+                  userId: access.userId,
+                  dependant: access.dependant,
+                }
+              })
               .filter(
                 (range) =>
                   range && range.end.valueOf() > startTime && range.start.valueOf() < endTime,
               )
-              .map((range) => ({
-                userId: access.userId,
-                dependant: access.dependant,
-                ...range,
-              }))
               .filter((overlapRecord) => {
                 const json = JSON.stringify(overlapRecord)
                 if (includedOverlapJSONs.has(json)) {
@@ -217,6 +221,7 @@ export default class TraceListener {
     this.repo.saveTrace(
       result,
       userId,
+      dependantIds,
       passportStatus as StopStatus,
       moment(endTime).format('YYYY-MM-DD'),
       endTime - startTime,
