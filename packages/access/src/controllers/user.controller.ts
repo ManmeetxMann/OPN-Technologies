@@ -56,7 +56,7 @@ class UserController implements IRouteController {
 
       return location.attestationRequired
         ? await this.enterWithAttestation(res, location, accessToken)
-        : await this.enterWithoutAttestation(res, location, accessToken)
+        : await this.enterWithoutAttestation(res, accessToken)
     } catch (error) {
       next(error)
     }
@@ -76,10 +76,25 @@ class UserController implements IRouteController {
         throw new BadRequestException('Access-location mismatch with the entering location')
 
       const passport = await this.passportService.findOneByToken(statusToken)
-      const {base64Photo} = await this.userService.findOne(userId)
-      await this.accessService.handleExit(access)
+      const user = await this.userService.findOne(userId)
+      const {base64Photo} = user
+      const newAccess = await this.accessService.handleExit(access)
 
-      res.json(actionSucceed({passport, base64Photo, dependants, includesGuardian, access}))
+      res.json(
+        actionSucceed({
+          passport,
+          base64Photo,
+          dependants,
+          includesGuardian,
+          access: {
+            enteredAt: null, // default value TODO this must be retrieved
+            exitAt: null, // default value
+            ...newAccess,
+            user,
+            status: passport.status,
+          },
+        }),
+      )
     } catch (error) {
       next(error)
     }
@@ -142,19 +157,30 @@ class UserController implements IRouteController {
     const canEnter = passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil)
 
     if (canEnter) {
-      const {dependants, userId, includesGuardian} = await this.accessService.handleEnter(access)
-      const {base64Photo} = await this.userService.findOne(userId)
-      return res.json(actionSucceed({passport, base64Photo, dependants, includesGuardian, access}))
+      const newAccess = await this.accessService.handleEnter(access)
+      const {dependants, userId, includesGuardian} = newAccess
+      const user = await this.userService.findOne(userId)
+      const {base64Photo} = user
+      return res.json(
+        actionSucceed({
+          passport,
+          base64Photo,
+          dependants,
+          includesGuardian,
+          access: {
+            ...newAccess,
+            user,
+            status: passport.status,
+            exitAt: null,
+          },
+        }),
+      )
     }
 
     return res.status(400).json(actionFailed('Access denied for access-token'))
   }
 
-  private async enterWithoutAttestation(
-    res: Response,
-    location: OrganizationLocation,
-    accessToken: string,
-  ): Promise<unknown> {
+  private async enterWithoutAttestation(res: Response, accessToken: string): Promise<unknown> {
     const access = await this.accessService.findOneByToken(accessToken)
     const {userId} = access
     const allIds = Object.keys(access.dependants)
@@ -170,10 +196,12 @@ class UserController implements IRouteController {
     if (allStatuses.includes('caution')) {
       throw new BadRequestException(`current status is caution`)
     }
+    const status = allStatuses.includes('pending') ? 'pending' : 'proceed'
 
-    const {base64Photo} = await this.userService.findOne(userId)
+    const user = await this.userService.findOne(userId)
+    const {base64Photo} = user
     const passport = await this.passportService.create(PassportStatuses.Pending, userId, [], true)
-    await this.accessService.handleEnter(access)
+    const newAccess = await this.accessService.handleEnter(access)
 
     return res.json(
       actionSucceed({
@@ -181,7 +209,12 @@ class UserController implements IRouteController {
         base64Photo,
         dependants: access.dependants,
         includesGuardian: access.includesGuardian,
-        access,
+        access: {
+          ...newAccess,
+          exitAt: null,
+          status,
+          user,
+        },
       }),
     )
   }

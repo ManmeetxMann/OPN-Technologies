@@ -140,25 +140,31 @@ class AdminController implements IRouteController {
         throw new UnauthorizedException(`Not an admin for location ${location.id}`)
       }
 
-      const responseBody = {
-        passport,
-        base64Photo: user.base64Photo,
-        dependants: [],
-        includesGuardian: access.includesGuardian,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        access,
-      }
       const canEnter =
         passport.status === PassportStatuses.Pending ||
         (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
 
       if (canEnter) {
-        const {dependants} = await this.accessService.handleEnter(access)
+        const newAccess = await this.accessService.handleEnter(access)
+        const {dependants} = newAccess
+        const responseBody = {
+          passport,
+          base64Photo: user.base64Photo,
+          dependants: [],
+          includesGuardian: access.includesGuardian,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          access: {
+            ...newAccess,
+            status: passport.status,
+            user,
+            exitAt: null,
+          },
+        }
         return res.json(actionSucceed({...responseBody, dependants}))
       }
 
-      res.status(400).json(actionFailed('Access denied for access-token', responseBody))
+      res.status(400).json(actionFailed('Access denied for access-token'))
     } catch (error) {
       next(error)
     }
@@ -176,7 +182,8 @@ class AdminController implements IRouteController {
       if (userId !== access.userId) {
         throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
       }
-      const {dependants} = await this.accessService.handleExit(access)
+      const newAccess = await this.accessService.handleExit(access)
+      const {dependants} = newAccess
 
       const responseBody = {
         passport,
@@ -185,7 +192,13 @@ class AdminController implements IRouteController {
         includesGuardian,
         firstName: user.firstName,
         lastName: user.lastName,
-        access,
+        access: {
+          enteredAt: null, // default value
+          exitAt: null, // default value
+          ...newAccess,
+          status: passport.status,
+          user,
+        },
       }
       res.json(actionSucceed(responseBody))
     } catch (error) {
@@ -202,7 +215,7 @@ class AdminController implements IRouteController {
       const {organizationId} = req.body
       const {userId} = req.query
 
-      // TODO: Get locations that have the same questionairre id as the location id in the status token
+      // TODO: Get locations that have the same questionaire id as the location id in the status token
 
       // Get all status tokens
       // const statusTokens = await this.passportService.findByValidity(userId as string | null)
