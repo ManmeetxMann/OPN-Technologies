@@ -60,7 +60,8 @@ export const authMiddleware = async (
   }
 
   // Set it for the actual route
-  res.locals.connectedUser = connectedUser
+  res.locals.connectedUser = connectedUser // TODO to be replaced with `authenticatedUser`
+  res.locals.authenticatedUser = connectedUser
 
   // Done
   next()
