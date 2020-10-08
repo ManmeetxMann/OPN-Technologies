@@ -1,6 +1,7 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import {PubSub, Topic} from '@google-cloud/pubsub'
+import {isValidISODateString} from 'iso-datestring-validator'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {PassportService} from '../services/passport-service'
@@ -19,6 +20,8 @@ import {User} from '../../../common/src/data/user'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {sendMessage} from '../../../common/src/service/messaging/push-notify-service'
+import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
+import {EvaluationCriteria} from '../../../lookup/src/models/questionnaire'
 
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
 const DEFAULT_IMAGE =
@@ -33,6 +36,7 @@ class UserController implements IControllerBase {
   private organizationService = new OrganizationService()
   private registrationService = new RegistrationService()
   private userService = new UserService()
+  private questionnaireService = new QuestionnaireService()
   private topic: Topic
 
   constructor() {
@@ -54,27 +58,35 @@ class UserController implements IControllerBase {
     }
   }
 
-  // TODO: actually test this against questionnaire "answer keys"
-  private async evaluateAnswers(answers: AttestationAnswers): Promise<PassportStatuses> {
-    // note that this switches us to 0-indexing
+  private async evaluateAnswers(
+    questionnaireId: string,
+    answers: AttestationAnswers,
+  ): Promise<PassportStatuses> {
     const answerKeys = Object.keys(answers).sort((a, b) =>
       a.localeCompare(b, 'en', {numeric: true}),
     )
-    const questionCount = answerKeys.length >= 13 ? 13 : answerKeys.length >= 6 ? 6 : 4
-    const [values, caution, stop] = {
-      4: [[1, 1, 1, 2], 1, 2],
-      6: [[1, 1, 1, 1, 1, 1], 100, 1],
-      13: [[2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 100], 1, 100],
-    }[questionCount]
+
+    // note that this switches us to 0-indexing
+    const responses = answerKeys.map((index) => (answers[index] ? answers[index][1] : null))
+
+    const {
+      values,
+      caution,
+      stop,
+    }: EvaluationCriteria = await this.questionnaireService.getAnswerLogic(questionnaireId)
+
     const score = (values as number[])
-      .map((value: number, index: number) => (answers[answerKeys[index]][1] ? value : 0))
+      .map((value: number, index: number) => (responses[index] ? value : 0))
       .reduce((total, current) => total + current)
+
     if (score >= stop) {
       return PassportStatuses.Stop
     }
+
     if (score >= caution) {
       return PassportStatuses.Caution
     }
+
     return PassportStatuses.Proceed
   }
 
@@ -167,9 +179,17 @@ class UserController implements IControllerBase {
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // HOT FIX: const -> let to force the includeGuardian change
-      // @ts-ignore
+      for (const value of Object.values(req.body.answers)) {
+        if (
+          (value[2] && !isValidISODateString(value[2])) ||
+          (value['02'] && !isValidISODateString(value['02']))
+        ) {
+          throw new BadRequestException('Date string must be ISO string')
+        }
+      }
+
       let {locationId, userId, includeGuardian} = req.body
+
       const {organizationId, questionnaireId} = await this.organizationService.getLocationById(
         locationId,
       )
@@ -186,7 +206,7 @@ class UserController implements IControllerBase {
         throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
       }
       const answers: AttestationAnswers = req.body.answers
-      const passportStatus = await this.evaluateAnswers(answers)
+      const passportStatus = await this.evaluateAnswers(questionnaireId, answers)
       const appliesTo = [...dependantIds]
       if (includeGuardian) {
         appliesTo.push(userId)

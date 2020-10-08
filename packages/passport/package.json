@@ -19,6 +19,7 @@
     },
     "dependencies": {
         "express": "^4.17.1",
+        "iso-datestring-validator": "^2.1.2",
         "pug": "^3.0.0"
     },
     "devDependencies": {

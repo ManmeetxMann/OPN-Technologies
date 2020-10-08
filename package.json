@@ -52,5 +52,6 @@
 		"typescript": "^3.9.5",
 		"node-fetch": "^2.6.0",
 		"firebase-tools": "^8.7.0"
-	}
+	},
+	"dependencies": {}
 }

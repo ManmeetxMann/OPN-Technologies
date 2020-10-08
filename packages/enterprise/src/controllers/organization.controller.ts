@@ -525,12 +525,18 @@ class OrganizationController implements IControllerBase {
       const isHealthAdmin = admin.healthAdminForOrganizationIds?.includes(organizationId)
       const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
 
-      if (!canAccessOrganization) replyInsufficientPermission(res)
+      if (!canAccessOrganization) {
+        replyInsufficientPermission(res)
+        return
+      }
 
       // If group is specified, make sure we are group admin
       if (groupId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForGroupIds?.includes(groupId)
-        if (!hasGrantedPermission) replyInsufficientPermission(res)
+        if (!hasGrantedPermission) {
+          replyInsufficientPermission(res)
+          return
+        }
         // Assert group exists
         await this.organizationService.getGroup(organizationId, groupId)
       }
@@ -538,7 +544,10 @@ class OrganizationController implements IControllerBase {
       // If location is specified, make sure we are location admin
       if (locationId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForLocationIds?.includes(locationId)
-        if (!hasGrantedPermission) replyInsufficientPermission(res)
+        if (!hasGrantedPermission) {
+          replyInsufficientPermission(res)
+          return
+        }
         // Assert location exists
         await this.organizationService.getLocation(organizationId, locationId)
       }
@@ -546,6 +555,7 @@ class OrganizationController implements IControllerBase {
       // If no group and no location is specified, make sure we are the health admin
       if (!groupId && !locationId && !isHealthAdmin) {
         replyInsufficientPermission(res)
+        return
       }
 
       const response = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
@@ -568,7 +578,10 @@ class OrganizationController implements IControllerBase {
       const canAccessOrganization =
         isSuperAdmin || isHealthAdmin || admin.adminForOrganizationId === organizationId
 
-      if (!canAccessOrganization) replyInsufficientPermission(res)
+      if (!canAccessOrganization) {
+        replyInsufficientPermission(res)
+        return
+      }
 
       const response = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
 
