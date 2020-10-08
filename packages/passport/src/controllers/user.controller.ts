@@ -152,11 +152,11 @@ class UserController implements IControllerBase {
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // HOT FIX: const -> let to force the includeGuardian change
-      // @ts-ignore
-
-      for (const [, value] of Object.entries(req.body.answers)) {
-        if (value[2] && !isValidISODateString(value[2])) {
+      for (const value of Object.values(req.body.answers)) {
+        if (
+          (value[2] && !isValidISODateString(value[2])) ||
+          (value['02'] && !isValidISODateString(value['02']))
+        ) {
           throw new BadRequestException('Date string must be ISO string')
         }
       }
