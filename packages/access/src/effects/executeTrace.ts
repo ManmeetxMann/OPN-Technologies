@@ -78,41 +78,22 @@ export default class TraceListener {
     this.userService = new UserService()
   }
 
-  async handleMessage(message: {
-    data: string
-    attributes: {
-      includesGuardian: string
-      dependantIds: string
-      startTime: string
-      endTime: string
-      passportStatus: string
-      userId: string
-      organizationId: string
-      locationId: string
-      questionnaireId: string
-      answers: string
-    }
-  }): Promise<void> {
-    const {data, attributes} = message
-    const payload = Buffer.from(data, 'base64').toString()
-    if (payload !== 'trace-required') {
-      return
-    }
-    const {userId, passportStatus} = attributes
-    const startTime = parseInt(attributes.startTime, 10)
-    const endTime = parseInt(attributes.endTime, 10)
+  async handleMessage(message: {data: string}): Promise<void> {
+    const {data} = message
+    const payload = JSON.parse(Buffer.from(data, 'base64').toString())
+    const {userId, passportStatus} = payload
     await this.traceFor(
       userId,
       // not sure if this comes over the wire in string or boolean form
-      !!JSON.parse(attributes.includesGuardian ?? 'false'),
-      JSON.parse(attributes.dependantIds),
-      startTime,
-      endTime,
+      payload.includesGuardian,
+      payload.dependantIds,
+      payload.startTime,
+      payload.endTime,
       passportStatus,
-      attributes.organizationId,
-      attributes.locationId,
-      attributes.questionnaireId,
-      JSON.parse(attributes.answers),
+      payload.organizationId,
+      payload.locationId,
+      payload.questionnaireId,
+      payload.answers,
     )
   }
 
