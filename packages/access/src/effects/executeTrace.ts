@@ -171,6 +171,9 @@ export default class TraceListener {
             mainUserAccesses
               .map((contaminated) => {
                 const intersection = overlap(contaminated, access, startOfDay, endOfDay)
+                if (!intersection) {
+                  return null
+                }
                 return {
                   ...intersection,
                   sourceUserId: contaminated.userId,
