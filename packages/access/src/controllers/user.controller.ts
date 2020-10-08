@@ -87,9 +87,11 @@ class UserController implements IRouteController {
           dependants,
           includesGuardian,
           access: {
-            enteredAt: null, // default value TODO this must be retrieved
-            exitAt: null, // default value
             ...newAccess,
+            // @ts-ignore timestamp, not string
+            enteredAt: newAccess.enteredAt?.toDate(), // TODO: almost always null
+            // @ts-ignore timestamp, not string
+            exitAt: newAccess.exitAt?.toDate(),
             user,
             status: passport.status,
           },
@@ -169,9 +171,12 @@ class UserController implements IRouteController {
           includesGuardian,
           access: {
             ...newAccess,
+            // @ts-ignore timestamp, not string
+            enteredAt: newAccess.enteredAt?.toDate(),
+            // @ts-ignore timestamp, not string
+            exitAt: newAccess.exitAt?.toDate(),
             user,
             status: passport.status,
-            exitAt: null,
           },
         }),
       )
@@ -211,7 +216,10 @@ class UserController implements IRouteController {
         includesGuardian: access.includesGuardian,
         access: {
           ...newAccess,
-          exitAt: null,
+          // @ts-ignore timestamp, not string
+          enteredAt: newAccess.enteredAt?.toDate(),
+          // @ts-ignore timestamp, not string
+          exitAt: newAccess.exitAt?.toDate(),
           status,
           user,
         },

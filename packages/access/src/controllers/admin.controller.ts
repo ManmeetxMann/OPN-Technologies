@@ -156,9 +156,12 @@ class AdminController implements IRouteController {
           lastName: user.lastName,
           access: {
             ...newAccess,
+            // @ts-ignore timestamp, not string
+            enteredAt: newAccess.enteredAt?.toDate(),
+            // @ts-ignore timestamp, not string
+            exitAt: newAccess.exitAt?.toDate(),
             status: passport.status,
             user,
-            exitAt: null,
           },
         }
         return res.json(actionSucceed({...responseBody, dependants}))
@@ -193,9 +196,11 @@ class AdminController implements IRouteController {
         firstName: user.firstName,
         lastName: user.lastName,
         access: {
-          enteredAt: null, // default value
-          exitAt: null, // default value
           ...newAccess,
+          // @ts-ignore timestamp, not string
+          enteredAt: newAccess.enteredAt?.toDate(),
+          // @ts-ignore timestamp, not string
+          exitAt: newAccess.exitAt?.toDate(),
           status: passport.status,
           user,
         },
