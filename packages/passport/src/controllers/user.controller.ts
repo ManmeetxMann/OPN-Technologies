@@ -1,6 +1,7 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import {PubSub, Topic} from '@google-cloud/pubsub'
+import {isValidISODateString} from 'iso-datestring-validator'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {PassportService} from '../services/passport-service'
@@ -153,7 +154,15 @@ class UserController implements IControllerBase {
     try {
       // HOT FIX: const -> let to force the includeGuardian change
       // @ts-ignore
+
+      for (const [, value] of Object.entries(req.body.answers)) {
+        if (value[2] && !isValidISODateString(value[2])) {
+          throw new BadRequestException('Date string must be ISO string')
+        }
+      }
+
       let {locationId, userId, includeGuardian} = req.body
+
       const {organizationId, questionnaireId} = await this.organizationService.getLocationById(
         locationId,
       )
@@ -170,6 +179,7 @@ class UserController implements IControllerBase {
         throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
       }
       const answers: AttestationAnswers = req.body.answers
+
       const passportStatus = await this.evaluateAnswers(answers)
       const appliesTo = [...dependantIds]
       if (includeGuardian) {
