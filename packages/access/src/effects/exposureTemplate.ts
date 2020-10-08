@@ -1,7 +1,7 @@
 import moment from 'moment-timezone'
 
 import {ExposureReport} from '../models/trace'
-import {User, UserDependant} from '../../../common/src/data/user'
+import {User} from '../../../common/src/data/user'
 import type {SinglePersonAccess} from '../models/attendance'
 import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
@@ -18,10 +18,23 @@ export type UserGroupData = {
   groupNames: string[]
   dependants: {
     id: string
+    firstName: string
+    lastName: string
     groupName: string
   }[]
 }
-const formatName = (user: User, dependant: UserDependant, groupData: UserGroupData): string => {
+
+type PrintableDependant = {
+  id: string
+  firstName: string
+  lastName: string
+}
+
+const formatName = (
+  user: User,
+  dependant: PrintableDependant,
+  groupData: UserGroupData,
+): string => {
   if (!dependant) {
     return `${user.firstName} ${user.lastName} (${groupData.groupNames.join(', ')})`
   } else {
@@ -65,19 +78,41 @@ const getResponseSection = (questionnaire: Questionnaire, answers: Answers): str
 // Add org name, responses
 export const getHeaderSection = (
   user: User,
+  includesGuardian: boolean,
+  dependantIds: string[],
   exposureTime: number,
   status: string,
   questionnaire: Questionnaire,
   answers: Answers,
   userLookup: Record<string, UserGroupData>,
 ): string => {
+  const lookup = userLookup[user.id]
+
+  const userRows = dependantIds.map((id) =>
+    formatName(
+      user,
+      lookup.dependants.find((dep) => dep.id === id),
+      lookup,
+    ),
+  )
+
+  if (includesGuardian) {
+    userRows.unshift(formatName(user, null, lookup))
+  }
+
+  const userSection =
+    userRows.length === 1
+      ? `<b>Exposed user:</b> ${userRows[0]}`
+      : `<b>Exposed users:</b><br>
+${userRows.join('<br>\n')}`
+
   return `Hello there,<br>
 <br>
 There is a potential exposure. Please see below for details.<br>
 <br>
 <b><u>SOURCE OF EXPOSURE</u></b><br>
 <br>
-<b>Exposed user:</b> ${formatName(user, null, userLookup[user.id])}<br>
+${userSection}<br>
 <b>Exposed status:</b> ${status}<br>
 <b>Time of notification:</b> ${formatTime(new Date(exposureTime))}<br>
 <br>
