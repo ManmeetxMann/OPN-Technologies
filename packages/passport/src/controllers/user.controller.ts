@@ -56,13 +56,16 @@ class UserController implements IControllerBase {
     }
   }
 
-  // TODO: actually test this against questionnaire "answer keys"
   private async evaluateAnswers(
     questionnaireId: string,
     answers: AttestationAnswers,
   ): Promise<PassportStatuses> {
+    const answerKeys = Object.keys(answers).sort((a, b) =>
+      a.localeCompare(b, 'en', {numeric: true}),
+    )
+
     // note that this switches us to 0-indexing
-    const responses = [1, 2, 3, 4, 5, 6].map((index) => (answers[index] ? answers[index][1] : null))
+    const responses = answerKeys.map((index) => (answers[index] ? answers[index][1] : null))
 
     const {
       values,
