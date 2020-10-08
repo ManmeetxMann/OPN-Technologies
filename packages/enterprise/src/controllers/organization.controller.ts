@@ -795,7 +795,7 @@ class OrganizationController implements IControllerBase {
       )
       // every location this organization contains
       const allLocations = await this.organizationService.getAllLocations(organizationId)
-      const locationsById: Record<string, Location> = allLocations.reduce(
+      const locationsById: Record<string, OrganizationLocation> = allLocations.reduce(
         (lookup, location) => ({...lookup, [location.id]: location}),
         {},
       )
