@@ -171,19 +171,22 @@ class UserController implements IControllerBase {
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
         if (userId) {
           const nowMillis = now().valueOf()
-          // TODO: do we have message and attributes swapped?
-          this.topic.publish(Buffer.from('trace-required'), {
-            userId,
-            dependantIds: JSON.stringify(dependantIds),
-            includesGuardian: includeGuardian ? 'true' : 'false',
-            passportStatus,
-            startTime: `${nowMillis - TRACE_LENGTH}`,
-            endTime: `${nowMillis}`,
-            organizationId,
-            locationId,
-            questionnaireId,
-            answers: JSON.stringify(answers),
-          })
+          this.topic.publish(
+            Buffer.from(
+              JSON.stringify({
+                userId,
+                dependantIds: dependantIds,
+                includesGuardian: includeGuardian,
+                passportStatus,
+                startTime: nowMillis - TRACE_LENGTH,
+                endTime: nowMillis,
+                organizationId,
+                locationId,
+                questionnaireId,
+                answers: answers,
+              }),
+            ),
+          )
           const organization = await this.organizationService.findOneById(organizationId)
           if (organization.enablePushNotifications) {
             //do not await here, this is a side effect
