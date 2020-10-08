@@ -4,3 +4,8 @@ export type UserContactTraceReportRequest = {
   from?: string
   to?: string
 }
+
+export type FamilyStatusReportRequest = {
+  userId: string
+  parentUserId?: string
+}

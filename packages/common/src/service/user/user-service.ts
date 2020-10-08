@@ -1,7 +1,6 @@
 import DataStore from '../../data/datastore'
 import {User, UserDependant, UserDependantModel, UserFilter, UserModel} from '../../data/user'
 import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
-import {firestore} from 'firebase-admin'
 
 export class UserService {
   private dataStore = new DataStore()
@@ -24,10 +23,7 @@ export class UserService {
   }
 
   findAllBy({userIds}: UserFilter): Promise<User[]> {
-    return this.userRepository
-      .collection()
-      .where(firestore.FieldPath.documentId(), 'in', userIds)
-      .fetch()
+    return this.userRepository.findWhereIdIn(userIds)
   }
 
   findOne(id: string): Promise<User> {

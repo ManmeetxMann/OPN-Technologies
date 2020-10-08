@@ -22,7 +22,7 @@ import {PassportService} from '../../../passport/src/services/passport-service'
 import {Passport, PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
 import {Stats, StatsFilter} from '../models/stats'
-import {UserContactTraceReportRequest} from '../types/trace-request'
+import {FamilyStatusReportRequest, UserContactTraceReportRequest} from '../types/trace-request'
 import {Range} from '../../../common/src/types/range'
 import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
@@ -107,8 +107,9 @@ class OrganizationController implements IControllerBase {
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/health', this.getStatsHealth)
         .get('/contact-trace-locations', this.getUserContactTraceLocations)
-        .get('/contact-trace-exposures', this.getUserContactTraceExposures)
+        .get('/contact-traces', this.getUserContactTraces)
         .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
+        .get('/family', this.getFamilyStats)
     )
     const organizations = Router().use(
       '/organizations',
@@ -691,28 +692,47 @@ class OrganizationController implements IControllerBase {
           betweenCreatedDate,
         })
       }
-
-      const accessLocationIds: string[] = accesses.map((item: Access) => item.locationId)
-
-      const locations: OrganizationLocation[] = await this.organizationService.getLocations(
-        organizationId,
+      const enteringAccesses = accesses.filter((access) => access.enteredAt)
+      const exitingAccesses = accesses.filter((access) => access.exitAt)
+      enteringAccesses.sort((a, b) => {
+        if (a.enteredAt < b.enteredAt) {
+          return -1
+        } else if (b.enteredAt < a.enteredAt) {
+          return 1
+        }
+        return 0
+      })
+      exitingAccesses.sort((a, b) => {
+        if (a.exitAt < b.exitAt) {
+          return -1
+        } else if (b.exitAt < a.exitAt) {
+          return 1
+        }
+        return 0
+      })
+      const accessedLocationIds = new Set(
+        [...enteringAccesses, ...exitingAccesses].map((item: Access) => item.locationId),
       )
+      const accessedLocations: OrganizationLocation[] = (
+        await this.organizationService.getAllLocations(organizationId)
+      ).filter((location) => accessedLocationIds.has(location.id))
 
-      const accessedLocations: OrganizationLocation[] = locations.filter(
-        (location: OrganizationLocation) => accessLocationIds.indexOf(location.id) > -1,
-      )
-
-      res.json(actionSucceed(accessedLocations))
+      const locationsWithAccesses = accessedLocations.map((location) => {
+        const entry = enteringAccesses.find((access) => access.locationId === location.id)
+        const exit = exitingAccesses.find((access) => access.locationId === location.id)
+        return {
+          location,
+          entry,
+          exit: entry && exit && new Date(entry.enteredAt) < new Date(entry.exitAt) ? exit : null,
+        }
+      })
+      res.json(actionSucceed(locationsWithAccesses))
     } catch (error) {
       next(error)
     }
   }
 
-  getUserContactTraceExposures = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  getUserContactTraces = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
       const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
@@ -726,15 +746,66 @@ class OrganizationController implements IControllerBase {
         }
       }
 
-      // fetch attestation array in the time period
+      // fetch exposures in the time period
       const rawExposures = await this.attestationService.getExposuresInPeriod(
         isParentUser ? userId : parentUserId,
         from,
         to,
       )
+
+      // ids of all the users we need more information about
+      // dependant info is already included in the trace
+      const allUserIds = new Set<string>()
+      const allDependantIds = new Set<string>()
+      rawExposures.forEach(({exposures}) =>
+        exposures.forEach((exposure) => {
+          exposure.overlapping.forEach((overlap) => {
+            allUserIds.add(overlap.userId)
+            if (overlap.dependant) {
+              allDependantIds.add(overlap.dependant.id)
+            }
+          })
+        }),
+      )
+
+      // N queries
+      const statuses = await Promise.all(
+        [...allDependantIds, ...allUserIds].map(
+          async (id): Promise<{id: string; status: PassportStatus}> => ({
+            id,
+            status: await this.attestationService.latestStatus(id),
+          }),
+        ),
+      )
+
+      const statusLookup: Record<string, PassportStatus> = statuses.reduce(
+        (lookup, curr) => ({...lookup, [curr.id]: curr.status}),
+        {},
+      )
+
+      const allUsers = await this.userService.findAllBy({userIds: [...allUserIds]})
+      const usersById: Record<string, User> = allUsers.reduce(
+        (lookup, user) => ({...lookup, [user.id]: user}),
+        {},
+      )
+      // every group this organization contains
+      const allGroups = await this.organizationService.getGroups(organizationId)
+      const groupsById: Record<string, OrganizationGroup> = allGroups.reduce(
+        (lookup, group) => ({...lookup, [group.id]: group}),
+        {},
+      )
+
+      // group memberships for all the users we're interested in
+      const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
+        ...allUserIds,
+      ])
+      const groupsByUserId: Record<string, OrganizationGroup> = userGroups.reduce(
+        (lookup, groupLink) => ({...lookup, [groupLink.userId]: groupsById[groupLink.groupId]}),
+        {},
+      )
+
       // WARNING: adding properties to models may not cause them to appear here
-      const result = rawExposures.map(({userId, date, duration, exposures}) => ({
-        userId,
+      const result = rawExposures.map(({date, duration, exposures}) => ({
         date,
         duration,
         exposures: exposures.map(({overlapping, date, organizationId, locationId}) => ({
@@ -743,6 +814,11 @@ class OrganizationController implements IControllerBase {
           locationId,
           overlapping: overlapping.map(({userId, dependant, start, end}) => ({
             userId,
+            status: statusLookup[userId] ?? PassportStatuses.Pending,
+            group: groupsByUserId[userId],
+            firstName: usersById[userId].firstName,
+            lastName: usersById[userId].lastName,
+            base64Photo: usersById[userId].base64Photo,
             // @ts-ignore this is a firestore timestamp, not a string
             start: start?.toDate() ?? null,
             // @ts-ignore this is a firestore timestamp, not a string
@@ -752,7 +828,8 @@ class OrganizationController implements IControllerBase {
                   id: dependant.id,
                   firstName: dependant.firstName,
                   lastName: dependant.lastName,
-                  groupId: dependant.groupId,
+                  group: groupsById[dependant.groupId],
+                  status: statusLookup[dependant.id] ?? PassportStatuses.Pending,
                 }
               : null,
           })),
@@ -781,6 +858,64 @@ class OrganizationController implements IControllerBase {
         // @ts-ignore attestationTime is a server timestamp, not a string
         attestationTime: attestationTime.toDate(),
       }))
+      res.json(actionSucceed(response))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getFamilyStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {userId, parentUserId} = req.query as FamilyStatusReportRequest
+
+      let isParentUser = true
+
+      if (parentUserId) {
+        const user = await this.userService.findOne(parentUserId)
+        if (user && user.organizationIds.indexOf(organizationId) > -1) {
+          isParentUser = false
+        }
+      }
+
+      const parent = await this.userService.findOne(isParentUser ? userId : parentUserId)
+      const parentGroup = await this.organizationService.getUserGroup(
+        organizationId,
+        isParentUser ? userId : parentUserId,
+      )
+
+      const parentStatus = await this.attestationService.latestStatus(
+        isParentUser ? userId : parentUserId,
+      )
+
+      const dependents = await this.userService.getAllDependants(
+        isParentUser ? userId : parentUserId,
+      )
+
+      const dependentsWithGroup = await Promise.all(
+        dependents.map(async (dependent: UserDependant) => {
+          const group = await this.organizationService.getGroup(organizationId, dependent.groupId)
+          const dependentStatus = await this.attestationService.latestStatus(dependent.id)
+
+          return {
+            ...dependent,
+            groupName: group.name,
+            status: dependentStatus,
+          }
+        }),
+      )
+
+      const response = {
+        parent: {
+          firstName: parent.firstName,
+          lastName: parent.lastName,
+          groupName: parentGroup.name,
+          base64Photo: parent.base64Photo,
+          status: parentStatus,
+        },
+        dependents: dependentsWithGroup,
+      }
+
       res.json(actionSucceed(response))
     } catch (error) {
       next(error)
