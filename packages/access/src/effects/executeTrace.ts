@@ -104,7 +104,7 @@ export default class TraceListener {
     await this.traceFor(
       userId,
       // not sure if this comes over the wire in string or boolean form
-      !!JSON.parse(attributes.includesGuardian ?? false),
+      !!JSON.parse(attributes.includesGuardian ?? 'false'),
       JSON.parse(attributes.dependantIds),
       startTime,
       endTime,
