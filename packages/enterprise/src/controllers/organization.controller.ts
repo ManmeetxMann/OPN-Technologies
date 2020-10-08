@@ -902,6 +902,12 @@ class OrganizationController implements IControllerBase {
         (lookup, group) => ({...lookup, [group.id]: group}),
         {},
       )
+      // every location this organization contains
+      const allLocations = await this.organizationService.getAllLocations(organizationId)
+      const locationsById: Record<string, OrganizationLocation> = allLocations.reduce(
+        (lookup, location) => ({...lookup, [location.id]: location}),
+        {},
+      )
       // group memberships for all the users and dependants we're interested in
       const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
         ...allUserIds,
@@ -932,7 +938,7 @@ class OrganizationController implements IControllerBase {
           .map(({overlapping, date, organizationId, locationId}) => ({
             date,
             organizationId,
-            locationId,
+            location: locationsById[locationId],
             overlapping: overlapping
               .filter(
                 (overlap) => (parentUserId ? overlap.dependant?.id : overlap.userId) === userId,
