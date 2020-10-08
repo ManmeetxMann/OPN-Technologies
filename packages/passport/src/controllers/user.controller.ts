@@ -24,28 +24,6 @@ const TRACE_LENGTH = 48 * 60 * 60 * 1000
 const DEFAULT_IMAGE =
   'https://firebasestorage.googleapis.com/v0/b/opn-platform-ca-prod.appspot.com/o/OPN-Icon.png?alt=media&token=17b833df-767d-4467-9a77-44c50aad5a33'
 
-// iOS can send a format like 2020-10-279T00:00:00.000-0400
-// the date is the number of days into the year instead of the month
-const correctDateString = (rawDate: string): string => {
-  try {
-    const standardParse = new Date(rawDate)
-    if (!isNaN(standardParse.getTime())) {
-      return rawDate
-    }
-    console.warn(`received bad date ${rawDate}`)
-    // we expect a format like 2020-10-279T00:00:00.000-0400
-    const dayOfYear = parseInt(rawDate.substring(8).split('T')[0], 10)
-    const year = parseInt(rawDate.substring(0, 4), 10)
-    const realDate = new Date(year, 0, dayOfYear)
-    const realDayOfMonth = realDate.getDate()
-    const rebuilt = rawDate.replace(`${dayOfYear}T`, `0${realDayOfMonth}T`.slice(-3))
-    return rebuilt
-  } catch (err) {
-    console.warn(err)
-  }
-  return rawDate
-}
-
 class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
@@ -74,17 +52,6 @@ class UserController implements IControllerBase {
     } catch (error) {
       if (error.code !== 6) throw error
     }
-  }
-
-  private reformatAnswers(answers: AttestationAnswers): void {
-    const allAnswers = Object.values(answers)
-    allAnswers.forEach((answer) =>
-      Object.keys(answer).forEach((key) => {
-        if (typeof answer[key] === 'string') {
-          answer[key] = correctDateString(answer[key])
-        }
-      }),
-    )
   }
 
   // TODO: actually test this against questionnaire "answer keys"
@@ -219,8 +186,6 @@ class UserController implements IControllerBase {
         throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
       }
       const answers: AttestationAnswers = req.body.answers
-      // WARNING: modifies data
-      this.reformatAnswers(answers)
       const passportStatus = await this.evaluateAnswers(answers)
       const appliesTo = [...dependantIds]
       if (includeGuardian) {
