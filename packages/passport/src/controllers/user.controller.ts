@@ -2,6 +2,7 @@ import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import {PubSub, Topic} from '@google-cloud/pubsub'
 import {isValidISODateString} from 'iso-datestring-validator'
+import moment from 'moment'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {PassportService} from '../services/passport-service'
@@ -23,6 +24,7 @@ import {sendMessage} from '../../../common/src/service/messaging/push-notify-ser
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 import {EvaluationCriteria} from '../../../lookup/src/models/questionnaire'
 
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 const TRACE_LENGTH = 48 * 60 * 60 * 1000
 const DEFAULT_IMAGE =
   'https://firebasestorage.googleapis.com/v0/b/opn-platform-ca-prod.appspot.com/o/OPN-Icon.png?alt=media&token=17b833df-767d-4467-9a77-44c50aad5a33'
@@ -232,7 +234,10 @@ class UserController implements IControllerBase {
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
         const dateOfTest = this.findTestDate(answers)
         if (userId) {
-          const nowMillis = now().valueOf()
+          const endTime = now().valueOf()
+          const startTime =
+            (dateOfTest ? moment(endTime).tz(timeZone).startOf('day').valueOf() : endTime) -
+            TRACE_LENGTH
           this.topic.publish(
             Buffer.from(
               JSON.stringify({
@@ -240,8 +245,8 @@ class UserController implements IControllerBase {
                 dependantIds: dependantIds,
                 includesGuardian: includeGuardian,
                 passportStatus,
-                startTime: (dateOfTest ? dateOfTest.getTime() : nowMillis) - TRACE_LENGTH,
-                endTime: nowMillis,
+                startTime,
+                endTime,
                 organizationId,
                 locationId,
                 questionnaireId,
