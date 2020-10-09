@@ -30,6 +30,9 @@ import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
+import {Config} from '../../../common/src/utils/config'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -108,6 +111,7 @@ class OrganizationController implements IControllerBase {
         .get('/health', this.getStatsHealth)
         .get('/contact-trace-locations', this.getUserContactTraceLocations)
         .get('/contact-traces', this.getUserContactTraces)
+        .get('/contact-trace-exposures', this.getUserContactTraceExposures)
         .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
         .get('/family', this.getFamilyStats)
     )
@@ -760,7 +764,7 @@ class OrganizationController implements IControllerBase {
       }
 
       // fetch exposures in the time period
-      const rawExposures = await this.attestationService.getExposuresInPeriod(
+      const rawExposures = await this.attestationService.getTracesInPeriod(
         isParentUser ? userId : parentUserId,
         from,
         to,
@@ -847,6 +851,128 @@ class OrganizationController implements IControllerBase {
               : null,
           })),
         })),
+      }))
+      res.json(actionSucceed(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getUserContactTraceExposures = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+
+      const fromDateString = from ? moment(new Date(from)).tz(timeZone).format('YYYY-MM-DD') : null
+      const toDateString = to ? moment(new Date(to)).tz(timeZone).format('YYYY-MM-DD') : null
+      // fetch exposures in the time period
+      const rawExposures = await this.attestationService.getExposuresInPeriod(
+        userId,
+        fromDateString,
+        toDateString,
+      )
+
+      // ids of all the users we need more information about
+      // dependant info is already included in the trace
+      const allUserIds = new Set<string>()
+      const allDependantIds = new Set<string>()
+      rawExposures.forEach((exposure) => {
+        ;(exposure.dependantIds ?? []).forEach((id) => allDependantIds.add(id))
+        allUserIds.add(exposure.userId)
+      })
+      // N queries
+      const statuses = await Promise.all(
+        [...allDependantIds, ...allUserIds].map(
+          async (id): Promise<{id: string; status: PassportStatus}> => ({
+            id,
+            status: await this.attestationService.latestStatus(id),
+          }),
+        ),
+      )
+
+      const statusLookup: Record<string, PassportStatus> = statuses.reduce(
+        (lookup, curr) => ({...lookup, [curr.id]: curr.status}),
+        {},
+      )
+
+      const allUsers = await this.userService.findAllBy({userIds: [...allUserIds]})
+      const usersById: Record<string, User> = allUsers.reduce(
+        (lookup, user) => ({...lookup, [user.id]: user}),
+        {},
+      )
+
+      const allDependants = await Promise.all(
+        [...allUserIds].map((id) => this.userService.getAllDependants(id)),
+      )
+
+      // every group this organization contains
+      const allGroups = await this.organizationService.getGroups(organizationId)
+      const groupsById: Record<string, OrganizationGroup> = allGroups.reduce(
+        (lookup, group) => ({...lookup, [group.id]: group}),
+        {},
+      )
+      // every location this organization contains
+      const allLocations = await this.organizationService.getAllLocations(organizationId)
+      const locationsById: Record<string, OrganizationLocation> = allLocations.reduce(
+        (lookup, location) => ({...lookup, [location.id]: location}),
+        {},
+      )
+      // group memberships for all the users and dependants we're interested in
+      const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
+        ...allUserIds,
+        ...allDependantIds,
+      ])
+      const groupsByUserOrDependantId: Record<string, OrganizationGroup> = userGroups.reduce(
+        (lookup, groupLink) => ({...lookup, [groupLink.userId]: groupsById[groupLink.groupId]}),
+        {},
+      )
+      const allDependantsById = (_.flatten(allDependants) as UserDependant[])
+        .map((dependant) => ({
+          ...dependant,
+          group: groupsByUserOrDependantId[dependant.id],
+          status: statusLookup[dependant.id],
+        }))
+        .reduce(
+          (lookup, dependant) => ({
+            ...lookup,
+            [dependant.id]: dependant,
+          }),
+          {},
+        )
+      // WARNING: adding properties to models may not cause them to appear here
+      const result = rawExposures.map(({date, duration, exposures}) => ({
+        date,
+        duration,
+        exposures: exposures
+          .map(({overlapping, date, organizationId, locationId}) => ({
+            date,
+            organizationId,
+            location: locationsById[locationId],
+            overlapping: overlapping
+              .filter(
+                (overlap) => (parentUserId ? overlap.dependant?.id : overlap.userId) === userId,
+              )
+              .map((overlap) => ({
+                userId: overlap.sourceUserId,
+                status: statusLookup[overlap.sourceUserId] ?? PassportStatuses.Pending,
+                group: groupsByUserOrDependantId[overlap.sourceUserId],
+                firstName: usersById[overlap.sourceUserId].firstName,
+                lastName: usersById[overlap.sourceUserId].lastName,
+                base64Photo: usersById[overlap.sourceUserId].base64Photo,
+                // @ts-ignore this is a firestore timestamp, not a string
+                start: overlap.start?.toDate() ?? null,
+                // @ts-ignore this is a firestore timestamp, not a string
+                end: overlap.end?.toDate() ?? null,
+                dependant: overlap.sourceDependantId
+                  ? allDependantsById[overlap.sourceDependantId]
+                  : null,
+              })),
+          }))
+          .filter(({overlapping}) => overlapping.length),
       }))
       res.json(actionSucceed(result))
     } catch (error) {

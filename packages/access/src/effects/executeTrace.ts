@@ -123,6 +123,7 @@ export default class TraceListener {
     }, {})
     // promises resolving with the org ID for the given location
     const locationPromises: Record<string, ReturnType<OrganizationModel['getLocation']>> = {}
+    const impactedUsersAndDependants = new Set<string>()
 
     const result = await Promise.all(
       accesses.map(async (dailyReport) => {
@@ -140,23 +141,32 @@ export default class TraceListener {
             otherUsersAccesses.push(access)
           }
         })
+
         const includedOverlapJSONs = new Set<string>()
+
         const startOfDay = moment(dailyReport.date).tz(timeZone).toDate().valueOf()
         const endOfDay = moment(dailyReport.date).tz(timeZone).add(1, 'day').toDate().valueOf()
         // TODO: this could be made more efficient with some sorting
         const overlapping = otherUsersAccesses
           .map((access) =>
             mainUserAccesses
-              .map((contaminated) => overlap(contaminated, access, startOfDay, endOfDay))
+              .map((contaminated) => {
+                const intersection = overlap(contaminated, access, startOfDay, endOfDay)
+                if (!intersection) {
+                  return null
+                }
+                return {
+                  ...intersection,
+                  sourceUserId: contaminated.userId,
+                  sourceDependantId: contaminated.dependantId ?? null,
+                  userId: access.userId,
+                  dependant: access.dependant,
+                }
+              })
               .filter(
                 (range) =>
                   range && range.end.valueOf() > startTime && range.start.valueOf() < endTime,
               )
-              .map((range) => ({
-                userId: access.userId,
-                dependant: access.dependant,
-                ...range,
-              }))
               .filter((overlapRecord) => {
                 const json = JSON.stringify(overlapRecord)
                 if (includedOverlapJSONs.has(json)) {
@@ -167,6 +177,14 @@ export default class TraceListener {
               }),
           )
           .reduce((flattened, page) => [...flattened, ...page], [])
+
+        overlapping.forEach((overlap) => {
+          if (overlap.dependant) {
+            impactedUsersAndDependants.add(overlap.dependant.id)
+          } else {
+            impactedUsersAndDependants.add(overlap.userId)
+          }
+        })
 
         if (!locationPromises[dailyReport.locationId]) {
           // just push the promise so we only query once per location
@@ -187,9 +205,11 @@ export default class TraceListener {
     this.repo.saveTrace(
       result,
       userId,
+      dependantIds,
       passportStatus as StopStatus,
       moment(endTime).format('YYYY-MM-DD'),
       endTime - startTime,
+      [...impactedUsersAndDependants],
     )
     const locations = {}
     await Promise.all(
