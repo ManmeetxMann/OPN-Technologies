@@ -175,6 +175,7 @@ paths:
                 - userId
                 - messageTitle
                 - messageBody
+              additionalProperties: false
 
       responses:
         '200':
