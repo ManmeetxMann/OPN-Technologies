@@ -47,7 +47,7 @@ export class AttestationService {
     return 'pending'
   }
 
-  async getExposuresInPeriod(userId: string, from: string, to: string): Promise<ExposureResult[]> {
+  async getTracesInPeriod(userId: string, from: string, to: string): Promise<ExposureResult[]> {
     const query = this.traceRepository.collection().where('userId', '==', userId)
 
     if (from) {
@@ -75,6 +75,38 @@ export class AttestationService {
       } as ExposureResult
     })
     return exposures
+  }
+
+  async getExposuresInPeriod(
+    userOrDependantId: string,
+    from: string,
+    to: string,
+  ): Promise<TraceModel[]> {
+    const conditions = [
+      {
+        map: '/',
+        key: 'exposedIds',
+        operator: DataModelFieldMapOperatorType.ArrayContains,
+        value: userOrDependantId,
+      },
+    ]
+    if (from) {
+      conditions.push({
+        map: '/',
+        key: 'date',
+        operator: DataModelFieldMapOperatorType.GreatOrEqual,
+        value: from,
+      })
+    }
+    if (to) {
+      conditions.push({
+        map: '/',
+        key: 'date',
+        operator: DataModelFieldMapOperatorType.LessOrEqual,
+        value: to,
+      })
+    }
+    return this.traceRepository.findWhereEqualInMap(conditions)
   }
 
   async getAttestationsInPeriod(userId: string, from: string, to: string): Promise<Attestation[]> {
