@@ -771,7 +771,6 @@ class OrganizationController implements IControllerBase {
       )
 
       // ids of all the users we need more information about
-      // dependant info is already included in the trace
       const allUserIds = new Set<string>()
       const allDependantIds = new Set<string>()
       rawExposures.forEach(({exposures}) =>
@@ -811,8 +810,15 @@ class OrganizationController implements IControllerBase {
         (lookup, group) => ({...lookup, [group.id]: group}),
         {},
       )
+      // every location this organization contains
+      const allLocations = await this.organizationService.getAllLocations(organizationId)
+      const locationsById: Record<string, OrganizationLocation> = allLocations.reduce(
+        (lookup, location) => ({...lookup, [location.id]: location}),
+        {},
+      )
 
       // group memberships for all the users we're interested in
+      // dependant membership is already included in the trace
       const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
         ...allUserIds,
       ])
@@ -828,7 +834,7 @@ class OrganizationController implements IControllerBase {
         exposures: exposures.map(({overlapping, date, organizationId, locationId}) => ({
           date,
           organizationId,
-          locationId,
+          location: locationsById[locationId],
           overlapping: overlapping.map(({userId, dependant, start, end}) => ({
             userId,
             status: statusLookup[userId] ?? PassportStatuses.Pending,
