@@ -4,7 +4,7 @@ import {CreateUserRequest} from '../../types/create-user-request'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
 import {AuthenticationRequest} from '../../types/authentication-request'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
-import {User} from '../../models/user'
+import {ConnectionStatuses, User} from '../../models/user'
 import {UpdateUserRequest} from '../../types/update-user-request'
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
 import {RegistrationConfirmationRequest} from '../../types/registration-confirmation-request'
@@ -192,11 +192,12 @@ export const disconnectGroup: Handler = async (req, res, next): Promise<void> =>
 
 /**
  * Get Direct parents for a given user-id
+ * Only the approved parent-child relations will be returned
  */
 export const getParents: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {id} = res.locals.connectedUser as User
-    const parents = await userService.getParents(id)
+    const {id} = res.locals.authenticatedUser as User
+    const parents = await userService.getParents(id, [ConnectionStatuses.Approved])
     res.json(actionSucceed(parents))
   } catch (error) {
     next(error)
@@ -205,29 +206,48 @@ export const getParents: Handler = async (req, res, next): Promise<void> => {
 
 /**
  * Get Direct dependents for a given user-id
+ * Only the approved parent-child relations will be returned
  */
 export const getDependents: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {id} = res.locals.connectedUser as User
-    const dependents = await userService.getDirectDependents(id)
+    const {id} = res.locals.authenticatedUser as User
+    const dependents = await userService.getDirectDependents(id, [ConnectionStatuses.Approved])
     res.json(actionSucceed(dependents))
   } catch (error) {
     next(error)
   }
 }
 
+/**
+ * Add dependents to the authenticated user
+ */
 export const addDependents: Handler = async (req, res, next): Promise<void> => {
   try {
-    // TODO
-    res.json(actionSucceed())
+    const {id} = res.locals.authenticatedUser as User
+    const users = req.body as User[]
+    const dependents = await userService.addDependents(users, id)
+    res.json(actionSucceed(dependents))
   } catch (error) {
     next(error)
   }
 }
 
+/**
+ * Remove a user as a dependent of the authenticated user
+ * Delete the dependent's data if query param `hard` is true
+ */
 export const removeDependent: Handler = async (req, res, next): Promise<void> => {
   try {
-    // TODO
+    const {id} = res.locals.authenticatedUser as User
+    const {dependentId} = req.params
+    const hard = req.query.hard ?? false
+    await userService.removeDependent(dependentId, id)
+
+    if (hard) {
+      await userService.disconnectAllGroups(dependentId)
+      await userService.removeUser(dependentId)
+    }
+
     res.json(actionSucceed())
   } catch (error) {
     next(error)

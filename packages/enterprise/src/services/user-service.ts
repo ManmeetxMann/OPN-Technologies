@@ -1,5 +1,13 @@
 import DataStore from '../../../common/src/data/datastore'
-import {User, UserGroup, UserOrganization} from '../models/user'
+import {
+  ConnectionStatus,
+  ConnectionStatuses,
+  User,
+  UserDependency,
+  UserGroup,
+  UserMatcher,
+  UserOrganization,
+} from '../models/user'
 import {CreateUserRequest} from '../types/create-user-request'
 import {UpdateUserRequest} from '../types/update-user-request'
 import {UserRepository} from '../repository/user.repository'
@@ -22,7 +30,11 @@ export class UserService {
   create(source: CreateUserRequest): Promise<User> {
     return this.getByEmail(source.email).then((existedUser) => {
       if (!!existedUser) throw new ResourceAlreadyExistsException(source.email)
-      return this.userRepository.add({...source, active: false} as User)
+      return this.userRepository.add({
+        ...source,
+        identifier: source.email,
+        active: false,
+      } as User)
     })
   }
 
@@ -64,16 +76,75 @@ export class UserService {
       .then((results) => results.map(({organizationId}) => organizationId))
   }
 
-  getDirectDependents(userId: string): Promise<User[]> {
+  addDependents(dependents: User[], parentUserId: string): Promise<User[]> {
+    return Promise.all(
+      dependents.map(({firstName, lastName, identifier, email, ...dependent}) =>
+        this.findUsersBy({firstName, lastName, identifier, email}).then((results) =>
+          results.length > 0
+            ? this.userDependencyRepository
+                .add({
+                  parentUserId,
+                  userId: results[0].id,
+                  status: ConnectionStatuses.Pending,
+                } as UserDependency)
+                .then(() => results[0])
+            : this.userRepository
+                .add({...dependent, firstName, lastName, identifier} as User)
+                .then((user) =>
+                  this.userDependencyRepository
+                    .add({
+                      parentUserId,
+                      userId: user.id,
+                      status: ConnectionStatuses.Approved,
+                    } as UserDependency)
+                    .then(() => user),
+                ),
+        ),
+      ),
+    )
+  }
+
+  removeUser(userId: string): Promise<void> {
+    return this.userRepository.delete(userId)
+  }
+
+  removeDependent(dependentId: string, parentUserId: string): Promise<void> {
     return this.userDependencyRepository
-      .findWhereEqual('parentUserId', userId)
+      .collection()
+      .where('userId', '==', dependentId)
+      .where('parentUserId', '==', parentUserId)
+      .fetch()
+      .then((results) => {
+        if (results.length === 0)
+          throw new ResourceNotFoundException(
+            `User [${dependentId}] is not a dependent of user [${parentUserId}]`,
+          )
+        return this.userDependencyRepository.delete(results[0].id)
+      })
+  }
+
+  getDirectDependents(userId: string, statuses?: ConnectionStatus[]): Promise<User[]> {
+    let query = this.userDependencyRepository.collection().where('parentUserId', '==', userId)
+
+    if (statuses?.length) {
+      query = query.where('status', 'in', statuses)
+    }
+
+    return query
+      .fetch()
       .then((results) => results.map(({userId}) => userId))
       .then((userIds) => this.getAllByIds(userIds))
   }
 
-  getParents(userId: string): Promise<User[]> {
-    return this.userDependencyRepository
-      .findWhereEqual('userId', userId)
+  getParents(userId: string, statuses?: ConnectionStatus[]): Promise<User[]> {
+    let query = this.userDependencyRepository.collection().where('userId', '==', userId)
+
+    if (statuses?.length) {
+      query = query.where('status', 'in', statuses)
+    }
+
+    return query
+      .fetch()
       .then((results) => results.map(({parentUserId}) => parentUserId))
       .then((userIds) => this.getAllByIds(userIds))
   }
@@ -126,6 +197,17 @@ export class UserService {
     ).then()
   }
 
+  disconnectAllGroups(userId: string): Promise<void> {
+    return this.findUserGroupsBy(userId).then((targets) =>
+      this.userGroupRepository
+        .collection()
+        .bulkDelete(targets.map(({id}) => id))
+        .then(() => {
+          console.log(`Deleted all user-group relation for user ${userId}`)
+        }),
+    )
+  }
+
   private findOneUserOrganizationBy(
     userId: string,
     organizationId: string,
@@ -138,11 +220,28 @@ export class UserService {
       .then((results) => results[0])
   }
 
-  private findUserGroupsBy(userId: string, groupIds: string[]): Promise<UserGroup[]> {
-    return this.userGroupRepository
+  private findUserGroupsBy(userId: string, groupIds?: string[]): Promise<UserGroup[]> {
+    let query = this.userGroupRepository.collection().where('userId', '==', userId)
+    if (groupIds?.length) {
+      query = query.where('groupId', 'in', groupIds)
+    }
+    return query.fetch()
+  }
+
+  private findUsersBy({firstName, lastName, identifier, email}: UserMatcher): Promise<User[]> {
+    let query = this.userRepository
       .collection()
-      .where('userId', '==', userId)
-      .where('groupId', 'in', groupIds)
-      .fetch()
+      .where('firstName', '==', firstName)
+      .where('lastName', '==', lastName)
+
+    if (identifier) {
+      query = query.where('identifier', '==', identifier)
+    }
+
+    if (email) {
+      query = query.where('email', '==', email)
+    }
+
+    return query.fetch()
   }
 }
