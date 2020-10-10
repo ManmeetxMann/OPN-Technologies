@@ -1,0 +1,103 @@
+openapi: 3.0.1
+info:
+  title: Reservation API
+  version: 1.0.0
+components:
+  schemas:
+    Appointment:
+      type: object
+      additionalProperties: false
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+      required:
+        - firstName
+        - lastName
+        - email
+
+    AppointmentSearchResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Appointment'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    Response:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          nullable: true
+          type: object
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+paths:
+
+  /admin/appointments/search:
+    post: #Post is used to avoid sending PI info to access logs
+      description: Appointments Search 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                phoneNumber:
+                  type: integer
+                dateOfAppointment:
+                  type: string
+                  format: date
+              required:
+                - phoneNumber
+                - dateOfAppointment
+              example: {phoneNumber: 4161111111, dateOfAppointment: "2020-06-10"}
+
+      responses:
+        '200':
+          description: Successfully Return Search Results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentSearchResponse200'
