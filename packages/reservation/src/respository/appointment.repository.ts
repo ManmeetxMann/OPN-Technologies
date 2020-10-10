@@ -6,7 +6,7 @@ export class AppoinmentsRepository extends AcuityScheduling {
     super()
   }
 
-  async getFilteredAppointments(data: AppointmentFilter) {
+  async getFilteredAppointments(data: AppointmentFilter): Promise<any>  {
     return this.getAppointments(data)
   }
 }
