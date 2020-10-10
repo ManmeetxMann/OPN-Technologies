@@ -1,11 +1,11 @@
 export type Appointment = {
   firstName: string
   lastName: string
-  email: string,
+  email: string
   phone: number
 }
 
 export type AppointmentFilter = {
-  phoneNumber: number,
+  phoneNumber: number
   dateOfAppointment: string
 }

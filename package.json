@@ -24,6 +24,7 @@
 		"cd-build-lookup": "lerna run --scope @opn/lookup build --stream",
 		"cd-build-access": "lerna run --scope @opn/access build --stream",
 		"cd-build-apidocs": "lerna run --scope @opn/apidocs build --stream",
+		"cd-build-reservation": "lerna run --scope @opn/reservation build --stream",
 		"cd-deploy-registry": "lerna run --scope @opn/registry gcloud_deploy --stream",
 		"cd-deploy-passport": "lerna run --scope @opn/passport gcloud_deploy --stream",
 		"cd-deploy-enterprise": "lerna run --scope @opn/enterprise gcloud_deploy --stream",
