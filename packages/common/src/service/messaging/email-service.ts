@@ -1,5 +1,9 @@
 import {sendWithTemplate} from './send-email'
+import {MessagingService} from './messaging-service'
+import {Config} from '../../utils/config'
+import fetch from 'node-fetch'
 
+// TODO: Start-deprecate
 export interface MailInfo {
   email: string
   name?: string
@@ -22,5 +26,39 @@ export abstract class Mail {
       this.templateId,
       this.recipient.parameters,
     )
+  }
+}
+// TODO: End-Deprecate
+
+type EmailMessageParticipant = {
+  email: string
+  name: string
+}
+
+type EmailMessage = {
+  to: EmailMessageParticipant[]
+  templateId: number
+  params: Record<string, unknown>
+  sender?: EmailMessageParticipant
+}
+
+const APIKEY = Config.get('EMAIL_PROVIDER_API_KEY')
+const APIURL = Config.get('EMAIL_PROVIDER_API_URL')
+const FROM_ADDRESS = Config.get('EMAIL_FROM_ADDRESS')
+const FROM_NAME = Config.get('EMAIL_FROM_NAME')
+const defaultSender = {email: FROM_ADDRESS, name: FROM_NAME} as EmailMessageParticipant
+
+export class EmailService implements MessagingService<EmailMessage> {
+  send(message: EmailMessage): Promise<unknown> {
+    const body = {...message, sender: message.sender ?? defaultSender}
+    return fetch(APIURL, {
+      method: 'post',
+      body: JSON.stringify(body),
+      headers: {
+        accept: 'application/json',
+        'Content-Type': 'application/json',
+        'api-key': APIKEY,
+      },
+    })
   }
 }
