@@ -36,6 +36,7 @@ Runs after authentication middleware.
 
 ## User group management:
 **User-auth aware:**
+- `GET -> /api/v3/users/self/groups`: Get all the user's connected-groups
 - `POST -> /api/v3/users/self/groups`: Connects the authenticated user to a group
 - `DELETE -> /api/v3/users/self/groups/{groupId}`: Removes the authenticated user from a group
 

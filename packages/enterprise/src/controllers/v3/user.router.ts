@@ -11,6 +11,7 @@ import {
   disconnectGroup,
   disconnectOrganization,
   get,
+  getAllConnectedGroupsInAnOrganization,
   getConnectedOrganizations,
   getDependents,
   getParents,
@@ -49,6 +50,7 @@ class UserController implements IControllerBase {
         .post('/organizations', connectOrganization)
         .delete('/organizations/:organizationId', disconnectOrganization)
 
+        .get('/groups', getAllConnectedGroupsInAnOrganization)
         .post('/groups', connectGroup)
         .delete('/groups/:groupId', disconnectGroup)
 

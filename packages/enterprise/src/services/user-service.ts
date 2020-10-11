@@ -167,6 +167,12 @@ export class UserService {
     })
   }
 
+  getAllGroupIdsForUser(userId: string): Promise<string[]> {
+    return this.userGroupRepository
+      .findWhereEqual('userId', userId)
+      .then((results) => results?.map(({groupId}) => groupId))
+  }
+
   connectGroups(userId: string, groups: OrganizationGroup[]): Promise<UserGroup[]> {
     const groupIds = new Set(groups.map(({id}) => id))
     return Promise.all(

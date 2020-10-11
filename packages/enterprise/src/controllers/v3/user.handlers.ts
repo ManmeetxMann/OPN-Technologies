@@ -157,6 +157,28 @@ export const disconnectOrganization: Handler = async (req, res, next): Promise<v
 }
 
 /**
+ * Get all the user's connected-groups
+ */
+export const getAllConnectedGroupsInAnOrganization: Handler = async (
+  req,
+  res,
+  next,
+): Promise<void> => {
+  try {
+    const {id} = res.locals.authenticatedUser as User
+    const {organizationId} = req.query
+    const groupIds = new Set<string>(await userService.getAllGroupIdsForUser(id))
+    const groups = (await organizationService.getGroups(organizationId as string)).filter(({id}) =>
+      groupIds.has(id),
+    )
+
+    res.json(actionSucceed(groups))
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
  * Connect a user to a group
  */
 export const connectGroup: Handler = async (req, res, next): Promise<void> => {
