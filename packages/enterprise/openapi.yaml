@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: Enterprise API
-  version: 1.0.0
+  version: 1.1.0
 components:
   securitySchemes:
     bearerAuthJWT:
@@ -389,6 +389,8 @@ components:
 
     User:
       type: object
+      deprecated: true
+      description: use `UserV3` instead
       additionalProperties: false
       properties:
         id:
@@ -409,8 +411,66 @@ components:
         - lastName
         - base64Photo
 
+    UserV3:
+      type: object
+      deprecated: true
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        identifier:
+          type: string
+          description: the user identifier (eg. email, external-id like a student id or generated-key
+        active:
+          type: boolean
+          description: Wheter the user account is active (has been verified with a magic-link)
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+      required:
+        - firstName
+        - lastName
+        - identifier
+
+    CreateUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          nullable: false
+        firstName:
+          type: string
+          nullable: false
+        lastName:
+          type: string
+          nullable: false
+        id:
+          type: string
+          description: Only used to connect an existing and legacy user
+          nullable: true
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+      required:
+        - email
+        - firstName
+        - lastName
+
     UserEdit:
       type: object
+      deprecated: true
       additionalProperties: false
       properties:
         parentUserId:
@@ -424,9 +484,10 @@ components:
       required:
         - firstName
         - lastName
-    
+
     UserLink:
       type: object
+      deprecated: true
       properties:
         registrationId:
           type: string
@@ -640,32 +701,6 @@ components:
               nullable: true
               type: string
 
-    ResponseOfOrganizationGroup:
-      type: object
-      additionalProperties: false
-      properties:
-        data:
-          $ref: '#/components/schemas/OrganizationGroup'
-        status:
-          type: object
-          additionalProperties: false
-          properties:
-            code:
-              type: string
-              enum:
-                [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
-                ]
-            message:
-              nullable: true
-              type: string
-
     ResponseOfOrganizationStats:
       type: object
       additionalProperties: false
@@ -755,6 +790,62 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminProfile'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfUser:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserV3'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfUsers:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserV3'
         status:
           type: object
           additionalProperties: false
@@ -1096,7 +1187,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationStats'
-  
+
   /organizations/{organizationId}/stats/user-report:
     get:
       description: Get pdf for one user (admin access required)
@@ -1133,7 +1224,7 @@ paths:
               schema:
                 type: string
                 format: binary
-  
+
   /organizations/{organizationId}/stats/group-report:
     get:
       description: Get user reports for an entire group (admin access required). This may take a long time
@@ -1159,7 +1250,7 @@ paths:
               schema:
                 type: string
                 format: binary
-            application/json:
+application/json:
               schema:
                 type: object
                 properties:
@@ -1167,7 +1258,7 @@ paths:
                     type: string
                   message:
                     type: string
-  
+
   /organizations/{organizationId}/stats/contact-trace-locations:
     get:
       description: Get contact traces locations (admin access required)
@@ -1327,12 +1418,12 @@ paths:
           name: groupId
           schema:
             type: string
-        - in: query
+- in: query
           name: organizationId
           deprecated: true
           schema:
             type: string
-              
+
       responses:
         '200':
           description: Successfully compute the stats
@@ -1402,7 +1493,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-  
+
   /organizations/{organizationId}/groups/zombie-users:
     delete:
       description: Remove dead users
@@ -1504,6 +1595,8 @@ paths:
 
   /user/connect/add:
     post:
+      deprecated: true
+      summary: Use `POST -> /api/v3/users/self/organizations` instead
       description: Connect a user to an organization
       requestBody:
         content:
@@ -1520,6 +1613,8 @@ paths:
 
   /user/connect/v2/add:
     post:
+      deprecated: true
+      summary: Use `POST -> /api/v3/users/self/organizations` instead
       description: Connect a user to an organization
       requestBody:
         content:
@@ -1536,6 +1631,8 @@ paths:
 
   /user/connect/{organizationId}/users/{userId}:
     get:
+      deprecated: true
+      summary: Use `GET -> /api/v3/users/self` instead
       description: Get info for a user
       parameters:
         - in: path
@@ -1564,6 +1661,7 @@ paths:
 
   /user/connect/link/{userId}:
     put:
+      deprecated: true
       description: Link info for a user
       parameters:
         - in: path
@@ -1588,6 +1686,8 @@ paths:
 
   /user/connect/edit/{userId}:
     put:
+      deprecated: true
+      summary: Use `PUT -> /api/v3/users/self` instead
       description: Update info for a user
       parameters:
         - in: path
@@ -1614,6 +1714,8 @@ paths:
 
   /user/connect/locations:
     post:
+      deprecated: true
+      summary: Use `GET -> /api/v3/users/self/organizations` instead
       description: Find all the user's connected-organizations
       requestBody:
         content:
@@ -1718,6 +1820,319 @@ paths:
       responses:
         '200':
           description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v3/users:
+    post:
+      summary: Account Registration
+      description: Creates a user profile with `CreateUserRequest` payload and returns a `User`
+      tags:
+        - Account management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '200':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUser'
+
+  /api/v3/user/auth:
+    post:
+      summary: Account authentication
+      description: Sends a magic-link to authenticate the user with a `AuthenticationRequest` payload
+      tags:
+        - Account management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                email:
+                  type: string
+                  nullable: false
+              required:
+                - email
+      responses:
+        '200':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v3/user/auth/registration-confirmation:
+    post:
+      summary: Account registration confirmation
+      description: Completes user registration with magic-link information
+      tags:
+        - Account management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                userId:
+                  type: string
+                  nullable: false
+                idToken:
+                  type: string
+                  nullable: false
+              required:
+                - userId
+                - idToken
+      responses:
+        '200':
+          description: Successfull completed registration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUser'
+
+  /api/v3/users/self:
+    get:
+      summary: User details
+      description: Gets authenticated user details
+      tags:
+        - Account management
+      responses:
+        '200':
+          description: Successfull retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUser'
+
+    put:
+      summary: Account update
+      description: Updates authenticated user (only first name, last name and photo)
+      tags:
+        - Account management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                firstName:
+                  type: string
+                  nullable: true
+                lastName:
+                  type: string
+                  nullable: true
+                photo:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Successfull updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUser'
+
+  /api/v3/users/self/organizations:
+    get:
+      summary: Connected organizations
+      description: Get all the authenticated-user's organizations
+      tags:
+        - Account management
+      responses:
+        '200':
+          description: Successfull retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfOrganizations'
+
+    post:
+      summary: Organization connection
+      description: Connect an organization to the authenticated user, if relation doesn't yet exist
+      tags:
+        - Account management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                organizationId:
+                  type: string
+                  nullable: false
+              required:
+                - organizationId
+      responses:
+        '200':
+          description: Successfull updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v3/users/self/organizations/{organizationId}:
+    delete:
+      summary: Unlink organization
+      description: Removes the authenticated user from an organization and all the groups within that organization
+      tags:
+        - Account management
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfull unlinked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+
+  /api/v3/users/self/groups:
+    get:
+      summary: Connected groups
+      description: Get all the authenticated-user's connected-groups within an organization
+      tags:
+        - Account management
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfull retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfOrganizationGroups'
+
+    post:
+      summary: Group connection
+      description: Connects the authenticated user to a group if not linked already
+      tags:
+        - Account management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                organizationId:
+                  type: string
+                  nullable: false
+                groupId:
+                  type: string
+                  nullable: false
+              required:
+                - organizationId
+                - groupId
+      responses:
+        '200':
+          description: Successfull linked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v3/users/self/groups/{groupId}:
+    delete:
+      summary: Unlink group
+      description: Removes the authenticated user from a group
+      tags:
+        - Account management
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfull unlinked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v3/users/self/dependents:
+    get:
+      summary: Account dependents
+      description: Gets the authenticated user's direct dependents
+      tags:
+        - Account management
+      responses:
+        '200':
+          description: Successfull retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsers'
+
+    post:
+      summary: Account dependent link
+      description: Links one or multiple user(s) to the authenticated user
+      tags:
+        - Account management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserV3'
+      responses:
+        '200':
+          description: Successfully linked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsers'
+
+  /api/v3/users/self/parents:
+    get:
+      summary: Account parents
+      description: Gets the authenticated user's direct-parents
+      tags:
+        - Account management
+      responses:
+        '200':
+          description: Successfull retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsers'
+
+  /api/v3/users/self/dependents/{dependentId}:
+    delete:
+      summary: Unlink dependent
+      description: |
+        Remove a user as a dependent of the authenticated user
+        Delete the dependent's data if query param `hard` is true
+      tags:
+        - Account management
+      parameters:
+        - in: path
+          name: dependentId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: hard
+          description: Delete dependent's data if true
+          schema:
+            type: boolean
+          required: false
+      responses:
+        '200':
+          description: Successfull unlinked/removed
           content:
             application/json:
               schema:
