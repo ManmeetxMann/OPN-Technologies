@@ -1868,7 +1868,7 @@ application/json:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /api/v3/user/auth/registration-confirmation:
+  /api/v3/users/auth/registration-confirmation:
     post:
       summary: Account registration confirmation
       description: Completes user registration with magic-link information
