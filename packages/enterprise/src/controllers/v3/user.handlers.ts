@@ -12,7 +12,7 @@ import {OrganizationService} from '../../services/organization-service'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {UserService} from '../../services/user-service'
 import {ConnectOrganizationRequest} from '../../types/user-organization-request'
-import {ConnectGroupRequest, DisconnectGroupRequest} from '../../types/user-group-request'
+import {ConnectGroupRequest} from '../../types/user-group-request'
 
 const authService = new AuthService()
 const userService = new UserService()
@@ -141,7 +141,8 @@ export const disconnectOrganization: Handler = async (req, res, next): Promise<v
 
     // Disconnect Organization and groups
     const groups = await organizationService.getGroups(organizationId)
-    await userService.disconnectOrganization(authenticatedUser.id, organizationId, groups)
+    const groupIds = new Set(groups.map(({id}) => id))
+    await userService.disconnectOrganization(authenticatedUser.id, organizationId, groupIds)
 
     res.json(actionSucceed())
   } catch (error) {
@@ -160,7 +161,7 @@ export const getAllConnectedGroupsInAnOrganization: Handler = async (
   try {
     const {id} = res.locals.authenticatedUser as User
     const {organizationId} = req.query
-    const groupIds = new Set<string>(await userService.getAllGroupIdsForUser(id))
+    const groupIds = await userService.getAllGroupIdsForUser(id)
     const groups = (await organizationService.getGroups(organizationId as string)).filter(({id}) =>
       groupIds.has(id),
     )
@@ -194,10 +195,8 @@ export const connectGroup: Handler = async (req, res, next): Promise<void> => {
 export const disconnectGroup: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
-    const {organizationId, groupId} = req.body as DisconnectGroupRequest
-    const group = await organizationService.getGroup(organizationId, groupId)
-
-    await userService.disconnectGroups(authenticatedUser.id, [group])
+    const {groupId} = req.params
+    await userService.disconnectGroups(authenticatedUser.id, new Set([groupId]))
 
     res.json(actionSucceed())
   } catch (error) {

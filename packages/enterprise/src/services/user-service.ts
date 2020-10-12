@@ -161,11 +161,11 @@ export class UserService {
   disconnectOrganization(
     userId: string,
     organizationId: string,
-    groups: OrganizationGroup[],
+    groupIds: Set<string>,
   ): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return this.dataStore.firestoreORM.runTransaction((_transaction) => {
-      return this.disconnectGroups(userId, groups).then(() =>
+      return this.disconnectGroups(userId, groupIds).then(() =>
         this.findOneUserOrganizationBy(userId, organizationId).then((existing) => {
           if (existing) return this.userOrganizationRepository.delete(existing.id)
 
@@ -177,28 +177,26 @@ export class UserService {
     })
   }
 
-  getAllGroupIdsForUser(userId: string): Promise<string[]> {
+  getAllGroupIdsForUser(userId: string): Promise<Set<string>> {
     return this.userGroupRepository
       .findWhereEqual('userId', userId)
-      .then((results) => results?.map(({groupId}) => groupId))
+      .then((results) => new Set(results?.map(({groupId}) => groupId)))
   }
 
   connectGroups(userId: string, groups: OrganizationGroup[]): Promise<UserGroup[]> {
-    const groupIds = new Set(groups.map(({id}) => id))
-    return Promise.all(
-      _.chunk(groupIds, 10)
-        .map((chunk) => this.findUserGroupsBy(userId, chunk))
-        .then((results) =>
-          flattern(results as UserGroup[][]).filter(({groupId}) => !groupIds.has(groupId)),
-        )
-        .then((toConnect) => this.userGroupRepository.addAll(toConnect)),
-    )
+    const groupIds = groups.map(({id}) => id)
+    return this.getAllGroupIdsForUser(userId)
+      .then((existingGroupIds) => groupIds.filter((id) => !existingGroupIds.has(id)))
+      .then((groupIdsToConnect) =>
+        this.userGroupRepository.addAll(
+          groupIdsToConnect.map((groupId) => ({userId, groupId} as UserGroup)),
+        ),
+      )
   }
 
-  disconnectGroups(userId: string, groups: OrganizationGroup[]): Promise<void> {
-    const groupIds = new Set(groups.map(({id}) => id))
+  disconnectGroups(userId: string, groupIds: Set<string>): Promise<void> {
     return Promise.all(
-      _.chunk(groupIds, 10).map((chunk) =>
+      _.chunk([...groupIds], 10).map((chunk) =>
         this.findUserGroupsBy(userId, chunk).then((targets) =>
           this.userGroupRepository
             .collection()
