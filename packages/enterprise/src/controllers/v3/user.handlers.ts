@@ -11,10 +11,7 @@ import {RegistrationConfirmationRequest} from '../../types/registration-confirma
 import {OrganizationService} from '../../services/organization-service'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {UserService} from '../../services/user-service'
-import {
-  ConnectOrganizationRequest,
-  DisconnectOrganizationRequest,
-} from '../../types/user-organization-request'
+import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ConnectGroupRequest, DisconnectGroupRequest} from '../../types/user-group-request'
 
 const authService = new AuthService()
@@ -136,19 +133,15 @@ export const connectOrganization: Handler = async (req, res, next): Promise<void
 export const disconnectOrganization: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
-    const {organizationId} = req.body as DisconnectOrganizationRequest
+    const {organizationId} = req.params
     const organization = await organizationService.findOneById(organizationId)
     if (!organization) {
       throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
     }
 
-    // Disconnect Groups
-    await organizationService
-      .getGroups(organizationId)
-      .then((groups) => userService.disconnectGroups(authenticatedUser.id, groups))
-
-    // Disconnect Organization
-    await userService.disconnectOrganization(authenticatedUser.id, organizationId)
+    // Disconnect Organization and groups
+    const groups = await organizationService.getGroups(organizationId)
+    await userService.disconnectOrganization(authenticatedUser.id, organizationId, groups)
 
     res.json(actionSucceed())
   } catch (error) {
@@ -266,6 +259,7 @@ export const removeDependent: Handler = async (req, res, next): Promise<void> =>
     await userService.removeDependent(dependentId, id)
 
     if (hard) {
+      // TODO: Make transactional and support pessimistic isolation level
       await userService.disconnectAllGroups(dependentId)
       await userService.removeUser(dependentId)
     }

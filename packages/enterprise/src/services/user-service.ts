@@ -158,12 +158,21 @@ export class UserService {
     )
   }
 
-  disconnectOrganization(userId: string, organizationId: string): Promise<void> {
-    return this.findOneUserOrganizationBy(organizationId, userId).then((existing) => {
-      if (existing) return this.userOrganizationRepository.delete(existing.id)
+  disconnectOrganization(
+    userId: string,
+    organizationId: string,
+    groups: OrganizationGroup[],
+  ): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return this.dataStore.firestoreORM.runTransaction((_transaction) => {
+      return this.disconnectGroups(userId, groups).then(() =>
+        this.findOneUserOrganizationBy(userId, organizationId).then((existing) => {
+          if (existing) return this.userOrganizationRepository.delete(existing.id)
 
-      throw new ResourceNotFoundException(
-        `User [${userId}] is connected to organization [${organizationId}]`,
+          throw new ResourceNotFoundException(
+            `User [${userId}] is not connected to organization [${organizationId}]`,
+          )
+        }),
       )
     })
   }
