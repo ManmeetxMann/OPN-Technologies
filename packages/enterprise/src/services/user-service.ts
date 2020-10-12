@@ -33,6 +33,7 @@ export class UserService {
       return this.userRepository.add({
         ...source,
         identifier: source.email,
+        authUserId: null,
         active: false,
       } as User)
     })
@@ -44,7 +45,7 @@ export class UserService {
         ...target,
         firstName: source.firstName ?? target.firstName,
         lastName: source.lastName ?? target.lastName,
-        photo: source.photo ?? target.photo,
+        photo: source.photo ?? target.photo ?? null,
       }),
     )
   }
