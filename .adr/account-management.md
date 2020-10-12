@@ -140,3 +140,68 @@ type Phone = {
   number: number
 }
 ```
+
+# Workflow
+## Registration
+1. Create user profile
+eg.
+```bash
+curl --location --request POST 'http://localhost:5003/api/v3/users' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "email": "lyrold+10@stayopn.com",
+    "firstName": "Lyrold10",
+    "lastName": "Careto10"
+}'
+```
+Response
+```json
+{
+    "data": {
+        "id": "FKAxpBY7Y3b4kajFaP6k",
+        "active": false,
+        "firstName": "Lyrold12",
+        "lastName": "Careto12",
+        "email": "lyrold+12@stayopn.com",
+        "identifier": "lyrold+12@stayopn.com",
+        "photo": null,
+        "authUserId": null
+    },
+    "status": {
+        "code": "succeed",
+        "message": null
+    }
+}
+```
+2. Use verification email to confirm email and extract id-token
+
+3. Complete registration to activate user account
+eg. 
+```bash
+curl --location --request POST 'http://localhost:5003/api/v3/users/auth/registration-confirmation' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "userId": "FKAxpBY7Y3b4kajFaP6k",
+    "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjIzNzA1ZmNmY2NjMTg4Njg2ZjhhZjkyYWJiZjAxYzRmMjZiZDVlODMiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vb3BuLXBsYXRmb3JtLWRldiIsImF1ZCI6Im9wbi1wbGF0Zm9ybS1kZXYiLCJhdXRoX3RpbWUiOjE2MDI1MTcwODMsInVzZXJfaWQiOiJwT0M2eTJxRWRSZ2JnSlg3b21qWDBVMFdjbmkxIiwic3ViIjoicE9DNnkycUVkUmdiZ0pYN29talgwVTBXY25pMSIsImlhdCI6MTYwMjUxNzA4MywiZXhwIjoxNjAyNTIwNjgzLCJlbWFpbCI6Imx5cm9sZCsxMkBzdGF5b3BuLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbImx5cm9sZCsxMkBzdGF5b3BuLmNvbSJdfSwic2lnbl9pbl9wcm92aWRlciI6InBhc3N3b3JkIn19.kTLtDTDu1EDjtfTJ3fl6vHCPmchSlAbbcFG6XQfZrgmbGpCaG6vIh9twVJcQAgvE7tXlfLg0TxgPPIkuXSPoNUi4Stk9GT7ijcpbnSN6PLOTqGO3sUiSo_vh5dsKsK0X8-pelah143SfWWxD9uGjH8-6RsqZ9znLV4EkEQbuPJjevhoRlYHRncQ_2q6ytZgs-0c6HFqHI5Vwof0surhuDMWFcWWBQP6GK_Bq2l8h9srVGBtSz2EZrsZuhniogept_Jmiw5SUAnrLCXjrdvbKLiDUA60K6QB4lFf4OthhLFV41389j5TUfGepN8lD6mIXlHqlucaqvfnqOMuHKXuSSQ"
+}'
+```
+Response:
+```json
+{
+    "data": {
+        "id": "FKAxpBY7Y3b4kajFaP6k",
+        "lastName": "Careto10",
+        "authUserId": "pOC6y2qEdRgbgJX7omjX0U0Wcni1",
+        "identifier": "lyrold+10@stayopn.com",
+        "active": true,
+        "email": "lyrold+10@stayopn.com",
+        "firstName": "Lyrold10",
+        "photo": null
+    },
+    "status": {
+        "code": "succeed",
+        "message": null
+    }
+}
+```
+==> The user is now active and linked to an external-auth ID
