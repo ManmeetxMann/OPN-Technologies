@@ -88,7 +88,7 @@ export const completeRegistration: Handler = async (req, res, next): Promise<voi
     const {userId, idToken} = req.body as RegistrationConfirmationRequest
     const user = await userService.getById(userId)
     const authUser = await authService.verifyAuthToken(idToken)
-    const activatedUser = await userService.activate({...user, authId: authUser.uid})
+    const activatedUser = await userService.activate({...user, authUserId: authUser.uid})
     res.json(actionSucceed(activatedUser))
   } catch (error) {
     next(error)

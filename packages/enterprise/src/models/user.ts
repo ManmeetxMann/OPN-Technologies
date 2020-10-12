@@ -8,7 +8,7 @@ export type User = Auditable & {
   active: boolean
   identifier: string //email, external-id (student id), generated-key
 
-  authId?: string
+  authUserId?: string
   email?: string
   photo?: string // photo url
   phone?: Phone
