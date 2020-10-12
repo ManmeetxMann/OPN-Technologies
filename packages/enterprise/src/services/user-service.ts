@@ -19,6 +19,7 @@ import {flattern} from '../../../common/src/utils/utils'
 import * as _ from 'lodash'
 import {OrganizationGroup} from '../models/organization'
 import {UserGroupRepository} from '../repository/user-group.repository'
+import {nanoid} from 'nanoid'
 
 export class UserService {
   private dataStore = new DataStore()
@@ -77,20 +78,31 @@ export class UserService {
       .then((results) => results.map(({organizationId}) => organizationId))
   }
 
-  addDependents(dependents: User[], parentUserId: string): Promise<User[]> {
+  async addDependents(dependents: User[], parentUserId: string): Promise<User[]> {
+    const existingDependentIds = new Set(
+      (await this.getDirectDependents(parentUserId)).map(({id}) => id),
+    )
+    // Add or link existing user who matches (firstName, lastName, identifier)
+    // Generate an OPN identifier if none provided to avoid discovering user with same FirstName and LastName
+    // If a matching record is found (firstName|lastName|identifier) a pending link will be created
+    // An approval process will be required to approve/reject user-dependent relation
     return Promise.all(
-      dependents.map(({firstName, lastName, identifier, email, ...dependent}) =>
-        this.findUsersBy({firstName, lastName, identifier, email}).then((results) =>
-          results.length > 0
-            ? this.userDependencyRepository
-                .add({
-                  parentUserId,
-                  userId: results[0].id,
-                  status: ConnectionStatuses.Pending,
-                } as UserDependency)
-                .then(() => results[0])
-            : this.userRepository
-                .add({...dependent, firstName, lastName, identifier} as User)
+      dependents
+        // Normalize
+        .map(({identifier, email, ...dependent}) => ({
+          ...dependent,
+          email: email ?? null,
+          identifier: identifier ?? email ?? `OPN-${nanoid(5)}`,
+          photo: null,
+          active: true,
+          authUserId: null,
+        }))
+        .map(({firstName, lastName, identifier, email, ...dependent}) =>
+          this.findUsersBy({firstName, lastName, identifier, email}).then((results) => {
+            // No matching record
+            if (results.length === 0) {
+              return this.userRepository
+                .add({...dependent, firstName, lastName, identifier, email})
                 .then((user) =>
                   this.userDependencyRepository
                     .add({
@@ -99,9 +111,21 @@ export class UserService {
                       status: ConnectionStatuses.Approved,
                     } as UserDependency)
                     .then(() => user),
-                ),
+                )
+            }
+
+            // Matching record
+            return existingDependentIds.has(results[0].id)
+              ? results[0]
+              : this.userDependencyRepository
+                  .add({
+                    parentUserId,
+                    userId: results[0].id,
+                    status: ConnectionStatuses.Pending,
+                  } as UserDependency)
+                  .then(() => results[0])
+          }),
         ),
-      ),
     )
   }
 

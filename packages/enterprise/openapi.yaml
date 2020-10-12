@@ -441,7 +441,6 @@ components:
       required:
         - firstName
         - lastName
-        - identifier
 
     CreateUserRequest:
       type: object
@@ -2078,7 +2077,14 @@ application/json:
 
     post:
       summary: Account dependent link
-      description: Links one or multiple user(s) to the authenticated user
+      description: |
+        Links one or multiple user(s) to the authenticated user
+
+        For each dependent:
+        * Generate an OPN identifier if none provided to avoid discovering user with same FirstName and LastName
+        * If a matching record is found (firstName|lastName|identifier) a pending link will be created
+        * An approval process will be required to approve/reject user-dependent relation
+
       tags:
         - Account management
       requestBody:
