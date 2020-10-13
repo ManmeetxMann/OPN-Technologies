@@ -20,7 +20,7 @@ import {AccessFilterWithDependent} from '../types'
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 // a regular access, but with the names of dependants fetched
-type AccessWithDependantNames = Omit<Access, 'dependants'> & {
+export type AccessWithDependantNames = Omit<Access, 'dependants'> & {
   dependants: UserDependant[]
 }
 
@@ -50,6 +50,39 @@ export class AccessService {
       }))
       .reduce((byId, entry) => ({...byId, [entry.id]: entry}), {}),
   })
+
+  // create meaningful access-level entry and exit times
+  private getDates = (acc: AccessWithDependantNames) => {
+    console.log(acc)
+    // @ts-ignore
+    const dependantEntries = acc.dependants.map((dep) => dep.enteredAt)
+    const guardianEntry = acc.enteredAt
+    // @ts-ignore
+    const dependantExits = acc.dependants.map((dep) => dep.exitAt)
+    const guardianExit = acc.exitAt
+    const exitAt = [guardianEntry, ...dependantEntries].reduce((min, curr) => {
+      if (curr) {
+        if (!min || curr < min) {
+          return curr
+        }
+      }
+      return min
+    }, null)
+    const enteredAt = [guardianExit, ...dependantExits].reduce((max, curr) => {
+      if (curr) {
+        if (!max || curr > max) {
+          return curr
+        }
+      }
+      return max
+    }, null)
+    return {
+      // @ts-ignore this is a timestamp
+      enteredAt: enteredAt?.toDate() ?? null,
+      // @ts-ignore this is a timestamp
+      exitAt: exitAt?.toDate() ?? null,
+    }
+  }
 
   create(
     statusToken: string,
@@ -129,7 +162,10 @@ export class AccessService {
           // we deliberately don't await this, the user doesn't need to know if it goes through
           this.accessListener.addEntry(savedAccess)
           return {
-            ...savedAccess,
+            ...{
+              ...savedAccess,
+              enteredAt: now().toISOString(),
+            },
             dependants: (dependants ?? []).filter(({id}) => !!savedAccess.dependants[id]),
           }
         }),
@@ -150,6 +186,19 @@ export class AccessService {
     if (dependantIds.some((id) => !!access.dependants[id].exitAt)) {
       throw new BadRequestException('Token already used to exit')
     }
+
+    const enteredAt = [
+      access.enteredAt,
+      ...Object.values(access.dependants).map((dep) => dep.enteredAt),
+    ].reduce((min, curr) => {
+      if (curr) {
+        if (!min || curr < min) {
+          return curr
+        }
+      }
+      return min
+    }, null)
+
     const newDependants = dependantIds.reduce(
       (byId, id) => ({
         ...byId,
@@ -184,7 +233,15 @@ export class AccessService {
         )
         .then(async (dependants) => {
           await this.accessListener.addExit(savedAccess, includesGuardian, dependantIds)
-          return {...savedAccess, dependants}
+          return {
+            ...{
+              ...savedAccess,
+              // @ts-ignore
+              enteredAt: enteredAt?.toString() ?? null,
+              exitAt: now().toISOString(),
+            },
+            dependants,
+          }
         }),
     )
   }

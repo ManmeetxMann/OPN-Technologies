@@ -3,7 +3,7 @@ import {NextFunction, Request, Response} from 'express'
 import IRouteController from '../../../common/src/interfaces/IRouteController.interface'
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
-import {AccessService} from '../service/access.service'
+import {AccessService, AccessWithDependantNames} from '../service/access.service'
 import {actionFailed, actionSucceed, of} from '../../../common/src/utils/response-wrapper'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
@@ -156,10 +156,6 @@ class AdminController implements IRouteController {
           lastName: user.lastName,
           access: {
             ...newAccess,
-            // @ts-ignore timestamp, not string
-            enteredAt: newAccess.enteredAt?.toDate(),
-            // @ts-ignore timestamp, not string
-            exitAt: newAccess.exitAt?.toDate(),
             status: passport.status,
             user,
           },
