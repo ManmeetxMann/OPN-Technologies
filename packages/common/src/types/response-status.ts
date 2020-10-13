@@ -11,4 +11,5 @@ export enum ResponseStatusCodes {
   Unauthorized = 'unauthorized',
   AccessDenied = 'access_denied',
   ResourceNotFound = 'resource_not_found',
+  ResourceAlreadyExists = 'resource_already_exists',
 }

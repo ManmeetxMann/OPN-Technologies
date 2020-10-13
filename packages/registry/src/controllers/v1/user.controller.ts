@@ -10,7 +10,7 @@ class UserController implements IControllerBase {
   public path = '/user'
   public router = express.Router()
   private registrationService = new RegistrationService()
-  private messaging = MessagingFactory.getDefault()
+  private messaging = MessagingFactory.getPushableMessagingService()
 
   constructor() {
     this.initRoutes()
