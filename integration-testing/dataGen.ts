@@ -182,7 +182,7 @@ const generate = async () => {
         dependantIds,
         involved[0],
       )
-      await scanExit(user.id, access.token, authIds[locIndex], dependantIds, involved[0])
+      await scanExit(user.id, access.token, authIds[locIndex])
     }
   }
   const sickUserIndex = Math.floor(Math.random() * users.length)
