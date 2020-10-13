@@ -89,6 +89,21 @@ components:
           schema:
             $ref: '#/components/schemas/Response'
 paths:
+  /setTime:
+    post:
+      description: set the time on the server. Onlyu works on local servers in guilible mode
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                  milliseconds:
+                    type: number
+      responses:
+        '200':
+          description: Successfully set
+
   /user/status/get:
     post:
       description: Get user's passport by statusToken or create a pending one if any. Not including userId is deprecated and will be removed
@@ -132,7 +147,7 @@ paths:
                   type: string
                 answers:
                   type: object
-                  additionalProperties: false
+                  additionalProperties: true
                 userId:
                   type: string
                 dependantIds:
@@ -146,7 +161,7 @@ paths:
                 - answers
                 - userId
                 # - includeGuardian  # HOTFIX: remove it for now for < 1.4 apps
-              example: {locationId: "location-id", answers: { 1:{1: false},2:{1: false},3:{1: false},4:{1: false, 2: "2020-06-10T05:05:32.217Z"}}, userId: "parentId", dependantIds: ["childOne", "childTwo"]}
+              example: {locationId: "location-id", answers: { "1":{"1": false},2:{1: false},"3":{"1": false},"4":{"1": false, 2: "2020-06-10T05:05:32.217Z"}}, userId: "parentId", dependantIds: ["childOne", "childTwo"]}
 
       responses:
         '200':

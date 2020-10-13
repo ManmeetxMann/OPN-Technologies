@@ -317,6 +317,21 @@ components:
           schema:
             $ref: '#/components/schemas/Response'
 paths:
+  /setTime:
+    post:
+      description: set the time on the server. Onlyu works on local servers in guilible mode
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                  milliseconds:
+                    type: number
+      responses:
+        '200':
+          description: Successfully set
+
   /user/createToken:
     post:
       description: Exchange status-token for an access-token
