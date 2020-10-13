@@ -64,9 +64,7 @@ class UserController implements IControllerBase {
     questionnaireId: string,
     answers: AttestationAnswers,
   ): Promise<PassportStatuses> {
-    const answerKeys = Object.keys(answers).sort((a, b) =>
-      a.localeCompare(b, 'en', {numeric: true}),
-    )
+    const answerKeys = Object.keys(answers).sort((a, b) => parseInt(a) - parseInt(b))
 
     // note that this switches us to 0-indexing
     const responses = answerKeys.map((index) => (answers[index] ? answers[index][1] : null))
@@ -93,7 +91,7 @@ class UserController implements IControllerBase {
   }
 
   private dateFromAnswer(answer: Record<number, boolean | string>): Date | null {
-    const answerKeys = Object.keys(answer).sort((a, b) => a.localeCompare(b, 'en', {numeric: true}))
+    const answerKeys = Object.keys(answer).sort((a, b) => parseInt(a) - parseInt(b))
     if (!answerKeys[0]) {
       // answer was false, no relevant date
       return null
@@ -235,9 +233,10 @@ class UserController implements IControllerBase {
         const dateOfTest = this.findTestDate(answers)
         if (userId) {
           const endTime = now().valueOf()
-          const startTime =
-            (dateOfTest ? moment(endTime).tz(timeZone).startOf('day').valueOf() : endTime) -
-            TRACE_LENGTH
+          // if we have a test datetime, start the trace 48 hours before the test date
+          // otherwise, start the trace 48 hours before now
+          // The frontends default to sending the very start of the day
+          const startTime = (dateOfTest ? dateOfTest.valueOf() : endTime) - TRACE_LENGTH
           this.topic.publish(
             Buffer.from(
               JSON.stringify({
