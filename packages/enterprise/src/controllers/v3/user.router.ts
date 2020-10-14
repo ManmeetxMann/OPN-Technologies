@@ -10,6 +10,7 @@ import {
   create,
   disconnectGroup,
   disconnectOrganization,
+  findAll,
   get,
   getAllConnectedGroupsInAnOrganization,
   getConnectedOrganizations,
@@ -17,6 +18,7 @@ import {
   getParents,
   removeDependent,
   update,
+  updateDependent,
 } from './user.handlers'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 
@@ -35,8 +37,25 @@ class UserController implements IControllerBase {
       '/',
       innerRouter()
         .post('/', create)
+        .post('/search', authMiddleware, findAll)
         .post('/auth', authenticate)
         .post('/auth/registration-confirmation', completeRegistration),
+    )
+
+    const dependents = innerRouter().use(
+      '/dependents',
+      innerRouter()
+        .get('/', getDependents)
+        .post('/', addDependents)
+        .put('/:dependentId', updateDependent)
+        .delete('/:dependentId', removeDependent),
+
+      // TODO
+      // .post('/:dependentId/organizations', connectOrganization)
+      // .delete('/:dependentId/organizations/:organizationId', disconnectOrganization)
+
+      // .post('/:dependentId/groups', connectGroup)
+      // .put('/:dependentId/groups', updateGroup),
     )
 
     const profile = innerRouter().use(
@@ -45,6 +64,7 @@ class UserController implements IControllerBase {
       innerRouter()
         .get('/', get)
         .put('/', update)
+        .get('/parents', getParents)
 
         .get('/organizations', getConnectedOrganizations)
         .post('/organizations', connectOrganization)
@@ -54,11 +74,7 @@ class UserController implements IControllerBase {
         .post('/groups', connectGroup)
         .delete('/groups/:groupId', disconnectGroup)
 
-        .get('/parents', getParents)
-
-        .get('/dependents', getDependents)
-        .post('/dependents', addDependents)
-        .delete('/dependents/:dependentId', removeDependent),
+        .use(dependents),
     )
 
     this.router.use(root, authentication, profile)

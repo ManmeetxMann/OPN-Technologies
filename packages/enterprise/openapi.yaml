@@ -1843,6 +1843,40 @@ application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
 
+  /api/v3/users/search:
+    post:
+      summary: User search
+      description: Find a user by `firstName`, `lastName`, `organizationId` and `identifier`
+      tags:
+        - Account management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                organizationId:
+                  type: string
+                identifier:
+                  type: string
+              required:
+                - firstName
+                - lastName
+                - organizationId
+                - identifier
+
+      responses:
+        '200':
+          description: Successfully found or no results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsers'
+
   /api/v3/users/auth:
     post:
       summary: User authentication
@@ -2078,13 +2112,9 @@ application/json:
     post:
       summary: Account dependent link
       description: |
-        Links one or multiple user(s) to the authenticated user
-
-        For each dependent:
-        * Generate an OPN identifier if none provided to avoid discovering user with same FirstName and LastName
-        * If a matching record is found (firstName|lastName|identifier) a pending link will be created
-        * An approval process will be required to approve/reject user-dependent relation
-
+        Create and/or links one or multiple user(s) to the authenticated user
+        If the user.id is provided, the found user will be linked with a pending link
+        An approval process will be required to approve/reject a pending user-dependent relation
       tags:
         - Account management
       requestBody:

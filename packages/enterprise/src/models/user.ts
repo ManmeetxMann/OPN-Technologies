@@ -6,7 +6,6 @@ export type User = Auditable & {
   firstName: string
   lastName: string
   active: boolean
-  identifier: string //email, external-id (student id), generated-key
 
   authUserId?: string
   email?: string
@@ -25,6 +24,8 @@ export type UserOrganization = Auditable & {
   id: string
   userId: string
   organizationId: string
+  identifier: string //email, external-id (student id), generated-key
+
   //TODO: status: 'pending' | 'approved' | 'rejected'
 }
 
@@ -45,6 +46,6 @@ export enum ConnectionStatuses {
 export type UserMatcher = {
   firstName: string
   lastName: string
-  identifier?: string
-  email?: string
+  identifier: string
+  organizationId: string
 }

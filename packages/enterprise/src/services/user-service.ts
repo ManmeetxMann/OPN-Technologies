@@ -31,12 +31,7 @@ export class UserService {
   create(source: CreateUserRequest): Promise<User> {
     return this.getByEmail(source.email).then((existedUser) => {
       if (!!existedUser) throw new ResourceAlreadyExistsException(source.email)
-      return this.userRepository.add({
-        ...source,
-        identifier: source.email,
-        authUserId: null,
-        active: false,
-      } as User)
+      return this.userRepository.add({...source, authUserId: null, active: false} as User)
     })
   }
 
@@ -78,53 +73,28 @@ export class UserService {
       .then((results) => results.map(({organizationId}) => organizationId))
   }
 
-  async addDependents(dependents: User[], parentUserId: string): Promise<User[]> {
-    const existingDependentIds = new Set(
-      (await this.getDirectDependents(parentUserId)).map(({id}) => id),
-    )
-    // Add or link existing user who matches (firstName, lastName, identifier)
-    // Generate an OPN identifier if none provided to avoid discovering user with same FirstName and LastName
-    // If a matching record is found (firstName|lastName|identifier) a pending link will be created
-    // An approval process will be required to approve/reject user-dependent relation
+  addDependents(dependents: User[], parentUserId: string): Promise<User[]> {
     return Promise.all(
       dependents
         // Normalize
-        .map(({identifier, email, ...dependent}) => ({
+        .map(({email, ...dependent}) => ({
           ...dependent,
           email: email ?? null,
-          identifier: identifier ?? email ?? `OPN-${nanoid(5)}`,
           photo: null,
           active: true,
           authUserId: null,
         }))
-        .map(({firstName, lastName, identifier, email, ...dependent}) =>
-          this.findUsersBy({firstName, lastName, identifier, email}).then((results) => {
-            // No matching record
-            if (results.length === 0) {
-              return this.userRepository
-                .add({...dependent, firstName, lastName, identifier, email})
-                .then((user) =>
-                  this.userDependencyRepository
-                    .add({
-                      parentUserId,
-                      userId: user.id,
-                      status: ConnectionStatuses.Approved,
-                    } as UserDependency)
-                    .then(() => user),
-                )
-            }
-
-            // Matching record
-            return existingDependentIds.has(results[0].id)
-              ? results[0]
-              : this.userDependencyRepository
-                  .add({
-                    parentUserId,
-                    userId: results[0].id,
-                    status: ConnectionStatuses.Pending,
-                  } as UserDependency)
-                  .then(() => results[0])
-          }),
+        .map((dependent) =>
+          (dependent.id ? this.getById(dependent.id) : this.userRepository.add(dependent)).then(
+            (user) =>
+              this.userDependencyRepository
+                .add({
+                  parentUserId,
+                  userId: user.id,
+                  status: dependent.id ? ConnectionStatuses.Pending : ConnectionStatuses.Approved,
+                } as UserDependency)
+                .then(() => user),
+          ),
         ),
     )
   }
@@ -174,11 +144,19 @@ export class UserService {
       .then((userIds) => this.getAllByIds(userIds))
   }
 
-  connectOrganization(userId: string, organizationId: string): Promise<UserOrganization> {
+  connectOrganization(
+    userId: string,
+    organizationId: string,
+    identifier?: string,
+  ): Promise<UserOrganization> {
     return this.findOneUserOrganizationBy(userId, organizationId).then((existing) =>
       existing
         ? existing
-        : this.userOrganizationRepository.add({organizationId, userId} as UserOrganization),
+        : this.userOrganizationRepository.add({
+            organizationId,
+            userId,
+            identifier: identifier ?? `OPN-${nanoid(5)}`,
+          } as UserOrganization),
     )
   }
 
@@ -246,6 +224,36 @@ export class UserService {
     )
   }
 
+  async findUsersBy(filter: UserMatcher): Promise<User[]> {
+    // Search in users
+    const {firstName, lastName, identifier, organizationId} = filter
+    const users = await this.userRepository
+      .collection()
+      .where('firstName', '==', firstName)
+      .where('lastName', '==', lastName)
+      .fetch()
+
+    if (users.length === 0) return []
+
+    // Search in organizations
+    const userIds = users.map(({id}) => id)
+    const userOrganizations = await Promise.all(
+      _.chunk(userIds, 10).map((chunk) =>
+        this.userOrganizationRepository
+          .collection()
+          .where('organizationId', '==', organizationId)
+          .where('identifier', '==', identifier)
+          .where('userId', 'in', chunk)
+          .fetch(),
+      ),
+    ).then((results) => flattern(results as UserOrganization[][]))
+
+    if (userOrganizations.length === 0) return []
+
+    const matchingUserIds = new Set(userOrganizations.map(({userId}) => userId))
+    return users.filter(({id}) => matchingUserIds.has(id))
+  }
+
   private findOneUserOrganizationBy(
     userId: string,
     organizationId: string,
@@ -263,23 +271,6 @@ export class UserService {
     if (groupIds?.length) {
       query = query.where('groupId', 'in', groupIds)
     }
-    return query.fetch()
-  }
-
-  private findUsersBy({firstName, lastName, identifier, email}: UserMatcher): Promise<User[]> {
-    let query = this.userRepository
-      .collection()
-      .where('firstName', '==', firstName)
-      .where('lastName', '==', lastName)
-
-    if (identifier) {
-      query = query.where('identifier', '==', identifier)
-    }
-
-    if (email) {
-      query = query.where('email', '==', email)
-    }
-
     return query.fetch()
   }
 }

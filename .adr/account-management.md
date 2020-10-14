@@ -46,10 +46,19 @@ Note: `Groups` would need to be part of an outer collection and refer to an orga
 - `GET -> /api/v3/users/self/dependents`: Gets the authenticated user's direct dependents
 - `GET -> /api/v3/users/self/parents`: Gets the authenticated user's parents
 - `POST -> /api/v3/users/self/dependents`: Links one or multiple user(s) to the authenticated user (Link strategy to be defined)
-- `DELETE -> /api/v3/users/self/dependants/{depId}`: Removes a user as a dependant of the authenticated user 
+- `PUT -> /api/v3/users/self/dependents/{depId}`: Update a dependent
+- `DELETE -> /api/v3/users/self/dependants/{depId}`: Removes a user as a dependent of the authenticated user 
+- `POST -> /api/v3/users/self/dependents/{depId}/organizations`: Link a dependent to an organization
+- `DELETE -> /api/v3/users/self/dependents/{depId}/organizations/{organizationId}`: Unlink a dependent organization and all the groups within that organization. 
+- `POST -> /api/v3/users/self/dependents/{depId}/groups`: Link a dependent to a group
+- `PUT -> /api/v3/users/self/dependents/{depId}/groups`: Update a dependent groups
+
+## User search
+- `POST -> /api/v3/users/search`: Find a user by `firstName`, `lastName`, `organizationId` and `identifier`   
 
 ## Admin requests:
 **Admin-auth aware:**
+- `POST -> /api/v3/users`: Create a user profile
 - `GET -> /api/v3/users/{id}`: Gets a user profile
 - `PUT -> /api/v3/users/{id}`: Updates any property of a user
 - `GET -> /api/v3/users/{id}/dependents`: Gets the direct-dependents of a user 
