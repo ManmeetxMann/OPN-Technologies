@@ -4,30 +4,25 @@ info:
   version: 1.0.0
 components:
   schemas:
-    Appointment:
-      type: object
-      additionalProperties: false
-      properties:
-        firstName:
-          type: string
-        lastName:
-          type: string
-        email:
-          type: string
-          format: email
-      required:
-        - firstName
-        - lastName
-        - email
-
-    AppointmentSearchResponse200:
+    AppointmentResponse200:
       type: object
       additionalProperties: false
       properties:
         data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Appointment'
+          type: object
+          additionalProperties: false
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+              format: email
+          required:
+            - firstName
+            - lastName
+            - email
         status:
           type: object
           additionalProperties: false
@@ -75,29 +70,45 @@ components:
               type: string
 
 paths:
+  /admin/page/appointment-by-bar-code:
+    get:
+      description: Show Form to Enter Bar Code
+      responses:
+        '200':
+          description: Successfully Return Appoinment
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      description: Show Appoinment Details
+      responses:
+        '200':
+          description: Successfully Return Appoinment
+          content:
+            text/html:
+              schema:
+                type: string
 
-  /admin/appointments/search:
+  /admin/api/v1/appointment:
     post: #Post is used to avoid sending PI info to access logs
-      description: Appointments Search 
+      description: Get Appoinment for Bar Code Number 
       requestBody:
         content:
           application/json:
             schema:
               properties:
-                phoneNumber:
+                barCodeNumber:
                   type: integer
-                dateOfAppointment:
-                  type: string
-                  format: date
               required:
-                - phoneNumber
-                - dateOfAppointment
-              example: {phoneNumber: 4161111111, dateOfAppointment: "2020-06-10"}
+                - barCodeNumber
+              example: {barCodeNumber: 1352671}
 
       responses:
         '200':
-          description: Successfully Return Search Results
+          description: Successfully Return Appoinment
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentSearchResponse200'
+                $ref: '#/components/schemas/AppointmentResponse200'
+                

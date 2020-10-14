@@ -15,26 +15,20 @@ class AdminController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.post(
-      this.path + '/appointments/search',
-      this.searchAppoinmentsForPhoneAndAppoinmentDate,
-    )
+    this.router.post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
   }
 
-  searchAppoinmentsForPhoneAndAppoinmentDate = async (
+  getAppointmentByBarCode = async (
     req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {phoneNumber, dateOfAppointment} = req.body
+      const {barCodeNumber} = req.body
 
-      const appointmentList = await this.appoinmentService.searchAppoinmentsForPhoneAndAppoinmentDate(
-        phoneNumber,
-        dateOfAppointment,
-      )
+      const appointment = await this.appoinmentService.getAppoinmentByBarCode(barCodeNumber)
 
-      res.json(actionSucceed(appointmentList))
+      res.json(actionSucceed(appointment))
     } catch (error) {
       next(error)
     }
