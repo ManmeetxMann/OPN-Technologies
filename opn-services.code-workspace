@@ -37,6 +37,10 @@
 			"path": "packages/registry"
 		},
 		{
+			"name": "📦 @opn/reservation",
+			"path": "packages/reservation"
+		},
+		{
 			"name": "📦 @opn/tools-admin",
 			"path": "packages/tools-admin"
 		},

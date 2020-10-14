@@ -20,6 +20,10 @@
             "to": "./docs/passport.yaml"
         },
         {
+            "from": "../reservation/openapi.yaml",
+            "to": "./docs/reservation.yaml"
+        },
+        {
             "from": "../lookup/openapi.yaml",
             "to": "./docs/lookup.yaml"
         },

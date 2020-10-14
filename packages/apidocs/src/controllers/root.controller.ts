@@ -113,6 +113,29 @@ class RootController implements IControllerBase {
         new SwaggerService({
           openApiVersion: '3.0.1',
           info: {
+            title: 'Reservation API',
+            version: '1.0.0',
+            description: 'OPN API docs using Open API / Swagger',
+          },
+          servers: [
+            {
+              url: 'http://localhost:5008',
+              description: 'Development Server',
+            },
+            {
+              url: 'https://reservation-staging-dot-opn-platform-dev.nn.r.appspot.com',
+              description: 'Staging Server',
+            },
+            {
+              url: 'https://reservation.services.ca.stayopn.net',
+              description: 'Production Server',
+            },
+          ],
+          yamlPath: 'reservation.yaml',
+        }),
+        new SwaggerService({
+          openApiVersion: '3.0.1',
+          info: {
             title: 'Lookup API',
             version: '1.0.0',
             description: 'OPN API docs using Open API / Swagger',
