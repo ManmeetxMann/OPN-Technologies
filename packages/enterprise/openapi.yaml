@@ -61,8 +61,6 @@ components:
           type: string
         name:
           type: string
-        logoUrl:
-          type: string
         type:
           type: string
           enum:
