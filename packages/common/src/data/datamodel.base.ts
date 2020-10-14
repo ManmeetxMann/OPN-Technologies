@@ -19,6 +19,11 @@ export type DataModelFieldMap = {
   value: unknown
 }
 
+export type DataModelOrdering = {
+  key: string
+  direction: 'desc' | 'asc'
+}
+
 abstract class DataModel<T extends HasId> {
   abstract readonly rootPath: string
   protected abstract readonly zeroSet: Array<Storable<T>>
@@ -282,7 +287,11 @@ abstract class DataModel<T extends HasId> {
       .fetch()
   }
 
-  findWhereEqualInMap(fields: DataModelFieldMap[], subPath = ''): Promise<T[]> {
+  findWhereEqualInMap(
+    fields: DataModelFieldMap[],
+    order?: DataModelOrdering,
+    subPath = '',
+  ): Promise<T[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let collection: any = this.collection(subPath)
     for (const field of fields) {
@@ -291,6 +300,9 @@ abstract class DataModel<T extends HasId> {
           ? new this.datastore.firestoreAdmin.firestore.FieldPath(field.key)
           : new this.datastore.firestoreAdmin.firestore.FieldPath(field.map, field.key)
       collection = collection.where(fieldPath, field.operator, field.value)
+    }
+    if (order) {
+      collection = collection.orderBy(order.key, order.direction)
     }
     return collection.fetch()
   }

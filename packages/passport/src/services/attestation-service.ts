@@ -137,7 +137,12 @@ export class AttestationService {
       })
     }
 
-    const attestations = await this.attestationRepository.findWhereEqualInMap(selector)
+    // order descernding and reverse so that we don't need to create an extra index
+    const attestations = await this.attestationRepository.findWhereEqualInMap(selector, {
+      key: 'attestationTime',
+      direction: 'desc',
+    })
+    attestations.reverse()
     return attestations
   }
 }
