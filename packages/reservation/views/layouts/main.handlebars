@@ -6,7 +6,17 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
 <body>
- 
+    <div class="container mt-5">
+        <ul class="nav  nav-tabs">
+            <li class="nav-item">
+                <a class="nav-link {{findAppoinmentTab}}" href="/admin/page/appointment-by-bar-code">Find Appointment</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{getNextBarCodeTab}}" href="/admin/page/next-bar-code">Get Next Barcode</a>
+            </li>
+        </ul>
+    </div>
+    
     {{{body}}}
     
      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
