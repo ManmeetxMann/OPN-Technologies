@@ -1,0 +1,114 @@
+openapi: 3.0.1
+info:
+  title: Reservation API
+  version: 1.0.0
+components:
+  schemas:
+    AppointmentResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+              format: email
+          required:
+            - firstName
+            - lastName
+            - email
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    Response:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          nullable: true
+          type: object
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+paths:
+  /admin/page/appointment-by-bar-code:
+    get:
+      description: Show Form to Enter Bar Code
+      responses:
+        '200':
+          description: Successfully Return Appoinment
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      description: Show Appoinment Details
+      responses:
+        '200':
+          description: Successfully Return Appoinment
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /admin/api/v1/appointment:
+    post: #Post is used to avoid sending PI info to access logs
+      description: Get Appoinment for Bar Code Number 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                barCodeNumber:
+                  type: integer
+              required:
+                - barCodeNumber
+              example: {barCodeNumber: 1352671}
+
+      responses:
+        '200':
+          description: Successfully Return Appoinment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse200'
+                
