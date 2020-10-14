@@ -165,6 +165,7 @@ export class AccessService {
             ...{
               ...savedAccess,
               enteredAt: now().toISOString(),
+              exitAt: null,
             },
             dependants: (dependants ?? []).filter(({id}) => !!savedAccess.dependants[id]),
           }
@@ -198,8 +199,11 @@ export class AccessService {
       }
       return min
     }, null)
-    // @ts-ignore timestamp, not fieldValue
-    const enteredAtStr = enteredAt ? (typeof enteredAt === 'string' ? enteredAt : enteredAt.toDate()): null
+    const enteredAtStr = enteredAt
+      ? typeof enteredAt === 'string'
+        ? enteredAt
+        : (enteredAt as firestore.Timestamp).toDate().toISOString()
+      : null
 
     const newDependants = dependantIds.reduce(
       (byId, id) => ({
@@ -238,7 +242,6 @@ export class AccessService {
           return {
             ...{
               ...savedAccess,
-              // @ts-ignore
               enteredAt: enteredAtStr,
               exitAt: now().toISOString(),
             },
