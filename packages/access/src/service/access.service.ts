@@ -51,39 +51,6 @@ export class AccessService {
       .reduce((byId, entry) => ({...byId, [entry.id]: entry}), {}),
   })
 
-  // create meaningful access-level entry and exit times
-  private getDates = (acc: AccessWithDependantNames) => {
-    console.log(acc)
-    // @ts-ignore
-    const dependantEntries = acc.dependants.map((dep) => dep.enteredAt)
-    const guardianEntry = acc.enteredAt
-    // @ts-ignore
-    const dependantExits = acc.dependants.map((dep) => dep.exitAt)
-    const guardianExit = acc.exitAt
-    const exitAt = [guardianEntry, ...dependantEntries].reduce((min, curr) => {
-      if (curr) {
-        if (!min || curr < min) {
-          return curr
-        }
-      }
-      return min
-    }, null)
-    const enteredAt = [guardianExit, ...dependantExits].reduce((max, curr) => {
-      if (curr) {
-        if (!max || curr > max) {
-          return curr
-        }
-      }
-      return max
-    }, null)
-    return {
-      // @ts-ignore this is a timestamp
-      enteredAt: enteredAt?.toDate() ?? null,
-      // @ts-ignore this is a timestamp
-      exitAt: exitAt?.toDate() ?? null,
-    }
-  }
-
   create(
     statusToken: string,
     locationId: string,
