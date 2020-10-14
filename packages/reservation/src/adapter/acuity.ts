@@ -16,7 +16,7 @@ abstract class AcuityScheduling {
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl =
       APIURL + '/api/v1/appointments?' + querystring.stringify(this.renameKeys(filters))
-    console.log(apiUrl)
+
     return fetch(apiUrl, {
       method: 'get',
       headers: {
@@ -31,7 +31,6 @@ abstract class AcuityScheduling {
     const acuityFilters = {}
     const keys = Object.keys(filters)
     keys.forEach((key) => {
-      console.log(this.fieldMapping[key])
       const newKey = this.fieldMapping[key] ? this.fieldMapping[key] : key
       acuityFilters[newKey] = filters[key]
     })
