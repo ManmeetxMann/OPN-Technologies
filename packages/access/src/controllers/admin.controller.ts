@@ -193,10 +193,6 @@ class AdminController implements IRouteController {
         lastName: user.lastName,
         access: {
           ...newAccess,
-          // @ts-ignore timestamp, not string
-          enteredAt: newAccess.enteredAt?.toDate(),
-          // @ts-ignore timestamp, not string
-          exitAt: newAccess.exitAt?.toDate(),
           status: passport.status,
           user,
         },
