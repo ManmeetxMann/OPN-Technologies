@@ -1843,10 +1843,10 @@ application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
 
-  /api/v3/user/auth:
+  /api/v3/users/auth:
     post:
-      summary: Account authentication
-      description: Sends a magic-link to authenticate the user with a `AuthenticationRequest` payload
+      summary: User authentication
+      description: Sends a magic-link to authenticate the user
       tags:
         - Account management
       requestBody:
@@ -1861,7 +1861,7 @@ application/json:
                 - email
       responses:
         '200':
-          description: Successfully created
+          description: Successful
           content:
             application/json:
               schema:

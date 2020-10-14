@@ -35,7 +35,7 @@ class UserController implements IControllerBase {
       '/',
       innerRouter()
         .post('/', create)
-        .get('/auth', authenticate)
+        .post('/auth', authenticate)
         .post('/auth/registration-confirmation', completeRegistration),
     )
 

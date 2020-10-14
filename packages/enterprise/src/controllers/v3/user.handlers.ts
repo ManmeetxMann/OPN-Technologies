@@ -41,7 +41,7 @@ export const authenticate: Handler = async (req, res, next): Promise<void> => {
   try {
     const {email} = req.body as AuthenticationRequest
     await userService.getByEmail(email).then(async (user) => {
-      if (user) await magicLinkService.send({email: user.email, name: user.firstName})
+      if (user) return await magicLinkService.send({email: user.email, name: user.firstName})
       throw new BadRequestException(`Cannot authenticate with email [${email}]`)
     })
 
