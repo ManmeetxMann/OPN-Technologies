@@ -17,6 +17,7 @@ import {
   OrganizationUsersGroupModel,
 } from '../repository/organization.repository'
 import * as _ from 'lodash'
+import {flattern} from '../../../common/src/utils/utils'
 
 const notFoundMessage = (organizationId: string, identifier?: string) =>
   `Cannot find organization with ${identifier ?? 'ID'} [${organizationId}]`
@@ -299,6 +300,12 @@ export class OrganizationService {
         `Cannot find group [${groupId}] for organization [${organizationId}]`,
       )
     }
+  }
+
+  getAllByIds(organizationIds: string[]): Promise<Organization[]> {
+    return Promise.all(
+      _.chunk(organizationIds, 10).map((chunk) => this.organizationRepository.findWhereIdIn(chunk)),
+    ).then((results) => flattern(results as Organization[][]))
   }
 
   // TODO: To be replaced with a proper solution that generates a 5 digits code for by user and organization with an expiry

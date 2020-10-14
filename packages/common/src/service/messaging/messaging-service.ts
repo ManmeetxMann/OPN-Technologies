@@ -7,19 +7,10 @@ export interface MessagingService<T> {
    * @param params the optional records of parameters
    */
   send(message: T, params?: Record<string, unknown>): Promise<unknown>
-
-  /**
-   * Check whether a push-notification token is valid
-   * @param token
-   */
-  validatePushToken(token: string): Promise<unknown>
 }
 
 export class MessagingFactory {
-  /**
-   * Returns the default implementation of the MessagingService
-   */
-  static getDefault(): FirebaseMessagingService {
+  static getPushableMessagingService(): FirebaseMessagingService {
     return new FirebaseMessagingService()
   }
 }

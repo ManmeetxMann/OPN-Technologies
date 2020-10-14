@@ -3,6 +3,7 @@ import {AdminProfile} from './admin'
 import {FieldValue} from '../utils/firebase'
 import DataStore from './datastore'
 
+// TODO: DEPRECATE
 export type User = {
   id: string
   registrationId: string
@@ -31,6 +32,7 @@ export type UserFilter = {
   userIds: string[]
 }
 
+// TODO: DEPRECATE
 export type UserDependant = {
   id: string
   firstName: string
@@ -38,11 +40,13 @@ export type UserDependant = {
   groupId: string
 }
 
+// TODO: DEPRECATE
 export class UserModel extends DataModel<User> {
   public readonly rootPath = 'users'
   readonly zeroSet = []
 }
 
+// TODO: DEPRECATE
 export class UserDependantModel extends DataModel<UserDependant> {
   public rootPath
   readonly zeroSet = []
