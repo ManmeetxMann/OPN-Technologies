@@ -198,6 +198,8 @@ export class AccessService {
       }
       return min
     }, null)
+    // @ts-ignore timestamp, not fieldValue
+    const enteredAtStr = enteredAt ? (typeof enteredAt === 'string' ? enteredAt : enteredAt.toDate()): null
 
     const newDependants = dependantIds.reduce(
       (byId, id) => ({
@@ -237,7 +239,7 @@ export class AccessService {
             ...{
               ...savedAccess,
               // @ts-ignore
-              enteredAt: enteredAt?.toString() ?? null,
+              enteredAt: enteredAtStr,
               exitAt: now().toISOString(),
             },
             dependants,
