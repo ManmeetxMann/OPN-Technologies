@@ -72,7 +72,12 @@ components:
 paths:
   /admin/page/next-bar-code:
     get:
-      description: Show Next Bar Code
+      description: Show Next Bar Code 
+      parameters:
+        - in: query
+          name: newcode
+          schema:
+            type: integer
       responses:
         '200':
           description: Successfully Return

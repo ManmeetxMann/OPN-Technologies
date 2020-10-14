@@ -29,3 +29,8 @@ export type AppoinmentBarCodeSequenceDAO = {
   id: string
   barCodeNumber: number
 }
+
+export type BarCodeGeneratorUI = {
+  barCode?: string
+  getNextBarCodeTab: string
+}

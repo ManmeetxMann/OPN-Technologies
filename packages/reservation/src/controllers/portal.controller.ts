@@ -4,7 +4,7 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 import {AppoinmentService} from '../services/appoinment.service'
-import {AppointmentDTO} from '../models/appoinment'
+import {AppointmentDTO, BarCodeGeneratorUI} from '../models/appoinment'
 import * as _ from 'lodash'
 
 class PortalController implements IControllerBase {
@@ -49,18 +49,23 @@ class PortalController implements IControllerBase {
   }
 
   displayNextBarCode = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const barCodeNumber = await this.appoinmentService.getNextBarCodeNumber()
-      res.render('next_bar_code_number', {
-        getNextBarCodeTab: 'active',
-        barCodeNumber: barCodeNumber,
-      })
-    } catch (err) {
-      res.render('next_bar_code_number', {
-        getNextBarCodeTab: 'active',
-        invalidBarCodeNumber: true,
-      })
+    let templateData:BarCodeGeneratorUI;
+
+    templateData = {
+      getNextBarCodeTab: 'active'
     }
+
+    try {
+      const {newcode} = req.query;
+      if(newcode == '1'){
+        templateData.barCode = await this.appoinmentService.getNextBarCodeNumber()
+      }
+
+    } catch (err) {
+      console.log(`Failed to render ${err}`)
+    }
+
+    res.render('next_bar_code_number', templateData)
   }
 }
 
