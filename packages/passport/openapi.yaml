@@ -91,7 +91,7 @@ components:
 paths:
   /setTime:
     post:
-      description: set the time on the server. Onlyu works on local servers in guilible mode
+      description: set the time on the server. Only works on local servers in guilible mode
       requestBody:
         content:
           application/json:
