@@ -1,4 +1,4 @@
-import {Passport, PassportModel, PassportStatus} from '../models/passport'
+import {Passport, PassportModel, PassportStatus, PassportStatuses} from '../models/passport'
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
@@ -101,7 +101,7 @@ export class PassportService {
         validFrom,
         validUntil: firestore.Timestamp.fromDate(
           // @ts-ignore
-          this.shortestTime(validFrom.toDate()),
+          this.shortestTime(passport.status, validFrom.toDate()),
         ),
       }))
       .then((passport) => this.passportRepository.update(passport))
@@ -125,12 +125,18 @@ export class PassportService {
    * Calculates the shortest time to an end of day or elapsed time.
    * Ex: end of day: 3am at night and 12 hours – we'd pick which is closer to now()
    */
-  private shortestTime(validFrom: Date): Date {
+  private shortestTime(passportStatus: PassportStatuses, validFrom: Date): Date {
     const expiryDuration = parseInt(Config.get('PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
     const expiryMax = parseInt(Config.get('PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS'))
+    const expiryDurationForRedPassports = parseInt(
+      Config.get('RED_PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'),
+    )
 
     const date = validFrom.toISOString()
-    const byDuration = moment(date).add(expiryDuration, 'hours')
+    const byDuration =
+      passportStatus === PassportStatuses.Stop
+        ? moment(date).add(expiryDurationForRedPassports, 'hours')
+        : moment(date).add(expiryDuration, 'hours')
     const lookAtNextDay = validFrom.getHours() < expiryMax ? 0 : 1
     const byMax = moment(date).startOf('day').add(lookAtNextDay, 'day').add(expiryMax, 'hours')
     const shorter = byMax.isBefore(byDuration) ? byMax : byDuration
