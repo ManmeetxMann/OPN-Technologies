@@ -20,7 +20,7 @@ import {AccessFilterWithDependent} from '../types'
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 // a regular access, but with the names of dependants fetched
-export type AccessWithDependantNames = Omit<Access, 'dependants'> & {
+type AccessWithDependantNames = Omit<Access, 'dependants'> & {
   dependants: UserDependant[]
 }
 
