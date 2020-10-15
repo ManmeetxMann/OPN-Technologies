@@ -768,6 +768,7 @@ class OrganizationController implements IControllerBase {
         isParentUser ? userId : parentUserId,
         from,
         to,
+        isParentUser ? null : userId,
       )
 
       // ids of all the users we need more information about

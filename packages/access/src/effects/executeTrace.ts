@@ -205,6 +205,7 @@ export default class TraceListener {
     this.repo.saveTrace(
       result,
       userId,
+      includesGuardian,
       dependantIds,
       passportStatus as StopStatus,
       moment(endTime).format('YYYY-MM-DD'),
