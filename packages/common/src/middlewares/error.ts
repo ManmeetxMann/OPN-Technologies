@@ -35,8 +35,6 @@ const combinePropertyErrors = (extra: string[], missing: string[]): string => {
   return lines.join('    ')
 }
 
-// express checks if 'next' is in the signature. DO NOT call next
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, res, _next) => {
   console.error('Validation Error: ', err)
   const {errors} = err
@@ -46,9 +44,15 @@ export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, re
   const missingProperties = (errors ?? [])
     .filter((error) => error.message.startsWith('should have required property '))
     .map((error) => error.path)
-  res.status(err.status || 500).json({
-    message: combinePropertyErrors(extraProperties, missingProperties),
-  })
+  const message = combinePropertyErrors(extraProperties, missingProperties)
+  if (extraProperties.length && !missingProperties.length) {
+    console.warn(`request ${req.path} allowing additional properties ${message}`)
+    _next()
+  } else {
+    res.status(err.status || 500).json({
+      message,
+    })
+  }
 }
 
 // Cannot have an error... to be used bottom of stack
