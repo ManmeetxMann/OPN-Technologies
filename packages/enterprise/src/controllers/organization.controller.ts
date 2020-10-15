@@ -66,6 +66,38 @@ const getPassportsCountPerStatus = (
       [PassportStatuses.Stop]: 0,
     })
 
+// select the 'fresher' access
+const getPriorityAccess = (
+  a: AccessWithPassportStatusAndUser | null,
+  b: AccessWithPassportStatusAndUser | null,
+): AccessWithPassportStatusAndUser | null => {
+  if (a && !b) {
+    return a
+  }
+  if (b && !a) {
+    return b
+  }
+  if (a.status !== PassportStatuses.Pending && b.status === PassportStatuses.Pending) {
+    return a
+  }
+  if (b.status !== PassportStatuses.Pending && a.status === PassportStatuses.Pending) {
+    return b
+  }
+  if (!a.exitAt && b.exitAt) {
+    return a
+  }
+  if (!b.exitAt && a.exitAt) {
+    return b
+  }
+  if (new Date(a.exitAt).getTime() > new Date(b.exitAt).getTime()) {
+    return a
+  }
+  if (new Date(b.exitAt).getTime() > new Date(a.exitAt).getTime()) {
+    return b
+  }
+  return a
+}
+
 class OrganizationController implements IControllerBase {
   public router = Router()
   private organizationService = new OrganizationService()
@@ -1118,7 +1150,13 @@ class OrganizationController implements IControllerBase {
         const parentUserId = passportsByUserIds[userId]?.parentUserId
 
         if (!user) {
-          console.error(`Invalid state exception: Cannot find user/dependant for ID [${userId}]`)
+          if (userIds.includes(userId)) {
+            console.warn(`Invalid state exception: Cannot find user for ID [${userId}]`)
+          } else if (dependantIds.includes(userId)) {
+            console.warn(`Invalid state exception: Cannot find dependant for ID [${userId}]`)
+          } else {
+            console.warn(`[${userId}] is not in userIds or dependantIds`)
+          }
           return null
         }
         const access = accessesByStatusToken[statusToken] ?? {
@@ -1145,7 +1183,6 @@ class OrganizationController implements IControllerBase {
         }
       })
       .filter((access) => !!access)
-
     // Handle duplicates
     const distinctAccesses: Record<string, AccessWithPassportStatusAndUser> = {}
     const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
@@ -1158,11 +1195,11 @@ class OrganizationController implements IControllerBase {
       const duplicateKey = `${normalize(user.firstName)}|${normalize(user.lastName)}|${
         groupsByUserId[user.id]?.groupId
       }`
-      const target = distinctAccesses[duplicateKey]
-
-      if (!target || target.status === PassportStatuses.Pending) {
-        distinctAccesses[duplicateKey] = {...access, user, status}
-      }
+      distinctAccesses[duplicateKey] = getPriorityAccess(distinctAccesses[duplicateKey], {
+        ...access,
+        user,
+        status,
+      })
     })
     return Object.values(distinctAccesses)
   }

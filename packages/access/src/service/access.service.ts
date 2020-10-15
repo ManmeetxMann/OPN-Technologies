@@ -117,6 +117,10 @@ export class AccessService {
           ...access,
           dependants,
         }
+    const activeUserId =
+      access.includesGuardian || Object.keys(access.dependants).length > 1
+        ? access.userId
+        : Object.keys(access.dependants)[0]
     const count = Object.keys(dependants).length + (access.includesGuardian ? 1 : 0)
     return this.accessRepository.update(newAccess).then((savedAccess) =>
       this.incrementPeopleOnPremises(access.locationId, count)
@@ -133,6 +137,8 @@ export class AccessService {
               ...savedAccess,
               enteredAt: now().toISOString(),
               exitAt: null,
+              // frontend expects this to be the id of the person who entered (if there was only one person)
+              userId: activeUserId,
             },
             dependants: (dependants ?? []).filter(({id}) => !!savedAccess.dependants[id]),
           }
@@ -194,6 +200,10 @@ export class AccessService {
           dependants: newDependants,
         }
     const count = dependantIds.length + (includesGuardian ? 1 : 0)
+    const activeUserId =
+      access.includesGuardian || Object.keys(access.dependants).length > 1
+        ? access.userId
+        : Object.keys(access.dependants)[0]
     return this.accessRepository.update(newAccess).then((savedAccess) =>
       this.decreasePeopleOnPremises(access.locationId, count)
         .then(() =>
@@ -211,6 +221,8 @@ export class AccessService {
               ...savedAccess,
               enteredAt: enteredAtStr,
               exitAt: now().toISOString(),
+              // frontend expects this to be the id of the person who exited (if there was only one person)
+              userId: activeUserId,
             },
             dependants,
           }
