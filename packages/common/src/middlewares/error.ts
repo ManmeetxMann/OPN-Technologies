@@ -35,7 +35,7 @@ const combinePropertyErrors = (extra: string[], missing: string[]): string => {
   return lines.join('    ')
 }
 
-export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, res, _next) => {
+export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, res, next) => {
   console.error('Validation Error: ', err)
   const {errors} = err
   const extraProperties = (errors ?? [])
@@ -46,8 +46,10 @@ export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, re
     .map((error) => error.path)
   const message = combinePropertyErrors(extraProperties, missingProperties)
   if (extraProperties.length && !missingProperties.length) {
-    console.warn(`request ${req.path} allowing additional properties ${message}`)
-    _next()
+    console.warn(
+      `request ${req.path} allowing additional properties ${message}. Consider adding them as deprecated properties and inform the frontend team of the error`,
+    )
+    next()
   } else {
     res.status(err.status || 500).json({
       message,
