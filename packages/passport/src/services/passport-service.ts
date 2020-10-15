@@ -129,13 +129,13 @@ export class PassportService {
     const expiryDuration = parseInt(Config.get('CAUTION_PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
     const expiryMax = parseInt(Config.get('PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS'))
     const expiryDurationForRedPassports = parseInt(
-      Config.get('STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'),
+      Config.get('STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_WEEKS'),
     )
 
     const date = validFrom.toISOString()
     const byDuration =
       passportStatus === PassportStatuses.Stop
-        ? moment(date).add(expiryDurationForRedPassports, 'hours')
+        ? moment(date).add(expiryDurationForRedPassports, 'weeks')
         : moment(date).add(expiryDuration, 'hours')
     const lookAtNextDay = validFrom.getHours() < expiryMax ? 0 : 1
     const byMax = moment(date).startOf('day').add(lookAtNextDay, 'day').add(expiryMax, 'hours')
