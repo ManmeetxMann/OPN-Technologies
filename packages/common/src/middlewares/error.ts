@@ -39,7 +39,11 @@ export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, re
   console.error('Validation Error: ', err)
   const {errors} = err
   const extraProperties = (errors ?? [])
-    .filter((error) => error.message === 'should NOT have additional properties')
+    .filter(
+      (error) =>
+        error.message === 'should NOT have additional properties' ||
+        error.message.startsWith('Unknown'),
+    )
     .map((error) => error.path)
   const missingProperties = (errors ?? [])
     .filter((error) => error.message.startsWith('should have required property '))
