@@ -1226,6 +1226,11 @@ paths:
           name: groupId
           schema:
             type: string
+        - in: query
+          name: organizationId
+          deprecated: true
+          schema:
+            type: string
               
       responses:
         '200':
