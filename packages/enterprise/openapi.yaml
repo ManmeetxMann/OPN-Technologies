@@ -978,7 +978,7 @@ paths:
     get:
       description: Get organization groups
       security:
-        - bearerAuth: []
+        - bearerAuthJWT: []
       parameters:
         - in: path
           name: organizationId
@@ -1021,7 +1021,7 @@ paths:
     get:
       description: Get stats for one organization (admin access required)
       security:
-        - bearerAuth: []
+        - bearerAuthJWT: []
       parameters:
         - in: path
           name: organizationId
@@ -1051,7 +1051,7 @@ paths:
     get:
       description: Get contact traces locations (admin access required)
       security:
-        - bearerAuth: []
+        - bearerAuthJWT: []
       parameters:
         - in: path
           name: organizationId
@@ -1082,7 +1082,7 @@ paths:
     get:
       description: Get contact traces (admin access required)
       security:
-        - bearerAuth: []
+        - bearerAuthJWT: []
       parameters:
         - in: path
           name: organizationId
@@ -1113,7 +1113,7 @@ paths:
     get:
       description: Get contact traces exposures (admin access required)
       security:
-        - bearerAuth: []
+        - bearerAuthJWT: []
       parameters:
         - in: path
           name: organizationId
@@ -1144,7 +1144,7 @@ paths:
     get:
       description: Get contact traces attestations (admin access required)
       security:
-        - bearerAuth: []
+        - bearerAuthJWT: []
       parameters:
         - in: path
           name: organizationId
@@ -1171,7 +1171,7 @@ paths:
     get:
       description: Get family data for the given userId
       security:
-        - bearerAuth: []
+        - bearerAuthJWT: []
       parameters:
         - in: path
           name: organizationId
@@ -1195,7 +1195,7 @@ paths:
     get:
       description: Get stats summary for one organization (admin access required)
       security:
-        - bearerAuth: []
+        - bearerAuthJWT: []
       parameters:
         - in: path
           name: organizationId
