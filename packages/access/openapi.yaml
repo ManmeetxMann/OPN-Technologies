@@ -465,8 +465,6 @@ paths:
                   type: string
                 locationId:
                   type: string
-              required:
-                - organizationId
       responses:
         '200':
           description: Successfully handled

@@ -76,6 +76,9 @@ class AdminController implements IRouteController {
   statsV2 = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId, locationId} = req.body
+      if (!organizationId && !locationId) {
+        throw new BadRequestException('either organization or location id must be provided')
+      }
       const responseBody = await this.statsHelper(organizationId, locationId)
 
       res.json(actionSucceed(responseBody))
