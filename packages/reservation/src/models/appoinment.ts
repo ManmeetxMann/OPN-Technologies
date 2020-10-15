@@ -24,3 +24,13 @@ export type AppointmentDAO = {
 export type AppointmentFilter = {
   barCodeNumber: number
 }
+
+export type AppoinmentBarCodeSequenceDAO = {
+  id: string
+  barCodeNumber: number
+}
+
+export type BarCodeGeneratorUI = {
+  barCode?: string
+  getNextBarCodeTab: string
+}

@@ -4,7 +4,7 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 import {AppoinmentService} from '../services/appoinment.service'
-import {AppointmentDTO} from '../models/appoinment'
+import {AppointmentDTO, BarCodeGeneratorUI} from '../models/appoinment'
 import * as _ from 'lodash'
 
 class PortalController implements IControllerBase {
@@ -17,6 +17,7 @@ class PortalController implements IControllerBase {
   }
 
   public initRoutes(): void {
+    this.router.get(this.path + '/page/next-bar-code', this.displayNextBarCode)
     this.router.get(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
     this.router.post(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
   }
@@ -31,6 +32,7 @@ class PortalController implements IControllerBase {
         barCodeNumber,
       )
       res.render('bar_code_form', {
+        findAppoinmentTab: 'active',
         barCodeNumber: barCodeNumber,
         firstName: appointment.firstName,
         lastName: appointment.lastName,
@@ -39,10 +41,28 @@ class PortalController implements IControllerBase {
       })
     } catch (err) {
       res.render('bar_code_form', {
+        findAppoinmentTab: 'active',
         barCodeNumber: barCodeNumber,
         invalidBarCodeNumber: true,
       })
     }
+  }
+
+  displayNextBarCode = async (req: Request, res: Response): Promise<void> => {
+    const templateData: BarCodeGeneratorUI = {
+      getNextBarCodeTab: 'active',
+    }
+
+    try {
+      const {newcode} = req.query
+      if (newcode == '1') {
+        templateData.barCode = await this.appoinmentService.getNextBarCodeNumber()
+      }
+    } catch (err) {
+      console.log(`Failed to render ${err}`)
+    }
+
+    res.render('next_bar_code_number', templateData)
   }
 }
 

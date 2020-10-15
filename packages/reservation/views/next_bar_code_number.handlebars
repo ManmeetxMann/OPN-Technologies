@@ -1,0 +1,30 @@
+<div class="container mt-5">
+    {{#if barCode}}
+    <div id="bar-code">
+        <label for="barCodeNumber">Bar Code Number</label>: <strong>{{barCode}}</strong>
+        <div class="w-100 mt-2"></div>
+        <p>Bar Code is available for <mark><span id="timer">10</span></mark> seconds</p>
+    </div>
+    {{/if}}
+    <div class="w-100 mt-2"></div>
+    <a class="btn btn-primary" href="/admin/page/next-bar-code?newcode=1" role="button">Get next bar code</a>
+</div>
+
+<script type="text/javascript">
+    function startTimer(duration, display) {
+        var timer = duration, minutes, seconds;
+        var loop = setInterval(function () {
+            seconds = parseInt(timer % 60, 10);
+            display.textContent = seconds;
+            if (--timer < 0) {
+                clearInterval(loop);
+                document.querySelector('#bar-code').style.display = 'none';
+            }
+        }, 1000);
+    }
+
+    window.onload = function () {
+        var seconds = 10, display = document.querySelector('#timer');
+        startTimer(seconds, display);
+    };
+</script>
