@@ -1,8 +1,8 @@
 <div class="container  mt-5">
     <form action="/admin/page/appointment-by-bar-code" method="POST">
     <div class="form-group">
-        <label for="barCodeNumber">Bar Code Number</label>
-        <input type="text" class="form-control" id="barCodeNumber" name="barCodeNumber" placeholder="Enter Bar Code Number" value="{{barCodeNumber}}">
+        <label for="barCode">Bar Code Number</label>
+        <input type="text" class="form-control" id="barCode" name="barCode" placeholder="Enter Bar Code Number" value="{{barCode}}">
     </div>
     <button type="submit" class="btn btn-primary">Submit</button>
     </form>
@@ -19,7 +19,7 @@
             First Name
             </div>
             <div class="col">
-            {{firstName}}
+            {{appointment.firstName}}
             </div>
 
             <div class="w-100"></div>
@@ -27,7 +27,7 @@
             Last Name
             </div>
             <div class="col">
-            {{lastName}}
+            {{appointment.lastName}}
             </div>
         
             <div class="w-100"></div>
@@ -35,7 +35,7 @@
             Email
             </div>
             <div class="col">
-            {{email}}
+            {{appointment.email}}
             </div>
         
             <div class="w-100"></div>
@@ -43,7 +43,15 @@
             Phone Number
             </div>
             <div class="col">
-            {{phone}}
+            {{appointment.phone}}
+            </div>
+        
+            <div class="w-100"></div>
+            <div class="col">
+            Date of Birth
+            </div>
+            <div class="col">
+            {{appointment.dateOfBirth}}
             </div>
         </div>
     {{/if}}

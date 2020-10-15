@@ -1,28 +1,40 @@
-export type AppointmentDTO = {
+export type AppointmentBase = {
   firstName: string
   lastName: string
   email: string
   phone: number
+  dateOfBirth: string
 }
 
-export type AppointmentAcuity = {
-  firstName: string
-  lastName: string
-  email: string
-  phone: number
+export type AppoinmentDataUI = {
+  findAppoinmentTab: string
+  invalidBarCodeNumber?: boolean
+  barCode: string
+  appointment?: AppointmentDTO
+}
+
+export type AppointmentDTO = AppointmentBase
+
+export type AppointmentAcuity = AppointmentBase & {
   id: number
+  forms: Array<AppointmentAcuityForm>
 }
 
-export type AppointmentDAO = {
-  firstName: string
-  lastName: string
-  email: string
-  phone: number
+export type AppointmentAcuityForm = {
+  values: Array<AppointmentAcuityFormField>
+}
+
+export type AppointmentAcuityFormField = {
+  fieldID: number
+  value: string
+}
+
+export type AppointmentDAO = AppointmentBase & {
   appointmentId: number
 }
 
 export type AppointmentFilter = {
-  barCodeNumber: number
+  barCodeNumber: string
 }
 
 export type AppoinmentBarCodeSequenceDAO = {

@@ -11,7 +11,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
     return this.getAppointments(data).then((appointments: AppointmentAcuity[]) => {
       if (appointments.length >= 1) {
         //Pick first item in case Staff made mistake by duplicating BarCodeNumber
-        const {firstName, lastName, email, phone, id} = appointments[0]
+        const {firstName, lastName, email, phone, id, dateOfBirth} = appointments[0]
         if (appointments.length > 1) {
           console.warn(`Duplicate Bar Code!! for Appoinment ${id}`)
         }
@@ -22,6 +22,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
           email,
           phone,
           appointmentId: id,
+          dateOfBirth,
         }
       }
       throw new ResourceNotFoundException(`Appointment not found`)

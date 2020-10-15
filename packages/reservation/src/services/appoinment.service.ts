@@ -8,12 +8,12 @@ export class AppoinmentService {
   private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
   private appoinmentDBRepository = new AppoinmentsDBRepository(new DataStore())
 
-  async getAppoinmentByBarCode(barCodeNumber: number): Promise<AppointmentDTO> {
+  async getAppoinmentByBarCode(barCodeNumber: string): Promise<AppointmentDTO> {
     const filters = {barCodeNumber: barCodeNumber}
     return this.appoinmentSchedulerRepository
       .getAppointment(filters)
-      .then(({phone, firstName, lastName, email}: AppointmentDAO) => {
-        return {phone, firstName, lastName, email}
+      .then(({phone, firstName, lastName, email, dateOfBirth}: AppointmentDAO) => {
+        return {phone, firstName, lastName, email, dateOfBirth}
       })
   }
 

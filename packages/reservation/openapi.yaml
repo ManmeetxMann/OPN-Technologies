@@ -107,17 +107,17 @@ paths:
 
   /admin/api/v1/appointment:
     post: #Post is used to avoid sending PI info to access logs
-      description: Get Appoinment for Bar Code Number 
+      description: Get Appoinment for Bar Code  
       requestBody:
         content:
           application/json:
             schema:
               properties:
-                barCodeNumber:
-                  type: integer
+                barCode:
+                  type: string
               required:
-                - barCodeNumber
-              example: {barCodeNumber: 1352671}
+                - barCode
+              example: {barCode: "X0000000000"}
 
       responses:
         '200':
