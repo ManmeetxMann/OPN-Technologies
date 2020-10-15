@@ -20,6 +20,8 @@ class PortalController implements IControllerBase {
     this.router.get(this.path + '/page/next-bar-code', this.displayNextBarCode)
     this.router.get(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
     this.router.post(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
+
+    this.router.get(this.path + '/js/print-label.js', this.displayPrintJs)
   }
 
   displayFormToEnterBarCode = async (req: Request, res: Response): Promise<void> => {
@@ -58,6 +60,10 @@ class PortalController implements IControllerBase {
     }
 
     res.render('next_bar_code_number', templateData)
+  }
+
+  displayPrintJs = async (req: Request, res: Response): Promise<void> => {
+    res.render('print_label_js', {layout: 'js'})
   }
 }
 

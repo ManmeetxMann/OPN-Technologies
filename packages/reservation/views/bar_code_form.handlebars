@@ -18,7 +18,7 @@
             <div class="col">
             First Name
             </div>
-            <div class="col">
+            <div class="col" id="firstName" value="{{appointment.firstName}}">
             {{appointment.firstName}}
             </div>
 
@@ -26,7 +26,7 @@
             <div class="col">
             Last Name
             </div>
-            <div class="col">
+            <div class="col" id="lastName" value="{{appointment.lastName}}">
             {{appointment.lastName}}
             </div>
         
@@ -47,11 +47,19 @@
             </div>
         
             <div class="w-100"></div>
-            <div class="col">
+            <div class="col" id="dateOfBirth" value="{{appointment.dateOfBirth}}">
             Date of Birth
             </div>
             <div class="col">
             {{appointment.dateOfBirth}}
+            </div>
+
+            <div class="w-100"></div>
+            <div class="col">
+            Test Label
+            </div>
+            <div class="col">
+            <button type="button" class="btn btn-primary" id="print-label">Print</button>
             </div>
         </div>
     {{/if}}

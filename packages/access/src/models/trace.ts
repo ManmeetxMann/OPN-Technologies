@@ -4,6 +4,7 @@ export type StopStatus = PassportStatuses.Caution | PassportStatuses.Stop
 export type Trace = {
   id?: string
   userId: string
+  includesGuardian: boolean
   dependantIds: string[]
   passportStatus: StopStatus
   date: string
