@@ -18,7 +18,7 @@
             <div class="col">
             First Name
             </div>
-            <div class="col">
+            <div class="col" id="firstName" value="{{firstName}}">
             {{firstName}}
             </div>
 
@@ -26,7 +26,7 @@
             <div class="col">
             Last Name
             </div>
-            <div class="col">
+            <div class="col" id="lastName" value="{{lastName}}">
             {{lastName}}
             </div>
         
@@ -44,6 +44,14 @@
             </div>
             <div class="col">
             {{phone}}
+            </div>
+
+            <div class="w-100"></div>
+            <div class="col">
+            Test Label
+            </div>
+            <div class="col">
+            <button type="button" class="btn btn-primary" id="print-label">Print</button>
             </div>
         </div>
     {{/if}}

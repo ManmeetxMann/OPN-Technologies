@@ -126,4 +126,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
+
+  /admin/js/print-label.js:
+    get:
+      description: Show JS for printing
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/javascript:
+              schema:
+                type: string
                 
