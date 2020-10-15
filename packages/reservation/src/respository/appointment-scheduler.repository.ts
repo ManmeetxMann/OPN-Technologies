@@ -15,7 +15,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
         if (appointments.length > 1) {
           console.warn(`Duplicate Bar Code!! for Appoinment ${id}`)
         }
-        
+
         return {
           firstName,
           lastName,

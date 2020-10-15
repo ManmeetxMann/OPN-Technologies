@@ -49,18 +49,15 @@ class PortalController implements IControllerBase {
   }
 
   displayNextBarCode = async (req: Request, res: Response): Promise<void> => {
-    let templateData:BarCodeGeneratorUI;
-
-    templateData = {
-      getNextBarCodeTab: 'active'
+    const templateData: BarCodeGeneratorUI = {
+      getNextBarCodeTab: 'active',
     }
 
     try {
-      const {newcode} = req.query;
-      if(newcode == '1'){
+      const {newcode} = req.query
+      if (newcode == '1') {
         templateData.barCode = await this.appoinmentService.getNextBarCodeNumber()
       }
-
     } catch (err) {
       console.log(`Failed to render ${err}`)
     }
