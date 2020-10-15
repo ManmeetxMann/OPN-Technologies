@@ -139,6 +139,7 @@ const generate = async () => {
   // index 0 is whether or not the user is on location, index n is whether dependant n-1 is on location
   const onLocation = users.map(() => null)
   const locIndexes = users.map(() => null)
+  const tokens = users.map(() => null)
 
   const endTime = now + 1000 * 60 * 60 * 2
   // 2 hours of 1 action/minute
@@ -166,23 +167,13 @@ const generate = async () => {
         dependantIds,
         involved[0],
       )
+      tokens[userIndex] = access.token
       await scanEntry(user.id, access.token, authIds[locationIndex])
     } else {
       // user should leave their location
-      const locIndex = locIndexes[userIndex]
+      await scanExit(user.id, tokens[userIndex], authIds[locIndexes[userIndex]])
       locIndexes[userIndex] = null
-      const involved = onLocation[userIndex]
-      const dependantIds = user.dependants
-        .map((dep, index) => involved[index + 1] && dep.id)
-        .filter((notNull) => notNull)
-      const access = await createAccess(
-        user.id,
-        locs[locIndex].id,
-        attestations[userIndex].statusToken,
-        dependantIds,
-        involved[0],
-      )
-      await scanExit(user.id, access.token, authIds[locIndex], dependantIds, involved[0])
+      tokens[userIndex] = null
     }
   }
   const sickUserIndex = Math.floor(Math.random() * users.length)

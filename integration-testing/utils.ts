@@ -79,6 +79,7 @@ export const createLocation = async (
       state: 'ON',
       zip: 'MV5 1P1',
       questionnaireId: 'questionnaire1',
+      type: 'default',
     },
   ])
     .then(getData)
@@ -136,7 +137,6 @@ export const createUser = async (
     groupId,
     firstName,
     lastName,
-    birthYear: 1999,
     base64Photo: 'www.google.com',
     registrationId: reg?.id ?? null,
   })
@@ -179,10 +179,10 @@ export const attest = async (
     dependantIds,
     locationId,
     answers: {
-      1: {1: exposed},
-      2: {1: false},
-      3: {1: false},
-      4: {1: false, 2: '2020-06-10T05:05:32.217Z'},
+      '1': {'1': exposed},
+      '2': {'1': false},
+      '3': {'1': false},
+      '4': {'1': false, '2': '2020-06-10T05:05:32.217Z'},
     },
   }).then(getData)
 }
@@ -224,16 +224,12 @@ export const scanExit = async (
   userId: string,
   accessToken: string,
   authId: string,
-  dependantIds: string[],
-  includeGuardian: boolean,
 ): Promise<unknown> => {
   return post(
     `${roots.Access}/admin/exit`,
     {
       userId,
       accessToken,
-      includeGuardian,
-      dependantIds,
     },
     {
       Authorization: `Bearer ${authId}`,

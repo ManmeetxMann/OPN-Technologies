@@ -129,7 +129,11 @@ export class AccessService {
           // we deliberately don't await this, the user doesn't need to know if it goes through
           this.accessListener.addEntry(savedAccess)
           return {
-            ...savedAccess,
+            ...{
+              ...savedAccess,
+              enteredAt: now().toISOString(),
+              exitAt: null,
+            },
             dependants: (dependants ?? []).filter(({id}) => !!savedAccess.dependants[id]),
           }
         }),
@@ -150,6 +154,24 @@ export class AccessService {
     if (dependantIds.some((id) => !!access.dependants[id].exitAt)) {
       throw new BadRequestException('Token already used to exit')
     }
+
+    const enteredAt = [
+      access.enteredAt,
+      ...Object.values(access.dependants).map((dep) => dep.enteredAt),
+    ].reduce((min, curr) => {
+      if (curr) {
+        if (!min || curr < min) {
+          return curr
+        }
+      }
+      return min
+    }, null)
+    const enteredAtStr = enteredAt
+      ? typeof enteredAt === 'string'
+        ? enteredAt
+        : (enteredAt as firestore.Timestamp).toDate().toISOString()
+      : null
+
     const newDependants = dependantIds.reduce(
       (byId, id) => ({
         ...byId,
@@ -184,7 +206,14 @@ export class AccessService {
         )
         .then(async (dependants) => {
           await this.accessListener.addExit(savedAccess, includesGuardian, dependantIds)
-          return {...savedAccess, dependants}
+          return {
+            ...{
+              ...savedAccess,
+              enteredAt: enteredAtStr,
+              exitAt: now().toISOString(),
+            },
+            dependants,
+          }
         }),
     )
   }
