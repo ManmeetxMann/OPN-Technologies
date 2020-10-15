@@ -4,7 +4,7 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 import {AppoinmentService} from '../services/appoinment.service'
-import {AppointmentDTO, BarCodeGeneratorUI} from '../models/appoinment'
+import {AppointmentDTO, BarCodeGeneratorUI, AppoinmentDataUI} from '../models/appoinment'
 import * as _ from 'lodash'
 
 class PortalController implements IControllerBase {
@@ -25,29 +25,24 @@ class PortalController implements IControllerBase {
   }
 
   displayFormToEnterBarCode = async (req: Request, res: Response): Promise<void> => {
-    const {barCodeNumber} = req.body
+    const {barCode} = req.body
+    const templateData: AppoinmentDataUI = {
+      findAppoinmentTab: 'active',
+      barCode: barCode,
+    }
     try {
-      if (_.isEmpty(barCodeNumber)) {
+      if (_.isEmpty(barCode)) {
         throw new BadRequestException('Please provide Bar Code Number')
       }
       const appointment: AppointmentDTO = await this.appoinmentService.getAppoinmentByBarCode(
-        barCodeNumber,
+        barCode,
       )
-      res.render('bar_code_form', {
-        findAppoinmentTab: 'active',
-        barCodeNumber: barCodeNumber,
-        firstName: appointment.firstName,
-        lastName: appointment.lastName,
-        email: appointment.email,
-        phone: appointment.phone,
-      })
+      templateData.appointment = appointment
     } catch (err) {
-      res.render('bar_code_form', {
-        findAppoinmentTab: 'active',
-        barCodeNumber: barCodeNumber,
-        invalidBarCodeNumber: true,
-      })
+      templateData.invalidBarCodeNumber = true
     }
+
+    res.render('bar_code_form', templateData)
   }
 
   displayNextBarCode = async (req: Request, res: Response): Promise<void> => {

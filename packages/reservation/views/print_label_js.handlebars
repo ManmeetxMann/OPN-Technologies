@@ -149,8 +149,8 @@
             const label = {
                 firstName: document.getElementById('firstName').getAttribute('value'),
                 lastName: document.getElementById('lastName').getAttribute('value'),
-                birthday: "April 20, 1979",
-                identifier: document.getElementById('barCodeNumber').value.trim()
+                birthday: document.getElementById('dateOfBirth').getAttribute('value'),
+                identifier: document.getElementById('barCode').value.trim()
             };
             processLabel(label)
         }
