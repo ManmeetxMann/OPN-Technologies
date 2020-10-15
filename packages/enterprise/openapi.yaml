@@ -80,6 +80,7 @@ components:
           description: number of days ago to generate the report for (0 to generate it for the day it is sent, 1 for the day before...)
         allowDependants:
           type: boolean
+          default: false
         dailyReminder:
           $ref: '#/components/schemas/OrganizationReminderSchedule'
         notificationFormatStop:
