@@ -1051,6 +1051,11 @@ paths:
           name: locationId
           schema:
             type: string
+        - in: query
+          name: organizationId
+          deprecated: true
+          schema:
+            type: string
 
       responses:
         '200':
