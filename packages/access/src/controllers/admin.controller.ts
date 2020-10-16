@@ -157,8 +157,8 @@ class AdminController implements IRouteController {
             : {
                 ...user,
                 id: userIdToReturn,
-                firstName: dependants[userIdToReturn].firstName,
-                lastName: dependants[userIdToReturn].lastName,
+                firstName: dependants.find(({id}) => id === userIdToReturn)?.firstName,
+                lastName: dependants.find(({id}) => id === userIdToReturn)?.lastName,
               }
         const responseBody = {
           passport,
@@ -203,8 +203,8 @@ class AdminController implements IRouteController {
           : {
               ...user,
               id: userIdToReturn,
-              firstName: dependants[userIdToReturn].firstName,
-              lastName: dependants[userIdToReturn].lastName,
+              firstName: dependants.find(({id}) => id === userIdToReturn)?.firstName,
+              lastName: dependants.find(({id}) => id === userIdToReturn)?.lastName,
             }
       const responseBody = {
         passport,
