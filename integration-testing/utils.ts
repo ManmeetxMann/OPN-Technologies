@@ -38,6 +38,11 @@ const post = (url: string, body: unknown, extraHeaders?: Record<string, string>)
     headers: {...headers, ...extraHeaders},
     body: JSON.stringify(body),
   })
+const get = (url: string, extraHeaders?: Record<string, string>) =>
+  fetch(url, {
+    method: 'GET',
+    headers: {...headers, ...extraHeaders},
+  })
 
 export const setTime = async (services: Service[], milliseconds: number): Promise<void> => {
   await Promise.all(services.map((svc) => post(`${roots[svc]}/setTime`, {milliseconds})))
@@ -104,13 +109,7 @@ export const createAdmin = async (
     showReporting: true,
     groupIds: [groupId],
   })
-  const user = await createUser(
-    organizationId,
-    firstName,
-    lastName,
-    groupId,
-    PUSH_TOKEN,
-  )
+  const user = await createUser(organizationId, firstName, lastName, groupId, PUSH_TOKEN)
   await post(`${roots.Enterprise}/admin/auth/signIn/request`, {
     email,
     // @ts-ignore
@@ -235,4 +234,10 @@ export const scanExit = async (
       Authorization: `Bearer ${authId}`,
     },
   ).then(getData)
+}
+
+export const getStats = async (organizationId: string, authId: string): Promise<unknown> => {
+  return get(`${roots.Enterprise}/organizations/${organizationId}/stats`, {
+    Authorization: `Bearer ${authId}`,
+  }).then(getData)
 }
