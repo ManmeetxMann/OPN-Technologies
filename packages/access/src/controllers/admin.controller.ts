@@ -150,6 +150,16 @@ class AdminController implements IRouteController {
       if (canEnter) {
         const newAccess = await this.accessService.handleEnter(access)
         const {dependants} = newAccess
+        const userIdToReturn = newAccess.userId
+        const userModelToReturn =
+          userIdToReturn === userId
+            ? user
+            : {
+                ...user,
+                id: userIdToReturn,
+                firstName: dependants[userIdToReturn].firstName,
+                lastName: dependants[userIdToReturn].lastName,
+              }
         const responseBody = {
           passport,
           base64Photo: user.base64Photo,
@@ -160,7 +170,7 @@ class AdminController implements IRouteController {
           access: {
             ...newAccess,
             status: passport.status,
-            user,
+            user: userModelToReturn,
           },
         }
         return res.json(actionSucceed({...responseBody, dependants}))
@@ -186,7 +196,16 @@ class AdminController implements IRouteController {
       }
       const newAccess = await this.accessService.handleExit(access)
       const {dependants} = newAccess
-
+      const userIdToReturn = newAccess.userId
+      const userModelToReturn =
+        userIdToReturn === userId
+          ? user
+          : {
+              ...user,
+              id: userIdToReturn,
+              firstName: dependants[userIdToReturn].firstName,
+              lastName: dependants[userIdToReturn].lastName,
+            }
       const responseBody = {
         passport,
         base64Photo: user.base64Photo,
@@ -197,7 +216,7 @@ class AdminController implements IRouteController {
         access: {
           ...newAccess,
           status: passport.status,
-          user,
+          user: userModelToReturn,
         },
       }
       res.json(actionSucceed(responseBody))

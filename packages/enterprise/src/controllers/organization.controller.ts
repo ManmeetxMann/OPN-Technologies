@@ -1123,7 +1123,7 @@ class OrganizationController implements IControllerBase {
     const proceedStatusTokens = Object.values(passportsByUserIds)
       .filter(({status}) => status === PassportStatuses.Proceed)
       .map(({statusToken}) => statusToken)
-    const accessesByStatusToken: Record<string, Access> = await Promise.all(
+    const accessesByStatusToken: Record<string, Access[]> = await Promise.all(
       _.chunk(proceedStatusTokens, 10).map((chunk) =>
         this.accessService.findAllWith({
           statusTokens: chunk,
@@ -1134,7 +1134,10 @@ class OrganizationController implements IControllerBase {
       .then((results) => flattern(results as Access[][]))
       .then((results) =>
         results.reduce(
-          (byStatusToken, access) => ({...byStatusToken, [access.statusToken]: access}),
+          (byStatusToken, access) => ({
+            ...byStatusToken,
+            [access.statusToken]: [...(byStatusToken[access.statusToken] ?? []), access],
+          }),
           {},
         ),
       )
@@ -1159,7 +1162,14 @@ class OrganizationController implements IControllerBase {
           }
           return null
         }
-        const access = accessesByStatusToken[statusToken] ?? {
+        const bestAccess = (accessesByStatusToken[statusToken] || [])
+          .filter(
+            (access) =>
+              access.userId === (parentUserId ?? userId) &&
+              (!parentUserId || Object.keys(access.dependants).includes(userId)),
+          )
+          .reduce(getPriorityAccess, null)
+        const access = bestAccess ?? {
           token: null,
           statusToken: null,
           locationId: null,
