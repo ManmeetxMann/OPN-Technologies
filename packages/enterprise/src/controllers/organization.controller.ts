@@ -68,34 +68,40 @@ const getPassportsCountPerStatus = (
 
 // select the 'fresher' access
 const getPriorityAccess = (
-  a: AccessWithPassportStatusAndUser | null,
-  b: AccessWithPassportStatusAndUser | null,
+  accessOne: AccessWithPassportStatusAndUser | null,
+  accessTwo: AccessWithPassportStatusAndUser | null,
 ): AccessWithPassportStatusAndUser | null => {
-  if (a && !b) {
-    return a
+  if (accessOne && !accessTwo) {
+    return accessOne
   }
-  if (b && !a) {
-    return b
+  if (accessTwo && !accessOne) {
+    return accessTwo
   }
-  if (a.status !== PassportStatuses.Pending && b.status === PassportStatuses.Pending) {
-    return a
+  if (
+    accessOne.status !== PassportStatuses.Pending &&
+    accessTwo.status === PassportStatuses.Pending
+  ) {
+    return accessOne
   }
-  if (b.status !== PassportStatuses.Pending && a.status === PassportStatuses.Pending) {
-    return b
+  if (
+    accessTwo.status !== PassportStatuses.Pending &&
+    accessOne.status === PassportStatuses.Pending
+  ) {
+    return accessTwo
   }
-  if (a.enteredAt && !a.exitAt && (b.exitAt || !b.enteredAt)) {
-    return a
+  if (accessOne.enteredAt && !accessOne.exitAt && (accessTwo.exitAt || !accessTwo.enteredAt)) {
+    return accessOne
   }
-  if (b.enteredAt && !b.exitAt && (a.exitAt || !a.enteredAt)) {
-    return b
+  if (accessTwo.enteredAt && !accessTwo.exitAt && (accessOne.exitAt || !accessOne.enteredAt)) {
+    return accessTwo
   }
-  if (new Date(a.exitAt).getTime() > new Date(b.exitAt).getTime()) {
-    return a
+  if (new Date(accessOne.exitAt).getTime() > new Date(accessTwo.exitAt).getTime()) {
+    return accessOne
   }
-  if (new Date(b.exitAt).getTime() > new Date(a.exitAt).getTime()) {
-    return b
+  if (new Date(accessTwo.exitAt).getTime() > new Date(accessOne.exitAt).getTime()) {
+    return accessTwo
   }
-  return a
+  return accessOne
 }
 
 class OrganizationController implements IControllerBase {
