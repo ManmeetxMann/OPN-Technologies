@@ -139,7 +139,7 @@ export class AccessService {
               exitAt: null,
               // frontend expects this to be the id of the person who entered (if there was only one person)
               userId: activeUserId,
-              parentUserId: activeUserId === access.userId ? access.userId : null,
+              parentUserId: activeUserId !== access.userId ? access.userId : null,
             },
             dependants: (dependants ?? []).filter(({id}) => !!savedAccess.dependants[id]),
           }
@@ -224,7 +224,7 @@ export class AccessService {
               exitAt: now().toISOString(),
               // frontend expects this to be the id of the person who exited (if there was only one person)
               userId: activeUserId,
-              parentUserId: activeUserId === access.userId ? access.userId : null,
+              parentUserId: activeUserId !== access.userId ? access.userId : null,
             },
             dependants,
           }
