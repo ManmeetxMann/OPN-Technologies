@@ -1,6 +1,6 @@
 import {Handler} from 'express'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {CreateUserRequest} from '../../types/create-user-request'
+import {CreateUserRequest, MigrateUserRequest} from '../../types/create-user-request'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
 import {AuthenticationRequest} from '../../types/authentication-request'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
@@ -13,11 +13,13 @@ import {ResourceNotFoundException} from '../../../../common/src/exceptions/resou
 import {UserService} from '../../services/user-service'
 import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ConnectGroupRequest} from '../../types/user-group-request'
+import {RegistrationService} from '../../../../common/src/service/registry/registration-service'
 
 const authService = new AuthService()
 const userService = new UserService()
 const organizationService = new OrganizationService()
 const magicLinkService = new MagicLinkService()
+const registrationService = new RegistrationService()
 
 /**
  * Creates a user profile and returns a User
@@ -26,7 +28,35 @@ export const create: Handler = async (req, res, next): Promise<void> => {
   try {
     const profile = req.body as CreateUserRequest
     const user = await userService.create(profile)
+
     await magicLinkService.send({email: user.email, name: user.firstName})
+
+    res.json(actionSucceed(user))
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Migrate existing user profile(s)
+ */
+export const migrate: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const {
+      email,
+      firstName,
+      lastName,
+      registrationId,
+      legacyProfiles,
+    } = req.body as MigrateUserRequest
+
+    const user = await userService.create({email, firstName, lastName})
+
+    await userService.migrateExistingUser(legacyProfiles, user.id)
+
+    await registrationService.linkUser(registrationId, user.id)
+
+    await magicLinkService.send({email, name: firstName})
 
     res.json(actionSucceed(user))
   } catch (error) {

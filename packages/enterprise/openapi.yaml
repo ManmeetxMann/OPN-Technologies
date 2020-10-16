@@ -454,10 +454,6 @@ components:
         lastName:
           type: string
           nullable: false
-        id:
-          type: string
-          description: Only used to connect an existing and legacy user
-          nullable: true
         photo:
           type: string
           description: Photo URL
@@ -466,6 +462,53 @@ components:
         - email
         - firstName
         - lastName
+
+    MigrateUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          nullable: false
+        firstName:
+          type: string
+          nullable: false
+        lastName:
+          type: string
+          nullable: false
+        registrationId:
+          type: string
+          nullable: false
+        legacyProfiles:
+          type: array
+          items:
+            properties:
+              userId:
+                type: string
+                description: The principal user ID
+              organizationId:
+                type: string
+                description: the principal user connected-organization
+              groupId:
+                type: string
+                description: the principal user group ID
+              dependentIds:
+                type: array
+                items:
+                  type: string
+                nullable: true
+            required:
+              - userId
+              - organizationId
+              - groupId
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+      required:
+        - email
+        - firstName
+        - lastName
+        - legacyProfiles
 
     UserEdit:
       type: object
@@ -1838,6 +1881,25 @@ application/json:
       responses:
         '200':
           description: Successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUser'
+
+  /api/v3/users/migration:
+    post:
+      summary: Profile Migration
+      description: Creates a user profile and link/migrate existing user's data
+      tags:
+        - Account management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MigrateUserRequest'
+      responses:
+        '200':
+          description: Successfully migrated
           content:
             application/json:
               schema:

@@ -16,6 +16,7 @@ import {
   getConnectedOrganizations,
   getDependents,
   getParents,
+  migrate,
   removeDependent,
   update,
   updateDependent,
@@ -37,6 +38,7 @@ class UserController implements IControllerBase {
       '/',
       innerRouter()
         .post('/', create)
+        .post('/migration', migrate)
         .post('/search', authMiddleware, findAll)
         .post('/auth', authenticate)
         .post('/auth/registration-confirmation', completeRegistration),

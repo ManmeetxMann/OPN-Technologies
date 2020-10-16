@@ -8,7 +8,7 @@ import {
   UserMatcher,
   UserOrganization,
 } from '../models/user'
-import {CreateUserRequest} from '../types/create-user-request'
+import {CreateUserRequest, LegacyProfile} from '../types/create-user-request'
 import {UpdateUserRequest} from '../types/update-user-request'
 import {UserRepository} from '../repository/user.repository'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
@@ -20,6 +20,7 @@ import * as _ from 'lodash'
 import {OrganizationGroup} from '../models/organization'
 import {UserGroupRepository} from '../repository/user-group.repository'
 import {nanoid} from 'nanoid'
+import {OrganizationUsersGroupModel} from '../repository/organization.repository'
 
 export class UserService {
   private dataStore = new DataStore()
@@ -33,6 +34,53 @@ export class UserService {
       if (!!existedUser) throw new ResourceAlreadyExistsException(source.email)
       return this.userRepository.add({...source, authUserId: null, active: false} as User)
     })
+  }
+
+  migrateExistingUser(legacyProfiles: LegacyProfile[], newUserId: string): Promise<void> {
+    return Promise.all(
+      legacyProfiles.map(async ({userId, organizationId, groupId, dependentIds}) => {
+        // Create dependents
+        const uniqueDependentIds = new Set(dependentIds)
+        const migratedDependentIds: string[] = await this.userRepository
+          .collection(`${userId}/dependants`)
+          .fetchAll()
+          .then((dependents: unknown[]) =>
+            Promise.all(
+              dependents
+                .filter(({id}) => uniqueDependentIds.has(id))
+                .map(({id, firstName, lastName}) =>
+                  this.userRepository.add({id, firstName, lastName, active: true} as User),
+                ),
+            ),
+          )
+          .then((results) => results.map(({id}) => id))
+
+        // Link dependents to principal user
+        await this.userDependencyRepository.addAll(
+          dependentIds.map(
+            (id) =>
+              ({
+                userId: id,
+                parentUserId: newUserId,
+                status: ConnectionStatuses.Approved,
+              } as UserDependency),
+          ),
+        )
+
+        // Connect to organizations
+        const userOrganizations = [newUserId, ...migratedDependentIds].map(
+          (id) => ({userId: id, organizationId} as UserOrganization),
+        )
+        await this.userOrganizationRepository.addAll(userOrganizations)
+
+        // Connect groups
+        await this.userGroupRepository.add({userId: newUserId, groupId} as UserGroup)
+        await new OrganizationUsersGroupModel(this.dataStore, organizationId)
+          .findWhereIn('userId', migratedDependentIds)
+          .then((targets) => targets.map(({userId, groupId}) => ({userId, groupId} as UserGroup)))
+          .then((targets) => this.userGroupRepository.addAll(targets))
+      }),
+    ).then()
   }
 
   update(id: string, source: UpdateUserRequest): Promise<User> {
