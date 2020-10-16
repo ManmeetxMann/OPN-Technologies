@@ -1185,10 +1185,10 @@ class OrganizationController implements IControllerBase {
           return null
         }
         const bestAccess = (accessesByStatusToken[statusToken] || [])
-          .filter(
-            (access) =>
-              access.userId === (parentUserId ?? userId) &&
-              (!parentUserId || Object.keys(access.dependants).includes(userId)),
+          .filter((access) =>
+            parentUserId
+              ? access.userId === parentUserId && access.dependants[userId]
+              : access.userId === userId && access.includesGuardian,
           )
           .map((access) => ({
             ...access,

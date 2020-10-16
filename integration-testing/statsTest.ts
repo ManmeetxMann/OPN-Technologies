@@ -56,7 +56,7 @@ const runStatsTest = async (): Promise<void> => {
       // @ts-ignore not unknown to me tbh
       accessTokens[user][person] = entry.access.token
     } else {
-      const exit = await scanExit(initialState.users[user].id,tokenToMove, initialState.authIds[0])
+      await scanExit(initialState.users[user].id,tokenToMove, initialState.authIds[0])
       accessTokens[user][person] = null
     }
   }
@@ -69,15 +69,16 @@ const runStatsTest = async (): Promise<void> => {
   }
   await setNow(startTime + (seqNum * TICK_LENGTH))
   const result = await getStats(initialState.organization.id, initialState.authIds[0])
-  const prnt = r => `entered: ${r.enteredAt}, exit: ${r.exitAt}, ${r.id}`
-  initialState.users.forEach((user, index) => {
-    // @ts-ignore
-    console.log(`User ${index}, guardian   `, prnt(result.accesses.find(acc => acc.userId === user.id)))
-    // @ts-ignore
-    console.log(`User ${index}, dependant 1`, prnt(result.accesses.find(acc => acc.userId === user.dependants[0].id)))
-    // @ts-ignore
-    console.log(`User ${index}, dependant 2`, prnt(result.accesses.find(acc => acc.userId === user.dependants[1].id)))
-  })
+  console.log(result)
+//   const prnt = r => `entered: ${r.enteredAt}, exit: ${r.exitAt}, ${r.id}`
+//   initialState.users.forEach((user, index) => {
+//     // @ts-ignore
+//     console.log(`User ${index}, guardian   `, prnt(result.accesses.find(acc => acc.userId === user.id)))
+//     // @ts-ignore
+//     console.log(`User ${index}, dependant 1`, prnt(result.accesses.find(acc => acc.userId === user.dependants[0].id)))
+//     // @ts-ignore
+//     console.log(`User ${index}, dependant 2`, prnt(result.accesses.find(acc => acc.userId === user.dependants[1].id)))
+//   })
 }
 
 runStatsTest()
