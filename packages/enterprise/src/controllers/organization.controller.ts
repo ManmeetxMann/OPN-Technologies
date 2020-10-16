@@ -83,10 +83,10 @@ const getPriorityAccess = (
   if (b.status !== PassportStatuses.Pending && a.status === PassportStatuses.Pending) {
     return b
   }
-  if (!a.exitAt && b.exitAt) {
+  if (a.enteredAt && !a.exitAt && (b.exitAt || !b.enteredAt)) {
     return a
   }
-  if (!b.exitAt && a.exitAt) {
+  if (b.enteredAt && !b.exitAt && (a.exitAt || !a.enteredAt)) {
     return b
   }
   if (new Date(a.exitAt).getTime() > new Date(b.exitAt).getTime()) {
@@ -1192,14 +1192,13 @@ class OrganizationController implements IControllerBase {
           dependants: null,
         }
 
-        const dependants = access.dependants ?? {}
         return {
           ...access,
           userId,
           user,
           status,
-          enteredAt: access.enteredAt ?? (dependants[userId]?.enteredAt as string) ?? null,
-          exitAt: access.exitAt ?? (dependants[userId]?.exitAt as string) ?? null,
+          enteredAt: access.enteredAt,
+          exitAt: access.exitAt,
           parentUserId,
           groupId,
         }
