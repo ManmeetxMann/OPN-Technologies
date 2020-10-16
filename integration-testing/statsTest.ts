@@ -53,7 +53,7 @@ const runStatsTest = async (): Promise<void> => {
         person === 0,
       )
       const entry = await scanEntry(initialState.users[user].id, access.token,initialState.authIds[0])
-      // @ts-ignore not unknown to me tbh
+      // @ts-ignore we just don't have a type for this
       accessTokens[user][person] = entry.access.token
     } else {
       await scanExit(initialState.users[user].id,tokenToMove, initialState.authIds[0])
