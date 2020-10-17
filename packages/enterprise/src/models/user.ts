@@ -11,6 +11,7 @@ export type User = Auditable & {
   email?: string
   photo?: string // photo url
   phone?: Phone
+  registrationId?: string
 }
 
 export type UserDependency = Auditable & {

@@ -32,7 +32,17 @@ export class UserService {
   create(source: CreateUserRequest): Promise<User> {
     return this.getByEmail(source.email).then((existedUser) => {
       if (!!existedUser) throw new ResourceAlreadyExistsException(source.email)
-      return this.userRepository.add({...source, authUserId: null, active: false} as User)
+
+      return this.userRepository.add({
+        firstName: source.firstName,
+        lastName: source.lastName,
+        email: source.email,
+        photo: source.photo ?? null,
+        phone: source.phone ?? null,
+        registrationId: source.registrationId ?? null,
+        authUserId: null,
+        active: false,
+      } as User)
     })
   }
 

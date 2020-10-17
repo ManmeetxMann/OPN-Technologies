@@ -4,6 +4,7 @@ export type CreateUserRequest = {
   email: string
   firstName: string
   lastName: string
+  registrationId: string
 
   photo?: string //url
   phone?: Phone

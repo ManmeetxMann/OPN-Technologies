@@ -13,14 +13,12 @@ import {ResourceNotFoundException} from '../../../../common/src/exceptions/resou
 import {UserService} from '../../services/user-service'
 import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ConnectGroupRequest} from '../../types/user-group-request'
-import {RegistrationService} from '../../../../common/src/service/registry/registration-service'
 import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
 
 const authService = new AuthService()
 const userService = new UserService()
 const organizationService = new OrganizationService()
 const magicLinkService = new MagicLinkService()
-const registrationService = new RegistrationService()
 
 /**
  * Creates a user profile and returns a User
@@ -51,11 +49,9 @@ export const migrate: Handler = async (req, res, next): Promise<void> => {
       legacyProfiles,
     } = req.body as MigrateUserRequest
 
-    const user = await userService.create({email, firstName, lastName})
+    const user = await userService.create({email, firstName, lastName, registrationId})
 
     await userService.migrateExistingUser(legacyProfiles, user.id)
-
-    await registrationService.linkUser(registrationId, user.id)
 
     await magicLinkService.send({email, name: firstName})
 

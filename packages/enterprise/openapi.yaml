@@ -422,9 +422,6 @@ components:
           type: string
         lastName:
           type: string
-        identifier:
-          type: string
-          description: the user identifier (eg. email, external-id like a student id or generated-key
         active:
           type: boolean
           description: Wheter the user account is active (has been verified with a magic-link)
@@ -454,6 +451,9 @@ components:
         lastName:
           type: string
           nullable: false
+        registrationId:
+          type: string
+          nullable: true
         photo:
           type: string
           description: Photo URL
