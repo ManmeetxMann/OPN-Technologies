@@ -14,6 +14,7 @@ import {UserService} from '../../services/user-service'
 import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ConnectGroupRequest} from '../../types/user-group-request'
 import {RegistrationService} from '../../../../common/src/service/registry/registration-service'
+import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
 
 const authService = new AuthService()
 const userService = new UserService()
@@ -128,6 +129,11 @@ export const completeRegistration: Handler = async (req, res, next): Promise<voi
     const {userId, idToken} = req.body as RegistrationConfirmationRequest
     const user = await userService.getById(userId)
     const authUser = await authService.verifyAuthToken(idToken)
+
+    if (!authUser.emailVerified) {
+      throw new ForbiddenException("Email hasn't been verified")
+    }
+
     const activatedUser = await userService.activate({...user, authUserId: authUser.uid})
     res.json(actionSucceed(activatedUser))
   } catch (error) {

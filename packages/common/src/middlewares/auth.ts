@@ -38,6 +38,11 @@ export const authMiddleware = async (
     return
   }
 
+  if (!validatedAuthUser.emailVerified) {
+    res.status(403).json(of(null, ResponseStatusCodes.AccessDenied, "Email hasn't been verified"))
+    return
+  }
+
   // Grab our claim
   // TODO: using claims to get the id and then calling a get(...) instead of query
   //       would have been faster... but the claim won't propagate because they already

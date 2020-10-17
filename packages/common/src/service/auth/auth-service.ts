@@ -5,6 +5,7 @@ import {Config} from '../../utils/config'
 export interface AuthUser {
   uid: string
   email?: string
+  emailVerified: boolean
   customClaims?: Record<string, unknown>
 }
 
@@ -96,9 +97,14 @@ export class AuthService {
     try {
       const decodedToken = await this.firebaseAuth.verifyIdToken(authToken, true)
       if (decodedToken !== undefined) {
-        return decodedToken as AuthUser
+        return {
+          uid: decodedToken.uid,
+          email: decodedToken.email,
+          emailVerified: decodedToken.email_verified ?? false,
+        }
       }
     } catch (error) {
+      // TODO: -- TO BE REMOVED -- to avoid security flaw when deploying with wrong environment variable
       // take the client's word that they are who they say they are
       if (Config.get('DEBUG_GUILIBLE_MODE') === 'enabled') {
         if (Config.get('FIRESTORE_EMULATOR_HOST') !== 'localhost:8080') {
@@ -109,8 +115,10 @@ export class AuthService {
         return {
           uid,
           email,
+          emailVerified: true,
         }
       }
+      // TODO: -- END TO BE REMOVED --
     }
 
     return null
