@@ -1,6 +1,6 @@
 import DataStore from '../../../common/src/data/datastore'
 
-import {TestResultsDTOForEmail} from '../models/appoinment'
+import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/appoinment'
 import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 
 export class TestResultsService {
@@ -9,4 +9,20 @@ export class TestResultsService {
   async sendTestResults(testResults: TestResultsDTOForEmail): Promise<void> {
     console.log(testResults)
   }
+
+  async saveResults(testResults: TestResultsDBModel): Promise<void> {
+    this.testResultsDBRepository.save(testResults)
+  }
+
+  async resultAlreadySent(barCode: string): Promise<boolean> {
+    const testResultExists = this.testResultsDBRepository.get(barCode).then((testResults) =>{
+        return !!testResults
+    })
+    return testResultExists
+  }
+
+  async getResults(barCode: string): Promise<TestResultsDBModel> {
+    return this.testResultsDBRepository.get(barCode)
+  }
+
 }

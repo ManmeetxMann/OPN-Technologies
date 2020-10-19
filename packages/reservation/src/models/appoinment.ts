@@ -6,6 +6,7 @@ type AppointmentBase = {
   dateOfBirth: string
   registeredNursePractitioner: string
   dateOfAppointment: string
+  appointmentId: number
 }
 
 export type AppoinmentDataUI = {
@@ -17,9 +18,7 @@ export type AppoinmentDataUI = {
 
 export type AppointmentDTO = AppointmentBase
 
-export type AppointmentDBModel = AppointmentBase & {
-  appointmentId: number
-}
+export type AppointmentDBModel = AppointmentBase
 
 type AppointmentAcuityFormField = {
   fieldID: number
@@ -71,9 +70,11 @@ type TestResultsBase = {
 
 export type TestResultsDTO = TestResultsBase
 
-export type TestResultsDBModel = TestResultsBase & {
+export type TestResultsDBModel = AppointmentBase & TestResultsBase & {
   id: string
-  appointmentId: number
 }
 
+export type TestResultsDBModelResponse = TestResultsDBModel & {
+  exists: boolean
+}
 export type TestResultsDTOForEmail = TestResultsBase & AppointmentBase
