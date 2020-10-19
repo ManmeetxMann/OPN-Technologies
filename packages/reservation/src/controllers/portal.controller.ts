@@ -75,7 +75,6 @@ class PortalController implements IControllerBase {
   displayFormToSendSingleResults = async (req: Request, res: Response): Promise<void> => {
     res.render('send_single_form', {layout: 'results'})
   }
-  
 }
 
 export default PortalController

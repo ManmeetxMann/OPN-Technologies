@@ -1,4 +1,4 @@
-export type AppointmentBase = {
+type AppointmentBase = {
   firstName: string
   lastName: string
   email: string
@@ -17,30 +17,31 @@ export type AppoinmentDataUI = {
 
 export type AppointmentDTO = AppointmentBase
 
-export type AppointmentAcuity = AppointmentBase & {
+export type AppointmentDBModel = AppointmentBase & {
+  appointmentId: number
+}
+
+type AppointmentAcuityFormField = {
+  fieldID: number
+  value: string
+}
+
+type AppointmentAcuityForm = {
+  values: Array<AppointmentAcuityFormField>
+}
+
+//Response From Acuity
+export type AppointmentAcuityResponse = AppointmentBase & {
   id: number
   date: string
   forms: Array<AppointmentAcuityForm>
 }
 
-export type AppointmentAcuityForm = {
-  values: Array<AppointmentAcuityFormField>
-}
-
-export type AppointmentAcuityFormField = {
-  fieldID: number
-  value: string
-}
-
-export type AppointmentDAO = AppointmentBase & {
-  appointmentId: number
-}
-
-export type AppointmentFilter = {
+export type AppointmentSearchRequest = {
   barCodeNumber: string
 }
 
-export type AppoinmentBarCodeSequenceDAO = {
+export type AppoinmentBarCodeSequenceDBModel = {
   id: string
   barCodeNumber: number
 }
@@ -52,10 +53,10 @@ export type BarCodeGeneratorUI = {
 
 enum ResultTypes {
   Positive,
-  Negative
+  Negative,
 }
 
-export type TestResultsDTO = {
+type TestResultsBase = {
   barCode: string
   result: ResultTypes
   famEGene: string
@@ -67,3 +68,12 @@ export type TestResultsDTO = {
   hexIC: string
   hexCt: string
 }
+
+export type TestResultsDTO = TestResultsBase
+
+export type TestResultsDBModel = TestResultsBase & {
+  id: string
+  appointmentId: number
+}
+
+export type TestResultsDTOForEmail = TestResultsBase & AppointmentBase

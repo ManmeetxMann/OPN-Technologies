@@ -1,7 +1,7 @@
 import fetch from 'node-fetch'
 import {Config} from '../../../common/src/utils/config'
 import querystring from 'querystring'
-import {AppointmentAcuity} from '../models/appoinment'
+import {AppointmentAcuityResponse} from '../models/appoinment'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -9,12 +9,12 @@ const APIURL = Config.get('ACUITY_SCHEDULER_API_URL')
 
 abstract class AcuityScheduling {
   private fieldMapping = {
-    barCodeNumber: 'field:'+Config.get('ACUITY_FIELD_BARCODE'),
-    dateOfBirth: 'field:'+Config.get('ACUITY_FIELD_DATE_OF_BIRTH'),
-    registeredNursePractitioner: 'field:'+Config.get('ACUITY_FIELD_NURSE_NAME'),
+    barCodeNumber: 'field:' + Config.get('ACUITY_FIELD_BARCODE'),
+    dateOfBirth: 'field:' + Config.get('ACUITY_FIELD_DATE_OF_BIRTH'),
+    registeredNursePractitioner: 'field:' + Config.get('ACUITY_FIELD_NURSE_NAME'),
   }
 
-  protected async getAppointments(filters: unknown): Promise<AppointmentAcuity[]> {
+  protected async getAppointments(filters: unknown): Promise<AppointmentAcuityResponse[]> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl =
@@ -33,7 +33,7 @@ abstract class AcuityScheduling {
     })
   }
 
-  private async addDOB(appoinments: Promise<AppointmentAcuity[]>) {
+  private async addDOB(appoinments: Promise<AppointmentAcuityResponse[]>) {
     return (await appoinments).map((appointment) => {
       appointment.forms.forEach((form) => {
         form.values.some((field) => {

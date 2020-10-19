@@ -4,12 +4,14 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 
 import {AppoinmentService} from '../services/appoinment.service'
-import { TestResultsDTO } from '../models/appoinment'
+import {TestResultsService} from '../services/test-results.service'
+import {TestResultsDTO} from '../models/appoinment'
 
 class AdminController implements IControllerBase {
   public path = '/admin'
   public router = Router()
   private appoinmentService = new AppoinmentService()
+  private testResultsService = new TestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -42,16 +44,18 @@ class AdminController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const requestData:TestResultsDTO = req.body
+      const requestData: TestResultsDTO = req.body
+      this.appoinmentService
+        .getAppoinmentByBarCode(requestData.barCode)
+        .then((appointment) =>
+          this.testResultsService.sendTestResults({...requestData, ...appointment}),
+        )
 
-      const appointment = await this.appoinmentService.saveAndSendTestResults(requestData)
-
-      res.json(actionSucceed(appointment))
+      res.json(actionSucceed({}))
     } catch (error) {
       next(error)
     }
   }
-
 }
 
 export default AdminController
