@@ -9,8 +9,9 @@ const APIURL = Config.get('ACUITY_SCHEDULER_API_URL')
 
 abstract class AcuityScheduling {
   private fieldMapping = {
-    barCodeNumber: 'field:8594852',
-    dateOfBirth: 'field:8561464',
+    barCodeNumber: 'field:'+Config.get('ACUITY_FIELD_BARCODE'),
+    dateOfBirth: 'field:'+Config.get('ACUITY_FIELD_DATE_OF_BIRTH'),
+    registeredNursePractitioner: 'field:'+Config.get('ACUITY_FIELD_NURSE_NAME'),
   }
 
   protected async getAppointments(filters: unknown): Promise<AppointmentAcuity[]> {
@@ -36,9 +37,11 @@ abstract class AcuityScheduling {
     return (await appoinments).map((appointment) => {
       appointment.forms.forEach((form) => {
         form.values.some((field) => {
-          if (field.fieldID == 8561464) {
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_DATE_OF_BIRTH'))) {
             appointment.dateOfBirth = field.value
-            return true
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_NURSE_NAME'))) {
+            appointment.registeredNursePractitioner = field.value
           }
         })
       })

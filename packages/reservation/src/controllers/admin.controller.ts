@@ -4,6 +4,7 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 
 import {AppoinmentService} from '../services/appoinment.service'
+import { TestResultsDTO } from '../models/appoinment'
 
 class AdminController implements IControllerBase {
   public path = '/admin'
@@ -16,6 +17,7 @@ class AdminController implements IControllerBase {
 
   public initRoutes(): void {
     this.router.post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
+    this.router.post(this.path + '/api/v1/test_results', this.saveAndSendTestResults)
   }
 
   getAppointmentByBarCode = async (
@@ -33,6 +35,23 @@ class AdminController implements IControllerBase {
       next(error)
     }
   }
+
+  saveAndSendTestResults = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const requestData:TestResultsDTO = req.body
+
+      const appointment = await this.appoinmentService.saveAndSendTestResults(requestData)
+
+      res.json(actionSucceed(appointment))
+    } catch (error) {
+      next(error)
+    }
+  }
+
 }
 
 export default AdminController

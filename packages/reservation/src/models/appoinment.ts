@@ -4,6 +4,8 @@ export type AppointmentBase = {
   email: string
   phone: number
   dateOfBirth: string
+  registeredNursePractitioner: string
+  dateOfAppointment: string
 }
 
 export type AppoinmentDataUI = {
@@ -17,6 +19,7 @@ export type AppointmentDTO = AppointmentBase
 
 export type AppointmentAcuity = AppointmentBase & {
   id: number
+  date: string
   forms: Array<AppointmentAcuityForm>
 }
 
@@ -45,4 +48,22 @@ export type AppoinmentBarCodeSequenceDAO = {
 export type BarCodeGeneratorUI = {
   barCode?: string
   getNextBarCodeTab: string
+}
+
+enum ResultTypes {
+  Positive,
+  Negative
+}
+
+export type TestResultsDTO = {
+  barCode: string
+  result: ResultTypes
+  famEGene: string
+  famCt: string
+  calRed61RdRpGene: string
+  calRed61Ct: string
+  quasar670NGene: string
+  quasar670Ct: string
+  hexIC: string
+  hexCt: string
 }

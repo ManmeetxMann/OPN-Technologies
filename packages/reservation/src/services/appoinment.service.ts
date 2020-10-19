@@ -1,6 +1,6 @@
 import DataStore from '../../../common/src/data/datastore'
 
-import {AppointmentDTO, AppointmentDAO, AppoinmentBarCodeSequenceDAO} from '../models/appoinment'
+import {AppointmentDTO, AppointmentDAO, AppoinmentBarCodeSequenceDAO, TestResultsDTO} from '../models/appoinment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppoinmentsDBRepository} from '../respository/appointment-db.repository'
 
@@ -12,8 +12,8 @@ export class AppoinmentService {
     const filters = {barCodeNumber: barCodeNumber}
     return this.appoinmentSchedulerRepository
       .getAppointment(filters)
-      .then(({phone, firstName, lastName, email, dateOfBirth}: AppointmentDAO) => {
-        return {phone, firstName, lastName, email, dateOfBirth}
+      .then((appoinment: AppointmentDTO) => {
+        return appoinment
       })
   }
 
@@ -24,4 +24,14 @@ export class AppoinmentService {
         return id.concat(barCodeNumber.toString())
       })
   }
+
+  async saveAndSendTestResults(testResults: TestResultsDTO): Promise<AppointmentDTO> {
+    const filters = {barCodeNumber: testResults.barCode}
+    return this.appoinmentSchedulerRepository
+      .getAppointment(filters)
+      .then((appoinment: AppointmentDTO) => {
+        return appoinment
+      })
+  }
+
 }
