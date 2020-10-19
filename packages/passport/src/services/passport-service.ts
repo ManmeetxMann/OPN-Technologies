@@ -126,7 +126,7 @@ export class PassportService {
    * Ex: end of day: 3am at night and 12 hours – we'd pick which is closer to now()
    */
   private shortestTime(passportStatus: PassportStatuses, validFrom: Date): Date {
-    const expiryDuration = parseInt(Config.get('CAUTION_PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
+    const expiryDuration = parseInt(Config.get('PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
     const expiryMax = parseInt(Config.get('PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS'))
     const expiryDurationForRedPassports = parseInt(
       Config.get('STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_WEEKS'),

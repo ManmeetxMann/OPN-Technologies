@@ -137,4 +137,14 @@ paths:
             text/javascript:
               schema:
                 type: string
-                
+
+  /admin/js/print-label-library.js:
+    get:
+      description: Show JS Library for printing
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/javascript:
+              schema:
+                type: string
