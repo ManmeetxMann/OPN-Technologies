@@ -8,7 +8,7 @@ import {PdfExportService} from './pdf-export.service'
 import {Config} from '../../../common/src/utils/config'
 
 export class TestResultsService {
-  private testResultEmailTemplateId = (Config.get('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 1) as number
+  private testResultEmailTemplateId = (Config.get('AUTH_EMAIL_TEMPLATE_ID') ?? 1) as number
   private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
   private emailService = new EmailService()
   private pdfExportService = new PdfExportService()
@@ -19,7 +19,9 @@ export class TestResultsService {
     this.emailService.send({
       templateId: this.testResultEmailTemplateId,
       to: [{email: testResults.email, name: `${testResults.firstName} ${testResults.lastName}`}],
-      params: {},
+      params: {
+        link: '',
+      },
       attachments: [
         {
           content: pdfContent,
