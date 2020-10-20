@@ -18,7 +18,7 @@ $(function() {
 
         $.ajax({
             'type': 'POST',
-            'url': "/admin/api/v1/send_and_save_test_results",
+            'url': "/admin/api/v1/send-and-save-test-results",
             'contentType': 'application/json',
             'data': JSON.stringify(data),
             'dataType': 'json',
@@ -45,7 +45,7 @@ $(function() {
 
         $.ajax({
             'type': 'POST',
-            'url': "/admin/api/v1/send_test_results_again",
+            'url': "/admin/api/v1/send-test-results-again",
             'contentType': 'application/json',
             'data': JSON.stringify(data),
             'dataType': 'json',

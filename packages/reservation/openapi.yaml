@@ -140,7 +140,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
 
-  /admin/api/v1/send_and_save_test_results:
+  /admin/api/v1/send-and-save-test-results:
     post:
       description: Save and Send Single Results
       requestBody:
@@ -192,7 +192,7 @@ paths:
               schema:
                 type: string
 
-  /admin/api/v1/send_test_results_again:
+  /admin/api/v1/send-test-results-again:
     post:
       description: Send Results Again
       requestBody:

@@ -29,11 +29,11 @@ abstract class AcuityScheduling {
       },
     }).then((res) => {
       const appointments = res.json()
-      return this.addDOB(appointments)
+      return this.mapCustomFieldsToAppoinment(appointments)
     })
   }
 
-  private async addDOB(appoinments: Promise<AppointmentAcuityResponse[]>) {
+  private async mapCustomFieldsToAppoinment(appoinments: Promise<AppointmentAcuityResponse[]>) {
     return (await appoinments).map((appointment) => {
       appointment.forms.forEach((form) => {
         form.values.some((field) => {
