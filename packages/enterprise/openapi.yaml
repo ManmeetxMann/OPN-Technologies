@@ -1064,7 +1064,7 @@ paths:
   
   /organizations/{organizationId}/stats/report:
     get:
-      description: Get stats for one organization (admin access required)
+      description: Get pdf for one organization (admin access required)
       security:
         - bearerAuthJWT: []
       parameters:
@@ -1084,13 +1084,12 @@ paths:
 
       responses:
         '200':
-          description: Successfully compute the stats
+          description: Successfully computed the stats
           content:
-            application/json:
+            application/pdf:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ResponseOfOrganizationStats'
+                type: string
+                format: binary
 
   /organizations/{organizationId}/stats/contact-trace-locations:
     get:
