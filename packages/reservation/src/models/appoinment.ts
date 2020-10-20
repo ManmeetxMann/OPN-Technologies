@@ -70,9 +70,10 @@ type TestResultsBase = {
 
 export type TestResultsDTO = TestResultsBase
 
-export type TestResultsDBModel = AppointmentBase & TestResultsBase & {
-  id: string
-}
+export type TestResultsDBModel = AppointmentBase &
+  TestResultsBase & {
+    id: string
+  }
 
 export type TestResultsDBModelResponse = TestResultsDBModel & {
   exists: boolean

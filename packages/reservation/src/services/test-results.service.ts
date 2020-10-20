@@ -7,6 +7,7 @@ export class TestResultsService {
   private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
 
   async sendTestResults(testResults: TestResultsDTOForEmail): Promise<void> {
+    //This is Placeholder for Calling Function create PDF and send as Email
     console.log(testResults)
   }
 
@@ -15,8 +16,8 @@ export class TestResultsService {
   }
 
   async resultAlreadySent(barCode: string): Promise<boolean> {
-    const testResultExists = this.testResultsDBRepository.get(barCode).then((testResults) =>{
-        return !!testResults
+    const testResultExists = this.testResultsDBRepository.get(barCode).then((testResults) => {
+      return !!testResults
     })
     return testResultExists
   }
@@ -24,5 +25,4 @@ export class TestResultsService {
   async getResults(barCode: string): Promise<TestResultsDBModel> {
     return this.testResultsDBRepository.get(barCode)
   }
-
 }

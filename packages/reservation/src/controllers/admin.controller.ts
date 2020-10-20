@@ -7,7 +7,7 @@ import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
 import {TestResultsDTO, AppointmentDTO} from '../models/appoinment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
-import { error } from 'console'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 class AdminController implements IControllerBase {
   public path = '/admin'
@@ -50,49 +50,49 @@ class AdminController implements IControllerBase {
       const requestData: TestResultsDTO = req.body
 
       const resultAlreadySent = await this.testResultsService.resultAlreadySent(requestData.barCode)
-      if(resultAlreadySent){
-        throw new ResourceAlreadyExistsException(requestData.barCode, 'Test Results are already sent.')
+      if (resultAlreadySent) {
+        throw new ResourceAlreadyExistsException(
+          requestData.barCode,
+          'Test Results are already sent.',
+        )
       }
-      
+
       await this.appoinmentService
         .getAppoinmentByBarCode(requestData.barCode)
-        .then((appointment:AppointmentDTO) =>{
+        .then((appointment: AppointmentDTO) => {
           this.testResultsService.sendTestResults({...requestData, ...appointment})
           return appointment
         })
-        .then((appointment:AppointmentDTO)=>{
+        .then((appointment: AppointmentDTO) => {
           this.testResultsService.saveResults({
-            ...requestData, 
-            ...appointment, 
-            appointmentId:appointment.appointmentId,
-            id:requestData.barCode
+            ...requestData,
+            ...appointment,
+            appointmentId: appointment.appointmentId,
+            id: requestData.barCode,
           })
         })
-      
-      res.json(actionSucceed("Results are sent successfully"))
+
+      res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {
       next(error)
     }
   }
 
-  sendTestResultsAgain = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  sendTestResultsAgain = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const requestData: TestResultsDTO = req.body
 
       const testResults = await this.testResultsService.getResults(requestData.barCode)
-      
+      if (!testResults) {
+        throw new ResourceNotFoundException('Something wend wrong. Results are not avaiable.')
+      }
       await this.testResultsService.sendTestResults({...testResults})
-      
-      res.json(actionSucceed("Results are sent successfully"))
+
+      res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {
       next(error)
     }
   }
-
 }
 
 export default AdminController
