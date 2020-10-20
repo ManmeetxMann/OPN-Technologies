@@ -20,7 +20,7 @@ export class TestResultsService {
       templateId: this.testResultEmailTemplateId,
       to: [{email: testResults.email, name: `${testResults.firstName} ${testResults.lastName}`}],
       params: {},
-      attachments: [
+      attachment: [
         {
           content: pdfContent,
           name: `PHHealth_${moment().format('YYYYMMDDHHmmss')}.pdf`,
