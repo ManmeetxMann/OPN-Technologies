@@ -21,8 +21,8 @@ class AdminController implements IControllerBase {
 
   public initRoutes(): void {
     this.router.post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
-    this.router.post(this.path + '/api/v1/send_and_save_test_results', this.sendAndSaveTestResults)
-    this.router.post(this.path + '/api/v1/send_test_results_again', this.sendTestResultsAgain)
+    this.router.post(this.path + '/api/v1/send-and-save-test-results', this.sendAndSaveTestResults)
+    this.router.post(this.path + '/api/v1/send-test-results-again', this.sendTestResultsAgain)
   }
 
   getAppointmentByBarCode = async (
