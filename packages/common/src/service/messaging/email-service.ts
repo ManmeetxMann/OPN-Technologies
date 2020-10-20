@@ -35,11 +35,18 @@ type EmailMessageParticipant = {
   name: string
 }
 
+type EmailAttachment = {
+  content?: string
+  url?: string
+  name: string
+}
+
 type EmailMessage = {
   to: EmailMessageParticipant[]
   templateId: number
   params: Record<string, unknown>
   sender?: EmailMessageParticipant
+  attachments?: EmailAttachment[]
 }
 
 const APIKEY = Config.get('EMAIL_PROVIDER_API_KEY')
