@@ -1,9 +1,12 @@
-export type AppointmentBase = {
+type AppointmentBase = {
   firstName: string
   lastName: string
   email: string
   phone: number
   dateOfBirth: string
+  registeredNursePractitioner: string
+  dateOfAppointment: string
+  appointmentId: number
 }
 
 export type AppoinmentDataUI = {
@@ -15,29 +18,29 @@ export type AppoinmentDataUI = {
 
 export type AppointmentDTO = AppointmentBase
 
-export type AppointmentAcuity = AppointmentBase & {
-  id: number
-  forms: Array<AppointmentAcuityForm>
-}
+export type AppointmentDBModel = AppointmentBase
 
-export type AppointmentAcuityForm = {
-  values: Array<AppointmentAcuityFormField>
-}
-
-export type AppointmentAcuityFormField = {
+type AppointmentAcuityFormField = {
   fieldID: number
   value: string
 }
 
-export type AppointmentDAO = AppointmentBase & {
-  appointmentId: number
+type AppointmentAcuityForm = {
+  values: Array<AppointmentAcuityFormField>
 }
 
-export type AppointmentFilter = {
+//Response From Acuity
+export type AppointmentAcuityResponse = AppointmentBase & {
+  id: number
+  date: string
+  forms: Array<AppointmentAcuityForm>
+}
+
+export type AppointmentSearchRequest = {
   barCodeNumber: string
 }
 
-export type AppoinmentBarCodeSequenceDAO = {
+export type AppoinmentBarCodeSequenceDBModel = {
   id: string
   barCodeNumber: number
 }
@@ -46,3 +49,33 @@ export type BarCodeGeneratorUI = {
   barCode?: string
   getNextBarCodeTab: string
 }
+
+enum ResultTypes {
+  Positive,
+  Negative,
+}
+
+type TestResultsBase = {
+  barCode: string
+  result: ResultTypes
+  famEGene: string
+  famCt: string
+  calRed61RdRpGene: string
+  calRed61Ct: string
+  quasar670NGene: string
+  quasar670Ct: string
+  hexIC: string
+  hexCt: string
+}
+
+export type TestResultsDTO = TestResultsBase
+
+export type TestResultsDBModel = AppointmentBase &
+  TestResultsBase & {
+    id: string
+  }
+
+export type TestResultsDBModelResponse = TestResultsDBModel & {
+  exists: boolean
+}
+export type TestResultsDTOForEmail = TestResultsBase & AppointmentBase
