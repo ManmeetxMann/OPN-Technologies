@@ -36,6 +36,12 @@ To generate the PDF we will use [node-html-pdf](https://github.com/marcbachmann/
 
 The library accepts html as a string, so we can generate the html using handlebars.
 
+For endpoints, we will use two GET endpoints in the enterprise service: /organizations/{orgId}/stats/report and organizations/{orgId}/stats/user-report. Both endpoints will accept the optional query parameters start and end, which will be ISO Datetime strings. If these are not provided, the default will be end: now, start: the start of the day 30 days ago.
+
+The report endpoint will additionally accept optional parameters locationId and groupId. These will be usable in combination, and neither is required
+
+The user-report endpoint will additionally accept a required query parameter userId and an optional parameter parentUserId. If parentUserId is provided, userId is the dependant id for the user with id parentUserId
+
 ## Consequences
 
 The PDFs will be available using node endpoints in the enterprise service. These endpoints will be authenticated so that only real admins can use them
