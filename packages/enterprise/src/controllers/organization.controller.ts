@@ -1,4 +1,5 @@
 import {NextFunction, Request, Response, Router} from 'express'
+import pdf from 'html-pdf'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed, of} from '../../../common/src/utils/response-wrapper'
 import {
@@ -31,6 +32,8 @@ import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
+
+import {Stream} from 'stream'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -654,18 +657,52 @@ class OrganizationController implements IControllerBase {
       }
 
       const statsObject = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
+      const generatedHTML = this.htmlAccessReport(statsObject.accesses)
+      const generatedPDF: Stream = await new Promise((resolve, reject) => {
+        pdf.create(`<body>${generatedHTML}</body>`).toStream((err: unknown, stream) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve(stream)
+          }
+        })
+      })
 
-      const accessesByStatus = {
-        [PassportStatuses.Pending]: [],
-        [PassportStatuses.Proceed]: [],
-        [PassportStatuses.Caution]: [],
-        [PassportStatuses.Stop]: [],
-      }
-      statsObject.accesses.forEach((access) => accessesByStatus[access.status].push(access))
-      res.status(200).json(accessesByStatus)
+      // console.log(generatedPDF)
+      res.contentType('application/pdf')
+      generatedPDF.pipe(res)
+      res.status(200)
     } catch (error) {
       next(error)
     }
+  }
+
+  private htmlAccessReport = (accesses: AccessWithPassportStatusAndUser[]): string => {
+    // TODO: use handlebars to generate better templates
+    const accessesByStatus: Record<PassportStatus, AccessWithPassportStatusAndUser[]> = {
+      [PassportStatuses.Pending]: [],
+      [PassportStatuses.Proceed]: [],
+      [PassportStatuses.Caution]: [],
+      [PassportStatuses.Stop]: [],
+    }
+    accesses.forEach((access) => accessesByStatus[access.status].push(access))
+    const format = (type: PassportStatus) => `
+    <h1>${type}</h1><br>
+    <table>
+      ${accessesByStatus[type]
+        .map(
+          (access) =>
+            `<tr><td>${access.user.firstName} ${access.user.lastName}</td><td>${type}</td></tr>`,
+        )
+        .join('')}
+    </table>
+    `
+    return [
+      format(PassportStatuses.Pending),
+      format(PassportStatuses.Proceed),
+      format(PassportStatuses.Caution),
+      format(PassportStatuses.Stop),
+    ].join('<br>')
   }
 
   getStatsHealth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

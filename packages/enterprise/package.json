@@ -19,6 +19,7 @@
     },
     "dependencies": {
         "express": "^4.17.1",
+        "html-pdf": "^2.2.0",
         "pug": "^3.0.0"
     },
     "devDependencies": {
