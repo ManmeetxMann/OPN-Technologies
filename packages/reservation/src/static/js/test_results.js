@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', event => {
   const submitResultsForm = document.getElementById('submitResults')
   const submitAgainBtn = document.getElementById("sendResultsAgain");
+  const successMessageModal = document.getElementById("successMessage");
+  const confirmSendingAgainModal = document.getElementById("confirmSendingAgain");
 
   submitResultsForm.addEventListener('submit', async event => {
     event.preventDefault();
@@ -26,22 +28,18 @@ document.addEventListener('DOMContentLoaded', event => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
-      })
+      });
 
-      const content = await raw.json();
-
-      $('#successMessage').modal()
-      $('#successMessage').modal('show')
+      if (raw.ok) {
+        successMessageModal.classList.add("show-modal");
+      } else {
+        if (raw.status === 409) {
+          confirmSendingAgainModal.classList.add("show-modal");
+        }
+      }
     } catch (e) {
       console.log("jqXHR.status", e);
       console.log("textStatus", e);
-
-      // @TODO Test console.log and make code below to work
-      // if (jqXHR.status == 409) {
-      //   $('#confirmSendingAgain').modal()
-      //   $('#confirmSendingAgain').modal('show')
-      // }
-
     }
 
   });
