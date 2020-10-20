@@ -1,5 +1,4 @@
-import fs from 'fs'
-import path from 'path'
+import moment from 'moment'
 import DataStore from '../../../common/src/data/datastore'
 
 import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/appoinment'
@@ -9,17 +8,13 @@ import {PdfExportService} from './pdf-export.service'
 import {Config} from '../../../common/src/utils/config'
 
 export class TestResultsService {
-  private exportFilePath = '../../export'
   private testResultEmailTemplateId = (Config.get('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 1) as number
   private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
   private emailService = new EmailService()
   private pdfExportService = new PdfExportService()
 
   async sendTestResults(testResults: TestResultsDTOForEmail): Promise<void> {
-    const pdfFileName = await this.pdfExportService.generateTestResultPdf(testResults)
-    const content = fs.readFileSync(path.join(`${this.exportFilePath}/${pdfFileName}`), {
-      encoding: 'base64',
-    })
+    const pdfContent = await this.pdfExportService.generateTestResultPdf(testResults)
 
     this.emailService.send({
       templateId: this.testResultEmailTemplateId,
@@ -27,8 +22,8 @@ export class TestResultsService {
       params: {},
       attachments: [
         {
-          content: content,
-          name: pdfFileName,
+          content: pdfContent,
+          name: `PHHealth_${moment().format('YYYYMMDDHHmmss')}.pdf`,
         },
       ],
     })
