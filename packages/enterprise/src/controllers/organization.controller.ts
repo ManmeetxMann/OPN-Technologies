@@ -77,18 +77,6 @@ const getPriorityAccess = (
   if (accessTwo && !accessOne) {
     return accessTwo
   }
-  if (
-    accessOne.status !== PassportStatuses.Pending &&
-    accessTwo.status === PassportStatuses.Pending
-  ) {
-    return accessOne
-  }
-  if (
-    accessTwo.status !== PassportStatuses.Pending &&
-    accessOne.status === PassportStatuses.Pending
-  ) {
-    return accessTwo
-  }
   // accessOne is still in the location but accessTwo is not
   if (accessOne.enteredAt && !accessOne.exitAt && (accessTwo.exitAt || !accessTwo.enteredAt)) {
     // but accessTwo is still more recent (accessTwo is 'stale')
@@ -100,7 +88,7 @@ const getPriorityAccess = (
     }
     return accessOne
   }
-  // accessTwo is still in the location but accessTwo is not
+  // accessTwo is still in the location but accessOne is not
   if (accessTwo.enteredAt && !accessTwo.exitAt && (accessOne.exitAt || !accessOne.enteredAt)) {
     // but accessOne is still more recent (accessTwo is 'stale')
     if (
@@ -1184,7 +1172,8 @@ class OrganizationController implements IControllerBase {
           }
           return null
         }
-        const bestAccess = (accessesByStatusToken[statusToken] || [])
+        // access which represents the user's present location
+        const activeAccess = (accessesByStatusToken[statusToken] || [])
           .filter((access) =>
             parentUserId
               ? access.userId === parentUserId && access.dependants[userId]
@@ -1203,7 +1192,7 @@ class OrganizationController implements IControllerBase {
             userId,
           }))
           .reduce(getPriorityAccess, null)
-        const access = bestAccess ?? {
+        const access = activeAccess ?? {
           token: null,
           statusToken: null,
           locationId: null,

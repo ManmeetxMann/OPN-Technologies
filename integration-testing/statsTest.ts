@@ -35,10 +35,11 @@ const sequence = [
   ],
 ]
 
-const TICK_LENGTH = 60 * 60 * 1000
+// amount of time we increment between steps in sequence
+const TIME_STEP_MILLIS = 60 * 60 * 1000
 
 const runStatsTest = async (): Promise<void> => {
-  const initialState = await initialize(6, 1, startTime - TICK_LENGTH)
+  const initialState = await initialize(6, 1, startTime - TIME_STEP_MILLIS)
   const accessTokens = initialState.users.map(() => [null, null, null])
   const checkInOrOut = async (user: number, person: number): Promise<void> => {
     const tokenToMove = accessTokens[user][person]
@@ -63,22 +64,13 @@ const runStatsTest = async (): Promise<void> => {
 
   let seqNum = 0
   while (seqNum < sequence.length) {
-    await setNow(startTime + (seqNum * TICK_LENGTH))
+    await setNow(startTime + (seqNum * TIME_STEP_MILLIS))
     await Promise.all(sequence[seqNum].map((action) => checkInOrOut(action.user, action.person)))
     seqNum ++
   }
-  await setNow(startTime + (seqNum * TICK_LENGTH))
+  await setNow(startTime + (seqNum * TIME_STEP_MILLIS))
   const result = await getStats(initialState.organization.id, initialState.authIds[0])
   console.log(result)
-//   const prnt = r => `entered: ${r.enteredAt}, exit: ${r.exitAt}, ${r.id}`
-//   initialState.users.forEach((user, index) => {
-//     // @ts-ignore
-//     console.log(`User ${index}, guardian   `, prnt(result.accesses.find(acc => acc.userId === user.id)))
-//     // @ts-ignore
-//     console.log(`User ${index}, dependant 1`, prnt(result.accesses.find(acc => acc.userId === user.dependants[0].id)))
-//     // @ts-ignore
-//     console.log(`User ${index}, dependant 2`, prnt(result.accesses.find(acc => acc.userId === user.dependants[1].id)))
-//   })
 }
 
 runStatsTest()
