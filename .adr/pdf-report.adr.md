@@ -23,8 +23,8 @@ The Admin app currently allows an admin to see various reporting views. We must 
     - A list of all users who checked in during the given dateTime range
     - A list of all users who checked out during the given dateTime range
 - The admin should have the ability to generate a PDF for a per user report
-- The per user report should contain all of the same data that is shown on the front ends
-    - this includes traces that the user is involved in, either as the exposed or exposing user
+- The per user report should contain all of the same data that is shown on the front ends. This includes:
+    - Traces that the user is involved in, either as the exposed or exposing user
     - Time/date of each assessment completed by a user
     - Name of the users parent/guardian if applicable
     - Assessment responses up to the last 30 days
