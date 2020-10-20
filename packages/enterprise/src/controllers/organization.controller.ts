@@ -152,6 +152,7 @@ class OrganizationController implements IControllerBase {
         .get('/contact-trace-exposures', this.getUserContactTraceExposures)
         .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
         .get('/family', this.getFamilyStats)
+        .get('/report', this.getStatsReport)
     )
     const organizations = Router().use(
       '/organizations',
@@ -603,6 +604,65 @@ class OrganizationController implements IControllerBase {
       const response = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
 
       res.json(actionSucceed(response))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getStatsReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId} = req.params
+      const {groupId, locationId, from, to} = req.query as StatsFilter
+
+      const authenticatedUser = res.locals.connectedUser as User
+      const admin = authenticatedUser.admin as AdminProfile
+      const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
+      const isHealthAdmin = admin.healthAdminForOrganizationIds?.includes(organizationId)
+      const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
+
+      if (!canAccessOrganization) {
+        replyInsufficientPermission(res)
+        return
+      }
+
+      // If group is specified, make sure we are group admin
+      if (groupId) {
+        const hasGrantedPermission = isSuperAdmin || admin.adminForGroupIds?.includes(groupId)
+        if (!hasGrantedPermission) {
+          replyInsufficientPermission(res)
+          return
+        }
+        // Assert group exists
+        await this.organizationService.getGroup(organizationId, groupId)
+      }
+
+      // If location is specified, make sure we are location admin
+      if (locationId) {
+        const hasGrantedPermission = isSuperAdmin || admin.adminForLocationIds?.includes(locationId)
+        if (!hasGrantedPermission) {
+          replyInsufficientPermission(res)
+          return
+        }
+        // Assert location exists
+        await this.organizationService.getLocation(organizationId, locationId)
+      }
+
+      // If no group and no location is specified, make sure we are the health admin
+      if (!groupId && !locationId && !isHealthAdmin) {
+        replyInsufficientPermission(res)
+        return
+      }
+
+      const statsObject = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
+
+      const accessesByStatus = {
+        [PassportStatuses.Pending]: [],
+        [PassportStatuses.Proceed]: [],
+        [PassportStatuses.Caution]: [],
+        [PassportStatuses.Stop]: [],
+      }
+      statsObject.accesses.forEach((access) => accessesByStatus[access.status].push(access))
+      res.status(200).json(accessesByStatus)
     } catch (error) {
       next(error)
     }
