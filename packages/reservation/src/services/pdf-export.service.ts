@@ -4,9 +4,10 @@ import handlebars from 'handlebars'
 import moment from 'moment'
 
 import {TestResultsDTOForEmail} from '../models/appoinment'
+import path from 'path'
 
 export class PdfExportService {
-  private templatePath = '../templates/test-result.html'
+  private templatePath = path.join(__dirname, '../templates/test-result.html')
 
   async generateTestResultPdf(testResults: TestResultsDTOForEmail): Promise<string> {
     const html = fs.readFileSync(this.templatePath, {encoding: 'utf-8'})

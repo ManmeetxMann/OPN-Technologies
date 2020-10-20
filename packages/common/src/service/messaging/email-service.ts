@@ -46,7 +46,7 @@ type EmailMessage = {
   templateId: number
   params: Record<string, unknown>
   sender?: EmailMessageParticipant
-  attachments?: EmailAttachment[]
+  attachment?: EmailAttachment[]
 }
 
 const APIKEY = Config.get('EMAIL_PROVIDER_API_KEY')

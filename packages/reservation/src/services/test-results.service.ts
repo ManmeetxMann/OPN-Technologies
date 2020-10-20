@@ -22,7 +22,7 @@ export class TestResultsService {
       params: {
         link: '',
       },
-      attachments: [
+      attachment: [
         {
           content: pdfContent,
           name: `PHHealth_${moment().format('YYYYMMDDHHmmss')}.pdf`,
