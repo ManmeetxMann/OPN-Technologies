@@ -69,6 +69,15 @@ jobs:
 
           # Auth Specific
           APIDOCS_PASSWORD=${{ secrets.DEV_APIDOCS_PWD }}
+          RESERVATION_PASSWORD=${{ secrets.DEV_RESERVATION_PWD }}
+
+          # Accuity
+          ACUITY_SCHEDULER_USERNAME=${{ secrets.ACUITY_SCHEDULER_USERNAME }}
+          ACUITY_SCHEDULER_PASSWORD=${{ secrets.ACUITY_SCHEDULER_PASSWORD }}
+          ACUITY_SCHEDULER_API_URL=https://acuityscheduling.com
+          ACUITY_FIELD_BARCODE=${{ secrets.ACUITY_FIELD_BARCODE }}
+          ACUITY_FIELD_DATE_OF_BIRTH=${{ secrets.ACUITY_FIELD_DATE_OF_BIRTH }}
+          ACUITY_FIELD_NURSE_NAME=${{ secrets.ACUITY_FIELD_NURSE_NAME }}
         write-mode: overwrite
     - run: npm install
     - run: npm run install-all
