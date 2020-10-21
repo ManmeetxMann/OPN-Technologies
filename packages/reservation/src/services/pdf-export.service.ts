@@ -22,12 +22,18 @@ export class PdfExportService {
     })
 
     return new Promise<string>((resolve, reject) => {
-      pdf.create(htmlToExport).toBuffer((err, buffer) => {
-        if (err) {
-          reject(err)
-        }
-        resolve(buffer.toString('base64'))
-      })
+      pdf
+        .create(htmlToExport, {
+          width: '21cm',
+          height: '32cm',
+          type: 'pdf',
+        })
+        .toBuffer((err, buffer) => {
+          if (err) {
+            reject(err)
+          }
+          resolve(buffer.toString('base64'))
+        })
     })
   }
 }
