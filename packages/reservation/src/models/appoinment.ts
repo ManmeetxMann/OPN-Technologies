@@ -50,9 +50,9 @@ export type BarCodeGeneratorUI = {
   getNextBarCodeTab: string
 }
 
-enum ResultTypes {
-  Positive,
-  Negative,
+export enum ResultTypes {
+  Positive = 'Positive',
+  Negative = 'Negative',
 }
 
 type TestResultsBase = {

@@ -2,7 +2,7 @@ import fs from 'fs'
 import pdf from 'html-pdf'
 import handlebars from 'handlebars'
 
-import {TestResultsDTOForEmail} from '../models/appoinment'
+import {ResultTypes, TestResultsDTOForEmail} from '../models/appoinment'
 import path from 'path'
 
 export class PdfExportService {
@@ -17,6 +17,7 @@ export class PdfExportService {
     const template = handlebars.compile(html)
     const htmlToExport = template({
       ...testResults,
+      result: testResults.result === ResultTypes.Positive,
       createTime: todaysDate,
     })
 
