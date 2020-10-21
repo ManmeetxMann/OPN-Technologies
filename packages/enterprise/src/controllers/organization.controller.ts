@@ -819,10 +819,15 @@ class OrganizationController implements IControllerBase {
         if (!questionnaire) {
           console.warn(`no questionnaire found for attestation ${attestation.id}`)
         }
-        return answerKeys.map((key) => ({
-          question: questionnaire?.questions[key]?.value,
-          answers: attestation.answers[key],
-        }))
+        return {
+          response: answerKeys.map((key) => ({
+            question: questionnaire?.questions[key]?.value,
+            answers: attestation.answers[key],
+          })),
+          // @ts-ignore timestamp, not string
+          time: attestation.attestationTime().toDate().toISOString() as string,
+          status: attestation.status,
+        }
       })
       res.status(200)
     } catch (error) {
