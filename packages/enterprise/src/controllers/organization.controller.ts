@@ -625,29 +625,46 @@ class OrganizationController implements IControllerBase {
   getUserReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {userId, parentUserId, from, to} = req.query
+      const {userId: primaryId, parentUserId: secondaryId, from, to} = req.query
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
       const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
 
+      const userId = (secondaryId || primaryId) as string
+      const dependantId = secondaryId ? (primaryId as string) : null
       if (!canAccessOrganization) {
         replyInsufficientPermission(res)
         return
       }
 
-      const attestations = await this.attestationService.getAttestationsInPeriod(
-        userId as string,
-        from,
-        to,
-      )
-      const exposures = await this.attestationService.getExposuresInPeriod(
-        userId as string,
-        from,
-        to,
-      )
-      const traces = await this.attestationService.getTracesInPeriod(userId as string, from, to)
+      const [attestations, exposureTraces, userTraces] = await Promise.all([
+        this.attestationService.getAttestationsInPeriod(
+          primaryId as string,
+          from as string,
+          to as string,
+        ),
+        this.attestationService.getExposuresInPeriod(
+          primaryId as string,
+          from as string,
+          to as string,
+        ),
+        this.attestationService.getTracesInPeriod(
+          userId,
+          from as string,
+          to as string,
+          dependantId,
+        ),
+      ])
+      const userIds = new Set<string>([userId])
+      const dependantIds = new Set<string>()
+      if (dependantId) {
+        dependantIds.add(dependantId)
+      }
 
+      exposureTraces.forEach((trace) => {
+        userIds.add(trace.userId)
+      })
       res.status(200)
     } catch (error) {
       next(error)
@@ -962,38 +979,12 @@ class OrganizationController implements IControllerBase {
         }),
       )
 
-      // N queries
-      const statuses = await Promise.all(
-        [...allDependantIds, ...allUserIds].map(
-          async (id): Promise<{id: string; status: PassportStatus}> => ({
-            id,
-            status: await this.attestationService.latestStatus(id),
-          }),
-        ),
-      )
-
-      const statusLookup: Record<string, PassportStatus> = statuses.reduce(
-        (lookup, curr) => ({...lookup, [curr.id]: curr.status}),
-        {},
-      )
-
-      const allUsers = await this.userService.findAllBy({userIds: [...allUserIds]})
-      const usersById: Record<string, User> = allUsers.reduce(
-        (lookup, user) => ({...lookup, [user.id]: user}),
-        {},
-      )
-      // every group this organization contains
-      const allGroups = await this.organizationService.getGroups(organizationId)
-      const groupsById: Record<string, OrganizationGroup> = allGroups.reduce(
-        (lookup, group) => ({...lookup, [group.id]: group}),
-        {},
-      )
-      // every location this organization contains
-      const allLocations = await this.organizationService.getAllLocations(organizationId)
-      const locationsById: Record<string, OrganizationLocation> = allLocations.reduce(
-        (lookup, location) => ({...lookup, [location.id]: location}),
-        {},
-      )
+      const {
+        locationsLookup: locationsById,
+        statusesLookup,
+        usersLookup: usersById,
+        groupsLookup: groupsById,
+      } = await this.getLookups(allUserIds, allDependantIds, organizationId)
 
       // group memberships for all the users we're interested in
       // dependant membership is already included in the trace
@@ -1015,7 +1006,7 @@ class OrganizationController implements IControllerBase {
           location: locationsById[locationId],
           overlapping: overlapping.map(({userId, dependant, start, end}) => ({
             userId,
-            status: statusLookup[userId] ?? PassportStatuses.Pending,
+            status: statusesLookup[userId] ?? PassportStatuses.Pending,
             group: groupsByUserId[userId],
             firstName: usersById[userId].firstName,
             lastName: usersById[userId].lastName,
@@ -1030,7 +1021,7 @@ class OrganizationController implements IControllerBase {
                   firstName: dependant.firstName,
                   lastName: dependant.lastName,
                   group: groupsById[dependant.groupId],
-                  status: statusLookup[dependant.id] ?? PassportStatuses.Pending,
+                  status: statusesLookup[dependant.id] ?? PassportStatuses.Pending,
                 }
               : null,
           })),
@@ -1062,11 +1053,7 @@ class OrganizationController implements IControllerBase {
       {},
     )
 
-    const allUsers = await this.userService.findAllBy({userIds: [...userIds]})
-    const usersById: Record<string, User> = allUsers.reduce(
-      (lookup, user) => ({...lookup, [user.id]: user}),
-      {},
-    )
+    const usersById = await this.getUsersById([...userIds])
 
     const allDependants: UserDependant[] = _.flatten(
       await Promise.all([...userIds].map((id) => this.userService.getAllDependants(id))),
