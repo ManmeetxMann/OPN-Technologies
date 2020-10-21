@@ -825,7 +825,7 @@ class OrganizationController implements IControllerBase {
             answers: attestation.answers[key],
           })),
           // @ts-ignore timestamp, not string
-          time: attestation.attestationTime().toDate().toISOString() as string,
+          time: attestation.attestationTime.toDate().toISOString() as string,
           status: attestation.status,
         }
       })
@@ -1264,17 +1264,17 @@ class OrganizationController implements IControllerBase {
       to: live ? undefined : new Date(to),
     }
     const accesses = parentUserId
-      ? (
+      ? await this.accessService.findAllWithDependents({
+          userId: parentUserId,
+          dependentId: userId,
+          betweenCreatedDate,
+        })
+      : (
           await this.accessService.findAllWith({
             userIds: [userId],
             betweenCreatedDate,
           })
         ).filter((acc) => acc.includesGuardian)
-      : await this.accessService.findAllWithDependents({
-          userId: parentUserId,
-          dependentId: userId,
-          betweenCreatedDate,
-        })
     const enteringAccesses = accesses.filter((access) => access.enteredAt)
     const exitingAccesses = accesses.filter((access) => access.exitAt)
     enteringAccesses.sort((a, b) => {
