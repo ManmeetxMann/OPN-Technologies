@@ -32,8 +32,11 @@ import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
+import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
+import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
 import {Stream} from 'stream'
+import {ExposureReport} from '../../../access/src/models/trace'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -127,6 +130,7 @@ class OrganizationController implements IControllerBase {
   private accessService = new AccessService()
   private passportService = new PassportService()
   private attestationService = new AttestationService()
+  private questionnaireService = new QuestionnaireService()
 
   constructor() {
     this.initRoutes()
@@ -672,13 +676,17 @@ class OrganizationController implements IControllerBase {
           secondaryId as string,
         ),
       ])
+      // sort by ascending attestation time
+      attestations.sort((a, b) =>
+        new Date(a.attestationTime) < new Date(b.attestationTime) ? -1 : 1,
+      )
       const userIds = new Set<string>([userId])
       const dependantIds = new Set<string>()
       if (dependantId) {
         dependantIds.add(dependantId)
       }
       // overlaps where the other user might have been sick
-      const exposureOverlaps = []
+      const exposureOverlaps: ExposureReport['overlapping'] = []
       exposureTraces.forEach((trace) =>
         trace.exposures.forEach((exposure) =>
           exposure.overlapping.forEach((overlap) => {
@@ -688,15 +696,13 @@ class OrganizationController implements IControllerBase {
             ) {
               exposureOverlaps.push(overlap)
               userIds.add(overlap.sourceUserId)
-              if (overlap.sourceDependantId) {
-                userIds.add(overlap.sourceDependantId)
-              }
+              // no need to add dependant id to the lookup tables here, it's included in the trace
             }
           }),
         ),
       )
-      // overlaps where this user was sick
-      const traceOverlaps = []
+      // overlaps where this user might have been sick
+      const traceOverlaps: ExposureReport['overlapping'] = []
       userTraces.forEach((trace) =>
         trace.exposures.forEach((exposure) =>
           exposure.overlapping.forEach((overlap) => {
@@ -714,7 +720,30 @@ class OrganizationController implements IControllerBase {
         ),
       )
       const lookups = await this.getLookups(userIds, dependantIds, organizationId)
-      const {locationsLookup, usersLookup, dependantsLookup} = lookups
+      const {locationsLookup, usersLookup, dependantsLookup, groupsLookup} = lookups
+
+      const questionnaireIds = new Set<string>()
+      Object.values(locationsLookup).forEach((location) =>
+        questionnaireIds.add(location.questionnaireId),
+      )
+      const questionnaires = await Promise.all(
+        [...questionnaireIds].map((id) => this.questionnaireService.getQuestionnaire(id)),
+      )
+
+      const questionnairesLookup: Record<number, Questionnaire> = questionnaires.reduce(
+        (lookupSoFar, questionnaire) => {
+          const count = Object.keys(questionnaire.questions).length
+          if (lookupSoFar[count]) {
+            console.warn(`Multiple questionnaires with ${count} questions`)
+            return lookupSoFar
+          }
+          return {
+            ...lookupSoFar,
+            [count]: questionnaire,
+          }
+        },
+        {},
+      )
 
       const printableAccessHistory = []
       let enterIndex = 0
@@ -758,7 +787,43 @@ class OrganizationController implements IControllerBase {
           enterIndex += 1
         }
       }
-
+      const printableExposures = exposureOverlaps.map((overlap) => ({
+        firstName: overlap.dependant
+          ? overlap.dependant.firstName
+          : usersLookup[overlap.userId].firstName,
+        lastName: overlap.dependant
+          ? overlap.dependant.lastName
+          : usersLookup[overlap.userId].lastName,
+        groupName: groupsLookup[overlap.dependant?.id ?? overlap.userId],
+        start: overlap.start.toISOString(),
+        end: overlap.end.toISOString(),
+      }))
+      const printableTraces = traceOverlaps.map((overlap) => ({
+        firstName: (overlap.sourceDependantId
+          ? dependantsLookup[overlap.sourceDependantId]
+          : usersLookup[overlap.sourceUserId]
+        ).firstName,
+        lastName: (overlap.sourceDependantId
+          ? dependantsLookup[overlap.sourceDependantId]
+          : usersLookup[overlap.sourceUserId]
+        ).lastName,
+        groupName: groupsLookup[overlap.sourceDependantId ?? overlap.sourceUserId],
+        start: overlap.start.toISOString(),
+        end: overlap.end.toISOString(),
+      }))
+      const printableAttestations = attestations.map((attestation) => {
+        const answerKeys = Object.keys(attestation.answers)
+        answerKeys.sort((a, b) => parseInt(a) - parseInt(b))
+        const answerCount = answerKeys.length
+        const questionnaire = questionnairesLookup[answerCount]
+        if (!questionnaire) {
+          console.warn(`no questionnaire found for attestation ${attestation.id}`)
+        }
+        return answerKeys.map((key) => ({
+          question: questionnaire?.questions[key]?.value,
+          answers: attestation.answers[key],
+        }))
+      })
       res.status(200)
     } catch (error) {
       next(error)
