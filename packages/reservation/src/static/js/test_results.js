@@ -4,20 +4,22 @@ document.addEventListener('DOMContentLoaded', event => {
   const successMessageModal = document.getElementById("successMessage");
   const confirmSendingAgainModal = document.getElementById("confirmSendingAgain");
 
+  const getbyId = function( id ) { return document.getElementById( id ).value; };
+
   submitResultsForm.addEventListener('submit', async event => {
     event.preventDefault();
 
     const data = {
-      barCode: 'TEST1000000005',
-      result: 'Positive',
-      famEGene: 'fam1',
-      famCt: 'fmct',
-      calRed61RdRpGene: 'A1000000005',
-      calRed61Ct: 'A1000000005',
-      quasar670NGene: 'A1000000005',
-      quasar670Ct: 'A1000000005',
-      hexIC: 'A1000000005',
-      hexCt: 'A1000000005',
+      barCode: getbyId('barCode'),
+      result: getbyId('result'),
+      famEGene: getbyId('famEGene'),
+      famCt: getbyId('famCt'),
+      calRed61RdRpGene: getbyId('calRed61RdRpGene'),
+      calRed61Ct: getbyId('calRed61Ct'),
+      quasar670NGene: getbyId('quasar670NGene'),
+      quasar670Ct: getbyId('quasar670Ct'),
+      hexIC: getbyId('hexIC'),
+      hexCt: getbyId('hexCt'),
     }
 
     try {
@@ -46,7 +48,7 @@ document.addEventListener('DOMContentLoaded', event => {
 
   submitAgainBtn.addEventListener('click', async e => {
     const data = {
-      barCode: 'TEST1000000005',
+      barCode: getbyId('barCode'),
     }
 
     try {
