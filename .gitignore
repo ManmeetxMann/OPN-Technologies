@@ -42,3 +42,6 @@ packages/apidocs/docs/*.yaml
 .env.prod
 .env.latest
 */.env.*
+
+#TestFiles
+packages/*/__tests__/*/*.pdf

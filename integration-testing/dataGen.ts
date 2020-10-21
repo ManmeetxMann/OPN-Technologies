@@ -11,8 +11,20 @@ import {
   scanEntry,
   scanExit,
 } from './utils'
+import {
+  OrganizationLocation,
+  Organization,
+  OrganizationGroup,
+} from 'packages/enterprise/src/models/organization'
+import {User} from 'packages/common/src/data/user'
+import {Passport} from 'packages/passport/src/models/passport'
 
 let now = 1080216000000
+
+export const setNow = async (time: number): Promise<void> => {
+  now = time
+  await setTime(['Access', 'Passport', 'Enterprise'], now)
+}
 
 const nameSegments = [
   'Alfa',
@@ -67,48 +79,56 @@ const randomPick = (): boolean[] => {
 
 const getEmail = () => `${getName('', 2)}@stayopn.com`.toLowerCase()
 
-const LOCATION_COUNT = 7
-const USER_COUNT = 50
+type InitialState = {
+  organization: Organization
+  group: OrganizationGroup
+  users: User[]
+  passports: Passport[]
+  locations: OrganizationLocation[]
+  authIds: string[]
+}
 
-const generate = async () => {
-  await setTime(['Access', 'Passport', 'Enterprise'], now)
+export const initialize = async (
+  userCount: number,
+  locationCount: number,
+  startTime: number,
+): Promise<InitialState> => {
+  await setNow(startTime)
 
   // servers must be running
-  const org = await createOrg('The Daycare Center')
-  const group = await createGroup(org.id, 'default')
+  const organization = await createOrg('The Daycare Center')
+  const group = await createGroup(organization.id, 'default')
   const groupId = group.id
-  const locs = []
+  const locations = []
   let i = 0
   // for some reason createLocations isn't thread safe, so this is done serially
   // TODO: figure out why
-  while (i < LOCATION_COUNT) {
+  while (i < locationCount) {
     const name = getName('location', 2)
-    const newLoc = await createLocation(org.id, name)
-    // console.log(i, name, newLoc)
-    locs.push(newLoc)
+    const newLoc = await createLocation(organization.id, name)
+    locations.push(newLoc)
     i++
   }
-  //   console.log(locs.length)
-  const authIds = locs.map((_, i) => getName(`${i}`, 2))
-  const emails = locs.map(() => getEmail())
+  const authIds = locations.map((_, i) => getName(`${i}`, 4))
+  const emails = locations.map(() => getEmail())
   await Promise.all(
-    locs.map((loc, i) =>
+    locations.map((loc, i) =>
       createAdmin(
         getName('', 1),
         randomSegment().substr(0, 1),
         emails[i],
         [loc.id],
-        org.id,
+        organization.id,
         authIds[i],
         groupId,
       ),
     ),
   )
-  const userCountArr = new Array(USER_COUNT)
-  userCountArr.fill(0, 0, USER_COUNT)
+  const userCountArr = new Array(userCount)
+  userCountArr.fill(0, 0, userCount)
   const users = await Promise.all(
     userCountArr.map(() =>
-      createUser(org.id, getName('user', 3), randomSegment(), groupId).then((user) => ({
+      createUser(organization.id, getName('user', 3), randomSegment(), groupId).then((user) => ({
         ...user,
         dependants: [],
       })),
@@ -122,20 +142,35 @@ const generate = async () => {
         lastName: user.lastName,
         groupId,
       })),
-      org.id,
+      organization.id,
     )
   }
-  const attestations = await Promise.all(
+  const passports = await Promise.all(
     users.map((user, i) =>
       attest(
         user.id,
-        locs[i % locs.length].id,
+        locations[i % locations.length].id,
         false,
         user.dependants.map(({id}) => id),
       ),
     ),
   )
+  return {
+    organization,
+    group,
+    users,
+    locations,
+    authIds,
+    passports,
+  }
+}
 
+export const fakeCheckIns = async (
+  users: User[],
+  locs: OrganizationLocation[],
+  authIds: string[],
+  passports: Passport[],
+): Promise<void> => {
   // index 0 is whether or not the user is on location, index n is whether dependant n-1 is on location
   const onLocation = users.map(() => null)
   const locIndexes = users.map(() => null)
@@ -144,9 +179,8 @@ const generate = async () => {
   const endTime = now + 1000 * 60 * 60 * 2
   // 2 hours of 1 action/minute
   while (now < endTime) {
-    now += 60000 // forward one minute
-    // console.log(now)
-    await setTime(['Access', 'Passport', 'Enterprise'], now)
+    // forward one minute
+    await setNow(now + 60000)
     // pick a user at random to act
     const userIndex = Math.floor(Math.random() * users.length)
     const user = users[userIndex]
@@ -157,13 +191,14 @@ const generate = async () => {
       locIndexes[userIndex] = locationIndex
       const involved = randomPick()
       onLocation[userIndex] = involved
+      // @ts-ignore user does have dependants
       const dependantIds = user.dependants
         .map((dep, index) => involved[index + 1] && dep.id)
         .filter((notNull) => notNull)
       const access = await createAccess(
         user.id,
         locs[locationIndex].id,
-        attestations[userIndex].statusToken,
+        passports[userIndex].statusToken,
         dependantIds,
         involved[0],
       )
@@ -179,5 +214,3 @@ const generate = async () => {
   const sickUserIndex = Math.floor(Math.random() * users.length)
   await attest(users[sickUserIndex].id, locs[0].id, true, [])
 }
-
-generate()

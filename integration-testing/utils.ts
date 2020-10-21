@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import dotenv from 'dotenv'
 
 import type {
   Organization,
@@ -8,10 +9,10 @@ import type {
 import type {Passport} from '../packages/passport/src/models/passport'
 import type {Access} from '../packages/access/src/models/access'
 import type {User} from '../packages/common/src/data/user'
-const PUSH_TOKEN = ''
-// uncomment to send messages to David
-// or add your own push token FROM STAGING
-// const PUSH_TOKEN = 'eBadYtPIRU-EvWbeupP3gN:APA91bGWl-Gix1mODMyXXtohd-PqdIJJwp4x9t9o-oeYjXc1Ljm3qUiTuMgHY5rscslIJsuDEuQ3YeosVT4uUjORql_HhtJwSIF4NokkZ7EaqA52iTvK_Y5Fyy3ARVEo7z0DI70gs0RC'
+
+dotenv.config()
+const {PUSH_TOKEN} = process.env
+
 type Service = 'Config' | 'Access' | 'Enterprise' | 'Lookup' | 'Passport' | 'Registry'
 
 const roots = {
@@ -37,6 +38,11 @@ const post = (url: string, body: unknown, extraHeaders?: Record<string, string>)
     method: 'POST',
     headers: {...headers, ...extraHeaders},
     body: JSON.stringify(body),
+  })
+const get = (url: string, extraHeaders?: Record<string, string>) =>
+  fetch(url, {
+    method: 'GET',
+    headers: {...headers, ...extraHeaders},
   })
 
 export const setTime = async (services: Service[], milliseconds: number): Promise<void> => {
@@ -104,13 +110,7 @@ export const createAdmin = async (
     showReporting: true,
     groupIds: [groupId],
   })
-  const user = await createUser(
-    organizationId,
-    firstName,
-    lastName,
-    groupId,
-    PUSH_TOKEN,
-  )
+  const user = await createUser(organizationId, firstName, lastName, groupId, PUSH_TOKEN)
   await post(`${roots.Enterprise}/admin/auth/signIn/request`, {
     email,
     // @ts-ignore
@@ -235,4 +235,10 @@ export const scanExit = async (
       Authorization: `Bearer ${authId}`,
     },
   ).then(getData)
+}
+
+export const getStats = async (organizationId: string, authId: string): Promise<unknown> => {
+  return get(`${roots.Enterprise}/organizations/${organizationId}/stats`, {
+    Authorization: `Bearer ${authId}`,
+  }).then(getData)
 }

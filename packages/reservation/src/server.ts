@@ -1,3 +1,5 @@
+import * as express from 'express'
+
 import App from '../../common/src/express/app'
 
 import * as bodyParser from 'body-parser'
@@ -9,6 +11,7 @@ import PortalController from './controllers/portal.controller'
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
 import exphbs from 'express-handlebars'
+import path from 'path'
 
 const PORT = Number(process.env.PORT) || 5008
 
@@ -25,6 +28,7 @@ const app = new App({
 //Attach handlebar only for Reservation Server
 app.app.engine('handlebars', exphbs())
 app.app.set('view engine', 'handlebars')
+app.app.use('/static', express.static(path.join(__dirname, 'static')))
 
 app.listen()
 

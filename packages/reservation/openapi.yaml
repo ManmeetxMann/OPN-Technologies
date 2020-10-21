@@ -69,10 +69,11 @@ components:
               nullable: true
               type: string
 
+
 paths:
   /admin/page/next-bar-code:
     get:
-      description: Show Next Bar Code 
+      description: Show Next Bar Code
       parameters:
         - in: query
           name: newcode
@@ -85,6 +86,18 @@ paths:
             text/html:
               schema:
                 type: string
+
+  /admin/page/send-single-results:
+    get:
+      description: Form to Send Single Results
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/html:
+              schema:
+                type: string
+
   /admin/page/appointment-by-bar-code:
     get:
       description: Show Form to Enter Bar Code
@@ -107,7 +120,7 @@ paths:
 
   /admin/api/v1/appointment:
     post: #Post is used to avoid sending PI info to access logs
-      description: Get Appoinment for Bar Code  
+      description: Get Appoinment for Bar Code
       requestBody:
         content:
           application/json:
@@ -126,6 +139,80 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
+
+  /admin/api/v1/send-and-save-test-results:
+    post:
+      description: Save and Send Single Results
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                barCode:
+                  type: string
+                result:
+                  type: string
+                  enum:
+                    - Positive
+                    - Negative
+                famEGene:
+                  type: string
+                famCt:
+                  type: string
+                calRed61RdRpGene:
+                  type: string
+                calRed61Ct:
+                  type: string
+                quasar670NGene:
+                  type: string
+                quasar670Ct:
+                  type: string
+                hexIC:
+                  type: string
+                hexCt:
+                  type: string
+              required:
+                - barCode
+                - result
+                - famEGene
+                - famCt
+                - calRed61RdRpGene
+                - calRed61Ct
+                - quasar670NGene
+                - quasar670Ct
+                - hexIC
+                - hexCt
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /admin/api/v1/send-test-results-again:
+    post:
+      description: Send Results Again
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                barCode:
+                  type: string
+              required:
+                - barCode
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/html:
+              schema:
+                type: string
 
   /admin/js/print-label.js:
     get:

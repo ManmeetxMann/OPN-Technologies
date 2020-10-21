@@ -89,22 +89,26 @@ const getPriorityAccess = (
   if (accessTwo && !accessOne) {
     return accessTwo
   }
-  if (
-    accessOne.status !== PassportStatuses.Pending &&
-    accessTwo.status === PassportStatuses.Pending
-  ) {
-    return accessOne
-  }
-  if (
-    accessTwo.status !== PassportStatuses.Pending &&
-    accessOne.status === PassportStatuses.Pending
-  ) {
-    return accessTwo
-  }
+  // accessOne is still in the location but accessTwo is not
   if (accessOne.enteredAt && !accessOne.exitAt && (accessTwo.exitAt || !accessTwo.enteredAt)) {
+    // but accessTwo is still more recent (accessTwo is 'stale')
+    if (
+      accessTwo.enteredAt &&
+      new Date(accessTwo.enteredAt).getTime() > new Date(accessOne.enteredAt).getTime()
+    ) {
+      return accessTwo
+    }
     return accessOne
   }
+  // accessTwo is still in the location but accessOne is not
   if (accessTwo.enteredAt && !accessTwo.exitAt && (accessOne.exitAt || !accessOne.enteredAt)) {
+    // but accessOne is still more recent (accessTwo is 'stale')
+    if (
+      accessOne.enteredAt &&
+      new Date(accessOne.enteredAt).getTime() > new Date(accessTwo.enteredAt).getTime()
+    ) {
+      return accessOne
+    }
     return accessTwo
   }
   if (new Date(accessOne.exitAt).getTime() > new Date(accessTwo.exitAt).getTime()) {
@@ -958,17 +962,34 @@ class OrganizationController implements IControllerBase {
       }
 
       // fetch exposures in the time period
-      const rawExposures = await this.attestationService.getTracesInPeriod(
+      const rawTraces = await this.attestationService.getTracesInPeriod(
         isParentUser ? userId : parentUserId,
         from,
         to,
         isParentUser ? null : userId,
       )
 
+      // filter down to only the overlaps with the user we're interested in
+      const relevantTraces = rawTraces
+        .map((trace) => {
+          const exposures = trace.exposures.map((exposure) => {
+            const overlapping = exposure.overlapping.filter((overlap) =>
+              isParentUser ? !overlap.sourceDependantId : overlap.sourceDependantId === userId,
+            )
+            return {...exposure, overlapping}
+          })
+
+          return {
+            ...trace,
+            exposures: exposures.filter(({overlapping}) => overlapping.length),
+          }
+        })
+        .filter(({exposures}) => exposures.length)
+
       // ids of all the users we need more information about
       const allUserIds = new Set<string>()
       const allDependantIds = new Set<string>()
-      rawExposures.forEach(({exposures}) =>
+      relevantTraces.forEach(({exposures}) =>
         exposures.forEach((exposure) => {
           exposure.overlapping.forEach((overlap) => {
             allUserIds.add(overlap.userId)
@@ -997,7 +1018,7 @@ class OrganizationController implements IControllerBase {
       )
 
       // WARNING: adding properties to models may not cause them to appear here
-      const result = rawExposures.map(({date, duration, exposures}) => ({
+      const result = relevantTraces.map(({date, duration, exposures}) => ({
         date,
         duration,
         exposures: exposures.map(({overlapping, date, organizationId, locationId}) => ({
@@ -1319,11 +1340,12 @@ class OrganizationController implements IControllerBase {
           }
           return null
         }
-        const bestAccess = (accessesByStatusToken[statusToken] || [])
-          .filter(
-            (access) =>
-              access.userId === (parentUserId ?? userId) &&
-              (!parentUserId || Object.keys(access.dependants).includes(userId)),
+        // access which represents the user's present location
+        const activeAccess = (accessesByStatusToken[statusToken] || [])
+          .filter((access) =>
+            parentUserId
+              ? access.userId === parentUserId && access.dependants[userId]
+              : access.userId === userId && access.includesGuardian,
           )
           .map((access) => ({
             ...access,
@@ -1338,7 +1360,7 @@ class OrganizationController implements IControllerBase {
             userId,
           }))
           .reduce(getPriorityAccess, null)
-        const access = bestAccess ?? {
+        const access = activeAccess ?? {
           token: null,
           statusToken: null,
           locationId: null,

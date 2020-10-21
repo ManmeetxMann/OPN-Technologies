@@ -10,16 +10,19 @@
         "dev:debug": "nodemon --inspect=3008 src/server.ts",
         "dev:local": "FIRESTORE_EMULATOR_HOST=localhost:8080 PUBSUB_EMULATOR_HOST=localhost:8085 FEATURE_DEBUG_MANUAL_TIMESTAMPS=enabled DEBUG_GUILIBLE_MODE=enabled ts-node src/server.ts",
         "clean": "rimraf -rf ./dist",
-        "prepare": "copyfiles ../common/.env dist/common && copyfiles app.yaml dist && copyfiles ./views/* dist && copyfiles ./views/layouts/* dist && copyfiles openapi.yaml dist && copyfiles package.json dist && node ../../__devops/package-cleaner.js reservation start",
+        "prepare": "copyfiles ../common/.env dist/common && copyfiles app.yaml dist && copyfiles openapi.yaml dist && copyfiles package.json dist && node ../../__devops/package-cleaner.js reservation start",
+        "add_web_assets": "copyfiles ./views/* dist && copyfiles ./views/layouts/* dist && copyfiles ./src/static/js/* dist/reservation/ && copyfiles ./src/templates/* dist/reservation/",
         "compile": "tsc -p tsconfig.build.json",
-        "build": "npm run clean && npm run prepare && npm run compile",
+        "build": "npm run clean && npm run compile && npm run prepare && npm run add_web_assets",
         "gcloud_deploy": "gcloud app deploy ./dist --quiet",
         "deploy": "npm run build && npm run gcloud_deploy",
         "initialize": "ts-node -e \"require('./src/server.ts').init()\""
     },
     "dependencies": {
         "express": "^4.17.1",
-        "express-handlebars":"5.1.0"
+        "express-handlebars": "5.1.0",
+        "handlebars": "^4.7.6",
+        "html-pdf": "^2.2.0"
     },
     "devDependencies": {
         "copyfiles": "^2.3.0",
