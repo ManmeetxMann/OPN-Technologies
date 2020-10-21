@@ -210,7 +210,15 @@
         </p>
     </div>
     <div>
+        {{#result}}
         <p>This result, along with the patron’s name and phone number have been forwarded to Public Health as per requirement by law, and the patron may be contacted. If you are the patron receiving the test, you should now follow the Public Health guidelines, which can be found here: https://www.toronto.ca/home/covid-19/covid-19-what-you-should-do/covid-19-have-symptoms-or-been-exposed/</p>
+        {{/result}}
+
+        {{^result}}
+        <p>
+            If you are the patron receiving the test and require further information,  please visit the City of Toronto Public Health: https://www.toronto.ca/home/covid-19
+        </p>
+        {{/result}}
     </div>
     <div>
         <p class="detail-test-data">Detailed Test Analysis Data:</p>
