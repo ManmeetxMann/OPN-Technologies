@@ -25,7 +25,7 @@ export class PdfExportService {
       pdf
         .create(htmlToExport, {
           width: '21cm',
-          height: '29.7cm',
+          height: '32cm',
           type: 'pdf',
         })
         .toBuffer((err, buffer) => {
