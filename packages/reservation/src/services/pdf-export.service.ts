@@ -1,7 +1,6 @@
 import fs from 'fs'
 import pdf from 'html-pdf'
 import handlebars from 'handlebars'
-import moment from 'moment'
 
 import {TestResultsDTOForEmail} from '../models/appoinment'
 import path from 'path'
