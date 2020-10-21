@@ -141,13 +141,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const {value: resultVal} = target
     if (resultVal === 'Positive') {
       famEGeneElem.value = '+'
-      famCtElem.value = '12.49'
+      famCtElem.value = ''
       calRed61RdRpGeneElem.value = '+'
-      calRed61CtElem.value = '16.23'
+      calRed61CtElem.value = ''
       quasar670NGeneElem.value = '+'
-      quasar670CtElem.value = '13.23'
+      quasar670CtElem.value = ''
       hexICElem.value = '+'
-      hexCtElem.value = 'NA'
+      hexCtElem.value = 'N/A'
     } else {
       famEGeneElem.value = '-'
       famCtElem.value = 'N/A'
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
       quasar670NGeneElem.value = '-'
       quasar670CtElem.value = 'N/A'
       hexICElem.value = '+'
-      hexCtElem.value = '26.08'
+      hexCtElem.value = ''
     }
   })
 })
