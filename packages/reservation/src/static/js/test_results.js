@@ -5,8 +5,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const messageModal = document.getElementById('message')
   const confirmSendingAgainModal = document.getElementById('confirmSendingAgain')
   const sendButton = document.getElementById('sendButton')
+  const resultSelect = document.getElementById('result')
+  const barCodeElem = document.getElementById('barCode')
+  const resultElem = document.getElementById('result')
+  const famEGeneElem = document.getElementById('famEGene')
+  const famCtElem = document.getElementById('famCt')
+  const calRed61RdRpGeneElem = document.getElementById('calRed61RdRpGene')
+  const calRed61CtElem = document.getElementById('calRed61Ct')
+  const quasar670NGeneElem = document.getElementById('quasar670NGene')
+  const quasar670CtElem = document.getElementById('quasar670Ct')
+  const hexICElem = document.getElementById('hexIC')
+  const hexCtElem = document.getElementById('hexCt')
 
-  const getValueById = (id) => document.getElementById(id).value
+  const getValueByElem = (elem) => elem.value
 
   const findAncestor = (el, sel) => {
     while ((el = el.parentElement) && !(el.matches || el.matchesSelector).call(el, sel));
@@ -49,16 +60,16 @@ document.addEventListener('DOMContentLoaded', () => {
     event.preventDefault()
 
     const data = {
-      barCode: getValueById('barCode'),
-      result: getValueById('result'),
-      famEGene: getValueById('famEGene'),
-      famCt: getValueById('famCt'),
-      calRed61RdRpGene: getValueById('calRed61RdRpGene'),
-      calRed61Ct: getValueById('calRed61Ct'),
-      quasar670NGene: getValueById('quasar670NGene'),
-      quasar670Ct: getValueById('quasar670Ct'),
-      hexIC: getValueById('hexIC'),
-      hexCt: getValueById('hexCt'),
+      barCode: getValueByElem(barCodeElem),
+      result: getValueByElem(resultElem),
+      famEGene: getValueByElem(famEGeneElem),
+      famCt: getValueByElem(famCtElem),
+      calRed61RdRpGene: getValueByElem(calRed61RdRpGeneElem),
+      calRed61Ct: getValueByElem(calRed61CtElem),
+      quasar670NGene: getValueByElem(quasar670NGeneElem),
+      quasar670Ct: getValueByElem(quasar670CtElem),
+      hexIC: getValueByElem(hexICElem),
+      hexCt: getValueByElem(hexCtElem),
     }
     setLoader(sendButton, true)
 
@@ -90,9 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  submitAgainBtn.addEventListener('click', async (e) => {
+  submitAgainBtn.addEventListener('click', async () => {
     const data = {
-      barCode: getValueById('barCode'),
+      barCode: getValueByElem(barCodeElem),
     }
 
     try {
@@ -106,13 +117,16 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify(data),
       })
 
-      const responseData = await response.json()
+      const {
+        data: responseData,
+        status: {message},
+      } = await response.json()
       setLoader(submitAgainBtn, false)
       closeModal(confirmSendingAgainModal)
       if (response.ok) {
-        showAlertModal('Success', responseData.data)
+        showAlertModal('Success', responseData)
       } else {
-        showAlertModal('Failed', responseData.status.message)
+        showAlertModal('Failed', message)
       }
     } catch (e) {
       showAlertModal('Failed', 'Something went wrong. Please try after sometime.')
@@ -122,4 +136,27 @@ document.addEventListener('DOMContentLoaded', () => {
     closBtn.addEventListener('click', ({target}) => createCloseModal(target)),
   )
   sendResultNoBtn.addEventListener('click', ({target}) => createCloseModal(target))
+
+  resultSelect.addEventListener('change', ({target}) => {
+    const {value: resultVal} = target
+    if (resultVal === 'Positive') {
+      famEGeneElem.value = '+'
+      famCtElem.value = ''
+      calRed61RdRpGeneElem.value = '+'
+      calRed61CtElem.value = ''
+      quasar670NGeneElem.value = '+'
+      quasar670CtElem.value = ''
+      hexICElem.value = '+'
+      hexCtElem.value = 'N/A'
+    } else {
+      famEGeneElem.value = '-'
+      famCtElem.value = 'N/A'
+      calRed61RdRpGeneElem.value = '-'
+      calRed61CtElem.value = 'N/A'
+      quasar670NGeneElem.value = '-'
+      quasar670CtElem.value = 'N/A'
+      hexICElem.value = '+'
+      hexCtElem.value = ''
+    }
+  })
 })
