@@ -1,11 +1,14 @@
 document.addEventListener('DOMContentLoaded', event => {
   const submitResultsForm = document.getElementById('submitResults')
   const submitAgainBtn = document.getElementById("sendResultsAgain");
-  const successMessageModal = document.getElementById("successMessage");
-  const confirmSendingAgainModal = document.getElementById("confirmSendingAgain");
 
   const getbyId = function( id ) { return document.getElementById( id ).value; };
-
+  const showAlertModal = function(title, message) {
+    $('#message .modal-title').html(title);
+    $('#message .modal-body').html(message);
+    $('#message').modal();
+    $('#message').modal('show');
+  }
   submitResultsForm.addEventListener('submit', async event => {
     event.preventDefault();
 
@@ -23,7 +26,7 @@ document.addEventListener('DOMContentLoaded', event => {
     }
 
     try {
-      const raw = await fetch('/admin/api/v1/send-and-save-test-results', {
+      const response = await fetch('/admin/api/v1/send-and-save-test-results', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
@@ -32,19 +35,20 @@ document.addEventListener('DOMContentLoaded', event => {
         body: JSON.stringify(data)
       });
 
-      if (raw.ok) {
-        //successMessageModal.classList.add("show-modal");
-        $('#successMessage').modal()
-        $('#successMessage').modal('show')
+      const responseData = await response.json();
+
+      if (response.ok) {
+        showAlertModal("Success", responseData.data);
       } else {
-        if (raw.status === 409) {
-          $('#confirmSendingAgain').modal()
-          $('#confirmSendingAgain').modal('show')
+        if (response.status === 409) {
+          $('#confirmSendingAgain').modal();
+          $('#confirmSendingAgain').modal('show');
+        }else{
+          showAlertModal("Failed", responseData.status.message);
         }
       }
     } catch (e) {
-      console.log("jqXHR.status", e);
-      console.log("textStatus", e);
+      showAlertModal("Failed", "Something went wrong. Please try after sometime.");
     }
 
   });
@@ -55,7 +59,7 @@ document.addEventListener('DOMContentLoaded', event => {
     }
 
     try {
-      const raw = await fetch('/admin/api/v1/send-test-results-again', {
+      const response = await fetch('/admin/api/v1/send-test-results-again', {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
@@ -64,11 +68,14 @@ document.addEventListener('DOMContentLoaded', event => {
         body: JSON.stringify(data)
       })
 
-      const content = await raw.json();
-      console.log(content);
-
+      const responseData = await response.json();
+      if (response.ok) {
+        showAlertModal("Success", responseData.data);
+      }else{
+        showAlertModal("Failed", responseData.status.message);
+      }
     } catch (e) {
-      console.log(e);
+      showAlertModal("Failed", "Something went wrong. Please try after sometime.");
     }
 
   });
