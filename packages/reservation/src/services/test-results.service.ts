@@ -20,9 +20,9 @@ export class TestResultsService {
     this.emailService.send({
       templateId: this.testResultEmailTemplateId,
       to: [{email: testResults.email, name: `${testResults.firstName} ${testResults.lastName}`}],
-      params:{
-        'BARCODE': testResults.barCode,
-        'DATE_OF_RESULT': todayDate,
+      params: {
+        BARCODE: testResults.barCode,
+        DATE_OF_RESULT: todayDate,
       },
       attachment: [
         {
