@@ -645,7 +645,7 @@ class OrganizationController implements IControllerBase {
         replyInsufficientPermission(res)
         return
       }
-      const organization = this.organizationService.findOneById(organizationId)
+      // const organization = this.organizationService.findOneById(organizationId)
 
       const [
         attestations,
@@ -829,6 +829,12 @@ class OrganizationController implements IControllerBase {
           status: attestation.status,
         }
       })
+      console.log(
+        printableAccessHistory,
+        printableAttestations,
+        printableExposures,
+        printableTraces,
+      )
       res.status(200)
     } catch (error) {
       next(error)
