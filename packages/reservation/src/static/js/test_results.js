@@ -33,10 +33,13 @@ document.addEventListener('DOMContentLoaded', event => {
       });
 
       if (raw.ok) {
-        successMessageModal.classList.add("show-modal");
+        //successMessageModal.classList.add("show-modal");
+        $('#successMessage').modal()
+        $('#successMessage').modal('show')
       } else {
         if (raw.status === 409) {
-          confirmSendingAgainModal.classList.add("show-modal");
+          $('#confirmSendingAgain').modal()
+          $('#confirmSendingAgain').modal('show')
         }
       }
     } catch (e) {
