@@ -744,7 +744,6 @@ class OrganizationController implements IControllerBase {
         },
         {},
       )
-
       const printableAccessHistory = []
       let enterIndex = 0
       let exitIndex = 0
@@ -757,8 +756,14 @@ class OrganizationController implements IControllerBase {
         } else {
           const entering = enteringAccesses[enterIndex]
           const exiting = exitingAccesses[exitIndex]
-          const enterTime = new Date(entering.enteredAt)
-          const exitTime = new Date(exiting.exitAt)
+          const enterTime = new Date(
+            // @ts-ignore dependant dates are actually strings
+            dependantId ? entering.dependants[dependantId].enteredAt : entering.enteredAt,
+          )
+          const exitTime = new Date(
+            // @ts-ignore dependant dates are actually strings
+            dependantId ? exiting.dependants[dependantId].exitAt : exiting.exitAt,
+          )
           if (enterTime > exitTime) {
             addExit = true
           }
@@ -766,7 +771,8 @@ class OrganizationController implements IControllerBase {
         if (addExit) {
           const access = exitingAccesses[exitIndex]
           const location = locationsLookup[access.locationId]
-          const time = new Date(access.exitAt)
+          //@ts-ignore dependant dates are actually strings
+          const time = new Date(dependantId ? access.dependants[dependantId].exitAt : access.exitAt)
           const exit = true
           printableAccessHistory.push({
             name: location.title,
@@ -777,7 +783,10 @@ class OrganizationController implements IControllerBase {
         } else {
           const access = enteringAccesses[enterIndex]
           const location = locationsLookup[access.locationId]
-          const time = new Date(access.enteredAt)
+          const time = new Date(
+            //@ts-ignore dependant dates are actually strings
+            dependantId ? access.dependants[dependantId].enteredAt : access.enteredAt,
+          )
           const exit = false
           printableAccessHistory.push({
             name: location.title,
@@ -835,7 +844,7 @@ class OrganizationController implements IControllerBase {
         printableExposures,
         printableTraces,
       )
-      res.status(200)
+      res.sendStatus(200)
     } catch (error) {
       next(error)
     }
@@ -1275,20 +1284,40 @@ class OrganizationController implements IControllerBase {
             betweenCreatedDate,
           })
         ).filter((acc) => acc.includesGuardian)
-    const enteringAccesses = accesses.filter((access) => access.enteredAt)
-    const exitingAccesses = accesses.filter((access) => access.exitAt)
+    const enteringAccesses = accesses.filter((access) => {
+      if (parentUserId) {
+        return access.dependants[userId]?.enteredAt
+      } else {
+        return access.enteredAt
+      }
+    })
+    const exitingAccesses = accesses.filter((access) => {
+      if (parentUserId) {
+        return access?.dependants[userId]?.exitAt
+      } else {
+        return access.exitAt
+      }
+    })
     enteringAccesses.sort((a, b) => {
-      if (a.enteredAt < b.enteredAt) {
+      // @ts-ignore timestamps are actually strings
+      const aEnter = new Date(parentUserId ? a.dependants[userId].enteredAt : a.enteredAt)
+      // @ts-ignore timestamps are actually strings
+      const bEnter = new Date(parentUserId ? b.dependants[userId].enteredAt : b.enteredAt)
+      if (aEnter < bEnter) {
         return -1
-      } else if (b.enteredAt < a.enteredAt) {
+      } else if (bEnter < aEnter) {
         return 1
       }
       return 0
     })
     exitingAccesses.sort((a, b) => {
-      if (a.exitAt < b.exitAt) {
+      // @ts-ignore timestamps are actually strings
+      const aExit = new Date(parentUserId ? a.dependants[userId].exitAt : a.exitAt)
+      // @ts-ignore timestamps are actually strings
+      const bExit = new Date(parentUserId ? b.dependants[userId].exitAt : b.exitAt)
+      if (aExit < bExit) {
         return -1
-      } else if (b.exitAt < a.exitAt) {
+      } else if (bExit < aExit) {
         return 1
       }
       return 0
