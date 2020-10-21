@@ -899,17 +899,34 @@ class OrganizationController implements IControllerBase {
       }
 
       // fetch exposures in the time period
-      const rawExposures = await this.attestationService.getTracesInPeriod(
+      const rawTraces = await this.attestationService.getTracesInPeriod(
         isParentUser ? userId : parentUserId,
         from,
         to,
         isParentUser ? null : userId,
       )
 
+      // filter down to only the overlaps with the user we're interested in
+      const relevantTraces = rawTraces
+        .map((trace) => {
+          const exposures = trace.exposures.map((exposure) => {
+            const overlapping = exposure.overlapping.filter((overlap) =>
+              isParentUser ? !overlap.sourceDependantId : overlap.sourceDependantId === userId,
+            )
+            return {...exposure, overlapping}
+          })
+
+          return {
+            ...trace,
+            exposures: exposures.filter(({overlapping}) => overlapping.length),
+          }
+        })
+        .filter(({exposures}) => exposures.length)
+
       // ids of all the users we need more information about
       const allUserIds = new Set<string>()
       const allDependantIds = new Set<string>()
-      rawExposures.forEach(({exposures}) =>
+      relevantTraces.forEach(({exposures}) =>
         exposures.forEach((exposure) => {
           exposure.overlapping.forEach((overlap) => {
             allUserIds.add(overlap.userId)
@@ -964,7 +981,7 @@ class OrganizationController implements IControllerBase {
       )
 
       // WARNING: adding properties to models may not cause them to appear here
-      const result = rawExposures.map(({date, duration, exposures}) => ({
+      const result = relevantTraces.map(({date, duration, exposures}) => ({
         date,
         duration,
         exposures: exposures.map(({overlapping, date, organizationId, locationId}) => ({
