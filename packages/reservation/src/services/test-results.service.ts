@@ -14,20 +14,20 @@ export class TestResultsService {
   private pdfExportService = new PdfExportService()
 
   async sendTestResults(testResults: TestResultsDTOForEmail): Promise<void> {
-    const pdfContent = await this.pdfExportService.generateTestResultPdf(testResults)
-    const todayDate = moment().format('ll')
+    const todaysDate = moment().format('ll')
+    const pdfContent = await this.pdfExportService.generateTestResultPdf(testResults, todaysDate)
 
     this.emailService.send({
       templateId: this.testResultEmailTemplateId,
       to: [{email: testResults.email, name: `${testResults.firstName} ${testResults.lastName}`}],
       params: {
         BARCODE: testResults.barCode,
-        DATE_OF_RESULT: todayDate,
+        DATE_OF_RESULT: todaysDate,
       },
       attachment: [
         {
           content: pdfContent,
-          name: `FHHealth.ca Result - ${testResults.barCode} - ${todayDate}.pdf`,
+          name: `FHHealth.ca Result - ${testResults.barCode} - ${todaysDate}.pdf`,
         },
       ],
     })
