@@ -641,8 +641,14 @@ class OrganizationController implements IControllerBase {
         replyInsufficientPermission(res)
         return
       }
+      const organization = this.organizationService.findOneById(organizationId)
 
-      const [attestations, exposureTraces, userTraces] = await Promise.all([
+      const [
+        attestations,
+        exposureTraces,
+        userTraces,
+        {enteringAccesses, exitingAccesses},
+      ] = await Promise.all([
         this.attestationService.getAttestationsInPeriod(
           primaryId as string,
           from as string,
@@ -659,16 +665,100 @@ class OrganizationController implements IControllerBase {
           to as string,
           dependantId,
         ),
+        this.getAccessHistory(
+          from as string,
+          to as string,
+          primaryId as string,
+          secondaryId as string,
+        ),
       ])
       const userIds = new Set<string>([userId])
       const dependantIds = new Set<string>()
       if (dependantId) {
         dependantIds.add(dependantId)
       }
+      // overlaps where the other user might have been sick
+      const exposureOverlaps = []
+      exposureTraces.forEach((trace) =>
+        trace.exposures.forEach((exposure) =>
+          exposure.overlapping.forEach((overlap) => {
+            if (
+              overlap.userId === userId &&
+              (dependantId ? overlap.dependant?.id === dependantId : !overlap.dependant)
+            ) {
+              exposureOverlaps.push(overlap)
+              userIds.add(overlap.sourceUserId)
+              if (overlap.sourceDependantId) {
+                userIds.add(overlap.sourceDependantId)
+              }
+            }
+          }),
+        ),
+      )
+      // overlaps where this user was sick
+      const traceOverlaps = []
+      userTraces.forEach((trace) =>
+        trace.exposures.forEach((exposure) =>
+          exposure.overlapping.forEach((overlap) => {
+            if (
+              overlap.sourceUserId === userId &&
+              (dependantId ? overlap.sourceDependantId === dependantId : !overlap.sourceDependantId)
+            ) {
+              traceOverlaps.push(overlap)
+              userIds.add(overlap.userId)
+              if (overlap.dependant) {
+                userIds.add(overlap.dependant.id)
+              }
+            }
+          }),
+        ),
+      )
+      const lookups = await this.getLookups(userIds, dependantIds, organizationId)
+      const {locationsLookup, usersLookup, dependantsLookup} = lookups
 
-      exposureTraces.forEach((trace) => {
-        userIds.add(trace.userId)
-      })
+      const printableAccessHistory = []
+      let enterIndex = 0
+      let exitIndex = 0
+      while (enterIndex < enteringAccesses.length || exitIndex < exitingAccesses.length) {
+        let addExit = false
+        if (enterIndex >= enteringAccesses.length) {
+          addExit = true
+        } else if (exitIndex >= exitingAccesses.length) {
+          addExit = false
+        } else {
+          const entering = enteringAccesses[enterIndex]
+          const exiting = exitingAccesses[exitIndex]
+          const enterTime = new Date(entering.enteredAt)
+          const exitTime = new Date(exiting.exitAt)
+          if (enterTime > exitTime) {
+            addExit = true
+          }
+        }
+        if (addExit) {
+          const access = exitingAccesses[exitIndex]
+          const location = locationsLookup[access.locationId]
+          const time = new Date(access.exitAt)
+          const exit = true
+          printableAccessHistory.push({
+            name: location.title,
+            time,
+            exit,
+          })
+          exitIndex += 1
+        } else {
+          const access = enteringAccesses[enterIndex]
+          const location = locationsLookup[access.locationId]
+          const time = new Date(access.enteredAt)
+          const exit = false
+          printableAccessHistory.push({
+            name: location.title,
+            time,
+            exit,
+          })
+          enterIndex += 1
+        }
+      }
+
       res.status(200)
     } catch (error) {
       next(error)
@@ -878,53 +968,13 @@ class OrganizationController implements IControllerBase {
       const {organizationId} = req.params
       const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
 
-      let isParentUser = true
-      let accesses: Access[]
+      const {enteringAccesses, exitingAccesses} = await this.getAccessHistory(
+        from,
+        to,
+        userId,
+        parentUserId,
+      )
 
-      if (parentUserId) {
-        const user = await this.userService.findOne(parentUserId)
-        if (user && user.organizationIds.indexOf(organizationId) > -1) {
-          isParentUser = false
-        }
-      }
-
-      const live = !from && !to
-
-      const betweenCreatedDate = {
-        from: live ? moment(now()).startOf('day').toDate() : new Date(from),
-        to: live ? undefined : new Date(to),
-      }
-
-      if (isParentUser) {
-        accesses = await this.accessService.findAllWith({
-          userIds: [userId],
-          betweenCreatedDate,
-        })
-      } else {
-        accesses = await this.accessService.findAllWithDependents({
-          userId: parentUserId,
-          dependentId: userId,
-          betweenCreatedDate,
-        })
-      }
-      const enteringAccesses = accesses.filter((access) => access.enteredAt)
-      const exitingAccesses = accesses.filter((access) => access.exitAt)
-      enteringAccesses.sort((a, b) => {
-        if (a.enteredAt < b.enteredAt) {
-          return -1
-        } else if (b.enteredAt < a.enteredAt) {
-          return 1
-        }
-        return 0
-      })
-      exitingAccesses.sort((a, b) => {
-        if (a.exitAt < b.exitAt) {
-          return -1
-        } else if (b.exitAt < a.exitAt) {
-          return 1
-        }
-        return 0
-      })
       const accessedLocationIds = new Set(
         [...enteringAccesses, ...exitingAccesses].map((item: Access) => item.locationId),
       )
@@ -1122,6 +1172,54 @@ class OrganizationController implements IControllerBase {
       locationsLookup: locationsById,
       groupsLookup: groupsById,
       statusesLookup: statusesByUserOrDependantId,
+    }
+  }
+
+  private getAccessHistory = async (
+    from: string | null,
+    to: string | null,
+    userId: string,
+    parentUserId: string | null,
+  ): Promise<{enteringAccesses: Access[]; exitingAccesses: Access[]}> => {
+    const live = !from && !to
+
+    const betweenCreatedDate = {
+      from: live ? moment(now()).startOf('day').toDate() : new Date(from),
+      to: live ? undefined : new Date(to),
+    }
+    const accesses = parentUserId
+      ? (
+          await this.accessService.findAllWith({
+            userIds: [userId],
+            betweenCreatedDate,
+          })
+        ).filter((acc) => acc.includesGuardian)
+      : await this.accessService.findAllWithDependents({
+          userId: parentUserId,
+          dependentId: userId,
+          betweenCreatedDate,
+        })
+    const enteringAccesses = accesses.filter((access) => access.enteredAt)
+    const exitingAccesses = accesses.filter((access) => access.exitAt)
+    enteringAccesses.sort((a, b) => {
+      if (a.enteredAt < b.enteredAt) {
+        return -1
+      } else if (b.enteredAt < a.enteredAt) {
+        return 1
+      }
+      return 0
+    })
+    exitingAccesses.sort((a, b) => {
+      if (a.exitAt < b.exitAt) {
+        return -1
+      } else if (b.exitAt < a.exitAt) {
+        return 1
+      }
+      return 0
+    })
+    return {
+      enteringAccesses,
+      exitingAccesses,
     }
   }
 
