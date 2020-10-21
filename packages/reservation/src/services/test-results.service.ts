@@ -8,22 +8,26 @@ import {PdfExportService} from './pdf-export.service'
 import {Config} from '../../../common/src/utils/config'
 
 export class TestResultsService {
-  private testResultEmailTemplateId = (Config.get('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 1) as number
+  private testResultEmailTemplateId = (Config.get('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2) as number
   private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
   private emailService = new EmailService()
   private pdfExportService = new PdfExportService()
 
   async sendTestResults(testResults: TestResultsDTOForEmail): Promise<void> {
     const pdfContent = await this.pdfExportService.generateTestResultPdf(testResults)
+    const todayDate = moment().format('ll')
 
     this.emailService.send({
       templateId: this.testResultEmailTemplateId,
       to: [{email: testResults.email, name: `${testResults.firstName} ${testResults.lastName}`}],
-      params: {},
+      params:{
+        'BARCODE': testResults.barCode,
+        'DATE_OF_RESULT': todayDate,
+      },
       attachment: [
         {
           content: pdfContent,
-          name: `PHHealth_${moment().format('YYYYMMDDHHmmss')}.pdf`,
+          name: `FHHealth.ca Result - ${testResults.barCode} - ${todayDate}.pdf`,
         },
       ],
     })
@@ -34,10 +38,7 @@ export class TestResultsService {
   }
 
   async resultAlreadySent(barCode: string): Promise<boolean> {
-    const testResultExists = this.testResultsDBRepository.get(barCode).then((testResults) => {
-      return !!testResults
-    })
-    return testResultExists
+    return this.testResultsDBRepository.get(barCode).then((testResults) => !!testResults)
   }
 
   async getResults(barCode: string): Promise<TestResultsDBModel> {
