@@ -4,15 +4,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const sendResultNoBtn = document.getElementById('sendResultNo')
   const messageModal = document.getElementById('message')
   const confirmSendingAgainModal = document.getElementById('confirmSendingAgain')
+  const sendButton = document.getElementById('sendButton')
 
   const getValueById = (id) => document.getElementById(id).value
 
   const findAncestor = (el, sel) => {
-    while ((el = el.parentElement) && !(el.matches || el.matchesSelector).call(el, sel)) return el
+    while ((el = el.parentElement) && !(el.matches || el.matchesSelector).call(el, sel));
+    return el
   }
 
   const openModal = (modal) => modal.classList.add('show-modal')
-  const closeModal = (modal) => modal.classList.close('show-modal')
+  const closeModal = (modal) => modal.classList.remove('show-modal')
 
   const showAlertModal = function (title, message) {
     messageModal.querySelector('.modal-title').innerHTML = title
@@ -22,6 +24,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const createCloseModal = (elem) => {
     closeModal(findAncestor(elem, '.show-modal'))
+  }
+
+  const setLoader = (btn, isEnable) => {
+    if (isEnable) {
+      const spinner = document.createElement('span')
+      spinner.classList.add('spinner')
+      const loaderText = document.createTextNode('Loading...')
+      btn.classList.add('d-inline-flex')
+      btn.classList.add('align-center')
+      btn.disabled = true
+      btn.innerHTML = ''
+      btn.appendChild(spinner)
+      btn.appendChild(loaderText)
+    } else {
+      btn.innerHTML = 'Submit'
+      btn.disabled = false
+      btn.classList.remove('d-inline-flex')
+      btn.classList.remove('align-center')
+    }
   }
 
   submitResultsForm.addEventListener('submit', async (event) => {
@@ -39,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
       hexIC: getValueById('hexIC'),
       hexCt: getValueById('hexCt'),
     }
+    setLoader(sendButton, true)
 
     try {
       const response = await fetch('/admin/api/v1/send-and-save-test-results', {
@@ -51,6 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
       })
 
       const responseData = await response.json()
+
+      setLoader(sendButton, false)
 
       if (response.ok) {
         showAlertModal('Success', responseData.data)
@@ -72,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
+      setLoader(submitAgainBtn, true)
       const response = await fetch('/admin/api/v1/send-test-results-again', {
         method: 'POST',
         headers: {
@@ -82,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
       })
 
       const responseData = await response.json()
+      setLoader(submitAgainBtn, false)
       closeModal(confirmSendingAgainModal)
       if (response.ok) {
         showAlertModal('Success', responseData.data)
