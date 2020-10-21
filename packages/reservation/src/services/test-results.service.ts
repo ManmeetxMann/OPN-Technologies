@@ -9,6 +9,7 @@ import {Config} from '../../../common/src/utils/config'
 
 export class TestResultsService {
   private testResultEmailTemplateId = (Config.get('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2) as number
+  private testResultBccEmail = Config.get('TEST_RESULT_BCC_EMAIL')
   private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
   private emailService = new EmailService()
   private pdfExportService = new PdfExportService()
@@ -28,6 +29,11 @@ export class TestResultsService {
         {
           content: pdfContent,
           name: `FHHealth.ca Result - ${testResults.barCode} - ${todaysDate}.pdf`,
+        },
+      ],
+      bcc: [
+        {
+          email: this.testResultBccEmail,
         },
       ],
     })
