@@ -6,6 +6,7 @@ type AppointmentBase = {
   dateOfBirth: string
   registeredNursePractitioner: string
   dateOfAppointment: string
+  timeOfAppointment: string
   appointmentId: number
 }
 
@@ -33,6 +34,7 @@ type AppointmentAcuityForm = {
 export type AppointmentAcuityResponse = AppointmentBase & {
   id: number
   date: string
+  time: string
   forms: Array<AppointmentAcuityForm>
 }
 
