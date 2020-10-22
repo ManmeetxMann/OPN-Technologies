@@ -75,6 +75,10 @@ export type TestResultsDBModel = AppointmentBase &
     id: string
   }
 
+export type TestResultsConfirmationRequest = TestResultsBase & {
+  needConfirmation?: boolean
+}
+
 export type TestResultsDBModelResponse = TestResultsDBModel & {
   exists: boolean
 }
