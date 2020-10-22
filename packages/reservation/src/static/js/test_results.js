@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitAgainBtn = document.getElementById('sendResultsAgain')
   const sendResultNoBtn = document.getElementById('sendResultNo')
   const messageModal = document.getElementById('message')
-  const confirmSendingAgainModal = document.getElementById('confirmSendingAgain')
+  const confirmSendingAgainModal = document.getElementById(
+    'confirmSendingAgain')
   const confirmMailSendModal = document.getElementById('confirmMailSend')
   const sendButton = document.getElementById('sendButton')
   const sendMailBtn = document.getElementById('sendMailBtn')
@@ -24,10 +25,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const hexICElem = document.getElementById('hexIC')
   const hexCtElem = document.getElementById('hexCt')
 
+  const confirmFirstName = document.getElementById('confirmFirstName')
+  const confirmLastName = document.getElementById('confirmLastName')
+  const confirmEmail = document.getElementById('confirmEmail')
+  const confirmPhone = document.getElementById('confirmPhone')
+  const confirmDateOfBirth = document.getElementById('confirmDateOfBirth')
+  const confirmRegisteredNursePractitioner = document.getElementById(
+    'confirmRegisteredNursePractitioner',
+  )
+  const confirmAppointmentId = document.getElementById('confirmAppointmentId')
+  const confirmDateOfAppointment = document.getElementById('confirmDateOfAppointment')
+
   const getValueByElem = (elem) => elem.value
 
   const findAncestor = (el, sel) => {
-    while ((el = el.parentElement) && !(el.matches || el.matchesSelector).call(el, sel));
+    while ((el = el.parentElement) && !(el.matches || el.matchesSelector).call(el, sel))
     return el
   }
 
@@ -78,6 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
       hexIC: getValueByElem(hexICElem),
       hexCt: getValueByElem(hexCtElem),
     }
+    if (confirmBeforeSend === '1') {
+      data.needConfirmation = true
+    }
     setLoader(sendButton, true)
 
     try {
@@ -96,6 +111,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response.ok) {
         if (confirmBeforeSend === '1') {
           openModal(confirmMailSendModal)
+          confirmAppointmentId.innerHTML = responseData.data.appointmentId
+          confirmDateOfAppointment.innerHTML = responseData.data.dateOfAppointment
+          confirmDateOfBirth.innerHTML = responseData.data.dateOfBirth
+          confirmEmail.innerHTML = responseData.data.email
+          confirmFirstName.innerHTML = responseData.data.firstName
+          confirmLastName.innerHTML = responseData.data.lastName
+          confirmPhone.innerHTML = responseData.data.phone
+          confirmRegisteredNursePractitioner.innerHTML = responseData.data.registeredNursePractitioner
         } else {
           showAlertModal('Success', responseData.data)
         }
@@ -107,7 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     } catch (e) {
-      showAlertModal('Failed', 'Something went wrong. Please try after sometime.')
+      showAlertModal('Failed',
+        'Something went wrong. Please try after sometime.')
     }
   })
 
@@ -139,18 +163,21 @@ document.addEventListener('DOMContentLoaded', () => {
         showAlertModal('Failed', message)
       }
     } catch (e) {
-      showAlertModal('Failed', 'Something went wrong. Please try after sometime.')
+      showAlertModal('Failed',
+        'Something went wrong. Please try after sometime.')
     }
   })
   ;[...document.getElementsByClassName('close')].forEach((closBtn) =>
     closBtn.addEventListener('click', ({target}) => createCloseModal(target)),
   )
-  sendResultNoBtn.addEventListener('click', ({target}) => createCloseModal(target))
+  sendResultNoBtn.addEventListener('click',
+    ({target}) => createCloseModal(target))
 
   sendMailBtn.addEventListener('click', () => {
     console.log('Here should send mail!!')
   })
-  sendMailNoBtn.addEventListener('click', ({target}) => createCloseModal(target))
+  sendMailNoBtn.addEventListener('click',
+    ({target}) => createCloseModal(target))
 
   resultSelect.addEventListener('change', ({target}) => {
     const {value: resultVal} = target

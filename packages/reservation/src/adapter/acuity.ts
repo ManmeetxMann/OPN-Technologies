@@ -56,6 +56,7 @@ abstract class AcuityScheduling {
       const newKey = this.fieldMapping[key] ? this.fieldMapping[key] : key
       acuityFilters[newKey] = filters[key]
     })
+
     return acuityFilters
   }
 }
