@@ -1,11 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const resultSelect = document.getElementById('result')
+  if (!resultSelect) {
+    return
+  }
   const submitResultsForm = document.getElementById('submitResults')
   const submitAgainBtn = document.getElementById('sendResultsAgain')
   const sendResultNoBtn = document.getElementById('sendResultNo')
   const messageModal = document.getElementById('message')
   const confirmSendingAgainModal = document.getElementById('confirmSendingAgain')
+  const confirmMailSendModal = document.getElementById('confirmMailSend')
   const sendButton = document.getElementById('sendButton')
-  const resultSelect = document.getElementById('result')
+  const sendMailBtn = document.getElementById('sendMailBtn')
+
+  const sendMailNoBtn = document.getElementById('sendMailNoBtn')
   const barCodeElem = document.getElementById('barCode')
   const resultElem = document.getElementById('result')
   const famEGeneElem = document.getElementById('famEGene')
@@ -86,9 +93,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const responseData = await response.json()
 
       setLoader(sendButton, false)
-
       if (response.ok) {
-        showAlertModal('Success', responseData.data)
+        if (confirmBeforeSend === '1') {
+          openModal(confirmMailSendModal)
+        } else {
+          showAlertModal('Success', responseData.data)
+        }
       } else {
         if (response.status === 409) {
           openModal(confirmSendingAgainModal)
@@ -136,6 +146,11 @@ document.addEventListener('DOMContentLoaded', () => {
     closBtn.addEventListener('click', ({target}) => createCloseModal(target)),
   )
   sendResultNoBtn.addEventListener('click', ({target}) => createCloseModal(target))
+
+  sendMailBtn.addEventListener('click', () => {
+    console.log('Here should send mail!!')
+  })
+  sendMailNoBtn.addEventListener('click', ({target}) => createCloseModal(target))
 
   resultSelect.addEventListener('change', ({target}) => {
     const {value: resultVal} = target

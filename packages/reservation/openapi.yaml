@@ -98,6 +98,17 @@ paths:
               schema:
                 type: string
 
+  /admin/page/send-bulk-results:
+    get:
+      description: Form to Send Bulk Results
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/html:
+              schema:
+                type: string
+
   /admin/page/appointment-by-bar-code:
     get:
       description: Show Form to Enter Bar Code
