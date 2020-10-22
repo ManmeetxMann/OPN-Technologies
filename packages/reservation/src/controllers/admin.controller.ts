@@ -5,7 +5,7 @@ import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 
 import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
-import {TestResultsDTO, AppointmentDTO} from '../models/appoinment'
+import {TestResultsDTO, TestResultsConfirmationRequest, AppointmentDTO} from '../models/appoinment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
@@ -45,9 +45,15 @@ class AdminController implements IControllerBase {
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<void> => {
+  ): Promise<unknown> => {
     try {
-      const requestData: TestResultsDTO = req.body
+      const requestData: TestResultsConfirmationRequest = req.body
+
+      if (requestData.needConfirmation) {
+        const appointment = await this.appoinmentService.getAppoinmentByBarCode(requestData.barCode)
+
+        return res.json(actionSucceed(appointment))
+      }
 
       const resultAlreadySent = await this.testResultsService.resultAlreadySent(requestData.barCode)
       if (resultAlreadySent) {

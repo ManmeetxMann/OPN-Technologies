@@ -1,92 +1,94 @@
 <div class="container  mt-5">
-    <div class="modal fade bd-example-modal-lg" id="message" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"></h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body"></div>
-            </div>
+  <div class="modal fade bd-example-modal-lg" id="message" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"></h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
+        <div class="modal-body"></div>
+      </div>
     </div>
-    <div class="modal" id="confirmSendingAgain" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirmation</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>Results are already sent. Do you want to send old results again?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">No</button>
-                    <button type="button" id="sendResultsAgain" class="btn btn-secondary" data-dismiss="modal">Yes, Send Again</button>
-                </div>
-            </div>
+  </div>
+  <div class="modal" id="confirmSendingAgain" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirmation</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
+        <div class="modal-body">
+          <p>Results are already sent. Do you want to send old results again?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="sendResultNo" data-dismiss="modal">No</button>
+          <button type="button" id="sendResultsAgain" class="btn btn-secondary" data-dismiss="modal">Yes, Send Again</button>
+        </div>
+      </div>
     </div>
-    <form action="#" id="submitResults" method="POST">
-        <div class="form-group">
-            <label for="barCode">Bar Code Number</label>
-            <input type="text" class="form-control" id="barCode" name="barCode" placeholder="Enter Bar Code Number" value="{{barCode}}" required>
-        </div>
-        <div class="form-group">
-            <label for="result">Result</label>
-            <select class="form-control" id="result" name="result">
-                <option>Positive</option>
-                <option>Negative</option>
-            </select>
-        </div>
-        <div class="form-row">
-            <legend class="col-form-label">FAM</legend>
-            <div class="form-group col-md-6">
-                <label for="famEGene">E gene</label>
-                <input type="text" class="form-control" id="famEGene" value="-" name="famEGene" required>
-            </div>
-            <div class="form-group col-md-6">
-                <label for="famCt">C(t)</label>
-                <input type="text" class="form-control" id="famCt" name="famCt" value="N/A" required>
-            </div>
-        </div>
-        <div class="form-row">
-            <legend class="col-form-label">Cal Red 61</legend>
-            <div class="form-group col-md-6">
-                <label for="famEGene">RdRP gene</label>
-                <input type="text" class="form-control" id="calRed61RdRpGene" value="-" name="calRed61RdRpGene" required>
-            </div>
-            <div class="form-group col-md-6">
-                <label for="calRed61Ct">C(t)</label>
-                <input type="text" class="form-control" id="calRed61Ct" value="N/A" name="calRed61Ct" required>
-            </div>
-        </div>
-        <div class="form-row">
-            <legend class="col-form-label">Quasar 670</legend>
-            <div class="form-group col-md-6">
-                <label for="quasar670NGene">N gene</label>
-                <input type="text" class="form-control" id="quasar670NGene" value="-"name="quasar670NGene" required>
-            </div>
-            <div class="form-group col-md-6">
-                <label for="quasar670Ct">C(t)</label>
-                <input type="text" class="form-control" id="quasar670Ct" value="N/A" name="quasar670Ct" required>
-            </div>
-        </div>
-        <div class="form-row">
-            <legend class="col-form-label">HEX</legend>
-            <div class="form-group col-md-6">
-                <label for="hexIC">IC</label>
-                <input type="text" class="form-control" id="hexIC" value="+" name="hexIC" required>
-            </div>
-            <div class="form-group col-md-6">
-                <label for="hexCt">C(t)</label>
-                <input type="text" class="form-control" id="hexCt" value="" name="hexCt" required>
-            </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Send Results</button>
-    </form>
+  </div>
+  <form action="#" id="submitResults" method="POST">
+    <div class="form-group">
+      <label for="barCode">Bar Code Number</label>
+      <input type="text" class="form-control" id="barCode" name="barCode" placeholder="Enter Bar Code Number" value="{{barCode}}" required>
+    </div>
+    <div class="form-group">
+      <label for="result">Result</label>
+      <select class="form-control" id="result" name="result">
+        <option>Positive</option>
+        <option selected>Negative</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <legend class="col-form-label">FAM</legend>
+      <div class="form-group col-md-6">
+        <label for="famEGene">E gene</label>
+        <input type="text" class="form-control" id="famEGene" value="-" name="famEGene" required>
+      </div>
+      <div class="form-group col-md-6">
+        <label for="famCt">C(t)</label>
+        <input type="text" class="form-control" id="famCt" name="famCt" value="N/A" required>
+      </div>
+    </div>
+    <div class="form-row">
+      <legend class="col-form-label">Cal Red 61</legend>
+      <div class="form-group col-md-6">
+        <label for="famEGene">RdRP gene</label>
+        <input type="text" class="form-control" id="calRed61RdRpGene" value="-" name="calRed61RdRpGene" required>
+      </div>
+      <div class="form-group col-md-6">
+        <label for="calRed61Ct">C(t)</label>
+        <input type="text" class="form-control" id="calRed61Ct" value="N/A" name="calRed61Ct" required>
+      </div>
+    </div>
+    <div class="form-row">
+      <legend class="col-form-label">Quasar 670</legend>
+      <div class="form-group col-md-6">
+        <label for="quasar670NGene">N gene</label>
+        <input type="text" class="form-control" id="quasar670NGene" value="-"name="quasar670NGene" required>
+      </div>
+      <div class="form-group col-md-6">
+        <label for="quasar670Ct">C(t)</label>
+        <input type="text" class="form-control" id="quasar670Ct" value="N/A" name="quasar670Ct" required>
+      </div>
+    </div>
+    <div class="form-row">
+      <legend class="col-form-label">HEX</legend>
+      <div class="form-group col-md-6">
+        <label for="hexIC">IC</label>
+        <input type="text" class="form-control" id="hexIC" value="+" name="hexIC" required>
+      </div>
+      <div class="form-group col-md-6">
+        <label for="hexCt">C(t)</label>
+        <input type="text" class="form-control" id="hexCt" value="" name="hexCt" required>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary" id="sendButton">Send Results</button>
+
+
+  </form>
 </div>

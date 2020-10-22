@@ -38,6 +38,7 @@ jobs:
           EMAIL_PROVIDER_API_URL=https://api.sendinblue.com/v3/smtp/email
           EMAIL_FROM_ADDRESS=no-reply@email.stayopn.net
           EMAIL_FROM_NAME="StayOPN Team"
+          TEST_RESULT_BCC_EMAIL=${{ secrets.TEST_RESULT_BCC_EMAIL }}
 
           # Links
           LINK_PRIVACYPOLICY=https://dev.pages.opnte.ch/privacy-policy.html

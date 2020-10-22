@@ -8,25 +8,37 @@ export class PdfService {
   async generatePDFStream(templatePath: string, handlebarsParams: unknown): Promise<Stream> {
     const htmlToExport = this.getHtml(templatePath, handlebarsParams)
     return new Promise<Stream>((resolve, reject) => {
-      pdf.create(htmlToExport).toStream((err, stream) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve(stream)
-        }
-      })
+      pdf
+        .create(htmlToExport, {
+          width: '21cm',
+          height: '32cm',
+          type: 'pdf',
+        })
+        .toStream((err, stream) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve(stream)
+          }
+        })
     })
   }
   async generatePDFBase64(templatePath: string, handlebarsParams: unknown): Promise<string> {
     const htmlToExport = this.getHtml(templatePath, handlebarsParams)
     return new Promise<string>((resolve, reject) => {
-      pdf.create(htmlToExport).toBuffer((err, buffer) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve(buffer.toString('base64'))
-        }
-      })
+      pdf
+        .create(htmlToExport, {
+          width: '21cm',
+          height: '32cm',
+          type: 'pdf',
+        })
+        .toBuffer((err, buffer) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve(buffer.toString('base64'))
+          }
+        })
     })
   }
   private getHtml(templatePath: string, handlebarsParams: unknown): string {
