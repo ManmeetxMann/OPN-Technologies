@@ -635,7 +635,7 @@ class OrganizationController implements IControllerBase {
   getUserReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {userId: primaryId, parentUserId: secondaryId, from, to} = req.query
+      const {userId: primaryId, parentUserId: secondaryId, from: queryFrom, to: queryTo} = req.query
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
@@ -648,7 +648,10 @@ class OrganizationController implements IControllerBase {
         return
       }
       const organization = await this.organizationService.findOneById(organizationId)
-
+      const to: string = (queryTo as string) ?? now().toISOString()
+      const from: string =
+        (queryFrom as string) ??
+        moment(now()).tz(timeZone).startOf('day').subtract(2, 'days').toISOString()
       const [
         attestations,
         exposureTraces,
@@ -869,7 +872,9 @@ class OrganizationController implements IControllerBase {
         userName: `${named.firstName} ${named.lastName}`,
         guardianName: `${namedGuardian.firstName} ${namedGuardian.lastName}`,
         generationDate: moment(now()).tz(timeZone).format(dateFormat),
-        reportDate: moment(now()).tz(timeZone).format(dateFormat),
+        reportDate: `${moment(from).tz(timeZone).format(dateFormat)} - ${moment(to)
+          .tz(timeZone)
+          .format(dateFormat)}`,
       })
       stream.pipe(res)
       res.status(200)
