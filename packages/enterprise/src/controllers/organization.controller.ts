@@ -1,5 +1,4 @@
 import {NextFunction, Request, Response, Router} from 'express'
-import pdf from 'html-pdf'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed, of} from '../../../common/src/utils/response-wrapper'
 import {
@@ -35,9 +34,9 @@ import {Config} from '../../../common/src/utils/config'
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
-import {Stream} from 'stream'
+import path from 'path'
 import {ExposureReport} from '../../../access/src/models/trace'
-import {PdfExportService} from '../services/pdf-export-service'
+import {PdfService} from '../../../common/src/service/reports/pdf'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -132,7 +131,7 @@ class OrganizationController implements IControllerBase {
   private passportService = new PassportService()
   private attestationService = new AttestationService()
   private questionnaireService = new QuestionnaireService()
-  private pdfService = new PdfExportService()
+  private pdfService = new PdfService()
 
   constructor() {
     this.initRoutes()
@@ -862,20 +861,24 @@ class OrganizationController implements IControllerBase {
       // @ts-ignore we added a group id to users
       const group = groupsLookup[named.groupId]
       const namedGuardian = dependantId ? usersLookup[userId] : null
-      const stream = await this.pdfService.generateUserReportPDF({
-        attestations: printableAttestations,
-        locations: printableAccessHistory,
-        exposures: printableExposures,
-        traces: printableTraces,
-        organizationName: organization.name,
-        userGroup: group.name,
-        userName: `${named.firstName} ${named.lastName}`,
-        guardianName: `${namedGuardian.firstName} ${namedGuardian.lastName}`,
-        generationDate: moment(now()).tz(timeZone).format(dateFormat),
-        reportDate: `${moment(from).tz(timeZone).format(dateFormat)} - ${moment(to)
-          .tz(timeZone)
-          .format(dateFormat)}`,
-      })
+      const stream = await this.pdfService.generatePDFStream(
+        path.join(__dirname, '../templates/user-report.html'),
+        {
+          attestations: printableAttestations,
+          locations: printableAccessHistory,
+          exposures: printableExposures,
+          traces: printableTraces,
+          organizationName: organization.name,
+          userGroup: group.name,
+          userName: `${named.firstName} ${named.lastName}`,
+          guardianName: `${namedGuardian.firstName} ${namedGuardian.lastName}`,
+          generationDate: moment(now()).tz(timeZone).format(dateFormat),
+          reportDate: `${moment(from).tz(timeZone).format(dateFormat)} - ${moment(to)
+            .tz(timeZone)
+            .format(dateFormat)}`,
+        },
+      )
+      res.contentType('application/pdf')
       stream.pipe(res)
       res.status(200)
     } catch (error) {
@@ -928,52 +931,18 @@ class OrganizationController implements IControllerBase {
       }
 
       const statsObject = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
-      const generatedHTML = this.htmlAccessReport(statsObject.accesses)
-      const generatedPDF: Stream = await new Promise((resolve, reject) => {
-        pdf.create(`<body>${generatedHTML}</body>`).toStream((err: unknown, stream) => {
-          if (err) {
-            reject(err)
-          } else {
-            resolve(stream)
-          }
-        })
-      })
-
-      // console.log(generatedPDF)
+      const pdfStream = await this.pdfService.generatePDFStream(
+        path.join(__dirname, '../templates/report.html'),
+        {
+          accesses: statsObject.accesses,
+        },
+      )
       res.contentType('application/pdf')
-      generatedPDF.pipe(res)
+      pdfStream.pipe(res)
       res.status(200)
     } catch (error) {
       next(error)
     }
-  }
-
-  private htmlAccessReport = (accesses: AccessWithPassportStatusAndUser[]): string => {
-    // TODO: use handlebars to generate better templates
-    const accessesByStatus: Record<PassportStatus, AccessWithPassportStatusAndUser[]> = {
-      [PassportStatuses.Pending]: [],
-      [PassportStatuses.Proceed]: [],
-      [PassportStatuses.Caution]: [],
-      [PassportStatuses.Stop]: [],
-    }
-    accesses.forEach((access) => accessesByStatus[access.status].push(access))
-    const format = (type: PassportStatus) => `
-    <h1>${type}</h1><br>
-    <table>
-      ${accessesByStatus[type]
-        .map(
-          (access) =>
-            `<tr><td>${access.user.firstName} ${access.user.lastName}</td><td>${type}</td></tr>`,
-        )
-        .join('')}
-    </table>
-    `
-    return [
-      format(PassportStatuses.Pending),
-      format(PassportStatuses.Proceed),
-      format(PassportStatuses.Caution),
-      format(PassportStatuses.Stop),
-    ].join('<br>')
   }
 
   getStatsHealth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

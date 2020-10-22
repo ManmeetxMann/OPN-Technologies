@@ -5,8 +5,8 @@ import handlebars from 'handlebars'
 import {Stream} from 'stream'
 
 export class PdfService {
-  async generatePDFStream(handlebarsParams: unknown, templatePath: string): Promise<Stream> {
-    const htmlToExport = this.getHtml(handlebarsParams, templatePath)
+  async generatePDFStream(templatePath: string, handlebarsParams: unknown): Promise<Stream> {
+    const htmlToExport = this.getHtml(templatePath, handlebarsParams)
     return new Promise<Stream>((resolve, reject) => {
       pdf.create(htmlToExport).toStream((err, stream) => {
         if (err) {
@@ -17,8 +17,8 @@ export class PdfService {
       })
     })
   }
-  async generatePDFBase64(handlebarsParams: unknown, templatePath: string): Promise<string> {
-    const htmlToExport = this.getHtml(handlebarsParams, templatePath)
+  async generatePDFBase64(templatePath: string, handlebarsParams: unknown): Promise<string> {
+    const htmlToExport = this.getHtml(templatePath, handlebarsParams)
     return new Promise<string>((resolve, reject) => {
       pdf.create(htmlToExport).toBuffer((err, buffer) => {
         if (err) {
@@ -29,7 +29,7 @@ export class PdfService {
       })
     })
   }
-  private getHtml(handlebarsParams: unknown, templatePath: string): string {
+  private getHtml(templatePath: string, handlebarsParams: unknown): string {
     const html = fs.readFileSync(templatePath, {encoding: 'utf-8'})
     const template = handlebars.compile(html)
     // TODO: https://www.npmjs.com/advisories/1095

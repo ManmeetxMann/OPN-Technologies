@@ -1,0 +1,90 @@
+<html>
+<head>
+    <style type="text/css">
+        body {
+            margin: 0;
+            font-family: Arial;
+            font-size: 8px;
+            color: #222222;
+        }
+
+        h1, h2, h3, h4, h5 {
+            font-family: Arial;
+        }
+
+        p {
+            margin: 0;
+            line-height: 1.5;
+            font-size: 30px;
+        }
+
+        table, th, td {
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        table {
+            margin-top: 32px;
+            margin-bottom: 32px;
+        }
+        td {
+            border: 1px solid black;
+            padding-left: 8px;
+            padding-right: 8px;
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+
+        .info-table {
+            width: 100%;
+        }
+        .page-wrapper {
+            position: absolute;
+            top: 40px;
+            left: 50px;
+            right: 50px;
+            bottom: 10px;
+        }
+        .text-left {
+            flex: 1;
+            text-align: left;
+        }
+        .text-right {
+            flex: 1;
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .footer {
+            margin: 20px 0 0 0;
+            width: 100%;
+            color: black;
+            font-size: 10px;
+            line-height: 1.3;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="page-wrapper">
+    <table class="info-table">
+            {{#each accesses}}
+                <tr>
+                    <td class="text-left">
+                        {{this.firstName}} {{this.lastName}}
+                    </td>
+                    <td class="text-left">
+                        {{this.status}}
+                    </td>
+                </tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <span>This document contains personal identifiable information that must be treated confidentially. Any unauthorized use or disclosure is prohibited. </span>
+    </div>
+</div>
+</body>
+</html>
