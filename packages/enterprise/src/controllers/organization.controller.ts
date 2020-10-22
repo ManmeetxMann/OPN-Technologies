@@ -37,6 +37,7 @@ import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
 import {Stream} from 'stream'
 import {ExposureReport} from '../../../access/src/models/trace'
+import {PdfExportService} from '../services/pdf-export-service'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -131,6 +132,7 @@ class OrganizationController implements IControllerBase {
   private passportService = new PassportService()
   private attestationService = new AttestationService()
   private questionnaireService = new QuestionnaireService()
+  private pdfService = new PdfExportService()
 
   constructor() {
     this.initRoutes()
@@ -645,7 +647,7 @@ class OrganizationController implements IControllerBase {
         replyInsufficientPermission(res)
         return
       }
-      // const organization = this.organizationService.findOneById(organizationId)
+      const organization = await this.organizationService.findOneById(organizationId)
 
       const [
         attestations,
@@ -744,7 +746,11 @@ class OrganizationController implements IControllerBase {
         },
         {},
       )
-      const printableAccessHistory = []
+
+      const dateFormat = 'MMMM D, YYYY'
+      const dateTimeFormat = 'h:mm A MMMM D, YYYY'
+
+      const printableAccessHistory: {name: string; time: string; action: string}[] = []
       let enterIndex = 0
       let exitIndex = 0
       while (enterIndex < enteringAccesses.length || exitIndex < exitingAccesses.length) {
@@ -771,27 +777,31 @@ class OrganizationController implements IControllerBase {
         if (addExit) {
           const access = exitingAccesses[exitIndex]
           const location = locationsLookup[access.locationId]
-          //@ts-ignore dependant dates are actually strings
-          const time = new Date(dependantId ? access.dependants[dependantId].exitAt : access.exitAt)
-          const exit = true
+          const time = moment(
+            //@ts-ignore dependant dates are actually strings
+            dependantId ? access.dependants[dependantId].exitAt : access.exitAt,
+          )
+            .tz(timeZone)
+            .format(dateTimeFormat)
           printableAccessHistory.push({
             name: location.title,
             time,
-            exit,
+            action: 'Exit',
           })
           exitIndex += 1
         } else {
           const access = enteringAccesses[enterIndex]
           const location = locationsLookup[access.locationId]
-          const time = new Date(
-            //@ts-ignore dependant dates are actually strings
+          const time = moment(
+            // @ts-ignore this is an ISO string
             dependantId ? access.dependants[dependantId].enteredAt : access.enteredAt,
           )
-          const exit = false
+            .tz(timeZone)
+            .format(dateTimeFormat)
           printableAccessHistory.push({
             name: location.title,
             time,
-            exit,
+            action: 'Enter',
           })
           enterIndex += 1
         }
@@ -804,8 +814,8 @@ class OrganizationController implements IControllerBase {
           ? overlap.dependant.lastName
           : usersLookup[overlap.userId].lastName,
         groupName: groupsLookup[overlap.dependant?.id ?? overlap.userId],
-        start: overlap.start.toISOString(),
-        end: overlap.end.toISOString(),
+        start: moment(overlap.start).tz(timeZone).format(dateTimeFormat),
+        end: moment(overlap.end).tz(timeZone).format(dateTimeFormat),
       }))
       const printableTraces = traceOverlaps.map((overlap) => ({
         firstName: (overlap.sourceDependantId
@@ -817,8 +827,8 @@ class OrganizationController implements IControllerBase {
           : usersLookup[overlap.sourceUserId]
         ).lastName,
         groupName: groupsLookup[overlap.sourceDependantId ?? overlap.sourceUserId],
-        start: overlap.start.toISOString(),
-        end: overlap.end.toISOString(),
+        start: moment(overlap.start).tz(timeZone).format(dateTimeFormat),
+        end: moment(overlap.end).tz(timeZone).format(dateTimeFormat),
       }))
       const printableAttestations = attestations.map((attestation) => {
         const answerKeys = Object.keys(attestation.answers)
@@ -829,22 +839,40 @@ class OrganizationController implements IControllerBase {
           console.warn(`no questionnaire found for attestation ${attestation.id}`)
         }
         return {
-          response: answerKeys.map((key) => ({
-            question: questionnaire?.questions[key]?.value,
-            answers: attestation.answers[key],
-          })),
+          responses: answerKeys.map((key) => {
+            const yes = attestation.answers[key]['1']
+            const dateOfTest =
+              yes &&
+              attestation.answers[key]['2'] &&
+              moment(attestation.answers[key]['2']).tz(timeZone).format(dateFormat)
+            return {
+              question: questionnaire?.questions[key]?.value as string,
+              response: yes ? dateOfTest || 'Yes' : 'No',
+            }
+          }),
           // @ts-ignore timestamp, not string
-          time: attestation.attestationTime.toDate().toISOString() as string,
+          time: moment(attestation.attestationTime.toDate()).tz(timeZone).format(dateTimeFormat),
           status: attestation.status,
         }
       })
-      console.log(
-        printableAccessHistory,
-        printableAttestations,
-        printableExposures,
-        printableTraces,
-      )
-      res.sendStatus(200)
+      const named = dependantId ? dependantsLookup[dependantId] : usersLookup[userId]
+      // @ts-ignore we added a group id to users
+      const group = groupsLookup[named.groupId]
+      const namedGuardian = dependantId ? usersLookup[userId] : null
+      const stream = await this.pdfService.generateUserReportPDF({
+        attestations: printableAttestations,
+        locations: printableAccessHistory,
+        exposures: printableExposures,
+        traces: printableTraces,
+        organizationName: organization.name,
+        userGroup: group.name,
+        userName: `${named.firstName} ${named.lastName}`,
+        guardianName: `${namedGuardian.firstName} ${namedGuardian.lastName}`,
+        generationDate: moment(now()).tz(timeZone).format(dateFormat),
+        reportDate: moment(now()).tz(timeZone).format(dateFormat),
+      })
+      stream.pipe(res)
+      res.status(200)
     } catch (error) {
       next(error)
     }
