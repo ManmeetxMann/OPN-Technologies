@@ -4,18 +4,26 @@ import DataStore from '../../../common/src/data/datastore'
 import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/appoinment'
 import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 import {EmailService} from '../../../common/src/service/messaging/email-service'
-import {PdfExportService} from './pdf-export.service'
+import {PdfService} from '../../../common/src/service/reports/pdf'
+import path from 'path'
+
 import {Config} from '../../../common/src/utils/config'
 
 export class TestResultsService {
   private testResultEmailTemplateId = (Config.get('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2) as number
   private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
   private emailService = new EmailService()
-  private pdfExportService = new PdfExportService()
+  private pdfService = new PdfService()
 
   async sendTestResults(testResults: TestResultsDTOForEmail): Promise<void> {
     const todaysDate = moment().format('ll')
-    const pdfContent = await this.pdfExportService.generateTestResultPdf(testResults, todaysDate)
+    const pdfContent = await this.pdfService.generatePDFBase64(
+      path.join(__dirname, '../templates/test-result.html'),
+      {
+        ...testResults,
+        createTime: todaysDate,
+      },
+    )
 
     this.emailService.send({
       templateId: this.testResultEmailTemplateId,
