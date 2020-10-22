@@ -49,7 +49,7 @@ type Bcc = {
 type EmailMessage = {
   to: EmailMessageParticipant[]
   templateId: number
-  params: Record<string, unknown>
+  params?: Record<string, unknown>
   sender?: EmailMessageParticipant
   attachment?: EmailAttachment[]
   bcc?: Bcc[]
@@ -57,13 +57,10 @@ type EmailMessage = {
 
 const APIKEY = Config.get('EMAIL_PROVIDER_API_KEY')
 const APIURL = Config.get('EMAIL_PROVIDER_API_URL')
-const FROM_ADDRESS = Config.get('EMAIL_FROM_ADDRESS')
-const FROM_NAME = Config.get('EMAIL_FROM_NAME')
-const defaultSender = {email: FROM_ADDRESS, name: FROM_NAME} as EmailMessageParticipant
 
 export class EmailService implements MessagingService<EmailMessage> {
   send(message: EmailMessage): Promise<unknown> {
-    const body = {...message, sender: message.sender ?? defaultSender}
+    const body = {...message}
     return fetch(APIURL, {
       method: 'post',
       body: JSON.stringify(body),
