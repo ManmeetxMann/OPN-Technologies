@@ -7,8 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitAgainBtn = document.getElementById('sendResultsAgain')
   const sendResultNoBtn = document.getElementById('sendResultNo')
   const messageModal = document.getElementById('message')
-  const confirmSendingAgainModal = document.getElementById(
-    'confirmSendingAgain')
+  const confirmSendingAgainModal = document.getElementById('confirmSendingAgain')
   const confirmMailSendModal = document.getElementById('confirmMailSend')
   const sendButton = document.getElementById('sendButton')
   const sendMailBtn = document.getElementById('sendMailBtn')
@@ -76,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  submitResultsForm.addEventListener('submit', async (event) => {
+  const sendResult = async (event, isSecond = false) => {
     event.preventDefault()
 
     const data = {
@@ -91,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
       hexIC: getValueByElem(hexICElem),
       hexCt: getValueByElem(hexCtElem),
     }
-    if (confirmBeforeSend === '1') {
+    if (!isSecond && confirmBeforeSend === '1') {
       data.needConfirmation = true
     }
     setLoader(sendButton, true)
@@ -110,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       setLoader(sendButton, false)
       if (response.ok) {
-        if (confirmBeforeSend === '1') {
+        if (!isSecond && confirmBeforeSend === '1') {
           openModal(confirmMailSendModal)
           confirmAppointmentId.innerHTML = responseData.data.appointmentId
           confirmDateOfAppointment.innerHTML = responseData.data.dateOfAppointment
@@ -135,7 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       showAlertModal('Failed', 'Something went wrong. Please try after sometime.')
     }
-  })
+  }
+
+  submitResultsForm.addEventListener('submit', sendResult)
 
   submitAgainBtn.addEventListener('click', async () => {
     const data = {
@@ -171,11 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
   ;[...document.getElementsByClassName('close')].forEach((closBtn) =>
     closBtn.addEventListener('click', ({target}) => createCloseModal(target)),
   )
-  sendResultNoBtn.addEventListener('click',
-    ({target}) => createCloseModal(target))
+  sendResultNoBtn.addEventListener('click', ({target}) => createCloseModal(target))
 
-  sendMailBtn.addEventListener('click', () => {
-    console.log(userData)
+  sendMailBtn.addEventListener('click', (e) => {
+    closeModal(confirmMailSendModal)
+    sendResult(e, true)
   })
   sendMailNoBtn.addEventListener('click', ({target}) => createCloseModal(target))
 
