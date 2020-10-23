@@ -30,6 +30,7 @@ export class PdfExportService {
         })
         .toBuffer((err, buffer) => {
           if (err) {
+            console.log(err)
             reject(err)
           }
           resolve(buffer.toString('base64'))
