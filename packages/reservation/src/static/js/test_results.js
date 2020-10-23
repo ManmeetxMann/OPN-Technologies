@@ -132,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     } catch (e) {
+      setLoader(sendButton, false)
       showAlertModal('Failed', 'Something went wrong. Please try after sometime.')
     }
   }
@@ -166,6 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
         showAlertModal('Failed', message)
       }
     } catch (e) {
+      setLoader(submitAgainBtn, false)
+      closeModal(confirmSendingAgainModal)
       showAlertModal('Failed', 'Something went wrong. Please try after sometime.')
     }
   })
