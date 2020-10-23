@@ -680,9 +680,9 @@ class OrganizationController implements IControllerBase {
           secondaryId as string,
         ),
       ])
-      // sort by ascending attestation time
+      // sort by descending attestation time
       attestations.sort((a, b) =>
-        new Date(a.attestationTime) < new Date(b.attestationTime) ? -1 : 1,
+        new Date(a.attestationTime) < new Date(b.attestationTime) ? 1 : -1,
       )
       const userIds = new Set<string>([userId])
       const dependantIds = new Set<string>()
@@ -808,6 +808,9 @@ class OrganizationController implements IControllerBase {
           enterIndex += 1
         }
       }
+      printableAccessHistory.reverse()
+      exposureOverlaps.sort((a, b) => (a.start > b.start ? -1 : 1))
+      traceOverlaps.sort((a, b) => (a.start > b.start ? -1 : 1))
       const printableExposures = exposureOverlaps.map((overlap) => ({
         firstName: overlap.dependant
           ? overlap.dependant.firstName
