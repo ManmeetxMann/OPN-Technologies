@@ -35,11 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
   )
   const confirmAppointmentId = document.getElementById('confirmAppointmentId')
   const confirmDateOfAppointment = document.getElementById('confirmDateOfAppointment')
+  let userData = {}
 
   const getValueByElem = (elem) => elem.value
 
-  const findAncestor = (el, sel) => {
-    while ((el = el.parentElement) && !(el.matches || el.matchesSelector).call(el, sel))
+  const findAncestor = (el, cls) => {
+    while ((el = el.parentElement) && !el.classList.contains(cls)) {}
     return el
   }
 
@@ -53,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const createCloseModal = (elem) => {
-    closeModal(findAncestor(elem, '.show-modal'))
+    closeModal(findAncestor(elem, 'show-modal'))
   }
 
   const setLoader = (btn, isEnable) => {
@@ -118,7 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
           confirmFirstName.innerHTML = responseData.data.firstName
           confirmLastName.innerHTML = responseData.data.lastName
           confirmPhone.innerHTML = responseData.data.phone
-          confirmRegisteredNursePractitioner.innerHTML = responseData.data.registeredNursePractitioner
+          confirmRegisteredNursePractitioner.innerHTML =
+            responseData.data.registeredNursePractitioner
+          userData = responseData.data
         } else {
           showAlertModal('Success', responseData.data)
         }
@@ -130,8 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     } catch (e) {
-      showAlertModal('Failed',
-        'Something went wrong. Please try after sometime.')
+      showAlertModal('Failed', 'Something went wrong. Please try after sometime.')
     }
   })
 
@@ -163,8 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showAlertModal('Failed', message)
       }
     } catch (e) {
-      showAlertModal('Failed',
-        'Something went wrong. Please try after sometime.')
+      showAlertModal('Failed', 'Something went wrong. Please try after sometime.')
     }
   })
   ;[...document.getElementsByClassName('close')].forEach((closBtn) =>
@@ -174,10 +175,9 @@ document.addEventListener('DOMContentLoaded', () => {
     ({target}) => createCloseModal(target))
 
   sendMailBtn.addEventListener('click', () => {
-    console.log('Here should send mail!!')
+    console.log(userData)
   })
-  sendMailNoBtn.addEventListener('click',
-    ({target}) => createCloseModal(target))
+  sendMailNoBtn.addEventListener('click', ({target}) => createCloseModal(target))
 
   resultSelect.addEventListener('change', ({target}) => {
     const {value: resultVal} = target
