@@ -184,6 +184,8 @@ paths:
                   type: string
                 hexCt:
                   type: string
+                needConfirmation:
+                  type: boolean
               required:
                 - barCode
                 - result
