@@ -65,63 +65,48 @@
       </div>
     </div>
   </div>
-  <form action="#" id="submitResults" method="POST">
+  <form action="#" id="bulkSubmitResults" method="POST">
     <div class="form-group">
-      <label for="barCode">Bar Code Number</label>
-      <input type="text" class="form-control" id="barCode" name="barCode" placeholder="Enter Bar Code Number" value="{{barCode}}" required>
+      <label for="barCode">CSV File</label>
+      <input type="file" class="form-control" id="csvFile" name="csvFile" placeholder="Upload CSV File" required>
     </div>
     <div class="form-group">
       <label for="result">Result</label>
-      <select class="form-control" id="result" name="result">
+      <select class="form-control" id="datesBefore" name="datesBefore">
         <option>Positive</option>
         <option selected>Negative</option>
       </select>
     </div>
-    <div class="form-row">
-      <legend class="col-form-label">FAM</legend>
-      <div class="form-group col-md-6">
-        <label for="famEGene">E gene</label>
-        <input type="text" class="form-control" id="famEGene" value="-" name="famEGene" required>
-      </div>
-      <div class="form-group col-md-6">
-        <label for="famCt">C(t)</label>
-        <input type="text" class="form-control" id="famCt" name="famCt" value="N/A" required>
-      </div>
-    </div>
-    <div class="form-row">
-      <legend class="col-form-label">Cal Red 61</legend>
-      <div class="form-group col-md-6">
-        <label for="famEGene">RdRP gene</label>
-        <input type="text" class="form-control" id="calRed61RdRpGene" value="-" name="calRed61RdRpGene" required>
-      </div>
-      <div class="form-group col-md-6">
-        <label for="calRed61Ct">C(t)</label>
-        <input type="text" class="form-control" id="calRed61Ct" value="N/A" name="calRed61Ct" required>
-      </div>
-    </div>
-    <div class="form-row">
-      <legend class="col-form-label">Quasar 670</legend>
-      <div class="form-group col-md-6">
-        <label for="quasar670NGene">N gene</label>
-        <input type="text" class="form-control" id="quasar670NGene" value="-"name="quasar670NGene" required>
-      </div>
-      <div class="form-group col-md-6">
-        <label for="quasar670Ct">C(t)</label>
-        <input type="text" class="form-control" id="quasar670Ct" value="N/A" name="quasar670Ct" required>
-      </div>
-    </div>
-    <div class="form-row">
-      <legend class="col-form-label">HEX</legend>
-      <div class="form-group col-md-6">
-        <label for="hexIC">IC</label>
-        <input type="text" class="form-control" id="hexIC" value="+" name="hexIC" required>
-      </div>
-      <div class="form-group col-md-6">
-        <label for="hexCt">C(t)</label>
-        <input type="text" class="form-control" id="hexCt" value="" name="hexCt" required>
-      </div>
-    </div>
     <button type="submit" class="btn btn-primary" id="sendButton">Send Results</button>
+
+    <table class="table table-bordered mt-4 d-none" id="presentationTable">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Barcode</th>
+          <th scope="col" colspan="2">FAM</th>
+          <th scope="col" colspan="2">Cal Red 210</th>
+          <th scope="col" colspan="2">Quasar 670</th>
+          <th scope="col" colspan="2">HEX</th>
+          <th scope="col">Auto Interpretation</th>
+        </tr>
+        <tr>
+          <th scope="col"></th>
+          <th scope="col"></th>
+          <th scope="col">E gene</th>
+          <th scope="col">C(t)</th>
+          <th scope="col">RdRP gene</th>
+          <th scope="col">C(t)</th>
+          <th scope="col">N gene</th>
+          <th scope="col">C(t)</th>
+          <th scope="col">IC</th>
+          <th scope="col">C(t)</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
 
   </form>
 </div>

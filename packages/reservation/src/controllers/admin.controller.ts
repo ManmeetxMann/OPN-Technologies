@@ -52,7 +52,8 @@ class AdminController implements IControllerBase {
       if (requestData.needConfirmation) {
         const appointment = await this.appoinmentService.getAppoinmentByBarCode(requestData.barCode)
 
-        return res.json(actionSucceed(appointment))
+        res.json(actionSucceed(appointment))
+        return
       }
 
       const resultAlreadySent = await this.testResultsService.resultAlreadySent(requestData.barCode)
