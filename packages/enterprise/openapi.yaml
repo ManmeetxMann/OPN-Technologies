@@ -1460,7 +1460,7 @@ application/json:
           name: groupId
           schema:
             type: string
-- in: query
+        - in: query
           name: organizationId
           deprecated: true
           schema:
@@ -2141,8 +2141,7 @@ application/json:
       summary: Account dependent link
       description: |
         Create and/or links one or multiple user(s) to the authenticated user
-        If the "dependent.id" is provided, the found dependent will be linked with a pending link
-        An approval process will be required to approve/reject a pending user-dependent relation
+        If the "dependent.id" is provided, the found dependent will be linked
       tags:
         - Account management
       requestBody:
@@ -2265,10 +2264,10 @@ application/json:
             type: string
           required: true
         - in: path
-            name: organizationId
-            schema:
-              type: string
-            required: true
+          name: organizationId
+          schema:
+            type: string
+          required: true
       responses:
         '200':
           description: Successfull unlinked/removed

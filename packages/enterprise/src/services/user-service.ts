@@ -1,12 +1,5 @@
 import DataStore from '../../../common/src/data/datastore'
-import {
-  ConnectionStatus,
-  ConnectionStatuses,
-  User,
-  UserDependency,
-  UserGroup,
-  UserOrganization,
-} from '../models/user'
+import {User, UserDependency, UserGroup, UserOrganization} from '../models/user'
 import {CreateUserRequest, LegacyProfile} from '../types/create-user-request'
 import {UpdateUserRequest} from '../types/update-user-request'
 import {UserRepository} from '../repository/user.repository'
@@ -64,14 +57,7 @@ export class UserService {
 
         // Link dependents to principal user
         await this.userDependencyRepository.addAll(
-          dependentIds.map(
-            (id) =>
-              ({
-                userId: id,
-                parentUserId: newUserId,
-                status: ConnectionStatuses.Approved,
-              } as UserDependency),
-          ),
+          dependentIds.map((id) => ({userId: id, parentUserId: newUserId} as UserDependency)),
         )
 
         // Connect to organizations
@@ -140,15 +126,13 @@ export class UserService {
           authUserId: null,
         }))
         .map((dependent) =>
-          (dependent.id ? this.getById(dependent.id) : this.userRepository.add(dependent)).then(
-            (user) =>
-              this.userDependencyRepository
-                .add({
-                  parentUserId,
-                  userId: user.id,
-                  status: dependent.id ? ConnectionStatuses.Pending : ConnectionStatuses.Approved,
-                } as UserDependency)
-                .then(() => user),
+          (dependent.id
+            ? this.getById(dependent.id)
+            : this.userRepository.add(dependent)
+          ).then((user) =>
+            this.userDependencyRepository
+              .add({parentUserId, userId: user.id} as UserDependency)
+              .then(() => user),
           ),
         ),
     )
@@ -173,30 +157,20 @@ export class UserService {
       })
   }
 
-  getDirectDependents(userId: string, statuses?: ConnectionStatus[]): Promise<User[]> {
-    let query = this.userDependencyRepository.collection().where('parentUserId', '==', userId)
-
-    if (statuses?.length) {
-      query = query.where('status', 'in', statuses)
-    }
-
-    return query
+  getDirectDependents(userId: string): Promise<User[]> {
+    return this.userDependencyRepository
+      .collection()
+      .where('parentUserId', '==', userId)
       .fetch()
-      .then((results) => results.map(({userId}) => userId))
-      .then((userIds) => this.getAllByIds(userIds))
+      .then((results) => this.getAllByIds(results.map(({userId}) => userId)))
   }
 
-  getParents(userId: string, statuses?: ConnectionStatus[]): Promise<User[]> {
-    let query = this.userDependencyRepository.collection().where('userId', '==', userId)
-
-    if (statuses?.length) {
-      query = query.where('status', 'in', statuses)
-    }
-
-    return query
+  getParents(userId: string): Promise<User[]> {
+    return this.userDependencyRepository
+      .collection()
+      .where('userId', '==', userId)
       .fetch()
-      .then((results) => results.map(({parentUserId}) => parentUserId))
-      .then((userIds) => this.getAllByIds(userIds))
+      .then((results) => this.getAllByIds(results.map(({parentUserId}) => parentUserId)))
   }
 
   connectOrganization(userId: string, organizationId: string): Promise<UserOrganization> {

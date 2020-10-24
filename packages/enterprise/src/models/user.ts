@@ -18,7 +18,6 @@ export type UserDependency = Auditable & {
   id: string
   userId: string
   parentUserId: string
-  status: ConnectionStatus
 }
 
 export type UserOrganization = Auditable & {
@@ -31,12 +30,4 @@ export type UserGroup = Auditable & {
   id: string
   userId: string
   groupId: string
-}
-
-export type ConnectionStatus = 'pending' | 'approved' | 'rejected'
-
-export enum ConnectionStatuses {
-  Pending = 'pending',
-  Approved = 'approved',
-  Rejected = 'rejected',
 }

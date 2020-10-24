@@ -4,7 +4,7 @@ import {CreateUserRequest, MigrateUserRequest} from '../../types/create-user-req
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
 import {AuthenticationRequest} from '../../types/authentication-request'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
-import {ConnectionStatuses, User} from '../../models/user'
+import {User} from '../../models/user'
 import {UpdateUserRequest} from '../../types/update-user-request'
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
 import {RegistrationConfirmationRequest} from '../../types/registration-confirmation-request'
@@ -360,7 +360,7 @@ export const updateDependentGroup: Handler = async (req, res, next): Promise<voi
 export const getParents: Handler = async (req, res, next): Promise<void> => {
   try {
     const {id} = res.locals.authenticatedUser as User
-    const parents = await userService.getParents(id, [ConnectionStatuses.Approved])
+    const parents = await userService.getParents(id)
     res.json(actionSucceed(parents))
   } catch (error) {
     next(error)
@@ -374,7 +374,7 @@ export const getParents: Handler = async (req, res, next): Promise<void> => {
 export const getDependents: Handler = async (req, res, next): Promise<void> => {
   try {
     const {id} = res.locals.authenticatedUser as User
-    const dependents = await userService.getDirectDependents(id, [ConnectionStatuses.Approved])
+    const dependents = await userService.getDirectDependents(id)
     res.json(actionSucceed(dependents))
   } catch (error) {
     next(error)
