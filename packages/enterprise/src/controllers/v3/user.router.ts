@@ -5,22 +5,29 @@ import {
   addDependents,
   authenticate,
   completeRegistration,
+  connectDependentToGroup,
+  connectDependentToOrganization,
   connectGroup,
   connectOrganization,
   create,
+  disconnectDependentOrganization,
   disconnectGroup,
   disconnectOrganization,
   get,
   getAllConnectedGroupsInAnOrganization,
+  getAllDependentConnectedGroupsInAnOrganization,
   getConnectedOrganizations,
+  getDependentConnectedOrganizations,
   getDependents,
   getParents,
   migrate,
   removeDependent,
   update,
   updateDependent,
+  updateDependentGroup,
 } from './user.handlers'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
+import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-authority'
 
 class UserController implements IControllerBase {
   public router = express.Router()
@@ -44,18 +51,21 @@ class UserController implements IControllerBase {
 
     const dependents = innerRouter().use(
       '/dependents',
-      innerRouter()
-        .get('/', getDependents)
-        .post('/', addDependents)
-        .put('/:dependentId', updateDependent)
-        .delete('/:dependentId', removeDependent),
+      innerRouter().get('/', getDependents).post('/', addDependents).use(
+        ':/dependentId',
+        assertHasAuthorityOnDependent,
+        innerRouter()
+          .put('/', updateDependent)
+          .delete('/', removeDependent)
 
-      // TODO
-      // .post('/:dependentId/organizations', connectOrganization)
-      // .delete('/:dependentId/organizations/:organizationId', disconnectOrganization)
+          .get('/organizations', getDependentConnectedOrganizations)
+          .post('/organizations', connectDependentToOrganization)
+          .delete('/organizations/:organizationId', disconnectDependentOrganization)
 
-      // .post('/:dependentId/groups', connectGroup)
-      // .put('/:dependentId/groups', updateGroup),
+          .get('/groups', getAllDependentConnectedGroupsInAnOrganization)
+          .post('/groups', connectDependentToGroup)
+          .put('/groups', updateDependentGroup),
+      ),
     )
 
     const profile = innerRouter().use(

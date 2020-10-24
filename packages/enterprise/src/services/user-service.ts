@@ -16,7 +16,6 @@ import {UserOrganizationRepository} from '../repository/user-organization.reposi
 import {UserDependencyRepository} from '../repository/user-dependency.repository'
 import {flattern} from '../../../common/src/utils/utils'
 import * as _ from 'lodash'
-import {OrganizationGroup} from '../models/organization'
 import {UserGroupRepository} from '../repository/user-group.repository'
 import {OrganizationUsersGroupModel} from '../repository/organization.repository'
 
@@ -217,8 +216,8 @@ export class UserService {
     groupIds: Set<string>,
   ): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return this.dataStore.firestoreORM.runTransaction((_transaction) => {
-      return this.disconnectGroups(userId, groupIds).then(() =>
+    return this.dataStore.firestoreORM.runTransaction((_transaction) =>
+      this.disconnectGroups(userId, groupIds).then(() =>
         this.findOneUserOrganizationBy(userId, organizationId).then((existing) => {
           if (existing) return this.userOrganizationRepository.delete(existing.id)
 
@@ -226,8 +225,8 @@ export class UserService {
             `User [${userId}] is not connected to organization [${organizationId}]`,
           )
         }),
-      )
-    })
+      ),
+    )
   }
 
   getAllGroupIdsForUser(userId: string): Promise<Set<string>> {
@@ -236,8 +235,7 @@ export class UserService {
       .then((results) => new Set(results?.map(({groupId}) => groupId)))
   }
 
-  connectGroups(userId: string, groups: OrganizationGroup[]): Promise<UserGroup[]> {
-    const groupIds = groups.map(({id}) => id)
+  connectGroups(userId: string, groupIds: string[]): Promise<UserGroup[]> {
     return this.getAllGroupIdsForUser(userId)
       .then((existingGroupIds) => groupIds.filter((id) => !existingGroupIds.has(id)))
       .then((groupIdsToConnect) =>
@@ -272,6 +270,15 @@ export class UserService {
         .then(() => {
           console.log(`Deleted all user-group relation for user ${userId}`)
         }),
+    )
+  }
+
+  updateGroup(userId: string, fromGroupId: string, toGroupId: string): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return this.dataStore.firestoreORM.runTransaction((_transaction) =>
+      this.disconnectGroups(userId, new Set([fromGroupId]))
+        .then(() => this.connectGroups(userId, [toGroupId]))
+        .then(),
     )
   }
 

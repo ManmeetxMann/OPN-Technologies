@@ -46,13 +46,13 @@ Note: `Groups` would need to be part of an outer collection and refer to an orga
 - `GET -> /api/v3/users/self/dependents`: Gets the authenticated user's direct dependents
 - `GET -> /api/v3/users/self/parents`: Gets the authenticated user's parents
 - `POST -> /api/v3/users/self/dependents`: Add one or multiple user(s) to the authenticated user
-- `PUT -> /api/v3/users/self/dependents/{depId}`: Update a dependent
-- `DELETE -> /api/v3/users/self/dependants/{depId}`: Removes a user as a dependent of the authenticated user 
+- `PUT -> /api/v3/users/self/dependents/{dependentId}`: Update a dependent
+- `DELETE -> /api/v3/users/self/dependants/{dependentId}`: Removes a user as a dependent of the authenticated user 
 
-- `POST -> /api/v3/users/self/dependents/{depId}/organizations`: Link a dependent to an organization
-- `DELETE -> /api/v3/users/self/dependents/{depId}/organizations/{organizationId}`: Unlink a dependent organization and all the groups within that organization. 
-- `POST -> /api/v3/users/self/dependents/{depId}/groups`: Link a dependent to a group
-- `PUT -> /api/v3/users/self/dependents/{depId}/groups`: Update a dependent groups
+- `POST -> /api/v3/users/self/dependents/{dependentId}/organizations`: Connect a dependent to an organization if relation doesn't yet exist
+- `DELETE -> /api/v3/users/self/dependents/{dependentId}/organizations/{organizationId}`: Removes the authenticated user's dependent from an organization and all the groups within that organization 
+- `POST -> /api/v3/users/self/dependents/{dependentId}/groups`: Connect a user's dependent to a group
+- `PUT -> /api/v3/users/self/dependents/{dependentId}/groups`: Update a user's dependent group within the same organization
 
 # Util Links
 Sequence Diagrams: https://drive.google.com/file/d/1CTESC_2KY5PZTvbB2CLY-eaya3mshjli/view?usp=sharing

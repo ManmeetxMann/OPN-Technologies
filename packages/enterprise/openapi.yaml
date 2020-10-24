@@ -2201,3 +2201,169 @@ application/json:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+
+  /api/v3/users/self/dependents/{dependentId}/organizations:
+    get:
+      summary: Connected organizations
+      description: Get all the organizations connected with an authenticated-user's dependent
+      tags:
+        - Account management
+      parameters:
+        - in: path
+          name: dependentId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfull retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfOrganizations'
+
+    post:
+      summary: Organization connection
+      description: Connect an organization to a dependent, if relation doesn't yet exist
+      tags:
+        - Account management
+      parameters:
+        - in: path
+          name: dependentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                organizationId:
+                  type: string
+                  nullable: false
+              required:
+                - organizationId
+      responses:
+        '200':
+          description: Successfull updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+
+  /api/v3/users/self/dependents/{dependentId}/organizations/{organizationId}:
+    delete:
+      summary: Unlink dependent from an organization
+      description: Removes the authenticated user's dependent from an organization and all the groups within that organization
+      tags:
+        - Account management
+      parameters:
+        - in: path
+          name: dependentId
+          schema:
+            type: string
+          required: true
+        - in: path
+            name: organizationId
+            schema:
+              type: string
+            required: true
+      responses:
+        '200':
+          description: Successfull unlinked/removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+
+  /api/v3/users/self/dependents/{dependentId}/groups:
+    get:
+      summary: Connected groups
+      description: Get all the connected-groups of a dependent
+      tags:
+        - Account management
+      parameters:
+        - in: query
+          name: dependentId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfull retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfOrganizationGroups'
+
+    post:
+      summary: Group connection
+      description: Connects an authenticated-user's dependent to a group if not linked already
+      tags:
+        - Account management
+      parameters:
+        - in: path
+          name: dependentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                organizationId:
+                  type: string
+                  nullable: false
+                groupId:
+                  type: string
+                  nullable: false
+              required:
+                - organizationId
+                - groupId
+      responses:
+        '200':
+          description: Successfull linked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+    put:
+      summary: Update Group
+      description: Update a user's dependent group within the same organization
+      tags:
+        - Account management
+      parameters:
+        - in: path
+          name: dependentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                organizationId:
+                  type: string
+                  nullable: false
+                fromGroupId:
+                  type: string
+                  nullable: false
+                toGroupId:
+                  type: string
+                  nullable: false
+              required:
+                - organizationId
+                - fromGroupId
+                - toGroupId
+      responses:
+        '200':
+          description: Successfull updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'

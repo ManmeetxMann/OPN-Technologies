@@ -12,7 +12,7 @@ import {OrganizationService} from '../../services/organization-service'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {UserService} from '../../services/user-service'
 import {ConnectOrganizationRequest} from '../../types/user-organization-request'
-import {ConnectGroupRequest} from '../../types/user-group-request'
+import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
 import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
 
 const authService = new AuthService()
@@ -140,6 +140,25 @@ export const getConnectedOrganizations: Handler = async (req, res, next): Promis
 }
 
 /**
+ * Fetch all the connected organizations of a dependent
+ */
+export const getDependentConnectedOrganizations: Handler = async (
+  req,
+  res,
+  next,
+): Promise<void> => {
+  try {
+    const {dependentId} = req.params
+    const organizationIds = await userService.getAllConnectedOrganizationIds(dependentId)
+    const organizations = await organizationService.getAllByIds(organizationIds)
+
+    res.json(actionSucceed(organizations))
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
  * Connect an organization to the authenticated user, if relation doesn't yet exist
  */
 export const connectOrganization: Handler = async (req, res, next): Promise<void> => {
@@ -152,6 +171,26 @@ export const connectOrganization: Handler = async (req, res, next): Promise<void
     }
 
     await userService.connectOrganization(id, organizationId)
+
+    res.json(actionSucceed())
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Connect a dependent to an organization if relation doesn't yet exist
+ */
+export const connectDependentToOrganization: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const {dependentId} = req.params
+    const {organizationId} = req.body as ConnectOrganizationRequest
+    const organization = await organizationService.findOneById(organizationId)
+    if (!organization) {
+      throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
+    }
+
+    await userService.connectOrganization(dependentId, organizationId)
 
     res.json(actionSucceed())
   } catch (error) {
@@ -175,6 +214,27 @@ export const disconnectOrganization: Handler = async (req, res, next): Promise<v
     const groups = await organizationService.getGroups(organizationId)
     const groupIds = new Set(groups.map(({id}) => id))
     await userService.disconnectOrganization(authenticatedUser.id, organizationId, groupIds)
+
+    res.json(actionSucceed())
+  } catch (error) {
+    next(error)
+  }
+}
+/**
+ * Removes the authenticated user's dependent from an organization and all the groups within that organization
+ */
+export const disconnectDependentOrganization: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const {dependentId, organizationId} = req.params
+    const organization = await organizationService.findOneById(organizationId)
+    if (!organization) {
+      throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
+    }
+
+    // Disconnect Organization and groups
+    const groups = await organizationService.getGroups(organizationId)
+    const groupIds = new Set(groups.map(({id}) => id))
+    await userService.disconnectOrganization(dependentId, organizationId, groupIds)
 
     res.json(actionSucceed())
   } catch (error) {
@@ -205,6 +265,28 @@ export const getAllConnectedGroupsInAnOrganization: Handler = async (
 }
 
 /**
+ * Get all the user's dependent's connected-groups
+ */
+export const getAllDependentConnectedGroupsInAnOrganization: Handler = async (
+  req,
+  res,
+  next,
+): Promise<void> => {
+  try {
+    const {dependentId} = req.params
+    const {organizationId} = req.query
+    const groupIds = await userService.getAllGroupIdsForUser(dependentId)
+    const groups = (await organizationService.getGroups(organizationId as string)).filter(({id}) =>
+      groupIds.has(id),
+    )
+
+    res.json(actionSucceed(groups))
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
  * Connect a user to a group
  */
 export const connectGroup: Handler = async (req, res, next): Promise<void> => {
@@ -213,7 +295,23 @@ export const connectGroup: Handler = async (req, res, next): Promise<void> => {
     const {organizationId, groupId} = req.body as ConnectGroupRequest
     const group = await organizationService.getGroup(organizationId, groupId)
 
-    await userService.connectGroups(authenticatedUser.id, [group])
+    await userService.connectGroups(authenticatedUser.id, [group.id])
+
+    res.json(actionSucceed())
+  } catch (error) {
+    next(error)
+  }
+}
+/**
+ * Connect a user's dependent to a group
+ */
+export const connectDependentToGroup: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const {dependentId} = req.params
+    const {organizationId, groupId} = req.body as ConnectGroupRequest
+    const group = await organizationService.getGroup(organizationId, groupId)
+
+    await userService.connectGroups(dependentId, [group.id])
 
     res.json(actionSucceed())
   } catch (error) {
@@ -229,6 +327,25 @@ export const disconnectGroup: Handler = async (req, res, next): Promise<void> =>
     const authenticatedUser = res.locals.authenticatedUser as User
     const {groupId} = req.params
     await userService.disconnectGroups(authenticatedUser.id, new Set([groupId]))
+
+    res.json(actionSucceed())
+  } catch (error) {
+    next(error)
+  }
+}
+/**
+ * Update a user's dependent group within the same organization
+ */
+export const updateDependentGroup: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const {dependentId} = req.params
+    const {organizationId, fromGroupId, toGroupId} = req.body as UpdateGroupRequest
+
+    // Assert destination group exists
+    await organizationService.getGroup(organizationId, toGroupId)
+
+    // Update
+    await userService.updateGroup(dependentId, fromGroupId, toGroupId)
 
     res.json(actionSucceed())
   } catch (error) {
