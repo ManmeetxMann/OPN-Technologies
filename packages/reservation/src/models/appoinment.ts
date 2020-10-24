@@ -7,6 +7,7 @@ type AppointmentBase = {
   registeredNursePractitioner: string
   dateOfAppointment: string
   appointmentId: number
+  barCode?: string
 }
 
 export type AppoinmentDataUI = {
@@ -38,6 +39,11 @@ export type AppointmentAcuityResponse = AppointmentBase & {
 
 export type AppointmentSearchRequest = {
   barCodeNumber: string
+}
+
+export type AppointmentSearchByDateRequest = {
+  startDate: string,
+  endDate: string
 }
 
 export type AppoinmentBarCodeSequenceDBModel = {
@@ -77,6 +83,12 @@ export type TestResultsDBModel = AppointmentBase &
 
 export type TestResultsConfirmationRequest = TestResultsBase & {
   needConfirmation?: boolean
+}
+
+export type CheckAppointmentRequest = {
+  from?: string
+  to?: string
+  barCodes?: string[]
 }
 
 export type TestResultsDBModelResponse = TestResultsDBModel & {

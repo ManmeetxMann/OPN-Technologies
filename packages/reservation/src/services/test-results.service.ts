@@ -1,7 +1,10 @@
 import moment from 'moment'
 import DataStore from '../../../common/src/data/datastore'
 
-import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/appoinment'
+import {
+  TestResultsDTOForEmail,
+  TestResultsDBModel,
+} from '../models/appoinment'
 import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 import {EmailService} from '../../../common/src/service/messaging/email-service'
 import {PdfExportService} from './pdf-export.service'
@@ -41,6 +44,10 @@ export class TestResultsService {
 
   async saveResults(testResults: TestResultsDBModel): Promise<void> {
     this.testResultsDBRepository.save(testResults)
+  }
+
+  async resultAlreadySentMany(barCode: string[]): Promise<string[]> {
+    return (await this.testResultsDBRepository.findWhereIdIn(barCode)).map((test) => test.id)
   }
 
   async resultAlreadySent(barCode: string): Promise<boolean> {

@@ -3,12 +3,32 @@ import {
   AppointmentSearchRequest,
   AppointmentDBModel,
   AppointmentAcuityResponse,
+  AppointmentSearchByDateRequest,
 } from '../models/appoinment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {app} from '../../../registry/src/server'
 
 export class AppoinmentsSchedulerRepository extends AcuityScheduling {
   constructor() {
     super()
+  }
+
+  async getManyAppointments(data: AppointmentSearchByDateRequest): Promise<AppointmentDBModel[]> {
+    console.log(await this.getAppointments(data))
+    return this.getAppointments(data).then((appointments: AppointmentAcuityResponse[]) => {
+      return appointments.map((appointment: AppointmentAcuityResponse) => ({
+        firstName: appointment.firstName,
+        lastName: appointment.lastName,
+        email: appointment.email,
+        phone: appointment.phone,
+        appointmentId: appointment.id,
+        dateOfBirth: appointment.dateOfBirth,
+        registeredNursePractitioner: appointment.registeredNursePractitioner,
+        dateOfAppointment: appointment.date,
+        barCode: appointment.barCode,
+      }))
+      throw new ResourceNotFoundException(`Appointment not found`)
+    })
   }
 
   async getAppointment(data: AppointmentSearchRequest): Promise<AppointmentDBModel> {

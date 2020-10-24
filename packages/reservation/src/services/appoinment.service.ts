@@ -21,6 +21,15 @@ export class AppoinmentService {
       })
   }
 
+  async getAppoinmentByDate(startDate: string, endDate: string): Promise<AppointmentDTO[]> {
+    const filters = {startDate, endDate}
+    return this.appoinmentSchedulerRepository
+      .getManyAppointments(filters)
+      .then((appoinment: AppointmentDBModel[]) => {
+        return appoinment
+      })
+  }
+
   async getNextBarCodeNumber(): Promise<string> {
     return this.appoinmentDBRepository
       .getNextBarCode()

@@ -5,7 +5,12 @@ import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 
 import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
-import {TestResultsDTO, TestResultsConfirmationRequest, AppointmentDTO} from '../models/appoinment'
+import {
+  TestResultsDTO,
+  TestResultsConfirmationRequest,
+  AppointmentDTO,
+  CheckAppointmentRequest,
+} from '../models/appoinment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
@@ -23,6 +28,12 @@ class AdminController implements IControllerBase {
     this.router.post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
     this.router.post(this.path + '/api/v1/send-and-save-test-results', this.sendAndSaveTestResults)
     this.router.post(this.path + '/api/v1/send-test-results-again', this.sendTestResultsAgain)
+
+    this.router.post(this.path + '/api/v1/check-appointments', this.checkAppointments)
+    this.router.post(
+      this.path + '/api/v1/send-and-save-test-results-bulk',
+      this.sendAndSaveTestResultsBulk,
+    )
   }
 
   getAppointmentByBarCode = async (
@@ -41,6 +52,38 @@ class AdminController implements IControllerBase {
     }
   }
 
+  sendAndSaveTestResultsBulk = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<unknown> => {
+    try {
+      const requestData = req.body
+
+      const notAgainData = requestData.results.filter(({isAgain}) => isAgain === false)
+      // const againData = requestData.results.filter(({isAgain}) => isAgain === true)
+
+      notAgainData.forEach((row) => {
+        await this.appoinmentService
+          .getAppoinmentByBarCode(requestData.barCode)
+          .then((appointment: AppointmentDTO) => {
+            this.testResultsService.sendTestResults({...requestData, ...appointment})
+            return appointment
+          })
+          .then((appointment: AppointmentDTO) => {
+            this.testResultsService.saveResults({
+              ...requestData,
+              ...appointment,
+              appointmentId: appointment.appointmentId,
+              id: requestData.barCode,
+            })
+          })
+      })
+    } catch (e) {
+      next(e)
+    }
+  }
+
   sendAndSaveTestResults = async (
     req: Request,
     res: Response,
@@ -51,7 +94,6 @@ class AdminController implements IControllerBase {
 
       if (requestData.needConfirmation) {
         const appointment = await this.appoinmentService.getAppoinmentByBarCode(requestData.barCode)
-
         res.json(actionSucceed(appointment))
         return
       }
@@ -99,6 +141,17 @@ class AdminController implements IControllerBase {
     } catch (error) {
       next(error)
     }
+  }
+
+  checkAppointments = async (req: Request, res: Response): Promise<void> => {
+    const requestData: CheckAppointmentRequest = req.body
+
+    // const appointment = await this.appoinmentService.getAppoinmentByDate(
+    //   requestData.from,
+    //   requestData.to,
+    // )
+    const alreadySents = await this.testResultsService.resultAlreadySentMany(requestData.barCodes)
+    res.json(actionSucceed(alreadySents))
   }
 }
 
