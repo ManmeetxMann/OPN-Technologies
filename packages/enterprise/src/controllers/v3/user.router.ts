@@ -10,7 +10,6 @@ import {
   create,
   disconnectGroup,
   disconnectOrganization,
-  findAll,
   get,
   getAllConnectedGroupsInAnOrganization,
   getConnectedOrganizations,
@@ -39,7 +38,6 @@ class UserController implements IControllerBase {
       innerRouter()
         .post('/', create)
         .post('/migration', migrate)
-        .post('/search', authMiddleware, findAll)
         .post('/auth', authenticate)
         .post('/auth/registration-confirmation', completeRegistration),
     )

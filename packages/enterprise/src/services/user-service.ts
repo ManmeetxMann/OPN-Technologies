@@ -5,7 +5,6 @@ import {
   User,
   UserDependency,
   UserGroup,
-  UserMatcher,
   UserOrganization,
 } from '../models/user'
 import {CreateUserRequest, LegacyProfile} from '../types/create-user-request'
@@ -19,7 +18,6 @@ import {flattern} from '../../../common/src/utils/utils'
 import * as _ from 'lodash'
 import {OrganizationGroup} from '../models/organization'
 import {UserGroupRepository} from '../repository/user-group.repository'
-import {nanoid} from 'nanoid'
 import {OrganizationUsersGroupModel} from '../repository/organization.repository'
 
 export class UserService {
@@ -202,18 +200,13 @@ export class UserService {
       .then((userIds) => this.getAllByIds(userIds))
   }
 
-  connectOrganization(
-    userId: string,
-    organizationId: string,
-    identifier?: string,
-  ): Promise<UserOrganization> {
+  connectOrganization(userId: string, organizationId: string): Promise<UserOrganization> {
     return this.findOneUserOrganizationBy(userId, organizationId).then((existing) =>
       existing
         ? existing
         : this.userOrganizationRepository.add({
             organizationId,
             userId,
-            identifier: identifier ?? `OPN-${nanoid(5)}`,
           } as UserOrganization),
     )
   }
@@ -280,36 +273,6 @@ export class UserService {
           console.log(`Deleted all user-group relation for user ${userId}`)
         }),
     )
-  }
-
-  async findUsersBy(filter: UserMatcher): Promise<User[]> {
-    // Search in users
-    const {firstName, lastName, identifier, organizationId} = filter
-    const users = await this.userRepository
-      .collection()
-      .where('firstName', '==', firstName)
-      .where('lastName', '==', lastName)
-      .fetch()
-
-    if (users.length === 0) return []
-
-    // Search in organizations
-    const userIds = users.map(({id}) => id)
-    const userOrganizations = await Promise.all(
-      _.chunk(userIds, 10).map((chunk) =>
-        this.userOrganizationRepository
-          .collection()
-          .where('organizationId', '==', organizationId)
-          .where('identifier', '==', identifier)
-          .where('userId', 'in', chunk)
-          .fetch(),
-      ),
-    ).then((results) => flattern(results as UserOrganization[][]))
-
-    if (userOrganizations.length === 0) return []
-
-    const matchingUserIds = new Set(userOrganizations.map(({userId}) => userId))
-    return users.filter(({id}) => matchingUserIds.has(id))
   }
 
   private findOneUserOrganizationBy(

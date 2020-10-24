@@ -4,7 +4,7 @@ import {CreateUserRequest, MigrateUserRequest} from '../../types/create-user-req
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
 import {AuthenticationRequest} from '../../types/authentication-request'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
-import {ConnectionStatuses, User, UserMatcher} from '../../models/user'
+import {ConnectionStatuses, User} from '../../models/user'
 import {UpdateUserRequest} from '../../types/update-user-request'
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
 import {RegistrationConfirmationRequest} from '../../types/registration-confirmation-request'
@@ -79,19 +79,6 @@ export const authenticate: Handler = async (req, res, next): Promise<void> => {
 }
 
 /**
- * Find users
- */
-export const findAll: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const matcher = req.body as UserMatcher
-    const users = await userService.findUsersBy(matcher)
-    res.json(actionSucceed(users))
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
  * Get the authenticated user details
  */
 export const get: Handler = async (req, res, next): Promise<void> => {
@@ -157,14 +144,14 @@ export const getConnectedOrganizations: Handler = async (req, res, next): Promis
  */
 export const connectOrganization: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {id, email} = res.locals.authenticatedUser as User
+    const {id} = res.locals.authenticatedUser as User
     const {organizationId} = req.body as ConnectOrganizationRequest
     const organization = await organizationService.findOneById(organizationId)
     if (!organization) {
       throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
     }
 
-    await userService.connectOrganization(id, organizationId, email)
+    await userService.connectOrganization(id, organizationId)
 
     res.json(actionSucceed())
   } catch (error) {
@@ -279,6 +266,8 @@ export const getDependents: Handler = async (req, res, next): Promise<void> => {
 
 /**
  * Add dependents to the authenticated user
+ * If a `dependent.id` is provided, the matching dependent will be linked,
+ * with a pending for approval state
  */
 export const addDependents: Handler = async (req, res, next): Promise<void> => {
   try {

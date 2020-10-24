@@ -25,9 +25,6 @@ export type UserOrganization = Auditable & {
   id: string
   userId: string
   organizationId: string
-  identifier: string //email, external-id (student id), generated-key
-
-  //TODO: status: 'pending' | 'approved' | 'rejected'
 }
 
 export type UserGroup = Auditable & {
@@ -42,11 +39,4 @@ export enum ConnectionStatuses {
   Pending = 'pending',
   Approved = 'approved',
   Rejected = 'rejected',
-}
-
-export type UserMatcher = {
-  firstName: string
-  lastName: string
-  identifier: string
-  organizationId: string
 }

@@ -105,6 +105,11 @@ export class AuthService {
       }
     } catch (error) {
       // TODO: -- TO BE REMOVED -- to avoid security flaw when deploying with wrong environment variable
+      // If an error occurred we shouldn't ignore it, no matter what is the running database engine.
+      // Moreover, this security layer shouldn't even care about the firestore-emulator.
+      // There's no point to add security if we add logic to workaround it, especially if that logic is everywhere.
+      // The emulator should be seeded or configured to run against the security layer, not the opposite.
+      // ---
       // take the client's word that they are who they say they are
       if (Config.get('DEBUG_GUILIBLE_MODE') === 'enabled') {
         if (Config.get('FIRESTORE_EMULATOR_HOST') !== 'localhost:8080') {
