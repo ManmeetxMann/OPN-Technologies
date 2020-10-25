@@ -52,7 +52,7 @@ class UserController implements IControllerBase {
     const dependents = innerRouter().use(
       '/dependents',
       innerRouter().get('/', getDependents).post('/', addDependents).use(
-        ':/dependentId',
+        '/:dependentId',
         assertHasAuthorityOnDependent,
         innerRouter()
           .put('/', updateDependent)
