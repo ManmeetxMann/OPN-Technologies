@@ -13,7 +13,6 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
   }
 
   async getManyAppointments(data: AppointmentSearchByDateRequest): Promise<AppointmentDBModel[]> {
-    console.log(await this.getAppointments(data))
     return this.getAppointments(data).then((appointments: AppointmentAcuityResponse[]) => {
       return appointments.map((appointment: AppointmentAcuityResponse) => ({
         firstName: appointment.firstName,
