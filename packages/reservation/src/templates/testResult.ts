@@ -2,61 +2,38 @@ import moment from 'moment-timezone'
 import path from 'path'
 
 import {ResultTypes, TestResultsDTOForEmail} from '../models/appoinment'
-import {
-  TableLayout,
-  TDocumentDefinitions,
-  TFontDictionary,
-} from '../types/document-definition-types'
+import {TableLayouts, Content} from '../../../common/src/service/reports/pdf-types'
+
 import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
 
-export function getFontDefinition(): TFontDictionary {
-  return {
-    Cambria: {
-      normal: path.join(__dirname, '../static/fonts/Cambria.ttf'),
-      bold: path.join(__dirname, '../static/fonts/CambriaBold.ttf'),
-      italics: path.join(__dirname, '../static/fonts/Cambria.ttf'),
-      bolditalics: path.join(__dirname, '../static/fonts/Cambria.ttf'),
-    },
-    Helvetica: {
-      normal: 'Helvetica',
-      bold: 'Helvetica-Bold',
-      italics: 'Helvetica-Oblique',
-      bolditalics: 'Helvetica-BoldOblique',
-    },
-  }
-}
-
-export function getMainTableLayout(): TableLayout {
-  return {
+const tableLayouts: TableLayouts = {
+  mainTable: {
     hLineWidth: () => 1,
     vLineWidth: () => 1,
     hLineColor: () => '#CCCCCC',
     vLineColor: () => '#CCCCCC',
     paddingTop: () => 5,
     paddingBottom: () => 5,
-  }
-}
-
-export function getResultTableLayout(): TableLayout {
-  return {
+  },
+  resultTable: {
     hLineWidth: () => 1,
     vLineWidth: () => 1,
     hLineColor: () => '#B7B7B7',
     vLineColor: () => '#B7B7B7',
     paddingTop: () => 5,
     paddingBottom: () => 5,
-  }
+  },
 }
-
-export function getDocDefinition(data: TestResultsDTOForEmail): TDocumentDefinitions {
+const generate = (
+  params: TestResultsDTOForEmail,
+): {content: Content[]; tableLayouts: TableLayouts} => {
   const timeZone = Config.get('DEFAULT_TIME_ZONE')
   const createTime = moment(now()).tz(timeZone).format('LL')
-  const isPositive = data.result === ResultTypes.Positive
+  const isPositive = params.result === ResultTypes.Positive
 
   return {
-    pageSize: 'A4',
-    pageMargins: [72, 34, 72, 30],
+    tableLayouts,
     content: [
       {
         columns: [
@@ -128,18 +105,18 @@ export function getDocDefinition(data: TestResultsDTOForEmail): TDocumentDefinit
             [
               'Client Name ',
               {
-                text: `${data.firstName} ${data.lastName}`,
+                text: `${params.firstName} ${params.lastName}`,
                 bold: true,
               },
             ],
-            ['Date of Birth', data.dateOfBirth],
-            ['Mobile Number', data.phone],
+            ['Date of Birth', params.dateOfBirth],
+            ['Mobile Number', params.phone],
             [
               'Date of Test (Sample Collection)',
-              `${data.dateOfAppointment} at ${data.timeOfAppointment}`,
+              `${params.dateOfAppointment} at ${params.timeOfAppointment}`,
             ],
             ['Date of Result', createTime],
-            ['Nurse / Physician', data.registeredNursePractitioner],
+            ['Nurse / Physician', params.registeredNursePractitioner],
             ['Test', 'RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
             [
               'Equipment approved by \n Health Canada',
@@ -242,35 +219,35 @@ export function getDocDefinition(data: TestResultsDTOForEmail): TDocumentDefinit
                 color: '#FFFFFF',
               },
               {
-                text: data.famEGene,
+                text: params.famEGene,
                 alignment: 'center',
               },
               {
-                text: data.famCt,
+                text: params.famCt,
                 alignment: 'center',
               },
               {
-                text: data.calRed61RdRpGene,
+                text: params.calRed61RdRpGene,
                 alignment: 'center',
               },
               {
-                text: data.calRed61Ct,
+                text: params.calRed61Ct,
                 alignment: 'center',
               },
               {
-                text: data.quasar670NGene,
+                text: params.quasar670NGene,
                 alignment: 'center',
               },
               {
-                text: data.quasar670Ct,
+                text: params.quasar670Ct,
                 alignment: 'center',
               },
               {
-                text: data.hexIC,
+                text: params.hexIC,
                 alignment: 'center',
               },
               {
-                text: data.hexCt,
+                text: params.hexCt,
                 alignment: 'center',
               },
             ],
@@ -287,23 +264,6 @@ export function getDocDefinition(data: TestResultsDTOForEmail): TDocumentDefinit
         margin: [0, isPositive ? 50 : 60, 0, 0],
       },
     ],
-    styles: {
-      'gray-text': {
-        color: '#666666',
-      },
-      black: {
-        color: '#000000',
-      },
-      footer: {
-        fontSize: 8,
-        lineHeight: 1.4,
-        font: 'Helvetica',
-        alignment: 'center',
-      },
-    },
-    defaultStyle: {
-      color: '#666666',
-      font: 'Cambria',
-    },
   }
 }
+export default generate

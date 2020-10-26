@@ -506,10 +506,15 @@ export interface ContextPageSize {
   orientation: PageOrientation
 }
 
+// edited for convenience
+export interface TableLayouts {
+  [key: string]: CustomTableLayout
+}
+
 export interface BufferOptions {
   fontLayoutCache?: boolean
   bufferPages?: boolean
-  tableLayouts?: {[key: string]: CustomTableLayout}
+  tableLayouts?: TableLayouts
   autoPrint?: boolean
   progressCallback?: (progress: number) => void
 }

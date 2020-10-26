@@ -1095,6 +1095,43 @@ paths:
               schema:
                 type: string
                 format: binary
+  
+  /organizations/{organizationId}/stats/user-report:
+    get:
+      description: Get pdf for one user (admin access required)
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: userId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: parentUserId
+          schema:
+            type: string
+        - in: query
+          name: from
+          schema:
+            type: string
+        - in: query
+          name: to
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully computed the stats
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
 
   /organizations/{organizationId}/stats/contact-trace-locations:
     get:

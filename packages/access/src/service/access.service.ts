@@ -326,22 +326,20 @@ export class AccessService {
           enteredAt: access.enteredAt?.toDate().toISOString(),
           //@ts-ignore
           exitAt: access.exitAt?.toDate().toISOString(),
-          //@ts-ignore
-          dependants: Object.values(access.dependants).map(({id, enteredAt, exitAt}) => {
-            return {
-              id,
-              //@ts-ignore
-              enteredAt: enteredAt?.toDate().toISOString(),
-              //@ts-ignore
-              exitAt: exitAt?.toDate().toISOString(),
-            }
-          }),
+          dependants: Object.values(access.dependants)
+            .map(({id, enteredAt, exitAt}) => {
+              return {
+                id,
+                //@ts-ignore
+                enteredAt: enteredAt?.toDate().toISOString(),
+                //@ts-ignore
+                exitAt: exitAt?.toDate().toISOString(),
+              }
+            })
+            .reduce((all, curr) => ({...all, [curr.id]: curr}), {}),
         }),
       )
-      .filter(
-        //@ts-ignore
-        (item) => item.dependants && item.dependants.map((dep) => dep.id).indexOf(dependentId) > -1,
-      )
+      .filter((item) => item.dependants && item.dependants[dependentId])
 
     // @ts-ignore
     return filteredAccesses
