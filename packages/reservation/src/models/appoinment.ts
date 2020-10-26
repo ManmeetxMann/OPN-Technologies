@@ -44,7 +44,7 @@ export type AppointmentSearchRequest = {
 }
 
 export type AppointmentSearchByDateRequest = {
-  startDate: string,
+  startDate: string
   endDate: string
 }
 

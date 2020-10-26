@@ -1,10 +1,7 @@
 import moment from 'moment'
 import DataStore from '../../../common/src/data/datastore'
 
-import {
-  TestResultsDTOForEmail,
-  TestResultsDBModel,
-} from '../models/appoinment'
+import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/appoinment'
 import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 import {EmailService} from '../../../common/src/service/messaging/email-service'
 import {PdfExportService} from './pdf-export.service'
