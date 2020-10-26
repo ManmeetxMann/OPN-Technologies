@@ -1433,14 +1433,7 @@ class OrganizationController implements IControllerBase {
       const {organizationId} = req.params
       const {userId, parentUserId} = req.query as FamilyStatusReportRequest
 
-      let isParentUser = true
-
-      if (parentUserId) {
-        const user = await this.userService.findOne(parentUserId)
-        if (user && user.organizationIds.indexOf(organizationId) > -1) {
-          isParentUser = false
-        }
-      }
+      const isParentUser = !parentUserId
 
       const parent = await this.userService.findOne(isParentUser ? userId : parentUserId)
       const parentGroup = await this.organizationService.getUserGroup(

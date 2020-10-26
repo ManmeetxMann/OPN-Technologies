@@ -6,6 +6,7 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {AppoinmentService} from '../services/appoinment.service'
 import {AppointmentDTO, BarCodeGeneratorUI, AppoinmentDataUI} from '../models/appoinment'
 import * as _ from 'lodash'
+import {Config} from '../../../common/src/utils/config'
 
 class PortalController implements IControllerBase {
   public path = '/admin'
@@ -21,6 +22,7 @@ class PortalController implements IControllerBase {
     this.router.get(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
     this.router.post(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
     this.router.get(this.path + '/page/send-single-results', this.displayFormToSendSingleResults)
+    this.router.get(this.path + '/page/send-bulk-results', this.displayFormToSendBulkResults)
 
     this.router.get(this.path + '/js/print-label-library.js', this.displayPrintLibraryJs)
     this.router.get(this.path + '/js/print-label.js', this.displayPrintJs)
@@ -73,7 +75,18 @@ class PortalController implements IControllerBase {
   }
 
   displayFormToSendSingleResults = async (req: Request, res: Response): Promise<void> => {
-    res.render('send_single_form', {layout: 'results'})
+    res.render('send_single_form', {
+      layout: 'results',
+      confirmBeforeSend: Config.get('CONFIRM_BEFORE_SEND'),
+      sendSingleResultsTab: true,
+    })
+  }
+
+  displayFormToSendBulkResults = async (req: Request, res: Response): Promise<void> => {
+    res.render('send_bulk_form', {
+      layout: 'results',
+      sendBulkResultTab: true,
+    })
   }
 }
 

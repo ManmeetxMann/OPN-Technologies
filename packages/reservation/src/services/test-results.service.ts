@@ -17,7 +17,7 @@ export class TestResultsService {
   private pdfService = new PdfService()
 
   async sendTestResults(testResults: TestResultsDTOForEmail): Promise<void> {
-    const todaysDate = moment().format('LL')
+    const todaysDate = moment().utcOffset('-0400').format('LL')
     const pdfContent = await this.pdfService.generatePDFBase64(
       path.join(__dirname, '../templates/test-result.html'),
       {

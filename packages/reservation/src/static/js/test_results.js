@@ -1,11 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const resultSelect = document.getElementById('result')
+  if (!resultSelect) {
+    return
+  }
   const submitResultsForm = document.getElementById('submitResults')
   const submitAgainBtn = document.getElementById('sendResultsAgain')
   const sendResultNoBtn = document.getElementById('sendResultNo')
   const messageModal = document.getElementById('message')
   const confirmSendingAgainModal = document.getElementById('confirmSendingAgain')
+  const confirmMailSendModal = document.getElementById('confirmMailSend')
   const sendButton = document.getElementById('sendButton')
-  const resultSelect = document.getElementById('result')
+  const sendMailBtn = document.getElementById('sendMailBtn')
+
+  const sendMailNoBtn = document.getElementById('sendMailNoBtn')
   const barCodeElem = document.getElementById('barCode')
   const resultElem = document.getElementById('result')
   const famEGeneElem = document.getElementById('famEGene')
@@ -17,10 +24,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const hexICElem = document.getElementById('hexIC')
   const hexCtElem = document.getElementById('hexCt')
 
+  const confirmFirstName = document.getElementById('confirmFirstName')
+  const confirmLastName = document.getElementById('confirmLastName')
+  const confirmEmail = document.getElementById('confirmEmail')
+  const confirmPhone = document.getElementById('confirmPhone')
+  const confirmDateOfBirth = document.getElementById('confirmDateOfBirth')
+  const confirmRegisteredNursePractitioner = document.getElementById(
+    'confirmRegisteredNursePractitioner',
+  )
+  const confirmAppointmentId = document.getElementById('confirmAppointmentId')
+  const confirmDateOfAppointment = document.getElementById('confirmDateOfAppointment')
+  let userData = {}
+
   const getValueByElem = (elem) => elem.value
 
-  const findAncestor = (el, sel) => {
-    while ((el = el.parentElement) && !(el.matches || el.matchesSelector).call(el, sel));
+  const findAncestor = (el, cls) => {
+    while ((el = el.parentElement) && !el.classList.contains(cls)) {}
     return el
   }
 
@@ -34,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const createCloseModal = (elem) => {
-    closeModal(findAncestor(elem, '.show-modal'))
+    closeModal(findAncestor(elem, 'show-modal'))
   }
 
   const setLoader = (btn, isEnable) => {
@@ -56,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  submitResultsForm.addEventListener('submit', async (event) => {
+  const sendResult = async (event, isSecond = false) => {
     event.preventDefault()
 
     const data = {
@@ -70,6 +89,9 @@ document.addEventListener('DOMContentLoaded', () => {
       quasar670Ct: getValueByElem(quasar670CtElem),
       hexIC: getValueByElem(hexICElem),
       hexCt: getValueByElem(hexCtElem),
+    }
+    if (!isSecond && confirmBeforeSend === '1') {
+      data.needConfirmation = true
     }
     setLoader(sendButton, true)
 
@@ -86,9 +108,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const responseData = await response.json()
 
       setLoader(sendButton, false)
-
       if (response.ok) {
-        showAlertModal('Success', responseData.data)
+        if (!isSecond && confirmBeforeSend === '1') {
+          openModal(confirmMailSendModal)
+          confirmAppointmentId.innerHTML = responseData.data.appointmentId
+          confirmDateOfAppointment.innerHTML = responseData.data.dateOfAppointment
+          confirmDateOfBirth.innerHTML = responseData.data.dateOfBirth
+          confirmEmail.innerHTML = responseData.data.email
+          confirmFirstName.innerHTML = responseData.data.firstName
+          confirmLastName.innerHTML = responseData.data.lastName
+          confirmPhone.innerHTML = responseData.data.phone
+          confirmRegisteredNursePractitioner.innerHTML =
+            responseData.data.registeredNursePractitioner
+          userData = responseData.data
+        } else {
+          showAlertModal('Success', responseData.data)
+        }
       } else {
         if (response.status === 409) {
           openModal(confirmSendingAgainModal)
@@ -99,7 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       showAlertModal('Failed', 'Something went wrong. Please try after sometime.')
     }
-  })
+  }
+
+  submitResultsForm.addEventListener('submit', sendResult)
 
   submitAgainBtn.addEventListener('click', async () => {
     const data = {
@@ -136,6 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
     closBtn.addEventListener('click', ({target}) => createCloseModal(target)),
   )
   sendResultNoBtn.addEventListener('click', ({target}) => createCloseModal(target))
+
+  sendMailBtn.addEventListener('click', (e) => {
+    closeModal(confirmMailSendModal)
+    sendResult(e, true)
+  })
+  sendMailNoBtn.addEventListener('click', ({target}) => createCloseModal(target))
 
   resultSelect.addEventListener('change', ({target}) => {
     const {value: resultVal} = target
