@@ -4,6 +4,10 @@ const parseCSV = (text) => {
     .filter((row) => !!row)
     .map((row) => row.split(',').map((row) => row.trim()))
 }
+const headers = {
+  Accept: 'application/json',
+  'Content-Type': 'application/json',
+}
 document.addEventListener('DOMContentLoaded', () => {
   const bulkForm = document.getElementById('bulkSubmitResults')
   const {DateTime} = luxon
@@ -97,18 +101,15 @@ document.addEventListener('DOMContentLoaded', () => {
         isAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
       }))
 
-    const response = await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
+    await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
       method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({
         from,
         to,
         results: dataSentBackend,
       }),
     })
-    console.log(await response.json())
+    location.reload()
   })
 })

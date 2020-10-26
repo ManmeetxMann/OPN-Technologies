@@ -6,7 +6,6 @@ import {
   AppointmentSearchByDateRequest,
 } from '../models/appoinment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {app} from '../../../registry/src/server'
 
 export class AppoinmentsSchedulerRepository extends AcuityScheduling {
   constructor() {

@@ -90,9 +90,9 @@ export type TestResultsAgainRequest = TestResultsBase & {
 }
 
 export type CheckAppointmentRequest = {
-  from?: string
-  to?: string
-  barCodes?: string[]
+  from: string
+  to: string
+  barCodes: string[]
 }
 
 export type TestResultsDBModelResponse = TestResultsDBModel & {

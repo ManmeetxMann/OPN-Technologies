@@ -10,7 +10,6 @@ import {
   TestResultsConfirmationRequest,
   AppointmentDTO,
   CheckAppointmentRequest,
-  TestResultsBase,
   TestResultsAgainRequest,
 } from '../models/appoinment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
@@ -30,7 +29,6 @@ class AdminController implements IControllerBase {
     this.router.post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
     this.router.post(this.path + '/api/v1/send-and-save-test-results', this.sendAndSaveTestResults)
     this.router.post(this.path + '/api/v1/send-test-results-again', this.sendTestResultsAgain)
-
     this.router.post(this.path + '/api/v1/check-appointments', this.checkAppointments)
     this.router.post(
       this.path + '/api/v1/send-and-save-test-results-bulk',
