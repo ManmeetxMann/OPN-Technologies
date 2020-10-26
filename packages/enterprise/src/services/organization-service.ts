@@ -345,10 +345,13 @@ export class OrganizationService {
     groupId?: string,
     userId?: string,
   ): Promise<OrganizationUsersGroup | undefined> {
-    return this.getUsersGroups(
-      organizationId,
-      groupId,
-      userId ? [userId] : undefined,
-    ).then((results) => (results.length > 0 ? results[0] : undefined))
+    return this.getUsersGroups(organizationId, groupId, userId ? [userId] : undefined).then(
+      (results) => {
+        if (results.length > 1) {
+          console.warn(`multiple groups found for ${organizationId}, ${groupId}, ${userId}`)
+        }
+        return results.length > 0 ? results[0] : undefined
+      },
+    )
   }
 }
