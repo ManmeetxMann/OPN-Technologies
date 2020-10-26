@@ -5,7 +5,7 @@ import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/appoinment'
 import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 import {EmailService} from '../../../common/src/service/messaging/email-service'
 import {PdfService} from '../../../common/src/service/reports/pdf'
-import template from '../../templates/testResult'
+import template from '../templates/testResult'
 
 import {Config} from '../../../common/src/utils/config'
 

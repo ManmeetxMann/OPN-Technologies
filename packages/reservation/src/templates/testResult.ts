@@ -1,4 +1,4 @@
-import {TestResultsDTOForEmail} from '../src/models/appoinment'
+import {TestResultsDTOForEmail} from '../models/appoinment'
 
 const getTableLayouts = () => ({
   mainTable: {
