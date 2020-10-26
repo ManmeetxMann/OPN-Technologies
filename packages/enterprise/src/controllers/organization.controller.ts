@@ -34,6 +34,7 @@ import {Config} from '../../../common/src/utils/config'
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
+import template from '../templates/report'
 import userTemplate from '../templates/user-report'
 import {ExposureReport} from '../../../access/src/models/trace'
 import {PdfService} from '../../../common/src/service/reports/pdf'
@@ -933,14 +934,11 @@ class OrganizationController implements IControllerBase {
       }
 
       const statsObject = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
-      // const pdfStream = await this.pdfService.generatePDFStream(
-      //   path.join(__dirname, '../templates/report.html'),
-      //   {
-      //     accesses: statsObject.accesses,
-      //   },
-      // )
-      // res.contentType('application/pdf')
-      // pdfStream.pipe(res)
+      // @ts-ignore
+      const {content, tableLayouts} = template(statsObject)
+      const pdfStream = await this.pdfService.generatePDFStream(content, tableLayouts)
+      res.contentType('application/pdf')
+      pdfStream.pipe(res)
       res.status(200)
     } catch (error) {
       next(error)
