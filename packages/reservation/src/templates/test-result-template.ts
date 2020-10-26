@@ -1,4 +1,4 @@
-import moment from 'moment'
+import moment from 'moment-timezone'
 import path from 'path'
 
 import {ResultTypes, TestResultsDTOForEmail} from '../models/appoinment'
@@ -7,6 +7,8 @@ import {
   TDocumentDefinitions,
   TFontDictionary,
 } from '../types/document-definition-types'
+import {Config} from '../../../common/src/utils/config'
+import {now} from '../../../common/src/utils/times'
 
 export function getFontDefinition(): TFontDictionary {
   return {
@@ -48,7 +50,8 @@ export function getResultTableLayout(): TableLayout {
 }
 
 export function getDocDefinition(data: TestResultsDTOForEmail): TDocumentDefinitions {
-  const createTime = moment().utcOffset('-0400').format('LL')
+  const timeZone = Config.get('DEFAULT_TIME_ZONE')
+  const createTime = moment(now()).tz(timeZone).format('LL')
   const isPositive = data.result === ResultTypes.Positive
 
   return {
@@ -136,7 +139,7 @@ export function getDocDefinition(data: TestResultsDTOForEmail): TDocumentDefinit
               `${data.dateOfAppointment} at ${data.timeOfAppointment}`,
             ],
             ['Date of Result', createTime],
-            ['Registered Practical Nurse', data.registeredNursePractitioner],
+            ['Nurse / Physician', data.registeredNursePractitioner],
             ['Test', 'RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
             [
               'Equipment approved by \n Health Canada',
