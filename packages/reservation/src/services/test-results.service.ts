@@ -1,4 +1,4 @@
-import moment from 'moment'
+import moment from 'moment-timezone'
 import DataStore from '../../../common/src/data/datastore'
 
 import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/appoinment'
@@ -8,6 +8,7 @@ import {PdfService} from '../../../common/src/service/reports/pdf'
 import template from '../templates/testResult'
 
 import {Config} from '../../../common/src/utils/config'
+import {now} from '../../../common/src/utils/times'
 
 export class TestResultsService {
   private testResultEmailTemplateId = (Config.get('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2) as number
@@ -17,9 +18,9 @@ export class TestResultsService {
   private pdfService = new PdfService()
 
   async sendTestResults(testResults: TestResultsDTOForEmail): Promise<void> {
-    const todaysDate = moment().utcOffset('-0400').format('LL')
-    // @ts-ignore
-    const {content, tableLayouts} = template({...testResults, createTime: todaysDate})
+    const timeZone = Config.get('DEFAULT_TIME_ZONE')
+    const todaysDate = moment(now()).tz(timeZone).format('LL')
+    const {content, tableLayouts} = template(testResults)
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
     this.emailService.send({

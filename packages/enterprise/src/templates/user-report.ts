@@ -1,3 +1,5 @@
+import {Content, TableLayouts} from '../../../common/src/service/reports/pdf-types'
+
 type Contact = {
   firstName: string
   lastName: string
@@ -32,7 +34,7 @@ type Params = {
   traces: Contact[]
 }
 
-const tableLayouts = {
+const tableLayouts: TableLayouts = {
   mainTable: {
     hLineWidth: () => 1,
     vLineWidth: () => 1,
@@ -50,7 +52,7 @@ const getHeaderTable = (
   orgName: string,
   dateRange: string,
   groupName: string,
-): unknown => ({
+): Content => ({
   layout: 'mainTable',
   table: {
     headerRows: 1,
@@ -67,7 +69,7 @@ const getHeaderTable = (
   margin: [14, 14, 14, 14],
 })
 
-const getLocationsTable = (locations: LocationAccess[]): unknown => ({
+const getLocationsTable = (locations: LocationAccess[]): Content => ({
   layout: 'mainTable',
   table: {
     headerRows: 1,
@@ -81,7 +83,7 @@ const getLocationsTable = (locations: LocationAccess[]): unknown => ({
   margin: [14, 14, 14, 14],
 })
 
-const getAttestationTables = (attestations: Attestation[]): unknown[] =>
+const getAttestationTables = (attestations: Attestation[]): Content[] =>
   attestations.map((attestation) => ({
     layout: 'mainTable',
     table: {
@@ -96,7 +98,7 @@ const getAttestationTables = (attestations: Attestation[]): unknown[] =>
     margin: [14, 14, 14, 14],
   }))
 
-const getContactTable = (title: string, contacts: Contact[]): unknown => ({
+const getContactTable = (title: string, contacts: Contact[]): Content => ({
   layout: 'mainTable',
   table: {
     headerRows: 1,
@@ -113,7 +115,7 @@ const getContactTable = (title: string, contacts: Contact[]): unknown => ({
   margin: [14, 14, 14, 14],
 })
 
-const getContent = (params: Params): unknown => ({
+const generate = (params: Params): {content: Content[]; tableLayouts: TableLayouts} => ({
   content: [
     getHeaderTable(
       params.generationDate,
@@ -131,4 +133,4 @@ const getContent = (params: Params): unknown => ({
   tableLayouts,
 })
 
-export default getContent
+export default generate

@@ -1,6 +1,8 @@
 import PdfPrinter from 'pdfmake'
 import path from 'path'
 
+import {Content, TDocumentDefinitions, TableLayouts} from './pdf-types'
+
 import {Stream} from 'stream'
 
 const getFontSettings = () => ({
@@ -21,7 +23,7 @@ const getFontSettings = () => ({
 export class PdfService {
   printer: PdfPrinter = new PdfPrinter(getFontSettings())
 
-  generatePDFStream(params: unknown, tableLayouts: unknown): Stream {
+  generatePDFStream(params: Content, tableLayouts: TableLayouts): Stream {
     const generatedParams = this.getPDF(params)
     const stream = new Stream.PassThrough()
     const pdfDoc = this.printer.createPdfKitDocument(generatedParams, {tableLayouts})
@@ -35,7 +37,7 @@ export class PdfService {
     return stream
   }
 
-  generatePDFBase64(params: unknown, tableLayouts: unknown): Promise<string> {
+  generatePDFBase64(params: Content, tableLayouts: TableLayouts): Promise<string> {
     const stream = this.generatePDFStream(params, tableLayouts)
     const chunks = []
     stream.on('data', (d) => chunks.push(d))
@@ -44,7 +46,7 @@ export class PdfService {
     })
   }
 
-  private getPDF(content: unknown): unknown {
+  private getPDF(content: Content): TDocumentDefinitions {
     return {
       pageSize: 'A4',
       pageMargins: [72, 34, 72, 30],
@@ -58,7 +60,6 @@ export class PdfService {
         footer: {
           fontSize: 8,
           lineHeight: 1.4,
-          width: 500,
           font: 'Helvetica',
           alignment: 'center',
         },

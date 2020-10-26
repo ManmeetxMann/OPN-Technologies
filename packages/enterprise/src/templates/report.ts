@@ -1,3 +1,5 @@
+import {Content, TableLayouts} from '../../../common/src/service/reports/pdf-types'
+
 type Access = {
   user: {
     firstName: string
@@ -10,7 +12,7 @@ type Params = {
   accesses: Access[]
 }
 
-const tableLayouts = {
+const tableLayouts: TableLayouts = {
   mainTable: {
     hLineWidth: () => 1,
     vLineWidth: () => 1,
@@ -21,7 +23,7 @@ const tableLayouts = {
   },
 }
 
-const getAccessesTable = (accesses: Access[]): unknown => ({
+const getAccessesTable = (accesses: Access[]): Content => ({
   layout: 'mainTable',
   table: {
     headerRows: 0,
@@ -31,9 +33,9 @@ const getAccessesTable = (accesses: Access[]): unknown => ({
 
   margin: [14, 14, 14, 14],
 })
-const getContent = (params: Params): unknown => ({
+const generate = (params: Params): {content: Content[]; tableLayouts: TableLayouts} => ({
   content: [getAccessesTable(params.accesses)],
   tableLayouts,
 })
 
-export default getContent
+export default generate
