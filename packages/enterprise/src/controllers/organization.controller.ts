@@ -34,7 +34,7 @@ import {Config} from '../../../common/src/utils/config'
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
-import path from 'path'
+import userTemplate from '../templates/user-report'
 import {ExposureReport} from '../../../access/src/models/trace'
 import {PdfService} from '../../../common/src/service/reports/pdf'
 
@@ -818,7 +818,7 @@ class OrganizationController implements IControllerBase {
         lastName: overlap.dependant
           ? overlap.dependant.lastName
           : usersLookup[overlap.userId].lastName,
-        groupName: groupsLookup[overlap.dependant?.id ?? overlap.userId],
+        groupName: groupsLookup[overlap.dependant?.id ?? overlap.userId]?.name ?? '',
         start: moment(overlap.start).tz(timeZone).format(dateTimeFormat),
         end: moment(overlap.end).tz(timeZone).format(dateTimeFormat),
       }))
@@ -831,7 +831,7 @@ class OrganizationController implements IControllerBase {
           ? dependantsLookup[overlap.sourceDependantId]
           : usersLookup[overlap.sourceUserId]
         ).lastName,
-        groupName: groupsLookup[overlap.sourceDependantId ?? overlap.sourceUserId],
+        groupName: groupsLookup[overlap.sourceDependantId ?? overlap.sourceUserId]?.name ?? '',
         start: moment(overlap.start).tz(timeZone).format(dateTimeFormat),
         end: moment(overlap.end).tz(timeZone).format(dateTimeFormat),
       }))
@@ -864,23 +864,22 @@ class OrganizationController implements IControllerBase {
       // @ts-ignore we added a group id to users
       const group = groupsLookup[named.groupId]
       const namedGuardian = dependantId ? usersLookup[userId] : null
-      const stream = await this.pdfService.generatePDFStream(
-        path.join(__dirname, '../templates/user-report.html'),
-        {
-          attestations: printableAttestations,
-          locations: printableAccessHistory,
-          exposures: printableExposures,
-          traces: printableTraces,
-          organizationName: organization.name,
-          userGroup: group.name,
-          userName: `${named.firstName} ${named.lastName}`,
-          guardianName: `${namedGuardian.firstName} ${namedGuardian.lastName}`,
-          generationDate: moment(now()).tz(timeZone).format(dateFormat),
-          reportDate: `${moment(from).tz(timeZone).format(dateFormat)} - ${moment(to)
-            .tz(timeZone)
-            .format(dateFormat)}`,
-        },
-      )
+      // @ts-ignore
+      const {content, tableLayouts} = userTemplate({
+        attestations: printableAttestations,
+        locations: printableAccessHistory,
+        exposures: printableExposures,
+        traces: printableTraces,
+        organizationName: organization.name,
+        userGroup: group.name,
+        userName: `${named.firstName} ${named.lastName}`,
+        guardianName: `${namedGuardian.firstName} ${namedGuardian.lastName}`,
+        generationDate: moment(now()).tz(timeZone).format(dateFormat),
+        reportDate: `${moment(from).tz(timeZone).format(dateFormat)} - ${moment(to)
+          .tz(timeZone)
+          .format(dateFormat)}`,
+      })
+      const stream = await this.pdfService.generatePDFStream(content, tableLayouts)
       res.contentType('application/pdf')
       stream.pipe(res)
       res.status(200)
@@ -934,14 +933,14 @@ class OrganizationController implements IControllerBase {
       }
 
       const statsObject = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
-      const pdfStream = await this.pdfService.generatePDFStream(
-        path.join(__dirname, '../templates/report.html'),
-        {
-          accesses: statsObject.accesses,
-        },
-      )
-      res.contentType('application/pdf')
-      pdfStream.pipe(res)
+      // const pdfStream = await this.pdfService.generatePDFStream(
+      //   path.join(__dirname, '../templates/report.html'),
+      //   {
+      //     accesses: statsObject.accesses,
+      //   },
+      // )
+      // res.contentType('application/pdf')
+      // pdfStream.pipe(res)
       res.status(200)
     } catch (error) {
       next(error)

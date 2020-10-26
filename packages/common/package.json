@@ -31,12 +31,11 @@
         "express-basic-auth": "^1.2.0",
         "express-openapi-validator": "^3.17.1",
         "firebase-admin": "^9.1.0",
-        "handlebars": "^4.7.6",
-        "html-pdf": "^2.2.0",
         "js-yaml": "^3.14.0",
         "lodash": "^4.17.20",
         "moment-timezone": "^0.5.31",
         "node-fetch": "^2.6.0",
+        "pdfmake": "^0.1.68",
         "pug": "^3.0.0"
     },
     "devDependencies": {

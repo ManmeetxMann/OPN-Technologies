@@ -1,51 +1,64 @@
-import fs from 'fs'
-import pdf from 'html-pdf'
-import handlebars from 'handlebars'
+import PdfPrinter from 'pdfmake'
+import path from 'path'
 
 import {Stream} from 'stream'
 
+const getFontSettings = () => ({
+  Cambria: {
+    normal: path.join(__dirname, '../../static/fonts/Cambria.ttf'),
+    bold: path.join(__dirname, '../../static/fonts/CambriaBold.ttf'),
+    italics: path.join(__dirname, '../../static/fonts/Cambria.ttf'),
+    bolditalics: path.join(__dirname, '../../static/fonts/Cambria.ttf'),
+  },
+  Helvetica: {
+    normal: 'Helvetica',
+    bold: 'Helvetica-Bold',
+    italics: 'Helvetica-Oblique',
+    bolditalics: 'Helvetica-BoldOblique',
+  },
+})
+
 export class PdfService {
-  async generatePDFStream(templatePath: string, handlebarsParams: unknown): Promise<Stream> {
-    const htmlToExport = this.getHtml(templatePath, handlebarsParams)
-    return new Promise<Stream>((resolve, reject) => {
-      pdf
-        .create(htmlToExport, {
-          width: '21cm',
-          height: '32cm',
-          type: 'pdf',
-        })
-        .toStream((err, stream) => {
-          if (err) {
-            reject(err)
-          } else {
-            resolve(stream)
-          }
-        })
+  printer: PdfPrinter = new PdfPrinter(getFontSettings())
+
+  async generatePDFStream(params: unknown, tableLayouts: unknown): Promise<Stream> {
+    const generatedParams = this.getPDF(params)
+    const stream = new Stream.PassThrough()
+    const pdfDoc = this.printer.createPdfKitDocument(generatedParams, {tableLayouts})
+    pdfDoc.on('data', (chunk) => stream.push(chunk))
+    pdfDoc.on('end', () => stream.end())
+    pdfDoc.on('error', (err) => {
+      console.error('error creating pdf', err)
+      stream.end()
     })
+    pdfDoc.end()
+    return stream
   }
-  async generatePDFBase64(templatePath: string, handlebarsParams: unknown): Promise<string> {
-    const htmlToExport = this.getHtml(templatePath, handlebarsParams)
-    return new Promise<string>((resolve, reject) => {
-      pdf
-        .create(htmlToExport, {
-          width: '21cm',
-          height: '32cm',
-          type: 'pdf',
-        })
-        .toBuffer((err, buffer) => {
-          if (err) {
-            reject(err)
-          } else {
-            resolve(buffer.toString('base64'))
-          }
-        })
-    })
-  }
-  private getHtml(templatePath: string, handlebarsParams: unknown): string {
-    const html = fs.readFileSync(templatePath, {encoding: 'utf-8'})
-    const template = handlebars.compile(html)
-    // TODO: https://www.npmjs.com/advisories/1095
-    // library claims to have solved this but should verify
-    return template(handlebarsParams)
+
+  private getPDF(content: unknown): unknown {
+    return {
+      pageSize: 'A4',
+      pageMargins: [72, 34, 72, 30],
+      styles: {
+        'gray-text': {
+          color: '#666666',
+        },
+        black: {
+          color: '#000000',
+        },
+        footer: {
+          fontSize: 8,
+          lineHeight: 1.4,
+          width: 500,
+          font: 'Helvetica',
+          alignment: 'center',
+        },
+      },
+      defaultStyle: {
+        color: '#666666',
+        font: 'Cambria',
+      },
+      content,
+    }
   }
 }
