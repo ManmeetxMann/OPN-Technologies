@@ -880,7 +880,7 @@ class OrganizationController implements IControllerBase {
           .tz(timeZone)
           .format(dateFormat)}`,
       })
-      const stream = await this.pdfService.generatePDFStream(content, tableLayouts)
+      const stream = this.pdfService.generatePDFStream(content, tableLayouts)
       res.contentType('application/pdf')
       stream.pipe(res)
       res.status(200)
@@ -936,7 +936,7 @@ class OrganizationController implements IControllerBase {
       const statsObject = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
       // @ts-ignore
       const {content, tableLayouts} = template(statsObject)
-      const pdfStream = await this.pdfService.generatePDFStream(content, tableLayouts)
+      const pdfStream = this.pdfService.generatePDFStream(content, tableLayouts)
       res.contentType('application/pdf')
       pdfStream.pipe(res)
       res.status(200)

@@ -21,7 +21,7 @@ const getFontSettings = () => ({
 export class PdfService {
   printer: PdfPrinter = new PdfPrinter(getFontSettings())
 
-  async generatePDFStream(params: unknown, tableLayouts: unknown): Promise<Stream> {
+  generatePDFStream(params: unknown, tableLayouts: unknown): Stream {
     const generatedParams = this.getPDF(params)
     const stream = new Stream.PassThrough()
     const pdfDoc = this.printer.createPdfKitDocument(generatedParams, {tableLayouts})
@@ -33,6 +33,15 @@ export class PdfService {
     })
     pdfDoc.end()
     return stream
+  }
+
+  generatePDFBase64(params: unknown, tableLayouts: unknown): Promise<string> {
+    const stream = this.generatePDFStream(params, tableLayouts)
+    const chunks = []
+    stream.on('data', (d) => chunks.push(d))
+    return new Promise((resolve) => {
+      stream.on('end', () => resolve(Buffer.concat(chunks).toString('base64')))
+    })
   }
 
   private getPDF(content: unknown): unknown {

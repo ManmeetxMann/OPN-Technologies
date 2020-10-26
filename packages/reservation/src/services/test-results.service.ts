@@ -5,7 +5,7 @@ import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/appoinment'
 import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 import {EmailService} from '../../../common/src/service/messaging/email-service'
 import {PdfService} from '../../../common/src/service/reports/pdf'
-import path from 'path'
+import template from '../../templates/testResult'
 
 import {Config} from '../../../common/src/utils/config'
 
@@ -18,12 +18,9 @@ export class TestResultsService {
 
   async sendTestResults(testResults: TestResultsDTOForEmail): Promise<void> {
     const todaysDate = moment().utcOffset('-0400').format('LL')
-    const pdfContent = await this.pdfService.generatePDFBase64(
-      path.join(__dirname, '../templates/test-result.html'),
-      {
-        ...testResults,
-      },
-    )
+    // @ts-ignore
+    const {content, tableLayouts} = template({...testResults, createTime: todaysDate})
+    const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
     this.emailService.send({
       templateId: this.testResultEmailTemplateId,
