@@ -27,11 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
   csvFileInput.addEventListener('change', (e) => {
     const file = e.target.files[0]
     if (file) {
-      var reader = new FileReader()
+      const reader = new FileReader()
       reader.readAsText(file, 'UTF-8')
       reader.onload = async function (evt) {
-        data = parseCSV(evt.target.result)
-        console.log(data)
+        try {
+          data = parseCSV(evt.target.result)
+        } catch (e) {
+          return
+        }
         const response = await fetch('/admin/api/v1/check-appointments', {
           method: 'POST',
           headers: {
@@ -44,6 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         const {data: existenceStatus} = await response.json()
         presentationTable.classList.remove('d-none')
+        const isValid = data.every((r) => r.length === 9)
+        if (!isValid) return
         data.forEach((row, i) => {
           const trElem = document.createElement('tr')
           const thElem = document.createElement('th')
@@ -110,6 +115,5 @@ document.addEventListener('DOMContentLoaded', () => {
         results: dataSentBackend,
       }),
     })
-    location.reload()
   })
 })
