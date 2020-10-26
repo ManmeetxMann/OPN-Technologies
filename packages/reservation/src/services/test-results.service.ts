@@ -18,8 +18,8 @@ export class TestResultsService {
   private pdfExportService = new PdfExportService()
 
   async sendTestResults(testResults: TestResultsDTOForEmail): Promise<void> {
-    const todaysDate = moment().format('LL')
-    const pdfContent = await this.pdfExportService.generateTestResultPdf(testResults, todaysDate)
+    const todaysDate = moment().utcOffset('-0400').format('LL')
+    const pdfContent = await this.pdfExportService.generateTestResultPdf(testResults)
 
     this.emailService.send({
       templateId: this.testResultEmailTemplateId,

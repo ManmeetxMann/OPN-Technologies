@@ -43,6 +43,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
           dateOfBirth,
           registeredNursePractitioner,
           date,
+          time,
         } = appointments[0]
         if (appointments.length > 1) {
           console.warn(`Duplicate Bar Code!! for Appoinment ${id}`)
@@ -57,6 +58,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
           dateOfBirth,
           registeredNursePractitioner,
           dateOfAppointment: date,
+          timeOfAppointment: time,
         }
       }
       throw new ResourceNotFoundException(`Appointment not found`)
