@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
       }))
 
-    const response = await fetch('/admin/api/v1/check-appointments', {
+    const response = await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
       method: 'POST',
       headers: {
         Accept: 'application/json',

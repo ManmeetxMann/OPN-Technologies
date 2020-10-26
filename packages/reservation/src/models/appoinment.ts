@@ -61,7 +61,7 @@ export enum ResultTypes {
   Negative = 'Negative',
 }
 
-type TestResultsBase = {
+export type TestResultsBase = {
   barCode: string
   result: ResultTypes
   famEGene: string
@@ -83,6 +83,10 @@ export type TestResultsDBModel = AppointmentBase &
 
 export type TestResultsConfirmationRequest = TestResultsBase & {
   needConfirmation?: boolean
+}
+
+export type TestResultsAgainRequest = TestResultsBase & {
+  sendAgain?: boolean
 }
 
 export type CheckAppointmentRequest = {

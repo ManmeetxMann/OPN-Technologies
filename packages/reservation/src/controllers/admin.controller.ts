@@ -10,6 +10,8 @@ import {
   TestResultsConfirmationRequest,
   AppointmentDTO,
   CheckAppointmentRequest,
+  TestResultsBase,
+  TestResultsAgainRequest,
 } from '../models/appoinment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -56,29 +58,56 @@ class AdminController implements IControllerBase {
     req: Request,
     res: Response,
     next: NextFunction,
-  ): Promise<unknown> => {
+  ): Promise<void> => {
     try {
       const requestData = req.body
 
-      const notAgainData = requestData.results.filter(({isAgain}) => isAgain === false)
-      // const againData = requestData.results.filter(({isAgain}) => isAgain === true)
+      const notAgainData: TestResultsAgainRequest[] = requestData.results.filter(
+        ({isAgain}) => isAgain === false,
+      )
+      const againData = requestData.results.filter(({isAgain}) => isAgain === true)
 
-      notAgainData.forEach((row) => {
-        await this.appoinmentService
-          .getAppoinmentByBarCode(requestData.barCode)
-          .then((appointment: AppointmentDTO) => {
-            this.testResultsService.sendTestResults({...requestData, ...appointment})
-            return appointment
+      const appointments = await this.appoinmentService.getAppoinmentByDate(
+        requestData.from,
+        requestData.to,
+      )
+
+      const notFoundBarcodes = []
+      console.log(appointments)
+
+      await Promise.all(
+        notAgainData.map(async (row) => {
+          const {sendAgain, ...requestData} = row
+          const currentAppointment = appointments.find(
+            (appointment) => appointment.barCode === requestData.barCode,
+          )
+          if (!currentAppointment) {
+            notFoundBarcodes.push(requestData)
+            return
+          }
+          await this.testResultsService.sendTestResults({...requestData, ...currentAppointment})
+          await this.testResultsService.saveResults({
+            ...requestData,
+            ...currentAppointment,
+            appointmentId: currentAppointment.appointmentId,
+            id: requestData.barCode,
           })
-          .then((appointment: AppointmentDTO) => {
-            this.testResultsService.saveResults({
-              ...requestData,
-              ...appointment,
-              appointmentId: appointment.appointmentId,
-              id: requestData.barCode,
-            })
-          })
-      })
+        }),
+      )
+      await Promise.all(
+        againData.map(async (row) => {
+          const testResults = await this.testResultsService.getResults(row.barCode)
+          if (!testResults) {
+            throw new ResourceNotFoundException('Something wend wrong. Results are not available.')
+          }
+          await this.testResultsService.sendTestResults({...testResults})
+        }),
+      )
+      res.json(
+        actionSucceed({
+          failedRows: notFoundBarcodes,
+        }),
+      )
     } catch (e) {
       next(e)
     }
@@ -146,10 +175,6 @@ class AdminController implements IControllerBase {
   checkAppointments = async (req: Request, res: Response): Promise<void> => {
     const requestData: CheckAppointmentRequest = req.body
 
-    // const appointment = await this.appoinmentService.getAppoinmentByDate(
-    //   requestData.from,
-    //   requestData.to,
-    // )
     const alreadySents = await this.testResultsService.resultAlreadySentMany(requestData.barCodes)
     res.json(actionSucceed(alreadySents))
   }
