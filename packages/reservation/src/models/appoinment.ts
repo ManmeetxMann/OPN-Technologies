@@ -6,8 +6,8 @@ type AppointmentBase = {
   dateOfBirth: string
   registeredNursePractitioner: string
   dateOfAppointment: string
-  timeOfAppointment: string
   appointmentId: number
+  timeOfAppointment?: string
   barCode?: string
 }
 
