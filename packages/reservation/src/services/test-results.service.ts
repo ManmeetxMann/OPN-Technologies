@@ -22,7 +22,6 @@ export class TestResultsService {
       path.join(__dirname, '../templates/test-result.html'),
       {
         ...testResults,
-        createTime: todaysDate,
       },
     )
 
