@@ -719,7 +719,7 @@ class OrganizationController implements IControllerBase {
               traceOverlaps.push(overlap)
               userIds.add(overlap.userId)
               if (overlap.dependant) {
-                userIds.add(overlap.dependant.id)
+                dependantIds.add(overlap.dependant.id)
               }
             }
           }),
@@ -1214,7 +1214,6 @@ class OrganizationController implements IControllerBase {
       (lookup, curr) => ({...lookup, [curr.id]: curr.status}),
       {},
     )
-
     const allUsers = Object.values(await this.getUsersById([...userIds]))
 
     const allDependants: UserDependant[] = _.flatten(
