@@ -728,9 +728,13 @@ class OrganizationController implements IControllerBase {
       const {locationsLookup, usersLookup, dependantsLookup, groupsLookup} = lookups
 
       const questionnaireIds = new Set<string>()
-      Object.values(locationsLookup).forEach((location) =>
-        questionnaireIds.add(location.questionnaireId),
-      )
+      Object.values(locationsLookup).forEach((location) => {
+        if (location.questionnaireId) {
+          questionnaireIds.add(location.questionnaireId)
+        } else {
+          console.warn(`location ${location.id} does not include a questionnaireId`)
+        }
+      })
       const questionnaires = await Promise.all(
         [...questionnaireIds].map((id) => this.questionnaireService.getQuestionnaire(id)),
       )
@@ -852,7 +856,7 @@ class OrganizationController implements IControllerBase {
               attestation.answers[key]['2'] &&
               moment(attestation.answers[key]['2']).tz(timeZone).format(dateFormat)
             return {
-              question: questionnaire?.questions[key]?.value as string,
+              question: (questionnaire?.questions[key]?.value ?? `Question ${key}`) as string,
               response: yes ? dateOfTest || 'Yes' : 'No',
             }
           }),
