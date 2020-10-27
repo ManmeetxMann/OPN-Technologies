@@ -7,10 +7,10 @@ import {Stream} from 'stream'
 
 const getFontSettings = () => ({
   Cambria: {
-    normal: path.join(__dirname, '../static/fonts/Cambria.ttf'),
-    bold: path.join(__dirname, '../static/fonts/CambriaBold.ttf'),
-    italics: path.join(__dirname, '../static/fonts/Cambria.ttf'),
-    bolditalics: path.join(__dirname, '../static/fonts/Cambria.ttf'),
+    normal: path.join(__dirname, '../../static/fonts/Cambria.ttf'),
+    bold: path.join(__dirname, '../../static/fonts/CambriaBold.ttf'),
+    italics: path.join(__dirname, '../../static/fonts/Cambria.ttf'),
+    bolditalics: path.join(__dirname, '../../static/fonts/Cambria.ttf'),
   },
   Helvetica: {
     normal: 'Helvetica',
