@@ -113,6 +113,10 @@ export const completeRegistration: Handler = async (req, res, next): Promise<voi
     const user = await userService.getById(userId)
     const authUser = await authService.verifyAuthToken(idToken)
 
+    if (!authUser) {
+      throw new ForbiddenException('Cannot find user for the given token')
+    }
+
     if (!authUser.emailVerified) {
       throw new ForbiddenException("Email hasn't been verified")
     }
