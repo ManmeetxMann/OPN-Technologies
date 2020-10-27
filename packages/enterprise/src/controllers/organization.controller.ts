@@ -878,7 +878,7 @@ class OrganizationController implements IControllerBase {
         organizationName: organization.name,
         userGroup: group.name,
         userName: `${named.firstName} ${named.lastName}`,
-        guardianName: `${namedGuardian.firstName} ${namedGuardian.lastName}`,
+        guardianName: namedGuardian ? `${namedGuardian.firstName} ${namedGuardian.lastName}` : null,
         generationDate: moment(now()).tz(timeZone).format(dateFormat),
         reportDate: `${moment(from).tz(timeZone).format(dateFormat)} - ${moment(to)
           .tz(timeZone)
