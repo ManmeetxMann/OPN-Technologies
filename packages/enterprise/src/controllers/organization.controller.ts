@@ -728,9 +728,13 @@ class OrganizationController implements IControllerBase {
       const {locationsLookup, usersLookup, dependantsLookup, groupsLookup} = lookups
 
       const questionnaireIds = new Set<string>()
-      Object.values(locationsLookup).forEach((location) =>
-        questionnaireIds.add(location.questionnaireId),
-      )
+      Object.values(locationsLookup).forEach((location) => {
+        if (location.questionnaireId) {
+          questionnaireIds.add(location.questionnaireId)
+        } else {
+          console.warn(`location ${location.id} does not include a questionnaireId`)
+        }
+      })
       const questionnaires = await Promise.all(
         [...questionnaireIds].map((id) => this.questionnaireService.getQuestionnaire(id)),
       )
