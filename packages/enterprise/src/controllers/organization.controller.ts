@@ -825,7 +825,11 @@ class OrganizationController implements IControllerBase {
         lastName: overlap.dependant
           ? overlap.dependant.lastName
           : usersLookup[overlap.userId].lastName,
-        groupName: groupsLookup[overlap.dependant?.id ?? overlap.userId]?.name ?? '',
+        groupName:
+          (overlap.dependant
+            ? groupsLookup[overlap.dependant.groupId]
+            : usersLookup[overlap.userId].group
+          )?.name ?? '',
         // @ts-ignore this is a timestamp, not a date
         start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
         // @ts-ignore this is a timestamp, not a date
@@ -841,7 +845,11 @@ class OrganizationController implements IControllerBase {
           ? dependantsLookup[overlap.sourceDependantId]
           : usersLookup[overlap.sourceUserId]
         ).lastName,
-        groupName: groupsLookup[overlap.sourceDependantId ?? overlap.sourceUserId]?.name ?? '',
+        groupName:
+          (overlap.sourceDependantId
+            ? dependantsLookup[overlap.sourceDependantId]
+            : usersLookup[overlap.sourceUserId]
+          )?.group.name ?? '',
         // @ts-ignore this is a timestamp, not a date
         start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
         // @ts-ignore this is a timestamp, not a date
