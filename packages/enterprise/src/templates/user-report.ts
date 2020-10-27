@@ -127,8 +127,8 @@ const generate = (params: Params): {content: Content[]; tableLayouts: TableLayou
     ),
     ...getAttestationTables(params.attestations),
     getLocationsTable(params.locations),
-    getContactTable('Contacts Risky to this User', params.exposures),
-    getContactTable('Users at Risk from this User', params.traces),
+    getContactTable('Potential Exposures', params.exposures),
+    getContactTable('Potential Users Exposed', params.traces),
   ],
   tableLayouts,
 })
