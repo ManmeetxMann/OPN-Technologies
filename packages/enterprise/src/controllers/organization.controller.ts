@@ -856,7 +856,7 @@ class OrganizationController implements IControllerBase {
               attestation.answers[key]['2'] &&
               moment(attestation.answers[key]['2']).tz(timeZone).format(dateFormat)
             return {
-              question: questionnaire?.questions[key]?.value as string,
+              question: (questionnaire?.questions[key]?.value ?? `Question ${key}`) as string,
               response: yes ? dateOfTest || 'Yes' : 'No',
             }
           }),
