@@ -14,6 +14,8 @@ import {
 } from '../models/appoinment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {body, check} from 'express-validator'
+import CSVValidator from '../validations/CSVValidator'
 
 class AdminController implements IControllerBase {
   public path = '/admin'
@@ -27,11 +29,40 @@ class AdminController implements IControllerBase {
 
   public initRoutes(): void {
     this.router.post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
-    this.router.post(this.path + '/api/v1/send-and-save-test-results', this.sendAndSaveTestResults)
-    this.router.post(this.path + '/api/v1/send-test-results-again', this.sendTestResultsAgain)
+    this.router.post(
+      this.path + '/api/v1/send-and-save-test-results',
+      CSVValidator.validateCSVSubmit([
+        body('hexCt').isNumeric().withMessage('must be numeric'),
+        body('hexCt')
+          .custom((value) => {
+            return parseInt(value) <= 40
+          })
+          .withMessage('must be less or equal than 40'),
+      ]),
+      this.sendAndSaveTestResults,
+    )
+    this.router.post(
+      this.path + '/api/v1/send-test-results-again',
+      CSVValidator.validateCSVSubmit([
+        body('hexCt').isNumeric().withMessage('must be numeric'),
+        body('hexCt')
+          .custom((value) => {
+            return parseInt(value) <= 40
+          })
+          .withMessage('must be less or equal than 40'),
+      ]),
+      this.sendTestResultsAgain,
+    )
     this.router.post(this.path + '/api/v1/check-appointments', this.checkAppointments)
     this.router.post(
       this.path + '/api/v1/send-and-save-test-results-bulk',
+      CSVValidator.validateCSVSubmit([
+        check('results.*.hexCtElem')
+          .custom((value) => {
+            return parseInt(value) <= 40
+          })
+          .withMessage('must be less or equal than 40'),
+      ]),
       this.sendAndSaveTestResultsBulk,
     )
   }
@@ -71,7 +102,6 @@ class AdminController implements IControllerBase {
       )
 
       const notFoundBarcodes = []
-      console.log(appointments)
 
       await Promise.all(
         notAgainData.map(async (row) => {
