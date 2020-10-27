@@ -42,8 +42,9 @@ import {PdfService} from '../../../common/src/service/reports/pdf'
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 type AugmentedDependant = UserDependant & {group: OrganizationGroup; status: PassportStatus}
+type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
 type Lookups = {
-  usersLookup: Record<string, User>
+  usersLookup: Record<string, AugmentedUser>
   dependantsLookup: Record<string, AugmentedDependant>
   locationsLookup: Record<string, OrganizationLocation>
   groupsLookup: Record<string, OrganizationGroup>
@@ -866,8 +867,7 @@ class OrganizationController implements IControllerBase {
         }
       })
       const named = dependantId ? dependantsLookup[dependantId] : usersLookup[userId]
-      // @ts-ignore we added a group id to users
-      const group = groupsLookup[named.groupId]
+      const {group} = named
       const namedGuardian = dependantId ? usersLookup[userId] : null
       // @ts-ignore
       const {content, tableLayouts} = userTemplate({
@@ -1215,7 +1215,7 @@ class OrganizationController implements IControllerBase {
       {},
     )
 
-    const usersById = await this.getUsersById([...userIds])
+    const allUsers = Object.values(await this.getUsersById([...userIds]))
 
     const allDependants: UserDependant[] = _.flatten(
       await Promise.all([...userIds].map((id) => this.userService.getAllDependants(id))),
@@ -1257,6 +1257,17 @@ class OrganizationController implements IControllerBase {
         }),
         {},
       )
+    const usersById: Record<string, AugmentedUser> = allUsers.reduce(
+      (lookup, user) => ({
+        ...lookup,
+        [user.id]: {
+          ...user,
+          group: groupsByUserOrDependantId[user.id],
+          stattus: statusesByUserOrDependantId[user.id],
+        },
+      }),
+      {},
+    )
     return {
       usersLookup: usersById,
       dependantsLookup: dependantsById,
