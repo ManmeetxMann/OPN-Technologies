@@ -14,9 +14,7 @@ import {
 } from '../models/appoinment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {body, check} from 'express-validator'
 import CSVValidator from '../validations/CSVValidator'
-import _ from 'lodash'
 
 class AdminController implements IControllerBase {
   public path = '/admin'
@@ -32,41 +30,18 @@ class AdminController implements IControllerBase {
     this.router.post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
     this.router.post(
       this.path + '/api/v1/send-and-save-test-results',
-      CSVValidator.validateCSVSubmit([
-        body('hexCt').isNumeric().withMessage('must be numeric'),
-        body('hexCt')
-          .custom((value) => {
-            return parseInt(value) <= 40
-          })
-          .withMessage('must be less or equal than 40'),
-      ]),
+      CSVValidator.validate(CSVValidator.csvValidation()),
       this.sendAndSaveTestResults,
     )
     this.router.post(
       this.path + '/api/v1/send-test-results-again',
-      CSVValidator.validateCSVSubmit([
-        body('hexCt').isNumeric().withMessage('must be numeric'),
-        body('hexCt')
-          .custom((value) => {
-            return parseInt(value) <= 40
-          })
-          .withMessage('must be less or equal than 40'),
-      ]),
+      CSVValidator.validate(CSVValidator.csvValidation()),
       this.sendTestResultsAgain,
     )
     this.router.post(this.path + '/api/v1/check-appointments', this.checkAppointments)
     this.router.post(
       this.path + '/api/v1/send-and-save-test-results-bulk',
-      CSVValidator.validateCSVSubmit([
-        check('results.*.hexCt')
-          .custom((value) => {
-            return parseInt(value) <= 40
-          })
-          .withMessage('must be less or equal than 40'),
-        body('results')
-          .custom((value) => value.every((row) => _.size(row) === 10))
-          .withMessage('invalid csv rows'),
-      ]),
+      CSVValidator.validate(CSVValidator.csvBulkValidation()),
       this.sendAndSaveTestResultsBulk,
     )
   }
@@ -95,16 +70,28 @@ class AdminController implements IControllerBase {
     try {
       const requestData: SendAndSaveTestResultsRequest = req.body
 
+      const barcodeCounts = requestData.results.reduce((acc, row) => {
+        if (acc[row.barCode]) {
+          acc[row.barCode]++
+        } else {
+          acc[row.barCode] = 1
+        }
+        return acc
+      }, {})
+
       const notAgainData = []
       const againData = []
 
       requestData.results.forEach(({sendAgain, ...row}) => {
-        if (sendAgain) {
-          againData.push(row)
-        } else {
-          notAgainData.push(row)
+        if (barcodeCounts[row.barCode] === 1) {
+          if (sendAgain) {
+            againData.push(row)
+          } else {
+            notAgainData.push(row)
+          }
         }
       })
+
 
       const appointments = (
         await this.appoinmentService.getAppoinmentByDate(requestData.from, requestData.to)

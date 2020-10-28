@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         const {data: existenceStatus} = await response.json()
         presentationTable.classList.remove('d-none')
-        const isValid = data.every((r) => r.length === 9)
+        const isValid = data.every((r) => r.length === 10)
         if (!isValid) return
         data.forEach((row, i) => {
           const trElem = document.createElement('tr')
@@ -103,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         quasar670Ct: row[6],
         hexIC: row[7],
         hexCt: row[8],
+        result: row[9],
         sendAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
       }))
 
