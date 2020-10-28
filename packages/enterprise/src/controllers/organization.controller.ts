@@ -44,11 +44,12 @@ const timeZone = Config.get('DEFAULT_TIME_ZONE')
 type AugmentedDependant = UserDependant & {group: OrganizationGroup; status: PassportStatus}
 type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
 type Lookups = {
-  usersLookup: Record<string, AugmentedUser>
-  dependantsLookup: Record<string, AugmentedDependant>
-  locationsLookup: Record<string, OrganizationLocation>
-  groupsLookup: Record<string, OrganizationGroup>
-  statusesLookup: Record<string, PassportStatus>
+  usersLookup: Record<string, AugmentedUser> // users by id (with group and status)
+  dependantsLookup: Record<string, AugmentedDependant> // dependants by id (with group and status)
+  locationsLookup: Record<string, OrganizationLocation> // lookups by id
+  groupsLookup: Record<string, OrganizationGroup> // groups by id
+  membershipLookup: Record<string, OrganizationGroup> // groups by member (user or dependant) id
+  statusesLookup: Record<string, PassportStatus> // statuses by person (user or dependant) id
 }
 
 const replyInsufficientPermission = (res: Response) =>
@@ -1288,6 +1289,7 @@ class OrganizationController implements IControllerBase {
       dependantsLookup: dependantsById,
       locationsLookup: locationsById,
       groupsLookup: groupsById,
+      membershipLookup: groupsByUserOrDependantId,
       statusesLookup: statusesByUserOrDependantId,
     }
   }
@@ -1301,8 +1303,8 @@ class OrganizationController implements IControllerBase {
     const live = !from && !to
 
     const betweenCreatedDate = {
-      from: live ? moment(now()).startOf('day').toDate() : new Date(from),
-      to: live ? undefined : new Date(to),
+      from: live ? moment(now()).subtract(24, 'hours').toDate() : new Date(from),
+      to: live ? now() : new Date(to),
     }
     const accesses = parentUserId
       ? await this.accessService.findAllWithDependents({
@@ -1392,7 +1394,7 @@ class OrganizationController implements IControllerBase {
         statusesLookup,
         usersLookup: usersById,
         dependantsLookup: allDependantsById,
-        groupsLookup: groupsByUserOrDependantId,
+        membershipLookup: groupsByUserOrDependantId,
       } = await this.getLookups(allUserIds, allDependantIds, organizationId)
 
       // WARNING: adding properties to models may not cause them to appear here
