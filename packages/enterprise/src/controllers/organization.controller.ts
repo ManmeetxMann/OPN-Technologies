@@ -1009,7 +1009,7 @@ class OrganizationController implements IControllerBase {
 
     const betweenCreatedDate = {
       from: live ? moment(now()).startOf('day').toDate() : new Date(from),
-      to: live ? undefined : new Date(to),
+      to: live ? now() : new Date(to),
     }
 
     // Fetch user groups
@@ -1074,7 +1074,14 @@ class OrganizationController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+      const {
+        userId,
+        parentUserId,
+        from: queryFrom,
+        to: queryTo,
+      } = req.query as UserContactTraceReportRequest
+      const to = queryTo ?? now().toISOString()
+      const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
 
       const {enteringAccesses, exitingAccesses} = await this.getAccessHistory(
         from,
@@ -1108,10 +1115,16 @@ class OrganizationController implements IControllerBase {
   getUserContactTraces = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+      const {
+        userId,
+        parentUserId,
+        from: queryFrom,
+        to: queryTo,
+      } = req.query as UserContactTraceReportRequest
+      const to = queryTo ?? now().toISOString()
+      const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
 
       let isParentUser = true
-
       if (parentUserId) {
         const user = await this.userService.findOne(parentUserId)
         if (user && user.organizationIds.indexOf(organizationId) > -1) {
@@ -1359,10 +1372,17 @@ class OrganizationController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+      const {
+        userId,
+        parentUserId,
+        from: queryFrom,
+        to: queryTo,
+      } = req.query as UserContactTraceReportRequest
+      const to = queryTo ?? now().toISOString()
+      const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
 
-      const fromDateString = from ? moment(new Date(from)).tz(timeZone).format('YYYY-MM-DD') : null
-      const toDateString = to ? moment(new Date(to)).tz(timeZone).format('YYYY-MM-DD') : null
+      const fromDateString = moment(new Date(from)).tz(timeZone).format('YYYY-MM-DD')
+      const toDateString = moment(new Date(to)).tz(timeZone).format('YYYY-MM-DD')
       // fetch exposures in the time period
       const rawTraces = await this.attestationService.getExposuresInPeriod(
         userId,
