@@ -10,7 +10,7 @@ import {
   TestResultsConfirmationRequest,
   AppointmentDTO,
   CheckAppointmentRequest,
-  TestResultsAgainRequest,
+  SendAndSaveTestResultsRequest,
 } from '../models/appoinment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -57,7 +57,7 @@ class AdminController implements IControllerBase {
     this.router.post(
       this.path + '/api/v1/send-and-save-test-results-bulk',
       CSVValidator.validateCSVSubmit([
-        check('results.*.hexCtElem')
+        check('results.*.hexCt')
           .custom((value) => {
             return parseInt(value) <= 40
           })
@@ -89,36 +89,41 @@ class AdminController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const requestData = req.body
+      const requestData: SendAndSaveTestResultsRequest = req.body
 
-      const notAgainData: TestResultsAgainRequest[] = requestData.results.filter(
-        ({isAgain}) => isAgain === false,
-      )
-      const againData = requestData.results.filter(({isAgain}) => isAgain === true)
+      const notAgainData = []
+      const againData = []
 
-      const appointments = await this.appoinmentService.getAppoinmentByDate(
-        requestData.from,
-        requestData.to,
-      )
+      requestData.results.forEach(({sendAgain, ...row}) => {
+        if (sendAgain) {
+          againData.push(row)
+        } else {
+          notAgainData.push(row)
+        }
+      })
+
+      const appointments = (
+        await this.appoinmentService.getAppoinmentByDate(requestData.from, requestData.to)
+      ).reduce((acc, {barCode, ...currentValue}) => {
+        acc[barCode] = currentValue
+        return acc
+      }, {})
 
       const notFoundBarcodes = []
 
       await Promise.all(
         notAgainData.map(async (row) => {
-          const {sendAgain, ...requestData} = row
-          const currentAppointment = appointments.find(
-            (appointment) => appointment.barCode === requestData.barCode,
-          )
+          const currentAppointment = appointments[row.barCode]
           if (!currentAppointment) {
-            notFoundBarcodes.push(requestData)
+            notFoundBarcodes.push(row)
             return
           }
-          await this.testResultsService.sendTestResults({...requestData, ...currentAppointment})
+          await this.testResultsService.sendTestResults({...row, ...currentAppointment})
           await this.testResultsService.saveResults({
-            ...requestData,
+            ...row,
             ...currentAppointment,
             appointmentId: currentAppointment.appointmentId,
-            id: requestData.barCode,
+            id: row.barCode,
           })
         }),
       )
@@ -200,11 +205,15 @@ class AdminController implements IControllerBase {
     }
   }
 
-  checkAppointments = async (req: Request, res: Response): Promise<void> => {
-    const requestData: CheckAppointmentRequest = req.body
+  checkAppointments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const requestData: CheckAppointmentRequest = req.body
 
-    const alreadySents = await this.testResultsService.resultAlreadySentMany(requestData.barCodes)
-    res.json(actionSucceed(alreadySents))
+      const alreadySents = await this.testResultsService.resultAlreadySentMany(requestData.barCodes)
+      res.json(actionSucceed(alreadySents))
+    } catch (error) {
+      next(error)
+    }
   }
 }
 

@@ -101,3 +101,9 @@ export type TestResultsDBModelResponse = TestResultsDBModel & {
   exists: boolean
 }
 export type TestResultsDTOForEmail = TestResultsBase & AppointmentBase
+
+export type SendAndSaveTestResultsRequest = {
+  results?: TestResultsAgainRequest[]
+  from: string
+  to: string
+}

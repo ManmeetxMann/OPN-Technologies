@@ -95,15 +95,15 @@ document.addEventListener('DOMContentLoaded', () => {
       .filter((row) => sendAgainData.indexOf(row[0]) === -1)
       .map((row) => ({
         barCode: row[0],
-        famEGeneElem: row[1],
-        famCtElem: row[2],
-        calRed61RdRpGeneElem: row[3],
-        calRed61CtElem: row[4],
-        quasar670NGeneElem: row[5],
-        quasar670CtElem: row[6],
-        hexICElem: row[7],
-        hexCtElem: row[8],
-        isAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
+        famEGene: row[1],
+        famCt: row[2],
+        calRed61RdRpGene: row[3],
+        calRed61Ct: row[4],
+        quasar670NGene: row[5],
+        quasar670Ct: row[6],
+        hexIC: row[7],
+        hexCt: row[8],
+        sendAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
       }))
 
     await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
