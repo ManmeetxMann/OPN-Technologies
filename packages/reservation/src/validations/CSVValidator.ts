@@ -15,7 +15,7 @@ export default {
       res.status(400).json({errors: errors.array()})
     }
   },
-  csvValidation: () => {
+  csvValidation: (): unknown[] => {
     return [
       body('hexCt').isNumeric().withMessage('must be numeric'),
       body('hexCt')
@@ -32,7 +32,7 @@ export default {
     ]
   },
 
-  csvBulkValidation: () => {
+  csvBulkValidation: (): unknown[] => {
     return [
       check('results.*.hexCt')
         .custom((value) => {

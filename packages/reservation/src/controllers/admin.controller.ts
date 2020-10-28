@@ -92,7 +92,6 @@ class AdminController implements IControllerBase {
         }
       })
 
-
       const appointments = (
         await this.appoinmentService.getAppoinmentByDate(requestData.from, requestData.to)
       ).reduce((acc, {barCode, ...currentValue}) => {
