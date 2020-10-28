@@ -1162,18 +1162,8 @@ class OrganizationController implements IControllerBase {
         locationsLookup: locationsById,
         statusesLookup,
         usersLookup: usersById,
-        groupsLookup: groupsById,
+        membershipLookup,
       } = await this.getLookups(allUserIds, allDependantIds, organizationId)
-
-      // group memberships for all the users we're interested in
-      // dependant membership is already included in the trace
-      const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
-        ...allUserIds,
-      ])
-      const groupsByUserId: Record<string, OrganizationGroup> = userGroups.reduce(
-        (lookup, groupLink) => ({...lookup, [groupLink.userId]: groupsById[groupLink.groupId]}),
-        {},
-      )
 
       // WARNING: adding properties to models may not cause them to appear here
       const result = relevantTraces.map(({date, duration, exposures}) => ({
@@ -1186,7 +1176,7 @@ class OrganizationController implements IControllerBase {
           overlapping: overlapping.map(({userId, dependant, start, end}) => ({
             userId,
             status: statusesLookup[userId] ?? PassportStatuses.Pending,
-            group: groupsByUserId[userId],
+            group: membershipLookup[userId],
             firstName: usersById[userId].firstName,
             lastName: usersById[userId].lastName,
             base64Photo: usersById[userId].base64Photo,
@@ -1199,7 +1189,7 @@ class OrganizationController implements IControllerBase {
                   id: dependant.id,
                   firstName: dependant.firstName,
                   lastName: dependant.lastName,
-                  group: groupsById[dependant.groupId],
+                  group: membershipLookup[dependant.id],
                   status: statusesLookup[dependant.id] ?? PassportStatuses.Pending,
                 }
               : null,
