@@ -702,7 +702,9 @@ class OrganizationController implements IControllerBase {
             ) {
               exposureOverlaps.push(overlap)
               userIds.add(overlap.sourceUserId)
-              // no need to add dependant id to the lookup tables here, it's included in the trace
+              if (overlap.sourceDependantId) {
+                dependantIds.add(overlap.sourceDependantId)
+              }
             }
           }),
         ),
@@ -718,13 +720,11 @@ class OrganizationController implements IControllerBase {
             ) {
               traceOverlaps.push(overlap)
               userIds.add(overlap.userId)
-              if (overlap.dependant) {
-                dependantIds.add(overlap.dependant.id)
-              }
             }
           }),
         ),
       )
+
       const lookups = await this.getLookups(userIds, dependantIds, organizationId)
       const {locationsLookup, usersLookup, dependantsLookup, groupsLookup} = lookups
 
@@ -817,18 +817,26 @@ class OrganizationController implements IControllerBase {
       printableAccessHistory.reverse()
       exposureOverlaps.sort((a, b) => (a.start > b.start ? -1 : 1))
       traceOverlaps.sort((a, b) => (a.start > b.start ? -1 : 1))
-      const printableExposures = exposureOverlaps.map((overlap) => ({
+      // victims
+      const printableTraces = traceOverlaps.map((overlap) => ({
         firstName: overlap.dependant
           ? overlap.dependant.firstName
           : usersLookup[overlap.userId].firstName,
         lastName: overlap.dependant
           ? overlap.dependant.lastName
           : usersLookup[overlap.userId].lastName,
-        groupName: groupsLookup[overlap.dependant?.id ?? overlap.userId]?.name ?? '',
-        start: moment(overlap.start).tz(timeZone).format(dateTimeFormat),
-        end: moment(overlap.end).tz(timeZone).format(dateTimeFormat),
+        groupName:
+          (overlap.dependant
+            ? groupsLookup[overlap.dependant.groupId]
+            : usersLookup[overlap.userId].group
+          )?.name ?? '',
+        // @ts-ignore this is a timestamp, not a date
+        start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
+        // @ts-ignore this is a timestamp, not a date
+        end: moment(overlap.end.toDate()).tz(timeZone).format(dateTimeFormat),
       }))
-      const printableTraces = traceOverlaps.map((overlap) => ({
+      // perpetrators
+      const printableExposures = exposureOverlaps.map((overlap) => ({
         firstName: (overlap.sourceDependantId
           ? dependantsLookup[overlap.sourceDependantId]
           : usersLookup[overlap.sourceUserId]
@@ -837,10 +845,17 @@ class OrganizationController implements IControllerBase {
           ? dependantsLookup[overlap.sourceDependantId]
           : usersLookup[overlap.sourceUserId]
         ).lastName,
-        groupName: groupsLookup[overlap.sourceDependantId ?? overlap.sourceUserId]?.name ?? '',
-        start: moment(overlap.start).tz(timeZone).format(dateTimeFormat),
-        end: moment(overlap.end).tz(timeZone).format(dateTimeFormat),
+        groupName:
+          (overlap.sourceDependantId
+            ? dependantsLookup[overlap.sourceDependantId]
+            : usersLookup[overlap.sourceUserId]
+          )?.group.name ?? '',
+        // @ts-ignore this is a timestamp, not a date
+        start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
+        // @ts-ignore this is a timestamp, not a date
+        end: moment(overlap.end.toDate()).tz(timeZone).format(dateTimeFormat),
       }))
+
       const printableAttestations = attestations.map((attestation) => {
         const answerKeys = Object.keys(attestation.answers)
         answerKeys.sort((a, b) => parseInt(a) - parseInt(b))
