@@ -1628,9 +1628,6 @@ class OrganizationController implements IControllerBase {
         console.log('Invalid state: Cannot find group for user: ', user.id)
         return
       }
-      if (access.userId === 'nZ89n1qxxPlP1iBqMxkm') {
-        console.log(access)
-      }
       const duplicateKey = `${normalize(user.firstName)}|${normalize(user.lastName)}|${
         groupsByUserId[user.id]?.groupId
       }`
