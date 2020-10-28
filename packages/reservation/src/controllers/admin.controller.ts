@@ -16,6 +16,7 @@ import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/res
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {body, check} from 'express-validator'
 import CSVValidator from '../validations/CSVValidator'
+import _ from 'lodash'
 
 class AdminController implements IControllerBase {
   public path = '/admin'
@@ -62,6 +63,9 @@ class AdminController implements IControllerBase {
             return parseInt(value) <= 40
           })
           .withMessage('must be less or equal than 40'),
+        body('results')
+          .custom((value) => value.every((row) => _.size(row) === 10))
+          .withMessage('invalid csv rows'),
       ]),
       this.sendAndSaveTestResultsBulk,
     )
