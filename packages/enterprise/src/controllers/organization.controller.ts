@@ -620,10 +620,10 @@ class OrganizationController implements IControllerBase {
       }
 
       // If no group and no location is specified, make sure we are the health admin
-      if (!groupId && !locationId && !isHealthAdmin) {
-        replyInsufficientPermission(res)
-        return
-      }
+      // if (!groupId && !locationId && !isHealthAdmin) {
+      //   replyInsufficientPermission(res)
+      //   return
+      // }
 
       const response = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
 
@@ -1016,14 +1016,14 @@ class OrganizationController implements IControllerBase {
 
     // Get users & dependants
     const nonGuardiansUserIds = new Set<string>()
-    const guardianIds = new Set<string>()
-    const dependantIds = new Set<string>()
+    const parentUserIds: Record<string, string> = {}
     usersGroups.forEach(({userId, parentUserId}) => {
       if (!!parentUserId) {
-        dependantIds.add(userId)
-        guardianIds.add(parentUserId)
+        parentUserIds[userId] = parentUserId
       } else nonGuardiansUserIds.add(userId)
     })
+    const guardianIds = new Set(Object.values(parentUserIds))
+    const dependantIds = new Set(Object.keys(parentUserIds))
     const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
     const usersById = await this.getUsersById([...userIds])
     const dependantsById = await this.getDependantsById([...guardianIds], usersById, dependantIds)
@@ -1049,6 +1049,7 @@ class OrganizationController implements IControllerBase {
     const accesses = await this.getAccessesFor(
       [...userIds],
       [...dependantIds],
+      parentUserIds,
       locationId,
       groupId,
       betweenCreatedDate,
@@ -1508,6 +1509,7 @@ class OrganizationController implements IControllerBase {
   private async getAccessesFor(
     userIds: string[],
     dependantIds: string[],
+    parentUserIds: Record<string, string>,
     locationId: string | undefined,
     groupId: string | undefined,
     betweenCreatedDate: Range<Date>,
@@ -1522,7 +1524,14 @@ class OrganizationController implements IControllerBase {
     )
     const implicitPendingPassports = [...userIds, ...dependantIds]
       .filter((userId) => !passportsByUserIds[userId])
-      .map((userId) => ({status: PassportStatuses.Pending, userId} as Passport))
+      .map(
+        (userId) =>
+          ({
+            status: PassportStatuses.Pending,
+            userId,
+            parentUserId: parentUserIds[userId] ?? null,
+          } as Passport),
+      )
 
     // Fetch accesses by status-token
     const proceedStatusTokens = Object.values(passportsByUserIds)
@@ -1555,8 +1564,13 @@ class OrganizationController implements IControllerBase {
       .filter(({userId}) => isAccessEligibleForUserId(userId))
       .map(({userId, status, statusToken}) => {
         const user = usersById[userId] ?? dependantsByIds[userId]
-        const parentUserId = passportsByUserIds[userId]?.parentUserId
-
+        const parentUserId =
+          passportsByUserIds[userId]?.parentUserId ??
+          implicitPendingPassports.find((passport) => passport.userId === userId)?.parentUserId
+        if (userId === 'nZ89n1qxxPlP1iBqMxkm') {
+          console.log(passportsByUserIds[userId])
+          console.log(implicitPendingPassports.find((passport) => passport.userId === userId))
+        }
         if (!user) {
           if (userIds.includes(userId)) {
             console.warn(`Invalid state exception: Cannot find user for ID [${userId}]`)
@@ -1618,7 +1632,9 @@ class OrganizationController implements IControllerBase {
         console.log('Invalid state: Cannot find group for user: ', user.id)
         return
       }
-
+      if (access.userId === 'nZ89n1qxxPlP1iBqMxkm') {
+        console.log(access)
+      }
       const duplicateKey = `${normalize(user.firstName)}|${normalize(user.lastName)}|${
         groupsByUserId[user.id]?.groupId
       }`
