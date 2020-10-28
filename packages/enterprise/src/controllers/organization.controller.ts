@@ -620,10 +620,10 @@ class OrganizationController implements IControllerBase {
       }
 
       // If no group and no location is specified, make sure we are the health admin
-      // if (!groupId && !locationId && !isHealthAdmin) {
-      //   replyInsufficientPermission(res)
-      //   return
-      // }
+      if (!groupId && !locationId && !isHealthAdmin) {
+        replyInsufficientPermission(res)
+        return
+      }
 
       const response = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
 
@@ -1567,10 +1567,6 @@ class OrganizationController implements IControllerBase {
         const parentUserId =
           passportsByUserIds[userId]?.parentUserId ??
           implicitPendingPassports.find((passport) => passport.userId === userId)?.parentUserId
-        if (userId === 'nZ89n1qxxPlP1iBqMxkm') {
-          console.log(passportsByUserIds[userId])
-          console.log(implicitPendingPassports.find((passport) => passport.userId === userId))
-        }
         if (!user) {
           if (userIds.includes(userId)) {
             console.warn(`Invalid state exception: Cannot find user for ID [${userId}]`)
