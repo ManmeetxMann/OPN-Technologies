@@ -1067,35 +1067,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationStats'
   
-  /organizations/{organizationId}/stats/report:
-    get:
-      description: Get pdf for one organization (admin access required)
-      security:
-        - bearerAuthJWT: []
-      parameters:
-        - in: path
-          name: organizationId
-          schema:
-            type: string
-          required: true
-        - in: query
-          name: groupId
-          schema:
-            type: string
-        - in: query
-          name: locationId
-          schema:
-            type: string
-
-      responses:
-        '200':
-          description: Successfully computed the stats
-          content:
-            application/pdf:
-              schema:
-                type: string
-                format: binary
-  
   /organizations/{organizationId}/stats/user-report:
     get:
       description: Get pdf for one user (admin access required)
@@ -1132,7 +1103,33 @@ paths:
               schema:
                 type: string
                 format: binary
+  
+  /organizations/{organizationId}/stats/report:
+    get:
+      description: Get user reports for and entire group (admin access required). This may take a long time
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: groupId
+          schema:
+            type: string
+          required: true
 
+      responses:
+        '200':
+          description: Successfully computed the stats
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  
   /organizations/{organizationId}/stats/contact-trace-locations:
     get:
       description: Get contact traces locations (admin access required)
