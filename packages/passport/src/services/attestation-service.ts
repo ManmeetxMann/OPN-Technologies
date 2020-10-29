@@ -72,13 +72,17 @@ export class AttestationService {
         return false
       }
       if (dependantId) {
+        if (!trace.dependantIds) {
+          console.warn(`trace ${trace.id} has no dependantIds array`)
+          return true
+        }
         return trace.dependantIds.includes(dependantId)
       }
       if (typeof trace.includesGuardian === 'boolean') {
         return trace.includesGuardian
       }
       // old records do not have an includesGuardian field, we need to guess
-      if (!trace.dependantIds.length) {
+      if (!trace.dependantIds?.length) {
         // no dependants, must be the guardian
         return true
       }
