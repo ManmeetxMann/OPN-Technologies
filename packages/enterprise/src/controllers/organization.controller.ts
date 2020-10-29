@@ -34,7 +34,6 @@ import {Config} from '../../../common/src/utils/config'
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
-import template from '../templates/report'
 import userTemplate from '../templates/user-report'
 import {ExposureReport} from '../../../access/src/models/trace'
 import {PdfService} from '../../../common/src/service/reports/pdf'
@@ -671,52 +670,46 @@ class OrganizationController implements IControllerBase {
   getStatsReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {groupId, locationId, from, to} = req.query as StatsFilter
-      if (!groupId) {
-        throw 'too complicated'
-      }
+      const {groupId} = req.query as {groupId: string}
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
-      const isHealthAdmin = admin.healthAdminForOrganizationIds?.includes(organizationId)
       const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
+      const hasGrantedPermission = isSuperAdmin || admin.adminForGroupIds?.includes(groupId)
+      if (!hasGrantedPermission) {
+        replyInsufficientPermission(res)
+        return
+      }
 
       if (!canAccessOrganization) {
         replyInsufficientPermission(res)
         return
       }
 
-      // If group is specified, make sure we are group admin
-      if (groupId) {
-        const hasGrantedPermission = isSuperAdmin || admin.adminForGroupIds?.includes(groupId)
-        if (!hasGrantedPermission) {
-          replyInsufficientPermission(res)
-          return
-        }
-        // Assert group exists
-        await this.organizationService.getGroup(organizationId, groupId)
-      }
+      // Assert group exists
+      await this.organizationService.getGroup(organizationId, groupId)
 
-      // If location is specified, make sure we are location admin
-      if (locationId) {
-        const hasGrantedPermission = isSuperAdmin || admin.adminForLocationIds?.includes(locationId)
-        if (!hasGrantedPermission) {
-          replyInsufficientPermission(res)
-          return
-        }
-        // Assert location exists
-        await this.organizationService.getLocation(organizationId, locationId)
-      }
+      const memberships = await this.organizationService.getUsersGroups(organizationId, groupId)
+      console.log(`${memberships.length} memberships found`)
+      const to = moment(now()).tz(timeZone).endOf('day').toISOString()
+      const from = moment(to).startOf('day').subtract(30, 'days').toISOString()
+      const allTemplates = await Promise.all(
+        memberships.map((membership) =>
+          this.getUserReportTemplate(
+            organizationId,
+            membership.userId,
+            membership.parentUserId,
+            from,
+            to,
+          ),
+        ),
+      )
+      const tableLayouts = allTemplates[0].tableLayouts
+      const content = allTemplates.reduce(
+        (contentArray, template) => [...contentArray, ...template.content],
+        [],
+      )
 
-      // If no group and no location is specified, make sure we are the health admin
-      if (!groupId && !locationId && !isHealthAdmin) {
-        replyInsufficientPermission(res)
-        return
-      }
-
-      const statsObject = await this.getStatsHelper(organizationId, {groupId, locationId, from, to})
-      // @ts-ignore
-      const {content, tableLayouts} = template(statsObject)
       const pdfStream = this.pdfService.generatePDFStream(content, tableLayouts)
       res.contentType('application/pdf')
       pdfStream.pipe(res)
@@ -812,8 +805,6 @@ class OrganizationController implements IControllerBase {
     Object.values(locationsLookup).forEach((location) => {
       if (location.questionnaireId) {
         questionnaireIds.add(location.questionnaireId)
-      } else {
-        console.warn(`location ${location.id} does not include a questionnaireId`)
       }
     })
     const questionnaires = await Promise.all(
@@ -961,9 +952,16 @@ class OrganizationController implements IControllerBase {
         status: attestation.status,
       }
     })
-    const named = dependantId ? dependantsLookup[dependantId] : usersLookup[userId]
+    const deletedUser = {
+      firstName: 'Deleted',
+      lastName: 'User',
+      group: {
+        name: 'Unknown Group',
+      },
+    }
+    const named = (dependantId ? dependantsLookup[dependantId] : usersLookup[userId]) ?? deletedUser
     const {group} = named
-    const namedGuardian = dependantId ? usersLookup[userId] : null
+    const namedGuardian = dependantId ? usersLookup[userId] ?? deletedUser : null
     return userTemplate({
       attestations: printableAttestations,
       locations: printableAccessHistory,
@@ -1587,7 +1585,9 @@ class OrganizationController implements IControllerBase {
           if (userIds.includes(userId)) {
             console.warn(`Invalid state exception: Cannot find user for ID [${userId}]`)
           } else if (dependantIds.includes(userId)) {
-            console.warn(`Invalid state exception: Cannot find dependant for ID [${userId}]`)
+            console.warn(
+              `Invalid state exception: Cannot find dependant for ID [${userId}], guardian [${parentUserIds[userId]}]`,
+            )
           } else {
             console.warn(`[${userId}] is not in userIds or dependantIds`)
           }
