@@ -44,11 +44,12 @@ const timeZone = Config.get('DEFAULT_TIME_ZONE')
 type AugmentedDependant = UserDependant & {group: OrganizationGroup; status: PassportStatus}
 type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
 type Lookups = {
-  usersLookup: Record<string, AugmentedUser>
-  dependantsLookup: Record<string, AugmentedDependant>
-  locationsLookup: Record<string, OrganizationLocation>
-  groupsLookup: Record<string, OrganizationGroup>
-  statusesLookup: Record<string, PassportStatus>
+  usersLookup: Record<string, AugmentedUser> // users by id (with group and status)
+  dependantsLookup: Record<string, AugmentedDependant> // dependants by id (with group and status)
+  locationsLookup: Record<string, OrganizationLocation> // lookups by id
+  groupsLookup: Record<string, OrganizationGroup> // groups by id
+  membershipLookup: Record<string, OrganizationGroup> // groups by member (user or dependant) id
+  statusesLookup: Record<string, PassportStatus> // statuses by person (user or dependant) id
 }
 
 const replyInsufficientPermission = (res: Response) =>
@@ -1008,7 +1009,7 @@ class OrganizationController implements IControllerBase {
 
     const betweenCreatedDate = {
       from: live ? moment(now()).startOf('day').toDate() : new Date(from),
-      to: live ? undefined : new Date(to),
+      to: live ? now() : new Date(to),
     }
 
     // Fetch user groups
@@ -1073,7 +1074,14 @@ class OrganizationController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+      const {
+        userId,
+        parentUserId,
+        from: queryFrom,
+        to: queryTo,
+      } = req.query as UserContactTraceReportRequest
+      const to = queryTo ?? now().toISOString()
+      const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
 
       const {enteringAccesses, exitingAccesses} = await this.getAccessHistory(
         from,
@@ -1107,10 +1115,16 @@ class OrganizationController implements IControllerBase {
   getUserContactTraces = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+      const {
+        userId,
+        parentUserId,
+        from: queryFrom,
+        to: queryTo,
+      } = req.query as UserContactTraceReportRequest
+      const to = queryTo ?? now().toISOString()
+      const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
 
       let isParentUser = true
-
       if (parentUserId) {
         const user = await this.userService.findOne(parentUserId)
         if (user && user.organizationIds.indexOf(organizationId) > -1) {
@@ -1161,18 +1175,8 @@ class OrganizationController implements IControllerBase {
         locationsLookup: locationsById,
         statusesLookup,
         usersLookup: usersById,
-        groupsLookup: groupsById,
+        membershipLookup,
       } = await this.getLookups(allUserIds, allDependantIds, organizationId)
-
-      // group memberships for all the users we're interested in
-      // dependant membership is already included in the trace
-      const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
-        ...allUserIds,
-      ])
-      const groupsByUserId: Record<string, OrganizationGroup> = userGroups.reduce(
-        (lookup, groupLink) => ({...lookup, [groupLink.userId]: groupsById[groupLink.groupId]}),
-        {},
-      )
 
       // WARNING: adding properties to models may not cause them to appear here
       const result = relevantTraces.map(({date, duration, exposures}) => ({
@@ -1185,7 +1189,7 @@ class OrganizationController implements IControllerBase {
           overlapping: overlapping.map(({userId, dependant, start, end}) => ({
             userId,
             status: statusesLookup[userId] ?? PassportStatuses.Pending,
-            group: groupsByUserId[userId],
+            group: membershipLookup[userId],
             firstName: usersById[userId].firstName,
             lastName: usersById[userId].lastName,
             base64Photo: usersById[userId].base64Photo,
@@ -1198,7 +1202,7 @@ class OrganizationController implements IControllerBase {
                   id: dependant.id,
                   firstName: dependant.firstName,
                   lastName: dependant.lastName,
-                  group: groupsById[dependant.groupId],
+                  group: membershipLookup[dependant.id],
                   status: statusesLookup[dependant.id] ?? PassportStatuses.Pending,
                 }
               : null,
@@ -1288,6 +1292,7 @@ class OrganizationController implements IControllerBase {
       dependantsLookup: dependantsById,
       locationsLookup: locationsById,
       groupsLookup: groupsById,
+      membershipLookup: groupsByUserOrDependantId,
       statusesLookup: statusesByUserOrDependantId,
     }
   }
@@ -1301,8 +1306,8 @@ class OrganizationController implements IControllerBase {
     const live = !from && !to
 
     const betweenCreatedDate = {
-      from: live ? moment(now()).startOf('day').toDate() : new Date(from),
-      to: live ? undefined : new Date(to),
+      from: live ? moment(now()).subtract(24, 'hours').toDate() : new Date(from),
+      to: live ? now() : new Date(to),
     }
     const accesses = parentUserId
       ? await this.accessService.findAllWithDependents({
@@ -1367,10 +1372,17 @@ class OrganizationController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+      const {
+        userId,
+        parentUserId,
+        from: queryFrom,
+        to: queryTo,
+      } = req.query as UserContactTraceReportRequest
+      const to = queryTo ?? now().toISOString()
+      const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
 
-      const fromDateString = from ? moment(new Date(from)).tz(timeZone).format('YYYY-MM-DD') : null
-      const toDateString = to ? moment(new Date(to)).tz(timeZone).format('YYYY-MM-DD') : null
+      const fromDateString = moment(new Date(from)).tz(timeZone).format('YYYY-MM-DD')
+      const toDateString = moment(new Date(to)).tz(timeZone).format('YYYY-MM-DD')
       // fetch exposures in the time period
       const rawTraces = await this.attestationService.getExposuresInPeriod(
         userId,
@@ -1392,7 +1404,7 @@ class OrganizationController implements IControllerBase {
         statusesLookup,
         usersLookup: usersById,
         dependantsLookup: allDependantsById,
-        groupsLookup: groupsByUserOrDependantId,
+        membershipLookup: groupsByUserOrDependantId,
       } = await this.getLookups(allUserIds, allDependantIds, organizationId)
 
       // WARNING: adding properties to models may not cause them to appear here
