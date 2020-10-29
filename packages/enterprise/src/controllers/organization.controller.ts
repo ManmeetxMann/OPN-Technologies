@@ -636,269 +636,29 @@ class OrganizationController implements IControllerBase {
   getUserReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {userId: primaryId, parentUserId: secondaryId, from: queryFrom, to: queryTo} = req.query
+      const {userId, parentUserId, from: queryFrom, to: queryTo} = req.query
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
       const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
 
-      const userId = (secondaryId || primaryId) as string
-      const dependantId = secondaryId ? (primaryId as string) : null
       if (!canAccessOrganization) {
         replyInsufficientPermission(res)
         return
       }
-      const organization = await this.organizationService.findOneById(organizationId)
       const to: string = (queryTo as string) ?? now().toISOString()
       const from: string =
         (queryFrom as string) ??
         moment(now()).tz(timeZone).startOf('day').subtract(2, 'days').toISOString()
-      const [
-        attestations,
-        exposureTraces,
-        userTraces,
-        {enteringAccesses, exitingAccesses},
-      ] = await Promise.all([
-        this.attestationService.getAttestationsInPeriod(
-          primaryId as string,
-          from as string,
-          to as string,
-        ),
-        this.attestationService.getExposuresInPeriod(
-          primaryId as string,
-          from as string,
-          to as string,
-        ),
-        this.attestationService.getTracesInPeriod(
-          userId,
-          from as string,
-          to as string,
-          dependantId,
-        ),
-        this.getAccessHistory(
-          from as string,
-          to as string,
-          primaryId as string,
-          secondaryId as string,
-        ),
-      ])
-      // sort by descending attestation time
-      attestations.sort((a, b) =>
-        new Date(a.attestationTime) < new Date(b.attestationTime) ? 1 : -1,
-      )
-      const userIds = new Set<string>([userId])
-      const dependantIds = new Set<string>()
-      if (dependantId) {
-        dependantIds.add(dependantId)
-      }
-      // overlaps where the other user might have been sick
-      const exposureOverlaps: ExposureReport['overlapping'] = []
-      exposureTraces.forEach((trace) =>
-        trace.exposures.forEach((exposure) =>
-          exposure.overlapping.forEach((overlap) => {
-            if (
-              overlap.userId === userId &&
-              (dependantId ? overlap.dependant?.id === dependantId : !overlap.dependant)
-            ) {
-              exposureOverlaps.push(overlap)
-              userIds.add(overlap.sourceUserId)
-              if (overlap.sourceDependantId) {
-                dependantIds.add(overlap.sourceDependantId)
-              }
-            }
-          }),
-        ),
-      )
-      // overlaps where this user might have been sick
-      const traceOverlaps: ExposureReport['overlapping'] = []
-      userTraces.forEach((trace) =>
-        trace.exposures.forEach((exposure) =>
-          exposure.overlapping.forEach((overlap) => {
-            if (
-              overlap.sourceUserId === userId &&
-              (dependantId ? overlap.sourceDependantId === dependantId : !overlap.sourceDependantId)
-            ) {
-              traceOverlaps.push(overlap)
-              userIds.add(overlap.userId)
-            }
-          }),
-        ),
+
+      const {content, tableLayouts} = await this.getUserReportTemplate(
+        organizationId,
+        userId as string,
+        parentUserId as string,
+        from,
+        to,
       )
 
-      const lookups = await this.getLookups(userIds, dependantIds, organizationId)
-      const {locationsLookup, usersLookup, dependantsLookup, groupsLookup} = lookups
-
-      const questionnaireIds = new Set<string>()
-      Object.values(locationsLookup).forEach((location) => {
-        if (location.questionnaireId) {
-          questionnaireIds.add(location.questionnaireId)
-        } else {
-          console.warn(`location ${location.id} does not include a questionnaireId`)
-        }
-      })
-      const questionnaires = await Promise.all(
-        [...questionnaireIds].map((id) => this.questionnaireService.getQuestionnaire(id)),
-      )
-
-      const questionnairesLookup: Record<number, Questionnaire> = questionnaires.reduce(
-        (lookupSoFar, questionnaire) => {
-          const count = Object.keys(questionnaire.questions).length
-          if (lookupSoFar[count]) {
-            console.warn(`Multiple questionnaires with ${count} questions`)
-            return lookupSoFar
-          }
-          return {
-            ...lookupSoFar,
-            [count]: questionnaire,
-          }
-        },
-        {},
-      )
-
-      const dateFormat = 'MMMM D, YYYY'
-      const dateTimeFormat = 'h:mm A MMMM D, YYYY'
-
-      const printableAccessHistory: {name: string; time: string; action: string}[] = []
-      let enterIndex = 0
-      let exitIndex = 0
-      while (enterIndex < enteringAccesses.length || exitIndex < exitingAccesses.length) {
-        let addExit = false
-        if (enterIndex >= enteringAccesses.length) {
-          addExit = true
-        } else if (exitIndex >= exitingAccesses.length) {
-          addExit = false
-        } else {
-          const entering = enteringAccesses[enterIndex]
-          const exiting = exitingAccesses[exitIndex]
-          const enterTime = new Date(
-            // @ts-ignore dependant dates are actually strings
-            dependantId ? entering.dependants[dependantId].enteredAt : entering.enteredAt,
-          )
-          const exitTime = new Date(
-            // @ts-ignore dependant dates are actually strings
-            dependantId ? exiting.dependants[dependantId].exitAt : exiting.exitAt,
-          )
-          if (enterTime > exitTime) {
-            addExit = true
-          }
-        }
-        if (addExit) {
-          const access = exitingAccesses[exitIndex]
-          const location = locationsLookup[access.locationId]
-          const time = moment(
-            //@ts-ignore dependant dates are actually strings
-            dependantId ? access.dependants[dependantId].exitAt : access.exitAt,
-          )
-            .tz(timeZone)
-            .format(dateTimeFormat)
-          printableAccessHistory.push({
-            name: location.title,
-            time,
-            action: 'Exit',
-          })
-          exitIndex += 1
-        } else {
-          const access = enteringAccesses[enterIndex]
-          const location = locationsLookup[access.locationId]
-          const time = moment(
-            // @ts-ignore this is an ISO string
-            dependantId ? access.dependants[dependantId].enteredAt : access.enteredAt,
-          )
-            .tz(timeZone)
-            .format(dateTimeFormat)
-          printableAccessHistory.push({
-            name: location.title,
-            time,
-            action: 'Enter',
-          })
-          enterIndex += 1
-        }
-      }
-      printableAccessHistory.reverse()
-      exposureOverlaps.sort((a, b) => (a.start > b.start ? -1 : 1))
-      traceOverlaps.sort((a, b) => (a.start > b.start ? -1 : 1))
-      // victims
-      const printableTraces = traceOverlaps.map((overlap) => ({
-        firstName: overlap.dependant
-          ? overlap.dependant.firstName
-          : usersLookup[overlap.userId].firstName,
-        lastName: overlap.dependant
-          ? overlap.dependant.lastName
-          : usersLookup[overlap.userId].lastName,
-        groupName:
-          (overlap.dependant
-            ? groupsLookup[overlap.dependant.groupId]
-            : usersLookup[overlap.userId].group
-          )?.name ?? '',
-        // @ts-ignore this is a timestamp, not a date
-        start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
-        // @ts-ignore this is a timestamp, not a date
-        end: moment(overlap.end.toDate()).tz(timeZone).format(dateTimeFormat),
-      }))
-      // perpetrators
-      const printableExposures = exposureOverlaps.map((overlap) => ({
-        firstName: (overlap.sourceDependantId
-          ? dependantsLookup[overlap.sourceDependantId]
-          : usersLookup[overlap.sourceUserId]
-        ).firstName,
-        lastName: (overlap.sourceDependantId
-          ? dependantsLookup[overlap.sourceDependantId]
-          : usersLookup[overlap.sourceUserId]
-        ).lastName,
-        groupName:
-          (overlap.sourceDependantId
-            ? dependantsLookup[overlap.sourceDependantId]
-            : usersLookup[overlap.sourceUserId]
-          )?.group.name ?? '',
-        // @ts-ignore this is a timestamp, not a date
-        start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
-        // @ts-ignore this is a timestamp, not a date
-        end: moment(overlap.end.toDate()).tz(timeZone).format(dateTimeFormat),
-      }))
-
-      const printableAttestations = attestations.map((attestation) => {
-        const answerKeys = Object.keys(attestation.answers)
-        answerKeys.sort((a, b) => parseInt(a) - parseInt(b))
-        const answerCount = answerKeys.length
-        const questionnaire = questionnairesLookup[answerCount]
-        if (!questionnaire) {
-          console.warn(`no questionnaire found for attestation ${attestation.id}`)
-        }
-        return {
-          responses: answerKeys.map((key) => {
-            const yes = attestation.answers[key]['1']
-            const dateOfTest =
-              yes &&
-              attestation.answers[key]['2'] &&
-              moment(attestation.answers[key]['2']).tz(timeZone).format(dateFormat)
-            return {
-              question: (questionnaire?.questions[key]?.value ?? `Question ${key}`) as string,
-              response: yes ? dateOfTest || 'Yes' : 'No',
-            }
-          }),
-          // @ts-ignore timestamp, not string
-          time: moment(attestation.attestationTime.toDate()).tz(timeZone).format(dateTimeFormat),
-          status: attestation.status,
-        }
-      })
-      const named = dependantId ? dependantsLookup[dependantId] : usersLookup[userId]
-      const {group} = named
-      const namedGuardian = dependantId ? usersLookup[userId] : null
-      // @ts-ignore
-      const {content, tableLayouts} = userTemplate({
-        attestations: printableAttestations,
-        locations: printableAccessHistory,
-        exposures: printableExposures,
-        traces: printableTraces,
-        organizationName: organization.name,
-        userGroup: group.name,
-        userName: `${named.firstName} ${named.lastName}`,
-        guardianName: namedGuardian ? `${namedGuardian.firstName} ${namedGuardian.lastName}` : null,
-        generationDate: moment(now()).tz(timeZone).format(dateFormat),
-        reportDate: `${moment(from).tz(timeZone).format(dateFormat)} - ${moment(to)
-          .tz(timeZone)
-          .format(dateFormat)}`,
-      })
       const stream = this.pdfService.generatePDFStream(content, tableLayouts)
       res.contentType('application/pdf')
       stream.pipe(res)
@@ -912,7 +672,9 @@ class OrganizationController implements IControllerBase {
     try {
       const {organizationId} = req.params
       const {groupId, locationId, from, to} = req.query as StatsFilter
-
+      if (!groupId) {
+        throw 'too complicated'
+      }
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
       const isSuperAdmin = admin.superAdminForOrganizationIds?.includes(organizationId)
@@ -962,6 +724,260 @@ class OrganizationController implements IControllerBase {
     } catch (error) {
       next(error)
     }
+  }
+
+  private getUserReportTemplate = async (
+    organizationId: string,
+    primaryId: string,
+    secondaryId: string,
+    from: string,
+    to: string,
+  ): Promise<ReturnType<typeof userTemplate>> => {
+    const userId = (secondaryId || primaryId) as string
+    const dependantId = secondaryId ? (primaryId as string) : null
+
+    const [
+      organization,
+      attestations,
+      exposureTraces,
+      userTraces,
+      {enteringAccesses, exitingAccesses},
+    ] = await Promise.all([
+      this.organizationService.findOneById(organizationId),
+      this.attestationService.getAttestationsInPeriod(
+        primaryId as string,
+        from as string,
+        to as string,
+      ),
+      this.attestationService.getExposuresInPeriod(
+        primaryId as string,
+        from as string,
+        to as string,
+      ),
+      this.attestationService.getTracesInPeriod(userId, from as string, to as string, dependantId),
+      this.getAccessHistory(
+        from as string,
+        to as string,
+        primaryId as string,
+        secondaryId as string,
+      ),
+    ])
+    // sort by descending attestation time
+    attestations.sort((a, b) =>
+      new Date(a.attestationTime) < new Date(b.attestationTime) ? 1 : -1,
+    )
+    const userIds = new Set<string>([userId])
+    const dependantIds = new Set<string>()
+    if (dependantId) {
+      dependantIds.add(dependantId)
+    }
+    // overlaps where the other user might have been sick
+    const exposureOverlaps: ExposureReport['overlapping'] = []
+    exposureTraces.forEach((trace) =>
+      trace.exposures.forEach((exposure) =>
+        exposure.overlapping.forEach((overlap) => {
+          if (
+            overlap.userId === userId &&
+            (dependantId ? overlap.dependant?.id === dependantId : !overlap.dependant)
+          ) {
+            exposureOverlaps.push(overlap)
+            userIds.add(overlap.sourceUserId)
+            if (overlap.sourceDependantId) {
+              dependantIds.add(overlap.sourceDependantId)
+            }
+          }
+        }),
+      ),
+    )
+    // overlaps where this user might have been sick
+    const traceOverlaps: ExposureReport['overlapping'] = []
+    userTraces.forEach((trace) =>
+      trace.exposures.forEach((exposure) =>
+        exposure.overlapping.forEach((overlap) => {
+          if (
+            overlap.sourceUserId === userId &&
+            (dependantId ? overlap.sourceDependantId === dependantId : !overlap.sourceDependantId)
+          ) {
+            traceOverlaps.push(overlap)
+            userIds.add(overlap.userId)
+          }
+        }),
+      ),
+    )
+
+    const lookups = await this.getLookups(userIds, dependantIds, organizationId)
+    const {locationsLookup, usersLookup, dependantsLookup, groupsLookup} = lookups
+
+    const questionnaireIds = new Set<string>()
+    Object.values(locationsLookup).forEach((location) => {
+      if (location.questionnaireId) {
+        questionnaireIds.add(location.questionnaireId)
+      } else {
+        console.warn(`location ${location.id} does not include a questionnaireId`)
+      }
+    })
+    const questionnaires = await Promise.all(
+      [...questionnaireIds].map((id) => this.questionnaireService.getQuestionnaire(id)),
+    )
+
+    const questionnairesLookup: Record<number, Questionnaire> = questionnaires.reduce(
+      (lookupSoFar, questionnaire) => {
+        const count = Object.keys(questionnaire.questions).length
+        if (lookupSoFar[count]) {
+          console.warn(`Multiple questionnaires with ${count} questions`)
+          return lookupSoFar
+        }
+        return {
+          ...lookupSoFar,
+          [count]: questionnaire,
+        }
+      },
+      {},
+    )
+
+    const dateFormat = 'MMMM D, YYYY'
+    const dateTimeFormat = 'h:mm A MMMM D, YYYY'
+
+    const printableAccessHistory: {name: string; time: string; action: string}[] = []
+    let enterIndex = 0
+    let exitIndex = 0
+    while (enterIndex < enteringAccesses.length || exitIndex < exitingAccesses.length) {
+      let addExit = false
+      if (enterIndex >= enteringAccesses.length) {
+        addExit = true
+      } else if (exitIndex >= exitingAccesses.length) {
+        addExit = false
+      } else {
+        const entering = enteringAccesses[enterIndex]
+        const exiting = exitingAccesses[exitIndex]
+        const enterTime = new Date(
+          // @ts-ignore dependant dates are actually strings
+          dependantId ? entering.dependants[dependantId].enteredAt : entering.enteredAt,
+        )
+        const exitTime = new Date(
+          // @ts-ignore dependant dates are actually strings
+          dependantId ? exiting.dependants[dependantId].exitAt : exiting.exitAt,
+        )
+        if (enterTime > exitTime) {
+          addExit = true
+        }
+      }
+      if (addExit) {
+        const access = exitingAccesses[exitIndex]
+        const location = locationsLookup[access.locationId]
+        const time = moment(
+          //@ts-ignore dependant dates are actually strings
+          dependantId ? access.dependants[dependantId].exitAt : access.exitAt,
+        )
+          .tz(timeZone)
+          .format(dateTimeFormat)
+        printableAccessHistory.push({
+          name: location.title,
+          time,
+          action: 'Exit',
+        })
+        exitIndex += 1
+      } else {
+        const access = enteringAccesses[enterIndex]
+        const location = locationsLookup[access.locationId]
+        const time = moment(
+          // @ts-ignore this is an ISO string
+          dependantId ? access.dependants[dependantId].enteredAt : access.enteredAt,
+        )
+          .tz(timeZone)
+          .format(dateTimeFormat)
+        printableAccessHistory.push({
+          name: location.title,
+          time,
+          action: 'Enter',
+        })
+        enterIndex += 1
+      }
+    }
+    printableAccessHistory.reverse()
+    exposureOverlaps.sort((a, b) => (a.start > b.start ? -1 : 1))
+    traceOverlaps.sort((a, b) => (a.start > b.start ? -1 : 1))
+    // victims
+    const printableTraces = traceOverlaps.map((overlap) => ({
+      firstName: overlap.dependant
+        ? overlap.dependant.firstName
+        : usersLookup[overlap.userId].firstName,
+      lastName: overlap.dependant
+        ? overlap.dependant.lastName
+        : usersLookup[overlap.userId].lastName,
+      groupName:
+        (overlap.dependant
+          ? groupsLookup[overlap.dependant.groupId]
+          : usersLookup[overlap.userId].group
+        )?.name ?? '',
+      // @ts-ignore this is a timestamp, not a date
+      start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
+      // @ts-ignore this is a timestamp, not a date
+      end: moment(overlap.end.toDate()).tz(timeZone).format(dateTimeFormat),
+    }))
+    // perpetrators
+    const printableExposures = exposureOverlaps.map((overlap) => ({
+      firstName: (overlap.sourceDependantId
+        ? dependantsLookup[overlap.sourceDependantId]
+        : usersLookup[overlap.sourceUserId]
+      ).firstName,
+      lastName: (overlap.sourceDependantId
+        ? dependantsLookup[overlap.sourceDependantId]
+        : usersLookup[overlap.sourceUserId]
+      ).lastName,
+      groupName:
+        (overlap.sourceDependantId
+          ? dependantsLookup[overlap.sourceDependantId]
+          : usersLookup[overlap.sourceUserId]
+        )?.group.name ?? '',
+      // @ts-ignore this is a timestamp, not a date
+      start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
+      // @ts-ignore this is a timestamp, not a date
+      end: moment(overlap.end.toDate()).tz(timeZone).format(dateTimeFormat),
+    }))
+
+    const printableAttestations = attestations.map((attestation) => {
+      const answerKeys = Object.keys(attestation.answers)
+      answerKeys.sort((a, b) => parseInt(a) - parseInt(b))
+      const answerCount = answerKeys.length
+      const questionnaire = questionnairesLookup[answerCount]
+      if (!questionnaire) {
+        console.warn(`no questionnaire found for attestation ${attestation.id}`)
+      }
+      return {
+        responses: answerKeys.map((key) => {
+          const yes = attestation.answers[key]['1']
+          const dateOfTest =
+            yes &&
+            attestation.answers[key]['2'] &&
+            moment(attestation.answers[key]['2']).tz(timeZone).format(dateFormat)
+          return {
+            question: (questionnaire?.questions[key]?.value ?? `Question ${key}`) as string,
+            response: yes ? dateOfTest || 'Yes' : 'No',
+          }
+        }),
+        // @ts-ignore timestamp, not string
+        time: moment(attestation.attestationTime.toDate()).tz(timeZone).format(dateTimeFormat),
+        status: attestation.status,
+      }
+    })
+    const named = dependantId ? dependantsLookup[dependantId] : usersLookup[userId]
+    const {group} = named
+    const namedGuardian = dependantId ? usersLookup[userId] : null
+    return userTemplate({
+      attestations: printableAttestations,
+      locations: printableAccessHistory,
+      exposures: printableExposures,
+      traces: printableTraces,
+      organizationName: organization.name,
+      userGroup: group.name,
+      userName: `${named.firstName} ${named.lastName}`,
+      guardianName: namedGuardian ? `${namedGuardian.firstName} ${namedGuardian.lastName}` : null,
+      generationDate: moment(now()).tz(timeZone).format(dateFormat),
+      reportDate: `${moment(from).tz(timeZone).format(dateFormat)} - ${moment(to)
+        .tz(timeZone)
+        .format(dateFormat)}`,
+    })
   }
 
   getStatsHealth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
