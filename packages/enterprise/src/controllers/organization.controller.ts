@@ -174,7 +174,7 @@ class OrganizationController implements IControllerBase {
         .get('/contact-trace-exposures', this.getUserContactTraceExposures)
         .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
         .get('/family', this.getFamilyStats)
-        .get('/report', this.getStatsReport)
+        .get('/group-report', this.getGroupReport)
         .get('/user-report', this.getUserReport)
     )
     const organizations = Router().use(
@@ -667,7 +667,7 @@ class OrganizationController implements IControllerBase {
     }
   }
 
-  getStatsReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getGroupReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
       const {groupId} = req.query as {groupId: string}

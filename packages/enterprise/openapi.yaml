@@ -1104,9 +1104,9 @@ paths:
                 type: string
                 format: binary
   
-  /organizations/{organizationId}/stats/report:
+  /organizations/{organizationId}/stats/group-report:
     get:
-      description: Get user reports for and entire group (admin access required). This may take a long time
+      description: Get user reports for an entire group (admin access required). This may take a long time
       security:
         - bearerAuthJWT: []
       parameters:
