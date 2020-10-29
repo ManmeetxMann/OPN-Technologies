@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const datesBefore = document.getElementById('datesBefore')
 
   const sendButtonBulk = document.getElementById('sendButtonBulk')
+  const errorBulkModal = document.getElementById('errorBulkModal')
+  const errorBulkContent = document.getElementById('errorBulkContent')
 
   csvFileInput.addEventListener('change', (e) => {
     const file = e.target.files[0]
@@ -60,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
             checkboxElem.setAttribute('type', 'checkbox')
             checkboxElem.classList.add('sendAgainCheckbox')
             checkboxElem.setAttribute('data-barcode', row[0])
+            checkboxElem.setAttribute('data-index', i)
             tdElem.appendChild(checkboxElem)
           }
           trElem.appendChild(tdElem)
@@ -87,12 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault()
     const sendAgainData = [...document.getElementsByClassName('sendAgainCheckbox')]
       .filter((row) => !row.checked)
-      .map((row) => row.getAttribute('data-barcode'))
+      .map((row) => row.getAttribute('data-index'))
     const sendAgainDataVice = [...document.getElementsByClassName('sendAgainCheckbox')]
       .filter((row) => row.checked)
-      .map((row) => row.getAttribute('data-barcode'))
+      .map((row) => row.getAttribute('data-index'))
     const dataSentBackend = data
-      .filter((row) => sendAgainData.indexOf(row[0]) === -1)
+      .filter((row, i) => sendAgainData.indexOf(`${i}`) === -1)
       .map((row) => ({
         barCode: row[0],
         famEGene: row[1],
@@ -107,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sendAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
       }))
 
-    await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
+    const response = await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -116,5 +119,25 @@ document.addEventListener('DOMContentLoaded', () => {
         results: dataSentBackend,
       }),
     })
+
+    const responseData = await response.json()
+
+    if (!response.ok) {
+      openModal(errorBulkModal)
+      const regexpFieldName = /.*\[\d*\]\./g
+      const regexpFieldRow = /.*\[(\d*)\]\..*/g
+      errorBulkContent.innerHTML = ''
+      responseData.errors.map((err) => {
+        const errrorElem = document.createElement('p')
+        const fieldName = err.param.replace(regexpFieldName, '')
+        const index = parseInt(err.param.replace(regexpFieldRow, '$1'))
+        console.log(regexpFieldRow)
+        console.log(err.param)
+        console.log(index)
+        errrorElem.innerText = `At ${index + 1} row ${fieldName} is invalid.`
+        errorBulkContent.appendChild(errrorElem)
+      })
+      console.log(responseData.errors[0].param.replace(regexpFieldName, ''))
+    }
   })
 })

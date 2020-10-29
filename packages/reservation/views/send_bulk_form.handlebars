@@ -34,38 +34,11 @@
       </div>
     </div>
   </div>
-  <div class="modal" id="confirmMailSend" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirmation</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div>
-            <ul>
-              <li><b>AppointmentId: </b><span id="confirmAppointmentId"></span></li>
-              <li><b>Date Of Appointment: </b><span id="confirmDateOfAppointment"></span></li>
-              <li><b>Date Of Birth: </b><span id="confirmDateOfBirth"></span></li>
-              <li><b>Email: </b><span id="confirmEmail"></span></li>
-              <li><b>First Name: </b><span id="confirmFirstName"></span></li>
-              <li><b>Last Name: </b><span id="confirmLastName"></span></li>
-              <li><b>Phone: </b><span id="confirmPhone"></span></li>
-              <li><b>Registered Nurse Practitioner: </b><span id="confirmRegisteredNursePractitioner"></span></li>
-            </ul>
-          </div>
-          <p>Do you confirm that you want to send email?</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-primary" id="sendMailNoBtn" data-dismiss="modal">No</button>
-          <button type="button" id="sendMailBtn" class="btn btn-secondary" data-dismiss="modal">Yes</button>
-        </div>
-      </div>
-    </div>
-  </div>
   <form action="#" id="bulkSubmitResults" method="POST">
+    <div class="alert alert-danger error-alert" role="alert" id="errorBulkModal">
+      <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+      <span id="errorBulkContent">Enter a valid email address</span>
+    </div>
     <div class="form-group">
       <label for="barCode">CSV File</label>
       <input type="file" class="form-control" id="csvFile" name="csvFile" placeholder="Upload CSV File" required>

@@ -7,6 +7,12 @@
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <!-- @TODO In future we can move this scsss file -->
     <style>
+      .error-alert {
+        display: none;
+      }
+      .error-alert p:nth-child(1) {
+        margin-bottom: 0;
+      }
       .show-modal {
         opacity: 1;
         display: block;
@@ -44,6 +50,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
           integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
           crossorigin="anonymous"></script>
+  <script src="/static/js/shared.js"></script>
   <script src="/static/js/test_results.js"></script>
   <script src="/static/js/test__bulk__results.js"></script>
   </body>
