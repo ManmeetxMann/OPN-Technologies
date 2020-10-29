@@ -133,9 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const errrorElem = document.createElement('p')
           const fieldName = err.param.replace(regexpFieldName, '')
           const index = parseInt(err.param.replace(regexpFieldRow, '$1'))
-          console.log(regexpFieldRow)
-          console.log(err.param)
-          console.log(index)
           errrorElem.innerText = `At ${index + 1} row ${fieldName} is invalid.`
           errorBulkContent.appendChild(errrorElem)
         })
@@ -144,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
         errrorElem.innerText = `Invalid request`
         errorBulkContent.appendChild(errrorElem)
       }
-      console.log(responseData.errors[0].param.replace(regexpFieldName, ''))
     }
   })
 })
