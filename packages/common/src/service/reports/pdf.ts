@@ -23,8 +23,8 @@ const getFontSettings = () => ({
 export class PdfService {
   printer: PdfPrinter = new PdfPrinter(getFontSettings())
 
-  generatePDFStream(params: Content, tableLayouts: TableLayouts): Stream {
-    const generatedParams = this.getPDF(params)
+  generatePDFStream(params: Content, tableLayouts: TableLayouts, password?: string): Stream {
+    const generatedParams = this.getPDF(params, password)
     const stream = new Stream.PassThrough()
     const pdfDoc = this.printer.createPdfKitDocument(generatedParams, {tableLayouts})
     pdfDoc.on('data', (chunk) => stream.push(chunk))
@@ -37,8 +37,12 @@ export class PdfService {
     return stream
   }
 
-  generatePDFBase64(params: Content, tableLayouts: TableLayouts): Promise<string> {
-    const stream = this.generatePDFStream(params, tableLayouts)
+  generatePDFBase64(
+    params: Content,
+    tableLayouts: TableLayouts,
+    password?: string,
+  ): Promise<string> {
+    const stream = this.generatePDFStream(params, tableLayouts, password)
     const chunks = []
     stream.on('data', (d) => chunks.push(d))
     return new Promise((resolve) => {
@@ -46,8 +50,8 @@ export class PdfService {
     })
   }
 
-  private getPDF(content: Content): TDocumentDefinitions {
-    return {
+  private getPDF(content: Content, password?: string): TDocumentDefinitions {
+    const docDefinition: TDocumentDefinitions = {
       pageSize: 'A4',
       pageMargins: [72, 34, 72, 30],
       styles: {
@@ -70,5 +74,11 @@ export class PdfService {
       },
       content,
     }
+
+    if (password !== '') {
+      docDefinition.userPassword = password
+    }
+
+    return docDefinition
   }
 }
