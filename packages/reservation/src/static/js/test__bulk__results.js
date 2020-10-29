@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const errrorElem = document.createElement('p')
           const fieldName = err.param.replace(regexpFieldName, '')
           const index = parseInt(err.param.replace(regexpFieldRow, '$1'))
-          errrorElem.innerText = `At ${index + 1} row ${fieldName} is invalid.`
+          errrorElem.innerText = `At ${dataSentBackend[index].barCode} row ${fieldName} is invalid.`
           errorBulkContent.appendChild(errrorElem)
         })
       } else {
