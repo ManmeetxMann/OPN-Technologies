@@ -38,14 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const getValueByElem = (elem) => elem.value
 
-  const findAncestor = (el, cls) => {
-    while ((el = el.parentElement) && !el.classList.contains(cls)) {}
-    return el
-  }
-
-  const openModal = (modal) => modal.classList.add('show-modal')
-  const closeModal = (modal) => modal.classList.remove('show-modal')
-
   const showAlertModal = function (title, message) {
     messageModal.querySelector('.modal-title').innerHTML = title
     messageModal.querySelector('.modal-body').innerHTML = message

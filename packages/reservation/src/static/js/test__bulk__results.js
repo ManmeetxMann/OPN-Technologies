@@ -127,16 +127,23 @@ document.addEventListener('DOMContentLoaded', () => {
       const regexpFieldName = /.*\[\d*\]\./g
       const regexpFieldRow = /.*\[(\d*)\]\..*/g
       errorBulkContent.innerHTML = ''
-      responseData.errors.map((err) => {
+
+      if (responseData?.errors?.length) {
+        responseData.errors.map((err) => {
+          const errrorElem = document.createElement('p')
+          const fieldName = err.param.replace(regexpFieldName, '')
+          const index = parseInt(err.param.replace(regexpFieldRow, '$1'))
+          console.log(regexpFieldRow)
+          console.log(err.param)
+          console.log(index)
+          errrorElem.innerText = `At ${index + 1} row ${fieldName} is invalid.`
+          errorBulkContent.appendChild(errrorElem)
+        })
+      } else {
         const errrorElem = document.createElement('p')
-        const fieldName = err.param.replace(regexpFieldName, '')
-        const index = parseInt(err.param.replace(regexpFieldRow, '$1'))
-        console.log(regexpFieldRow)
-        console.log(err.param)
-        console.log(index)
-        errrorElem.innerText = `At ${index + 1} row ${fieldName} is invalid.`
+        errrorElem.innerText = `Invalid request`
         errorBulkContent.appendChild(errrorElem)
-      })
+      }
       console.log(responseData.errors[0].param.replace(regexpFieldName, ''))
     }
   })
