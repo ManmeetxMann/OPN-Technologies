@@ -6,7 +6,7 @@ import loggerMiddleware from '../../common/src/middlewares/logger'
 import InternalController from './controllers/internal.controller'
 import AdminController from './controllers/admin.controller'
 import UserController from './controllers/user.controller'
-import UserV3Controller from './controllers/v3/user.router'
+import UserV3Controller from './controllers/v3/user.controller'
 import RootController from './controllers/root.controller'
 import OrganizationController from './controllers/organization.controller'
 

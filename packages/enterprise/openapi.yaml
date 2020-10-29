@@ -1886,6 +1886,34 @@ application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
 
+  /api/v3/users/email:
+    post:
+      summary: Account Email Registration
+      description: Link an existing user's email and trigger a magic link for email verification
+      tags:
+        - Account management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                userId:
+                  type: string
+                  nullable: false
+                email:
+                  type: string
+                  nullable: false
+              required:
+                - userId
+                - email
+      responses:
+        '200':
+          description: Email Successfully linked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUser'
+
   /api/v3/users/migration:
     post:
       summary: Profile Migration

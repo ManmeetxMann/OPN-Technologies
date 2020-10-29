@@ -1,19 +1,23 @@
-import {Handler} from 'express'
-import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {CreateUserRequest, MigrateUserRequest} from '../../types/create-user-request'
+import * as express from 'express'
+import {Handler, Router} from 'express'
+import {authMiddleware} from '../../../../common/src/middlewares/auth'
+import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
+import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-authority'
+import {AuthService} from '../../../../common/src/service/auth/auth-service'
+import {UserService} from '../../services/user-service'
+import {OrganizationService} from '../../services/organization-service'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
+import {CreateUserRequest, MigrateUserRequest} from '../../types/create-user-request'
+import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {AuthenticationRequest} from '../../types/authentication-request'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {User} from '../../models/user'
 import {UpdateUserRequest} from '../../types/update-user-request'
-import {AuthService} from '../../../../common/src/service/auth/auth-service'
 import {RegistrationConfirmationRequest} from '../../types/registration-confirmation-request'
-import {OrganizationService} from '../../services/organization-service'
-import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
-import {UserService} from '../../services/user-service'
-import {ConnectOrganizationRequest} from '../../types/user-organization-request'
-import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
 import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
+import {ConnectOrganizationRequest} from '../../types/user-organization-request'
+import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
+import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
 
 const authService = new AuthService()
 const userService = new UserService()
@@ -23,7 +27,7 @@ const magicLinkService = new MagicLinkService()
 /**
  * Creates a user profile and returns a User
  */
-export const create: Handler = async (req, res, next): Promise<void> => {
+const create: Handler = async (req, res, next): Promise<void> => {
   try {
     const profile = req.body as CreateUserRequest
     const user = await userService.create(profile)
@@ -37,9 +41,27 @@ export const create: Handler = async (req, res, next): Promise<void> => {
 }
 
 /**
+ * Update a user's email, reset its `authUserId` and trigger a magic link for email verification
+ * TODO: Handle authenticated user when handler behind an authenticated route
+ *  const authenticatedUser = res.locals.authenticatedUser as User
+ */
+const updateEmail: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const {userId, email} = req.body
+    const user = await userService.updateEmail(userId, email)
+
+    await magicLinkService.send({email: user.email, name: user.firstName})
+
+    res.json(actionSucceed(user))
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
  * Migrate existing user profile(s)
  */
-export const migrate: Handler = async (req, res, next): Promise<void> => {
+const migrate: Handler = async (req, res, next): Promise<void> => {
   try {
     const {
       email,
@@ -64,7 +86,7 @@ export const migrate: Handler = async (req, res, next): Promise<void> => {
 /**
  * Sends a magic-link to authenticate a user
  */
-export const authenticate: Handler = async (req, res, next): Promise<void> => {
+const authenticate: Handler = async (req, res, next): Promise<void> => {
   try {
     const {email} = req.body as AuthenticationRequest
     await userService.getByEmail(email).then(async (user) => {
@@ -81,7 +103,7 @@ export const authenticate: Handler = async (req, res, next): Promise<void> => {
 /**
  * Get the authenticated user details
  */
-export const get: Handler = async (req, res, next): Promise<void> => {
+const get: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
     res.json(actionSucceed(authenticatedUser))
@@ -93,7 +115,7 @@ export const get: Handler = async (req, res, next): Promise<void> => {
 /**
  * Update authenticated user
  */
-export const update: Handler = async (req, res, next): Promise<void> => {
+const update: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
     const source = req.body as UpdateUserRequest
@@ -107,7 +129,7 @@ export const update: Handler = async (req, res, next): Promise<void> => {
 /**
  * Completes user registration with magic-link id-token
  */
-export const completeRegistration: Handler = async (req, res, next): Promise<void> => {
+const completeRegistration: Handler = async (req, res, next): Promise<void> => {
   try {
     const {userId, idToken} = req.body as RegistrationConfirmationRequest
     const user = await userService.getById(userId)
@@ -131,7 +153,7 @@ export const completeRegistration: Handler = async (req, res, next): Promise<voi
 /**
  * Fetch all the connected organizations of the authenticated user
  */
-export const getConnectedOrganizations: Handler = async (req, res, next): Promise<void> => {
+const getConnectedOrganizations: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
     const organizationIds = await userService.getAllConnectedOrganizationIds(authenticatedUser.id)
@@ -146,11 +168,7 @@ export const getConnectedOrganizations: Handler = async (req, res, next): Promis
 /**
  * Fetch all the connected organizations of a dependent
  */
-export const getDependentConnectedOrganizations: Handler = async (
-  req,
-  res,
-  next,
-): Promise<void> => {
+const getDependentConnectedOrganizations: Handler = async (req, res, next): Promise<void> => {
   try {
     const {dependentId} = req.params
     const organizationIds = await userService.getAllConnectedOrganizationIds(dependentId)
@@ -165,7 +183,7 @@ export const getDependentConnectedOrganizations: Handler = async (
 /**
  * Connect an organization to the authenticated user, if relation doesn't yet exist
  */
-export const connectOrganization: Handler = async (req, res, next): Promise<void> => {
+const connectOrganization: Handler = async (req, res, next): Promise<void> => {
   try {
     const {id} = res.locals.authenticatedUser as User
     const {organizationId} = req.body as ConnectOrganizationRequest
@@ -185,7 +203,7 @@ export const connectOrganization: Handler = async (req, res, next): Promise<void
 /**
  * Connect a dependent to an organization if relation doesn't yet exist
  */
-export const connectDependentToOrganization: Handler = async (req, res, next): Promise<void> => {
+const connectDependentToOrganization: Handler = async (req, res, next): Promise<void> => {
   try {
     const {dependentId} = req.params
     const {organizationId} = req.body as ConnectOrganizationRequest
@@ -205,7 +223,7 @@ export const connectDependentToOrganization: Handler = async (req, res, next): P
 /**
  * Removes the authenticated user from an organization and all the groups within that organization
  */
-export const disconnectOrganization: Handler = async (req, res, next): Promise<void> => {
+const disconnectOrganization: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
     const {organizationId} = req.params
@@ -224,10 +242,11 @@ export const disconnectOrganization: Handler = async (req, res, next): Promise<v
     next(error)
   }
 }
+
 /**
  * Removes the authenticated user's dependent from an organization and all the groups within that organization
  */
-export const disconnectDependentOrganization: Handler = async (req, res, next): Promise<void> => {
+const disconnectDependentOrganization: Handler = async (req, res, next): Promise<void> => {
   try {
     const {dependentId, organizationId} = req.params
     const organization = await organizationService.findOneById(organizationId)
@@ -249,11 +268,7 @@ export const disconnectDependentOrganization: Handler = async (req, res, next): 
 /**
  * Get all the user's connected-groups
  */
-export const getAllConnectedGroupsInAnOrganization: Handler = async (
-  req,
-  res,
-  next,
-): Promise<void> => {
+const getAllConnectedGroupsInAnOrganization: Handler = async (req, res, next): Promise<void> => {
   try {
     const {id} = res.locals.authenticatedUser as User
     const {organizationId} = req.query
@@ -271,7 +286,7 @@ export const getAllConnectedGroupsInAnOrganization: Handler = async (
 /**
  * Get all the user's dependent's connected-groups
  */
-export const getAllDependentConnectedGroupsInAnOrganization: Handler = async (
+const getAllDependentConnectedGroupsInAnOrganization: Handler = async (
   req,
   res,
   next,
@@ -293,7 +308,7 @@ export const getAllDependentConnectedGroupsInAnOrganization: Handler = async (
 /**
  * Connect a user to a group
  */
-export const connectGroup: Handler = async (req, res, next): Promise<void> => {
+const connectGroup: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
     const {organizationId, groupId} = req.body as ConnectGroupRequest
@@ -306,10 +321,11 @@ export const connectGroup: Handler = async (req, res, next): Promise<void> => {
     next(error)
   }
 }
+
 /**
  * Connect a user's dependent to a group
  */
-export const connectDependentToGroup: Handler = async (req, res, next): Promise<void> => {
+const connectDependentToGroup: Handler = async (req, res, next): Promise<void> => {
   try {
     const {dependentId} = req.params
     const {organizationId, groupId} = req.body as ConnectGroupRequest
@@ -326,7 +342,7 @@ export const connectDependentToGroup: Handler = async (req, res, next): Promise<
 /**
  * Disconnect a user from a group
  */
-export const disconnectGroup: Handler = async (req, res, next): Promise<void> => {
+const disconnectGroup: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
     const {groupId} = req.params
@@ -337,10 +353,11 @@ export const disconnectGroup: Handler = async (req, res, next): Promise<void> =>
     next(error)
   }
 }
+
 /**
  * Update a user's dependent group within the same organization
  */
-export const updateDependentGroup: Handler = async (req, res, next): Promise<void> => {
+const updateDependentGroup: Handler = async (req, res, next): Promise<void> => {
   try {
     const {dependentId} = req.params
     const {organizationId, fromGroupId, toGroupId} = req.body as UpdateGroupRequest
@@ -361,7 +378,7 @@ export const updateDependentGroup: Handler = async (req, res, next): Promise<voi
  * Get Direct parents for a given user-id
  * Only the approved parent-child relations will be returned
  */
-export const getParents: Handler = async (req, res, next): Promise<void> => {
+const getParents: Handler = async (req, res, next): Promise<void> => {
   try {
     const {id} = res.locals.authenticatedUser as User
     const parents = await userService.getParents(id)
@@ -375,7 +392,7 @@ export const getParents: Handler = async (req, res, next): Promise<void> => {
  * Get Direct dependents for a given user-id
  * Only the approved parent-child relations will be returned
  */
-export const getDependents: Handler = async (req, res, next): Promise<void> => {
+const getDependents: Handler = async (req, res, next): Promise<void> => {
   try {
     const {id} = res.locals.authenticatedUser as User
     const dependents = await userService.getDirectDependents(id)
@@ -390,7 +407,7 @@ export const getDependents: Handler = async (req, res, next): Promise<void> => {
  * If a `dependent.id` is provided, the matching dependent will be linked,
  * with a pending for approval state
  */
-export const addDependents: Handler = async (req, res, next): Promise<void> => {
+const addDependents: Handler = async (req, res, next): Promise<void> => {
   try {
     const {id} = res.locals.authenticatedUser as User
     const users = req.body as User[]
@@ -404,7 +421,7 @@ export const addDependents: Handler = async (req, res, next): Promise<void> => {
 /**
  * Update a dependent
  */
-export const updateDependent: Handler = async (req, res, next): Promise<void> => {
+const updateDependent: Handler = async (req, res, next): Promise<void> => {
   try {
     const {dependentId} = req.params
     const updateRequest = req.body as UpdateUserRequest
@@ -415,11 +432,12 @@ export const updateDependent: Handler = async (req, res, next): Promise<void> =>
     next(error)
   }
 }
+
 /**
  * Remove a user as a dependent of the authenticated user
  * Delete the dependent's data if query param `hard` is true
  */
-export const removeDependent: Handler = async (req, res, next): Promise<void> => {
+const removeDependent: Handler = async (req, res, next): Promise<void> => {
   try {
     const {id} = res.locals.authenticatedUser as User
     const {dependentId} = req.params
@@ -437,3 +455,68 @@ export const removeDependent: Handler = async (req, res, next): Promise<void> =>
     next(error)
   }
 }
+
+class UserController implements IControllerBase {
+  public router = express.Router()
+
+  constructor() {
+    this.initRoutes()
+  }
+
+  public initRoutes(): void {
+    const innerRouter = () => Router({mergeParams: true})
+    const root = '/api/v3/users'
+
+    const authentication = innerRouter().use(
+      '/',
+      innerRouter()
+        .post('/', create)
+        .post('/email', updateEmail) // to be eventually deprecated if favour of `PUT -> /api/v3/users/self/email`
+        .post('/migration', migrate)
+        .post('/auth', authenticate)
+        .post('/auth/registration-confirmation', completeRegistration),
+    )
+
+    const dependents = innerRouter().use(
+      '/dependents',
+      innerRouter().get('/', getDependents).post('/', addDependents).use(
+        '/:dependentId',
+        assertHasAuthorityOnDependent,
+        innerRouter()
+          .put('/', updateDependent)
+          .delete('/', removeDependent)
+
+          .get('/organizations', getDependentConnectedOrganizations)
+          .post('/organizations', connectDependentToOrganization)
+          .delete('/organizations/:organizationId', disconnectDependentOrganization)
+
+          .get('/groups', getAllDependentConnectedGroupsInAnOrganization)
+          .post('/groups', connectDependentToGroup)
+          .put('/groups', updateDependentGroup),
+      ),
+    )
+
+    const profile = innerRouter().use(
+      '/self',
+      authMiddleware,
+      innerRouter()
+        .get('/', get)
+        .put('/', update)
+        .get('/parents', getParents)
+
+        .get('/organizations', getConnectedOrganizations)
+        .post('/organizations', connectOrganization)
+        .delete('/organizations/:organizationId', disconnectOrganization)
+
+        .get('/groups', getAllConnectedGroupsInAnOrganization)
+        .post('/groups', connectGroup)
+        .delete('/groups/:groupId', disconnectGroup)
+
+        .use(dependents),
+    )
+
+    this.router.use(root, authentication, profile)
+  }
+}
+
+export default UserController
