@@ -627,11 +627,6 @@ class OrganizationController implements IControllerBase {
             message: `Report for ${memberships.length} users will be emailed to ${email}`,
           }),
         )
-        console.log(
-          Config.get('GCP_PROJECT'),
-          Config.get('GAE_LOCATION'), // northamerica-northeast1
-          Config.get('QUEUE_NAME'),
-        )
         const path = this.taskClient.queuePath(
           Config.get('GCP_PROJECT'),
           Config.get('GAE_LOCATION'), // northamerica-northeast1
