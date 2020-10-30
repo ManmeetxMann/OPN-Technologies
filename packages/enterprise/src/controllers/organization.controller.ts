@@ -701,7 +701,7 @@ class OrganizationController implements IControllerBase {
         }
         res.json(
           actionSucceed({
-            type: 'email',
+            reponseType: 'email',
             message: `Report for ${memberships.length} users will be emailed to ${email}`,
           }),
         )
