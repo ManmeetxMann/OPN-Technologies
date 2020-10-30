@@ -3,14 +3,13 @@ import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
 import {PdfService} from '../../../common/src/service/reports/pdf'
-import {EmailService} from '../../../common/src/service/messaging/email-service'
 
+import {EmailService} from '../services/email-service'
 import {OrganizationService} from '../services/organization-service'
 import {ReportService} from '../services/report-service'
 import {InternalAdminApprovalCreateRequest} from '../models/internal-request'
 
-import * as express from 'express'
-import {NextFunction, Request, Response} from 'express'
+import {Router, NextFunction, Request, Response} from 'express'
 
 type GroupReportEmailRequest = {
   groupId: string
@@ -22,8 +21,8 @@ type GroupReportEmailRequest = {
 }
 
 class InternalController implements IControllerBase {
-  public path = '/internal'
-  public router = express.Router()
+  private path = '/internal'
+  public router = Router()
 
   private organizationService = new OrganizationService()
   private adminApprovalService = new AdminApprovalService()
@@ -65,26 +64,7 @@ class InternalController implements IControllerBase {
       )
 
       const pdfB64 = await this.pdfService.generatePDFBase64(content, tableLayouts)
-      await this.emailService.send({
-        to: [{email, name}],
-        textContent: 'Report attached',
-        subject: 'OPN Report',
-        sender: {
-          email: 'no-reply@email.stayopn.net',
-          name: 'OPN Team',
-        },
-        attachment: [
-          {
-            content: pdfB64,
-            name: `OPN Report.pdf`,
-          },
-        ],
-        bcc: [
-          {
-            email: 'reports@stayopn.com',
-          },
-        ],
-      })
+      await this.emailService.sendGroupReport(email, name, pdfB64)
       res.sendStatus(200)
     } catch (error) {
       next(error)
