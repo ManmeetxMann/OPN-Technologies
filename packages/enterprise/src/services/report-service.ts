@@ -1,8 +1,8 @@
 import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {Range} from '../../../common/src/types/range'
 import {User, UserDependant} from '../../../common/src/data/user'
+import {Range} from '../../../common/src/types/range'
 
 import {OrganizationService} from './organization-service'
 import {
@@ -200,13 +200,13 @@ export class ReportService {
     )
   }
 
-  getUserReportTemplate = async (
+  async getUserReportTemplate(
     organizationId: string,
     primaryId: string,
     secondaryId: string,
     from: string,
     to: string,
-  ): Promise<ReturnType<typeof userTemplate>> => {
+  ): Promise<ReturnType<typeof userTemplate>> {
     const userId = (secondaryId || primaryId) as string
     const dependantId = secondaryId ? (primaryId as string) : null
 
@@ -470,11 +470,11 @@ export class ReportService {
     )
   }
 
-  getLookups = async (
+  async getLookups(
     userIds: Set<string>,
     dependantIds: Set<string>,
     organizationId: string,
-  ): Promise<Lookups> => {
+  ): Promise<Lookups> {
     // N queries
     const statuses = await Promise.all(
       [...dependantIds, ...userIds].map(
@@ -552,12 +552,12 @@ export class ReportService {
     }
   }
 
-  getAccessHistory = async (
+  async getAccessHistory(
     from: string | null,
     to: string | null,
     userId: string,
     parentUserId: string | null,
-  ): Promise<{enteringAccesses: Access[]; exitingAccesses: Access[]}> => {
+  ): Promise<{enteringAccesses: Access[]; exitingAccesses: Access[]}> {
     const live = !from && !to
 
     const betweenCreatedDate = {
