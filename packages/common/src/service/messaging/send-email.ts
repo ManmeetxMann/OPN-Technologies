@@ -6,16 +6,34 @@ const APIURL = Config.get('EMAIL_PROVIDER_API_URL')
 const FROM_ADDRESS = Config.get('EMAIL_FROM_ADDRESS')
 const FROM_NAME = Config.get('EMAIL_FROM_NAME')
 
-const sendRequest = (body: unknown) =>
-  fetch(APIURL, {
-    method: 'post',
-    body: JSON.stringify(body),
-    headers: {
-      'Content-Type': 'application/json',
-      accept: 'application/json',
-      'api-key': APIKEY,
-    },
-  })
+const sendRequest = async (body: unknown) => {
+  try {
+    const response = await fetch(APIURL, {
+      method: 'post',
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+        'api-key': APIKEY,
+      },
+    })
+    if (response.ok) {
+      return response
+    } else {
+      console.error({
+        apiUrl: APIURL,
+        body,
+        error: response.statusText,
+      })
+    }
+  } catch (e) {
+    console.error({
+      apiUrl: APIURL,
+      body,
+      error: e,
+    })
+  }
+}
 
 export async function send(
   toEmail: string | string[],
