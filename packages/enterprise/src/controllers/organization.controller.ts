@@ -692,6 +692,21 @@ class OrganizationController implements IControllerBase {
 
       const memberships = await this.organizationService.getUsersGroups(organizationId, groupId)
       console.log(`${memberships.length} memberships found`)
+      const membershipLimit = parseInt(Config.get('PDF_GENERATION_EMAIL_THRESHOLD') ?? '100', 10)
+      if (membershipLimit <= memberships.length) {
+        // @ts-ignore admin is not a field value
+        const email = authenticatedUser.admin.email as string
+        if (!email) {
+          throw 'No email found'
+        }
+        res.json(
+          actionSucceed({
+            type: 'email',
+            message: `Report for ${memberships.length} users will be emailed to ${email}`,
+          }),
+        )
+        return
+      }
       const to = moment(now()).tz(timeZone).endOf('day').toISOString()
       const from = moment(to).startOf('day').subtract(30, 'days').toISOString()
       const allTemplates = await Promise.all(
