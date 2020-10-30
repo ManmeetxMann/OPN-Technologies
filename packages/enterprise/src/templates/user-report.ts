@@ -75,7 +75,7 @@ const getLocationsTable = (locations: LocationAccess[]): Content => ({
     headerRows: 1,
     widths: [183, 190, 50],
     body: [
-      ['Locations Visited', {}, {}],
+      [locations.length ? 'Locations Visited' : ' No Locations Visited', {}, {}],
       ...locations.map(({name, time, action}) => [name, time, action]),
     ],
   },
