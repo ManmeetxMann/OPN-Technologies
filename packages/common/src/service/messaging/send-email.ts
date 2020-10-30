@@ -42,28 +42,6 @@ export async function send(
   // return sendRequest(email)
 }
 
-export async function sendWithAttachment(
-  toEmail: string | string[],
-  subject: string,
-  body: string,
-  htmlBody?: string,
-  attachment?: unknown,
-): Promise<unknown> {
-  const to = typeof toEmail === 'string' ? [{email: toEmail}] : toEmail.map((email) => ({email}))
-  const email = {
-    sender: {
-      email: FROM_ADDRESS,
-      name: FROM_NAME,
-    },
-    to,
-    attachment,
-    subject,
-    textContent: body,
-    htmlContent: htmlBody ?? body,
-  }
-  return sendRequest(email)
-}
-
 export async function sendWithTemplate(
   toName: string,
   toEmail: string,
