@@ -46,7 +46,6 @@ class InternalController implements IControllerBase {
       const {groupId, organizationId, email, name, from, to} = req.body as GroupReportEmailRequest
 
       await this.organizationService.getGroup(organizationId, groupId)
-
       const memberships = await this.organizationService.getUsersGroups(organizationId, groupId)
       const allTemplates = await Promise.all(
         memberships.map((membership) =>
@@ -66,9 +65,10 @@ class InternalController implements IControllerBase {
       )
 
       const pdfB64 = await this.pdfService.generatePDFBase64(content, tableLayouts)
-      this.emailService.send({
+      await this.emailService.send({
         to: [{email, name}],
-        templateId: null,
+        textContent: 'Report attached',
+        subject: 'OPN Report',
         sender: {
           email: 'no-reply@email.stayopn.net',
           name: 'OPN Team',
@@ -85,6 +85,7 @@ class InternalController implements IControllerBase {
           },
         ],
       })
+      res.sendStatus(200)
     } catch (error) {
       next(error)
     }

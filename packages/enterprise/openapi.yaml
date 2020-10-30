@@ -279,6 +279,36 @@ components:
         - idToken
         - connectedId
 
+    GroupReportEmailRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        groupId:
+          type: string
+          description: id of the group to generate the report for
+        organizationId:
+          type: string
+          description: id of the organization containingthe group
+        email:
+          type: string
+          description: email to send the report to
+        name:
+          type: string
+          description: name of the user receiving the report
+        from:
+          type: string
+          description: ISO timestamp for the start of the report
+        to:
+          type: string
+          description: ISO timestamp for the end of the report
+      required:
+        - groupId
+        - organizationId
+        - email
+        - name
+        - from
+        - to
+
     InternalAdminApprovalCreateRequest:
       type: object
       additionalProperties: false
@@ -1644,6 +1674,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfAdminProfile'
+
+  /internal/group-report:
+    post:
+      description: Request a report be sent to an email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupReportEmailRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
 
   /internal/admin/operations/create:
     post:
