@@ -83,6 +83,8 @@ jobs:
           # Auth Specific
           APIDOCS_PASSWORD=${{ secrets.DEV_APIDOCS_PWD }}
           RESERVATION_PASSWORD=${{ secrets.DEV_RESERVATION_PWD }}
+          # Enterprise Specific
+          PDF_GENERATION_EMAIL_THRESHOLD=100
 
           # Accuity
           ACUITY_SCHEDULER_USERNAME=${{ secrets.ACUITY_SCHEDULER_USERNAME }}
