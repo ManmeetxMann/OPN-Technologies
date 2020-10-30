@@ -71,38 +71,21 @@ const getPriorityAccess = (
   accessOne: AccessWithPassportStatusAndUser | null,
   accessTwo: AccessWithPassportStatusAndUser | null,
 ): AccessWithPassportStatusAndUser | null => {
-  if (accessOne && !accessTwo) {
-    return accessOne
-  }
-  if (accessTwo && !accessOne) {
+  if (!accessOne) {
     return accessTwo
   }
-  // accessOne is still in the location but accessTwo is not
-  if (accessOne.enteredAt && !accessOne.exitAt && (accessTwo.exitAt || !accessTwo.enteredAt)) {
-    // but accessTwo is still more recent (accessTwo is 'stale')
-    if (
-      accessTwo.enteredAt &&
-      new Date(accessTwo.enteredAt).getTime() > new Date(accessOne.enteredAt).getTime()
-    ) {
-      return accessTwo
-    }
+  if (!accessTwo) {
     return accessOne
   }
-  // accessTwo is still in the location but accessOne is not
-  if (accessTwo.enteredAt && !accessTwo.exitAt && (accessOne.exitAt || !accessOne.enteredAt)) {
-    // but accessOne is still more recent (accessTwo is 'stale')
-    if (
-      accessOne.enteredAt &&
-      new Date(accessOne.enteredAt).getTime() > new Date(accessTwo.enteredAt).getTime()
-    ) {
-      return accessOne
-    }
+  const accessOneTime = accessOne.exitAt ?? accessOne.enteredAt
+  const accessTwoTime = accessTwo.exitAt ?? accessTwo.enteredAt
+  if (!accessTwoTime) {
+    return accessOne
+  }
+  if (!accessOneTime) {
     return accessTwo
   }
-  if (new Date(accessOne.exitAt).getTime() > new Date(accessTwo.exitAt).getTime()) {
-    return accessOne
-  }
-  if (new Date(accessTwo.exitAt).getTime() > new Date(accessOne.exitAt).getTime()) {
+  if (new Date(accessOneTime) < new Date(accessTwoTime)) {
     return accessTwo
   }
   return accessOne
