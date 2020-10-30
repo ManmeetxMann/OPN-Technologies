@@ -1129,6 +1129,14 @@ paths:
               schema:
                 type: string
                 format: binary
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseType:
+                    type: string
+                  message:
+                    type: string
   
   /organizations/{organizationId}/stats/contact-trace-locations:
     get:
