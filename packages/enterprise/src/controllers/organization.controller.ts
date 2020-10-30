@@ -1173,9 +1173,15 @@ class OrganizationController implements IControllerBase {
       const relevantTraces = rawTraces
         .map((trace) => {
           const exposures = trace.exposures.map((exposure) => {
-            const overlapping = exposure.overlapping.filter((overlap) =>
-              isParentUser ? !overlap.sourceDependantId : overlap.sourceDependantId === userId,
-            )
+            const overlapping = exposure.overlapping
+              .filter((overlap) =>
+                isParentUser ? !overlap.sourceDependantId : overlap.sourceDependantId === userId,
+              )
+              .filter(
+                (overlapping) =>
+                  moment(overlapping.start).toISOString() >= from &&
+                  moment(overlapping.end).toISOString() <= to,
+              )
             return {...exposure, overlapping}
           })
 
