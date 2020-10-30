@@ -1179,8 +1179,8 @@ class OrganizationController implements IControllerBase {
               )
               .filter(
                 (overlapping) =>
-                  moment(overlapping.start).toISOString() >= from &&
-                  moment(overlapping.end).toISOString() <= to,
+                  moment(overlapping.end).toISOString() >= from &&
+                  moment(overlapping.start).toISOString() <= to,
               )
             return {...exposure, overlapping}
           })
@@ -1454,6 +1454,11 @@ class OrganizationController implements IControllerBase {
             overlapping: overlapping
               .filter(
                 (overlap) => (parentUserId ? overlap.dependant?.id : overlap.userId) === userId,
+              )
+              .filter(
+                (overlapping) =>
+                  moment(overlapping.end).toISOString() >= from &&
+                  moment(overlapping.start).toISOString() <= to,
               )
               .map((overlap) => ({
                 userId: overlap.sourceUserId,
