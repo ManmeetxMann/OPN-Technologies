@@ -1,12 +1,25 @@
+import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
+import {actionSucceed} from '../../../common/src/utils/response-wrapper'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
+import {PdfService} from '../../../common/src/service/reports/pdf'
+import {EmailService} from '../../../common/src/service/messaging/email-service'
+
+import {OrganizationService} from '../services/organization-service'
+import {ReportService} from '../services/report-service'
+import {InternalAdminApprovalCreateRequest} from '../models/internal-request'
+
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 
-import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import {InternalAdminApprovalCreateRequest} from '../models/internal-request'
-import {actionSucceed} from '../../../common/src/utils/response-wrapper'
-import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
-import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
-import {OrganizationService} from '../services/organization-service'
+type GroupReportEmailRequest = {
+  groupId: string
+  organizationId: string
+  email: string
+  name: string
+  from: string
+  to: string
+}
 
 class InternalController implements IControllerBase {
   public path = '/internal'
@@ -14,6 +27,9 @@ class InternalController implements IControllerBase {
 
   private organizationService = new OrganizationService()
   private adminApprovalService = new AdminApprovalService()
+  private pdfService = new PdfService()
+  private reportService = new ReportService()
+  private emailService = new EmailService()
 
   constructor() {
     this.initRoutes()
@@ -22,6 +38,56 @@ class InternalController implements IControllerBase {
   public initRoutes(): void {
     this.router.post(this.path + '/admin/operations/create', this.internalAdminApprovalCreate)
     this.router.post(this.path + '/admin/operations/list', this.internalAdminList)
+    this.router.post(this.path + '/group-report/', this.emailGroupReport)
+  }
+
+  emailGroupReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {groupId, organizationId, email, name, from, to} = req.body as GroupReportEmailRequest
+
+      await this.organizationService.getGroup(organizationId, groupId)
+
+      const memberships = await this.organizationService.getUsersGroups(organizationId, groupId)
+      const allTemplates = await Promise.all(
+        memberships.map((membership) =>
+          this.reportService.getUserReportTemplate(
+            organizationId,
+            membership.userId,
+            membership.parentUserId,
+            from,
+            to,
+          ),
+        ),
+      )
+      const tableLayouts = allTemplates[0].tableLayouts
+      const content = allTemplates.reduce(
+        (contentArray, template) => [...contentArray, ...template.content],
+        [],
+      )
+
+      const pdfB64 = await this.pdfService.generatePDFBase64(content, tableLayouts)
+      this.emailService.send({
+        to: [{email, name}],
+        templateId: null,
+        sender: {
+          email: 'no-reply@email.stayopn.net',
+          name: 'OPN Team',
+        },
+        attachment: [
+          {
+            content: pdfB64,
+            name: `OPN Report.pdf`,
+          },
+        ],
+        bcc: [
+          {
+            email: 'reports@stayopn.com',
+          },
+        ],
+      })
+    } catch (error) {
+      next(error)
+    }
   }
 
   internalAdminApprovalCreate = async (
