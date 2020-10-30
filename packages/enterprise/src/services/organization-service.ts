@@ -1,5 +1,8 @@
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {flattern} from '../../../common/src/utils/utils'
+
 import {
   Organization,
   OrganizationGroup,
@@ -8,7 +11,6 @@ import {
   OrganizationType,
   OrganizationUsersGroup,
 } from '../models/organization'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {
   OrganizationGroupModel,
   OrganizationKeySequenceModel,
@@ -16,8 +18,8 @@ import {
   OrganizationModel,
   OrganizationUsersGroupModel,
 } from '../repository/organization.repository'
+
 import * as _ from 'lodash'
-import {flattern} from '../../../common/src/utils/utils'
 
 const notFoundMessage = (organizationId: string, identifier?: string) =>
   `Cannot find organization with ${identifier ?? 'ID'} [${organizationId}]`
