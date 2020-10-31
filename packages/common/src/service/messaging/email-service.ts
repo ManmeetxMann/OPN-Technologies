@@ -48,7 +48,9 @@ type Bcc = {
 
 type EmailMessage = {
   to: EmailMessageParticipant[]
-  templateId: number
+  templateId?: number
+  textContent?: string
+  subject?: string
   params?: Record<string, unknown>
   sender?: EmailMessageParticipant
   attachment?: EmailAttachment[]

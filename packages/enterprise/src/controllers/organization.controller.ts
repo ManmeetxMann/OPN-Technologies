@@ -31,6 +31,7 @@ import {Access} from '../../../access/src/models/access'
 
 import {NextFunction, Request, Response, Router} from 'express'
 import moment from 'moment'
+import {CloudTasksClient} from '@google-cloud/tasks'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 const replyInsufficientPermission = (res: Response) =>
@@ -47,6 +48,7 @@ class OrganizationController implements IControllerBase {
   private reportService = new ReportService()
   private attestationService = new AttestationService()
   private pdfService = new PdfService()
+  private taskClient = new CloudTasksClient()
 
   constructor() {
     this.initRoutes()
@@ -611,6 +613,8 @@ class OrganizationController implements IControllerBase {
       const memberships = await this.organizationService.getUsersGroups(organizationId, groupId)
       console.log(`${memberships.length} memberships found`)
       const membershipLimit = parseInt(Config.get('PDF_GENERATION_EMAIL_THRESHOLD') ?? '100', 10)
+      const to = moment(now()).tz(timeZone).endOf('day').toISOString()
+      const from = moment(to).startOf('day').subtract(30, 'days').toISOString()
       if (membershipLimit <= memberships.length) {
         // @ts-ignore admin is not a field value
         const email = authenticatedUser.admin.email as string
@@ -623,10 +627,35 @@ class OrganizationController implements IControllerBase {
             message: `Report for ${memberships.length} users will be emailed to ${email}`,
           }),
         )
+        const path = this.taskClient.queuePath(
+          Config.get('GCP_PROJECT'),
+          Config.get('GAE_LOCATION'), // northamerica-northeast1
+          Config.get('QUEUE_NAME'),
+        )
+        const task = {
+          appEngineHttpRequest: {
+            httpMethod: 'POST',
+            relativeUri: '/internal/group-report',
+            body: Buffer.from(
+              JSON.stringify({
+                groupId,
+                organizationId,
+                email,
+                name: `${authenticatedUser.firstName} ${authenticatedUser.lastName}`,
+                from,
+                to,
+              }),
+            ).toString('base64'),
+          },
+        }
+        const request = {
+          parent: path,
+          task,
+        }
+        // @ts-ignore POST has type string
+        await this.taskClient.createTask(request)
         return
       }
-      const to = moment(now()).tz(timeZone).endOf('day').toISOString()
-      const from = moment(to).startOf('day').subtract(30, 'days').toISOString()
       const allTemplates = await Promise.all(
         memberships.map((membership) =>
           this.reportService.getUserReportTemplate(
