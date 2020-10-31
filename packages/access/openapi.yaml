@@ -506,6 +506,9 @@ paths:
               type: object
               additionalProperties: false
               properties:
+                subscription:
+                  type: string
+                  description: subscription of the message.
                 message:
                   type: object
                   additionalProperties: false
@@ -525,9 +528,6 @@ paths:
                     publish_time:
                       type: string
                       description: ISO datetime for when the message was published, again. Provided by GCP
-                    subscription:
-                      type: string
-                      description: subscription of the message.
                   required:
                     - data
 
