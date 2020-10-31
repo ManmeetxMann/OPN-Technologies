@@ -1,7 +1,7 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import {PubSub, Topic} from '@google-cloud/pubsub'
-import {isValidISODateString} from 'iso-datestring-validator'
+//import {isValidISODateString} from 'iso-datestring-validator'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {PassportService} from '../services/passport-service'
@@ -259,7 +259,7 @@ class UserController implements IControllerBase {
                       .replace('__GROUPNAME', name)
                       .replace('__ORGLABEL', organizationLabel),
                     icon,
-                    tokens.map((token) => ({token, data:{}})),
+                    tokens.map((token) => ({token, data: {}})),
                   ),
                 )
               },
