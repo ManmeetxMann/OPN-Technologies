@@ -5,7 +5,7 @@ import {FirebaseManager} from '../../utils/firebase'
 import {auth} from 'firebase-admin'
 import {encodeQueryParams} from '../../utils/utils'
 
-// TODO: Depracated
+// TODO: Deprecated
 export class MagicLinkMail extends Mail {
   protected templateId = 1
 }
