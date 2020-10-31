@@ -139,6 +139,8 @@ class UserController implements IControllerBase {
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      /*
+      //This is TEMP to allow backward compatibilty
       for (const value of Object.values(req.body.answers)) {
         if (
           (value[2] && !isValidISODateString(value[2])) ||
@@ -147,6 +149,7 @@ class UserController implements IControllerBase {
           throw new BadRequestException('Date string must be ISO string')
         }
       }
+      */
 
       let {locationId, userId, includeGuardian} = req.body
 
