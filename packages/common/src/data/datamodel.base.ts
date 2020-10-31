@@ -4,6 +4,7 @@ import {firestore} from 'firebase-admin'
 import {Collection} from '@firestore-simple/admin'
 import * as _ from 'lodash'
 import {serverTimestamp} from '../utils/times'
+import {EncryptionService} from '../service/encryption/encryption-service'
 
 export enum DataModelFieldMapOperatorType {
   Equals = '==',
@@ -27,10 +28,13 @@ export type DataModelOrdering = {
 abstract class DataModel<T extends HasId> {
   abstract readonly rootPath: string
   protected abstract readonly zeroSet: Array<Storable<T>>
+  protected encryptedFields: string[]
   private datastore: DataStore
+  private encryptionService: EncryptionService
 
   constructor(datastore: DataStore) {
     this.datastore = datastore
+    this.encryptionService = new EncryptionService()
   }
 
   /**
@@ -77,9 +81,14 @@ abstract class DataModel<T extends HasId> {
    * @param subPath path to the subcollection where we add data. rootPath if left blank
    */
   add(data: OptionalIdStorable<T>, subPath = ''): Promise<T> {
+    const processedData =
+      this.encryptedFields.length > 0
+        ? ((this.encryptDocument(data) as unknown) as OptionalIdStorable<T>)
+        : data
+
     return this.collection(subPath)
       .addOrSet({
-        ...data,
+        ...processedData,
         timestamps: {
           createdAt: serverTimestamp(),
           updatedAt: null,
@@ -89,9 +98,18 @@ abstract class DataModel<T extends HasId> {
   }
 
   async addAll(data: Array<OptionalIdStorable<T>>, subPath = ''): Promise<T[]> {
+    let dataArray: Array<OptionalIdStorable<T>> = []
+    if (this.encryptedFields.length > 0) {
+      data.forEach((item: OptionalIdStorable<T>) => {
+        dataArray.push((this.encryptDocument(item) as unknown) as OptionalIdStorable<T>)
+      })
+    } else {
+      dataArray = data
+    }
+
     return this.collection(subPath)
       .bulkAdd(
-        data.map((d) => ({
+        dataArray.map((d) => ({
           ...d,
           timestamps: {
             createdAt: serverTimestamp(),
@@ -110,6 +128,9 @@ abstract class DataModel<T extends HasId> {
    * @param subPath path to the subcollection where we add data. rootPath if left blank
    */
   updateProperty(id: string, fieldName: string, fieldValue: unknown, subPath = ''): Promise<T> {
+    if (this.isEncryptedField(fieldName)) {
+      fieldValue = this.encryptionService.encrypt(fieldValue.toString())
+    }
     return this.updateProperties(id, {[fieldName]: fieldValue}, subPath)
   }
 
@@ -120,9 +141,17 @@ abstract class DataModel<T extends HasId> {
    */
   async updateProperties(id: string, fields: Record<string, unknown>, subPath = ''): Promise<T> {
     const {timestamps, ...fieldsWithoutTimestamps} = fields
+    const fieldsProcessed = Object.keys(fieldsWithoutTimestamps).map((key: string) => {
+      return {
+        [key]: this.isEncryptedField(key)
+          ? this.encryptionService.encrypt(fieldsWithoutTimestamps[key].toString())
+          : fieldsWithoutTimestamps[key],
+      }
+    })
+
     return this.doc(id, subPath)
       .update({
-        ...fieldsWithoutTimestamps,
+        ...fieldsProcessed,
         'timestamps.updatedAt': serverTimestamp(),
       })
       .then(() => this.get(id, subPath))
@@ -143,7 +172,9 @@ abstract class DataModel<T extends HasId> {
   }
 
   async fetchAll(subPath = ''): Promise<T[]> {
-    return this.collection(subPath).fetchAll()
+    return this.collection(subPath)
+      .fetchAll()
+      .then((docs: T[]) => this.decryptDocuments(docs))
   }
 
   /**
@@ -167,8 +198,16 @@ abstract class DataModel<T extends HasId> {
     value: unknown,
     subPath = '',
   ): Promise<T[]> {
+    const processedValue = this.isEncryptedField(key)
+      ? this.encryptionService.encrypt(value.toString())
+      : value
+
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
-    return await this.collection(subPath).where(fieldPath, 'array-contains-any', value).fetch()
+
+    return await this.collection(subPath)
+      .where(fieldPath, 'array-contains-any', processedValue)
+      .fetch()
+      .then((docs: T[]) => this.decryptDocuments(docs))
   }
 
   async findWhereArrayInMapContains(
@@ -177,13 +216,29 @@ abstract class DataModel<T extends HasId> {
     value: unknown,
     subPath = '',
   ): Promise<T[]> {
+    const processedValue = this.isEncryptedField(key)
+      ? this.encryptionService.encrypt(value.toString())
+      : value
+
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
-    return await this.collection(subPath).where(fieldPath, 'array-contains', value).fetch()
+
+    return await this.collection(subPath)
+      .where(fieldPath, 'array-contains', processedValue)
+      .fetch()
+      .then((docs: T[]) => this.decryptDocuments(docs))
   }
 
   async findWhereArrayContains(property: string, value: unknown, subPath = ''): Promise<T[]> {
+    const processedValue = this.isEncryptedField(property)
+      ? this.encryptionService.encrypt(value.toString())
+      : value
+
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
-    return await this.collection(subPath).where(fieldPath, 'array-contains', value).fetch()
+
+    return await this.collection(subPath)
+      .where(fieldPath, 'array-contains', processedValue)
+      .fetch()
+      .then((docs: T[]) => this.decryptDocuments(docs))
   }
 
   async findWhereArrayContainsAny(
@@ -193,10 +248,17 @@ abstract class DataModel<T extends HasId> {
     identity = (element: T) => element.id,
   ): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
-    const chunks: unknown[][] = _.chunk([...values], 10)
+    const processedValues = this.isEncryptedField(property)
+      ? [...values].map((value) => this.encryptionService.encrypt(value.toString()))
+      : values
+
+    const chunks: unknown[][] = _.chunk([...processedValues], 10)
     const allResults = await Promise.all(
       chunks.map((chunk) =>
-        this.collection(subPath).where(fieldPath, 'array-contains-any', chunk).fetch(),
+        this.collection(subPath)
+          .where(fieldPath, 'array-contains-any', chunk)
+          .fetch()
+          .then((docs: T[]) => this.decryptDocuments(docs)),
       ),
     )
     const deduplicated: Record<string, T> = {}
@@ -206,12 +268,21 @@ abstract class DataModel<T extends HasId> {
 
   async findWhereIdIn(values: unknown[], subPath = ''): Promise<T[]> {
     const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()
+
     const chunks: unknown[][] = _.chunk([...values], 10)
+
     const allResults = await Promise.all(
-      chunks.map((chunk) => this.collection(subPath).where(fieldPath, 'in', chunk).fetch()),
+      chunks.map((chunk) =>
+        this.collection(subPath)
+          .where(fieldPath, 'in', chunk)
+          .fetch()
+          .then((docs: T[]) => this.decryptDocuments(docs)),
+      ),
     )
+
     const deduplicated: Record<string, T> = {}
     allResults.forEach((page) => page.forEach((item) => (deduplicated[item.id] = item)))
+
     return Object.values(deduplicated)
   }
 
@@ -219,8 +290,9 @@ abstract class DataModel<T extends HasId> {
     const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()
     const results = await this.collection(subPath).where(fieldPath, '==', value).fetch()
     if (results.length) {
-      return results[0]
+      return this.decryptDocument((results[0] as unknown) as OptionalIdStorable<T>)
     }
+
     return null
   }
 
@@ -230,8 +302,16 @@ abstract class DataModel<T extends HasId> {
     value: unknown,
     subPath = '',
   ): Promise<T[]> {
+    const processedValue = this.isEncryptedField(key)
+      ? this.encryptionService.encrypt(value.toString())
+      : value
+
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
-    return await this.collection(subPath).where(fieldPath, 'in', value).fetch()
+
+    return await this.collection(subPath)
+      .where(fieldPath, 'in', processedValue)
+      .fetch()
+      .then((docs: T[]) => this.decryptDocuments(docs))
   }
 
   async findWhereIn(
@@ -241,22 +321,48 @@ abstract class DataModel<T extends HasId> {
     identity = (element: T) => element.id,
   ): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
-    const chunks: unknown[][] = _.chunk([...values], 10)
+
+    const processedValues = this.isEncryptedField(property)
+      ? [...values].map((value) => this.encryptionService.encrypt(value.toString()))
+      : values
+
+    const chunks: unknown[][] = _.chunk([...processedValues], 10)
     const allResults = await Promise.all(
-      chunks.map((chunk) => this.collection(subPath).where(fieldPath, 'in', chunk).fetch()),
+      chunks.map((chunk) =>
+        this.collection(subPath)
+          .where(fieldPath, 'in', chunk)
+          .fetch()
+          .then((docs: T[]) => this.decryptDocuments(docs)),
+      ),
     )
+
     const deduplicated: Record<string, T> = {}
     allResults.forEach((page) => page.forEach((item) => (deduplicated[identity(item)] = item)))
+
     return Object.values(deduplicated)
   }
 
   get(id: string, subPath = ''): Promise<T> {
-    return this.collection(subPath).fetch(id)
+    return this.collection(subPath)
+      .fetch(id)
+      .then((doc: T) => {
+        const data = (doc as unknown) as OptionalIdStorable<T>
+
+        return this.decryptDocument(data)
+      })
   }
 
   findWhereEqual(property: string, value: unknown, subPath = ''): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
-    return this.collection(subPath).where(fieldPath, '==', value).fetch()
+
+    const processedValue = this.isEncryptedField(property)
+      ? this.encryptionService.encrypt(value.toString())
+      : value
+
+    return this.collection(subPath)
+      .where(fieldPath, '==', processedValue)
+      .fetch()
+      .then((docs: T[]) => this.decryptDocuments(docs))
   }
 
   findWhereEqualWithMax(
@@ -266,11 +372,17 @@ abstract class DataModel<T extends HasId> {
     subPath = '',
   ): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+
+    const processedValue = this.isEncryptedField(property)
+      ? this.encryptionService.encrypt(value.toString())
+      : value
+
     return this.collection(subPath)
-      .where(fieldPath, '==', value)
+      .where(fieldPath, '==', processedValue)
       .orderBy(sortKey, 'desc')
       .limit(1)
       .fetch()
+      .then((docs: T[]) => this.decryptDocuments(docs))
   }
 
   findWhereArrayContainsWithMax(
@@ -280,11 +392,17 @@ abstract class DataModel<T extends HasId> {
     subPath = '',
   ): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+
+    const processedValue = this.isEncryptedField(property)
+      ? this.encryptionService.encrypt(value.toString())
+      : value
+
     return this.collection(subPath)
-      .where(fieldPath, 'array-contains', value)
+      .where(fieldPath, 'array-contains', processedValue)
       .orderBy(sortKey, 'desc')
       .limit(1)
       .fetch()
+      .then((docs: T[]) => this.decryptDocuments(docs))
   }
 
   findWhereEqualInMap(
@@ -299,12 +417,17 @@ abstract class DataModel<T extends HasId> {
         !field.map || field.map === '/'
           ? new this.datastore.firestoreAdmin.firestore.FieldPath(field.key)
           : new this.datastore.firestoreAdmin.firestore.FieldPath(field.map, field.key)
-      collection = collection.where(fieldPath, field.operator, field.value)
+
+      const processedValue = this.isEncryptedField(field.key)
+        ? this.encryptionService.encrypt(field.value.toString())
+        : field.value
+
+      collection = collection.where(fieldPath, field.operator, processedValue)
     }
     if (order) {
       collection = collection.orderBy(order.key, order.direction)
     }
-    return collection.fetch()
+    return collection.fetch().then((docs: T[]) => this.decryptDocuments(docs))
   }
 
   delete(id: string, subPath = ''): Promise<void> {
@@ -317,6 +440,45 @@ abstract class DataModel<T extends HasId> {
     return this.collection(subPath)
       .fetchAll()
       .then((results) => results.length)
+  }
+
+  encryptDocument(data: OptionalIdStorable<T>): T {
+    const cipherData: T = <T>{}
+
+    Object.keys(data).forEach((key: string) => {
+      if (this.isEncryptedField(key)) {
+        cipherData[key] = this.encryptionService.encrypt(data[key].toString())
+      } else {
+        cipherData[key] = data[key]
+      }
+    })
+
+    return cipherData
+  }
+
+  decryptDocument(data: OptionalIdStorable<T>): T {
+    const plainData: T = <T>{}
+
+    Object.keys(data).forEach((key: string) => {
+      if (this.isEncryptedField(key)) {
+        plainData[key] = this.encryptionService.decrypt(data[key])
+      } else {
+        plainData[key] = data[key]
+      }
+    })
+    return plainData
+  }
+
+  isEncryptedField(fieldName: string): boolean {
+    if (fieldName === 'id') return false
+    return this.encryptedFields.includes(fieldName)
+  }
+
+  decryptDocuments(docs: T[]): T[] {
+    return docs.map((doc: T) => {
+      const data = (doc as unknown) as OptionalIdStorable<T>
+      return this.decryptDocument(data)
+    })
   }
 }
 
