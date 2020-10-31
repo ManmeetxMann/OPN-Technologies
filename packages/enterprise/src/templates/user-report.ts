@@ -58,6 +58,7 @@ const getHeaderTable = (
     headerRows: 1,
     widths: [183, 240],
     body: [
+      ['OPN Report', {}],
       ['Date of Report Generation', generationDate],
       ['Name of User', userName],
       guardianName ? ['Name of Guardian', guardianName] : null,
