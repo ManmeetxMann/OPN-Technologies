@@ -779,8 +779,10 @@ class OrganizationController implements IControllerBase {
               )
               .filter(
                 (overlapping) =>
-                  moment(overlapping.end).toISOString() >= from &&
-                  moment(overlapping.start).toISOString() <= to,
+                  //@ts-ignore these are timestamps, not strings
+                  moment(overlapping.end.toDate()).toISOString() >= from &&
+                  //@ts-ignore these are timestamps, not strings
+                  moment(overlapping.start.toDate()).toISOString() <= to,
               )
             return {...exposure, overlapping}
           })
@@ -907,8 +909,10 @@ class OrganizationController implements IControllerBase {
               )
               .filter(
                 (overlapping) =>
-                  moment(overlapping.end).toISOString() >= from &&
-                  moment(overlapping.start).toISOString() <= to,
+                  //@ts-ignore these are timestamps, not strings
+                  moment(overlapping.end.toDate()).toISOString() >= from &&
+                  //@ts-ignore these are timestamps, not strings
+                  moment(overlapping.start.toDate()).toISOString() <= to,
               )
               .map((overlap) => ({
                 userId: overlap.sourceUserId,
