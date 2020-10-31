@@ -178,6 +178,13 @@ export class OrganizationService {
     return this.organizationRepository.updateProperties(id, {hourToSendReport, dayShift})
   }
 
+  getByIdOrThrow(id: string): Promise<Organization> {
+    return this.organizationRepository.get(id).then((target) => {
+      if (target) return target
+      throw new ResourceNotFoundException(`Cannot find organization with ID ${id}`)
+    })
+  }
+
   findOneById(id: string): Promise<Organization> {
     return this.organizationRepository.get(id)
   }
