@@ -55,9 +55,14 @@ export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, re
     )
     next()
   } else {
-    res.status(err.status || 500).json({
-      message,
-    })
+    const response: ResponseWrapper<null> = {
+      data: null,
+      status: {
+        code: ResponseStatusCodes.ValidationError,
+        message,
+      },
+    }
+    res.status(400).json(response)
   }
 }
 
