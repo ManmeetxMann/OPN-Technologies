@@ -3,6 +3,7 @@ import {MessagingService} from './messaging-service'
 import {Config} from '../../utils/config'
 import {FirebaseManager} from '../../utils/firebase'
 import {auth} from 'firebase-admin'
+import {encodeQueryParams} from '../../utils/utils'
 
 // TODO: Depracated
 export class MagicLinkMail extends Mail {
@@ -12,6 +13,7 @@ export class MagicLinkMail extends Mail {
 export type MagicLinkMessage = {
   email: string
   name?: string
+  meta?: Record<string, string>
 }
 
 const magicLinkSettings: auth.ActionCodeSettings = {
@@ -29,8 +31,13 @@ export class MagicLinkService implements MessagingService<MagicLinkMessage> {
   private firebaseAuth = FirebaseManager.getInstance().getAdmin().auth()
 
   send(message: MagicLinkMessage): Promise<unknown> {
+    const additionalQueryParams = encodeQueryParams(message.meta ?? {})
+    const url = additionalQueryParams
+      ? `${magicLinkSettings.url}?${additionalQueryParams}`
+      : magicLinkSettings.url
+
     return this.firebaseAuth
-      .generateSignInWithEmailLink(message.email, magicLinkSettings)
+      .generateSignInWithEmailLink(message.email, {...magicLinkSettings, url})
       .then((signInLink) =>
         this.emailService.send({
           templateId: magicLinkEmailTemplateId,
