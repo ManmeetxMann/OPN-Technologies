@@ -1,7 +1,7 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
 import {PubSub, Topic} from '@google-cloud/pubsub'
-import {isValidISODateString} from 'iso-datestring-validator'
+//import {isValidISODateString} from 'iso-datestring-validator'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {PassportService} from '../services/passport-service'
@@ -139,6 +139,8 @@ class UserController implements IControllerBase {
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      /*
+      //This is TEMP to allow backward compatibilty
       for (const value of Object.values(req.body.answers)) {
         if (
           (value[2] && !isValidISODateString(value[2])) ||
@@ -147,6 +149,7 @@ class UserController implements IControllerBase {
           throw new BadRequestException('Date string must be ISO string')
         }
       }
+      */
 
       let {locationId, userId, includeGuardian} = req.body
 
@@ -256,7 +259,7 @@ class UserController implements IControllerBase {
                       .replace('__GROUPNAME', name)
                       .replace('__ORGLABEL', organizationLabel),
                     icon,
-                    tokens.map((token) => ({token})),
+                    tokens.map((token) => ({token, data: {}})),
                   ),
                 )
               },
