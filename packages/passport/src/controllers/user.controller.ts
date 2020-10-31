@@ -256,7 +256,7 @@ class UserController implements IControllerBase {
                       .replace('__GROUPNAME', name)
                       .replace('__ORGLABEL', organizationLabel),
                     icon,
-                    tokens.map((token) => ({token})),
+                    tokens.map((token) => ({token, data:{}})),
                   ),
                 )
               },
