@@ -618,6 +618,7 @@ export class ReportService {
     const passportsByUserIds = await this.passportService.findTheLatestValidPassports(
       userIds,
       dependantIds,
+      betweenCreatedDate.to,
     )
     const implicitPendingPassports = [...userIds, ...dependantIds]
       .filter((userId) => !passportsByUserIds[userId])
