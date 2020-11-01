@@ -7,10 +7,12 @@ import {AuthService} from '../../../../common/src/service/auth/auth-service'
 import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
-import {CreateUserRequest, MigrateUserRequest} from '../../types/create-user-request'
+import {
+  CreateUserRequestWithOrganization,
+  MigrateUserRequest,
+} from '../../types/create-user-request'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {AuthenticationRequest} from '../../types/authentication-request'
-import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {User} from '../../models/user'
 import {UpdateUserRequest} from '../../types/update-user-request'
 import {RegistrationConfirmationRequest} from '../../types/registration-confirmation-request'
@@ -29,10 +31,18 @@ const magicLinkService = new MagicLinkService()
  */
 const create: Handler = async (req, res, next): Promise<void> => {
   try {
-    const profile = req.body as CreateUserRequest
+    const {organizationId, ...profile} = req.body as CreateUserRequestWithOrganization
+
+    // Assert organization exists
+    await organizationService.getByIdOrThrow(organizationId)
+
     const user = await userService.create(profile)
 
-    await magicLinkService.send({email: user.email, name: user.firstName})
+    await magicLinkService.send({
+      email: user.email,
+      name: user.firstName,
+      meta: {organizationId, email: user.email},
+    })
 
     res.json(actionSucceed(user))
   } catch (error) {
@@ -70,11 +80,10 @@ const migrate: Handler = async (req, res, next): Promise<void> => {
  */
 const authenticate: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {email} = req.body as AuthenticationRequest
-    await userService.getByEmail(email).then(async (user) => {
-      if (user) return await magicLinkService.send({email: user.email, name: user.firstName})
-      throw new BadRequestException(`Cannot authenticate with email [${email}]`)
-    })
+    const {email, organizationId, userId} = req.body as AuthenticationRequest
+    await organizationService.getByIdOrThrow(organizationId)
+
+    await magicLinkService.send({email, name: '', meta: {organizationId, email, userId}})
 
     res.json(actionSucceed())
   } catch (error) {
@@ -113,19 +122,24 @@ const update: Handler = async (req, res, next): Promise<void> => {
  */
 const completeRegistration: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {userId, idToken} = req.body as RegistrationConfirmationRequest
-    const user = await userService.getById(userId)
+    const {email, idToken, organizationId, userId} = req.body as RegistrationConfirmationRequest
     const authUser = await authService.verifyAuthToken(idToken)
 
     if (!authUser) {
-      throw new ForbiddenException('Cannot find user for the given token')
+      throw new ForbiddenException('Cannot verify the given id-token')
     }
 
-    if (!authUser.emailVerified) {
-      throw new ForbiddenException("Email hasn't been verified")
-    }
+    const user = await (userId ? userService.getById(userId) : userService.getByEmail(email))
 
-    const activatedUser = await userService.activate({...user, authUserId: authUser.uid})
+    await organizationService
+      .getByIdOrThrow(organizationId)
+      .then(() => userService.connectOrganization(user.id, organizationId))
+
+    const activatedUser = await userService.activate({
+      ...user,
+      email: authUser.email,
+      authUserId: authUser.uid,
+    })
     res.json(actionSucceed(activatedUser))
   } catch (error) {
     next(error)
@@ -455,7 +469,7 @@ class UserController implements IControllerBase {
         .post('/', create)
         .post('/migration', migrate)
         .post('/auth', authenticate)
-        .post('/auth/registration-confirmation', completeRegistration),
+        .post('/auth/confirmation', completeRegistration),
     )
 
     const dependents = innerRouter().use(
@@ -477,13 +491,12 @@ class UserController implements IControllerBase {
       ),
     )
 
-    const profile = innerRouter().use(
+    const selfProfile = innerRouter().use(
       '/self',
       authMiddleware,
       innerRouter()
         .get('/', get)
         .put('/', update)
-        .get('/parents', getParents)
 
         .get('/organizations', getConnectedOrganizations)
         .post('/organizations', connectOrganization)
@@ -493,10 +506,12 @@ class UserController implements IControllerBase {
         .post('/groups', connectGroup)
         .delete('/groups/:groupId', disconnectGroup)
 
+        .get('/parents', getParents)
+
         .use(dependents),
     )
 
-    this.router.use(root, authentication, profile)
+    this.router.use(root, authentication, selfProfile)
   }
 }
 

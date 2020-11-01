@@ -451,6 +451,9 @@ components:
         lastName:
           type: string
           nullable: false
+        organizationId:
+          type: string
+          nullable: false
         registrationId:
           type: string
           nullable: true
@@ -462,6 +465,7 @@ components:
         - email
         - firstName
         - lastName
+        - organizationId
 
     MigrateUserRequest:
       type: object
@@ -1919,8 +1923,15 @@ paths:
                 email:
                   type: string
                   nullable: false
+                organizationId:
+                  type: string
+                  nullable: false
+                userId:
+                  type: string
+                  nullable: true
               required:
                 - email
+                - organizationId
       responses:
         '200':
           description: Successful
@@ -1929,7 +1940,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /api/v3/users/auth/registration-confirmation:
+  /api/v3/users/auth/confirmation:
     post:
       summary: Account registration confirmation
       description: Completes user registration with magic-link information
@@ -1940,14 +1951,21 @@ paths:
           application/json:
             schema:
               properties:
-                userId:
+                email:
+                  type: string
+                  nullable: false
+                organizationId:
                   type: string
                   nullable: false
                 idToken:
                   type: string
                   nullable: false
+                userId:
+                  type: string
+                  nullable: true
               required:
-                - userId
+                - email
+                - organizationId
                 - idToken
       responses:
         '200':

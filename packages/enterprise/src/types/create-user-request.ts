@@ -5,9 +5,12 @@ export type CreateUserRequest = {
   firstName: string
   lastName: string
   registrationId: string
-
   photo?: string //url
   phone?: Phone
+}
+
+export type CreateUserRequestWithOrganization = CreateUserRequest & {
+  organizationId: string
 }
 
 export type MigrateUserRequest = {

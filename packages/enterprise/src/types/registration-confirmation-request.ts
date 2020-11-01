@@ -1,4 +1,6 @@
 export type RegistrationConfirmationRequest = {
-  userId: string
+  email: string
   idToken: string
+  organizationId: string
+  userId?: string
 }
