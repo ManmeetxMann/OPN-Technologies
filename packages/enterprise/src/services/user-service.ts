@@ -87,20 +87,6 @@ export class UserService {
     )
   }
 
-  updateEmail(id: string, email: string): Promise<User> {
-    return this.getByEmail(email).then((existedUser) => {
-      if (!!existedUser) throw new ResourceAlreadyExistsException(email)
-
-      return this.getById(id).then((target) =>
-        this.userRepository.update({
-          ...target,
-          email,
-          authUserId: null,
-        }),
-      )
-    })
-  }
-
   getById(id: string): Promise<User> {
     return this.userRepository.get(id).then((target) => {
       if (target) return target

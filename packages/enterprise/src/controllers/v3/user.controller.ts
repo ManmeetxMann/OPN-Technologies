@@ -41,24 +41,6 @@ const create: Handler = async (req, res, next): Promise<void> => {
 }
 
 /**
- * Update a user's email, reset its `authUserId` and trigger a magic link for email verification
- * TODO: Handle authenticated user when handler behind an authenticated route
- *  const authenticatedUser = res.locals.authenticatedUser as User
- */
-const updateEmail: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {userId, email} = req.body
-    const user = await userService.updateEmail(userId, email)
-
-    await magicLinkService.send({email: user.email, name: user.firstName})
-
-    res.json(actionSucceed(user))
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
  * Migrate existing user profile(s)
  */
 const migrate: Handler = async (req, res, next): Promise<void> => {
@@ -471,7 +453,6 @@ class UserController implements IControllerBase {
       '/',
       innerRouter()
         .post('/', create)
-        .post('/email', updateEmail) // to be eventually deprecated if favour of `PUT -> /api/v3/users/self/email`
         .post('/migration', migrate)
         .post('/auth', authenticate)
         .post('/auth/registration-confirmation', completeRegistration),

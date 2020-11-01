@@ -357,7 +357,7 @@ components:
         scope:
           type: string
           description: Look at admin approvals or users admin profiles
-          enum: [approval,user]
+          enum: [approval, user]
       required:
         - organizationId
         - scope
@@ -772,7 +772,7 @@ components:
                         $ref: '#/components/schemas/User'
                       status:
                         type: string
-                        enum: [pending,proceed,caution,stop]
+                        enum: [pending, proceed, caution, stop]
 
             passportsCountByStatus:
               type: object
@@ -926,8 +926,8 @@ paths:
             schema:
               type: object
               properties:
-                  milliseconds:
-                    type: number
+                milliseconds:
+                  type: number
       responses:
         '200':
           description: Successfully set
@@ -1292,7 +1292,7 @@ paths:
               schema:
                 type: string
                 format: binary
-application/json:
+            application/json:
               schema:
                 type: object
                 properties:
@@ -1881,34 +1881,6 @@ application/json:
       responses:
         '200':
           description: Successfully created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfUser'
-
-  /api/v3/users/email:
-    post:
-      summary: Account Email Registration
-      description: Link an existing user's email and trigger a magic link for email verification
-      tags:
-        - Account management
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                userId:
-                  type: string
-                  nullable: false
-                email:
-                  type: string
-                  nullable: false
-              required:
-                - userId
-                - email
-      responses:
-        '200':
-          description: Email Successfully linked
           content:
             application/json:
               schema:
