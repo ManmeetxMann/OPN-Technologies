@@ -83,7 +83,7 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
     const {email, organizationId, userId} = req.body as AuthenticationRequest
     await organizationService.getByIdOrThrow(organizationId)
 
-    await magicLinkService.send({email, name: '', meta: {organizationId, email, userId}})
+    await magicLinkService.send({email, meta: {organizationId, email, userId}})
 
     res.json(actionSucceed())
   } catch (error) {

@@ -32,18 +32,13 @@ export abstract class Mail {
 
 type EmailMessageParticipant = {
   email: string
-  name: string
+  name?: string
 }
 
 type EmailAttachment = {
   content?: string
   url?: string
   name: string
-}
-
-type Bcc = {
-  email: string
-  name?: string
 }
 
 type EmailMessage = {
@@ -54,7 +49,7 @@ type EmailMessage = {
   params?: Record<string, unknown>
   sender?: EmailMessageParticipant
   attachment?: EmailAttachment[]
-  bcc?: Bcc[]
+  bcc?: EmailMessageParticipant[]
 }
 
 const APIKEY = Config.get('EMAIL_PROVIDER_API_KEY')
@@ -62,10 +57,9 @@ const APIURL = Config.get('EMAIL_PROVIDER_API_URL')
 
 export class EmailService implements MessagingService<EmailMessage> {
   send(message: EmailMessage): Promise<unknown> {
-    const body = {...message}
     return fetch(APIURL, {
       method: 'post',
-      body: JSON.stringify(body),
+      body: JSON.stringify(message),
       headers: {
         accept: 'application/json',
         'Content-Type': 'application/json',
