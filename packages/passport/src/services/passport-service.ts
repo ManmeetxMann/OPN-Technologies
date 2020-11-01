@@ -26,6 +26,7 @@ export class PassportService {
   async findTheLatestValidPassports(
     userIds: string[],
     dependantIds: string[] = [],
+    nowDate: Date = now(),
   ): Promise<Record<string, Passport>> {
     const latestPassportsByUserId: Record<string, Passport> = {}
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
@@ -34,7 +35,7 @@ export class PassportService {
         this.passportRepository
           .collection()
           .where('userId', 'in', chunk)
-          .where('validUntil', '>', moment(now()).tz(timeZone).toDate())
+          .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
           .fetch(),
       ),
     ).then((results) =>
