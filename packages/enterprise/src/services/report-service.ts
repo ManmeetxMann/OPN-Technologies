@@ -30,6 +30,22 @@ import moment from 'moment'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
+const fixTimestamp = (raw: string): string => {
+  if (isNaN(new Date(raw).valueOf())) {
+    return raw
+  }
+  console.warn(`Saw invalid date ${raw}`)
+  const [datePart, timePart] = raw.split('T')
+  const [year, month, dayOfYear] = datePart.split('-')
+  const date = moment().year(parseInt(year)).dayOfYear(parseInt(dayOfYear))
+  return `${year}-${month}-${date.date()}T${timePart}`
+}
+
+const toDateFormat = (timestamp: string): string =>
+  moment(fixTimestamp(timestamp)).tz(timeZone).format('MMMM D, YYYY')
+const toDateTimeFormat = (timestamp: string): string =>
+  moment(fixTimestamp(timestamp)).tz(timeZone).format('h:mm A MMMM D, YYYY')
+
 type AugmentedDependant = UserDependant & {group: OrganizationGroup; status: PassportStatus}
 type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
 type Lookups = {
@@ -290,9 +306,6 @@ export class ReportService {
       {},
     )
 
-    const dateFormat = 'MMMM D, YYYY'
-    const dateTimeFormat = 'h:mm A MMMM D, YYYY'
-
     const printableAccessHistory: {name: string; time: string; action: string}[] = []
     let enterIndex = 0
     let exitIndex = 0
@@ -320,12 +333,10 @@ export class ReportService {
       if (addExit) {
         const access = exitingAccesses[exitIndex]
         const location = locationsLookup[access.locationId]
-        const time = moment(
+        const time = toDateTimeFormat(
           //@ts-ignore dependant dates are actually strings
           dependantId ? access.dependants[dependantId].exitAt : access.exitAt,
         )
-          .tz(timeZone)
-          .format(dateTimeFormat)
         printableAccessHistory.push({
           name: location.title,
           time,
@@ -335,12 +346,10 @@ export class ReportService {
       } else {
         const access = enteringAccesses[enterIndex]
         const location = locationsLookup[access.locationId]
-        const time = moment(
+        const time = toDateTimeFormat(
           // @ts-ignore this is an ISO string
           dependantId ? access.dependants[dependantId].enteredAt : access.enteredAt,
         )
-          .tz(timeZone)
-          .format(dateTimeFormat)
         printableAccessHistory.push({
           name: location.title,
           time,
@@ -403,9 +412,7 @@ export class ReportService {
         responses: answerKeys.map((key) => {
           const yes = attestation.answers[key]['1']
           const dateOfTest =
-            yes &&
-            attestation.answers[key]['2'] &&
-            moment(attestation.answers[key]['2']).tz(timeZone).format(dateFormat)
+            yes && attestation.answers[key]['2'] && toDateFormat(attestation.answers[key]['2'])
           return {
             question: (questionnaire?.questions[key]?.value ?? `Question ${key}`) as string,
             response: yes ? dateOfTest || 'Yes' : 'No',
@@ -435,10 +442,8 @@ export class ReportService {
       userGroup: group.name,
       userName: `${named.firstName} ${named.lastName}`,
       guardianName: namedGuardian ? `${namedGuardian.firstName} ${namedGuardian.lastName}` : null,
-      generationDate: moment(now()).tz(timeZone).format(dateFormat),
-      reportDate: `${moment(from).tz(timeZone).format(dateFormat)} - ${moment(to)
-        .tz(timeZone)
-        .format(dateFormat)}`,
+      generationDate: toDateFormat(now().toISOString()),
+      reportDate: `${toDateFormat(from)} - ${toDateFormat(to)}`,
     })
   }
 
