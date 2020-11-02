@@ -31,7 +31,7 @@ import moment from 'moment'
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 const fixTimestamp = (raw: string): string => {
-  if (isNaN(new Date(raw).valueOf())) {
+  if (!isNaN(new Date(raw).valueOf())) {
     return raw
   }
   console.warn(`Saw invalid date ${raw}`)
