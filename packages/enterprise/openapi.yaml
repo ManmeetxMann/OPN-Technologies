@@ -91,6 +91,8 @@ components:
           type: string
         notificationIconCaution:
           type: string
+        enablePushNotifications:
+          type: boolean
       required:
         - name
 
@@ -424,7 +426,7 @@ components:
       required:
         - firstName
         - lastName
-    
+
     UserLink:
       type: object
       properties:
@@ -1096,7 +1098,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ResponseOfOrganizationStats'
-  
+
   /organizations/{organizationId}/stats/user-report:
     get:
       description: Get pdf for one user (admin access required)
@@ -1133,7 +1135,7 @@ paths:
               schema:
                 type: string
                 format: binary
-  
+
   /organizations/{organizationId}/stats/group-report:
     get:
       description: Get user reports for an entire group (admin access required). This may take a long time
@@ -1167,7 +1169,7 @@ paths:
                     type: string
                   message:
                     type: string
-  
+
   /organizations/{organizationId}/stats/contact-trace-locations:
     get:
       description: Get contact traces locations (admin access required)
@@ -1332,7 +1334,7 @@ paths:
           deprecated: true
           schema:
             type: string
-              
+
       responses:
         '200':
           description: Successfully compute the stats
@@ -1402,7 +1404,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-  
+
   /organizations/{organizationId}/groups/zombie-users:
     delete:
       description: Remove dead users
