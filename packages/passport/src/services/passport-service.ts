@@ -9,6 +9,7 @@ import {firestore} from 'firebase-admin'
 import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
 import {Config} from '../../../common/src/utils/config'
+import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
   ...passport,
@@ -110,8 +111,22 @@ export class PassportService {
   }
 
   findOneByToken(token: string): Promise<Passport> {
+    const timeZone = Config.get('DEFAULT_TIME_ZONE')
     return this.passportRepository
-      .findWhereEqual('statusToken', token)
+      .findWhereEqualInMap([
+        {
+          map: '/',
+          key: 'statusToken',
+          operator: DataModelFieldMapOperatorType.Equals,
+          value: token,
+        },
+        {
+          map: '/',
+          key: 'validUntil',
+          operator: DataModelFieldMapOperatorType.Great,
+          value: moment(now()).tz(timeZone).toDate(),
+        },
+      ])
       .then((results) => {
         if (results.length > 0) {
           return results[0]

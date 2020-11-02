@@ -8,6 +8,7 @@ import {serverTimestamp} from '../utils/times'
 export enum DataModelFieldMapOperatorType {
   Equals = '==',
   GreatOrEqual = '>=',
+  Great = '>',
   LessOrEqual = '<=',
   ArrayContains = 'array-contains',
 }
