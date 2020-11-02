@@ -436,8 +436,8 @@ export class ReportService {
     return userTemplate({
       attestations: printableAttestations,
       locations: printableAccessHistory,
-      exposures: printableExposures,
-      traces: printableTraces,
+      exposures: _.uniqBy(printableExposures, (exposure) => JSON.stringify(exposure)),
+      traces: _.uniqBy(printableTraces, (trace) => JSON.stringify(trace)),
       organizationName: organization.name,
       userGroup: group.name,
       userName: `${named.firstName} ${named.lastName}`,
