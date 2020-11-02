@@ -38,7 +38,7 @@ const fixTimestamp = (raw: string): string => {
   const [datePart, timePart] = raw.split('T')
   const [year, month, dayOfYear] = datePart.split('-')
   const date = moment().year(parseInt(year)).dayOfYear(parseInt(dayOfYear))
-  return `${year}-${month}-${date.date()}T${timePart}`
+  return `${year}-${month}-${date.format('DD')}T${timePart}`
 }
 
 const toDateFormat = (timestamp: string): string =>
