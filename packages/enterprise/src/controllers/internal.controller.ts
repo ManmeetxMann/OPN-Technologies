@@ -46,6 +46,7 @@ class InternalController implements IControllerBase {
 
       await this.organizationService.getGroup(organizationId, groupId)
       const memberships = await this.organizationService.getUsersGroups(organizationId, groupId)
+      console.log(`Found ${memberships.length} memberships for ${organizationId}/${groupId}`)
       const allTemplates = await Promise.all(
         memberships.map((membership) =>
           this.reportService.getUserReportTemplate(
@@ -57,13 +58,15 @@ class InternalController implements IControllerBase {
           ),
         ),
       )
+      console.log(`generated ${allTemplates.length} templates`)
       const tableLayouts = allTemplates[0].tableLayouts
       const content = allTemplates.reduce(
         (contentArray, template) => [...contentArray, ...template.content],
         [],
       )
-
+      console.log(`generating pdf with ${content.length} elements`)
       const pdfB64 = await this.pdfService.generatePDFBase64(content, tableLayouts)
+      console.log('sending pdf')
       await this.emailService.sendGroupReport(email, name, pdfB64)
       res.sendStatus(200)
     } catch (error) {
