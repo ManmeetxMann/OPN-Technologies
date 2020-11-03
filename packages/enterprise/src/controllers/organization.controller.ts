@@ -647,6 +647,9 @@ class OrganizationController implements IControllerBase {
                 to,
               }),
             ).toString('base64'),
+            headers: {
+              'Content-Type': 'application/json',
+            },
           },
         }
         const request = {
