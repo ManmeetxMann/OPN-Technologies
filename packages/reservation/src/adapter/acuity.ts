@@ -14,6 +14,32 @@ abstract class AcuityScheduling {
     registeredNursePractitioner: 'field:' + Config.get('ACUITY_FIELD_NURSE_NAME'),
   }
 
+  private fieldIdMapping = {
+    barCodeNumber: Config.get('ACUITY_FIELD_BARCODE'),
+    dateOfBirth: Config.get('ACUITY_FIELD_DATE_OF_BIRTH'),
+    registeredNursePractitioner: Config.get('ACUITY_FIELD_NURSE_NAME'),
+  }
+
+  protected async updateAppointment(id: number, fields: unknown) {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = `${APIURL}/api/v1/appointments/${id}`
+
+    const res = await fetch(apiUrl, {
+      method: 'put',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        fields: this.renameKeysToId(fields),
+      }),
+    })
+    const appointment = await res.json()
+    return this.customFieldsToAppoinment(appointment)
+  }
+
   protected async getAppointments(filters: unknown): Promise<AppointmentAcuityResponse[]> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
@@ -34,19 +60,21 @@ abstract class AcuityScheduling {
   }
 
   private async mapCustomFieldsToAppoinment(appoinments: Promise<AppointmentAcuityResponse[]>) {
-    return (await appoinments).map((appointment) => {
-      appointment.forms.forEach((form) => {
-        form.values.some((field) => {
-          if (field.fieldID == Number(Config.get('ACUITY_FIELD_DATE_OF_BIRTH'))) {
-            appointment.dateOfBirth = field.value
-          }
-          if (field.fieldID == Number(Config.get('ACUITY_FIELD_NURSE_NAME'))) {
-            appointment.registeredNursePractitioner = field.value
-          }
-        })
+    return (await appoinments).map(this.customFieldsToAppoinment)
+  }
+
+  private customFieldsToAppoinment(appointment: AppointmentAcuityResponse) {
+    appointment.forms.forEach((form) => {
+      form.values.some((field) => {
+        if (field.fieldID == Number(Config.get('ACUITY_FIELD_DATE_OF_BIRTH'))) {
+          appointment.dateOfBirth = field.value
+        }
+        if (field.fieldID == Number(Config.get('ACUITY_FIELD_NURSE_NAME'))) {
+          appointment.registeredNursePractitioner = field.value
+        }
       })
-      return appointment
     })
+    return appointment
   }
 
   private renameKeys(filters) {
@@ -55,6 +83,20 @@ abstract class AcuityScheduling {
     keys.forEach((key) => {
       const newKey = this.fieldMapping[key] ? this.fieldMapping[key] : key
       acuityFilters[newKey] = filters[key]
+    })
+
+    return acuityFilters
+  }
+
+  private renameKeysToId(filters) {
+    const acuityFilters = []
+    const keys = Object.keys(filters)
+    keys.forEach((key) => {
+      const newKey = this.fieldIdMapping[key] ? this.fieldIdMapping[key] : key
+      acuityFilters.push({
+        id: newKey,
+        value: filters[key],
+      })
     })
 
     return acuityFilters
