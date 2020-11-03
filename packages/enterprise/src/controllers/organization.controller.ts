@@ -774,7 +774,21 @@ class OrganizationController implements IControllerBase {
           exits.reverse()
           while (entries.length || exits.length) {
             const entryCandidate = entries[0] ?? null
+            const entryTimestamp = entryCandidate
+              ? parentUserId
+                ? entryCandidate.enteredAt
+                : entryCandidate.dependants[userId]?.enteredAt
+              : null
             const exitCandidate = exits[0] ?? null
+            const exitTimestamp = exitCandidate
+              ? parentUserId
+                ? exitCandidate.exitAt
+                : exitCandidate.dependants[userId]?.exitAt
+              : null
+            // @ts-ignore these are strings, not field values
+            const entryDate = new Date(entryTimestamp)
+            // @ts-ignore these are strings, not field values
+            const exitDate = new Date(exitTimestamp)
             if (!entryCandidate && !exitCandidate) {
               console.warn('illegal state - no entry or exit')
               break
@@ -787,10 +801,7 @@ class OrganizationController implements IControllerBase {
               })
               continue
             }
-            if (
-              exitCandidate &&
-              (!entryCandidate || exitCandidate.exitAt < entryCandidate.enteredAt)
-            ) {
+            if (exitCandidate && (!entryCandidate || exitDate < entryDate)) {
               pairs.push({
                 location,
                 entry: null,
