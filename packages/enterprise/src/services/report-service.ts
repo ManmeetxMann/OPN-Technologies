@@ -30,8 +30,12 @@ import moment from 'moment'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
+// some timestamps are invalid and the "day" part is actually
+// the day of the year. This function accepts a (valid or invalid)
+// timestamp and returns a valid timestamp
 const fixTimestamp = (raw: string): string => {
   if (!isNaN(new Date(raw).valueOf())) {
+    // raw is parseable on its own, no need to correct
     return raw
   }
   console.warn(`Saw invalid date ${raw}`)
@@ -436,8 +440,16 @@ export class ReportService {
     return userTemplate({
       attestations: printableAttestations,
       locations: printableAccessHistory,
-      exposures: _.uniqBy(printableExposures, (exposure) => JSON.stringify(exposure)),
-      traces: _.uniqBy(printableTraces, (trace) => JSON.stringify(trace)),
+      exposures: _.uniqBy(
+        printableExposures,
+        (exposure) =>
+          `${exposure.firstName}, ${exposure.lastName}, ${exposure.groupName}, ${exposure.start}, ${exposure.end}`,
+      ),
+      traces: _.uniqBy(
+        printableTraces,
+        (trace) =>
+          `${trace.firstName}, ${trace.lastName}, ${trace.groupName}, ${trace.start}, ${trace.end}`,
+      ),
       organizationName: organization.name,
       userGroup: group.name,
       userName: `${named.firstName} ${named.lastName}`,
