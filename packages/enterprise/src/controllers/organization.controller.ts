@@ -32,6 +32,7 @@ import {Access} from '../../../access/src/models/access'
 import {NextFunction, Request, Response, Router} from 'express'
 import moment from 'moment'
 import {CloudTasksClient} from '@google-cloud/tasks'
+import * as _ from 'lodash'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 const replyInsufficientPermission = (res: Response) =>
@@ -755,16 +756,54 @@ class OrganizationController implements IControllerBase {
         await this.organizationService.getAllLocations(organizationId)
       ).filter((location) => accessedLocationIds.has(location.id))
 
-      const locationsWithAccesses = accessedLocations.map((location) => {
-        const entry = enteringAccesses.find((access) => access.locationId === location.id)
-        const exit = exitingAccesses.find((access) => access.locationId === location.id)
-        return {
-          location,
-          entry,
-          exit: entry && exit && new Date(entry.enteredAt) < new Date(entry.exitAt) ? exit : null,
-        }
-      })
-      res.json(actionSucceed(locationsWithAccesses))
+      const locationsWithAccesses = accessedLocations
+        .map((location) => {
+          const entries = enteringAccesses.filter((access) => access.locationId === location.id)
+          const exits = exitingAccesses.filter((access) => access.locationId === location.id)
+          return {
+            location,
+            entries,
+            exits,
+          }
+        })
+        .map((allAccessesForLocation) => {
+          const {entries, exits, location} = allAccessesForLocation
+          const pairs = []
+          while (entries.length || exits.length) {
+            const entryCandidate = entries[0] ?? null
+            const exitCandidate = exits[0] ?? null
+            if (!entryCandidate && !exitCandidate) {
+              console.warn('illegal state - no entry or exit')
+              break
+            }
+            if (entryCandidate && !exitCandidate) {
+              pairs.push({
+                location,
+                entry: entries.pop(),
+                exit: null,
+              })
+              continue
+            }
+            if (
+              exitCandidate &&
+              (!entryCandidate || exitCandidate.exitAt < entryCandidate.enteredAt)
+            ) {
+              pairs.push({
+                location,
+                entry: null,
+                exit: exits.pop(),
+              })
+              continue
+            }
+            pairs.push({
+              location,
+              entry: entries.pop(),
+              exit: exits.pop(),
+            })
+          }
+          return pairs
+        })
+      res.json(actionSucceed(_.flatten(locationsWithAccesses)))
     } catch (error) {
       next(error)
     }
