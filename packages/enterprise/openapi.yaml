@@ -153,6 +153,70 @@ components:
         - attestationRequired
         - type
 
+    OrganizationLocationWithAccess:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        country:
+          type: string
+        type:
+          type: string
+          enum:
+            - default
+            - event
+        attestationRequired:
+          type: boolean
+        allowAccess:
+          type: boolean
+        questionnaireId:
+          type: string
+          nullable: true
+        allowsSelfCheckInOut:
+          type: boolean
+        zones:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+              address:
+                type: string
+              attestationRequired:
+                type: boolean
+              questionnaireId:
+                type: string
+              allowsSelfCheckInOut:
+                type: boolean
+        validFrom:
+          type: string
+        validUntil:
+          type: string
+        entry:
+          $ref: '#/components/schemas/Access'
+        exit:
+          $ref: '#/components/schemas/Access'
+
+      required:
+        - title
+        - attestationRequired
+        - type
+
     OrganizationGroup:
       type: object
       additionalProperties: false
@@ -367,6 +431,183 @@ components:
       required:
         - organizationId
         - scope
+
+
+    ContactTrace:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        date:
+          type: string
+        duration:
+          type: number
+        exposures:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              locationId:
+                type: string
+              organizationid:
+                type: string
+              overlapping:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    start:
+                      type: string
+                    end:
+                      type: string
+                    sourceUserId:
+                      type: string
+                    sourceDependentId:
+                      type: string
+                    userId:
+                      type: string
+
+                  required:
+                    - userId
+                    - sourceUserId
+                    - start
+                    - end
+        adminForLocationIds:
+          type: array
+          items:
+            type: string
+        superAdminForOrganizationIds:
+          type: array
+          items:
+            type: string
+        adminForOrganizationId:
+          type: string
+        showReporting:
+          type: boolean
+
+    TraceModel:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        includesGuardian:
+          type: boolean
+        dependantIds:
+          type: array
+          items:
+            type: string
+        passportStatus:
+          type: string
+        exposures:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              locationId:
+                type: string
+              organizationid:
+                type: string
+              overlapping:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    start:
+                      type: string
+                    end:
+                      type: string
+                    sourceUserId:
+                      type: string
+                    sourceDependentId:
+                      type: string
+                    userId:
+                      type: string
+
+                  required:
+                    - userId
+                    - sourceUserId
+                    - start
+                    - end
+        exposedIds:
+          type: array
+          items:
+            type: string
+
+    Attestation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        answers:
+          type: object
+          additionalProperties: true
+        appliesTo:
+          type: array
+          items:
+            type: string
+        locationId:
+          type: string
+        attestationTime:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - proceed
+            - caution
+            - stop
+
+    FamilyStats:
+      type: object
+      additionalProperties: false
+      properties:
+        parent:
+          type: object
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            groupName:
+              type: string
+            base64Photo:
+              type: string
+            status:
+              type: string
+              enum:
+                - pending
+                - proceed
+                - caution
+        dependents:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
+              groupId:
+                type: string
+              groupName:
+                type: string
+              status:
+                type: string
+                enum:
+                  - pending
+                  - proceed
+                  - caution
 
     AdminProfile:
       type: object
@@ -925,6 +1166,117 @@ components:
               nullable: true
               type: string
 
+    ResponseOfContactTraces:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContactTrace'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfContactTraceExposures:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TraceModel'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfContactTraceAttestations:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attestation'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfFamilyStats:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/FamilyStats'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
   responses:
     Response:
       description: Default Response wrapper
@@ -1348,6 +1700,12 @@ paths:
       responses:
         '200':
           description: Successfully computed (format to come)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrganizationLocationWithAccess'
 
   /organizations/{organizationId}/stats/contact-traces:
     get:
@@ -1378,7 +1736,11 @@ paths:
             type: string
       responses:
         '200':
-          description: Successfully computed (format to come)
+          description: Successfully returning contract trace array
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfContactTraces'
 
   /organizations/{organizationId}/stats/contact-trace-exposures:
     get:
@@ -1409,7 +1771,11 @@ paths:
             type: string
       responses:
         '200':
-          description: Successfully computed (format to come)
+          description: Successfully returning contract trace array
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfContactTraceExposures'
 
   /organizations/{organizationId}/stats/contact-trace-attestations:
     get:
@@ -1437,6 +1803,10 @@ paths:
       responses:
         '200':
           description: Successfully computed (format to come)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfContactTraceAttestations'
 
   /organizations/{organizationId}/stats/family:
     get:
@@ -1461,6 +1831,10 @@ paths:
       responses:
         '200':
           description: Successfully computed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfFamilyStats'
 
   /organizations/{organizationId}/stats/health:
     get:
