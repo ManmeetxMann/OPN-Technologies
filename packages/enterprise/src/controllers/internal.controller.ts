@@ -105,15 +105,15 @@ class InternalController implements IControllerBase {
               }),
           ),
       )
-      console.log('templates retrieved')
+      console.log(`generated ${allTemplates.length} templates`)
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
       const content = allTemplates.reduce(
         (contentArray, template) => [...contentArray, ...template.content],
         [],
       )
-      console.log('generating stream')
-
+      console.log(`generating pdf with ${content.length} elements`)
       const pdfB64 = await this.pdfService.generatePDFBase64(content, tableLayouts)
+      console.log('sending pdf')
       await this.emailService.sendGroupReport(email, name, pdfB64)
       res.sendStatus(200)
     } catch (error) {
