@@ -20,7 +20,10 @@ abstract class AcuityScheduling {
     registeredNursePractitioner: Config.get('ACUITY_FIELD_NURSE_NAME'),
   }
 
-  protected async updateAppointment(id: number, fields: unknown) {
+  protected async updateAppointment(
+    id: number,
+    fields: unknown,
+  ): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = `${APIURL}/api/v1/appointments/${id}`
