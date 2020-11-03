@@ -769,6 +769,9 @@ class OrganizationController implements IControllerBase {
         .map((allAccessesForLocation) => {
           const {entries, exits, location} = allAccessesForLocation
           const pairs = []
+          // now sorted earliest-first
+          entries.reverse()
+          exits.reverse()
           while (entries.length || exits.length) {
             const entryCandidate = entries[0] ?? null
             const exitCandidate = exits[0] ?? null
@@ -801,6 +804,8 @@ class OrganizationController implements IControllerBase {
               exit: exits.pop(),
             })
           }
+          // sorted recent-first
+          pairs.reverse()
           return pairs
         })
       res.json(actionSucceed(_.flatten(locationsWithAccesses)))
