@@ -24,7 +24,6 @@ export class TestResultsService {
     const pdfContent = await this.pdfService.generatePDFBase64(
       content,
       tableLayouts,
-      testResults.firstName.toLowerCase(),
     )
 
     this.emailService.send({
