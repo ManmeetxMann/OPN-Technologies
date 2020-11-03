@@ -77,12 +77,10 @@ const getPriorityAccess = (
   if (!accessTwo) {
     return accessOne
   }
-  
+
   // Check if we status mismatch AND send back non-pending if can
-  if (accessOne.status === 'pending' && accessTwo.status !== 'pending')
-    return accessTwo
-  else if (accessTwo.status === 'pending' && accessOne.status !== 'pending')
-    return accessOne
+  if (accessOne.status === 'pending' && accessTwo.status !== 'pending') return accessTwo
+  else if (accessTwo.status === 'pending' && accessOne.status !== 'pending') return accessOne
 
   // Else, continue ...
 
