@@ -1,6 +1,6 @@
 import DataStore from '../../../common/src/data/datastore'
 import {User, UserDependency, UserGroup, UserOrganization} from '../models/user'
-import {CreateUserRequest, LegacyProfile} from '../types/create-user-request'
+import {NewUser, LegacyProfile} from '../types/new-user'
 import {UpdateUserRequest} from '../types/update-user-request'
 import {UserRepository} from '../repository/user.repository'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
@@ -19,7 +19,7 @@ export class UserService {
   private userGroupRepository = new UserGroupRepository(this.dataStore)
   private userDependencyRepository = new UserDependencyRepository(this.dataStore)
 
-  create(source: CreateUserRequest): Promise<User> {
+  create(source: NewUser): Promise<User> {
     return this.getByEmail(source.email).then((existedUser) => {
       if (!!existedUser) throw new ResourceAlreadyExistsException(source.email)
 
@@ -30,8 +30,8 @@ export class UserService {
         photo: source.photo ?? null,
         phone: source.phone ?? null,
         registrationId: source.registrationId ?? null,
-        authUserId: null,
-        active: false,
+        authUserId: source.authUserId ?? null,
+        active: source.active ?? false,
       } as User)
     })
   }

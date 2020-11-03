@@ -1,15 +1,18 @@
 import {Phone} from '../../../common/src/types/phone'
 
-export type CreateUserRequest = {
+export type NewUser = {
   email: string
   firstName: string
   lastName: string
   registrationId: string
   photo?: string //url
   phone?: Phone
+  authUserId?: string
+  active?: boolean
 }
 
-export type CreateUserRequestWithOrganization = CreateUserRequest & {
+export type CreateUserRequest = NewUser & {
+  idToken: string
   organizationId: string
 }
 

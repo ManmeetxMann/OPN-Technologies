@@ -442,6 +442,9 @@ components:
     CreateUserRequest:
       type: object
       properties:
+        idToken:
+          type: string
+          nullable: false
         email:
           type: string
           nullable: false
@@ -462,6 +465,7 @@ components:
           description: Photo URL
           nullable: true
       required:
+        - idToken
         - email
         - firstName
         - lastName
@@ -1951,9 +1955,6 @@ paths:
           application/json:
             schema:
               properties:
-                email:
-                  type: string
-                  nullable: false
                 organizationId:
                   type: string
                   nullable: false

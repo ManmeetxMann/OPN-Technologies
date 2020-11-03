@@ -7,10 +7,7 @@ import {AuthService} from '../../../../common/src/service/auth/auth-service'
 import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
-import {
-  CreateUserRequestWithOrganization,
-  MigrateUserRequest,
-} from '../../types/create-user-request'
+import {CreateUserRequest, MigrateUserRequest} from '../../types/new-user'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {AuthenticationRequest} from '../../types/authentication-request'
 import {User} from '../../models/user'
@@ -31,18 +28,26 @@ const magicLinkService = new MagicLinkService()
  */
 const create: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {organizationId, ...profile} = req.body as CreateUserRequestWithOrganization
+    const {organizationId, idToken, ...profile} = req.body as CreateUserRequest
+
+    const authUser = await authService.verifyAuthToken(idToken)
+    if (!authUser) {
+      throw new ForbiddenException('Cannot verify the given id-token')
+    }
 
     // Assert organization exists
     await organizationService.getByIdOrThrow(organizationId)
 
-    const user = await userService.create(profile)
-
-    await magicLinkService.send({
-      email: user.email,
-      name: user.firstName,
-      meta: {organizationId, email: user.email},
+    // Create and activate user
+    const user = await userService.create({
+      ...profile,
+      email: authUser.email,
+      authUserId: authUser.uid,
+      active: true,
     })
+
+    // Connect to org
+    await userService.connectOrganization(user.id, organizationId)
 
     res.json(actionSucceed(user))
   } catch (error) {
@@ -83,7 +88,7 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
     const {email, organizationId, userId} = req.body as AuthenticationRequest
     await organizationService.getByIdOrThrow(organizationId)
 
-    await magicLinkService.send({email, meta: {organizationId, email, userId}})
+    await magicLinkService.send({email, meta: {organizationId, userId}})
 
     res.json(actionSucceed())
   } catch (error) {
@@ -122,14 +127,16 @@ const update: Handler = async (req, res, next): Promise<void> => {
  */
 const completeRegistration: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {email, idToken, organizationId, userId} = req.body as RegistrationConfirmationRequest
+    const {idToken, organizationId, userId} = req.body as RegistrationConfirmationRequest
     const authUser = await authService.verifyAuthToken(idToken)
 
     if (!authUser) {
       throw new ForbiddenException('Cannot verify the given id-token')
     }
 
-    const user = await (userId ? userService.getById(userId) : userService.getByEmail(email))
+    const user = await (userId
+      ? userService.getById(userId)
+      : userService.getByEmail(authUser.email))
 
     await organizationService
       .getByIdOrThrow(organizationId)
