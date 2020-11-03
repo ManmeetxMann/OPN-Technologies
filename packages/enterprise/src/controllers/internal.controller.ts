@@ -78,25 +78,32 @@ class InternalController implements IControllerBase {
       console.log(`lookups retrieved`)
 
       const allTemplates = await Promise.all(
-        memberships.map((membership) =>
-          this.reportService
-            .getUserReportTemplate(
-              organization,
-              membership.userId,
-              membership.parentUserId,
-              from,
-              to,
-              lookups,
-              questionnaire,
-            )
-            .catch((err) => {
-              console.warn(`error getting content for ${JSON.stringify(membership)} - ${err}`)
-              return {
-                content: [],
-                tableLayouts: null,
-              }
-            }),
-        ),
+        memberships
+          .filter((membership) => {
+            if (membership.parentUserId) {
+              return lookups.dependantsLookup[membership.userId]
+            }
+            return lookups.usersLookup[membership.userId]
+          })
+          .map((membership) =>
+            this.reportService
+              .getUserReportTemplate(
+                organization,
+                membership.userId,
+                membership.parentUserId,
+                from,
+                to,
+                lookups,
+                questionnaire,
+              )
+              .catch((err) => {
+                console.warn(`error getting content for ${JSON.stringify(membership)} - ${err}`)
+                return {
+                  content: [],
+                  tableLayouts: null,
+                }
+              }),
+          ),
       )
       console.log('templates retrieved')
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
