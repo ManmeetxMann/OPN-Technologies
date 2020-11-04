@@ -173,6 +173,9 @@ components:
       type: object
       additionalProperties: false
       properties:
+        idToken:
+          type: string
+          nullable: true
         organizationId:
           type: string
         registrationId:
@@ -200,6 +203,9 @@ components:
     OrganizationConnectionRequestV2:
       type: object
       properties:
+        idToken:
+          type: string
+          nullable: true
         organizationId:
           type: string
         registrationId:
@@ -395,6 +401,9 @@ components:
       properties:
         id:
           type: string
+        email:
+          type: string
+          nullable: true
         firstName:
           type: string
         lastName:
