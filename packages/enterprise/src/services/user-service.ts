@@ -11,6 +11,7 @@ import {flattern} from '../../../common/src/utils/utils'
 import * as _ from 'lodash'
 import {UserGroupRepository} from '../repository/user-group.repository'
 import {OrganizationUsersGroupModel} from '../repository/organization.repository'
+import {UserModel} from '../../../common/src/data/user'
 
 export class UserService {
   private dataStore = new DataStore()
@@ -174,14 +175,32 @@ export class UserService {
   }
 
   connectOrganization(userId: string, organizationId: string): Promise<UserOrganization> {
-    return this.findOneUserOrganizationBy(userId, organizationId).then((existing) =>
-      existing
-        ? existing
-        : this.userOrganizationRepository.add({
-            organizationId,
-            userId,
-          } as UserOrganization),
+    return (
+      this.findOneUserOrganizationBy(userId, organizationId)
+        .then((existing) =>
+          existing
+            ? existing
+            : this.userOrganizationRepository.add({
+                organizationId,
+                userId,
+              } as UserOrganization),
+        )
+        // TODO TO BE REMOVED: Support for legacy APIs
+        .then((userGroup) => {
+          const legacyUserRepository = new UserModel(this.dataStore)
+          return legacyUserRepository
+            .get(userId)
+            .then((user) =>
+              legacyUserRepository.updateProperty(
+                userId,
+                'organizationIds',
+                Array.from(new Set([...(user.organizationIds ?? []), organizationId])),
+              ),
+            )
+            .then(() => userGroup)
+        })
     )
+    // TODO: End of legacy support
   }
 
   disconnectOrganization(
