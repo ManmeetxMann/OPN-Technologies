@@ -1965,7 +1965,6 @@ paths:
                   type: string
                   nullable: true
               required:
-                - email
                 - organizationId
                 - idToken
       responses:
