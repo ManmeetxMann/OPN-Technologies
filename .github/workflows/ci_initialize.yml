@@ -51,9 +51,10 @@ jobs:
           DOMAIN_PASSPORT=https://passport-staging-dot-opn-platform-dev.nn.r.appspot.com/
           DOMAIN_REGISTRY=https://registry-staging-dot-opn-platform-dev.nn.r.appspot.com/
 
-          # Pubsub
+          # App Engine
           PUBSUB_TRACE_TOPIC=tracing
           PUBSUB_TRACE_SUBSCRIPTION=executeTrace
+          GAE_PROJECT_NAME=opn-platform-dev
 
           # Timezones
           DEFAULT_TIME_ZONE=America/Toronto

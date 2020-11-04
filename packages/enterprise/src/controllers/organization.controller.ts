@@ -659,7 +659,7 @@ class OrganizationController implements IControllerBase {
           }),
         )
         const path = this.taskClient.queuePath(
-          Config.get('GCP_PROJECT'),
+          Config.get('GAE_PROJECT_NAME'),
           Config.get('GAE_LOCATION'), // northamerica-northeast1
           Config.get('QUEUE_NAME'),
         )
