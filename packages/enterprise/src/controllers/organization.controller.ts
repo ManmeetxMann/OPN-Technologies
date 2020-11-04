@@ -27,6 +27,8 @@ import {FamilyStatusReportRequest, UserContactTraceReportRequest} from '../types
 import {AttestationService} from '../../../passport/src/services/attestation-service'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 
+import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
+
 import {Access} from '../../../access/src/models/access'
 
 import {NextFunction, Request, Response, Router} from 'express'
@@ -48,6 +50,7 @@ class OrganizationController implements IControllerBase {
   private userService = new UserService()
   private reportService = new ReportService()
   private attestationService = new AttestationService()
+  private questionnaireService = new QuestionnaireService()
   private pdfService = new PdfService()
   private taskClient = new CloudTasksClient()
 
@@ -571,13 +574,30 @@ class OrganizationController implements IControllerBase {
       const from: string =
         (queryFrom as string) ??
         moment(now()).tz(timeZone).startOf('day').subtract(2, 'days').toISOString()
-
-      const {content, tableLayouts} = await this.reportService.getUserReportTemplate(
+      const orgPromise = this.organizationService.findOneById(organizationId)
+      const lookup = await this.reportService.getLookups(
+        new Set([(parentUserId as string) ?? (userId as string)]),
+        new Set(parentUserId ? [userId as string] : []),
         organizationId,
+      )
+      const questionnaireIds = new Set<string>()
+      Object.values(lookup.locationsLookup).forEach((location) => {
+        if (location.questionnaireId) {
+          questionnaireIds.add(location.questionnaireId)
+        }
+      })
+      const questionnairePromise = this.questionnaireService.getQuestionnaires([
+        ...questionnaireIds,
+      ])
+      const [organization, questionnaire] = await Promise.all([orgPromise, questionnairePromise])
+      const {content, tableLayouts} = await this.reportService.getUserReportTemplate(
+        organization,
         userId as string,
         parentUserId as string,
         from,
         to,
+        lookup,
+        questionnaire,
       )
 
       const stream = this.pdfService.generatePDFStream(content, tableLayouts)
@@ -612,6 +632,16 @@ class OrganizationController implements IControllerBase {
       await this.organizationService.getGroup(organizationId, groupId)
 
       const memberships = await this.organizationService.getUsersGroups(organizationId, groupId)
+      const userIds = new Set<string>()
+      const dependantIds = new Set<string>()
+      memberships.forEach((membership) => {
+        if (membership.parentUserId) {
+          userIds.add(membership.parentUserId)
+          dependantIds.add(membership.userId)
+        } else {
+          userIds.add(membership.userId)
+        }
+      })
       console.log(`${memberships.length} memberships found`)
       const membershipLimit = parseInt(Config.get('PDF_GENERATION_EMAIL_THRESHOLD') ?? '100', 10)
       const to = moment(now()).tz(timeZone).endOf('day').toISOString()
@@ -660,23 +690,59 @@ class OrganizationController implements IControllerBase {
         await this.taskClient.createTask(request)
         return
       }
+
+      const organizationPromise = this.organizationService.findOneById(organizationId)
+      const lookups = await this.reportService.getLookups(userIds, dependantIds, organizationId)
+      const questionnaireIds = new Set<string>()
+      Object.values(lookups.locationsLookup).forEach((location) => {
+        if (location.questionnaireId) {
+          questionnaireIds.add(location.questionnaireId)
+        }
+      })
+      const questionnairePromise = this.questionnaireService.getQuestionnaires([
+        ...questionnaireIds,
+      ])
+      const [organization, questionnaire] = await Promise.all([
+        organizationPromise,
+        questionnairePromise,
+      ])
+      console.log(`lookups retrieved`)
+
       const allTemplates = await Promise.all(
-        memberships.map((membership) =>
-          this.reportService.getUserReportTemplate(
-            organizationId,
-            membership.userId,
-            membership.parentUserId,
-            from,
-            to,
+        memberships
+          .filter((membership) => {
+            if (membership.parentUserId) {
+              return lookups.dependantsLookup[membership.userId]
+            }
+            return lookups.usersLookup[membership.userId]
+          })
+          .map((membership) =>
+            this.reportService
+              .getUserReportTemplate(
+                organization,
+                membership.userId,
+                membership.parentUserId,
+                from,
+                to,
+                lookups,
+                questionnaire,
+              )
+              .catch((err) => {
+                console.warn(`error getting content for ${JSON.stringify(membership)} - ${err}`)
+                return {
+                  content: [],
+                  tableLayouts: null,
+                }
+              }),
           ),
-        ),
       )
-      const tableLayouts = allTemplates[0].tableLayouts
+      console.log('templates retrieved')
+      const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
       const content = allTemplates.reduce(
         (contentArray, template) => [...contentArray, ...template.content],
         [],
       )
-
+      console.log('generating stream')
       const pdfStream = this.pdfService.generatePDFStream(content, tableLayouts)
       res.contentType('application/pdf')
       pdfStream.pipe(res)

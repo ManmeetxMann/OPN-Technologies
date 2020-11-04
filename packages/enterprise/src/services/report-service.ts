@@ -9,6 +9,7 @@ import {
   OrganizationGroup,
   OrganizationLocation,
   OrganizationUsersGroup,
+  Organization,
 } from '../models/organization'
 import {Stats, StatsFilter} from '../models/stats'
 import userTemplate from '../templates/user-report'
@@ -184,23 +185,25 @@ export class ReportService {
   }
 
   async getUserReportTemplate(
-    organizationId: string,
+    organization: Organization,
     primaryId: string,
     secondaryId: string,
     from: string,
     to: string,
+    // lookup table with users, dependants and groups
+    // likely to be needed. Some users or dependants may be missing
+    partialLookup: Lookups,
+    questionnaires: Questionnaire[],
   ): Promise<ReturnType<typeof userTemplate>> {
     const userId = (secondaryId || primaryId) as string
     const dependantId = secondaryId ? (primaryId as string) : null
 
     const [
-      organization,
       attestations,
       exposureTraces,
       userTraces,
       {enteringAccesses, exitingAccesses},
     ] = await Promise.all([
-      this.organizationService.findOneById(organizationId),
       this.attestationService.getAttestationsInPeriod(
         primaryId as string,
         from as string,
@@ -224,9 +227,9 @@ export class ReportService {
       new Date(a.attestationTime) < new Date(b.attestationTime) ? 1 : -1,
     )
     const userIds = new Set<string>([userId])
-    const dependantIds = new Set<string>()
+    const guardians: Record<string, string> = {}
     if (dependantId) {
-      dependantIds.add(dependantId)
+      guardians[dependantId] = userId
     }
     // overlaps where the other user might have been sick
     const exposureOverlaps: ExposureReport['overlapping'] = []
@@ -240,7 +243,7 @@ export class ReportService {
             exposureOverlaps.push(overlap)
             userIds.add(overlap.sourceUserId)
             if (overlap.sourceDependantId) {
-              dependantIds.add(overlap.sourceDependantId)
+              guardians[overlap.sourceDependantId] = overlap.sourceUserId
             }
           }
         }),
@@ -258,22 +261,50 @@ export class ReportService {
             traceOverlaps.push(overlap)
             userIds.add(overlap.userId)
           }
+          if (overlap.dependant) {
+            guardians[overlap.dependant.id] = overlap.userId
+          }
         }),
       ),
     )
-
-    const lookups = await this.getLookups(userIds, dependantIds, organizationId)
-    const {locationsLookup, usersLookup, dependantsLookup, groupsLookup} = lookups
-
-    const questionnaireIds = new Set<string>()
-    Object.values(locationsLookup).forEach((location) => {
-      if (location.questionnaireId) {
-        questionnaireIds.add(location.questionnaireId)
-      }
-    })
-    const questionnaires = await Promise.all(
-      [...questionnaireIds].map((id) => this.questionnaireService.getQuestionnaire(id)),
+    const missingUsers = [...userIds].filter((id) => !partialLookup.usersLookup[id])
+    const missingDependants = Object.keys(guardians).filter(
+      (id) => !partialLookup.dependantsLookup[id],
     )
+
+    const extraLookup =
+      missingUsers.length || missingDependants.length
+        ? await this.getLookups(
+            new Set([
+              ...missingUsers,
+              // must look up their guardians as well
+              ...[...missingDependants].map((id) => guardians[id]),
+            ]),
+            new Set(missingDependants),
+            organization.id,
+            partialLookup.groupsLookup,
+            partialLookup.locationsLookup,
+          )
+        : null
+    const lookups =
+      missingUsers.length || missingDependants.length
+        ? {
+            ...partialLookup,
+            usersLookup: {
+              ...partialLookup.usersLookup,
+              ...extraLookup.usersLookup,
+            },
+            dependantsLookup: {
+              ...partialLookup.dependantsLookup,
+              ...extraLookup.dependantsLookup,
+            },
+            groupsLookup: {
+              ...partialLookup.groupsLookup,
+              ...extraLookup.groupsLookup,
+            },
+          }
+        : partialLookup
+    const {locationsLookup, usersLookup, dependantsLookup, groupsLookup} = lookups
 
     const questionnairesLookup: Record<number, Questionnaire> = questionnaires.reduce(
       (lookupSoFar, questionnaire) => {
@@ -453,48 +484,51 @@ export class ReportService {
     )
   }
 
-  async getLookups(
+  getLookups = async (
     userIds: Set<string>,
     dependantIds: Set<string>,
     organizationId: string,
-  ): Promise<Lookups> {
-    // N queries
-    const statuses = await Promise.all(
-      [...dependantIds, ...userIds].map(
-        async (id): Promise<{id: string; status: PassportStatus}> => ({
-          id,
-          status: await this.attestationService.latestStatus(id),
-        }),
+    cachedGroupsById?: Record<string, OrganizationGroup>,
+    cachedLocationsById?: Record<string, OrganizationLocation>,
+  ): Promise<Lookups> => {
+    const [
+      allUsers,
+      allDependants,
+      userGroups,
+      allGroups,
+      allLocations,
+      statuses,
+    ] = await Promise.all([
+      // N/10 queries
+      this.getUsersById([...userIds]).then((byId) => Object.values(byId) as User[]),
+      // N queries
+      Promise.all([...userIds].map((id) => this.userService.getAllDependants(id))).then((pages) =>
+        _.flatten(pages),
       ),
-    )
+      // N/10 queries
+      this.organizationService.getUsersGroups(organizationId, null, [...userIds, ...dependantIds]),
+      cachedGroupsById ? null : this.organizationService.getGroups(organizationId),
+      cachedLocationsById ? null : this.organizationService.getAllLocations(organizationId),
+      // N queries
+      Promise.all(
+        [...dependantIds, ...userIds].map(
+          (id): Promise<{id: string; status: PassportStatus}> =>
+            this.attestationService.latestStatus(id).then((status) => ({id, status})),
+        ),
+      ),
+    ])
     // keyed by user or dependant ID
     const statusesByUserOrDependantId: Record<string, PassportStatus> = statuses.reduce(
       (lookup, curr) => ({...lookup, [curr.id]: curr.status}),
       {},
     )
-    const allUsers = Object.values(await this.getUsersById([...userIds]))
 
-    const allDependants: UserDependant[] = _.flatten(
-      await Promise.all([...userIds].map((id) => this.userService.getAllDependants(id))),
-    )
-
-    // every group this organization contains
-    const allGroups = await this.organizationService.getGroups(organizationId)
-    const groupsById: Record<string, OrganizationGroup> = allGroups.reduce(
-      (lookup, group) => ({...lookup, [group.id]: group}),
-      {},
-    )
+    const groupsById: Record<string, OrganizationGroup> =
+      cachedGroupsById ?? allGroups.reduce((lookup, group) => ({...lookup, [group.id]: group}), {})
     // every location this organization contains
-    const allLocations = await this.organizationService.getAllLocations(organizationId)
-    const locationsById: Record<string, OrganizationLocation> = allLocations.reduce(
-      (lookup, location) => ({...lookup, [location.id]: location}),
-      {},
-    )
-    // group memberships for all the users and dependants we're interested in
-    const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
-      ...userIds,
-      ...dependantIds,
-    ])
+    const locationsById: Record<string, OrganizationLocation> =
+      cachedLocationsById ??
+      allLocations.reduce((lookup, location) => ({...lookup, [location.id]: location}), {})
     const groupsByUserOrDependantId: Record<string, OrganizationGroup> = userGroups.reduce(
       (lookup, groupLink) => ({...lookup, [groupLink.userId]: groupsById[groupLink.groupId]}),
       {},
@@ -515,13 +549,13 @@ export class ReportService {
         {},
       )
     const usersById: Record<string, AugmentedUser> = allUsers.reduce(
-      (lookup, user) => ({
+      (lookup, user: User) => ({
         ...lookup,
         [user.id]: {
           ...user,
           group: groupsByUserOrDependantId[user.id],
-          stattus: statusesByUserOrDependantId[user.id],
-        },
+          status: statusesByUserOrDependantId[user.id],
+        } as AugmentedUser,
       }),
       {},
     )
