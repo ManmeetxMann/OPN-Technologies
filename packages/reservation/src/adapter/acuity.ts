@@ -62,11 +62,15 @@ abstract class AcuityScheduling {
     })
   }
 
-  private async mapCustomFieldsToAppoinment(appoinments: Promise<AppointmentAcuityResponse[]>) {
+  private async mapCustomFieldsToAppoinment(
+    appoinments: Promise<AppointmentAcuityResponse[]>,
+  ): Promise<AppointmentAcuityResponse[]> {
     return (await appoinments).map(this.customFieldsToAppoinment)
   }
 
-  private customFieldsToAppoinment(appointment: AppointmentAcuityResponse) {
+  private customFieldsToAppoinment(
+    appointment: AppointmentAcuityResponse,
+  ): AppointmentAcuityResponse {
     appointment.forms.forEach((form) => {
       form.values.some((field) => {
         if (field.fieldID == Number(Config.get('ACUITY_FIELD_DATE_OF_BIRTH'))) {
