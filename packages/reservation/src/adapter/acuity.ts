@@ -7,6 +7,11 @@ const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
 const APIURL = Config.get('ACUITY_SCHEDULER_API_URL')
 
+type AcuityFilter = {
+  id: string
+  value: string
+}
+
 abstract class AcuityScheduling {
   private fieldMapping = {
     barCodeNumber: 'field:' + Config.get('ACUITY_FIELD_BARCODE'),
@@ -95,7 +100,7 @@ abstract class AcuityScheduling {
     return acuityFilters
   }
 
-  private renameKeysToId(filters) {
+  private renameKeysToId(filters): AcuityFilter[] {
     const acuityFilters = []
     const keys = Object.keys(filters)
     keys.forEach((key) => {
