@@ -1149,14 +1149,17 @@ class OrganizationController implements IControllerBase {
       )
 
       const response = {
-        parent: {
-          firstName: parent.firstName,
-          lastName: parent.lastName,
-          groupName: parentGroup.name,
-          base64Photo: parent.base64Photo,
-          status: parentStatus,
-        },
-        dependents: dependentsWithGroup,
+        parent: parentUserId
+          ? {
+              id: parent.id,
+              firstName: parent.firstName,
+              lastName: parent.lastName,
+              groupName: parentGroup.name,
+              base64Photo: parent.base64Photo,
+              status: parentStatus,
+            }
+          : null,
+        dependents: dependentsWithGroup.filter((dependant) => dependant.id !== userId),
       }
 
       res.json(actionSucceed(response))
