@@ -74,6 +74,7 @@ abstract class EncryptedDataModel<T extends HasId> extends DataModel<T> {
     const {timestamps, ...fieldsWithoutTimestamps} = fields
 
     const encryptedFields = Object.entries(fields)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .filter(([field, value]) => this.isEncryptedField(field))
       .reduce((byField, [field, value]) => {
         return {
