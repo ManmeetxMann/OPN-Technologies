@@ -223,9 +223,8 @@ export class ReportService {
       ),
     ])
     // sort by descending attestation time
-    attestations.sort((a, b) =>
-      new Date(a.attestationTime) < new Date(b.attestationTime) ? 1 : -1,
-    )
+    // (default ascending)
+    attestations.reverse()
     const userIds = new Set<string>([userId])
     const guardians: Record<string, string> = {}
     if (dependantId) {
