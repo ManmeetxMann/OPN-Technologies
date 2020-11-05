@@ -892,7 +892,7 @@ components:
           properties:
             profile:
               $ref: '#/components/schemas/User'
-            dependents:
+            dependants:
               type: array
               items:
                 $ref: '#/components/schemas/UserDependent'
