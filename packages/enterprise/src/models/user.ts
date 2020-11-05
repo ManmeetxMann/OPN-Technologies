@@ -7,10 +7,11 @@ export type User = Auditable & {
   lastName: string
   active: boolean
 
-  authId?: string
+  authUserId?: string
   email?: string
   photo?: string // photo url
   phone?: Phone
+  registrationId?: string
 }
 
 export type UserDependency = Auditable & {
@@ -23,7 +24,6 @@ export type UserOrganization = Auditable & {
   id: string
   userId: string
   organizationId: string
-  //TODO: status: 'pending' | 'connected' | 'rejected'
 }
 
 export type UserGroup = Auditable & {

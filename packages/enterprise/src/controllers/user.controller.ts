@@ -13,6 +13,8 @@ import {Organization, OrganizationUsersGroup} from '../models/organization'
 import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {AuthService} from '../../../common/src/service/auth/auth-service'
+import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -20,6 +22,7 @@ class UserController implements IControllerBase {
   private organizationService = new OrganizationService()
   private userService = new UserService()
   private registrationService = new RegistrationService()
+  private authService = new AuthService()
 
   constructor() {
     this.initRoutes()
@@ -41,13 +44,28 @@ class UserController implements IControllerBase {
       const {responses, ...body} = req.body
       body as OrganizationConnectionRequest
       responses as string[]
-      const {organizationId, registrationId, firstName, lastName, base64Photo, groupId} = body
+      const {
+        idToken,
+        organizationId,
+        registrationId,
+        firstName,
+        lastName,
+        base64Photo,
+        groupId,
+      } = body
       const organization = await this.organizationService.findOneById(organizationId)
       const group = await this.organizationService.getGroup(organization.id, groupId)
+
+      const authUser = !!idToken ? await this.authService.verifyAuthToken(idToken) : null
+      if (idToken && !authUser) {
+        throw new UnauthorizedException(`Cannot verify id-token`)
+      }
 
       // Create user
       // registrationId might be undefined, since this could be the old version
       const user = await this.userService.create(({
+        email: authUser?.email ?? null,
+        authUserId: authUser?.uid ?? null,
         registrationId: registrationId ?? null,
         firstName,
         lastName,
