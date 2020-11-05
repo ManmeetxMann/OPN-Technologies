@@ -247,7 +247,7 @@ paths:
                   type: string
       responses:
         '200':
-          description: Successfully Return
+          description: Successfully handled
           content:
             text/html:
               schema:
