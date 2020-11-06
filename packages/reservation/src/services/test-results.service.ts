@@ -21,11 +21,7 @@ export class TestResultsService {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
     const todaysDate = moment(now()).tz(timeZone).format('LL')
     const {content, tableLayouts} = template(testResults)
-    const pdfContent = await this.pdfService.generatePDFBase64(
-      content,
-      tableLayouts,
-      testResults.firstName.toLowerCase(),
-    )
+    const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
     this.emailService.send({
       templateId: this.testResultEmailTemplateId,
