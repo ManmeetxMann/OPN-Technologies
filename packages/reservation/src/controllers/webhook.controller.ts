@@ -2,7 +2,7 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import {NextFunction, Request, Response, Router} from 'express'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {AppoinmentService} from '../services/appoinment.service'
-import {ScheduleWebhookRequest} from "../models/webhook";
+import {ScheduleWebhookRequest} from '../models/webhook'
 
 class WebhookController implements IControllerBase {
   public path = '/webhook'
