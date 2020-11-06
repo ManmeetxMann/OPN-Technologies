@@ -785,6 +785,23 @@ components:
         - firstName
         - lastName
 
+
+    UserDependent:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        groupId:
+          type: string
+      required:
+        - firstName
+        - lastName
+
     UserLink:
       type: object
       deprecated: true
@@ -845,6 +862,42 @@ components:
               $ref: '#/components/schemas/Organization'
             group:
               $ref: '#/components/schemas/OrganizationGroup'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfOrganizationConnectionUser:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            profile:
+              $ref: '#/components/schemas/User'
+            dependants:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserDependent'
+            parentUserId:
+              type: string
         status:
           type: object
           additionalProperties: false
@@ -2088,9 +2141,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/ResponseOfOrganizationConnectionUser'
 
   /user/connect/link/{userId}:
     put:
