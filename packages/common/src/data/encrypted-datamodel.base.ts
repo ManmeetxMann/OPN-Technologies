@@ -378,8 +378,6 @@ abstract class EncryptedDataModel<T extends HasId> extends DataModel<T> {
   }
 
   isEncryptedField(fieldName: string): boolean {
-    if (fieldName === 'id') return false
-    // @ts-ignore
     return this.encryptedFields.has(fieldName)
   }
 
