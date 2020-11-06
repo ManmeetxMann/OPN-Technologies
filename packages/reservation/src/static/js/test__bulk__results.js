@@ -1,8 +1,39 @@
-const parseCSV = (text) => {
-  return text
-    .split('\n')
-    .filter((row) => !!row)
-    .map((row) => row.split(',').map((row) => row.trim()))
+const parseCSV = (strData) => {
+  const strDelimiter = ','
+
+  const objPattern = new RegExp(
+    // Delimiters.
+    '(\\' +
+      strDelimiter +
+      '|\\r?\\n|\\r|^)' +
+      // Quoted fields.
+      '(?:"([^"]*(?:""[^"]*)*)"|' +
+      // Standard fields.
+      '([^"\\' +
+      strDelimiter +
+      '\\r\\n]*))',
+    'gi',
+  )
+
+  const arrData = [[]]
+  let arrMatches = null
+
+  while ((arrMatches = objPattern.exec(strData))) {
+    const strMatchedDelimiter = arrMatches[1]
+    if (strMatchedDelimiter.length && strMatchedDelimiter !== strDelimiter) {
+      arrData.push([])
+    }
+
+    let strMatchedValue
+    if (arrMatches[2]) {
+      strMatchedValue = arrMatches[2].replace(new RegExp('""', 'g'), '"')
+    } else {
+      strMatchedValue = arrMatches[3]
+    }
+
+    arrData[arrData.length - 1].push(strMatchedValue)
+  }
+  return arrData
 }
 const headers = {
   Accept: 'application/json',
@@ -33,8 +64,23 @@ document.addEventListener('DOMContentLoaded', () => {
       reader.readAsText(file, 'UTF-8')
       reader.onload = async function (evt) {
         try {
-          data = parseCSV(evt.target.result)
+          data = parseCSV(evt.target.result).filter(
+            (row) => !(row[0] === 'Sample No' || row[3] === '' || row[5] === 'E gene'),
+          )
+          if (data.length > 100) {
+            openModal(errorBulkModal)
+            errorBulkContent.innerHTML = 'CSV File is invalid should be 15 columns'
+            return
+          }
         } catch (e) {
+          openModal(errorBulkModal)
+          errorBulkContent.innerHTML = 'CSV File is invalid'
+          return
+        }
+        const isValid = data.every((r) => r.length === 15)
+        if (!isValid) {
+          openModal(errorBulkModal)
+          errorBulkContent.innerHTML = 'CSV File is invalid should be 15 columns'
           return
         }
         const response = await fetch('/admin/api/v1/check-appointments', {
@@ -44,24 +90,22 @@ document.addEventListener('DOMContentLoaded', () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            barCodes: data.map((row) => row[0]),
+            barCodes: data.map((row) => row[3]),
           }),
         })
         const {data: existenceStatus} = await response.json()
         presentationTable.classList.remove('d-none')
-        const isValid = data.every((r) => r.length === 10)
-        if (!isValid) return
         data.forEach((row, i) => {
           const trElem = document.createElement('tr')
           const thElem = document.createElement('th')
           thElem.innerText = i + 1
           trElem.appendChild(thElem)
           const tdElem = document.createElement('td')
-          if (existenceStatus.indexOf(row[0]) !== -1) {
+          if (existenceStatus.indexOf(row[3]) !== -1) {
             const checkboxElem = document.createElement('input')
             checkboxElem.setAttribute('type', 'checkbox')
             checkboxElem.classList.add('sendAgainCheckbox')
-            checkboxElem.setAttribute('data-barcode', row[0])
+            checkboxElem.setAttribute('data-barcode', row[3])
             checkboxElem.setAttribute('data-index', i)
             tdElem.appendChild(checkboxElem)
           }
@@ -97,16 +141,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const dataSentBackend = data
       .filter((row, i) => sendAgainData.indexOf(`${i}`) === -1)
       .map((row) => ({
-        barCode: row[0],
-        famEGene: row[1],
-        famCt: row[2],
-        calRed61RdRpGene: row[3],
-        calRed61Ct: row[4],
-        quasar670NGene: row[5],
-        quasar670Ct: row[6],
-        hexIC: row[7],
-        hexCt: row[8],
-        result: row[9],
+        barCode: row[3],
+        famEGene: row[5],
+        famCt: row[6],
+        calRed61RdRpGene: row[7],
+        calRed61Ct: row[8],
+        quasar670NGene: row[9],
+        quasar670Ct: row[10],
+        hexIC: row[11],
+        hexCt: row[12],
+        result: row[13],
         sendAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
       }))
 
@@ -124,9 +168,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!response.ok) {
       openModal(errorBulkModal)
+      errorBulkContent.innerHTML = ''
       const regexpFieldName = /.*\[\d*\]\./g
       const regexpFieldRow = /.*\[(\d*)\]\..*/g
-      errorBulkContent.innerHTML = ''
 
       if (responseData?.errors?.length) {
         responseData.errors.map((err) => {

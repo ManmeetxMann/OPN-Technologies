@@ -41,7 +41,7 @@
     </div>
     <div class="form-group">
       <label for="barCode">CSV File</label>
-      <input type="file" class="form-control" id="csvFile" name="csvFile" placeholder="Upload CSV File" required>
+      <input type="file" class="form-control" id="csvFile" name="csvFile" accept="text/csv" placeholder="Upload CSV File" required>
     </div>
     <div class="form-group">
       <label for="result">Days from now</label>
@@ -58,14 +58,23 @@
         <tr>
           <th scope="col">#</th>
           <th scope="col">Send Again</th>
+          <th scope="col">Sample No</th>
+          <th scope="col">Patient Id</th>
+          <th scope="col">Well</th>
           <th scope="col">Barcode</th>
+          <th scope="col">Type</th>
           <th scope="col" colspan="2">FAM</th>
           <th scope="col" colspan="2">Cal Red 210</th>
           <th scope="col" colspan="2">Quasar 670</th>
           <th scope="col" colspan="2">HEX</th>
           <th scope="col">Auto Interpretation</th>
+          <th scope="col">Comments</th>
         </tr>
         <tr>
+          <th scope="col"></th>
+          <th scope="col"></th>
+          <th scope="col"></th>
+          <th scope="col"></th>
           <th scope="col"></th>
           <th scope="col"></th>
           <th scope="col"></th>
@@ -77,6 +86,7 @@
           <th scope="col">C(t)</th>
           <th scope="col">IC</th>
           <th scope="col">C(t)</th>
+          <th scope="col"></th>
           <th scope="col"></th>
         </tr>
       </thead>
