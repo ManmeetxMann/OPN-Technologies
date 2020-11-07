@@ -79,18 +79,7 @@ class AdminController implements IControllerBase {
         return acc
       }, {})
 
-      const notAgainData = []
-      const againData = []
-
-      requestData.results.forEach(({sendAgain, ...row}) => {
-        if (barcodeCounts[row.barCode] === 1) {
-          if (sendAgain) {
-            againData.push(row)
-          } else {
-            notAgainData.push(row)
-          }
-        }
-      })
+      const notFoundBarcodes = []
 
       const appointmentsByBarCode = (
         await this.appoinmentService.getAppoinmentByDate(requestData.from, requestData.to)
@@ -99,33 +88,35 @@ class AdminController implements IControllerBase {
         return acc
       }, {})
 
-      const notFoundBarcodes = []
+      await Promise.all(
+        requestData.results.map(async ({sendAgain, ...row}) => {
+          if (barcodeCounts[row.barCode] === 1) {
+            if (sendAgain) {
+              const testResults = await this.testResultsService.getResults(row.barCode)
+              if (!testResults) {
+                throw new ResourceNotFoundException(
+                  'Something wend wrong. Results are not available.',
+                )
+              }
+              await this.testResultsService.sendTestResults({...testResults})
+            } else {
+              const currentAppointment = appointmentsByBarCode[row.barCode]
+              if (!currentAppointment) {
+                notFoundBarcodes.push(row)
+                return
+              }
+              await this.testResultsService.sendTestResults({...row, ...currentAppointment})
+              await this.testResultsService.saveResults({
+                ...row,
+                ...currentAppointment,
+                appointmentId: currentAppointment.appointmentId,
+                id: row.barCode,
+              })
+            }
+          }
+        }),
+      )
 
-      await Promise.all(
-        notAgainData.map(async (row) => {
-          const currentAppointment = appointmentsByBarCode[row.barCode]
-          if (!currentAppointment) {
-            notFoundBarcodes.push(row)
-            return
-          }
-          await this.testResultsService.sendTestResults({...row, ...currentAppointment})
-          await this.testResultsService.saveResults({
-            ...row,
-            ...currentAppointment,
-            appointmentId: currentAppointment.appointmentId,
-            id: row.barCode,
-          })
-        }),
-      )
-      await Promise.all(
-        againData.map(async (row) => {
-          const testResults = await this.testResultsService.getResults(row.barCode)
-          if (!testResults) {
-            throw new ResourceNotFoundException('Something wend wrong. Results are not available.')
-          }
-          await this.testResultsService.sendTestResults({...testResults})
-        }),
-      )
       res.json(
         actionSucceed({
           failedRows: notFoundBarcodes,
