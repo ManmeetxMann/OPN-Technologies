@@ -92,7 +92,7 @@ class AdminController implements IControllerBase {
         }
       })
 
-      const appointments = (
+      const appointmentsByBarCode = (
         await this.appoinmentService.getAppoinmentByDate(requestData.from, requestData.to)
       ).reduce((acc, {barCode, ...currentValue}) => {
         acc[barCode] = currentValue
@@ -103,7 +103,7 @@ class AdminController implements IControllerBase {
 
       await Promise.all(
         notAgainData.map(async (row) => {
-          const currentAppointment = appointments[row.barCode]
+          const currentAppointment = appointmentsByBarCode[row.barCode]
           if (!currentAppointment) {
             notFoundBarcodes.push(row)
             return

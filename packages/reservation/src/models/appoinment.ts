@@ -103,7 +103,7 @@ export type TestResultsDBModelResponse = TestResultsDBModel & {
 export type TestResultsDTOForEmail = TestResultsBase & AppointmentBase
 
 export type SendAndSaveTestResultsRequest = {
-  results?: TestResultsAgainRequest[]
+  results: TestResultsAgainRequest[]
   from: string
   to: string
 }

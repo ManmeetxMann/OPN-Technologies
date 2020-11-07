@@ -1,10 +1,11 @@
-import {body, check, validationResult} from 'express-validator'
+import {body, check, ValidationChain, validationResult} from 'express-validator'
+import {NextFunction, Request, Response} from 'express'
 
 export default {
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  validate: (validations) => {
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    return async (req, res, next) => {
+  validate: (
+    validations: ValidationChain[],
+  ): ((req: Request, res: Response, next: NextFunction) => Promise<void>) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
       await Promise.all(validations.map((validation) => validation.run(req)))
 
       const errors = validationResult(req)
@@ -15,7 +16,7 @@ export default {
       res.status(400).json({errors: errors.array()})
     }
   },
-  csvValidation: (): unknown[] => {
+  csvValidation: (): ValidationChain[] => {
     return [
       body('hexCt').isNumeric().withMessage('must be numeric'),
       body('hexCt')
@@ -32,7 +33,7 @@ export default {
     ]
   },
 
-  csvBulkValidation: (): unknown[] => {
+  csvBulkValidation: (): ValidationChain[] => {
     return [
       check('results.*.hexCt')
         .custom((value) => {
