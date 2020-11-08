@@ -76,16 +76,18 @@ abstract class AcuityScheduling {
   private customFieldsToAppoinment(
     appointment: AppointmentAcuityResponse,
   ): AppointmentAcuityResponse {
-    appointment.forms.forEach((form) => {
-      form.values.some((field) => {
-        if (field.fieldID == Number(Config.get('ACUITY_FIELD_DATE_OF_BIRTH'))) {
-          appointment.dateOfBirth = field.value
-        }
-        if (field.fieldID == Number(Config.get('ACUITY_FIELD_NURSE_NAME'))) {
-          appointment.registeredNursePractitioner = field.value
-        }
+    if (Array.isArray(appointment.forms)) {
+      appointment.forms.forEach((form) => {
+        form.values.some((field) => {
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_DATE_OF_BIRTH'))) {
+            appointment.dateOfBirth = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_NURSE_NAME'))) {
+            appointment.registeredNursePractitioner = field.value
+          }
+        })
       })
-    })
+    }
     return appointment
   }
 
