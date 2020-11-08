@@ -7,10 +7,15 @@ import {serverTimestamp} from '../utils/times'
 
 export enum DataModelFieldMapOperatorType {
   Equals = '==',
+  NotEquals = '!=',
   GreatOrEqual = '>=',
-  Great = '>',
   LessOrEqual = '<=',
   ArrayContains = 'array-contains',
+  Greater = '>',
+  Less = '<',
+  In = 'in',
+  NotIn = 'not-in',
+  ArrayContainsAny = 'array-contains-any',
 }
 
 export type DataModelFieldMap = {

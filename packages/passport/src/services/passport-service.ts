@@ -123,7 +123,7 @@ export class PassportService {
         {
           map: '/',
           key: 'validUntil',
-          operator: DataModelFieldMapOperatorType.Great,
+          operator: DataModelFieldMapOperatorType.Greater,
           value: moment(now()).tz(timeZone).toDate(),
         },
       ])
