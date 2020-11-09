@@ -8,6 +8,7 @@ export class IdentifiersModel extends DataModel<IdentifiersSchema> {
     {id: 'status', count: 10000},
     {id: 'access', count: 10000},
     {id: 'attestation', count: 10000},
+    {id: 'report', count: 10000},
   ]
 
   /**
