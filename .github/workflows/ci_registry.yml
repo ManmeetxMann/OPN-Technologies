@@ -88,6 +88,7 @@ jobs:
           PDF_GENERATION_EMAIL_THRESHOLD=100
           GAE_LOCATION=northamerica-northeast1
           QUEUE_NAME=longrunningtasks
+          REPORT_BUCKET_NAME=reports
 
           # Accuity
           ACUITY_SCHEDULER_USERNAME=${{ secrets.ACUITY_SCHEDULER_USERNAME }}

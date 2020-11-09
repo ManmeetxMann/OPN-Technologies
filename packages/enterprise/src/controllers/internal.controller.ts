@@ -5,6 +5,7 @@ import {AdminApprovalService} from '../../../common/src/service/user/admin-servi
 import {PdfService} from '../../../common/src/service/reports/pdf'
 
 import {EmailService} from '../services/email-service'
+import UploadService from '../services/upload-service'
 import {OrganizationService} from '../services/organization-service'
 import {ReportService} from '../services/report-service'
 import {InternalAdminApprovalCreateRequest} from '../models/internal-request'
@@ -32,6 +33,7 @@ class InternalController implements IControllerBase {
   private reportService = new ReportService()
   private questionnaireService = new QuestionnaireService()
   private emailService = new EmailService()
+  private uploadService = new UploadService()
 
   constructor() {
     this.initRoutes()
@@ -112,9 +114,10 @@ class InternalController implements IControllerBase {
         [],
       )
       console.log(`generating pdf with ${content.length} elements`)
-      const pdfB64 = await this.pdfService.generatePDFBase64(content, tableLayouts)
-      console.log('sending pdf')
-      await this.emailService.sendGroupReport(email, name, pdfB64)
+      const pdfStream = await this.pdfService.generatePDFStream(content, tableLayouts)
+      console.log('uploading pdf')
+      const filePath = await this.uploadService.uploadReport('someFilename.pdf', pdfStream)
+      await this.emailService.sendGroupReport(email, name, filePath)
       res.sendStatus(200)
     } catch (error) {
       next(error)

@@ -24,6 +24,7 @@
         "@firestore-simple/admin": "^7.0.2",
         "@google-cloud/firestore": "^4.2.0",
         "@google-cloud/pubsub": "^2.3.0",
+        "@google-cloud/storage": "^5.4.0",
         "@google-cloud/tasks": "^2.1.2",
         "cors": "^2.8.5",
         "crypto": "^1.0.1",
