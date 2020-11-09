@@ -44,7 +44,6 @@ export default class {
         .on('end', resolve)
         .on('error', reject)
     }).then(() => {
-      console.log('resolved')
       return (
         file
           .makePublic()
