@@ -116,7 +116,7 @@ class InternalController implements IControllerBase {
       console.log(`generating pdf with ${content.length} elements`)
       const pdfStream = await this.pdfService.generatePDFStream(content, tableLayouts)
       console.log('uploading pdf')
-      const filePath = await this.uploadService.uploadReport('someFilename.pdf', pdfStream)
+      const filePath = await this.uploadService.uploadReport(pdfStream)
       console.log('sending email')
       await this.emailService.sendGroupReport(email, name, filePath)
       res.sendStatus(200)
