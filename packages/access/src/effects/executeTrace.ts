@@ -1,6 +1,6 @@
 import moment from 'moment-timezone'
 
-import TraceRepository from '../repository/trace.repository'
+import TraceRepository, {DailyReportRepository} from '../repository/trace.repository'
 import type {ExposureReport, StopStatus} from '../models/trace'
 import type {SinglePersonAccess} from '../models/attendance'
 import DataStore from '../../../common/src/data/datastore'
@@ -11,7 +11,10 @@ import type {Answers} from './exposureTemplate'
 import {send} from '../../../common/src/service/messaging/send-email'
 import {Config} from '../../../common/src/utils/config'
 
-import {OrganizationModel} from '../../../enterprise/src/repository/organization.repository'
+import {
+  OrganizationModel,
+  AllLocationsModel,
+} from '../../../enterprise/src/repository/organization.repository'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
@@ -60,8 +63,10 @@ const overlap = (
 
 // When triggered, this creates a trace
 export default class TraceListener {
-  repo: TraceRepository
+  traceRepo: TraceRepository
+  reportRepo: DailyReportRepository
   orgRepo: OrganizationModel
+  locRepo: AllLocationsModel
   userApprovalRepo: AdminApprovalModel
   userRepo: UserModel
   questionnaireService: QuestionnaireService
@@ -69,7 +74,8 @@ export default class TraceListener {
   userService: UserService
   constructor() {
     const dataStore = new DataStore()
-    this.repo = new TraceRepository(dataStore)
+    this.traceRepo = new TraceRepository(dataStore)
+    this.reportRepo = new DailyReportRepository(dataStore)
     this.orgRepo = new OrganizationModel(dataStore)
     this.userApprovalRepo = new AdminApprovalModel(dataStore)
     this.userRepo = new UserModel(dataStore)
@@ -113,7 +119,7 @@ export default class TraceListener {
     const earliestDate = moment(startTime).tz(timeZone).format('YYYY-MM-DD')
     const latestDate = moment(endTime).tz(timeZone).format('YYYY-MM-DD')
 
-    const accesses = await this.repo.getAccesses(userId, earliestDate, latestDate)
+    const accesses = await this.reportRepo.getAccesses(userId, earliestDate, latestDate)
     const accessLookup = accesses.reduce((accessesByLocation, access): AccessLookup => {
       if (!accessesByLocation[access.locationId]) {
         accessesByLocation[access.locationId] = {}
@@ -122,7 +128,7 @@ export default class TraceListener {
       return accessesByLocation
     }, {})
     // promises resolving with the org ID for the given location
-    const locationPromises: Record<string, ReturnType<OrganizationModel['getLocation']>> = {}
+    const locationPromises: Record<string, ReturnType<AllLocationsModel['getLocation']>> = {}
     const impactedUsersAndDependants = new Set<string>()
 
     const result = await Promise.all(
@@ -188,7 +194,7 @@ export default class TraceListener {
 
         if (!locationPromises[dailyReport.locationId]) {
           // just push the promise so we only query once per location
-          locationPromises[dailyReport.locationId] = this.orgRepo.getLocation(
+          locationPromises[dailyReport.locationId] = this.locRepo.getLocation(
             dailyReport.locationId,
           )
         }
@@ -202,7 +208,7 @@ export default class TraceListener {
         return result
       }),
     )
-    this.repo.saveTrace(
+    this.traceRepo.saveTrace(
       result,
       userId,
       includesGuardian,
