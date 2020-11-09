@@ -37,6 +37,7 @@
         "moment-timezone": "^0.5.31",
         "node-fetch": "^2.6.0",
         "pdfmake": "^0.1.68",
+        "@types/pdfmake": "^0.1.16",
         "pug": "^3.0.0"
     },
     "devDependencies": {
