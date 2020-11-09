@@ -17,6 +17,7 @@ import {
   OrganizationLocationModel,
   OrganizationModel,
   OrganizationUsersGroupModel,
+  AllLocationsModel,
 } from '../repository/organization.repository'
 
 import * as _ from 'lodash'
@@ -30,6 +31,7 @@ const HANDLE_LEGACY_LOCATIONS =
 export class OrganizationService {
   private dataStore = new DataStore()
   private organizationRepository = new OrganizationModel(this.dataStore)
+  private allLocationsRepo = new AllLocationsModel(this.dataStore)
   private organizationKeySequenceRepository = new OrganizationKeySequenceModel(this.dataStore)
 
   create(organization: Organization): Promise<Organization> {
@@ -157,8 +159,8 @@ export class OrganizationService {
   }
 
   // includes organization id
-  async getLocationById(locationId: string): ReturnType<OrganizationModel['getLocation']> {
-    const location = await this.organizationRepository.getLocation(locationId)
+  async getLocationById(locationId: string): ReturnType<AllLocationsModel['getLocation']> {
+    const location = await this.allLocationsRepo.getLocation(locationId)
     if (!location) {
       throw new ResourceNotFoundException(`Cannot find location for location-id [${locationId}]`)
     }

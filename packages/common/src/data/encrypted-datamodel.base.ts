@@ -5,7 +5,11 @@ import {serverTimestamp} from '../utils/times'
 import {EncryptionService} from '../service/encryption/encryption-service'
 import {DataModelFieldMap, DataModelOrdering} from './datamodel.base'
 
-abstract class EncryptedDataModel<T extends HasId> {
+import {ForbiddenException} from '../../../common/src/exceptions/forbidden-exception'
+
+import {Collection} from '@firestore-simple/admin'
+
+abstract class EncryptedDataModel<T extends HasId> implements IDataModel<T> {
   abstract readonly rootPath: string
   private getRootPath() {
     // give access in constructor
@@ -30,11 +34,13 @@ abstract class EncryptedDataModel<T extends HasId> {
     this.dataModel = new InnerModel(dataStore)
   }
 
-  /**
-   * @override Adds data to the collection
-   * @param data Data to add - id does not need to be present.
-   * @param subPath path to the subcollection where we add data. rootPath if left blank
-   */
+  initialize = this.dataModel.initialize
+  delete = this.dataModel.delete
+  count = this.dataModel.count
+  collection(): Collection<T> {
+    throw new ForbiddenException('Cannot access encrypted collections externally')
+  }
+
   add(data: OptionalIdStorable<T>, subPath = ''): Promise<T> {
     const dataToAdd = (this.encryptDocument(data) as unknown) as OptionalIdStorable<T>
     return this.dataModel.add(dataToAdd, subPath)
@@ -247,6 +253,15 @@ abstract class EncryptedDataModel<T extends HasId> {
     return this.dataModel
       .findWhereEqualInMap(processedValues, order, subPath)
       .then((docs: T[]) => this.decryptDocuments(docs))
+  }
+
+  increment(id: string, fieldName: string, byCount = 1, subPath = ''): Promise<T> {
+    if (this.isEncryptedField(fieldName)) {
+      throw new ForbiddenException(`Cannot increment encrypted field ${this.rootPath}/${fieldName}`)
+    }
+    return this.dataModel
+      .increment(id, fieldName, byCount, subPath)
+      .then((doc: T) => this.decryptDocument((doc as unknown) as OptionalIdStorable<T>))
   }
 
   encryptDocument(data: OptionalIdStorable<T>): T {
