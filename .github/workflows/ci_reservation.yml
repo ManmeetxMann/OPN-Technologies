@@ -97,6 +97,9 @@ jobs:
           ACUITY_FIELD_BARCODE=${{ secrets.ACUITY_FIELD_BARCODE }}
           ACUITY_FIELD_DATE_OF_BIRTH=${{ secrets.ACUITY_FIELD_DATE_OF_BIRTH }}
           ACUITY_FIELD_NURSE_NAME=${{ secrets.ACUITY_FIELD_NURSE_NAME }}
+
+          # Test Results
+          TEST_RESULT_REQ_DOCTOR=Peter M. Blecher, M.D., C.M.
         write-mode: overwrite
     - run: npm run cd-deploy-reservation
     - run: npm run cd-build-apidocs
