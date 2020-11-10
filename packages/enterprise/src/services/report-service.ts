@@ -350,10 +350,10 @@ export class ReportService {
       } else {
         const entering = enteringAccesses[enterIndex]
         const exiting = exitingAccesses[exitIndex]
-        const enterTime = new Date(
+        const enterTime = safeTimestamp(
           dependantId ? entering.dependants[dependantId].enteredAt : entering.enteredAt,
         )
-        const exitTime = new Date(
+        const exitTime = safeTimestamp(
           dependantId ? exiting.dependants[dependantId].exitAt : exiting.exitAt,
         )
         if (enterTime > exitTime) {
