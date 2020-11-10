@@ -443,8 +443,12 @@ export class ReportService {
             yes &&
             attestation.answers[key]['2'] &&
             moment(attestation.answers[key]['2']).tz(timeZone).format(dateFormat)
+          const question =
+            questionnaire?.questions[
+              Object.keys(questionnaire.questions).find((qKey) => parseInt(qKey) === parseInt(key))
+            ]?.value ?? `Question ${key}`
           return {
-            question: (questionnaire?.questions[key]?.value ?? `Question ${key}`) as string,
+            question: question as string,
             response: yes ? dateOfTest || 'Yes' : 'No',
           }
         }),
