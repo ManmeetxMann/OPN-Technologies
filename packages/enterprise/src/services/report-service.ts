@@ -51,6 +51,34 @@ const toDateFormat = (timestamp: string): string =>
 const toDateTimeFormat = (timestamp: string): string =>
   moment(fixTimestamp(timestamp)).tz(timeZone).format('h:mm A MMMM D, YYYY')
 
+const timestampToDateTimeFormat = (
+  timestamp: string | Date | FirebaseFirestore.FieldValue,
+): string => {
+  if (typeof timestamp === 'string') {
+    return toDateTimeFormat(timestamp)
+  }
+  if (timestamp instanceof Date) {
+    return toDateTimeFormat(timestamp.toISOString())
+  }
+  if (timestamp instanceof FirebaseFirestore.Timestamp) {
+    return toDateTimeFormat(timestamp.toDate().toISOString())
+  }
+  throw `${timestamp} is not a date, string, or Timestamp`
+}
+
+const timestampToDateFormat = (timestamp: string | Date | FirebaseFirestore.FieldValue): string => {
+  if (typeof timestamp === 'string') {
+    return toDateFormat(timestamp)
+  }
+  if (timestamp instanceof Date) {
+    return toDateFormat(timestamp.toISOString())
+  }
+  if (timestamp instanceof FirebaseFirestore.Timestamp) {
+    return toDateFormat(timestamp.toDate().toISOString())
+  }
+  throw `${timestamp} is not a date, string, or Timestamp`
+}
+
 type AugmentedDependant = UserDependant & {group: OrganizationGroup; status: PassportStatus}
 type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
 type Lookups = {
@@ -374,8 +402,7 @@ export class ReportService {
       if (addExit) {
         const access = exitingAccesses[exitIndex]
         const location = locationsLookup[access.locationId]
-        const time = toDateTimeFormat(
-          //@ts-ignore dependant dates are actually strings
+        const time = timestampToDateTimeFormat(
           dependantId ? access.dependants[dependantId].exitAt : access.exitAt,
         )
         printableAccessHistory.push({
@@ -387,8 +414,7 @@ export class ReportService {
       } else {
         const access = enteringAccesses[enterIndex]
         const location = locationsLookup[access.locationId]
-        const time = toDateTimeFormat(
-          // @ts-ignore this is an ISO string
+        const time = timestampToDateTimeFormat(
           dependantId ? access.dependants[dependantId].enteredAt : access.enteredAt,
         )
         printableAccessHistory.push({
@@ -415,10 +441,8 @@ export class ReportService {
           ? groupsLookup[overlap.dependant.groupId]
           : usersLookup[overlap.userId].group
         )?.name ?? '',
-      // @ts-ignore this is a timestamp, not a date
-      start: toDateTimeFormat(overlap.start.toDate().toISOString()),
-      // @ts-ignore this is a timestamp, not a date
-      end: toDateTimeFormat(overlap.end.toDate().toISOString()),
+      start: timestampToDateTimeFormat(overlap.start),
+      end: timestampToDateTimeFormat(overlap.end),
     }))
     // perpetrators
     const printableExposures = exposureOverlaps.map((overlap) => ({
@@ -435,10 +459,8 @@ export class ReportService {
           ? dependantsLookup[overlap.sourceDependantId]
           : usersLookup[overlap.sourceUserId]
         )?.group.name ?? '',
-      // @ts-ignore this is a timestamp, not a date
-      start: toDateTimeFormat(overlap.start.toDate().toISOString()),
-      // @ts-ignore this is a timestamp, not a date
-      end: toDateTimeFormat(overlap.end.toDate().toISOString()),
+      start: timestampToDateTimeFormat(overlap.start),
+      end: timestampToDateTimeFormat(overlap.end),
     }))
 
     const printableAttestations = attestations.map((attestation) => {
@@ -459,8 +481,7 @@ export class ReportService {
             response: yes ? dateOfTest || 'Yes' : 'No',
           }
         }),
-        // @ts-ignore timestamp, not string
-        time: toDateFormat(attestation.attestationTime.toDate().toISOString()),
+        time: timestampToDateFormat(attestation.attestationTime),
         status: attestation.status,
       }
     })
@@ -491,7 +512,7 @@ export class ReportService {
       userGroup: group.name,
       userName: `${named.firstName} ${named.lastName}`,
       guardianName: namedGuardian ? `${namedGuardian.firstName} ${namedGuardian.lastName}` : null,
-      generationDate: toDateFormat(now().toISOString()),
+      generationDate: timestampToDateFormat(now()),
       reportDate: `${toDateFormat(from)} - ${toDateFormat(to)}`,
     })
   }
