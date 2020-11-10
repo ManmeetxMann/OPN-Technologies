@@ -20,7 +20,6 @@ abstract class EncryptedDataModel<T extends HasId> implements IDataModel<T> {
 
   private encryptionService: EncryptionService
   private dataModel: IDataModel<T>
-  private dataStore: DataStore
 
   constructor(dataStore: DataStore) {
     this.encryptionService = new EncryptionService()
@@ -30,7 +29,6 @@ abstract class EncryptedDataModel<T extends HasId> implements IDataModel<T> {
       rootPath = rootPath
       zeroSet = []
     }
-    this.dataStore = dataStore
     this.dataModel = new InnerModel(dataStore)
   }
 
