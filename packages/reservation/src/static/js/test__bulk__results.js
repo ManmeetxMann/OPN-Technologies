@@ -56,6 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const sendButtonBulk = document.getElementById('sendButtonBulk')
   const errorBulkModal = document.getElementById('errorBulkModal')
   const errorBulkContent = document.getElementById('errorBulkContent')
+  const successModal = document.getElementById('successModal')
+  const successModalContent = document.getElementById('successModalContent')
+  const successModalClose = document.getElementById('successModalClose')
+
+  successModalClose.addEventListener('click', () => closeModal(successModal))
 
   csvFileInput.addEventListener('change', (e) => {
     const file = e.target.files[0]
@@ -191,18 +196,24 @@ document.addEventListener('DOMContentLoaded', () => {
         errorBulkContent.appendChild(errrorElem)
       }
     } else {
-      if (responseData.data.failedRows.length) {
-        openModal(errorBulkModal)
-        errorBulkContent.innerHTML =
-          'Failed rows: (Appointment not found)' +
-          responseData.data.failedRows
-            .map(
-              (row) => `
-                <div>${row.barCode}</div>
-              `,
-            )
-            .join('')
+      let content = ''
+      const succeedRows = dataSentBackend.filter((row) => {
+        return !responseData.data.failedRows.find((row2) => row2.barCode === row.barCode)
+      })
+      openModal(successModal)
+
+      if (succeedRows.length) {
+        const succeedRowsElem = succeedRows.map((row) => `<div>${row.barCode}</div>`).join('')
+        content += `Succeed rows: ${succeedRowsElem}<br/>`
       }
+      if (responseData.data.failedRows.length) {
+        const failedRows = responseData.data.failedRows
+          .map((row) => `<div>${row.barCode}</div>`)
+          .join('')
+        content += `Failed rows: (Appointment not found) ${failedRows}`
+      }
+
+      successModalContent.innerHTML = content
     }
   })
 })
