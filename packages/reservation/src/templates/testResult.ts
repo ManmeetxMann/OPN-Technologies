@@ -152,7 +152,7 @@ const generate = (
               },
               {
                 text:
-                  '\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 482-0042.',
+                  '\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 482-0042.\n\n',
               },
             ]
           : [
