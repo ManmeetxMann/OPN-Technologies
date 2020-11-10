@@ -1,5 +1,6 @@
 import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
+import {safeTimestamp, GenericTimestamp} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {User, UserDependant} from '../../../common/src/data/user'
 import {Range} from '../../../common/src/types/range'
@@ -31,52 +32,14 @@ import moment from 'moment'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
-// some timestamps are invalid and the "day" part is actually
-// the day of the year. This function accepts a (valid or invalid)
-// timestamp and returns a valid timestamp
-const fixTimestamp = (raw: string): string => {
-  if (!isNaN(new Date(raw).valueOf())) {
-    // raw is parseable on its own, no need to correct
-    return raw
-  }
-  console.warn(`Saw invalid date ${raw}`)
-  const [datePart, timePart] = raw.split('T')
-  const [year, month, dayOfYear] = datePart.split('-')
-  const date = moment().year(parseInt(year)).dayOfYear(parseInt(dayOfYear))
-  return `${year}-${month}-${date.format('DD')}T${timePart}`
+const toDateFormat = (timestamp: GenericTimestamp): string => {
+  const date = safeTimestamp(timestamp)
+  return moment(date).tz(timeZone).format('MMMM D, YYYY')
 }
 
-const toDateFormat = (timestamp: string): string =>
-  moment(fixTimestamp(timestamp)).tz(timeZone).format('MMMM D, YYYY')
-const toDateTimeFormat = (timestamp: string): string =>
-  moment(fixTimestamp(timestamp)).tz(timeZone).format('h:mm A MMMM D, YYYY')
-
-const timestampToDateTimeFormat = (
-  timestamp: string | Date | FirebaseFirestore.FieldValue,
-): string => {
-  if (typeof timestamp === 'string') {
-    return toDateTimeFormat(timestamp)
-  }
-  if (timestamp instanceof Date) {
-    return toDateTimeFormat(timestamp.toISOString())
-  }
-  if (timestamp instanceof FirebaseFirestore.Timestamp) {
-    return toDateTimeFormat(timestamp.toDate().toISOString())
-  }
-  throw `${timestamp} is not a date, string, or Timestamp`
-}
-
-const timestampToDateFormat = (timestamp: string | Date | FirebaseFirestore.FieldValue): string => {
-  if (typeof timestamp === 'string') {
-    return toDateFormat(timestamp)
-  }
-  if (timestamp instanceof Date) {
-    return toDateFormat(timestamp.toISOString())
-  }
-  if (timestamp instanceof FirebaseFirestore.Timestamp) {
-    return toDateFormat(timestamp.toDate().toISOString())
-  }
-  throw `${timestamp} is not a date, string, or Timestamp`
+const toDateTimeFormat = (timestamp: GenericTimestamp): string => {
+  const date = safeTimestamp(timestamp)
+  return moment(date).tz(timeZone).format('h:mm A MMMM D, YYYY')
 }
 
 type AugmentedDependant = UserDependant & {group: OrganizationGroup; status: PassportStatus}
@@ -388,11 +351,9 @@ export class ReportService {
         const entering = enteringAccesses[enterIndex]
         const exiting = exitingAccesses[exitIndex]
         const enterTime = new Date(
-          // @ts-ignore dependant dates are actually strings
           dependantId ? entering.dependants[dependantId].enteredAt : entering.enteredAt,
         )
         const exitTime = new Date(
-          // @ts-ignore dependant dates are actually strings
           dependantId ? exiting.dependants[dependantId].exitAt : exiting.exitAt,
         )
         if (enterTime > exitTime) {
@@ -402,7 +363,7 @@ export class ReportService {
       if (addExit) {
         const access = exitingAccesses[exitIndex]
         const location = locationsLookup[access.locationId]
-        const time = timestampToDateTimeFormat(
+        const time = toDateTimeFormat(
           dependantId ? access.dependants[dependantId].exitAt : access.exitAt,
         )
         printableAccessHistory.push({
@@ -414,7 +375,7 @@ export class ReportService {
       } else {
         const access = enteringAccesses[enterIndex]
         const location = locationsLookup[access.locationId]
-        const time = timestampToDateTimeFormat(
+        const time = toDateTimeFormat(
           dependantId ? access.dependants[dependantId].enteredAt : access.enteredAt,
         )
         printableAccessHistory.push({
@@ -441,8 +402,8 @@ export class ReportService {
           ? groupsLookup[overlap.dependant.groupId]
           : usersLookup[overlap.userId].group
         )?.name ?? '',
-      start: timestampToDateTimeFormat(overlap.start),
-      end: timestampToDateTimeFormat(overlap.end),
+      start: toDateTimeFormat(overlap.start),
+      end: toDateTimeFormat(overlap.end),
     }))
     // perpetrators
     const printableExposures = exposureOverlaps.map((overlap) => ({
@@ -459,8 +420,8 @@ export class ReportService {
           ? dependantsLookup[overlap.sourceDependantId]
           : usersLookup[overlap.sourceUserId]
         )?.group.name ?? '',
-      start: timestampToDateTimeFormat(overlap.start),
-      end: timestampToDateTimeFormat(overlap.end),
+      start: toDateTimeFormat(overlap.start),
+      end: toDateTimeFormat(overlap.end),
     }))
 
     const printableAttestations = attestations.map((attestation) => {
@@ -481,7 +442,7 @@ export class ReportService {
             response: yes ? dateOfTest || 'Yes' : 'No',
           }
         }),
-        time: timestampToDateFormat(attestation.attestationTime),
+        time: toDateFormat(attestation.attestationTime),
         status: attestation.status,
       }
     })
@@ -512,7 +473,7 @@ export class ReportService {
       userGroup: group.name,
       userName: `${named.firstName} ${named.lastName}`,
       guardianName: namedGuardian ? `${namedGuardian.firstName} ${namedGuardian.lastName}` : null,
-      generationDate: timestampToDateFormat(now()),
+      generationDate: toDateFormat(now()),
       reportDate: `${toDateFormat(from)} - ${toDateFormat(to)}`,
     })
   }
@@ -652,10 +613,8 @@ export class ReportService {
       }
     })
     enteringAccesses.sort((a, b) => {
-      // @ts-ignore timestamps are actually strings
-      const aEnter = new Date(parentUserId ? a.dependants[userId].enteredAt : a.enteredAt)
-      // @ts-ignore timestamps are actually strings
-      const bEnter = new Date(parentUserId ? b.dependants[userId].enteredAt : b.enteredAt)
+      const aEnter = safeTimestamp(parentUserId ? a.dependants[userId].enteredAt : a.enteredAt)
+      const bEnter = safeTimestamp(parentUserId ? b.dependants[userId].enteredAt : b.enteredAt)
       if (aEnter < bEnter) {
         return -1
       } else if (bEnter < aEnter) {
@@ -664,10 +623,8 @@ export class ReportService {
       return 0
     })
     exitingAccesses.sort((a, b) => {
-      // @ts-ignore timestamps are actually strings
-      const aExit = new Date(parentUserId ? a.dependants[userId].exitAt : a.exitAt)
-      // @ts-ignore timestamps are actually strings
-      const bExit = new Date(parentUserId ? b.dependants[userId].exitAt : b.exitAt)
+      const aExit = safeTimestamp(parentUserId ? a.dependants[userId].exitAt : a.exitAt)
+      const bExit = safeTimestamp(parentUserId ? b.dependants[userId].exitAt : b.exitAt)
       if (aExit < bExit) {
         return -1
       } else if (bExit < aExit) {
