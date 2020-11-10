@@ -139,7 +139,7 @@ const generate = (
               },
               {
                 text:
-                  ' for the presence of SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness.  A positive test means that the virus was likely present in the sample you provided. The probability of a false positive is low.\n\n This result, along with your name and contact information have been forwarded to Public Health as per requirement by law, and you may be contacted. You should follow the Public Health guidelines for \'‘Have COVID-19’\', which can be found here: ',
+                  " for the presence of SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness.  A positive test means that the virus was likely present in the sample you provided. The probability of a false positive is low.\n\n This result, along with your name and contact information have been forwarded to Public Health as per requirement by law, and you may be contacted. You should follow the Public Health guidelines for '‘Have COVID-19’', which can be found here: ",
               },
               {
                 text:
