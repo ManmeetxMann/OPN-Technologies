@@ -22,7 +22,10 @@ export class AppoinmentService {
   }
 
   async getAppoinmentByDate(startDate: string, endDate: string): Promise<AppointmentDTO[]> {
-    const filters = {startDate, endDate}
+    const filters = {
+      minDate: startDate,
+      maxDate: endDate,
+    }
     return this.appoinmentSchedulerRepository
       .getManyAppointments(filters)
       .then((appoinment: AppointmentDBModel[]) => {

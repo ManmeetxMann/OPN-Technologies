@@ -105,13 +105,15 @@ class AdminController implements IControllerBase {
                 notFoundBarcodes.push(row)
                 return
               }
-              await this.testResultsService.sendTestResults({...row, ...currentAppointment})
-              await this.testResultsService.saveResults({
-                ...row,
-                ...currentAppointment,
-                appointmentId: currentAppointment.appointmentId,
-                id: row.barCode,
-              })
+              await Promise.all([
+                this.testResultsService.sendTestResults({...row, ...currentAppointment}),
+                this.testResultsService.saveResults({
+                  ...row,
+                  ...currentAppointment,
+                  appointmentId: currentAppointment.appointmentId,
+                  id: row.barCode,
+                }),
+              ])
             }
           }
         }),

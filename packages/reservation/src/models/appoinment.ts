@@ -44,8 +44,8 @@ export type AppointmentSearchRequest = {
 }
 
 export type AppointmentSearchByDateRequest = {
-  startDate: string
-  endDate: string
+  maxDate: string
+  minDate: string
 }
 
 export type AppoinmentBarCodeSequenceDBModel = {

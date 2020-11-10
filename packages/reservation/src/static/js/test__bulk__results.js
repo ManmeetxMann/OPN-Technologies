@@ -42,8 +42,8 @@ const headers = {
 document.addEventListener('DOMContentLoaded', () => {
   const bulkForm = document.getElementById('bulkSubmitResults')
   const {DateTime} = luxon
-  let from = DateTime.utc().toLocaleString()
-  let to = DateTime.utc().minus({days: 4}).toLocaleString()
+  let to = DateTime.utc().toLocaleString()
+  let from = DateTime.utc().minus({days: 4}).toLocaleString()
   let data
   if (!bulkForm) {
     return
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
           )
           if (data.length > 100) {
             openModal(errorBulkModal)
-            errorBulkContent.innerHTML = 'CSV File is invalid should be 15 columns'
+            errorBulkContent.innerHTML = 'CSV Rows cannot be more than 100'
             return
           }
         } catch (e) {
@@ -127,11 +127,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
   datesBefore.addEventListener('change', async (e) => {
-    from = DateTime.utc().toLocaleString()
-    to = DateTime.utc().minus({days: e.target.value}).toLocaleString()
+    to = DateTime.utc().toLocaleString()
+    from = DateTime.utc().minus({days: e.target.value}).toLocaleString()
   })
   sendButtonBulk.addEventListener('click', async (e) => {
     e.preventDefault()
+    if (!data) {
+      openModal(errorBulkModal)
+      errorBulkContent.innerHTML = 'You should upload CSV file before'
+      return
+    }
     const sendAgainData = [...document.getElementsByClassName('sendAgainCheckbox')]
       .filter((row) => !row.checked)
       .map((row) => row.getAttribute('data-index'))
@@ -184,6 +189,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const errrorElem = document.createElement('p')
         errrorElem.innerText = `Invalid request`
         errorBulkContent.appendChild(errrorElem)
+      }
+    } else {
+      if (responseData.data.failedRows.length) {
+        openModal(errorBulkModal)
+        errorBulkContent.innerHTML =
+          'Failed rows: (Appointment not found)' +
+          responseData.data.failedRows
+            .map(
+              (row) => `
+                <div>${row.barCode}</div>
+              `,
+            )
+            .join('')
       }
     }
   })
