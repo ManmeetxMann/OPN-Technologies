@@ -921,7 +921,6 @@ class OrganizationController implements IControllerBase {
         to,
         isParentUser ? null : userId,
       )
-
       // filter down to only the overlaps with the user we're interested in
       const relevantTraces = rawTraces
         .map((trace) => {
@@ -931,11 +930,11 @@ class OrganizationController implements IControllerBase {
                 isParentUser ? !overlap.sourceDependantId : overlap.sourceDependantId === userId,
               )
               .filter(
-                (overlapping) =>
+                (overlap) =>
                   //@ts-ignore these are timestamps, not strings
-                  moment(overlapping.end.toDate()).toISOString() >= from &&
+                  moment(overlap.end.toDate()) >= moment(from) &&
                   //@ts-ignore these are timestamps, not strings
-                  moment(overlapping.start.toDate()).toISOString() <= to,
+                  moment(overlap.start.toDate()) <= moment(to),
               )
             return {...exposure, overlapping}
           })
@@ -1061,11 +1060,11 @@ class OrganizationController implements IControllerBase {
                 (overlap) => (parentUserId ? overlap.dependant?.id : overlap.userId) === userId,
               )
               .filter(
-                (overlapping) =>
+                (overlap) =>
                   //@ts-ignore these are timestamps, not strings
-                  moment(overlapping.end.toDate()).toISOString() >= from &&
+                  moment(overlap.end.toDate()) >= moment(from) &&
                   //@ts-ignore these are timestamps, not strings
-                  moment(overlapping.start.toDate()).toISOString() <= to,
+                  moment(overlap.start.toDate()) <= moment(to),
               )
               .map((overlap) => ({
                 userId: overlap.sourceUserId,
