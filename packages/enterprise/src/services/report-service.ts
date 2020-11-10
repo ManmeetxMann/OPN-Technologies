@@ -416,9 +416,9 @@ export class ReportService {
           : usersLookup[overlap.userId].group
         )?.name ?? '',
       // @ts-ignore this is a timestamp, not a date
-      start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
+      start: toDateTimeFormat(overlap.start.toDate().toISOString()),
       // @ts-ignore this is a timestamp, not a date
-      end: moment(overlap.end.toDate()).tz(timeZone).format(dateTimeFormat),
+      end: toDateTimeFormat(overlap.end.toDate().toISOString()),
     }))
     // perpetrators
     const printableExposures = exposureOverlaps.map((overlap) => ({
@@ -436,9 +436,9 @@ export class ReportService {
           : usersLookup[overlap.sourceUserId]
         )?.group.name ?? '',
       // @ts-ignore this is a timestamp, not a date
-      start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
+      start: toDateTimeFormat(overlap.start.toDate().toISOString()),
       // @ts-ignore this is a timestamp, not a date
-      end: moment(overlap.end.toDate()).tz(timeZone).format(dateTimeFormat),
+      end: toDateTimeFormat(overlap.end.toDate().toISOString()),
     }))
 
     const printableAttestations = attestations.map((attestation) => {
@@ -460,7 +460,7 @@ export class ReportService {
           }
         }),
         // @ts-ignore timestamp, not string
-        time: moment(attestation.attestationTime.toDate()).tz(timeZone).format(dateTimeFormat),
+        time: toDateFormat(attestation.attestationTime.toDate().toISOString()),
         status: attestation.status,
       }
     })
