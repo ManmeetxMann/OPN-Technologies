@@ -689,6 +689,30 @@ components:
         - firstName
         - lastName
 
+    UserWithGroup:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        photo:
+          type: string
+          description: Photo URL
+        groupName:
+          type: string
+        memberId:
+          type: string
+          nullable: true
+      required:
+        - firstName
+        - lastName
+        - photo
+        - groupName
+
     CreateUserRequest:
       type: object
       properties:
@@ -1310,6 +1334,62 @@ components:
         data:
           type: object
           $ref: '#/components/schemas/FamilyStats'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfNfcTag:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          properties:
+            tagId:
+              type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfUserWithGroup:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          $ref: '#/components/schemas/UserWithGroup'
         status:
           type: object
           additionalProperties: false
@@ -2260,6 +2340,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfAdminProfile'
+
+  /enterprise/admin/api/v3/tags:
+    post:
+      description: Create NFC TagId
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                userId:
+                  type: string
+                organizationId:
+                  type: string
+              required:
+                - userId
+                - organizationId
+      responses:
+        '200':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfNfcTag'
+
+  /enterprise/admin/api/v3/tags/{tagId}/user:
+    get:
+      description: Get user details by tagId
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: tagId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUserWithGroup'
 
   /internal/group-report:
     post:
