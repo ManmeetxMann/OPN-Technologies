@@ -419,7 +419,7 @@ export class ReportService {
         (overlap.sourceDependantId
           ? dependantsLookup[overlap.sourceDependantId]
           : usersLookup[overlap.sourceUserId]
-        )?.group.name ?? '',
+        )?.group?.name ?? '',
       start: toDateTimeFormat(overlap.start),
       end: toDateTimeFormat(overlap.end),
     }))
@@ -542,7 +542,7 @@ export class ReportService {
       .map(
         (dependant): AugmentedDependant => ({
           ...dependant,
-          group: groupsByUserOrDependantId[dependant.id],
+          group: groupsByUserOrDependantId[dependant.id] ?? groupsById[dependant.groupId],
           status: statusesByUserOrDependantId[dependant.id],
         }),
       )
