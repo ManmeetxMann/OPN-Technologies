@@ -82,9 +82,7 @@ class AdminController implements IControllerBase {
 
     const tags = innerRouter().use(
       '/',
-      innerRouter()
-        .post('/tags', addNfcTagId)
-        .get('/tags/:tagId/user', getUserByTagId),
+      innerRouter().post('/tags', addNfcTagId).get('/tags/:tagId/user', getUserByTagId),
     )
 
     this.router.use(root, tags)
