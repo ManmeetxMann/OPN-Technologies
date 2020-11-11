@@ -48,6 +48,10 @@ export class TestResultsService {
     this.testResultsDBRepository.save(testResults)
   }
 
+  async resultAlreadySentMany(barCode: string[]): Promise<string[]> {
+    return (await this.testResultsDBRepository.findWhereIdIn(barCode)).map((test) => test.id)
+  }
+
   async resultAlreadySent(barCode: string): Promise<boolean> {
     return this.testResultsDBRepository.get(barCode).then((testResults) => !!testResults)
   }

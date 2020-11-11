@@ -19,7 +19,6 @@ abstract class AcuityScheduling {
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl =
       APIURL + '/api/v1/appointments?' + querystring.stringify(this.renameKeys(filters))
-
     return fetch(apiUrl, {
       method: 'get',
       headers: {
@@ -42,6 +41,9 @@ abstract class AcuityScheduling {
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_NURSE_NAME'))) {
             appointment.registeredNursePractitioner = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_BARCODE'))) {
+            appointment.barCode = field.value
           }
         })
       })

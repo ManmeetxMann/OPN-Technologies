@@ -7,6 +7,12 @@
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <!-- @TODO In future we can move this scsss file -->
     <style>
+      .error-alert {
+        display: none;
+      }
+      .error-alert p:nth-child(1) {
+        margin-bottom: 0;
+      }
       .show-modal {
         opacity: 1;
         display: block;
@@ -21,6 +27,13 @@
         border-left-color: transparent;
         animation: spin 1s linear infinite;
       }
+      .modal-content{
+        top: 50px;
+      }
+      .modal-body{
+        max-height: 400px;
+        overflow: auto;
+      }
       @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -28,7 +41,7 @@
     </style>
   </head>
   <body>
-  <div class="container mt-5" style="display: none">
+  <div class="container mt-5">
     <ul class="nav  nav-tabs">
       <li class="nav-item">
         <a class="nav-link {{#if sendSingleResultsTab }} active {{/if}}" href="/admin/page/send-single-results">Send Single Results</a>
@@ -40,9 +53,11 @@
   </div>
 
   {{{body}}}
+  <script src="https://moment.github.io/luxon/global/luxon.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
           integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
           crossorigin="anonymous"></script>
+  <script src="/static/js/shared.js"></script>
   <script src="/static/js/test_results.js"></script>
   <script src="/static/js/test__bulk__results.js"></script>
   </body>

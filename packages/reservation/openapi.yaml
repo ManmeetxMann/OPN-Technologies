@@ -31,13 +31,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -57,13 +57,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -141,7 +141,7 @@ paths:
                   type: string
               required:
                 - barCode
-              example: {barCode: "X0000000000"}
+              example: { barCode: "X0000000000" }
 
       responses:
         '200':
@@ -150,6 +150,60 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
+
+  /admin/api/v1/send-and-save-test-results-bulk:
+    post:
+      description: Save and Send Single Results
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                from:
+                  type: string
+                to:
+                  type: string
+                results:
+                  type: array
+                  items:
+                      type: object
+                      properties:
+                        barCode:
+                          type: string
+                        result:
+                          type: string
+                          enum:
+                            - Positive
+                            - Negative
+                        famEGene:
+                          type: string
+                        famCt:
+                          type: string
+                        calRed61RdRpGene:
+                          type: string
+                        calRed61Ct:
+                          type: string
+                        quasar670NGene:
+                          type: string
+                        quasar670Ct:
+                          type: string
+                        hexIC:
+                          type: string
+                        hexCt:
+                          type: string
+              required:
+                - from
+                - to
+                - results
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/html:
+              schema:
+                type: string
 
   /admin/api/v1/send-and-save-test-results:
     post:
@@ -219,6 +273,30 @@ paths:
                   type: string
               required:
                 - barCode
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /admin/api/v1/check-appointments:
+    post:
+      description: Check appointments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                barCodes:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - barCodes
       responses:
         '200':
           description: Successfully Return

@@ -21,6 +21,7 @@
     "dependencies": {
         "express": "^4.17.1",
         "express-handlebars": "5.1.0",
+        "express-validator": "^6.6.1",
         "pdfmake": "^0.1.68"
     },
     "devDependencies": {
