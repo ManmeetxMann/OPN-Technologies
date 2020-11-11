@@ -511,7 +511,7 @@ export class ReportService {
         _.flatten(pages),
       ),
       // N/10 queries
-      // don't need to look up dependant groups because it's stored on the depoendant doc
+      // don't need to look up dependant groups because it's stored on the dependant doc
       this.organizationService.getUsersGroups(organizationId, null, [...userIds]),
       cachedGroupsById ? null : this.organizationService.getGroups(organizationId),
       cachedLocationsById ? null : this.organizationService.getAllLocations(organizationId),
