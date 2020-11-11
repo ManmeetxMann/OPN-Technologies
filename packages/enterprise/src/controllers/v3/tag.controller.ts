@@ -54,7 +54,7 @@ const getUserByTagId: Handler = async (req, res, next): Promise<void> => {
 
     const [user, userGroup] = await Promise.all([
       userService.getById(tag.userId),
-      organizationService.getUserGroup(tag.organizationId, tag.userId)
+      organizationService.getUserGroup(tag.organizationId, tag.userId),
     ])
 
     res.json(
