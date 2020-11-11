@@ -5,6 +5,7 @@ import loggerMiddleware from '../../common/src/middlewares/logger'
 
 import InternalController from './controllers/internal.controller'
 import AdminController from './controllers/admin.controller'
+import AdminV3Controller from './controllers/v3/admin.controller'
 import UserController from './controllers/user.controller'
 import UserV3Controller from './controllers/v3/user.controller'
 import RootController from './controllers/root.controller'
@@ -21,6 +22,7 @@ const app = new App({
     new UserController(),
     new UserV3Controller(),
     new AdminController(),
+    new AdminV3Controller(),
     new InternalController(),
     new OrganizationController(),
   ],
