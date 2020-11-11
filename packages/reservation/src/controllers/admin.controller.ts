@@ -115,6 +115,8 @@ class AdminController implements IControllerBase {
                 }),
               ])
             }
+          } else {
+            notFoundBarcodes.push(row)
           }
         }),
       )

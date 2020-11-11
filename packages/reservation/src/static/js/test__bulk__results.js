@@ -60,7 +60,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const successModalContent = document.getElementById('successModalContent')
   const successModalClose = document.getElementById('successModalClose')
 
-  successModalClose.addEventListener('click', () => closeModal(successModal))
+  successModalClose.addEventListener('click', () => {
+    closeModal(successModal)
+    location.reload()
+  });
 
   csvFileInput.addEventListener('change', (e) => {
     const file = e.target.files[0]
@@ -210,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const failedRows = responseData.data.failedRows
           .map((row) => `<div>${row.barCode}</div>`)
           .join('')
-        content += `Failed rows: (Appointment not found) ${failedRows}`
+        content += `Failed rows: ${failedRows}`
       }
 
       successModalContent.innerHTML = content
