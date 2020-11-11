@@ -458,37 +458,30 @@ class OrganizationController implements IControllerBase {
     try {
       const {organizationId} = req.params
       const groups = await this.getGroups(organizationId)
-      for (const group of groups) {
-        const groupId = group.id
-        const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
-        for (const item of usersGroups) {
-          let user: User | UserDependant = null
-          const {id, userId, parentUserId} = item
-
-          // If parent is not null then userId represents a dependent id
-          if (parentUserId) {
-            const dependants = await this.userService.getAllDependants(parentUserId)
-            for (const dependant of dependants) {
-              // Look for dependent
-              if (dependant.id === userId) {
-                user = dependant
-                break
+      await Promise.all(
+        groups.map(async (group) => {
+          const groupId = group.id
+          const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
+          return Promise.all(
+            usersGroups.map(async (item) => {
+              // If parent is not null then userId represents a dependent id
+              const {id, userId, parentUserId} = item
+              const userExists = parentUserId
+                ? (await this.userService.getAllDependants(parentUserId)).some(
+                    (dependant) => dependant.id === userId,
+                  )
+                : !!(await this.userService.findOneSilently(userId))
+              // Let's see if we need to delete the user group membership
+              if (!userExists) {
+                console.log(
+                  `Deleting user-group [${id}] for user [${userId}] and [${parentUserId}] from group [${groupId}]`,
+                )
+                return this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
               }
-              // FYI: we may have not found it and thus user = null
-            }
-          } else {
-            user = await this.userService.findOneSilently(userId)
-          }
-
-          // Let's see if we need to delete the user group membership
-          if (!user) {
-            console.warn(
-              `Deleting user-group [${id}] for user [${userId}] and [${parentUserId}] from group [${groupId}]`,
-            )
-            await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
-          }
-        }
-      }
+            }),
+          )
+        }),
+      )
 
       res.json(actionSucceed())
     } catch (error) {
