@@ -542,6 +542,8 @@ export class ReportService {
       .map(
         (dependant): AugmentedDependant => ({
           ...dependant,
+          // if this dependant was not in dependantIds, we won't have retrieved their group membership
+          // and we'll have to use their groupId instead
           group: groupsByUserOrDependantId[dependant.id] ?? groupsById[dependant.groupId],
           status: statusesByUserOrDependantId[dependant.id],
         }),
