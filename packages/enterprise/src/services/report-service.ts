@@ -511,7 +511,8 @@ export class ReportService {
         _.flatten(pages),
       ),
       // N/10 queries
-      this.organizationService.getUsersGroups(organizationId, null, [...userIds, ...dependantIds]),
+      // don't need to look up dependant groups because it's stored on the depoendant doc
+      this.organizationService.getUsersGroups(organizationId, null, [...userIds]),
       cachedGroupsById ? null : this.organizationService.getGroups(organizationId),
       cachedLocationsById ? null : this.organizationService.getAllLocations(organizationId),
       // N queries
@@ -534,17 +535,23 @@ export class ReportService {
     const locationsById: Record<string, OrganizationLocation> =
       cachedLocationsById ??
       allLocations.reduce((lookup, location) => ({...lookup, [location.id]: location}), {})
-    const groupsByUserOrDependantId: Record<string, OrganizationGroup> = userGroups.reduce(
+    const groupsByUserId: Record<string, OrganizationGroup> = userGroups.reduce(
       (lookup, groupLink) => ({...lookup, [groupLink.userId]: groupsById[groupLink.groupId]}),
       {},
     )
+    const groupsByDependantId: Record<string, OrganizationGroup> = allDependants.map(
+      (lookup, dependant) => ({...lookup, [dependant.id]: groupsById[dependant.groupId]}),
+      {},
+    )
+    const groupsByUserOrDependantId = {
+      ...groupsByUserId,
+      ...groupsByDependantId,
+    }
     const dependantsById: Record<string, AugmentedDependant> = allDependants
       .map(
         (dependant): AugmentedDependant => ({
           ...dependant,
-          // if this dependant was not in dependantIds, we won't have retrieved their group membership
-          // and we'll have to use their groupId instead
-          group: groupsByUserOrDependantId[dependant.id] ?? groupsById[dependant.groupId],
+          group: groupsByUserOrDependantId[dependant.id],
           status: statusesByUserOrDependantId[dependant.id],
         }),
       )
