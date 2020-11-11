@@ -4,8 +4,7 @@ import {NfcTag} from '../models/nfcTag'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 
 export class NfcTagService {
-  private dataStore = new DataStore()
-  private tagRepository = new NfcTagRepository(this.dataStore)
+  private tagRepository = new NfcTagRepository(new DataStore())
 
   create(organizationId: string, userId: string): Promise<string> {
     return this.tagRepository

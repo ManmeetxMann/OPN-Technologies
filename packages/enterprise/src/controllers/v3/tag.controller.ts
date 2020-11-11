@@ -4,7 +4,7 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {User} from '../../models/user'
+import {authMiddleware} from '../../../../common/src/middlewares/auth'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {ResourceAlreadyExistsException} from '../../../../common/src/exceptions/resource-already-exists-exception'
 import {NfcTagService} from '../../services/nfctag-service'
@@ -19,7 +19,7 @@ const organizationService = new OrganizationService()
  */
 const addNfcTagId: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {organizationId, userId} = req.query as CreateNfcTagRequest
+    const {organizationId, userId} = req.body as CreateNfcTagRequest
 
     const tag = await tagService.getByOrgUserId(organizationId, userId)
     if (tag) {
@@ -52,8 +52,10 @@ const getUserByTagId: Handler = async (req, res, next): Promise<void> => {
       throw new ResourceNotFoundException(`NFC tag not found with tagId: ${tagId}`)
     }
 
-    const user: User = await userService.getById(tag.userId)
-    const userGroup = await organizationService.getUserGroup(tag.organizationId, tag.userId)
+    const [user, userGroup] = await Promise.all([
+      userService.getById(tag.userId),
+      organizationService.getUserGroup(tag.organizationId, tag.userId)
+    ])
 
     res.json(
       actionSucceed({
@@ -69,7 +71,7 @@ const getUserByTagId: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-class AdminController implements IControllerBase {
+class TagController implements IControllerBase {
   public router = express.Router()
 
   constructor() {
@@ -78,15 +80,17 @@ class AdminController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = () => Router({mergeParams: true})
-    const root = '/admin/api/v3/'
+    const root = '/enterprise/admin/api/v3/'
 
     const tags = innerRouter().use(
       '/',
-      innerRouter().post('/tags', addNfcTagId).get('/tags/:tagId/user', getUserByTagId),
+      innerRouter()
+        .post('/tags', authMiddleware, addNfcTagId)
+        .get('/tags/:tagId/user', authMiddleware, getUserByTagId),
     )
 
     this.router.use(root, tags)
   }
 }
 
-export default AdminController
+export default TagController
