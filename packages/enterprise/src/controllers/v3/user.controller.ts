@@ -10,7 +10,7 @@ import {MagicLinkService} from '../../../../common/src/service/messaging/magicli
 import {CreateUserRequest, MigrateUserRequest} from '../../types/new-user'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {AuthenticationRequest} from '../../types/authentication-request'
-import {User} from '../../models/user'
+import {User, userDTOFrom} from '../../models/user'
 import {UpdateUserRequest} from '../../types/update-user-request'
 import {RegistrationConfirmationRequest} from '../../types/registration-confirmation-request'
 import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
@@ -49,7 +49,7 @@ const create: Handler = async (req, res, next): Promise<void> => {
     // Connect to org
     await userService.connectOrganization(user.id, organizationId)
 
-    res.json(actionSucceed(user))
+    res.json(actionSucceed(userDTOFrom(user)))
   } catch (error) {
     next(error)
   }
@@ -102,7 +102,7 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
 const get: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
-    res.json(actionSucceed(authenticatedUser))
+    res.json(actionSucceed(userDTOFrom(authenticatedUser)))
   } catch (error) {
     next(error)
   }
@@ -147,7 +147,7 @@ const completeRegistration: Handler = async (req, res, next): Promise<void> => {
       email: authUser.email,
       authUserId: authUser.uid,
     })
-    res.json(actionSucceed(activatedUser))
+    res.json(actionSucceed(userDTOFrom(activatedUser)))
   } catch (error) {
     next(error)
   }
