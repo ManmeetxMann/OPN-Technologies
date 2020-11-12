@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   successModalClose.addEventListener('click', () => {
     closeModal(successModal)
     location.reload()
-  });
+  })
 
   csvFileInput.addEventListener('change', (e) => {
     const file = e.target.files[0]
@@ -119,7 +119,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           trElem.appendChild(tdElem)
 
-          row.forEach((col) => {
+          row.forEach((col, i) => {
+            if (i === 12 && parseInt(col) > 40) {
+              trElem.classList.add('line-warning')
+            }
             const tdElem = document.createElement('td')
             tdElem.innerText = col
             trElem.appendChild(tdElem)
@@ -152,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .filter((row) => row.checked)
       .map((row) => row.getAttribute('data-index'))
     const dataSentBackend = data
-      .filter((row, i) => sendAgainData.indexOf(`${i}`) === -1)
+      .filter((row, i) => sendAgainData.indexOf(`${i}`) === -1 && row[12] <= 40)
       .map((row) => ({
         barCode: row[3],
         famEGene: row[5],
@@ -166,7 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
         result: row[13],
         sendAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
       }))
-
     const response = await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
       method: 'POST',
       headers,
