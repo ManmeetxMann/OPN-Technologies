@@ -74,6 +74,7 @@ export type TestResultsBase = {
   quasar670Ct: string
   hexIC: string
   hexCt: string
+  todaysDate: Date
 }
 
 export type TestResultsDTO = TestResultsBase

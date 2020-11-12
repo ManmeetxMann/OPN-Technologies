@@ -98,7 +98,7 @@ class AdminController implements IControllerBase {
                   'Something wend wrong. Results are not available.',
                 )
               }
-              await this.testResultsService.sendTestResults({...testResults})
+              await this.testResultsService.sendTestResults({...testResults}, null)
             } else {
               const currentAppointment = appointmentsByBarCode[row.barCode]
               if (!currentAppointment) {
@@ -106,7 +106,7 @@ class AdminController implements IControllerBase {
                 return
               }
               await Promise.all([
-                this.testResultsService.sendTestResults({...row, ...currentAppointment}),
+                this.testResultsService.sendTestResults({...row, ...currentAppointment}, null),
                 this.testResultsService.saveResults({
                   ...row,
                   ...currentAppointment,
@@ -138,6 +138,7 @@ class AdminController implements IControllerBase {
   ): Promise<unknown> => {
     try {
       const requestData: TestResultsConfirmationRequest = req.body
+      const {todaysDate} = requestData
 
       if (requestData.needConfirmation) {
         const appointment = await this.appoinmentService.getAppoinmentByBarCode(requestData.barCode)
@@ -156,7 +157,7 @@ class AdminController implements IControllerBase {
       await this.appoinmentService
         .getAppoinmentByBarCode(requestData.barCode)
         .then((appointment: AppointmentDTO) => {
-          this.testResultsService.sendTestResults({...requestData, ...appointment})
+          this.testResultsService.sendTestResults({...requestData, ...appointment}, todaysDate)
           return appointment
         })
         .then((appointment: AppointmentDTO) => {
@@ -182,7 +183,7 @@ class AdminController implements IControllerBase {
       if (!testResults) {
         throw new ResourceNotFoundException('Something wend wrong. Results are not avaiable.')
       }
-      await this.testResultsService.sendTestResults({...testResults})
+      await this.testResultsService.sendTestResults({...testResults}, null)
 
       res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {
