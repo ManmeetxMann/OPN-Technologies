@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isDuplicate = barcodeCounts[row[3]] > 1
         return (
           sendAgainData.indexOf(`${i}`) === -1 &&
-          row[12] <= 40 &&
+          (row[12] <= 40 || row[12] === 'N/A') &&
           !isInvalidNum &&
           !isResultWrong &&
           !isDuplicate
