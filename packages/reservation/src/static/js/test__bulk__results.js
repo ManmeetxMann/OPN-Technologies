@@ -187,16 +187,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (responseData?.errors?.length) {
         responseData.errors.map((err) => {
-          const errrorElem = document.createElement('p')
+          const errorElem = document.createElement('p')
           const fieldName = err.param.replace(regexpFieldName, '')
           const index = parseInt(err.param.replace(regexpFieldRow, '$1'))
-          errrorElem.innerText = `At ${dataSentBackend[index].barCode} row ${fieldName} is invalid.`
-          errorBulkContent.appendChild(errrorElem)
+          errorElem.innerText = `At ${dataSentBackend[index].barCode} row ${fieldName} is invalid.`
+          errorBulkContent.appendChild(errorElem)
         })
       } else {
-        const errrorElem = document.createElement('p')
-        errrorElem.innerText = `Invalid request`
-        errorBulkContent.appendChild(errrorElem)
+        const errorElem = document.createElement('p')
+        errorElem.innerText = `Invalid request`
+        errorBulkContent.appendChild(errorElem)
       }
     } else {
       let content = ''
