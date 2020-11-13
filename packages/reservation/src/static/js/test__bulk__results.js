@@ -173,6 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
   })
   sendButtonBulk.addEventListener('click', async (e) => {
     e.preventDefault()
+    setLoader(sendButtonBulk, true)
     if (!data) {
       openModal(errorBulkModal)
       errorBulkContent.innerHTML = 'You should upload CSV file before'
@@ -193,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isDuplicate = barcodeCounts[row[3]] > 1
         return (
           sendAgainData.indexOf(`${i}`) === -1 &&
-          row[12] <= 40 &&
+          (row[12] <= 40 || row[12] === 'N/A') &&
           !isInvalidNum &&
           !isResultWrong &&
           !isDuplicate
@@ -229,7 +230,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }),
       })
 
-      const responseData = await response.json()
+    setLoader(sendButtonBulk, false)
+
+    const responseData = await response.json()
 
       // This case should be only if server is down
       if (!response.ok) {
