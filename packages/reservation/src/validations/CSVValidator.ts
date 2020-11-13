@@ -18,13 +18,11 @@ export default {
   },
   csvValidation: (): ValidationChain[] => {
     return [
-      body('hexCt').isNumeric().withMessage('must be numeric'),
       body('hexCt')
         .custom((value) => {
-          return parseInt(value) <= 40
+          return parseInt(value) <= 40 || value === 'N/A' 
         })
-        .withMessage('must be less or equal than 40'),
-      body('hexCt').isNumeric().withMessage('must be numeric'),
+        .withMessage('HEX C(t) must be less or equal than 40'),
       body(['famCt', 'calRed61Ct', 'quasar670Ct', 'hexCt'])
         .custom((value) => {
           return value === 'N/A' || !isNaN(value)
