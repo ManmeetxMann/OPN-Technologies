@@ -19,7 +19,7 @@ export class TestResultsService {
 
   async sendTestResults(
     testResults: TestResultsDTOForEmail,
-    dateFromRequest: Date | null,
+    dateFromRequest: Date = null,
   ): Promise<void> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
     const todaysDate = dateFromRequest || moment(now()).tz(timeZone).format('LL')

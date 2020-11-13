@@ -240,6 +240,8 @@ paths:
                   type: string
                 needConfirmation:
                   type: boolean
+                todaysDate: 
+                  type: string
               required:
                 - barCode
                 - result
@@ -251,6 +253,7 @@ paths:
                 - quasar670Ct
                 - hexIC
                 - hexCt
+                - todaysDate
       responses:
         '200':
           description: Successfully Return

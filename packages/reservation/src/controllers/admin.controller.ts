@@ -98,7 +98,7 @@ class AdminController implements IControllerBase {
                   'Something wend wrong. Results are not available.',
                 )
               }
-              await this.testResultsService.sendTestResults({...testResults}, null)
+              await this.testResultsService.sendTestResults({...testResults})
             } else {
               const currentAppointment = appointmentsByBarCode[row.barCode]
               if (!currentAppointment) {
@@ -106,7 +106,7 @@ class AdminController implements IControllerBase {
                 return
               }
               await Promise.all([
-                this.testResultsService.sendTestResults({...row, ...currentAppointment}, null),
+                this.testResultsService.sendTestResults({...row, ...currentAppointment}),
                 this.testResultsService.saveResults({
                   ...row,
                   ...currentAppointment,
@@ -183,7 +183,7 @@ class AdminController implements IControllerBase {
       if (!testResults) {
         throw new ResourceNotFoundException('Something wend wrong. Results are not avaiable.')
       }
-      await this.testResultsService.sendTestResults({...testResults}, null)
+      await this.testResultsService.sendTestResults({...testResults})
 
       res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {
