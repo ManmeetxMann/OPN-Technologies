@@ -213,56 +213,62 @@ document.addEventListener('DOMContentLoaded', () => {
         result: row[13],
         sendAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
       }))
-    const response = await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        from,
-        to,
-        results: dataSentBackend,
-      }),
-    })
 
-    const responseData = await response.json()
+    const dataChunks = _.chunk(dataSentBackend, 20)
+    let failedRows = []
 
-    if (!response.ok) {
-      openModal(errorBulkModal)
-      errorBulkContent.innerHTML = ''
-      const regexpFieldName = /.*\[\d*\]\./g
-      const regexpFieldRow = /.*\[(\d*)\]\..*/g
-
-      if (responseData?.errors?.length) {
-        responseData.errors.map((err) => {
-          const errorElem = document.createElement('p')
-          const fieldName = err.param.replace(regexpFieldName, '')
-          const index = parseInt(err.param.replace(regexpFieldRow, '$1'))
-          errorElem.innerText = `At ${dataSentBackend[index].barCode} row ${fieldName} is invalid.`
-          errorBulkContent.appendChild(errorElem)
-        })
-      } else {
-        const errorElem = document.createElement('p')
-        errorElem.innerText = `Invalid request`
-        errorBulkContent.appendChild(errorElem)
-      }
-    } else {
-      let content = ''
-      const succeedRows = dataSentBackend.filter((row) => {
-        return !responseData.data.failedRows.find((row2) => row2.barCode === row.barCode)
+    for (let i = 0; i < dataChunks.length; i++) {
+      const response = await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          from,
+          to,
+          results: dataChunks[i],
+        }),
       })
-      openModal(successModal)
 
-      if (succeedRows.length) {
-        const succeedRowsElem = succeedRows.map((row) => `<div>${row.barCode}</div>`).join('')
-        content += `Succeed rows: ${succeedRowsElem}<br/>`
-      }
-      if (responseData.data.failedRows.length) {
-        const failedRows = responseData.data.failedRows
-          .map((row) => `<div>${row.barCode}</div>`)
-          .join('')
-        content += `Failed rows. Reason: Appointment not found ${failedRows}`
-      }
+      const responseData = await response.json()
 
-      successModalContent.innerHTML = content
+      // This case should be only if server is down
+      if (!response.ok) {
+        openModal(errorBulkModal)
+        errorBulkContent.innerHTML = ''
+        const regexpFieldName = /.*\[\d*\]\./g
+        const regexpFieldRow = /.*\[(\d*)\]\..*/g
+
+        if (responseData?.errors?.length) {
+          responseData.errors.map((err) => {
+            const errorElem = document.createElement('p')
+            const fieldName = err.param.replace(regexpFieldName, '')
+            const index = parseInt(err.param.replace(regexpFieldRow, '$1'))
+            errorElem.innerText = `At ${dataSentBackend[index].barCode} row ${fieldName} is invalid.`
+            errorBulkContent.appendChild(errorElem)
+          })
+        } else {
+          const errorElem = document.createElement('p')
+          errorElem.innerText = `Invalid request`
+          errorBulkContent.appendChild(errorElem)
+        }
+        break
+      }
+      failedRows = [...failedRows, ...responseData.data.failedRows]
     }
+    let content = ''
+    const succeedRows = dataSentBackend.filter((row) => {
+      return !failedRows.find((row2) => row2.barCode === row.barCode)
+    })
+    openModal(successModal)
+
+    if (succeedRows.length) {
+      const succeedRowsElem = succeedRows.map((row) => `<div>${row.barCode}</div>`).join('')
+      content += `Succeed rows: ${succeedRowsElem}<br/>`
+    }
+    if (failedRows.length) {
+      const failedRowsElem = failedRows.map((row) => `<div>${row.barCode}</div>`).join('')
+      content += `Failed rows. Reason: Appointment not found ${failedRowsElem}`
+    }
+
+    successModalContent.innerHTML = content
   })
 })
