@@ -173,6 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
   })
   sendButtonBulk.addEventListener('click', async (e) => {
     e.preventDefault()
+    setLoader(sendButtonBulk, true)
     if (!data) {
       openModal(errorBulkModal)
       errorBulkContent.innerHTML = 'You should upload CSV file before'
@@ -222,6 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
         results: dataSentBackend,
       }),
     })
+
+    setLoader(sendButtonBulk, false)
 
     const responseData = await response.json()
 
