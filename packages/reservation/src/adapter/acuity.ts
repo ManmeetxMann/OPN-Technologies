@@ -19,6 +19,8 @@ abstract class AcuityScheduling {
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl =
       APIURL + '/api/v1/appointments?max=500&' + querystring.stringify(this.renameKeys(filters))
+    console.log(apiUrl) //To know request path for dependency
+
     return fetch(apiUrl, {
       method: 'get',
       headers: {
