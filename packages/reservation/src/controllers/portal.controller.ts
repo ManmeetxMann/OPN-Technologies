@@ -1,12 +1,16 @@
 import {Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
+import moment from 'moment-timezone'
+import * as _ from 'lodash'
+
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {now} from '../../../common/src/utils/times'
+import {Config} from '../../../common/src/utils/config'
 
 import {AppoinmentService} from '../services/appoinment.service'
+
 import {AppointmentDTO, BarCodeGeneratorUI, AppoinmentDataUI} from '../models/appoinment'
-import * as _ from 'lodash'
-import {Config} from '../../../common/src/utils/config'
 
 class PortalController implements IControllerBase {
   public path = '/admin'
@@ -75,17 +79,25 @@ class PortalController implements IControllerBase {
   }
 
   displayFormToSendSingleResults = async (req: Request, res: Response): Promise<void> => {
+    const timeZone = Config.get('DEFAULT_TIME_ZONE')
+    const todaysDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
+
     res.render('send_single_form', {
       layout: 'results',
       confirmBeforeSend: Config.get('CONFIRM_BEFORE_SEND'),
       sendSingleResultsTab: true,
+      todaysDate: todaysDate,
     })
   }
 
   displayFormToSendBulkResults = async (req: Request, res: Response): Promise<void> => {
+    const timeZone = Config.get('DEFAULT_TIME_ZONE')
+    const todaysDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
+
     res.render('send_bulk_form', {
       layout: 'results',
       sendBulkResultTab: true,
+      todaysDate: todaysDate,
     })
   }
 }

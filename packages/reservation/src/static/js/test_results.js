@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
       quasar670Ct: getValueByElem(quasar670CtElem),
       hexIC: getValueByElem(hexICElem),
       hexCt: getValueByElem(hexCtElem),
+      todaysDate: getValueByElem(todaysDate),
     }
     if (!isSecond && confirmBeforeSend === '1') {
       data.needConfirmation = true
