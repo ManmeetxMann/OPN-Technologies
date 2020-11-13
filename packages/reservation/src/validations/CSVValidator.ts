@@ -20,7 +20,7 @@ export default {
     return [
       body('hexCt')
         .custom((value) => {
-          return parseInt(value) <= 40 || value === 'N/A' 
+          return parseInt(value) <= 40 || value === 'N/A'
         })
         .withMessage('HEX C(t) must be less or equal than 40'),
       body(['famCt', 'calRed61Ct', 'quasar670Ct', 'hexCt'])
