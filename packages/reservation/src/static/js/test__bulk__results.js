@@ -216,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const dataChunks = _.chunk(dataSentBackend, 20)
     let failedRows = []
+    let isFatal = []
 
     for (let i = 0; i < dataChunks.length; i++) {
       const response = await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
@@ -250,13 +251,17 @@ document.addEventListener('DOMContentLoaded', () => {
           errorElem.innerText = `Invalid request`
           errorBulkContent.appendChild(errorElem)
         }
+        isFatal = _.flatten(dataChunks.slice(i))
         break
       }
       failedRows = [...failedRows, ...responseData.data.failedRows]
     }
     let content = ''
     const succeedRows = dataSentBackend.filter((row) => {
-      return !failedRows.find((row2) => row2.barCode === row.barCode)
+      return (
+        !failedRows.find((row2) => row2.barCode === row.barCode) &&
+        !isFatal.find((row2) => row2.barCode === row.barCode)
+      )
     })
     openModal(successModal)
 
@@ -266,7 +271,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (failedRows.length) {
       const failedRowsElem = failedRows.map((row) => `<div>${row.barCode}</div>`).join('')
-      content += `Failed rows. Reason: Appointment not found ${failedRowsElem}`
+      content += `Failed rows. Reason: Appointment not found ${failedRowsElem}<br/>`
+    }
+    if (isFatal.length) {
+      const fatalRowsElem = isFatal.map((row) => `<div>${row.barCode}</div>`).join('')
+      content += `Failed rows. Reason: Internal Server Error ${fatalRowsElem}<br/>`
     }
 
     successModalContent.innerHTML = content
