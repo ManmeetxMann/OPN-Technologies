@@ -663,7 +663,7 @@ components:
 
     UserV3:
       type: object
-      deprecated: true
+      deprecated: false
       additionalProperties: false
       properties:
         id:
