@@ -45,11 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
   let to = DateTime.utc().toLocaleString()
   let from = DateTime.utc().minus({days: 4}).toLocaleString()
   let data
+  let barcodeCounts
   if (!bulkForm) {
     return
   }
   const csvFileInput = document.getElementById('csvFile')
   const presentationTable = document.getElementById('presentationTable')
+  const warningMessage = document.getElementById('warning-message')
 
   const datesBefore = document.getElementById('datesBefore')
 
@@ -85,8 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
           errorBulkContent.innerHTML = 'CSV File is invalid'
           return
         }
-        const isValid = data.every((r) => r.length === 15)
-        if (!isValid) {
+        const isInvalid = data.every((r) => r.length !== 15)
+        if (isInvalid) {
           openModal(errorBulkModal)
           errorBulkContent.innerHTML = 'CSV File is invalid should be 15 columns'
           return
@@ -101,8 +103,19 @@ document.addEventListener('DOMContentLoaded', () => {
             barCodes: data.map((row) => row[3]),
           }),
         })
+        const presentationTableTbody = presentationTable.querySelector('tbody')
+        presentationTableTbody.innerHTML = ''
+        warningMessage.classList.add('d-none')
         const {data: existenceStatus} = await response.json()
         presentationTable.classList.remove('d-none')
+        barcodeCounts = data.reduce((acc, row) => {
+          if (acc[row[3]]) {
+            acc[row[3]]++
+          } else {
+            acc[row[3]] = 1
+          }
+          return acc
+        }, {})
         data.forEach((row, i) => {
           const trElem = document.createElement('tr')
           const thElem = document.createElement('th')
@@ -117,20 +130,37 @@ document.addEventListener('DOMContentLoaded', () => {
             checkboxElem.setAttribute('data-index', i)
             tdElem.appendChild(checkboxElem)
           }
-          trElem.appendChild(tdElem)
-
-          row.forEach((col, i) => {
-            if (i === 12 && parseInt(col) > 40) {
-              trElem.classList.add('line-warning')
+          const markWarning = (rowElem, colElem = null) => {
+            warningMessage.classList.remove('d-none')
+            rowElem.classList.add('line-warning')
+            if (colElem) {
+              colElem.classList.add('col-warning')
             }
+          }
+          if (row.length !== 15) {
+            markWarning(trElem)
+          }
+          trElem.appendChild(tdElem)
+          row.forEach((col, i) => {
             const tdElem = document.createElement('td')
             tdElem.innerText = col
+            if (i === 12 && parseInt(col) > 40) {
+              markWarning(trElem, tdElem)
+            }
+            if ([6, 8, 10, 12].includes(i) && !(col === 'N/A' || !isNaN(parseInt(col)))) {
+              markWarning(trElem, tdElem)
+            }
+            if (i === 13 && !['Positive', 'Negative'].includes(col)) {
+              markWarning(trElem, tdElem)
+            }
+            if (i === 3 && barcodeCounts[col] > 1) {
+              markWarning(trElem, tdElem)
+            }
+
             trElem.appendChild(tdElem)
           })
-          presentationTable.appendChild(trElem)
+          presentationTableTbody.appendChild(trElem)
         })
-
-        presentationTable.querySelector('tbody')
       }
       reader.onerror = function () {
         document.getElementById('fileContents').innerHTML = 'error reading file'
@@ -155,7 +185,20 @@ document.addEventListener('DOMContentLoaded', () => {
       .filter((row) => row.checked)
       .map((row) => row.getAttribute('data-index'))
     const dataSentBackend = data
-      .filter((row, i) => sendAgainData.indexOf(`${i}`) === -1 && row[12] <= 40)
+      .filter((row, i) => {
+        const isInvalidNum = [6, 8, 10, 12].find(
+          (num) => !(row[num] === 'N/A' || !isNaN(parseInt(row[num]))),
+        )
+        const isResultWrong = row[13] && !['Positive', 'Negative'].includes(row[13])
+        const isDuplicate = barcodeCounts[row[3]] > 1
+        return (
+          sendAgainData.indexOf(`${i}`) === -1 &&
+          row[12] <= 40 &&
+          !isInvalidNum &&
+          !isResultWrong &&
+          !isDuplicate
+        )
+      })
       .map((row) => ({
         barCode: row[3],
         famEGene: row[5],
@@ -165,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
         quasar670NGene: row[9],
         quasar670Ct: row[10],
         hexIC: row[11],
+
         hexCt: row[12],
         result: row[13],
         sendAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
@@ -215,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const failedRows = responseData.data.failedRows
           .map((row) => `<div>${row.barCode}</div>`)
           .join('')
-        content += `Failed rows: ${failedRows}`
+        content += `Failed rows. Reason: Appointment not found ${failedRows}`
       }
 
       successModalContent.innerHTML = content
