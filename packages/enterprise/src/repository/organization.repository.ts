@@ -10,11 +10,14 @@ import {
 } from '../models/organization'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
-export class OrganizationModel extends GroupDataModel<Organization, OrganizationLocation> {
+export class OrganizationModel extends DataModel<Organization> {
   public readonly rootPath = 'organizations'
   readonly zeroSet = []
-  groupId = 'locations'
+}
 
+// used for retrieving locations with unknown organization ids
+export class AllLocationsModel extends GroupDataModel<OrganizationLocation> {
+  groupId = 'locations'
   // retrieve a location by id, and include the id of the organization it belongs to
   public async getLocation(
     id: string,

@@ -119,7 +119,15 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         if (response.status === 409) {
           openModal(confirmSendingAgainModal)
-        } else {
+        }
+        else if (responseData?.errors?.length) {
+          let errorMessage = "";
+          responseData.errors.map((error) => {
+            errorMessage +=  `${error.param} ${error.msg}`
+          })
+
+          showAlertModal('Failed', errorMessage)
+        }else {
           showAlertModal('Failed', responseData.status.message)
         }
       }
