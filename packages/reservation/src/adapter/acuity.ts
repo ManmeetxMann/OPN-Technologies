@@ -18,7 +18,7 @@ abstract class AcuityScheduling {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl =
-      APIURL + '/api/v1/appointments?' + querystring.stringify(this.renameKeys(filters))
+      APIURL + '/api/v1/appointments?max=500&' + querystring.stringify(this.renameKeys(filters))
     return fetch(apiUrl, {
       method: 'get',
       headers: {
