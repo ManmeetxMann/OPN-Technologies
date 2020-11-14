@@ -1410,6 +1410,36 @@ components:
               nullable: true
               type: string
 
+    ResponseOfUsersByOrganization:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserWithGroup'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+        page:
+          type: number
+
   responses:
     Response:
       description: Default Response wrapper
@@ -2432,6 +2462,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+
+  /api/v3/users/{organizationId}:
+    get:
+      summary: Organization users list
+      description: Get users by organizationId
+      tags:
+        - Account management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: page
+          schema:
+            type: number
+          required: true
+        - in: query
+          name: perPage
+          schema:
+            type: number
+          required: true
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsersByOrganization'
 
   /api/v3/users:
     post:
