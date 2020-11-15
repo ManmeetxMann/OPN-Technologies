@@ -464,7 +464,7 @@ const removeDependent: Handler = async (req, res, next): Promise<void> => {
  * Get all users for a given org-id
  * Paginated result will be returned
  */
-const getUsersByOrgnizationId: Handler = async (req, res, next): Promise<void> => {
+const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> => {
   try {
     const {organizationId} = req.params
     const {perPage, page} = req.query as PageableRequestFilter
@@ -504,7 +504,7 @@ class UserController implements IControllerBase {
     const authentication = innerRouter().use(
       '/',
       innerRouter()
-        .get('/:organizationId', authMiddleware, getUsersByOrgnizationId)
+        .get('/:organizationId', authMiddleware, getUsersByOrganizationId)
         .post('/', create)
         .post('/migration', migrate)
         .post('/auth', authenticate)
