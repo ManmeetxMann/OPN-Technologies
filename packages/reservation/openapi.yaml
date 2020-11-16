@@ -165,7 +165,7 @@ paths:
                   type: string
                 to:
                   type: string
-                todaysDate: 
+                todaysDate:
                   type: string
                 results:
                   type: array
@@ -243,7 +243,7 @@ paths:
                   type: string
                 needConfirmation:
                   type: boolean
-                todaysDate: 
+                todaysDate:
                   type: string
               required:
                 - barCode
@@ -306,6 +306,32 @@ paths:
       responses:
         '200':
           description: Successfully Return
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /webhook/acuity/schedule:
+    post:
+      description: Webhook for adding barcode to acuity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              properties:
+                calendarID:
+                  type: string
+                appointmentTypeID:
+                  type: string
+                action:
+                  type: string
+                id:
+                  type: string
+      responses:
+        '200':
+          description: Successfully handled
           content:
             text/html:
               schema:

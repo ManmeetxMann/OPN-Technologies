@@ -8,6 +8,7 @@ import loggerMiddleware from '../../common/src/middlewares/logger'
 
 import AdminController from './controllers/admin.controller'
 import PortalController from './controllers/portal.controller'
+import WebhookController from './controllers/webhook.controller'
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
 import exphbs from 'express-handlebars'
@@ -20,7 +21,7 @@ const app = new App({
   validation: true,
   securityOptions: Config.get('RESERVATION_PASSWORD'),
   corsOptions: '*',
-  controllers: [new AdminController(), new PortalController()],
+  controllers: [new AdminController(), new PortalController(), new WebhookController()],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],
 })
