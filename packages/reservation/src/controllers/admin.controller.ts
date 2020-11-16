@@ -19,7 +19,7 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import CSVValidator from '../validations/CSVValidator'
 
 class AdminController implements IControllerBase {
-  public path = '/admin'
+  public path = ''
   public router = Router()
   private appoinmentService = new AppoinmentService()
   private testResultsService = new TestResultsService()
@@ -48,7 +48,7 @@ class AdminController implements IControllerBase {
         CSVValidator.validate(CSVValidator.csvBulkValidation()),
         this.sendAndSaveTestResultsBulk,
       )
-    this.router.use('/', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
+    this.router.use('/admin', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
   }
 
   getAppointmentByBarCode = async (
