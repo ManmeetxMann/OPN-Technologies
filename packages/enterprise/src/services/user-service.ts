@@ -96,7 +96,7 @@ export class UserService {
   }
 
   getAllByOrganizationId(organizationId: string, page: number, perPage: number): Promise<User[]> {
-    const userIdsQuery = this.userRepository.getQueryFindWhereArrayContainsQuery(
+    const userIdsQuery = this.userRepository.getQueryFindWhereArrayContains(
       'organizationIds',
       organizationId,
     )

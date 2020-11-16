@@ -41,11 +41,11 @@ abstract class EncryptedDataModel<T extends HasId> implements IDataModel<T> {
   fetchPage = this.dataModel.fetchPage
   fetchAllWithPagination = this.dataModel.fetchAllWithPagination
   getQueryFindWhereArrayInMapContainsAny = this.dataModel.getQueryFindWhereArrayInMapContainsAny
-  getQueryFindWhereArrayInMapContainsQuery = this.dataModel.getQueryFindWhereArrayInMapContainsQuery
-  getQueryFindWhereArrayContainsQuery = this.dataModel.getQueryFindWhereArrayContainsQuery
-  getQueryFindWhereMapHasKeyValueInQuery = this.dataModel.getQueryFindWhereMapHasKeyValueInQuery
-  getQueryFindWhereEqualQuery = this.dataModel.getQueryFindWhereEqualQuery
-  getQueryFindWhereEqualWithMaxQuery = this.dataModel.getQueryFindWhereEqualWithMaxQuery
+  getQueryFindWhereArrayInMapContains = this.dataModel.getQueryFindWhereArrayInMapContains
+  getQueryFindWhereArrayContains = this.dataModel.getQueryFindWhereArrayContains
+  getQueryFindWhereMapHasKeyValueIn = this.dataModel.getQueryFindWhereMapHasKeyValueIn
+  getQueryFindWhereEqual = this.dataModel.getQueryFindWhereEqual
+  getQueryFindWhereEqualWithMax = this.dataModel.getQueryFindWhereEqualWithMax
 
   collection(): Collection<T> {
     throw new ForbiddenException('Cannot access encrypted collections externally')
