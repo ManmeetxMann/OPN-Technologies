@@ -1,5 +1,6 @@
 import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
+import {safeTimestamp, GenericTimestamp} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {User, UserDependant} from '../../../common/src/data/user'
 import {Range} from '../../../common/src/types/range'
@@ -9,6 +10,7 @@ import {
   OrganizationGroup,
   OrganizationLocation,
   OrganizationUsersGroup,
+  Organization,
 } from '../models/organization'
 import {Stats, StatsFilter} from '../models/stats'
 import userTemplate from '../templates/user-report'
@@ -29,6 +31,16 @@ import * as _ from 'lodash'
 import moment from 'moment'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
+
+const toDateFormat = (timestamp: GenericTimestamp): string => {
+  const date = safeTimestamp(timestamp)
+  return moment(date).tz(timeZone).format('MMMM D, YYYY')
+}
+
+const toDateTimeFormat = (timestamp: GenericTimestamp): string => {
+  const date = safeTimestamp(timestamp)
+  return moment(date).tz(timeZone).format('h:mm A MMMM D, YYYY')
+}
 
 type AugmentedDependant = UserDependant & {group: OrganizationGroup; status: PassportStatus}
 type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
@@ -77,6 +89,13 @@ const getPriorityAccess = (
   if (!accessTwo) {
     return accessOne
   }
+
+  // Check if we status mismatch AND send back non-pending if can
+  if (accessOne.status === 'pending' && accessTwo.status !== 'pending') return accessTwo
+  else if (accessTwo.status === 'pending' && accessOne.status !== 'pending') return accessOne
+
+  // Else, continue ...
+
   const accessOneTime = accessOne.exitAt ?? accessOne.enteredAt
   const accessTwoTime = accessTwo.exitAt ?? accessTwo.enteredAt
   if (!accessTwoTime) {
@@ -184,23 +203,25 @@ export class ReportService {
   }
 
   async getUserReportTemplate(
-    organizationId: string,
+    organization: Organization,
     primaryId: string,
     secondaryId: string,
     from: string,
     to: string,
+    // lookup table with users, dependants and groups
+    // likely to be needed. Some users or dependants may be missing
+    partialLookup: Lookups,
+    questionnaires: Questionnaire[],
   ): Promise<ReturnType<typeof userTemplate>> {
     const userId = (secondaryId || primaryId) as string
     const dependantId = secondaryId ? (primaryId as string) : null
 
     const [
-      organization,
       attestations,
       exposureTraces,
       userTraces,
       {enteringAccesses, exitingAccesses},
     ] = await Promise.all([
-      this.organizationService.findOneById(organizationId),
       this.attestationService.getAttestationsInPeriod(
         primaryId as string,
         from as string,
@@ -220,13 +241,12 @@ export class ReportService {
       ),
     ])
     // sort by descending attestation time
-    attestations.sort((a, b) =>
-      new Date(a.attestationTime) < new Date(b.attestationTime) ? 1 : -1,
-    )
+    // (default ascending)
+    attestations.reverse()
     const userIds = new Set<string>([userId])
-    const dependantIds = new Set<string>()
+    const guardians: Record<string, string> = {}
     if (dependantId) {
-      dependantIds.add(dependantId)
+      guardians[dependantId] = userId
     }
     // overlaps where the other user might have been sick
     const exposureOverlaps: ExposureReport['overlapping'] = []
@@ -240,7 +260,7 @@ export class ReportService {
             exposureOverlaps.push(overlap)
             userIds.add(overlap.sourceUserId)
             if (overlap.sourceDependantId) {
-              dependantIds.add(overlap.sourceDependantId)
+              guardians[overlap.sourceDependantId] = overlap.sourceUserId
             }
           }
         }),
@@ -258,22 +278,50 @@ export class ReportService {
             traceOverlaps.push(overlap)
             userIds.add(overlap.userId)
           }
+          if (overlap.dependant) {
+            guardians[overlap.dependant.id] = overlap.userId
+          }
         }),
       ),
     )
-
-    const lookups = await this.getLookups(userIds, dependantIds, organizationId)
-    const {locationsLookup, usersLookup, dependantsLookup, groupsLookup} = lookups
-
-    const questionnaireIds = new Set<string>()
-    Object.values(locationsLookup).forEach((location) => {
-      if (location.questionnaireId) {
-        questionnaireIds.add(location.questionnaireId)
-      }
-    })
-    const questionnaires = await Promise.all(
-      [...questionnaireIds].map((id) => this.questionnaireService.getQuestionnaire(id)),
+    const missingUsers = [...userIds].filter((id) => !partialLookup.usersLookup[id])
+    const missingDependants = Object.keys(guardians).filter(
+      (id) => !partialLookup.dependantsLookup[id],
     )
+
+    const extraLookup =
+      missingUsers.length || missingDependants.length
+        ? await this.getLookups(
+            new Set([
+              ...missingUsers,
+              // must look up their guardians as well
+              ...[...missingDependants].map((id) => guardians[id]),
+            ]),
+            new Set(missingDependants),
+            organization.id,
+            partialLookup.groupsLookup,
+            partialLookup.locationsLookup,
+          )
+        : null
+    const lookups =
+      missingUsers.length || missingDependants.length
+        ? {
+            ...partialLookup,
+            usersLookup: {
+              ...partialLookup.usersLookup,
+              ...extraLookup.usersLookup,
+            },
+            dependantsLookup: {
+              ...partialLookup.dependantsLookup,
+              ...extraLookup.dependantsLookup,
+            },
+            groupsLookup: {
+              ...partialLookup.groupsLookup,
+              ...extraLookup.groupsLookup,
+            },
+          }
+        : partialLookup
+    const {locationsLookup, usersLookup, dependantsLookup, groupsLookup} = lookups
 
     const questionnairesLookup: Record<number, Questionnaire> = questionnaires.reduce(
       (lookupSoFar, questionnaire) => {
@@ -290,9 +338,6 @@ export class ReportService {
       {},
     )
 
-    const dateFormat = 'MMMM D, YYYY'
-    const dateTimeFormat = 'h:mm A MMMM D, YYYY'
-
     const printableAccessHistory: {name: string; time: string; action: string}[] = []
     let enterIndex = 0
     let exitIndex = 0
@@ -305,12 +350,10 @@ export class ReportService {
       } else {
         const entering = enteringAccesses[enterIndex]
         const exiting = exitingAccesses[exitIndex]
-        const enterTime = new Date(
-          // @ts-ignore dependant dates are actually strings
+        const enterTime = safeTimestamp(
           dependantId ? entering.dependants[dependantId].enteredAt : entering.enteredAt,
         )
-        const exitTime = new Date(
-          // @ts-ignore dependant dates are actually strings
+        const exitTime = safeTimestamp(
           dependantId ? exiting.dependants[dependantId].exitAt : exiting.exitAt,
         )
         if (enterTime > exitTime) {
@@ -320,12 +363,9 @@ export class ReportService {
       if (addExit) {
         const access = exitingAccesses[exitIndex]
         const location = locationsLookup[access.locationId]
-        const time = moment(
-          //@ts-ignore dependant dates are actually strings
+        const time = toDateTimeFormat(
           dependantId ? access.dependants[dependantId].exitAt : access.exitAt,
         )
-          .tz(timeZone)
-          .format(dateTimeFormat)
         printableAccessHistory.push({
           name: location.title,
           time,
@@ -335,12 +375,9 @@ export class ReportService {
       } else {
         const access = enteringAccesses[enterIndex]
         const location = locationsLookup[access.locationId]
-        const time = moment(
-          // @ts-ignore this is an ISO string
+        const time = toDateTimeFormat(
           dependantId ? access.dependants[dependantId].enteredAt : access.enteredAt,
         )
-          .tz(timeZone)
-          .format(dateTimeFormat)
         printableAccessHistory.push({
           name: location.title,
           time,
@@ -365,10 +402,8 @@ export class ReportService {
           ? groupsLookup[overlap.dependant.groupId]
           : usersLookup[overlap.userId].group
         )?.name ?? '',
-      // @ts-ignore this is a timestamp, not a date
-      start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
-      // @ts-ignore this is a timestamp, not a date
-      end: moment(overlap.end.toDate()).tz(timeZone).format(dateTimeFormat),
+      start: toDateTimeFormat(overlap.start),
+      end: toDateTimeFormat(overlap.end),
     }))
     // perpetrators
     const printableExposures = exposureOverlaps.map((overlap) => ({
@@ -385,10 +420,8 @@ export class ReportService {
           ? dependantsLookup[overlap.sourceDependantId]
           : usersLookup[overlap.sourceUserId]
         )?.group.name ?? '',
-      // @ts-ignore this is a timestamp, not a date
-      start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
-      // @ts-ignore this is a timestamp, not a date
-      end: moment(overlap.end.toDate()).tz(timeZone).format(dateTimeFormat),
+      start: toDateTimeFormat(overlap.start),
+      end: toDateTimeFormat(overlap.end),
     }))
 
     const printableAttestations = attestations.map((attestation) => {
@@ -403,16 +436,13 @@ export class ReportService {
         responses: answerKeys.map((key) => {
           const yes = attestation.answers[key]['1']
           const dateOfTest =
-            yes &&
-            attestation.answers[key]['2'] &&
-            moment(attestation.answers[key]['2']).tz(timeZone).format(dateFormat)
+            yes && attestation.answers[key]['2'] && toDateFormat(attestation.answers[key]['2'])
           return {
             question: (questionnaire?.questions[key]?.value ?? `Question ${key}`) as string,
             response: yes ? dateOfTest || 'Yes' : 'No',
           }
         }),
-        // @ts-ignore timestamp, not string
-        time: moment(attestation.attestationTime.toDate()).tz(timeZone).format(dateTimeFormat),
+        time: toDateFormat(attestation.attestationTime),
         status: attestation.status,
       }
     })
@@ -429,16 +459,22 @@ export class ReportService {
     return userTemplate({
       attestations: printableAttestations,
       locations: printableAccessHistory,
-      exposures: printableExposures,
-      traces: printableTraces,
+      exposures: _.uniqBy(
+        printableExposures,
+        (exposure) =>
+          `${exposure.firstName}, ${exposure.lastName}, ${exposure.groupName}, ${exposure.start}, ${exposure.end}`,
+      ),
+      traces: _.uniqBy(
+        printableTraces,
+        (trace) =>
+          `${trace.firstName}, ${trace.lastName}, ${trace.groupName}, ${trace.start}, ${trace.end}`,
+      ),
       organizationName: organization.name,
       userGroup: group.name,
       userName: `${named.firstName} ${named.lastName}`,
       guardianName: namedGuardian ? `${namedGuardian.firstName} ${namedGuardian.lastName}` : null,
-      generationDate: moment(now()).tz(timeZone).format(dateFormat),
-      reportDate: `${moment(from).tz(timeZone).format(dateFormat)} - ${moment(to)
-        .tz(timeZone)
-        .format(dateFormat)}`,
+      generationDate: toDateFormat(now()),
+      reportDate: `${toDateFormat(from)} - ${toDateFormat(to)}`,
     })
   }
 
@@ -453,48 +489,51 @@ export class ReportService {
     )
   }
 
-  async getLookups(
+  getLookups = async (
     userIds: Set<string>,
     dependantIds: Set<string>,
     organizationId: string,
-  ): Promise<Lookups> {
-    // N queries
-    const statuses = await Promise.all(
-      [...dependantIds, ...userIds].map(
-        async (id): Promise<{id: string; status: PassportStatus}> => ({
-          id,
-          status: await this.attestationService.latestStatus(id),
-        }),
+    cachedGroupsById?: Record<string, OrganizationGroup>,
+    cachedLocationsById?: Record<string, OrganizationLocation>,
+  ): Promise<Lookups> => {
+    const [
+      allUsers,
+      allDependants,
+      userGroups,
+      allGroups,
+      allLocations,
+      statuses,
+    ] = await Promise.all([
+      // N/10 queries
+      this.getUsersById([...userIds]).then((byId) => Object.values(byId) as User[]),
+      // N queries
+      Promise.all([...userIds].map((id) => this.userService.getAllDependants(id))).then((pages) =>
+        _.flatten(pages),
       ),
-    )
+      // N/10 queries
+      this.organizationService.getUsersGroups(organizationId, null, [...userIds, ...dependantIds]),
+      cachedGroupsById ? null : this.organizationService.getGroups(organizationId),
+      cachedLocationsById ? null : this.organizationService.getAllLocations(organizationId),
+      // N queries
+      Promise.all(
+        [...dependantIds, ...userIds].map(
+          (id): Promise<{id: string; status: PassportStatus}> =>
+            this.attestationService.latestStatus(id).then((status) => ({id, status})),
+        ),
+      ),
+    ])
     // keyed by user or dependant ID
     const statusesByUserOrDependantId: Record<string, PassportStatus> = statuses.reduce(
       (lookup, curr) => ({...lookup, [curr.id]: curr.status}),
       {},
     )
-    const allUsers = Object.values(await this.getUsersById([...userIds]))
 
-    const allDependants: UserDependant[] = _.flatten(
-      await Promise.all([...userIds].map((id) => this.userService.getAllDependants(id))),
-    )
-
-    // every group this organization contains
-    const allGroups = await this.organizationService.getGroups(organizationId)
-    const groupsById: Record<string, OrganizationGroup> = allGroups.reduce(
-      (lookup, group) => ({...lookup, [group.id]: group}),
-      {},
-    )
+    const groupsById: Record<string, OrganizationGroup> =
+      cachedGroupsById ?? allGroups.reduce((lookup, group) => ({...lookup, [group.id]: group}), {})
     // every location this organization contains
-    const allLocations = await this.organizationService.getAllLocations(organizationId)
-    const locationsById: Record<string, OrganizationLocation> = allLocations.reduce(
-      (lookup, location) => ({...lookup, [location.id]: location}),
-      {},
-    )
-    // group memberships for all the users and dependants we're interested in
-    const userGroups = await this.organizationService.getUsersGroups(organizationId, null, [
-      ...userIds,
-      ...dependantIds,
-    ])
+    const locationsById: Record<string, OrganizationLocation> =
+      cachedLocationsById ??
+      allLocations.reduce((lookup, location) => ({...lookup, [location.id]: location}), {})
     const groupsByUserOrDependantId: Record<string, OrganizationGroup> = userGroups.reduce(
       (lookup, groupLink) => ({...lookup, [groupLink.userId]: groupsById[groupLink.groupId]}),
       {},
@@ -515,13 +554,13 @@ export class ReportService {
         {},
       )
     const usersById: Record<string, AugmentedUser> = allUsers.reduce(
-      (lookup, user) => ({
+      (lookup, user: User) => ({
         ...lookup,
         [user.id]: {
           ...user,
           group: groupsByUserOrDependantId[user.id],
-          stattus: statusesByUserOrDependantId[user.id],
-        },
+          status: statusesByUserOrDependantId[user.id],
+        } as AugmentedUser,
       }),
       {},
     )
@@ -574,10 +613,8 @@ export class ReportService {
       }
     })
     enteringAccesses.sort((a, b) => {
-      // @ts-ignore timestamps are actually strings
-      const aEnter = new Date(parentUserId ? a.dependants[userId].enteredAt : a.enteredAt)
-      // @ts-ignore timestamps are actually strings
-      const bEnter = new Date(parentUserId ? b.dependants[userId].enteredAt : b.enteredAt)
+      const aEnter = safeTimestamp(parentUserId ? a.dependants[userId].enteredAt : a.enteredAt)
+      const bEnter = safeTimestamp(parentUserId ? b.dependants[userId].enteredAt : b.enteredAt)
       if (aEnter < bEnter) {
         return -1
       } else if (bEnter < aEnter) {
@@ -586,10 +623,8 @@ export class ReportService {
       return 0
     })
     exitingAccesses.sort((a, b) => {
-      // @ts-ignore timestamps are actually strings
-      const aExit = new Date(parentUserId ? a.dependants[userId].exitAt : a.exitAt)
-      // @ts-ignore timestamps are actually strings
-      const bExit = new Date(parentUserId ? b.dependants[userId].exitAt : b.exitAt)
+      const aExit = safeTimestamp(parentUserId ? a.dependants[userId].exitAt : a.exitAt)
+      const bExit = safeTimestamp(parentUserId ? b.dependants[userId].exitAt : b.exitAt)
       if (aExit < bExit) {
         return -1
       } else if (bExit < aExit) {

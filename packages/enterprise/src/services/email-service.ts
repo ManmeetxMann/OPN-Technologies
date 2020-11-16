@@ -3,21 +3,15 @@ import {EmailService as BaseService} from '../../../common/src/service/messaging
 export class EmailService {
   private emailService = new BaseService()
 
-  sendGroupReport(email: string, name: string, attachmentBase64: string): Promise<unknown> {
+  sendGroupReport(email: string, name: string, publicUrl: string): Promise<unknown> {
     return this.emailService.send({
       to: [{email, name}],
-      textContent: 'Report attached',
+      textContent: `Click <a href="${publicUrl}">here</a> to download your report`,
       subject: 'OPN Report',
       sender: {
         email: 'no-reply@email.stayopn.net',
         name: 'OPN Team',
       },
-      attachment: [
-        {
-          content: attachmentBase64,
-          name: `OPN Report.pdf`,
-        },
-      ],
       bcc: [
         {
           email: 'reports@stayopn.com',

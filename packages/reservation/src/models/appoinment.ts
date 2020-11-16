@@ -6,8 +6,9 @@ type AppointmentBase = {
   dateOfBirth: string
   registeredNursePractitioner: string
   dateOfAppointment: string
-  timeOfAppointment: string
   appointmentId: number
+  timeOfAppointment?: string
+  barCode?: string
 }
 
 export type AppoinmentDataUI = {
@@ -42,6 +43,11 @@ export type AppointmentSearchRequest = {
   barCodeNumber: string
 }
 
+export type AppointmentSearchByDateRequest = {
+  maxDate: string
+  minDate: string
+}
+
 export type AppoinmentBarCodeSequenceDBModel = {
   id: string
   barCodeNumber: number
@@ -57,7 +63,7 @@ export enum ResultTypes {
   Negative = 'Negative',
 }
 
-type TestResultsBase = {
+export type TestResultsBase = {
   barCode: string
   result: ResultTypes
   famEGene: string
@@ -68,6 +74,7 @@ type TestResultsBase = {
   quasar670Ct: string
   hexIC: string
   hexCt: string
+  todaysDate: Date
 }
 
 export type TestResultsDTO = TestResultsBase
@@ -81,7 +88,24 @@ export type TestResultsConfirmationRequest = TestResultsBase & {
   needConfirmation?: boolean
 }
 
+export type TestResultsAgainRequest = TestResultsBase & {
+  sendAgain?: boolean
+}
+
+export type CheckAppointmentRequest = {
+  from: string
+  to: string
+  barCodes: string[]
+}
+
 export type TestResultsDBModelResponse = TestResultsDBModel & {
   exists: boolean
 }
 export type TestResultsDTOForEmail = TestResultsBase & AppointmentBase
+
+export type SendAndSaveTestResultsRequest = {
+  results: TestResultsAgainRequest[]
+  from: string
+  to: string
+  todaysDate: Date
+}

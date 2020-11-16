@@ -28,7 +28,10 @@ export class PdfService {
     const stream = new Stream.PassThrough()
     const pdfDoc = this.printer.createPdfKitDocument(generatedParams, {tableLayouts})
     pdfDoc.on('data', (chunk) => stream.push(chunk))
-    pdfDoc.on('end', () => stream.end())
+    pdfDoc.on('end', () => {
+      console.log('ending stream')
+      stream.end()
+    })
     pdfDoc.on('error', (err) => {
       console.error('error creating pdf', err)
       stream.end()
