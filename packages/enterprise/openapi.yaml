@@ -549,7 +549,36 @@ components:
           type: string
         answers:
           type: object
-          additionalProperties: true
+          description: answers to the questionnaire, keyed by numerical strings
+          additionalProperties:
+            type: object
+            additionalProperties:
+              oneOf:
+                - type: string
+                - type: boolean
+            required:
+              - "1"
+          required:
+            - "1"
+        questions:
+          type: object
+          description: questions in the questionnaire, keyed by numerical strings
+          additionalProperties:
+            type: object
+            properties:
+              answers:
+                type: object
+                additionalProperties:
+                  type: string
+                  enum:
+                    - "boolean" 
+                    - "datetime"
+                required:
+                  - "1"
+              value:
+                type: string
+          required:
+            - "1"
         appliesTo:
           type: array
           items:
