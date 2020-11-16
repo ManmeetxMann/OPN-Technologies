@@ -69,6 +69,7 @@ class AdminController implements IControllerBase {
   ): Promise<void> => {
     try {
       const requestData: SendAndSaveTestResultsRequest = req.body
+      const {todaysDate} = requestData
 
       const barcodeCounts = requestData.results.reduce((acc, row) => {
         if (acc[row.barCode]) {
@@ -98,7 +99,7 @@ class AdminController implements IControllerBase {
                   'Something wend wrong. Results are not available.',
                 )
               }
-              await this.testResultsService.sendTestResults({...testResults})
+              await this.testResultsService.sendTestResults({...testResults}, todaysDate)
             } else {
               const currentAppointment = appointmentsByBarCode[row.barCode]
               if (!currentAppointment) {
@@ -106,7 +107,10 @@ class AdminController implements IControllerBase {
                 return
               }
               await Promise.all([
-                this.testResultsService.sendTestResults({...row, ...currentAppointment}),
+                this.testResultsService.sendTestResults(
+                  {...row, ...currentAppointment},
+                  todaysDate,
+                ),
                 this.testResultsService.saveResults({
                   ...row,
                   ...currentAppointment,
@@ -138,6 +142,7 @@ class AdminController implements IControllerBase {
   ): Promise<unknown> => {
     try {
       const requestData: TestResultsConfirmationRequest = req.body
+      const {todaysDate} = requestData
 
       if (requestData.needConfirmation) {
         const appointment = await this.appoinmentService.getAppoinmentByBarCode(requestData.barCode)
@@ -156,7 +161,7 @@ class AdminController implements IControllerBase {
       await this.appoinmentService
         .getAppoinmentByBarCode(requestData.barCode)
         .then((appointment: AppointmentDTO) => {
-          this.testResultsService.sendTestResults({...requestData, ...appointment})
+          this.testResultsService.sendTestResults({...requestData, ...appointment}, todaysDate)
           return appointment
         })
         .then((appointment: AppointmentDTO) => {
