@@ -28,7 +28,13 @@ const addNfcTagId: Handler = async (req, res, next): Promise<void> => {
       )
     }
 
-    const tagId = await tagService.create(organizationId, userId)
+    const checkIfOrganizationExists = await organizationService.findOneById(organizationId)
+    if (!checkIfOrganizationExists) {
+      throw new ResourceNotFoundException(`No organization found for this id ${organizationId}`)
+    }
+
+    const user = await userService.getById(userId)
+    const tagId = await tagService.create(organizationId, user.id)
 
     res.json(
       actionSucceed({
