@@ -3,7 +3,6 @@ import * as express from 'express'
 import App from '../../common/src/express/app'
 
 import * as bodyParser from 'body-parser'
-import {Config} from '../../common/src/utils/config'
 import loggerMiddleware from '../../common/src/middlewares/logger'
 
 import AdminController from './controllers/admin.controller'
