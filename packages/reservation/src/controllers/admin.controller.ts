@@ -2,6 +2,8 @@ import {NextFunction, Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
+import {Config} from '../../../common/src/utils/config'
+import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 
 import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
@@ -27,23 +29,26 @@ class AdminController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
-    this.router.post(
-      this.path + '/api/v1/send-and-save-test-results',
-      CSVValidator.validate(CSVValidator.csvValidation()),
-      this.sendAndSaveTestResults,
-    )
-    this.router.post(
-      this.path + '/api/v1/send-test-results-again',
-      CSVValidator.validate(CSVValidator.csvValidation()),
-      this.sendTestResultsAgain,
-    )
-    this.router.post(this.path + '/api/v1/check-appointments', this.checkAppointments)
-    this.router.post(
-      this.path + '/api/v1/send-and-save-test-results-bulk',
-      CSVValidator.validate(CSVValidator.csvBulkValidation()),
-      this.sendAndSaveTestResultsBulk,
-    )
+    const innerRouter = Router({mergeParams: true})
+    innerRouter
+      .post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
+      .post(
+        this.path + '/api/v1/send-and-save-test-results',
+        CSVValidator.validate(CSVValidator.csvValidation()),
+        this.sendAndSaveTestResults,
+      )
+      .post(
+        this.path + '/api/v1/send-test-results-again',
+        CSVValidator.validate(CSVValidator.csvValidation()),
+        this.sendTestResultsAgain,
+      )
+      .post(this.path + '/api/v1/check-appointments', this.checkAppointments)
+      .post(
+        this.path + '/api/v1/send-and-save-test-results-bulk',
+        CSVValidator.validate(CSVValidator.csvBulkValidation()),
+        this.sendAndSaveTestResultsBulk,
+      )
+    this.router.use('/', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
   }
 
   getAppointmentByBarCode = async (

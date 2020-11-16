@@ -4,11 +4,11 @@ Config.load()
 
 // Continue...
 import express, {Application, RequestHandler} from 'express'
-import basicAuth from 'express-basic-auth'
 import {OpenApiValidator} from 'express-openapi-validator'
 import cors from 'cors'
 
 import {handleErrors, handleValidationErrors, handleRouteNotFound} from '../middlewares/error'
+import {middlewareGenerator} from '../middlewares/basic-auth'
 import IRouteController from '../interfaces/IRouteController.interface'
 
 interface Initializer {
@@ -55,7 +55,7 @@ class App {
   private security() {
     if (!!this.securityOptions) {
       console.log('security on!')
-      this.app.use(basicAuth({users: {admin: this.securityOptions}, challenge: true}))
+      this.app.use(middlewareGenerator(this.securityOptions))
     }
   }
 
