@@ -1129,7 +1129,7 @@ class OrganizationController implements IControllerBase {
           ...passThrough,
           locationId,
           attestationTime: safeTimestamp(attestationTime),
-          questions: questionnairesById[questionnaireIdsByLocationId[locationId]]?.questions ?? [],
+          questions: questionnairesById[questionnaireIdsByLocationId[locationId]]?.questions ?? {},
         }),
       )
       res.json(actionSucceed(response))
