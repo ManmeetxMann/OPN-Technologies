@@ -5,7 +5,7 @@ export const of = <T>(
   data: T,
   statusCode: string,
   message: string = null,
-  page = 1,
+  page = 0,
 ): ResponseWrapper<T> => ({
   data,
   status: {
@@ -15,7 +15,7 @@ export const of = <T>(
   page,
 })
 
-export const actionSucceed = <T>(data: T = null, page = 1): ResponseWrapper<T> =>
+export const actionSucceed = <T>(data: T = null, page = 0): ResponseWrapper<T> =>
   of(data, ResponseStatusCodes.Succeed, null, page)
 
 export const actionFailed = <T>(message?: string, data: T = null): ResponseWrapper<T> =>

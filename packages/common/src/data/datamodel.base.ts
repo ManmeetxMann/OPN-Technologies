@@ -82,7 +82,7 @@ export interface IDataModel<T extends HasId> {
    */
   increment(id: string, fieldName: string, byCount: number, subPath?: string): Promise<T>
 
-  findWhereArrayInMapContainsAnyQuery(
+  getQueryFindWhereArrayInMapContainsAny(
     map: string,
     key: string,
     value: unknown,
@@ -96,7 +96,7 @@ export interface IDataModel<T extends HasId> {
     subPath?: string,
   ): Promise<T[]>
 
-  findWhereArrayInMapContainsQuery(
+  getQueryFindWhereArrayInMapContainsQuery(
     map: string,
     key: string,
     value: unknown,
@@ -110,7 +110,7 @@ export interface IDataModel<T extends HasId> {
     subPath?: string,
   ): Promise<T[]>
 
-  findWhereArrayContainsQuery(
+  getQueryFindWhereArrayContainsQuery(
     property: string,
     value: unknown,
     subPath: string,
@@ -129,7 +129,7 @@ export interface IDataModel<T extends HasId> {
 
   findOneById(value: unknown, subPath?: string): Promise<T>
 
-  findWhereMapHasKeyValueInQuery(
+  getQueryFindWhereMapHasKeyValueInQuery(
     map: string,
     key: string,
     value: unknown,
@@ -152,11 +152,15 @@ export interface IDataModel<T extends HasId> {
 
   get(id: string, subPath?: string): Promise<T>
 
-  findWhereEqualQuery(property: string, value: unknown, subPath: string): Query<T, Omit<T, 'id'>>
+  getQueryFindWhereEqualQuery(
+    property: string,
+    value: unknown,
+    subPath: string,
+  ): Query<T, Omit<T, 'id'>>
 
   findWhereEqual(property: string, value: unknown, subPath?: string): Promise<T[]>
 
-  findWhereEqualWithMaxQuery(
+  getQueryFindWhereEqualWithMaxQuery(
     property: string,
     value: unknown,
     sortKey: Exclude<keyof T, 'id'>,
@@ -288,10 +292,9 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     perPage: number,
     subPath = '',
   ): Promise<T[]> {
-    query = query.limit(page <= 1 ? perPage : (page - 1) * perPage)
-    const subset = await query.fetch()
+    const subset = await query.limit(page === 0 ? perPage : page * perPage).fetch()
 
-    if (page <= 1) return subset
+    if (page === 0) return subset.slice()
 
     const lastVisible = subset[subset.length - 1]
     const lastVisibleSnapshot = await this.collection(subPath).docRef(lastVisible.id).get()
@@ -305,18 +308,19 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
   }
 
   public async fetchAllWithPagination(page: number, perPage: number, subPath = ''): Promise<T[]> {
-    const query = this.collection(subPath).limit(page <= 1 ? perPage : (page - 1) * perPage)
-    const subset = await query.fetch()
+    const subset = await this.collection(subPath)
+      .limit(page === 0 ? perPage : page * perPage)
+      .fetch()
 
-    if (page && page <= 1) {
-      return subset.slice()
-    }
+    if (page === 0) return subset.slice()
 
     const lastVisible = subset[subset.length - 1]
     const lastVisibleSnapshot = await this.collection(subPath).docRef(lastVisible.id).get()
 
-    const queryWithLimit = this.collection(subPath).limit(perPage)
-    const nextSubset = await queryWithLimit.startAfter(lastVisibleSnapshot).fetch()
+    const nextSubset = await this.collection(subPath)
+      .limit(perPage)
+      .startAfter(lastVisibleSnapshot)
+      .fetch()
 
     return nextSubset.slice()
   }
@@ -330,7 +334,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
       .then(() => this.get(id))
   }
 
-  public findWhereArrayInMapContainsAnyQuery(
+  public getQueryFindWhereArrayInMapContainsAny(
     map: string,
     key: string,
     value: unknown,
@@ -350,7 +354,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return await this.collection(subPath).where(fieldPath, 'array-contains-any', value).fetch()
   }
 
-  public findWhereArrayInMapContainsQuery(
+  public getQueryFindWhereArrayInMapContainsQuery(
     map: string,
     key: string,
     value: unknown,
@@ -370,7 +374,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return await this.collection(subPath).where(fieldPath, 'array-contains', value).fetch()
   }
 
-  public findWhereArrayContainsQuery(
+  public getQueryFindWhereArrayContainsQuery(
     property: string,
     value: unknown,
     subPath = '',
@@ -426,7 +430,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return null
   }
 
-  public findWhereMapHasKeyValueInQuery(
+  public getQueryFindWhereMapHasKeyValueInQuery(
     map: string,
     key: string,
     value: unknown,
@@ -466,7 +470,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return this.collection(subPath).fetch(id)
   }
 
-  public findWhereEqualQuery(
+  public getQueryFindWhereEqualQuery(
     property: string,
     value: unknown,
     subPath = '',
@@ -480,7 +484,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return this.collection(subPath).where(fieldPath, '==', value).fetch()
   }
 
-  public findWhereEqualWithMaxQuery(
+  public getQueryFindWhereEqualWithMaxQuery(
     property: string,
     value: unknown,
     sortKey: Exclude<keyof T, 'id'>,
