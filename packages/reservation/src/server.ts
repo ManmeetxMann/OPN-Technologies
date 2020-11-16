@@ -19,7 +19,6 @@ const PORT = Number(process.env.PORT) || 5008
 const app = new App({
   port: PORT,
   validation: true,
-  securityOptions: Config.get('RESERVATION_PASSWORD'),
   corsOptions: '*',
   controllers: [new AdminController(), new PortalController(), new WebhookController()],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
