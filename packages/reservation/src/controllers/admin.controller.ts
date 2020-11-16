@@ -107,7 +107,10 @@ class AdminController implements IControllerBase {
                 return
               }
               await Promise.all([
-                this.testResultsService.sendTestResults({...row, ...currentAppointment}, todaysDate),
+                this.testResultsService.sendTestResults(
+                  {...row, ...currentAppointment},
+                  todaysDate,
+                ),
                 this.testResultsService.saveResults({
                   ...row,
                   ...currentAppointment,

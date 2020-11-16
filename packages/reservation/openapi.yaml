@@ -199,6 +199,7 @@ paths:
                 - from
                 - to
                 - results
+                - todaysDate
       responses:
         '200':
           description: Successfully Return
