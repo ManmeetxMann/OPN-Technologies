@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
       body: JSON.stringify({
         from,
         to,
-        todaysDate: todaysDate,
+        todaysDate,
         results: dataSentBackend,
       }),
     })

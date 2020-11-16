@@ -2,7 +2,7 @@ import {Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import moment from 'moment-timezone'
-import * as _ from 'lodash'
+import { isEmpty } from 'lodash'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
@@ -39,7 +39,7 @@ class PortalController implements IControllerBase {
       barCode: barCode,
     }
     try {
-      if (_.isEmpty(barCode)) {
+      if (isEmpty(barCode)) {
         throw new BadRequestException('Please provide Bar Code Number')
       }
       const appointment: AppointmentDTO = await this.appoinmentService.getAppoinmentByBarCode(
@@ -86,7 +86,7 @@ class PortalController implements IControllerBase {
       layout: 'results',
       confirmBeforeSend: Config.get('CONFIRM_BEFORE_SEND'),
       sendSingleResultsTab: true,
-      todaysDate: todaysDate,
+      todaysDate,
     })
   }
 
@@ -97,7 +97,7 @@ class PortalController implements IControllerBase {
     res.render('send_bulk_form', {
       layout: 'results',
       sendBulkResultTab: true,
-      todaysDate: todaysDate,
+      todaysDate,
     })
   }
 }
