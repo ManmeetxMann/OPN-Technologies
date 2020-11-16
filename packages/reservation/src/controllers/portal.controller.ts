@@ -10,7 +10,7 @@ import {Config} from '../../../common/src/utils/config'
 import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 
 class PortalController implements IControllerBase {
-  public path = '/admin'
+  public path = ''
   public router = Router()
   private appoinmentService = new AppoinmentService()
 
@@ -28,7 +28,7 @@ class PortalController implements IControllerBase {
       .get(this.path + '/js/print-label-library.js', this.displayPrintLibraryJs)
       .get(this.path + '/js/print-label.js', this.displayPrintJs)
 
-    this.router.use('/', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
+    this.router.use('/admin', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
   }
 
   displayFormToEnterBarCode = async (req: Request, res: Response): Promise<void> => {
