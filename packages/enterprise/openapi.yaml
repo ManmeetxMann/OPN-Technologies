@@ -685,6 +685,9 @@ components:
         phone:
           type: string
           nullable: true
+        memberId:
+          type: string
+          nullable: true
       required:
         - firstName
         - lastName
