@@ -30,6 +30,7 @@ export default {
           return value === 'N/A' || !isNaN(value)
         })
         .withMessage('must be numeric or N/A'),
+      body('todaysDate').isDate().withMessage('must be valid date'),
     ]
   },
 
@@ -46,6 +47,7 @@ export default {
         })
         .withMessage('must be numeric or N/A'),
       body('results.*.result').isIn(['Positive', 'Negative']).withMessage('invalid csv rows'),
+      body('todaysDate').isDate().withMessage('must be valid date'),
     ]
   },
 }

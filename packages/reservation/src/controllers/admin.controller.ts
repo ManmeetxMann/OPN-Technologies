@@ -1,7 +1,11 @@
 import {NextFunction, Request, Response, Router} from 'express'
+import moment from 'moment'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
+import {now} from '../../../common/src/utils/times'
+
+import {Config} from '../../../common/src/utils/config'
 
 import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
@@ -14,6 +18,7 @@ import {
 } from '../models/appoinment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import CSVValidator from '../validations/CSVValidator'
 
 class AdminController implements IControllerBase {
@@ -70,6 +75,14 @@ class AdminController implements IControllerBase {
     try {
       const requestData: SendAndSaveTestResultsRequest = req.body
       const {todaysDate} = requestData
+
+      const timeZone = Config.get('DEFAULT_TIME_ZONE')
+      const fromDate = moment(now()).tz(timeZone).subtract(30, 'days').format('YYYY-MM-DD')
+      const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
+  
+      if (!moment(todaysDate).isBetween(fromDate, toDate)) {
+        throw new BadRequestException(`Date does not match the time range (from ${fromDate} - to ${toDate})`)
+      }
 
       const barcodeCounts = requestData.results.reduce((acc, row) => {
         if (acc[row.barCode]) {
@@ -143,6 +156,14 @@ class AdminController implements IControllerBase {
     try {
       const requestData: TestResultsConfirmationRequest = req.body
       const {todaysDate} = requestData
+
+      const timeZone = Config.get('DEFAULT_TIME_ZONE')
+      const fromDate = moment(now()).tz(timeZone).subtract(30, 'days').format('YYYY-MM-DD')
+      const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
+  
+      if (!moment(todaysDate).isBetween(fromDate, toDate)) {
+        throw new BadRequestException(`Date does not match the time range (from ${fromDate} - to ${toDate})`)
+      }
 
       if (requestData.needConfirmation) {
         const appointment = await this.appoinmentService.getAppoinmentByBarCode(requestData.barCode)

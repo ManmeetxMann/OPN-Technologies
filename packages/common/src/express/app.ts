@@ -38,7 +38,7 @@ class App {
     this.securityOptions = appInit.securityOptions || null
     this.initializers = appInit.initializers || []
 
-    this.security()
+    // this.security()
     this.setupCors()
     this.middlewares(appInit.middleWares)
     const promise = this.validation
