@@ -2,7 +2,7 @@ import {Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import moment from 'moment-timezone'
-import { isEmpty } from 'lodash'
+import {isEmpty} from 'lodash'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
@@ -80,24 +80,28 @@ class PortalController implements IControllerBase {
 
   displayFormToSendSingleResults = async (req: Request, res: Response): Promise<void> => {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
-    const todaysDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
+    const calendarFromDate = moment(now()).tz(timeZone).subtract(30, 'days').format('YYYY-MM-DD')
+    const calendarToDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
 
     res.render('send_single_form', {
       layout: 'results',
       confirmBeforeSend: Config.get('CONFIRM_BEFORE_SEND'),
       sendSingleResultsTab: true,
-      todaysDate,
+      calendarFromDate,
+      calendarToDate,
     })
   }
 
   displayFormToSendBulkResults = async (req: Request, res: Response): Promise<void> => {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
-    const todaysDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
+    const calendarFromDate = moment(now()).tz(timeZone).subtract(30, 'days').format('YYYY-MM-DD')
+    const calendarToDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
 
     res.render('send_bulk_form', {
       layout: 'results',
       sendBulkResultTab: true,
-      todaysDate,
+      calendarFromDate,
+      calendarToDate,
     })
   }
 }
