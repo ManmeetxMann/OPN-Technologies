@@ -315,9 +315,13 @@ const connectGroup: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
     const {organizationId, groupId} = req.body as ConnectGroupRequest
-    const group = await organizationService.getGroup(organizationId, groupId)
 
-    await userService.connectGroups(authenticatedUser.id, [group.id])
+    // validate that the group exists
+    await organizationService.getGroup(organizationId, groupId)
+
+    await organizationService.addUserToGroup(organizationId, groupId, authenticatedUser.id)
+    // adds to root collection. Disabled for compatibility
+    // await userService.connectGroups(authenticatedUser.id, [group.id])
 
     res.json(actionSucceed())
   } catch (error) {
