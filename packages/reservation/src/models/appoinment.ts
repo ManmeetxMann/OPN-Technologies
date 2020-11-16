@@ -107,4 +107,5 @@ export type SendAndSaveTestResultsRequest = {
   results: TestResultsAgainRequest[]
   from: string
   to: string
+  todaysDate: Date
 }

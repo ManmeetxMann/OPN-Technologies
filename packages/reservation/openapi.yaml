@@ -165,6 +165,8 @@ paths:
                   type: string
                 to:
                   type: string
+                todaysDate: 
+                  type: string
                 results:
                   type: array
                   items:
