@@ -2,6 +2,8 @@ import {NextFunction, Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
+import {Config} from '../../../common/src/utils/config'
+import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 
 import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
@@ -27,23 +29,26 @@ class AdminController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
-    this.router.post(
-      this.path + '/api/v1/send-and-save-test-results',
-      CSVValidator.validate(CSVValidator.csvValidation()),
-      this.sendAndSaveTestResults,
-    )
-    this.router.post(
-      this.path + '/api/v1/send-test-results-again',
-      CSVValidator.validate(CSVValidator.csvValidation()),
-      this.sendTestResultsAgain,
-    )
-    this.router.post(this.path + '/api/v1/check-appointments', this.checkAppointments)
-    this.router.post(
-      this.path + '/api/v1/send-and-save-test-results-bulk',
-      CSVValidator.validate(CSVValidator.csvBulkValidation()),
-      this.sendAndSaveTestResultsBulk,
-    )
+    const innerRouter = Router({mergeParams: true})
+    innerRouter
+      .post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
+      .post(
+        this.path + '/api/v1/send-and-save-test-results',
+        CSVValidator.validate(CSVValidator.csvValidation()),
+        this.sendAndSaveTestResults,
+      )
+      .post(
+        this.path + '/api/v1/send-test-results-again',
+        CSVValidator.validate(CSVValidator.csvValidation()),
+        this.sendTestResultsAgain,
+      )
+      .post(this.path + '/api/v1/check-appointments', this.checkAppointments)
+      .post(
+        this.path + '/api/v1/send-and-save-test-results-bulk',
+        CSVValidator.validate(CSVValidator.csvBulkValidation()),
+        this.sendAndSaveTestResultsBulk,
+      )
+    this.router.use('/', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
   }
 
   getAppointmentByBarCode = async (
@@ -69,6 +74,7 @@ class AdminController implements IControllerBase {
   ): Promise<void> => {
     try {
       const requestData: SendAndSaveTestResultsRequest = req.body
+      const {todaysDate} = requestData
 
       const barcodeCounts = requestData.results.reduce((acc, row) => {
         if (acc[row.barCode]) {
@@ -98,7 +104,7 @@ class AdminController implements IControllerBase {
                   'Something wend wrong. Results are not available.',
                 )
               }
-              await this.testResultsService.sendTestResults({...testResults})
+              await this.testResultsService.sendTestResults({...testResults}, todaysDate)
             } else {
               const currentAppointment = appointmentsByBarCode[row.barCode]
               if (!currentAppointment) {
@@ -106,7 +112,10 @@ class AdminController implements IControllerBase {
                 return
               }
               await Promise.all([
-                this.testResultsService.sendTestResults({...row, ...currentAppointment}),
+                this.testResultsService.sendTestResults(
+                  {...row, ...currentAppointment},
+                  todaysDate,
+                ),
                 this.testResultsService.saveResults({
                   ...row,
                   ...currentAppointment,
@@ -138,6 +147,7 @@ class AdminController implements IControllerBase {
   ): Promise<unknown> => {
     try {
       const requestData: TestResultsConfirmationRequest = req.body
+      const {todaysDate} = requestData
 
       if (requestData.needConfirmation) {
         const appointment = await this.appoinmentService.getAppoinmentByBarCode(requestData.barCode)
@@ -156,7 +166,7 @@ class AdminController implements IControllerBase {
       await this.appoinmentService
         .getAppoinmentByBarCode(requestData.barCode)
         .then((appointment: AppointmentDTO) => {
-          this.testResultsService.sendTestResults({...requestData, ...appointment})
+          this.testResultsService.sendTestResults({...requestData, ...appointment}, todaysDate)
           return appointment
         })
         .then((appointment: AppointmentDTO) => {

@@ -165,6 +165,8 @@ paths:
                   type: string
                 to:
                   type: string
+                todaysDate:
+                  type: string
                 results:
                   type: array
                   items:
@@ -197,6 +199,7 @@ paths:
                 - from
                 - to
                 - results
+                - todaysDate
       responses:
         '200':
           description: Successfully Return
@@ -240,6 +243,8 @@ paths:
                   type: string
                 needConfirmation:
                   type: boolean
+                todaysDate:
+                  type: string
               required:
                 - barCode
                 - result
@@ -251,6 +256,7 @@ paths:
                 - quasar670Ct
                 - hexIC
                 - hexCt
+                - todaysDate
       responses:
         '200':
           description: Successfully Return
@@ -300,6 +306,32 @@ paths:
       responses:
         '200':
           description: Successfully Return
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /webhook/acuity/schedule:
+    post:
+      description: Webhook for adding barcode to acuity
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: true
+              properties:
+                calendarID:
+                  type: string
+                appointmentTypeID:
+                  type: string
+                action:
+                  type: string
+                id:
+                  type: string
+      responses:
+        '200':
+          description: Successfully handled
           content:
             text/html:
               schema:

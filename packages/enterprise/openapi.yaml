@@ -549,7 +549,28 @@ components:
           type: string
         answers:
           type: object
-          additionalProperties: true
+          description: answers to the questionnaire, keyed by numerical strings
+          additionalProperties:
+            type: object
+            additionalProperties:
+              oneOf:
+                - type: string
+                - type: boolean
+        questions:
+          type: object
+          description: questions in the questionnaire, keyed by numerical strings
+          additionalProperties:
+            type: object
+            properties:
+              answers:
+                type: object
+                additionalProperties:
+                  type: string
+                  enum:
+                    - "boolean" 
+                    - "datetime"
+              value:
+                type: string
         appliesTo:
           type: array
           items:
@@ -663,7 +684,7 @@ components:
 
     UserV3:
       type: object
-      deprecated: true
+      deprecated: false
       additionalProperties: false
       properties:
         id:

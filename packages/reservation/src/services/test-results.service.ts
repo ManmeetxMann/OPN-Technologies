@@ -17,9 +17,12 @@ export class TestResultsService {
   private emailService = new EmailService()
   private pdfService = new PdfService()
 
-  async sendTestResults(testResults: TestResultsDTOForEmail): Promise<void> {
+  async sendTestResults(
+    testResults: TestResultsDTOForEmail,
+    dateFromRequest: Date = null,
+  ): Promise<void> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
-    const todaysDate = moment(now()).tz(timeZone).format('LL')
+    const todaysDate = dateFromRequest || moment(now()).tz(timeZone).format('LL')
     const {content, tableLayouts} = template(testResults)
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 

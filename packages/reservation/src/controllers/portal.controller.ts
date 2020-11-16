@@ -12,6 +12,8 @@ import {AppoinmentService} from '../services/appoinment.service'
 
 import {AppointmentDTO, BarCodeGeneratorUI, AppoinmentDataUI} from '../models/appoinment'
 
+import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
+
 class PortalController implements IControllerBase {
   public path = '/admin'
   public router = Router()
@@ -22,14 +24,16 @@ class PortalController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.get(this.path + '/page/next-bar-code', this.displayNextBarCode)
-    this.router.get(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
-    this.router.post(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
-    this.router.get(this.path + '/page/send-single-results', this.displayFormToSendSingleResults)
-    this.router.get(this.path + '/page/send-bulk-results', this.displayFormToSendBulkResults)
+    const innerRouter = Router()
+      .get(this.path + '/page/next-bar-code', this.displayNextBarCode)
+      .get(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
+      .post(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
+      .get(this.path + '/page/send-single-results', this.displayFormToSendSingleResults)
+      .get(this.path + '/page/send-bulk-results', this.displayFormToSendBulkResults)
+      .get(this.path + '/js/print-label-library.js', this.displayPrintLibraryJs)
+      .get(this.path + '/js/print-label.js', this.displayPrintJs)
 
-    this.router.get(this.path + '/js/print-label-library.js', this.displayPrintLibraryJs)
-    this.router.get(this.path + '/js/print-label.js', this.displayPrintJs)
+    this.router.use('/', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
   }
 
   displayFormToEnterBarCode = async (req: Request, res: Response): Promise<void> => {

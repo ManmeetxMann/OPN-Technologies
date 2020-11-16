@@ -40,4 +40,7 @@ export class AppoinmentService {
         return id.concat(barCodeNumber.toString())
       })
   }
+  async addBarcodeAppointment(id: number, barCode: string): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.addBarcodeAppointment(id, barCode)
+  }
 }

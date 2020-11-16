@@ -10,7 +10,7 @@ import {MagicLinkService} from '../../../../common/src/service/messaging/magicli
 import {CreateUserRequest, MigrateUserRequest} from '../../types/new-user'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {AuthenticationRequest} from '../../types/authentication-request'
-import {User} from '../../models/user'
+import {User, userDTOFrom} from '../../models/user'
 import {UpdateUserRequest} from '../../types/update-user-request'
 import {RegistrationConfirmationRequest} from '../../types/registration-confirmation-request'
 import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
@@ -49,7 +49,7 @@ const create: Handler = async (req, res, next): Promise<void> => {
     // Connect to org
     await userService.connectOrganization(user.id, organizationId)
 
-    res.json(actionSucceed(user))
+    res.json(actionSucceed(userDTOFrom(user)))
   } catch (error) {
     next(error)
   }
@@ -74,7 +74,7 @@ const migrate: Handler = async (req, res, next): Promise<void> => {
 
     await magicLinkService.send({email, name: firstName})
 
-    res.json(actionSucceed(user))
+    res.json(actionSucceed(userDTOFrom(user)))
   } catch (error) {
     next(error)
   }
@@ -102,7 +102,7 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
 const get: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
-    res.json(actionSucceed(authenticatedUser))
+    res.json(actionSucceed(userDTOFrom(authenticatedUser)))
   } catch (error) {
     next(error)
   }
@@ -116,7 +116,7 @@ const update: Handler = async (req, res, next): Promise<void> => {
     const authenticatedUser = res.locals.authenticatedUser as User
     const source = req.body as UpdateUserRequest
     const updatedUser = await userService.update(authenticatedUser.id, source)
-    res.json(actionSucceed(updatedUser))
+    res.json(actionSucceed(userDTOFrom(updatedUser)))
   } catch (error) {
     next(error)
   }
@@ -147,7 +147,7 @@ const completeRegistration: Handler = async (req, res, next): Promise<void> => {
       email: authUser.email,
       authUserId: authUser.uid,
     })
-    res.json(actionSucceed(activatedUser))
+    res.json(actionSucceed(userDTOFrom(activatedUser)))
   } catch (error) {
     next(error)
   }
@@ -315,9 +315,13 @@ const connectGroup: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
     const {organizationId, groupId} = req.body as ConnectGroupRequest
-    const group = await organizationService.getGroup(organizationId, groupId)
 
-    await userService.connectGroups(authenticatedUser.id, [group.id])
+    // validate that the group exists
+    await organizationService.getGroup(organizationId, groupId)
+
+    await organizationService.addUserToGroup(organizationId, groupId, authenticatedUser.id)
+    // adds to root collection. Disabled for compatibility
+    // await userService.connectGroups(authenticatedUser.id, [group.id])
 
     res.json(actionSucceed())
   } catch (error) {
@@ -385,7 +389,7 @@ const getParents: Handler = async (req, res, next): Promise<void> => {
   try {
     const {id} = res.locals.authenticatedUser as User
     const parents = await userService.getParents(id)
-    res.json(actionSucceed(parents))
+    res.json(actionSucceed(parents.map(userDTOFrom)))
   } catch (error) {
     next(error)
   }
@@ -399,7 +403,7 @@ const getDependents: Handler = async (req, res, next): Promise<void> => {
   try {
     const {id} = res.locals.authenticatedUser as User
     const dependents = await userService.getDirectDependents(id)
-    res.json(actionSucceed(dependents))
+    res.json(actionSucceed(dependents.map(userDTOFrom)))
   } catch (error) {
     next(error)
   }
@@ -415,7 +419,7 @@ const addDependents: Handler = async (req, res, next): Promise<void> => {
     const {id} = res.locals.authenticatedUser as User
     const users = req.body as User[]
     const dependents = await userService.addDependents(users, id)
-    res.json(actionSucceed(dependents))
+    res.json(actionSucceed(dependents.map(userDTOFrom)))
   } catch (error) {
     next(error)
   }

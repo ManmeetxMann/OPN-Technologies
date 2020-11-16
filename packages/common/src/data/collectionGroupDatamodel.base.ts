@@ -1,7 +1,6 @@
-import {HasId, WhereFilterOp} from '@firestore-simple/admin/dist/types'
+import {WhereFilterOp} from '@firestore-simple/admin/dist/types'
 import {firestore} from 'firebase-admin'
 
-import DataModel from './datamodel.base'
 import DataStore from './datastore'
 
 type QueryCondition = [string | firestore.FieldPath, WhereFilterOp, unknown]
@@ -10,21 +9,21 @@ type RecordWithPath<G> = {
   path: string[]
   value: G
 }
+
+function digestGroupResult<G>(doc: firestore.QueryDocumentSnapshot<G>): {path: string[]; value: G} {
+  return {
+    path: doc.ref.path.split('/'),
+    value: doc.data(),
+  }
+}
+
 // an extension of a normal datamodel which can also access a collectionGroup
-abstract class CollectionGroupModel<T extends HasId, G> extends DataModel<T> {
+abstract class CollectionGroupModel<G> {
   abstract readonly groupId: string
   // shadow of the parent class' private ds
   private store: DataStore
   constructor(store: DataStore) {
-    super(store)
     this.store = store
-  }
-
-  private digest(doc: firestore.QueryDocumentSnapshot<G>): {path: string[]; value: G} {
-    return {
-      path: doc.ref.path.split('/'),
-      value: doc.data(),
-    }
   }
 
   private getQuery(): firestore.Query {
@@ -44,7 +43,7 @@ abstract class CollectionGroupModel<T extends HasId, G> extends DataModel<T> {
       )
       result = conditional.get()
     }
-    return (await result).docs.map(this.digest)
+    return (await result).docs.map(digestGroupResult)
   }
 
   async groupGetWhereEqual(

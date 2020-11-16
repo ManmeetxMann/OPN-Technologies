@@ -22,7 +22,7 @@ export default {
         .custom((value) => {
           return parseInt(value) <= 40 || value === 'N/A'
         })
-        .withMessage('HEX C(t) must be less or equal than 40'),
+        .withMessage('must be less or equal than 40 or N/A'),
       body(['famCt', 'calRed61Ct', 'quasar670Ct', 'hexCt'])
         .custom((value) => {
           return value === 'N/A' || !isNaN(value)
@@ -35,7 +35,7 @@ export default {
     return [
       check('results.*.hexCt')
         .custom((value) => {
-          return parseInt(value) <= 40
+          return parseInt(value) <= 40 || value === 'N/A'
         })
         .withMessage('must be less or equal than 40'),
       body(['results.*.famCt', 'results.*.calRed61Ct', 'results.*.quasar670Ct', 'results.*.hexCt'])

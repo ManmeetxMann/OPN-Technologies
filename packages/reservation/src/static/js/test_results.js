@@ -48,25 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModal(findAncestor(elem, 'show-modal'))
   }
 
-  const setLoader = (btn, isEnable) => {
-    if (isEnable) {
-      const spinner = document.createElement('span')
-      spinner.classList.add('spinner')
-      const loaderText = document.createTextNode('Loading...')
-      btn.classList.add('d-inline-flex')
-      btn.classList.add('align-center')
-      btn.disabled = true
-      btn.innerHTML = ''
-      btn.appendChild(spinner)
-      btn.appendChild(loaderText)
-    } else {
-      btn.innerHTML = 'Submit'
-      btn.disabled = false
-      btn.classList.remove('d-inline-flex')
-      btn.classList.remove('align-center')
-    }
-  }
-
   const sendResult = async (event, isSecond = false) => {
     event.preventDefault()
 

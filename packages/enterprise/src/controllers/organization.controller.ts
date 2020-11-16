@@ -8,6 +8,7 @@ import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {Config} from '../../../common/src/utils/config'
 import {PdfService} from '../../../common/src/service/reports/pdf'
 
@@ -28,6 +29,7 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 import {PassportStatuses} from '../../../passport/src/models/passport'
 
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
+import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
 import {Access} from '../../../access/src/models/access'
 
@@ -1089,17 +1091,47 @@ class OrganizationController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      // const {organizationId} = req.params
+      const {organizationId} = req.params
       const {userId, from, to} = req.query as UserContactTraceReportRequest
 
       // fetch attestation array in the time period
-      const attestations = await this.attestationService.getAttestationsInPeriod(userId, from, to)
-      // @ts-ignore 'timestamps' does not exist in typescript
-      const response = attestations.map(({timestamps, attestationTime, ...passThrough}) => ({
-        ...passThrough,
-        // @ts-ignore attestationTime is a server timestamp, not a string
-        attestationTime: attestationTime.toDate(),
-      }))
+      const [attestations, locations] = await Promise.all([
+        this.attestationService.getAttestationsInPeriod(userId, from, to),
+        this.organizationService.getLocations(organizationId),
+      ])
+      const attestedLocationIds = new Set<string>(_.uniq(attestations.map((att) => att.locationId)))
+      const questionnaireIdsByLocationId: Record<string, string> = locations.reduce(
+        (lookup, location) => {
+          if (!attestedLocationIds.has(location.id)) {
+            // don't care about this location
+            return lookup
+          }
+          return {
+            ...lookup,
+            [location.id]: location.questionnaireId,
+          }
+        },
+        {},
+      )
+      const questionnaireIds: string[] = _.uniq(Object.values(questionnaireIdsByLocationId))
+      const questionnaires = await this.questionnaireService.getQuestionnaires(questionnaireIds)
+      const questionnairesById: Record<string, Questionnaire> = questionnaires.reduce(
+        (lookup, questionnaire) => ({
+          ...lookup,
+          [questionnaire.id]: questionnaire,
+        }),
+        {},
+      )
+
+      const response = attestations.map(
+        // @ts-ignore 'timestamps' does not exist in typescript
+        ({timestamps, attestationTime, locationId, ...passThrough}) => ({
+          ...passThrough,
+          locationId,
+          attestationTime: safeTimestamp(attestationTime),
+          questions: questionnairesById[questionnaireIdsByLocationId[locationId]]?.questions ?? {},
+        }),
+      )
       res.json(actionSucceed(response))
     } catch (error) {
       next(error)
