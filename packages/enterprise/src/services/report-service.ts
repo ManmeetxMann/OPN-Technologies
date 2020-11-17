@@ -68,15 +68,16 @@ const getHourlyCheckInsCounts = (accesses: AccessWithPassportStatusAndUser[]): C
 
 const getPassportsCountPerStatus = (
   accesses: AccessWithPassportStatusAndUser[],
-): Record<PassportStatus, number> =>
-  accesses
-    .map(({status}) => status)
-    .reduce((byStatus, status) => ({...byStatus, [status]: byStatus[status] + 1}), {
-      [PassportStatuses.Pending]: 0,
-      [PassportStatuses.Proceed]: 0,
-      [PassportStatuses.Caution]: 0,
-      [PassportStatuses.Stop]: 0,
-    })
+): Record<PassportStatus, number> => {
+  const counts = {
+    [PassportStatuses.Pending]: 0,
+    [PassportStatuses.Proceed]: 0,
+    [PassportStatuses.Caution]: 0,
+    [PassportStatuses.Stop]: 0,
+  }
+  accesses.forEach(({status}) => (counts[status] += 1))
+  return counts
+}
 
 // select the 'fresher' access
 const getPriorityAccess = (
@@ -143,7 +144,7 @@ export class ReportService {
     const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
     const usersById = await this.getUsersById([...userIds])
     console.log('got users')
-    const dependantsById = await this.getDependantsById([...guardianIds], usersById, dependantIds)
+    const dependantsById = await this.getDependantsById(guardianIds, usersById, dependantIds)
     console.log('got dependants')
 
     // Fetch Guardians groups
@@ -158,6 +159,7 @@ export class ReportService {
     const usersGroupsByUserId: Record<string, OrganizationUsersGroup> = {}
     allGroups.forEach((groupUser) => (usersGroupsByUserId[groupUser.userId] = groupUser))
     // Get accesses
+    console.log('getting acceses')
     const accesses = await this.getAccessesFor(
       [...userIds],
       [...dependantIds],
@@ -179,12 +181,13 @@ export class ReportService {
   }
 
   private getDependantsById(
-    parentUserIds: string[],
+    parentUserIds: Set<string> | string[],
     usersById: Record<string, User>,
     dependantIds?: Set<string>,
   ): Promise<Record<string, User>> {
-    return Promise.all(
-      parentUserIds.map((userId) =>
+    const promises = []
+    parentUserIds.forEach((userId) =>
+      promises.push(
         this.userService
           .getAllDependants(userId)
           .then((results) =>
@@ -193,7 +196,9 @@ export class ReportService {
               .map((dependant) => ({...usersById[userId], ...dependant})),
           ),
       ),
-    ).then((pages) => {
+    )
+
+    return Promise.all(promises).then((pages) => {
       const byId: Record<string, User> = {}
       pages.forEach((page) => page.forEach((dependant) => (byId[dependant.id] = dependant)))
       return byId
@@ -321,20 +326,15 @@ export class ReportService {
         : partialLookup
     const {locationsLookup, usersLookup, dependantsLookup, groupsLookup} = lookups
 
-    const questionnairesLookup: Record<number, Questionnaire> = questionnaires.reduce(
-      (lookupSoFar, questionnaire) => {
-        const count = Object.keys(questionnaire.questions).length
-        if (lookupSoFar[count]) {
-          console.warn(`Multiple questionnaires with ${count} questions`)
-          return lookupSoFar
-        }
-        return {
-          ...lookupSoFar,
-          [count]: questionnaire,
-        }
-      },
-      {},
-    )
+    const questionnairesLookup: Record<number, Questionnaire> = {}
+    questionnaires.forEach((questionnaire) => {
+      const count = Object.keys(questionnaire.questions).length
+      if (questionnairesLookup[count]) {
+        console.warn(`Multiple questionnaires with ${count} questions`)
+        return
+      }
+      questionnairesLookup[count] = questionnaire
+    }, {})
 
     const printableAccessHistory: {name: string; time: string; action: string}[] = []
     let enterIndex = 0
@@ -521,19 +521,27 @@ export class ReportService {
       ),
     ])
     // keyed by user or dependant ID
-    const statusesByUserOrDependantId: Record<string, PassportStatus> = statuses.reduce(
-      (lookup, curr) => ({...lookup, [curr.id]: curr.status}),
-      {},
-    )
+    const statusesByUserOrDependantId: Record<string, PassportStatus> = {}
+    statuses.forEach(({id, status}) => (statusesByUserOrDependantId[id] = status))
 
     const groupsById: Record<string, OrganizationGroup> =
-      cachedGroupsById ?? allGroups.reduce((lookup, group) => ({...lookup, [group.id]: group}), {})
+      cachedGroupsById ??
+      allGroups.reduce((lookup, group) => {
+        lookup[group.id] = group
+        return lookup
+      }, {})
     // every location this organization contains
     const locationsById: Record<string, OrganizationLocation> =
       cachedLocationsById ??
-      allLocations.reduce((lookup, location) => ({...lookup, [location.id]: location}), {})
+      allLocations.reduce((lookup, location) => {
+        lookup[location.id] = location
+        return lookup
+      }, {})
     const groupsByUserOrDependantId: Record<string, OrganizationGroup> = userGroups.reduce(
-      (lookup, groupLink) => ({...lookup, [groupLink.userId]: groupsById[groupLink.groupId]}),
+      (lookup, groupLink) => {
+        lookup[groupLink.userId] = groupsById[groupLink.groupId]
+        return lookup
+      },
       {},
     )
     const dependantsById: Record<string, AugmentedDependant> = allDependants
@@ -544,13 +552,10 @@ export class ReportService {
           status: statusesByUserOrDependantId[dependant.id],
         }),
       )
-      .reduce(
-        (lookup, dependant) => ({
-          ...lookup,
-          [dependant.id]: dependant,
-        }),
-        {},
-      )
+      .reduce((lookup, dependant) => {
+        lookup[dependant.id] = dependant
+        return lookup
+      }, {})
     const usersById: Record<string, AugmentedUser> = allUsers.reduce(
       (lookup, user: User) => ({
         ...lookup,
@@ -678,13 +683,13 @@ export class ReportService {
     )
       .then((results) => _.flatten(results as Access[][]))
       .then((results) =>
-        results.reduce(
-          (byStatusToken, access) => ({
-            ...byStatusToken,
-            [access.statusToken]: [...(byStatusToken[access.statusToken] ?? []), access],
-          }),
-          {},
-        ),
+        results.reduce((byStatusToken, access) => {
+          if (!byStatusToken[access.statusToken]) {
+            byStatusToken[access.statusToken] = []
+          }
+          byStatusToken[access.statusToken].push(access)
+          return byStatusToken
+        }, {}),
       )
 
     const isAccessEligibleForUserId = (userId: string) =>
