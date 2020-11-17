@@ -17,7 +17,6 @@ import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-ex
 import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
-import {PageableRequestFilter} from '../../../../common/src/types/request'
 
 const authService = new AuthService()
 const userService = new UserService()
@@ -464,36 +463,6 @@ const removeDependent: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-/**
- * Get all users for a given org-id
- * Paginated result will be returned
- */
-const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {organizationId} = req.params
-    const {perPage, page} = req.query as PageableRequestFilter
-
-    const users = await userService.getAllByOrganizationId(organizationId, page, perPage)
-
-    const resultUsers = await Promise.all(
-      users.map(async (user: User) => {
-        const userGroup = await organizationService.getUserGroup(organizationId, user.id)
-        return {
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          photo: user.photo,
-          groupName: userGroup.name,
-          memberId: user.memberId,
-        }
-      }),
-    )
-    res.json(actionSucceed(resultUsers, page))
-  } catch (error) {
-    next(error)
-  }
-}
-
 class UserController implements IControllerBase {
   public router = express.Router()
 
@@ -508,7 +477,6 @@ class UserController implements IControllerBase {
     const authentication = innerRouter().use(
       '/',
       innerRouter()
-        .get('/:organizationId', authMiddleware, getUsersByOrganizationId)
         .post('/', create)
         .post('/migration', migrate)
         .post('/auth', authenticate)
