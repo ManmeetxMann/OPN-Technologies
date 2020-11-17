@@ -419,7 +419,7 @@ export class ReportService {
         (overlap.sourceDependantId
           ? dependantsLookup[overlap.sourceDependantId]
           : usersLookup[overlap.sourceUserId]
-        )?.group.name ?? '',
+        )?.group?.name ?? '',
       start: toDateTimeFormat(overlap.start),
       end: toDateTimeFormat(overlap.end),
     }))
@@ -511,7 +511,8 @@ export class ReportService {
         _.flatten(pages),
       ),
       // N/10 queries
-      this.organizationService.getUsersGroups(organizationId, null, [...userIds, ...dependantIds]),
+      // don't need to look up dependant groups because it's stored on the dependant doc
+      this.organizationService.getUsersGroups(organizationId, null, [...userIds]),
       cachedGroupsById ? null : this.organizationService.getGroups(organizationId),
       cachedLocationsById ? null : this.organizationService.getAllLocations(organizationId),
       // N queries
@@ -534,10 +535,18 @@ export class ReportService {
     const locationsById: Record<string, OrganizationLocation> =
       cachedLocationsById ??
       allLocations.reduce((lookup, location) => ({...lookup, [location.id]: location}), {})
-    const groupsByUserOrDependantId: Record<string, OrganizationGroup> = userGroups.reduce(
+    const groupsByUserId: Record<string, OrganizationGroup> = userGroups.reduce(
       (lookup, groupLink) => ({...lookup, [groupLink.userId]: groupsById[groupLink.groupId]}),
       {},
     )
+    const groupsByDependantId: Record<string, OrganizationGroup> = allDependants.map(
+      (lookup, dependant) => ({...lookup, [dependant.id]: groupsById[dependant.groupId]}),
+      {},
+    )
+    const groupsByUserOrDependantId = {
+      ...groupsByUserId,
+      ...groupsByDependantId,
+    }
     const dependantsById: Record<string, AugmentedDependant> = allDependants
       .map(
         (dependant): AugmentedDependant => ({
