@@ -465,40 +465,6 @@ const removeDependent: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-/**
- * Get all users for a given org-id
- * Paginated result will be returned
- */
-const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {organizationId} = req.params
-    const {perPage, page} = req.query as PageableRequestFilter
-
-    if (perPage < 1 || page < 0) {
-      throw new BadRequestException(`Pagination params are invalid`)
-    }
-
-    const users = await userService.getAllByOrganizationId(organizationId, page, perPage)
-
-    const resultUsers = await Promise.all(
-      users.map(async (user: User) => {
-        const userGroup = await organizationService.getUserGroup(organizationId, user.id)
-        return {
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          photo: user.photo,
-          groupName: userGroup.name,
-          memberId: user.memberId,
-        }
-      }),
-    )
-    res.json(actionSucceed(resultUsers, page))
-  } catch (error) {
-    next(error)
-  }
-}
-
 class UserController implements IControllerBase {
   public router = express.Router()
 
@@ -513,7 +479,6 @@ class UserController implements IControllerBase {
     const authentication = innerRouter().use(
       '/',
       innerRouter()
-        .get('/:organizationId', authMiddleware, getUsersByOrganizationId)
         .post('/', create)
         .post('/migration', migrate)
         .post('/auth', authenticate)
