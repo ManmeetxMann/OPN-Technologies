@@ -404,6 +404,12 @@ components:
           items:
             type: string
           description: Organizaiton ids to become a health admin of. Must be provided can be empty.
+        nfcAdminForOrganizationIds:
+          type: array
+          items:
+            type: string
+          description: Organizaiton ids to become a NFC tag admin of. Must be provided can be empty.
+
         groupIds:
           type: array
           items:
@@ -647,6 +653,10 @@ components:
           items:
             type: string
         superAdminForOrganizationIds:
+          type: array
+          items:
+            type: string
+        nfcAdminForOrganizationIds:
           type: array
           items:
             type: string
