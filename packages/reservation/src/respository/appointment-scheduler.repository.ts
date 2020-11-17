@@ -6,6 +6,7 @@ import {
   AppointmentSearchByDateRequest,
 } from '../models/appoinment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 export class AppoinmentsSchedulerRepository extends AcuityScheduling {
   constructor() {
@@ -54,7 +55,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
           time,
         } = appointments[0]
         if (appointments.length > 1) {
-          console.warn(`Duplicate Bar Code!! for Appoinment ${id}`)
+          throw new BadRequestException(`Duplicate Bar Code!! for Appoinment ${id}`)
         }
 
         return {
