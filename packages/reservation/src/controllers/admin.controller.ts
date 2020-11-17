@@ -84,7 +84,7 @@ class AdminController implements IControllerBase {
       const fromDate = moment(now()).tz(timeZone).subtract(30, 'days').startOf('day')
       const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
 
-      if (!moment(todaysDate).isBetween(fromDate, toDate)) {
+      if (!moment(todaysDate).isBetween(fromDate, toDate, undefined, '[]')) {
         throw new BadRequestException(
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
@@ -167,7 +167,7 @@ class AdminController implements IControllerBase {
       const fromDate = moment(now()).tz(timeZone).subtract(30, 'days').format('YYYY-MM-DD')
       const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
 
-      if (!moment(todaysDate).isBetween(fromDate, toDate)) {
+      if (!moment(todaysDate).isBetween(fromDate, toDate, undefined, '[]')) {
         throw new BadRequestException(
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
