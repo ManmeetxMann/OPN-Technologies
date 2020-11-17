@@ -42,11 +42,11 @@ export class UserService {
     return results.length > 0 ? results.shift() : null
   }
 
-  getAllDependants(userId: string): Promise<UserDependant[]> {
+  getAllDependants(userId: string, skipUserCheck = false): Promise<UserDependant[]> {
     return Promise.all([
       new UserDependantModel(this.dataStore, userId).fetchAll(),
-      // make sure the user exists
-      this.findOne(userId),
+      // make sure the user exists. Skippable for efficiency if the user is already known to exist
+      skipUserCheck ? () => Promise.resolve() : this.findOne(userId).then(() => null),
     ]).then(([dependants]) => dependants)
   }
 

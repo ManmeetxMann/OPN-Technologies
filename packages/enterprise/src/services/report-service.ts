@@ -127,10 +127,8 @@ export class ReportService {
       from: live ? moment(now()).startOf('day').toDate() : new Date(from),
       to: live ? now() : new Date(to),
     }
-    console.log('going to work')
     // Fetch user groups
     const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
-    console.log('got groups')
     // Get users & dependants
     const nonGuardiansUserIds = new Set<string>()
     const parentUserIds: Record<string, string> = {}
@@ -143,9 +141,7 @@ export class ReportService {
     const dependantIds = new Set(Object.keys(parentUserIds))
     const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
     const usersById = await this.getUsersById([...userIds])
-    console.log('got users')
     const dependantsById = await this.getDependantsById(guardianIds, usersById, dependantIds)
-    console.log('got dependants')
 
     // Fetch Guardians groups
     const guardiansGroups: OrganizationUsersGroup[] = await Promise.all(
@@ -153,13 +149,11 @@ export class ReportService {
         this.organizationService.getUsersGroups(organizationId, null, chunk),
       ),
     ).then((results) => _.flatten(results as OrganizationUsersGroup[][]))
-    console.log('got guardians')
 
     const allGroups = [...new Set([...(usersGroups ?? []), ...(guardiansGroups ?? [])])]
     const usersGroupsByUserId: Record<string, OrganizationUsersGroup> = {}
     allGroups.forEach((groupUser) => (usersGroupsByUserId[groupUser.userId] = groupUser))
     // Get accesses
-    console.log('getting acceses')
     const accesses = await this.getAccessesFor(
       [...userIds],
       [...dependantIds],
@@ -189,7 +183,7 @@ export class ReportService {
     parentUserIds.forEach((userId) =>
       promises.push(
         this.userService
-          .getAllDependants(userId)
+          .getAllDependants(userId, true)
           .then((results) =>
             results
               .filter(({id}) => dependantIds.has(id))
