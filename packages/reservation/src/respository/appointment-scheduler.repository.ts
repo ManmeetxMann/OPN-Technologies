@@ -12,6 +12,15 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
     super()
   }
 
+  async addBarcodeAppointment(
+    id: number,
+    barCodeNumber: string,
+  ): Promise<AppointmentAcuityResponse> {
+    return this.updateAppointment(id, {
+      barCodeNumber,
+    })
+  }
+
   async getManyAppointments(data: AppointmentSearchByDateRequest): Promise<AppointmentDBModel[]> {
     return this.getAppointments(data).then((appointments: AppointmentAcuityResponse[]) => {
       return appointments.map((appointment: AppointmentAcuityResponse) => ({

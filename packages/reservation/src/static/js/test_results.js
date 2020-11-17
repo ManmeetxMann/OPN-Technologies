@@ -48,25 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModal(findAncestor(elem, 'show-modal'))
   }
 
-  const setLoader = (btn, isEnable) => {
-    if (isEnable) {
-      const spinner = document.createElement('span')
-      spinner.classList.add('spinner')
-      const loaderText = document.createTextNode('Loading...')
-      btn.classList.add('d-inline-flex')
-      btn.classList.add('align-center')
-      btn.disabled = true
-      btn.innerHTML = ''
-      btn.appendChild(spinner)
-      btn.appendChild(loaderText)
-    } else {
-      btn.innerHTML = 'Submit'
-      btn.disabled = false
-      btn.classList.remove('d-inline-flex')
-      btn.classList.remove('align-center')
-    }
-  }
-
   const sendResult = async (event, isSecond = false) => {
     event.preventDefault()
 
@@ -81,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
       quasar670Ct: getValueByElem(quasar670CtElem),
       hexIC: getValueByElem(hexICElem),
       hexCt: getValueByElem(hexCtElem),
+      todaysDate: getValueByElem(todaysDate),
     }
     if (!isSecond && confirmBeforeSend === '1') {
       data.needConfirmation = true
@@ -119,7 +101,15 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         if (response.status === 409) {
           openModal(confirmSendingAgainModal)
-        } else {
+        }
+        else if (responseData?.errors?.length) {
+          let errorMessage = "";
+          responseData.errors.map((error) => {
+            errorMessage +=  `${error.param} ${error.msg}`
+          })
+
+          showAlertModal('Failed', errorMessage)
+        }else {
           showAlertModal('Failed', responseData.status.message)
         }
       }
