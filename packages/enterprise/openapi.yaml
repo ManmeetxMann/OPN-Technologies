@@ -404,6 +404,12 @@ components:
           items:
             type: string
           description: Organizaiton ids to become a health admin of. Must be provided can be empty.
+        nfcAdminForOrganizationIds:
+          type: array
+          items:
+            type: string
+          description: Organizaiton ids to become a NFC tag admin of. Must be provided can be empty.
+
         groupIds:
           type: array
           items:
@@ -549,7 +555,28 @@ components:
           type: string
         answers:
           type: object
-          additionalProperties: true
+          description: answers to the questionnaire, keyed by numerical strings
+          additionalProperties:
+            type: object
+            additionalProperties:
+              oneOf:
+                - type: string
+                - type: boolean
+        questions:
+          type: object
+          description: questions in the questionnaire, keyed by numerical strings
+          additionalProperties:
+            type: object
+            properties:
+              answers:
+                type: object
+                additionalProperties:
+                  type: string
+                  enum:
+                    - "boolean" 
+                    - "datetime"
+              value:
+                type: string
         appliesTo:
           type: array
           items:
@@ -629,6 +656,10 @@ components:
           type: array
           items:
             type: string
+        nfcAdminForOrganizationIds:
+          type: array
+          items:
+            type: string
         adminForOrganizationId:
           type: string
         showReporting:
@@ -683,6 +714,9 @@ components:
           type: string
           nullable: true
         phone:
+          type: string
+          nullable: true
+        memberId:
           type: string
           nullable: true
       required:
@@ -1409,6 +1443,36 @@ components:
             message:
               nullable: true
               type: string
+
+    ResponseOfUsersByOrganization:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserWithGroup'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+        page:
+          type: number
 
   responses:
     Response:
@@ -2432,6 +2496,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+
+  /api/v3/users/{organizationId}:
+    get:
+      summary: Organization users list
+      description: Get users by organizationId
+      tags:
+        - Account management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: page
+          schema:
+            type: number
+          required: true
+        - in: query
+          name: perPage
+          schema:
+            type: number
+          required: true
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsersByOrganization'
 
   /api/v3/users:
     post:

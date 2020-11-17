@@ -17,6 +17,7 @@ import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-ex
 import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
+import {PageableRequestFilter} from '../../../../common/src/types/request'
 
 const authService = new AuthService()
 const userService = new UserService()
@@ -315,9 +316,13 @@ const connectGroup: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
     const {organizationId, groupId} = req.body as ConnectGroupRequest
-    const group = await organizationService.getGroup(organizationId, groupId)
 
-    await userService.connectGroups(authenticatedUser.id, [group.id])
+    // validate that the group exists
+    await organizationService.getGroup(organizationId, groupId)
+
+    await organizationService.addUserToGroup(organizationId, groupId, authenticatedUser.id)
+    // adds to root collection. Disabled for compatibility
+    // await userService.connectGroups(authenticatedUser.id, [group.id])
 
     res.json(actionSucceed())
   } catch (error) {
@@ -459,6 +464,36 @@ const removeDependent: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
+/**
+ * Get all users for a given org-id
+ * Paginated result will be returned
+ */
+const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const {organizationId} = req.params
+    const {perPage, page} = req.query as PageableRequestFilter
+
+    const users = await userService.getAllByOrganizationId(organizationId, page, perPage)
+
+    const resultUsers = await Promise.all(
+      users.map(async (user: User) => {
+        const userGroup = await organizationService.getUserGroup(organizationId, user.id)
+        return {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          photo: user.photo,
+          groupName: userGroup.name,
+          memberId: user.memberId,
+        }
+      }),
+    )
+    res.json(actionSucceed(resultUsers, page))
+  } catch (error) {
+    next(error)
+  }
+}
+
 class UserController implements IControllerBase {
   public router = express.Router()
 
@@ -473,6 +508,7 @@ class UserController implements IControllerBase {
     const authentication = innerRouter().use(
       '/',
       innerRouter()
+        .get('/:organizationId', authMiddleware, getUsersByOrganizationId)
         .post('/', create)
         .post('/migration', migrate)
         .post('/auth', authenticate)

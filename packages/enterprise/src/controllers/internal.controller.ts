@@ -137,6 +137,7 @@ class InternalController implements IControllerBase {
         organizationId,
         superAdminForOrganizationIds,
         healthAdminForOrganizationIds,
+        nfcAdminForOrganizationIds,
         showReporting,
         groupIds,
       } = req.body as InternalAdminApprovalCreateRequest
@@ -157,6 +158,7 @@ class InternalController implements IControllerBase {
         adminForGroupIds: groupIds ?? [],
         superAdminForOrganizationIds: superAdminForOrganizationIds ?? [],
         healthAdminForOrganizationIds: healthAdminForOrganizationIds ?? [],
+        nfcAdminForOrganizationIds: nfcAdminForOrganizationIds ?? [],
       })
       res.json(actionSucceed())
     } catch (error) {

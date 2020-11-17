@@ -13,6 +13,7 @@ export type User = Auditable & {
   photo?: string // photo url
   phone?: Phone
   registrationId?: string
+  memberId?: string
 }
 
 export type UserDTO = {
