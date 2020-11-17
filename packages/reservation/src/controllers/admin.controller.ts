@@ -77,7 +77,7 @@ class AdminController implements IControllerBase {
       const {todaysDate} = requestData
 
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
-      const fromDate = moment(now()).tz(timeZone).subtract(30, 'days').format('YYYY-MM-DD')
+      const fromDate = moment(now()).tz(timeZone).subtract(30, 'days').startOf('day')
       const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
   
       if (!moment(todaysDate).isBetween(fromDate, toDate)) {
