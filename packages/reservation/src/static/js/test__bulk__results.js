@@ -222,59 +222,73 @@ document.addEventListener('DOMContentLoaded', () => {
         sendAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
       }))
 
-    const response = await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        from,
-        to,
-        todaysDate,
-        results: dataSentBackend,
-      }),
-    })
+    const dataChunks = _.chunk(dataSentBackend, 20)
+    let failedRows = []
+    let isFatal = []
+
+    for (let i = 0; i < dataChunks.length; i++) {
+      const response = await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          from,
+          to,
+          todaysDate,
+          results: dataChunks[i],
+        }),
+      })
 
     setLoader(sendButtonBulk, false)
 
     const responseData = await response.json()
 
-    if (!response.ok) {
-      openModal(errorBulkModal)
-      errorBulkContent.innerHTML = ''
-      const regexpFieldName = /.*\[\d*\]\./g
-      const regexpFieldRow = /.*\[(\d*)\]\..*/g
+      // This case should be only if server is down
+      if (!response.ok) {
+        openModal(errorBulkModal)
+        errorBulkContent.innerHTML = ''
+        const regexpFieldName = /.*\[\d*\]\./g
+        const regexpFieldRow = /.*\[(\d*)\]\..*/g
 
-      if (responseData?.errors?.length) {
-        responseData.errors.map((err) => {
-          const errrorElem = document.createElement('p')
-          const fieldName = err.param.replace(regexpFieldName, '')
-          const index = parseInt(err.param.replace(regexpFieldRow, '$1'))
-          errrorElem.innerText = `At ${dataSentBackend[index].barCode} row ${fieldName} is invalid.`
-          errorBulkContent.appendChild(errrorElem)
-        })
-      } else {
-        const errrorElem = document.createElement('p')
-        errrorElem.innerText = `Invalid request`
-        errorBulkContent.appendChild(errrorElem)
+        if (responseData?.errors?.length) {
+          responseData.errors.map((err) => {
+            const errorElem = document.createElement('p')
+            const fieldName = err.param.replace(regexpFieldName, '')
+            const index = parseInt(err.param.replace(regexpFieldRow, '$1'))
+            errorElem.innerText = `At ${dataSentBackend[index].barCode} row ${fieldName} is invalid.`
+            errorBulkContent.appendChild(errorElem)
+          })
+        } else {
+          const errorElem = document.createElement('p')
+          errorElem.innerText = `Invalid request`
+          errorBulkContent.appendChild(errorElem)
+        }
+        isFatal = _.flatten(dataChunks.slice(i))
+        break
       }
-    } else {
-      let content = ''
-      const succeedRows = dataSentBackend.filter((row) => {
-        return !responseData.data.failedRows.find((row2) => row2.barCode === row.barCode)
-      })
-      openModal(successModal)
-
-      if (succeedRows.length) {
-        const succeedRowsElem = succeedRows.map((row) => `<div>${row.barCode}</div>`).join('')
-        content += `Succeed rows: ${succeedRowsElem}<br/>`
-      }
-      if (responseData.data.failedRows.length) {
-        const failedRows = responseData.data.failedRows
-          .map((row) => `<div>${row.barCode}</div>`)
-          .join('')
-        content += `Failed rows. Reason: Appointment not found ${failedRows}`
-      }
-
-      successModalContent.innerHTML = content
+      failedRows = [...failedRows, ...responseData.data.failedRows]
     }
+    let content = ''
+    const succeedRows = dataSentBackend.filter((row) => {
+      return (
+        !failedRows.find((row2) => row2.barCode === row.barCode) &&
+        !isFatal.find((row2) => row2.barCode === row.barCode)
+      )
+    })
+    openModal(successModal)
+
+    if (succeedRows.length) {
+      const succeedRowsElem = succeedRows.map((row) => `<div>${row.barCode}</div>`).join('')
+      content += `Succeed rows: ${succeedRowsElem}<br/>`
+    }
+    if (failedRows.length) {
+      const failedRowsElem = failedRows.map((row) => `<div>${row.barCode}</div>`).join('')
+      content += `Failed rows. Reason: Appointment not found ${failedRowsElem}<br/>`
+    }
+    if (isFatal.length) {
+      const fatalRowsElem = isFatal.map((row) => `<div>${row.barCode}</div>`).join('')
+      content += `Failed rows. Reason: Internal Server Error ${fatalRowsElem}<br/>`
+    }
+
+    successModalContent.innerHTML = content
   })
 })
