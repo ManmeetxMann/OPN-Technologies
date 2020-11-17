@@ -126,10 +126,10 @@ export class ReportService {
       from: live ? moment(now()).startOf('day').toDate() : new Date(from),
       to: live ? now() : new Date(to),
     }
-
+    console.log('going to work')
     // Fetch user groups
     const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
-
+    console.log('got groups')
     // Get users & dependants
     const nonGuardiansUserIds = new Set<string>()
     const parentUserIds: Record<string, string> = {}
@@ -142,7 +142,9 @@ export class ReportService {
     const dependantIds = new Set(Object.keys(parentUserIds))
     const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
     const usersById = await this.getUsersById([...userIds])
+    console.log('got users')
     const dependantsById = await this.getDependantsById([...guardianIds], usersById, dependantIds)
+    console.log('got dependants')
 
     // Fetch Guardians groups
     const guardiansGroups: OrganizationUsersGroup[] = await Promise.all(
@@ -150,17 +152,11 @@ export class ReportService {
         this.organizationService.getUsersGroups(organizationId, null, chunk),
       ),
     ).then((results) => _.flatten(results as OrganizationUsersGroup[][]))
+    console.log('got guardians')
 
-    const groupsUsersByUserId: Record<string, OrganizationUsersGroup> = [
-      ...new Set([...(usersGroups ?? []), ...(guardiansGroups ?? [])]),
-    ].reduce(
-      (byUserId, groupUser) => ({
-        ...byUserId,
-        [groupUser.userId]: groupUser,
-      }),
-      {},
-    )
-
+    const allGroups = [...new Set([...(usersGroups ?? []), ...(guardiansGroups ?? [])])]
+    const usersGroupsByUserId: Record<string, OrganizationUsersGroup> = {}
+    allGroups.forEach((groupUser) => (usersGroupsByUserId[groupUser.userId] = groupUser))
     // Get accesses
     const accesses = await this.getAccessesFor(
       [...userIds],
@@ -169,7 +165,7 @@ export class ReportService {
       locationId,
       groupId,
       betweenCreatedDate,
-      groupsUsersByUserId,
+      usersGroupsByUserId,
       usersById,
       dependantsById,
     )
@@ -197,9 +193,11 @@ export class ReportService {
               .map((dependant) => ({...usersById[userId], ...dependant})),
           ),
       ),
-    ).then((dependants) =>
-      _.flatten(dependants).reduce((byId, dependant) => ({...byId, [dependant.id]: dependant}), {}),
-    )
+    ).then((pages) => {
+      const byId: Record<string, User> = {}
+      pages.forEach((page) => page.forEach((dependant) => (byId[dependant.id] = dependant)))
+      return byId
+    })
   }
 
   async getUserReportTemplate(
@@ -480,12 +478,12 @@ export class ReportService {
 
   private getUsersById(userIds: string[]): Promise<Record<string, User>> {
     const chunks = _.chunk(userIds, 10) as string[][]
-    return Promise.all(
-      chunks.map((userIds) => this.userService.findAllBy({userIds})),
-    ).then((results) =>
-      results
-        ?.reduce((flatted, chunks) => [...flatted, ...chunks], [])
-        .reduce((byId, user) => ({...byId, [user.id]: user}), {}),
+    return Promise.all(chunks.map((userIds) => this.userService.findAllBy({userIds}))).then(
+      (pages) => {
+        const byId: Record<string, User> = {}
+        pages.forEach((page) => page.forEach((user) => (byId[user.id] = user)))
+        return byId
+      },
     )
   }
 

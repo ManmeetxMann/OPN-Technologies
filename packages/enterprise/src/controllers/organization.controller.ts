@@ -733,10 +733,7 @@ class OrganizationController implements IControllerBase {
       )
       console.log('templates retrieved')
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
-      const content = allTemplates.reduce(
-        (contentArray, template) => [...contentArray, ...template.content],
-        [],
-      )
+      const content = _.flatten(allTemplates)
       console.log('generating stream')
       const pdfStream = this.pdfService.generatePDFStream(content, tableLayouts)
       res.contentType('application/pdf')

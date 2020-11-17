@@ -43,9 +43,11 @@ export class UserService {
   }
 
   getAllDependants(userId: string): Promise<UserDependant[]> {
-    return this.findOne(userId).then(() =>
+    return Promise.all([
       new UserDependantModel(this.dataStore, userId).fetchAll(),
-    )
+      // make sure the user exists
+      this.findOne(userId),
+    ]).then(([dependants]) => dependants)
   }
 
   getDependantAndParentByParentId(
