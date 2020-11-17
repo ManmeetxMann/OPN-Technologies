@@ -17,8 +17,6 @@ import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-ex
 import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
-import {PageableRequestFilter} from '../../../../common/src/types/request'
-import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 
 const authService = new AuthService()
 const userService = new UserService()
