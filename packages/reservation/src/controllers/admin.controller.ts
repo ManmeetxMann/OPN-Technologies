@@ -79,9 +79,11 @@ class AdminController implements IControllerBase {
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now()).tz(timeZone).subtract(30, 'days').startOf('day')
       const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
-  
+
       if (!moment(todaysDate).isBetween(fromDate, toDate)) {
-        throw new BadRequestException(`Date does not match the time range (from ${fromDate} - to ${toDate})`)
+        throw new BadRequestException(
+          `Date does not match the time range (from ${fromDate} - to ${toDate})`,
+        )
       }
 
       const barcodeCounts = requestData.results.reduce((acc, row) => {
@@ -160,9 +162,11 @@ class AdminController implements IControllerBase {
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now()).tz(timeZone).subtract(30, 'days').format('YYYY-MM-DD')
       const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
-  
+
       if (!moment(todaysDate).isBetween(fromDate, toDate)) {
-        throw new BadRequestException(`Date does not match the time range (from ${fromDate} - to ${toDate})`)
+        throw new BadRequestException(
+          `Date does not match the time range (from ${fromDate} - to ${toDate})`,
+        )
       }
 
       if (requestData.needConfirmation) {
