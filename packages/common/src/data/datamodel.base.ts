@@ -1,7 +1,7 @@
 import DataStore from './datastore'
 import {HasId, OptionalIdStorable, Storable} from '@firestore-simple/admin/dist/types'
 import {firestore} from 'firebase-admin'
-import {Collection} from '@firestore-simple/admin'
+import {Collection, Query} from '@firestore-simple/admin'
 import * as _ from 'lodash'
 import {serverTimestamp} from '../utils/times'
 
@@ -65,6 +65,15 @@ export interface IDataModel<T extends HasId> {
 
   fetchAll(subPath?: string): Promise<T[]>
 
+  fetchPage(
+    query: Query<T, Omit<T, 'id'>>,
+    page: number,
+    perPage: number,
+    subPath?: string,
+  ): Promise<T[]>
+
+  fetchAllWithPagination(page: number, perPage: number, subPath: string): Promise<T[]>
+
   /**
    * Increments the given property of the specified document by the count given
    * @param id identifier for the document in the collection
@@ -73,6 +82,13 @@ export interface IDataModel<T extends HasId> {
    */
   increment(id: string, fieldName: string, byCount: number, subPath?: string): Promise<T>
 
+  getQueryFindWhereArrayInMapContainsAny(
+    map: string,
+    key: string,
+    value: unknown,
+    subPath: string,
+  ): Query<T, Omit<T, 'id'>>
+
   findWhereArrayInMapContainsAny(
     map: string,
     key: string,
@@ -80,12 +96,25 @@ export interface IDataModel<T extends HasId> {
     subPath?: string,
   ): Promise<T[]>
 
+  getQueryFindWhereArrayInMapContains(
+    map: string,
+    key: string,
+    value: unknown,
+    subPath: string,
+  ): Query<T, Omit<T, 'id'>>
+
   findWhereArrayInMapContains(
     map: string,
     key: string,
     value: unknown,
     subPath?: string,
   ): Promise<T[]>
+
+  getQueryFindWhereArrayContains(
+    property: string,
+    value: unknown,
+    subPath: string,
+  ): Query<T, Omit<T, 'id'>>
 
   findWhereArrayContains(property: string, value: unknown, subPath?: string): Promise<T[]>
 
@@ -99,6 +128,13 @@ export interface IDataModel<T extends HasId> {
   findWhereIdIn(values: unknown[], subPath?: string): Promise<T[]>
 
   findOneById(value: unknown, subPath?: string): Promise<T>
+
+  getQueryFindWhereMapHasKeyValueIn(
+    map: string,
+    key: string,
+    value: unknown,
+    subPath: string,
+  ): Query<T, Omit<T, 'id'>>
 
   findWhereMapHasKeyValueIn(
     map: string,
@@ -116,7 +152,16 @@ export interface IDataModel<T extends HasId> {
 
   get(id: string, subPath?: string): Promise<T>
 
+  getQueryFindWhereEqual(property: string, value: unknown, subPath: string): Query<T, Omit<T, 'id'>>
+
   findWhereEqual(property: string, value: unknown, subPath?: string): Promise<T[]>
+
+  getQueryFindWhereEqualWithMax(
+    property: string,
+    value: unknown,
+    sortKey: Exclude<keyof T, 'id'>,
+    subPath: string,
+  ): Query<T, Omit<T, 'id'>>
 
   findWhereEqualWithMax(
     property: string,
@@ -237,8 +282,34 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return Promise.all(data.map((item) => this.update(item, subPath)))
   }
 
+  public async fetchPage(
+    query: Query<T, Omit<T, 'id'>>,
+    page: number,
+    perPage: number,
+    subPath = '',
+  ): Promise<T[]> {
+    const subset = await query.limit(page === 0 ? perPage : page * perPage).fetch()
+
+    if (page === 0) return subset.slice()
+
+    const lastVisible = subset[subset.length - 1]
+    const lastVisibleSnapshot = await this.collection(subPath).docRef(lastVisible.id).get()
+
+    const nextPage = await query.limit(perPage).startAfter(lastVisibleSnapshot).fetch()
+    return nextPage.slice()
+  }
+
   public async fetchAll(subPath = ''): Promise<T[]> {
     return this.collection(subPath).fetchAll()
+  }
+
+  public async fetchAllWithPagination(page: number, perPage: number, subPath = ''): Promise<T[]> {
+    return this.fetchPage(
+      this.collection(subPath).limit(page === 0 ? perPage : page * perPage),
+      page,
+      perPage,
+      subPath,
+    )
   }
 
   public async increment(id: string, fieldName: string, byCount: number, subPath = ''): Promise<T> {
@@ -248,6 +319,16 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
         'timestamps.updatedAt': serverTimestamp(),
       })
       .then(() => this.get(id))
+  }
+
+  public getQueryFindWhereArrayInMapContainsAny(
+    map: string,
+    key: string,
+    value: unknown,
+    subPath = '',
+  ): Query<T, Omit<T, 'id'>> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
+    return this.collection(subPath).where(fieldPath, 'array-contains-any', value)
   }
 
   public async findWhereArrayInMapContainsAny(
@@ -260,6 +341,16 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return await this.collection(subPath).where(fieldPath, 'array-contains-any', value).fetch()
   }
 
+  public getQueryFindWhereArrayInMapContains(
+    map: string,
+    key: string,
+    value: unknown,
+    subPath = '',
+  ): Query<T, Omit<T, 'id'>> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
+    return this.collection(subPath).where(fieldPath, 'array-contains', value)
+  }
+
   public async findWhereArrayInMapContains(
     map: string,
     key: string,
@@ -268,6 +359,15 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
   ): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
     return await this.collection(subPath).where(fieldPath, 'array-contains', value).fetch()
+  }
+
+  public getQueryFindWhereArrayContains(
+    property: string,
+    value: unknown,
+    subPath = '',
+  ): Query<T, Omit<T, 'id'>> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+    return this.collection(subPath).where(fieldPath, 'array-contains', value)
   }
 
   public async findWhereArrayContains(
@@ -317,6 +417,16 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return null
   }
 
+  public getQueryFindWhereMapHasKeyValueIn(
+    map: string,
+    key: string,
+    value: unknown,
+    subPath = '',
+  ): Query<T, Omit<T, 'id'>> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(map, key)
+    return this.collection(subPath).where(fieldPath, 'in', value)
+  }
+
   public async findWhereMapHasKeyValueIn(
     map: string,
     key: string,
@@ -347,9 +457,28 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return this.collection(subPath).fetch(id)
   }
 
+  public getQueryFindWhereEqual(
+    property: string,
+    value: unknown,
+    subPath = '',
+  ): Query<T, Omit<T, 'id'>> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+    return this.collection(subPath).where(fieldPath, '==', value)
+  }
+
   public async findWhereEqual(property: string, value: unknown, subPath = ''): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
     return this.collection(subPath).where(fieldPath, '==', value).fetch()
+  }
+
+  public getQueryFindWhereEqualWithMax(
+    property: string,
+    value: unknown,
+    sortKey: Exclude<keyof T, 'id'>,
+    subPath = '',
+  ): Query<T, Omit<T, 'id'>> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+    return this.collection(subPath).where(fieldPath, '==', value).orderBy(sortKey, 'desc').limit(1)
   }
 
   public async findWhereEqualWithMax(

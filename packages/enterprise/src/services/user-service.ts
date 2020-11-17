@@ -95,6 +95,14 @@ export class UserService {
     })
   }
 
+  getAllByOrganizationId(organizationId: string, page: number, perPage: number): Promise<User[]> {
+    const userIdsQuery = this.userRepository.getQueryFindWhereArrayContains(
+      'organizationIds',
+      organizationId,
+    )
+    return this.userRepository.fetchPage(userIdsQuery, page, perPage)
+  }
+
   getByEmail(email: string): Promise<User> {
     return this.userRepository.findWhereEqual('email', email).then((results) => results[0])
   }
