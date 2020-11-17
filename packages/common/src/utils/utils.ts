@@ -1,7 +1,3 @@
-import * as _ from 'lodash'
-
-export const flattern = <T>(data: T[][]): T[] => _.flatten(data)
-
 export const encodeQueryParams = (params: Record<string, unknown>): string =>
   Object.entries(params)
     .filter(([_key, value]) => !!value)

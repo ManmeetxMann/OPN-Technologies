@@ -7,7 +7,6 @@ import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/res
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {UserOrganizationRepository} from '../repository/user-organization.repository'
 import {UserDependencyRepository} from '../repository/user-dependency.repository'
-import {flattern} from '../../../common/src/utils/utils'
 import * as _ from 'lodash'
 import {UserGroupRepository} from '../repository/user-group.repository'
 import {OrganizationUsersGroupModel} from '../repository/organization.repository'
@@ -102,7 +101,7 @@ export class UserService {
   getAllByIds(userIds: string[]): Promise<User[]> {
     return Promise.all(
       _.chunk(userIds, 10).map((chunk) => this.userRepository.findWhereIdIn(chunk)),
-    ).then((results) => flattern(results as User[][]))
+    ).then((results) => _.flatten(results as User[][]))
   }
 
   activate(user: User): Promise<User> {

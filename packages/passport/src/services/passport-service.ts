@@ -7,7 +7,6 @@ import {now, serverTimestamp} from '../../../common/src/utils/times'
 import moment from 'moment'
 import {firestore} from 'firebase-admin'
 import * as _ from 'lodash'
-import {flattern} from '../../../common/src/utils/utils'
 import {Config} from '../../../common/src/utils/config'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
@@ -39,7 +38,7 @@ export class PassportService {
           .fetch(),
       ),
     ).then((results) =>
-      flattern(results as Passport[][])?.forEach((source) => {
+      _.flatten(results as Passport[][])?.forEach((source) => {
         const passport = mapDates(source)
         const validFrom = passport.validFrom
         const latestUserPassport = latestPassportsByUserId[passport.userId]
