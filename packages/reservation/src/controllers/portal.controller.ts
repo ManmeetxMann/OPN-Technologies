@@ -1,12 +1,17 @@
 import {Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
+import moment from 'moment-timezone'
+import {isEmpty} from 'lodash'
+
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {now} from '../../../common/src/utils/times'
+import {Config} from '../../../common/src/utils/config'
 
 import {AppoinmentService} from '../services/appoinment.service'
+
 import {AppointmentDTO, BarCodeGeneratorUI, AppoinmentDataUI} from '../models/appoinment'
-import * as _ from 'lodash'
-import {Config} from '../../../common/src/utils/config'
+
 import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 
 class PortalController implements IControllerBase {
@@ -38,7 +43,7 @@ class PortalController implements IControllerBase {
       barCode: barCode,
     }
     try {
-      if (_.isEmpty(barCode)) {
+      if (isEmpty(barCode)) {
         throw new BadRequestException('Please provide Bar Code Number')
       }
       const appointment: AppointmentDTO = await this.appoinmentService.getAppoinmentByBarCode(
@@ -78,17 +83,29 @@ class PortalController implements IControllerBase {
   }
 
   displayFormToSendSingleResults = async (req: Request, res: Response): Promise<void> => {
+    const timeZone = Config.get('DEFAULT_TIME_ZONE')
+    const calendarFromDate = moment(now()).tz(timeZone).subtract(30, 'days').format('YYYY-MM-DD')
+    const calendarToDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
+
     res.render('send_single_form', {
       layout: 'results',
       confirmBeforeSend: Config.get('CONFIRM_BEFORE_SEND'),
       sendSingleResultsTab: true,
+      calendarFromDate,
+      calendarToDate,
     })
   }
 
   displayFormToSendBulkResults = async (req: Request, res: Response): Promise<void> => {
+    const timeZone = Config.get('DEFAULT_TIME_ZONE')
+    const calendarFromDate = moment(now()).tz(timeZone).subtract(30, 'days').format('YYYY-MM-DD')
+    const calendarToDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
+
     res.render('send_bulk_form', {
       layout: 'results',
       sendBulkResultTab: true,
+      calendarFromDate,
+      calendarToDate,
     })
   }
 }
