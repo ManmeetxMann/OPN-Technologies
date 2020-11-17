@@ -24,6 +24,10 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
 
   async getManyAppointments(data: AppointmentSearchByDateRequest): Promise<AppointmentDBModel[]> {
     return this.getAppointments(data).then((appointments: AppointmentAcuityResponse[]) => {
+      if (!appointments.length) {
+        throw new ResourceNotFoundException(`Appointment not found`)
+      }
+
       return appointments.map((appointment: AppointmentAcuityResponse) => ({
         firstName: appointment.firstName,
         lastName: appointment.lastName,
@@ -35,7 +39,6 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
         dateOfAppointment: appointment.date,
         barCode: appointment.barCode,
       }))
-      throw new ResourceNotFoundException(`Appointment not found`)
     })
   }
 
