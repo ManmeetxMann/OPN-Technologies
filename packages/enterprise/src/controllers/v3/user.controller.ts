@@ -18,6 +18,7 @@ import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
 import {PageableRequestFilter} from '../../../../common/src/types/request'
+import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 
 const authService = new AuthService()
 const userService = new UserService()
@@ -472,6 +473,10 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
   try {
     const {organizationId} = req.params
     const {perPage, page} = req.query as PageableRequestFilter
+
+    if (perPage < 1 || page < 0) {
+      throw new BadRequestException(`Pagination params are invalid`)
+    }
 
     const users = await userService.getAllByOrganizationId(organizationId, page, perPage)
 

@@ -2487,7 +2487,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /api/v3/users/{organizationId}:
+  /enterprise/api/v3/users/{organizationId}:
     get:
       summary: Organization users list
       description: Get users by organizationId
@@ -2504,12 +2504,14 @@ paths:
         - in: query
           name: page
           schema:
-            type: number
+            type: integer
+            minimum: 0
           required: true
         - in: query
           name: perPage
           schema:
-            type: number
+            type: integer
+            minimum: 1
           required: true
       responses:
         '200':
