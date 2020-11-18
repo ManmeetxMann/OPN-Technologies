@@ -801,6 +801,10 @@ components:
           type: string
           description: Photo URL
           nullable: true
+        memberId:
+          type: string
+          nullable: true
+
       required:
         - email
         - firstName
