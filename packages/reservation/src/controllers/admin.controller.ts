@@ -43,7 +43,6 @@ class AdminController implements IControllerBase {
       )
       .post(
         this.path + '/api/v1/send-test-results-again',
-        CSVValidator.validate(CSVValidator.csvValidation()),
         this.sendTestResultsAgain,
       )
       .post(this.path + '/api/v1/check-appointments', this.checkAppointments)
