@@ -41,10 +41,7 @@ class AdminController implements IControllerBase {
         CSVValidator.validate(CSVValidator.csvValidation()),
         this.sendAndSaveTestResults,
       )
-      .post(
-        this.path + '/api/v1/send-test-results-again',
-        this.sendTestResultsAgain,
-      )
+      .post(this.path + '/api/v1/send-test-results-again', this.sendTestResultsAgain)
       .post(this.path + '/api/v1/check-appointments', this.checkAppointments)
       .post(
         this.path + '/api/v1/send-and-save-test-results-bulk',
