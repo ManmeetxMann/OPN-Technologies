@@ -5,9 +5,12 @@ import {AdminApprovalService} from '../../../common/src/service/user/admin-servi
 import {PdfService} from '../../../common/src/service/reports/pdf'
 
 import {EmailService} from '../services/email-service'
+import UploadService from '../services/upload-service'
 import {OrganizationService} from '../services/organization-service'
 import {ReportService} from '../services/report-service'
 import {InternalAdminApprovalCreateRequest} from '../models/internal-request'
+
+import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 
 import {Router, NextFunction, Request, Response} from 'express'
 
@@ -28,7 +31,9 @@ class InternalController implements IControllerBase {
   private adminApprovalService = new AdminApprovalService()
   private pdfService = new PdfService()
   private reportService = new ReportService()
+  private questionnaireService = new QuestionnaireService()
   private emailService = new EmailService()
+  private uploadService = new UploadService()
 
   constructor() {
     this.initRoutes()
@@ -44,27 +49,76 @@ class InternalController implements IControllerBase {
     try {
       const {groupId, organizationId, email, name, from, to} = req.body as GroupReportEmailRequest
 
-      await this.organizationService.getGroup(organizationId, groupId)
       const memberships = await this.organizationService.getUsersGroups(organizationId, groupId)
+      const userIds = new Set<string>()
+      const dependantIds = new Set<string>()
+      memberships.forEach((membership) => {
+        if (membership.parentUserId) {
+          userIds.add(membership.parentUserId)
+          dependantIds.add(membership.userId)
+        } else {
+          userIds.add(membership.userId)
+        }
+      })
+      console.log(`${memberships.length} memberships found`)
+
+      const organizationPromise = this.organizationService.findOneById(organizationId)
+      const lookups = await this.reportService.getLookups(userIds, dependantIds, organizationId)
+      const questionnaireIds = new Set<string>()
+      Object.values(lookups.locationsLookup).forEach((location) => {
+        if (location.questionnaireId) {
+          questionnaireIds.add(location.questionnaireId)
+        }
+      })
+      const questionnairePromise = this.questionnaireService.getQuestionnaires([
+        ...questionnaireIds,
+      ])
+      const [organization, questionnaire] = await Promise.all([
+        organizationPromise,
+        questionnairePromise,
+      ])
+      console.log(`lookups retrieved`)
+
       const allTemplates = await Promise.all(
-        memberships.map((membership) =>
-          this.reportService.getUserReportTemplate(
-            organizationId,
-            membership.userId,
-            membership.parentUserId,
-            from,
-            to,
+        memberships
+          .filter((membership) => {
+            if (membership.parentUserId) {
+              return lookups.dependantsLookup[membership.userId]
+            }
+            return lookups.usersLookup[membership.userId]
+          })
+          .map((membership) =>
+            this.reportService
+              .getUserReportTemplate(
+                organization,
+                membership.userId,
+                membership.parentUserId,
+                from,
+                to,
+                lookups,
+                questionnaire,
+              )
+              .catch((err) => {
+                console.warn(`error getting content for ${JSON.stringify(membership)} - ${err}`)
+                return {
+                  content: [],
+                  tableLayouts: null,
+                }
+              }),
           ),
-        ),
       )
-      const tableLayouts = allTemplates[0].tableLayouts
+      console.log(`generated ${allTemplates.length} templates`)
+      const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
       const content = allTemplates.reduce(
         (contentArray, template) => [...contentArray, ...template.content],
         [],
       )
-
-      const pdfB64 = await this.pdfService.generatePDFBase64(content, tableLayouts)
-      await this.emailService.sendGroupReport(email, name, pdfB64)
+      console.log(`generating pdf with ${content.length} elements`)
+      const pdfStream = await this.pdfService.generatePDFStream(content, tableLayouts)
+      console.log('uploading pdf')
+      const filePath = await this.uploadService.uploadReport(pdfStream)
+      console.log('sending email')
+      await this.emailService.sendGroupReport(email, name, filePath)
       res.sendStatus(200)
     } catch (error) {
       next(error)
@@ -83,6 +137,7 @@ class InternalController implements IControllerBase {
         organizationId,
         superAdminForOrganizationIds,
         healthAdminForOrganizationIds,
+        nfcAdminForOrganizationIds,
         showReporting,
         groupIds,
       } = req.body as InternalAdminApprovalCreateRequest
@@ -103,6 +158,7 @@ class InternalController implements IControllerBase {
         adminForGroupIds: groupIds ?? [],
         superAdminForOrganizationIds: superAdminForOrganizationIds ?? [],
         healthAdminForOrganizationIds: healthAdminForOrganizationIds ?? [],
+        nfcAdminForOrganizationIds: nfcAdminForOrganizationIds ?? [],
       })
       res.json(actionSucceed())
     } catch (error) {

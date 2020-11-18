@@ -21,11 +21,26 @@ export class AppoinmentService {
       })
   }
 
+  async getAppoinmentByDate(startDate: string, endDate: string): Promise<AppointmentDTO[]> {
+    const filters = {
+      minDate: startDate,
+      maxDate: endDate,
+    }
+    return this.appoinmentSchedulerRepository
+      .getManyAppointments(filters)
+      .then((appoinment: AppointmentDBModel[]) => {
+        return appoinment
+      })
+  }
+
   async getNextBarCodeNumber(): Promise<string> {
     return this.appoinmentDBRepository
       .getNextBarCode()
       .then(({id, barCodeNumber}: AppoinmentBarCodeSequenceDBModel) => {
         return id.concat(barCodeNumber.toString())
       })
+  }
+  async addBarcodeAppointment(id: number, barCode: string): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.addBarcodeAppointment(id, barCode)
   }
 }

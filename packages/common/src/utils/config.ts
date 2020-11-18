@@ -20,4 +20,9 @@ export class Config {
     }
     return process.env[parameter]
   }
+
+  static getInt(key: string, defaultValue?: number): number {
+    const value = Config.get(key)
+    return value ? parseInt(value) : defaultValue
+  }
 }

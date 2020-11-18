@@ -8,6 +8,7 @@ import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {Config} from '../../../common/src/utils/config'
 import {PdfService} from '../../../common/src/service/reports/pdf'
 
@@ -27,11 +28,15 @@ import {FamilyStatusReportRequest, UserContactTraceReportRequest} from '../types
 import {AttestationService} from '../../../passport/src/services/attestation-service'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 
+import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
+import {Questionnaire} from '../../../lookup/src/models/questionnaire'
+
 import {Access} from '../../../access/src/models/access'
 
 import {NextFunction, Request, Response, Router} from 'express'
 import moment from 'moment'
 import {CloudTasksClient} from '@google-cloud/tasks'
+import * as _ from 'lodash'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 const replyInsufficientPermission = (res: Response) =>
@@ -47,6 +52,7 @@ class OrganizationController implements IControllerBase {
   private userService = new UserService()
   private reportService = new ReportService()
   private attestationService = new AttestationService()
+  private questionnaireService = new QuestionnaireService()
   private pdfService = new PdfService()
   private taskClient = new CloudTasksClient()
 
@@ -454,37 +460,30 @@ class OrganizationController implements IControllerBase {
     try {
       const {organizationId} = req.params
       const groups = await this.getGroups(organizationId)
-      for (const group of groups) {
-        const groupId = group.id
-        const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
-        for (const item of usersGroups) {
-          let user: User | UserDependant = null
-          const {id, userId, parentUserId} = item
-
-          // If parent is not null then userId represents a dependent id
-          if (parentUserId) {
-            const dependants = await this.userService.getAllDependants(parentUserId)
-            for (const dependant of dependants) {
-              // Look for dependent
-              if (dependant.id === userId) {
-                user = dependant
-                break
+      await Promise.all(
+        groups.map(async (group) => {
+          const groupId = group.id
+          const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
+          return Promise.all(
+            usersGroups.map(async (item) => {
+              // If parent is not null then userId represents a dependent id
+              const {id, userId, parentUserId} = item
+              const userExists = parentUserId
+                ? (await this.userService.getAllDependants(parentUserId)).some(
+                    (dependant) => dependant.id === userId,
+                  )
+                : !!(await this.userService.findOneSilently(userId))
+              // Let's see if we need to delete the user group membership
+              if (!userExists) {
+                console.log(
+                  `Deleting user-group [${id}] for user [${userId}] and [${parentUserId}] from group [${groupId}]`,
+                )
+                return this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
               }
-              // FYI: we may have not found it and thus user = null
-            }
-          } else {
-            user = await this.userService.findOneSilently(userId)
-          }
-
-          // Let's see if we need to delete the user group membership
-          if (!user) {
-            console.warn(
-              `Deleting user-group [${id}] for user [${userId}] and [${parentUserId}] from group [${groupId}]`,
-            )
-            await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
-          }
-        }
-      }
+            }),
+          )
+        }),
+      )
 
       res.json(actionSucceed())
     } catch (error) {
@@ -570,13 +569,30 @@ class OrganizationController implements IControllerBase {
       const from: string =
         (queryFrom as string) ??
         moment(now()).tz(timeZone).startOf('day').subtract(2, 'days').toISOString()
-
-      const {content, tableLayouts} = await this.reportService.getUserReportTemplate(
+      const orgPromise = this.organizationService.findOneById(organizationId)
+      const lookup = await this.reportService.getLookups(
+        new Set([(parentUserId as string) ?? (userId as string)]),
+        new Set(parentUserId ? [userId as string] : []),
         organizationId,
+      )
+      const questionnaireIds = new Set<string>()
+      Object.values(lookup.locationsLookup).forEach((location) => {
+        if (location.questionnaireId) {
+          questionnaireIds.add(location.questionnaireId)
+        }
+      })
+      const questionnairePromise = this.questionnaireService.getQuestionnaires([
+        ...questionnaireIds,
+      ])
+      const [organization, questionnaire] = await Promise.all([orgPromise, questionnairePromise])
+      const {content, tableLayouts} = await this.reportService.getUserReportTemplate(
+        organization,
         userId as string,
         parentUserId as string,
         from,
         to,
+        lookup,
+        questionnaire,
       )
 
       const stream = this.pdfService.generatePDFStream(content, tableLayouts)
@@ -611,6 +627,16 @@ class OrganizationController implements IControllerBase {
       await this.organizationService.getGroup(organizationId, groupId)
 
       const memberships = await this.organizationService.getUsersGroups(organizationId, groupId)
+      const userIds = new Set<string>()
+      const dependantIds = new Set<string>()
+      memberships.forEach((membership) => {
+        if (membership.parentUserId) {
+          userIds.add(membership.parentUserId)
+          dependantIds.add(membership.userId)
+        } else {
+          userIds.add(membership.userId)
+        }
+      })
       console.log(`${memberships.length} memberships found`)
       const membershipLimit = parseInt(Config.get('PDF_GENERATION_EMAIL_THRESHOLD') ?? '100', 10)
       const to = moment(now()).tz(timeZone).endOf('day').toISOString()
@@ -628,7 +654,7 @@ class OrganizationController implements IControllerBase {
           }),
         )
         const path = this.taskClient.queuePath(
-          Config.get('GCP_PROJECT'),
+          Config.get('GAE_PROJECT_NAME'),
           Config.get('GAE_LOCATION'), // northamerica-northeast1
           Config.get('QUEUE_NAME'),
         )
@@ -646,6 +672,9 @@ class OrganizationController implements IControllerBase {
                 to,
               }),
             ).toString('base64'),
+            headers: {
+              'Content-Type': 'application/json',
+            },
           },
         }
         const request = {
@@ -656,23 +685,59 @@ class OrganizationController implements IControllerBase {
         await this.taskClient.createTask(request)
         return
       }
+
+      const organizationPromise = this.organizationService.findOneById(organizationId)
+      const lookups = await this.reportService.getLookups(userIds, dependantIds, organizationId)
+      const questionnaireIds = new Set<string>()
+      Object.values(lookups.locationsLookup).forEach((location) => {
+        if (location.questionnaireId) {
+          questionnaireIds.add(location.questionnaireId)
+        }
+      })
+      const questionnairePromise = this.questionnaireService.getQuestionnaires([
+        ...questionnaireIds,
+      ])
+      const [organization, questionnaire] = await Promise.all([
+        organizationPromise,
+        questionnairePromise,
+      ])
+      console.log(`lookups retrieved`)
+
       const allTemplates = await Promise.all(
-        memberships.map((membership) =>
-          this.reportService.getUserReportTemplate(
-            organizationId,
-            membership.userId,
-            membership.parentUserId,
-            from,
-            to,
+        memberships
+          .filter((membership) => {
+            if (membership.parentUserId) {
+              return lookups.dependantsLookup[membership.userId]
+            }
+            return lookups.usersLookup[membership.userId]
+          })
+          .map((membership) =>
+            this.reportService
+              .getUserReportTemplate(
+                organization,
+                membership.userId,
+                membership.parentUserId,
+                from,
+                to,
+                lookups,
+                questionnaire,
+              )
+              .catch((err) => {
+                console.warn(`error getting content for ${JSON.stringify(membership)} - ${err}`)
+                return {
+                  content: [],
+                  tableLayouts: null,
+                }
+              }),
           ),
-        ),
       )
-      const tableLayouts = allTemplates[0].tableLayouts
+      console.log('templates retrieved')
+      const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
       const content = allTemplates.reduce(
         (contentArray, template) => [...contentArray, ...template.content],
         [],
       )
-
+      console.log('generating stream')
       const pdfStream = this.pdfService.generatePDFStream(content, tableLayouts)
       res.contentType('application/pdf')
       pdfStream.pipe(res)
@@ -755,16 +820,70 @@ class OrganizationController implements IControllerBase {
         await this.organizationService.getAllLocations(organizationId)
       ).filter((location) => accessedLocationIds.has(location.id))
 
-      const locationsWithAccesses = accessedLocations.map((location) => {
-        const entry = enteringAccesses.find((access) => access.locationId === location.id)
-        const exit = exitingAccesses.find((access) => access.locationId === location.id)
-        return {
-          location,
-          entry,
-          exit: entry && exit && new Date(entry.enteredAt) < new Date(entry.exitAt) ? exit : null,
-        }
-      })
-      res.json(actionSucceed(locationsWithAccesses))
+      const locationsWithAccesses = accessedLocations
+        .map((location) => {
+          const entries = enteringAccesses.filter((access) => access.locationId === location.id)
+          const exits = exitingAccesses.filter((access) => access.locationId === location.id)
+          return {
+            location,
+            entries,
+            exits,
+          }
+        })
+        .map((allAccessesForLocation) => {
+          const {entries, exits, location} = allAccessesForLocation
+          const pairs = []
+          // now sorted earliest-first
+          entries.reverse()
+          exits.reverse()
+          while (entries.length || exits.length) {
+            const entryCandidate = entries[0] ?? null
+            const entryTimestamp = entryCandidate
+              ? parentUserId
+                ? entryCandidate.enteredAt
+                : entryCandidate.dependants[userId]?.enteredAt
+              : null
+            const exitCandidate = exits[0] ?? null
+            const exitTimestamp = exitCandidate
+              ? parentUserId
+                ? exitCandidate.exitAt
+                : exitCandidate.dependants[userId]?.exitAt
+              : null
+            // @ts-ignore these are strings, not field values
+            const entryDate = new Date(entryTimestamp)
+            // @ts-ignore these are strings, not field values
+            const exitDate = new Date(exitTimestamp)
+            if (!entryCandidate && !exitCandidate) {
+              console.warn('illegal state - no entry or exit')
+              break
+            }
+            if (entryCandidate && !exitCandidate) {
+              pairs.push({
+                location,
+                entry: entries.pop(),
+                exit: null,
+              })
+              continue
+            }
+            if (exitCandidate && (!entryCandidate || exitDate < entryDate)) {
+              pairs.push({
+                location,
+                entry: null,
+                exit: exits.pop(),
+              })
+              continue
+            }
+            pairs.push({
+              location,
+              entry: entries.pop(),
+              exit: exits.pop(),
+            })
+          }
+          // sorted recent-first
+          pairs.reverse()
+          return pairs
+        })
+      res.json(actionSucceed(_.flatten(locationsWithAccesses)))
     } catch (error) {
       next(error)
     }
@@ -797,7 +916,6 @@ class OrganizationController implements IControllerBase {
         to,
         isParentUser ? null : userId,
       )
-
       // filter down to only the overlaps with the user we're interested in
       const relevantTraces = rawTraces
         .map((trace) => {
@@ -807,11 +925,11 @@ class OrganizationController implements IControllerBase {
                 isParentUser ? !overlap.sourceDependantId : overlap.sourceDependantId === userId,
               )
               .filter(
-                (overlapping) =>
+                (overlap) =>
                   //@ts-ignore these are timestamps, not strings
-                  moment(overlapping.end.toDate()).toISOString() >= from &&
+                  moment(overlap.end.toDate()) >= moment(from) &&
                   //@ts-ignore these are timestamps, not strings
-                  moment(overlapping.start.toDate()).toISOString() <= to,
+                  moment(overlap.start.toDate()) <= moment(to),
               )
             return {...exposure, overlapping}
           })
@@ -937,11 +1055,11 @@ class OrganizationController implements IControllerBase {
                 (overlap) => (parentUserId ? overlap.dependant?.id : overlap.userId) === userId,
               )
               .filter(
-                (overlapping) =>
+                (overlap) =>
                   //@ts-ignore these are timestamps, not strings
-                  moment(overlapping.end.toDate()).toISOString() >= from &&
+                  moment(overlap.end.toDate()) >= moment(from) &&
                   //@ts-ignore these are timestamps, not strings
-                  moment(overlapping.start.toDate()).toISOString() <= to,
+                  moment(overlap.start.toDate()) <= moment(to),
               )
               .map((overlap) => ({
                 userId: overlap.sourceUserId,
@@ -973,17 +1091,47 @@ class OrganizationController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      // const {organizationId} = req.params
+      const {organizationId} = req.params
       const {userId, from, to} = req.query as UserContactTraceReportRequest
 
       // fetch attestation array in the time period
-      const attestations = await this.attestationService.getAttestationsInPeriod(userId, from, to)
-      // @ts-ignore 'timestamps' does not exist in typescript
-      const response = attestations.map(({timestamps, attestationTime, ...passThrough}) => ({
-        ...passThrough,
-        // @ts-ignore attestationTime is a server timestamp, not a string
-        attestationTime: attestationTime.toDate(),
-      }))
+      const [attestations, locations] = await Promise.all([
+        this.attestationService.getAttestationsInPeriod(userId, from, to),
+        this.organizationService.getLocations(organizationId),
+      ])
+      const attestedLocationIds = new Set<string>(_.uniq(attestations.map((att) => att.locationId)))
+      const questionnaireIdsByLocationId: Record<string, string> = locations.reduce(
+        (lookup, location) => {
+          if (!attestedLocationIds.has(location.id)) {
+            // don't care about this location
+            return lookup
+          }
+          return {
+            ...lookup,
+            [location.id]: location.questionnaireId,
+          }
+        },
+        {},
+      )
+      const questionnaireIds: string[] = _.uniq(Object.values(questionnaireIdsByLocationId))
+      const questionnaires = await this.questionnaireService.getQuestionnaires(questionnaireIds)
+      const questionnairesById: Record<string, Questionnaire> = questionnaires.reduce(
+        (lookup, questionnaire) => ({
+          ...lookup,
+          [questionnaire.id]: questionnaire,
+        }),
+        {},
+      )
+
+      const response = attestations.map(
+        // @ts-ignore 'timestamps' does not exist in typescript
+        ({timestamps, attestationTime, locationId, ...passThrough}) => ({
+          ...passThrough,
+          locationId,
+          attestationTime: safeTimestamp(attestationTime),
+          questions: questionnairesById[questionnaireIdsByLocationId[locationId]]?.questions ?? {},
+        }),
+      )
       res.json(actionSucceed(response))
     } catch (error) {
       next(error)
@@ -1025,14 +1173,17 @@ class OrganizationController implements IControllerBase {
       )
 
       const response = {
-        parent: {
-          firstName: parent.firstName,
-          lastName: parent.lastName,
-          groupName: parentGroup.name,
-          base64Photo: parent.base64Photo,
-          status: parentStatus,
-        },
-        dependents: dependentsWithGroup,
+        parent: parentUserId
+          ? {
+              id: parent.id,
+              firstName: parent.firstName,
+              lastName: parent.lastName,
+              groupName: parentGroup.name,
+              base64Photo: parent.base64Photo,
+              status: parentStatus,
+            }
+          : null,
+        dependents: dependentsWithGroup.filter((dependant) => dependant.id !== userId),
       }
 
       res.json(actionSucceed(response))

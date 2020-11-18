@@ -1,15 +1,21 @@
 import {Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import moment from 'moment-timezone'
+import {isEmpty} from 'lodash'
 
-import {AppoinmentService} from '../services/appoinment.service'
-import {AppointmentDTO, BarCodeGeneratorUI, AppoinmentDataUI} from '../models/appoinment'
-import * as _ from 'lodash'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 
+import {AppoinmentService} from '../services/appoinment.service'
+
+import {AppointmentDTO, BarCodeGeneratorUI, AppoinmentDataUI} from '../models/appoinment'
+
+import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
+
 class PortalController implements IControllerBase {
-  public path = '/admin'
+  public path = ''
   public router = Router()
   private appoinmentService = new AppoinmentService()
 
@@ -18,14 +24,16 @@ class PortalController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.get(this.path + '/page/next-bar-code', this.displayNextBarCode)
-    this.router.get(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
-    this.router.post(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
-    this.router.get(this.path + '/page/send-single-results', this.displayFormToSendSingleResults)
-    this.router.get(this.path + '/page/send-bulk-results', this.displayFormToSendBulkResults)
+    const innerRouter = Router()
+      .get(this.path + '/page/next-bar-code', this.displayNextBarCode)
+      .get(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
+      .post(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
+      .get(this.path + '/page/send-single-results', this.displayFormToSendSingleResults)
+      .get(this.path + '/page/send-bulk-results', this.displayFormToSendBulkResults)
+      .get(this.path + '/js/print-label-library.js', this.displayPrintLibraryJs)
+      .get(this.path + '/js/print-label.js', this.displayPrintJs)
 
-    this.router.get(this.path + '/js/print-label-library.js', this.displayPrintLibraryJs)
-    this.router.get(this.path + '/js/print-label.js', this.displayPrintJs)
+    this.router.use('/admin', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
   }
 
   displayFormToEnterBarCode = async (req: Request, res: Response): Promise<void> => {
@@ -35,7 +43,7 @@ class PortalController implements IControllerBase {
       barCode: barCode,
     }
     try {
-      if (_.isEmpty(barCode)) {
+      if (isEmpty(barCode)) {
         throw new BadRequestException('Please provide Bar Code Number')
       }
       const appointment: AppointmentDTO = await this.appoinmentService.getAppoinmentByBarCode(
@@ -75,17 +83,29 @@ class PortalController implements IControllerBase {
   }
 
   displayFormToSendSingleResults = async (req: Request, res: Response): Promise<void> => {
+    const timeZone = Config.get('DEFAULT_TIME_ZONE')
+    const calendarFromDate = moment(now()).tz(timeZone).subtract(30, 'days').format('YYYY-MM-DD')
+    const calendarToDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
+
     res.render('send_single_form', {
       layout: 'results',
       confirmBeforeSend: Config.get('CONFIRM_BEFORE_SEND'),
       sendSingleResultsTab: true,
+      calendarFromDate,
+      calendarToDate,
     })
   }
 
   displayFormToSendBulkResults = async (req: Request, res: Response): Promise<void> => {
+    const timeZone = Config.get('DEFAULT_TIME_ZONE')
+    const calendarFromDate = moment(now()).tz(timeZone).subtract(30, 'days').format('YYYY-MM-DD')
+    const calendarToDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
+
     res.render('send_bulk_form', {
       layout: 'results',
       sendBulkResultTab: true,
+      calendarFromDate,
+      calendarToDate,
     })
   }
 }

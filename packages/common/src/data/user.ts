@@ -11,6 +11,7 @@ export type User = {
   lastName: string
   base64Photo: string
   organizationIds?: string[]
+  email?: string
   admin?: AdminProfile | FieldValue
   authUserId?: string | FieldValue
 }

@@ -3,8 +3,9 @@ import {MessagingService} from './messaging-service'
 import {Config} from '../../utils/config'
 import {FirebaseManager} from '../../utils/firebase'
 import {auth} from 'firebase-admin'
+import {encodeQueryParams} from '../../utils/utils'
 
-// TODO: Depracated
+// TODO: Deprecated
 export class MagicLinkMail extends Mail {
   protected templateId = 1
 }
@@ -12,6 +13,7 @@ export class MagicLinkMail extends Mail {
 export type MagicLinkMessage = {
   email: string
   name?: string
+  meta?: Record<string, string>
 }
 
 const magicLinkSettings: auth.ActionCodeSettings = {
@@ -22,15 +24,20 @@ const magicLinkSettings: auth.ActionCodeSettings = {
   dynamicLinkDomain: Config.get('AUTH_EMAIL_SIGNIN_DOMAIN'),
 }
 
-const magicLinkEmailTemplateId = (Config.get('AUTH_EMAIL_TEMPLATE_ID') ?? 1) as number
+const magicLinkEmailTemplateId = Config.getInt('AUTH_EMAIL_TEMPLATE_ID', 1)
 
 export class MagicLinkService implements MessagingService<MagicLinkMessage> {
   private emailService = new EmailService()
   private firebaseAuth = FirebaseManager.getInstance().getAdmin().auth()
 
   send(message: MagicLinkMessage): Promise<unknown> {
+    const additionalQueryParams = encodeQueryParams(message.meta ?? {})
+    const url = additionalQueryParams
+      ? `${magicLinkSettings.url}?${additionalQueryParams}`
+      : magicLinkSettings.url
+
     return this.firebaseAuth
-      .generateSignInWithEmailLink(message.email, magicLinkSettings)
+      .generateSignInWithEmailLink(message.email, {...magicLinkSettings, url})
       .then((signInLink) =>
         this.emailService.send({
           templateId: magicLinkEmailTemplateId,
