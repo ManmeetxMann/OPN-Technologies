@@ -33,6 +33,7 @@ export class UserService {
         registrationId: source.registrationId ?? null,
         authUserId: source.authUserId ?? null,
         active: source.active ?? false,
+        memberId: source.memberId ?? null,
       } as User)
     })
   }

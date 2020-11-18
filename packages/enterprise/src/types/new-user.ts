@@ -9,6 +9,7 @@ export type NewUser = {
   phone?: Phone
   authUserId?: string
   active?: boolean
+  memberId?: string
 }
 
 export type CreateUserRequest = NewUser & {
