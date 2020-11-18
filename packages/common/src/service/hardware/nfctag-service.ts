@@ -1,7 +1,7 @@
-import DataStore from '../../../common/src/data/datastore'
-import {NfcTagRepository} from '../repository/tag.repository'
-import {NfcTag} from '../models/nfcTag'
-import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
+import DataStore from '../../data/datastore'
+import {NfcTagRepository} from '../../repository/tag.repository'
+import {NfcTag} from '../../data/nfcTag'
+import {DataModelFieldMapOperatorType} from '../../data/datamodel.base'
 
 export class NfcTagService {
   private tagRepository = new NfcTagRepository(new DataStore())

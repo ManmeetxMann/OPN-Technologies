@@ -7,8 +7,8 @@ import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {authMiddleware} from '../../../../common/src/middlewares/auth'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {ResourceAlreadyExistsException} from '../../../../common/src/exceptions/resource-already-exists-exception'
-import {NfcTagService} from '../../services/nfctag-service'
-import {CreateNfcTagRequest} from '../../types/nfc-tag-request'
+import {NfcTagService} from '../../../../common/src/service/hardware/nfctag-service'
+import {CreateNfcTagRequest} from '../../../../common/src/types/nfc-tag-request'
 
 const userService = new UserService()
 const tagService = new NfcTagService()
