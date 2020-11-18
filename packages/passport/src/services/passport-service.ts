@@ -9,7 +9,6 @@ import {firestore} from 'firebase-admin'
 import * as _ from 'lodash'
 import {flattern} from '../../../common/src/utils/utils'
 import {Config} from '../../../common/src/utils/config'
-import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
