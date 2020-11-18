@@ -31,3 +31,12 @@ export type LegacyProfile = {
   groupId: string
   dependentIds?: string[]
 }
+
+export type CreateUserByAdminRequest = {
+  email: string
+  firstName: string
+  lastName: string
+  registrationId: string
+  photo: string
+  organizationId: string
+}
