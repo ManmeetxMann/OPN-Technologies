@@ -1,11 +1,9 @@
-import moment from 'moment-timezone'
 import path from 'path'
 
 import {ResultTypes, TestResultsDTOForEmail} from '../models/appoinment'
 import {TableLayouts, Content} from '../../../common/src/service/reports/pdf-types'
 
 import {Config} from '../../../common/src/utils/config'
-import {now} from '../../../common/src/utils/times'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
@@ -27,7 +25,7 @@ const tableLayouts: TableLayouts = {
 }
 const generate = (
   params: TestResultsDTOForEmail,
-  resultDate: string
+  resultDate: string,
 ): {content: Content[]; tableLayouts: TableLayouts} => {
   const isPositive = params.result === ResultTypes.Positive
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')

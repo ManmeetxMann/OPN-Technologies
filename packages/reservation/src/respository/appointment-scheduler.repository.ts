@@ -58,7 +58,9 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
           time,
         } = appointments[0]
         if (appointments.length > 1) {
-          throw new BadRequestException(`Sorry, Results are not sent. Same Barcode is used by multiple appointments`)
+          throw new BadRequestException(
+            `Sorry, Results are not sent. Same Barcode is used by multiple appointments`,
+          )
         }
 
         return {
