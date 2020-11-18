@@ -779,6 +779,40 @@ components:
         - lastName
         - organizationId
 
+    CreateUserByAdminRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          nullable: false
+        firstName:
+          type: string
+          nullable: false
+        lastName:
+          type: string
+          nullable: false
+        organizationId:
+          type: string
+          nullable: false
+        registrationId:
+          type: string
+          nullable: true
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+        memberId:
+          type: string
+          nullable: true
+
+      required:
+        - email
+        - firstName
+        - lastName
+        - organizationId
+        - photo
+
+
     MigrateUserRequest:
       type: object
       properties:
@@ -2404,6 +2438,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfAdminProfile'
+
+  /enterprise/admin/api/v3/users:
+    post:
+      summary: Create User
+      description: Creates a user profile with `CreateUserByAdminRequest` payload and returns a `User`
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserByAdminRequest'
+      responses:
+        '200':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUser'
+
 
   /enterprise/admin/api/v3/users/{organizationId}:
     get:

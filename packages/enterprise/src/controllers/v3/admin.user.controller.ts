@@ -5,9 +5,10 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {User} from '../../models/user'
+import {User, userDTOResponse} from '../../models/user'
 import {PageableRequestFilter} from '../../../../common/src/types/request'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+import {CreateUserByAdminRequest} from '../../types/new-user'
 
 const userService = new UserService()
 const organizationService = new OrganizationService()
@@ -46,6 +47,26 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
   }
 }
 
+/**
+ * Creates a user and returns a User
+ */
+const createUser: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const {organizationId, ...profile} = req.body as CreateUserByAdminRequest
+    // Assert organization exists
+    await organizationService.getByIdOrThrow(organizationId)
+    const user = await userService.create({
+      ...profile,
+    })
+    // Connect to org
+    await userService.connectOrganization(user.id, organizationId)
+
+    res.json(actionSucceed(userDTOResponse(user)))
+  } catch (error) {
+    next(error)
+  }
+}
+
 class AdminUserController implements IControllerBase {
   public router = express.Router()
 
@@ -59,7 +80,9 @@ class AdminUserController implements IControllerBase {
 
     const route = innerRouter().use(
       '/',
-      innerRouter().get('/:organizationId', authMiddleware, getUsersByOrganizationId),
+      innerRouter()
+        .get('/:organizationId', authMiddleware, getUsersByOrganizationId)
+        .post('/', authMiddleware, createUser),
     )
 
     this.router.use(root, route)
