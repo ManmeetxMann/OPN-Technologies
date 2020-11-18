@@ -5,7 +5,7 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {User, userDTOFrom} from '../../models/user'
+import {User, userDTOResponse} from '../../models/user'
 import {PageableRequestFilter} from '../../../../common/src/types/request'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {CreateUserByAdminRequest} from '../../types/new-user'
@@ -61,7 +61,7 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
     // Connect to org
     await userService.connectOrganization(user.id, organizationId)
 
-    res.json(actionSucceed(userDTOFrom(user)))
+    res.json(actionSucceed(userDTOResponse(user)))
   } catch (error) {
     next(error)
   }
