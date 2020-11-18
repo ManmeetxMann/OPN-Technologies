@@ -154,6 +154,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if ([6, 8, 10, 12].includes(i) && !(col === 'N/A' || !isNaN(parseInt(col)))) {
               markWarning(trElem, tdElem)
             }
+
+            if(col == "2019-nCoV Detected"){
+              col = 'Positive'
+            }
+
             if (i === 13 && !['Positive', 'Negative'].includes(col)) {
               markWarning(trElem, tdElem)
             }
@@ -171,13 +176,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   })
+
   datesBefore.addEventListener('change', async (e) => {
     to = DateTime.utc().toLocaleString()
     from = DateTime.utc().minus({days: e.target.value}).toLocaleString()
   })
+
   datesToday.addEventListener('change', (e) => {
     resultDate = DateTime.utc({days: e.target.value}).toLocaleString()
   })
+  
   sendButtonBulk.addEventListener('click', async (e) => {
     e.preventDefault()
     setLoader(sendButtonBulk, true)
@@ -186,17 +194,23 @@ document.addEventListener('DOMContentLoaded', () => {
       errorBulkContent.innerHTML = 'You should upload CSV file before'
       return
     }
+
     const sendAgainData = [...document.getElementsByClassName('sendAgainCheckbox')]
       .filter((row) => !row.checked)
       .map((row) => row.getAttribute('data-index'))
+
     const sendAgainDataVice = [...document.getElementsByClassName('sendAgainCheckbox')]
       .filter((row) => row.checked)
       .map((row) => row.getAttribute('data-index'))
+
     const dataSentBackend = data
       .filter((row, i) => {
         const isInvalidNum = [6, 8, 10, 12].find(
           (num) => !(row[num] === 'N/A' || !isNaN(parseInt(row[num]))),
         )
+        if(row[13] == "2019-nCoV Detected"){
+          row[13] = 'Positive'
+        }
         const isResultWrong = row[13] && !['Positive', 'Negative'].includes(row[13])
         const isDuplicate = barcodeCounts[row[3]] > 1
         return (
@@ -222,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sendAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
       }))
 
-    const dataChunks = _.chunk(dataSentBackend, 20)
+    const dataChunks = _.chunk(dataSentBackend, 5)
     let failedRows = []
     let isFatal = []
 
@@ -238,12 +252,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }),
       })
 
-    setLoader(sendButtonBulk, false)
-
-    const responseData = await response.json()
+      const responseData = await response.json()
 
       // This case should be only if server is down
       if (!response.ok) {
+        setLoader(sendButtonBulk, false)
         openModal(errorBulkModal)
         errorBulkContent.innerHTML = ''
         const regexpFieldName = /.*\[\d*\]\./g
@@ -274,7 +287,11 @@ document.addEventListener('DOMContentLoaded', () => {
         !isFatal.find((row2) => row2.barCode === row.barCode)
       )
     })
+
+    setLoader(sendButtonBulk, false)
     openModal(successModal)
+
+    content += `Total rows: ${data.length}<br/>`
 
     if (succeedRows.length) {
       const succeedRowsElem = succeedRows.map((row) => `<div>${row.barCode}</div>`).join('')
