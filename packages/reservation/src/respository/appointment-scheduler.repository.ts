@@ -38,6 +38,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
         registeredNursePractitioner: appointment.registeredNursePractitioner,
         dateOfAppointment: appointment.date,
         barCode: appointment.barCode,
+        timeOfAppointment: appointment.time,
       }))
     })
   }
