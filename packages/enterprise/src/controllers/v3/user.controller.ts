@@ -472,7 +472,7 @@ class UserController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = () => Router({mergeParams: true})
-    const root = '/api/v3/users'
+    const root = '/enterprise/api/v3/users'
 
     const authentication = innerRouter().use(
       '/',
