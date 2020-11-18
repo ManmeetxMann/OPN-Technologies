@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const warningMessage = document.getElementById('warning-message')
 
   const datesBefore = document.getElementById('datesBefore')
-  const datesToday = document.getElementById('todaysDate')
+  const datesToday = document.getElementById('resultDate')
 
   const sendButtonBulk = document.getElementById('sendButtonBulk')
   const errorBulkModal = document.getElementById('errorBulkModal')
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const successModalContent = document.getElementById('successModalContent')
   const successModalClose = document.getElementById('successModalClose')
 
-  let todaysDate = datesToday.value;
+  let resultDate = datesToday.value;
 
 
   successModalClose.addEventListener('click', () => {
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     from = DateTime.utc().minus({days: e.target.value}).toLocaleString()
   })
   datesToday.addEventListener('change', (e) => {
-    todaysDate = DateTime.utc({days: e.target.value}).toLocaleString()
+    resultDate = DateTime.utc({days: e.target.value}).toLocaleString()
   })
   sendButtonBulk.addEventListener('click', async (e) => {
     e.preventDefault()
@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({
           from,
           to,
-          todaysDate,
+          resultDate,
           results: dataChunks[i],
         }),
       })
