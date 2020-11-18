@@ -12,6 +12,7 @@ import {User} from '../../../common/src/data/user'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {now} from '../../../common/src/utils/times'
 import moment from 'moment-timezone'
@@ -20,6 +21,7 @@ import {Config} from '../../../common/src/utils/config'
 import {AccessTokenService} from '../service/access-token.service'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {AccessStats} from '../models/access'
+import {NfcTagService} from '../../../common/src/service/hardware/nfctag-service'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -41,6 +43,7 @@ class AdminController implements IRouteController {
     this.passportService,
     this.accessService,
   )
+  private tagService = new NfcTagService()
 
   constructor() {
     this.initRoutes()
@@ -53,7 +56,8 @@ class AdminController implements IRouteController {
       .post('/stats/v2', authMiddleware, this.statsV2)
       .post('/enter', authMiddleware, this.enter)
       .post('/exit', authMiddleware, this.exit)
-      .post('/createToken', authMiddleware, this.createToken)
+      .post('/createToken', authMiddleware, this.enterOrExitUsingATag)
+      .post('/enterorexit/tag', authMiddleware, this.exit)
       .get('/:organizationId/locations/accessible', this.getAccessibleLocations)
     this.router.use('/admin', routes)
   }
@@ -223,6 +227,35 @@ class AdminController implements IRouteController {
     } catch (error) {
       next(error)
     }
+  }
+
+  enterOrExitUsingATag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // Get request inputs
+    const {tagId, locationId} = req.body
+
+    // Get tag
+    const tag = await this.tagService.getById(tagId)
+    if (tag) {
+      throw new ResourceNotFoundException(
+        `NFC Tag not found`,
+      )
+    }
+
+    // Save org
+    const organizationId = tag.organizationId
+
+    // Make sure the admin is allowed
+    const authenticatedUser = res.locals.connectedUser as User
+    const admin = authenticatedUser.admin as AdminProfile
+    const isNFCGateKioskAdmin = admin.nfcGateKioskAdminForOrganizationIds?.includes(organizationId)
+    
+    // Check if allowed
+    if (!(isNFCGateKioskAdmin || admin.adminForOrganizationId === organizationId)) {
+      replyInsufficientPermission(res)
+      return
+    }
+
+    
   }
 
   getAccessibleLocations = async (
