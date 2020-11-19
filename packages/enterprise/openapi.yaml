@@ -91,6 +91,8 @@ components:
           type: string
         notificationIconCaution:
           type: string
+        enablePushNotifications:
+          type: boolean
       required:
         - name
 
@@ -876,9 +878,7 @@ components:
       required:
         - firstName
         - lastName
-
-
-    UserDependent:
+UserDependent:
       type: object
       additionalProperties: false
       properties:
@@ -893,7 +893,6 @@ components:
       required:
         - firstName
         - lastName
-
     UserLink:
       type: object
       deprecated: true
