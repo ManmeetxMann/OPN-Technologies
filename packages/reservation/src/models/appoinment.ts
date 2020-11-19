@@ -74,7 +74,7 @@ export type TestResultsBase = {
   quasar670Ct: string
   hexIC: string
   hexCt: string
-  todaysDate: Date
+  resultDate: Date
 }
 
 export type TestResultsDTO = TestResultsBase
@@ -82,6 +82,7 @@ export type TestResultsDTO = TestResultsBase
 export type TestResultsDBModel = AppointmentBase &
   TestResultsBase & {
     id: string
+    todaysDate?: Date //Deprecated
   }
 
 export type TestResultsConfirmationRequest = TestResultsBase & {
@@ -98,14 +99,11 @@ export type CheckAppointmentRequest = {
   barCodes: string[]
 }
 
-export type TestResultsDBModelResponse = TestResultsDBModel & {
-  exists: boolean
-}
 export type TestResultsDTOForEmail = TestResultsBase & AppointmentBase
 
 export type SendAndSaveTestResultsRequest = {
   results: TestResultsAgainRequest[]
   from: string
   to: string
-  todaysDate: Date
+  resultDate: Date
 }

@@ -13,6 +13,7 @@ export type User = Auditable & {
   photo?: string // photo url
   phone?: Phone
   registrationId?: string
+  memberId?: string
 }
 
 export type UserDTO = {
@@ -42,7 +43,7 @@ export type UserGroup = Auditable & {
   groupId: string
 }
 
-export const userDTOFrom = (user: User | LegacyUser): UserDTO => ({
+export const userDTOResponse = (user: User | LegacyUser): UserDTO => ({
   id: user.id,
   firstName: user.firstName,
   lastName: user.lastName,

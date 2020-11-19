@@ -41,11 +41,7 @@ class AdminController implements IControllerBase {
         CSVValidator.validate(CSVValidator.csvValidation()),
         this.sendAndSaveTestResults,
       )
-      .post(
-        this.path + '/api/v1/send-test-results-again',
-        CSVValidator.validate(CSVValidator.csvValidation()),
-        this.sendTestResultsAgain,
-      )
+      .post(this.path + '/api/v1/send-test-results-again', this.sendTestResultsAgain)
       .post(this.path + '/api/v1/check-appointments', this.checkAppointments)
       .post(
         this.path + '/api/v1/send-and-save-test-results-bulk',
@@ -78,13 +74,13 @@ class AdminController implements IControllerBase {
   ): Promise<void> => {
     try {
       const requestData: SendAndSaveTestResultsRequest = req.body
-      const {todaysDate} = requestData
+      const {resultDate} = requestData
 
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now()).tz(timeZone).subtract(30, 'days').startOf('day')
       const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
 
-      if (!moment(todaysDate).isBetween(fromDate, toDate)) {
+      if (!moment(resultDate).isBetween(fromDate, toDate, undefined, '[]')) {
         throw new BadRequestException(
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
@@ -118,7 +114,7 @@ class AdminController implements IControllerBase {
                   'Something wend wrong. Results are not available.',
                 )
               }
-              await this.testResultsService.sendTestResults({...testResults}, todaysDate)
+              await this.testResultsService.sendTestResults({...testResults}, resultDate)
             } else {
               const currentAppointment = appointmentsByBarCode[row.barCode]
               if (!currentAppointment) {
@@ -128,7 +124,7 @@ class AdminController implements IControllerBase {
               await Promise.all([
                 this.testResultsService.sendTestResults(
                   {...row, ...currentAppointment},
-                  todaysDate,
+                  resultDate,
                 ),
                 this.testResultsService.saveResults({
                   ...row,
@@ -161,13 +157,13 @@ class AdminController implements IControllerBase {
   ): Promise<unknown> => {
     try {
       const requestData: TestResultsConfirmationRequest = req.body
-      const {todaysDate} = requestData
+      const {resultDate} = requestData
 
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now()).tz(timeZone).subtract(30, 'days').format('YYYY-MM-DD')
       const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
 
-      if (!moment(todaysDate).isBetween(fromDate, toDate)) {
+      if (!moment(resultDate).isBetween(fromDate, toDate, undefined, '[]')) {
         throw new BadRequestException(
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
@@ -190,7 +186,7 @@ class AdminController implements IControllerBase {
       await this.appoinmentService
         .getAppoinmentByBarCode(requestData.barCode)
         .then((appointment: AppointmentDTO) => {
-          this.testResultsService.sendTestResults({...requestData, ...appointment}, todaysDate)
+          this.testResultsService.sendTestResults({...requestData, ...appointment}, resultDate)
           return appointment
         })
         .then((appointment: AppointmentDTO) => {
@@ -216,7 +212,8 @@ class AdminController implements IControllerBase {
       if (!testResults) {
         throw new ResourceNotFoundException('Something wend wrong. Results are not avaiable.')
       }
-      await this.testResultsService.sendTestResults({...testResults})
+      const resultDate = testResults.resultDate || testResults.todaysDate
+      await this.testResultsService.sendTestResults({...testResults}, resultDate)
 
       res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {

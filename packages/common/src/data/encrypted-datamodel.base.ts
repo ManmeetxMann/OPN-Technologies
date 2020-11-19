@@ -11,10 +11,12 @@ import {Collection} from '@firestore-simple/admin'
 
 abstract class EncryptedDataModel<T extends HasId> implements IDataModel<T> {
   abstract readonly rootPath: string
+
   private getRootPath() {
     // give access in constructor
     return this.rootPath
   }
+
   // @ts-ignore
   protected encryptedFields: Set<Partial<keyof Omit<T, 'id', 'timestamps'>>>
 
@@ -29,12 +31,22 @@ abstract class EncryptedDataModel<T extends HasId> implements IDataModel<T> {
       rootPath = rootPath
       zeroSet = []
     }
+
     this.dataModel = new InnerModel(dataStore)
   }
 
   initialize = this.dataModel.initialize
   delete = this.dataModel.delete
   count = this.dataModel.count
+  fetchPage = this.dataModel.fetchPage
+  fetchAllWithPagination = this.dataModel.fetchAllWithPagination
+  getQueryFindWhereArrayInMapContainsAny = this.dataModel.getQueryFindWhereArrayInMapContainsAny
+  getQueryFindWhereArrayInMapContains = this.dataModel.getQueryFindWhereArrayInMapContains
+  getQueryFindWhereArrayContains = this.dataModel.getQueryFindWhereArrayContains
+  getQueryFindWhereMapHasKeyValueIn = this.dataModel.getQueryFindWhereMapHasKeyValueIn
+  getQueryFindWhereEqual = this.dataModel.getQueryFindWhereEqual
+  getQueryFindWhereEqualWithMax = this.dataModel.getQueryFindWhereEqualWithMax
+
   collection(): Collection<T> {
     throw new ForbiddenException('Cannot access encrypted collections externally')
   }

@@ -91,6 +91,8 @@ components:
           type: string
         notificationIconCaution:
           type: string
+        enablePushNotifications:
+          type: boolean
       required:
         - name
 
@@ -404,6 +406,12 @@ components:
           items:
             type: string
           description: Organizaiton ids to become a health admin of. Must be provided can be empty.
+        nfcAdminForOrganizationIds:
+          type: array
+          items:
+            type: string
+          description: Organizaiton ids to become a NFC tag admin of. Must be provided can be empty.
+
         groupIds:
           type: array
           items:
@@ -567,7 +575,7 @@ components:
                 additionalProperties:
                   type: string
                   enum:
-                    - "boolean" 
+                    - "boolean"
                     - "datetime"
               value:
                 type: string
@@ -650,6 +658,10 @@ components:
           type: array
           items:
             type: string
+        nfcAdminForOrganizationIds:
+          type: array
+          items:
+            type: string
         adminForOrganizationId:
           type: string
         showReporting:
@@ -704,6 +716,9 @@ components:
           type: string
           nullable: true
         phone:
+          type: string
+          nullable: true
+        memberId:
           type: string
           nullable: true
       required:
@@ -765,6 +780,40 @@ components:
         - firstName
         - lastName
         - organizationId
+
+    CreateUserByAdminRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          nullable: false
+        firstName:
+          type: string
+          nullable: false
+        lastName:
+          type: string
+          nullable: false
+        organizationId:
+          type: string
+          nullable: false
+        registrationId:
+          type: string
+          nullable: true
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+        memberId:
+          type: string
+          nullable: true
+
+      required:
+        - email
+        - firstName
+        - lastName
+        - organizationId
+        - photo
+
 
     MigrateUserRequest:
       type: object
@@ -829,8 +878,6 @@ components:
       required:
         - firstName
         - lastName
-
-
     UserDependent:
       type: object
       additionalProperties: false
@@ -846,7 +893,6 @@ components:
       required:
         - firstName
         - lastName
-
     UserLink:
       type: object
       deprecated: true
@@ -1430,6 +1476,36 @@ components:
             message:
               nullable: true
               type: string
+
+    ResponseOfUsersByOrganization:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserWithGroup'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+        page:
+          type: number
 
   responses:
     Response:
@@ -2362,6 +2438,58 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfAdminProfile'
 
+  /enterprise/admin/api/v3/users:
+    post:
+      summary: Create User
+      description: Creates a user profile with `CreateUserByAdminRequest` payload and returns a `User`
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserByAdminRequest'
+      responses:
+        '200':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUser'
+
+
+  /enterprise/admin/api/v3/users/{organizationId}:
+    get:
+      summary: Organization users list
+      description: Get users by organizationId
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 0
+          required: true
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsersByOrganization'
+
   /enterprise/admin/api/v3/tags:
     post:
       description: Create NFC TagId
@@ -2454,7 +2582,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /api/v3/users:
+  /enterprise/api/v3/users:
     post:
       summary: Account Registration
       description: Creates a user profile with `CreateUserRequest` payload and returns a `User`
@@ -2473,7 +2601,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
 
-  /api/v3/users/migration:
+  /enterprise/api/v3/users/migration:
     post:
       summary: Profile Migration
       description: Creates a user profile and link/migrate existing user's data
@@ -2492,7 +2620,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
 
-  /api/v3/users/auth:
+  /enterprise/api/v3/users/auth:
     post:
       summary: User authentication
       description: Sends a magic-link to authenticate the user
@@ -2523,7 +2651,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /api/v3/users/auth/confirmation:
+  /enterprise/api/v3/users/auth/confirmation:
     post:
       summary: Account registration confirmation
       description: Completes user registration with magic-link information
@@ -2554,10 +2682,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
 
-  /api/v3/users/self:
+  /enterprise/api/v3/users/self:
     get:
       summary: User details
       description: Gets authenticated user details
+      security:
+        - bearerAuthJWT: []
       tags:
         - Account management
       responses:
@@ -2595,7 +2725,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
 
-  /api/v3/users/self/organizations:
+  /enterprise/api/v3/users/self/organizations:
     get:
       summary: Connected organizations
       description: Get all the authenticated-user's organizations
@@ -2632,7 +2762,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /api/v3/users/self/organizations/{organizationId}:
+  /enterprise/api/v3/users/self/organizations/{organizationId}:
     delete:
       summary: Unlink organization
       description: Removes the authenticated user from an organization and all the groups within that organization
@@ -2652,7 +2782,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /api/v3/users/self/groups:
+  /enterprise/api/v3/users/self/groups:
     get:
       summary: Connected groups
       description: Get all the authenticated-user's connected-groups within an organization
@@ -2699,7 +2829,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /api/v3/users/self/groups/{groupId}:
+  /enterprise/api/v3/users/self/groups/{groupId}:
     delete:
       summary: Unlink group
       description: Removes the authenticated user from a group
@@ -2719,7 +2849,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /api/v3/users/self/dependents:
+  /enterprise/api/v3/users/self/dependents:
     get:
       summary: Account dependents
       description: Gets the authenticated user's direct dependents
@@ -2755,7 +2885,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUsers'
 
-  /api/v3/users/self/parents:
+  /enterprise/api/v3/users/self/parents:
     get:
       summary: Account parents
       description: Gets the authenticated user's direct-parents
@@ -2769,7 +2899,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUsers'
 
-  /api/v3/users/self/dependents/{dependentId}:
+  /enterprise/api/v3/users/self/dependents/{dependentId}:
     delete:
       summary: Unlink dependent
       description: |
@@ -2797,7 +2927,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /api/v3/users/self/dependents/{dependentId}/organizations:
+  /enterprise/api/v3/users/self/dependents/{dependentId}/organizations:
     get:
       summary: Connected organizations
       description: Get all the organizations connected with an authenticated-user's dependent
@@ -2846,7 +2976,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /api/v3/users/self/dependents/{dependentId}/organizations/{organizationId}:
+  /enterprise/api/v3/users/self/dependents/{dependentId}/organizations/{organizationId}:
     delete:
       summary: Unlink dependent from an organization
       description: Removes the authenticated user's dependent from an organization and all the groups within that organization
@@ -2871,7 +3001,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /api/v3/users/self/dependents/{dependentId}/groups:
+  /enterprise/api/v3/users/self/dependents/{dependentId}/groups:
     get:
       summary: Connected groups
       description: Get all the connected-groups of a dependent

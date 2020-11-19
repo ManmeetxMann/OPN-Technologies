@@ -8,6 +8,7 @@ import moment from 'moment'
 import {firestore} from 'firebase-admin'
 import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
+import {isPassed} from '../../../common/src/utils/datetime-util'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
   ...passport,
@@ -113,7 +114,16 @@ export class PassportService {
       .findWhereEqual('statusToken', token)
       .then((results) => {
         if (results.length > 0) {
-          return results[0]
+          const notPassedPassports = results.filter((result) => !isPassed(result.validUntil))
+          if (!notPassedPassports.length) {
+            throw new ResourceNotFoundException(`passport ${token} is expired`)
+          }
+          if (results.length > 1) {
+            console.warn(
+              `multiple passport found, ${results.length}, ${notPassedPassports.length}, ${token}`,
+            )
+          }
+          return notPassedPassports[0]
         }
         throw new ResourceNotFoundException(`Cannot find passport with token [${token}]`)
       })

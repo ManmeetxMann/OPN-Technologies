@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const warningMessage = document.getElementById('warning-message')
 
   const datesBefore = document.getElementById('datesBefore')
-  const datesToday = document.getElementById('todaysDate')
+  const datesToday = document.getElementById('resultDate')
 
   const sendButtonBulk = document.getElementById('sendButtonBulk')
   const errorBulkModal = document.getElementById('errorBulkModal')
@@ -62,9 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const successModal = document.getElementById('successModal')
   const successModalContent = document.getElementById('successModalContent')
   const successModalClose = document.getElementById('successModalClose')
-
-  let todaysDate = datesToday.value;
-
 
   successModalClose.addEventListener('click', () => {
     closeModal(successModal)
@@ -154,6 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if ([6, 8, 10, 12].includes(i) && !(col === 'N/A' || !isNaN(parseInt(col)))) {
               markWarning(trElem, tdElem)
             }
+
+            if(col == "2019-nCoV Detected"){
+              col = 'Positive'
+            }
+
             if (i === 13 && !['Positive', 'Negative'].includes(col)) {
               markWarning(trElem, tdElem)
             }
@@ -171,32 +173,38 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   })
+
   datesBefore.addEventListener('change', async (e) => {
     to = DateTime.utc().toLocaleString()
     from = DateTime.utc().minus({days: e.target.value}).toLocaleString()
   })
-  datesToday.addEventListener('change', (e) => {
-    todaysDate = DateTime.utc({days: e.target.value}).toLocaleString()
-  })
+  
   sendButtonBulk.addEventListener('click', async (e) => {
     e.preventDefault()
+    let resultDate = datesToday.value;
     setLoader(sendButtonBulk, true)
     if (!data) {
       openModal(errorBulkModal)
       errorBulkContent.innerHTML = 'You should upload CSV file before'
       return
     }
+
     const sendAgainData = [...document.getElementsByClassName('sendAgainCheckbox')]
       .filter((row) => !row.checked)
       .map((row) => row.getAttribute('data-index'))
+
     const sendAgainDataVice = [...document.getElementsByClassName('sendAgainCheckbox')]
       .filter((row) => row.checked)
       .map((row) => row.getAttribute('data-index'))
+
     const dataSentBackend = data
       .filter((row, i) => {
         const isInvalidNum = [6, 8, 10, 12].find(
           (num) => !(row[num] === 'N/A' || !isNaN(parseInt(row[num]))),
         )
+        if(row[13] == "2019-nCoV Detected"){
+          row[13] = 'Positive'
+        }
         const isResultWrong = row[13] && !['Positive', 'Negative'].includes(row[13])
         const isDuplicate = barcodeCounts[row[3]] > 1
         return (
@@ -219,62 +227,81 @@ document.addEventListener('DOMContentLoaded', () => {
 
         hexCt: row[12],
         result: row[13],
+        resultDate: resultDate,
         sendAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
       }))
 
-    const response = await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        from,
-        to,
-        todaysDate,
-        results: dataSentBackend,
-      }),
+    const dataChunks = _.chunk(dataSentBackend, 5)
+    let failedRows = []
+    let isFatal = []
+
+    for (let i = 0; i < dataChunks.length; i++) {
+      const response = await fetch('/admin/api/v1/send-and-save-test-results-bulk', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          from,
+          to,
+          resultDate,
+          results: dataChunks[i],
+        }),
+      })
+
+      const responseData = await response.json()
+
+      // This case should be only if server is down
+      if (!response.ok) {
+        setLoader(sendButtonBulk, false)
+        openModal(errorBulkModal)
+        errorBulkContent.innerHTML = ''
+        const regexpFieldName = /.*\[\d*\]\./g
+        const regexpFieldRow = /.*\[(\d*)\]\..*/g
+
+        if (responseData?.errors?.length) {
+          responseData.errors.map((err) => {
+            const errorElem = document.createElement('p')
+            const fieldName = err.param.replace(regexpFieldName, '')
+            const index = parseInt(err.param.replace(regexpFieldRow, '$1'))
+            errorElem.innerText = `At ${dataSentBackend[index].barCode} row ${fieldName} is invalid.`
+            errorBulkContent.appendChild(errorElem)
+          })
+        } else {
+          const errorElem = document.createElement('p')
+          errorElem.innerText = `Invalid request`
+          errorBulkContent.appendChild(errorElem)
+        }
+        isFatal = _.flatten(dataChunks.slice(i))
+        break
+      }
+      failedRows = [...failedRows, ...responseData.data.failedRows]
+    }
+
+    let content = ''
+    const succeedRows = dataSentBackend.filter((row) => {
+      return (
+        !failedRows.find((row2) => row2.barCode === row.barCode) &&
+        !isFatal.find((row2) => row2.barCode === row.barCode)
+      )
     })
 
     setLoader(sendButtonBulk, false)
+    openModal(successModal)
 
-    const responseData = await response.json()
+    content += `Total rows: ${data.length}<br/>`
 
-    if (!response.ok) {
-      openModal(errorBulkModal)
-      errorBulkContent.innerHTML = ''
-      const regexpFieldName = /.*\[\d*\]\./g
-      const regexpFieldRow = /.*\[(\d*)\]\..*/g
-
-      if (responseData?.errors?.length) {
-        responseData.errors.map((err) => {
-          const errrorElem = document.createElement('p')
-          const fieldName = err.param.replace(regexpFieldName, '')
-          const index = parseInt(err.param.replace(regexpFieldRow, '$1'))
-          errrorElem.innerText = `At ${dataSentBackend[index].barCode} row ${fieldName} is invalid.`
-          errorBulkContent.appendChild(errrorElem)
-        })
-      } else {
-        const errrorElem = document.createElement('p')
-        errrorElem.innerText = `Invalid request`
-        errorBulkContent.appendChild(errrorElem)
-      }
-    } else {
-      let content = ''
-      const succeedRows = dataSentBackend.filter((row) => {
-        return !responseData.data.failedRows.find((row2) => row2.barCode === row.barCode)
-      })
-      openModal(successModal)
-
-      if (succeedRows.length) {
-        const succeedRowsElem = succeedRows.map((row) => `<div>${row.barCode}</div>`).join('')
-        content += `Succeed rows: ${succeedRowsElem}<br/>`
-      }
-      if (responseData.data.failedRows.length) {
-        const failedRows = responseData.data.failedRows
-          .map((row) => `<div>${row.barCode}</div>`)
-          .join('')
-        content += `Failed rows. Reason: Appointment not found ${failedRows}`
-      }
-
-      successModalContent.innerHTML = content
+    if (succeedRows.length) {
+      const succeedRowsElem = succeedRows.map((row) => `<div>${row.barCode}</div>`).join('')
+      content += `Succeed rows: ${succeedRowsElem}<br/>`
     }
+    if (failedRows.length) {
+      const failedRowsElem = failedRows.map((row) => `<div>${row.barCode}</div>`).join('')
+      content += `Failed rows. Reason: Appointment not found ${failedRowsElem}<br/>`
+    }
+    if (isFatal.length) {
+      const fatalRowsElem = isFatal.map((row) => `<div>${row.barCode}</div>`).join('')
+      content += `Failed rows. Reason: Internal Server Error ${fatalRowsElem}<br/>`
+    }
+
+    successModalContent.innerHTML = content
   })
 })

@@ -732,6 +732,9 @@ class OrganizationController implements IControllerBase {
           ),
       )
       console.log('templates retrieved')
+      if (!allTemplates.length) {
+        throw new HttpException('There is no historical data available for this group.')
+      }
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
       const content = _.flatten(allTemplates)
       console.log('generating stream')

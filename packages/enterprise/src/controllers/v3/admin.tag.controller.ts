@@ -77,7 +77,7 @@ const getUserByTagId: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-class TagController implements IControllerBase {
+class AdminTagController implements IControllerBase {
   public router = express.Router()
 
   constructor() {
@@ -86,17 +86,17 @@ class TagController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = () => Router({mergeParams: true})
-    const root = '/enterprise/admin/api/v3/'
+    const root = '/enterprise/admin/api/v3/tags'
 
     const tags = innerRouter().use(
       '/',
       innerRouter()
-        .post('/tags', authMiddleware, addNfcTagId)
-        .get('/tags/:tagId/user', authMiddleware, getUserByTagId),
+        .post('/', authMiddleware, addNfcTagId)
+        .get('/:tagId/user', authMiddleware, getUserByTagId),
     )
 
     this.router.use(root, tags)
   }
 }
 
-export default TagController
+export default AdminTagController
