@@ -63,9 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const successModalContent = document.getElementById('successModalContent')
   const successModalClose = document.getElementById('successModalClose')
 
-  let resultDate = datesToday.value;
-
-
   successModalClose.addEventListener('click', () => {
     closeModal(successModal)
     location.reload()
@@ -181,13 +178,10 @@ document.addEventListener('DOMContentLoaded', () => {
     to = DateTime.utc().toLocaleString()
     from = DateTime.utc().minus({days: e.target.value}).toLocaleString()
   })
-
-  datesToday.addEventListener('change', (e) => {
-    resultDate = DateTime.utc({days: e.target.value}).toLocaleString()
-  })
   
   sendButtonBulk.addEventListener('click', async (e) => {
     e.preventDefault()
+    let resultDate = datesToday.value;
     setLoader(sendButtonBulk, true)
     if (!data) {
       openModal(errorBulkModal)
@@ -280,6 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       failedRows = [...failedRows, ...responseData.data.failedRows]
     }
+
     let content = ''
     const succeedRows = dataSentBackend.filter((row) => {
       return (
