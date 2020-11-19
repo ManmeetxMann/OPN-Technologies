@@ -67,7 +67,6 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
         time,
       } = appointments[0]
 
-
       return {
         firstName,
         lastName,
@@ -79,7 +78,6 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
         dateOfAppointment: date,
         timeOfAppointment: time,
       }
-
     })
   }
 }
