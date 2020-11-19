@@ -1,5 +1,6 @@
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
-import {UserDependant, UserDependantModel} from '../../../common/src/data/user'
+import {UserDependant} from '../../../common/src/data/user'
+import {UserService} from '../../../common/src/service/user/user-service'
 import DataStore from '../../../common/src/data/datastore'
 import {AccessModel, AccessRepository} from '../repository/access.repository'
 import {Access, AccessFilter} from '../models/access'
@@ -29,6 +30,7 @@ export class AccessService {
   private accessRepository = new AccessRepository(this.dataStore)
   private accessStatsRepository = new AccessStatsRepository(this.dataStore)
   private accessListener = new AccessListener(this.dataStore)
+  private userService = new UserService()
 
   public static mapAccessDates = (access: Access): Access => ({
     ...access,
@@ -125,7 +127,7 @@ export class AccessService {
       this.incrementPeopleOnPremises(access.locationId, count)
         .then(() =>
           Object.keys(savedAccess.dependants ?? {}).length > 0
-            ? new UserDependantModel(this.dataStore, access.userId).fetchAll()
+            ? this.userService.getAllDependants(access.userId)
             : ([] as UserDependant[]),
         )
         .then((dependants) => {
@@ -209,7 +211,7 @@ export class AccessService {
         .then(() =>
           _.isEmpty(savedAccess.dependants)
             ? ([] as UserDependant[])
-            : new UserDependantModel(this.dataStore, access.userId).fetchAll(),
+            : this.userService.getAllDependants(access.userId),,
         )
         .then((dependants) =>
           dependants.filter(({id}) => !!savedAccess.dependants[id] && dependantIds.includes(id)),
