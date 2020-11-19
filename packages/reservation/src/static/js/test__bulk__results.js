@@ -227,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         hexCt: row[12],
         result: row[13],
+        resultDate: resultDate,
         sendAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
       }))
 
