@@ -1,5 +1,6 @@
 import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
+import {safeTimestamp, GenericTimestamp} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {User, UserDependant} from '../../../common/src/data/user'
 import {Range} from '../../../common/src/types/range'
@@ -30,6 +31,16 @@ import * as _ from 'lodash'
 import moment from 'moment'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
+
+const toDateFormat = (timestamp: GenericTimestamp): string => {
+  const date = safeTimestamp(timestamp)
+  return moment(date).tz(timeZone).format('MMMM D, YYYY')
+}
+
+const toDateTimeFormat = (timestamp: GenericTimestamp): string => {
+  const date = safeTimestamp(timestamp)
+  return moment(date).tz(timeZone).format('h:mm A MMMM D, YYYY')
+}
 
 type AugmentedDependant = UserDependant & {group: OrganizationGroup; status: PassportStatus}
 type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
@@ -327,9 +338,6 @@ export class ReportService {
       {},
     )
 
-    const dateFormat = 'MMMM D, YYYY'
-    const dateTimeFormat = 'h:mm A MMMM D, YYYY'
-
     const printableAccessHistory: {name: string; time: string; action: string}[] = []
     let enterIndex = 0
     let exitIndex = 0
@@ -342,12 +350,10 @@ export class ReportService {
       } else {
         const entering = enteringAccesses[enterIndex]
         const exiting = exitingAccesses[exitIndex]
-        const enterTime = new Date(
-          // @ts-ignore dependant dates are actually strings
+        const enterTime = safeTimestamp(
           dependantId ? entering.dependants[dependantId].enteredAt : entering.enteredAt,
         )
-        const exitTime = new Date(
-          // @ts-ignore dependant dates are actually strings
+        const exitTime = safeTimestamp(
           dependantId ? exiting.dependants[dependantId].exitAt : exiting.exitAt,
         )
         if (enterTime > exitTime) {
@@ -357,12 +363,9 @@ export class ReportService {
       if (addExit) {
         const access = exitingAccesses[exitIndex]
         const location = locationsLookup[access.locationId]
-        const time = moment(
-          //@ts-ignore dependant dates are actually strings
+        const time = toDateTimeFormat(
           dependantId ? access.dependants[dependantId].exitAt : access.exitAt,
         )
-          .tz(timeZone)
-          .format(dateTimeFormat)
         printableAccessHistory.push({
           name: location.title,
           time,
@@ -372,12 +375,9 @@ export class ReportService {
       } else {
         const access = enteringAccesses[enterIndex]
         const location = locationsLookup[access.locationId]
-        const time = moment(
-          // @ts-ignore this is an ISO string
+        const time = toDateTimeFormat(
           dependantId ? access.dependants[dependantId].enteredAt : access.enteredAt,
         )
-          .tz(timeZone)
-          .format(dateTimeFormat)
         printableAccessHistory.push({
           name: location.title,
           time,
@@ -402,10 +402,8 @@ export class ReportService {
           ? groupsLookup[overlap.dependant.groupId]
           : usersLookup[overlap.userId].group
         )?.name ?? '',
-      // @ts-ignore this is a timestamp, not a date
-      start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
-      // @ts-ignore this is a timestamp, not a date
-      end: moment(overlap.end.toDate()).tz(timeZone).format(dateTimeFormat),
+      start: toDateTimeFormat(overlap.start),
+      end: toDateTimeFormat(overlap.end),
     }))
     // perpetrators
     const printableExposures = exposureOverlaps.map((overlap) => ({
@@ -421,11 +419,9 @@ export class ReportService {
         (overlap.sourceDependantId
           ? dependantsLookup[overlap.sourceDependantId]
           : usersLookup[overlap.sourceUserId]
-        )?.group.name ?? '',
-      // @ts-ignore this is a timestamp, not a date
-      start: moment(overlap.start.toDate()).tz(timeZone).format(dateTimeFormat),
-      // @ts-ignore this is a timestamp, not a date
-      end: moment(overlap.end.toDate()).tz(timeZone).format(dateTimeFormat),
+        )?.group?.name ?? '',
+      start: toDateTimeFormat(overlap.start),
+      end: toDateTimeFormat(overlap.end),
     }))
 
     const printableAttestations = attestations.map((attestation) => {
@@ -440,9 +436,7 @@ export class ReportService {
         responses: answerKeys.map((key) => {
           const yes = attestation.answers[key]['1']
           const dateOfTest =
-            yes &&
-            attestation.answers[key]['2'] &&
-            moment(attestation.answers[key]['2']).tz(timeZone).format(dateFormat)
+            yes && attestation.answers[key]['2'] && toDateFormat(attestation.answers[key]['2'])
           const question =
             questionnaire?.questions[
               Object.keys(questionnaire.questions).find((qKey) => parseInt(qKey) === parseInt(key))
@@ -452,8 +446,7 @@ export class ReportService {
             response: yes ? dateOfTest || 'Yes' : 'No',
           }
         }),
-        // @ts-ignore timestamp, not string
-        time: moment(attestation.attestationTime.toDate()).tz(timeZone).format(dateTimeFormat),
+        time: toDateFormat(attestation.attestationTime),
         status: attestation.status,
       }
     })
@@ -470,16 +463,22 @@ export class ReportService {
     return userTemplate({
       attestations: printableAttestations,
       locations: printableAccessHistory,
-      exposures: printableExposures,
-      traces: printableTraces,
+      exposures: _.uniqBy(
+        printableExposures,
+        (exposure) =>
+          `${exposure.firstName}, ${exposure.lastName}, ${exposure.groupName}, ${exposure.start}, ${exposure.end}`,
+      ),
+      traces: _.uniqBy(
+        printableTraces,
+        (trace) =>
+          `${trace.firstName}, ${trace.lastName}, ${trace.groupName}, ${trace.start}, ${trace.end}`,
+      ),
       organizationName: organization.name,
       userGroup: group.name,
       userName: `${named.firstName} ${named.lastName}`,
       guardianName: namedGuardian ? `${namedGuardian.firstName} ${namedGuardian.lastName}` : null,
-      generationDate: moment(now()).tz(timeZone).format(dateFormat),
-      reportDate: `${moment(from).tz(timeZone).format(dateFormat)} - ${moment(to)
-        .tz(timeZone)
-        .format(dateFormat)}`,
+      generationDate: toDateFormat(now()),
+      reportDate: `${toDateFormat(from)} - ${toDateFormat(to)}`,
     })
   }
 
@@ -516,7 +515,8 @@ export class ReportService {
         _.flatten(pages),
       ),
       // N/10 queries
-      this.organizationService.getUsersGroups(organizationId, null, [...userIds, ...dependantIds]),
+      // don't need to look up dependant groups because it's stored on the dependant doc
+      this.organizationService.getUsersGroups(organizationId, null, [...userIds]),
       cachedGroupsById ? null : this.organizationService.getGroups(organizationId),
       cachedLocationsById ? null : this.organizationService.getAllLocations(organizationId),
       // N queries
@@ -539,10 +539,18 @@ export class ReportService {
     const locationsById: Record<string, OrganizationLocation> =
       cachedLocationsById ??
       allLocations.reduce((lookup, location) => ({...lookup, [location.id]: location}), {})
-    const groupsByUserOrDependantId: Record<string, OrganizationGroup> = userGroups.reduce(
+    const groupsByUserId: Record<string, OrganizationGroup> = userGroups.reduce(
       (lookup, groupLink) => ({...lookup, [groupLink.userId]: groupsById[groupLink.groupId]}),
       {},
     )
+    const groupsByDependantId: Record<string, OrganizationGroup> = allDependants.map(
+      (lookup, dependant) => ({...lookup, [dependant.id]: groupsById[dependant.groupId]}),
+      {},
+    )
+    const groupsByUserOrDependantId = {
+      ...groupsByUserId,
+      ...groupsByDependantId,
+    }
     const dependantsById: Record<string, AugmentedDependant> = allDependants
       .map(
         (dependant): AugmentedDependant => ({
@@ -618,10 +626,8 @@ export class ReportService {
       }
     })
     enteringAccesses.sort((a, b) => {
-      // @ts-ignore timestamps are actually strings
-      const aEnter = new Date(parentUserId ? a.dependants[userId].enteredAt : a.enteredAt)
-      // @ts-ignore timestamps are actually strings
-      const bEnter = new Date(parentUserId ? b.dependants[userId].enteredAt : b.enteredAt)
+      const aEnter = safeTimestamp(parentUserId ? a.dependants[userId].enteredAt : a.enteredAt)
+      const bEnter = safeTimestamp(parentUserId ? b.dependants[userId].enteredAt : b.enteredAt)
       if (aEnter < bEnter) {
         return -1
       } else if (bEnter < aEnter) {
@@ -630,10 +636,8 @@ export class ReportService {
       return 0
     })
     exitingAccesses.sort((a, b) => {
-      // @ts-ignore timestamps are actually strings
-      const aExit = new Date(parentUserId ? a.dependants[userId].exitAt : a.exitAt)
-      // @ts-ignore timestamps are actually strings
-      const bExit = new Date(parentUserId ? b.dependants[userId].exitAt : b.exitAt)
+      const aExit = safeTimestamp(parentUserId ? a.dependants[userId].exitAt : a.exitAt)
+      const bExit = safeTimestamp(parentUserId ? b.dependants[userId].exitAt : b.exitAt)
       if (aExit < bExit) {
         return -1
       } else if (bExit < aExit) {
@@ -764,23 +768,6 @@ export class ReportService {
         }
       })
       .filter((access) => !!access)
-    // Handle duplicates
-    const distinctAccesses: Record<string, AccessWithPassportStatusAndUser> = {}
-    const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
-    accesses.forEach(({user, status, ...access}) => {
-      if (!groupsByUserId[user.id]) {
-        console.log('Invalid state: Cannot find group for user: ', user.id)
-        return
-      }
-      const duplicateKey = `${normalize(user.firstName)}|${normalize(user.lastName)}|${
-        groupsByUserId[user.id]?.groupId
-      }`
-      distinctAccesses[duplicateKey] = getPriorityAccess(distinctAccesses[duplicateKey], {
-        ...access,
-        user,
-        status,
-      })
-    })
-    return Object.values(distinctAccesses)
+    return accesses
   }
 }

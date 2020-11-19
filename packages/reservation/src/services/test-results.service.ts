@@ -8,7 +8,6 @@ import {PdfService} from '../../../common/src/service/reports/pdf'
 import template from '../templates/testResult'
 
 import {Config} from '../../../common/src/utils/config'
-import {now} from '../../../common/src/utils/times'
 
 export class TestResultsService {
   private testResultEmailTemplateId = (Config.get('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2) as number
@@ -17,10 +16,14 @@ export class TestResultsService {
   private emailService = new EmailService()
   private pdfService = new PdfService()
 
-  async sendTestResults(testResults: TestResultsDTOForEmail): Promise<void> {
-    const timeZone = Config.get('DEFAULT_TIME_ZONE')
-    const todaysDate = moment(now()).tz(timeZone).format('LL')
-    const {content, tableLayouts} = template(testResults)
+  async sendTestResults(
+    testResults: TestResultsDTOForEmail,
+    dateFromRequest: Date = null,
+  ): Promise<void> {
+    const resultDateRaw = dateFromRequest
+    const resultDate = moment(resultDateRaw).format('LL')
+
+    const {content, tableLayouts} = template(testResults, resultDate)
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
     this.emailService.send({
@@ -28,12 +31,12 @@ export class TestResultsService {
       to: [{email: testResults.email, name: `${testResults.firstName} ${testResults.lastName}`}],
       params: {
         BARCODE: testResults.barCode,
-        DATE_OF_RESULT: todaysDate,
+        DATE_OF_RESULT: resultDate,
       },
       attachment: [
         {
           content: pdfContent,
-          name: `FHHealth.ca Result - ${testResults.barCode} - ${todaysDate}.pdf`,
+          name: `FHHealth.ca Result - ${testResults.barCode} - ${resultDate}.pdf`,
         },
       ],
       bcc: [
@@ -46,6 +49,10 @@ export class TestResultsService {
 
   async saveResults(testResults: TestResultsDBModel): Promise<void> {
     this.testResultsDBRepository.save(testResults)
+  }
+
+  async resultAlreadySentMany(barCode: string[]): Promise<string[]> {
+    return (await this.testResultsDBRepository.findWhereIdIn(barCode)).map((test) => test.id)
   }
 
   async resultAlreadySent(barCode: string): Promise<boolean> {

@@ -15,6 +15,21 @@
       </div>
     </div>
   </div>
+  <div class="modal fade bd-example-modal-lg" id="successModal" style="padding-top: 80px;" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Results state</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="successModalClose">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p id="successModalContent"></p>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="modal" id="confirmSendingAgain" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -34,63 +49,55 @@
       </div>
     </div>
   </div>
-  <div class="modal" id="confirmMailSend" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirmation</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div>
-            <ul>
-              <li><b>AppointmentId: </b><span id="confirmAppointmentId"></span></li>
-              <li><b>Date Of Appointment: </b><span id="confirmDateOfAppointment"></span></li>
-              <li><b>Date Of Birth: </b><span id="confirmDateOfBirth"></span></li>
-              <li><b>Email: </b><span id="confirmEmail"></span></li>
-              <li><b>First Name: </b><span id="confirmFirstName"></span></li>
-              <li><b>Last Name: </b><span id="confirmLastName"></span></li>
-              <li><b>Phone: </b><span id="confirmPhone"></span></li>
-              <li><b>Registered Nurse Practitioner: </b><span id="confirmRegisteredNursePractitioner"></span></li>
-            </ul>
-          </div>
-          <p>Do you confirm that you want to send email?</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-primary" id="sendMailNoBtn" data-dismiss="modal">No</button>
-          <button type="button" id="sendMailBtn" class="btn btn-secondary" data-dismiss="modal">Yes</button>
-        </div>
-      </div>
-    </div>
-  </div>
   <form action="#" id="bulkSubmitResults" method="POST">
+    <div class="alert alert-danger error-alert" role="alert" id="errorBulkModal">
+      <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+      <span id="errorBulkContent">Enter a valid email address</span>
+    </div>
     <div class="form-group">
       <label for="barCode">CSV File</label>
-      <input type="file" class="form-control" id="csvFile" name="csvFile" placeholder="Upload CSV File" required>
+      <input type="file" class="form-control" id="csvFile" name="csvFile" accept="text/csv" placeholder="Upload CSV File" required>
     </div>
     <div class="form-group">
-      <label for="result">Result</label>
+      <label for="result">Days from now</label>
       <select class="form-control" id="datesBefore" name="datesBefore">
-        <option>Positive</option>
-        <option selected>Negative</option>
+        <option selected>4</option>
+        <option>15</option>
+        <option>30</option>
       </select>
     </div>
-    <button type="submit" class="btn btn-primary" id="sendButton">Send Results</button>
+    <div class="form-group">
+      <label for="resultDate">Date of Result</label>
+        <input type="date" class="form-control" id="resultDate" min={{calendarFromDate}} max={{calendarToDate}} value={{calendarToDate}} name="resultDate" required autocomplete>
+    </div>
+    <button type="submit" class="btn btn-primary" id="sendButtonBulk">Send Results</button>
+    <div class="alert alert-warning mt-3 d-none" role="alert" id="warning-message">
+      Notice: Lines marked in yellow color are invalid and will not sent to backend
+    </div>
 
     <table class="table table-bordered mt-4 d-none" id="presentationTable">
       <thead>
         <tr>
           <th scope="col">#</th>
+          <th scope="col">Send Again</th>
+          <th scope="col">Sample No</th>
+          <th scope="col">Patient Id</th>
+          <th scope="col">Well</th>
           <th scope="col">Barcode</th>
+          <th scope="col">Type</th>
           <th scope="col" colspan="2">FAM</th>
           <th scope="col" colspan="2">Cal Red 210</th>
           <th scope="col" colspan="2">Quasar 670</th>
           <th scope="col" colspan="2">HEX</th>
           <th scope="col">Auto Interpretation</th>
+          <th scope="col">Comments</th>
         </tr>
         <tr>
+          <th scope="col"></th>
+          <th scope="col"></th>
+          <th scope="col"></th>
+          <th scope="col"></th>
+          <th scope="col"></th>
           <th scope="col"></th>
           <th scope="col"></th>
           <th scope="col">E gene</th>
@@ -101,6 +108,7 @@
           <th scope="col">C(t)</th>
           <th scope="col">IC</th>
           <th scope="col">C(t)</th>
+          <th scope="col"></th>
           <th scope="col"></th>
         </tr>
       </thead>

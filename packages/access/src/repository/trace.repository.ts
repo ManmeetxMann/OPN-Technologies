@@ -1,8 +1,10 @@
 import CollectionGroupModel from '../../../common/src/data/collectionGroupDatamodel.base'
-import {PassportStatuses} from '../../../passport/src/models/passport'
+import DataModel from '../../../common/src/data/datamodel.base'
+
 import {Trace, ExposureReport} from '../models/trace'
 import {Attendance} from '../models/attendance'
-import DataModel from '../../../common/src/data/datamodel.base'
+
+import {PassportStatuses} from '../../../passport/src/models/passport'
 
 export type TraceModel = Trace & {
   id: string
@@ -30,11 +32,9 @@ const digest = (record: {path: string[]; value: Attendance}): AugmentedAttendanc
   }
 }
 
-export default class DailyReportAccess extends CollectionGroupModel<TraceModel, Attendance> {
+// collection group for daily reports
+export class DailyReportRepository extends CollectionGroupModel<Attendance> {
   groupId = 'daily-reports'
-  zeroSet = []
-  rootPath = 'traces'
-
   async getAccesses(
     userId: string,
     earliestDate: string,
@@ -58,6 +58,11 @@ export default class DailyReportAccess extends CollectionGroupModel<TraceModel, 
     ])
     return results.map(digest)
   }
+}
+
+export default class extends DataModel<TraceModel> {
+  zeroSet = []
+  rootPath = 'traces'
 
   async saveTrace(
     reports: ExposureReport[],

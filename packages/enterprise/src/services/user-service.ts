@@ -33,6 +33,7 @@ export class UserService {
         registrationId: source.registrationId ?? null,
         authUserId: source.authUserId ?? null,
         active: source.active ?? false,
+        memberId: source.memberId ?? null,
       } as User)
     })
   }
@@ -93,6 +94,14 @@ export class UserService {
       if (target) return target
       throw new ResourceNotFoundException(`Cannot find user [${id}]`)
     })
+  }
+
+  getAllByOrganizationId(organizationId: string, page: number, perPage: number): Promise<User[]> {
+    const userIdsQuery = this.userRepository.getQueryFindWhereArrayContains(
+      'organizationIds',
+      organizationId,
+    )
+    return this.userRepository.fetchPage(userIdsQuery, page, perPage)
   }
 
   getByEmail(email: string): Promise<User> {

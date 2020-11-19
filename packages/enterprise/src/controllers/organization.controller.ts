@@ -8,6 +8,7 @@ import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {Config} from '../../../common/src/utils/config'
 import {PdfService} from '../../../common/src/service/reports/pdf'
 
@@ -28,6 +29,7 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 import {PassportStatuses} from '../../../passport/src/models/passport'
 
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
+import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
 import {Access} from '../../../access/src/models/access'
 
@@ -458,37 +460,30 @@ class OrganizationController implements IControllerBase {
     try {
       const {organizationId} = req.params
       const groups = await this.getGroups(organizationId)
-      for (const group of groups) {
-        const groupId = group.id
-        const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
-        for (const item of usersGroups) {
-          let user: User | UserDependant = null
-          const {id, userId, parentUserId} = item
-
-          // If parent is not null then userId represents a dependent id
-          if (parentUserId) {
-            const dependants = await this.userService.getAllDependants(parentUserId)
-            for (const dependant of dependants) {
-              // Look for dependent
-              if (dependant.id === userId) {
-                user = dependant
-                break
+      await Promise.all(
+        groups.map(async (group) => {
+          const groupId = group.id
+          const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
+          return Promise.all(
+            usersGroups.map(async (item) => {
+              // If parent is not null then userId represents a dependent id
+              const {id, userId, parentUserId} = item
+              const userExists = parentUserId
+                ? (await this.userService.getAllDependants(parentUserId)).some(
+                    (dependant) => dependant.id === userId,
+                  )
+                : !!(await this.userService.findOneSilently(userId))
+              // Let's see if we need to delete the user group membership
+              if (!userExists) {
+                console.log(
+                  `Deleting user-group [${id}] for user [${userId}] and [${parentUserId}] from group [${groupId}]`,
+                )
+                return this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
               }
-              // FYI: we may have not found it and thus user = null
-            }
-          } else {
-            user = await this.userService.findOneSilently(userId)
-          }
-
-          // Let's see if we need to delete the user group membership
-          if (!user) {
-            console.warn(
-              `Deleting user-group [${id}] for user [${userId}] and [${parentUserId}] from group [${groupId}]`,
-            )
-            await this.organizationService.removeUserFromGroup(organizationId, groupId, userId)
-          }
-        }
-      }
+            }),
+          )
+        }),
+      )
 
       res.json(actionSucceed())
     } catch (error) {
@@ -737,6 +732,9 @@ class OrganizationController implements IControllerBase {
           ),
       )
       console.log('templates retrieved')
+      if (!allTemplates.length) {
+        throw new HttpException('There is no historical data available for this group.')
+      }
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
       const content = allTemplates.reduce(
         (contentArray, template) => [...contentArray, ...template.content],
@@ -921,7 +919,6 @@ class OrganizationController implements IControllerBase {
         to,
         isParentUser ? null : userId,
       )
-
       // filter down to only the overlaps with the user we're interested in
       const relevantTraces = rawTraces
         .map((trace) => {
@@ -931,11 +928,11 @@ class OrganizationController implements IControllerBase {
                 isParentUser ? !overlap.sourceDependantId : overlap.sourceDependantId === userId,
               )
               .filter(
-                (overlapping) =>
+                (overlap) =>
                   //@ts-ignore these are timestamps, not strings
-                  moment(overlapping.end.toDate()).toISOString() >= from &&
+                  moment(overlap.end.toDate()) >= moment(from) &&
                   //@ts-ignore these are timestamps, not strings
-                  moment(overlapping.start.toDate()).toISOString() <= to,
+                  moment(overlap.start.toDate()) <= moment(to),
               )
             return {...exposure, overlapping}
           })
@@ -1061,11 +1058,11 @@ class OrganizationController implements IControllerBase {
                 (overlap) => (parentUserId ? overlap.dependant?.id : overlap.userId) === userId,
               )
               .filter(
-                (overlapping) =>
+                (overlap) =>
                   //@ts-ignore these are timestamps, not strings
-                  moment(overlapping.end.toDate()).toISOString() >= from &&
+                  moment(overlap.end.toDate()) >= moment(from) &&
                   //@ts-ignore these are timestamps, not strings
-                  moment(overlapping.start.toDate()).toISOString() <= to,
+                  moment(overlap.start.toDate()) <= moment(to),
               )
               .map((overlap) => ({
                 userId: overlap.sourceUserId,
@@ -1097,17 +1094,47 @@ class OrganizationController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      // const {organizationId} = req.params
+      const {organizationId} = req.params
       const {userId, from, to} = req.query as UserContactTraceReportRequest
 
       // fetch attestation array in the time period
-      const attestations = await this.attestationService.getAttestationsInPeriod(userId, from, to)
-      // @ts-ignore 'timestamps' does not exist in typescript
-      const response = attestations.map(({timestamps, attestationTime, ...passThrough}) => ({
-        ...passThrough,
-        // @ts-ignore attestationTime is a server timestamp, not a string
-        attestationTime: attestationTime.toDate(),
-      }))
+      const [attestations, locations] = await Promise.all([
+        this.attestationService.getAttestationsInPeriod(userId, from, to),
+        this.organizationService.getLocations(organizationId),
+      ])
+      const attestedLocationIds = new Set<string>(_.uniq(attestations.map((att) => att.locationId)))
+      const questionnaireIdsByLocationId: Record<string, string> = locations.reduce(
+        (lookup, location) => {
+          if (!attestedLocationIds.has(location.id)) {
+            // don't care about this location
+            return lookup
+          }
+          return {
+            ...lookup,
+            [location.id]: location.questionnaireId,
+          }
+        },
+        {},
+      )
+      const questionnaireIds: string[] = _.uniq(Object.values(questionnaireIdsByLocationId))
+      const questionnaires = await this.questionnaireService.getQuestionnaires(questionnaireIds)
+      const questionnairesById: Record<string, Questionnaire> = questionnaires.reduce(
+        (lookup, questionnaire) => ({
+          ...lookup,
+          [questionnaire.id]: questionnaire,
+        }),
+        {},
+      )
+
+      const response = attestations.map(
+        // @ts-ignore 'timestamps' does not exist in typescript
+        ({timestamps, attestationTime, locationId, ...passThrough}) => ({
+          ...passThrough,
+          locationId,
+          attestationTime: safeTimestamp(attestationTime),
+          questions: questionnairesById[questionnaireIdsByLocationId[locationId]]?.questions ?? {},
+        }),
+      )
       res.json(actionSucceed(response))
     } catch (error) {
       next(error)

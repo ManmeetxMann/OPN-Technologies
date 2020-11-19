@@ -38,14 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const getValueByElem = (elem) => elem.value
 
-  const findAncestor = (el, cls) => {
-    while ((el = el.parentElement) && !el.classList.contains(cls)) {}
-    return el
-  }
-
-  const openModal = (modal) => modal.classList.add('show-modal')
-  const closeModal = (modal) => modal.classList.remove('show-modal')
-
   const showAlertModal = function (title, message) {
     messageModal.querySelector('.modal-title').innerHTML = title
     messageModal.querySelector('.modal-body').innerHTML = message
@@ -54,25 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const createCloseModal = (elem) => {
     closeModal(findAncestor(elem, 'show-modal'))
-  }
-
-  const setLoader = (btn, isEnable) => {
-    if (isEnable) {
-      const spinner = document.createElement('span')
-      spinner.classList.add('spinner')
-      const loaderText = document.createTextNode('Loading...')
-      btn.classList.add('d-inline-flex')
-      btn.classList.add('align-center')
-      btn.disabled = true
-      btn.innerHTML = ''
-      btn.appendChild(spinner)
-      btn.appendChild(loaderText)
-    } else {
-      btn.innerHTML = 'Submit'
-      btn.disabled = false
-      btn.classList.remove('d-inline-flex')
-      btn.classList.remove('align-center')
-    }
   }
 
   const sendResult = async (event, isSecond = false) => {
@@ -89,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
       quasar670Ct: getValueByElem(quasar670CtElem),
       hexIC: getValueByElem(hexICElem),
       hexCt: getValueByElem(hexCtElem),
+      resultDate: getValueByElem(resultDate),
     }
     if (!isSecond && confirmBeforeSend === '1') {
       data.needConfirmation = true
@@ -127,11 +101,20 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         if (response.status === 409) {
           openModal(confirmSendingAgainModal)
-        } else {
+        }
+        else if (responseData?.errors?.length) {
+          let errorMessage = "";
+          responseData.errors.map((error) => {
+            errorMessage +=  `${error.param} ${error.msg}`
+          })
+
+          showAlertModal('Failed', errorMessage)
+        }else {
           showAlertModal('Failed', responseData.status.message)
         }
       }
     } catch (e) {
+      setLoader(sendButton, false)
       showAlertModal('Failed', 'Something went wrong. Please try after sometime.')
     }
   }
@@ -166,6 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
         showAlertModal('Failed', message)
       }
     } catch (e) {
+      setLoader(submitAgainBtn, false)
+      closeModal(confirmSendingAgainModal)
       showAlertModal('Failed', 'Something went wrong. Please try after sometime.')
     }
   })
