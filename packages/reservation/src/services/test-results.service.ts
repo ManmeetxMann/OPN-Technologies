@@ -8,7 +8,6 @@ import {PdfService} from '../../../common/src/service/reports/pdf'
 import template from '../templates/testResult'
 
 import {Config} from '../../../common/src/utils/config'
-import {now} from '../../../common/src/utils/times'
 
 export class TestResultsService {
   private testResultEmailTemplateId = (Config.get('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2) as number
@@ -21,7 +20,6 @@ export class TestResultsService {
     testResults: TestResultsDTOForEmail,
     dateFromRequest: Date = null,
   ): Promise<void> {
-    const timeZone = Config.get('DEFAULT_TIME_ZONE')
     const resultDateRaw = dateFromRequest
     const resultDate = moment(resultDateRaw).format('LL')
 
