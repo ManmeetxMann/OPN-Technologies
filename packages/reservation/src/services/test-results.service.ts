@@ -22,8 +22,8 @@ export class TestResultsService {
     dateFromRequest: Date = null,
   ): Promise<void> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
-    const resultDateRaw = dateFromRequest || now()
-    const resultDate = moment(resultDateRaw).tz(timeZone).format('LL')
+    const resultDateRaw = dateFromRequest
+    const resultDate = moment(resultDateRaw).format('LL')
 
     const {content, tableLayouts} = template(testResults, resultDate)
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
