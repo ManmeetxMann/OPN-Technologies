@@ -32,10 +32,7 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
       users.map(async (user: User) => {
         const userGroup = await organizationService.getUserGroup(organizationId, user.id)
         return {
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          photo: user.photo,
+          ...userDTOResponse(user),
           groupName: userGroup.name,
           memberId: user.memberId,
         }
