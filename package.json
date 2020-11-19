@@ -16,6 +16,8 @@
 		"deploy-all": "lerna run deploy --stream",
 		"emulate-firebase": "cd firebase-emulation && firebase emulators:start --only firestore,pubsub --import=./rawState/",
 		"save-firebase": "cd firebase-emulation && firebase emulators:export",
+        "make-migrations": "lerna run migrations-up --stream",
+        "rollback-migrations": "lerna run migrations-down --stream",
 		"cd-build-registry": "lerna run --scope @opn/registry build --stream",
 		"cd-build-passport": "lerna run --scope @opn/passport build --stream",
 		"cd-build-enterprise": "lerna run --scope @opn/enterprise build --stream",

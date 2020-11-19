@@ -150,6 +150,8 @@ paths:
                   additionalProperties: true
                 userId:
                   type: string
+                questionnaireId:
+                  type: string
                 dependantIds:
                   type: array
                   items:

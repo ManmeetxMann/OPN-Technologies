@@ -12,6 +12,9 @@ import {ExposureResult} from '../types/status-changes-result'
 import {Config} from '../../../common/src/utils/config'
 
 import moment from 'moment'
+import 'moment-timezone';
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {UpdateAttestationRequest} from '../types/update-attestation-request'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -174,5 +177,25 @@ export class AttestationService {
     })
     attestations.reverse()
     return attestations
+  }
+
+  async getAllAttestations(): Promise<Attestation[]> {
+    return this.attestationRepository.fetchAll();
+  }
+
+  update(id: string, source: UpdateAttestationRequest): Promise<Attestation> {
+    return this.getById(id).then((target) =>
+      this.attestationRepository.update({
+        ...target,
+        ...source
+      }),
+    )
+  }
+
+  getById(id: string): Promise<Attestation> {
+    return this.attestationRepository.get(id).then((target) => {
+      if (target) return target
+      throw new ResourceNotFoundException(`Cannot find attestation [${id}]`)
+    })
   }
 }

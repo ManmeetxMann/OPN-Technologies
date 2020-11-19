@@ -10,7 +10,7 @@ export type EvaluationCriteria = {
   stop: number
 }
 
-type Question = {
+export type Question = {
   value: string
   answers: Record<number, AnswerType>
 }
