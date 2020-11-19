@@ -1,11 +1,9 @@
-import moment from 'moment-timezone'
 import path from 'path'
 
 import {ResultTypes, TestResultsDTOForEmail} from '../models/appoinment'
 import {TableLayouts, Content} from '../../../common/src/service/reports/pdf-types'
 
 import {Config} from '../../../common/src/utils/config'
-import {now} from '../../../common/src/utils/times'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
@@ -27,9 +25,8 @@ const tableLayouts: TableLayouts = {
 }
 const generate = (
   params: TestResultsDTOForEmail,
+  resultDate: string,
 ): {content: Content[]; tableLayouts: TableLayouts} => {
-  const timeZone = Config.get('DEFAULT_TIME_ZONE')
-  const createTime = moment(now()).tz(timeZone).format('LL')
   const isPositive = params.result === ResultTypes.Positive
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -86,7 +83,7 @@ const generate = (
         ],
       },
       {
-        text: createTime,
+        text: resultDate,
         margin: [0, 30, 0, 0],
         style: ['gray-text'],
       },
@@ -116,7 +113,7 @@ const generate = (
               'Date of Test (Sample Collection)',
               `${params.dateOfAppointment} at ${params.timeOfAppointment}`,
             ],
-            ['Date of Result', createTime],
+            ['Date of Result', resultDate],
             ['Ordering Physician', requisitionDoctor],
             ['Nurse', params.registeredNursePractitioner],
             ['Test', 'RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],

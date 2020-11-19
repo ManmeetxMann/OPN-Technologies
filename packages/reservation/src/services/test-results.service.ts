@@ -22,8 +22,10 @@ export class TestResultsService {
     dateFromRequest: Date = null,
   ): Promise<void> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
-    const todaysDate = dateFromRequest || moment(now()).tz(timeZone).format('LL')
-    const {content, tableLayouts} = template(testResults)
+    const resultDateRaw = dateFromRequest || now()
+    const resultDate = moment(resultDateRaw).tz(timeZone).format('LL')
+
+    const {content, tableLayouts} = template(testResults, resultDate)
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
     this.emailService.send({
@@ -31,12 +33,12 @@ export class TestResultsService {
       to: [{email: testResults.email, name: `${testResults.firstName} ${testResults.lastName}`}],
       params: {
         BARCODE: testResults.barCode,
-        DATE_OF_RESULT: todaysDate,
+        DATE_OF_RESULT: resultDate,
       },
       attachment: [
         {
           content: pdfContent,
-          name: `FHHealth.ca Result - ${testResults.barCode} - ${todaysDate}.pdf`,
+          name: `FHHealth.ca Result - ${testResults.barCode} - ${resultDate}.pdf`,
         },
       ],
       bcc: [

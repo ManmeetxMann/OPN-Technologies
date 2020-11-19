@@ -38,42 +38,46 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
         registeredNursePractitioner: appointment.registeredNursePractitioner,
         dateOfAppointment: appointment.date,
         barCode: appointment.barCode,
+        timeOfAppointment: appointment.time,
       }))
     })
   }
 
   async getAppointment(data: AppointmentSearchRequest): Promise<AppointmentDBModel> {
     return this.getAppointments(data).then((appointments: AppointmentAcuityResponse[]) => {
-      if (appointments.length >= 1) {
-        //Pick first item in case Staff made mistake by duplicating BarCodeNumber
-        const {
-          firstName,
-          lastName,
-          email,
-          phone,
-          id,
-          dateOfBirth,
-          registeredNursePractitioner,
-          date,
-          time,
-        } = appointments[0]
-        if (appointments.length > 1) {
-          throw new BadRequestException(`Duplicate Bar Code!! for Appoinment ${id}`)
-        }
-
-        return {
-          firstName,
-          lastName,
-          email,
-          phone,
-          appointmentId: id,
-          dateOfBirth,
-          registeredNursePractitioner,
-          dateOfAppointment: date,
-          timeOfAppointment: time,
-        }
+      if (appointments.length > 1) {
+        throw new BadRequestException(
+          `Sorry, Results are not sent. Same Barcode is used by multiple appointments`,
+        )
       }
-      throw new ResourceNotFoundException(`Appointment not found`)
+
+      if (!appointments.length) {
+        throw new ResourceNotFoundException(`Appointment not found`)
+      }
+
+      const {
+        firstName,
+        lastName,
+        email,
+        phone,
+        id,
+        dateOfBirth,
+        registeredNursePractitioner,
+        date,
+        time,
+      } = appointments[0]
+
+      return {
+        firstName,
+        lastName,
+        email,
+        phone,
+        appointmentId: id,
+        dateOfBirth,
+        registeredNursePractitioner,
+        dateOfAppointment: date,
+        timeOfAppointment: time,
+      }
     })
   }
 }
