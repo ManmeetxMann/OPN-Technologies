@@ -255,6 +255,33 @@ class AdminController implements IRouteController {
       return
     }
 
+    // Get Latest Passport (as they need a valid access)
+    const passports = await this.passportService.findTheLatestValidPassports([tagId.userId])
+
+    // Make sure it's valid
+    if (!passports || !(tagId.userId in passports) || passports[tagId.userId].statusToken !== 'proceed') {
+      replyInsufficientPermission(res)
+    }
+
+    // Get ours
+    const passport = passports[tagId.userId]
+
+    // Let's get the access assuming that user is already Proceed
+    const accesses = await this.accessService.findLatest(
+      tagId.userId, 
+      locationId,
+      {from: now(), to: now()}, 
+    )
+
+    // If nothing found
+    if (accesses.length > 0) {
+
+    }
+    // 
+    else {
+
+    }
+
     
   }
 

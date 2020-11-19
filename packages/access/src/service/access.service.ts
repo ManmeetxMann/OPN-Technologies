@@ -16,6 +16,7 @@ import {PassportStatus} from '../../../passport/src/models/passport'
 import {AccessStatsFilter} from '../models/access-stats'
 import {Config} from '../../../common/src/utils/config'
 import {AccessFilterWithDependent} from '../types'
+import {Range} from '../../../common/src/types/range'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -343,6 +344,43 @@ export class AccessService {
 
     // @ts-ignore
     return filteredAccesses
+  }
+
+  findLatest(
+    userId: string,
+    locationId: string,
+    betweenCreatedDate? : Range<Date>
+    ): Promise<Access[]> {
+    // @ts-ignore
+    let query = this.accessRepository.collection()
+
+    // @ts-ignore
+    query = query.where('userId', '==', userId)
+    
+    // @ts-ignore
+    query = query.where('locationId', '==', locationId)
+    
+    if (betweenCreatedDate) {
+      const {from, to} = betweenCreatedDate
+      if (from) {
+        // @ts-ignore
+        query = query.where('createdAt', '>=', from)
+      }
+      if (to) {
+        // @ts-ignore
+        query = query.where('createdAt', '<=', to)
+      }
+    }
+
+    // @ts-ignore
+    query = query.orderBy('createdAt', 'desc')
+
+    const hasFilter = userId || locationId || betweenCreatedDate
+    
+    // @ts-ignore
+    return (hasFilter ? query.fetch() : query.fetchAll()).then((accesses) =>
+      accesses.map(AccessService.mapAccessDates),
+    )
   }
 
   async getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
