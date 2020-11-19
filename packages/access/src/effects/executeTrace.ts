@@ -339,6 +339,10 @@ export default class TraceListener {
           groups: await this.organizationService.getUsersGroups(user.organizationIds[0], null, [
             user.id,
           ]),
+          dependantGroups: await this.organizationService.getDependantGroups(
+            user.organizationIds[0],
+            user.id,
+          ),
           dependants: await this.userService.getAllDependants(user.id),
         }
       }),

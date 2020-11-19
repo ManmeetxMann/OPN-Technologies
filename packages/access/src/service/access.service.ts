@@ -211,7 +211,7 @@ export class AccessService {
         .then(() =>
           _.isEmpty(savedAccess.dependants)
             ? ([] as UserDependant[])
-            : this.userService.getAllDependants(access.userId),,
+            : this.userService.getAllDependants(access.userId),
         )
         .then((dependants) =>
           dependants.filter(({id}) => !!savedAccess.dependants[id] && dependantIds.includes(id)),
