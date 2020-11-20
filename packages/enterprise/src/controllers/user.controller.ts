@@ -11,7 +11,6 @@ import {User, UserEdit, UserWithGroup, UserDependant} from '../../../common/src/
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Organization, OrganizationUsersGroup} from '../models/organization'
 import * as _ from 'lodash'
-import {flattern} from '../../../common/src/utils/utils'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {AuthService} from '../../../common/src/service/auth/auth-service'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
@@ -146,7 +145,7 @@ class UserController implements IControllerBase {
         _.chunk(lookupIds, 10).map((chunk) =>
           this.organizationService.getUsersGroups(organizationId, null, chunk),
         ),
-      ).then((results) => flattern(results as OrganizationUsersGroup[][]))
+      ).then((results) => _.flatten(results as OrganizationUsersGroup[][]))
 
       // Create a hashmap fo results
       const userGroups: Record<string, string> = userGroupsArray.reduce(function (map, obj) {

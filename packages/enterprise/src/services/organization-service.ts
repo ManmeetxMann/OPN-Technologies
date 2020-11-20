@@ -1,7 +1,6 @@
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {flattern} from '../../../common/src/utils/utils'
 
 import {
   Organization,
@@ -316,7 +315,7 @@ export class OrganizationService {
   getAllByIds(organizationIds: string[]): Promise<Organization[]> {
     return Promise.all(
       _.chunk(organizationIds, 10).map((chunk) => this.organizationRepository.findWhereIdIn(chunk)),
-    ).then((results) => flattern(results as Organization[][]))
+    ).then((results) => _.flatten(results as Organization[][]))
   }
 
   // TODO: To be replaced with a proper solution that generates a 5 digits code for by user and organization with an expiry

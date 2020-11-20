@@ -11,7 +11,6 @@ import AccessListener from '../effects/addToAttendance'
 import moment from 'moment-timezone'
 import {serverTimestamp, now} from '../../../common/src/utils/times'
 import * as _ from 'lodash'
-import {flattern} from '../../../common/src/utils/utils'
 import {PassportStatus} from '../../../passport/src/models/passport'
 import {AccessStatsFilter} from '../models/access-stats'
 import {Config} from '../../../common/src/utils/config'
@@ -416,7 +415,7 @@ export class AccessService {
 
         return query.fetch()
       }),
-    ).then((results) => flattern(results as AccessStatsModel[][]))
+    ).then((results) => _.flatten(results as AccessStatsModel[][]))
   }
 
   incrementPeopleOnPremises(locationId: string, count = 1): Promise<AccessStatsModel> {
