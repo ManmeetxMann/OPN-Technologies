@@ -49,14 +49,24 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
  */
 const createUser: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {organizationId, ...profile} = req.body as CreateUserByAdminRequest
+    const {organizationId, groupId, memberId, ...profile} = req.body as CreateUserByAdminRequest
     // Assert organization exists
     await organizationService.getByIdOrThrow(organizationId)
+
+    // Assert that the group exists
+    await organizationService.getGroup(organizationId, groupId)
+
     const user = await userService.create({
       ...profile,
     })
     // Connect to org
     await userService.connectOrganization(user.id, organizationId)
+
+    await organizationService.addUserToGroup(organizationId, groupId, user.id)
+
+    if (memberId) {
+      await userService.createOrganizationProfile(user.id, organizationId, memberId)
+    }
 
     res.json(actionSucceed(userDTOResponse(user)))
   } catch (error) {

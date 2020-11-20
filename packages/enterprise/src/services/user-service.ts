@@ -1,11 +1,18 @@
 import DataStore from '../../../common/src/data/datastore'
-import {User, UserDependency, UserGroup, UserOrganization} from '../models/user'
+import {
+  User,
+  UserDependency,
+  UserGroup,
+  UserOrganization,
+  UserOrganizationProfile,
+} from '../models/user'
 import {NewUser, LegacyProfile} from '../types/new-user'
 import {UpdateUserRequest} from '../types/update-user-request'
 import {UserRepository} from '../repository/user.repository'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {UserOrganizationRepository} from '../repository/user-organization.repository'
+import {UserOrganizationProfileRepository} from '../repository/user-organization-profile.repository'
 import {UserDependencyRepository} from '../repository/user-dependency.repository'
 import * as _ from 'lodash'
 import {UserGroupRepository} from '../repository/user-group.repository'
@@ -16,6 +23,7 @@ export class UserService {
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
   private userOrganizationRepository = new UserOrganizationRepository(this.dataStore)
+  private userOrganizationProfileRepository = new UserOrganizationProfileRepository(this.dataStore)
   private userGroupRepository = new UserGroupRepository(this.dataStore)
   private userDependencyRepository = new UserDependencyRepository(this.dataStore)
 
@@ -301,5 +309,17 @@ export class UserService {
       query = query.where('groupId', 'in', groupIds)
     }
     return query.fetch()
+  }
+
+  createOrganizationProfile(
+    userId: string,
+    organizationId: string,
+    memberId: string,
+  ): Promise<UserOrganizationProfile> {
+    return this.userOrganizationProfileRepository.add({
+      userId,
+      organizationId,
+      memberId,
+    } as UserOrganizationProfile)
   }
 }
