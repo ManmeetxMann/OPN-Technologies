@@ -429,8 +429,12 @@ export class ReportService {
           const yes = attestation.answers[key]['1']
           const dateOfTest =
             yes && attestation.answers[key]['2'] && toDateFormat(attestation.answers[key]['2'])
+          const question =
+            questionnaire?.questions[
+              Object.keys(questionnaire.questions).find((qKey) => parseInt(qKey) === parseInt(key))
+            ]?.value ?? `Question ${key}`
           return {
-            question: (questionnaire?.questions[key]?.value ?? `Question ${key}`) as string,
+            question: question as string,
             response: yes ? dateOfTest || 'Yes' : 'No',
           }
         }),
