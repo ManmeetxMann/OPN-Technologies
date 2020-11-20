@@ -31,7 +31,7 @@ export default {
       body('result')
         .isIn(['Positive', 'Negative', '2019-nCoV Detected'])
         .withMessage('must be one of: Positive, Negative, 2019-nCoV Detected'),
-      body('todaysDate').isDate().withMessage('must be valid date'),
+      body('resultDate').isDate().withMessage('must be valid date'),
     ]
   },
 
@@ -50,7 +50,7 @@ export default {
       body('results.*.result')
         .isIn(['Positive', 'Negative', '2019-nCoV Detected'])
         .withMessage('must be one of: Positive, Negative, 2019-nCoV Detected'),
-      body('todaysDate').isDate().withMessage('must be valid date'),
+      body('resultDate').isDate().withMessage('must be valid date'),
     ]
   },
 }

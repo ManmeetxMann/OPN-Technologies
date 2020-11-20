@@ -165,7 +165,7 @@ paths:
                   type: string
                 to:
                   type: string
-                todaysDate:
+                resultDate:
                   type: string
                 results:
                   type: array
@@ -200,7 +200,7 @@ paths:
                 - from
                 - to
                 - results
-                - todaysDate
+                - resultDate
       responses:
         '200':
           description: Successfully Return
@@ -245,7 +245,7 @@ paths:
                   type: string
                 needConfirmation:
                   type: boolean
-                todaysDate:
+                resultDate:
                   type: string
               required:
                 - barCode
@@ -258,7 +258,7 @@ paths:
                 - quasar670Ct
                 - hexIC
                 - hexCt
-                - todaysDate
+                - resultDate
       responses:
         '200':
           description: Successfully Return
