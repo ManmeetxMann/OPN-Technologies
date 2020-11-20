@@ -366,12 +366,14 @@ export class AccessService {
       .where('locationId', '==', locationId)
       //@ts-ignore
       .where('timestamps.createdAt', '>=', from)
+      //@ts-ignore
       .where('timestamps.createdAt', '<=', to)
 
     if (delegateAdminUserId) {
       query = query.where('delegateAdminUserId', '==', delegateAdminUserId)
     }
 
+    //@ts-ignore
     query = query.orderBy('timestamps.createdAt', 'desc')
 
     const accesses = await query.fetch()
