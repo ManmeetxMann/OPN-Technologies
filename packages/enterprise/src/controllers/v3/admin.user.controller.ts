@@ -28,12 +28,28 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
 
     const users = await userService.getAllByOrganizationId(organizationId, page, perPage)
 
+    const usersGroups = await organizationService.getUsersGroups(
+      organizationId,
+      null,
+      users.map((user) => user.id),
+    )
+
+    const groupIdsByUserId: Record<string, string> = usersGroups.reduce(
+      (lookup, usersGroup) => ({
+        ...lookup,
+        [usersGroup.userId]: usersGroup.groupId,
+      }),
+      {},
+    )
+
     const resultUsers = await Promise.all(
       users.map(async (user: User) => {
-        const userGroup = await organizationService.getUserGroup(organizationId, user.id)
+        const userGroup = groupIdsByUserId[user.id]
+          ? await organizationService.getGroup(organizationId, groupIdsByUserId[user.id])
+          : null
         return {
           ...userDTOResponse(user),
-          groupName: userGroup.name,
+          groupName: userGroup ? userGroup.name : '',
           memberId: user.memberId,
         }
       }),
