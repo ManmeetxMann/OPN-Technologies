@@ -59,7 +59,7 @@ export class AccessService {
     includesGuardian: boolean,
     dependantIds: string[],
     delegateAdminUserId?: string,
-  ): Promise<Access> {
+  ): Promise<AccessModel> {
     const dependants = {}
     dependantIds.forEach(
       (id) =>
@@ -346,11 +346,12 @@ export class AccessService {
     return filteredAccesses
   }
 
-  findLatest(
+  async findLatest(
     userId: string,
     locationId: string,
-    betweenCreatedDate? : Range<Date>
-    ): Promise<Access[]> {
+    onCreatedDate : Date,
+    delegateAdminUserId?: string,
+    ): Promise<AccessModel> {
     // @ts-ignore
     let query = this.accessRepository.collection()
 
@@ -360,27 +361,35 @@ export class AccessService {
     // @ts-ignore
     query = query.where('locationId', '==', locationId)
     
-    if (betweenCreatedDate) {
-      const {from, to} = betweenCreatedDate
-      if (from) {
-        // @ts-ignore
-        query = query.where('createdAt', '>=', from)
-      }
-      if (to) {
-        // @ts-ignore
-        query = query.where('createdAt', '<=', to)
-      }
+    // @ts-ignore these are timestamps, not dates
+    const from = moment(onCreatedDate).tz(timeZone).startOf('day').toDate()
+
+    // @ts-ignore
+    query = query.where('timestamps.createdAt', '>=', from)
+
+    // @ts-ignore these are timestamps, not dates
+    const to = moment(onCreatedDate).tz(timeZone).endOf('day').toDate()
+
+    // @ts-ignore
+    query = query.where('timestamps.createdAt', '<=', to)
+
+    if (delegateAdminUserId) {
+      // @ts-ignore
+      query = query.where('delegateAdminUserId', '==', delegateAdminUserId)
     }
 
     // @ts-ignore
-    query = query.orderBy('createdAt', 'desc')
+    query = query.orderBy('timestamps.createdAt', 'desc')
 
-    const hasFilter = userId || locationId || betweenCreatedDate
-    
     // @ts-ignore
-    return (hasFilter ? query.fetch() : query.fetchAll()).then((accesses) =>
-      accesses.map(AccessService.mapAccessDates),
-    )
+    const accesses = await query.fetch()
+
+    // @ts-ignore
+    return (accesses.length > 0) ? accesses[0] : null
+    
+    // .then((accesses) =>
+    //   accesses.map(AccessService.mapAccessDates),
+    // )
   }
 
   async getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
