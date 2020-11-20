@@ -122,6 +122,9 @@ export class AccessService {
         ? access.userId
         : Object.keys(access.dependants)[0]
     const count = Object.keys(dependants).length + (access.includesGuardian ? 1 : 0)
+
+    console.log(`Processed an ENTER for Access id: ${access.id}`)
+
     return this.accessRepository.update(newAccess).then((savedAccess) =>
       this.incrementPeopleOnPremises(access.locationId, count)
         .then(() =>
@@ -205,6 +208,9 @@ export class AccessService {
       access.includesGuardian || Object.keys(access.dependants).length > 1
         ? access.userId
         : Object.keys(access.dependants)[0]
+
+    console.log(`Processed an EXIT for Access id: ${access.id}`)
+
     return this.accessRepository.update(newAccess).then((savedAccess) =>
       this.decreasePeopleOnPremises(access.locationId, count)
         .then(() =>
