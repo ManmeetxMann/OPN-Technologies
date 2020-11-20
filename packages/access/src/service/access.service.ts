@@ -16,6 +16,7 @@ import {PassportStatus} from '../../../passport/src/models/passport'
 import {AccessStatsFilter} from '../models/access-stats'
 import {Config} from '../../../common/src/utils/config'
 import {AccessFilterWithDependent} from '../types'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -363,6 +364,7 @@ export class AccessService {
       .collection()
       .where('userId', '==', userId)
       .where('locationId', '==', locationId)
+      //@ts-ignore
       .where('timestamps.createdAt', '>=', from)
       .where('timestamps.createdAt', '<=', to)
 
