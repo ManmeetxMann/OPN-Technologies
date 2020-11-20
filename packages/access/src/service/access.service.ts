@@ -353,7 +353,8 @@ export class AccessService {
   ): Promise<AccessModel> {
     const from = moment(safeTimestamp(onCreatedDate)).tz(timeZone).startOf('day').toDate()
     const to = moment(safeTimestamp(onCreatedDate)).tz(timeZone).endOf('day').toDate()
-    let query = this.accessRepository.collection()
+    let query = this.accessRepository
+      .collection()
       .where('userId', '==', userId)
       .where('locationId', '==', locationId)
       .where('timestamps.createdAt', '>=', from)
