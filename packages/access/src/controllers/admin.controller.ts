@@ -235,8 +235,6 @@ class AdminController implements IRouteController {
 
   enterOrExitUsingATag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // userId = tb2FvnMjwxSG0gmyHgEx
-
       // Get request inputs
       const {tagId, locationId} = req.body
 
