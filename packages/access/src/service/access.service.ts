@@ -16,7 +16,6 @@ import {PassportStatus} from '../../../passport/src/models/passport'
 import {AccessStatsFilter} from '../models/access-stats'
 import {Config} from '../../../common/src/utils/config'
 import {AccessFilterWithDependent} from '../types'
-import {Range} from '../../../common/src/types/range'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -349,18 +348,18 @@ export class AccessService {
   async findLatest(
     userId: string,
     locationId: string,
-    onCreatedDate : Date,
+    onCreatedDate: Date,
     delegateAdminUserId?: string,
-    ): Promise<AccessModel> {
+  ): Promise<AccessModel> {
     // @ts-ignore
     let query = this.accessRepository.collection()
 
     // @ts-ignore
     query = query.where('userId', '==', userId)
-    
+
     // @ts-ignore
     query = query.where('locationId', '==', locationId)
-    
+
     // @ts-ignore these are timestamps, not dates
     const from = moment(onCreatedDate).tz(timeZone).startOf('day').toDate()
 
@@ -385,8 +384,8 @@ export class AccessService {
     const accesses = await query.fetch()
 
     // @ts-ignore
-    return (accesses.length > 0) ? accesses[0] : null
-    
+    return accesses.length > 0 ? accesses[0] : null
+
     // .then((accesses) =>
     //   accesses.map(AccessService.mapAccessDates),
     // )

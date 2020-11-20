@@ -121,11 +121,7 @@ export class PassportService {
       .then(mapDates)
   }
 
-  async findTheLatestValidPassport(
-    userId: string,
-    nowDate: Date = now(),
-  ): Promise<Passport> {
-    
+  async findTheLatestValidPassport(userId: string, nowDate: Date = now()): Promise<Passport> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
     const passports = await this.passportRepository
       .collection()

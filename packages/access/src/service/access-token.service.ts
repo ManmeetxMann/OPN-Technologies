@@ -1,4 +1,3 @@
-import {Access} from '../models/access'
 import {ForbiddenException} from '../../../common/src/exceptions/forbidden-exception'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
@@ -6,7 +5,7 @@ import {PassportService} from '../../../passport/src/services/passport-service'
 import {Config} from '../../../common/src/utils/config'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {AccessService} from './access.service'
-import { AccessModel } from '../repository/access.repository'
+import {AccessModel} from '../repository/access.repository'
 
 const permissiveMode = Config.get('FEATURE_CREATE_TOKEN_PERMISSIVE_MODE') === 'enabled'
 

@@ -22,7 +22,6 @@ import {AccessTokenService} from '../service/access-token.service'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {AccessStats} from '../models/access'
 import {NfcTagService} from '../../../common/src/service/hardware/nfctag-service'
-import { ok } from 'assert'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -33,9 +32,7 @@ const replyInsufficientPermission = (res: Response) =>
 const replyUnauthorizedEntry = (res: Response) =>
   res
     .status(403)
-    .json(
-      of(null, ResponseStatusCodes.AccessDenied, 'Must have Proceed badge to enter/exit'),
-    )
+    .json(of(null, ResponseStatusCodes.AccessDenied, 'Must have Proceed badge to enter/exit'))
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -246,9 +243,7 @@ class AdminController implements IRouteController {
       // Get tag
       const tag = await this.tagService.getById(tagId)
       if (!tag) {
-        throw new ResourceNotFoundException(
-          `NFC Tag not found`,
-        )
+        throw new ResourceNotFoundException(`NFC Tag not found`)
       }
 
       // Save org
@@ -257,7 +252,9 @@ class AdminController implements IRouteController {
       // Make sure the admin is allowed
       const authenticatedUser = res.locals.connectedUser as User
       const admin = authenticatedUser.admin as AdminProfile
-      const isNFCGateKioskAdmin = admin.nfcGateKioskAdminForOrganizationIds?.includes(organizationId)
+      const isNFCGateKioskAdmin = admin.nfcGateKioskAdminForOrganizationIds?.includes(
+        organizationId,
+      )
       const authenticatedUserId = authenticatedUser.id
 
       // Check if allowed
@@ -272,13 +269,13 @@ class AdminController implements IRouteController {
         tag.userId,
         locationId,
         now(),
-        authenticatedUserId
+        authenticatedUserId,
       )
 
       // Check if access does not exist or if they've exited
       // Note we are not checking for entered at as assuming that the enteredAt is there :-)
       if (!access || !!access.exitAt) {
-        // Fetch latest passport 
+        // Fetch latest passport
         const passport = await this.passportService.findTheLatestValidPassport(tag.userId)
 
         // Make sure it's valid
@@ -294,13 +291,12 @@ class AdminController implements IRouteController {
           tag.userId,
           [],
           true,
-          authenticatedUserId
+          authenticatedUserId,
         )
 
         const ae = await this.accessService.handleEnter(accessToken)
         res.json(actionSucceed(ae))
-      }
-      else {
+      } else {
         // Get Latest Passport (as they need a valid access)
         const passport = await this.passportService.findOneByToken(access.statusToken)
 
@@ -311,13 +307,12 @@ class AdminController implements IRouteController {
         }
 
         // Decide
-        const ae = !access.enteredAt ?
-          await this.accessService.handleEnter(access) :
-          await this.accessService.handleExit(access)
+        const ae = !access.enteredAt
+          ? await this.accessService.handleEnter(access)
+          : await this.accessService.handleExit(access)
 
         res.json(actionSucceed(ae))
       }
-      
     } catch (error) {
       next(error)
     }
