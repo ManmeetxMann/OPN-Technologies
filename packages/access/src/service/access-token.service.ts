@@ -6,6 +6,7 @@ import {PassportService} from '../../../passport/src/services/passport-service'
 import {Config} from '../../../common/src/utils/config'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {AccessService} from './access.service'
+import { AccessModel } from '../repository/access.repository'
 
 const permissiveMode = Config.get('FEATURE_CREATE_TOKEN_PERMISSIVE_MODE') === 'enabled'
 
@@ -31,7 +32,7 @@ export class AccessTokenService {
     dependantIds: string[],
     includeGuardian: boolean,
     delegateAdminUserId?: string,
-  ): Promise<Access> {
+  ): Promise<AccessModel> {
     const passport = await this.passportService.findOneByToken(statusToken)
 
     const fail = (reason: string) => {
