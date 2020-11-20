@@ -61,6 +61,7 @@ export type BarCodeGeneratorUI = {
 export enum ResultTypes {
   Positive = 'Positive',
   Negative = 'Negative',
+  Detected = '2019-nCoV Detected',
 }
 
 export type TestResultsBase = {

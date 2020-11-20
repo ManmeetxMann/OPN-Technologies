@@ -30,7 +30,8 @@ const generate = (
 ): {content: Content[]; tableLayouts: TableLayouts} => {
   const timeZone = Config.get('DEFAULT_TIME_ZONE')
   const createTime = moment(now()).tz(timeZone).format('LL')
-  const isPositive = params.result === ResultTypes.Positive
+  const isPositive =
+    params.result === ResultTypes.Positive || params.result === ResultTypes.Detected
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
   return {

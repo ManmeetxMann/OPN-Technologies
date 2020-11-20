@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   resultSelect.addEventListener('change', ({target}) => {
     const {value: resultVal} = target
-    if (resultVal === 'Positive') {
+    if (resultVal === 'Positive' || resultVal === '2019-nCoV Detected') {
       famEGeneElem.value = '+'
       famCtElem.value = ''
       calRed61RdRpGeneElem.value = '+'

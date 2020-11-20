@@ -179,6 +179,7 @@ paths:
                           enum:
                             - Positive
                             - Negative
+                            - 2019-nCoV Detected
                         famEGene:
                           type: string
                         famCt:
@@ -225,6 +226,7 @@ paths:
                   enum:
                     - Positive
                     - Negative
+                    - 2019-nCoV Detected
                 famEGene:
                   type: string
                 famCt:

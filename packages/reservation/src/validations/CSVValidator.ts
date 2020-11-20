@@ -28,6 +28,9 @@ export default {
           return value === 'N/A' || !isNaN(value)
         })
         .withMessage('must be numeric or N/A'),
+      body('result')
+        .isIn(['Positive', 'Negative', '2019-nCoV Detected'])
+        .withMessage('must be one of: Positive, Negative, 2019-nCoV Detected'),
       body('todaysDate').isDate().withMessage('must be valid date'),
     ]
   },
@@ -44,7 +47,9 @@ export default {
           return value === 'N/A' || !isNaN(value)
         })
         .withMessage('must be numeric or N/A'),
-      body('results.*.result').isIn(['Positive', 'Negative']).withMessage('invalid csv rows'),
+      body('results.*.result')
+        .isIn(['Positive', 'Negative', '2019-nCoV Detected'])
+        .withMessage('must be one of: Positive, Negative, 2019-nCoV Detected'),
       body('todaysDate').isDate().withMessage('must be valid date'),
     ]
   },

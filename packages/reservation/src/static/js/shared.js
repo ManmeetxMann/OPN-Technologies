@@ -22,7 +22,7 @@ const setLoader = (btn, isEnable) => {
     btn.appendChild(spinner)
     btn.appendChild(loaderText)
   } else {
-    btn.innerHTML = 'Submit'
+    btn.innerHTML = 'Send Results'
     btn.disabled = false
     btn.classList.remove('d-inline-flex')
     btn.classList.remove('align-center')
