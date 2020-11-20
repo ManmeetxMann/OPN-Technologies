@@ -351,39 +351,22 @@ export class AccessService {
     onCreatedDate: Date,
     delegateAdminUserId?: string,
   ): Promise<AccessModel> {
-    // @ts-ignore
+    const from = moment(safeTimestamp(onCreatedDate)).tz(timeZone).startOf('day').toDate()
+    const to = moment(safeTimestamp(onCreatedDate)).tz(timeZone).endOf('day').toDate()
     let query = this.accessRepository.collection()
-
-    // @ts-ignore
-    query = query.where('userId', '==', userId)
-
-    // @ts-ignore
-    query = query.where('locationId', '==', locationId)
-
-    // @ts-ignore these are timestamps, not dates
-    const from = moment(onCreatedDate).tz(timeZone).startOf('day').toDate()
-
-    // @ts-ignore
-    query = query.where('timestamps.createdAt', '>=', from)
-
-    // @ts-ignore these are timestamps, not dates
-    const to = moment(onCreatedDate).tz(timeZone).endOf('day').toDate()
-
-    // @ts-ignore
-    query = query.where('timestamps.createdAt', '<=', to)
+      .where('userId', '==', userId)
+      .where('locationId', '==', locationId)
+      .where('timestamps.createdAt', '>=', from)
+      .where('timestamps.createdAt', '<=', to)
 
     if (delegateAdminUserId) {
-      // @ts-ignore
       query = query.where('delegateAdminUserId', '==', delegateAdminUserId)
     }
 
-    // @ts-ignore
     query = query.orderBy('timestamps.createdAt', 'desc')
 
-    // @ts-ignore
     const accesses = await query.fetch()
 
-    // @ts-ignore
     return accesses.length > 0 ? accesses[0] : null
 
     // .then((accesses) =>
