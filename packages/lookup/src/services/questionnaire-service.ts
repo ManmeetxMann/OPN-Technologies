@@ -48,6 +48,6 @@ export class QuestionnaireService {
   }
 
   async getAllQuestionnaire(): Promise<Questionnaire[]> {
-    return this.questionnaireRepository.fetchAll();
+    return this.questionnaireRepository.fetchAll()
   }
 }

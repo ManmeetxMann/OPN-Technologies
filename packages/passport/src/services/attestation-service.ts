@@ -12,7 +12,7 @@ import {ExposureResult} from '../types/status-changes-result'
 import {Config} from '../../../common/src/utils/config'
 
 import moment from 'moment'
-import 'moment-timezone';
+import 'moment-timezone'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {UpdateAttestationRequest} from '../types/update-attestation-request'
 
@@ -180,14 +180,14 @@ export class AttestationService {
   }
 
   async getAllAttestations(): Promise<Attestation[]> {
-    return this.attestationRepository.fetchAll();
+    return this.attestationRepository.fetchAll()
   }
 
   update(id: string, source: UpdateAttestationRequest): Promise<Attestation> {
     return this.getById(id).then((target) =>
       this.attestationRepository.update({
         ...target,
-        ...source
+        ...source,
       }),
     )
   }
