@@ -357,14 +357,17 @@ export default class TraceListener {
             organizationLookup[lookup.orgId].groups.find((group) => group.id === membership.groupId)
               ?.name,
         ),
-        dependants: lookup.dependants.map((dep) => ({
-          id: dep.id,
-          firstName: dep.firstName,
-          lastName: dep.lastName,
-          groupName: organizationLookup[lookup.orgId].groups.find(
-            (group) => group.id === dep.groupId,
-          )?.name,
-        })),
+        dependants: lookup.dependants.map((dep) => {
+          const membership = lookup.dependantGroups.find((group) => group.userId === dep.id)
+          return {
+            id: dep.id,
+            firstName: dep.firstName,
+            lastName: dep.lastName,
+            groupName: organizationLookup[lookup.orgId].groups.find(
+              (group) => group.id === membership.groupId,
+            )?.name,
+          }
+        }),
       }))
       .reduce((lookup, data) => ({...lookup, [data.id]: data}), {})
 

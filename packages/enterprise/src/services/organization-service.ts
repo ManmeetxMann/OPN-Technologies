@@ -308,7 +308,11 @@ export class OrganizationService {
     })
   }
 
-  removeUserFromGroup(organizationId: string, groupId: string, userId: string): Promise<void> {
+  removeUserFromGroup(
+    organizationId: string,
+    groupId: string | null,
+    userId: string,
+  ): Promise<void> {
     return this.getOneUsersGroup(organizationId, groupId, userId).then((target) => {
       if (target) return this.getUsersGroupRepositoryFor(organizationId).delete(target.id)
 

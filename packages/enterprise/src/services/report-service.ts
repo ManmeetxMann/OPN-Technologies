@@ -318,7 +318,7 @@ export class ReportService {
             },
           }
         : partialLookup
-    const {locationsLookup, usersLookup, dependantsLookup, groupsLookup} = lookups
+    const {locationsLookup, usersLookup, dependantsLookup} = lookups
 
     const questionnairesLookup: Record<number, Questionnaire> = {}
     questionnaires.forEach((questionnaire) => {
@@ -391,7 +391,7 @@ export class ReportService {
         : usersLookup[overlap.userId].lastName,
       groupName:
         (overlap.dependant
-          ? groupsLookup[overlap.dependant.groupId]
+          ? usersLookup[overlap.dependant.id].group
           : usersLookup[overlap.userId].group
         )?.name ?? '',
       start: toDateTimeFormat(overlap.start),

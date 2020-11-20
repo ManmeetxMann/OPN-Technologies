@@ -154,8 +154,10 @@ class UserController implements IControllerBase {
       }, {})
 
       // Fill out user one
+      // @ts-ignore creating a DTO
       user.groupId = userGroups[userId]
       for (const dependent of dependents) {
+        // @ts-ignore creating a DTO
         dependent.groupId = userGroups[dependent.id]
       }
 
