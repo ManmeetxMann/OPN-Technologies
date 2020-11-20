@@ -17,11 +17,59 @@ import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-ex
 import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
+import {AdminProfile} from '../../../../common/src/data/admin'
+import {replyInsufficientPermission} from '../organization.controller'
+import {User as AuthenticatedUser} from '../../../../common/src/data/user'
 
 const authService = new AuthService()
 const userService = new UserService()
 const organizationService = new OrganizationService()
 const magicLinkService = new MagicLinkService()
+
+/**
+ * Search a user(s) profile and returns a User(s)
+ */
+const search: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const {q} = req.query as {q: string}
+
+    const authenticatedUser = res.locals.connectedUser as AuthenticatedUser
+    const admin = authenticatedUser.admin as AdminProfile
+
+    if (!admin || !admin.adminForOrganizationId || !admin.superAdminForOrganizationIds.length) {
+      replyInsufficientPermission(res)
+      return
+    }
+
+    const adminForOrganizationIds = [
+      ...admin.superAdminForOrganizationIds,
+      ...[admin.adminForOrganizationId],
+    ].filter((value, index, self) => {
+      return self.indexOf(value) === index
+    })
+
+    const allUsers = await Promise.all(
+      adminForOrganizationIds.map(async (organizationId) => {
+        const users = await userService.searchByQueryAndOrganizationId(organizationId, q)
+
+        return await Promise.all(
+          users.map(async (user: User) => {
+            const userGroup = await organizationService.getUserGroup(organizationId, user.id)
+            return {
+              ...userDTOResponse(user),
+              groupName: userGroup.name,
+              memberId: user.memberId,
+            }
+          }),
+        )
+      }),
+    )
+
+    res.json(actionSucceed(allUsers.flat()))
+  } catch (error) {
+    next(error)
+  }
+}
 
 /**
  * Creates a user profile and returns a User
@@ -477,6 +525,7 @@ class UserController implements IControllerBase {
     const authentication = innerRouter().use(
       '/',
       innerRouter()
+        .get('/search', authMiddleware, search)
         .post('/', create)
         .post('/migration', migrate)
         .post('/auth', authenticate)

@@ -11,6 +11,7 @@ import * as _ from 'lodash'
 import {UserGroupRepository} from '../repository/user-group.repository'
 import {OrganizationUsersGroupModel} from '../repository/organization.repository'
 import {UserModel} from '../../../common/src/data/user'
+import {validateEmail} from '../../../common/src/utils/utils'
 
 export class UserService {
   private dataStore = new DataStore()
@@ -92,6 +93,55 @@ export class UserService {
     return this.userRepository.get(id).then((target) => {
       if (target) return target
       throw new ResourceNotFoundException(`Cannot find user [${id}]`)
+    })
+  }
+
+  searchByQueryAndOrganizationId(organizationId: string, query: string): Promise<User[]> {
+    const searchArray = query.split(' ')
+    const email = searchArray.find((string) => validateEmail(string))
+
+    const usersQuery = this.userRepository.getQueryFindWhereArrayContains(
+      'organizationIds',
+      organizationId,
+    )
+    return Promise.all(
+      searchArray.map(async (searchString) => {
+        if (email && searchString == email) {
+          return await this.userRepository.fetchAllWhereEqual(usersQuery, 'email', searchString)
+        }
+        const searchByLastName = await this.userRepository.fetchAllWhereEqual(
+          usersQuery,
+          'lastName',
+          `${searchString[0].toUpperCase()}${searchString.slice(1)}`,
+        )
+        const searchByLastNameToLower = await this.userRepository.fetchAllWhereEqual(
+          usersQuery,
+          'lastName',
+          searchString,
+        )
+        const searchByFirstNameToLower = await this.userRepository.fetchAllWhereEqual(
+          usersQuery,
+          'firstName',
+          searchString.toLowerCase(),
+        )
+        const searchByFirstName = await this.userRepository.fetchAllWhereEqual(
+          usersQuery,
+          'firstName',
+          `${searchString[0].toUpperCase()}${searchString.slice(1)}`,
+        )
+
+        return [
+          ...searchByFirstNameToLower,
+          ...searchByFirstName,
+          ...searchByLastNameToLower,
+          ...searchByLastName,
+        ]
+      }),
+    ).then((result) => {
+      const resultArray = result.flat()
+      const deduplicated: Record<string, User> = {}
+      resultArray.forEach((item) => (deduplicated[item.id] = item))
+      return Object.values(deduplicated)
     })
   }
 
