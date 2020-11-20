@@ -411,6 +411,11 @@ components:
           items:
             type: string
           description: Organizaiton ids to become a NFC tag admin of. Must be provided can be empty.
+        nfcGateKioskAdminForOrganizationIds:
+          type: array
+          items:
+            type: string
+          description: Organizaiton ids to become a NFC Gate Kiosk admin. Must be provided can be empty.
 
         groupIds:
           type: array

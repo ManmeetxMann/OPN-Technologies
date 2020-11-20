@@ -131,6 +131,27 @@ export class PassportService {
       .then(mapDates)
   }
 
+  async findTheLatestValidPassport(userId: string, nowDate: Date = now()): Promise<Passport> {
+    const timeZone = Config.get('DEFAULT_TIME_ZONE')
+    const passports = await this.passportRepository
+      .collection()
+      .where('userId', '==', userId)
+      .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
+      .orderBy('validUntil', 'desc')
+      .fetch()
+
+    // Deal with the bad
+    if (!passports || passports.length == 0) {
+      return null
+    }
+
+    // Latest
+    const latestPassport = passports[0]
+
+    // Send if in range
+    return moment(nowDate).isAfter(latestPassport.validFrom) ? latestPassport : null
+  }
+
   /**
    * shortestTime
    * Calculates the shortest time to an end of day or elapsed time.
