@@ -292,8 +292,8 @@ class AdminController implements IRouteController {
           authenticatedUserId,
         )
 
-        const ae = await this.accessService.handleEnter(accessToken)
-        res.json(actionSucceed(ae))
+        const accessForEntering = await this.accessService.handleEnter(accessToken)
+        res.json(actionSucceed(accessForEntering))
       } else {
         // Get Latest Passport (as they need a valid access)
         const passport = await this.passportService.findOneByToken(access.statusToken)
@@ -305,11 +305,11 @@ class AdminController implements IRouteController {
         }
 
         // Decide
-        const ae = !access.enteredAt
+        const accessForEnteringOrExiting = !access.enteredAt
           ? await this.accessService.handleEnter(access)
           : await this.accessService.handleExit(access)
 
-        res.json(actionSucceed(ae))
+        res.json(actionSucceed(accessForEnteringOrExiting))
       }
     } catch (error) {
       next(error)
