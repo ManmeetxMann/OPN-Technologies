@@ -13,6 +13,7 @@ import {InternalAdminApprovalCreateRequest} from '../models/internal-request'
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 
 import {Router, NextFunction, Request, Response} from 'express'
+import * as _ from 'lodash'
 
 type GroupReportEmailRequest = {
   groupId: string
@@ -109,10 +110,7 @@ class InternalController implements IControllerBase {
       )
       console.log(`generated ${allTemplates.length} templates`)
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
-      const content = allTemplates.reduce(
-        (contentArray, template) => [...contentArray, ...template.content],
-        [],
-      )
+      const content = _.flatten(allTemplates)
       console.log(`generating pdf with ${content.length} elements`)
       const pdfStream = await this.pdfService.generatePDFStream(content, tableLayouts)
       console.log('uploading pdf')

@@ -7,7 +7,6 @@ import {now, serverTimestamp} from '../../../common/src/utils/times'
 import moment from 'moment'
 import {firestore} from 'firebase-admin'
 import * as _ from 'lodash'
-import {flattern} from '../../../common/src/utils/utils'
 import {Config} from '../../../common/src/utils/config'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 
@@ -40,7 +39,7 @@ export class PassportService {
           .fetch(),
       ),
     ).then((results) =>
-      flattern(results as Passport[][])?.forEach((source) => {
+      _.flatten(results as Passport[][])?.forEach((source) => {
         const passport = mapDates(source)
         const validFrom = passport.validFrom
         const latestUserPassport = latestPassportsByUserId[passport.userId]
@@ -110,21 +109,22 @@ export class PassportService {
       .then(mapDates)
   }
 
-  findOneByToken(token: string): Promise<Passport> {
+  findOneByToken(token: string, requireValid = false): Promise<Passport> {
     return this.passportRepository
       .findWhereEqual('statusToken', token)
       .then((results) => {
         if (results.length > 0) {
-          const notPassedPassports = results.filter((result) => !isPassed(result.validUntil))
-          if (!notPassedPassports.length) {
+          if (results.length > 1) {
+            console.warn(`multiple passport found, ${results.length}, ${token}`)
+          }
+          if (!requireValid) {
+            return results[0]
+          }
+          const validPassports = results.filter((result) => !isPassed(result.validUntil))
+          if (!validPassports.length) {
             throw new ResourceNotFoundException(`passport ${token} is expired`)
           }
-          if (results.length > 1) {
-            console.warn(
-              `multiple passport found, ${results.length}, ${notPassedPassports.length}, ${token}`,
-            )
-          }
-          return notPassedPassports[0]
+          return validPassports[0]
         }
         throw new ResourceNotFoundException(`Cannot find passport with token [${token}]`)
       })
