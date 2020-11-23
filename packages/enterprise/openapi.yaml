@@ -811,6 +811,9 @@ components:
         memberId:
           type: string
           nullable: true
+        groupId:
+          type: string
+          nullable: true
 
       required:
         - email
