@@ -6,7 +6,6 @@ import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 
-import {FaxService} from '../../../common/src/service/messaging/fax-service'
 
 import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 
@@ -30,7 +29,6 @@ class AdminController implements IControllerBase {
   public router = Router()
   private appoinmentService = new AppoinmentService()
   private testResultsService = new TestResultsService()
-  private faxService = new FaxService()
 
   constructor() {
     this.initRoutes()
@@ -111,8 +109,9 @@ class AdminController implements IControllerBase {
       await Promise.all(
         requestData.results.map(async ({sendAgain, ...row}) => {
           if (barcodeCounts[row.barCode] === 1) {
+            const testResults = await this.testResultsService.getResults(row.barCode)
+
             if (sendAgain) {
-              const testResults = await this.testResultsService.getResults(row.barCode)
               if (!testResults) {
                 throw new ResourceNotFoundException(
                   'Something wend wrong. Results are not available.',
@@ -140,10 +139,13 @@ class AdminController implements IControllerBase {
             }
 
             if (row.result === ResultTypes.Positive) {
-              const addressee = Config.get('MFAX_NUMBER')
-              const name = `${row.barCode} - ${new Date()}`
+              if (!testResults) {
+                throw new ResourceNotFoundException(
+                  'Something wend wrong. Results are not available.',
+                )
+              }
 
-              this.faxService.send(addressee, JSON.stringify(row), name)
+              this.testResultsService.sendFax({...testResults}, resultDate)
             }
           } else {
             notFoundBarcodes.push(row)
@@ -182,6 +184,12 @@ class AdminController implements IControllerBase {
 
       if (requestData.needConfirmation) {
         const appointment = await this.appoinmentService.getAppoinmentByBarCode(requestData.barCode)
+
+        //  should we send a fax here?
+        if (requestData.result === ResultTypes.Positive) {
+          this.testResultsService.sendFax({...appointment, ...requestData}, resultDate)
+        }
+
         res.json(actionSucceed(appointment))
         return
       }
@@ -201,6 +209,13 @@ class AdminController implements IControllerBase {
           return appointment
         })
         .then((appointment: AppointmentDTO) => {
+          if (requestData.result === ResultTypes.Positive) {
+            this.testResultsService.sendFax({...appointment, ...requestData}, resultDate)
+          }
+          
+          return appointment
+        })
+        .then((appointment: AppointmentDTO) => {
           this.testResultsService.saveResults({
             ...requestData,
             ...appointment,
@@ -209,12 +224,6 @@ class AdminController implements IControllerBase {
           })
         })
 
-      if (requestData.result === ResultTypes.Positive) {
-        const addressee = Config.get('MFAX_NUMBER')
-        const name = `${requestData.barCode} - ${new Date()}`
-
-        this.faxService.send(addressee, JSON.stringify(requestData), name)
-      }
 
       res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {

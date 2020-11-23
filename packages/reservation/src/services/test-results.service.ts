@@ -4,6 +4,7 @@ import DataStore from '../../../common/src/data/datastore'
 import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/appoinment'
 import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 import {EmailService} from '../../../common/src/service/messaging/email-service'
+import {FaxService} from '../../../common/src/service/messaging/fax-service'
 import {PdfService} from '../../../common/src/service/reports/pdf'
 import template from '../templates/testResult'
 
@@ -15,6 +16,7 @@ export class TestResultsService {
   private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
   private emailService = new EmailService()
   private pdfService = new PdfService()
+  private faxService = new FaxService()
 
   async sendTestResults(
     testResults: TestResultsDTOForEmail,
@@ -45,6 +47,21 @@ export class TestResultsService {
         },
       ],
     })
+  }
+
+  async sendFax(
+    testResults: TestResultsDTOForEmail,
+    dateFromRequest: Date = null,
+  ): Promise<void> {
+    const resultDateRaw = dateFromRequest
+    const resultDate = moment(resultDateRaw).format('LL')
+    const addressee = Config.get('MFAX_NUMBER')
+    const name = `${testResults.barCode} - ${new Date()}`
+
+    const {content, tableLayouts} = template(testResults, resultDate)
+    const pdfContent = this.pdfService.generatePDFStream(content, tableLayouts)
+
+    this.faxService.send(addressee, name, pdfContent)
   }
 
   async saveResults(testResults: TestResultsDBModel): Promise<void> {
