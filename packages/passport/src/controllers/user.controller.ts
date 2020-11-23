@@ -107,7 +107,7 @@ class UserController implements IControllerBase {
       }
 
       const existingPassport = statusToken
-        ? await this.passportService.findOneByToken(statusToken, true)
+        ? await this.passportService.findOneByToken(statusToken)
         : null
 
       const mustReset = ({status, validUntil}: Passport): boolean =>
