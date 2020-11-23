@@ -261,16 +261,12 @@ export class OrganizationService {
     parentId: string,
     groupId?: string,
   ): Promise<OrganizationUsersGroup[]> {
-    // Firestore doesn't give enough "where" operators to have optional query filters
-    // To have a query-builder, we need here to re-assign the query declaration (of type Collection) with a WhereClause Query
-    // Therefor the TS transpiler complains because of the types conflicts...
     let query = this.getUsersGroupRepositoryFor(organizationId)
       .collection()
       .where('parentUserId', '==', parentId)
     if (!!groupId) {
       query = query.where('groupId', '==', groupId)
     }
-    // Cannot fetchAll on a `Query` object, only on `Collection`
     return query.fetch()
   }
 
