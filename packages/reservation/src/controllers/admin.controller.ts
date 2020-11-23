@@ -6,6 +6,8 @@ import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 
+import {FaxService} from '../../../common/src/service/messaging/fax-service'
+
 import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 
 import {AppoinmentService} from '../services/appoinment.service'
@@ -16,6 +18,7 @@ import {
   AppointmentDTO,
   CheckAppointmentRequest,
   SendAndSaveTestResultsRequest,
+  ResultTypes,
 } from '../models/appoinment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -27,6 +30,7 @@ class AdminController implements IControllerBase {
   public router = Router()
   private appoinmentService = new AppoinmentService()
   private testResultsService = new TestResultsService()
+  private faxService = new FaxService()
 
   constructor() {
     this.initRoutes()
@@ -134,6 +138,13 @@ class AdminController implements IControllerBase {
                 }),
               ])
             }
+
+            if (row.result === ResultTypes.Positive) {
+              const addressee = Config.get('MFAX_NUMBER')
+              const name = `${row.barCode} - ${new Date()}`
+
+              this.faxService.send(addressee, JSON.stringify(row), name)
+            }
           } else {
             notFoundBarcodes.push(row)
           }
@@ -197,6 +208,13 @@ class AdminController implements IControllerBase {
             id: requestData.barCode,
           })
         })
+
+      if (requestData.result === ResultTypes.Positive) {
+        const addressee = Config.get('MFAX_NUMBER')
+        const name = `${requestData.barCode} - ${new Date()}`
+
+        this.faxService.send(addressee, JSON.stringify(requestData), name)
+      }
 
       res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {
