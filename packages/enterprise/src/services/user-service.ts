@@ -96,7 +96,6 @@ export class UserService {
   }
 
   searchByQueryAndOrganizationId(organizationId: string, query: string): Promise<User[]> {
-
     const searchRegexp = new RegExp(`(${query.split(' ').join(')|(')})`, 'gmi')
 
     return this.userRepository
