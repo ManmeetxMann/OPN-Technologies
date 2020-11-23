@@ -41,14 +41,12 @@ class App {
     this.security()
     this.setupCors()
     this.middlewares(appInit.middleWares)
-    this.routes(appInit.controllers)
-    this.setupErrorHandling()
     const promise = this.validation
-      ? this.setupValidation().then(() => this.setupValidationErrorHandling())
+      ? this.setupValidation().then(() => this.setupErrorHandling())
       : Promise.resolve()
     promise.then(() => {
-      // this.routes(appInit.controllers)
-      // this.setupErrorHandling()
+      this.routes(appInit.controllers)
+      this.setupErrorHandling()
     })
     // this.assets()
     // this.template()
