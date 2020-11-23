@@ -14,6 +14,7 @@ export type User = {
   email?: string
   admin?: AdminProfile | FieldValue
   authUserId?: string | FieldValue
+  delegates: null | string[]
 }
 
 export type UserWithGroup = {
