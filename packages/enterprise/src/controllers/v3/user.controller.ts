@@ -50,10 +50,10 @@ const search: Handler = async (req, res, next): Promise<void> => {
 
     const usersResponse = await Promise.all(
       adminForOrganizationIds.map(async (organizationId) => {
-        const users = await userService.searchByQueryAndOrganizationId(organizationId, q)
+        const usersArray = await userService.searchByQueryAndOrganizationId(organizationId, q)
 
         return await Promise.all(
-          users.map(async (user: User) => {
+          usersArray.flat().map(async (user: User) => {
             let groupName
             try {
               const userGroup = await organizationService.getUserGroup(organizationId, user.id)
