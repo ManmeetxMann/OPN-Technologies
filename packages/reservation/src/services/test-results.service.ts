@@ -56,7 +56,7 @@ export class TestResultsService {
     const name = `${testResults.barCode} - ${new Date()}`
 
     const {content, tableLayouts} = template(testResults, resultDate)
-    const pdfContent = this.pdfService.generatePDFStream(content, tableLayouts)
+    const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
     this.faxService.send(addressee, name, pdfContent)
   }
