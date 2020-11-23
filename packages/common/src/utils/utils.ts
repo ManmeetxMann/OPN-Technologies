@@ -1,6 +1,3 @@
-export const flattern = <T>(data: T[][]): T[] =>
-  data?.reduce((flatted, chunk) => [...flatted, ...(chunk ?? [])], [] as T[])
-
 export const encodeQueryParams = (params: Record<string, unknown>): string =>
   Object.entries(params)
     .filter(([_key, value]) => !!value)

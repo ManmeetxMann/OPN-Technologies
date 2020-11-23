@@ -28,15 +28,34 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
 
     const users = await userService.getAllByOrganizationId(organizationId, page, perPage)
 
+    const usersGroups = await organizationService.getUsersGroups(
+      organizationId,
+      null,
+      users.map((user) => user.id),
+    )
+
+    const orgGroups = await organizationService.getGroups(organizationId)
+    const groupNamesById: Record<string, string> = orgGroups.reduce(
+      (lookup, orgGroup) => ({
+        ...lookup,
+        [orgGroup.id]: orgGroup.name,
+      }),
+      {},
+    )
+
+    const groupNamesByUserId: Record<string, string> = usersGroups.reduce(
+      (lookup, usersGroup) => ({
+        ...lookup,
+        [usersGroup.userId]: groupNamesById[usersGroup.groupId] || '',
+      }),
+      {},
+    )
+
     const resultUsers = await Promise.all(
       users.map(async (user: User) => {
-        const userGroup = await organizationService.getUserGroup(organizationId, user.id)
         return {
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          photo: user.photo,
-          groupName: userGroup.name,
+          ...userDTOResponse(user),
+          groupName: groupNamesByUserId[user.id],
           memberId: user.memberId,
         }
       }),
@@ -52,14 +71,24 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
  */
 const createUser: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {organizationId, ...profile} = req.body as CreateUserByAdminRequest
+    const {organizationId, groupId, memberId, ...profile} = req.body as CreateUserByAdminRequest
     // Assert organization exists
     await organizationService.getByIdOrThrow(organizationId)
+
+    // Assert that the group exists
+    await organizationService.getGroup(organizationId, groupId)
+
     const user = await userService.create({
       ...profile,
     })
     // Connect to org
     await userService.connectOrganization(user.id, organizationId)
+
+    await organizationService.addUserToGroup(organizationId, groupId, user.id)
+
+    if (memberId) {
+      await userService.createOrganizationProfile(user.id, organizationId, memberId)
+    }
 
     res.json(actionSucceed(userDTOResponse(user)))
   } catch (error) {

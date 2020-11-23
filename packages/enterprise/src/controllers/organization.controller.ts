@@ -736,10 +736,7 @@ class OrganizationController implements IControllerBase {
         throw new HttpException('There is no historical data available for this group.')
       }
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
-      const content = allTemplates.reduce(
-        (contentArray, template) => [...contentArray, ...template.content],
-        [],
-      )
+      const content = _.flatten(allTemplates)
       console.log('generating stream')
       const pdfStream = this.pdfService.generatePDFStream(content, tableLayouts)
       res.contentType('application/pdf')

@@ -11,11 +11,11 @@ import AccessListener from '../effects/addToAttendance'
 import moment from 'moment-timezone'
 import {serverTimestamp, now} from '../../../common/src/utils/times'
 import * as _ from 'lodash'
-import {flattern} from '../../../common/src/utils/utils'
 import {PassportStatus} from '../../../passport/src/models/passport'
 import {AccessStatsFilter} from '../models/access-stats'
 import {Config} from '../../../common/src/utils/config'
 import {AccessFilterWithDependent} from '../types'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -58,7 +58,7 @@ export class AccessService {
     includesGuardian: boolean,
     dependantIds: string[],
     delegateAdminUserId?: string,
-  ): Promise<Access> {
+  ): Promise<AccessModel> {
     const dependants = {}
     dependantIds.forEach(
       (id) =>
@@ -122,6 +122,9 @@ export class AccessService {
         ? access.userId
         : Object.keys(access.dependants)[0]
     const count = Object.keys(dependants).length + (access.includesGuardian ? 1 : 0)
+
+    console.log(`Processed an ENTER for Access id: ${access.id}`)
+
     return this.accessRepository.update(newAccess).then((savedAccess) =>
       this.incrementPeopleOnPremises(access.locationId, count)
         .then(() =>
@@ -205,6 +208,9 @@ export class AccessService {
       access.includesGuardian || Object.keys(access.dependants).length > 1
         ? access.userId
         : Object.keys(access.dependants)[0]
+
+    console.log(`Processed an EXIT for Access id: ${access.id}`)
+
     return this.accessRepository.update(newAccess).then((savedAccess) =>
       this.decreasePeopleOnPremises(access.locationId, count)
         .then(() =>
@@ -345,6 +351,39 @@ export class AccessService {
     return filteredAccesses
   }
 
+  async findLatest(
+    userId: string,
+    locationId: string,
+    onCreatedDate: Date,
+    delegateAdminUserId?: string,
+  ): Promise<AccessModel> {
+    const from = moment(safeTimestamp(onCreatedDate)).tz(timeZone).startOf('day').toDate()
+    const to = moment(safeTimestamp(onCreatedDate)).tz(timeZone).endOf('day').toDate()
+    let query = this.accessRepository
+      .collection()
+      .where('userId', '==', userId)
+      .where('locationId', '==', locationId)
+      //@ts-ignore
+      .where('timestamps.createdAt', '>=', from)
+      //@ts-ignore
+      .where('timestamps.createdAt', '<=', to)
+
+    if (delegateAdminUserId) {
+      query = query.where('delegateAdminUserId', '==', delegateAdminUserId)
+    }
+
+    //@ts-ignore
+    query = query.orderBy('timestamps.createdAt', 'desc')
+
+    const accesses = await query.fetch()
+
+    return accesses.length > 0 ? accesses[0] : null
+
+    // .then((accesses) =>
+    //   accesses.map(AccessService.mapAccessDates),
+    // )
+  }
+
   async getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
     return await this.getTodayStatsForLocations([locationId])
   }
@@ -416,7 +455,7 @@ export class AccessService {
 
         return query.fetch()
       }),
-    ).then((results) => flattern(results as AccessStatsModel[][]))
+    ).then((results) => _.flatten(results as AccessStatsModel[][]))
   }
 
   incrementPeopleOnPremises(locationId: string, count = 1): Promise<AccessStatsModel> {

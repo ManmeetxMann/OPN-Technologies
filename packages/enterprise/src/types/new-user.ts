@@ -40,4 +40,6 @@ export type CreateUserByAdminRequest = {
   registrationId: string
   photo: string
   organizationId: string
+  groupId: string
+  memberId: string
 }

@@ -91,6 +91,8 @@ components:
           type: string
         notificationIconCaution:
           type: string
+        enablePushNotifications:
+          type: boolean
       required:
         - name
 
@@ -409,6 +411,11 @@ components:
           items:
             type: string
           description: Organizaiton ids to become a NFC tag admin of. Must be provided can be empty.
+        nfcGateKioskAdminForOrganizationIds:
+          type: array
+          items:
+            type: string
+          description: Organizaiton ids to become a NFC Gate Kiosk admin. Must be provided can be empty.
 
         groupIds:
           type: array
@@ -804,6 +811,9 @@ components:
         memberId:
           type: string
           nullable: true
+        groupId:
+          type: string
+          nullable: true
 
       required:
         - email
@@ -876,8 +886,6 @@ components:
       required:
         - firstName
         - lastName
-
-
     UserDependent:
       type: object
       additionalProperties: false
@@ -893,7 +901,6 @@ components:
       required:
         - firstName
         - lastName
-
     UserLink:
       type: object
       deprecated: true
