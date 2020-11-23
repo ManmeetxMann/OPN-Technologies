@@ -389,11 +389,7 @@ export class ReportService {
       lastName: overlap.dependant
         ? overlap.dependant.lastName
         : usersLookup[overlap.userId].lastName,
-      groupName:
-        (overlap.dependant
-          ? usersLookup[overlap.dependant.id].group
-          : usersLookup[overlap.userId].group
-        )?.name ?? '',
+      groupName: usersLookup[overlap.dependant?.id ?? overlap.userId]?.group?.name ?? '',
       start: toDateTimeFormat(overlap.start),
       end: toDateTimeFormat(overlap.end),
     }))
