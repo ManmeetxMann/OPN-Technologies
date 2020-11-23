@@ -1,8 +1,9 @@
 import {AttestationsEdit} from './attestationsEdit'
-const attestationMigration = new AttestationsEdit()
-const [method] = process.argv.slice(2)
 
 function runMigration(): void {
+  const attestationMigration = new AttestationsEdit()
+  const [method] = process.argv.slice(2)
+
   attestationMigration[method]()
     .then(() => {
       console.log('migrations completed successfully')
