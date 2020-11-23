@@ -54,10 +54,17 @@ const search: Handler = async (req, res, next): Promise<void> => {
 
         return await Promise.all(
           users.map(async (user: User) => {
-            const userGroup = await organizationService.getUserGroup(organizationId, user.id)
+            let groupName
+            try {
+              const userGroup = await organizationService.getUserGroup(organizationId, user.id)
+              groupName = userGroup.name
+            } catch (e) {
+              groupName = ''
+            }
+
             return {
               ...userDTOResponse(user),
-              groupName: userGroup.name,
+              groupName,
               memberId: user.memberId,
             }
           }),
