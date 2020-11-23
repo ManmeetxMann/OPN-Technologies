@@ -48,7 +48,7 @@ const search: Handler = async (req, res, next): Promise<void> => {
       return self.indexOf(value) === index
     })
 
-    const allUsers = await Promise.all(
+    const usersResponse = await Promise.all(
       adminForOrganizationIds.map(async (organizationId) => {
         const users = await userService.searchByQueryAndOrganizationId(organizationId, q)
 
@@ -65,7 +65,7 @@ const search: Handler = async (req, res, next): Promise<void> => {
       }),
     )
 
-    res.json(actionSucceed(allUsers.flat()))
+    res.json(actionSucceed(usersResponse.flat()))
   } catch (error) {
     next(error)
   }

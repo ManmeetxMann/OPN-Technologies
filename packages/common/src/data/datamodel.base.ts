@@ -305,14 +305,6 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return nextPage.slice()
   }
 
-  public async fetchAllWhereEqual(
-    query: Query<T, Omit<T, 'id'>>,
-    parameter: Exclude<keyof T, 'id'>,
-    value: string,
-  ): Promise<T[]> {
-    return query.where(parameter, '==', value).fetch()
-  }
-
   public async fetchAll(subPath = ''): Promise<T[]> {
     return this.collection(subPath).fetchAll()
   }
