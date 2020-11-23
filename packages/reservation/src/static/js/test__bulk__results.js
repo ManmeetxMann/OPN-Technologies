@@ -240,8 +240,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }),
       })
 
-      setLoader(sendButtonBulk, false)
-
       const responseData = await response.json()
 
       // This case should be only if server is down
@@ -297,7 +295,6 @@ document.addEventListener('DOMContentLoaded', () => {
       content += `Failed rows. Reason: Internal Server Error ${fatalRowsElem}<br/>`
     }
 
-    csvFileInput.value = ''
     successModalContent.innerHTML = content
   })
 })
