@@ -304,18 +304,22 @@ export class OrganizationService {
     })
   }
 
-  removeUserFromGroup(
+  async removeUserFromGroup(
     organizationId: string,
+    // if null, remove from every group
     groupId: string | null,
     userId: string,
   ): Promise<void> {
-    return this.getOneUsersGroup(organizationId, groupId, userId).then((target) => {
-      if (target) return this.getUsersGroupRepositoryFor(organizationId).delete(target.id)
-
+    const allGroups = groupId
+      ? await this.getUsersGroups(organizationId, null, [userId])
+      : [await this.getOneUsersGroup(organizationId, groupId, userId)]
+    if (!allGroups.length)
       throw new ResourceNotFoundException(
         `Cannot find relation user-group for groupId [${groupId}] and userId [${userId}]`,
       )
-    })
+    await Promise.all(
+      allGroups.map((target) => this.getUsersGroupRepositoryFor(organizationId).delete(target.id)),
+    )
   }
 
   async deleteGroup(organizationId: string, groupId: string): Promise<void> {
