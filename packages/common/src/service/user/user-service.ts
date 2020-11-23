@@ -59,7 +59,7 @@ export class UserService {
       this.findOne(parentId),
       this.findOne(dependantId),
     ])
-    if (!dependant.delegates.includes(parentId)) {
+    if (!(dependant.delegates?.includes(parentId))) {
       throw new ResourceNotFoundException(`${parentId} not a delegate of ${dependantId}`)
     }
     return {
@@ -74,7 +74,7 @@ export class UserService {
     fields: Record<string, unknown>,
   ): Promise<void> {
     const dependant = await this.findOne(dependantId)
-    if (!dependant.delegates.includes(parentId)) {
+    if (!(dependant.delegates?.includes(parentId))) {
       throw new ResourceNotFoundException(`${parentId} not a delegate of ${dependantId}`)
     }
     await this.userRepository.updateProperties(dependantId, fields)
@@ -82,7 +82,7 @@ export class UserService {
 
   async addDependants(userId: string, members: UserDependant[]): Promise<UserDependant[]> {
     const parent = await this.findOne(userId)
-    if (parent.delegates.length) {
+    if (parent.delegates?.length) {
       throw new ForbiddenException(`${userId} has delegates and cannot become a delegate`)
     }
     const withDelegate = members.map((dependant) => ({
@@ -94,7 +94,7 @@ export class UserService {
 
   async removeDependant(parentId: string, dependantId: string): Promise<void> {
     const dependant = await this.findOne(dependantId)
-    if (!dependant.delegates.includes(parentId)) {
+    if (!(dependant.delegates?.includes(parentId))) {
       throw new ResourceNotFoundException(`${parentId} not a delegate of ${dependantId}`)
     }
     return this.userRepository.delete(dependantId)
