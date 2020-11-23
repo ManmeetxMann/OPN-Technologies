@@ -1,5 +1,3 @@
-// import * as _ from 'lodash'
-
 import {UserModel, UserDependantModel} from '../../data/user'
 import DataStore from '../../data/datastore'
 const PAGE_SIZE = 200
@@ -18,9 +16,10 @@ export default async function runMigration(): Promise<void> {
         const dependantsModel = new UserDependantModel(ds, user.id)
         const dependants = await dependantsModel.fetchAll()
         if (!dependants.length) {
+          console.log(`User ${user.id} has no dependants, continuing`)
           return
         }
-        await Promise.all(
+        const updateResults = await Promise.all(
           dependants.map((dep) =>
             ORM.runTransaction(async (tx) => {
               const deleteRef = ORM.collection({
@@ -40,9 +39,21 @@ export default async function runMigration(): Promise<void> {
                 // no admin
                 // no authUserId
               })
-            }),
+              // we don't have access to allSettled here
+            }).then(
+              (result) => ({success: true, result, error: null, dep}),
+              (error) => ({success: false, result: null, error, dep}),
+            ),
           ),
         )
+        updateResults.forEach((result) => {
+          if (result.success) {
+            console.log(`${user.id} / ${result.dep.id} updated successfully`)
+            console.log(JSON.stringify(result))
+            return
+          }
+          console.error(`${user.id} / ${result.dep.id} update failed - ${result.error}`)
+        })
       }),
     )
     pageIndex += 1

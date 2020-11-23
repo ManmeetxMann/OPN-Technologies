@@ -12,12 +12,12 @@ export default async function runMigration(): Promise<void> {
     if (allUsers.length === 0) {
       break
     }
-    // await Promise.all(
-    //   allUsers.map((user) => console.log(`model.updateProperty(${user.id}, 'delegates', [])`)),
-    // )
-    await Promise.all(allUsers.map((user) => model.updateProperty(user.id, 'delegates', [])))
+    console.log(`Updating page ${pageIndex + 1} with ${allUsers.length} users in it`)
+    await Promise.all(allUsers.map((user) => model.updateProperty(user.id, 'delegates', null)))
+    console.log(`Update complete`)
     pageIndex += 1
   }
+  console.log('migration complete')
 }
 
 runMigration()
