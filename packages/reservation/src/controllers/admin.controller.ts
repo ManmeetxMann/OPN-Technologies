@@ -6,7 +6,6 @@ import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 
-
 import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 
 import {AppoinmentService} from '../services/appoinment.service'
@@ -212,7 +211,7 @@ class AdminController implements IControllerBase {
           if (requestData.result === ResultTypes.Positive) {
             this.testResultsService.sendFax({...appointment, ...requestData}, resultDate)
           }
-          
+
           return appointment
         })
         .then((appointment: AppointmentDTO) => {
@@ -223,7 +222,6 @@ class AdminController implements IControllerBase {
             id: requestData.barCode,
           })
         })
-
 
       res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {

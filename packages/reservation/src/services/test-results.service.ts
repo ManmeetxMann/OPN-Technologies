@@ -49,10 +49,7 @@ export class TestResultsService {
     })
   }
 
-  async sendFax(
-    testResults: TestResultsDTOForEmail,
-    dateFromRequest: Date = null,
-  ): Promise<void> {
+  async sendFax(testResults: TestResultsDTOForEmail, dateFromRequest: Date = null): Promise<void> {
     const resultDateRaw = dateFromRequest
     const resultDate = moment(resultDateRaw).format('LL')
     const addressee = Config.get('MFAX_NUMBER')
