@@ -109,25 +109,47 @@ export class PassportService {
       .then(mapDates)
   }
 
-  findOneByToken(token: string): Promise<Passport> {
+  findOneByToken(token: string, requireValid = false): Promise<Passport> {
     return this.passportRepository
       .findWhereEqual('statusToken', token)
       .then((results) => {
         if (results.length > 0) {
-          const notPassedPassports = results.filter((result) => !isPassed(result.validUntil))
-          if (!notPassedPassports.length) {
+          if (results.length > 1) {
+            console.warn(`multiple passport found, ${results.length}, ${token}`)
+          }
+          if (!requireValid) {
+            return results[0]
+          }
+          const validPassports = results.filter((result) => !isPassed(result.validUntil))
+          if (!validPassports.length) {
             throw new ResourceNotFoundException(`passport ${token} is expired`)
           }
-          if (results.length > 1) {
-            console.warn(
-              `multiple passport found, ${results.length}, ${notPassedPassports.length}, ${token}`,
-            )
-          }
-          return notPassedPassports[0]
+          return validPassports[0]
         }
         throw new ResourceNotFoundException(`Cannot find passport with token [${token}]`)
       })
       .then(mapDates)
+  }
+
+  async findTheLatestValidPassport(userId: string, nowDate: Date = now()): Promise<Passport> {
+    const timeZone = Config.get('DEFAULT_TIME_ZONE')
+    const passports = await this.passportRepository
+      .collection()
+      .where('userId', '==', userId)
+      .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
+      .orderBy('validUntil', 'desc')
+      .fetch()
+
+    // Deal with the bad
+    if (!passports || passports.length == 0) {
+      return null
+    }
+
+    // Latest
+    const latestPassport = passports[0]
+
+    // Send if in range
+    return moment(nowDate).isAfter(latestPassport.validFrom) ? latestPassport : null
   }
 
   /**

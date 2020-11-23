@@ -12,6 +12,7 @@ import {User} from '../../../common/src/data/user'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {now} from '../../../common/src/utils/times'
 import moment from 'moment-timezone'
@@ -20,6 +21,7 @@ import {Config} from '../../../common/src/utils/config'
 import {AccessTokenService} from '../service/access-token.service'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {AccessStats} from '../models/access'
+import {NfcTagService} from '../../../common/src/service/hardware/nfctag-service'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -27,6 +29,10 @@ const replyInsufficientPermission = (res: Response) =>
     .json(
       of(null, ResponseStatusCodes.AccessDenied, 'Insufficient permissions to fulfil the request'),
     )
+const replyUnauthorizedEntry = (res: Response) =>
+  res
+    .status(403)
+    .json(of(null, ResponseStatusCodes.AccessDenied, 'Must have Proceed badge to enter/exit'))
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -41,6 +47,7 @@ class AdminController implements IRouteController {
     this.passportService,
     this.accessService,
   )
+  private tagService = new NfcTagService()
 
   constructor() {
     this.initRoutes()
@@ -54,6 +61,7 @@ class AdminController implements IRouteController {
       .post('/enter', authMiddleware, this.enter)
       .post('/exit', authMiddleware, this.exit)
       .post('/createToken', authMiddleware, this.createToken)
+      .post('/enterorexit/tag', authMiddleware, this.enterOrExitUsingATag)
       .get('/:organizationId/locations/accessible', this.getAccessibleLocations)
     this.router.use('/admin', routes)
   }
@@ -220,6 +228,89 @@ class AdminController implements IRouteController {
         },
       }
       res.json(actionSucceed(responseBody))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  enterOrExitUsingATag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      // Get request inputs
+      const {tagId, locationId} = req.body
+
+      // Get tag
+      const tag = await this.tagService.getById(tagId)
+      if (!tag) {
+        throw new ResourceNotFoundException(`NFC Tag not found`)
+      }
+
+      // Save org
+      const organizationId = tag.organizationId
+
+      // Make sure the admin is allowed
+      const authenticatedUser = res.locals.connectedUser as User
+      const admin = authenticatedUser.admin as AdminProfile
+      const isNFCGateKioskAdmin = admin.nfcGateKioskAdminForOrganizationIds?.includes(
+        organizationId,
+      )
+      const authenticatedUserId = authenticatedUser.id
+
+      // Check if allowed
+      if (!(isNFCGateKioskAdmin || admin.adminForOrganizationId === organizationId)) {
+        replyInsufficientPermission(res)
+        return
+      }
+
+      // Let's get the access assuming that user is already Proceed
+      // Note we are only looking for ones that authenticated by this admin account
+      const access = await this.accessService.findLatest(
+        tag.userId,
+        locationId,
+        now(),
+        authenticatedUserId,
+      )
+
+      // Check if access does not exist or if they've exited
+      // Note we are not checking for entered at as assuming that the enteredAt is there :-)
+      if (!access || !!access.exitAt) {
+        // Fetch latest passport
+        const passport = await this.passportService.findTheLatestValidPassport(tag.userId)
+
+        // Make sure it's valid
+        if (!passport || tag.userId !== passport.userId || passport.status !== 'proceed') {
+          replyUnauthorizedEntry(res)
+          return
+        }
+
+        // Create new Access
+        const accessToken = await this.accessTokenService.createToken(
+          passport.statusToken,
+          locationId,
+          tag.userId,
+          [],
+          true,
+          authenticatedUserId,
+        )
+
+        const accessForEntering = await this.accessService.handleEnter(accessToken)
+        res.json(actionSucceed(accessForEntering))
+      } else {
+        // Get Latest Passport (as they need a valid access)
+        const passport = await this.passportService.findOneByToken(access.statusToken)
+
+        // Make sure it's valid
+        if (!passport || tag.userId !== passport.userId || passport.status !== 'proceed') {
+          replyUnauthorizedEntry(res)
+          return
+        }
+
+        // Decide
+        const accessForEnteringOrExiting = !access.enteredAt
+          ? await this.accessService.handleEnter(access)
+          : await this.accessService.handleExit(access)
+
+        res.json(actionSucceed(accessForEnteringOrExiting))
+      }
     } catch (error) {
       next(error)
     }
