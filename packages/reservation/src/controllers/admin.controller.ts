@@ -184,11 +184,6 @@ class AdminController implements IControllerBase {
       if (requestData.needConfirmation) {
         const appointment = await this.appoinmentService.getAppoinmentByBarCode(requestData.barCode)
 
-        //  should we send a fax here?
-        if (requestData.result === ResultTypes.Positive) {
-          this.testResultsService.sendFax({...appointment, ...requestData}, resultDate)
-        }
-
         res.json(actionSucceed(appointment))
         return
       }
