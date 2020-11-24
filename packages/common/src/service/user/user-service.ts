@@ -1,6 +1,7 @@
 import DataStore from '../../data/datastore'
-import {User, UserDependant, UserDependantModel, UserFilter, UserModel} from '../../data/user'
+import {User, UserDependant, UserFilter, UserModel} from '../../data/user'
 import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
+import {ForbiddenException} from '../../exceptions/forbidden-exception'
 
 export class UserService {
   private dataStore = new DataStore()
@@ -44,57 +45,59 @@ export class UserService {
 
   getAllDependants(userId: string, skipUserCheck = false): Promise<UserDependant[]> {
     return Promise.all([
-      new UserDependantModel(this.dataStore, userId).fetchAll(),
+      this.userRepository.findWhereArrayContains('delegates', userId),
       // make sure the user exists. Skippable for efficiency if the user is already known to exist
       skipUserCheck ? () => Promise.resolve() : this.findOne(userId).then(() => null),
     ]).then(([dependants]) => dependants)
   }
 
-  getDependantAndParentByParentId(
+  async getDependantAndParentByParentId(
     parentId: string,
     dependantId: string,
   ): Promise<{parent: User; dependant: UserDependant}> {
-    return this.findOne(parentId).then((parent) =>
-      new UserDependantModel(this.dataStore, parentId).get(dependantId).then((dependant) => {
-        if (!!dependant) return {parent, dependant}
-        throw new ResourceNotFoundException(
-          `Cannot find dependant with id [${dependantId}] of user [${parentId}]`,
-        )
-      }),
-    )
+    const [parent, dependant] = await Promise.all([
+      this.findOne(parentId),
+      this.findOne(dependantId),
+    ])
+    if (!(dependant.delegates?.includes(parentId))) {
+      throw new ResourceNotFoundException(`${parentId} not a delegate of ${dependantId}`)
+    }
+    return {
+      parent,
+      dependant,
+    }
   }
 
-  updateDependantProperties(
-    parentUserId: string,
+  async updateDependantProperties(
+    parentId: string,
     dependantId: string,
     fields: Record<string, unknown>,
   ): Promise<void> {
-    return this.findOne(parentUserId).then(() =>
-      new UserDependantModel(this.dataStore, parentUserId).get(dependantId).then((dependant) => {
-        if (!!dependant) {
-          new UserDependantModel(this.dataStore, parentUserId).updateProperties(
-            dependant.id,
-            fields,
-          )
-        } else {
-          throw new ResourceNotFoundException(
-            `Cannot find dependant with id [${dependantId}] of user [${parentUserId}]`,
-          )
-        }
-      }),
-    )
+    const dependant = await this.findOne(dependantId)
+    if (!(dependant.delegates?.includes(parentId))) {
+      throw new ResourceNotFoundException(`${parentId} not a delegate of ${dependantId}`)
+    }
+    await this.userRepository.updateProperties(dependantId, fields)
   }
 
-  addDependants(userId: string, members: UserDependant[]): Promise<UserDependant[]> {
-    return this.findOne(userId).then(() =>
-      new UserDependantModel(this.dataStore, userId).addAll(members),
-    )
+  async addDependants(userId: string, members: UserDependant[]): Promise<UserDependant[]> {
+    const parent = await this.findOne(userId)
+    if (parent.delegates?.length) {
+      throw new ForbiddenException(`${userId} has delegates and cannot become a delegate`)
+    }
+    const withDelegate = members.map((dependant) => ({
+      ...dependant,
+      delegates: [userId],
+    }))
+    return this.userRepository.addAll(withDelegate)
   }
 
-  removeDependant(userId: string, dependantId: string): Promise<void> {
-    return this.findOne(userId).then(() =>
-      new UserDependantModel(this.dataStore, userId).delete(dependantId),
-    )
+  async removeDependant(parentId: string, dependantId: string): Promise<void> {
+    const dependant = await this.findOne(dependantId)
+    if (!(dependant.delegates?.includes(parentId))) {
+      throw new ResourceNotFoundException(`${parentId} not a delegate of ${dependantId}`)
+    }
+    return this.userRepository.delete(dependantId)
   }
 
   findHealthAdminsForOrg(organizationId: string): Promise<User[]> {
