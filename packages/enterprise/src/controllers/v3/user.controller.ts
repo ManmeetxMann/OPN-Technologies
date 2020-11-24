@@ -276,9 +276,9 @@ const getAllConnectedGroupsInAnOrganization: Handler = async (req, res, next): P
     const {id} = res.locals.authenticatedUser as User
     const {organizationId} = req.query
     const groupIds = await userService.getAllGroupIdsForUser(id)
-    const groups = (await organizationService.getGroups(organizationId as string)).filter(({id}) =>
-      groupIds.has(id),
-    )
+    const groups = (
+      await organizationService.getPublicGroups(organizationId as string)
+    ).filter(({id}) => groupIds.has(id))
 
     res.json(actionSucceed(groups))
   } catch (error) {
@@ -298,9 +298,9 @@ const getAllDependentConnectedGroupsInAnOrganization: Handler = async (
     const {dependentId} = req.params
     const {organizationId} = req.query
     const groupIds = await userService.getAllGroupIdsForUser(dependentId)
-    const groups = (await organizationService.getGroups(organizationId as string)).filter(({id}) =>
-      groupIds.has(id),
-    )
+    const groups = (
+      await organizationService.getPublicGroups(organizationId as string)
+    ).filter(({id}) => groupIds.has(id))
 
     res.json(actionSucceed(groups))
   } catch (error) {

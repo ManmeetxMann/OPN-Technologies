@@ -477,6 +477,11 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return this.collection(subPath).where(fieldPath, '==', value).fetch()
   }
 
+  public async findWhereNotEqual(property: string, value: unknown, subPath = ''): Promise<T[]> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+    return this.collection(subPath).where(fieldPath, '!=', value).fetch()
+  }
+
   public getQueryFindWhereEqualWithMax(
     property: string,
     value: unknown,

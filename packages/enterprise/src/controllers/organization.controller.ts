@@ -19,6 +19,7 @@ import {
   OrganizationUsersGroup,
   OrganizationUsersGroupMoveOperation,
   OrganizationReminderSchedule,
+  OrganizationGroupType,
 } from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {ReportService} from '../services/report-service'
@@ -45,6 +46,19 @@ const replyInsufficientPermission = (res: Response) =>
     .json(
       of(null, ResponseStatusCodes.AccessDenied, 'Insufficient permissions to fulfil the request'),
     )
+const dataConversionAndSortGroups = (groups: OrganizationGroup[]): OrganizationGroup[] => {
+  groups.sort((a, b) => {
+    // if a has higher priority, return a negative number (a comes first)
+    const bias = (b.priority || 0) - (a.priority || 0)
+    return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
+  })
+  return groups.map((group) => {
+    if (!group.type) {
+      group.type = OrganizationGroupType.Public
+    }
+    return group
+  })
+}
 
 class OrganizationController implements IControllerBase {
   public router = Router()
@@ -295,7 +309,7 @@ class OrganizationController implements IControllerBase {
   getGroupsForPublic = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const groups = await this.getGroups(organizationId)
+      const groups = await this.getPublicGroups(organizationId)
       res.json(actionSucceed(groups))
     } catch (error) {
       next(error)
@@ -1196,12 +1210,16 @@ class OrganizationController implements IControllerBase {
     const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
       throw new HttpException(error.message)
     })
-    groups.sort((a, b) => {
-      // if a has higher priority, return a negative number (a comes first)
-      const bias = (b.priority || 0) - (a.priority || 0)
-      return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
+
+    return dataConversionAndSortGroups(groups)
+  }
+
+  private async getPublicGroups(organizationId: string): Promise<OrganizationGroup[]> {
+    const groups = await this.organizationService.getPublicGroups(organizationId).catch((error) => {
+      throw new HttpException(error.message)
     })
-    return groups
+
+    return dataConversionAndSortGroups(groups)
   }
 }
 

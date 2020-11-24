@@ -227,6 +227,11 @@ components:
           type: string
         name:
           type: string
+        type:
+          type: string
+          enum:
+            - public
+            - private
         checkInDisabled:
           type: boolean
           default: false

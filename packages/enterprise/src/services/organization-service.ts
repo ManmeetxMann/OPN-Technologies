@@ -5,6 +5,7 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {
   Organization,
   OrganizationGroup,
+  OrganizationGroupType,
   OrganizationLocation,
   OrganizationLocationType,
   OrganizationType,
@@ -197,6 +198,15 @@ export class OrganizationService {
   addGroups(organizationId: string, groups: OrganizationGroup[]): Promise<OrganizationGroup[]> {
     return this.getOrganization(organizationId).then(() =>
       Promise.all(groups.map((group) => this.addGroup(organizationId, group))),
+    )
+  }
+
+  getPublicGroups(organizationId: string): Promise<OrganizationGroup[]> {
+    return this.getOrganization(organizationId).then(() =>
+      this.getGroupsRepositoryFor(organizationId).findWhereNotEqual(
+        'type',
+        OrganizationGroupType.Private,
+      ),
     )
   }
 
