@@ -20,6 +20,7 @@ import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-re
 import {AdminProfile} from '../../../../common/src/data/admin'
 import {replyInsufficientPermission} from '../organization.controller'
 import {User as AuthenticatedUser} from '../../../../common/src/data/user'
+import {uniq} from 'lodash'
 
 const authService = new AuthService()
 const userService = new UserService()
@@ -31,7 +32,7 @@ const magicLinkService = new MagicLinkService()
  */
 const search: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {q} = req.query as {q: string}
+    const {searchQuery} = req.query as {searchQuery: string}
 
     const authenticatedUser = res.locals.connectedUser as AuthenticatedUser
     const admin = authenticatedUser.admin as AdminProfile
@@ -41,26 +42,24 @@ const search: Handler = async (req, res, next): Promise<void> => {
       return
     }
 
-    const adminForOrganizationIds = [
+    const adminForOrganizationIds = uniq([
       ...admin.superAdminForOrganizationIds,
       ...[admin.adminForOrganizationId],
-    ].filter((value, index, self) => {
-      return self.indexOf(value) === index
-    })
+    ])
 
     const usersResponse = await Promise.all(
       adminForOrganizationIds.map(async (organizationId) => {
-        const usersArray = await userService.searchByQueryAndOrganizationId(organizationId, q)
+        const usersArray = await userService.searchByQueryAndOrganizationId(
+          organizationId,
+          searchQuery,
+        )
 
         return await Promise.all(
           usersArray.flat().map(async (user: User) => {
-            let groupName
-            try {
-              const userGroup = await organizationService.getUserGroup(organizationId, user.id)
-              groupName = userGroup.name
-            } catch (e) {
-              groupName = ''
-            }
+            const groupName = await organizationService
+              .getUserGroup(organizationId, user.id)
+              .then(({name}) => name)
+              .catch(() => '')
 
             return {
               ...userDTOResponse(user),

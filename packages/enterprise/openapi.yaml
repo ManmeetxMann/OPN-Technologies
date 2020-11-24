@@ -2619,7 +2619,7 @@ paths:
         - Account management
       parameters:
         - in: query
-          name: q
+          name: searchQuery
           schema:
             type: string
           required: true

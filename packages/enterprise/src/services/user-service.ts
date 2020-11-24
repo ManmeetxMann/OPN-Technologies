@@ -160,21 +160,56 @@ export class UserService {
         )
       }
     } else if (searchArray.length === 3) {
-      searchArray.splice(searchArray.indexOf(email), 1)
-      searchPromises.push(
-        this.userRepository
-          .getQueryFindWhereArrayContains('organizationIds', organizationId)
-          .where('email', '==', email)
-          .where('firstName', '==', searchArray[1])
-          .where('lastName', '==', searchArray[0])
-          .fetch(),
-        this.userRepository
-          .getQueryFindWhereArrayContains('organizationIds', organizationId)
-          .where('email', '==', email)
-          .where('firstName', '==', searchArray[0])
-          .where('lastName', '==', searchArray[1])
-          .fetch(),
-      )
+      if (email) {
+        searchArray.splice(searchArray.indexOf(email), 1)
+        searchPromises.push(
+          this.userRepository
+            .getQueryFindWhereArrayContains('organizationIds', organizationId)
+            .where('email', '==', email)
+            .where('firstName', '==', searchArray[1])
+            .where('lastName', '==', searchArray[0])
+            .fetch(),
+          this.userRepository
+            .getQueryFindWhereArrayContains('organizationIds', organizationId)
+            .where('email', '==', email)
+            .where('firstName', '==', searchArray[0])
+            .where('lastName', '==', searchArray[1])
+            .fetch(),
+        )
+      } else {
+        searchPromises.push(
+          this.userRepository
+            .getQueryFindWhereArrayContains('organizationIds', organizationId)
+            .where('firstName', '==', searchArray[1])
+            .where('lastName', '==', searchArray[0])
+            .fetch(),
+          this.userRepository
+            .getQueryFindWhereArrayContains('organizationIds', organizationId)
+            .where('firstName', '==', searchArray[0])
+            .where('lastName', '==', searchArray[1])
+            .fetch(),
+          this.userRepository
+            .getQueryFindWhereArrayContains('organizationIds', organizationId)
+            .where('firstName', '==', searchArray[1])
+            .where('lastName', '==', searchArray[2])
+            .fetch(),
+          this.userRepository
+            .getQueryFindWhereArrayContains('organizationIds', organizationId)
+            .where('firstName', '==', searchArray[2])
+            .where('lastName', '==', searchArray[1])
+            .fetch(),
+          this.userRepository
+            .getQueryFindWhereArrayContains('organizationIds', organizationId)
+            .where('firstName', '==', searchArray[2])
+            .where('lastName', '==', searchArray[0])
+            .fetch(),
+          this.userRepository
+            .getQueryFindWhereArrayContains('organizationIds', organizationId)
+            .where('firstName', '==', searchArray[0])
+            .where('lastName', '==', searchArray[2])
+            .fetch(),
+        )
+      }
     }
 
     return Promise.all(searchPromises)
