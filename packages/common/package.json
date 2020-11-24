@@ -18,8 +18,8 @@
         "prepare": "copyfiles package.json dist && node ../../__devops/package-cleaner.js common start",
         "compile": "tsc --module amd -p tsconfig.build.json",
         "build": "npm run clean && npm run prepare && npm run compile",
-        "migrateAddDelegate": "ts-node ./src/migrations/remove-dependants/add-delegate-array.ts",
-        "migrateMoveDependants": "ts-node ./src/migrations/remove-dependants/move-dependants-to-users.ts",
+        "migrateDependantsUp": "ts-node ./src/migrations/remove-dependants/migrate.ts up",
+        "migrateDependantsDown": "ts-node ./src/migrations/remove-dependants/migrate.ts down",
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
