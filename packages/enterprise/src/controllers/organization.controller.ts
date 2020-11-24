@@ -39,7 +39,7 @@ import {CloudTasksClient} from '@google-cloud/tasks'
 import * as _ from 'lodash'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
-export const replyInsufficientPermission = (res: Response) =>
+export const replyInsufficientPermission = (res: Response): Response =>
   res
     .status(403)
     .json(
