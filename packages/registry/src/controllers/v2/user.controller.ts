@@ -84,7 +84,7 @@ class UserController implements IRouteController {
           this.userService
             .removeDependant(userId, dependant.id)
             .then(() =>
-              this.organizationService.removeUserFromAllGroups(organizationId, null, dependant.id),
+              this.organizationService.removeUserFromAllGroups(organizationId, dependant.id),
             ),
         ),
       )
