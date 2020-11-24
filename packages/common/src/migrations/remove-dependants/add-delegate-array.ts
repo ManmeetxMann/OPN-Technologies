@@ -1,5 +1,3 @@
-// import * as _ from 'lodash'
-
 import {UserModel} from '../../data/user'
 import DataStore from '../../data/datastore'
 const PAGE_SIZE = 200

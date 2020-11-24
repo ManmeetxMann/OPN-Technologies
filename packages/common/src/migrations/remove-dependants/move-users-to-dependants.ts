@@ -1,4 +1,4 @@
-import {UserModel, UserDependantModel} from '../../data/user'
+import {UserModel} from '../../data/user'
 import DataStore from '../../data/datastore'
 const PAGE_SIZE = 200
 export default async function runMigration(): Promise<void> {
