@@ -42,5 +42,3 @@ export default async function runMigration(): Promise<void> {
     pageIndex += 1
   }
 }
-
-runMigration()

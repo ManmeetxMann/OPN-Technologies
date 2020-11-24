@@ -26,5 +26,3 @@ export default async function runMigration(): Promise<void> {
   }
   console.log('migration complete')
 }
-
-runMigration()
