@@ -1,18 +1,20 @@
 import {UserModel, UserDependantModel} from '../../data/user'
 import DataStore from '../../data/datastore'
-const PAGE_SIZE = 200
+import {firestore} from 'firebase-admin'
 export default async function runMigration(): Promise<void> {
   const ds = new DataStore()
-  const ORM = ds.firestoreORM
   const userModel = new UserModel(ds)
+  const ORM = firestore()
   let pageIndex = 0
+  // we have to fetch all of the users at once as we're adding user records
+  const allUsers = await userModel.fetchAll()
   while (true) {
-    const allUsers = await userModel.fetchAllWithPagination(pageIndex, PAGE_SIZE)
-    if (allUsers.length === 0) {
+    const userPage = allUsers.slice(pageIndex * 200, (pageIndex + 1) * 200)
+    if (userPage.length === 0) {
       break
     }
     await Promise.all(
-      allUsers.map(async (user) => {
+      userPage.map(async (user) => {
         const dependantsModel = new UserDependantModel(ds, user.id)
         const dependants = await dependantsModel.fetchAll()
         if (!dependants.length) {
@@ -25,15 +27,13 @@ export default async function runMigration(): Promise<void> {
               // const deleteRef = ORM.collection({
               //   path: `users/${user.id}/dependants`,
               // }).docRef(dep.id)
-              const createRef = ORM.collection({
-                path: `users`,
-              }).docRef(dep.id)
+              const createRef = ORM.collection('users').doc(dep.id)
               tx
                 //.delete(deleteRef)
                 .create(createRef, {
                   registrationId: null,
-                  firstName: dep.firstName,
-                  lastName: dep.lastName,
+                  firstName: dep.firstName ?? null,
+                  lastName: dep.lastName ?? null,
                   base64Photo: '',
                   organizationIds: user.organizationIds ?? [],
                   email: user.email ?? null,
