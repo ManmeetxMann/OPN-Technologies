@@ -1,9 +1,8 @@
 import fetch from 'node-fetch'
-// import {Stream} from 'stream'
-// import request from 'request'
 import {Config} from '../../utils/config'
 
 const MFAX_TOKEN = Config.get('MFAX_TOKEN')
+const MFAX_CALLERID = Config.get('MFAX_CALLERID')
 
 export class FaxService {
   async send(toNumber: string, filename: string, file: string): Promise<unknown> {
@@ -11,14 +10,16 @@ export class FaxService {
       method: 'POST',
       headers: {
         Authorization: `Basic ${MFAX_TOKEN}`,
-        'content-type': 'multipart/form-data',
+        'Content-Type': 'multipart/form-data',
       },
       body: JSON.stringify({
-        // callerId: fromNumber,
+        callerId: MFAX_CALLERID,
         faxNumber: `${toNumber}`,
         coverPage: 'false',
+        recipientName: 'StayOPN',
         subject: 'COVID-19 Positive Report',
         attachment: {
+          value: file,
           content: file,
           options: {
             filename,
@@ -27,25 +28,5 @@ export class FaxService {
         },
       }),
     })
-    // return request({
-    //   method: 'POST',
-    //   url: 'https://api.documo.com/v1/faxes',
-    //   headers: {
-    //     Authorization: `Basic ${MFAX_TOKEN}`,
-    //     'content-type': 'multipart/form-data',
-    //   },
-    //   formData: {
-    //     faxNumber: toNumber,
-    //     coverPage: 'false',
-    //     subject: 'COVID-19 Positive Report',
-    //     attachments: {
-    //       value: fileStream,
-    //       options: {
-    //         filename,
-    //         contentType: 'application/pdf',
-    //       },
-    //     },
-    //   },
-    // })
   }
 }
