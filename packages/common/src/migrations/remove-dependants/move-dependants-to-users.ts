@@ -22,23 +22,25 @@ export default async function runMigration(): Promise<void> {
         const updateResults = await Promise.all(
           dependants.map((dep) =>
             ORM.runTransaction(async (tx) => {
-              const deleteRef = ORM.collection({
-                path: `users/${user.id}/dependants`,
-              }).docRef(dep.id)
+              // const deleteRef = ORM.collection({
+              //   path: `users/${user.id}/dependants`,
+              // }).docRef(dep.id)
               const createRef = ORM.collection({
                 path: `users`,
               }).docRef(dep.id)
-              tx.delete(deleteRef).create(createRef, {
-                registrationId: null,
-                firstName: dep.firstName,
-                lastName: dep.lastName,
-                base64Photo: '',
-                organizationIds: user.organizationIds ?? [],
-                email: user.email ?? null,
-                delegates: [user.id],
-                // no admin
-                // no authUserId
-              })
+              tx
+                //.delete(deleteRef)
+                .create(createRef, {
+                  registrationId: null,
+                  firstName: dep.firstName,
+                  lastName: dep.lastName,
+                  base64Photo: '',
+                  organizationIds: user.organizationIds ?? [],
+                  email: user.email ?? null,
+                  delegates: [user.id],
+                  // no admin
+                  // no authUserId
+                })
               // we don't have access to allSettled here
             }).then(
               (result) => ({success: true, result, error: null, dep}),
