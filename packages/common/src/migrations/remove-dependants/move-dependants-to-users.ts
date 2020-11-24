@@ -33,6 +33,7 @@ export default async function runMigration(): Promise<void> {
                 organizationIds: user.organizationIds ?? [],
                 email: user.email ?? null,
                 delegates: [user.id],
+                migrated: true,
                 // no admin
                 // no authUserId
               })
