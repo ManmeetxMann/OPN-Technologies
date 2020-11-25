@@ -229,7 +229,6 @@ components:
           type: string
         isPrivate:
           type: boolean
-          default: false
         checkInDisabled:
           type: boolean
           default: false

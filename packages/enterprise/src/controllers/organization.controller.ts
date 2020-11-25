@@ -1202,15 +1202,13 @@ class OrganizationController implements IControllerBase {
   }
 
   private async getGroups(organizationId: string): Promise<OrganizationGroup[]> {
-    const groups = await this.organizationService.getGroups(organizationId)
-
-    return dataConversionAndSortGroups(groups)
+    return this.organizationService.getGroups(organizationId).then(dataConversionAndSortGroups)
   }
 
   private async getPublicGroups(organizationId: string): Promise<OrganizationGroup[]> {
-    const groups = await this.organizationService.getPublicGroups(organizationId)
-
-    return dataConversionAndSortGroups(groups)
+    return this.organizationService
+      .getPublicGroups(organizationId)
+      .then(dataConversionAndSortGroups)
   }
 }
 
