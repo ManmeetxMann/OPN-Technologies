@@ -37,9 +37,7 @@ const addNfcTagId: Handler = async (req, res, next): Promise<void> => {
     const tagId = await tagService.create(organizationId, user.id)
 
     res.json(
-      actionSucceed({
-        tagId,
-      }),
+      actionSucceed(tagId),
     )
   } catch (error) {
     next(error)
@@ -52,8 +50,11 @@ const addNfcTagId: Handler = async (req, res, next): Promise<void> => {
 const getUserByTagId: Handler = async (req, res, next): Promise<void> => {
   try {
     const {tagId} = req.params
+    const {legacyMode} = req.query as {legacyMode?: boolean}
 
-    const tag = await tagService.getById(tagId)
+    const tag = legacyMode === true ?
+                    await this.tagService.getByLegacyId(tagId) :
+                    await this.tagService.getById(tagId)
     if (!tag) {
       throw new ResourceNotFoundException(`NFC tag not found with tagId: ${tagId}`)
     }
