@@ -40,9 +40,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
       }
 
       if (appointments.length > 1 && !isMultiple) {
-        throw new BadRequestException(
-          `Sorry, Results are not sent. Same Barcode is used by multiple appointments`,
-        )
+        throw new BadRequestException(`Sorry, Results are not sent. Same Barcode is used by multiple appointments`)
       }
 
       return appointments.map((appointment: AppointmentAcuityResponse) => ({
@@ -57,6 +55,6 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
         dateOfAppointment: appointment.date,
         timeOfAppointment: appointment.time,
       }))
-    }
+    })
   }
 }
