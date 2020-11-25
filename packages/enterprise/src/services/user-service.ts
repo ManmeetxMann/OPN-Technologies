@@ -18,7 +18,7 @@ import * as _ from 'lodash'
 import {UserGroupRepository} from '../repository/user-group.repository'
 import {OrganizationUsersGroupModel} from '../repository/organization.repository'
 import {UserModel} from '../../../common/src/data/user'
-import {validateEmail} from '../../../common/src/utils/utils'
+import {isEmail} from '../../../common/src/utils/utils'
 
 export class UserService {
   private dataStore = new DataStore()
@@ -107,7 +107,7 @@ export class UserService {
   searchByQueryAndOrganizationId(organizationId: string, query: string): Promise<User[]> {
     const searchArray = query.split(' ')
     const searchPromises = []
-    const email = searchArray.find((string) => validateEmail(string))
+    const email = searchArray.find((string) => isEmail(string))
 
     if (searchArray.length === 1) {
       if (email) {

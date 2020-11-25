@@ -1,8 +1,10 @@
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed, of} from '../../../common/src/utils/response-wrapper'
+import {
+  actionReplyInsufficientPermission,
+  actionSucceed,
+} from '../../../common/src/utils/response-wrapper'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 import {User, UserDependant} from '../../../common/src/data/user'
-import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
@@ -39,12 +41,8 @@ import {CloudTasksClient} from '@google-cloud/tasks'
 import * as _ from 'lodash'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
-export const replyInsufficientPermission = (res: Response): Response =>
-  res
-    .status(403)
-    .json(
-      of(null, ResponseStatusCodes.AccessDenied, 'Insufficient permissions to fulfil the request'),
-    )
+const replyInsufficientPermission = (res: Response): Response =>
+  res.status(403).json(actionReplyInsufficientPermission())
 
 class OrganizationController implements IControllerBase {
   public router = Router()

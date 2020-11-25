@@ -8,7 +8,10 @@ import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
 import {CreateUserRequest, MigrateUserRequest} from '../../types/new-user'
-import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
+import {
+  actionReplyInsufficientPermission,
+  actionSucceed,
+} from '../../../../common/src/utils/response-wrapper'
 import {AuthenticationRequest} from '../../types/authentication-request'
 import {User, userDTOResponse} from '../../models/user'
 import {UpdateUserRequest} from '../../types/update-user-request'
@@ -18,7 +21,6 @@ import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
 import {AdminProfile} from '../../../../common/src/data/admin'
-import {replyInsufficientPermission} from '../organization.controller'
 import {User as AuthenticatedUser} from '../../../../common/src/data/user'
 import {uniq} from 'lodash'
 
@@ -38,7 +40,7 @@ const search: Handler = async (req, res, next): Promise<void> => {
     const admin = authenticatedUser.admin as AdminProfile
 
     if (!admin || !admin.adminForOrganizationId || !admin.superAdminForOrganizationIds.length) {
-      replyInsufficientPermission(res)
+      res.status(403).json(actionReplyInsufficientPermission())
       return
     }
 
