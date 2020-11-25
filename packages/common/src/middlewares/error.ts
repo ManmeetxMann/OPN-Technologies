@@ -38,8 +38,7 @@ const combinePropertyErrors = (extra: string[], missing: string[]): string => {
 export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, res, next) => {
   console.error('Validation Error: ', err)
   const {errors} = err
-  const routeNotFoundErrors = (errors ?? []).filter((error) => error.message === 'not found')
-  if (routeNotFoundErrors.length > 0) {
+  if (err.status === 404) {
     return next()
   }
 
