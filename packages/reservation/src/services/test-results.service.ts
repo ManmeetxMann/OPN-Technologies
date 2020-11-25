@@ -49,16 +49,15 @@ export class TestResultsService {
     })
   }
 
-  async sendFax(testResults: TestResultsDTOForEmail, dateFromRequest: Date = null): Promise<void> {
-    const resultDateRaw = dateFromRequest
+  async sendFax(testResults: TestResultsDTOForEmail, faxNumber: string): Promise<any> {
+    const resultDateRaw = testResults.resultDate
     const resultDate = moment(resultDateRaw).format('LL')
-    const addressee = Config.get('MFAX_NUMBER')
     const name = `${testResults.barCode} - ${new Date()}`
 
     const {content, tableLayouts} = template(testResults, resultDate)
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
-    this.faxService.send(addressee, name, pdfContent)
+    return this.faxService.send(faxNumber, name, pdfContent)
   }
 
   async saveResults(testResults: TestResultsDBModel): Promise<void> {
