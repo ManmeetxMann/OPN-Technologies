@@ -3,7 +3,7 @@ import {
   AppointmentSearchRequest,
   AppointmentDBModel,
   AppointmentAcuityResponse,
-  AppointmentSearchByDateRequest, 
+  AppointmentSearchByDateRequest,
   AppointmentRequest,
 } from '../models/appoinment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -28,19 +28,26 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
   }
 
   async getAppointment(data: AppointmentSearchRequest): Promise<AppointmentDBModel> {
-    return this.getAppointmentsByFilter(data, false).then((appointments: AppointmentAcuityResponse[]) => {
-      return appointments[0]
-    })
+    return this.getAppointmentsByFilter(data, false).then(
+      (appointments: AppointmentAcuityResponse[]) => {
+        return appointments[0]
+      },
+    )
   }
 
-  private async getAppointmentsByFilter(filter: AppointmentRequest, isMultiple: boolean): Promise<AppointmentDBModel[]> {
+  private async getAppointmentsByFilter(
+    filter: AppointmentRequest,
+    isMultiple: boolean,
+  ): Promise<AppointmentDBModel[]> {
     return this.getAppointments(filter).then((appointments: AppointmentAcuityResponse[]) => {
       if (!appointments.length) {
         throw new ResourceNotFoundException(`Appointment not found`)
       }
 
       if (appointments.length > 1 && !isMultiple) {
-        throw new BadRequestException(`Sorry, Results are not sent. Same Barcode is used by multiple appointments`)
+        throw new BadRequestException(
+          `Sorry, Results are not sent. Same Barcode is used by multiple appointments`,
+        )
       }
 
       return appointments.map((appointment: AppointmentAcuityResponse) => ({
