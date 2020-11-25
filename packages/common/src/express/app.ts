@@ -42,7 +42,7 @@ class App {
     this.setupCors()
     this.middlewares(appInit.middleWares)
     const promise = this.validation
-      ? this.setupValidation().then(() => this.setupErrorHandling())
+      ? this.setupValidation().then(() => this.setupValidationErrorHandling())
       : Promise.resolve()
     promise.then(() => {
       this.routes(appInit.controllers)
