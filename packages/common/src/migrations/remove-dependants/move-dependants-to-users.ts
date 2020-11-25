@@ -1,5 +1,6 @@
 import DataStore from '../../data/datastore'
 import {firestore} from 'firebase-admin'
+import {FieldPath} from '@google-cloud/firestore'
 
 const PAGE_SIZE = 200
 
@@ -9,18 +10,17 @@ export default async function runMigration(): Promise<void> {
   const fs = firestore()
   const baseQuery = orm
     .collection({path: 'users'})
+    .orderBy(FieldPath.documentId())
     .where(new firestore.FieldPath('delegates'), '==', null)
     .limit(PAGE_SIZE)
   let startAfter = null
   while (true) {
-    const query = startAfter ? baseQuery.startAfter(startAfter) : baseQuery
+    const query = startAfter ? baseQuery.startAfter(startAfter.id) : baseQuery
     const userPage = await query.fetch()
     if (userPage.length === 0) {
       break
     }
-    startAfter = {
-      id: userPage[userPage.length - 1].id,
-    }
+    startAfter = userPage[userPage.length - 1]
     await Promise.all(
       userPage.map(async (user) => {
         const query = orm.collection({path: `users/${user.id}/dependants`})
