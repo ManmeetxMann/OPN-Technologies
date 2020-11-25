@@ -260,13 +260,12 @@ class AdminController implements IControllerBase {
       }
 
       const result = await this.testResultsService.sendFax(testResults, faxNumber)
-      console.log(result.error);
-      if (!result.error) {
+      const error = JSON.parse(result).error
+      if (!error) {
         res.json(actionSucceed('Fax are sent successfully'))
       } else {
-        throw new HttpException(result.error.message, 500)
+        throw new HttpException(error.message, 500)
       }
-
     } catch (error) {
       next(error)
     }

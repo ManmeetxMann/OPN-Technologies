@@ -114,7 +114,7 @@ class PortalController implements IControllerBase {
     res.render('send_fax_for_positive', {
       layout: 'results',
       confirmBeforeSend: Config.get('CONFIRM_BEFORE_SEND'),
-      sendFaxForPositiveTab: true
+      sendFaxForPositiveTab: true,
     })
   }
 }

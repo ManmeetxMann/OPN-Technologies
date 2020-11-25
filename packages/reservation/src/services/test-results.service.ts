@@ -49,7 +49,7 @@ export class TestResultsService {
     })
   }
 
-  async sendFax(testResults: TestResultsDTOForEmail, faxNumber: string): Promise<any> {
+  async sendFax(testResults: TestResultsDTOForEmail, faxNumber: string): Promise<string> {
     const resultDateRaw = testResults.resultDate
     const resultDate = moment(resultDateRaw).format('LL')
     const name = `${testResults.barCode} - ${new Date()}`
