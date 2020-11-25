@@ -48,6 +48,8 @@ export type AppointmentSearchByDateRequest = {
   minDate: string
 }
 
+export type AppointmentRequest = AppointmentSearchRequest | AppointmentSearchByDateRequest
+
 export type AppoinmentBarCodeSequenceDBModel = {
   id: string
   barCodeNumber: number
