@@ -9,6 +9,7 @@ export class IdentifiersModel extends DataModel<IdentifiersSchema> {
     {id: 'access', count: 10000},
     {id: 'attestation', count: 10000},
     {id: 'report', count: 10000},
+    {id: 'nfcId', count: 1000},
   ]
 
   /**
@@ -25,5 +26,15 @@ export class IdentifiersModel extends DataModel<IdentifiersSchema> {
     return this.increment(identifierName, 'count', 1).then(({count}) =>
       crypto.createHash('sha1').update(`${count}_${Date.now()}`).digest('base64'),
     )
+  }
+
+  async getUniqueId(identifierName: string): Promise<string> {
+    // Increment by 1
+    // Return numeric version
+    const zeroValue = this.zeroSet.find(({id}) => id === identifierName)
+    if (zeroValue === undefined) {
+      throw new Error(`${identifierName} cannot be incremented`)
+    }
+    return this.increment(identifierName, 'count', 1).then(({count}) => count.toString())
   }
 }

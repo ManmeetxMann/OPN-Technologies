@@ -223,7 +223,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
             console.log(`${record.id} already exists, skipping initialization`)
           } else {
             console.log(`initializing ${record.id}`)
-            await this.update(record)
+            await this.add(record)
           }
         },
       ),

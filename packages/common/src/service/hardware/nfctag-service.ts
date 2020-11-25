@@ -2,15 +2,21 @@ import DataStore from '../../data/datastore'
 import {NfcTagRepository} from '../../repository/tag.repository'
 import {NfcTag} from '../../data/nfcTag'
 import {DataModelFieldMapOperatorType} from '../../data/datamodel.base'
+import {IdentifiersModel} from '../../data/identifiers'
 
 export class NfcTagService {
   private tagRepository = new NfcTagRepository(new DataStore())
+  private identifier = new IdentifiersModel(new DataStore())
 
   create(organizationId: string, userId: string): Promise<string> {
-    return this.tagRepository
-      .add({
-        organizationId,
-        userId,
+    return this.identifier
+      .getUniqueId('nfcId')
+      .then((nfcId) => {
+        return this.tagRepository.add({
+          organizationId,
+          userId,
+          legacyId: nfcId,
+        })
       })
       .then((tag: NfcTag) => {
         return tag.id
