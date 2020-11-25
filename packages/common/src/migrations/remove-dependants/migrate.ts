@@ -10,8 +10,21 @@ const [method] = process.argv.slice(2)
 
 if (method === 'up') {
   ;(async () => {
-    await addArray()
-    await createUsers()
+    try {
+      await addArray()
+    } catch (err) {
+      console.error(err)
+      await removeArray()
+      return
+    }
+    try {
+      await createUsers()
+    } catch (err) {
+      console.error(err)
+      await createDependantsAndDeleteUsers()
+      await removeArray()
+      return
+    }
   })()
 } else if (method === 'down') {
   ;(async () => {

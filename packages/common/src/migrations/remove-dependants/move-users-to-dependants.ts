@@ -1,35 +1,49 @@
-import {UserModel} from '../../data/user'
 import DataStore from '../../data/datastore'
 import {firestore} from 'firebase-admin'
+
 const PAGE_SIZE = 200
+
 export default async function runMigration(): Promise<void> {
   const ds = new DataStore()
-  const ORM = firestore()
-  const userModel = new UserModel(ds)
-  let pageIndex = 0
-  const allUsers = await userModel.fetchAll()
+  const orm = ds.firestoreORM
+  const fs = firestore()
+  const baseQuery = orm
+    .collection({path: 'users'})
+    .where(new firestore.FieldPath('delegates'), 'not-in', [null, []])
+    .limit(PAGE_SIZE)
+  let startAfter = null
   while (true) {
-    const userPage = allUsers.slice(PAGE_SIZE * 200, (pageIndex + 1) * PAGE_SIZE)
+    const query = startAfter ? baseQuery.startAfter(startAfter) : baseQuery
+    const userPage = await query.fetch()
     if (userPage.length === 0) {
       break
     }
+    startAfter = {
+      id: userPage[userPage.length - 1].id,
+    }
     await Promise.all(
       userPage.map(async (user) => {
+        // @ts-ignore
         if (!user.delegates?.length) {
           console.log(`User ${user.id} is not a dependant, continuing`)
           return
         }
+        // @ts-ignore
         const parent = user.delegates[0]
 
-        return ORM.runTransaction(async (tx) => {
-          const deleteRef = ORM.collection(`users/`).doc(user.id)
-          const createRef = ORM.collection(`users/${parent}/dependants/`).doc(user.id)
+        return fs.runTransaction(async (tx) => {
+          const deleteRef = fs.collection(`users/`).doc(user.id)
+          const createRef = fs.collection(`users/${parent}/dependants/`).doc(user.id)
           tx.delete(deleteRef).create(createRef, {
             registrationId: null,
+            // @ts-ignore
             firstName: user.firstName,
+            // @ts-ignore
             lastName: user.lastName,
             base64Photo: '',
+            // @ts-ignore
             organizationIds: user.organizationIds ?? [],
+            // @ts-ignore
             email: user.email ?? null,
             // no admin
             // no authUserId
@@ -37,6 +51,5 @@ export default async function runMigration(): Promise<void> {
         })
       }),
     )
-    pageIndex += 1
   }
 }

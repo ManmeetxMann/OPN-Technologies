@@ -1,17 +1,26 @@
-import {UserModel, UserDependantModel} from '../../data/user'
+import {UserDependantModel} from '../../data/user'
 import DataStore from '../../data/datastore'
 import {firestore} from 'firebase-admin'
+
+const PAGE_SIZE = 200
+
 export default async function runMigration(): Promise<void> {
   const ds = new DataStore()
-  const userModel = new UserModel(ds)
-  const ORM = firestore()
-  let pageIndex = 0
-  // we have to fetch all of the users at once as we're adding user records
-  const allUsers = await userModel.fetchAll()
+  const orm = ds.firestoreORM
+  const fs = firestore()
+  const baseQuery = orm
+    .collection({path: 'users'})
+    .where(new firestore.FieldPath('delegates'), '==', null)
+    .limit(PAGE_SIZE)
+  let startAfter = null
   while (true) {
-    const userPage = allUsers.slice(pageIndex * 200, (pageIndex + 1) * 200)
+    const query = startAfter ? baseQuery.startAfter(startAfter) : baseQuery
+    const userPage = await query.fetch()
     if (userPage.length === 0) {
       break
+    }
+    startAfter = {
+      id: userPage[userPage.length - 1].id,
     }
     await Promise.all(
       userPage.map(async (user) => {
@@ -23,37 +32,40 @@ export default async function runMigration(): Promise<void> {
         }
         const updateResults = await Promise.all(
           dependants.map((dep) =>
-            ORM.runTransaction(async (tx) => {
-              const createRef = ORM.collection('users').doc(dep.id)
-              tx.create(createRef, {
-                registrationId: null,
-                firstName: dep.firstName ?? null,
-                lastName: dep.lastName ?? null,
-                base64Photo: '',
-                organizationIds: user.organizationIds ?? [],
-                email: user.email ?? null,
-                delegates: [user.id],
-                migrated: true,
-                // no admin
-                // no authUserId
+            fs
+              .runTransaction(async (tx) => {
+                const createRef = fs.collection('users').doc(dep.id)
+                tx.create(createRef, {
+                  registrationId: null,
+                  firstName: dep.firstName ?? null,
+                  lastName: dep.lastName ?? null,
+                  base64Photo: '',
+                  // @ts-ignore
+                  organizationIds: user.organizationIds ?? [],
+                  // @ts-ignore
+                  email: user.email ?? null,
+                  delegates: [user.id],
+                  migrated: true,
+                  // no admin
+                  // no authUserId
+                })
+                // we don't have access to allSettled here
               })
-              // we don't have access to allSettled here
-            }).then(
-              (result) => ({success: true, result, error: null, dep}),
-              (error) => ({success: false, result: null, error, dep}),
-            ),
+              .then(
+                (result) => ({success: true, result, error: null, dep}),
+                (error) => ({success: false, result: null, error, dep}),
+              ),
           ),
         )
         updateResults.forEach((result) => {
           if (result.success) {
             console.log(`${user.id} / ${result.dep.id} updated successfully`)
-            console.log(JSON.stringify(result))
+            console.log(JSON.stringify(result.result))
             return
           }
           console.error(`${user.id} / ${result.dep.id} update failed - ${result.error}`)
         })
       }),
     )
-    pageIndex += 1
   }
 }

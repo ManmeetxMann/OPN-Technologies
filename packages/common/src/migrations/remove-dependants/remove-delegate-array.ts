@@ -1,24 +1,34 @@
-import {UserModel} from '../../data/user'
 import DataStore from '../../data/datastore'
 import {FieldValue} from '@google-cloud/firestore'
 
 const PAGE_SIZE = 200
 export default async function runMigration(): Promise<void> {
   console.log('running migration')
-  const model = new UserModel(new DataStore())
+  const ds = new DataStore()
+  const orm = ds.firestoreORM
   let pageIndex = 0
+  let after = null
   while (true) {
-    const allUsers = await model.fetchAllWithPagination(pageIndex, PAGE_SIZE)
-    if (allUsers.length === 0) {
+    const baseQuery = orm.collection({path: 'users'}).limit(PAGE_SIZE)
+    const query = after ? baseQuery.startAfter(after) : baseQuery
+    const page = await query.fetch()
+    if (page.length === 0) {
       break
     }
-    console.log(`Updating page ${pageIndex + 1} with ${allUsers.length} users in it`)
+    after = {
+      id: page[page.length - 1].id,
+    }
+    console.log(`Updating page ${pageIndex + 1} with ${page.length} users in it`)
     await Promise.all(
-      allUsers.map((user) => {
+      page.map((user) => {
+        // @ts-ignore
         if (user.delegates?.length) {
-          throw 'Cannot remove a delegate array that still has users'
+          throw new Error('user still has delegates')
         }
-        return model.updateProperty(user.id, 'delegates', FieldValue.delete)
+        return orm
+          .collection({path: 'users'})
+          .docRef(user.id)
+          .update({delegates: FieldValue.delete()})
       }),
     )
     console.log(`Update complete`)
