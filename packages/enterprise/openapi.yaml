@@ -227,11 +227,9 @@ components:
           type: string
         name:
           type: string
-        type:
-          type: string
-          enum:
-            - public
-            - private
+        isPrivate:
+          type: boolean
+          default: false
         checkInDisabled:
           type: boolean
           default: false
@@ -239,6 +237,7 @@ components:
           type: number
       required:
         - name
+        - isPrivate
 
     OrganizationConnectionRequestV1:
       type: object

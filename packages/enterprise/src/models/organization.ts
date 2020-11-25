@@ -36,17 +36,12 @@ export enum OrganizationLocationType {
   Event = 'event',
 }
 
-export enum OrganizationGroupType {
-  Public = 'public',
-  Private = 'private',
-}
-
 export type OrganizationGroup = {
   id: string
   name: string
   checkInDisabled: boolean
   priority?: number
-  type: OrganizationGroupType
+  isPrivate: boolean
 }
 
 // A many-to-x representation of Users belonging to a group
