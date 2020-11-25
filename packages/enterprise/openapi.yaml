@@ -227,6 +227,8 @@ components:
           type: string
         name:
           type: string
+        isPrivate:
+          type: boolean
         checkInDisabled:
           type: boolean
           default: false
@@ -234,6 +236,7 @@ components:
           type: number
       required:
         - name
+        - isPrivate
 
     OrganizationConnectionRequestV1:
       type: object

@@ -200,6 +200,12 @@ export class OrganizationService {
     )
   }
 
+  getPublicGroups(organizationId: string): Promise<OrganizationGroup[]> {
+    return this.getOrganization(organizationId).then(() =>
+      this.getGroupsRepositoryFor(organizationId).findWhereEqual('isPrivate', false),
+    )
+  }
+
   getGroups(organizationId: string): Promise<OrganizationGroup[]> {
     return this.getOrganization(organizationId).then(() =>
       this.getGroupsRepositoryFor(organizationId).fetchAll(),
