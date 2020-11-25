@@ -7,7 +7,7 @@ import {
   UserOrganizationProfile,
 } from '../models/user'
 import {NewUser, LegacyProfile} from '../types/new-user'
-import {UpdateUserRequest} from '../types/update-user-request'
+import {UpdateUserByAdminRequest, UpdateUserRequest} from '../types/update-user-request'
 import {UserRepository} from '../repository/user.repository'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -93,6 +93,20 @@ export class UserService {
         firstName: source.firstName ?? target.firstName,
         lastName: source.lastName ?? target.lastName,
         photo: source.photo ?? target.photo ?? null,
+      }),
+    )
+  }
+
+  updateByAdmin(id: string, source: UpdateUserByAdminRequest): Promise<User> {
+    return this.getById(id).then((target) =>
+      this.userRepository.update({
+        ...target,
+        firstName: source.firstName ?? target.firstName,
+        lastName: source.lastName ?? target.lastName,
+        photo: source.photo ?? target.photo ?? null,
+        registrationId: source.registrationId ?? target.registrationId ?? null,
+        phone: source.phone ?? target.phone ?? null,
+        memberId: source.memberId ?? target.memberId ?? null,
       }),
     )
   }

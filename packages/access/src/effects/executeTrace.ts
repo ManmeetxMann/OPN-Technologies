@@ -79,6 +79,7 @@ export default class TraceListener {
     this.orgRepo = new OrganizationModel(dataStore)
     this.userApprovalRepo = new AdminApprovalModel(dataStore)
     this.userRepo = new UserModel(dataStore)
+    this.locRepo = new AllLocationsModel(dataStore)
     this.questionnaireService = new QuestionnaireService()
     this.organizationService = new OrganizationService()
     this.userService = new UserService()

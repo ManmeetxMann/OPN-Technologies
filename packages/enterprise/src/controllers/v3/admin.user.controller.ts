@@ -6,9 +6,10 @@ import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {User, userDTOResponse} from '../../models/user'
-import {PageableRequestFilter} from '../../../../common/src/types/request'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {CreateUserByAdminRequest} from '../../types/new-user'
+import {UpdateUserByAdminRequest} from '../../types/update-user-request'
+import {UsersByOrganizationRequest} from '../../types/user-organization-request'
 
 const userService = new UserService()
 const organizationService = new OrganizationService()
@@ -19,8 +20,7 @@ const organizationService = new OrganizationService()
  */
 const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {organizationId} = req.params
-    const {perPage, page} = req.query as PageableRequestFilter
+    const {perPage, page, organizationId} = req.query as UsersByOrganizationRequest
 
     if (perPage < 1 || page < 0) {
       throw new BadRequestException(`Pagination params are invalid`)
@@ -96,6 +96,20 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
+/**
+ * Update user
+ */
+const updateUser: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const source = req.body as UpdateUserByAdminRequest
+    const {userId} = req.params
+    const updatedUser = await userService.updateByAdmin(userId, source)
+    res.json(actionSucceed(userDTOResponse(updatedUser)))
+  } catch (error) {
+    next(error)
+  }
+}
+
 class AdminUserController implements IControllerBase {
   public router = express.Router()
 
@@ -110,8 +124,9 @@ class AdminUserController implements IControllerBase {
     const route = innerRouter().use(
       '/',
       innerRouter()
-        .get('/:organizationId', authMiddleware, getUsersByOrganizationId)
-        .post('/', authMiddleware, createUser),
+        .get('/', authMiddleware, getUsersByOrganizationId)
+        .post('/', authMiddleware, createUser)
+        .put('/:userId', authMiddleware, updateUser),
     )
 
     this.router.use(root, route)

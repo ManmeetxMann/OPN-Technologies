@@ -41,6 +41,16 @@ import {CloudTasksClient} from '@google-cloud/tasks'
 import * as _ from 'lodash'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
+
+const dataConversionAndSortGroups = (groups: OrganizationGroup[]): OrganizationGroup[] => {
+  return groups
+    .sort((a, b) => {
+      // if a has higher priority, return a negative number (a comes first)
+      const bias = (b.priority || 0) - (a.priority || 0)
+      return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
+    })
+    .map((group) => ({...group, isPrivate: group.isPrivate ?? false}))
+}
 const replyInsufficientPermission = (res: Response): Response =>
   res.status(403).json(actionReplyInsufficientPermission())
 
@@ -293,7 +303,7 @@ class OrganizationController implements IControllerBase {
   getGroupsForPublic = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const groups = await this.getGroups(organizationId)
+      const groups = await this.getPublicGroups(organizationId)
       res.json(actionSucceed(groups))
     } catch (error) {
       next(error)
@@ -1191,15 +1201,13 @@ class OrganizationController implements IControllerBase {
   }
 
   private async getGroups(organizationId: string): Promise<OrganizationGroup[]> {
-    const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
-      throw new HttpException(error.message)
-    })
-    groups.sort((a, b) => {
-      // if a has higher priority, return a negative number (a comes first)
-      const bias = (b.priority || 0) - (a.priority || 0)
-      return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
-    })
-    return groups
+    return this.organizationService.getGroups(organizationId).then(dataConversionAndSortGroups)
+  }
+
+  private async getPublicGroups(organizationId: string): Promise<OrganizationGroup[]> {
+    return this.organizationService
+      .getPublicGroups(organizationId)
+      .then(dataConversionAndSortGroups)
   }
 }
 

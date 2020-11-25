@@ -227,6 +227,8 @@ components:
           type: string
         name:
           type: string
+        isPrivate:
+          type: boolean
         checkInDisabled:
           type: boolean
           default: false
@@ -234,6 +236,7 @@ components:
           type: number
       required:
         - name
+        - isPrivate
 
     OrganizationConnectionRequestV1:
       type: object
@@ -822,6 +825,25 @@ components:
         - organizationId
         - photo
 
+    UpdateUserByAdminRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          nullable: false
+        lastName:
+          type: string
+          nullable: false
+        registrationId:
+          type: string
+          nullable: true
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+        memberId:
+          type: string
+          nullable: true
 
     MigrateUserRequest:
       type: object
@@ -2447,33 +2469,13 @@ paths:
                 $ref: '#/components/schemas/ResponseOfAdminProfile'
 
   /enterprise/admin/api/v3/users:
-    post:
-      summary: Create User
-      description: Creates a user profile with `CreateUserByAdminRequest` payload and returns a `User`
-      security:
-        - bearerAuthJWT: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateUserByAdminRequest'
-      responses:
-        '200':
-          description: Successfully created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfUser'
-
-
-  /enterprise/admin/api/v3/users/{organizationId}:
     get:
       summary: Organization users list
       description: Get users by organizationId
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: path
+        - in: query
           name: organizationId
           schema:
             type: string
@@ -2497,6 +2499,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfUsersByOrganization'
+    post:
+      summary: Create User
+      description: Creates a user profile with `CreateUserByAdminRequest` payload and returns a `User`
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserByAdminRequest'
+      responses:
+        '200':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUser'
+
+  /enterprise/admin/api/v3/users/{userId}:
+    put:
+      summary: Update User
+      description: Update a user profile with `UpdateUserByAdminRequest` payload and returns a `User`
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserByAdminRequest'
+      responses:
+        '200':
+          description: Successfully Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUser'
+
 
   /enterprise/admin/api/v3/tags:
     post:
