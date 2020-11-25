@@ -533,7 +533,7 @@ class UserController implements IControllerBase {
     const authentication = innerRouter().use(
       '/',
       innerRouter()
-        .get('/search', authMiddleware, search)
+        .get('/', authMiddleware, search)
         .post('/', create)
         .post('/migration', migrate)
         .post('/auth', authenticate)

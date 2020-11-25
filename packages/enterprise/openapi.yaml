@@ -2609,7 +2609,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
 
-  /enterprise/api/v3/users/search:
+  /enterprise/api/v3/users:
     get:
       summary: Search users list
       description: Find `User`(s) by admin
