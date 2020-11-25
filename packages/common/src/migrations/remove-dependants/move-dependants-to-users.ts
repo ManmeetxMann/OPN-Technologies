@@ -1,4 +1,3 @@
-import {UserDependantModel} from '../../data/user'
 import DataStore from '../../data/datastore'
 import {firestore} from 'firebase-admin'
 
@@ -24,8 +23,8 @@ export default async function runMigration(): Promise<void> {
     }
     await Promise.all(
       userPage.map(async (user) => {
-        const dependantsModel = new UserDependantModel(ds, user.id)
-        const dependants = await dependantsModel.fetchAll()
+        const query = orm.collection({path: `users/${user.id}/dependants`})
+        const dependants = await query.fetchAll()
         if (!dependants.length) {
           console.log(`User ${user.id} has no dependants, continuing`)
           return
@@ -37,7 +36,9 @@ export default async function runMigration(): Promise<void> {
                 const createRef = fs.collection('users').doc(dep.id)
                 tx.create(createRef, {
                   registrationId: null,
+                  // @ts-ignore
                   firstName: dep.firstName ?? null,
+                  // @ts-ignore
                   lastName: dep.lastName ?? null,
                   base64Photo: '',
                   // @ts-ignore
