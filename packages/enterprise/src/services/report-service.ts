@@ -487,41 +487,28 @@ export class ReportService {
 
   getLookups = async (
     userIds: Set<string>,
-    dependantIds: Set<string>,
     organizationId: string,
     cachedGroupsById?: Record<string, OrganizationGroup>,
     cachedLocationsById?: Record<string, OrganizationLocation>,
   ): Promise<Lookups> => {
-    const [
-      allUsers,
-      allDependants,
-      userGroups,
-      allGroups,
-      allLocations,
-      statuses,
-    ] = await Promise.all([
+    const [allUsers, userGroups, allGroups, allLocations, statuses] = await Promise.all([
       // N/10 queries
       this.getUsersById([...userIds]).then((byId) => Object.values(byId) as User[]),
-      // N queries
-      Promise.all([...userIds].map((id) => this.userService.getAllDependants(id))).then((pages) =>
-        _.flatten(pages),
-      ),
       // N/10 queries
-      // don't need to look up dependant groups because it's stored on the dependant doc
       this.organizationService.getUsersGroups(organizationId, null, [...userIds]),
       cachedGroupsById ? null : this.organizationService.getGroups(organizationId),
       cachedLocationsById ? null : this.organizationService.getAllLocations(organizationId),
-      // N queries
+      // N queries - can be improved? Find latest in ts, batch queries by 10
       Promise.all(
-        [...dependantIds, ...userIds].map(
+        [...userIds].map(
           (id): Promise<{id: string; status: PassportStatus}> =>
             this.attestationService.latestStatus(id).then((status) => ({id, status})),
         ),
       ),
     ])
     // keyed by user or dependant ID
-    const statusesByUserOrDependantId: Record<string, PassportStatus> = {}
-    statuses.forEach(({id, status}) => (statusesByUserOrDependantId[id] = status))
+    const statusesByUserId: Record<string, PassportStatus> = {}
+    statuses.forEach(({id, status}) => (statusesByUserId[id] = status))
 
     const groupsById: Record<string, OrganizationGroup> =
       cachedGroupsById ??
@@ -543,47 +530,24 @@ export class ReportService {
       },
       {},
     )
-    const groupsByDependantId: Record<string, OrganizationGroup> = allDependants.map(
-      (lookup, dependant) => {
-        lookup[dependant.id] = groupsById[dependant.groupId]
-        return lookup
-      },
-      {},
-    )
-    const groupsByUserOrDependantId = {
-      ...groupsByUserId,
-      ...groupsByDependantId,
-    }
-    const dependantsById: Record<string, AugmentedDependant> = allDependants
-      .map(
-        (dependant): AugmentedDependant => ({
-          ...dependant,
-          group: groupsByUserOrDependantId[dependant.id],
-          status: statusesByUserOrDependantId[dependant.id],
-        }),
-      )
-      .reduce((lookup, dependant) => {
-        lookup[dependant.id] = dependant
-        return lookup
-      }, {})
     const usersById: Record<string, AugmentedUser> = allUsers.reduce(
       (lookup, user: User) => ({
         ...lookup,
         [user.id]: {
           ...user,
-          group: groupsByUserOrDependantId[user.id],
-          status: statusesByUserOrDependantId[user.id],
+          group: groupsByUserId[user.id],
+          status: statusesByUserId[user.id],
         } as AugmentedUser,
       }),
       {},
     )
     return {
       usersLookup: usersById,
-      dependantsLookup: dependantsById,
+      dependantsLookup: usersById,
       locationsLookup: locationsById,
       groupsLookup: groupsById,
-      membershipLookup: groupsByUserOrDependantId,
-      statusesLookup: statusesByUserOrDependantId,
+      membershipLookup: groupsByUserId,
+      statusesLookup: statusesByUserId,
     }
   }
 
