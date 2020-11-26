@@ -256,6 +256,16 @@ export class OrganizationService {
     return _.flatten(pagedResults)
   }
 
+  async getDependantGroups(
+    organizationId: string,
+    parentUserId: string,
+  ): Promise<OrganizationUsersGroup[]> {
+    return this.getUsersGroupRepositoryFor(organizationId)
+      .collection()
+      .where('parentUserId', '==', parentUserId)
+      .fetch()
+  }
+
   addUserToGroup(
     organizationId: string,
     groupId: string,

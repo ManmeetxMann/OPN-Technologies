@@ -64,6 +64,16 @@ export class UserService {
     )
   }
 
+  getUserAndDependants(userId: string): Promise<{guardian: User; dependants: UserDependant[]}> {
+    return Promise.all([
+      new UserDependantModel(this.dataStore, userId).fetchAll(),
+      this.findOne(userId),
+    ]).then(([dependants, guardian]) => ({
+      guardian,
+      dependants,
+    }))
+  }
+
   updateDependantProperties(
     parentUserId: string,
     dependantId: string,
