@@ -28,6 +28,7 @@ const addNfcTagId: Handler = async (req, res, next): Promise<void> => {
           legacyTagId: tag.legacyId,
         }),
       )
+      return
     }
 
     const checkIfOrganizationExists = await organizationService.findOneById(organizationId)
