@@ -22,12 +22,8 @@ const addNfcTagId: Handler = async (req, res, next): Promise<void> => {
 
     const tag = await tagService.getByOrgUserId(organizationId, userId)
     if (tag) {
-      res.json(
-        actionSucceed({
-          tagId: tag.id,
-          legacyTagId: tag.legacyId,
-        }),
-      )
+      res.json(actionSucceed(tag))
+      return
     }
 
     const checkIfOrganizationExists = await organizationService.findOneById(organizationId)
