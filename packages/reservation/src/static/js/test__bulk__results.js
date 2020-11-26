@@ -193,13 +193,27 @@ document.addEventListener('DOMContentLoaded', () => {
       .filter((row) => row.checked)
       .map((row) => row.getAttribute('data-index'))
 
+    const failedValidation = []
+    const duplicatedRow = []
+    const alreadyExist = []
     const dataSentBackend = data
       .filter((row, i) => {
-        const isInvalidNum = [6, 8, 10, 12].find(
+        const isInvalidNum = [6, 8, 10, 12].some(
           (num) => !(row[num] === 'N/A' || !isNaN(parseInt(row[num]))),
         )
         const isResultWrong = row[13] && !['Positive', 'Negative', '2019-nCoV Detected'].includes(row[13])
         const isDuplicate = barcodeCounts[row[3]] > 1
+        
+        if (isInvalidNum || isResultWrong || !(row[12] <= 40 || row[12] === 'N/A')) {
+          failedValidation.push({barCode: row[3]})
+        }
+        if (isDuplicate) {
+          duplicatedRow.push({barCode: row[3]})
+        }
+        if (sendAgainData.indexOf(`${i}`) === 1) {
+          alreadyExist.push({barCode: row[3]})
+        }
+
         return (
           sendAgainData.indexOf(`${i}`) === -1 &&
           (row[12] <= 40 || row[12] === 'N/A') &&
@@ -281,10 +295,21 @@ document.addEventListener('DOMContentLoaded', () => {
     openModal(successModal)
 
     content += `Total rows: ${data.length}<br/>`
+    content += `Successfully: ${succeedRows.length}<br/>`
+    content += `Exists but is not marked for sent again: ${alreadyExist.length}<br/>`
+    content += `Failed: ${failedRows.length + isFatal.length + failedValidation.length}<br/>`
 
     if (succeedRows.length) {
       const succeedRowsElem = succeedRows.map((row) => `<div>${row.barCode}</div>`).join('')
       content += `Succeed rows: ${succeedRowsElem}<br/>`
+    }
+    if (failedValidation.length) {
+      const invalidRowsElem = failedValidation.map((row) => `<div>${row.barCode}</div>`).join('')
+      content += `Failed rows. Reason: Validation Error ${invalidRowsElem}<br/>`
+    }
+    if (duplicatedRow.length) {
+      const duplicatedRowsElem = duplicatedRow.map((row) => `<div>${row.barCode}</div>`).join('')
+      content += `Failed rows. Reason: duplicated rows ${duplicatedRowsElem}<br/>`
     }
     if (failedRows.length) {
       const failedRowsElem = failedRows.map((row) => `<div>${row.barCode}</div>`).join('')
