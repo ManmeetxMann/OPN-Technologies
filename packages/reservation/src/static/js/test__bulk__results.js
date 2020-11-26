@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const alreadyExist = []
     const dataSentBackend = data
       .filter((row, i) => {
-        const isInvalidNum = [6, 8, 10, 12].find(
+        const isInvalidNum = [6, 8, 10, 12].some(
           (num) => !(row[num] === 'N/A' || !isNaN(parseInt(row[num]))),
         )
         if(row[13] == "2019-nCoV Detected"){
