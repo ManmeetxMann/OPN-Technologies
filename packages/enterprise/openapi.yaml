@@ -1460,6 +1460,8 @@ components:
           properties:
             tagId:
               type: string
+            legacyTagId:
+              type: string
         status:
           type: object
           additionalProperties: false
@@ -2579,6 +2581,10 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: legacyMode
+          schema:
+            type: boolean
       responses:
         '200':
           description: Successfully returned

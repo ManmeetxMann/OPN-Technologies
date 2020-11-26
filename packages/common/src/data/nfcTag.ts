@@ -4,3 +4,8 @@ export type NfcTag = {
   organizationId: string
   legacyId?: string
 }
+
+export type NfcTagIdentifier = {
+  tagId: string
+  legacyTagId: string
+}
