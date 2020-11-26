@@ -1158,6 +1158,7 @@ class OrganizationController implements IControllerBase {
                 ? guardian
                 : dependants.find((dep) => dep.id === appliesToId)
             return {
+              id: appliesToId,
               firstName: user?.firstName ?? 'deleted',
               lastName: user?.lastName ?? 'user',
               base64Photo: (user as User)?.base64Photo ?? '',
