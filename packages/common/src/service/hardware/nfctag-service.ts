@@ -28,7 +28,7 @@ export class NfcTagService {
   }
 
   async getByLegacyId(legacyId: string): Promise<NfcTag> {
-    let query = this.tagRepository
+    const query = this.tagRepository
       .collection()
       // @ts-ignore
       .where('legacyId', '==', legacyId)
