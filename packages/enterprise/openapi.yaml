@@ -587,7 +587,18 @@ components:
         appliesTo:
           type: array
           items:
-            type: string
+            oneOf:
+              - type: string
+              - type: object
+                properties:
+                  firstName:
+                    type: string
+                  lastName:
+                    type: string
+                  base64Photo:
+                    type: string
+                  group:
+                    $ref: '#/components/schemas/OrganizationGroup'
         locationId:
           type: string
         attestationTime:
