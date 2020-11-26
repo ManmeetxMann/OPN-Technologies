@@ -52,8 +52,8 @@ const getUserByTagId: Handler = async (req, res, next): Promise<void> => {
 
     const tag =
       legacyMode === true
-        ? await this.tagService.getByLegacyId(tagId)
-        : await this.tagService.getById(tagId)
+        ? await tagService.getByLegacyId(tagId)
+        : await tagService.getById(tagId)
     if (!tag) {
       throw new ResourceNotFoundException(`NFC tag not found with tagId: ${tagId}`)
     }
