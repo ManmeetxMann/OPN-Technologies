@@ -151,12 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if ([6, 8, 10, 12].includes(i) && !(col === 'N/A' || !isNaN(parseInt(col)))) {
               markWarning(trElem, tdElem)
             }
-
-            if(col == "2019-nCoV Detected"){
-              col = 'Positive'
-            }
-
-            if (i === 13 && !['Positive', 'Negative'].includes(col)) {
+            if (i === 13 && !['Positive', 'Negative', '2019-nCoV Detected'].includes(col)) {
               markWarning(trElem, tdElem)
             }
             if (i === 3 && barcodeCounts[col] > 1) {
@@ -186,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!data) {
       openModal(errorBulkModal)
       errorBulkContent.innerHTML = 'You should upload CSV file before'
+      setLoader(sendButtonBulk, false)
       return
     }
 
@@ -202,10 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isInvalidNum = [6, 8, 10, 12].find(
           (num) => !(row[num] === 'N/A' || !isNaN(parseInt(row[num]))),
         )
-        if(row[13] == "2019-nCoV Detected"){
-          row[13] = 'Positive'
-        }
-        const isResultWrong = row[13] && !['Positive', 'Negative'].includes(row[13])
+        const isResultWrong = row[13] && !['Positive', 'Negative', '2019-nCoV Detected'].includes(row[13])
         const isDuplicate = barcodeCounts[row[3]] > 1
         return (
           sendAgainData.indexOf(`${i}`) === -1 &&
