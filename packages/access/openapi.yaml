@@ -125,6 +125,9 @@ components:
           type: string
         locationId:
           type: string
+        legacyMode:
+          type: boolean
+          default: false
       required:
         - tagId
         - locationId
