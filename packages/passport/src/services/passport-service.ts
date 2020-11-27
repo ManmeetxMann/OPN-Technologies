@@ -148,7 +148,7 @@ export class PassportService {
     // Get the Latest Proceed
     const momentDate = moment(nowDate)
     const latestPassport: Passport = passports.find(
-      passport => passport.status === 'proceed' && momentDate.isAfter(passport.validFrom)
+      (passport) => passport.status === 'proceed' && momentDate.isAfter(passport.validFrom),
     )
 
     return latestPassport
