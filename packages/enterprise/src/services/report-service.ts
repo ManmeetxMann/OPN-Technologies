@@ -2,7 +2,7 @@ import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
 import {safeTimestamp, GenericTimestamp} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {User, UserDependant} from '../../../common/src/data/user'
+import {User} from '../../../common/src/data/user'
 import {Range} from '../../../common/src/types/range'
 
 import {OrganizationService} from './organization-service'
@@ -42,11 +42,9 @@ const toDateTimeFormat = (timestamp: GenericTimestamp): string => {
   return moment(date).tz(timeZone).format('h:mm A MMMM D, YYYY')
 }
 
-type AugmentedDependant = UserDependant & {group: OrganizationGroup; status: PassportStatus}
 type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
 type Lookups = {
   usersLookup: Record<string, AugmentedUser> // users by id (with group and status)
-  dependantsLookup: Record<string, AugmentedDependant> // dependants by id (with group and status)
   locationsLookup: Record<string, OrganizationLocation> // lookups by id
   groupsLookup: Record<string, OrganizationGroup> // groups by id
   membershipLookup: Record<string, OrganizationGroup> // groups by member (user or dependant) id
@@ -281,44 +279,30 @@ export class ReportService {
         }),
       ),
     )
-    const missingUsers = [...userIds].filter((id) => !partialLookup.usersLookup[id])
-    const missingDependants = Object.keys(guardians).filter(
-      (id) => !partialLookup.dependantsLookup[id],
+    const missingUsers = _.uniq(
+      [...userIds, ...Object.keys(guardians), ...Object.values(guardians)].filter(
+        (id) => !partialLookup.usersLookup[id],
+      ),
     )
 
-    const extraLookup =
-      missingUsers.length || missingDependants.length
-        ? await this.getLookups(
-            new Set([
-              ...missingUsers,
-              // must look up their guardians as well
-              ...[...missingDependants].map((id) => guardians[id]),
-            ]),
-            new Set(missingDependants),
-            organization.id,
-            partialLookup.groupsLookup,
-            partialLookup.locationsLookup,
-          )
-        : null
-    const lookups =
-      missingUsers.length || missingDependants.length
-        ? {
-            ...partialLookup,
-            usersLookup: {
-              ...partialLookup.usersLookup,
-              ...extraLookup.usersLookup,
-            },
-            dependantsLookup: {
-              ...partialLookup.dependantsLookup,
-              ...extraLookup.dependantsLookup,
-            },
-            groupsLookup: {
-              ...partialLookup.groupsLookup,
-              ...extraLookup.groupsLookup,
-            },
-          }
-        : partialLookup
-    const {locationsLookup, usersLookup, dependantsLookup, groupsLookup} = lookups
+    const extraLookup = missingUsers.length
+      ? await this.getLookups(
+          new Set(missingUsers),
+          organization.id,
+          partialLookup.groupsLookup,
+          partialLookup.locationsLookup,
+        )
+      : null
+    const lookups = missingUsers.length
+      ? {
+          ...partialLookup,
+          usersLookup: {
+            ...partialLookup.usersLookup,
+            ...extraLookup.usersLookup,
+          },
+        }
+      : partialLookup
+    const {locationsLookup, usersLookup} = lookups
 
     const questionnairesLookup: Record<number, Questionnaire> = {}
     questionnaires.forEach((questionnaire) => {
@@ -382,39 +366,27 @@ export class ReportService {
     exposureOverlaps.sort((a, b) => (a.start > b.start ? -1 : 1))
     traceOverlaps.sort((a, b) => (a.start > b.start ? -1 : 1))
     // victims
-    const printableTraces = traceOverlaps.map((overlap) => ({
-      firstName: overlap.dependant
-        ? overlap.dependant.firstName
-        : usersLookup[overlap.userId].firstName,
-      lastName: overlap.dependant
-        ? overlap.dependant.lastName
-        : usersLookup[overlap.userId].lastName,
-      groupName:
-        (overlap.dependant
-          ? groupsLookup[overlap.dependant.groupId]
-          : usersLookup[overlap.userId].group
-        )?.name ?? '',
-      start: toDateTimeFormat(overlap.start),
-      end: toDateTimeFormat(overlap.end),
-    }))
+    const printableTraces = traceOverlaps.map((overlap) => {
+      const user = usersLookup[overlap.dependant?.id ?? overlap.userId]
+      return {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        groupName: user.group?.name ?? '',
+        start: toDateTimeFormat(overlap.start),
+        end: toDateTimeFormat(overlap.end),
+      }
+    })
     // perpetrators
-    const printableExposures = exposureOverlaps.map((overlap) => ({
-      firstName: (overlap.sourceDependantId
-        ? dependantsLookup[overlap.sourceDependantId]
-        : usersLookup[overlap.sourceUserId]
-      ).firstName,
-      lastName: (overlap.sourceDependantId
-        ? dependantsLookup[overlap.sourceDependantId]
-        : usersLookup[overlap.sourceUserId]
-      ).lastName,
-      groupName:
-        (overlap.sourceDependantId
-          ? dependantsLookup[overlap.sourceDependantId]
-          : usersLookup[overlap.sourceUserId]
-        )?.group?.name ?? '',
-      start: toDateTimeFormat(overlap.start),
-      end: toDateTimeFormat(overlap.end),
-    }))
+    const printableExposures = exposureOverlaps.map((overlap) => {
+      const user = usersLookup[overlap.sourceDependantId ?? overlap.sourceUserId]
+      return {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        groupName: user.group?.name ?? '',
+        start: toDateTimeFormat(overlap.start),
+        end: toDateTimeFormat(overlap.end),
+      }
+    })
 
     const printableAttestations = attestations.map((attestation) => {
       const answerKeys = Object.keys(attestation.answers)
@@ -449,7 +421,7 @@ export class ReportService {
         name: 'Unknown Group',
       },
     }
-    const named = (dependantId ? dependantsLookup[dependantId] : usersLookup[userId]) ?? deletedUser
+    const named = usersLookup[dependantId ?? userId] ?? deletedUser
     const {group} = named
     const namedGuardian = dependantId ? usersLookup[userId] ?? deletedUser : null
     return userTemplate({
@@ -543,7 +515,6 @@ export class ReportService {
     )
     return {
       usersLookup: usersById,
-      dependantsLookup: usersById,
       locationsLookup: locationsById,
       groupsLookup: groupsById,
       membershipLookup: groupsByUserId,

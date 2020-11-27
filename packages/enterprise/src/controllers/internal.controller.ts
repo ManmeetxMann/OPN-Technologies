@@ -79,12 +79,7 @@ class InternalController implements IControllerBase {
 
       const allTemplates = await Promise.all(
         memberships
-          .filter((membership) => {
-            if (membership.parentUserId) {
-              return lookups.dependantsLookup[membership.userId]
-            }
-            return lookups.usersLookup[membership.userId]
-          })
+          .filter((membership) => lookups.usersLookup[membership.userId])
           .map((membership) =>
             this.reportService
               .getUserReportTemplate(
