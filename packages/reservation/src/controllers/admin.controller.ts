@@ -20,7 +20,7 @@ import {
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
-import CSVValidator from '../validations/CSVValidator'
+import CSVValidator from '../validations/csv.validations'
 
 class AdminController implements IControllerBase {
   public path = ''
@@ -38,14 +38,14 @@ class AdminController implements IControllerBase {
       .post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
       .post(
         this.path + '/api/v1/send-and-save-test-results',
-        CSVValidator.validate(CSVValidator.csvValidation()),
+        CSVValidator.csvValidation,
         this.sendAndSaveTestResults,
       )
       .post(this.path + '/api/v1/send-test-results-again', this.sendTestResultsAgain)
       .post(this.path + '/api/v1/check-appointments', this.checkAppointments)
       .post(
         this.path + '/api/v1/send-and-save-test-results-bulk',
-        CSVValidator.validate(CSVValidator.csvBulkValidation()),
+        CSVValidator.csvBulkValidation,
         this.sendAndSaveTestResultsBulk,
       )
     this.router.use('/admin', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
