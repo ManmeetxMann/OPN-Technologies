@@ -57,6 +57,14 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
           ...userDTOResponse(user),
           groupName: groupNamesByUserId[user.id],
           memberId: user.memberId,
+          createdAt:
+            user.timestamps && user.timestamps.createdAt
+              ? user.timestamps.createdAt.toDate().toISOString()
+              : null,
+          updatedAt:
+            user.timestamps && user.timestamps.updatedAt
+              ? user.timestamps.updatedAt.toDate().toISOString()
+              : null,
         }
       }),
     )

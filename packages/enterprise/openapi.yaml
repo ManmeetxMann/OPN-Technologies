@@ -764,6 +764,10 @@ components:
         memberId:
           type: string
           nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
       required:
         - firstName
         - lastName
