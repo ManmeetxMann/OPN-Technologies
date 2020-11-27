@@ -147,7 +147,7 @@ export class PassportService {
 
     // Get the Latest Proceed
     const momentDate = moment(nowDate)
-    let latestPassport = null
+    let latestPassport: Passport = null
     for (const passport of passports) {
       if (passport.status === 'proceed' && momentDate.isAfter(passport.validFrom)) {
         latestPassport = passport
