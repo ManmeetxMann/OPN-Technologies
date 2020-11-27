@@ -145,11 +145,13 @@ export class PassportService {
       return null
     }
 
-    // Latest
-    const latestPassport = passports[0]
+    // Get the Latest Proceed
+    const momentDate = moment(nowDate)
+    const latestPassport: Passport = passports.find(
+      (passport) => passport.status === 'proceed' && momentDate.isAfter(passport.validFrom),
+    )
 
-    // Send if in range
-    return moment(nowDate).isAfter(latestPassport.validFrom) ? latestPassport : null
+    return latestPassport
   }
 
   /**
