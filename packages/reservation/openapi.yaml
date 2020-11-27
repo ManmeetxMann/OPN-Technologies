@@ -373,6 +373,29 @@ paths:
             text/html:
               schema:
                 type: string
+              
+
+  /reservation/admin/api/v1/packages:
+    post:
+      description: Add Package Codes for Orgs
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: true
+              properties:
+                packageCode:
+                  type: string
+                organizationId:
+                  type: string
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            text/html:
+              schema:
+                type: string
 
   /admin/js/print-label.js:
     get:

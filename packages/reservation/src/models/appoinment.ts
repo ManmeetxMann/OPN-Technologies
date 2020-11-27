@@ -78,6 +78,7 @@ export type TestResultsBase = {
   hexIC: string
   hexCt: string
   resultDate: Date
+  packageCode: string
 }
 
 export type TestResultsDTO = TestResultsBase
