@@ -8,7 +8,10 @@ import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
 import {CreateUserRequest, MigrateUserRequest} from '../../types/new-user'
-import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
+import {
+  actionReplyInsufficientPermission,
+  actionSucceed,
+} from '../../../../common/src/utils/response-wrapper'
 import {AuthenticationRequest} from '../../types/authentication-request'
 import {User, userDTOResponse} from '../../models/user'
 import {UpdateUserRequest} from '../../types/update-user-request'
@@ -17,11 +20,64 @@ import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-ex
 import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
+import {AdminProfile} from '../../../../common/src/data/admin'
+import {User as AuthenticatedUser} from '../../../../common/src/data/user'
+import {uniq} from 'lodash'
 
 const authService = new AuthService()
 const userService = new UserService()
 const organizationService = new OrganizationService()
 const magicLinkService = new MagicLinkService()
+
+/**
+ * Search a user(s) profile and returns a User(s)
+ */
+const search: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const {searchQuery} = req.query as {searchQuery: string}
+
+    const authenticatedUser = res.locals.connectedUser as AuthenticatedUser
+    const admin = authenticatedUser.admin as AdminProfile
+
+    if (!admin || !admin.adminForOrganizationId || !admin.superAdminForOrganizationIds.length) {
+      res.status(403).json(actionReplyInsufficientPermission())
+      return
+    }
+
+    const adminForOrganizationIds = uniq([
+      ...admin.superAdminForOrganizationIds,
+      ...[admin.adminForOrganizationId],
+    ])
+
+    const usersResponse = await Promise.all(
+      adminForOrganizationIds.map(async (organizationId) => {
+        const usersArray = await userService.searchByQueryAndOrganizationId(
+          organizationId,
+          searchQuery,
+        )
+
+        return await Promise.all(
+          usersArray.flat().map(async (user: User) => {
+            const groupName = await organizationService
+              .getUserGroup(organizationId, user.id)
+              .then(({name}) => name)
+              .catch(() => '')
+
+            return {
+              ...userDTOResponse(user),
+              groupName,
+              memberId: user.memberId,
+            }
+          }),
+        )
+      }),
+    )
+
+    res.json(actionSucceed(usersResponse.flat()))
+  } catch (error) {
+    next(error)
+  }
+}
 
 /**
  * Creates a user profile and returns a User
@@ -477,6 +533,7 @@ class UserController implements IControllerBase {
     const authentication = innerRouter().use(
       '/',
       innerRouter()
+        .get('/search', authMiddleware, search)
         .post('/', create)
         .post('/migration', migrate)
         .post('/auth', authenticate)

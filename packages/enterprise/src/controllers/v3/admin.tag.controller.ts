@@ -6,7 +6,6 @@ import {OrganizationService} from '../../services/organization-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {authMiddleware} from '../../../../common/src/middlewares/auth'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
-import {ResourceAlreadyExistsException} from '../../../../common/src/exceptions/resource-already-exists-exception'
 import {NfcTagService} from '../../../../common/src/service/hardware/nfctag-service'
 import {CreateNfcTagRequest} from '../../../../common/src/types/nfc-tag-request'
 
@@ -23,9 +22,8 @@ const addNfcTagId: Handler = async (req, res, next): Promise<void> => {
 
     const tag = await tagService.getByOrgUserId(organizationId, userId)
     if (tag) {
-      throw new ResourceAlreadyExistsException(
-        `NFC Tag for the organization ${organizationId} and userId ${userId}: TagId ${tag.id}`,
-      )
+      res.json(actionSucceed(tag))
+      return
     }
 
     const checkIfOrganizationExists = await organizationService.findOneById(organizationId)
