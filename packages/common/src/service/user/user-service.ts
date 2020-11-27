@@ -42,6 +42,11 @@ export class UserService {
     return results.length > 0 ? results.shift() : null
   }
 
+  async findAllByAuthUserId(authUserId: string): Promise<User[]> {
+    const results = await this.userRepository.findWhereEqual('authUserId', authUserId)
+    return results.length > 0 ? results : null
+  }
+
   getAllDependants(userId: string, skipUserCheck = false): Promise<UserDependant[]> {
     return Promise.all([
       new UserDependantModel(this.dataStore, userId).fetchAll(),
