@@ -1,0 +1,104 @@
+name: 'Deploy to Google App Engine'
+inputs:
+  node_version:
+    description: 'Node version'
+    required: false
+    default: v12.18.4
+  only_validate_deployment:
+    description: 'Validate Deployments'
+    required: false
+    default: false
+env:
+  application_config_file: ./packages/reservation/dist/common/.env
+
+runs:
+  using: 'composite'
+  steps:
+  
+  - name: Deploy Modules
+    run: |
+      echo "::group::Install npm modules"
+      echo "Inside group"
+      export NVM_DIR=~/.nvm
+      source ~/.nvm/nvm.sh
+      nvm install ${{ inputs.node_version }}
+      nvm use ${{ inputs.node_version }}
+      npm install
+      npm run install-all
+      npm run lint-all
+      echo "::endgroup::"
+    shell: bash
+
+  - name: Define Deployment Variables
+    run: |
+      EVENT_NAME=${{ github.event_name }}
+      EVENT_ACTION=${{ github.event.action }}
+      RELEASE_REF=refs/tags/release
+      PRERELEASE_REF=refs/tags/prerelease
+      echo "::group::Define Deployment Variables"
+      if [[ $GITHUB_REF == 'refs/heads/ci_cd' ]]; then
+        echo "Deploy to INFRA"
+        echo "PROJECT_ID=${{ env.infra_dev_project_id }}" > $GITHUB_ENV
+        echo "ENV_SERVICE_ACCOUNT=infra_dev_service_account" >> $GITHUB_ENV
+        echo "PROMOTEFLAG=--no-promote" >> $GITHUB_ENV
+      elif [[ "$GITHUB_REF" == *"$PRERELEASE_REF"* ]] && [[ $EVENT_NAME == 'release' ]] && [[ $EVENT_ACTION == 'prereleased' ]]; then
+        echo "Deploy to PREPROD"
+        echo "PROJECT_ID=${{ env.preprod_project_id }}" > $GITHUB_ENV
+        echo "ENV_SERVICE_ACCOUNT=preprod_service_account" >> $GITHUB_ENV
+        echo "PROMOTEFLAG=--promote" >> $GITHUB_ENV
+      elif [[ "$GITHUB_REF" == *"$RELEASE_REF"* ]] && [[ $EVENT_NAME == 'release' ]] && [[ $EVENT_ACTION == 'released' ]]; then
+        echo "Deploy to PROD"
+        echo "PROJECT_ID=${{ env.prod_project_id }}" > $GITHUB_ENV
+        echo "ENV_SERVICE_ACCOUNT=prod_service_account" >> $GITHUB_ENV
+        echo "PROMOTEFLAG=--no-promote" >> $GITHUB_ENV
+      else
+        echo "Deploy to DEV"
+        echo "PROJECT_ID=${{ env.dev_project_id }}" > $GITHUB_ENV
+        echo "ENV_SERVICE_ACCOUNT=dev_service_account" >> $GITHUB_ENV
+        echo "PROMOTEFLAG=--promote" >> $GITHUB_ENV
+      fi
+      
+      echo "::endgroup::"
+    shell: bash
+
+  - name: Deploy to GAE
+    run: |
+      ONLY_VALIDATE_DEPLOYMENT=${{ inputs.only_validate_deployment }}
+
+      echo "::group::Auth with GCLOUD"
+      cat >> service-account.json << EOF
+      ${{ env[env.ENV_SERVICE_ACCOUNT] }}
+      EOF
+      echo "Deploying to: ${{ env.PROJECT_ID }}"
+      gcloud auth activate-service-account --key-file=./service-account.json --project=${{ env.PROJECT_ID }}
+      rm ./service-account.json
+      echo "::endgroup::"
+
+      echo "::group::Add Application Environment Variables"
+      echo "Writing Environment Variables to: .env"
+      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ${{env.application_config_file}}
+      echo "::endgroup::"
+
+      echo "::group::Build"
+      npm run cd-build-reservation
+      echo "::endgroup::"
+
+      if [[ $ONLY_VALIDATE_DEPLOYMENT == 'false' ]]; then
+        echo "::group::Deploy to GAE"
+        echo "::endgroup::"
+      fi
+    shell: bash
+
+  - name: Send Status Update to Slack
+    run: |
+      JOB_STATUS=${{ job.status }}
+      
+      if [[ $JOB_STATUS == 'success' ]]; then
+        SLACK_STATUS=good
+      elif [[ $JOB_STATUS == 'failure' ]]; then
+        SLACK_STATUS=danger
+      else
+        SLACK_STATUS=warning
+      fi
+      curl -X POST -H 'Content-type: application/json' --data "{'username': 'action-slack','icon_emoji': ':octocat:','attachments': [{'color': '$SLACK_STATUS','text': 'Latest Config Build to succeeded. Check API Docs: https://apidocs-dot-opn-platform-dev.nn.r.appspot.com'}]}" https://hooks.slack.com/services/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
+    shell: bash
