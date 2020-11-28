@@ -1172,7 +1172,8 @@ class OrganizationController implements IControllerBase {
               base64Photo: (user as User)?.base64Photo ?? '',
               group:
                 groupsById[
-                  allMemberships.find((membership) => membership.userId === appliesToId)?.id ?? ''
+                  allMemberships.find((membership) => membership.userId === appliesToId)?.groupId ??
+                    ''
                 ] ?? null,
             }
           }),
