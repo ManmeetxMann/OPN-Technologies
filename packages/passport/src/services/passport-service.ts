@@ -117,6 +117,8 @@ export class PassportService {
           if (results.length > 1) {
             console.warn(`multiple passport found, ${results.length}, ${token}`)
           }
+          console.log('OUT1')
+          console.log(results)
           if (!requireValid) {
             return results[0]
           }
@@ -144,6 +146,9 @@ export class PassportService {
     if (!passports || passports.length == 0) {
       return null
     }
+
+    console.log('OUT2')
+    console.log(passports)
 
     // Get the Latest Proceed
     const momentDate = moment(nowDate)
