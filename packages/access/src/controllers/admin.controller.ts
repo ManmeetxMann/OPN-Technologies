@@ -238,7 +238,7 @@ class AdminController implements IRouteController {
       // Get request inputs
       const {tagId, locationId, legacyMode} = req.body
 
-      // Get tag
+      // Get tag appropriately
       const tag =
         legacyMode === true
           ? await this.tagService.getByLegacyId(tagId)
