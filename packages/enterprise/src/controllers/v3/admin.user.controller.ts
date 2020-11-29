@@ -25,15 +25,13 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
     if (perPage < 1 || page < 0) {
       throw new BadRequestException(`Pagination params are invalid`)
     }
-    let users = []; 
-    if(searchQuery){
+    let users = []
+    if (searchQuery) {
       users = await userService.searchByQueryAndOrganizationId(organizationId, searchQuery)
       users = users.flat()
-    }else{
+    } else {
       users = await userService.getAllByOrganizationId(organizationId, page, perPage)
     }
-    
-console.log(users)
 
     const usersGroups = await organizationService.getUsersGroups(
       organizationId,
