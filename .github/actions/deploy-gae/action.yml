@@ -8,8 +8,6 @@ inputs:
     description: 'Validate Deployments'
     required: false
     default: false
-env:
-  application_config_file: './packages/reservation/dist/common/.env'
 
 runs:
   using: 'composite'
@@ -74,13 +72,14 @@ runs:
       echo "::endgroup::"
       echo "::group::Add Application Environment Variables"
       echo "Writing Environment Variables to: .env"
-      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ${{ env.application_config_file }}
+      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/reservation/dist/common/.env
       echo "::endgroup::"
       echo "::group::Build"
       npm run cd-build-reservation
       echo "::endgroup::"
       if [[ $ONLY_VALIDATE_DEPLOYMENT == 'false' ]]; then
         echo "::group::Deploy to GAE"
+        gcloud app deploy ./dist --quiet ${{ env.PROMOTEFLAG }}
         echo "::endgroup::"
       fi
     shell: bash
