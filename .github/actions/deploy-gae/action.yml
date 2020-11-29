@@ -39,12 +39,6 @@ runs:
       EVENT_NAME=${{ github.event_name }}
       EVENT_ACTION=${{ github.event.action }}
 
-      DEV_PROJECT_ID=opn-platform-dev'
-      INFRA_DEV_PROJECT_ID=opn-platform-infra-dev'
-      PREPROD_PROJECT_ID=opn-platform-preprod'
-      PROD_PROJECT_ID=opn-platform-prod'
-
-      ONLY_VALIDATE_DEPLOYMENT=${{ inputs.only_validate_deployment }}
       TAG_STRING=$GITHUB_REF
       TAG_NUMBER="${TAG_STRING##*-}"
       GAE_VERSION=${TAG_NUMBER//./-}
@@ -56,28 +50,28 @@ runs:
       echo "::group::Define Deployment Variables"
       if [[ $GITHUB_REF == 'refs/heads/ci_cd' ]]; then
         echo "Deploy to INFRA"
-        echo "PROJECT_ID=$INFRA_DEV_PROJECT_ID" > $GITHUB_ENV
+        echo "PROJECT_ID=opn-platform-infra-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=infra_dev_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--no-promote" >> $GITHUB_ENV
       elif [[ "$GITHUB_REF" == *"$INFRA_DEV_TAG_REF"* ]]; then
         echo "Deploy to INFRA DEV"
-        echo "PROJECT_ID=$INFRA_DEV_PROJECT_ID" > $GITHUB_ENV
+        echo "PROJECT_ID=opn-platform-infra-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=infra_dev_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
         echo "GAE_VERSION_FLAG=--version=$GAE_VERSION" >> $GITHUB_ENV
       elif [[ "$GITHUB_REF" == *"$PREPROD_TAG_REF"* ]]; then
         echo "Deploy to PREPROD"
-        echo "PROJECT_ID=$PREPROD_PROJECT_ID" > $GITHUB_ENV
+        echo "PROJECT_ID=opn-platform-preprod" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=preprod_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
       elif [[ "$GITHUB_REF" == *"$PROD_TAG_REF"* ]]; then
         echo "Deploy to PROD"
-        echo "PROJECT_ID=$PROD_PROJECT_ID" > $GITHUB_ENV
+        echo "PROJECT_ID=opn-platform-prod" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=prod_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--no-promote" >> $GITHUB_ENV
       elif [[ $GITHUB_REF == 'refs/heads/development' ]]; then
         echo "Deploy to DEV"
-        echo "PROJECT_ID=$DEV_PROJECT_ID" > $GITHUB_ENV
+        echo "PROJECT_ID=opn-platform-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=dev_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
       else
@@ -106,6 +100,7 @@ runs:
       echo "Writing Environment Variables to: .env"
       gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/${{ inputs.service_name }}/dist/common/.env
       echo "::endgroup::"
+      ONLY_VALIDATE_DEPLOYMENT=${{ inputs.only_validate_deployment }}
       if [[ $ONLY_VALIDATE_DEPLOYMENT == 'false' ]]; then
         echo "::group::Deploy to GAE"
         cd ./packages/${{ inputs.service_name }}
