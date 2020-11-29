@@ -57,7 +57,6 @@ runs:
         echo "ENV_SERVICE_ACCOUNT=dev_service_account" >> $GITHUB_ENV
         echo "PROMOTEFLAG=--promote" >> $GITHUB_ENV
       fi
-      
       echo "::endgroup::"
     shell: bash
 
@@ -73,16 +72,9 @@ runs:
       gcloud auth activate-service-account --key-file=./service-account.json --project=${{ env.PROJECT_ID }}
       rm ./service-account.json
       echo "::endgroup::"
-
-      echo "::group::Add Application Environment Variables"
-      echo "Writing Environment Variables to: .env"
-      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ${{env.application_config_file}}
-      echo "::endgroup::"
-
       echo "::group::Build"
       npm run cd-build-reservation
       echo "::endgroup::"
-
       if [[ $ONLY_VALIDATE_DEPLOYMENT == 'false' ]]; then
         echo "::group::Deploy to GAE"
         echo "::endgroup::"
