@@ -38,7 +38,7 @@ export class NfcTagService {
     return tags.length > 0 ? tags[0] : null
   }
 
-  getByOrgUserId(organizationId: string, userId: string): Promise<NfcTag> {
+  getByOrgUserId(organizationId: string, userId: string): Promise<NfcTagIdentifier> {
     return this.tagRepository
       .findWhereEqualInMap([
         {
@@ -56,7 +56,8 @@ export class NfcTagService {
       ])
       .then((nfcTags: NfcTag[]) => {
         if (!nfcTags || nfcTags.length === 0) return null
-        return nfcTags[0]
+        const nfcTag = nfcTags[0]
+        return {tagId: nfcTag.id, legacyTagId: nfcTag.legacyId}
       })
   }
 }
