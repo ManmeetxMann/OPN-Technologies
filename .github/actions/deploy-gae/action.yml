@@ -9,7 +9,7 @@ inputs:
     required: false
     default: false
 env:
-  application_config_file: ./packages/reservation/dist/common/.env
+  application_config_file: './packages/reservation/dist/common/.env'
 
 runs:
   using: 'composite'
@@ -74,7 +74,7 @@ runs:
       echo "::endgroup::"
       echo "::group::Add Application Environment Variables"
       echo "Writing Environment Variables to: .env"
-      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > .env
+      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ${{ env.application_config_file }}
       echo "::endgroup::"
       echo "::group::Build"
       npm run cd-build-reservation
