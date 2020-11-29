@@ -72,6 +72,10 @@ runs:
       gcloud auth activate-service-account --key-file=./service-account.json --project=${{ env.PROJECT_ID }}
       rm ./service-account.json
       echo "::endgroup::"
+      echo "::group::Add Application Environment Variables"
+      echo "Writing Environment Variables to: .env"
+      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > .env
+      echo "::endgroup::"
       echo "::group::Build"
       npm run cd-build-reservation
       echo "::endgroup::"
