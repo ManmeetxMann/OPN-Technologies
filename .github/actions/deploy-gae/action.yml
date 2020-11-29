@@ -74,15 +74,15 @@ runs:
       rm ./service-account.json
       echo "::endgroup::"
       echo "::group::Build"
-      npm run cd-build-${{ inputs.only_validate_deployment }}
+      npm run cd-build-${{ inputs.service_name }}
       echo "::endgroup::"
       echo "::group::Add Application Environment Variables"
       echo "Writing Environment Variables to: .env"
-      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/${{ inputs.only_validate_deployment }}/dist/common/.env
+      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/${{ inputs.service_name }}/dist/common/.env
       echo "::endgroup::"
       if [[ $ONLY_VALIDATE_DEPLOYMENT == 'false' ]]; then
         echo "::group::Deploy to GAE"
-        cd ./packages/${{ inputs.only_validate_deployment }}
+        cd ./packages/${{ inputs.service_name }}
         gcloud app deploy ./dist --quiet --version=0-0-1 ${{ env.PROMOTEFLAG }}
         echo "::endgroup::"
       fi
