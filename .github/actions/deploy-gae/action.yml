@@ -79,7 +79,8 @@ runs:
       echo "::endgroup::"
       if [[ $ONLY_VALIDATE_DEPLOYMENT == 'false' ]]; then
         echo "::group::Deploy to GAE"
-        npm run cd-deploy-reservation
+        cd ./packages/reservation
+        gcloud app deploy ./dist --quiet --version=0-0-1 ${{ env.PROMOTEFLAG }}
         echo "::endgroup::"
       fi
     shell: bash
