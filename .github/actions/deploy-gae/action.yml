@@ -79,8 +79,7 @@ runs:
       echo "::endgroup::"
       if [[ $ONLY_VALIDATE_DEPLOYMENT == 'false' ]]; then
         echo "::group::Deploy to GAE"
-        ls -al
-        npm run cd-deploy-reservation ${{ env.PROMOTEFLAG }} --version=0-0-1
+        npm run cd-deploy-reservation
         echo "::endgroup::"
       fi
     shell: bash
