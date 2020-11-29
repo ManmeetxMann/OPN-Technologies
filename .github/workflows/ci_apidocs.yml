@@ -1,57 +1,30 @@
-name: OPN API Docs CD Action
+name: Deploy API Docs
 
 on:
   push:
     paths:
       - "packages/apidocs/**"
       - ".github/workflows/ci_apidocs.yml"
-    branches: [ development ]
+      - ".github/actions/**"
+    branches: 
+      - development
+    tags:
+      - infra-dev-reservation-*
+      - preprod-reservation-*
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
-    - name: Setup Node.js
-      uses: actions/setup-node@v1
+        
+    - uses: ./.github/actions/deploy-gae
       with:
-        node-version: 10.x
-    - name: Setup GCloud
-      if: github.ref == 'refs/heads/development'
-      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
-      with:
-        project_id: ${{ secrets.DEV_GCP_PROJECT_ID }}
-        service_account_key: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY }}
-    - run: npm install
-    - run: npm run install-all
-    - run: npm run lint-all
-    # - run: npm run test-all
-    - run: npm run cd-build-apidocs
-    - name: Create Environment Parameters
-      if: github.ref == 'refs/heads/development'
-      uses: DamianReeves/write-file-action@v1.0
-      with:
-        path: ./packages/apidocs/dist/common/.env
-        contents: |
-          # Environment Config for Dev Access
-          # Auth Specific
-          APIDOCS_PASSWORD=${{ secrets.DEV_APIDOCS_PWD }}
-        write-mode: overwrite
-    - run: npm run cd-deploy-apidocs
-    - name: Let Slack know
-      uses: 8398a7/action-slack@v3
-      with:
-        status: custom
-        fields: workflow,job,commit,repo,ref,author,took
-        custom_payload: |
-          {
-            username: 'action-slack',
-            icon_emoji: ':octocat:',
-            attachments: [{
-              color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
-              text: `Latest Build to succeeded. Check API Docs: https://apidocs-dot-opn-platform-dev.nn.r.appspot.com`,
-            }]
-          }
+        service_name: "reservation"
+      name: Build & Deploy to GAE
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          dev_service_account: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY }}
+          infra_dev_service_account: ${{ secrets.INFRA_DEV_GCP_CLOUDBUILD_SA_KEY }}
+          preprod_service_account: ${{ secrets.PREPROD_GCP_SERVICE_ACCOUNT }}
+          prod_service_account: ${{ secrets.PROD_GCP_SERVICE_ACCOUNT }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

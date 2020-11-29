@@ -1,11 +1,12 @@
-name: Deploy Registry
+name: Deploy Registry Service
 
 on:
-  push: # Needs to be pull_request
+  push:
     paths:
       - "packages/common/**"
       - "packages/registry/**"
       - ".github/workflows/ci_registry.yml"
+      - ".github/actions/**"
     branches: 
       - development
     tags:
@@ -27,3 +28,4 @@ jobs:
           infra_dev_service_account: ${{ secrets.INFRA_DEV_GCP_CLOUDBUILD_SA_KEY }}
           preprod_service_account: ${{ secrets.PREPROD_GCP_SERVICE_ACCOUNT }}
           prod_service_account: ${{ secrets.PROD_GCP_SERVICE_ACCOUNT }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
