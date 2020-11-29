@@ -6,11 +6,11 @@ on:
       - "packages/reservation/**"
       - ".github/workflows/ci_reservation.yml"
       - ".github/actions/**"
-    branches: [ ci_cd ]
-  release:
-    types: 
-      - prereleased
-      - released
+    branches: 
+      - ci_cd
+    tags:
+      - infra-dev-reservation-*
+      - preprod-reservation-*
 
 jobs:
   build:
@@ -21,7 +21,7 @@ jobs:
     - uses: ./.github/actions/deploy-gae
       with:
         service_name: "reservation"
-      name: Deploy to GAE
+      name: Build & Deploy to GAE
       env:
           dev_project_id: ${{ secrets.DEV_GCP_PROJECT_ID }}
           dev_service_account: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY }}

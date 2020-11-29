@@ -36,36 +36,53 @@ runs:
     run: |
       EVENT_NAME=${{ github.event_name }}
       EVENT_ACTION=${{ github.event.action }}
-      RELEASE_REF=refs/tags/release
-      PRERELEASE_REF=refs/tags/prerelease
+
+      ONLY_VALIDATE_DEPLOYMENT=${{ inputs.only_validate_deployment }}
+      TAG_STRING=$GITHUB_REF
+      TAG_NUMBER="${TAG_STRING##*-}"
+      GAE_VERSION=${TAG_NUMBER//./-}
+      GAE_VERSION_FLAG=""
+      
+      INFRA_DEV_TAG_REF=refs/tags/infra-dev-
+      PREPROD_TAG_REF=refs/tags/preprod-
+      PROD_TAG_REF=refs/tags/prod-
       echo "::group::Define Deployment Variables"
       if [[ $GITHUB_REF == 'refs/heads/ci_cd' ]]; then
         echo "Deploy to INFRA"
         echo "PROJECT_ID=${{ env.infra_dev_project_id }}" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=infra_dev_service_account" >> $GITHUB_ENV
-        echo "PROMOTEFLAG=--no-promote" >> $GITHUB_ENV
-      elif [[ "$GITHUB_REF" == *"$PRERELEASE_REF"* ]] && [[ $EVENT_NAME == 'release' ]] && [[ $EVENT_ACTION == 'prereleased' ]]; then
+        echo "PROMOTE_FLAG=--no-promote" >> $GITHUB_ENV
+      elif [[ "$GITHUB_REF" == *"$INFRA_DEV_TAG_REF"* ]]; then
+        echo "Deploy to INFRA DEV"
+        echo "PROJECT_ID=${{ env.infra_dev_project_id }}" > $GITHUB_ENV
+        echo "ENV_SERVICE_ACCOUNT=infra_dev_service_account" >> $GITHUB_ENV
+        echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
+        echo "GAE_VERSION_FLAG=--version=$GAE_VERSION" >> $GITHUB_ENV
+      elif [[ "$GITHUB_REF" == *"$PREPROD_TAG_REF"* ]]; then
         echo "Deploy to PREPROD"
         echo "PROJECT_ID=${{ env.preprod_project_id }}" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=preprod_service_account" >> $GITHUB_ENV
-        echo "PROMOTEFLAG=--promote" >> $GITHUB_ENV
-      elif [[ "$GITHUB_REF" == *"$RELEASE_REF"* ]] && [[ $EVENT_NAME == 'release' ]] && [[ $EVENT_ACTION == 'released' ]]; then
+        echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
+      elif [[ "$GITHUB_REF" == *"$PROD_TAG_REF"* ]]; then
         echo "Deploy to PROD"
         echo "PROJECT_ID=${{ env.prod_project_id }}" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=prod_service_account" >> $GITHUB_ENV
-        echo "PROMOTEFLAG=--no-promote" >> $GITHUB_ENV
-      else
+        echo "PROMOTE_FLAG=--no-promote" >> $GITHUB_ENV
+      elif [[ $GITHUB_REF == 'refs/heads/development' ]]; then
         echo "Deploy to DEV"
         echo "PROJECT_ID=${{ env.dev_project_id }}" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=dev_service_account" >> $GITHUB_ENV
-        echo "PROMOTEFLAG=--promote" >> $GITHUB_ENV
+        echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
+      else
+        echo "Bad Deployment"
+        exit 1;
       fi
       echo "::endgroup::"
     shell: bash
 
   - name: Deploy to GAE
     run: |
-      ONLY_VALIDATE_DEPLOYMENT=${{ inputs.only_validate_deployment }}
+      echo $GAE_VERSION_FLAG
 
       echo "::group::Auth with GCLOUD"
       cat >> service-account.json << EOF
@@ -85,7 +102,7 @@ runs:
       if [[ $ONLY_VALIDATE_DEPLOYMENT == 'false' ]]; then
         echo "::group::Deploy to GAE"
         cd ./packages/${{ inputs.service_name }}
-        gcloud app deploy ./dist --quiet --version=0-0-1 ${{ env.PROMOTEFLAG }}
+        gcloud app deploy ./dist --quiet ${{ env.GAE_VERSION_FLAG }} ${{ env.PROMOTE_FLAG }}
         echo "::endgroup::"
       fi
     shell: bash
