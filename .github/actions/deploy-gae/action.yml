@@ -120,5 +120,5 @@ runs:
       else
         SLACK_STATUS=warning
       fi
-      curl -X POST -H 'Content-type: application/json' --data "{'username': 'action-slack','icon_emoji': ':octocat:','attachments': [{'color': '$SLACK_STATUS','text': 'Latest Build Deployed to https://${{ inputs.service_name }}-dot-${{ env.PROJECT_ID }}.nn.r.appspot.com'" https://hooks.slack.com/services/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
+      curl -X POST -H 'Content-type: application/json' --data "{'username': 'action-slack','icon_emoji': ':octocat:','attachments': [{'color': '$SLACK_STATUS','text': 'Latest Build Deployed to https://${{ inputs.service_name }}-dot-${{ env.PROJECT_ID }}.nn.r.appspot.com'}]}" https://hooks.slack.com/services/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
     shell: bash
