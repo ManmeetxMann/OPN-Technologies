@@ -10,6 +10,7 @@ import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 
 import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
+import {PackageService} from '../services/package.service'
 import {
   TestResultsDTO,
   TestResultsConfirmationRequest,
@@ -21,13 +22,17 @@ import {
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {HttpException} from '../../../common/src/exceptions/httpexception'
+
 import CSVValidator from '../validations/csv.validations'
+import {PackageByOrganizationRequest} from '../models/packages'
 
 class AdminController implements IControllerBase {
   public path = ''
   public router = Router()
   private appoinmentService = new AppoinmentService()
   private testResultsService = new TestResultsService()
+  private packageService = new PackageService()
 
   constructor() {
     this.initRoutes()
@@ -50,6 +55,7 @@ class AdminController implements IControllerBase {
         this.sendAndSaveTestResultsBulk,
       )
       .post(this.path + '/api/v1/send-fax-for-positive', this.sendFax)
+      .get(this.path + '/api/v1/test-results', this.getResultsByOrganizationId)
     this.router.use('/admin', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
   }
 
@@ -208,6 +214,10 @@ class AdminController implements IControllerBase {
             appointmentId: appointment.appointmentId,
             id: requestData.barCode,
           })
+          return appointment
+        })
+        .then((appointment: AppointmentDTO) => {
+          this.packageService.savePackage(appointment.packageCode)
         })
 
       res.json(actionSucceed('Results are sent successfully'))
@@ -265,6 +275,43 @@ class AdminController implements IControllerBase {
       } else {
         throw new HttpException(error.message, 500)
       }
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getResultsByOrganizationId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {
+        perPage,
+        page,
+        organizationId,
+        dateOfAppointment,
+      } = req.query as PackageByOrganizationRequest
+
+      if (perPage < 1 || page < 0) {
+        throw new BadRequestException(`Pagination params are invalid`)
+      }
+      const allpackages = await this.packageService.getAllByOrganizationId(organizationId)
+
+      if (!allpackages) {
+        throw new ResourceNotFoundException('Results are not available for this organization')
+      }
+
+      const packagesId: string[] = allpackages.map(({packageCode}) => packageCode)
+
+      const testResult = await this.testResultsService.getAllByOrganizationId(
+        packagesId,
+        dateOfAppointment,
+        page,
+        perPage,
+      )
+
+      res.json(actionSucceed(testResult))
     } catch (error) {
       next(error)
     }

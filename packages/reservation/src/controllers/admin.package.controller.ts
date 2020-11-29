@@ -1,16 +1,20 @@
 import {NextFunction, Request, Response, Router} from 'express'
 
-import packageValidations from '../validations/package.validations'
-import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed} from '../../../common/src/utils/response-wrapper'
-import {AppoinmentService} from '../services/appoinment.service'
+import {ResourceNotFoundException} from 'packages/common/src/exceptions/resource-not-found-exception'
+import IControllerBase from 'packages/common/src/interfaces/IControllerBase.interface'
+import {actionSucceed} from 'packages/common/src/utils/response-wrapper'
+
 import {TestResultsService} from '../services/test-results.service'
-import {ScheduleWebhookRequest} from '../models/webhook'
+import {PackageService} from '../services/package.service'
+
+import {SavePackageAndOrganizationRequest} from '../models/packages'
+
+import packageValidations from '../validations/package.validations'
 
 class AdminPackageController implements IControllerBase {
   public path = '/packages'
   public router = Router()
-  private appoinmentService = new AppoinmentService()
+  private packageService = new PackageService()
   private testResultsService = new TestResultsService()
 
   constructor() {
@@ -18,24 +22,28 @@ class AdminPackageController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.post(
-      this.path + '/',
-      packageValidations.packageValidation,
-      this.addPackageCode
-    )
+    this.router.post(this.path + '/', packageValidations.packageValidation, this.addPackageCode)
   }
 
-  addPackageCode = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  addPackageCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {id} = req.body as ScheduleWebhookRequest
+      const {packageCode, organizationId} = req.body as SavePackageAndOrganizationRequest
 
-      const newBarcode = await this.appoinmentService.getNextBarCodeNumber()
+      const results = await this.testResultsService.getResultsByPackageCode(packageCode)
 
-      await this.appoinmentService.addBarcodeAppointment(id, newBarcode)
+      if (!results) {
+        throw new ResourceNotFoundException(
+          `Results are not avaiable for this packageCode: ${packageCode}`,
+        )
+      }
+
+      await this.packageService.savePackage(packageCode, organizationId)
+
+      console.warn(
+        `${results.length} ${
+          results.length == 1 ? 'result' : 'results'
+        } updated for the organization ${organizationId}`,
+      )
 
       res.json(actionSucceed(''))
     } catch (error) {

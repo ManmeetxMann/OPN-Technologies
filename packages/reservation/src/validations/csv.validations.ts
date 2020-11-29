@@ -1,10 +1,9 @@
-import {body, check, ValidationChain, validationResult} from 'express-validator'
+import {body, check} from 'express-validator'
 import {NextFunction, Request, Response} from 'express'
 
 import {validator} from './basic.validator'
 
 export default {
-
   csvValidation: (): ((req: Request, res: Response, next: NextFunction) => Promise<void>) => {
     return validator([
       body('hexCt')

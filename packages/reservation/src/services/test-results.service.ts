@@ -1,14 +1,17 @@
 import moment from 'moment-timezone'
-import DataStore from '../../../common/src/data/datastore'
 
 import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/appoinment'
 import {TestResultsDBRepository} from '../respository/test-results-db.repository'
+
+import DataStore from '../../../common/src/data/datastore'
+
 import {EmailService} from '../../../common/src/service/messaging/email-service'
 import {FaxService} from '../../../common/src/service/messaging/fax-service'
 import {PdfService} from '../../../common/src/service/reports/pdf'
-import template from '../templates/testResult'
 
 import {Config} from '../../../common/src/utils/config'
+
+import template from '../templates/testResult'
 
 export class TestResultsService {
   private testResultEmailTemplateId = (Config.get('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2) as number
@@ -74,5 +77,38 @@ export class TestResultsService {
 
   async getResults(barCode: string): Promise<TestResultsDBModel> {
     return this.testResultsDBRepository.get(barCode)
+  }
+
+  async getResultsByPackageCode(packageCode: string): Promise<TestResultsDBModel[]> {
+    return this.testResultsDBRepository.findWhereEqual('packageCode', packageCode)
+  }
+
+  async getAllByOrganizationId(
+    packageCodes: string[],
+    dateOfAppointment: Date,
+    page: number,
+    perPage: number,
+  ): Promise<TestResultsDBModel[]> {
+    const resultsQuery = this.testResultsDBRepository.getWhereIdInQuery(packageCodes)
+
+    const results = []
+
+    for (let i = 0; i < resultsQuery.length; i++) {
+      const currentResults = await this.testResultsDBRepository.fetchPage(
+        resultsQuery[i].where('dateOfAppointment', '==', dateOfAppointment),
+        page,
+        perPage,
+      )
+
+      if (results.length > perPage) {
+        results.splice(perPage)
+
+        break
+      }
+
+      results.push(...currentResults)
+    }
+
+    return results
   }
 }

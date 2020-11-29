@@ -414,6 +414,12 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return Object.values(deduplicated)
   }
 
+  public getWhereIdInQuery(values: unknown[], subPath = ''): Query<T, Omit<T, 'id'>>[] {
+    const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()
+    const chunks: unknown[][] = _.chunk([...values], 10)
+    return chunks.map((chunk) => this.collection(subPath).where(fieldPath, 'in', chunk))
+  }
+
   public async findOneById(value: unknown, subPath = ''): Promise<T> {
     const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()
     const results = await this.collection(subPath).where(fieldPath, '==', value).fetch()
