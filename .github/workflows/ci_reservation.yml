@@ -19,9 +19,10 @@ jobs:
     - uses: actions/checkout@v2
         
     - uses: ./.github/actions/deploy-gae
+      with:
+        service_name: "reservation"
       name: Deploy to GAE
       env:
-          service_name: "reservation"
           dev_project_id: ${{ secrets.DEV_GCP_PROJECT_ID }}
           dev_service_account: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY }}
           infra_dev_project_id: ${{ secrets.INFRA_DEV_GCP_PROJECT_ID }}
