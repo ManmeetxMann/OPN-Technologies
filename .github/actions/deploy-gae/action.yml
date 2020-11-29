@@ -12,6 +12,11 @@ inputs:
     description: 'Service Name'
     required: true
     default: ""
+env:
+  dev_project_id: 'opn-platform-dev'
+  infra_dev_project_id: 'opn-platform-infra-dev'
+  preprod_project_id: 'opn-platform-preprod'
+  prod_project_id: 'opn-platform-prod'
 
 runs:
   using: 'composite'
@@ -118,5 +123,5 @@ runs:
       else
         SLACK_STATUS=warning
       fi
-      curl -X POST -H 'Content-type: application/json' --data "{'username': 'action-slack','icon_emoji': ':octocat:','attachments': [{'color': '$SLACK_STATUS','text': 'Latest Config Build to succeeded. Check API Docs: https://apidocs-dot-opn-platform-dev.nn.r.appspot.com'}]}" https://hooks.slack.com/services/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
+      curl -X POST -H 'Content-type: application/json' --data "{'username': 'action-slack','icon_emoji': ':octocat:','attachments': [{'color': '$SLACK_STATUS','text': 'Latest Build Deployed to https://${{ inputs.service_name }}-dot-${{ env.PROJECT_ID }}.nn.r.appspot.com'" https://hooks.slack.com/services/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
     shell: bash
