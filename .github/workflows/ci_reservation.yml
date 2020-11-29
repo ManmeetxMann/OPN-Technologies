@@ -5,6 +5,7 @@ on:
       - "packages/common/**"
       - "packages/reservation/**"
       - ".github/workflows/ci_reservation.yml"
+      - ".github/actions/action.yml"
     branches: [ ci_cd ]
   release:
     types: 
