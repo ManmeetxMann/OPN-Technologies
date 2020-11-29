@@ -11,6 +11,7 @@ inputs:
   service_name:
     description: 'Service Name'
     required: true
+    default: ""
 
 runs:
   using: 'composite'
@@ -18,6 +19,7 @@ runs:
   
   - name: Deploy Modules
     run: |
+      echo "Service Name: ${{ inputs.service_name }}"
       echo "::group::Install npm modules"
       echo "Inside group"
       export NVM_DIR=~/.nvm
