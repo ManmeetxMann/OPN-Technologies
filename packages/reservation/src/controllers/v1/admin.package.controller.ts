@@ -40,7 +40,7 @@ class AdminController implements IControllerBase {
 
       const isPackageExist = await this.packageService.isExist(packageCode)
 
-      if (!isPackageExist) {
+      if (isPackageExist) {
         throw new BadRequestException(`Package code ${packageCode} already exist`)
       }
 

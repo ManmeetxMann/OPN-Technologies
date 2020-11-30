@@ -34,7 +34,6 @@ export class PackageService {
 
     const updated = await this.testResultsDBRepository.findWhereEqual(
       'packageCode',
-      '==',
       packageCode,
     )
 
