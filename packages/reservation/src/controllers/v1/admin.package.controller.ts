@@ -2,12 +2,12 @@ import {NextFunction, Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-
+import {HttpException} from '../../../../common/src/exceptions/httpexception'
 import {authMiddleware} from '../../../../common/src/middlewares/auth'
+import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 
 import {TestResultsService} from '../../services/test-results.service'
 import {PackageService} from '../../services/package.service'
-import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 
 import packageValidations from '../../validations/package.validations'
 import {SavePackageAndOrganizationRequest} from '../../models/packages'
@@ -38,19 +38,19 @@ class AdminController implements IControllerBase {
     try {
       const {packageCode, organizationId} = req.body as SavePackageAndOrganizationRequest
 
-      const results = await this.testResultsService.getResultsByPackageCode(packageCode)
+      const isPackageExist = await this.packageService.isExist(packageCode)
 
-      await this.packageService.savePackage(packageCode, organizationId)
+      if (!isPackageExist) {
+        throw new BadRequestException(`Package code ${packageCode} already exist`)
+      }
 
-      console.warn(
-        `${results.length} ${
-          results.length == 1 ? 'result' : 'results'
-        } updated for the organization ${organizationId}`,
-      )
+      const results = await this.packageService.savePackage(packageCode, organizationId)
 
-      res.json(actionSucceed(''))
+      console.warn(`${results} updated for the organization ${organizationId}`)
+
+      res.json(actionSucceed())
     } catch (error) {
-      next(error)
+      next(new HttpException())
     }
   }
 }

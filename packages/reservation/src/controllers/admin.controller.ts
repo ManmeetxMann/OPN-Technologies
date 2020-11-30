@@ -142,7 +142,6 @@ class AdminController implements IControllerBase {
                   appointmentId: currentAppointment.appointmentId,
                   id: row.barCode,
                 }),
-                this.packageService.savePackage(currentAppointment.packageCode),
               ])
             }
 
@@ -191,8 +190,6 @@ class AdminController implements IControllerBase {
       if (requestData.needConfirmation) {
         const appointment = await this.appoinmentService.getAppoinmentByBarCode(requestData.barCode)
 
-        await this.packageService.savePackage(appointment.packageCode)
-
         res.json(actionSucceed(appointment))
         return
       }
@@ -218,10 +215,6 @@ class AdminController implements IControllerBase {
             appointmentId: appointment.appointmentId,
             id: requestData.barCode,
           })
-          return appointment
-        })
-        .then((appointment: AppointmentDTO) => {
-          this.packageService.savePackage(appointment.packageCode)
         })
 
       res.json(actionSucceed('Results are sent successfully'))

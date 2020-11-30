@@ -1,5 +1,4 @@
 import moment from 'moment-timezone'
-import {flatten} from 'lodash'
 
 import {
   TestResultsDTOForEmail,
@@ -89,22 +88,27 @@ export class TestResultsService {
   }
 
   async getAllByOrganizationId(
-    packageCodes: string[],
+    organizationId: string,
     dateOfAppointment: Date,
+    page: number,
+    perPage: number,
   ): Promise<TestResultForPagination[]> {
-    const resultsQuery = this.testResultsDBRepository.getWhereInQuery('packageCode', packageCodes)
-
-    const results: TestResultsDBModel[] = await Promise.all(
-      flatten(resultsQuery).map((query) => {
-        if (dateOfAppointment) {
-          return query.where('dateOfAppointment', '==', dateOfAppointment)
-        }
-
-        return query
-      }),
+    const testResultQuery = this.testResultsDBRepository.getQueryFindWhereEqual(
+      'organizationId',
+      organizationId,
     )
 
-    return results.map(
+    if (dateOfAppointment) {
+      testResultQuery.where('dateOfAppointment', '==', dateOfAppointment)
+    }
+
+    const testResults = await this.testResultsDBRepository.fetchPage(testResultQuery, page, perPage)
+
+    // if (!testResults) {
+    //   return []
+    // }
+
+    return testResults.map(
       (result: TestResultsDBModel): TestResultForPagination => ({
         barCode: result.barCode,
         firstname: result.firstName,

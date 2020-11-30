@@ -298,6 +298,8 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
 
     if (page === 0) return subset.slice()
 
+    if (!subset.length) return []
+
     const lastVisible = subset[subset.length - 1]
     const lastVisibleSnapshot = await this.collection(subPath).docRef(lastVisible.id).get()
 
@@ -383,6 +385,27 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
   ): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
     return await this.collection(subPath).where(fieldPath, 'array-contains', value).fetch()
+  }
+
+  public async updateAllFromCollectionWhereEqual(
+    property: string,
+    value: unknown,
+    data: unknown,
+    subPath = '',
+  ): Promise<unknown> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+
+    return this.collection(subPath)
+      .where(fieldPath, '==', value)
+      .fetch()
+      .then((response) => {
+        const batch = this.datastore.firestoreAdmin.firestore().batch()
+        response.forEach((doc) => {
+          const docRef = this.collection(subPath).docRef(doc.id)
+          batch.update(docRef, data)
+        })
+        batch.commit()
+      })
   }
 
   public async findWhereArrayContainsAny(

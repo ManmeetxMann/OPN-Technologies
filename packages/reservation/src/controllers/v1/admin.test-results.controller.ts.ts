@@ -4,17 +4,16 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 
 import {TestResultsService} from '../../services/test-results.service'
-import {PackageService} from '../../services/package.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
-import {authMiddleware} from '../../../../common/src/middlewares/auth'
 
 import {PackageByOrganizationRequest} from '../../models/packages'
+import {HttpException} from '../../../../common/src/exceptions/httpexception'
+import {authMiddleware} from '../../../../common/src/middlewares/auth'
 
 class AdminController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private testResultsService = new TestResultsService()
-  private packageService = new PackageService()
 
   constructor() {
     this.initRoutes()
@@ -47,27 +46,17 @@ class AdminController implements IControllerBase {
       if (perPage < 1 || page < 0) {
         throw new BadRequestException(`Pagination params are invalid`)
       }
-      const allpackages = await this.packageService.getAllByOrganizationId(
+
+      const testResult = await this.testResultsService.getAllByOrganizationId(
         organizationId,
+        dateOfAppointment,
         page,
         perPage,
       )
 
-      if (!allpackages) {
-        res.json(actionSucceed([]))
-        return
-      }
-
-      const packagesId: string[] = allpackages.map(({packageCode}) => packageCode)
-
-      const testResult = await this.testResultsService.getAllByOrganizationId(
-        packagesId,
-        dateOfAppointment,
-      )
-
-      res.json(actionSucceed(testResult))
+      res.json(actionSucceed(testResult, page))
     } catch (error) {
-      next(error)
+      next(new HttpException())
     }
   }
 }
