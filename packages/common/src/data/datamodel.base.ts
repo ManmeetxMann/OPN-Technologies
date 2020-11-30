@@ -310,12 +310,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
   }
 
   public async fetchAllWithPagination(page: number, perPage: number, subPath = ''): Promise<T[]> {
-    return this.fetchPage(
-      this.collection(subPath).limit(page * perPage),
-      page,
-      perPage,
-      subPath,
-    )
+    return this.fetchPage(this.collection(subPath).limit(page * perPage), page, perPage, subPath)
   }
 
   public async increment(id: string, fieldName: string, byCount: number, subPath = ''): Promise<T> {
