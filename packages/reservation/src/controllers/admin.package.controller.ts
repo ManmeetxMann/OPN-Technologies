@@ -26,7 +26,11 @@ class AdminPackageController implements IControllerBase {
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
 
-    this.router.post(this.path + '/api/v1/packages', packageValidations.packageValidation, this.addPackageCode)
+    this.router.post(
+      this.path + '/api/v1/packages',
+      packageValidations.packageValidation,
+      this.addPackageCode,
+    )
     this.router.use('/admin', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
   }
 
