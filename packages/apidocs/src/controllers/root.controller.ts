@@ -27,16 +27,20 @@ class RootController implements IControllerBase {
           },
           servers: [
             {
-              url: 'https://config.services.ca.stayopn.net',
-              description: 'Production Server',
+              url: 'http://localhost:5001',
+              description: 'Development Server',
             },
             {
               url: 'https://config-staging-dot-opn-platform-dev.nn.r.appspot.com',
               description: 'Staging Server',
             },
             {
-              url: 'http://localhost:5001',
-              description: 'Development Server',
+              url: 'https://config-dot-opn-platform-preprod.nn.r.appspot.com',
+              description: 'PreProd Server',
+            },
+            {
+              url: 'https://config.services.ca.stayopn.net',
+              description: 'Production Server',
             },
           ],
           yamlPath: 'config.yaml',
@@ -50,16 +54,20 @@ class RootController implements IControllerBase {
           },
           servers: [
             {
-              url: 'https://registry.services.ca.stayopn.net',
-              description: 'Production Server',
+              url: 'http://localhost:5006',
+              description: 'Development Server',
             },
             {
               url: 'https://registry-staging-dot-opn-platform-dev.nn.r.appspot.com',
               description: 'Staging Server',
             },
             {
-              url: 'http://localhost:5006',
-              description: 'Development Server',
+              url: 'https://registry-dot-opn-platform-preprod.nn.r.appspot.com',
+              description: 'PreProd Server',
+            },
+            {
+              url: 'https://registry.services.ca.stayopn.net',
+              description: 'Production Server',
             },
           ],
           yamlPath: 'registry.yaml',
@@ -73,16 +81,20 @@ class RootController implements IControllerBase {
           },
           servers: [
             {
-              url: 'https://enterprise.services.ca.stayopn.net',
-              description: 'Production Server',
+              url: 'http://localhost:5003',
+              description: 'Development Server',
             },
             {
               url: 'https://enterprise-staging-dot-opn-platform-dev.nn.r.appspot.com',
               description: 'Staging Server',
             },
             {
-              url: 'http://localhost:5003',
-              description: 'Development Server',
+              url: 'https://enterprise-dot-opn-platform-preprod.nn.r.appspot.com',
+              description: 'PreProd Server',
+            },
+            {
+              url: 'https://enterprise.services.ca.stayopn.net',
+              description: 'Production Server',
             },
           ],
           yamlPath: 'enterprise.yaml',
@@ -96,16 +108,20 @@ class RootController implements IControllerBase {
           },
           servers: [
             {
-              url: 'https://passport.services.ca.stayopn.net',
-              description: 'Production Server',
+              url: 'http://localhost:5005',
+              description: 'Development Server',
             },
             {
               url: 'https://passport-staging-dot-opn-platform-dev.nn.r.appspot.com',
               description: 'Staging Server',
             },
             {
-              url: 'http://localhost:5005',
-              description: 'Development Server',
+              url: 'https://passport-dot-opn-platform-preprod.nn.r.appspot.com',
+              description: 'PreProd Server',
+            },
+            {
+              url: 'https://passport.services.ca.stayopn.net',
+              description: 'Production Server',
             },
           ],
           yamlPath: 'passport.yaml',
@@ -142,16 +158,16 @@ class RootController implements IControllerBase {
           },
           servers: [
             {
-              url: 'https://lookup.services.ca.stayopn.net',
-              description: 'Production Server',
+              url: 'http://localhost:5004',
+              description: 'Development Server',
             },
             {
               url: 'https://lookup-staging-dot-opn-platform-dev.nn.r.appspot.com',
               description: 'Staging Server',
             },
             {
-              url: 'http://localhost:5004',
-              description: 'Development Server',
+              url: 'https://lookup.services.ca.stayopn.net',
+              description: 'Production Server',
             },
           ],
           yamlPath: 'lookup.yaml',
@@ -165,16 +181,16 @@ class RootController implements IControllerBase {
           },
           servers: [
             {
-              url: 'https://access.services.ca.stayopn.net',
-              description: 'Production Server',
+              url: 'http://localhost:5002',
+              description: 'Development Server',
             },
             {
               url: 'https://access-staging-dot-opn-platform-dev.nn.r.appspot.com',
               description: 'Staging Server',
             },
             {
-              url: 'http://localhost:5002',
-              description: 'Development Server',
+              url: 'https://access.services.ca.stayopn.net',
+              description: 'Production Server',
             },
           ],
           yamlPath: 'access.yaml',
