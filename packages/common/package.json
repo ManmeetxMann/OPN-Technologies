@@ -18,8 +18,7 @@
         "prepare": "copyfiles package.json dist && node ../../__devops/package-cleaner.js common start",
         "compile": "tsc --module amd -p tsconfig.build.json",
         "build": "npm run clean && npm run prepare && npm run compile",
-        "prepublishOnly": "npm run build",
-        "migrateOrganizationGroups": "ts-node ./src/migrations/organization-group"
+        "prepublishOnly": "npm run build"
     },
     "dependencies": {
         "@firestore-simple/admin": "^7.0.2",
