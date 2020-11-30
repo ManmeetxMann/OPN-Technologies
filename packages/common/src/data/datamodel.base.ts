@@ -294,9 +294,9 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     perPage: number,
     subPath = '',
   ): Promise<T[]> {
-    const subset = await query.limit(page === 0 ? perPage : page * perPage).fetch()
+    const subset = await query.limit(page * perPage).fetch()
 
-    if (page === 0) return subset.slice()
+    if (page === 1) return subset.slice()
 
     const lastVisible = subset[subset.length - 1]
     const lastVisibleSnapshot = await this.collection(subPath).docRef(lastVisible.id).get()
@@ -311,7 +311,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
 
   public async fetchAllWithPagination(page: number, perPage: number, subPath = ''): Promise<T[]> {
     return this.fetchPage(
-      this.collection(subPath).limit(page === 0 ? perPage : page * perPage),
+      this.collection(subPath).limit(page * perPage),
       page,
       perPage,
       subPath,
