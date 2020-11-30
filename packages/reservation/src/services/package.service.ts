@@ -6,8 +6,16 @@ import {PackageRepository} from '../respository/package.repository'
 export class PackageService {
   private packageRepository = new PackageRepository(new DataStore())
 
-  async getAllByOrganizationId(organizationId: string): Promise<PackageBase[]> {
-    return this.packageRepository.findWhereEqual('organizationId', organizationId)
+  async getAllByOrganizationId(
+    organizationId: string,
+    page: number,
+    perPage: number,
+  ): Promise<PackageBase[]> {
+    const query = this.packageRepository
+      .getQueryFindWhereEqual('organizationId', organizationId)
+      .orderBy('packageCode')
+
+    return this.packageRepository.fetchPage(query, page, perPage)
   }
 
   async savePackage(packageCode: string, organizationId: string = null): Promise<void> {

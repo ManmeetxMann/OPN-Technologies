@@ -309,10 +309,15 @@ class AdminController implements IControllerBase {
       if (perPage < 1 || page < 0) {
         throw new BadRequestException(`Pagination params are invalid`)
       }
-      const allpackages = await this.packageService.getAllByOrganizationId(organizationId)
+      const allpackages = await this.packageService.getAllByOrganizationId(
+        organizationId,
+        page,
+        perPage,
+      )
 
       if (!allpackages) {
-        throw new ResourceNotFoundException('Results are not available for this organization')
+        res.json(actionSucceed([]))
+        return
       }
 
       const packagesId: string[] = allpackages.map(({packageCode}) => packageCode)
@@ -320,8 +325,6 @@ class AdminController implements IControllerBase {
       const testResult = await this.testResultsService.getAllByOrganizationId(
         packagesId,
         dateOfAppointment,
-        page,
-        perPage,
       )
 
       res.json(actionSucceed(testResult))

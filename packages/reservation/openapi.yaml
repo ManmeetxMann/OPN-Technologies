@@ -338,7 +338,6 @@ paths:
           name: dateOfAppointment
           schema:
             type: string
-          required: true
         - in: query
           name: page
           schema:

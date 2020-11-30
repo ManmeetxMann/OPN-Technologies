@@ -1,6 +1,11 @@
 import moment from 'moment-timezone'
+import {flatten} from 'lodash'
 
-import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/appoinment'
+import {
+  TestResultsDTOForEmail,
+  TestResultsDBModel,
+  TestResultForPagination,
+} from '../models/appoinment'
 import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 
 import DataStore from '../../../common/src/data/datastore'
@@ -86,29 +91,29 @@ export class TestResultsService {
   async getAllByOrganizationId(
     packageCodes: string[],
     dateOfAppointment: Date,
-    page: number,
-    perPage: number,
-  ): Promise<TestResultsDBModel[]> {
-    const resultsQuery = this.testResultsDBRepository.getWhereIdInQuery(packageCodes)
+  ): Promise<TestResultForPagination[]> {
+    const resultsQuery = this.testResultsDBRepository.getWhereInQuery('packageCode', packageCodes)
 
-    const results = []
+    const results: TestResultsDBModel[] = await Promise.all(
+      flatten(resultsQuery).map((query) => {
+        if (dateOfAppointment) {
+          return query.where('dateOfAppointment', '==', dateOfAppointment)
+        }
 
-    for (let i = 0; i < resultsQuery.length; i++) {
-      const currentResults = await this.testResultsDBRepository.fetchPage(
-        resultsQuery[i].where('dateOfAppointment', '==', dateOfAppointment),
-        page,
-        perPage,
-      )
+        return query
+      }),
+    )
 
-      if (results.length > perPage) {
-        results.splice(perPage)
-
-        break
-      }
-
-      results.push(...currentResults)
-    }
-
-    return results
+    return results.map(
+      (result: TestResultsDBModel): TestResultForPagination => ({
+        barCode: result.barCode,
+        firstname: result.firstName,
+        lastname: result.lastName,
+        result: result.result,
+        resultDate: result.resultDate,
+        dateOfAppointment: result.dateOfAppointment,
+        timeOfAppointment: result.timeOfAppointment,
+      }),
+    )
   }
 }

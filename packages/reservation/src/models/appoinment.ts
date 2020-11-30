@@ -113,3 +113,13 @@ export type SendAndSaveTestResultsRequest = {
   to: string
   resultDate: Date
 }
+
+export type TestResultForPagination = {
+  barCode: string
+  firstname: string
+  lastname: string
+  result: ResultTypes
+  resultDate: Date
+  dateOfAppointment: string
+  timeOfAppointment: string
+}
