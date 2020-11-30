@@ -64,7 +64,8 @@ const getUserByTagId: Handler = async (req, res, next): Promise<void> => {
         id: user.id,
         firstName: user.firstName,
         lastName: user.lastName,
-        photo: user.photo,
+        // @ts-ignore
+        photo: user.photo ?? user.base64Photo,
         groupName: userGroup.name,
       }),
     )

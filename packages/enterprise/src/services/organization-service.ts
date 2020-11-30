@@ -219,7 +219,9 @@ export class OrganizationService {
         .get(groupId)
         .then((target) => {
           if (target) return target
-          throw new ResourceNotFoundException(`Cannot find organization-group with id [${groupId}]`)
+          throw new ResourceNotFoundException(
+            `Cannot find organization-group [${groupId}] in organization [${organizationId}]`,
+          )
         }),
     )
   }
@@ -228,7 +230,9 @@ export class OrganizationService {
     const groupsForUser = await this.getUsersGroups(organizationId, null, [userId])
 
     if (groupsForUser.length === 0) {
-      throw new ResourceNotFoundException(`Cannot find organization-group for [${userId}]`)
+      throw new ResourceNotFoundException(
+        `Cannot find organization-group for [${userId}] in organization [${organizationId}]`,
+      )
     }
 
     return await this.getGroup(organizationId, groupsForUser[0].groupId)
@@ -320,7 +324,7 @@ export class OrganizationService {
       if (target) return this.getUsersGroupRepositoryFor(organizationId).delete(target.id)
 
       throw new ResourceNotFoundException(
-        `Cannot find relation user-group for groupId [${groupId}] and userId [${userId}]`,
+        `Cannot find relation user-group for groupId [${groupId}] and userId [${userId}] in org [${organizationId}]`,
       )
     })
   }
