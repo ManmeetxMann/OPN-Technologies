@@ -40,12 +40,6 @@ class AdminController implements IControllerBase {
 
       const results = await this.testResultsService.getResultsByPackageCode(packageCode)
 
-      if (!results.length) {
-        throw new ResourceNotFoundException(
-          `Results are not avaiable for this packageCode: ${packageCode}`,
-        )
-      }
-
       await this.packageService.savePackage(packageCode, organizationId)
 
       console.warn(
