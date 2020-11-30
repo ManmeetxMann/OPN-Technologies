@@ -24,8 +24,8 @@ jobs:
         service_name: "registry"
       name: Build & Deploy to GAE
       env:
-          dev_service_account: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY }}
-          infra_dev_service_account: ${{ secrets.INFRA_DEV_GCP_CLOUDBUILD_SA_KEY }}
-          preprod_service_account: ${{ secrets.PREPROD_GCP_SERVICE_ACCOUNT }}
-          prod_service_account: ${{ secrets.PROD_GCP_SERVICE_ACCOUNT }}
+          dev_service_account: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY}}
+          infra_dev_service_account: ${{ secrets.INFRA_DEV_GCP_CLOUDBUILD_SA_KEY}}
+          preprod_service_account: ${{ secrets.PREPROD_GCP_CLOUDBUILD_SA_KEY }}
+          prod_service_account: ${{ secrets.PROD_GCP_CLOUDBUILD_SA_KEY }}
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
