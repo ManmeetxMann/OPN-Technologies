@@ -298,6 +298,8 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
 
     if (page === 1) return subset.slice()
 
+    if (!subset.length) return []
+
     const lastVisible = subset[subset.length - 1]
     const lastVisibleSnapshot = await this.collection(subPath).docRef(lastVisible.id).get()
 
@@ -380,6 +382,27 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return await this.collection(subPath).where(fieldPath, 'array-contains', value).fetch()
   }
 
+  public async updateAllFromCollectionWhereEqual(
+    property: string,
+    value: unknown,
+    data: unknown,
+    subPath = '',
+  ): Promise<unknown> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+
+    return this.collection(subPath)
+      .where(fieldPath, '==', value)
+      .fetch()
+      .then((response) => {
+        const batch = this.datastore.firestoreAdmin.firestore().batch()
+        response.forEach((doc) => {
+          const docRef = this.collection(subPath).docRef(doc.id)
+          batch.update(docRef, data)
+        })
+        batch.commit()
+      })
+  }
+
   public async findWhereArrayContainsAny(
     property: string,
     values: Iterable<unknown>,
@@ -407,6 +430,22 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     const deduplicated: Record<string, T> = {}
     allResults.forEach((page) => page.forEach((item) => (deduplicated[item.id] = item)))
     return Object.values(deduplicated)
+  }
+
+  public getWhereIdInQuery(values: unknown[], subPath = ''): Query<T, Omit<T, 'id'>>[] {
+    const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()
+    const chunks: unknown[][] = _.chunk([...values], 10)
+    return chunks.map((chunk) => this.collection(subPath).where(fieldPath, 'in', chunk))
+  }
+
+  public getWhereInQuery(
+    property: string,
+    values: unknown[],
+    subPath = '',
+  ): Query<T, Omit<T, 'id'>>[] {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+    const chunks: unknown[][] = _.chunk([...values], 10)
+    return chunks.map((chunk) => this.collection(subPath).where(fieldPath, 'in', chunk))
   }
 
   public async findOneById(value: unknown, subPath = ''): Promise<T> {

@@ -9,6 +9,7 @@ type AppointmentBase = {
   appointmentId: number
   timeOfAppointment?: string
   barCode?: string
+  packageCode: string
 }
 
 export type AppoinmentDataUI = {
@@ -37,6 +38,7 @@ export type AppointmentAcuityResponse = AppointmentBase & {
   date: string
   time: string
   forms: Array<AppointmentAcuityForm>
+  certificate: string
 }
 
 export type AppointmentSearchRequest = {
@@ -78,6 +80,8 @@ export type TestResultsBase = {
   hexIC: string
   hexCt: string
   resultDate: Date
+  packageCode: string
+  organizationId: string
 }
 
 export type TestResultsDTO = TestResultsBase
@@ -109,4 +113,14 @@ export type SendAndSaveTestResultsRequest = {
   from: string
   to: string
   resultDate: Date
+}
+
+export type TestResultForPagination = {
+  barCode: string
+  firstname: string
+  lastname: string
+  result: ResultTypes
+  resultDate: Date
+  dateOfAppointment: string
+  timeOfAppointment: string
 }

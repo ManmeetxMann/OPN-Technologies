@@ -1,14 +1,21 @@
 import moment from 'moment-timezone'
+
+import {
+  TestResultsDTOForEmail,
+  TestResultsDBModel,
+  TestResultForPagination,
+} from '../models/appoinment'
+import {TestResultsDBRepository} from '../respository/test-results-db.repository'
+
 import DataStore from '../../../common/src/data/datastore'
 
-import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/appoinment'
-import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 import {EmailService} from '../../../common/src/service/messaging/email-service'
 import {FaxService} from '../../../common/src/service/messaging/fax-service'
 import {PdfService} from '../../../common/src/service/reports/pdf'
-import template from '../templates/testResult'
 
 import {Config} from '../../../common/src/utils/config'
+
+import template from '../templates/testResult'
 
 export class TestResultsService {
   private testResultEmailTemplateId = (Config.get('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2) as number
@@ -74,5 +81,43 @@ export class TestResultsService {
 
   async getResults(barCode: string): Promise<TestResultsDBModel> {
     return this.testResultsDBRepository.get(barCode)
+  }
+
+  async getResultsByPackageCode(packageCode: string): Promise<TestResultsDBModel[]> {
+    return this.testResultsDBRepository.findWhereEqual('packageCode', packageCode)
+  }
+
+  async getAllByOrganizationId(
+    organizationId: string,
+    dateOfAppointment: Date,
+    page: number,
+    perPage: number,
+  ): Promise<TestResultForPagination[]> {
+    const testResultQuery = this.testResultsDBRepository.getQueryFindWhereEqual(
+      'organizationId',
+      organizationId,
+    )
+
+    if (dateOfAppointment) {
+      testResultQuery.where('dateOfAppointment', '==', dateOfAppointment)
+    }
+
+    const testResults = await this.testResultsDBRepository.fetchPage(testResultQuery, page, perPage)
+
+    // if (!testResults) {
+    //   return []
+    // }
+
+    return testResults.map(
+      (result: TestResultsDBModel): TestResultForPagination => ({
+        barCode: result.barCode,
+        firstname: result.firstName,
+        lastname: result.lastName,
+        result: result.result,
+        resultDate: result.resultDate,
+        dateOfAppointment: result.dateOfAppointment,
+        timeOfAppointment: result.timeOfAppointment,
+      }),
+    )
   }
 }

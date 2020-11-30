@@ -10,6 +10,7 @@ import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 
 import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
+import {PackageService} from '../services/package.service'
 import {
   TestResultsDTO,
   TestResultsConfirmationRequest,
@@ -22,13 +23,15 @@ import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/res
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
-import CSVValidator from '../validations/CSVValidator'
+
+import CSVValidator from '../validations/csv.validations'
 
 class AdminController implements IControllerBase {
   public path = ''
   public router = Router()
   private appoinmentService = new AppoinmentService()
   private testResultsService = new TestResultsService()
+  private packageService = new PackageService()
 
   constructor() {
     this.initRoutes()
@@ -40,17 +43,18 @@ class AdminController implements IControllerBase {
       .post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
       .post(
         this.path + '/api/v1/send-and-save-test-results',
-        CSVValidator.validate(CSVValidator.csvValidation()),
+        CSVValidator.csvValidation(),
         this.sendAndSaveTestResults,
       )
       .post(this.path + '/api/v1/send-test-results-again', this.sendTestResultsAgain)
       .post(this.path + '/api/v1/check-appointments', this.checkAppointments)
       .post(
         this.path + '/api/v1/send-and-save-test-results-bulk',
-        CSVValidator.validate(CSVValidator.csvBulkValidation()),
+        CSVValidator.csvBulkValidation(),
         this.sendAndSaveTestResultsBulk,
       )
       .post(this.path + '/api/v1/send-fax-for-positive', this.sendFax)
+
     this.router.use('/admin', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
   }
 
@@ -118,7 +122,9 @@ class AdminController implements IControllerBase {
                   'Something wend wrong. Results are not available.',
                 )
               }
-              await this.testResultsService.sendTestResults({...testResults}, resultDate)
+
+              await this.packageService.savePackage(appointmentsByBarCode[row.barCode].packageCode),
+                await this.testResultsService.sendTestResults({...testResults}, resultDate)
             } else {
               const currentAppointment = appointmentsByBarCode[row.barCode]
               if (!currentAppointment) {
