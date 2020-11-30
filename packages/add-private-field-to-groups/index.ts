@@ -75,7 +75,9 @@ async function verifyMigration(): Promise<void> {
   console.log(`Verified ${allVerifiedGroupLength} groups`)
 }
 
-async function changeAllOrganizationGroup(): Promise<({status: string; value: unknown} | {status: string; reason: unknown})[]> {
+async function changeAllOrganizationGroup(): Promise<
+  ({status: string; value: unknown} | {status: string; reason: unknown})[]
+> {
   let offset = 0
   let hasMore = true
 
