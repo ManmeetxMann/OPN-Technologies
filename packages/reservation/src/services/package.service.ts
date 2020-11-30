@@ -12,7 +12,7 @@ export class PackageService {
 
   async savePackage(packageCode: string, organizationId: string = null): Promise<void> {
     if (!packageCode) {
-      console.warn(`No packageCode`)
+      return console.warn(`No packageCode`)
     }
 
     await this.packageRepository.add({

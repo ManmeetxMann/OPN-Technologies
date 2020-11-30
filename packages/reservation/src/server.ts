@@ -6,7 +6,6 @@ import * as bodyParser from 'body-parser'
 import loggerMiddleware from '../../common/src/middlewares/logger'
 
 import AdminController from './controllers/admin.controller'
-import AdminPackageController from './controllers/admin.package.controller'
 import PortalController from './controllers/portal.controller'
 import WebhookController from './controllers/webhook.controller'
 import {IdentifiersModel} from '../../common/src/data/identifiers'
@@ -20,12 +19,7 @@ const app = new App({
   port: PORT,
   validation: true,
   corsOptions: '*',
-  controllers: [
-    new AdminController(),
-    new PortalController(),
-    new WebhookController(),
-    new AdminPackageController(),
-  ],
+  controllers: [new AdminController(), new PortalController(), new WebhookController()],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],
 })
