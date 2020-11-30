@@ -2,7 +2,6 @@ import {NextFunction, Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {HttpException} from '../../../../common/src/exceptions/httpexception'
 import {authMiddleware} from '../../../../common/src/middlewares/auth'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 

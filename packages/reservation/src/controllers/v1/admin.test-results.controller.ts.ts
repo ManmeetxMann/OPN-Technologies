@@ -7,7 +7,6 @@ import {TestResultsService} from '../../services/test-results.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 
 import {PackageByOrganizationRequest} from '../../models/packages'
-import {HttpException} from '../../../../common/src/exceptions/httpexception'
 import {authMiddleware} from '../../../../common/src/middlewares/auth'
 
 class AdminController implements IControllerBase {

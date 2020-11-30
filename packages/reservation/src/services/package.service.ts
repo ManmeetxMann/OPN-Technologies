@@ -32,10 +32,7 @@ export class PackageService {
       {organizationId},
     )
 
-    const updated = await this.testResultsDBRepository.findWhereEqual(
-      'packageCode',
-      packageCode,
-    )
+    const updated = await this.testResultsDBRepository.findWhereEqual('packageCode', packageCode)
 
     // do not pay attention to this moment, I will correct it later
     return updated.length
