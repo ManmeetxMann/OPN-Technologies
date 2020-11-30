@@ -56,7 +56,7 @@ class AdminController implements IControllerBase {
 
       res.json(actionSucceed(testResult, page))
     } catch (error) {
-      next(new HttpException())
+      next(error)
     }
   }
 }
