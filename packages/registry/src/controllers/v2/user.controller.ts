@@ -42,22 +42,17 @@ class UserController implements IRouteController {
         organizationId: string
         dependants: UserDependant[]
       }
-      const existingDependants = new Set(
-        (await this.userService.getAllDependants(userId)).map(({id}) => id),
-      )
       const added = await this.userService.addDependants(userId, dependants)
 
       await Promise.all(
-        added
-          .filter(({id}) => !existingDependants.has(id))
-          .map((member) =>
-            this.organizationService.addUserToGroup(
-              organizationId,
-              member.groupId,
-              member.id,
-              userId,
-            ),
+        added.map((member, idx) =>
+          this.organizationService.addUserToGroup(
+            organizationId,
+            dependants[idx].groupId,
+            member.id,
+            userId,
           ),
+        ),
       )
 
       res.json(actionSucceed(added))
