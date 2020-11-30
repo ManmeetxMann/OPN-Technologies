@@ -32,7 +32,8 @@
 		"cd-deploy-access": "lerna run --scope @opn/access gcloud_deploy --stream",
 		"cd-deploy-reservation": "lerna run --scope @opn/reservation gcloud_deploy --stream",
 		"cd-deploy-apidocs": "lerna run --scope @opn/apidocs gcloud_deploy --stream",
-		"cd-deploy-tools-pages": "lerna run --scope @opn/tools-pages deploy --stream"
+		"cd-deploy-tools-pages": "lerna run --scope @opn/tools-pages deploy --stream",
+		"migration:migrate-groups-private-field": "ts-node ./packages/add-private-field-to-groups"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
