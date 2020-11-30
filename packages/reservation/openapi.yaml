@@ -277,6 +277,7 @@ paths:
             text/html:
               schema:
                 type: string
+
   /admin/api/v1/send-fax-for-positive:
     post:
       description: Send Fax for positive result
@@ -352,9 +353,11 @@ paths:
         '200':
           description: Successfully Return
           content:
-            text/html:
+            application/json:
               schema:
-                type: string
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentResponse200'
 
   /admin/api/v1/check-appointments:
     post:
@@ -412,10 +415,10 @@ paths:
       description: Add Package Codes for Orgs
       requestBody:
         content:
-          application/x-www-form-urlencoded:
+          application/json:
             schema:
               type: object
-              additionalProperties: true
+              additionalProperties: false
               properties:
                 packageCode:
                   type: string

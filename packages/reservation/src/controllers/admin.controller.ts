@@ -56,7 +56,9 @@ class AdminController implements IControllerBase {
       )
       .post(this.path + '/api/v1/send-fax-for-positive', this.sendFax)
       .get(this.path + '/api/v1/test-results', this.getResultsByOrganizationId)
-    this.router.use('/admin', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
+    this.router.use('/admin', 
+    // middlewareGenerator(Config.get('RESERVATION_PASSWORD')),
+    innerRouter)
   }
 
   getAppointmentByBarCode = async (
@@ -141,6 +143,7 @@ class AdminController implements IControllerBase {
                   appointmentId: currentAppointment.appointmentId,
                   id: row.barCode,
                 }),
+                this.packageService.savePackage(currentAppointment.packageCode)
               ])
             }
 
@@ -216,9 +219,9 @@ class AdminController implements IControllerBase {
           })
           return appointment
         })
-        .then((appointment: AppointmentDTO) => {
-          this.packageService.savePackage(appointment.packageCode)
-        })
+        // .then((appointment: AppointmentDTO) => {
+        //   this.packageService.savePackage(appointment.packageCode)
+        // })
 
       res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {

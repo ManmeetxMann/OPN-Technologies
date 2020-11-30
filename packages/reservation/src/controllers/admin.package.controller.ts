@@ -3,6 +3,8 @@ import {NextFunction, Request, Response, Router} from 'express'
 import {ResourceNotFoundException} from 'packages/common/src/exceptions/resource-not-found-exception'
 import IControllerBase from 'packages/common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from 'packages/common/src/utils/response-wrapper'
+import {middlewareGenerator} from 'packages/common/src/middlewares/basic-auth'
+import {Config} from 'packages/common/src/utils/config'
 
 import {TestResultsService} from '../services/test-results.service'
 import {PackageService} from '../services/package.service'
@@ -12,7 +14,7 @@ import {SavePackageAndOrganizationRequest} from '../models/packages'
 import packageValidations from '../validations/package.validations'
 
 class AdminPackageController implements IControllerBase {
-  public path = '/packages'
+  public path = '/admin'
   public router = Router()
   private packageService = new PackageService()
   private testResultsService = new TestResultsService()
@@ -22,7 +24,10 @@ class AdminPackageController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.post(this.path + '/', packageValidations.packageValidation, this.addPackageCode)
+    const innerRouter = Router({mergeParams: true})
+
+    this.router.post(this.path + '/api/v1/packages', packageValidations.packageValidation, this.addPackageCode)
+    this.router.use('/admin', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
   }
 
   addPackageCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
