@@ -325,7 +325,7 @@ paths:
               schema:
                 type: string
 
-  /admin/api/v1/test-results:
+  /reservation/admin/api/v1/test-results:
     get:
       description: Get test results by organization ID
       parameters:
@@ -423,6 +423,9 @@ paths:
                   type: string
                 organizationId:
                   type: string
+              required:
+                - packageCode
+                - organizationId
       responses:
         '200':
           description: Successfully handled
