@@ -20,3 +20,6 @@ export const actionSucceed = <T>(data: T = null, page = 0): ResponseWrapper<T> =
 
 export const actionFailed = <T>(message?: string, data: T = null): ResponseWrapper<T> =>
   of(data, ResponseStatusCodes.Failed, message)
+
+export const actionReplyInsufficientPermission = <T>(data: T = null): ResponseWrapper<T> =>
+  of(data, ResponseStatusCodes.Failed, 'Insufficient permissions to fulfil the request')

@@ -109,6 +109,17 @@ paths:
               schema:
                 type: string
 
+  /admin/page/send-fax-for-positive:
+    get:
+      description: Form to Send Fax for Positive results
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/html:
+              schema:
+                type: string
+
   /admin/page/appointment-by-bar-code:
     get:
       description: Show Form to Enter Bar Code
@@ -179,6 +190,7 @@ paths:
                           enum:
                             - Positive
                             - Negative
+                            - 2019-nCoV Detected
                         famEGene:
                           type: string
                         famCt:
@@ -225,6 +237,7 @@ paths:
                   enum:
                     - Positive
                     - Negative
+                    - 2019-nCoV Detected
                 famEGene:
                   type: string
                 famCt:
@@ -257,6 +270,30 @@ paths:
                 - hexIC
                 - hexCt
                 - resultDate
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/html:
+              schema:
+                type: string
+  /admin/api/v1/send-fax-for-positive:
+    post:
+      description: Send Fax for positive result
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                barCode:
+                  type: string
+                faxNumber:
+                  type: string
+              required:
+                - barCode
+                - faxNumber
       responses:
         '200':
           description: Successfully Return

@@ -14,6 +14,7 @@ import * as _ from 'lodash'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {AuthService} from '../../../common/src/service/auth/auth-service'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
+import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 
 class UserController implements IControllerBase {
   public path = '/user'
@@ -58,6 +59,14 @@ class UserController implements IControllerBase {
       const authUser = !!idToken ? await this.authService.verifyAuthToken(idToken) : null
       if (idToken && !authUser) {
         throw new UnauthorizedException(`Cannot verify id-token`)
+      }
+
+      // check if auth user is already there
+      const usersByAuthId = await this.userService.findAllByAuthUserId(authUser.uid)
+      if (usersByAuthId && usersByAuthId.length) {
+        if (usersByAuthId.some((user) => user.email === authUser.email)) {
+          throw new ResourceAlreadyExistsException(authUser.email)
+        }
       }
 
       // Create user
@@ -123,6 +132,10 @@ class UserController implements IControllerBase {
       let dependents: UserDependant[] = []
       let lookupIds: string[] = [userId]
 
+      // get all groups under the org to use as filter
+      const orgGroups = await this.organizationService.getGroups(organizationId)
+      const groupIdsForOrg = orgGroups.map((group) => group.id)
+
       // Get appropriately Dependent vs User
       if (parentUserId) {
         // Get User
@@ -132,8 +145,12 @@ class UserController implements IControllerBase {
         // Get User
         user = (await this.userService.findOne(userId)) as UserWithGroup
 
-        // Get dependents (if any)
+        // Get dependents only just under org
         dependents = await this.userService.getAllDependants(userId)
+        dependents = dependents.filter(
+          (dependent) => groupIdsForOrg.indexOf(dependent.groupId) > -1,
+        )
+
         const dependentIds = dependents.map((dependent) => dependent.id)
         lookupIds = [...lookupIds, ...dependentIds]
       }

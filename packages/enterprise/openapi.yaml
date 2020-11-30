@@ -590,7 +590,20 @@ components:
         appliesTo:
           type: array
           items:
-            type: string
+            oneOf:
+              - type: string
+              - type: object
+                properties:
+                  id:
+                    type: string
+                  firstName:
+                    type: string
+                  lastName:
+                    type: string
+                  base64Photo:
+                    type: string
+                  group:
+                    $ref: '#/components/schemas/OrganizationGroup'
         locationId:
           type: string
         attestationTime:
@@ -751,6 +764,10 @@ components:
         memberId:
           type: string
           nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
       required:
         - firstName
         - lastName
@@ -2494,6 +2511,11 @@ paths:
             type: integer
             minimum: 1
           required: true
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
+          required: false
       responses:
         '200':
           description: Successfully returned
@@ -2659,6 +2681,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
+
+  /enterprise/api/v3/users/search:
+    get:
+      summary: Search users list
+      description: Find `User`(s) by admin
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Account management
+      parameters:
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsersByOrganization'
 
   /enterprise/api/v3/users/migration:
     post:

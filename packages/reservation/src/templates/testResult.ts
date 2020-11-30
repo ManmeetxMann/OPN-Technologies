@@ -27,7 +27,8 @@ const generate = (
   params: TestResultsDTOForEmail,
   resultDate: string,
 ): {content: Content[]; tableLayouts: TableLayouts} => {
-  const isPositive = params.result === ResultTypes.Positive
+  const isPositive =
+    params.result === ResultTypes.Positive || params.result === ResultTypes.Detected2019nCoV
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
   return {

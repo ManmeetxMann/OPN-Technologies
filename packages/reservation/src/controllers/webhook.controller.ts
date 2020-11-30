@@ -27,7 +27,11 @@ class WebhookController implements IControllerBase {
 
       const newBarcode = await this.appoinmentService.getNextBarCodeNumber()
 
-      await this.appoinmentService.addBarcodeAppointment(id, newBarcode)
+      const appointment = await this.appoinmentService.getAppoinmentByBarCode(newBarcode)
+
+      if (!appointment) {
+        await this.appoinmentService.addBarcodeAppointment(id, newBarcode)
+      }
 
       res.json(actionSucceed(''))
     } catch (error) {

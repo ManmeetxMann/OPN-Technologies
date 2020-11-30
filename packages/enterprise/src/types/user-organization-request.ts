@@ -6,4 +6,5 @@ export type ConnectOrganizationRequest = {
 
 export type UsersByOrganizationRequest = PageableRequestFilter & {
   organizationId?: string
+  searchQuery?: string
 }
