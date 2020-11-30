@@ -44,6 +44,6 @@ export class PackageService {
 
   async isExist(packageCode: string): Promise<boolean> {
     const result = await this.packageRepository.findWhereEqual('packageCode', packageCode)
-    return new Boolean(result.length)
+    return !!result.length
   }
 }
