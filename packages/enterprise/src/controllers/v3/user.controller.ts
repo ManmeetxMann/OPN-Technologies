@@ -56,8 +56,12 @@ const search: Handler = async (req, res, next): Promise<void> => {
           searchQuery,
         )
 
+        const usersUniqueById = [
+          ...new Map(usersArray.flat().map((item) => [item.id, item])).values(),
+        ]
+
         return await Promise.all(
-          usersArray.flat().map(async (user: User) => {
+          usersUniqueById.map(async (user: User) => {
             const groupName = await organizationService
               .getUserGroup(organizationId, user.id)
               .then(({name}) => name)
