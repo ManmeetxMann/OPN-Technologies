@@ -25,7 +25,9 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 
 import CSVValidator from '../validations/csv.validations'
+import packageValidations from '../validations/package.validations'
 import {PackageByOrganizationRequest} from '../models/packages'
+import {SavePackageAndOrganizationRequest} from '../models/packages'
 
 class AdminController implements IControllerBase {
   public path = ''
@@ -44,18 +46,24 @@ class AdminController implements IControllerBase {
       .post(this.path + '/api/v1/appointment', this.getAppointmentByBarCode)
       .post(
         this.path + '/api/v1/send-and-save-test-results',
-        CSVValidator.csvValidation,
+        CSVValidator.csvValidation(),
         this.sendAndSaveTestResults,
       )
       .post(this.path + '/api/v1/send-test-results-again', this.sendTestResultsAgain)
       .post(this.path + '/api/v1/check-appointments', this.checkAppointments)
       .post(
         this.path + '/api/v1/send-and-save-test-results-bulk',
-        CSVValidator.csvBulkValidation,
+        CSVValidator.csvBulkValidation(),
         this.sendAndSaveTestResultsBulk,
       )
       .post(this.path + '/api/v1/send-fax-for-positive', this.sendFax)
       .get(this.path + '/api/v1/test-results', this.getResultsByOrganizationId)
+      .post(
+        this.path + '/api/v1/packages',
+        packageValidations.packageValidation(),
+        this.addPackageCode,
+      )
+
     this.router.use('/admin', middlewareGenerator(Config.get('RESERVATION_PASSWORD')), innerRouter)
   }
 
@@ -123,7 +131,9 @@ class AdminController implements IControllerBase {
                   'Something wend wrong. Results are not available.',
                 )
               }
-              await this.testResultsService.sendTestResults({...testResults}, resultDate)
+
+              await this.packageService.savePackage(appointmentsByBarCode[row.barCode].packageCode),
+                await this.testResultsService.sendTestResults({...testResults}, resultDate)
             } else {
               const currentAppointment = appointmentsByBarCode[row.barCode]
               if (!currentAppointment) {
@@ -190,6 +200,8 @@ class AdminController implements IControllerBase {
       if (requestData.needConfirmation) {
         const appointment = await this.appoinmentService.getAppoinmentByBarCode(requestData.barCode)
 
+        await this.packageService.savePackage(appointment.packageCode)
+
         res.json(actionSucceed(appointment))
         return
       }
@@ -217,9 +229,9 @@ class AdminController implements IControllerBase {
           })
           return appointment
         })
-      // .then((appointment: AppointmentDTO) => {
-      //   this.packageService.savePackage(appointment.packageCode)
-      // })
+        .then((appointment: AppointmentDTO) => {
+          this.packageService.savePackage(appointment.packageCode)
+        })
 
       res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {
@@ -313,6 +325,32 @@ class AdminController implements IControllerBase {
       )
 
       res.json(actionSucceed(testResult))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  addPackageCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {packageCode, organizationId} = req.body as SavePackageAndOrganizationRequest
+
+      const results = await this.testResultsService.getResultsByPackageCode(packageCode)
+
+      if (!results.length) {
+        throw new ResourceNotFoundException(
+          `Results are not avaiable for this packageCode: ${packageCode}`,
+        )
+      }
+
+      await this.packageService.savePackage(packageCode, organizationId)
+
+      console.warn(
+        `${results.length} ${
+          results.length == 1 ? 'result' : 'results'
+        } updated for the organization ${organizationId}`,
+      )
+
+      res.json(actionSucceed(''))
     } catch (error) {
       next(error)
     }
