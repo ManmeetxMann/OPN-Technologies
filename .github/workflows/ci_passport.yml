@@ -8,7 +8,7 @@ on:
       - ".github/workflows/ci_passport.yml"
       - ".github/actions/**"
     branches: 
-      - development
+      - ci_cd
     tags:
       - infra-dev-passport-*
       - preprod-passport-*

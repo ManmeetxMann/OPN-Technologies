@@ -7,7 +7,7 @@ on:
       - ".github/workflows/ci_apidocs.yml"
       - ".github/actions/**"
     branches: 
-      - development
+      - ci_cd
     tags:
       - infra-dev-apidocs-*
       - preprod-apidocs-*
