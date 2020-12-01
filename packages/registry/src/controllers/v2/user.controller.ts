@@ -48,7 +48,7 @@ class UserController implements IRouteController {
         added.map((member, idx) =>
           this.organizationService.addUserToGroup(
             organizationId,
-            dependants[idx].groupId,
+            dependants[index].groupId,
             member.id,
             userId,
           ),
