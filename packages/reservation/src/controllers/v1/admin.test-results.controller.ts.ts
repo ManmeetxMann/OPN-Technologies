@@ -8,7 +8,6 @@ import {BadRequestException} from '../../../../common/src/exceptions/bad-request
 
 import {PackageByOrganizationRequest} from '../../models/packages'
 import {authMiddleware} from '../../../../common/src/middlewares/auth'
-import {Config} from '../../../../common/src/utils/config'
 import moment from 'moment'
 
 class AdminController implements IControllerBase {
