@@ -1,5 +1,5 @@
 import {initializeApp, credential, firestore} from 'firebase-admin'
-import {Config} from '../common/src/utils/config'
+import {Config} from '../packages/common/src/utils/config'
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
