@@ -19,6 +19,7 @@ import {UserGroupRepository} from '../repository/user-group.repository'
 import {OrganizationUsersGroupModel} from '../repository/organization.repository'
 import {UserModel} from '../../../common/src/data/user'
 import {isEmail} from '../../../common/src/utils/utils'
+import {CursoredUsersRequestFilter} from '../types/user-organization-request'
 
 export class UserService {
   private dataStore = new DataStore()
@@ -227,6 +228,57 @@ export class UserService {
     }
 
     return Promise.all(searchPromises)
+  }
+
+  async findAllUsers({
+    organizationId,
+    from,
+    limit,
+    query,
+  }: CursoredUsersRequestFilter): Promise<User[]> {
+    const organizationContextualQuery = this.userRepository.getQueryFindWhereArrayContains(
+      'organizationIds',
+      organizationId,
+    )
+    const fromSnapshot = from ? await this.userRepository.collection().docRef(from).get() : null
+    const baseQuery = fromSnapshot
+      ? organizationContextualQuery.startAfter(fromSnapshot)
+      : organizationContextualQuery
+
+    if (!query) {
+      return baseQuery.limit(limit).fetch()
+    }
+
+    const searchKeywords = query.split(' ')
+    const filterableFields: (keyof Omit<User, 'id'>)[] = ['email', 'firstName', 'lastName']
+    const combinationQueries = []
+    for (const field of filterableFields) {
+      for (const keyword of searchKeywords) {
+        // FIXME:
+        combinationQueries.push(
+          // - WORKS with no cursor
+          this.userRepository
+            .getQueryFindWhereArrayContains('organizationIds', organizationId)
+            .where(field, '==', keyword)
+            .limit(limit)
+            .fetch(),
+
+          // - DOESN'T WORK with cursor
+          //Error: Cannot specify a where() filter after calling startAt(), startAfter(), endBefore() or endAt().
+          this.userRepository
+            .getQueryFindWhereArrayContains('organizationIds', organizationId)
+            .startAfter(fromSnapshot)
+            .where(field, '==', keyword)
+            .limit(limit)
+            .fetch(),
+
+          // DOESN'T WORK with and without cursor:
+          //Error: Cannot specify a where() filter after calling startAt(), startAfter(), endBefore() or endAt().
+          baseQuery.where(field, '==', keyword).fetch(),
+        )
+      }
+    }
+    return Promise.all(combinationQueries).then((results) => results.flat().slice(0, limit + 1))
   }
 
   getAllByOrganizationId(organizationId: string, page: number, perPage: number): Promise<User[]> {

@@ -1,18 +1,18 @@
-import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
+import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {
   actionReplyInsufficientPermission,
   actionSucceed,
-} from '../../../common/src/utils/response-wrapper'
-import {HttpException} from '../../../common/src/exceptions/httpexception'
-import {User, UserDependant} from '../../../common/src/data/user'
-import {UserService} from '../../../common/src/service/user/user-service'
-import {authMiddleware} from '../../../common/src/middlewares/auth'
-import {AdminProfile} from '../../../common/src/data/admin'
-import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
-import {now} from '../../../common/src/utils/times'
-import {safeTimestamp} from '../../../common/src/utils/datetime-util'
-import {Config} from '../../../common/src/utils/config'
-import {PdfService} from '../../../common/src/service/reports/pdf'
+} from '../../../../common/src/utils/response-wrapper'
+import {HttpException} from '../../../../common/src/exceptions/httpexception'
+import {User, UserDependant} from '../../../../common/src/data/user'
+import {UserService} from '../../../../common/src/service/user/user-service'
+import {authMiddleware} from '../../../../common/src/middlewares/auth'
+import {AdminProfile} from '../../../../common/src/data/admin'
+import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+import {now} from '../../../../common/src/utils/times'
+import {safeTimestamp} from '../../../../common/src/utils/datetime-util'
+import {Config} from '../../../../common/src/utils/config'
+import {PdfService} from '../../../../common/src/service/reports/pdf'
 
 import {
   Organization,
@@ -21,19 +21,19 @@ import {
   OrganizationUsersGroup,
   OrganizationUsersGroupMoveOperation,
   OrganizationReminderSchedule,
-} from '../models/organization'
-import {OrganizationService} from '../services/organization-service'
-import {ReportService} from '../services/report-service'
-import {StatsFilter} from '../models/stats'
-import {FamilyStatusReportRequest, UserContactTraceReportRequest} from '../types/trace-request'
+} from '../../models/organization'
+import {OrganizationService} from '../../services/organization-service'
+import {ReportService} from '../../services/report-service'
+import {StatsFilter} from '../../models/stats'
+import {FamilyStatusReportRequest, UserContactTraceReportRequest} from '../../types/trace-request'
 
-import {AttestationService} from '../../../passport/src/services/attestation-service'
-import {PassportStatuses} from '../../../passport/src/models/passport'
+import {AttestationService} from '../../../../passport/src/services/attestation-service'
+import {PassportStatuses} from '../../../../passport/src/models/passport'
 
-import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
-import {Questionnaire} from '../../../lookup/src/models/questionnaire'
+import {QuestionnaireService} from '../../../../lookup/src/services/questionnaire-service'
+import {Questionnaire} from '../../../../lookup/src/models/questionnaire'
 
-import {Access} from '../../../access/src/models/access'
+import {Access} from '../../../../access/src/models/access'
 
 import {NextFunction, Request, Response, Router} from 'express'
 import moment from 'moment'

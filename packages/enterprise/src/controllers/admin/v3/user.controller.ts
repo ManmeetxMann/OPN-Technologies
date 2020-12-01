@@ -11,6 +11,7 @@ import {CreateUserByAdminRequest} from '../../types/new-user'
 import {UpdateUserByAdminRequest} from '../../types/update-user-request'
 import {UsersByOrganizationRequest} from '../../types/user-organization-request'
 import {flatten} from 'lodash'
+
 const userService = new UserService()
 const organizationService = new OrganizationService()
 
@@ -40,21 +41,18 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
     )
 
     const orgGroups = await organizationService.getGroups(organizationId)
-    const groupsById: Record<string, {id: string; name: string}> = orgGroups.reduce(
+    const groupsById: Record<string, OrganizationGroup> = orgGroups.reduce(
       (lookup, orgGroup) => ({
         ...lookup,
-        [orgGroup.id]: {
-          id: orgGroup.id,
-          name: orgGroup.name,
-        },
+        [orgGroup.id]: orgGroup,
       }),
       {},
     )
 
-    const groupsByUserId: Record<string, {id: string; name: string}> = usersGroups.reduce(
+    const groupsByUserId: Record<string, OrganizationGroup> = usersGroups.reduce(
       (lookup, usersGroup) => ({
         ...lookup,
-        [usersGroup.userId]: groupsById[usersGroup.groupId] || '',
+        [usersGroup.userId]: groupsById[usersGroup.groupId],
       }),
       {},
     )
@@ -62,9 +60,9 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
     const resultUsers = await Promise.all(
       users.map(async (user: User) => {
         return {
-          ...userDTOResponse(user),
-          groupName: groupsByUserId[user.id].name,
-          groupId: groupsByUserId[user.id].id,
+          ...userDTOFrom(user),
+          groupId: groupsByUserId[user.id]?.id,
+          groupName: groupsByUserId[user.id]?.name,
           memberId: user.memberId,
           createdAt:
             user.timestamps && user.timestamps.createdAt
@@ -107,7 +105,7 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
       await userService.createOrganizationProfile(user.id, organizationId, memberId)
     }
 
-    res.json(actionSucceed(userDTOResponse(user)))
+    res.json(actionSucceed(userDTOFrom(user)))
   } catch (error) {
     next(error)
   }
@@ -130,13 +128,13 @@ const updateUser: Handler = async (req, res, next): Promise<void> => {
       await organizationService.updateGroupForUser(organizationId, currentGroup.id, userId, groupId)
     }
 
-    res.json(actionSucceed(userDTOResponse(updatedUser)))
+    res.json(actionSucceed(userDTOFrom(updatedUser)))
   } catch (error) {
     next(error)
   }
 }
 
-class AdminUserController implements IControllerBase {
+class UserController implements IControllerBase {
   public router = express.Router()
 
   constructor() {
@@ -159,4 +157,4 @@ class AdminUserController implements IControllerBase {
   }
 }
 
-export default AdminUserController
+export default UserController
