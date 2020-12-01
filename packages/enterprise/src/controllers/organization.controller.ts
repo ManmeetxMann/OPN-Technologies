@@ -251,9 +251,15 @@ class OrganizationController implements IControllerBase {
         locations.map(async (location) => this.populateZones(location, organizationId)),
       )
 
-      locations.sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))
+      // Filter NFC gates out
+      const filteredLocations = locations.filter(
+        (location) => !('nfcGateOnly' in location && location.nfcGateOnly === true),
+      )
 
-      res.json(actionSucceed(locations))
+      // Sort
+      filteredLocations.sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))
+
+      res.json(actionSucceed(filteredLocations))
     } catch (error) {
       next(error)
     }
