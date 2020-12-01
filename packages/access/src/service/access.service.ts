@@ -127,7 +127,7 @@ export class AccessService {
     const count = Object.keys(dependants).length + (access.includesGuardian ? 1 : 0)
 
     console.log(`Processed an ENTER for Access id: ${access.id}`)
-
+    // @ts-ignore we have removed 'createdAt', but update does not require a complete object
     return this.accessRepository.update(newAccess).then((savedAccess) =>
       this.incrementPeopleOnPremises(access.locationId, count)
         .then(() =>
@@ -156,6 +156,7 @@ export class AccessService {
   handleExit(rawAccess: AccessModel): Promise<AccessWithDependantNames> {
     // createdAt could be a string, and we don't want to rewrite it
     const {createdAt, ...access} = rawAccess
+
     const {includesGuardian} = access
     const dependantIds = Object.keys(access.dependants)
     if (!includesGuardian && !dependantIds.length) {
@@ -215,7 +216,7 @@ export class AccessService {
         : Object.keys(access.dependants)[0]
 
     console.log(`Processed an EXIT for Access id: ${access.id}`)
-
+    // @ts-ignore we have removed 'createdAt', but update does not require a complete object
     return this.accessRepository.update(newAccess).then((savedAccess) =>
       this.decreasePeopleOnPremises(access.locationId, count)
         .then(() =>
