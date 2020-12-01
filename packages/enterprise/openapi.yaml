@@ -861,6 +861,12 @@ components:
         memberId:
           type: string
           nullable: true
+        groupId:
+          type: string
+          nullable: true
+        organizationId:
+          type: string
+          nullable: true
 
     MigrateUserRequest:
       type: object

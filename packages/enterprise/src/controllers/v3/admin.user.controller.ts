@@ -114,9 +114,17 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
  */
 const updateUser: Handler = async (req, res, next): Promise<void> => {
   try {
-    const source = req.body as UpdateUserByAdminRequest
+    const {organizationId, groupId, ...source} = req.body as UpdateUserByAdminRequest
     const {userId} = req.params
     const updatedUser = await userService.updateByAdmin(userId, source)
+
+    // Assert that the group exists
+    await organizationService.getGroup(organizationId, groupId)
+
+    if (groupId) {
+      await organizationService.addUserToGroup(organizationId, groupId, userId)
+    }
+
     res.json(actionSucceed(userDTOResponse(updatedUser)))
   } catch (error) {
     next(error)
