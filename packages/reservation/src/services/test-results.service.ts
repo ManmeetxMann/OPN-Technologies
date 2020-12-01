@@ -98,9 +98,7 @@ export class TestResultsService {
       organizationId,
     )
 
-    if (dateOfAppointmentStr) {
-      testResultQuery.where('dateOfAppointment', '==', dateOfAppointmentStr)
-    }
+    testResultQuery.where('dateOfAppointment', '==', dateOfAppointmentStr)
 
     const testResults = await this.testResultsDBRepository.fetchPage(testResultQuery, page, perPage)
 
