@@ -1,7 +1,8 @@
 import DataStore from '../../../common/src/data/datastore'
+import {UserDependantModel} from '../../../common/src/data/user'
 import {Config} from '../../../common/src/utils/config'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {UserService} from '../../../common/src/service/user/user-service'
+
 import {
   Organization,
   OrganizationGroup,
@@ -29,7 +30,6 @@ const HANDLE_LEGACY_LOCATIONS =
 
 export class OrganizationService {
   private dataStore = new DataStore()
-  private userService = new UserService()
   private organizationRepository = new OrganizationModel(this.dataStore)
   private allLocationsRepo = new AllLocationsModel(this.dataStore)
   private organizationKeySequenceRepository = new OrganizationKeySequenceModel(this.dataStore)
@@ -306,10 +306,9 @@ export class OrganizationService {
       )
 
       if (target.parentUserId) {
+        const dependantModel = new UserDependantModel(this.dataStore, target.parentUserId)
         // user is a dependant, we need to update them directly
-        await this.userService.updateDependantProperties(target.parentUserId, target.userId, {
-          groupId: newGroupId,
-        })
+        await dependantModel.updateProperty(target.id, 'groupId', newGroupId)
       }
       return result
     }
