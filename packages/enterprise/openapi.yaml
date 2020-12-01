@@ -150,6 +150,8 @@ components:
           type: string
         validUntil:
           type: string
+        nfcGateOnly:
+          type: boolean
       required:
         - title
         - attestationRequired
