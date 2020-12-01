@@ -90,7 +90,10 @@ export class AccessService {
       }))
   }
 
-  handleEnter(access: AccessModel): Promise<AccessWithDependantNames> {
+  handleEnter(rawAccess: AccessModel): Promise<AccessWithDependantNames> {
+    // createdAt could be a string, and we don't want to rewrite it
+    const {createdAt, ...access} = rawAccess
+
     if (!!access.enteredAt || !!access.exitAt) {
       throw new BadRequestException('Token already used to enter or exit')
     }
@@ -150,7 +153,9 @@ export class AccessService {
     )
   }
 
-  handleExit(access: AccessModel): Promise<AccessWithDependantNames> {
+  handleExit(rawAccess: AccessModel): Promise<AccessWithDependantNames> {
+    // createdAt could be a string, and we don't want to rewrite it
+    const {createdAt, ...access} = rawAccess
     const {includesGuardian} = access
     const dependantIds = Object.keys(access.dependants)
     if (!includesGuardian && !dependantIds.length) {
