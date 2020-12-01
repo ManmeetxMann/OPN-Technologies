@@ -45,10 +45,10 @@ class UserController implements IRouteController {
       const added = await this.userService.addDependants(userId, dependants)
 
       await Promise.all(
-        added.map((member) =>
+        added.map((member, index) =>
           this.organizationService.addUserToGroup(
             organizationId,
-            member.groupId,
+            dependants[index].groupId,
             member.id,
             userId,
           ),

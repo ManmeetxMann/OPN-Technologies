@@ -1,4 +1,5 @@
 import DataStore from '../../../common/src/data/datastore'
+import {UserDependantModel} from '../../../common/src/data/user'
 import {Config} from '../../../common/src/utils/config'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
@@ -290,24 +291,31 @@ export class OrganizationService {
     })
   }
 
-  updateGroupForUser(
+  async updateGroupForUser(
     organizationId: string,
     groupId: string,
     userId: string,
     newGroupId: string,
   ): Promise<OrganizationUsersGroup> {
-    return this.getOneUsersGroup(organizationId, groupId, userId).then((target) => {
-      if (target)
-        return this.getUsersGroupRepositoryFor(organizationId).updateProperty(
-          target.id,
-          'groupId',
-          newGroupId,
-        )
-
-      throw new ResourceNotFoundException(
-        `Cannot find relation user-group for groupId [${groupId}] and userId [${userId}] in org [${organizationId}]`,
+    const target = await this.getOneUsersGroup(organizationId, groupId, userId)
+    if (target) {
+      const result = await this.getUsersGroupRepositoryFor(organizationId).updateProperty(
+        target.id,
+        'groupId',
+        newGroupId,
       )
-    })
+
+      if (target.parentUserId) {
+        const dependantModel = new UserDependantModel(this.dataStore, target.parentUserId)
+        // user is a dependant, we need to update them directly
+        await dependantModel.updateProperty(target.id, 'groupId', newGroupId)
+      }
+      return result
+    }
+
+    throw new ResourceNotFoundException(
+      `Cannot find relation user-group for groupId [${groupId}] and userId [${userId}]`,
+    )
   }
 
   removeUserFromGroup(organizationId: string, groupId: string, userId: string): Promise<void> {
