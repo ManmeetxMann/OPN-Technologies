@@ -8,7 +8,6 @@ import {BadRequestException} from '../../../../common/src/exceptions/bad-request
 
 import {PackageByOrganizationRequest} from '../../models/packages'
 import {authMiddleware} from '../../../../common/src/middlewares/auth'
-import {Config} from '../../../../common/src/utils/config'
 import moment from 'moment'
 
 class AdminController implements IControllerBase {
@@ -50,9 +49,7 @@ class AdminController implements IControllerBase {
 
       //TODO: Update DB to use Date instead of String from Acuity
       //Map to DB Field Format
-      const timeZone = Config.get('DEFAULT_TIME_ZONE')
-      const dateOfAppointmentStr = moment(dateOfAppointment).tz(timeZone).format('MMMM DD, YYYY')
-
+      const dateOfAppointmentStr = moment.utc(dateOfAppointment).format('MMMM DD, YYYY')
       const testResult = await this.testResultsService.getAllByOrganizationId(
         organizationId,
         dateOfAppointmentStr,
