@@ -89,7 +89,7 @@ export class TestResultsService {
 
   async getAllByOrganizationId(
     organizationId: string,
-    dateOfAppointment: Date,
+    dateOfAppointmentStr: string,
     page: number,
     perPage: number,
   ): Promise<TestResultForPagination[]> {
@@ -98,8 +98,8 @@ export class TestResultsService {
       organizationId,
     )
 
-    if (dateOfAppointment) {
-      testResultQuery.where('dateOfAppointment', '==', dateOfAppointment)
+    if (dateOfAppointmentStr) {
+      testResultQuery.where('dateOfAppointment', '==', dateOfAppointmentStr)
     }
 
     const testResults = await this.testResultsDBRepository.fetchPage(testResultQuery, page, perPage)

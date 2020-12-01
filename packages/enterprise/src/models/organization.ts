@@ -72,6 +72,7 @@ export type OrganizationLocation = {
   } & OrganizationConfiguration)[]
   validFrom?: string
   validUntil?: string
+  nfcGateOnly?: boolean
 } & OrganizationConfiguration
 
 export type OrganizationConfiguration = {

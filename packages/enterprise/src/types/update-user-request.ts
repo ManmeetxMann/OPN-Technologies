@@ -13,4 +13,6 @@ export type UpdateUserByAdminRequest = {
   photo?: string //url
   phone?: Phone
   memberId?: string
+  groupId?: string
+  organizationId?: string
 }

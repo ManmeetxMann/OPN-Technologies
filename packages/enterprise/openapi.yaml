@@ -150,6 +150,8 @@ components:
           type: string
         validUntil:
           type: string
+        nfcGateOnly:
+          type: boolean
       required:
         - title
         - attestationRequired
@@ -859,6 +861,12 @@ components:
           description: Photo URL
           nullable: true
         memberId:
+          type: string
+          nullable: true
+        groupId:
+          type: string
+          nullable: true
+        organizationId:
           type: string
           nullable: true
 
