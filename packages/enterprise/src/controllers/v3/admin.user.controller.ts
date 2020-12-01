@@ -122,6 +122,8 @@ const updateUser: Handler = async (req, res, next): Promise<void> => {
     await organizationService.getGroup(organizationId, groupId)
 
     if (groupId) {
+      const currentGroup = await organizationService.getUserGroup(organizationId, userId)
+      await organizationService.removeUserFromGroup(organizationId, currentGroup.id, userId)
       await organizationService.addUserToGroup(organizationId, groupId, userId)
     }
 
