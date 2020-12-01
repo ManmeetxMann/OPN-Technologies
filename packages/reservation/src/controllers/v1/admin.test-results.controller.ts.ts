@@ -22,7 +22,7 @@ class AdminController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.get(
       this.path + '/api/v1/test-results',
-      authMiddleware,  
+      authMiddleware,
       this.getResultsByOrganizationId,
     )
 
