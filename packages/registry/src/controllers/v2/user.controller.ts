@@ -45,7 +45,7 @@ class UserController implements IRouteController {
       const added = await this.userService.addDependants(userId, dependants)
 
       await Promise.all(
-        added.map((member, idx) =>
+        added.map((member, index) =>
           this.organizationService.addUserToGroup(
             organizationId,
             dependants[index].groupId,
