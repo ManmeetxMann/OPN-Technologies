@@ -123,8 +123,7 @@ const updateUser: Handler = async (req, res, next): Promise<void> => {
 
     if (groupId) {
       const currentGroup = await organizationService.getUserGroup(organizationId, userId)
-      await organizationService.removeUserFromGroup(organizationId, currentGroup.id, userId)
-      await organizationService.addUserToGroup(organizationId, groupId, userId)
+      await organizationService.updateGroupForUser(organizationId, currentGroup.id, userId, groupId)
     }
 
     res.json(actionSucceed(userDTOResponse(updatedUser)))
