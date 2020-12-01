@@ -117,6 +117,7 @@ export class TestResultsService {
         resultDate: result.resultDate,
         dateOfAppointment: result.dateOfAppointment,
         timeOfAppointment: result.timeOfAppointment,
+        testType: 'PCR',
       }),
     )
   }
