@@ -8,8 +8,8 @@ export type RequestFilter = {
 }
 
 export type CursoredRequestFilter = RequestFilter & {
-  from: string // last document ID
-  limit: number
+  from?: string // last document ID
+  limit?: number
 }
 
 export type OrganizationRequestFilter = {
