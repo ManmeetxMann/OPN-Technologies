@@ -112,7 +112,7 @@ export class TestResultsService {
         dateOfAppointment: result.dateOfAppointment,
         timeOfAppointment: result.timeOfAppointment,
         testType: 'PCR',
-        id: result.id
+        id: result.id,
       }),
     )
   }
