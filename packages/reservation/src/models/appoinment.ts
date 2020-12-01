@@ -123,4 +123,5 @@ export type TestResultForPagination = {
   resultDate: Date
   dateOfAppointment: string
   timeOfAppointment: string
+  testType: string
 }
