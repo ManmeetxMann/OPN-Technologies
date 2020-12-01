@@ -20,6 +20,12 @@ export class PackageService {
     return this.packageRepository.fetchPage(query, page, perPage)
   }
 
+  async getByPackageCode(packageCode: string): Promise<PackageBase> {
+    const result = await this.packageRepository.findWhereEqual('packageCode', packageCode)
+
+    return result[0]
+  }
+
   async savePackage(packageCode: string, organizationId: string = null): Promise<number> {
     await this.packageRepository.add({
       packageCode: packageCode,
