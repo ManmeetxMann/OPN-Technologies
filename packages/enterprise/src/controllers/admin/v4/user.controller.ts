@@ -22,6 +22,7 @@ const organizationService = new OrganizationService()
 const findAll: Handler = async (req, res, next): Promise<void> => {
   try {
     const {organizationId, ...filter} = (req.query as unknown) as CursoredUsersRequestFilter
+    const limit = Math.min(filter.limit ?? 20, 50)
     const admin = (res.locals.authenticatedUser as User).admin as AdminProfile
 
     // Assert admin has granted access to organization
@@ -38,7 +39,7 @@ const findAll: Handler = async (req, res, next): Promise<void> => {
     const users = await userService.findAllUsers({
       ...filter,
       organizationId,
-      limit: Math.min(filter.limit ?? 20, 50),
+      limit,
     })
 
     // Fetch groups
@@ -70,7 +71,7 @@ const findAll: Handler = async (req, res, next): Promise<void> => {
     res.json({
       ...actionSucceed(data),
       last: filter.from ?? null,
-      next: data[data.length - 1]?.id ?? null,
+      next: data.length < limit ? null : data[data.length - 1].id,
     })
   } catch (error) {
     next(error)

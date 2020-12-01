@@ -236,46 +236,30 @@ export class UserService {
     limit,
     query,
   }: CursoredUsersRequestFilter): Promise<User[]> {
-    const organizationContextualQuery = this.userRepository.getQueryFindWhereArrayContains(
-      'organizationIds',
-      organizationId,
-    )
+    // Pre-build organization-filtered query
+    // That has to be a function to avoid mutating the same query object in the below for-loop
+    const organizationContextualQuery = () =>
+      this.userRepository.getQueryFindWhereArrayContains('organizationIds', organizationId)
     const fromSnapshot = from ? await this.userRepository.collection().docRef(from).get() : null
-    const baseQuery = fromSnapshot
-      ? organizationContextualQuery.startAfter(fromSnapshot)
-      : organizationContextualQuery
 
+    // Handle no keyword filter
     if (!query) {
-      return baseQuery.limit(limit).fetch()
+      const unfilteredQuery = fromSnapshot
+        ? organizationContextualQuery().startAfter(fromSnapshot)
+        : organizationContextualQuery()
+      return unfilteredQuery.limit(limit).fetch()
     }
 
+    // Build and fetch all query combinations
     const searchKeywords = query.split(' ')
     const filterableFields: (keyof Omit<User, 'id'>)[] = ['email', 'firstName', 'lastName']
     const combinationQueries = []
     for (const field of filterableFields) {
       for (const keyword of searchKeywords) {
-        // FIXME:
-        combinationQueries.push(
-          // - WORKS with no cursor
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where(field, '==', keyword)
-            .limit(limit)
-            .fetch(),
-
-          // - DOESN'T WORK with cursor
-          //Error: Cannot specify a where() filter after calling startAt(), startAfter(), endBefore() or endAt().
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .startAfter(fromSnapshot)
-            .where(field, '==', keyword)
-            .limit(limit)
-            .fetch(),
-
-          // DOESN'T WORK with and without cursor:
-          //Error: Cannot specify a where() filter after calling startAt(), startAfter(), endBefore() or endAt().
-          baseQuery.where(field, '==', keyword).fetch(),
-        )
+        this.userRepository.collection()
+        let combinationQuery = organizationContextualQuery().where(field, '==', keyword)
+        if (fromSnapshot) combinationQuery = combinationQuery.startAfter(fromSnapshot)
+        combinationQueries.push(combinationQuery.limit(limit).fetch())
       }
     }
     return Promise.all(combinationQueries).then((results) => results.flat().slice(0, limit + 1))
