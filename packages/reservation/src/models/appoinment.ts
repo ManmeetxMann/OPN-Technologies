@@ -42,7 +42,8 @@ export type AppointmentAcuityResponse = AppointmentBase & {
 }
 
 export type AppointmentSearchRequest = {
-  barCodeNumber: string
+  barCodeNumber?: string
+  organizationId?: string
 }
 
 export type AppointmentSearchByDateRequest = {

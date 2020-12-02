@@ -56,6 +56,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
         email: appointment.email,
         phone: appointment.phone,
         appointmentId: appointment.id,
+        id: appointment.id,
         dateOfBirth: appointment.dateOfBirth,
         registeredNursePractitioner: appointment.registeredNursePractitioner,
         barCode: appointment.barCode,
