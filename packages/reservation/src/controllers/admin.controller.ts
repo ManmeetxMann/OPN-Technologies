@@ -12,7 +12,6 @@ import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
 import {PackageService} from '../services/package.service'
 import {
-  TestResultsDTO,
   TestResultsConfirmationRequest,
   AppointmentDTO,
   CheckAppointmentRequest,
