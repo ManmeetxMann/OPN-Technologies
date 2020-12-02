@@ -61,11 +61,13 @@ class UserController implements IControllerBase {
         throw new UnauthorizedException(`Cannot verify id-token`)
       }
 
-      // check if auth user is already there
-      const usersByAuthId = await this.userService.findAllByAuthUserId(authUser.uid)
-      if (usersByAuthId && usersByAuthId.length) {
-        if (usersByAuthId.some((user) => user.email === authUser.email)) {
-          throw new ResourceAlreadyExistsException(authUser.email)
+      if (authUser) {
+        // check if auth user is already there
+        const usersByAuthId = await this.userService.findAllByAuthUserId(authUser.uid)
+        if (usersByAuthId && usersByAuthId.length) {
+          if (usersByAuthId.some((user) => user.email === authUser.email)) {
+            throw new ResourceAlreadyExistsException(authUser.email)
+          }
         }
       }
 
