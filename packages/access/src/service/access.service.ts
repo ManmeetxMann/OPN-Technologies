@@ -90,7 +90,10 @@ export class AccessService {
       }))
   }
 
-  handleEnter(access: AccessModel): Promise<AccessWithDependantNames> {
+  handleEnter(rawAccess: AccessModel): Promise<AccessWithDependantNames> {
+    // createdAt could be a string, and we don't want to rewrite it
+    const access: AccessModel = _.omit(rawAccess)
+
     if (!!access.enteredAt || !!access.exitAt) {
       throw new BadRequestException('Token already used to enter or exit')
     }
@@ -124,7 +127,6 @@ export class AccessService {
     const count = Object.keys(dependants).length + (access.includesGuardian ? 1 : 0)
 
     console.log(`Processed an ENTER for Access id: ${access.id}`)
-
     return this.accessRepository.update(newAccess).then((savedAccess) =>
       this.incrementPeopleOnPremises(access.locationId, count)
         .then(() =>
@@ -150,7 +152,10 @@ export class AccessService {
     )
   }
 
-  handleExit(access: AccessModel): Promise<AccessWithDependantNames> {
+  handleExit(rawAccess: AccessModel): Promise<AccessWithDependantNames> {
+    // createdAt could be a string, and we don't want to rewrite it
+    const access: AccessModel = _.omit(rawAccess)
+
     const {includesGuardian} = access
     const dependantIds = Object.keys(access.dependants)
     if (!includesGuardian && !dependantIds.length) {
@@ -210,7 +215,6 @@ export class AccessService {
         : Object.keys(access.dependants)[0]
 
     console.log(`Processed an EXIT for Access id: ${access.id}`)
-
     return this.accessRepository.update(newAccess).then((savedAccess) =>
       this.decreasePeopleOnPremises(access.locationId, count)
         .then(() =>

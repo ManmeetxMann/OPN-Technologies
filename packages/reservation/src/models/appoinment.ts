@@ -119,11 +119,12 @@ export type SendAndSaveTestResultsRequest = {
 
 export type TestResultForPagination = {
   barCode: string
-  firstname: string
-  lastname: string
+  firstName: string
+  lastName: string
   result: ResultTypes
   resultDate: Date
   dateOfAppointment: string
   timeOfAppointment: string
   testType: string
+  id: string
 }

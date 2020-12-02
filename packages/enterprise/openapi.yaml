@@ -1731,6 +1731,12 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: includeNfcGates
+          schema:
+            type: boolean
+          description: Filters to only include NFC gates
+          required: false
       responses:
         '200':
           description: Successfully retrieved

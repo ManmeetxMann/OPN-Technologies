@@ -98,26 +98,21 @@ export class TestResultsService {
       organizationId,
     )
 
-    if (dateOfAppointmentStr) {
-      testResultQuery.where('dateOfAppointment', '==', dateOfAppointmentStr)
-    }
+    testResultQuery.where('dateOfAppointment', '==', dateOfAppointmentStr)
 
     const testResults = await this.testResultsDBRepository.fetchPage(testResultQuery, page, perPage)
-
-    // if (!testResults) {
-    //   return []
-    // }
 
     return testResults.map(
       (result: TestResultsDBModel): TestResultForPagination => ({
         barCode: result.barCode,
-        firstname: result.firstName,
-        lastname: result.lastName,
+        firstName: result.firstName,
+        lastName: result.lastName,
         result: result.result,
         resultDate: result.resultDate,
         dateOfAppointment: result.dateOfAppointment,
         timeOfAppointment: result.timeOfAppointment,
         testType: 'PCR',
+        id: result.id,
       }),
     )
   }
