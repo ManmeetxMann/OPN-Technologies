@@ -421,6 +421,15 @@ components:
           items:
             type: string
           description: Organizaiton ids to become a NFC Gate Kiosk admin. Must be provided can be empty.
+        managementAdminForOrganizationIds:
+          type: string
+          description: Organization IDs for admin dashboard to give access to user management/group management
+        testReportsAdminForOrganizationIds:
+          type: string
+          description: Organization IDs for admin dashboard to to see test reports
+        testAppointmentsAdminForOrganizationIds:
+          type: string
+          description: Organization IDs for admin dashboard to to see test appoinments and print bar codes
 
         groupIds:
           type: array
@@ -689,7 +698,12 @@ components:
           type: string
         showReporting:
           type: boolean
-
+        managementAdminForOrganizationIds:
+          type: string
+        testReportsAdminForOrganizationIds:
+          type: string
+        testAppointmentsAdminForOrganizationIds:
+          type: string
     User:
       type: object
       deprecated: true
