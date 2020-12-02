@@ -297,8 +297,34 @@ export class OrganizationService {
     userId: string,
     newGroupId: string,
   ): Promise<OrganizationUsersGroup> {
-    const target = await this.getOneUsersGroup(organizationId, groupId, userId)
+    const allGroups = await this.getUsersGroups(organizationId, null, [userId])
+    if (!allGroups.length) {
+      throw new ResourceNotFoundException(
+        `Cannot find any user-group in organization [${organizationId}] for userId [${userId}]`,
+      )
+    }
+    if (allGroups.length > 0) {
+      console.warn(
+        `INVALID DATA DETECTED: found ${
+          allGroups.length
+        } user-groups in organization [${organizationId}] for userId [${userId}]: ${allGroups
+          .map((membership) => membership.id)
+          .join(', ')}`,
+      )
+    }
+    const target =
+      allGroups.length === 1
+        ? allGroups[0]
+        : allGroups.find((membership) => membership.groupId === groupId)
     if (target) {
+      // check if data looks invalid
+      if (target.groupId !== groupId) {
+        // we still have a target, so we can make the change to a valid state, but should warn
+        console.warn(
+          `INVALID DATA DETECTED: updating user-group ${target.id} in organization ${organizationId} for userId ${userId} with groupId ${target.groupId} instead of ${groupId}`,
+        )
+      }
+
       const result = await this.getUsersGroupRepositoryFor(organizationId).updateProperty(
         target.id,
         'groupId',
@@ -308,13 +334,12 @@ export class OrganizationService {
       if (target.parentUserId) {
         const dependantModel = new UserDependantModel(this.dataStore, target.parentUserId)
         // user is a dependant, we need to update them directly
-        await dependantModel.updateProperty(target.id, 'groupId', newGroupId)
+        await dependantModel.updateProperty(target.userId, 'groupId', newGroupId)
       }
       return result
     }
-
     throw new ResourceNotFoundException(
-      `Cannot find relation user-group for groupId [${groupId}] and userId [${userId}]`,
+      `userId [${userId}] has ${allGroups.length} user-groups in organization [${organizationId}], none with groupId ${groupId}`,
     )
   }
 
