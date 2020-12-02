@@ -382,20 +382,15 @@ paths:
               schema:
                 type: string
 
-  /reservation/admin/api/v1/appointment-by-organization:
-    post:
+  /reservation/admin/api/v1/appointments:
+    get:
       description: Get appointmenr list by organization ID
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              properties:
-                organizationId:
-                  type: string
-              required:
-                - organizationId
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
       responses:
         '200':
           description: Successfully Return

@@ -1,3 +1,5 @@
+import {PageableRequestFilter} from '../../../common/src/types/request'
+
 type AppointmentBase = {
   firstName: string
   lastName: string
@@ -127,4 +129,9 @@ export type TestResultForPagination = {
   dateOfAppointment: string
   timeOfAppointment: string
   testType: string
+}
+
+
+export type AppointmentByOrganizationRequest = PageableRequestFilter & {
+  organizationId?: string
 }
