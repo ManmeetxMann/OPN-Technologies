@@ -225,14 +225,9 @@ class AdminController implements IControllerBase {
 
   sendTestResultsAgain = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const requestData: TestResultsDTO = req.body
+      const requestData = req.body
 
-      const testResults = await this.testResultsService.getResults(requestData.barCode)
-      if (!testResults) {
-        throw new ResourceNotFoundException('Something wend wrong. Results are not avaiable.')
-      }
-      const resultDate = testResults.resultDate || testResults.todaysDate
-      await this.testResultsService.sendTestResults({...testResults}, resultDate)
+      await this.testResultsService.sendTestResults({...requestData}, requestData.resultDate)
 
       res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {
