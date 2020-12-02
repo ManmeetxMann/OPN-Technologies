@@ -36,7 +36,9 @@ class WebhookController implements IControllerBase {
       const dataForUpdate = {}
 
       if (appointment.barCode) {
-        dataForUpdate['barCodeNumber'] = appointment.barCode || appointment['barCodeNumber']
+if (!appointment.barCode) {
+        dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
+        }
       }
 
       if (appointment.certificate) {
