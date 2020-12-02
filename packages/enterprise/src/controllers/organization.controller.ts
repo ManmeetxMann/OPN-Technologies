@@ -1231,16 +1231,27 @@ class OrganizationController implements IControllerBase {
       )
 
       const response = {
-        parent: parentUserId
-          ? {
-              id: parent.id,
-              firstName: parent.firstName,
-              lastName: parent.lastName,
-              groupName: parentGroup.name,
-              base64Photo: parent.base64Photo,
-              status: parentStatus,
-            }
-          : null,
+        parent: {
+          id: parent.id,
+          firstName: parent.firstName,
+          lastName: parent.lastName,
+          groupName: parentGroup.name,
+          base64Photo: parent.base64Photo,
+          status: parentStatus,
+        },
+        // Frontends break if this is not provided
+        // However, this should be null when parent is the user
+        // in the query args
+        // parent: parentUserId
+        //   ? {
+        //       id: parent.id,
+        //       firstName: parent.firstName,
+        //       lastName: parent.lastName,
+        //       groupName: parentGroup.name,
+        //       base64Photo: parent.base64Photo,
+        //       status: parentStatus,
+        //     }
+        //   : null,
         dependents: dependentsWithGroup.filter((dependant) => dependant.id !== userId),
       }
 
