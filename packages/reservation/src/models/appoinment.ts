@@ -131,7 +131,6 @@ export type TestResultForPagination = {
   testType: string
 }
 
-
 export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   organizationId?: string
 }

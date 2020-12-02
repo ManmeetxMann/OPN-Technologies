@@ -4,7 +4,7 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {authMiddleware} from '../../../../common/src/middlewares/auth'
 
-import {AppointmentByOrganizationRequest} from '../../models/appoinment';
+import {AppointmentByOrganizationRequest} from '../../models/appoinment'
 import {AppoinmentService} from '../../services/appoinment.service'
 
 class AdminAppointmentController implements IControllerBase {
@@ -20,7 +20,7 @@ class AdminAppointmentController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.get(
       this.path + '/api/v1/appointment',
-      // authMiddleware,
+      authMiddleware,
       this.getListAppointments,
     )
 
