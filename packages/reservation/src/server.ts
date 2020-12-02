@@ -10,6 +10,7 @@ import PortalController from './controllers/portal.controller'
 import WebhookController from './controllers/webhook.controller'
 import TestResultController from './controllers/v1/admin.test-results.controller.ts'
 import PackageController from './controllers/v1/admin.package.controller'
+import AppointmentController from './controllers/v1/admin.appointment.controller'
 
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
@@ -31,6 +32,7 @@ const app = new App({
     new WebhookController(),
     new TestResultController(),
     new PackageController(),
+    new AppointmentController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],

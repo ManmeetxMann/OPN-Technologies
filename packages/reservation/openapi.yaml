@@ -383,7 +383,7 @@ paths:
                 type: string
 
   /reservation/admin/api/v1/appointment-by-organization:
-    get:
+    post:
       description: Get appointmenr list by organization ID
       requestBody:
         content:

@@ -21,11 +21,11 @@ export class AppoinmentService {
       })
   }
 
-  async getAppoinmentByOrganizationId(organizationId: string): Promise<AppointmentDTO> {
+  async getAppoinmentByOrganizationId(organizationId: string): Promise<AppointmentDTO[]> {
     const filters = {organizationId}
     return this.appoinmentSchedulerRepository
-      .getAppointment(filters)
-      .then((appoinment: AppointmentDBModel) => {
+      .getManyAppointments(filters)
+      .then((appoinment: AppointmentDBModel[]) => {
         return appoinment
       })
   }
