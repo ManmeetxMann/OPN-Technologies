@@ -3,7 +3,6 @@ import {
   AppointmentSearchRequest,
   AppointmentDBModel,
   AppointmentAcuityResponse,
-  AppointmentSearchByDateRequest,
   AppointmentRequest,
 } from '../models/appoinment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -23,7 +22,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
     })
   }
 
-  async getManyAppointments(data: AppointmentSearchByDateRequest): Promise<AppointmentDBModel[]> {
+  async getManyAppointments(data: AppointmentRequest): Promise<AppointmentDBModel[]> {
     return this.getAppointmentsByFilter(data, true)
   }
 
@@ -56,12 +55,14 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
         email: appointment.email,
         phone: appointment.phone,
         appointmentId: appointment.id,
+        id: appointment.id,
         dateOfBirth: appointment.dateOfBirth,
         registeredNursePractitioner: appointment.registeredNursePractitioner,
         barCode: appointment.barCode,
         packageCode: appointment.certificate,
         dateOfAppointment: appointment.date,
         timeOfAppointment: appointment.time,
+        location: appointment.location,
       }))
     })
   }

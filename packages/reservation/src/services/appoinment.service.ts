@@ -21,6 +21,15 @@ export class AppoinmentService {
       })
   }
 
+  async getAppoinmentByOrganizationId(organizationId: string): Promise<AppointmentDTO[]> {
+    const filters = {organizationId}
+    return this.appoinmentSchedulerRepository
+      .getManyAppointments(filters)
+      .then((appoinment: AppointmentDBModel[]) => {
+        return appoinment
+      })
+  }
+
   async getAppoinmentByDate(startDate: string, endDate: string): Promise<AppointmentDTO[]> {
     const filters = {
       minDate: startDate,

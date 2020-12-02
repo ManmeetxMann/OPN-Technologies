@@ -1,3 +1,5 @@
+import {PageableRequestFilter} from '../../../common/src/types/request'
+
 type AppointmentBase = {
   firstName: string
   lastName: string
@@ -40,10 +42,13 @@ export type AppointmentAcuityResponse = AppointmentBase & {
   time: string
   forms: Array<AppointmentAcuityForm>
   certificate: string
+  location: string
+  organizationId: string
 }
 
 export type AppointmentSearchRequest = {
-  barCodeNumber: string
+  barCodeNumber?: string
+  organizationId?: string
 }
 
 export type AppointmentSearchByDateRequest = {
@@ -126,4 +131,8 @@ export type TestResultForPagination = {
   timeOfAppointment: string
   testType: string
   id: string
+}
+
+export type AppointmentByOrganizationRequest = PageableRequestFilter & {
+  organizationId?: string
 }
