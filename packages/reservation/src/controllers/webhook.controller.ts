@@ -29,16 +29,18 @@ class WebhookController implements IControllerBase {
       const {id} = req.body as ScheduleWebhookRequest
 
       const appointment = await this.appoinmentService.getAppointmentById(id)
+
       if (!appointment) {
         throw new ResourceNotFoundException(`Appointmen with ${id} id not found`)
       }
 
-      const dataForUpdate = {}
+      const dataForUpdate = {
+        barCodeNumber: null,
+        organizationId: null,
+      }
 
-      if (appointment.barCode) {
-if (!appointment.barCode) {
+      if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
-        }
       }
 
       if (appointment.certificate) {
@@ -49,7 +51,9 @@ if (!appointment.barCode) {
         }
       }
 
-      await this.appoinmentService.updateAppoinment(id, dataForUpdate)
+      if (dataForUpdate.barCodeNumber || dataForUpdate.organizationId) {
+        await this.appoinmentService.updateAppoinment(id, dataForUpdate)
+      }
 
       res.json(actionSucceed(''))
     } catch (error) {
