@@ -5,7 +5,6 @@ import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {authMiddleware} from '../../../../common/src/middlewares/auth'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 
-import {TestResultsService} from '../../services/test-results.service'
 import {PackageService} from '../../services/package.service'
 
 import packageValidations from '../../validations/package.validations'
@@ -14,7 +13,6 @@ import {SavePackageAndOrganizationRequest} from '../../models/packages'
 class AdminController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
-  private testResultsService = new TestResultsService()
   private packageService = new PackageService()
 
   constructor() {

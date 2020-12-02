@@ -40,18 +40,21 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
     )
 
     const orgGroups = await organizationService.getGroups(organizationId)
-    const groupNamesById: Record<string, string> = orgGroups.reduce(
+    const groupsById: Record<string, {id: string; name: string}> = orgGroups.reduce(
       (lookup, orgGroup) => ({
         ...lookup,
-        [orgGroup.id]: orgGroup.name,
+        [orgGroup.id]: {
+          id: orgGroup.id,
+          name: orgGroup.name,
+        },
       }),
       {},
     )
 
-    const groupNamesByUserId: Record<string, string> = usersGroups.reduce(
+    const groupsByUserId: Record<string, {id: string; name: string}> = usersGroups.reduce(
       (lookup, usersGroup) => ({
         ...lookup,
-        [usersGroup.userId]: groupNamesById[usersGroup.groupId] || '',
+        [usersGroup.userId]: groupsById[usersGroup.groupId] || '',
       }),
       {},
     )
@@ -60,7 +63,8 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
       users.map(async (user: User) => {
         return {
           ...userDTOResponse(user),
-          groupName: groupNamesByUserId[user.id],
+          groupName: groupsByUserId[user.id].name,
+          groupId: groupsByUserId[user.id].id,
           memberId: user.memberId,
           createdAt:
             user.timestamps && user.timestamps.createdAt

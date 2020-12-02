@@ -382,6 +382,25 @@ paths:
               schema:
                 type: string
 
+  /reservation/admin/api/v1/appointments:
+    get:
+      description: Get appointmenr list by organization ID
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentResponse200'
+
   /webhook/acuity/schedule:
     post:
       description: Webhook for adding barcode to acuity

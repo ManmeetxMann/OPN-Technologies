@@ -242,7 +242,10 @@ class OrganizationController implements IControllerBase {
   getLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {parentLocationId} = req.query
+      const {parentLocationId, includeNfcGates} = req.query as {
+        parentLocationId?: string
+        includeNfcGates?: boolean
+      }
       const locations = await this.organizationService.getLocations(
         organizationId,
         parentLocationId as string | null,
@@ -252,9 +255,11 @@ class OrganizationController implements IControllerBase {
       )
 
       // Filter NFC gates out
-      const filteredLocations = locations.filter(
-        (location) => !('nfcGateOnly' in location && location.nfcGateOnly === true),
-      )
+      const filteredLocations = includeNfcGates
+        ? locations
+        : locations.filter((location) => {
+            return !('nfcGateOnly' in location && location.nfcGateOnly === true)
+          })
 
       // Sort
       filteredLocations.sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))
