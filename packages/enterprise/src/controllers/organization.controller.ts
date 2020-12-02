@@ -255,10 +255,11 @@ class OrganizationController implements IControllerBase {
       )
 
       // Filter NFC gates out
-      const filteredLocations = locations.filter((location) => {
-        const gatesOnly = 'nfcGateOnly' in location && location.nfcGateOnly === true
-        return includeNfcGates === true ? gatesOnly : !gatesOnly
-      })
+      const filteredLocations = includeNfcGates
+        ? locations
+        : locations.filter((location) => {
+            return !('nfcGateOnly' in location && location.nfcGateOnly === true)
+          })
 
       // Sort
       filteredLocations.sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))
