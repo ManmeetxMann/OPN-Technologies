@@ -17,12 +17,14 @@ abstract class AcuityScheduling {
     barCodeNumber: 'field:' + Config.get('ACUITY_FIELD_BARCODE'),
     dateOfBirth: 'field:' + Config.get('ACUITY_FIELD_DATE_OF_BIRTH'),
     registeredNursePractitioner: 'field:' + Config.get('ACUITY_FIELD_NURSE_NAME'),
+    organizationId: 'field:' + Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
   }
 
   private fieldIdMapping = {
     barCodeNumber: Config.get('ACUITY_FIELD_BARCODE'),
     dateOfBirth: Config.get('ACUITY_FIELD_DATE_OF_BIRTH'),
     registeredNursePractitioner: Config.get('ACUITY_FIELD_NURSE_NAME'),
+    organizationId: Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
   }
 
   protected async updateAppointment(
@@ -53,7 +55,7 @@ abstract class AcuityScheduling {
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl =
       APIURL + '/api/v1/appointments?max=500&' + querystring.stringify(this.renameKeys(filters))
-    console.log(apiUrl) //To know request path for dependency
+    console.log(apiUrl, userPassBase64) //To know request path for dependency
 
     return fetch(apiUrl, {
       method: 'get',
@@ -88,6 +90,9 @@ abstract class AcuityScheduling {
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_BARCODE'))) {
             appointment.barCode = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ORGANIZATION_ID'))) {
+            appointment.organizationId = field.value
           }
         })
       })
