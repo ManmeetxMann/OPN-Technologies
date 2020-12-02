@@ -40,6 +40,7 @@ export type AppointmentAcuityResponse = AppointmentBase & {
   forms: Array<AppointmentAcuityForm>
   certificate: string
   location: string
+  organizationId: string
 }
 
 export type AppointmentSearchRequest = {
