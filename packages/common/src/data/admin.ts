@@ -10,9 +10,9 @@ export type AdminProfile = {
   healthAdminForOrganizationIds: string[]
   nfcAdminForOrganizationIds: string[]
   nfcGateKioskAdminForOrganizationIds: string[]
-  managementAdminForOrganizationIds: string
-  testReportsAdminForOrganizationIds: string
-  testAppointmentsAdminForOrganizationIds: string
+  managementAdminForOrganizationId: string
+  testReportsAdminForOrganizationId: string
+  testAppointmentsAdminForOrganizationId: string
   showReporting: boolean
 }
 

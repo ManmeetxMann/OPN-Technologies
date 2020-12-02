@@ -139,9 +139,9 @@ class InternalController implements IControllerBase {
         nfcGateKioskAdminForOrganizationIds,
         showReporting,
         groupIds,
-        managementAdminForOrganizationIds,
-        testReportsAdminForOrganizationIds,
-        testAppointmentsAdminForOrganizationIds,
+        managementAdminForOrganizationId,
+        testReportsAdminForOrganizationId,
+        testAppointmentsAdminForOrganizationId,
       } = req.body as InternalAdminApprovalCreateRequest
 
       // Make sure it does not exist
@@ -162,9 +162,9 @@ class InternalController implements IControllerBase {
         healthAdminForOrganizationIds: healthAdminForOrganizationIds ?? [],
         nfcAdminForOrganizationIds: nfcAdminForOrganizationIds ?? [],
         nfcGateKioskAdminForOrganizationIds: nfcGateKioskAdminForOrganizationIds ?? [],
-        managementAdminForOrganizationIds: managementAdminForOrganizationIds,
-        testReportsAdminForOrganizationIds: testReportsAdminForOrganizationIds,
-        testAppointmentsAdminForOrganizationIds: testAppointmentsAdminForOrganizationIds,
+        managementAdminForOrganizationId: managementAdminForOrganizationId,
+        testReportsAdminForOrganizationId: testReportsAdminForOrganizationId,
+        testAppointmentsAdminForOrganizationId: testAppointmentsAdminForOrganizationId,
       })
       res.json(actionSucceed())
     } catch (error) {

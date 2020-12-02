@@ -5,9 +5,9 @@ export type InternalAdminApprovalCreateRequest = {
   healthAdminForOrganizationIds?: string[]
   nfcAdminForOrganizationIds?: string[]
   nfcGateKioskAdminForOrganizationIds?: string[]
-  managementAdminForOrganizationIds: string
-  testReportsAdminForOrganizationIds: string
-  testAppointmentsAdminForOrganizationIds: string
+  managementAdminForOrganizationId: string
+  testReportsAdminForOrganizationId: string
+  testAppointmentsAdminForOrganizationId: string
   locationIds: string[]
   showReporting: boolean
   groupIds: string[]
