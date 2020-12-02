@@ -12,6 +12,7 @@ type AppointmentBase = {
   timeOfAppointment?: string
   barCode?: string
   packageCode: string
+  certificate?: string
   organizationId?: string
 }
 

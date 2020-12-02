@@ -2,12 +2,15 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import {NextFunction, Request, Response, Router} from 'express'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {AppoinmentService} from '../services/appoinment.service'
+import {PackageService} from '../services/package.service'
 import {ScheduleWebhookRequest} from '../models/webhook'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 class WebhookController implements IControllerBase {
   public path = '/webhook'
   public router = Router()
   private appoinmentService = new AppoinmentService()
+  private packageService = new PackageService()
 
   constructor() {
     this.initRoutes()
@@ -25,12 +28,31 @@ class WebhookController implements IControllerBase {
     try {
       const {id} = req.body as ScheduleWebhookRequest
 
-      const newBarcode = await this.appoinmentService.getNextBarCodeNumber()
-
-      const appointment = await this.appoinmentService.getAppoinmentByBarCode(newBarcode)
+      const appointment = await this.appoinmentService.getAppointmentById(id)
 
       if (!appointment) {
-        await this.appoinmentService.addBarcodeAppointment(id, newBarcode)
+        throw new ResourceNotFoundException(`Appointmen with ${id} id not found`)
+      }
+
+      const dataForUpdate = {
+        barCodeNumber: null,
+        organizationId: null,
+      }
+
+      if (!appointment.barCode) {
+        dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
+      }
+
+      if (appointment.certificate) {
+        const packageResult = await this.packageService.getByPackageCode(appointment.certificate)
+
+        if (packageResult) {
+          dataForUpdate['organizationId'] = packageResult.organizationId
+        }
+      }
+
+      if (dataForUpdate.barCodeNumber || dataForUpdate.organizationId) {
+        await this.appoinmentService.updateAppoinment(id, dataForUpdate)
       }
 
       res.json(actionSucceed(''))

@@ -13,13 +13,12 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
     super()
   }
 
-  async addBarcodeAppointment(
-    id: number,
-    barCodeNumber: string,
-  ): Promise<AppointmentAcuityResponse> {
-    return this.updateAppointment(id, {
-      barCodeNumber,
-    })
+  async updateAppoinment(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
+    return this.updateAppointment(id, data)
+  }
+
+  async getAppointmentById(id: number): Promise<AppointmentDBModel> {
+    return this.getAppointmentsById(id)
   }
 
   async getManyAppointments(data: AppointmentRequest): Promise<AppointmentDBModel[]> {

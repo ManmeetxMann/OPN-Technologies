@@ -70,8 +70,26 @@ abstract class AcuityScheduling {
     })
   }
 
+  protected async getAppointmentsById(id: number): Promise<AppointmentAcuityResponse> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = APIURL + `/api/v1/appointments/${id}`
+    console.log(apiUrl) //To know request path for dependency
+
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const appointment = await res.json()
+    return this.customFieldsToAppoinment(appointment)
+  }
+
   private async mapCustomFieldsToAppoinment(
-    appoinments: Promise<AppointmentAcuityResponse[]>,
+    appoinments: AppointmentAcuityResponse[],
   ): Promise<AppointmentAcuityResponse[]> {
     return (await appoinments).map(this.customFieldsToAppoinment)
   }
