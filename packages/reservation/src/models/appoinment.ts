@@ -137,3 +137,8 @@ export type TestResultForPagination = {
 export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   organizationId?: string
 }
+
+export type AcuityUpdateDTO = {
+  barCodeNumber?: string
+  organizationId?: string
+}
