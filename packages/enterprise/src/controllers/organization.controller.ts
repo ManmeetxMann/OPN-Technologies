@@ -1171,7 +1171,8 @@ class OrganizationController implements IControllerBase {
           locationId,
           attestationTime: safeTimestamp(attestationTime),
           questions: questionnairesById[questionnaireIdsByLocationId[locationId]]?.questions ?? {},
-          appliesTo: appliesTo.map((appliesToId) => {
+          appliesTo,
+          appliesToUsers: appliesTo.map((appliesToId) => {
             const user =
               appliesToId === primaryUserId
                 ? guardian
