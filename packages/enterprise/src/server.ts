@@ -11,6 +11,8 @@ import UserV3Controller from './controllers/v3/user.controller'
 import AdminUserV3Controller from './controllers/v3/admin.user.controller'
 import RootController from './controllers/root.controller'
 import OrganizationController from './controllers/organization.controller'
+import {IdentifiersModel} from '../../common/src/data/identifiers'
+import DataStore from '../../common/src/data/datastore'
 
 const PORT = Number(process.env.PORT) || 5003
 
@@ -29,6 +31,7 @@ const app = new App({
     new OrganizationController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
+  initializers: [new IdentifiersModel(new DataStore())],
 })
 
 app.listen()

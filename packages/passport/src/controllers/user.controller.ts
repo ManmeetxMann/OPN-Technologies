@@ -62,9 +62,7 @@ class UserController implements IControllerBase {
     questionnaireId: string,
     answers: AttestationAnswers,
   ): Promise<PassportStatuses> {
-    const answerKeys = Object.keys(answers).sort((a, b) =>
-      a.localeCompare(b, 'en', {numeric: true}),
-    )
+    const answerKeys = Object.keys(answers).sort((a, b) => parseInt(a) - parseInt(b))
 
     // note that this switches us to 0-indexing
     const responses = answerKeys.map((index) => (answers[index] ? answers[index][1] : null))
@@ -88,6 +86,46 @@ class UserController implements IControllerBase {
     }
 
     return PassportStatuses.Proceed
+  }
+
+  private dateFromAnswer(answer: Record<number, boolean | string>): Date | null {
+    const answerKeys = Object.keys(answer).sort((a, b) => parseInt(a) - parseInt(b))
+    if (!answerKeys[0]) {
+      // answer was false, no relevant date
+      return null
+    }
+    if (answerKeys.length === 1) {
+      // no follow up answer
+      return null
+    }
+    if (typeof answer[answerKeys[1]] !== 'string') {
+      // no follow up answer
+      return null
+    }
+    const date = new Date(answer[answerKeys[1]])
+    if (isNaN(date.getTime())) {
+      console.warn(`${answer[answerKeys[1]]} is not a parseable date`)
+      return null
+    }
+    return date
+  }
+
+  private findTestDate(answers: AttestationAnswers): Date | null {
+    const earliestDate = Object.values(answers)
+      .map(this.dateFromAnswer)
+      .reduce((earliest, curr) => {
+        if (!curr) {
+          return earliest
+        }
+        if (!earliest) {
+          return curr
+        }
+        if (curr < earliest) {
+          return curr
+        }
+        return earliest
+      })
+    return earliestDate
   }
 
   public initRoutes(): void {
@@ -193,8 +231,13 @@ class UserController implements IControllerBase {
       const count = dependantIds.length + (includeGuardian ? 1 : 0)
       await this.accessService.incrementTodayPassportStatusCount(locationId, passportStatus, count)
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
+        const dateOfTest = this.findTestDate(answers)
         if (userId) {
-          const nowMillis = now().valueOf()
+          const endTime = now().valueOf()
+          // if we have a test datetime, start the trace 48 hours before the test date
+          // otherwise, start the trace 48 hours before now
+          // The frontends default to sending the very start of the day
+          const startTime = (dateOfTest ? dateOfTest.valueOf() : endTime) - TRACE_LENGTH
           this.topic.publish(
             Buffer.from(
               JSON.stringify({
@@ -202,8 +245,8 @@ class UserController implements IControllerBase {
                 dependantIds: dependantIds,
                 includesGuardian: includeGuardian,
                 passportStatus,
-                startTime: nowMillis - TRACE_LENGTH,
-                endTime: nowMillis,
+                startTime,
+                endTime,
                 organizationId,
                 locationId,
                 questionnaireId,

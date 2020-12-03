@@ -41,7 +41,8 @@
         "node-fetch": "^2.6.0",
         "pdfmake": "^0.1.68",
         "@types/pdfmake": "^0.1.16",
-        "pug": "^3.0.0"
+        "pug": "^3.0.0",
+        "request":"2.88.2"
     },
     "devDependencies": {
         "@types/express": "^4.17.7",

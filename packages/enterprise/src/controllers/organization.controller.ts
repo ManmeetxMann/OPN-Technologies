@@ -1,8 +1,10 @@
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed, of} from '../../../common/src/utils/response-wrapper'
+import {
+  actionReplyInsufficientPermission,
+  actionSucceed,
+} from '../../../common/src/utils/response-wrapper'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 import {User, UserDependant} from '../../../common/src/data/user'
-import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
@@ -39,12 +41,18 @@ import {CloudTasksClient} from '@google-cloud/tasks'
 import * as _ from 'lodash'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
-const replyInsufficientPermission = (res: Response) =>
-  res
-    .status(403)
-    .json(
-      of(null, ResponseStatusCodes.AccessDenied, 'Insufficient permissions to fulfil the request'),
-    )
+
+const dataConversionAndSortGroups = (groups: OrganizationGroup[]): OrganizationGroup[] => {
+  return groups
+    .sort((a, b) => {
+      // if a has higher priority, return a negative number (a comes first)
+      const bias = (b.priority || 0) - (a.priority || 0)
+      return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
+    })
+    .map((group) => ({...group, isPrivate: group.isPrivate ?? false}))
+}
+const replyInsufficientPermission = (res: Response): Response =>
+  res.status(403).json(actionReplyInsufficientPermission())
 
 class OrganizationController implements IControllerBase {
   public router = Router()
@@ -234,7 +242,10 @@ class OrganizationController implements IControllerBase {
   getLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {parentLocationId} = req.query
+      const {parentLocationId, includeNfcGates} = req.query as {
+        parentLocationId?: string
+        includeNfcGates?: boolean
+      }
       const locations = await this.organizationService.getLocations(
         organizationId,
         parentLocationId as string | null,
@@ -243,9 +254,17 @@ class OrganizationController implements IControllerBase {
         locations.map(async (location) => this.populateZones(location, organizationId)),
       )
 
-      locations.sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))
+      // Filter NFC gates out
+      const filteredLocations = includeNfcGates
+        ? locations
+        : locations.filter((location) => {
+            return !('nfcGateOnly' in location && location.nfcGateOnly === true)
+          })
 
-      res.json(actionSucceed(locations))
+      // Sort
+      filteredLocations.sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))
+
+      res.json(actionSucceed(filteredLocations))
     } catch (error) {
       next(error)
     }
@@ -295,7 +314,7 @@ class OrganizationController implements IControllerBase {
   getGroupsForPublic = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const groups = await this.getGroups(organizationId)
+      const groups = await this.getPublicGroups(organizationId)
       res.json(actionSucceed(groups))
     } catch (error) {
       next(error)
@@ -726,7 +745,7 @@ class OrganizationController implements IControllerBase {
         throw new HttpException('There is no historical data available for this group.')
       }
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
-      const content = _.flatten(allTemplates)
+      const content = _.flatten(_.map(allTemplates, 'content'))
       console.log('generating stream')
       const pdfStream = this.pdfService.generatePDFStream(content, tableLayouts)
       res.contentType('application/pdf')
@@ -1077,14 +1096,28 @@ class OrganizationController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {userId, from, to} = req.query as UserContactTraceReportRequest
+      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+      const primaryUserId = parentUserId ?? userId
 
       // fetch attestation array in the time period
-      const [attestations, locations] = await Promise.all([
+      const [
+        allAttestations,
+        locations,
+        {guardian, dependants},
+        parentMembership,
+        dependantMemberships,
+        groups,
+      ] = await Promise.all([
         this.attestationService.getAttestationsInPeriod(userId, from, to),
         this.organizationService.getLocations(organizationId),
+        this.userService.getUserAndDependants(primaryUserId),
+        this.organizationService.getUsersGroups(organizationId, null, [primaryUserId]),
+        this.organizationService.getDependantGroups(organizationId, primaryUserId),
+        this.organizationService.getGroups(organizationId),
       ])
-      const attestedLocationIds = new Set<string>(_.uniq(attestations.map((att) => att.locationId)))
+      const allLocationIds = new Set(locations.map(({id}) => id))
+      const attestationsInOrg = allAttestations.filter((att) => allLocationIds.has(att.locationId))
+      const attestedLocationIds = new Set(attestationsInOrg.map((att) => att.locationId))
       const questionnaireIdsByLocationId: Record<string, string> = locations.reduce(
         (lookup, location) => {
           if (!attestedLocationIds.has(location.id)) {
@@ -1098,8 +1131,16 @@ class OrganizationController implements IControllerBase {
         },
         {},
       )
+
       const questionnaireIds: string[] = _.uniq(Object.values(questionnaireIdsByLocationId))
       const questionnaires = await this.questionnaireService.getQuestionnaires(questionnaireIds)
+
+      const allMemberships = [...parentMembership, ...dependantMemberships]
+      const groupsById: Record<string, OrganizationGroup> = groups.reduce((lookup, group) => {
+        lookup[group.id] = group
+        return lookup
+      }, {})
+
       const questionnairesById: Record<string, Questionnaire> = questionnaires.reduce(
         (lookup, questionnaire) => ({
           ...lookup,
@@ -1108,13 +1149,31 @@ class OrganizationController implements IControllerBase {
         {},
       )
 
-      const response = attestations.map(
+      const response = attestationsInOrg.map(
         // @ts-ignore 'timestamps' does not exist in typescript
-        ({timestamps, attestationTime, locationId, ...passThrough}) => ({
+        ({timestamps, attestationTime, locationId, appliesTo, ...passThrough}) => ({
           ...passThrough,
           locationId,
           attestationTime: safeTimestamp(attestationTime),
           questions: questionnairesById[questionnaireIdsByLocationId[locationId]]?.questions ?? {},
+          appliesTo,
+          appliesToUsers: appliesTo.map((appliesToId) => {
+            const user =
+              appliesToId === primaryUserId
+                ? guardian
+                : dependants.find((dep) => dep.id === appliesToId)
+            return {
+              id: appliesToId,
+              firstName: user?.firstName ?? 'deleted',
+              lastName: user?.lastName ?? 'user',
+              base64Photo: (user as User)?.base64Photo ?? '',
+              group:
+                groupsById[
+                  allMemberships.find((membership) => membership.userId === appliesToId)?.groupId ??
+                    ''
+                ] ?? null,
+            }
+          }),
         }),
       )
       res.json(actionSucceed(response))
@@ -1158,16 +1217,27 @@ class OrganizationController implements IControllerBase {
       )
 
       const response = {
-        parent: parentUserId
-          ? {
-              id: parent.id,
-              firstName: parent.firstName,
-              lastName: parent.lastName,
-              groupName: parentGroup.name,
-              base64Photo: parent.base64Photo,
-              status: parentStatus,
-            }
-          : null,
+        parent: {
+          id: parent.id,
+          firstName: parent.firstName,
+          lastName: parent.lastName,
+          groupName: parentGroup.name,
+          base64Photo: parent.base64Photo,
+          status: parentStatus,
+        },
+        // Frontends break if this is not provided
+        // However, this should be null when parent is the user
+        // in the query args
+        // parent: parentUserId
+        //   ? {
+        //       id: parent.id,
+        //       firstName: parent.firstName,
+        //       lastName: parent.lastName,
+        //       groupName: parentGroup.name,
+        //       base64Photo: parent.base64Photo,
+        //       status: parentStatus,
+        //     }
+        //   : null,
         dependents: dependentsWithGroup.filter((dependant) => dependant.id !== userId),
       }
 
@@ -1178,15 +1248,13 @@ class OrganizationController implements IControllerBase {
   }
 
   private async getGroups(organizationId: string): Promise<OrganizationGroup[]> {
-    const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
-      throw new HttpException(error.message)
-    })
-    groups.sort((a, b) => {
-      // if a has higher priority, return a negative number (a comes first)
-      const bias = (b.priority || 0) - (a.priority || 0)
-      return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
-    })
-    return groups
+    return this.organizationService.getGroups(organizationId).then(dataConversionAndSortGroups)
+  }
+
+  private async getPublicGroups(organizationId: string): Promise<OrganizationGroup[]> {
+    return this.organizationService
+      .getPublicGroups(organizationId)
+      .then(dataConversionAndSortGroups)
   }
 }
 

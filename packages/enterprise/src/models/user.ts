@@ -37,6 +37,13 @@ export type UserOrganization = Auditable & {
   organizationId: string
 }
 
+export type UserOrganizationProfile = Auditable & {
+  id: string
+  userId: string
+  organizationId: string
+  memberId: string
+}
+
 export type UserGroup = Auditable & {
   id: string
   userId: string

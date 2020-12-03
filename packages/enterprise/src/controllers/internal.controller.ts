@@ -102,7 +102,7 @@ class InternalController implements IControllerBase {
       )
       console.log(`generated ${allTemplates.length} templates`)
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
-      const content = _.flatten(allTemplates)
+      const content = _.flatten(_.map(allTemplates, 'content'))
       console.log(`generating pdf with ${content.length} elements`)
       const pdfStream = await this.pdfService.generatePDFStream(content, tableLayouts)
       console.log('uploading pdf')
@@ -128,14 +128,18 @@ class InternalController implements IControllerBase {
         superAdminForOrganizationIds,
         healthAdminForOrganizationIds,
         nfcAdminForOrganizationIds,
+        nfcGateKioskAdminForOrganizationIds,
         showReporting,
         groupIds,
+        managementAdminForOrganizationId,
+        testReportsAdminForOrganizationId,
+        testAppointmentsAdminForOrganizationId,
       } = req.body as InternalAdminApprovalCreateRequest
 
       // Make sure it does not exist
       const approval = await this.adminApprovalService.findOneByEmail(email)
       if (approval) {
-        throw new BadRequestException('Unauthorized Access')
+        throw new BadRequestException(`Unauthorized Access got ${approval.id}`)
       }
 
       // Check if we have approval for this admin
@@ -149,6 +153,10 @@ class InternalController implements IControllerBase {
         superAdminForOrganizationIds: superAdminForOrganizationIds ?? [],
         healthAdminForOrganizationIds: healthAdminForOrganizationIds ?? [],
         nfcAdminForOrganizationIds: nfcAdminForOrganizationIds ?? [],
+        nfcGateKioskAdminForOrganizationIds: nfcGateKioskAdminForOrganizationIds ?? [],
+        managementAdminForOrganizationId: managementAdminForOrganizationId,
+        testReportsAdminForOrganizationId: testReportsAdminForOrganizationId,
+        testAppointmentsAdminForOrganizationId: testAppointmentsAdminForOrganizationId,
       })
       res.json(actionSucceed())
     } catch (error) {

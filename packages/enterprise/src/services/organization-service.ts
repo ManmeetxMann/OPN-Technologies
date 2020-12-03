@@ -1,4 +1,5 @@
 import DataStore from '../../../common/src/data/datastore'
+import {UserDependantModel} from '../../../common/src/data/user'
 import {Config} from '../../../common/src/utils/config'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
@@ -200,6 +201,12 @@ export class OrganizationService {
     )
   }
 
+  getPublicGroups(organizationId: string): Promise<OrganizationGroup[]> {
+    return this.getOrganization(organizationId).then(() =>
+      this.getGroupsRepositoryFor(organizationId).findWhereEqual('isPrivate', false),
+    )
+  }
+
   getGroups(organizationId: string): Promise<OrganizationGroup[]> {
     return this.getOrganization(organizationId).then(() =>
       this.getGroupsRepositoryFor(organizationId).fetchAll(),
@@ -212,7 +219,9 @@ export class OrganizationService {
         .get(groupId)
         .then((target) => {
           if (target) return target
-          throw new ResourceNotFoundException(`Cannot find organization-group with id [${groupId}]`)
+          throw new ResourceNotFoundException(
+            `Cannot find organization-group [${groupId}] in organization [${organizationId}]`,
+          )
         }),
     )
   }
@@ -221,7 +230,9 @@ export class OrganizationService {
     const groupsForUser = await this.getUsersGroups(organizationId, null, [userId])
 
     if (groupsForUser.length === 0) {
-      throw new ResourceNotFoundException(`Cannot find organization-group for [${userId}]`)
+      throw new ResourceNotFoundException(
+        `Cannot find organization-group for [${userId}] in organization [${organizationId}]`,
+      )
     }
 
     return await this.getGroup(organizationId, groupsForUser[0].groupId)
@@ -256,6 +267,16 @@ export class OrganizationService {
     return _.flatten(pagedResults)
   }
 
+  async getDependantGroups(
+    organizationId: string,
+    parentUserId: string,
+  ): Promise<OrganizationUsersGroup[]> {
+    return this.getUsersGroupRepositoryFor(organizationId)
+      .collection()
+      .where('parentUserId', '==', parentUserId)
+      .fetch()
+  }
+
   addUserToGroup(
     organizationId: string,
     groupId: string,
@@ -270,24 +291,56 @@ export class OrganizationService {
     })
   }
 
-  updateGroupForUser(
+  async updateGroupForUser(
     organizationId: string,
     groupId: string,
     userId: string,
     newGroupId: string,
   ): Promise<OrganizationUsersGroup> {
-    return this.getOneUsersGroup(organizationId, groupId, userId).then((target) => {
-      if (target)
-        return this.getUsersGroupRepositoryFor(organizationId).updateProperty(
-          target.id,
-          'groupId',
-          newGroupId,
-        )
-
+    const allGroups = await this.getUsersGroups(organizationId, null, [userId])
+    if (!allGroups.length) {
       throw new ResourceNotFoundException(
-        `Cannot find relation user-group for groupId [${groupId}] and userId [${userId}]`,
+        `Cannot find any user-group in organization [${organizationId}] for userId [${userId}]`,
       )
-    })
+    }
+    if (allGroups.length > 0) {
+      console.warn(
+        `INVALID DATA DETECTED: found ${
+          allGroups.length
+        } user-groups in organization [${organizationId}] for userId [${userId}]: ${allGroups
+          .map((membership) => membership.id)
+          .join(', ')}`,
+      )
+    }
+    const target =
+      allGroups.length === 1
+        ? allGroups[0]
+        : allGroups.find((membership) => membership.groupId === groupId)
+    if (target) {
+      // check if data looks invalid
+      if (target.groupId !== groupId) {
+        // we still have a target, so we can make the change to a valid state, but should warn
+        console.warn(
+          `INVALID DATA DETECTED: updating user-group ${target.id} in organization ${organizationId} for userId ${userId} with groupId ${target.groupId} instead of ${groupId}`,
+        )
+      }
+
+      const result = await this.getUsersGroupRepositoryFor(organizationId).updateProperty(
+        target.id,
+        'groupId',
+        newGroupId,
+      )
+
+      if (target.parentUserId) {
+        const dependantModel = new UserDependantModel(this.dataStore, target.parentUserId)
+        // user is a dependant, we need to update them directly
+        await dependantModel.updateProperty(target.userId, 'groupId', newGroupId)
+      }
+      return result
+    }
+    throw new ResourceNotFoundException(
+      `userId [${userId}] has ${allGroups.length} user-groups in organization [${organizationId}], none with groupId ${groupId}`,
+    )
   }
 
   removeUserFromGroup(organizationId: string, groupId: string, userId: string): Promise<void> {
@@ -295,7 +348,7 @@ export class OrganizationService {
       if (target) return this.getUsersGroupRepositoryFor(organizationId).delete(target.id)
 
       throw new ResourceNotFoundException(
-        `Cannot find relation user-group for groupId [${groupId}] and userId [${userId}]`,
+        `Cannot find relation user-group for groupId [${groupId}] and userId [${userId}] in org [${organizationId}]`,
       )
     })
   }

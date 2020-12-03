@@ -117,6 +117,21 @@ components:
         - locationId
         - accessToken
 
+    EntryOrExitUsingTagRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        tagId:
+          type: string
+        locationId:
+          type: string
+        legacyMode:
+          type: boolean
+          default: false
+      required:
+        - tagId
+        - locationId
+
     StatusTokenExchangeRequest:
       type: object
       additionalProperties: false
@@ -417,6 +432,24 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EntryOrExitRequest'
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfEnterOrExit'
+
+  /admin/enterorexit/tag:
+    post:
+      description: Handle a user's entry or exit using a tag
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryOrExitUsingTagRequest'
       responses:
         '200':
           description: Successfully handled

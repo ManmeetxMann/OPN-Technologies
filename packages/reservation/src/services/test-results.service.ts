@@ -1,13 +1,21 @@
 import moment from 'moment-timezone'
+
+import {
+  TestResultsDTOForEmail,
+  TestResultsDBModel,
+  TestResultForPagination,
+} from '../models/appoinment'
+import {TestResultsDBRepository} from '../respository/test-results-db.repository'
+
 import DataStore from '../../../common/src/data/datastore'
 
-import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/appoinment'
-import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 import {EmailService} from '../../../common/src/service/messaging/email-service'
+import {FaxService} from '../../../common/src/service/messaging/fax-service'
 import {PdfService} from '../../../common/src/service/reports/pdf'
-import template from '../templates/testResult'
 
 import {Config} from '../../../common/src/utils/config'
+
+import template from '../templates/testResult'
 
 export class TestResultsService {
   private testResultEmailTemplateId = (Config.get('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2) as number
@@ -15,6 +23,7 @@ export class TestResultsService {
   private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
   private emailService = new EmailService()
   private pdfService = new PdfService()
+  private faxService = new FaxService()
 
   async sendTestResults(
     testResults: TestResultsDTOForEmail,
@@ -47,6 +56,17 @@ export class TestResultsService {
     })
   }
 
+  async sendFax(testResults: TestResultsDTOForEmail, faxNumber: string): Promise<string> {
+    const resultDateRaw = testResults.resultDate
+    const resultDate = moment(resultDateRaw).format('LL')
+    const name = `${testResults.barCode} - ${new Date()}`
+
+    const {content, tableLayouts} = template(testResults, resultDate)
+    const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
+
+    return this.faxService.send(faxNumber, name, pdfContent)
+  }
+
   async saveResults(testResults: TestResultsDBModel): Promise<void> {
     this.testResultsDBRepository.save(testResults)
   }
@@ -61,5 +81,39 @@ export class TestResultsService {
 
   async getResults(barCode: string): Promise<TestResultsDBModel> {
     return this.testResultsDBRepository.get(barCode)
+  }
+
+  async getResultsByPackageCode(packageCode: string): Promise<TestResultsDBModel[]> {
+    return this.testResultsDBRepository.findWhereEqual('packageCode', packageCode)
+  }
+
+  async getAllByOrganizationId(
+    organizationId: string,
+    dateOfAppointmentStr: string,
+    page: number,
+    perPage: number,
+  ): Promise<TestResultForPagination[]> {
+    const testResultQuery = this.testResultsDBRepository.getQueryFindWhereEqual(
+      'organizationId',
+      organizationId,
+    )
+
+    testResultQuery.where('dateOfAppointment', '==', dateOfAppointmentStr)
+
+    const testResults = await this.testResultsDBRepository.fetchPage(testResultQuery, page, perPage)
+
+    return testResults.map(
+      (result: TestResultsDBModel): TestResultForPagination => ({
+        barCode: result.barCode,
+        firstName: result.firstName,
+        lastName: result.lastName,
+        result: result.result,
+        resultDate: result.resultDate,
+        dateOfAppointment: result.dateOfAppointment,
+        timeOfAppointment: result.timeOfAppointment,
+        testType: 'PCR',
+        id: result.id,
+      }),
+    )
   }
 }

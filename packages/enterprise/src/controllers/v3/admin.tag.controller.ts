@@ -6,9 +6,8 @@ import {OrganizationService} from '../../services/organization-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {authMiddleware} from '../../../../common/src/middlewares/auth'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
-import {ResourceAlreadyExistsException} from '../../../../common/src/exceptions/resource-already-exists-exception'
-import {NfcTagService} from '../../services/nfctag-service'
-import {CreateNfcTagRequest} from '../../types/nfc-tag-request'
+import {NfcTagService} from '../../../../common/src/service/hardware/nfctag-service'
+import {CreateNfcTagRequest} from '../../../../common/src/types/nfc-tag-request'
 
 const userService = new UserService()
 const tagService = new NfcTagService()
@@ -23,9 +22,8 @@ const addNfcTagId: Handler = async (req, res, next): Promise<void> => {
 
     const tag = await tagService.getByOrgUserId(organizationId, userId)
     if (tag) {
-      throw new ResourceAlreadyExistsException(
-        `NFC Tag for the organization ${organizationId} and userId ${userId}: TagId ${tag.id}`,
-      )
+      res.json(actionSucceed(tag))
+      return
     }
 
     const checkIfOrganizationExists = await organizationService.findOneById(organizationId)
@@ -36,11 +34,7 @@ const addNfcTagId: Handler = async (req, res, next): Promise<void> => {
     const user = await userService.getById(userId)
     const tagId = await tagService.create(organizationId, user.id)
 
-    res.json(
-      actionSucceed({
-        tagId,
-      }),
-    )
+    res.json(actionSucceed(tagId))
   } catch (error) {
     next(error)
   }
@@ -52,8 +46,10 @@ const addNfcTagId: Handler = async (req, res, next): Promise<void> => {
 const getUserByTagId: Handler = async (req, res, next): Promise<void> => {
   try {
     const {tagId} = req.params
+    const {legacyMode} = req.query as {legacyMode?: boolean}
 
-    const tag = await tagService.getById(tagId)
+    const tag =
+      legacyMode === true ? await tagService.getByLegacyId(tagId) : await tagService.getById(tagId)
     if (!tag) {
       throw new ResourceNotFoundException(`NFC tag not found with tagId: ${tagId}`)
     }
@@ -68,7 +64,8 @@ const getUserByTagId: Handler = async (req, res, next): Promise<void> => {
         id: user.id,
         firstName: user.firstName,
         lastName: user.lastName,
-        photo: user.photo,
+        // @ts-ignore
+        photo: user.photo ?? user.base64Photo,
         groupName: userGroup.name,
       }),
     )

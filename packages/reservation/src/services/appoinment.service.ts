@@ -21,6 +21,19 @@ export class AppoinmentService {
       })
   }
 
+  async getAppointmentById(id: number): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.getAppointmentById(id)
+  }
+
+  async getAppoinmentByOrganizationId(organizationId: string): Promise<AppointmentDTO[]> {
+    const filters = {organizationId}
+    return this.appoinmentSchedulerRepository
+      .getManyAppointments(filters)
+      .then((appoinment: AppointmentDBModel[]) => {
+        return appoinment
+      })
+  }
+
   async getAppoinmentByDate(startDate: string, endDate: string): Promise<AppointmentDTO[]> {
     const filters = {
       minDate: startDate,
@@ -40,7 +53,8 @@ export class AppoinmentService {
         return id.concat(barCodeNumber.toString())
       })
   }
-  async addBarcodeAppointment(id: number, barCode: string): Promise<AppointmentDTO> {
-    return this.appoinmentSchedulerRepository.addBarcodeAppointment(id, barCode)
+
+  async updateAppoinment(id: number, data: unknown): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.updateAppoinment(id, data)
   }
 }
