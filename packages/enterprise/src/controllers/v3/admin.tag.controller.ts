@@ -1,13 +1,13 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
-import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
-import {UserService} from '../../../services/user-service'
-import {OrganizationService} from '../../../services/organization-service'
-import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-import {authMiddleware} from '../../../../../common/src/middlewares/auth'
-import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
-import {NfcTagService} from '../../../../../common/src/service/hardware/nfctag-service'
-import {CreateNfcTagRequest} from '../../../../../common/src/types/nfc-tag-request'
+import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
+import {UserService} from '../../services/user-service'
+import {OrganizationService} from '../../services/organization-service'
+import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
+import {authMiddleware} from '../../../../common/src/middlewares/auth'
+import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
+import {NfcTagService} from '../../../../common/src/service/hardware/nfctag-service'
+import {CreateNfcTagRequest} from '../../../../common/src/types/nfc-tag-request'
 
 const userService = new UserService()
 const tagService = new NfcTagService()
@@ -74,7 +74,7 @@ const getUserByTagId: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
-class TagController implements IControllerBase {
+class AdminTagController implements IControllerBase {
   public router = express.Router()
 
   constructor() {
@@ -96,4 +96,4 @@ class TagController implements IControllerBase {
   }
 }
 
-export default TagController
+export default AdminTagController

@@ -7,7 +7,7 @@ import {
   actionReplyInsufficientPermission,
   actionSucceed,
 } from '../../../../../common/src/utils/response-wrapper'
-import {userDTOFrom} from '../../../models/user'
+import {userDTOResponse} from '../../../models/user'
 import {User} from '../../../../../common/src/data/user'
 import {AdminProfile} from '../../../../../common/src/data/admin'
 import {authMiddleware} from '../../../../../common/src/middlewares/auth'
@@ -63,7 +63,7 @@ const findAll: Handler = async (req, res, next): Promise<void> => {
 
     // Remap users
     const data = users.map((user) => ({
-      ...userDTOFrom(user),
+      ...userDTOResponse(user),
       groupId: groupsByUserId[user.id]?.id,
       groupName: groupsByUserId[user.id]?.name,
       memberId: user.memberId,

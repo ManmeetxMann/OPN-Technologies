@@ -1,7 +1,7 @@
 import * as express from 'express'
 import {Request, Response} from 'express'
-import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {setTime} from '../../../../common/src/utils/times'
+import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
+import {setTime} from '../../../common/src/utils/times'
 
 class RootController implements IControllerBase {
   public path = '/'
