@@ -226,7 +226,7 @@ class AdminController implements IControllerBase {
     try {
       const requestData = req.body
 
-      await this.testResultsService.sendTestResults({...requestData}, requestData.resultDate)
+      await this.testResultsService.sendTestResults(requestData as TestResultsDTOForEmail, requestData.resultDate)
 
       res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {
