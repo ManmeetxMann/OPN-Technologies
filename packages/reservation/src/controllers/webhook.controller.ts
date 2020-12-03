@@ -6,7 +6,7 @@ import {PackageService} from '../services/package.service'
 import {ScheduleWebhookRequest} from '../models/webhook'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {isEmpty} from 'lodash'
-import { AcuityUpdateDTO } from '../models/appoinment'
+import {AcuityUpdateDTO} from '../models/appoinment'
 
 class WebhookController implements IControllerBase {
   public path = '/webhook'
@@ -42,21 +42,29 @@ class WebhookController implements IControllerBase {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
       }
 
-      if (appointment.certificate && !(appointment.organizationId)) {
+      if (appointment.certificate && !appointment.organizationId) {
         const packageResult = await this.packageService.getByPackageCode(appointment.certificate)
 
         if (packageResult) {
           dataForUpdate['organizationId'] = packageResult.organizationId
-        }else{
-          console.log(`WebhookController: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`)
+        } else {
+          console.log(
+            `WebhookController: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`,
+          )
         }
       }
 
       if (!isEmpty(dataForUpdate)) {
-        console.log(`WebhookController: SaveToAcuity AppoinmentID: ${id} barCodeNumber: ${JSON.stringify(dataForUpdate)}`)
+        console.log(
+          `WebhookController: SaveToAcuity AppoinmentID: ${id} barCodeNumber: ${JSON.stringify(
+            dataForUpdate,
+          )}`,
+        )
         await this.appoinmentService.updateAppoinment(id, dataForUpdate)
-      }else{
-        console.log(`WebhookController: NoUpdateToAcuity AppoinmentID: ${id} barCodeNumber: ${appointment.barCode}  organizationId: ${appointment.organizationId}`)
+      } else {
+        console.log(
+          `WebhookController: NoUpdateToAcuity AppoinmentID: ${id} barCodeNumber: ${appointment.barCode}  organizationId: ${appointment.organizationId}`,
+        )
       }
 
       res.json(actionSucceed(''))
