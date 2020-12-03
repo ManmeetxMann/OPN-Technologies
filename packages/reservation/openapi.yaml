@@ -388,7 +388,6 @@ paths:
                 - timeOfAppointment
                 - id
                 - packageCode
-                - timestamps
       responses:
         '200':
           description: Successfully Return

@@ -17,6 +17,7 @@ import {
   CheckAppointmentRequest,
   SendAndSaveTestResultsRequest,
   ResultTypes,
+  TestResultsDTOForEmail,
 } from '../models/appoinment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -226,7 +227,10 @@ class AdminController implements IControllerBase {
     try {
       const requestData = req.body
 
-      await this.testResultsService.sendTestResults(requestData as TestResultsDTOForEmail, requestData.resultDate)
+      await this.testResultsService.sendTestResults(
+        requestData as TestResultsDTOForEmail,
+        requestData.resultDate,
+      )
 
       res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {

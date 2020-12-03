@@ -145,7 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
       timeOfAppointment: userData.timeOfAppointment,
       id: getValueByElem(barCodeElem),
       packageCode: userData.packageCode,
-      timestamps: userData.timestamps,
     }
 
     try {
