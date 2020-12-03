@@ -139,12 +139,15 @@ class InternalController implements IControllerBase {
         nfcGateKioskAdminForOrganizationIds,
         showReporting,
         groupIds,
+        managementAdminForOrganizationId,
+        testReportsAdminForOrganizationId,
+        testAppointmentsAdminForOrganizationId,
       } = req.body as InternalAdminApprovalCreateRequest
 
       // Make sure it does not exist
       const approval = await this.adminApprovalService.findOneByEmail(email)
       if (approval) {
-        throw new BadRequestException('Unauthorized Access')
+        throw new BadRequestException(`Unauthorized Access got ${approval.id}`)
       }
 
       // Check if we have approval for this admin
@@ -159,6 +162,9 @@ class InternalController implements IControllerBase {
         healthAdminForOrganizationIds: healthAdminForOrganizationIds ?? [],
         nfcAdminForOrganizationIds: nfcAdminForOrganizationIds ?? [],
         nfcGateKioskAdminForOrganizationIds: nfcGateKioskAdminForOrganizationIds ?? [],
+        managementAdminForOrganizationId: managementAdminForOrganizationId,
+        testReportsAdminForOrganizationId: testReportsAdminForOrganizationId,
+        testAppointmentsAdminForOrganizationId: testAppointmentsAdminForOrganizationId,
       })
       res.json(actionSucceed())
     } catch (error) {
