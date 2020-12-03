@@ -601,20 +601,22 @@ components:
         appliesTo:
           type: array
           items:
-            oneOf:
-              - type: string
-              - type: object
-                properties:
-                  id:
-                    type: string
-                  firstName:
-                    type: string
-                  lastName:
-                    type: string
-                  base64Photo:
-                    type: string
-                  group:
-                    $ref: '#/components/schemas/OrganizationGroup'
+            type: string
+        appliesToUsers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
+              base64Photo:
+                type: string
+              group:
+                $ref: '#/components/schemas/OrganizationGroup'
         locationId:
           type: string
         attestationTime:
