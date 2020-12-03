@@ -42,6 +42,9 @@ class UserController implements IRouteController {
         organizationId: string
         dependants: UserDependant[]
       }
+
+      const existingDependants = await this.userService.getAllDependants(userId)
+
       const added = await this.userService.addDependants(userId, dependants)
 
       await Promise.all(
@@ -54,8 +57,7 @@ class UserController implements IRouteController {
           ),
         ),
       )
-
-      res.json(actionSucceed(added))
+      res.json(actionSucceed([...existingDependants, ...added]))
     } catch (error) {
       next(error)
     }
