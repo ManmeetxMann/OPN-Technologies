@@ -110,7 +110,7 @@ class InternalController implements IControllerBase {
       )
       console.log(`generated ${allTemplates.length} templates`)
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
-      const content = _.flatten(allTemplates)
+      const content = _.flatten(allTemplates.map(template => template.content))
       console.log(`generating pdf with ${content.length} elements`)
       const pdfStream = await this.pdfService.generatePDFStream(content, tableLayouts)
       console.log('uploading pdf')
