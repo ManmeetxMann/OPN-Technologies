@@ -17,8 +17,8 @@ import DataStore from '../../common/src/data/datastore'
 import exphbs from 'express-handlebars'
 import path from 'path'
 
-import * as debugClient from '@google-cloud/debug-agent'
-debugClient.start({allowExpressions: true})
+//import * as debugClient from '@google-cloud/debug-agent'
+//debugClient.start({allowExpressions: true})
 
 const PORT = Number(process.env.PORT) || 5008
 
