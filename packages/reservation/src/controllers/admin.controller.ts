@@ -122,9 +122,7 @@ class AdminController implements IControllerBase {
                   'Something wend wrong. Results are not available.',
                 )
               }
-
-              await this.packageService.savePackage(appointmentsByBarCode[row.barCode].packageCode),
-                await this.testResultsService.sendTestResults({...testResults}, resultDate)
+              await this.testResultsService.sendTestResults({...testResults}, resultDate)
             } else {
               const currentAppointment = appointmentsByBarCode[row.barCode]
               if (!currentAppointment) {
