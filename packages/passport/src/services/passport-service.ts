@@ -131,7 +131,7 @@ export class PassportService {
       .then(mapDates)
   }
 
-  async findTheLatestValidPassport(userId: string, nowDate: Date = now()): Promise<Passport> {
+  async findLatestPassport(userId: string, nowDate: Date = now()): Promise<Passport> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
     const passports = await this.passportRepository
       .collection()
@@ -145,13 +145,23 @@ export class PassportService {
       return null
     }
 
-    // Get the Latest Proceed
+    // Get the Latest validForm Passport
     const momentDate = moment(nowDate)
-    const latestPassport: Passport = passports.find(
-      (passport) => passport.status === 'proceed' && momentDate.isAfter(passport.validFrom),
-    )
+    let selectedPassport: Passport = null
+    for (const passport of passports) {
+      if (
+        // @ts-ignore
+        momentDate.isSameOrAfter(passport.validFrom.toDate()) &&
+        // @ts-ignore
+        (!selectedPassport ||
+          // @ts-ignore
+          moment(passport.validFrom.toDate()).isSameOrAfter(selectedPassport.validFrom.toDate()))
+      ) {
+        selectedPassport = passport
+      }
+    }
 
-    return latestPassport
+    return selectedPassport
   }
 
   /**
