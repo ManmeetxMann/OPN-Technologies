@@ -12,6 +12,7 @@ import {User} from '../../../../../common/src/data/user'
 import {AdminProfile} from '../../../../../common/src/data/admin'
 import {authMiddleware} from '../../../../../common/src/middlewares/auth'
 import {CursoredUsersRequestFilter} from '../../../types/user-organization-request'
+import {OrganizationGroup} from '../../../models/organization'
 
 const userService = new UserService()
 const organizationService = new OrganizationService()
@@ -43,10 +44,11 @@ const findAll: Handler = async (req, res, next): Promise<void> => {
     })
 
     // Fetch groups
-    const groupNamesById = await organizationService
+    const groupsById: Record<string, OrganizationGroup> = await organizationService
       .getGroups(organizationId)
-      .then((groups) => groups.reduce((byId, {id, name}) => ({...byId, [id]: name}), {}))
-    const groupNamesByUserId = await organizationService
+      .then((groups) => groups.reduce((byId, group) => ({...byId, [group.id]: group}), {}))
+
+    const groupsByUserId: Record<string, OrganizationGroup> = await organizationService
       .getUsersGroups(
         organizationId,
         null,
@@ -54,7 +56,7 @@ const findAll: Handler = async (req, res, next): Promise<void> => {
       )
       .then((userGroups) =>
         userGroups.reduce(
-          (byUserId, {groupId, userId}) => ({...byUserId, [userId]: groupNamesById[groupId] ?? ''}),
+          (byUserId, {groupId, userId}) => ({...byUserId, [userId]: groupsById[groupId]}),
           {},
         ),
       )
@@ -62,7 +64,8 @@ const findAll: Handler = async (req, res, next): Promise<void> => {
     // Remap users
     const data = users.map((user) => ({
       ...userDTOFrom(user),
-      groupName: groupNamesByUserId[user.id],
+      groupId: groupsByUserId[user.id]?.id,
+      groupName: groupsByUserId[user.id]?.name,
       memberId: user.memberId,
       createdAt: user.timestamps?.createdAt?.toDate().toISOString(),
       updatedAt: user.timestamps?.updatedAt?.toDate().toISOString(),
