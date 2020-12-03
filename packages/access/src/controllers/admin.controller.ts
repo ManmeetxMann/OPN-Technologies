@@ -263,6 +263,17 @@ class AdminController implements IRouteController {
         replyInsufficientPermission(res)
         return
       }
+      const latestPassport = await this.passportService.findLatestPassport(tag.userId)
+
+      // Make sure it's valid
+      if (
+        !latestPassport ||
+        tag.userId !== latestPassport.userId ||
+        latestPassport.status !== 'proceed'
+      ) {
+        replyUnauthorizedEntry(res)
+        return
+      }
 
       // Let's get the access assuming that user is already Proceed
       // Note we are only looking for ones that authenticated by this admin account
@@ -276,18 +287,9 @@ class AdminController implements IRouteController {
       // Check if access does not exist or if they've exited
       // Note we are not checking for entered at as assuming that the enteredAt is there :-)
       if (!access || !!access.exitAt) {
-        // Fetch latest passport
-        const passport = await this.passportService.findTheLatestValidPassport(tag.userId)
-
-        // Make sure it's valid
-        if (!passport || tag.userId !== passport.userId || passport.status !== 'proceed') {
-          replyUnauthorizedEntry(res)
-          return
-        }
-
         // Create new Access
         const accessToken = await this.accessTokenService.createToken(
-          passport.statusToken,
+          latestPassport.statusToken,
           locationId,
           tag.userId,
           [],
@@ -299,10 +301,14 @@ class AdminController implements IRouteController {
         res.json(actionSucceed(accessForEntering))
       } else {
         // Get Latest Passport (as they need a valid access)
-        const passport = await this.passportService.findOneByToken(access.statusToken)
+        const specificPassport = await this.passportService.findOneByToken(access.statusToken)
 
         // Make sure it's valid
-        if (!passport || tag.userId !== passport.userId || passport.status !== 'proceed') {
+        if (
+          !specificPassport ||
+          tag.userId !== specificPassport.userId ||
+          specificPassport.status !== 'proceed'
+        ) {
           replyUnauthorizedEntry(res)
           return
         }
