@@ -80,9 +80,11 @@ export default class ReportSender {
       users.map(async (user) => {
         return {
           id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
           orgId: user.organizationIds[0],
           groups: await this.orgService.getUsersGroups(organizationId, null, [user.id]),
-          dependants: await this.userService.getAllDependants(user.id),
+          delegates: user.delegates,
         }
       }),
     )
@@ -94,14 +96,25 @@ export default class ReportSender {
         groupNames: lookup.groups.map(
           (membership) => allGroups.find((group) => group.id === membership.groupId)?.name,
         ),
-        dependants: lookup.dependants.map((dep) => ({
-          id: dep.id,
-          firstName: dep.firstName,
-          lastName: dep.lastName,
-          groupName: allGroups.find((group) => group.id === dep.groupId)?.name,
-        })),
+        delegates: lookup.delegates,
+        dependants: [],
       }))
       .reduce((lookup, data) => ({...lookup, [data.id]: data}), {})
+
+    const keys = Object.keys(userDependantLookup)
+    keys.forEach((userId) => {
+      const user = userDependantLookup[userId]
+      if (!user.delegates?.length) {
+        // not a dependant
+        return
+      }
+      user.delegates.forEach((delegateId) => {
+        const delegate = userDependantLookup[delegateId]
+        if (delegate) {
+          delegate.dependants.push(user)
+        }
+      })
+    })
 
     const message = reports
       .map((report) =>
