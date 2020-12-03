@@ -336,11 +336,13 @@ export default class TraceListener {
       users.map(async (user) => {
         return {
           id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
           orgId: user.organizationIds[0],
           groups: await this.organizationService.getUsersGroups(user.organizationIds[0], null, [
             user.id,
           ]),
-          dependants: await this.userService.getAllDependants(user.id),
+          delegates: user.delegates ?? [],
         }
       }),
     )
@@ -354,16 +356,25 @@ export default class TraceListener {
             organizationLookup[lookup.orgId].groups.find((group) => group.id === membership.groupId)
               ?.name,
         ),
-        dependants: lookup.dependants.map((dep) => ({
-          id: dep.id,
-          firstName: dep.firstName,
-          lastName: dep.lastName,
-          groupName: organizationLookup[lookup.orgId].groups.find(
-            (group) => group.id === dep.groupId,
-          )?.name,
-        })),
+        delegates: lookup.delegates,
+        dependants: [],
       }))
       .reduce((lookup, data) => ({...lookup, [data.id]: data}), {})
+
+    const keys = Object.keys(userDependantLookup)
+    keys.forEach((userId) => {
+      const user = userDependantLookup[userId]
+      if (!user.delegates?.length) {
+        // not a dependant
+        return
+      }
+      user.delegates.forEach((delegateId) => {
+        const delegate = userDependantLookup[delegateId]
+        if (delegate) {
+          delegate.dependants.push(user)
+        }
+      })
+    })
 
     const sourceUser = users.find((u) => u.id === userId)
 
