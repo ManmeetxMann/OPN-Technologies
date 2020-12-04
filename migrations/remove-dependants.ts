@@ -24,10 +24,7 @@ async function addDelegates(): Promise<void> {
     }
     after = page[page.length - 1]
     console.log(`Updating page ${pageIndex + 1} with ${page.length} users in it`)
-    // Dry running
-    // await Promise.all(
-    //   page.map((user) => user.ref.set({delegates: null}))
-    // )
+    await Promise.all(page.map((user) => user.ref.set({delegates: null})))
     console.log(`Update complete`)
     pageIndex += 1
   }
