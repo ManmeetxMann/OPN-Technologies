@@ -143,13 +143,6 @@ class AdminController implements IControllerBase {
               ])
             }
 
-            if (row.result === ResultTypes.Positive) {
-              if (!testResults) {
-                throw new ResourceNotFoundException(
-                  'Something wend wrong. Results are not available.',
-                )
-              }
-            }
           } else {
             notFoundBarcodes.push(row)
           }
