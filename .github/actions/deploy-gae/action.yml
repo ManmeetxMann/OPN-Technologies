@@ -53,7 +53,7 @@ runs:
         echo "PROJECT_ID=opn-platform-infra-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=infra_dev_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--no-promote" >> $GITHUB_ENV
-        cat >> ./packages/${{ inputs.service_name }}/app.yaml << EOF
+      cat > ./packages/${{ inputs.service_name }}/app.yaml << EOF
         runtime: nodejs12
         service: access-staging
       EOF
@@ -78,7 +78,7 @@ runs:
         echo "PROJECT_ID=opn-platform-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=dev_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
-        cat >> ./packages/${{ inputs.service_name }}/app.yaml << EOF
+      cat > ./packages/${{ inputs.service_name }}/app.yaml << EOF
         runtime: nodejs12
         service: access-staging
       EOF
