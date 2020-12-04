@@ -294,7 +294,8 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     perPage: number,
     subPath = '',
   ): Promise<T[]> {
-    if (page === 1) return query.limit(perPage).fetch()
+    // Do a fast and efficient fetch for first step
+    if (page <= 1) return query.limit(perPage).fetch()
 
     // Get all (I know it's inefficient)
     const subset = await query.fetch()
