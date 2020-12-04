@@ -4,7 +4,7 @@ import {
   AppointmentDBModel,
   AppointmentAcuityResponse,
   AppointmentRequest,
-  AppointmentUI
+  AppointmentUI,
 } from '../models/appoinment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
