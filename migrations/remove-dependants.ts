@@ -8,6 +8,7 @@ initializeApp({
   credential: credential.cert(serviceAccount),
 })
 
+const DRY = false
 const database = firestore()
 
 async function addDelegates(): Promise<void> {
@@ -24,7 +25,9 @@ async function addDelegates(): Promise<void> {
     }
     after = page[page.length - 1]
     console.log(`Updating page ${pageIndex + 1} with ${page.length} users in it`)
-    await Promise.all(page.map((user) => user.ref.update({delegates: null})))
+    if (!DRY) {
+      await Promise.all(page.map((user) => user.ref.update({delegates: null})))
+    }
     console.log(`Update complete`)
     pageIndex += 1
   }
@@ -60,8 +63,9 @@ async function createNewUsers(): Promise<void> {
           .get()
 
         if (!currentDoc.exists) {
-          console.warn(`no dependant found at users/${parentUserId}/dependants/${data.userId}`)
-          console.warn(`Check ${userGroup.ref.path}`)
+          console.warn(
+            `no dependant found at users/${parentUserId}/dependants/${data.userId}, Check ${userGroup.ref.path}`,
+          )
           // probably deleted
           return
         }
@@ -78,9 +82,17 @@ async function createNewUsers(): Promise<void> {
         }
         // fails if already exists
         try {
-          return target.create(newDependant)
+          console.log(`Creating ${JSON.stringify(newDependant)} at users/${data.userId}`)
+          if (DRY) {
+            const t = await target.get()
+            if (t.exists) {
+              throw new Error('Already exists')
+            }
+          } else {
+            await target.create(newDependant)
+          }
         } catch (err) {
-          console.warn(`error creating dependant from ${fullPath}, attempting to recover`, err)
+          console.warn(`error creating dependant from ${fullPath}, attempting to recover`)
           const existingUser = await target.get()
           if (!existingUser.exists) {
             console.error("couldn't recover - user is not a duplicate")
@@ -88,16 +100,18 @@ async function createNewUsers(): Promise<void> {
           }
           const data = existingUser.data()
           if (
-            data.firstName === current.firstName &&
-            data.lastName === current.lastName &&
+            data.firstName === newDependant.firstName &&
+            data.lastName === newDependant.lastName &&
             data.delegates?.includes(parentUserId)
           ) {
             // it's a duplicate
-            console.warn(`Check ${data.path}, it may be a duplicate`)
+            console.warn(`Check ${userGroup.ref.path}, it may be a duplicate`)
             console.warn(`Not creating ${JSON.stringify(newDependant)}`)
           } else {
             console.error(
-              `couldn't recover - id in use, but not similar to ${JSON.stringify(newDependant)}`,
+              `couldn't recover - id in use, but ${JSON.stringify(
+                data,
+              )} is not similar to ${JSON.stringify(newDependant)}`,
             )
           }
         }
