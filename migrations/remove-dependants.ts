@@ -61,7 +61,7 @@ async function createNewUsers(): Promise<void> {
 
         if (!currentDoc.exists) {
           console.warn(`no dependant found at users/${parentUserId}/dependants/${data.userId}`)
-          console.warn(`Check ${data.path}`)
+          console.warn(`Check ${userGroup.ref.path}`)
           // probably deleted
           return
         }
