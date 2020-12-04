@@ -19,6 +19,11 @@ class AdminAppointmentController implements IControllerBase {
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
     innerRouter.get(this.path + '/api/v1/appointments', authMiddleware, this.getListAppointments)
+    innerRouter.get(
+      this.path + '/api/v1/appointments/:appointmentId',
+      authMiddleware,
+      this.getAppointmentById,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -28,6 +33,21 @@ class AdminAppointmentController implements IControllerBase {
       const {organizationId} = req.query as AppointmentByOrganizationRequest
 
       const appointment = await this.appoinmentService.getAppoinmentByOrganizationId(organizationId)
+
+      res.json(actionSucceed(appointment))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getAppointmentById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {appointmentId} = req.params as {appointmentId: string}
+
+      const appointment = await this.appoinmentService.getAppointmentById(
+        Number(appointmentId),
+        true,
+      )
 
       res.json(actionSucceed(appointment))
     } catch (error) {
