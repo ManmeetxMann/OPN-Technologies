@@ -30,6 +30,7 @@ class PortalController implements IControllerBase {
       .post(this.path + '/page/appointment-by-bar-code', this.displayFormToEnterBarCode)
       .get(this.path + '/page/send-single-results', this.displayFormToSendSingleResults)
       .get(this.path + '/page/send-bulk-results', this.displayFormToSendBulkResults)
+      .get(this.path + '/page/send-fax-for-positive', this.displayFormToSendFaxForPositive)
       .get(this.path + '/js/print-label-library.js', this.displayPrintLibraryJs)
       .get(this.path + '/js/print-label.js', this.displayPrintJs)
 
@@ -106,6 +107,14 @@ class PortalController implements IControllerBase {
       sendBulkResultTab: true,
       calendarFromDate,
       calendarToDate,
+    })
+  }
+
+  displayFormToSendFaxForPositive = async (req: Request, res: Response): Promise<void> => {
+    res.render('send_fax_for_positive', {
+      layout: 'results',
+      confirmBeforeSend: Config.get('CONFIRM_BEFORE_SEND'),
+      sendFaxForPositiveTab: true,
     })
   }
 }

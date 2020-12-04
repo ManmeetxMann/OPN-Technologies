@@ -38,6 +38,10 @@ const combinePropertyErrors = (extra: string[], missing: string[]): string => {
 export const handleValidationErrors: ErrorMiddleware<BadRequest> = (err, req, res, next) => {
   console.error('Validation Error: ', err)
   const {errors} = err
+  if (err.status === 404) {
+    return next()
+  }
+
   const extraProperties = (errors ?? [])
     .filter(
       (error) =>

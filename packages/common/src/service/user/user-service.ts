@@ -1,7 +1,6 @@
 import DataStore from '../../data/datastore'
 import {User, UserDependant, UserFilter, UserModel} from '../../data/user'
 import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
-import {ForbiddenException} from '../../exceptions/forbidden-exception'
 
 export class UserService {
   private dataStore = new DataStore()
@@ -43,6 +42,11 @@ export class UserService {
     return results.length > 0 ? results.shift() : null
   }
 
+  async findAllByAuthUserId(authUserId: string): Promise<User[]> {
+    const results = await this.userRepository.findWhereEqual('authUserId', authUserId)
+    return results.length > 0 ? results : null
+  }
+
   getAllDependants(userId: string, skipUserCheck = false): Promise<UserDependant[]> {
     return Promise.all([
       this.userRepository.findWhereArrayContains('delegates', userId),
@@ -68,28 +72,39 @@ export class UserService {
     }
   }
 
+  getUserAndDependants(userId: string): Promise<{guardian: User; dependants: UserDependant[]}> {
+    return Promise.all([this.getAllDependants(userId, true), this.findOne(userId)]).then(
+      ([dependants, guardian]) => ({
+        guardian,
+        dependants,
+      }),
+    )
+  }
+
   async updateDependantProperties(
     parentId: string,
     dependantId: string,
     fields: Record<string, unknown>,
   ): Promise<void> {
     const dependant = await this.findOne(dependantId)
-    if (!(dependant.delegates?.includes(parentId))) {
+    if (!dependant.delegates?.includes(parentId)) {
       throw new ResourceNotFoundException(`${parentId} not a delegate of ${dependantId}`)
     }
     await this.userRepository.updateProperties(dependantId, fields)
   }
-
-  async addDependants(userId: string, members: UserDependant[]): Promise<UserDependant[]> {
+  // TODO: validate this
+  async addDependants(userId: string, dependants: UserDependant[]): Promise<UserDependant[]> {
     const parent = await this.findOne(userId)
-    if (parent.delegates?.length) {
-      throw new ForbiddenException(`${userId} has delegates and cannot become a delegate`)
-    }
-    const withDelegate = members.map((dependant) => ({
-      ...dependant,
+    const dependantsToAdd = dependants.map((dependant) => ({
+      firstName: dependant.firstName,
+      lastName: dependant.lastName,
       delegates: [userId],
+      registrationId: '',
+      base64Photo: '',
+      organizationIds: parent.organizationIds,
     }))
-    return this.userRepository.addAll(withDelegate)
+    // @ts-ignore no id needed
+    return Promise.all(dependantsToAdd.map((dependant) => this.create(dependant)))
   }
 
   async removeDependant(parentId: string, dependantId: string): Promise<void> {

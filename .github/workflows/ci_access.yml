@@ -97,6 +97,7 @@ jobs:
           ACUITY_FIELD_BARCODE=${{ secrets.ACUITY_FIELD_BARCODE }}
           ACUITY_FIELD_DATE_OF_BIRTH=${{ secrets.ACUITY_FIELD_DATE_OF_BIRTH }}
           ACUITY_FIELD_NURSE_NAME=${{ secrets.ACUITY_FIELD_NURSE_NAME }}
+          ACUITY_FIELD_ORGANIZATION_ID=8842033
         write-mode: overwrite
     - run: npm run cd-deploy-access
     - run: npm run cd-build-apidocs

@@ -150,6 +150,8 @@ components:
           type: string
         validUntil:
           type: string
+        nfcGateOnly:
+          type: boolean
       required:
         - title
         - attestationRequired
@@ -227,6 +229,8 @@ components:
           type: string
         name:
           type: string
+        isPrivate:
+          type: boolean
         checkInDisabled:
           type: boolean
           default: false
@@ -234,6 +238,7 @@ components:
           type: number
       required:
         - name
+        - isPrivate
 
     OrganizationConnectionRequestV1:
       type: object
@@ -411,6 +416,20 @@ components:
           items:
             type: string
           description: Organizaiton ids to become a NFC tag admin of. Must be provided can be empty.
+        nfcGateKioskAdminForOrganizationIds:
+          type: array
+          items:
+            type: string
+          description: Organizaiton ids to become a NFC Gate Kiosk admin. Must be provided can be empty.
+        managementAdminForOrganizationId:
+          type: string
+          description: Organization IDs for admin dashboard to give access to user management/group management
+        testReportsAdminForOrganizationId:
+          type: string
+          description: Organization IDs for admin dashboard to to see test reports
+        testAppointmentsAdminForOrganizationId:
+          type: string
+          description: Organization IDs for admin dashboard to to see test appoinments and print bar codes
 
         groupIds:
           type: array
@@ -583,6 +602,21 @@ components:
           type: array
           items:
             type: string
+        appliesToUsers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
+              base64Photo:
+                type: string
+              group:
+                $ref: '#/components/schemas/OrganizationGroup'
         locationId:
           type: string
         attestationTime:
@@ -666,7 +700,12 @@ components:
           type: string
         showReporting:
           type: boolean
-
+        managementAdminForOrganizationId:
+          type: string
+        testReportsAdminForOrganizationId:
+          type: string
+        testAppointmentsAdminForOrganizationId:
+          type: string
     User:
       type: object
       deprecated: true
@@ -740,9 +779,15 @@ components:
           description: Photo URL
         groupName:
           type: string
+        groupId:
+          type: string
         memberId:
           type: string
           nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
       required:
         - firstName
         - lastName
@@ -806,6 +851,9 @@ components:
         memberId:
           type: string
           nullable: true
+        groupId:
+          type: string
+          nullable: true
 
       required:
         - email
@@ -814,6 +862,31 @@ components:
         - organizationId
         - photo
 
+    UpdateUserByAdminRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          nullable: false
+        lastName:
+          type: string
+          nullable: false
+        registrationId:
+          type: string
+          nullable: true
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+        memberId:
+          type: string
+          nullable: true
+        groupId:
+          type: string
+          nullable: true
+        organizationId:
+          type: string
+          nullable: true
 
     MigrateUserRequest:
       type: object
@@ -1430,6 +1503,8 @@ components:
           properties:
             tagId:
               type: string
+            legacyTagId:
+              type: string
         status:
           type: object
           additionalProperties: false
@@ -1674,6 +1749,12 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: includeNfcGates
+          schema:
+            type: boolean
+          description: Filters to only include NFC gates
+          required: false
       responses:
         '200':
           description: Successfully retrieved
@@ -2439,6 +2520,41 @@ paths:
                 $ref: '#/components/schemas/ResponseOfAdminProfile'
 
   /enterprise/admin/api/v3/users:
+    get:
+      summary: Organization users list
+      description: Get users by organizationId
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 0
+          required: true
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsersByOrganization'
     post:
       summary: Create User
       description: Creates a user profile with `CreateUserByAdminRequest` payload and returns a `User`
@@ -2457,38 +2573,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
 
-
-  /enterprise/admin/api/v3/users/{organizationId}:
-    get:
-      summary: Organization users list
-      description: Get users by organizationId
+  /enterprise/admin/api/v3/users/{userId}:
+    put:
+      summary: Update User
+      description: Update a user profile with `UpdateUserByAdminRequest` payload and returns a `User`
       security:
         - bearerAuthJWT: []
       parameters:
         - in: path
-          name: organizationId
+          name: userId
           schema:
             type: string
           required: true
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 0
-          required: true
-        - in: query
-          name: perPage
-          schema:
-            type: integer
-            minimum: 1
-          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserByAdminRequest'
       responses:
         '200':
-          description: Successfully returned
+          description: Successfully Updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseOfUsersByOrganization'
+                $ref: '#/components/schemas/ResponseOfUser'
+
 
   /enterprise/admin/api/v3/tags:
     post:
@@ -2526,6 +2635,10 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: legacyMode
+          schema:
+            type: boolean
       responses:
         '200':
           description: Successfully returned
@@ -2600,6 +2713,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
+
+  /enterprise/api/v3/users/search:
+    get:
+      summary: Search users list
+      description: Find `User`(s) by admin
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Account management
+      parameters:
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsersByOrganization'
 
   /enterprise/api/v3/users/migration:
     post:
