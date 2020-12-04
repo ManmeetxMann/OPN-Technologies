@@ -56,7 +56,7 @@ runs:
         cat >> ./packages/${{ inputs.service_name }}/app.yaml << EOF
         runtime: nodejs12
         service: access-staging
-        EOF
+      EOF
       elif [[ "$GITHUB_REF" == *"$INFRA_DEV_TAG_REF"* ]]; then
         echo "Deploy to INFRA DEV"
         echo "PROJECT_ID=opn-platform-infra-dev" > $GITHUB_ENV
@@ -81,7 +81,7 @@ runs:
         cat >> ./packages/${{ inputs.service_name }}/app.yaml << EOF
         runtime: nodejs12
         service: access-staging
-        EOF
+      EOF
       else
         echo "Bad Deployment"
         exit 1;
