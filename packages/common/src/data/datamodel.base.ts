@@ -294,13 +294,13 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     perPage: number,
     subPath = '',
   ): Promise<T[]> {
-    const subset = await query.limit(page * perPage).fetch()
+    if (page === 1) return query.limit(perPage).fetch()
 
-    if (page === 1) return subset.slice()
+    const subset = await query.fetch()
 
     if (!subset.length) return []
 
-    const lastVisible = subset[subset.length - 1]
+    const lastVisible = subset[(page - 1) * perPage - 1] // go to previous page (zero base) and then the last one
     const lastVisibleSnapshot = await this.collection(subPath).docRef(lastVisible.id).get()
 
     const nextPage = await query.limit(perPage).startAfter(lastVisibleSnapshot).fetch()
