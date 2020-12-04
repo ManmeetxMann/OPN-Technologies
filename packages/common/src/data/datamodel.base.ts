@@ -294,13 +294,23 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     perPage: number,
     subPath = '',
   ): Promise<T[]> {
-    const subset = await query.limit(page === 0 ? perPage : page * perPage).fetch()
+    // Do a fast and efficient fetch for first step
+    if (page <= 1) return query.limit(perPage).fetch()
 
-    if (page === 0) return subset.slice()
+    // Get all (I know it's inefficient)
+    const subset = await query.fetch()
+    if (!subset.length) return []
 
-    const lastVisible = subset[subset.length - 1]
+    // Check for last visible
+    // Go to previous page (zero base) and then the last one
+    const lastVisible = subset[(page - 1) * perPage - 1]
+    if (!lastVisible) return []
+
+    // Get the snapshot
     const lastVisibleSnapshot = await this.collection(subPath).docRef(lastVisible.id).get()
+    if (!lastVisibleSnapshot) return []
 
+    // Return
     const nextPage = await query.limit(perPage).startAfter(lastVisibleSnapshot).fetch()
     return nextPage.slice()
   }
@@ -310,12 +320,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
   }
 
   public async fetchAllWithPagination(page: number, perPage: number, subPath = ''): Promise<T[]> {
-    return this.fetchPage(
-      this.collection(subPath).limit(page === 0 ? perPage : page * perPage),
-      page,
-      perPage,
-      subPath,
-    )
+    return this.fetchPage(this.collection(subPath).limit(page * perPage), page, perPage, subPath)
   }
 
   public async increment(id: string, fieldName: string, byCount: number, subPath = ''): Promise<T> {
@@ -385,6 +390,27 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return await this.collection(subPath).where(fieldPath, 'array-contains', value).fetch()
   }
 
+  public async updateAllFromCollectionWhereEqual(
+    property: string,
+    value: unknown,
+    data: unknown,
+    subPath = '',
+  ): Promise<unknown> {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+
+    return this.collection(subPath)
+      .where(fieldPath, '==', value)
+      .fetch()
+      .then((response) => {
+        const batch = this.datastore.firestoreAdmin.firestore().batch()
+        response.forEach((doc) => {
+          const docRef = this.collection(subPath).docRef(doc.id)
+          batch.update(docRef, data)
+        })
+        batch.commit()
+      })
+  }
+
   public async findWhereArrayContainsAny(
     property: string,
     values: Iterable<unknown>,
@@ -412,6 +438,22 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     const deduplicated: Record<string, T> = {}
     allResults.forEach((page) => page.forEach((item) => (deduplicated[item.id] = item)))
     return Object.values(deduplicated)
+  }
+
+  public getWhereIdInQuery(values: unknown[], subPath = ''): Query<T, Omit<T, 'id'>>[] {
+    const fieldPath = this.datastore.firestoreAdmin.firestore.FieldPath.documentId()
+    const chunks: unknown[][] = _.chunk([...values], 10)
+    return chunks.map((chunk) => this.collection(subPath).where(fieldPath, 'in', chunk))
+  }
+
+  public getWhereInQuery(
+    property: string,
+    values: unknown[],
+    subPath = '',
+  ): Query<T, Omit<T, 'id'>>[] {
+    const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
+    const chunks: unknown[][] = _.chunk([...values], 10)
+    return chunks.map((chunk) => this.collection(subPath).where(fieldPath, 'in', chunk))
   }
 
   public async findOneById(value: unknown, subPath = ''): Promise<T> {

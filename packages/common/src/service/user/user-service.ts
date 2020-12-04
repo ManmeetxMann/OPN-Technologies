@@ -100,9 +100,10 @@ export class UserService {
     )
   }
 
-  addDependants(userId: string, members: UserDependant[]): Promise<UserDependant[]> {
+  addDependants(userId: string, dependants: UserDependant[]): Promise<UserDependant[]> {
+    const model = new UserDependantModel(this.dataStore, userId)
     return this.findOne(userId).then(() =>
-      new UserDependantModel(this.dataStore, userId).addAll(members),
+      Promise.all(dependants.map((dependant) => model.add(dependant))),
     )
   }
 

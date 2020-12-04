@@ -1,8 +1,9 @@
+import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
+import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
+// import {RegistrationService} from '../../../../common/src/service/registry/registration-service'
+
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
-import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-// import {RegistrationService} from '../../../../common/src/service/registry/registration-service'
-import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 
 class AdminController implements IControllerBase {
   public path = '/admin'

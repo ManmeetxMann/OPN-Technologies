@@ -242,7 +242,10 @@ class OrganizationController implements IControllerBase {
   getLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {parentLocationId} = req.query
+      const {parentLocationId, includeNfcGates} = req.query as {
+        parentLocationId?: string
+        includeNfcGates?: boolean
+      }
       const locations = await this.organizationService.getLocations(
         organizationId,
         parentLocationId as string | null,
@@ -251,9 +254,17 @@ class OrganizationController implements IControllerBase {
         locations.map(async (location) => this.populateZones(location, organizationId)),
       )
 
-      locations.sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))
+      // Filter NFC gates out
+      const filteredLocations = includeNfcGates
+        ? locations
+        : locations.filter((location) => {
+            return !('nfcGateOnly' in location && location.nfcGateOnly === true)
+          })
 
-      res.json(actionSucceed(locations))
+      // Sort
+      filteredLocations.sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))
+
+      res.json(actionSucceed(filteredLocations))
     } catch (error) {
       next(error)
     }
@@ -744,7 +755,7 @@ class OrganizationController implements IControllerBase {
         throw new HttpException('There is no historical data available for this group.')
       }
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
-      const content = _.flatten(allTemplates)
+      const content = _.flatten(_.map(allTemplates, 'content'))
       console.log('generating stream')
       const pdfStream = this.pdfService.generatePDFStream(content, tableLayouts)
       res.contentType('application/pdf')
@@ -1160,7 +1171,8 @@ class OrganizationController implements IControllerBase {
           locationId,
           attestationTime: safeTimestamp(attestationTime),
           questions: questionnairesById[questionnaireIdsByLocationId[locationId]]?.questions ?? {},
-          appliesTo: appliesTo.map((appliesToId) => {
+          appliesTo,
+          appliesToUsers: appliesTo.map((appliesToId) => {
             const user =
               appliesToId === primaryUserId
                 ? guardian
@@ -1220,16 +1232,27 @@ class OrganizationController implements IControllerBase {
       )
 
       const response = {
-        parent: parentUserId
-          ? {
-              id: parent.id,
-              firstName: parent.firstName,
-              lastName: parent.lastName,
-              groupName: parentGroup.name,
-              base64Photo: parent.base64Photo,
-              status: parentStatus,
-            }
-          : null,
+        parent: {
+          id: parent.id,
+          firstName: parent.firstName,
+          lastName: parent.lastName,
+          groupName: parentGroup.name,
+          base64Photo: parent.base64Photo,
+          status: parentStatus,
+        },
+        // Frontends break if this is not provided
+        // However, this should be null when parent is the user
+        // in the query args
+        // parent: parentUserId
+        //   ? {
+        //       id: parent.id,
+        //       firstName: parent.firstName,
+        //       lastName: parent.lastName,
+        //       groupName: parentGroup.name,
+        //       base64Photo: parent.base64Photo,
+        //       status: parentStatus,
+        //     }
+        //   : null,
         dependents: dependentsWithGroup.filter((dependant) => dependant.id !== userId),
       }
 

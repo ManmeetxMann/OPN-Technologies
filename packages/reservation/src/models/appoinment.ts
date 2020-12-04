@@ -1,3 +1,5 @@
+import {PageableRequestFilter} from '../../../common/src/types/request'
+
 type AppointmentBase = {
   firstName: string
   lastName: string
@@ -9,6 +11,9 @@ type AppointmentBase = {
   appointmentId: number
   timeOfAppointment?: string
   barCode?: string
+  packageCode: string
+  certificate?: string
+  organizationId?: string
 }
 
 export type AppoinmentDataUI = {
@@ -37,10 +42,14 @@ export type AppointmentAcuityResponse = AppointmentBase & {
   date: string
   time: string
   forms: Array<AppointmentAcuityForm>
+  certificate: string
+  location: string
+  organizationId: string
 }
 
 export type AppointmentSearchRequest = {
-  barCodeNumber: string
+  barCodeNumber?: string
+  organizationId?: string
 }
 
 export type AppointmentSearchByDateRequest = {
@@ -78,6 +87,8 @@ export type TestResultsBase = {
   hexIC: string
   hexCt: string
   resultDate: Date
+  packageCode: string
+  organizationId: string
 }
 
 export type TestResultsDTO = TestResultsBase
@@ -109,4 +120,30 @@ export type SendAndSaveTestResultsRequest = {
   from: string
   to: string
   resultDate: Date
+}
+
+export type TestResultForPagination = {
+  barCode: string
+  firstName: string
+  lastName: string
+  result: ResultTypes
+  resultDate: Date
+  dateOfAppointment: string
+  timeOfAppointment: string
+  testType: string
+  id: string
+}
+
+export type AppointmentByOrganizationRequest = PageableRequestFilter & {
+  organizationId?: string
+}
+
+export type AcuityUpdateDTO = {
+  barCodeNumber?: string
+  organizationId?: string
+}
+
+export type AppointmentUI = AppointmentBase & {
+  id?: number
+  location?: string
 }

@@ -10,7 +10,7 @@ import {BadRequestException} from '../../../../common/src/exceptions/bad-request
 import {CreateUserByAdminRequest} from '../../types/new-user'
 import {UpdateUserByAdminRequest} from '../../types/update-user-request'
 import {UsersByOrganizationRequest} from '../../types/user-organization-request'
-
+import {flatten} from 'lodash'
 const userService = new UserService()
 const organizationService = new OrganizationService()
 
@@ -20,13 +20,18 @@ const organizationService = new OrganizationService()
  */
 const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {perPage, page, organizationId} = req.query as UsersByOrganizationRequest
+    const {perPage, page, organizationId, searchQuery} = req.query as UsersByOrganizationRequest
 
     if (perPage < 1 || page < 0) {
       throw new BadRequestException(`Pagination params are invalid`)
     }
-
-    const users = await userService.getAllByOrganizationId(organizationId, page, perPage)
+    let users = []
+    if (searchQuery) {
+      users = await userService.searchByQueryAndOrganizationId(organizationId, searchQuery)
+      users = flatten(users)
+    } else {
+      users = await userService.getAllByOrganizationId(organizationId, page, perPage)
+    }
 
     const usersGroups = await organizationService.getUsersGroups(
       organizationId,
@@ -35,18 +40,21 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
     )
 
     const orgGroups = await organizationService.getGroups(organizationId)
-    const groupNamesById: Record<string, string> = orgGroups.reduce(
+    const groupsById: Record<string, {id: string; name: string}> = orgGroups.reduce(
       (lookup, orgGroup) => ({
         ...lookup,
-        [orgGroup.id]: orgGroup.name,
+        [orgGroup.id]: {
+          id: orgGroup.id,
+          name: orgGroup.name,
+        },
       }),
       {},
     )
 
-    const groupNamesByUserId: Record<string, string> = usersGroups.reduce(
+    const groupsByUserId: Record<string, {id: string; name: string}> = usersGroups.reduce(
       (lookup, usersGroup) => ({
         ...lookup,
-        [usersGroup.userId]: groupNamesById[usersGroup.groupId] || '',
+        [usersGroup.userId]: groupsById[usersGroup.groupId] || '',
       }),
       {},
     )
@@ -55,7 +63,8 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
       users.map(async (user: User) => {
         return {
           ...userDTOResponse(user),
-          groupName: groupNamesByUserId[user.id],
+          groupName: groupsByUserId[user.id].name,
+          groupId: groupsByUserId[user.id].id,
           memberId: user.memberId,
           createdAt:
             user.timestamps && user.timestamps.createdAt
@@ -109,9 +118,18 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
  */
 const updateUser: Handler = async (req, res, next): Promise<void> => {
   try {
-    const source = req.body as UpdateUserByAdminRequest
+    const {organizationId, groupId, ...source} = req.body as UpdateUserByAdminRequest
     const {userId} = req.params
     const updatedUser = await userService.updateByAdmin(userId, source)
+
+    // Assert that the group exists
+    await organizationService.getGroup(organizationId, groupId)
+
+    if (groupId) {
+      const currentGroup = await organizationService.getUserGroup(organizationId, userId)
+      await organizationService.updateGroupForUser(organizationId, currentGroup.id, userId, groupId)
+    }
+
     res.json(actionSucceed(userDTOResponse(updatedUser)))
   } catch (error) {
     next(error)

@@ -150,6 +150,8 @@ components:
           type: string
         validUntil:
           type: string
+        nfcGateOnly:
+          type: boolean
       required:
         - title
         - attestationRequired
@@ -419,6 +421,15 @@ components:
           items:
             type: string
           description: Organizaiton ids to become a NFC Gate Kiosk admin. Must be provided can be empty.
+        managementAdminForOrganizationId:
+          type: string
+          description: Organization IDs for admin dashboard to give access to user management/group management
+        testReportsAdminForOrganizationId:
+          type: string
+          description: Organization IDs for admin dashboard to to see test reports
+        testAppointmentsAdminForOrganizationId:
+          type: string
+          description: Organization IDs for admin dashboard to to see test appoinments and print bar codes
 
         groupIds:
           type: array
@@ -590,20 +601,22 @@ components:
         appliesTo:
           type: array
           items:
-            oneOf:
-              - type: string
-              - type: object
-                properties:
-                  id:
-                    type: string
-                  firstName:
-                    type: string
-                  lastName:
-                    type: string
-                  base64Photo:
-                    type: string
-                  group:
-                    $ref: '#/components/schemas/OrganizationGroup'
+            type: string
+        appliesToUsers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
+              base64Photo:
+                type: string
+              group:
+                $ref: '#/components/schemas/OrganizationGroup'
         locationId:
           type: string
         attestationTime:
@@ -687,7 +700,12 @@ components:
           type: string
         showReporting:
           type: boolean
-
+        managementAdminForOrganizationId:
+          type: string
+        testReportsAdminForOrganizationId:
+          type: string
+        testAppointmentsAdminForOrganizationId:
+          type: string
     User:
       type: object
       deprecated: true
@@ -760,6 +778,8 @@ components:
           type: string
           description: Photo URL
         groupName:
+          type: string
+        groupId:
           type: string
         memberId:
           type: string
@@ -859,6 +879,12 @@ components:
           description: Photo URL
           nullable: true
         memberId:
+          type: string
+          nullable: true
+        groupId:
+          type: string
+          nullable: true
+        organizationId:
           type: string
           nullable: true
 
@@ -1723,6 +1749,12 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: includeNfcGates
+          schema:
+            type: boolean
+          description: Filters to only include NFC gates
+          required: false
       responses:
         '200':
           description: Successfully retrieved
@@ -2511,6 +2543,11 @@ paths:
             type: integer
             minimum: 1
           required: true
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
+          required: false
       responses:
         '200':
           description: Successfully returned

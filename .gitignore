@@ -14,6 +14,7 @@ lerna-debug.log*
 
 # Firebase files
 packages/tools/.firebase/**
+firebase-emulation/rawState/*
 
 # Dependency directories
 node_modules/
