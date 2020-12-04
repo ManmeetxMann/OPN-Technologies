@@ -472,6 +472,23 @@ paths:
                 items:
                   $ref: '#/components/schemas/AppointmentResponse200'
 
+  /reservation/admin/api/v1/appointments/{appointmentId}:
+    get:
+      description: Get appointment by appointment ID
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+      responses:
+            '200':
+              description: Successfully Return
+              content:
+                  application/json:
+                    schema:
+                        $ref: '#/components/schemas/AppointmentResponse200'
+
   /webhook/acuity/schedule:
     post:
       description: Webhook for adding barcode to acuity
