@@ -1,5 +1,5 @@
 import DataStore from '../../data/datastore'
-import {User, UserDependant, UserFilter, UserModel} from '../../data/user'
+import {User, UserDependant, UserFilter, UserModel, LegacyDependant} from '../../data/user'
 import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
 
 export class UserService {
@@ -93,7 +93,10 @@ export class UserService {
     await this.userRepository.updateProperties(dependantId, fields)
   }
   // TODO: validate this
-  async addDependants(userId: string, dependants: UserDependant[]): Promise<UserDependant[]> {
+  async addDependants(
+    userId: string,
+    dependants: (UserDependant | LegacyDependant)[],
+  ): Promise<UserDependant[]> {
     const parent = await this.findOne(userId)
     const dependantsToAdd = dependants.map((dependant) => ({
       firstName: dependant.firstName,
