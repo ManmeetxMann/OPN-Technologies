@@ -21,8 +21,8 @@ export class AppoinmentService {
       })
   }
 
-  async getAppointmentById(id: number, isNeedToConvert = false): Promise<AppointmentDTO> {
-    return this.appoinmentSchedulerRepository.getAppointmentById(id, isNeedToConvert)
+  async getAppointmentById(id: number): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.getAppointmentById(id)
   }
 
   async getAppoinmentByOrganizationId(organizationId: string): Promise<AppointmentDTO[]> {

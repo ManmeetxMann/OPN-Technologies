@@ -44,10 +44,7 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {appointmentId} = req.params as {appointmentId: string}
 
-      const appointment = await this.appoinmentService.getAppointmentById(
-        Number(appointmentId),
-        true,
-      )
+      const appointment = await this.appoinmentService.getAppointmentById(Number(appointmentId))
 
       res.json(actionSucceed(appointment))
     } catch (error) {
