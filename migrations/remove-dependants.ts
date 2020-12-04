@@ -55,21 +55,17 @@ async function createNewUsers(): Promise<void> {
         }
         const target = database.doc(`users/${data.userId}`)
         // the current dependant
-        const currentArr = (
-          await database
-            .collection(`users/${parentUserId}/dependants`)
-            .where(firestore.FieldPath.documentId(), '==', data.userId)
-            .limit(1)
-            .get()
-        ).docs
+        const currentDoc = await database
+          .doc(`users/${parentUserId}/dependants/${data.userId}`)
+          .get()
 
-        if (currentArr.length === 0) {
+        if (!currentDoc.exists) {
           console.warn(`no dependant found at users/${parentUserId}/dependants/${data.userId}`)
           console.warn(`Check ${data.path}`)
           // probably deleted
           return
         }
-        const current = currentArr[0].data()
+        const current = currentDoc.data()
         const fullPath = userGroup.ref.path
         const orgId = fullPath.split('/')[1]
         const newDependant = {
@@ -97,6 +93,7 @@ async function createNewUsers(): Promise<void> {
           ) {
             // it's a duplicate
             console.warn(`Check ${data.path}, it may be a duplicate`)
+            console.warn(`Not creating ${JSON.stringify(newDependant)}`)
             return
           }
           console.error(err, data.userId)
