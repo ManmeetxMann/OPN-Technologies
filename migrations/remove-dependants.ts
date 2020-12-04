@@ -85,7 +85,7 @@ async function createNewUsers(): Promise<void> {
         }
         // fails if already exists
         try {
-          // return target.create(newDependant)
+          return target.create(newDependant)
         } catch (err) {
           const existingUser = await target.get()
           if (!existingUser.exists) {
@@ -99,6 +99,7 @@ async function createNewUsers(): Promise<void> {
             data.delegates?.includes(parentUserId)
           ) {
             // it's a duplicate
+            console.warn(`Check ${data.path}, it may be a duplicate`)
             return
           }
           console.error(err, data.userId)
