@@ -80,9 +80,10 @@ async function createNewUsers(): Promise<void> {
         try {
           return target.create(newDependant)
         } catch (err) {
+          console.warn(`error creating dependant from ${fullPath}, attempting to recover`, err)
           const existingUser = await target.get()
           if (!existingUser.exists) {
-            console.error("couldn't recover")
+            console.error("couldn't recover - user is not a duplicate")
             return
           }
           const data = existingUser.data()
@@ -94,9 +95,11 @@ async function createNewUsers(): Promise<void> {
             // it's a duplicate
             console.warn(`Check ${data.path}, it may be a duplicate`)
             console.warn(`Not creating ${JSON.stringify(newDependant)}`)
-            return
+          } else {
+            console.error(
+              `couldn't recover - id in use, but not similar to ${JSON.stringify(newDependant)}`,
+            )
           }
-          console.error(err, data.userId)
         }
       }),
     )
