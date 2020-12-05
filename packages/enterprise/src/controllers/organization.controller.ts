@@ -1220,7 +1220,8 @@ class OrganizationController implements IControllerBase {
 
       const dependentsWithGroup = await Promise.all(
         dependents.map(async (dependent: UserDependant) => {
-          const group = await this.organizationService.getGroup(organizationId, dependent.groupId)
+          const group = await this.organizationService.getUserGroup(organizationId, dependent.id)
+
           const dependentStatus = await this.attestationService.latestStatus(dependent.id)
 
           return {

@@ -82,6 +82,10 @@ export default class ReportSender {
           id: user.id,
           orgId: user.organizationIds[0],
           groups: await this.orgService.getUsersGroups(organizationId, null, [user.id]),
+          dependantGroups: await this.orgService.getDependantGroups(
+            user.organizationIds[0],
+            user.id,
+          ),
           dependants: await this.userService.getAllDependants(user.id),
         }
       }),
@@ -94,12 +98,15 @@ export default class ReportSender {
         groupNames: lookup.groups.map(
           (membership) => allGroups.find((group) => group.id === membership.groupId)?.name,
         ),
-        dependants: lookup.dependants.map((dep) => ({
-          id: dep.id,
-          firstName: dep.firstName,
-          lastName: dep.lastName,
-          groupName: allGroups.find((group) => group.id === dep.groupId)?.name,
-        })),
+        dependants: lookup.dependants.map((dep) => {
+          const membership = lookup.dependantGroups.find((group) => group.userId === dep.id)
+          return {
+            id: dep.id,
+            firstName: dep.firstName,
+            lastName: dep.lastName,
+            groupName: allGroups.find((group) => group.id === membership.groupId)?.name,
+          }
+        }),
       }))
       .reduce((lookup, data) => ({...lookup, [data.id]: data}), {})
 
