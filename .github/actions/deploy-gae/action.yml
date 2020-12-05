@@ -69,7 +69,7 @@ runs:
         echo "PROJECT_ID=opn-platform-prod" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=prod_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--no-promote" >> $GITHUB_ENV
-      elif [[ $GITHUB_REF == 'refs/heads/development' ]]; then
+      elif [[ $GITHUB_REF == 'refs/heads/master' ]]; then
         echo "Deploy to DEV"
         echo "PROJECT_ID=opn-platform-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=dev_service_account" >> $GITHUB_ENV

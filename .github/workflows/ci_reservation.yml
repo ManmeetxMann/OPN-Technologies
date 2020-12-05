@@ -7,7 +7,7 @@ on:
       - ".github/workflows/ci_reservation.yml"
       - ".github/actions/**"
     branches: 
-      - development
+      - master
     tags:
       - infra-dev-reservation-*
       - preprod-reservation-*
