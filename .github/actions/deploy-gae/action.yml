@@ -55,7 +55,7 @@ runs:
         echo "PROMOTE_FLAG=--no-promote" >> $GITHUB_ENV
       cat > ./packages/${{ inputs.service_name }}/app.yaml << EOF
         runtime: nodejs12
-        service: access-staging
+        service: ${{ inputs.service_name }}-staging
       EOF
       elif [[ "$GITHUB_REF" == *"$INFRA_DEV_TAG_REF"* ]]; then
         echo "Deploy to INFRA DEV"
@@ -80,7 +80,7 @@ runs:
         echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
       cat > ./packages/${{ inputs.service_name }}/app.yaml << EOF
         runtime: nodejs12
-        service: access-staging
+        service: ${{ inputs.service_name }}-staging
       EOF
       else
         echo "Bad Deployment"

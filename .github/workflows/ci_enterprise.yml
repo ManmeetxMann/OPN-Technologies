@@ -8,7 +8,7 @@ on:
       - ".github/workflows/ci_enterprise.yml"
       - ".github/actions/**"
     branches: 
-      - ci_cd
+      - development
     tags:
       - infra-dev-enterprise-*
       - preprod-enterprise-*

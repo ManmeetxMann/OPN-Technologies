@@ -8,7 +8,7 @@ on:
       - ".github/workflows/ci_lookup.yml"
       - ".github/actions/**"
     branches: 
-      - ci_cd
+      - development
     tags:
       - infra-dev-lookup-*
       - preprod-lookup-*

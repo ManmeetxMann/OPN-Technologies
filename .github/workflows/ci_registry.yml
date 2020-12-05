@@ -8,7 +8,7 @@ on:
       - ".github/workflows/ci_registry.yml"
       - ".github/actions/**"
     branches: 
-      - ci_cd
+      - development
     tags:
       - infra-dev-registry-*
       - preprod-registry-*
