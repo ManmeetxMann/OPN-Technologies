@@ -131,6 +131,59 @@ async function createNewUsers(): Promise<void> {
   console.log('all dependants now have corresponding users')
 }
 
+async function validateNewUsers(): Promise<void> {
+  console.log('checking dependant creation')
+
+  const collection = database.collection('users')
+  const baseQuery = collection.orderBy(firestore.FieldPath.documentId()).limit(PAGE_SIZE)
+  let pageIndex = 0
+  let after = null
+  while (true) {
+    const query = after ? baseQuery.startAfter(after.id) : baseQuery
+    const page = (await query.get()).docs
+    if (page.length === 0) {
+      break
+    }
+    after = page[page.length - 1]
+    console.log(`Validating page ${pageIndex + 1} with ${page.length} users in it`)
+    await Promise.all(
+      page.map(async (user) => {
+        const allOriginalDependants = (
+          await database.collection(`users/${user.id}/dependants`).get()
+        ).docs
+        const allNewUsersByDelegate = (
+          await collection.where('delegates', 'array-contains', user.id).get()
+        ).docs
+        const allNewDependantsById = await Promise.all(
+          allOriginalDependants.map((dependant) => database.doc(`users/${dependant.id}`).get()),
+        )
+        allOriginalDependants.forEach((original) => {
+          const created = allNewDependantsById.find((dep) => dep.id === original.id)
+          if (!created) {
+            console.error(`missing new user from ${original.ref.path}`)
+          }
+          if (
+            created.data().firstName !== original.data().firstName ||
+            created.data().lastName !== original.data().lastName ||
+            !created.data().delegates.includes(user.id)
+          ) {
+            console.error(`mismatch between${original.ref.path} and ${created.ref.path}`)
+          }
+        })
+        allNewUsersByDelegate.forEach((created) => {
+          if (!allOriginalDependants.some((original) => original.id === created.id)) {
+            console.error(`${created.ref.path} does not have a matching dependant for ${user.id}`)
+          }
+        })
+      }),
+    )
+    pageIndex += 1
+  }
+
+  console.log('all dependants verified')
+}
+
 addDelegates()
   .then(createNewUsers)
+  .then(validateNewUsers)
   .then(() => console.log('Script Complete \n'))
