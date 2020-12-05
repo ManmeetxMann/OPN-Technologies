@@ -10,7 +10,7 @@ import {BadRequestException} from '../../../../common/src/exceptions/bad-request
 import {CreateUserByAdminRequest} from '../../types/new-user'
 import {UpdateUserByAdminRequest} from '../../types/update-user-request'
 import {UsersByOrganizationRequest} from '../../types/user-organization-request'
-import {OrganizationGroup} from '../../../models/organization'
+import {OrganizationGroup} from '../../models/organization'
 import {flatten} from 'lodash'
 
 const userService = new UserService()
@@ -53,7 +53,7 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
       {},
     )
 
-    const groupsByUserId: Record<string, {id: string; name: string}> = usersGroups.reduce(
+    const groupsByUserId: Record<string, OrganizationGroup> = usersGroups.reduce(
       (lookup, usersGroup) => ({
         ...lookup,
         [usersGroup.userId]: groupsById[usersGroup.groupId],

@@ -13,6 +13,7 @@ import {AdminProfile} from '../../../../../common/src/data/admin'
 import {authMiddleware} from '../../../../../common/src/middlewares/auth'
 import {CursoredUsersRequestFilter} from '../../../types/user-organization-request'
 import {OrganizationGroup} from '../../../models/organization'
+import {omit} from 'lodash'
 
 const userService = new UserService()
 const organizationService = new OrganizationService()
@@ -27,10 +28,11 @@ const findAll: Handler = async (req, res, next): Promise<void> => {
     const admin = (res.locals.authenticatedUser as User).admin as AdminProfile
 
     // Assert admin has granted access to organization
-    const hasGrantedAccess = new Set(
+    const authorizedOrganizationIds = [
       ...(admin?.superAdminForOrganizationIds ?? []),
-      ...(admin?.adminForOrganizationId ?? []),
-    ).has(organizationId)
+      admin?.adminForOrganizationId,
+    ].filter((id) => !!id)
+    const hasGrantedAccess = new Set(authorizedOrganizationIds).has(organizationId)
     if (!hasGrantedAccess) {
       res.status(403).json(actionReplyInsufficientPermission())
       return
@@ -72,7 +74,7 @@ const findAll: Handler = async (req, res, next): Promise<void> => {
     }))
 
     res.json({
-      ...actionSucceed(data),
+      ...omit(actionSucceed(data), 'page'),
       last: filter.from ?? null,
       next: data.length < limit ? null : data[data.length - 1].id,
     })
