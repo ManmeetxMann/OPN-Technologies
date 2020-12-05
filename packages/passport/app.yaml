@@ -1,2 +1,2 @@
 runtime: nodejs12
-service: passport-staging
+service: passport
