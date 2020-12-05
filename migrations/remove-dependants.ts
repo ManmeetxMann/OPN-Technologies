@@ -33,7 +33,10 @@ async function addDelegates(): Promise<void> {
         page.map((user) =>
           user.ref.update({
             delegates: null,
-            'timestamps.migratedAt': firestore.FieldValue.serverTimestamp(),
+            'timestamps.migrations': firestore.FieldValue.arrayUnion({
+              script: 'Add delegates array',
+              time: firestore.FieldValue.serverTimestamp(),
+            }),
           }),
         ),
       )
@@ -89,7 +92,10 @@ async function createNewUsers(): Promise<void> {
           delegates: [parentUserId],
           base64Photo: '',
           registrationId: '',
-          'timestamps.migratedAt': firestore.FieldValue.serverTimestamp(),
+          'timestamps.migrations': firestore.FieldValue.arrayUnion({
+            script: 'Create user from dependant',
+            time: firestore.FieldValue.serverTimestamp(),
+          })
         }
         // fails if already exists
         try {
@@ -103,8 +109,8 @@ async function createNewUsers(): Promise<void> {
             await target.create(newDependant)
           }
         } catch (err) {
-          console.warn(`error creating dependant from ${fullPath}, attempting to recover`)
           const existingUser = await target.get()
+          console.warn(`error creating dependant from ${fullPath}, attempting to recover`)
           if (!existingUser.exists) {
             console.error("couldn't recover - user is not a duplicate")
             return
