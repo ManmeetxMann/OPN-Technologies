@@ -11,6 +11,8 @@ initializeApp({
 const DRY = false
 const database = firestore()
 
+let originalUserCount = 0
+
 async function addDelegates(): Promise<void> {
   console.log('adding delegates:null to all users')
   const collection = database.collection('users')
@@ -24,6 +26,7 @@ async function addDelegates(): Promise<void> {
       break
     }
     after = page[page.length - 1]
+    originalUserCount += page.length
     console.log(`Updating page ${pageIndex + 1} with ${page.length} users in it`)
     if (!DRY) {
       await Promise.all(
@@ -132,12 +135,19 @@ async function createNewUsers(): Promise<void> {
 }
 
 async function validateNewUsers(): Promise<void> {
+  if (DRY) {
+    console.log('skipping validation for dry run')
+    return
+  }
+
   console.log('checking dependant creation')
 
   const collection = database.collection('users')
   const baseQuery = collection.orderBy(firestore.FieldPath.documentId()).limit(PAGE_SIZE)
   let pageIndex = 0
   let after = null
+  let dependantCount = 0
+  let newUserCount = 0
   while (true) {
     const query = after ? baseQuery.startAfter(after.id) : baseQuery
     const page = (await query.get()).docs
@@ -146,11 +156,13 @@ async function validateNewUsers(): Promise<void> {
     }
     after = page[page.length - 1]
     console.log(`Validating page ${pageIndex + 1} with ${page.length} users in it`)
+    newUserCount += page.length
     await Promise.all(
       page.map(async (user) => {
         const allOriginalDependants = (
           await database.collection(`users/${user.id}/dependants`).get()
         ).docs
+        dependantCount += allOriginalDependants.length
         const allNewUsersByDelegate = (
           await collection.where('delegates', 'array-contains', user.id).get()
         ).docs
@@ -181,6 +193,13 @@ async function validateNewUsers(): Promise<void> {
   }
 
   console.log('all dependants verified')
+  const expectedUserCount = originalUserCount + dependantCount
+  const actualUserCount = newUserCount
+  if (newUserCount !== expectedUserCount) {
+    console.warn(`expected ${expectedUserCount} users but found ${actualUserCount}`)
+  } else {
+    console.log(`User count ${actualUserCount} matches expectation`)
+  }
 }
 
 addDelegates()
