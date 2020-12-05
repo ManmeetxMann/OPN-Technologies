@@ -37,10 +37,7 @@ async function addDelegates(): Promise<void> {
           }
           return user.ref.update({
             delegates: null,
-            'timestamps.migrations': firestore.FieldValue.arrayUnion({
-              script: 'Add delegates array',
-              time: firestore.FieldValue.serverTimestamp(),
-            }),
+            'timestamps.migrations.addDelegatesArray': firestore.FieldValue.serverTimestamp(),
           })
         }),
       )
@@ -96,10 +93,7 @@ async function createNewUsers(): Promise<void> {
           delegates: [parentUserId],
           base64Photo: '',
           registrationId: '',
-          'timestamps.migrations': firestore.FieldValue.arrayUnion({
-            script: 'Create user from dependant',
-            time: firestore.FieldValue.serverTimestamp(),
-          }),
+          'timestamps.migrations.createUserFromDependant': firestore.FieldValue.serverTimestamp(),
         }
         // fails if already exists
         try {
