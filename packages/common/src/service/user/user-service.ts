@@ -1,5 +1,5 @@
 import DataStore from '../../data/datastore'
-import {User, UserDependant, UserDependantModel, UserFilter, UserModel} from '../../data/user'
+import {User, UserDependant, UserFilter, UserModel} from '../../data/user'
 import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
 
 export class UserService {
@@ -42,59 +42,77 @@ export class UserService {
     return results.length > 0 ? results.shift() : null
   }
 
+  async findAllByAuthUserId(authUserId: string): Promise<User[]> {
+    const results = await this.userRepository.findWhereEqual('authUserId', authUserId)
+    return results.length > 0 ? results : null
+  }
+
   getAllDependants(userId: string, skipUserCheck = false): Promise<UserDependant[]> {
     return Promise.all([
-      new UserDependantModel(this.dataStore, userId).fetchAll(),
+      this.userRepository.findWhereArrayContains('delegates', userId),
       // make sure the user exists. Skippable for efficiency if the user is already known to exist
       skipUserCheck ? () => Promise.resolve() : this.findOne(userId).then(() => null),
     ]).then(([dependants]) => dependants)
   }
 
-  getDependantAndParentByParentId(
+  async getDependantAndParentByParentId(
     parentId: string,
     dependantId: string,
   ): Promise<{parent: User; dependant: UserDependant}> {
-    return this.findOne(parentId).then((parent) =>
-      new UserDependantModel(this.dataStore, parentId).get(dependantId).then((dependant) => {
-        if (!!dependant) return {parent, dependant}
-        throw new ResourceNotFoundException(
-          `Cannot find dependant with id [${dependantId}] of user [${parentId}]`,
-        )
+    const [parent, dependant] = await Promise.all([
+      this.findOne(parentId),
+      this.findOne(dependantId),
+    ])
+    if (!(dependant.delegates?.includes(parentId))) {
+      throw new ResourceNotFoundException(`${parentId} not a delegate of ${dependantId}`)
+    }
+    return {
+      parent,
+      dependant,
+    }
+  }
+
+  getUserAndDependants(userId: string): Promise<{guardian: User; dependants: UserDependant[]}> {
+    return Promise.all([this.getAllDependants(userId, true), this.findOne(userId)]).then(
+      ([dependants, guardian]) => ({
+        guardian,
+        dependants,
       }),
     )
   }
 
-  updateDependantProperties(
-    parentUserId: string,
+  async updateDependantProperties(
+    parentId: string,
     dependantId: string,
     fields: Record<string, unknown>,
   ): Promise<void> {
-    return this.findOne(parentUserId).then(() =>
-      new UserDependantModel(this.dataStore, parentUserId).get(dependantId).then((dependant) => {
-        if (!!dependant) {
-          new UserDependantModel(this.dataStore, parentUserId).updateProperties(
-            dependant.id,
-            fields,
-          )
-        } else {
-          throw new ResourceNotFoundException(
-            `Cannot find dependant with id [${dependantId}] of user [${parentUserId}]`,
-          )
-        }
-      }),
-    )
+    const dependant = await this.findOne(dependantId)
+    if (!dependant.delegates?.includes(parentId)) {
+      throw new ResourceNotFoundException(`${parentId} not a delegate of ${dependantId}`)
+    }
+    await this.userRepository.updateProperties(dependantId, fields)
+  }
+  // TODO: validate this
+  async addDependants(userId: string, dependants: UserDependant[]): Promise<UserDependant[]> {
+    const parent = await this.findOne(userId)
+    const dependantsToAdd = dependants.map((dependant) => ({
+      firstName: dependant.firstName,
+      lastName: dependant.lastName,
+      delegates: [userId],
+      registrationId: '',
+      base64Photo: '',
+      organizationIds: parent.organizationIds,
+    }))
+    // @ts-ignore no id needed
+    return Promise.all(dependantsToAdd.map((dependant) => this.create(dependant)))
   }
 
-  addDependants(userId: string, members: UserDependant[]): Promise<UserDependant[]> {
-    return this.findOne(userId).then(() =>
-      new UserDependantModel(this.dataStore, userId).addAll(members),
-    )
-  }
-
-  removeDependant(userId: string, dependantId: string): Promise<void> {
-    return this.findOne(userId).then(() =>
-      new UserDependantModel(this.dataStore, userId).delete(dependantId),
-    )
+  async removeDependant(parentId: string, dependantId: string): Promise<void> {
+    const dependant = await this.findOne(dependantId)
+    if (!(dependant.delegates?.includes(parentId))) {
+      throw new ResourceNotFoundException(`${parentId} not a delegate of ${dependantId}`)
+    }
+    return this.userRepository.delete(dependantId)
   }
 
   findHealthAdminsForOrg(organizationId: string): Promise<User[]> {

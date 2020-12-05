@@ -41,6 +41,7 @@ export type OrganizationGroup = {
   name: string
   checkInDisabled: boolean
   priority?: number
+  isPrivate: boolean
 }
 
 // A many-to-x representation of Users belonging to a group
@@ -71,6 +72,7 @@ export type OrganizationLocation = {
   } & OrganizationConfiguration)[]
   validFrom?: string
   validUntil?: string
+  nfcGateOnly?: boolean
 } & OrganizationConfiguration
 
 export type OrganizationConfiguration = {

@@ -14,6 +14,7 @@ export type User = {
   email?: string
   admin?: AdminProfile | FieldValue
   authUserId?: string | FieldValue
+  delegates: null | string[]
 }
 
 export type UserWithGroup = {
@@ -34,12 +35,7 @@ export type UserFilter = {
 }
 
 // TODO: DEPRECATE
-export type UserDependant = {
-  id: string
-  firstName: string
-  lastName: string
-  groupId: string
-}
+export type UserDependant = User
 
 // TODO: DEPRECATE
 export class UserModel extends DataModel<User> {

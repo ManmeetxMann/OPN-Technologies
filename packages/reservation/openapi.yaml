@@ -109,6 +109,17 @@ paths:
               schema:
                 type: string
 
+  /admin/page/send-fax-for-positive:
+    get:
+      description: Form to Send Fax for Positive results
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/html:
+              schema:
+                type: string
+
   /admin/page/appointment-by-bar-code:
     get:
       description: Show Form to Enter Bar Code
@@ -179,6 +190,7 @@ paths:
                           enum:
                             - Positive
                             - Negative
+                            - 2019-nCoV Detected
                         famEGene:
                           type: string
                         famCt:
@@ -225,6 +237,7 @@ paths:
                   enum:
                     - Positive
                     - Negative
+                    - 2019-nCoV Detected
                 famEGene:
                   type: string
                 famCt:
@@ -265,6 +278,31 @@ paths:
               schema:
                 type: string
 
+  /admin/api/v1/send-fax-for-positive:
+    post:
+      description: Send Fax for positive result
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                barCode:
+                  type: string
+                faxNumber:
+                  type: string
+              required:
+                - barCode
+                - faxNumber
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/html:
+              schema:
+                type: string
+
   /admin/api/v1/send-test-results-again:
     post:
       description: Send Results Again
@@ -286,6 +324,39 @@ paths:
             text/html:
               schema:
                 type: string
+
+  /reservation/admin/api/v1/test-results:
+    get:
+      description: Get test results by organization ID
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: dateOfAppointment
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+          required: true
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentResponse200'
 
   /admin/api/v1/check-appointments:
     post:
@@ -311,6 +382,25 @@ paths:
               schema:
                 type: string
 
+  /reservation/admin/api/v1/appointments:
+    get:
+      description: Get appointmenr list by organization ID
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentResponse200'
+
   /webhook/acuity/schedule:
     post:
       description: Webhook for adding barcode to acuity
@@ -329,6 +419,32 @@ paths:
                   type: string
                 id:
                   type: string
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            text/html:
+              schema:
+                type: string
+              
+
+  /reservation/admin/api/v1/packages:
+    post:
+      description: Add Package Codes for Orgs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                packageCode:
+                  type: string
+                organizationId:
+                  type: string
+              required:
+                - packageCode
+                - organizationId
       responses:
         '200':
           description: Successfully handled

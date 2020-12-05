@@ -539,7 +539,7 @@ export class ReportService {
       },
       {},
     )
-    const groupsByDependantId: Record<string, OrganizationGroup> = allDependants.map(
+    const groupsByDependantId: Record<string, OrganizationGroup> = allDependants.reduce(
       (lookup, dependant) => {
         lookup[dependant.id] = groupsById[dependant.groupId]
         return lookup

@@ -1,23 +1,11 @@
-import {body, check, ValidationChain, validationResult} from 'express-validator'
+import {body, check} from 'express-validator'
 import {NextFunction, Request, Response} from 'express'
 
+import {validator} from './basic.validator'
+
 export default {
-  validate: (
-    validations: ValidationChain[],
-  ): ((req: Request, res: Response, next: NextFunction) => Promise<void>) => {
-    return async (req: Request, res: Response, next: NextFunction) => {
-      await Promise.all(validations.map((validation) => validation.run(req)))
-
-      const errors = validationResult(req)
-      if (errors.isEmpty()) {
-        return next()
-      }
-
-      res.status(400).json({errors: errors.array()})
-    }
-  },
-  csvValidation: (): ValidationChain[] => {
-    return [
+  csvValidation: (): ((req: Request, res: Response, next: NextFunction) => Promise<void>) => {
+    return validator([
       body('hexCt')
         .custom((value) => {
           return parseInt(value) <= 40 || value === 'N/A'
@@ -28,12 +16,15 @@ export default {
           return value === 'N/A' || !isNaN(value)
         })
         .withMessage('must be numeric or N/A'),
+      body('result')
+        .isIn(['Positive', 'Negative', '2019-nCoV Detected'])
+        .withMessage('must be one of: Positive, Negative, 2019-nCoV Detected'),
       body('resultDate').isDate().withMessage('must be valid date'),
-    ]
+    ])
   },
 
-  csvBulkValidation: (): ValidationChain[] => {
-    return [
+  csvBulkValidation: (): ((req: Request, res: Response, next: NextFunction) => Promise<void>) => {
+    return validator([
       check('results.*.hexCt')
         .custom((value) => {
           return parseInt(value) <= 40 || value === 'N/A'
@@ -44,8 +35,10 @@ export default {
           return value === 'N/A' || !isNaN(value)
         })
         .withMessage('must be numeric or N/A'),
-      body('results.*.result').isIn(['Positive', 'Negative']).withMessage('invalid csv rows'),
+      body('results.*.result')
+        .isIn(['Positive', 'Negative', '2019-nCoV Detected'])
+        .withMessage('must be one of: Positive, Negative, 2019-nCoV Detected'),
       body('resultDate').isDate().withMessage('must be valid date'),
-    ]
+    ])
   },
 }
