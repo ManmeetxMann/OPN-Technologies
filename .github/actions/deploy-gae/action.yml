@@ -124,5 +124,5 @@ runs:
       else
         SLACK_STATUS=warning
       fi
-      curl -X POST -H 'Content-type: application/json' --data "{'username': 'action-slack','icon_emoji': ':octocat:','attachments': [{'color': '$SLACK_STATUS','text': 'Latest Build Deployed to https://${{ inputs.service_name }}-dot-${{ env.PROJECT_ID }}.nn.r.appspot.com'}]}" ${{ secrets.SLACK_WEBHOOK_URL }}
+      curl -X POST -H 'Content-type: application/json' --data "{'username': 'action-slack','icon_emoji': ':octocat:','attachments': [{'color': '$SLACK_STATUS','text': 'Latest Build Deployed to https://${{ inputs.service_name }}-dot-${{ env.PROJECT_ID }}.nn.r.appspot.com'}]}" ${{ env.slack_webhook_url }}
     shell: bash
