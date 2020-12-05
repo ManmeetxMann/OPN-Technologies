@@ -99,7 +99,7 @@ async function createNewUsers(): Promise<void> {
           'timestamps.migrations': firestore.FieldValue.arrayUnion({
             script: 'Create user from dependant',
             time: firestore.FieldValue.serverTimestamp(),
-          })
+          }),
         }
         // fails if already exists
         try {
