@@ -3,7 +3,7 @@ import {AttendanceRepository} from '../repository/attendance.repository'
 import DataStore from '../../../common/src/data/datastore'
 import {FieldValue} from '@google-cloud/firestore'
 import moment from 'moment-timezone'
-import {UserDependantModel} from '../../../common/src/data/user'
+import {UserService} from '../../../common/src/service/user/user-service'
 import {Config} from '../../../common/src/utils/config'
 
 const ACCESS_KEY = 'accesses'
@@ -37,9 +37,11 @@ const dateOfExit = (access: Access): string => {
 export default class AccessListener {
   repo: AttendanceRepository
   dataStore: DataStore
+  userService: UserService
   constructor(dataStore: DataStore) {
     this.repo = new AttendanceRepository(dataStore)
     this.dataStore = dataStore
+    this.userService = new UserService()
   }
 
   async addEntry(access: Access): Promise<unknown> {
@@ -71,7 +73,7 @@ export default class AccessListener {
     const dependantsById = {}
     if (peopleEntering.length) {
       // look this up here so we can access it in attendance without n queries at once
-      const dependants = await new UserDependantModel(this.dataStore, access.userId).fetchAll()
+      const dependants = await this.userService.getAllDependants(access.userId)
       dependants.forEach((dependant) => (dependantsById[dependant.id] = dependant))
     }
 
@@ -119,7 +121,7 @@ export default class AccessListener {
     const dependantsById = {}
     if (peopleExiting.length) {
       // look this up here so we can access it in attendance without n queries at once
-      const dependants = await new UserDependantModel(this.dataStore, access.userId).fetchAll()
+      const dependants = await this.userService.getAllDependants(access.userId)
       dependants.forEach((dependant) => (dependantsById[dependant.id] = dependant))
     }
 

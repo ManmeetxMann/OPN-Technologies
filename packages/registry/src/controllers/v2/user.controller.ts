@@ -40,7 +40,7 @@ class UserController implements IRouteController {
       const userId = req.params['userId']
       const {organizationId, dependants} = req.body as {
         organizationId: string
-        dependants: UserDependant[]
+        dependants: (UserDependant & {groupId: string})[]
       }
 
       const existingDependants = await this.userService.getAllDependants(userId)
@@ -86,11 +86,7 @@ class UserController implements IRouteController {
           this.userService
             .removeDependant(userId, dependant.id)
             .then(() =>
-              this.organizationService.removeUserFromGroup(
-                organizationId,
-                dependant.groupId,
-                dependant.id,
-              ),
+              this.organizationService.removeUserFromAllGroups(organizationId, dependant.id),
             ),
         ),
       )
