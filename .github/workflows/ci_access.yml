@@ -8,7 +8,7 @@ on:
       - ".github/workflows/ci_access.yml"
       - ".github/actions/**"
     branches: 
-      - ci_cd
+      - development
     tags:
       - infra-dev-access-*
       - preprod-access-*
