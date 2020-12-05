@@ -22,7 +22,7 @@ import {ResourceNotFoundException} from '../../../../common/src/exceptions/resou
 import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
 import {AdminProfile} from '../../../../common/src/data/admin'
 import {User as AuthenticatedUser} from '../../../../common/src/data/user'
-import {uniq} from 'lodash'
+import {uniq, flatten} from 'lodash'
 
 const authService = new AuthService()
 const userService = new UserService()
@@ -57,7 +57,7 @@ const search: Handler = async (req, res, next): Promise<void> => {
         )
 
         const usersUniqueById = [
-          ...new Map(usersArray.flat().map((item) => [item.id, item])).values(),
+          ...new Map(flatten(usersArray).map((item) => [item.id, item])).values(),
         ]
 
         return await Promise.all(
@@ -77,7 +77,7 @@ const search: Handler = async (req, res, next): Promise<void> => {
       }),
     )
 
-    res.json(actionSucceed(usersResponse.flat()))
+    res.json(actionSucceed(flatten(usersResponse)))
   } catch (error) {
     next(error)
   }

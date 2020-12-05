@@ -315,8 +315,79 @@ paths:
               properties:
                 barCode:
                   type: string
+                result:
+                  type: string
+                  enum:
+                    - Positive
+                    - Negative
+                    - 2019-nCoV Detected
+                famEGene:
+                  type: string
+                famCt:
+                  type: string
+                calRed61RdRpGene:
+                  type: string
+                calRed61Ct:
+                  type: string
+                quasar670NGene:
+                  type: string
+                quasar670Ct:
+                  type: string
+                hexIC:
+                  type: string
+                hexCt:
+                  type: string
+                needConfirmation:
+                  type: boolean
+                resultDate:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: string
+                dateOfBirth:
+                  type: string
+                registeredNursePractitioner:
+                  type: string
+                dateOfAppointment:
+                  type: string
+                appointmentId:
+                  type: string
+                timeOfAppointment:
+                  type: string
+                id:
+                  type: string
+                packageCode:
+                  type: string
+                timestamps:
+                  type: string
               required:
                 - barCode
+                - result
+                - famEGene
+                - famCt
+                - calRed61RdRpGene
+                - calRed61Ct
+                - quasar670NGene
+                - quasar670Ct
+                - hexIC
+                - hexCt
+                - resultDate
+                - firstName
+                - lastName
+                - email
+                - phone
+                - dateOfBirth
+                - registeredNursePractitioner
+                - dateOfAppointment
+                - appointmentId
+                - timeOfAppointment
+                - id
+                - packageCode
       responses:
         '200':
           description: Successfully Return
@@ -400,6 +471,23 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AppointmentResponse200'
+
+  /reservation/admin/api/v1/appointments/{appointmentId}:
+    get:
+      description: Get appointment by appointment ID
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+      responses:
+            '200':
+              description: Successfully Return
+              content:
+                  application/json:
+                    schema:
+                        $ref: '#/components/schemas/AppointmentResponse200'
 
   /webhook/acuity/schedule:
     post:
