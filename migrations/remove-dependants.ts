@@ -175,15 +175,18 @@ async function validateNewUsers(): Promise<void> {
         )
         allOriginalDependants.forEach((original) => {
           const created = allNewDependantsById.find((dep) => dep.id === original.id)
-          if (!created) {
-            console.error(`missing new user from ${original.ref.path}`)
+          if (!created.exists) {
+            console.error(
+              `missing new user from ${original.ref.path}. They likely do not have a users_group document`
+            )
+            return
           }
           if (
             created.data().firstName !== original.data().firstName ||
             created.data().lastName !== original.data().lastName ||
-            !created.data().delegates.includes(user.id)
+            !created.data().delegates?.includes(user.id)
           ) {
-            console.error(`mismatch between${original.ref.path} and ${created.ref.path}`)
+            console.error(`mismatch between ${original.ref.path} and ${created.ref.path}`)
           }
         })
         allNewUsersByDelegate.forEach((created) => {
