@@ -262,7 +262,9 @@ export class UserService {
         combinationQueries.push(combinationQuery.limit(limit).fetch())
       }
     }
-    return Promise.all(combinationQueries).then((results) => results.flat().slice(0, limit + 1))
+    return Promise.all(combinationQueries).then((results) =>
+      _.flattern(results).slice(0, limit + 1),
+    )
   }
 
   getAllByOrganizationId(organizationId: string, page: number, perPage: number): Promise<User[]> {
