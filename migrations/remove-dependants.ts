@@ -30,15 +30,19 @@ async function addDelegates(): Promise<void> {
     console.log(`Updating page ${pageIndex + 1} with ${page.length} users in it`)
     if (!DRY) {
       await Promise.all(
-        page.map((user) =>
-          user.ref.update({
+        page.map((user) => {
+          if (user.data().delegates) {
+            console.warn(`${user.id} already has delegates`)
+            return
+          }
+          return user.ref.update({
             delegates: null,
             'timestamps.migrations': firestore.FieldValue.arrayUnion({
               script: 'Add delegates array',
               time: firestore.FieldValue.serverTimestamp(),
             }),
-          }),
-        ),
+          })
+        }),
       )
     }
     console.log(`Update complete`)
