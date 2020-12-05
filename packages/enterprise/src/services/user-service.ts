@@ -263,7 +263,7 @@ export class UserService {
       }
     }
     return Promise.all(combinationQueries).then((results) =>
-      _.flattern(results).slice(0, limit + 1),
+      _.flatten(results).slice(0, limit + 1),
     )
   }
 
