@@ -26,7 +26,14 @@ async function addDelegates(): Promise<void> {
     after = page[page.length - 1]
     console.log(`Updating page ${pageIndex + 1} with ${page.length} users in it`)
     if (!DRY) {
-      await Promise.all(page.map((user) => user.ref.update({delegates: null})))
+      await Promise.all(
+        page.map((user) =>
+          user.ref.update({
+            delegates: null,
+            'timestamps.migratedAt': firestore.FieldValue.serverTimestamp(),
+          }),
+        ),
+      )
     }
     console.log(`Update complete`)
     pageIndex += 1
@@ -79,6 +86,7 @@ async function createNewUsers(): Promise<void> {
           delegates: [parentUserId],
           base64Photo: '',
           registrationId: '',
+          'timestamps.migratedAt': firestore.FieldValue.serverTimestamp(),
         }
         // fails if already exists
         try {
