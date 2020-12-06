@@ -1,5 +1,4 @@
 import DataStore from '../../../common/src/data/datastore'
-import {UserDependantModel} from '../../../common/src/data/user'
 import {Config} from '../../../common/src/utils/config'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
@@ -335,11 +334,6 @@ export class OrganizationService {
         newGroupId,
       )
 
-      if (target.parentUserId) {
-        const dependantModel = new UserDependantModel(this.dataStore, target.parentUserId)
-        // user is a dependant, we need to update them directly
-        await dependantModel.updateProperty(target.userId, 'groupId', newGroupId)
-      }
       return result
     }
     throw new ResourceNotFoundException(
