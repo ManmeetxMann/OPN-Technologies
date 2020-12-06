@@ -44,21 +44,36 @@ class UserController implements IRouteController {
         dependants: LegacyDependant[]
       }
 
-      const existingDependants = await this.userService.getAllDependants(userId)
+      const [existingGroups, existingDependants, added] = await Promise.all([
+        this.organizationService.getDependantGroups(organizationId, userId),
+        this.userService.getAllDependants(userId),
+        this.userService.addDependants(userId, dependants),
+      ])
 
-      const added = await this.userService.addDependants(userId, dependants)
+      const legacyExisting: LegacyDependant[] = existingDependants.map((dep) => ({
+        firstName: dep.firstName,
+        lastName: dep.lastName,
+        id: dep.id,
+        groupId: existingGroups.find((membership) => membership.userId === dep.id)?.groupId,
+      }))
+      const legacyAdded: LegacyDependant[] = added.map((dep, index) => ({
+        firstName: dep.firstName,
+        lastName: dep.lastName,
+        id: dep.id,
+        groupId: dependants[index].groupId,
+      }))
 
       await Promise.all(
-        added.map((member, index) =>
+        legacyAdded.map((member) =>
           this.organizationService.addUserToGroup(
             organizationId,
-            dependants[index].groupId,
+            member.groupId,
             member.id,
             userId,
           ),
         ),
       )
-      res.json(actionSucceed([...existingDependants, ...added]))
+      res.json(actionSucceed([...legacyExisting, ...legacyAdded]))
     } catch (error) {
       next(error)
     }
