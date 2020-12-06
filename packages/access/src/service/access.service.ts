@@ -95,6 +95,7 @@ export class AccessService {
       }))
   }
 
+  // TODO: remove once frontend no longer expects groupId
   private async decorateDependants(dependants: User[]): Promise<(User & LegacyDependant)[]> {
     const allOrgs = new Set<string>(_.flatten(_.map(dependants, 'organizationIds')))
     const groups = _.flatten(
