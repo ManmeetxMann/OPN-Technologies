@@ -7,6 +7,7 @@ import {
   OrganizationLocationModel,
   OrganizationModel,
 } from '../../../enterprise/src/repository/organization.repository'
+import {OrganizationGroup} from '../../../enterprise/src/models/organization'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {UserModel, User} from '../../../common/src/data/user'
 import {UserService} from '../../../common/src/service/user/user-service'
@@ -74,7 +75,10 @@ export default class ReportSender {
       await Promise.all(userPages.map((page) => this.userRepo.findWhereIdIn(page))),
     )
 
-    const allGroups = await this.orgService.getGroups(organizationId)
+    const allGroups = (await this.orgService.getGroups(organizationId)).reduce((byId, group) => {
+      byId[group.id] = group
+      return byId
+    }, {} as Record<string, OrganizationGroup>)
 
     // TODO: this is an extremely expensive loop. See issue #429 in github
     const allUsersWithDependantsAndGroups = await Promise.all(
@@ -94,9 +98,7 @@ export default class ReportSender {
       .map((lookup) => ({
         id: lookup.id,
         orgId: lookup.orgId,
-        groupNames: lookup.groups.map(
-          (membership) => allGroups.find((group) => group.id === membership.groupId)?.name,
-        ),
+        groupNames: lookup.groups.map((membership) => allGroups[membership.groupId]?.name),
         delegates: lookup.delegates,
         dependants: [],
       }))

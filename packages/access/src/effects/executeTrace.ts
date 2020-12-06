@@ -317,14 +317,17 @@ export default class TraceListener {
       allOrganizations.map(async (orgId) => {
         return {
           org: await this.organizationService.findOneById(orgId),
-          groups: await this.organizationService.getGroups(orgId),
+          groups: (await this.organizationService.getGroups(orgId)).reduce((groupLookup, group) => {
+            groupLookup[group.id] = group
+            return groupLookup
+          }, {} as Record<string, OrganizationGroup>),
         }
       }),
     )
 
     const organizationLookup: Record<
       string,
-      {org: Organization; groups: OrganizationGroup[]}
+      {org: Organization; groups: Record<string, OrganizationGroup>}
     > = organizationData.reduce((lookup, data) => {
       lookup[data.org.id] = data
       return lookup
@@ -350,9 +353,7 @@ export default class TraceListener {
         id: lookup.id, // a userId
         orgId: lookup.orgId,
         groupNames: lookup.groups.map(
-          (membership) =>
-            organizationLookup[lookup.orgId].groups.find((group) => group.id === membership.groupId)
-              ?.name,
+          (membership) => organizationLookup[lookup.orgId].groups[membership.groupId]?.name,
         ),
         delegates: lookup.delegates,
         dependants: [],
