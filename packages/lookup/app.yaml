@@ -1,2 +1,2 @@
 runtime: nodejs12
-service: lookup-staging
+service: lookup

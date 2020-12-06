@@ -2,7 +2,7 @@ name: OPN Services CI Action
 
 on:
   pull_request:
-    branches: [ development ]
+    branches: [ development, master ]
 
 jobs:
   build:

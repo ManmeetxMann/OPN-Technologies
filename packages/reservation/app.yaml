@@ -1,2 +1,2 @@
 runtime: nodejs12
-service: reservation-staging
+service: reservation
