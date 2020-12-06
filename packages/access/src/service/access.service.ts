@@ -1,5 +1,5 @@
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
-import {UserDependant, LegacyDependant, User} from '../../../common/src/data/user'
+import {UserDependant, LegacyDependant} from '../../../common/src/data/user'
 import {UserService} from '../../../common/src/service/user/user-service'
 import DataStore from '../../../common/src/data/datastore'
 import {AccessModel, AccessRepository} from '../repository/access.repository'
@@ -96,7 +96,9 @@ export class AccessService {
   }
 
   // TODO: remove once frontend no longer expects groupId
-  private async decorateDependants(dependants: User[]): Promise<(User & LegacyDependant)[]> {
+  private async decorateDependants(
+    dependants: UserDependant[],
+  ): Promise<(UserDependant & LegacyDependant)[]> {
     const allOrgs = new Set<string>(_.flatten(_.map(dependants, 'organizationIds')))
     const groups = _.flatten(
       await Promise.all([
