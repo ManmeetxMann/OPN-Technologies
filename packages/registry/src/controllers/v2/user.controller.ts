@@ -2,7 +2,7 @@ import {NextFunction, Request, Response, Router} from 'express'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import IRouteController from '../../../../common/src/interfaces/IRouteController.interface'
 import {UserService} from '../../../../common/src/service/user/user-service'
-import {UserDependant} from '../../../../common/src/data/user'
+import {LegacyDependant} from '../../../../common/src/data/user'
 import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
 
 class UserController implements IRouteController {
@@ -35,12 +35,13 @@ class UserController implements IRouteController {
     }
   }
 
+  // TODO: update API to not use LegacyDependant
   addDependants = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.params['userId']
       const {organizationId, dependants} = req.body as {
         organizationId: string
-        dependants: UserDependant[]
+        dependants: LegacyDependant[]
       }
 
       const existingDependants = await this.userService.getAllDependants(userId)
@@ -79,18 +80,14 @@ class UserController implements IRouteController {
       const userId = req.params['userId']
       const {organizationId, dependants} = req.body as {
         organizationId: string
-        dependants: UserDependant[]
+        dependants: {id: string}[]
       }
       await Promise.all(
         dependants.map((dependant) =>
           this.userService
             .removeDependant(userId, dependant.id)
             .then(() =>
-              this.organizationService.removeUserFromGroup(
-                organizationId,
-                dependant.groupId,
-                dependant.id,
-              ),
+              this.organizationService.removeUserFromAllGroups(organizationId, dependant.id),
             ),
         ),
       )

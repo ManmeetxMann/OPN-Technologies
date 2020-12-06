@@ -1,4 +1,5 @@
 import moment from 'moment-timezone'
+import * as _ from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 import {AdminApprovalModel} from '../../../common/src/data/admin'
@@ -6,8 +7,9 @@ import {
   OrganizationLocationModel,
   OrganizationModel,
 } from '../../../enterprise/src/repository/organization.repository'
+import {OrganizationGroup} from '../../../enterprise/src/models/organization'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
-import {UserModel} from '../../../common/src/data/user'
+import {UserModel, User} from '../../../common/src/data/user'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {AttendanceRepository} from '../repository/attendance.repository'
 
@@ -59,7 +61,7 @@ export default class ReportSender {
           .then((reports) => reports.map((report) => ({...report, locationId}))),
       ),
     )
-    const reports = reportPages.reduce((flattened, page) => [...flattened, ...page], [])
+    const reports = _.flatten(reportPages)
     const userIds = new Set<string>()
     reports.forEach((report) => {
       report.accessingUsers.forEach((userId) => userIds.add(userId))
@@ -69,20 +71,25 @@ export default class ReportSender {
     for (let i = 0; i < userIdList.length; i += 10) {
       userPages.push(userIdList.slice(i, i + 10))
     }
-    const users = (
-      await Promise.all(userPages.map((page) => this.userRepo.findWhereIdIn(page)))
-    ).reduce((flattened, page) => [...flattened, ...page], [])
+    const users: User[] = _.flatten(
+      await Promise.all(userPages.map((page) => this.userRepo.findWhereIdIn(page))),
+    )
 
-    const allGroups = await this.orgService.getGroups(organizationId)
+    const allGroups = (await this.orgService.getGroups(organizationId)).reduce((byId, group) => {
+      byId[group.id] = group
+      return byId
+    }, {} as Record<string, OrganizationGroup>)
 
     // TODO: this is an extremely expensive loop. See issue #429 in github
     const allUsersWithDependantsAndGroups = await Promise.all(
       users.map(async (user) => {
         return {
           id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
           orgId: user.organizationIds[0],
           groups: await this.orgService.getUsersGroups(organizationId, null, [user.id]),
-          dependants: await this.userService.getAllDependants(user.id),
+          delegates: user.delegates,
         }
       }),
     )
@@ -91,17 +98,29 @@ export default class ReportSender {
       .map((lookup) => ({
         id: lookup.id,
         orgId: lookup.orgId,
-        groupNames: lookup.groups.map(
-          (membership) => allGroups.find((group) => group.id === membership.groupId)?.name,
-        ),
-        dependants: lookup.dependants.map((dep) => ({
-          id: dep.id,
-          firstName: dep.firstName,
-          lastName: dep.lastName,
-          groupName: allGroups.find((group) => group.id === dep.groupId)?.name,
-        })),
+        groupNames: lookup.groups.map((membership) => allGroups[membership.groupId]?.name),
+        delegates: lookup.delegates,
+        dependants: [],
       }))
-      .reduce((lookup, data) => ({...lookup, [data.id]: data}), {})
+      .reduce((lookup, data) => {
+        lookup[data.id] = data
+        return lookup
+      }, {})
+
+    const keys = Object.keys(userDependantLookup)
+    keys.forEach((userId) => {
+      const user = userDependantLookup[userId]
+      if (!user.delegates?.length) {
+        // not a dependant
+        return
+      }
+      user.delegates.forEach((delegateId) => {
+        const delegate = userDependantLookup[delegateId]
+        if (delegate) {
+          delegate.dependants.push(user)
+        }
+      })
+    })
 
     const message = reports
       .map((report) =>

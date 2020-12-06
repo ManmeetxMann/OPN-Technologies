@@ -52,19 +52,16 @@ class InternalController implements IControllerBase {
 
       const memberships = await this.organizationService.getUsersGroups(organizationId, groupId)
       const userIds = new Set<string>()
-      const dependantIds = new Set<string>()
       memberships.forEach((membership) => {
         if (membership.parentUserId) {
           userIds.add(membership.parentUserId)
-          dependantIds.add(membership.userId)
-        } else {
-          userIds.add(membership.userId)
         }
+        userIds.add(membership.userId)
       })
       console.log(`${memberships.length} memberships found`)
 
       const organizationPromise = this.organizationService.findOneById(organizationId)
-      const lookups = await this.reportService.getLookups(userIds, dependantIds, organizationId)
+      const lookups = await this.reportService.getLookups(userIds, organizationId)
       const questionnaireIds = new Set<string>()
       Object.values(lookups.locationsLookup).forEach((location) => {
         if (location.questionnaireId) {
@@ -82,12 +79,7 @@ class InternalController implements IControllerBase {
 
       const allTemplates = await Promise.all(
         memberships
-          .filter((membership) => {
-            if (membership.parentUserId) {
-              return lookups.dependantsLookup[membership.userId]
-            }
-            return lookups.usersLookup[membership.userId]
-          })
+          .filter((membership) => lookups.usersLookup[membership.userId])
           .map((membership) =>
             this.reportService
               .getUserReportTemplate(

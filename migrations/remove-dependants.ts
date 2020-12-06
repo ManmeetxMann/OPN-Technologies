@@ -177,7 +177,7 @@ async function validateNewUsers(): Promise<void> {
           const created = allNewDependantsById.find((dep) => dep.id === original.id)
           if (!created.exists) {
             console.error(
-              `missing new user from ${original.ref.path}. They likely do not have a users_group document`
+              `missing new user from ${original.ref.path}. They likely do not have a users_group document`,
             )
             return
           }

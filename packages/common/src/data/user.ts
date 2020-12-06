@@ -14,6 +14,7 @@ export type User = {
   email?: string
   admin?: AdminProfile | FieldValue
   authUserId?: string | FieldValue
+  delegates: null | string[]
 }
 
 export type UserWithGroup = {
@@ -34,7 +35,8 @@ export type UserFilter = {
 }
 
 // TODO: DEPRECATE
-export type UserDependant = {
+export type UserDependant = User
+export type LegacyDependant = {
   id: string
   firstName: string
   lastName: string
