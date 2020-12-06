@@ -1,7 +1,6 @@
 import DataModel from '../../../common/src/data/datamodel.base'
 import {AdminProfile} from './admin'
 import {FieldValue} from '../utils/firebase'
-import DataStore from './datastore'
 
 // TODO: DEPRECATE
 export type User = {
