@@ -36,6 +36,12 @@ export type UserFilter = {
 
 // TODO: DEPRECATE
 export type UserDependant = User
+export type LegacyDependant = {
+  id: string
+  firstName: string
+  lastName: string
+  groupId: string
+}
 
 // TODO: DEPRECATE
 export class UserModel extends DataModel<User> {

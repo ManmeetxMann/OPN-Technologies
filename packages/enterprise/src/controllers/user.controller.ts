@@ -134,10 +134,6 @@ class UserController implements IControllerBase {
       let dependents: UserDependant[] = []
       let lookupIds: string[] = [userId]
 
-      // get all groups under the org to use as filter
-      const orgGroups = await this.organizationService.getGroups(organizationId)
-      const groupIdsForOrg = orgGroups.map((group) => group.id)
-
       // Get appropriately Dependent vs User
       if (parentUserId) {
         // Get User
@@ -148,9 +144,8 @@ class UserController implements IControllerBase {
         user = (await this.userService.findOne(userId)) as UserWithGroup
 
         // Get dependents only just under org
-        dependents = await this.userService.getAllDependants(userId)
-        dependents = dependents.filter(
-          (dependent) => groupIdsForOrg.indexOf(dependent.groupId) > -1,
+        dependents = (await this.userService.getAllDependants(userId)).filter((dep) =>
+          dep.organizationIds?.includes(organizationId),
         )
 
         const dependentIds = dependents.map((dependent) => dependent.id)
