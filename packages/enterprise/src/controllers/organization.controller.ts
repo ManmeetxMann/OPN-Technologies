@@ -1210,6 +1210,7 @@ class OrganizationController implements IControllerBase {
 
           return {
             ...dependent,
+            groupId: group.id,
             groupName: group.name,
             status: dependentStatus,
           }
@@ -1221,6 +1222,7 @@ class OrganizationController implements IControllerBase {
           id: parent.id,
           firstName: parent.firstName,
           lastName: parent.lastName,
+          groupId: parentGroup.id,
           groupName: parentGroup.name,
           base64Photo: parent.base64Photo,
           status: parentStatus,
