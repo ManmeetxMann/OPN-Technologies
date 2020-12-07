@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "packages/apidocs/**"
+      - "packages/**/openapi.yaml"
       - ".github/workflows/ci_apidocs.yml"
       - ".github/actions/**"
     branches: 
