@@ -9,6 +9,7 @@ import AdminTagController from './controllers/v3/admin.tag.controller'
 import UserController from './controllers/user.controller'
 import UserV3Controller from './controllers/v3/user.controller'
 import AdminUserV3Controller from './controllers/v3/admin.user.controller'
+import GroupV3Controller from './controllers/v3/group.controller'
 import RootController from './controllers/root.controller'
 import OrganizationController from './controllers/organization.controller'
 import {IdentifiersModel} from '../../common/src/data/identifiers'
@@ -29,6 +30,7 @@ const app = new App({
     new AdminTagController(),
     new InternalController(),
     new OrganizationController(),
+    new GroupV3Controller(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],
