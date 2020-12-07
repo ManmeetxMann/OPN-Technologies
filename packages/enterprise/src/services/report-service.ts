@@ -2,7 +2,7 @@ import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
 import {safeTimestamp, GenericTimestamp} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {User} from '../../../common/src/data/user'
+import {User, UserModel} from '../../../common/src/data/user'
 import {Range} from '../../../common/src/types/range'
 
 import {OrganizationService} from './organization-service'
@@ -21,7 +21,6 @@ import {ExposureReport} from '../../../access/src/models/trace'
 import {Access, AccessWithPassportStatusAndUser} from '../../../access/src/models/access'
 
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
-import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 
 import {Passport, PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {PassportService} from '../../../passport/src/services/passport-service'
@@ -29,6 +28,7 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 
 import * as _ from 'lodash'
 import moment from 'moment'
+import DataStore from '../../../common/src/data/datastore'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -112,7 +112,7 @@ const getPriorityAccess = (
 export class ReportService {
   private organizationService = new OrganizationService()
   private attestationService = new AttestationService()
-  private questionnaireService = new QuestionnaireService()
+  private userRepo = new UserModel(new DataStore())
   private userService = new UserService()
   private accessService = new AccessService()
   private passportService = new PassportService()
@@ -125,36 +125,48 @@ export class ReportService {
       from: live ? moment(now()).startOf('day').toDate() : new Date(from),
       to: live ? now() : new Date(to),
     }
-    // Fetch user groups
-    const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
-    // Get users & dependants
-    const nonGuardiansUserIds = new Set<string>()
+
+    const [allUsers, allOrgGroups] = await Promise.all([
+      this.userRepo.findWhereArrayContains('organizationIds', organizationId),
+      this.organizationService.getUsersGroups(organizationId, groupId),
+    ])
+    let allRelevantUsers = allUsers
+    if (groupId) {
+      // TODO: always do this filtering?
+      const relevantUserIds = new Set<string>(_.map(allOrgGroups, 'userId'))
+      allRelevantUsers = allUsers.filter((user) => relevantUserIds.has(user.id))
+    }
+    const allUsersById: Record<string, User> = {}
+    const usersById: Record<string, User> = {}
+    const dependantsById: Record<string, User> = {}
     const parentUserIds: Record<string, string> = {}
-    usersGroups.forEach(({userId, parentUserId}) => {
-      if (!!parentUserId) {
-        parentUserIds[userId] = parentUserId
-      } else nonGuardiansUserIds.add(userId)
+    allRelevantUsers.forEach((user) => {
+      allUsersById[user.id] = user
+      if (user.delegates?.length) {
+        dependantsById[user.id] = user
+        if (user.delegates.length > 1) {
+          console.warn(`${user.delegates.length} delegates found for user ${user.id}`)
+          const parent = user.delegates[0]
+          parentUserIds[user.id] = parent
+        }
+      } else {
+        usersById[user.id] = user
+      }
     })
-    const guardianIds = new Set(Object.values(parentUserIds))
-    const dependantIds = new Set(Object.keys(parentUserIds))
-    const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
-    const usersById = await this.getUsersById([...userIds])
-    const dependantsById = await this.getDependantsById(guardianIds, usersById, dependantIds)
-
-    // Fetch Guardians groups
-    const guardiansGroups: OrganizationUsersGroup[] = await Promise.all(
-      _.chunk([...guardianIds], 10).map((chunk) =>
-        this.organizationService.getUsersGroups(organizationId, null, chunk),
-      ),
-    ).then((results) => _.flatten(results as OrganizationUsersGroup[][]))
-
-    const allGroups = [...new Set([...(usersGroups ?? []), ...(guardiansGroups ?? [])])]
     const usersGroupsByUserId: Record<string, OrganizationUsersGroup> = {}
-    allGroups.forEach((groupUser) => (usersGroupsByUserId[groupUser.userId] = groupUser))
-    // Get accesses
+    allOrgGroups.forEach((membership) => {
+      if (usersGroupsByUserId[membership.userId]) {
+        console.warn(
+          `In org ${organizationId} user groups ${membership.id} and ${
+            usersGroupsByUserId[membership.userId].id
+          } collided`,
+        )
+      }
+      usersGroupsByUserId[membership.userId] = membership
+    })
     const accesses = await this.getAccessesFor(
-      [...userIds],
-      [...dependantIds],
+      Object.keys(allUsersById),
+      Object.keys(dependantsById),
       parentUserIds,
       locationId,
       groupId,
@@ -597,7 +609,7 @@ export class ReportService {
     usersById: Record<string, User>,
     dependantsByIds: Record<string, User>,
   ): Promise<AccessWithPassportStatusAndUser[]> {
-    // Fetch passports
+    // Fetch passports - N queries
     const passportsByUserIds = await this.passportService.findTheLatestValidPassports(
       userIds,
       dependantIds,
@@ -618,6 +630,7 @@ export class ReportService {
     const proceedStatusTokens = Object.values(passportsByUserIds)
       .filter(({status}) => status === PassportStatuses.Proceed)
       .map(({statusToken}) => statusToken)
+    // N/10 Queries
     const accessesByStatusToken: Record<string, Access[]> = await Promise.all(
       _.chunk(proceedStatusTokens, 10).map((chunk) =>
         this.accessService.findAllWith({
