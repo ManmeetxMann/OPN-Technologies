@@ -13,9 +13,17 @@ const organizationService = new OrganizationService()
 const getUsersByGroupId: Handler = async (req, res, next): Promise<void> => {
   try {
     const {organizationId, groupId} = req.params as {organizationId: string; groupId: string}
-    const users = organizationService.getUsersGroups(organizationId, groupId, [])
+    const users = await organizationService.getUsersGroups(organizationId, groupId)
 
     res.json(actionSucceed(users))
+  } catch (error) {
+    next(error)
+  }
+}
+
+const updateGroup: Handler = async (req, res, next): Promise<void> => {
+  try {
+
   } catch (error) {
     next(error)
   }
@@ -34,7 +42,9 @@ class GroupController implements IControllerBase {
 
     const authentication = innerRouter().use(
       '/',
-      innerRouter().get('/groups/:groupId/users', authMiddleware, getUsersByGroupId),
+      innerRouter()
+        .get('/groups/:groupId/users', authMiddleware, getUsersByGroupId)
+        .put('/groups', authMiddleware, updateGroup),
     )
 
     this.router.use(root, authentication, authentication)
