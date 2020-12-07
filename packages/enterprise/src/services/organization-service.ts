@@ -194,6 +194,14 @@ export class OrganizationService {
     return this.getGroupsRepositoryFor(organizationId).add(group)
   }
 
+  updateGroup(
+    organizationId: string,
+    groupId: string,
+    groupData: OrganizationGroup,
+  ): Promise<OrganizationGroup> {
+    return this.getGroupsRepositoryFor(organizationId).updateProperties(groupId, groupData)
+  }
+
   addGroups(organizationId: string, groups: OrganizationGroup[]): Promise<OrganizationGroup[]> {
     return this.getOrganization(organizationId).then(() =>
       Promise.all(groups.map((group) => this.addGroup(organizationId, group))),
