@@ -37,7 +37,6 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
     isMultiple: boolean,
   ): Promise<AppointmentDBModel[]> {
     return this.getAppointments(filter).then((appointments: AppointmentAcuityResponse[]) => {
-
       if (appointments.length > 1 && !isMultiple) {
         throw new BadRequestException(
           `Sorry, Results are not sent. Same Barcode is used by multiple appointments`,

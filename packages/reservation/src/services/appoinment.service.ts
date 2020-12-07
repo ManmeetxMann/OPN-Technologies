@@ -31,8 +31,7 @@ export class AppoinmentService {
   ): Promise<AppointmentDTO[]> {
     const filters = {organizationId}
     if (!searchQuery) {
-      return this.appoinmentSchedulerRepository
-        .getManyAppointments(filters)
+      return this.appoinmentSchedulerRepository.getManyAppointments(filters)
     } else {
       const searchPromises = []
       const searchArray = searchQuery.split(' ')
