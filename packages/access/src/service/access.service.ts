@@ -101,16 +101,14 @@ export class AccessService {
   ): Promise<(UserDependant & LegacyDependant)[]> {
     const allOrgs = new Set<string>(_.flatten(_.map(dependants, 'organizationIds')))
     const groups = _.flatten(
-      await Promise.all([
-        [
-          [...allOrgs].map((orgId) =>
-            new OrganizationUsersGroupModel(this.dataStore, orgId).findWhereIn(
-              'userId',
-              _.map(dependants, 'id'),
-            ),
+      await Promise.all(
+        [...allOrgs].map((orgId) =>
+          new OrganizationUsersGroupModel(this.dataStore, orgId).findWhereIn(
+            'userId',
+            _.map(dependants, 'id'),
           ),
-        ],
-      ]),
+        ),
+      ),
     )
 
     return dependants.map((dep) => ({
