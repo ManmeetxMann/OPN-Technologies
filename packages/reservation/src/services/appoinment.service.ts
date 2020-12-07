@@ -25,13 +25,47 @@ export class AppoinmentService {
     return this.appoinmentSchedulerRepository.getAppointmentById(id)
   }
 
-  async getAppoinmentByOrganizationId(organizationId: string): Promise<AppointmentDTO[]> {
+  async getAppointmentByOrganizationIdAndSearchParams(
+    organizationId: string,
+    searchQuery: string,
+  ): Promise<AppointmentDTO[]> {
     const filters = {organizationId}
-    return this.appoinmentSchedulerRepository
-      .getManyAppointments(filters)
-      .then((appoinment: AppointmentDBModel[]) => {
-        return appoinment
+    if (!searchQuery) {
+      return this.appoinmentSchedulerRepository
+        .getManyAppointments(filters)
+    } else {
+      const searchPromises = []
+      const searchArray = searchQuery.split(' ')
+      if (searchArray.length === 1) {
+        searchPromises.push(
+          this.appoinmentSchedulerRepository.getManyAppointments({
+            firstName: searchArray[0],
+            ...filters,
+          }),
+          this.appoinmentSchedulerRepository.getManyAppointments({
+            lastName: searchArray[0],
+            ...filters,
+          }),
+        )
+      } else {
+        searchPromises.push(
+          this.appoinmentSchedulerRepository.getManyAppointments({
+            firstName: searchArray[0],
+            lastName: searchArray[1],
+            ...filters,
+          }),
+          this.appoinmentSchedulerRepository.getManyAppointments({
+            firstName: searchArray[1],
+            lastName: searchArray[0],
+            ...filters,
+          }),
+        )
+      }
+
+      return Promise.all(searchPromises).then((appointmentsArray) => {
+        return appointmentsArray.flat()
       })
+    }
   }
 
   async getAppoinmentByDate(startDate: string, endDate: string): Promise<AppointmentDTO[]> {

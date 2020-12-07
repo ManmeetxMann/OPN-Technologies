@@ -5,7 +5,6 @@ import {
   AppointmentAcuityResponse,
   AppointmentRequest,
 } from '../models/appoinment'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 export class AppoinmentsSchedulerRepository extends AcuityScheduling {
@@ -38,9 +37,6 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
     isMultiple: boolean,
   ): Promise<AppointmentDBModel[]> {
     return this.getAppointments(filter).then((appointments: AppointmentAcuityResponse[]) => {
-      if (!appointments.length) {
-        throw new ResourceNotFoundException(`Appointment not found`)
-      }
 
       if (appointments.length > 1 && !isMultiple) {
         throw new BadRequestException(
