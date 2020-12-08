@@ -7,7 +7,7 @@ export type Registration = {
   osVersion: string
   pushToken?: string
   userIds?: string[]
-  shortCode: RegistrationShortCode
+  shortCode?: RegistrationShortCode
 }
 
 export type RegistrationShortCode = {
