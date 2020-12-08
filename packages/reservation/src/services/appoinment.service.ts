@@ -29,7 +29,7 @@ export class AppoinmentService {
     organizationId: string,
     searchQuery: string,
   ): Promise<AppointmentDTO[]> {
-    const filters = {organizationId}
+    const filters = {organizationId, showall: true}
     if (!searchQuery) {
       return this.appoinmentSchedulerRepository.getManyAppointments(filters)
     } else {
