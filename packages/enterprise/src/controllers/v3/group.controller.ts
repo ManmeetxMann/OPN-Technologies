@@ -3,10 +3,13 @@ import * as express from 'express'
 import {Handler, Router} from 'express'
 import {authMiddleware} from '../../../../common/src/middlewares/auth'
 import {OrganizationService} from '../../services/organization-service'
+import {UserService} from '../../services/user-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {OrganizationGroup} from '../../models/organization'
+import {User, userDTOResponse} from '../../models/user'
 
 const organizationService = new OrganizationService()
+const userService = new UserService()
 
 /**
  * Search a user(s) profile and returns a User(s)
@@ -14,9 +17,25 @@ const organizationService = new OrganizationService()
 const getUsersByGroupId: Handler = async (req, res, next): Promise<void> => {
   try {
     const {organizationId, groupId} = req.params as {organizationId: string; groupId: string}
-    const users = await organizationService.getUsersGroups(organizationId, groupId)
-
-    res.json(actionSucceed(users))
+    const userIds = await organizationService.getUsersGroups(organizationId, groupId)
+    const users = await userService.getAllByIds(userIds.map((user) => user.userId))
+    res.json(
+      actionSucceed(
+        users.map((user: User) => {
+          return {
+            ...userDTOResponse(user),
+            createdAt:
+              user.timestamps && user.timestamps.createdAt
+                ? user.timestamps.createdAt.toDate().toISOString()
+                : null,
+            updatedAt:
+              user.timestamps && user.timestamps.updatedAt
+                ? user.timestamps.updatedAt.toDate().toISOString()
+                : null,
+          }
+        }),
+      ),
+    )
   } catch (error) {
     next(error)
   }
@@ -25,7 +44,7 @@ const getUsersByGroupId: Handler = async (req, res, next): Promise<void> => {
 const updateGroup: Handler = async (req, res, next): Promise<void> => {
   try {
     const {organizationId, groupId} = req.params as {organizationId: string; groupId: string}
-    const groupData = req.body as OrganizationGroup;
+    const groupData = req.body as OrganizationGroup
     const updatedGroup = await organizationService.updateGroup(organizationId, groupId, groupData)
 
     res.json(actionSucceed(updatedGroup))
