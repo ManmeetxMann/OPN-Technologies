@@ -9,6 +9,7 @@ import AdminTagController from './controllers/v3/admin.tag.controller'
 import UserController from './controllers/user.controller'
 import UserV3Controller from './controllers/v3/user.controller'
 import AdminUserV3Controller from './controllers/v3/admin.user.controller'
+import AdminUserV4Controller from './controllers/admin/v4/user.controller'
 import RootController from './controllers/root.controller'
 import OrganizationController from './controllers/organization.controller'
 import {IdentifiersModel} from '../../common/src/data/identifiers'
@@ -26,6 +27,7 @@ const app = new App({
     new UserV3Controller(),
     new AdminController(),
     new AdminUserV3Controller(),
+    new AdminUserV4Controller(),
     new AdminTagController(),
     new InternalController(),
     new OrganizationController(),
