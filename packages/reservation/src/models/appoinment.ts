@@ -52,6 +52,8 @@ export type AppointmentAcuityResponse = AppointmentBase & {
 export type AppointmentSearchRequest = {
   barCodeNumber?: string
   organizationId?: string
+  firstName?: string
+  lastName?: string
 }
 
 export type AppointmentSearchByDateRequest = {
@@ -138,6 +140,7 @@ export type TestResultForPagination = {
 
 export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   organizationId?: string
+  searchQuery?: string
 }
 
 export type AcuityUpdateDTO = {
