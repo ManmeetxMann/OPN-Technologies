@@ -68,6 +68,8 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
       timeOfAppointment: appointment.time,
       location: appointment.location,
       organizationId: appointment.organizationId,
+      canceled: appointment.canceled,
+      dateTime: appointment.datetime,
     }
   }
 }
