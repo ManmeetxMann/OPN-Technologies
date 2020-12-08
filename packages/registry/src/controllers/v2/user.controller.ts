@@ -2,8 +2,10 @@ import {NextFunction, Request, Response, Router} from 'express'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import IRouteController from '../../../../common/src/interfaces/IRouteController.interface'
 import {UserService} from '../../../../common/src/service/user/user-service'
-import {UserDependant} from '../../../../common/src/data/user'
+import {LegacyDependant} from '../../../../common/src/data/user'
 import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
+
+import * as _ from 'lodash'
 
 class UserController implements IRouteController {
   public router = Router()
@@ -25,39 +27,74 @@ class UserController implements IRouteController {
     )
   }
 
+  // TODO: make this org-specific
   getAllDependants = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.params['userId']
-      const members = await this.userService.getAllDependants(userId)
-      res.json(actionSucceed(members))
+      const [user, dependants] = await Promise.all([
+        this.userService.findOne(userId),
+        this.userService.getAllDependants(userId),
+      ])
+      const allGroups = _.flatten(
+        await Promise.all(
+          (user.organizationIds ?? []).map((orgId) =>
+            this.organizationService.getDependantGroups(orgId, userId),
+          ),
+        ),
+      )
+
+      const legacyDependants = dependants.map((dep) => ({
+        firstName: dep.firstName,
+        lastName: dep.lastName,
+        id: dep.id,
+        groupId: allGroups.find((membership) => membership.userId === dep.id)?.groupId,
+      }))
+
+      res.json(actionSucceed(legacyDependants))
     } catch (error) {
       next(error)
     }
   }
 
+  // TODO: update API to not use LegacyDependant
   addDependants = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.params['userId']
       const {organizationId, dependants} = req.body as {
         organizationId: string
-        dependants: UserDependant[]
+        dependants: LegacyDependant[]
       }
 
-      const existingDependants = await this.userService.getAllDependants(userId)
+      const [existingGroups, existingDependants, added] = await Promise.all([
+        this.organizationService.getDependantGroups(organizationId, userId),
+        this.userService.getAllDependants(userId),
+        this.userService.addDependants(userId, dependants),
+      ])
 
-      const added = await this.userService.addDependants(userId, dependants)
+      const legacyExisting: LegacyDependant[] = existingDependants.map((dep) => ({
+        firstName: dep.firstName,
+        lastName: dep.lastName,
+        id: dep.id,
+        groupId: existingGroups.find((membership) => membership.userId === dep.id)?.groupId,
+      }))
+      const legacyAdded: LegacyDependant[] = added.map((dep, index) => ({
+        firstName: dep.firstName,
+        lastName: dep.lastName,
+        id: dep.id,
+        groupId: dependants[index].groupId,
+      }))
 
       await Promise.all(
-        added.map((member, index) =>
+        legacyAdded.map((member) =>
           this.organizationService.addUserToGroup(
             organizationId,
-            dependants[index].groupId,
+            member.groupId,
             member.id,
             userId,
           ),
         ),
       )
-      res.json(actionSucceed([...existingDependants, ...added]))
+      res.json(actionSucceed([...legacyExisting, ...legacyAdded]))
     } catch (error) {
       next(error)
     }
@@ -79,18 +116,14 @@ class UserController implements IRouteController {
       const userId = req.params['userId']
       const {organizationId, dependants} = req.body as {
         organizationId: string
-        dependants: UserDependant[]
+        dependants: {id: string}[]
       }
       await Promise.all(
         dependants.map((dependant) =>
           this.userService
             .removeDependant(userId, dependant.id)
             .then(() =>
-              this.organizationService.removeUserFromGroup(
-                organizationId,
-                dependant.groupId,
-                dependant.id,
-              ),
+              this.organizationService.removeUserFromAllGroups(organizationId, dependant.id),
             ),
         ),
       )

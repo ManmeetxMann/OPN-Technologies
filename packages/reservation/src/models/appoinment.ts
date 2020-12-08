@@ -145,3 +145,8 @@ export type AcuityUpdateDTO = {
   barCodeNumber?: string
   organizationId?: string
 }
+
+export type AppointmentUI = AppointmentBase & {
+  id?: number
+  location?: string
+}

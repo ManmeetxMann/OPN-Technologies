@@ -4,6 +4,7 @@ import {
   AppointmentDBModel,
   AppointmentAcuityResponse,
   AppointmentRequest,
+  AppointmentUI,
 } from '../models/appoinment'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
@@ -17,7 +18,9 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
   }
 
   async getAppointmentById(id: number): Promise<AppointmentDBModel> {
-    return this.getAppointmentsById(id)
+    return this.getAppointmentsById(id).then((appointment: AppointmentAcuityResponse) =>
+      this.convertToAppointmentModel(appointment),
+    )
   }
 
   async getManyAppointments(data: AppointmentRequest): Promise<AppointmentDBModel[]> {
@@ -43,21 +46,27 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
         )
       }
 
-      return appointments.map((appointment: AppointmentAcuityResponse) => ({
-        firstName: appointment.firstName,
-        lastName: appointment.lastName,
-        email: appointment.email,
-        phone: appointment.phone,
-        appointmentId: appointment.id,
-        id: appointment.id,
-        dateOfBirth: appointment.dateOfBirth,
-        registeredNursePractitioner: appointment.registeredNursePractitioner,
-        barCode: appointment.barCode,
-        packageCode: appointment.certificate,
-        dateOfAppointment: appointment.date,
-        timeOfAppointment: appointment.time,
-        location: appointment.location,
-      }))
+      return appointments.map((appointment: AppointmentAcuityResponse) =>
+        this.convertToAppointmentModel(appointment),
+      )
     })
+  }
+
+  private convertToAppointmentModel(appointment: AppointmentAcuityResponse): AppointmentUI {
+    return {
+      firstName: appointment.firstName,
+      lastName: appointment.lastName,
+      email: appointment.email,
+      phone: appointment.phone,
+      appointmentId: appointment.id,
+      id: appointment.id,
+      dateOfBirth: appointment.dateOfBirth,
+      registeredNursePractitioner: appointment.registeredNursePractitioner,
+      barCode: appointment.barCode,
+      packageCode: appointment.certificate,
+      dateOfAppointment: appointment.date,
+      timeOfAppointment: appointment.time,
+      location: appointment.location,
+    }
   }
 }

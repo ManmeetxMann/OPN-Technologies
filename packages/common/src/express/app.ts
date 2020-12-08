@@ -104,7 +104,7 @@ class App {
 
   private setupCors() {
     if (!!this.corsOptions) {
-      this.app.use(cors({origin: this.corsOptions}))
+      this.app.use(cors({origin: this.corsOptions, allowedHeaders: this.corsOptions}))
     }
   }
 

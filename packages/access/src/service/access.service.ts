@@ -1,5 +1,6 @@
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
-import {UserDependant, UserDependantModel} from '../../../common/src/data/user'
+import {UserDependant, LegacyDependant} from '../../../common/src/data/user'
+import {UserService} from '../../../common/src/service/user/user-service'
 import DataStore from '../../../common/src/data/datastore'
 import {AccessModel, AccessRepository} from '../repository/access.repository'
 import {Access, AccessFilter} from '../models/access'
@@ -12,6 +13,9 @@ import moment from 'moment-timezone'
 import {serverTimestamp, now} from '../../../common/src/utils/times'
 import * as _ from 'lodash'
 import {PassportStatus} from '../../../passport/src/models/passport'
+
+import {OrganizationUsersGroupModel} from '../../../enterprise/src/repository/organization.repository'
+
 import {AccessStatsFilter} from '../models/access-stats'
 import {Config} from '../../../common/src/utils/config'
 import {AccessFilterWithDependent} from '../types'
@@ -30,6 +34,7 @@ export class AccessService {
   private accessRepository = new AccessRepository(this.dataStore)
   private accessStatsRepository = new AccessStatsRepository(this.dataStore)
   private accessListener = new AccessListener(this.dataStore)
+  private userService = new UserService()
 
   public static mapAccessDates = (access: Access): Access => ({
     ...access,
@@ -90,6 +95,28 @@ export class AccessService {
       }))
   }
 
+  // TODO: remove once frontend no longer expects groupId
+  private async decorateDependants(
+    dependants: UserDependant[],
+  ): Promise<(UserDependant & LegacyDependant)[]> {
+    const allOrgs = new Set<string>(_.flatten(_.map(dependants, 'organizationIds')))
+    const groups = _.flatten(
+      await Promise.all(
+        [...allOrgs].map((orgId) =>
+          new OrganizationUsersGroupModel(this.dataStore, orgId).findWhereIn(
+            'userId',
+            _.map(dependants, 'id'),
+          ),
+        ),
+      ),
+    )
+
+    return dependants.map((dep) => ({
+      ...dep,
+      groupId: groups.find((group) => group.userId === dep.id)?.groupId ?? '',
+    }))
+  }
+
   handleEnter(rawAccess: AccessModel): Promise<AccessWithDependantNames> {
     // createdAt could be a string, and we don't want to rewrite it
     const access: AccessModel = _.omit(rawAccess, ['createdAt'])
@@ -131,12 +158,15 @@ export class AccessService {
       this.incrementPeopleOnPremises(access.locationId, count)
         .then(() =>
           Object.keys(savedAccess.dependants ?? {}).length > 0
-            ? new UserDependantModel(this.dataStore, access.userId).fetchAll()
+            ? this.userService.getAllDependants(access.userId)
             : ([] as UserDependant[]),
         )
-        .then((dependants) => {
+        .then(async (dependants) => {
           // we deliberately don't await this, the user doesn't need to know if it goes through
           this.accessListener.addEntry(savedAccess)
+          const decorated = await this.decorateDependants(
+            (dependants ?? []).filter(({id}) => !!savedAccess.dependants[id]),
+          )
           return {
             ...{
               ...savedAccess,
@@ -146,7 +176,7 @@ export class AccessService {
               userId: activeUserId,
               parentUserId: activeUserId !== access.userId ? access.userId : null,
             },
-            dependants: (dependants ?? []).filter(({id}) => !!savedAccess.dependants[id]),
+            dependants: decorated,
           }
         }),
     )
@@ -220,13 +250,14 @@ export class AccessService {
         .then(() =>
           _.isEmpty(savedAccess.dependants)
             ? ([] as UserDependant[])
-            : new UserDependantModel(this.dataStore, access.userId).fetchAll(),
+            : this.userService.getAllDependants(access.userId),
         )
         .then((dependants) =>
           dependants.filter(({id}) => !!savedAccess.dependants[id] && dependantIds.includes(id)),
         )
         .then(async (dependants) => {
-          await this.accessListener.addExit(savedAccess, includesGuardian, dependantIds)
+          this.accessListener.addExit(savedAccess, includesGuardian, dependantIds)
+          const decorated = await this.decorateDependants(dependants)
           return {
             ...{
               ...savedAccess,
@@ -236,7 +267,7 @@ export class AccessService {
               userId: activeUserId,
               parentUserId: activeUserId !== access.userId ? access.userId : null,
             },
-            dependants,
+            dependants: decorated,
           }
         }),
     )

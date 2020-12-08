@@ -42,14 +42,14 @@ class WebhookController implements IControllerBase {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
       }
 
-      if (appointment.certificate && !appointment.organizationId) {
-        const packageResult = await this.packageService.getByPackageCode(appointment.certificate)
+      if (appointment.packageCode && !appointment.organizationId) {
+        const packageResult = await this.packageService.getByPackageCode(appointment.packageCode)
 
         if (packageResult) {
           dataForUpdate['organizationId'] = packageResult.organizationId
         } else {
           console.log(
-            `WebhookController: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`,
+            `WebhookController: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.packageCode}`,
           )
         }
       }

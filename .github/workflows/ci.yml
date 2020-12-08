@@ -2,17 +2,17 @@ name: OPN Services CI Action
 
 on:
   pull_request:
-    branches: [ development ]
+    branches: [ development, master ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
     - name: Setup Node.js
       uses: actions/setup-node@v1
       with:
-        node-version: 10.x
+        node-version: 12.x
     - run: npm install
     - run: npm run install-all
     - run: npm run lint-all
