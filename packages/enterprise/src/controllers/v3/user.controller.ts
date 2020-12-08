@@ -1,28 +1,35 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
-import {authMiddleware} from '../../../../common/src/middlewares/auth'
+import {uniq, flatten} from 'lodash'
+
+import {AdminProfile} from '../../../../common/src/data/admin'
+import {User as AuthenticatedUser} from '../../../../common/src/data/user'
+import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
+import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
+import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-authority'
+import {authMiddleware} from '../../../../common/src/middlewares/auth'
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
-import {UserService} from '../../services/user-service'
-import {OrganizationService} from '../../services/organization-service'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
-import {CreateUserRequest, MigrateUserRequest} from '../../types/new-user'
 import {
   actionReplyInsufficientPermission,
   actionSucceed,
 } from '../../../../common/src/utils/response-wrapper'
-import {AuthenticationRequest} from '../../types/authentication-request'
-import {User, userDTOResponse} from '../../models/user'
-import {UpdateUserRequest} from '../../types/update-user-request'
+
+import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-authority'
+
+import {UserService} from '../../services/user-service'
+import {OrganizationService} from '../../services/organization-service'
+
+import {CreateUserRequest, MigrateUserRequest} from '../../types/new-user'
+import {VerifyShortCodeRequest} from '../../types/verify-short-code-request'
 import {RegistrationConfirmationRequest} from '../../types/registration-confirmation-request'
-import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
-import {ConnectOrganizationRequest} from '../../types/user-organization-request'
-import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
+import {UpdateUserRequest} from '../../types/update-user-request'
+import {AuthenticationRequest} from '../../types/authentication-request'
 import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
-import {AdminProfile} from '../../../../common/src/data/admin'
-import {User as AuthenticatedUser} from '../../../../common/src/data/user'
-import {uniq, flatten} from 'lodash'
+import {ConnectOrganizationRequest} from '../../types/user-organization-request'
+
+import {User, userDTOResponse} from '../../models/user'
 
 const authService = new AuthService()
 const userService = new UserService()
@@ -148,9 +155,36 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
     const {email, organizationId, userId} = req.body as AuthenticationRequest
     await organizationService.getByIdOrThrow(organizationId)
 
-    await magicLinkService.send({email, meta: {organizationId, userId}})
+    const shortCode = await userService.generateAndSaveShortCode(userId)
+    await magicLinkService.send({email, meta: {organizationId, userId, shortCode}})
 
     res.json(actionSucceed())
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Validate short code to authenticate a user
+ */
+const validateShortCode: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const {email, organizationId, userId, shortCode} = req.body as VerifyShortCodeRequest
+
+    const isValid = await userService.isShortCodeValid(userId, shortCode)
+
+    if (isValid) {
+      const magicLink = await magicLinkService.generateMagicLink({
+        email,
+        meta: {organizationId, userId, shortCode},
+      })
+
+      await userService.clearShortCode(userId)
+
+      res.json(actionSucceed({magicLink}))
+    } else {
+      throw new BadRequestException('Short code invalid or expired')
+    }
   } catch (error) {
     next(error)
   }
@@ -541,6 +575,7 @@ class UserController implements IControllerBase {
         .post('/', create)
         .post('/migration', migrate)
         .post('/auth', authenticate)
+        .post('/auth/short-code', validateShortCode)
         .post('/auth/confirmation', completeRegistration),
     )
 
