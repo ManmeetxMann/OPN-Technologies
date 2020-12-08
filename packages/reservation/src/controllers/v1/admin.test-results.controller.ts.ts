@@ -49,7 +49,7 @@ class AdminController implements IControllerBase {
 
       //TODO: Update DB to use Date instead of String from Acuity
       //Map to DB Field Format
-      const dateOfAppointmentStr = moment.utc(dateOfAppointment).format('MMMM DD, YYYY')
+      const dateOfAppointmentStr = moment.utc(dateOfAppointment).format('MMMM D, YYYY')
       const testResult = await this.testResultsService.getAllByOrganizationId(
         organizationId,
         dateOfAppointmentStr,
