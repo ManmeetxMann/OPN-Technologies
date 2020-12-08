@@ -72,7 +72,7 @@ async function setIsPrivateFlag(snapshot: firestore.QueryDocumentSnapshot<firest
   //console.log(user.admin.email)
   //return Promise.resolve()
   try {
-    return snapshot.ref.set(
+    return await snapshot.ref.set(
       {
         admin: {
           email: modfiedEmail
