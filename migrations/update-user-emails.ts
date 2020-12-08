@@ -11,31 +11,39 @@ initializeApp({
 
 const database = firestore()
 
+export enum ResultStatus {
+  'fulfilled',
+  'rejected'
+}
+
+type Result = {
+  status: ResultStatus
+  value: unknown
+}
+
 export async function promiseAllSettled(
   promises: Promise<unknown>[],
-): Promise<({status: string; value: unknown} | {status: string; reason: unknown})[]> {
+): Promise<Result[]> {
   return Promise.all(
     promises.map((promise) =>
       promise
         .then((value) => ({
-          status: 'fulfilled',
+          status: ResultStatus.fulfilled,
           value,
         }))
         .catch((error: unknown) => ({
-          status: 'rejected',
-          reason: error,
+          status: ResultStatus.rejected,
+          value: error,
         })),
     ),
   )
 }
-
-async function updateAllUsers(): Promise<
-  ({status: string; value: unknown} | {status: string; reason: unknown})[]
+async function updateAllUsers(): Promise<Result[]
 > {
   let offset = 0
   let hasMore = true
 
-  const results: ({status: string; value: unknown} | {status: string; reason: unknown})[] = []
+  const results: Result[] = []
 
   while (hasMore) {
     const approvalsSnapshot = await database
@@ -49,7 +57,7 @@ async function updateAllUsers(): Promise<
 
     for (const approval of approvalsSnapshot.docs) {
       const promises = []
-      promises.push(setIsPrivateFlag(approval))
+      promises.push(replaceProdEmailWithTestEmail(approval))
       const result = await promiseAllSettled(promises)
       results.push(...result)
     }
@@ -57,9 +65,9 @@ async function updateAllUsers(): Promise<
   return results
 }
 
-async function setIsPrivateFlag(snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
+async function replaceProdEmailWithTestEmail(snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
   const user = snapshot.data()
-  //admin
+
   if (!user.hasOwnProperty('admin')) {
     return Promise.resolve()
   }
@@ -68,14 +76,11 @@ async function setIsPrivateFlag(snapshot: firestore.QueryDocumentSnapshot<firest
     return Promise.resolve()
   }
 
-  const modfiedEmail = "tester@stayopn.com"
-  //console.log(user.admin.email)
-  //return Promise.resolve()
   try {
     return await snapshot.ref.set(
       {
         admin: {
-          email: modfiedEmail
+          email: "tester@stayopn.com"
         }
       },
       {
@@ -92,7 +97,7 @@ async function main() {
     console.log('Migration Starting')
     const results = await updateAllUsers()
     results.forEach((result) => {
-      if (result.status === 'fulfilled') {
+      if (result.status === ResultStatus.fulfilled) {
         // @ts-ignore - We will always have a value if the status is fulfilled
         if (result.value) {
           successCount += 1

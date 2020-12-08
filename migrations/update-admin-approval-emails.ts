@@ -11,31 +11,39 @@ initializeApp({
 
 const database = firestore()
 
+export enum ResultStatus {
+  'fulfilled',
+  'rejected'
+}
+
+type Result = {
+  status: ResultStatus
+  value: unknown
+}
+
 export async function promiseAllSettled(
   promises: Promise<unknown>[],
-): Promise<({status: string; value: unknown} | {status: string; reason: unknown})[]> {
+): Promise<Result[]> {
   return Promise.all(
     promises.map((promise) =>
       promise
         .then((value) => ({
-          status: 'fulfilled',
+          status: ResultStatus.fulfilled,
           value,
         }))
         .catch((error: unknown) => ({
-          status: 'rejected',
-          reason: error,
+          status: ResultStatus.rejected,
+          value: error,
         })),
     ),
   )
 }
 
-async function updateAllConfigApprovals(): Promise<
-  ({status: string; value: unknown} | {status: string; reason: unknown})[]
-> {
+async function updateAllConfigApprovals(): Promise<Result[]> {
   let offset = 0
   let hasMore = true
 
-  const results: ({status: string; value: unknown} | {status: string; reason: unknown})[] = []
+  const results: Result[] = []
 
   while (hasMore) {
     const approvalsSnapshot = await database
@@ -46,10 +54,9 @@ async function updateAllConfigApprovals(): Promise<
 
     offset += approvalsSnapshot.docs.length
     hasMore = !approvalsSnapshot.empty
-    console.log(offset)
     for (const approval of approvalsSnapshot.docs) {
       const promises = []
-      promises.push(setIsPrivateFlag(approval))
+      promises.push(replaceProdEmailWithTestEmail(approval))
       const result = await promiseAllSettled(promises)
       results.push(...result)
     }
@@ -57,10 +64,7 @@ async function updateAllConfigApprovals(): Promise<
   return results
 }
 
-async function setIsPrivateFlag(snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
-  const group = snapshot.data()
-  
-  //return Promise.resolve()
+async function replaceProdEmailWithTestEmail(snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
   try {
     return await snapshot.ref.set(
       {
@@ -82,7 +86,7 @@ async function main() {
     console.log('Migration Starting')
     const results = await updateAllConfigApprovals()
     results.forEach((result) => {
-      if (result.status === 'fulfilled') {
+      if (result.status === ResultStatus.fulfilled) {
         // @ts-ignore - We will always have a value if the status is fulfilled
         if (result.value) {
           successCount += 1
