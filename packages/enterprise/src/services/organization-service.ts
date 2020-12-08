@@ -245,6 +245,17 @@ export class OrganizationService {
     return await this.getGroup(organizationId, groupsForUser[0].groupId)
   }
 
+  async getUsersByGroup(
+    organizationId: string,
+    groupId: string,
+    page: number,
+    perPage: number,
+  ): Promise<OrganizationUsersGroup[]> {
+    const userGroupRepository = this.getUsersGroupRepositoryFor(organizationId);
+    const userGroupQuery = userGroupRepository.getQueryFindWhereEqual('groupId', groupId)
+    return userGroupRepository.fetchPage(userGroupQuery, Number(page), Number(perPage))
+  }
+
   async getUsersGroups(
     organizationId: string,
     groupId?: string,

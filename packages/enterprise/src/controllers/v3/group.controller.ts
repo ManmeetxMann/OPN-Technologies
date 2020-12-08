@@ -7,6 +7,7 @@ import {UserService} from '../../services/user-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {OrganizationGroup} from '../../models/organization'
 import {User, userDTOResponse} from '../../models/user'
+import {PageableRequestFilter} from '../../../../common/src/types/request'
 
 const organizationService = new OrganizationService()
 const userService = new UserService()
@@ -16,8 +17,15 @@ const userService = new UserService()
  */
 const getUsersByGroupId: Handler = async (req, res, next): Promise<void> => {
   try {
+    const {perPage, page} = req.query as PageableRequestFilter
     const {organizationId, groupId} = req.params as {organizationId: string; groupId: string}
-    const userIds = await organizationService.getUsersGroups(organizationId, groupId)
+
+    const userIds = await organizationService.getUsersByGroup(
+      organizationId,
+      groupId,
+      page,
+      perPage,
+    )
     const users = await userService.getAllByIds(userIds.map((user) => user.userId))
     res.json(
       actionSucceed(
