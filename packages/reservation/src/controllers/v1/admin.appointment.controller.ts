@@ -30,9 +30,12 @@ class AdminAppointmentController implements IControllerBase {
 
   getListAppointments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId} = req.query as AppointmentByOrganizationRequest
+      const {organizationId, searchQuery} = req.query as AppointmentByOrganizationRequest
 
-      const appointment = await this.appoinmentService.getAppoinmentByOrganizationId(organizationId)
+      const appointment = await this.appoinmentService.getAppointmentByOrganizationIdAndSearchParams(
+        organizationId,
+        searchQuery,
+      )
 
       res.json(actionSucceed(appointment))
     } catch (error) {
