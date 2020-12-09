@@ -403,6 +403,7 @@ export class AccessService {
         .where('timestamps.createdAt', '>=', from)
         //@ts-ignore
         .where('timestamps.createdAt', '<=', to)
+        //@ts-ignore
         .orderBy('timestamps.createdAt', 'desc')
       if (delegateAdminUserId) {
         return base.where('delegateAdminUserId', '==', delegateAdminUserId)
@@ -412,11 +413,13 @@ export class AccessService {
 
     const directAccesses = await getBaseQuery().where('userId', '==', userId).fetch()
     const indirectAccesses = parentUserId
-      ? await getBaseQuery().where('dependantIds', 'array-contains', parentUserId).fetch()
+      ? // @ts-ignore
+        await getBaseQuery().where(`dependants.${userId}`, '!=', null).fetch()
       : []
 
     const accesses = [...directAccesses, ...indirectAccesses]
     accesses.sort((a, b) =>
+      // @ts-ignore
       safeTimestamp(a.timestamps.createdAt) < safeTimestamp(b.timestamps.createdAt) ? 1 : -1,
     )
     return accesses.length > 0 ? accesses[0] : null
