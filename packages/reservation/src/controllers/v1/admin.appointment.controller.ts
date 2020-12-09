@@ -45,7 +45,7 @@ class AdminAppointmentController implements IControllerBase {
       const appointments = await this.appointmentService.getAppointmentByOrganizationIdAndSearchParams(
         organizationId,
         searchQuery,
-        dateOfAppointment
+        dateOfAppointment,
       )
 
       const appointmentsUniqueById = [
