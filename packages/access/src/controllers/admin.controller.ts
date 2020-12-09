@@ -246,7 +246,6 @@ class AdminController implements IRouteController {
       if (!tag) {
         throw new ResourceNotFoundException(`NFC Tag not found`)
       }
-
       // Save org
       const organizationId = tag.organizationId
 
@@ -263,8 +262,9 @@ class AdminController implements IRouteController {
         replyInsufficientPermission(res)
         return
       }
+      const user = await this.userService.findOne(tag.userId)
+      const parentUserId = user.delegates?.length ? user.delegates[0] : null
       const latestPassport = await this.passportService.findLatestPassport(tag.userId)
-
       // Make sure it's valid
       if (
         !latestPassport ||
@@ -279,6 +279,7 @@ class AdminController implements IRouteController {
       // Note we are only looking for ones that authenticated by this admin account
       const access = await this.accessService.findLatest(
         tag.userId,
+        parentUserId,
         locationId,
         now(),
         authenticatedUserId,
@@ -291,9 +292,9 @@ class AdminController implements IRouteController {
         const accessToken = await this.accessTokenService.createToken(
           latestPassport.statusToken,
           locationId,
-          tag.userId,
-          [],
-          true,
+          parentUserId ?? tag.userId,
+          parentUserId ? [tag.userId] : [],
+          !!parentUserId,
           authenticatedUserId,
         )
 
