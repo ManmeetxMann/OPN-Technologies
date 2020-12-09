@@ -13,7 +13,7 @@ const database = firestore()
 
 export enum ResultStatus {
   Fulfilled = 'fulfilled',
-  Rejected = 'rejected'
+  Rejected = 'rejected',
 }
 
 type Result = {
@@ -21,9 +21,7 @@ type Result = {
   value: unknown
 }
 
-export async function promiseAllSettled(
-  promises: Promise<unknown>[],
-): Promise<Result[]> {
+export async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]> {
   return Promise.all(
     promises.map((promise) =>
       promise
@@ -64,16 +62,18 @@ async function updateAllConfigApprovals(): Promise<Result[]> {
   return results
 }
 
-async function replaceProdEmailWithTestEmail(snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
+async function replaceProdEmailWithTestEmail(
+  snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
+) {
   try {
     return await snapshot.ref.set(
       {
         profile: {
-          email: 'tester@stayopn.com'
-        }
+          email: 'tester@stayopn.com',
+        },
       },
       {
-        merge: true
+        merge: true,
       },
     )
   } catch (error) {

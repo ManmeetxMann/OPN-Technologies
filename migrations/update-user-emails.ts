@@ -13,7 +13,7 @@ const database = firestore()
 
 export enum ResultStatus {
   Fulfilled = 'fulfilled',
-  Rejected = 'rejected'
+  Rejected = 'rejected',
 }
 
 type Result = {
@@ -21,9 +21,7 @@ type Result = {
   value: unknown
 }
 
-export async function promiseAllSettled(
-  promises: Promise<unknown>[],
-): Promise<Result[]> {
+export async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]> {
   return Promise.all(
     promises.map((promise) =>
       promise
@@ -38,19 +36,14 @@ export async function promiseAllSettled(
     ),
   )
 }
-async function updateAllUsers(): Promise<Result[]
-> {
+async function updateAllUsers(): Promise<Result[]> {
   let offset = 0
   let hasMore = true
 
   const results: Result[] = []
 
   while (hasMore) {
-    const approvalsSnapshot = await database
-      .collection('users')
-      .offset(offset)
-      .limit(limit)
-      .get()
+    const approvalsSnapshot = await database.collection('users').offset(offset).limit(limit).get()
 
     offset += approvalsSnapshot.docs.length
     hasMore = !approvalsSnapshot.empty
@@ -65,14 +58,16 @@ async function updateAllUsers(): Promise<Result[]
   return results
 }
 
-async function replaceProdEmailWithTestEmail(snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
+async function replaceProdEmailWithTestEmail(
+  snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
+) {
   const user = snapshot.data()
 
   if (!user.hasOwnProperty('admin')) {
     return Promise.resolve()
   }
-  
-  if(user.admin.email.indexOf('@stayopn.com') != -1){
+
+  if (user.admin.email.indexOf('@stayopn.com') != -1) {
     return Promise.resolve()
   }
 
@@ -80,11 +75,11 @@ async function replaceProdEmailWithTestEmail(snapshot: firestore.QueryDocumentSn
     return await snapshot.ref.set(
       {
         admin: {
-          email: "tester@stayopn.com"
-        }
+          email: 'tester@stayopn.com',
+        },
       },
       {
-        merge: true
+        merge: true,
       },
     )
   } catch (error) {
