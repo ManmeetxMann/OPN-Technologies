@@ -12,8 +12,8 @@ initializeApp({
 const database = firestore()
 
 export enum ResultStatus {
-  'fulfilled',
-  'rejected'
+  Fulfilled = 'fulfilled',
+  Rejected = 'rejected'
 }
 
 type Result = {
@@ -28,11 +28,11 @@ export async function promiseAllSettled(
     promises.map((promise) =>
       promise
         .then((value) => ({
-          status: ResultStatus.fulfilled,
+          status: ResultStatus.Fulfilled,
           value,
         }))
         .catch((error: unknown) => ({
-          status: ResultStatus.rejected,
+          status: ResultStatus.Rejected,
           value: error,
         })),
     ),
@@ -97,7 +97,7 @@ async function main() {
     console.log('Migration Starting')
     const results = await updateAllUsers()
     results.forEach((result) => {
-      if (result.status === ResultStatus.fulfilled) {
+      if (result.status === ResultStatus.Fulfilled) {
         // @ts-ignore - We will always have a value if the status is fulfilled
         if (result.value) {
           successCount += 1
