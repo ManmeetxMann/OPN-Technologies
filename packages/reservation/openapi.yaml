@@ -409,16 +409,6 @@ paths:
           name: dateOfAppointment
           schema:
             type: string
-        - in: query
-          name: page
-          schema:
-            type: integer
-          required: true
-        - in: query
-          name: perPage
-          schema:
-            type: integer
-          required: true
       responses:
         '200':
           description: Successfully Return
