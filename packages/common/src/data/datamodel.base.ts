@@ -1,5 +1,10 @@
 import DataStore from './datastore'
-import {HasId, OptionalIdStorable, Storable, DocumentSnapshot} from '@firestore-simple/admin/dist/types'
+import {
+  HasId,
+  OptionalIdStorable,
+  Storable,
+  DocumentSnapshot,
+} from '@firestore-simple/admin/dist/types'
 import {firestore} from 'firebase-admin'
 import {Collection, Query} from '@firestore-simple/admin'
 import * as _ from 'lodash'
@@ -77,6 +82,12 @@ export interface IDataModel<T extends HasId> {
     perPage: number,
     subPath?: string,
   ): Promise<T[]>
+
+  fetchByCursor(
+    query: Query<T, Omit<T, 'id'>>,
+    fromSnapshot: DocumentSnapshot,
+    limit: number,
+  ): Promise<{last: string | null; next: string | null; data: T[]}>
 
   fetchAllWithPagination(page: number, perPage: number, subPath: string): Promise<T[]>
 
@@ -298,7 +309,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     const data = await unfilteredQuery.limit(limit).fetch()
 
     return {
-      last: fromSnapshot.ref.id ?? null,
+      last: fromSnapshot?.ref?.id ?? null,
       next: data.length < limit ? null : data[data.length - 1].id,
       data,
     }

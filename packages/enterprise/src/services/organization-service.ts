@@ -19,6 +19,8 @@ import {
   AllLocationsModel,
 } from '../repository/organization.repository'
 
+import {DocumentSnapshot} from '@firestore-simple/admin/dist/types'
+
 import * as _ from 'lodash'
 
 const notFoundMessage = (organizationId: string, identifier?: string) =>
@@ -248,12 +250,16 @@ export class OrganizationService {
   async getUsersByGroup(
     organizationId: string,
     groupId: string,
-    page: number,
-    perPage: number,
-  ): Promise<OrganizationUsersGroup[]> {
+    limit: number,
+    fromSnapshot: DocumentSnapshot,
+  ): Promise<{
+    data: OrganizationUsersGroup[]
+    last: string | null
+    next: string | null
+  }> {
     const userGroupRepository = this.getUsersGroupRepositoryFor(organizationId)
     const userGroupQuery = userGroupRepository.getQueryFindWhereEqual('groupId', groupId)
-    return userGroupRepository.fetchPage(userGroupQuery, Number(page), Number(perPage))
+    return userGroupRepository.fetchByCursor(userGroupQuery, fromSnapshot, limit)
   }
 
   async getUsersGroups(

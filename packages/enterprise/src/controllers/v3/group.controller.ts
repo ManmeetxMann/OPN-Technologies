@@ -7,7 +7,10 @@ import {UserService} from '../../services/user-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {OrganizationGroup} from '../../models/organization'
 import {User, userDTOResponse} from '../../models/user'
-import {PageableRequestFilter} from '../../../../common/src/types/request'
+import {CursoredRequestFilter} from '../../../../common/src/types/request'
+import {UserModel} from '../../../../common/src/data/user'
+import DataStore from '../../../../common/src/data/datastore'
+import {OrganizationUsersGroupModel} from '../../repository/organization.repository'
 
 const organizationService = new OrganizationService()
 const userService = new UserService()
@@ -17,20 +20,26 @@ const userService = new UserService()
  */
 const getUsersByGroupId: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {perPage, page} = req.query as PageableRequestFilter
     const {organizationId, groupId} = req.params as {organizationId: string; groupId: string}
+    const dataStore = new DataStore()
+    const userRepository = new OrganizationUsersGroupModel(dataStore, organizationId)
 
-    const userIds = await organizationService.getUsersByGroup(
+    const {from, ...filter} = (req.query as unknown) as CursoredRequestFilter
+    const limit = Math.min(filter.limit ?? 20, 50)
+
+    const fromSnapshot = from ? await userRepository.collection().docRef(from).get() : null
+
+    const {data: userIds, next: nextCursor, last} = await organizationService.getUsersByGroup(
       organizationId,
       groupId,
-      page,
-      perPage,
+      limit,
+      fromSnapshot,
     )
 
     const users = await userService.getAllByIds(userIds.map((user) => user.userId))
     res.json(
-      actionSucceed(
-        users.map((user: User) => {
+      actionSucceed({
+        data: users.map((user: User) => {
           return {
             ...userDTOResponse(user),
             createdAt:
@@ -43,7 +52,9 @@ const getUsersByGroupId: Handler = async (req, res, next): Promise<void> => {
                 : null,
           }
         }),
-      ),
+        next: nextCursor,
+        last,
+      }),
     )
   } catch (error) {
     next(error)
