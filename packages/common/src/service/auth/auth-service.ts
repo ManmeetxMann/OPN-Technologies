@@ -1,6 +1,7 @@
 import {FirebaseManager} from '../../utils/firebase'
 import {MagicLinkMail} from '../messaging/magiclink-service'
 import {Config} from '../../utils/config'
+import {RegistrationService} from '../../../src/service/registry/registration-service'
 
 export interface AuthUser {
   uid: string
@@ -15,6 +16,7 @@ export interface AuthUser {
  */
 export class AuthService {
   private readonly firebaseAuth = FirebaseManager.getInstance().getAdmin().auth()
+  private readonly registrationService = new RegistrationService()
 
   async createUser(email: string): Promise<string> {
     if (Config.get('DEBUG_GUILIBLE_MODE') === 'enabled') {

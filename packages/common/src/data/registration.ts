@@ -7,12 +7,6 @@ export type Registration = {
   osVersion: string
   pushToken?: string
   userIds?: string[]
-  shortCode?: RegistrationShortCode
-}
-
-export type RegistrationShortCode = {
-  code: string
-  expiresAt: Date
 }
 
 export type RegistrationUpdate = {

@@ -1,6 +1,4 @@
 import * as _ from 'lodash'
-import {nanoid} from 'nanoid'
-import moment from 'moment'
 
 import {
   User,
@@ -25,8 +23,6 @@ import {UserDependencyRepository} from '../repository/user-dependency.repository
 import {UserGroupRepository} from '../repository/user-group.repository'
 import {OrganizationUsersGroupModel} from '../repository/organization.repository'
 
-import {RegistrationService} from '../../../common/src/service/registry/registration-service'
-
 import {isEmail} from '../../../common/src/utils/utils'
 
 export class UserService {
@@ -36,7 +32,6 @@ export class UserService {
   private userOrganizationProfileRepository = new UserOrganizationProfileRepository(this.dataStore)
   private userGroupRepository = new UserGroupRepository(this.dataStore)
   private userDependencyRepository = new UserDependencyRepository(this.dataStore)
-  private registrationService = new RegistrationService()
 
   create(source: NewUser): Promise<User> {
     return this.getByEmail(source.email).then((existedUser) => {
@@ -457,35 +452,5 @@ export class UserService {
       organizationId,
       memberId,
     } as UserOrganizationProfile)
-  }
-
-  async generateAndSaveShortCode(userId: string): Promise<string> {
-    const code = nanoid(6)
-    const expiresAt = moment().add(1, 'hours')
-    const [registration] = await this.registrationService.findForUserIds([userId])
-
-    if (registration) {
-      await this.registrationService.updateProperty(registration.id, 'shortCode', {
-        code,
-        expiresAt,
-      })
-
-      return code
-    }
-
-    throw new ResourceNotFoundException('Registration for this user not found')
-  }
-
-  async isShortCodeValid(userId: string, code: string): Promise<boolean> {
-    const [registration] = await this.registrationService.findForUserIds([userId])
-
-    return (
-      moment().isAfter(registration.shortCode.expiresAt) && code === registration.shortCode.code
-    )
-  }
-
-  async clearShortCode(userId: string): Promise<void> {
-    const [registration] = await this.registrationService.findForUserIds([userId])
-    await this.registrationService.updateProperty(registration.id, 'shortCode', {})
   }
 }

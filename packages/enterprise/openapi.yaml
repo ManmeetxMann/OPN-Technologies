@@ -2768,11 +2768,13 @@ paths:
               properties:
                 email:
                   type: string
+                  nullable: false
                 organizationId:
                   type: string
+                  nullable: false
                 userId:
                   type: string
-                  nullable: true
+                  nullable: false
               required:
                 - email
                 - organizationId
@@ -2801,15 +2803,13 @@ paths:
                 organizationId:
                   type: string
                   nullable: false
-                userId:
-                  type: string
-                  nullable: true
                 shortCode:
                   type: string
                   nullable: false
               required:
                 - email
                 - organizationId
+                - shortCode
       responses:
         '200':
           description: Successful
@@ -2821,6 +2821,7 @@ paths:
                   magicLink:
                     type: string
                     nullable: false
+
   /enterprise/api/v3/users/auth/confirmation:
     post:
       summary: Account registration confirmation

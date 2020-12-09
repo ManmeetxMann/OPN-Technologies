@@ -26,6 +26,7 @@
         "@google-cloud/pubsub": "^2.3.0",
         "@google-cloud/storage": "^5.4.0",
         "@google-cloud/tasks": "^2.1.2",
+        "@types/pdfmake": "^0.1.16",
         "cors": "^2.8.5",
         "crypto": "^1.0.1",
         "dotenv": "^8.2.0",
@@ -36,11 +37,11 @@
         "js-yaml": "^3.14.0",
         "lodash": "^4.17.20",
         "moment-timezone": "^0.5.31",
+        "nanoid": "^3.1.20",
         "node-fetch": "^2.6.0",
         "pdfmake": "^0.1.68",
-        "@types/pdfmake": "^0.1.16",
         "pug": "^3.0.0",
-        "request":"2.88.2"
+        "request": "2.88.2"
     },
     "devDependencies": {
         "@types/express": "^4.17.7",

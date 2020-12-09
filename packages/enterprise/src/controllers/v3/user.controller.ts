@@ -1,6 +1,7 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
 import {uniq, flatten} from 'lodash'
+import moment from 'moment'
 
 import {AdminProfile} from '../../../../common/src/data/admin'
 import {User as AuthenticatedUser} from '../../../../common/src/data/user'
@@ -22,7 +23,6 @@ import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 
 import {CreateUserRequest, MigrateUserRequest} from '../../types/new-user'
-import {VerifyShortCodeRequest} from '../../types/verify-short-code-request'
 import {RegistrationConfirmationRequest} from '../../types/registration-confirmation-request'
 import {UpdateUserRequest} from '../../types/update-user-request'
 import {AuthenticationRequest} from '../../types/authentication-request'
@@ -30,11 +30,13 @@ import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-re
 import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 
 import {User, userDTOResponse} from '../../models/user'
+import {AuthShortCodeService} from '../../services/auth-short-code-service'
 
 const authService = new AuthService()
 const userService = new UserService()
 const organizationService = new OrganizationService()
 const magicLinkService = new MagicLinkService()
+const authShortCodeService = new AuthShortCodeService()
 
 /**
  * Search a user(s) profile and returns a User(s)
@@ -155,7 +157,12 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
     const {email, organizationId, userId} = req.body as AuthenticationRequest
     await organizationService.getByIdOrThrow(organizationId)
 
-    const shortCode = await userService.generateAndSaveShortCode(userId)
+    const shortCode = await authShortCodeService.generateAndSaveShortCode(
+      email,
+      organizationId,
+      userId,
+    )
+
     await magicLinkService.send({email, meta: {organizationId, userId, shortCode}})
 
     res.json(actionSucceed())
@@ -169,22 +176,22 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
  */
 const validateShortCode: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {email, organizationId, userId, shortCode} = req.body as VerifyShortCodeRequest
+    const {shortCode} = req.body
 
-    const isValid = await userService.isShortCodeValid(userId, shortCode)
+    const authShortCode = await authShortCodeService.findAuthShortCode(shortCode)
 
-    if (isValid) {
-      const magicLink = await magicLinkService.generateMagicLink({
-        email,
-        meta: {organizationId, userId, shortCode},
-      })
-
-      await userService.clearShortCode(userId)
-
-      res.json(actionSucceed({magicLink}))
-    } else {
+    if (!authShortCode) {
       throw new BadRequestException('Short code invalid or expired')
     }
+    const isValid =
+      moment().isBefore(authShortCode.expiresAt) && shortCode === authShortCode.shortCode
+
+    if (!isValid) {
+      throw new BadRequestException('Short code invalid or expired')
+    }
+    await authShortCodeService.clearShortCode(authShortCode.id)
+
+    res.json(actionSucceed({magicLink: authShortCode.magicLink}))
   } catch (error) {
     next(error)
   }
