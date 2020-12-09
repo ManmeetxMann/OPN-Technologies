@@ -421,6 +421,15 @@ components:
           items:
             type: string
           description: Organizaiton ids to become a NFC Gate Kiosk admin. Must be provided can be empty.
+        managementAdminForOrganizationId:
+          type: string
+          description: Organization IDs for admin dashboard to give access to user management/group management
+        testReportsAdminForOrganizationId:
+          type: string
+          description: Organization IDs for admin dashboard to to see test reports
+        testAppointmentsAdminForOrganizationId:
+          type: string
+          description: Organization IDs for admin dashboard to to see test appoinments and print bar codes
 
         groupIds:
           type: array
@@ -592,20 +601,22 @@ components:
         appliesTo:
           type: array
           items:
-            oneOf:
-              - type: string
-              - type: object
-                properties:
-                  id:
-                    type: string
-                  firstName:
-                    type: string
-                  lastName:
-                    type: string
-                  base64Photo:
-                    type: string
-                  group:
-                    $ref: '#/components/schemas/OrganizationGroup'
+            type: string
+        appliesToUsers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
+              base64Photo:
+                type: string
+              group:
+                $ref: '#/components/schemas/OrganizationGroup'
         locationId:
           type: string
         attestationTime:
@@ -689,7 +700,12 @@ components:
           type: string
         showReporting:
           type: boolean
-
+        managementAdminForOrganizationId:
+          type: string
+        testReportsAdminForOrganizationId:
+          type: string
+        testAppointmentsAdminForOrganizationId:
+          type: string
     User:
       type: object
       deprecated: true
@@ -1566,6 +1582,42 @@ components:
         page:
           type: number
 
+    ResponseOfUsersByOrganizationV4:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserWithGroup'
+        last:
+          type: string
+          description: the previous given "from" index to fetch the previous page of the same query
+          nullable: true
+        next:
+          type: string
+          description: the new "from" index to fetch the next page of the same query
+          nullable: true
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
   responses:
     Response:
       description: Default Response wrapper
@@ -1733,6 +1785,12 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: includeNfcGates
+          schema:
+            type: boolean
+          description: Filters to only include NFC gates
+          required: false
       responses:
         '200':
           description: Successfully retrieved
@@ -2551,6 +2609,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
 
+  /enterprise/admin/api/v4/users:
+    get:
+      summary: Fetch matching users within an organization
+      description: Returns a page of users matching filter for an organization
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: from
+          description: The `next` document ID given by the server at the previous request. Therefor optional for the very first request
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: limit
+          description: The limit number of items. Defaults to 20 and caped to 50
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+        - in: query
+          name: query
+          description: Email, firstname or lastname. Will be case-sensitive evaluated.
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: Successfully found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsersByOrganizationV4'
+
   /enterprise/admin/api/v3/users/{userId}:
     put:
       summary: Update User
@@ -2575,7 +2673,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
-
 
   /enterprise/admin/api/v3/tags:
     post:

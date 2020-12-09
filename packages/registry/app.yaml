@@ -1,2 +1,2 @@
 runtime: nodejs12
-service: registry-staging
+service: registry

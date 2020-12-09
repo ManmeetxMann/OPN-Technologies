@@ -61,11 +61,13 @@ class UserController implements IControllerBase {
         throw new UnauthorizedException(`Cannot verify id-token`)
       }
 
-      // check if auth user is already there
-      const usersByAuthId = await this.userService.findAllByAuthUserId(authUser.uid)
-      if (usersByAuthId && usersByAuthId.length) {
-        if (usersByAuthId.some((user) => user.email === authUser.email)) {
-          throw new ResourceAlreadyExistsException(authUser.email)
+      if (authUser) {
+        // check if auth user is already there
+        const usersByAuthId = await this.userService.findAllByAuthUserId(authUser.uid)
+        if (usersByAuthId && usersByAuthId.length) {
+          if (usersByAuthId.some((user) => user.email === authUser.email)) {
+            throw new ResourceAlreadyExistsException(authUser.email)
+          }
         }
       }
 
@@ -132,10 +134,6 @@ class UserController implements IControllerBase {
       let dependents: UserDependant[] = []
       let lookupIds: string[] = [userId]
 
-      // get all groups under the org to use as filter
-      const orgGroups = await this.organizationService.getGroups(organizationId)
-      const groupIdsForOrg = orgGroups.map((group) => group.id)
-
       // Get appropriately Dependent vs User
       if (parentUserId) {
         // Get User
@@ -146,9 +144,8 @@ class UserController implements IControllerBase {
         user = (await this.userService.findOne(userId)) as UserWithGroup
 
         // Get dependents only just under org
-        dependents = await this.userService.getAllDependants(userId)
-        dependents = dependents.filter(
-          (dependent) => groupIdsForOrg.indexOf(dependent.groupId) > -1,
+        dependents = (await this.userService.getAllDependants(userId)).filter((dep) =>
+          dep.organizationIds?.includes(organizationId),
         )
 
         const dependentIds = dependents.map((dependent) => dependent.id)
@@ -171,8 +168,10 @@ class UserController implements IControllerBase {
       }, {})
 
       // Fill out user one
+      // @ts-ignore creating a DTO
       user.groupId = userGroups[userId]
       for (const dependent of dependents) {
+        // @ts-ignore creating a DTO
         dependent.groupId = userGroups[dependent.id]
       }
 

@@ -1,3 +1,5 @@
+import {PageableRequestFilter} from '../../../common/src/types/request'
+
 type AppointmentBase = {
   firstName: string
   lastName: string
@@ -10,6 +12,9 @@ type AppointmentBase = {
   timeOfAppointment?: string
   barCode?: string
   packageCode: string
+  certificate?: string
+  organizationId?: string
+  canceled?: boolean
 }
 
 export type AppoinmentDataUI = {
@@ -39,10 +44,16 @@ export type AppointmentAcuityResponse = AppointmentBase & {
   time: string
   forms: Array<AppointmentAcuityForm>
   certificate: string
+  location: string
+  organizationId: string
+  datetime: string
 }
 
 export type AppointmentSearchRequest = {
-  barCodeNumber: string
+  barCodeNumber?: string
+  organizationId?: string
+  firstName?: string
+  lastName?: string
 }
 
 export type AppointmentSearchByDateRequest = {
@@ -117,11 +128,50 @@ export type SendAndSaveTestResultsRequest = {
 
 export type TestResultForPagination = {
   barCode: string
-  firstname: string
-  lastname: string
+  firstName: string
+  lastName: string
   result: ResultTypes
   resultDate: Date
   dateOfAppointment: string
   timeOfAppointment: string
   testType: string
+  id: string
 }
+
+export type AppointmentByOrganizationRequest = PageableRequestFilter & {
+  organizationId?: string
+  searchQuery?: string
+}
+
+export type AcuityUpdateDTO = {
+  barCodeNumber?: string
+  organizationId?: string
+}
+
+export type AppointmentUI = AppointmentBase & {
+  id?: number
+  location?: string
+  dateTime?: string
+}
+
+export type AppointmentUiDTO = {
+  id: number
+  firstName: string
+  lastName: string
+  location?: string
+  status?: string
+  barCode: string
+  dateTime?: string
+}
+
+export const appointmentUiDTOResponse = (
+  appointment: AppointmentDTO | AppointmentUI,
+): AppointmentUiDTO => ({
+  id: (appointment as AppointmentUI).id,
+  firstName: appointment.firstName,
+  lastName: appointment.lastName,
+  status: (appointment as AppointmentUI).canceled ? 'Canceled' : 'Scheduled',
+  barCode: appointment.barCode,
+  location: (appointment as AppointmentUI).location,
+  dateTime: (appointment as AppointmentUI).dateTime,
+})

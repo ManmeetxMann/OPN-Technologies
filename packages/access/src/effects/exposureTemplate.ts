@@ -14,14 +14,12 @@ const timeZone = Config.get('DEFAULT_TIME_ZONE')
 // printable info about a user's group membership and the memberships of their dependants
 export type UserGroupData = {
   id: string
+  firstName: string
+  lastName: string
   orgId: string
   groupNames: string[]
-  dependants: {
-    id: string
-    firstName: string
-    lastName: string
-    groupName: string
-  }[]
+  delegates?: string[]
+  dependants: UserGroupData[]
 }
 
 type PrintableDependant = {
@@ -39,7 +37,7 @@ const formatName = (
     return `${user.firstName} ${user.lastName} (${groupData.groupNames.join(', ')})`
   } else {
     return `${dependant.firstName} ${dependant.lastName} (${
-      groupData.dependants.find((dep) => dep.id === dependant.id)?.groupName
+      groupData.dependants.find((dep) => dep.id === dependant.id)?.groupNames[0]
     }, dependant of ${user.firstName} ${user.lastName})`
   }
 }

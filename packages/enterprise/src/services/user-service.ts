@@ -19,6 +19,7 @@ import {UserGroupRepository} from '../repository/user-group.repository'
 import {OrganizationUsersGroupModel} from '../repository/organization.repository'
 import {UserModel} from '../../../common/src/data/user'
 import {isEmail} from '../../../common/src/utils/utils'
+import {CursoredUsersRequestFilter} from '../types/user-organization-request'
 
 export class UserService {
   private dataStore = new DataStore()
@@ -227,6 +228,43 @@ export class UserService {
     }
 
     return Promise.all(searchPromises)
+  }
+
+  async findAllUsers({
+    organizationId,
+    from,
+    limit,
+    query,
+  }: CursoredUsersRequestFilter): Promise<User[]> {
+    // Pre-build organization-filtered query
+    // That has to be a function to avoid mutating the same query object in the below for-loop
+    const organizationContextualQuery = () =>
+      this.userRepository.getQueryFindWhereArrayContains('organizationIds', organizationId)
+    const fromSnapshot = from ? await this.userRepository.collection().docRef(from).get() : null
+
+    // Handle no keyword filter
+    if (!query) {
+      const unfilteredQuery = fromSnapshot
+        ? organizationContextualQuery().startAfter(fromSnapshot)
+        : organizationContextualQuery()
+      return unfilteredQuery.limit(limit).fetch()
+    }
+
+    // Build and fetch all query combinations
+    const searchKeywords = query.split(' ')
+    const filterableFields: (keyof Omit<User, 'id'>)[] = ['email', 'firstName', 'lastName']
+    const combinationQueries = []
+    for (const field of filterableFields) {
+      for (const keyword of searchKeywords) {
+        this.userRepository.collection()
+        let combinationQuery = organizationContextualQuery().where(field, '==', keyword)
+        if (fromSnapshot) combinationQuery = combinationQuery.startAfter(fromSnapshot)
+        combinationQueries.push(combinationQuery.limit(limit).fetch())
+      }
+    }
+    return Promise.all(combinationQueries).then((results) =>
+      _.sortBy(_.flatten(results), 'id').slice(0, limit + 1),
+    )
   }
 
   getAllByOrganizationId(organizationId: string, page: number, perPage: number): Promise<User[]> {

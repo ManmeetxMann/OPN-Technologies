@@ -10,6 +10,8 @@ import {BadRequestException} from '../../../../common/src/exceptions/bad-request
 import {CreateUserByAdminRequest} from '../../types/new-user'
 import {UpdateUserByAdminRequest} from '../../types/update-user-request'
 import {UsersByOrganizationRequest} from '../../types/user-organization-request'
+import {OrganizationGroup} from '../../models/organization'
+import {flatten} from 'lodash'
 
 const userService = new UserService()
 const organizationService = new OrganizationService()
@@ -28,7 +30,7 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
     let users = []
     if (searchQuery) {
       users = await userService.searchByQueryAndOrganizationId(organizationId, searchQuery)
-      users = users.flat()
+      users = flatten(users)
     } else {
       users = await userService.getAllByOrganizationId(organizationId, page, perPage)
     }
@@ -51,10 +53,10 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
       {},
     )
 
-    const groupsByUserId: Record<string, {id: string; name: string}> = usersGroups.reduce(
+    const groupsByUserId: Record<string, OrganizationGroup> = usersGroups.reduce(
       (lookup, usersGroup) => ({
         ...lookup,
-        [usersGroup.userId]: groupsById[usersGroup.groupId] || '',
+        [usersGroup.userId]: groupsById[usersGroup.groupId],
       }),
       {},
     )
@@ -63,8 +65,8 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
       users.map(async (user: User) => {
         return {
           ...userDTOResponse(user),
-          groupName: groupsByUserId[user.id].name,
-          groupId: groupsByUserId[user.id].id,
+          groupId: groupsByUserId[user.id]?.id,
+          groupName: groupsByUserId[user.id]?.name,
           memberId: user.memberId,
           createdAt:
             user.timestamps && user.timestamps.createdAt

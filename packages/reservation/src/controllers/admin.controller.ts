@@ -12,12 +12,12 @@ import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
 import {PackageService} from '../services/package.service'
 import {
-  TestResultsDTO,
   TestResultsConfirmationRequest,
   AppointmentDTO,
   CheckAppointmentRequest,
   SendAndSaveTestResultsRequest,
   ResultTypes,
+  TestResultsDTOForEmail,
 } from '../models/appoinment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -122,9 +122,7 @@ class AdminController implements IControllerBase {
                   'Something wend wrong. Results are not available.',
                 )
               }
-
-              await this.packageService.savePackage(appointmentsByBarCode[row.barCode].packageCode),
-                await this.testResultsService.sendTestResults({...testResults}, resultDate)
+              await this.testResultsService.sendTestResults({...testResults}, resultDate)
             } else {
               const currentAppointment = appointmentsByBarCode[row.barCode]
               if (!currentAppointment) {
@@ -143,14 +141,6 @@ class AdminController implements IControllerBase {
                   id: row.barCode,
                 }),
               ])
-            }
-
-            if (row.result === ResultTypes.Positive) {
-              if (!testResults) {
-                throw new ResourceNotFoundException(
-                  'Something wend wrong. Results are not available.',
-                )
-              }
             }
           } else {
             notFoundBarcodes.push(row)
@@ -225,14 +215,12 @@ class AdminController implements IControllerBase {
 
   sendTestResultsAgain = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const requestData: TestResultsDTO = req.body
+      const requestData = req.body
 
-      const testResults = await this.testResultsService.getResults(requestData.barCode)
-      if (!testResults) {
-        throw new ResourceNotFoundException('Something wend wrong. Results are not avaiable.')
-      }
-      const resultDate = testResults.resultDate || testResults.todaysDate
-      await this.testResultsService.sendTestResults({...testResults}, resultDate)
+      await this.testResultsService.sendTestResults(
+        requestData as TestResultsDTOForEmail,
+        requestData.resultDate,
+      )
 
       res.json(actionSucceed('Results are sent successfully'))
     } catch (error) {

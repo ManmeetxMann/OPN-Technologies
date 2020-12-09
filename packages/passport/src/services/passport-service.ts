@@ -2,7 +2,7 @@ import {Passport, PassportModel, PassportStatus, PassportStatuses} from '../mode
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
-import {UserDependantModel} from '../../../common/src/data/user'
+import {UserService} from '../../../common/src/service/user/user-service'
 import {now, serverTimestamp} from '../../../common/src/utils/times'
 import moment from 'moment'
 import {firestore} from 'firebase-admin'
@@ -20,6 +20,7 @@ const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => (
 
 export class PassportService {
   private dataStore = new DataStore()
+  private userService = new UserService()
   private passportRepository = new PassportModel(this.dataStore)
   private identifierRepository = new IdentifiersModel(this.dataStore)
 
@@ -77,8 +78,7 @@ export class PassportService {
     includesGuardian: boolean,
   ): Promise<Passport> {
     if (dependantIds.length) {
-      const depModel = new UserDependantModel(this.dataStore, userId)
-      const allDependants = (await depModel.fetchAll()).map(({id}) => id)
+      const allDependants = (await this.userService.getAllDependants(userId)).map(({id}) => id)
       const invalidIds = dependantIds.filter((depId) => !allDependants.includes(depId))
       if (invalidIds.length) {
         throw new Error(`${userId} is not the guardian of ${invalidIds.join(', ')}`)
@@ -131,7 +131,7 @@ export class PassportService {
       .then(mapDates)
   }
 
-  async findTheLatestValidPassport(userId: string, nowDate: Date = now()): Promise<Passport> {
+  async findLatestPassport(userId: string, nowDate: Date = now()): Promise<Passport> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
     const passports = await this.passportRepository
       .collection()
@@ -145,13 +145,23 @@ export class PassportService {
       return null
     }
 
-    // Get the Latest Proceed
+    // Get the Latest validForm Passport
     const momentDate = moment(nowDate)
-    const latestPassport: Passport = passports.find(
-      (passport) => passport.status === 'proceed' && momentDate.isAfter(passport.validFrom),
-    )
+    let selectedPassport: Passport = null
+    for (const passport of passports) {
+      if (
+        // @ts-ignore
+        momentDate.isSameOrAfter(passport.validFrom.toDate()) &&
+        // @ts-ignore
+        (!selectedPassport ||
+          // @ts-ignore
+          moment(passport.validFrom.toDate()).isSameOrAfter(selectedPassport.validFrom.toDate()))
+      ) {
+        selectedPassport = passport
+      }
+    }
 
-    return latestPassport
+    return selectedPassport
   }
 
   /**
