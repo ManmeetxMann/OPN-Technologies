@@ -251,7 +251,7 @@ export class OrganizationService {
     page: number,
     perPage: number,
   ): Promise<OrganizationUsersGroup[]> {
-    const userGroupRepository = this.getUsersGroupRepositoryFor(organizationId);
+    const userGroupRepository = this.getUsersGroupRepositoryFor(organizationId)
     const userGroupQuery = userGroupRepository.getQueryFindWhereEqual('groupId', groupId)
     return userGroupRepository.fetchPage(userGroupQuery, Number(page), Number(perPage))
   }

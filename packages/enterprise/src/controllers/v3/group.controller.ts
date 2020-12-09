@@ -26,6 +26,7 @@ const getUsersByGroupId: Handler = async (req, res, next): Promise<void> => {
       page,
       perPage,
     )
+
     const users = await userService.getAllByIds(userIds.map((user) => user.userId))
     res.json(
       actionSucceed(
