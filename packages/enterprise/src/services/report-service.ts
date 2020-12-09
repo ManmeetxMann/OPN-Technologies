@@ -32,6 +32,12 @@ import DataStore from '../../../common/src/data/datastore'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
+type UserInfo = {
+  enteringAccess: Access
+  exitingAccess: Access
+  status: PassportStatus
+}
+
 const toDateFormat = (timestamp: GenericTimestamp): string => {
   const date = safeTimestamp(timestamp)
   return moment(date).tz(timeZone).format('MMMM D, YYYY')
@@ -125,6 +131,7 @@ export class ReportService {
       from: live ? moment(now()).startOf('day').toDate() : new Date(from),
       to: live ? now() : new Date(to),
     }
+    const isInWindow = (date: Date) => (date <= betweenCreatedDate.to && date >= betweenCreatedDate.from)
 
     const [allUsers, allOrgGroups] = await Promise.all([
       this.userRepo.findWhereArrayContains('organizationIds', organizationId),
@@ -140,6 +147,7 @@ export class ReportService {
     const usersById: Record<string, User> = {}
     const dependantsById: Record<string, User> = {}
     const parentUserIds: Record<string, string> = {}
+    const cachedData: Record<string, UserInfo> = {}
     allRelevantUsers.forEach((user) => {
       allUsersById[user.id] = user
       if (user.delegates?.length) {
@@ -151,6 +159,18 @@ export class ReportService {
         }
       } else {
         usersById[user.id] = user
+      }
+      const enteringAccess = user.cache.enteringAccess && isInWindow(safeTimestamp(user.cache.enteringAccess.enteredAt))
+        ? user.cache.enteringAccess 
+        : null
+      const exitingAccess = user.cache.enteringAccess && isInWindow(safeTimestamp(user.cache.enteringAccess.enteredAt))
+        ? user.cache.enteringAccess 
+        : null
+      const status = user.cache.passport && safeTimestamp(user.cache.passport.validFrom) <= betweenCreatedDate.to && safeTimestamp(user.cache.passport.validTo) >= betweenCreatedDate.from ? user.cache.passport.status : null
+      cachedData[user.id] = {
+        enteringAccess,
+        exitingAccess,
+        status,
       }
     })
     const usersGroupsByUserId: Record<string, OrganizationUsersGroup> = {}
@@ -164,6 +184,8 @@ export class ReportService {
       }
       usersGroupsByUserId[membership.userId] = membership
     })
+
+
     const accesses = await this.getAccessesFor(
       Object.keys(allUsersById),
       Object.keys(dependantsById),
