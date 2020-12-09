@@ -413,8 +413,9 @@ export class AccessService {
 
     const directAccesses = await getBaseQuery().where('userId', '==', userId).fetch()
     const indirectAccesses = parentUserId
-      ? // @ts-ignore
-        await getBaseQuery().where(`dependants.${userId}`, '!=', null).fetch()
+      ? (await getBaseQuery().where(`userId`, '==', parentUserId).fetch()).filter(
+          (acc) => acc.dependants[userId],
+        )
       : []
 
     const accesses = [...directAccesses, ...indirectAccesses]
