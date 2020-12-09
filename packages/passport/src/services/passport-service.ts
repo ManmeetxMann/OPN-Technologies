@@ -177,7 +177,6 @@ export class PassportService {
         selectedPassport = passport
       }
     }
-
     return selectedPassport
   }
 

@@ -268,7 +268,7 @@ class AdminController implements IRouteController {
       // Make sure it's valid
       if (
         !latestPassport ||
-        tag.userId !== latestPassport.userId ||
+        ![parentUserId, tag.userId].includes(latestPassport.userId) ||
         latestPassport.status !== 'proceed'
       ) {
         replyUnauthorizedEntry(res)
@@ -307,7 +307,7 @@ class AdminController implements IRouteController {
         // Make sure it's valid
         if (
           !specificPassport ||
-          tag.userId !== specificPassport.userId ||
+          ![parentUserId, tag.userId].includes(latestPassport.userId) ||
           specificPassport.status !== 'proceed'
         ) {
           replyUnauthorizedEntry(res)
