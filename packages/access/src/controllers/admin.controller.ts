@@ -264,7 +264,7 @@ class AdminController implements IRouteController {
       }
       const user = await this.userService.findOne(tag.userId)
       const parentUserId = user.delegates?.length ? user.delegates[0] : null
-      const latestPassport = await this.passportService.findLatestPassport(tag.userId)
+      const latestPassport = await this.passportService.findLatestPassport(tag.userId, parentUserId)
       // Make sure it's valid
       if (
         !latestPassport ||

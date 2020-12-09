@@ -144,17 +144,19 @@ export class PassportService {
       .orderBy('validUntil', 'desc')
       .fetch()
     const indirectPassports = parentUserId
-      ? await this.passportRepository
-          .collection()
-          .where('userId', '==', parentUserId)
-          .where('dependantIds', 'array-contains', userId)
-          .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
-          .orderBy('validUntil', 'desc')
-          .fetch()
+      ? (
+          await this.passportRepository
+            .collection()
+            .where('userId', '==', parentUserId)
+            .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
+            .orderBy('validUntil', 'desc')
+            .fetch()
+        ).filter((ppt) => ppt.dependantIds?.includes(userId))
       : []
 
-    const passports = [...directPassports, ...indirectPassports]
-
+    const passports = [...directPassports, ...indirectPassports].filter(
+      (ppt) => ppt.status !== PassportStatuses.Pending,
+    )
     // Deal with the bad
     if (!passports || passports.length == 0) {
       return null
