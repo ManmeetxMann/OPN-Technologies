@@ -131,7 +131,8 @@ export class ReportService {
       from: live ? moment(now()).startOf('day').toDate() : new Date(from),
       to: live ? now() : new Date(to),
     }
-    const isInWindow = (date: Date) => (date <= betweenCreatedDate.to && date >= betweenCreatedDate.from)
+    const isInWindow = (date: Date) =>
+      date <= betweenCreatedDate.to && date >= betweenCreatedDate.from
 
     const [allUsers, allOrgGroups] = await Promise.all([
       this.userRepo.findWhereArrayContains('organizationIds', organizationId),
@@ -160,13 +161,20 @@ export class ReportService {
       } else {
         usersById[user.id] = user
       }
-      const enteringAccess = user.cache.enteringAccess && isInWindow(safeTimestamp(user.cache.enteringAccess.enteredAt))
-        ? user.cache.enteringAccess 
-        : null
-      const exitingAccess = user.cache.enteringAccess && isInWindow(safeTimestamp(user.cache.enteringAccess.enteredAt))
-        ? user.cache.enteringAccess 
-        : null
-      const status = user.cache.passport && safeTimestamp(user.cache.passport.validFrom) <= betweenCreatedDate.to && safeTimestamp(user.cache.passport.validTo) >= betweenCreatedDate.from ? user.cache.passport.status : null
+      const enteringAccess =
+        user.cache.enteringAccess && isInWindow(safeTimestamp(user.cache.enteringAccess.enteredAt))
+          ? user.cache.enteringAccess
+          : null
+      const exitingAccess =
+        user.cache.enteringAccess && isInWindow(safeTimestamp(user.cache.enteringAccess.enteredAt))
+          ? user.cache.enteringAccess
+          : null
+      const status =
+        user.cache.passport &&
+        safeTimestamp(user.cache.passport.validFrom) <= betweenCreatedDate.to &&
+        safeTimestamp(user.cache.passport.validTo) >= betweenCreatedDate.from
+          ? user.cache.passport.status
+          : null
       cachedData[user.id] = {
         enteringAccess,
         exitingAccess,
@@ -184,7 +192,6 @@ export class ReportService {
       }
       usersGroupsByUserId[membership.userId] = membership
     })
-
 
     const accesses = await this.getAccessesFor(
       Object.keys(allUsersById),
