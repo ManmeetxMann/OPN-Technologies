@@ -388,7 +388,7 @@ export class AccessService {
 
   async findLatest(
     userId: string,
-    parentUserId: string,
+    parentUserId: string | null,
     locationId: string,
     onCreatedDate: Date,
     delegateAdminUserId?: string,
