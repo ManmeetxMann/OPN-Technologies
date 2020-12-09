@@ -241,7 +241,6 @@ export class UserService {
     const organizationContextualQuery = () =>
       this.userRepository.getQueryFindWhereArrayContains('organizationIds', organizationId)
     const fromSnapshot = from ? await this.userRepository.collection().docRef(from).get() : null
-
     // Handle no keyword filter
     if (!query) {
       const unfilteredQuery = fromSnapshot
