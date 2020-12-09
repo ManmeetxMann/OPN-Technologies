@@ -8,6 +8,8 @@ initializeApp({
   credential: credential.cert(serviceAccount),
 })
 
+console.log(`Migrate Dependents: ${serviceAccount.project_id}`)
+
 const DRY = false
 const database = firestore()
 
