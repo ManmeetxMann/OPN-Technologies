@@ -2,6 +2,30 @@ import DataModel from '../../../common/src/data/datamodel.base'
 import {AdminProfile} from './admin'
 import {FieldValue} from '../utils/firebase'
 
+export type UserCache = {
+  passport?: {
+    id: string
+    statusToken: string
+    status: 'pending' | 'proceed' | 'caution' | 'stop'
+    validFrom: Date | FieldValue
+    validUntil: Date | FieldValue
+  }
+  enteringAccess: {
+    id: string
+    locationId: string
+    statusToken: string
+    accessToken: string
+    time: Date | FieldValue
+  }
+  exitingAccess: {
+    id: string
+    locationId: string
+    statusToken: string
+    accessToken: string
+    time: Date | FieldValue
+  }
+}
+
 // TODO: DEPRECATE
 export type User = {
   id: string
@@ -14,6 +38,7 @@ export type User = {
   admin?: AdminProfile | FieldValue
   authUserId?: string | FieldValue
   delegates: null | string[]
+  cache?: UserCache
 }
 
 export type UserWithGroup = {

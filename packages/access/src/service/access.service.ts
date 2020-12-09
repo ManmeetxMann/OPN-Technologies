@@ -1,6 +1,7 @@
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {UserDependant, LegacyDependant} from '../../../common/src/data/user'
 import {UserService} from '../../../common/src/service/user/user-service'
+import {UserModel} from '../../../common/src/data/user'
 import DataStore from '../../../common/src/data/datastore'
 import {AccessModel, AccessRepository} from '../repository/access.repository'
 import {Access, AccessFilter} from '../models/access'
@@ -31,6 +32,7 @@ type AccessWithDependantNames = Omit<Access, 'dependants'> & {
 export class AccessService {
   private dataStore = new DataStore()
   private identifier = new IdentifiersModel(this.dataStore)
+  private userRepository = new UserModel(this.dataStore)
   private accessRepository = new AccessRepository(this.dataStore)
   private accessStatsRepository = new AccessStatsRepository(this.dataStore)
   private accessListener = new AccessListener(this.dataStore)
@@ -162,8 +164,23 @@ export class AccessService {
             : ([] as UserDependant[]),
         )
         .then(async (dependants) => {
-          // we deliberately don't await this, the user doesn't need to know if it goes through
+          const toCache = {
+            id: savedAccess.id,
+            time: savedAccess.enteredAt,
+            locationId: savedAccess.locationId,
+            statusToken: savedAccess.statusToken,
+            accessToken: savedAccess.token,
+          }
+
+          const allUserIds: string[] = _.map(dependants, 'id')
+          if (savedAccess.includesGuardian) allUserIds.push(savedAccess.userId)
+
+          // we deliberately don't await these, the user doesn't need to know they go through
+          allUserIds.forEach((id) =>
+            this.userRepository.updateProperty(id, 'cache.enteringAccess', toCache),
+          )
           this.accessListener.addEntry(savedAccess)
+
           const decorated = await this.decorateDependants(
             (dependants ?? []).filter(({id}) => !!savedAccess.dependants[id]),
           )
@@ -256,7 +273,23 @@ export class AccessService {
           dependants.filter(({id}) => !!savedAccess.dependants[id] && dependantIds.includes(id)),
         )
         .then(async (dependants) => {
+          const toCache = {
+            id: savedAccess.id,
+            time: savedAccess.enteredAt,
+            locationId: savedAccess.locationId,
+            statusToken: savedAccess.statusToken,
+            accessToken: savedAccess.token,
+          }
+
+          const allUserIds: string[] = _.map(dependants, 'id')
+          if (savedAccess.includesGuardian) allUserIds.push(savedAccess.userId)
+
+          // we deliberately don't await these, the user doesn't need to know they go through
+          allUserIds.forEach((id) =>
+            this.userRepository.updateProperty(id, 'cache.exitingAccess', toCache),
+          )
           this.accessListener.addExit(savedAccess, includesGuardian, dependantIds)
+
           const decorated = await this.decorateDependants(dependants)
           return {
             ...{

@@ -2,7 +2,7 @@ import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
 import {safeTimestamp, GenericTimestamp} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {User, UserModel} from '../../../common/src/data/user'
+import {User, UserModel, UserCache} from '../../../common/src/data/user'
 import {Range} from '../../../common/src/types/range'
 
 import {OrganizationService} from './organization-service'
@@ -31,12 +31,6 @@ import moment from 'moment'
 import DataStore from '../../../common/src/data/datastore'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
-
-type UserInfo = {
-  enteringAccess: Access
-  exitingAccess: Access
-  status: PassportStatus
-}
 
 const toDateFormat = (timestamp: GenericTimestamp): string => {
   const date = safeTimestamp(timestamp)
@@ -148,7 +142,7 @@ export class ReportService {
     const usersById: Record<string, User> = {}
     const dependantsById: Record<string, User> = {}
     const parentUserIds: Record<string, string> = {}
-    const cachedData: Record<string, UserInfo> = {}
+    const cachedData: Record<string, UserCache> = {}
     allRelevantUsers.forEach((user) => {
       allUsersById[user.id] = user
       if (user.delegates?.length) {
@@ -162,23 +156,27 @@ export class ReportService {
         usersById[user.id] = user
       }
       const enteringAccess =
-        user.cache.enteringAccess && isInWindow(safeTimestamp(user.cache.enteringAccess.enteredAt))
+        user.cache.enteringAccess &&
+        (!locationId || user.cache.enteringAccess.locationId === locationId) &&
+        isInWindow(safeTimestamp(user.cache.enteringAccess.time))
           ? user.cache.enteringAccess
           : null
       const exitingAccess =
-        user.cache.enteringAccess && isInWindow(safeTimestamp(user.cache.enteringAccess.enteredAt))
+        user.cache.enteringAccess &&
+        (!locationId || user.cache.enteringAccess.locationId === locationId) &&
+        isInWindow(safeTimestamp(user.cache.enteringAccess.time))
           ? user.cache.enteringAccess
           : null
-      const status =
+      const passport =
         user.cache.passport &&
         safeTimestamp(user.cache.passport.validFrom) <= betweenCreatedDate.to &&
-        safeTimestamp(user.cache.passport.validTo) >= betweenCreatedDate.from
-          ? user.cache.passport.status
+        safeTimestamp(user.cache.passport.validUntil) >= betweenCreatedDate.from
+          ? user.cache.passport
           : null
       cachedData[user.id] = {
         enteringAccess,
         exitingAccess,
-        status,
+        passport,
       }
     })
     const usersGroupsByUserId: Record<string, OrganizationUsersGroup> = {}

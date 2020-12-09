@@ -2,6 +2,7 @@ import {Passport, PassportModel, PassportStatus, PassportStatuses} from '../mode
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
+import {UserModel} from '../../../common/src/data/user'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {now, serverTimestamp} from '../../../common/src/utils/times'
 import moment from 'moment'
@@ -23,6 +24,7 @@ export class PassportService {
   private userService = new UserService()
   private passportRepository = new PassportModel(this.dataStore)
   private identifierRepository = new IdentifiersModel(this.dataStore)
+  private userRepository = new UserModel(this.dataStore)
 
   async findTheLatestValidPassports(
     userIds: string[],
@@ -97,14 +99,32 @@ export class PassportService {
           includesGuardian,
         }),
       )
-      .then(({validFrom, validUntil, ...passport}) => ({
-        ...passport,
-        validFrom,
-        validUntil: firestore.Timestamp.fromDate(
+      .then(({validFrom, validUntil, ...passport}) => {
+        const validUntilUpdated = firestore.Timestamp.fromDate(
           // @ts-ignore
           this.shortestTime(passport.status, validFrom.toDate()),
-        ),
-      }))
+        )
+        const toCache = {
+          id: passport.id,
+          statusToken: passport.statusToken,
+          status: passport.status,
+          validFrom,
+          validUntil,
+        }
+
+        const allUserIds = Array.from(passport.dependantIds)
+        if (passport.includesGuardian) {
+          allUserIds.push(passport.userId)
+        }
+        allUserIds.forEach((id) =>
+          this.userRepository.updateProperty(id, 'cache.passport', toCache),
+        )
+        return {
+          ...passport,
+          validFrom,
+          validUntil: validUntilUpdated,
+        }
+      })
       .then((passport) => this.passportRepository.update(passport))
       .then(mapDates)
   }
