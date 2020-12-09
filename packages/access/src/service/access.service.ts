@@ -388,30 +388,41 @@ export class AccessService {
 
   async findLatest(
     userId: string,
+    parentUserId: string | null,
     locationId: string,
     onCreatedDate: Date,
     delegateAdminUserId?: string,
   ): Promise<AccessModel> {
     const from = moment(safeTimestamp(onCreatedDate)).tz(timeZone).startOf('day').toDate()
     const to = moment(safeTimestamp(onCreatedDate)).tz(timeZone).endOf('day').toDate()
-    let query = this.accessRepository
-      .collection()
-      .where('userId', '==', userId)
-      .where('locationId', '==', locationId)
-      //@ts-ignore
-      .where('timestamps.createdAt', '>=', from)
-      //@ts-ignore
-      .where('timestamps.createdAt', '<=', to)
-
-    if (delegateAdminUserId) {
-      query = query.where('delegateAdminUserId', '==', delegateAdminUserId)
+    const getBaseQuery = () => {
+      const base = this.accessRepository
+        .collection()
+        .where('locationId', '==', locationId)
+        //@ts-ignore
+        .where('timestamps.createdAt', '>=', from)
+        //@ts-ignore
+        .where('timestamps.createdAt', '<=', to)
+        //@ts-ignore
+        .orderBy('timestamps.createdAt', 'desc')
+      if (delegateAdminUserId) {
+        return base.where('delegateAdminUserId', '==', delegateAdminUserId)
+      }
+      return base
     }
 
-    //@ts-ignore
-    query = query.orderBy('timestamps.createdAt', 'desc')
+    const directAccesses = await getBaseQuery().where('userId', '==', userId).fetch()
+    const indirectAccesses = parentUserId
+      ? (await getBaseQuery().where(`userId`, '==', parentUserId).fetch()).filter(
+          (acc) => acc.dependants[userId],
+        )
+      : []
 
-    const accesses = await query.fetch()
-
+    const accesses = [...directAccesses, ...indirectAccesses]
+    accesses.sort((a, b) =>
+      // @ts-ignore
+      safeTimestamp(a.timestamps.createdAt) < safeTimestamp(b.timestamps.createdAt) ? 1 : -1,
+    )
     return accesses.length > 0 ? accesses[0] : null
 
     // .then((accesses) =>

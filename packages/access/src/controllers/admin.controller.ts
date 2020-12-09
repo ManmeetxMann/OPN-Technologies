@@ -246,7 +246,6 @@ class AdminController implements IRouteController {
       if (!tag) {
         throw new ResourceNotFoundException(`NFC Tag not found`)
       }
-
       // Save org
       const organizationId = tag.organizationId
 
@@ -263,12 +262,13 @@ class AdminController implements IRouteController {
         replyInsufficientPermission(res)
         return
       }
-      const latestPassport = await this.passportService.findLatestPassport(tag.userId)
-
+      const user = await this.userService.findOne(tag.userId)
+      const parentUserId = user.delegates?.length ? user.delegates[0] : null
+      const latestPassport = await this.passportService.findLatestPassport(tag.userId, parentUserId)
       // Make sure it's valid
       if (
         !latestPassport ||
-        tag.userId !== latestPassport.userId ||
+        ![parentUserId, tag.userId].includes(latestPassport.userId) ||
         latestPassport.status !== 'proceed'
       ) {
         replyUnauthorizedEntry(res)
@@ -279,6 +279,7 @@ class AdminController implements IRouteController {
       // Note we are only looking for ones that authenticated by this admin account
       const access = await this.accessService.findLatest(
         tag.userId,
+        parentUserId,
         locationId,
         now(),
         authenticatedUserId,
@@ -291,9 +292,9 @@ class AdminController implements IRouteController {
         const accessToken = await this.accessTokenService.createToken(
           latestPassport.statusToken,
           locationId,
-          tag.userId,
-          [],
-          true,
+          parentUserId ?? tag.userId,
+          parentUserId ? [tag.userId] : [],
+          !!parentUserId,
           authenticatedUserId,
         )
 
@@ -306,7 +307,7 @@ class AdminController implements IRouteController {
         // Make sure it's valid
         if (
           !specificPassport ||
-          tag.userId !== specificPassport.userId ||
+          ![parentUserId, tag.userId].includes(latestPassport.userId) ||
           specificPassport.status !== 'proceed'
         ) {
           replyUnauthorizedEntry(res)
