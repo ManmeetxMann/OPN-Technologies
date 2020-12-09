@@ -34,7 +34,7 @@
 		"cd-deploy-apidocs": "lerna run --scope @opn/apidocs gcloud_deploy --stream",
 		"cd-deploy-tools-pages": "lerna run --scope @opn/tools-pages deploy --stream",
 		"migration:migrate-groups-private-field": "ts-node ./migrations/add-private-field-to-groups",
-		"migration:migrate-dependants": "ts-node ./migrations/remove-dependants",
+		"migration:migrate-dependants": "ts-node ./migrations/migrate-dependants",
 		"migration:update-admin-approval-emails": "ts-node ./migrations/update-admin-approval-emails",
 		"migration:update-user-emails": "ts-node ./migrations/update-user-emails"
 	},
