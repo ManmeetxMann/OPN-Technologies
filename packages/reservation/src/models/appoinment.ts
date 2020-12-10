@@ -166,14 +166,6 @@ export type AppointmentUiDTO = {
   dateTime?: string
 }
 
-export type ResultsUiDTO = {
-  id: number
-  firstName: string
-  lastName: string
-  testType: string
-  dateOfAppointment: string
-}
-
 export type AppointmentFilters = {
   organizationId: string
   showall: boolean
@@ -191,12 +183,4 @@ export const appointmentUiDTOResponse = (
   barCode: appointment.barCode,
   location: (appointment as AppointmentUI).location,
   dateTime: (appointment as AppointmentUI).dateTime,
-})
-
-export const resultUiDTOResponse = (appointment: AppointmentDTO | AppointmentUI): ResultsUiDTO => ({
-  id: (appointment as AppointmentUI).id,
-  firstName: appointment.firstName,
-  lastName: appointment.lastName,
-  testType: 'PCR',
-  dateOfAppointment: (appointment as AppointmentUI).dateOfAppointment,
 })

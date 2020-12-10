@@ -10,8 +10,8 @@ import {
   AppointmentByOrganizationRequest,
   AppointmentDTO,
   AppointmentUI,
-  resultUiDTOResponse,
 } from '../../models/appoinment'
+import {testResultUiDTOResponse} from '../../models/test-result'
 
 class AdminController implements IControllerBase {
   public path = '/reservation/admin'
@@ -51,7 +51,7 @@ class AdminController implements IControllerBase {
             .catch(() => 'Pending')
 
           return {
-            ...resultUiDTOResponse(appointment),
+            ...testResultUiDTOResponse(appointment),
             result,
           }
         }),
