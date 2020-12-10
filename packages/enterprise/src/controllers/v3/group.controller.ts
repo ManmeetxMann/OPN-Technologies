@@ -81,7 +81,7 @@ class GroupController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = () => Router({mergeParams: true})
-    const root = `/enterprise/admin/api/v4/organizations/:organizationId`
+    const root = `/enterprise/admin/api/v3/organizations/:organizationId`
 
     const authentication = innerRouter().use(
       '/',
