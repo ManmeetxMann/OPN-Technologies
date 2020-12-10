@@ -1360,9 +1360,19 @@ components:
       additionalProperties: false
       properties:
         data:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserV3'
+          type: object
+          additionalProperties: false
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserV3'
+            last:
+              type: string
+            next:
+              type: string
+        page:
+          type: number
         status:
           type: object
           additionalProperties: false
