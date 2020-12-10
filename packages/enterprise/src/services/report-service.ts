@@ -777,7 +777,7 @@ export class ReportService {
     // Handle duplicates
     const distinctAccesses: Record<string, AccessWithPassportStatusAndUser> = {}
     const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
-    accesses.forEach(({user, status, userId, ...access}) => {
+    accesses.forEach(({user, status, ...access}) => {
       if (!groupsByUserId[user.id]) {
         console.log('Invalid state: Cannot find group for user: ', user.id)
         return
@@ -787,7 +787,6 @@ export class ReportService {
       }`
       distinctAccesses[duplicateKey] = getPriorityAccess(distinctAccesses[duplicateKey], {
         ...access,
-        userId,
         user,
         status,
       })
