@@ -131,15 +131,32 @@ export class PassportService {
       .then(mapDates)
   }
 
-  async findLatestPassport(userId: string, nowDate: Date = now()): Promise<Passport> {
+  async findLatestPassport(
+    userId: string,
+    parentUserId: string | null = null,
+    nowDate: Date = now(),
+  ): Promise<Passport> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
-    const passports = await this.passportRepository
+    const directPassports = await this.passportRepository
       .collection()
       .where('userId', '==', userId)
       .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
       .orderBy('validUntil', 'desc')
       .fetch()
+    const indirectPassports = parentUserId
+      ? (
+          await this.passportRepository
+            .collection()
+            .where('userId', '==', parentUserId)
+            .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
+            .orderBy('validUntil', 'desc')
+            .fetch()
+        ).filter((ppt) => ppt.dependantIds?.includes(userId))
+      : []
 
+    const passports = [...directPassports, ...indirectPassports].filter(
+      (ppt) => ppt.status !== PassportStatuses.Pending,
+    )
     // Deal with the bad
     if (!passports || passports.length == 0) {
       return null
@@ -160,7 +177,6 @@ export class PassportService {
         selectedPassport = passport
       }
     }
-
     return selectedPassport
   }
 
