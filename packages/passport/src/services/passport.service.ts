@@ -12,7 +12,7 @@ import {Config} from '../../../common/src/utils/config'
 import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {TemperatureStatuses} from '../models/temperature'
 
-const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
+export const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
   ...passport,
   //@ts-ignore
   validFrom: typeof validFrom === 'string' ? validFrom : validFrom.toDate().toISOString(),
