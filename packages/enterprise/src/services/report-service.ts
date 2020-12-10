@@ -201,6 +201,7 @@ export class ReportService {
       usersGroupsByUserId,
       usersById,
       dependantsById,
+      cachedData,
     )
 
     return {
@@ -635,14 +636,61 @@ export class ReportService {
     groupsByUserId: Record<string, OrganizationUsersGroup>,
     usersById: Record<string, User>,
     dependantsByIds: Record<string, User>,
+    cache: Record<string, UserCache>,
   ): Promise<AccessWithPassportStatusAndUser[]> {
+    const cachedIds = Object.keys(cache)
+    const statusTokensWithCachedAccesses = new Set<string>()
+    const uncachedPassportUsers: string[] = []
+    const uncachedPassportDependants: string[] = []
+    const uncachedAccessUsers: string[] = []
+    const uncachedAccessDependants: string[] = []
+
+    const cachedAccesses = []
+
+    cachedIds.forEach((id) => {
+      const isDependant = !!dependantsByIds[id]
+      const record = cache[id]
+      if (!record.passport) {
+        ;(isDependant ? uncachedPassportDependants : uncachedPassportUsers).push(id)
+      }
+      // if either one of these is defined, we don't need to fetch access for this user
+      if (!(record.enteringAccess || record.exitingAccess)) {
+        if (record.enteringAccess) {
+          cachedAccesses.push({
+            ...record.enteringAccess,
+            enteredAt: safeTimestamp(record.enteringAccess.time),
+          })
+          statusTokensWithCachedAccesses.add(record.enteringAccess.statusToken)
+        }
+        if (record.exitingAccess) {
+          cachedAccesses.push({
+            ...record.exitingAccess,
+            exitedAt: safeTimestamp(record.exitingAccess.time),
+          })
+          statusTokensWithCachedAccesses.add(record.exitingAccess.statusToken)
+        }
+        ;(isDependant ? uncachedAccessDependants : uncachedAccessUsers).push(id)
+      }
+    })
+
     // Fetch passports - N queries
     const passportsByUserIds = await this.passportService.findTheLatestValidPassports(
-      userIds,
-      dependantIds,
+      uncachedPassportUsers,
+      uncachedPassportDependants,
       betweenCreatedDate.to,
     )
-    const implicitPendingPassports = [...userIds, ...dependantIds]
+    cachedIds.forEach((userId) => {
+      if (!cache[userId]?.passport) {
+        return
+      }
+      passportsByUserIds[userId] = {
+        status: cache[userId].passport.status,
+        statusToken: cache[userId].passport.statusToken,
+        userId,
+        parentUserId: parentUserIds[userId] ?? null,
+      } as Passport
+    })
+    const implicitPendingPassports = [...uncachedPassportUsers, ...uncachedPassportDependants]
       .filter((userId) => !passportsByUserIds[userId])
       .map(
         (userId) =>
@@ -654,12 +702,13 @@ export class ReportService {
       )
 
     // Fetch accesses by status-token
-    const proceedStatusTokens = Object.values(passportsByUserIds)
+    const proceedStatusTokensToFetch = Object.values(passportsByUserIds)
       .filter(({status}) => status === PassportStatuses.Proceed)
+      .filter(({statusToken}) => !statusTokensWithCachedAccesses.has(statusToken))
       .map(({statusToken}) => statusToken)
     // N/10 Queries
     const accessesByStatusToken: Record<string, Access[]> = await Promise.all(
-      _.chunk(proceedStatusTokens, 10).map((chunk) =>
+      _.chunk(proceedStatusTokensToFetch, 10).map((chunk) =>
         this.accessService.findAllWith({
           statusTokens: chunk,
           locationId,
