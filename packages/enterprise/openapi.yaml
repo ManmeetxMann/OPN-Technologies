@@ -2992,7 +2992,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /enterprise/admin/api/v1/organizations/{organizationId}/groups/{groupId}/users:
+  /enterprise/admin/api/v3/organizations/{organizationId}/groups/{groupId}/users:
     get:
       summary: Get users by group Id
       description: Get users within an group
