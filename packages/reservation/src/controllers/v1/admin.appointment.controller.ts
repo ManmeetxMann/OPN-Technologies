@@ -46,7 +46,6 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         dateOfAppointment,
         searchQuery,
-        dateOfAppointment,
       )
 
       const appointmentsUniqueById = [
