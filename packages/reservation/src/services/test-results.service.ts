@@ -36,7 +36,7 @@ export class TestResultsService {
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
     this.emailService.send({
-      templateId: this.testResultEmailTemplateId,
+      templateId: Number(this.testResultEmailTemplateId),
       to: [{email: testResults.email, name: `${testResults.firstName} ${testResults.lastName}`}],
       params: {
         BARCODE: testResults.barCode,
