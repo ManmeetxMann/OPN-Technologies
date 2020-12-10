@@ -126,16 +126,24 @@ export class ReportService {
       to: live ? now() : new Date(to),
     }
 
-    const [allUsers, allOrgGroups] = await Promise.all([
-      this.userRepo.findWhereArrayContains('organizationIds', organizationId),
-      this.organizationService.getUsersGroups(organizationId, groupId),
-    ])
-    let allRelevantUsers = allUsers
-    if (groupId) {
-      // TODO: always do this filtering?
-      const relevantUserIds = new Set<string>(_.map(allOrgGroups, 'userId'))
-      allRelevantUsers = allUsers.filter((user) => relevantUserIds.has(user.id))
+    let allUsers: User[] = []
+    let allMemberships: OrganizationUsersGroup[] = []
+
+    if (!groupId) {
+      ;[allUsers, allMemberships] = await Promise.all([
+        this.userRepo.findWhereArrayContains('organizationIds', organizationId),
+        this.organizationService.getUsersGroups(organizationId, null),
+      ])
+    } else {
+      allMemberships = await this.organizationService.getUsersGroups(organizationId, groupId)
+      const userIds = new Set(_.map(allMemberships, 'userId'))
+      // fetches in groups of 10
+      allUsers = await this.userRepo.findWhereIdIn([...userIds])
     }
+
+    const relevantUserIds = new Set<string>(_.map(allMemberships, 'userId'))
+    const allRelevantUsers = allUsers.filter((user) => relevantUserIds.has(user.id))
+
     const allUsersById: Record<string, User> = {}
     const usersById: Record<string, User> = {}
     const dependantsById: Record<string, User> = {}
@@ -175,7 +183,7 @@ export class ReportService {
       }
     })
     const usersGroupsByUserId: Record<string, OrganizationUsersGroup> = {}
-    allOrgGroups.forEach((membership) => {
+    allMemberships.forEach((membership) => {
       if (usersGroupsByUserId[membership.userId]) {
         console.warn(
           `In org ${organizationId} user groups ${membership.id} and ${
