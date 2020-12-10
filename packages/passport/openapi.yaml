@@ -3,6 +3,12 @@ info:
   title: Passport API
   version: 1.0.0
 components:
+  securitySchemes:
+    bearerAuthJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     Response:
       type: object
@@ -79,6 +85,26 @@ components:
                 ]
             message:
               nullable: true
+              type: string
+
+    ResponseOfTemperature:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/Passport'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            status:
+              type: string
+              enum: [pending,proceed,caution,stop]
+            userId:
+              type: string
+            validFrom:
+              type: string
+            validUntil:
               type: string
 
   responses:
@@ -197,3 +223,33 @@ paths:
           description: Message sent to at least one token.
         '404':
           description: No Registrations with pushToken !== null exist for that user.
+
+  /passport/admin/api/v1/temperature:
+    post:
+      description: Create record temperature and update user passport
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                organizationId:
+                  type: string
+                locationId: 	
+                  type: string
+                temperature: 
+                  type: number
+              required:
+                - organizationId
+                - locationId
+                - temperature
+              additionalProperties: false
+
+      responses:
+        '200':
+          description: Temperature record created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfTemperature'

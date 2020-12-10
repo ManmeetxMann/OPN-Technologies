@@ -10,6 +10,7 @@ import {firestore} from 'firebase-admin'
 import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
 import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
+import {TemperatureStatuses} from '../models/temperature'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
   ...passport,
@@ -207,7 +208,7 @@ export class PassportService {
    * Calculates the shortest time to an end of day or elapsed time.
    * Ex: end of day: 3am at night and 12 hours – we'd pick which is closer to now()
    */
-  private shortestTime(passportStatus: PassportStatuses, validFrom: Date): Date {
+  shortestTime(passportStatus: PassportStatuses | TemperatureStatuses, validFrom: Date): Date {
     const expiryDuration = parseInt(Config.get('PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
     const expiryMax = parseInt(Config.get('PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS'))
     const expiryDurationForRedPassports = parseInt(
