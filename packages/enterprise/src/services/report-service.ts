@@ -144,11 +144,8 @@ export class ReportService {
       allUsersById[user.id] = user
       if (user.delegates?.length) {
         dependantsById[user.id] = user
-        if (user.delegates.length > 1) {
-          console.warn(`${user.delegates.length} delegates found for user ${user.id}`)
-          const parent = user.delegates[0]
-          parentUserIds[user.id] = parent
-        }
+        const parent = user.delegates[0]
+        parentUserIds[user.id] = parent
       } else {
         usersById[user.id] = user
       }
@@ -719,8 +716,15 @@ export class ReportService {
 
     // Handle duplicates
     const distinctAccesses: Record<string, AccessWithPassportStatusAndUser> = {}
+    const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
     accesses.forEach(({user, status, userId, ...access}) => {
-      const duplicateKey = userId
+      if (!groupsByUserId[user.id]) {
+        console.log('Invalid state: Cannot find group for user: ', user.id)
+        return
+      }
+      const duplicateKey = `${normalize(user.firstName)}|${normalize(user.lastName)}|${
+        groupsByUserId[user.id]?.groupId
+      }`
       distinctAccesses[duplicateKey] = getPriorityAccess(distinctAccesses[duplicateKey], {
         ...access,
         userId,
