@@ -4,6 +4,22 @@ info:
   version: 1.0.0
 components:
   schemas:
+    TestResult200:
+      type: object
+      deprecated: false
+      additionalProperties: false
+      properties:
+        id:
+          type: number
+        firstName:
+          type: string
+        lastName:
+          type: string
+        testType:
+          type: string
+        dateOfAppointment:
+          type: string
+
     AppointmentResponse200:
       type: object
       additionalProperties: false
@@ -417,7 +433,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/AppointmentResponse200'
+                  $ref: '#/components/schemas/TestResult200'
 
   /admin/api/v1/check-appointments:
     post:
