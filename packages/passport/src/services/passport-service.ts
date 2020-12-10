@@ -104,21 +104,7 @@ export class PassportService {
           // @ts-ignore
           this.shortestTime(passport.status, validFrom.toDate()),
         )
-        const toCache = {
-          id: passport.id,
-          statusToken: passport.statusToken,
-          status: passport.status,
-          validFrom,
-          validUntil,
-        }
 
-        const allUserIds = Array.from(passport.dependantIds)
-        if (passport.includesGuardian) {
-          allUserIds.push(passport.userId)
-        }
-        allUserIds.forEach((id) =>
-          this.userRepository.updateProperty(id, 'cache.passport', toCache),
-        )
         return {
           ...passport,
           validFrom,
