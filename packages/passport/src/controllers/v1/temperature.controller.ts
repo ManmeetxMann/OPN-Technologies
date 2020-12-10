@@ -33,7 +33,7 @@ class AdminController implements IControllerBase {
       const authenticatedUser: User = res.locals.authenticatedUser || res.locals.connectedUser
       const status = temperature > 37.4 ? TemperatureStatuses.Stop : TemperatureStatuses.Proceed
       const validFrom = now()
-      console.log(validFrom)
+
       const data = {
         organizationId,
         locationId,
