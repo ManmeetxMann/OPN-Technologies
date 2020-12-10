@@ -153,19 +153,19 @@ export class ReportService {
         usersById[user.id] = user
       }
       const enteringAccess =
-        user.cache.enteringAccess &&
+        user.cache?.enteringAccess &&
         (!locationId || user.cache.enteringAccess.locationId === locationId) &&
         isInWindow(safeTimestamp(user.cache.enteringAccess.time))
           ? user.cache.enteringAccess
           : null
       const exitingAccess =
-        user.cache.enteringAccess &&
+        user.cache?.enteringAccess &&
         (!locationId || user.cache.enteringAccess.locationId === locationId) &&
         isInWindow(safeTimestamp(user.cache.enteringAccess.time))
           ? user.cache.enteringAccess
           : null
       const passport =
-        user.cache.passport &&
+        user.cache?.passport &&
         safeTimestamp(user.cache.passport.validFrom) <= betweenCreatedDate.to &&
         safeTimestamp(user.cache.passport.validUntil) >= betweenCreatedDate.from
           ? user.cache.passport
