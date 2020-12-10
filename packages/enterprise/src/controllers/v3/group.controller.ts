@@ -8,7 +8,6 @@ import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {OrganizationGroup} from '../../models/organization'
 import {User, userDTOResponse} from '../../models/user'
 import {CursoredRequestFilter} from '../../../../common/src/types/request'
-import {UserModel} from '../../../../common/src/data/user'
 import DataStore from '../../../../common/src/data/datastore'
 import {OrganizationUsersGroupModel} from '../../repository/organization.repository'
 
@@ -82,7 +81,7 @@ class GroupController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = () => Router({mergeParams: true})
-    const root = `/enterprise/admin/api/v1/organizations/:organizationId`
+    const root = `/enterprise/admin/api/v4/organizations/:organizationId`
 
     const authentication = innerRouter().use(
       '/',
