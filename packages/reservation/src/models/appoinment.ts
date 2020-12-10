@@ -141,6 +141,7 @@ export type TestResultForPagination = {
 export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   organizationId?: string
   searchQuery?: string
+  dateOfAppointment?: string
 }
 
 export type AcuityUpdateDTO = {
@@ -162,6 +163,13 @@ export type AppointmentUiDTO = {
   status?: string
   barCode: string
   dateTime?: string
+}
+
+export type AppointmentFilters = {
+  organizationId: string
+  showall: boolean
+  minDate?: string
+  maxDate?: string
 }
 
 export const appointmentUiDTOResponse = (

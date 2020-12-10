@@ -466,6 +466,10 @@ paths:
           name: searchQuery
           schema:
             type: string
+        - in: query
+          name: dateOfAppointment
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully Return

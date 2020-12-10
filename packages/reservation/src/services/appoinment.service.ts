@@ -4,6 +4,7 @@ import {
   AppointmentDTO,
   AppointmentDBModel,
   AppoinmentBarCodeSequenceDBModel,
+  AppointmentFilters,
 } from '../models/appoinment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppoinmentsDBRepository} from '../respository/appointment-db.repository'
@@ -28,8 +29,13 @@ export class AppoinmentService {
   async getAppointmentByOrganizationIdAndSearchParams(
     organizationId: string,
     searchQuery: string,
+    dateOfAppointment: string,
   ): Promise<AppointmentDTO[]> {
-    const filters = {organizationId, showall: true}
+    const filters: AppointmentFilters = {organizationId, showall: true}
+    if (dateOfAppointment) {
+      filters.maxDate = dateOfAppointment
+      filters.minDate = dateOfAppointment
+    }
     if (!searchQuery) {
       return this.appoinmentSchedulerRepository.getManyAppointments(filters)
     } else {
