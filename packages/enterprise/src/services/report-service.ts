@@ -125,8 +125,6 @@ export class ReportService {
       from: live ? moment(now()).startOf('day').toDate() : new Date(from),
       to: live ? now() : new Date(to),
     }
-    const isInWindow = (date: Date) =>
-      date <= betweenCreatedDate.to && date >= betweenCreatedDate.from
 
     const [allUsers, allOrgGroups] = await Promise.all([
       this.userRepo.findWhereArrayContains('organizationIds', organizationId),
@@ -152,18 +150,18 @@ export class ReportService {
       } else {
         usersById[user.id] = user
       }
-      const enteringAccess =
-        user.cache?.enteringAccess &&
-        (!locationId || user.cache.enteringAccess.locationId === locationId) &&
-        isInWindow(safeTimestamp(user.cache.enteringAccess.time))
-          ? user.cache.enteringAccess
-          : null
-      const exitingAccess =
-        user.cache?.enteringAccess &&
-        (!locationId || user.cache.enteringAccess.locationId === locationId) &&
-        isInWindow(safeTimestamp(user.cache.enteringAccess.time))
-          ? user.cache.enteringAccess
-          : null
+      // const enteringAccess =
+      //   user.cache?.enteringAccess &&
+      //   (!locationId || user.cache.enteringAccess.locationId === locationId) &&
+      //   isInWindow(safeTimestamp(user.cache.enteringAccess.time))
+      //     ? user.cache.enteringAccess
+      //     : null
+      // const exitingAccess =
+      //   user.cache?.enteringAccess &&
+      //   (!locationId || user.cache.enteringAccess.locationId === locationId) &&
+      //   isInWindow(safeTimestamp(user.cache.enteringAccess.time))
+      //     ? user.cache.enteringAccess
+      //     : null
       const passport =
         user.cache?.passport &&
         safeTimestamp(user.cache.passport.validFrom) <= betweenCreatedDate.to &&
@@ -171,8 +169,8 @@ export class ReportService {
           ? user.cache.passport
           : null
       cachedData[user.id] = {
-        enteringAccess,
-        exitingAccess,
+        // enteringAccess,
+        // exitingAccess,
         passport,
       }
     })
@@ -639,34 +637,12 @@ export class ReportService {
     const statusTokensWithCachedAccesses = new Set<string>()
     const uncachedPassportUsers: string[] = []
     const uncachedPassportDependants: string[] = []
-    const uncachedAccessUsers: string[] = []
-    const uncachedAccessDependants: string[] = []
-
-    const cachedAccesses = []
 
     cachedIds.forEach((id) => {
       const isDependant = !!dependantsByIds[id]
       const record = cache[id]
       if (!record.passport) {
         ;(isDependant ? uncachedPassportDependants : uncachedPassportUsers).push(id)
-      }
-      // if either one of these is defined, we don't need to fetch access for this user
-      if (!(record.enteringAccess || record.exitingAccess)) {
-        if (record.enteringAccess) {
-          cachedAccesses.push({
-            ...record.enteringAccess,
-            enteredAt: safeTimestamp(record.enteringAccess.time),
-          })
-          statusTokensWithCachedAccesses.add(record.enteringAccess.statusToken)
-        }
-        if (record.exitingAccess) {
-          cachedAccesses.push({
-            ...record.exitingAccess,
-            exitedAt: safeTimestamp(record.exitingAccess.time),
-          })
-          statusTokensWithCachedAccesses.add(record.exitingAccess.statusToken)
-        }
-        ;(isDependant ? uncachedAccessDependants : uncachedAccessUsers).push(id)
       }
     })
 

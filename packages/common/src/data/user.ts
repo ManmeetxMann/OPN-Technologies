@@ -10,20 +10,6 @@ export type UserCache = {
     validFrom: Date | FieldValue
     validUntil: Date | FieldValue
   }
-  enteringAccess: {
-    id: string
-    locationId: string
-    statusToken: string
-    accessToken: string
-    time: Date | FieldValue
-  }
-  exitingAccess: {
-    id: string
-    locationId: string
-    statusToken: string
-    accessToken: string
-    time: Date | FieldValue
-  }
 }
 
 // TODO: DEPRECATE
