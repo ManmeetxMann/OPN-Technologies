@@ -18,7 +18,8 @@ import {Config} from '../../../common/src/utils/config'
 import template from '../templates/testResult'
 
 export class TestResultsService {
-  private testResultEmailTemplateId = (Config.get('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2) as number
+  private testResultEmailTemplateId = (Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ??
+    2) as number
   private testResultBccEmail = Config.get('TEST_RESULT_BCC_EMAIL')
   private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
   private emailService = new EmailService()
@@ -36,7 +37,7 @@ export class TestResultsService {
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
     this.emailService.send({
-      templateId: Number(this.testResultEmailTemplateId),
+      templateId: this.testResultEmailTemplateId,
       to: [{email: testResults.email, name: `${testResults.firstName} ${testResults.lastName}`}],
       params: {
         BARCODE: testResults.barCode,

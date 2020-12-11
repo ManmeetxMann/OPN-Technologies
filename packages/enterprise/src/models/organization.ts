@@ -1,3 +1,6 @@
+import {User as LegacyUser} from '../../../common/src/data/user'
+import {User, UserDTO} from './user'
+
 export type OrganizationReminderSchedule = {
   enabled: boolean
   enabledOnWeekends: boolean
@@ -97,3 +100,17 @@ export type OrganizationUsersGroupMoveOperation = {
   data: OrganizationUsersGroupMoveData[]
   dryRun: boolean
 }
+
+export type OrganizationGroupDTO = {
+  id: string
+  name: string
+  checkInDisabled: boolean
+  isPrivate: boolean
+}
+
+export const organizationGroupDTOResponse = (group: OrganizationGroup): OrganizationGroupDTO => ({
+  id: group.id,
+  name: group.name,
+  checkInDisabled: group.checkInDisabled,
+  isPrivate: group.isPrivate,
+})

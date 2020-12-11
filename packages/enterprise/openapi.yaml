@@ -221,6 +221,34 @@ components:
         - attestationRequired
         - type
 
+    ResponseOfUpdateGroup:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationGroup'
+        page:
+          type: number
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
     OrganizationGroup:
       type: object
       additionalProperties: false
@@ -1363,7 +1391,7 @@ components:
           type: object
           additionalProperties: false
           properties:
-            data:
+            users:
               type: array
               items:
                 $ref: '#/components/schemas/UserV3'
@@ -3035,6 +3063,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfUsers'
+  /enterprise/admin/api/v3/organizations/{organizationId}/groups/{groupId}:
+    put:
+      summary: Update group by groupId
+      description: Update group data
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfull updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUpdateGroup'
 
   /enterprise/api/v3/users/self/groups:
     get:

@@ -5,7 +5,7 @@ import {authMiddleware} from '../../../../common/src/middlewares/auth'
 import {OrganizationService} from '../../services/organization-service'
 import {UserService} from '../../services/user-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {OrganizationGroup} from '../../models/organization'
+import {OrganizationGroup, organizationGroupDTOResponse} from '../../models/organization'
 import {User, userDTOResponse} from '../../models/user'
 import {CursoredRequestFilter} from '../../../../common/src/types/request'
 
@@ -32,7 +32,7 @@ const getUsersByGroupId: Handler = async (req, res, next): Promise<void> => {
     const users = await userService.getAllByIds(userIds.map((user) => user.userId))
     res.json(
       actionSucceed({
-        data: users.map((user: User) => {
+        users: users.map((user: User) => {
           return {
             ...userDTOResponse(user),
             createdAt:
@@ -60,7 +60,9 @@ const updateGroup: Handler = async (req, res, next): Promise<void> => {
     const groupData = req.body as OrganizationGroup
     const updatedGroup = await organizationService.updateGroup(organizationId, groupId, groupData)
 
-    res.json(actionSucceed(updatedGroup))
+    const a = organizationGroupDTOResponse(updatedGroup);
+
+    res.json(actionSucceed(organizationGroupDTOResponse(updatedGroup)))
   } catch (error) {
     next(error)
   }
