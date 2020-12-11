@@ -170,16 +170,16 @@ export class ReportService {
       //   isInWindow(safeTimestamp(user.cache.enteringAccess.time))
       //     ? user.cache.enteringAccess
       //     : null
-      const passport =
-        user.cache?.passport &&
-        safeTimestamp(user.cache.passport.validFrom) <= betweenCreatedDate.to &&
-        safeTimestamp(user.cache.passport.validUntil) >= betweenCreatedDate.from
-          ? user.cache.passport
+      const passports =
+        user.cache?.passports &&
+        user.cache?.passports[organizationId] &&
+        safeTimestamp(user.cache.passports[organizationId].validUntil) >= betweenCreatedDate.from
+          ? user.cache.passports
           : null
       cachedData[user.id] = {
         // enteringAccess,
         // exitingAccess,
-        passport,
+        passports,
       }
     })
     const usersGroupsByUserId: Record<string, OrganizationUsersGroup> = {}
@@ -205,6 +205,7 @@ export class ReportService {
       usersById,
       dependantsById,
       cachedData,
+      organizationId,
     )
 
     return {
@@ -639,48 +640,67 @@ export class ReportService {
     groupsByUserId: Record<string, OrganizationUsersGroup>,
     usersById: Record<string, User>,
     dependantsByIds: Record<string, User>,
+    // note - we expect expired passports to already be filtered out
     cache: Record<string, UserCache>,
+    organizationId: string,
   ): Promise<AccessWithPassportStatusAndUser[]> {
     const cachedIds = Object.keys(cache)
+    const validCachedIds: string[] = []
     const statusTokensWithCachedAccesses = new Set<string>()
+
+    // presumed pending
     const uncachedPassportUsers: string[] = []
     const uncachedPassportDependants: string[] = []
 
+    // need to actually look them up
+    const mustFetchPassportUsers: string[] = []
+    const mustFetchPassportDependants: string[] = []
+
     cachedIds.forEach((id) => {
       const isDependant = !!dependantsByIds[id]
-      const record = cache[id]
-      if (!record.passport) {
+      const passports = cache[id]?.passports
+      const record = passports ? passports[organizationId] : null
+      if (!record) {
         ;(isDependant ? uncachedPassportDependants : uncachedPassportUsers).push(id)
+      } else if (safeTimestamp(record.validFrom) > betweenCreatedDate.to) {
+        ;(isDependant ? mustFetchPassportDependants : mustFetchPassportUsers).push(id)
+      } else {
+        validCachedIds.push(id)
       }
     })
 
     // Fetch passports - N queries
     const passportsByUserIds = await this.passportService.findTheLatestValidPassports(
-      uncachedPassportUsers,
-      uncachedPassportDependants,
+      mustFetchPassportUsers,
+      mustFetchPassportDependants,
       betweenCreatedDate.to,
     )
-    cachedIds.forEach((userId) => {
-      if (!cache[userId]?.passport) {
+    const missedFetchIds = [...mustFetchPassportUsers, ...mustFetchPassportDependants].filter(
+      (id) => !passportsByUserIds[id],
+    )
+    validCachedIds.forEach((userId) => {
+      if (!(cache[userId]?.passports && cache[userId].passports[organizationId])) {
         return
       }
       passportsByUserIds[userId] = {
-        status: cache[userId].passport.status,
-        statusToken: cache[userId].passport.statusToken,
+        status: cache[userId].passports[organizationId].status,
+        statusToken: cache[userId].passports[organizationId].statusToken,
         userId,
         parentUserId: parentUserIds[userId] ?? null,
       } as Passport
     })
-    const implicitPendingPassports = [...uncachedPassportUsers, ...uncachedPassportDependants]
-      .filter((userId) => !passportsByUserIds[userId])
-      .map(
-        (userId) =>
-          ({
-            status: PassportStatuses.Pending,
-            userId,
-            parentUserId: parentUserIds[userId] ?? null,
-          } as Passport),
-      )
+    const implicitPendingPassports = [
+      ...uncachedPassportUsers,
+      ...uncachedPassportDependants,
+      ...missedFetchIds,
+    ].map(
+      (userId) =>
+        ({
+          status: PassportStatuses.Pending,
+          userId,
+          parentUserId: parentUserIds[userId] ?? null,
+        } as Passport),
+    )
 
     // Fetch accesses by status-token
     const proceedStatusTokensToFetch = Object.values(passportsByUserIds)

@@ -3,13 +3,16 @@ import {AdminProfile} from './admin'
 import {FieldValue} from '../utils/firebase'
 
 export type UserCache = {
-  passport?: {
-    id: string
-    statusToken: string
-    status: 'pending' | 'proceed' | 'caution' | 'stop'
-    validFrom: Date | FieldValue
-    validUntil: Date | FieldValue
-  }
+  passports?: Record<
+    string,
+    {
+      id: string
+      statusToken: string
+      status: 'pending' | 'proceed' | 'caution' | 'stop'
+      validFrom: Date | FieldValue
+      validUntil: Date | FieldValue
+    }
+  >
 }
 
 // TODO: DEPRECATE
