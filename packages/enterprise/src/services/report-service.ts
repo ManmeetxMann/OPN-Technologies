@@ -646,7 +646,6 @@ export class ReportService {
   ): Promise<AccessWithPassportStatusAndUser[]> {
     const cachedIds = Object.keys(cache)
     const validCachedIds: string[] = []
-    const statusTokensWithCachedAccesses = new Set<string>()
 
     // presumed pending
     const uncachedPassportUsers: string[] = []
@@ -705,7 +704,6 @@ export class ReportService {
     // Fetch accesses by status-token
     const proceedStatusTokensToFetch = Object.values(passportsByUserIds)
       .filter(({status}) => status === PassportStatuses.Proceed)
-      .filter(({statusToken}) => !statusTokensWithCachedAccesses.has(statusToken))
       .map(({statusToken}) => statusToken)
     // N/10 Queries
     const accessesByStatusToken: Record<string, Access[]> = await Promise.all(
