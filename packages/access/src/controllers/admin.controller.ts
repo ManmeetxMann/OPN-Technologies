@@ -294,8 +294,8 @@ class AdminController implements IRouteController {
         const accessToken = await this.accessTokenService.createToken(
           latestPassport.statusToken,
           locationId,
-          parentUserId ?? tag.userId,
-          parentUserId ? [tag.userId] : [],
+          isADependant ? parentUserId : tag.userId,
+          isADependant ? [tag.userId] : [],
           !isADependant,
           authenticatedUserId,
         )
