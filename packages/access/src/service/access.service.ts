@@ -396,6 +396,7 @@ export class AccessService {
     const isADependant = !!parentUserId
     const from = moment(safeTimestamp(onCreatedDate)).tz(timeZone).startOf('day').toDate()
     const to = moment(safeTimestamp(onCreatedDate)).tz(timeZone).endOf('day').toDate()
+    const primaryUserId = isADependant ? parentUserId : userId
     const getBaseQuery = () => {
       const base = this.accessRepository
         .collection()
@@ -404,6 +405,7 @@ export class AccessService {
         .where('timestamps.createdAt', '>=', from)
         //@ts-ignore
         .where('timestamps.createdAt', '<=', to)
+        .where(`userId`, '==', primaryUserId)
         //@ts-ignore
         .orderBy('timestamps.createdAt', 'desc')
       if (delegateAdminUserId) {
@@ -412,14 +414,10 @@ export class AccessService {
       return base
     }
 
-    const directAccesses = await getBaseQuery().where('userId', '==', userId).fetch()
-    const indirectAccesses = isADependant
-      ? await getBaseQuery().where(`userId`, '==', parentUserId).fetch()
-      : []
-
-    const accesses = [...directAccesses, ...indirectAccesses].filter((acc) =>
+    const accesses = (await getBaseQuery().fetch()).filter((acc) =>
       isADependant ? acc.dependants[userId] : acc.includesGuardian,
     )
+
     accesses.sort((a, b) =>
       // @ts-ignore
       safeTimestamp(a.timestamps.createdAt) < safeTimestamp(b.timestamps.createdAt) ? 1 : -1,
