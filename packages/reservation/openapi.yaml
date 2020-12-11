@@ -4,6 +4,24 @@ info:
   version: 1.0.0
 components:
   schemas:
+    TestResult200:
+      type: object
+      deprecated: false
+      additionalProperties: false
+      properties:
+        id:
+          type: number
+        firstName:
+          type: string
+        lastName:
+          type: string
+        testType:
+          type: string
+        dateOfAppointment:
+          type: string
+        result:
+          type: string
+
     AppointmentResponse200:
       type: object
       additionalProperties: false
@@ -409,16 +427,6 @@ paths:
           name: dateOfAppointment
           schema:
             type: string
-        - in: query
-          name: page
-          schema:
-            type: integer
-          required: true
-        - in: query
-          name: perPage
-          schema:
-            type: integer
-          required: true
       responses:
         '200':
           description: Successfully Return
@@ -427,7 +435,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/AppointmentResponse200'
+                  $ref: '#/components/schemas/TestResult200'
 
   /admin/api/v1/check-appointments:
     post:

@@ -100,6 +100,7 @@ export type TestResultsDTO = TestResultsBase
 export type TestResultsDBModel = AppointmentBase &
   TestResultsBase & {
     id: string
+    result: string
     todaysDate?: Date //Deprecated
   }
 

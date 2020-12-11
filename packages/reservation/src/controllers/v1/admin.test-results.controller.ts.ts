@@ -1,19 +1,23 @@
 import {NextFunction, Request, Response, Router} from 'express'
-
+import {flatten} from 'lodash'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 
-import {TestResultsService} from '../../services/test-results.service'
-import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
-
-import {PackageByOrganizationRequest} from '../../models/packages'
 import {authMiddleware} from '../../../../common/src/middlewares/auth'
-import moment from 'moment'
+import {TestResultsService} from '../../services/test-results.service'
+import {AppoinmentService} from '../../services/appoinment.service'
+import {
+  AppointmentByOrganizationRequest,
+  AppointmentDTO,
+  AppointmentUI,
+} from '../../models/appoinment'
+import {testResultUiDTOResponse} from '../../models/test-result'
 
 class AdminController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private testResultsService = new TestResultsService()
+  private appointmentService = new AppoinmentService()
 
   constructor() {
     this.initRoutes()
@@ -21,43 +25,39 @@ class AdminController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.get(
-      this.path + '/api/v1/test-results',
-      authMiddleware,
-      this.getResultsByOrganizationId,
-    )
+    innerRouter.get(this.path + '/api/v1/test-results', authMiddleware, this.getListResult)
 
     this.router.use('/', innerRouter)
   }
 
-  getResultsByOrganizationId = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  getListResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {
-        perPage,
-        page,
+      const {organizationId, dateOfAppointment} = req.query as AppointmentByOrganizationRequest
+
+      const appointments = await this.appointmentService.getAppointmentByOrganizationIdAndSearchParams(
         organizationId,
         dateOfAppointment,
-      } = req.query as PackageByOrganizationRequest
-
-      if (perPage < 1 || page < 0) {
-        throw new BadRequestException(`Pagination params are invalid`)
-      }
-
-      //TODO: Update DB to use Date instead of String from Acuity
-      //Map to DB Field Format
-      const dateOfAppointmentStr = moment.utc(dateOfAppointment).format('MMMM D, YYYY')
-      const testResult = await this.testResultsService.getAllByOrganizationId(
-        organizationId,
-        dateOfAppointmentStr,
-        page,
-        perPage,
       )
 
-      res.json(actionSucceed(testResult, page))
+      const appointmentsUniqueById = [
+        ...new Map(flatten(appointments).map((item) => [item.id, item])).values(),
+      ]
+
+      const responseAppointments = await Promise.all(
+        appointmentsUniqueById.map(async (appointment: AppointmentDTO | AppointmentUI) => {
+          const result = await this.testResultsService
+            .getResults(appointment.barCode)
+            .then(({result}) => result)
+            .catch(() => 'Pending')
+
+          return {
+            ...testResultUiDTOResponse(appointment),
+            result,
+          }
+        }),
+      )
+
+      res.json(actionSucceed(responseAppointments))
     } catch (error) {
       next(error)
     }

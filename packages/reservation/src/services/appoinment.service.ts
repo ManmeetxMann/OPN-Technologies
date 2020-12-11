@@ -28,8 +28,8 @@ export class AppoinmentService {
 
   async getAppointmentByOrganizationIdAndSearchParams(
     organizationId: string,
-    searchQuery: string,
     dateOfAppointment: string,
+    searchQuery = '',
   ): Promise<AppointmentDTO[]> {
     const filters: AppointmentFilters = {organizationId, showall: true}
     if (dateOfAppointment) {
