@@ -264,6 +264,7 @@ class AdminController implements IRouteController {
       }
       const user = await this.userService.findOne(tag.userId)
       const parentUserId = user.delegates?.length ? user.delegates[0] : null
+      const isADependant = !!parentUserId
       const latestPassport = await this.passportService.findLatestPassport(tag.userId, parentUserId)
       // Make sure it's valid
       if (
@@ -287,14 +288,15 @@ class AdminController implements IRouteController {
 
       // Check if access does not exist or if they've exited
       // Note we are not checking for entered at as assuming that the enteredAt is there :-)
-      if (!access || !!access.exitAt) {
+      const shouldEnter = !access || (isADependant ? access.dependants[tag.userId] : access)?.exitAt
+      if (shouldEnter) {
         // Create new Access
         const accessToken = await this.accessTokenService.createToken(
           latestPassport.statusToken,
           locationId,
-          parentUserId ?? tag.userId,
-          parentUserId ? [tag.userId] : [],
-          !!parentUserId,
+          isADependant ? parentUserId : tag.userId,
+          isADependant ? [tag.userId] : [],
+          !isADependant,
           authenticatedUserId,
         )
 
@@ -315,9 +317,11 @@ class AdminController implements IRouteController {
         }
 
         // Decide
-        const accessForEnteringOrExiting = !access.enteredAt
-          ? await this.accessService.handleEnter(access)
-          : await this.accessService.handleExit(access)
+        const shouldExit =
+          access && (isADependant ? access.dependants[tag.userId] : access)?.enteredAt
+        const accessForEnteringOrExiting = shouldExit
+          ? await this.accessService.handleExit(access)
+          : await this.accessService.handleEnter(access)
 
         res.json(actionSucceed(accessForEnteringOrExiting))
       }
