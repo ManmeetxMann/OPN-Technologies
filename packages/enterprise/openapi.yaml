@@ -2774,7 +2774,7 @@ paths:
                   nullable: false
                 userId:
                   type: string
-                  nullable: false
+                  nullable: true
               required:
                 - email
                 - organizationId

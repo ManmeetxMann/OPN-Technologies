@@ -4,7 +4,7 @@ import moment from 'moment'
 import DataStore from '../../../common/src/data/datastore'
 import {AuthShortCodeRepository} from '../repository/auth-short-code.repository'
 import {MagicLinkService} from '../../../common/src/service/messaging/magiclink-service'
-import {AuthShortCode} from '../models/auth-short-codes'
+import {AuthShortCode} from '../models/auth'
 
 export class AuthShortCodeService {
   private dataStore = new DataStore()
