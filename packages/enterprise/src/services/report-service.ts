@@ -129,16 +129,16 @@ export class ReportService {
     let allUsers: User[] = []
     let allMemberships: OrganizationUsersGroup[] = []
 
-    if (!groupId) {
-      ;[allUsers, allMemberships] = await Promise.all([
-        this.userRepo.findWhereArrayContains('organizationIds', organizationId),
-        this.organizationService.getUsersGroups(organizationId, null),
-      ])
-    } else {
+    if (groupId) {
       allMemberships = await this.organizationService.getUsersGroups(organizationId, groupId)
       const userIds = new Set(_.map(allMemberships, 'userId'))
       // fetches in groups of 10
       allUsers = await this.userRepo.findWhereIdIn([...userIds])
+    } else {
+      ;[allUsers, allMemberships] = await Promise.all([
+        this.userRepo.findWhereArrayContains('organizationIds', organizationId),
+        this.organizationService.getUsersGroups(organizationId, null),
+      ])
     }
 
     const relevantUserIds = new Set<string>(_.map(allMemberships, 'userId'))
