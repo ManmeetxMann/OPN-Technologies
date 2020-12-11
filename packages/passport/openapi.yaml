@@ -92,19 +92,37 @@ components:
       additionalProperties: false
       properties:
         data:
-          $ref: '#/components/schemas/Passport'
-        status:
           type: object
           additionalProperties: false
           properties:
             status:
               type: string
-              enum: [pending,proceed,caution,stop]
+              enum: [proceed,stop]
             userId:
               type: string
             validFrom:
               type: string
             validUntil:
+              type: string        status:
+            type: object
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
               type: string
 
   responses:
