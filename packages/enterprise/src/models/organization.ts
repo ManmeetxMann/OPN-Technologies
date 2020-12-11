@@ -1,6 +1,3 @@
-import {User as LegacyUser} from '../../../common/src/data/user'
-import {User, UserDTO} from './user'
-
 export type OrganizationReminderSchedule = {
   enabled: boolean
   enabledOnWeekends: boolean

@@ -60,8 +60,6 @@ const updateGroup: Handler = async (req, res, next): Promise<void> => {
     const groupData = req.body as OrganizationGroup
     const updatedGroup = await organizationService.updateGroup(organizationId, groupId, groupData)
 
-    const a = organizationGroupDTOResponse(updatedGroup);
-
     res.json(actionSucceed(organizationGroupDTOResponse(updatedGroup)))
   } catch (error) {
     next(error)
