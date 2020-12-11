@@ -164,21 +164,7 @@ export class AccessService {
             : ([] as UserDependant[]),
         )
         .then(async (dependants) => {
-          const toCache = {
-            id: savedAccess.id,
-            time: savedAccess.enteredAt,
-            locationId: savedAccess.locationId,
-            statusToken: savedAccess.statusToken,
-            accessToken: savedAccess.token,
-          }
-
-          const allUserIds: string[] = _.map(dependants, 'id')
-          if (savedAccess.includesGuardian) allUserIds.push(savedAccess.userId)
-
-          // we deliberately don't await these, the user doesn't need to know they go through
-          allUserIds.forEach((id) =>
-            this.userRepository.updateProperty(id, 'cache.enteringAccess', toCache),
-          )
+          // we deliberately don't await this, the user doesn't need to know if it goes through
           this.accessListener.addEntry(savedAccess)
 
           const decorated = await this.decorateDependants(
@@ -273,21 +259,7 @@ export class AccessService {
           dependants.filter(({id}) => !!savedAccess.dependants[id] && dependantIds.includes(id)),
         )
         .then(async (dependants) => {
-          const toCache = {
-            id: savedAccess.id,
-            time: savedAccess.enteredAt,
-            locationId: savedAccess.locationId,
-            statusToken: savedAccess.statusToken,
-            accessToken: savedAccess.token,
-          }
-
-          const allUserIds: string[] = _.map(dependants, 'id')
-          if (savedAccess.includesGuardian) allUserIds.push(savedAccess.userId)
-
-          // we deliberately don't await these, the user doesn't need to know they go through
-          allUserIds.forEach((id) =>
-            this.userRepository.updateProperty(id, 'cache.exitingAccess', toCache),
-          )
+          // we deliberately don't await this, the user doesn't need to know if it goes through
           this.accessListener.addExit(savedAccess, includesGuardian, dependantIds)
 
           const decorated = await this.decorateDependants(dependants)

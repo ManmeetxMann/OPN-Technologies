@@ -9,7 +9,7 @@ import moment from 'moment'
 import {firestore} from 'firebase-admin'
 import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
-import {isPassed} from '../../../common/src/utils/datetime-util'
+import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
   ...passport,
@@ -78,6 +78,7 @@ export class PassportService {
     userId: string,
     dependantIds: string[],
     includesGuardian: boolean,
+    organizationIds: string[],
   ): Promise<Passport> {
     if (dependantIds.length) {
       const allDependants = (await this.userService.getAllDependants(userId)).map(({id}) => id)
@@ -100,15 +101,30 @@ export class PassportService {
         }),
       )
       .then(({validFrom, validUntil, ...passport}) => {
-        const validUntilUpdated = firestore.Timestamp.fromDate(
-          // @ts-ignore
-          this.shortestTime(passport.status, validFrom.toDate()),
+        const validUntilUpdated = this.shortestTime(
+          passport.status as PassportStatuses,
+          safeTimestamp(validFrom),
         )
+        const toCache = {
+          id: passport.id,
+          validFrom: safeTimestamp(validFrom),
+          validUntil: validUntilUpdated,
+          status: passport.status,
+          statusToken: passport.statusToken,
+        }
 
+        const allUserIds: string[] = [...passport.dependantIds]
+        if (passport.includesGuardian) allUserIds.push(passport.userId)
+
+        allUserIds.forEach((id) =>
+          organizationIds.forEach((organizationId) =>
+            this.userRepository.updateProperty(id, `cache.passports.${organizationId}`, toCache),
+          ),
+        )
         return {
           ...passport,
           validFrom,
-          validUntil: validUntilUpdated,
+          validUntil: firestore.Timestamp.fromDate(validUntilUpdated),
         }
       })
       .then((passport) => this.passportRepository.update(passport))
