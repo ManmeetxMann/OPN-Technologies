@@ -679,6 +679,7 @@ export class ReportService {
     )
     validCachedIds.forEach((userId) => {
       if (!(cache[userId]?.passports && cache[userId].passports[organizationId])) {
+        missedFetchIds.push(userId)
         return
       }
       passportsByUserIds[userId] = {
