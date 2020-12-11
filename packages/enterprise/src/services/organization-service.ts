@@ -194,6 +194,17 @@ export class OrganizationService {
     return this.getGroupsRepositoryFor(organizationId).add(group)
   }
 
+  updateGroup(
+    organizationId: string,
+    groupId: string,
+    groupData: {name: string; isPrivate: boolean},
+  ): Promise<OrganizationGroup> {
+    return this.getGroupsRepositoryFor(organizationId).updateProperties(groupId, {
+      name: groupData.name,
+      isPrivate: groupData.isPrivate,
+    })
+  }
+
   addGroups(organizationId: string, groups: OrganizationGroup[]): Promise<OrganizationGroup[]> {
     return this.getOrganization(organizationId).then(() =>
       Promise.all(groups.map((group) => this.addGroup(organizationId, group))),
@@ -235,6 +246,25 @@ export class OrganizationService {
     }
 
     return await this.getGroup(organizationId, groupsForUser[0].groupId)
+  }
+
+  async getUsersByGroup(
+    organizationId: string,
+    groupId: string,
+    limit: number,
+    from: string,
+  ): Promise<{
+    data: OrganizationUsersGroup[]
+    last: string | null
+    next: string | null
+  }> {
+    const userRepository = this.getOrganizationUsersGroupRepositoryFor(organizationId)
+
+    const userGroupRepository = this.getUsersGroupRepositoryFor(organizationId)
+    const userGroupQuery = userGroupRepository.getQueryFindWhereEqual('groupId', groupId)
+    const fromSnapshot = from ? await userRepository.collection().docRef(from).get() : null
+
+    return userGroupRepository.fetchByCursor(userGroupQuery, fromSnapshot, limit)
   }
 
   async getUsersGroups(
@@ -413,6 +443,10 @@ export class OrganizationService {
   }
 
   private getUsersGroupRepositoryFor(organizationId: string) {
+    return new OrganizationUsersGroupModel(this.dataStore, organizationId)
+  }
+
+  private getOrganizationUsersGroupRepositoryFor(organizationId: string) {
     return new OrganizationUsersGroupModel(this.dataStore, organizationId)
   }
 

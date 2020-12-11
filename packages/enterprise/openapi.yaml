@@ -25,13 +25,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -220,6 +220,34 @@ components:
         - title
         - attestationRequired
         - type
+
+    ResponseOfUpdateGroup:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationGroup'
+        page:
+          type: number
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
 
     OrganizationGroup:
       type: object
@@ -1034,13 +1062,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1070,13 +1098,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1096,13 +1124,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1124,13 +1152,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1150,13 +1178,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1178,13 +1206,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1206,13 +1234,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1287,13 +1315,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1315,13 +1343,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1343,13 +1371,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1360,9 +1388,19 @@ components:
       additionalProperties: false
       properties:
         data:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserV3'
+          type: object
+          additionalProperties: false
+          properties:
+            users:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserV3'
+            last:
+              type: string
+            next:
+              type: string
+        page:
+          type: number
         status:
           type: object
           additionalProperties: false
@@ -1371,13 +1409,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1399,13 +1437,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1427,13 +1465,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1455,13 +1493,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1482,13 +1520,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1513,13 +1551,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1540,13 +1578,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1568,13 +1606,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1606,13 +1644,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -2991,6 +3029,77 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+
+  /enterprise/admin/api/v3/organizations/{organizationId}/groups/{groupId}/users:
+    get:
+      summary: Get users by group Id
+      description: Get users within an group
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: from
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+      responses:
+        '200':
+          description: Successfull retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsers'
+  /enterprise/admin/api/v3/organizations/{organizationId}/groups/{groupId}:
+    put:
+      summary: Update group by groupId
+      description: Update group data
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties: false
+              properties:
+                isPrivate:
+                  type: string
+                  nullable: false
+                name:
+                  type: string
+                  nullable: false
+              required:
+                - name
+                - isPrivate
+      responses:
+        '200':
+          description: Successfull updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUpdateGroup'
 
   /enterprise/api/v3/users/self/groups:
     get:
