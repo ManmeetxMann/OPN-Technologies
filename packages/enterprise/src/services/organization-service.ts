@@ -19,8 +19,6 @@ import {
   AllLocationsModel,
 } from '../repository/organization.repository'
 
-import {DocumentSnapshot} from '@firestore-simple/admin/dist/types'
-
 import * as _ from 'lodash'
 
 const notFoundMessage = (organizationId: string, identifier?: string) =>

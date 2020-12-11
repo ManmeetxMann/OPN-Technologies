@@ -8,8 +8,6 @@ import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {OrganizationGroup} from '../../models/organization'
 import {User, userDTOResponse} from '../../models/user'
 import {CursoredRequestFilter} from '../../../../common/src/types/request'
-import DataStore from '../../../../common/src/data/datastore'
-import {OrganizationUsersGroupModel} from '../../repository/organization.repository'
 
 const organizationService = new OrganizationService()
 const userService = new UserService()
