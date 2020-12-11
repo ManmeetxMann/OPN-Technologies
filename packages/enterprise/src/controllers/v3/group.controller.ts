@@ -5,7 +5,7 @@ import {authMiddleware} from '../../../../common/src/middlewares/auth'
 import {OrganizationService} from '../../services/organization-service'
 import {UserService} from '../../services/user-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {OrganizationGroup, organizationGroupDTOResponse} from '../../models/organization'
+import {organizationGroupDTOResponse} from '../../models/organization'
 import {User, userDTOResponse} from '../../models/user'
 import {CursoredRequestFilter} from '../../../../common/src/types/request'
 
