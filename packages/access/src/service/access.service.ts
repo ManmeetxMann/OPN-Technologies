@@ -393,6 +393,7 @@ export class AccessService {
     onCreatedDate: Date,
     delegateAdminUserId?: string,
   ): Promise<AccessModel> {
+    const isADependant = !!parentUserId
     const from = moment(safeTimestamp(onCreatedDate)).tz(timeZone).startOf('day').toDate()
     const to = moment(safeTimestamp(onCreatedDate)).tz(timeZone).endOf('day').toDate()
     const getBaseQuery = () => {
@@ -412,13 +413,13 @@ export class AccessService {
     }
 
     const directAccesses = await getBaseQuery().where('userId', '==', userId).fetch()
-    const indirectAccesses = parentUserId
-      ? (await getBaseQuery().where(`userId`, '==', parentUserId).fetch()).filter(
-          (acc) => acc.dependants[userId],
-        )
+    const indirectAccesses = isADependant
+      ? await getBaseQuery().where(`userId`, '==', parentUserId).fetch()
       : []
 
-    const accesses = [...directAccesses, ...indirectAccesses]
+    const accesses = [...directAccesses, ...indirectAccesses].filter((acc) =>
+      isADependant ? acc.dependants[userId] : acc.includesGuardian,
+    )
     accesses.sort((a, b) =>
       // @ts-ignore
       safeTimestamp(a.timestamps.createdAt) < safeTimestamp(b.timestamps.createdAt) ? 1 : -1,
