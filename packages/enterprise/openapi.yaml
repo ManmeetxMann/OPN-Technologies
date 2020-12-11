@@ -3078,6 +3078,21 @@ paths:
           schema:
             type: string
           required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties: false
+              properties:
+                isPrivate:
+                  type: string
+                  nullable: false
+                name:
+                  type: string
+                  nullable: false
+              required:
+                - name
+                - isPrivate
       responses:
         '200':
           description: Successfull updated

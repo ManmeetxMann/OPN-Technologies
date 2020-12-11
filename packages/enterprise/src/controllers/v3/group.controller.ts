@@ -57,8 +57,11 @@ const getUsersByGroupId: Handler = async (req, res, next): Promise<void> => {
 const updateGroup: Handler = async (req, res, next): Promise<void> => {
   try {
     const {organizationId, groupId} = req.params as {organizationId: string; groupId: string}
-    const groupData = req.body as OrganizationGroup
-    const updatedGroup = await organizationService.updateGroup(organizationId, groupId, groupData)
+    const {name, isPrivate} = req.body as {name: string; isPrivate: string}
+    const updatedGroup = await organizationService.updateGroup(organizationId, groupId, {
+      isPrivate: isPrivate === 'true',
+      name,
+    })
 
     res.json(actionSucceed(organizationGroupDTOResponse(updatedGroup)))
   } catch (error) {

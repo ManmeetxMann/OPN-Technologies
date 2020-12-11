@@ -197,9 +197,12 @@ export class OrganizationService {
   updateGroup(
     organizationId: string,
     groupId: string,
-    groupData: OrganizationGroup,
+    groupData: {name: string; isPrivate: boolean},
   ): Promise<OrganizationGroup> {
-    return this.getGroupsRepositoryFor(organizationId).updateProperties(groupId, groupData)
+    return this.getGroupsRepositoryFor(organizationId).updateProperties(groupId, {
+      name: groupData.name,
+      isPrivate: groupData.isPrivate,
+    })
   }
 
   addGroups(organizationId: string, groups: OrganizationGroup[]): Promise<OrganizationGroup[]> {
