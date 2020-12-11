@@ -20,19 +20,15 @@ const userService = new UserService()
 const getUsersByGroupId: Handler = async (req, res, next): Promise<void> => {
   try {
     const {organizationId, groupId} = req.params as {organizationId: string; groupId: string}
-    const dataStore = new DataStore()
-    const userRepository = new OrganizationUsersGroupModel(dataStore, organizationId)
 
     const {from, ...filter} = (req.query as unknown) as CursoredRequestFilter
     const limit = Math.min(filter.limit ?? 20, 50)
-
-    const fromSnapshot = from ? await userRepository.collection().docRef(from).get() : null
 
     const {data: userIds, next: nextCursor, last} = await organizationService.getUsersByGroup(
       organizationId,
       groupId,
       limit,
-      fromSnapshot,
+      from,
     )
 
     const users = await userService.getAllByIds(userIds.map((user) => user.userId))

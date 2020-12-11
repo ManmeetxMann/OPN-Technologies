@@ -251,14 +251,18 @@ export class OrganizationService {
     organizationId: string,
     groupId: string,
     limit: number,
-    fromSnapshot: DocumentSnapshot,
+    from: string,
   ): Promise<{
     data: OrganizationUsersGroup[]
     last: string | null
     next: string | null
   }> {
+    const userRepository = this.getOrganizationUsersGroupRepositoryFor(organizationId)
+
     const userGroupRepository = this.getUsersGroupRepositoryFor(organizationId)
     const userGroupQuery = userGroupRepository.getQueryFindWhereEqual('groupId', groupId)
+    const fromSnapshot = from ? await userRepository.collection().docRef(from).get() : null
+
     return userGroupRepository.fetchByCursor(userGroupQuery, fromSnapshot, limit)
   }
 
@@ -438,6 +442,10 @@ export class OrganizationService {
   }
 
   private getUsersGroupRepositoryFor(organizationId: string) {
+    return new OrganizationUsersGroupModel(this.dataStore, organizationId)
+  }
+
+  private getOrganizationUsersGroupRepositoryFor(organizationId: string) {
     return new OrganizationUsersGroupModel(this.dataStore, organizationId)
   }
 
