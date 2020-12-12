@@ -765,7 +765,12 @@ export class ReportService {
               ? ((access.dependants[userId]?.exitAt ?? null) as string)
               : access.exitAt,
             status,
-            user,
+            user: {
+              ...user,
+              cache: null,
+              admin: null,
+              authUserId: null,
+            },
             userId,
           }))
           .reduce(getPriorityAccess, null)
