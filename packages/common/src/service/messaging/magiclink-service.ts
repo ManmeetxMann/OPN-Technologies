@@ -24,7 +24,7 @@ const magicLinkSettings: auth.ActionCodeSettings = {
   dynamicLinkDomain: Config.get('AUTH_EMAIL_SIGNIN_DOMAIN'),
 }
 
-const magicLinkEmailTemplateId = Config.getInt('AUTH_EMAIL_TEMPLATE_ID', 1)
+const magicLinkEmailTemplateId = Number(Config.getInt('AUTH_EMAIL_TEMPLATE_ID', 1))
 
 export class MagicLinkService implements MessagingService<MagicLinkMessage> {
   private emailService = new EmailService()

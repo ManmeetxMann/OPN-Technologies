@@ -1,5 +1,4 @@
-import * as _ from 'lodash'
-
+import DataStore from '../../../common/src/data/datastore'
 import {
   User,
   UserDependency,
@@ -10,19 +9,15 @@ import {
 import {NewUser, LegacyProfile} from '../types/new-user'
 import {UpdateUserByAdminRequest, UpdateUserRequest} from '../types/update-user-request'
 import {UserRepository} from '../repository/user.repository'
-
-import DataStore from '../../../common/src/data/datastore'
-import {UserModel} from '../../../common/src/data/user'
-
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-
 import {UserOrganizationRepository} from '../repository/user-organization.repository'
 import {UserOrganizationProfileRepository} from '../repository/user-organization-profile.repository'
 import {UserDependencyRepository} from '../repository/user-dependency.repository'
+import * as _ from 'lodash'
 import {UserGroupRepository} from '../repository/user-group.repository'
 import {OrganizationUsersGroupModel} from '../repository/organization.repository'
-
+import {UserModel} from '../../../common/src/data/user'
 import {isEmail} from '../../../common/src/utils/utils'
 
 export class UserService {

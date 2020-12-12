@@ -1,36 +1,31 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
-import {uniq, flatten} from 'lodash'
-import moment from 'moment'
-
-import {AdminProfile} from '../../../../common/src/data/admin'
-import {User as AuthenticatedUser} from '../../../../common/src/data/user'
-import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
-import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
-import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
-import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {authMiddleware} from '../../../../common/src/middlewares/auth'
+import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
+import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-authority'
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
+import {UserService} from '../../services/user-service'
+import {OrganizationService} from '../../services/organization-service'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
+import {CreateUserRequest, MigrateUserRequest} from '../../types/new-user'
 import {
   actionReplyInsufficientPermission,
   actionSucceed,
 } from '../../../../common/src/utils/response-wrapper'
-
-import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-authority'
-
-import {UserService} from '../../services/user-service'
-import {OrganizationService} from '../../services/organization-service'
-
-import {CreateUserRequest, MigrateUserRequest} from '../../types/new-user'
-import {RegistrationConfirmationRequest} from '../../types/registration-confirmation-request'
-import {UpdateUserRequest} from '../../types/update-user-request'
 import {AuthenticationRequest} from '../../types/authentication-request'
-import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
-import {ConnectOrganizationRequest} from '../../types/user-organization-request'
-
 import {User, userDTOResponse} from '../../models/user'
+import {UpdateUserRequest} from '../../types/update-user-request'
+import {RegistrationConfirmationRequest} from '../../types/registration-confirmation-request'
+import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
+import {ConnectOrganizationRequest} from '../../types/user-organization-request'
+import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
+import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
+import {AdminProfile} from '../../../../common/src/data/admin'
+import {User as AuthenticatedUser} from '../../../../common/src/data/user'
+import {uniq, flatten} from 'lodash'
+import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {AuthShortCodeService} from '../../services/auth-short-code-service'
+import moment from 'moment'
 
 const authService = new AuthService()
 const userService = new UserService()
@@ -184,7 +179,9 @@ const validateShortCode: Handler = async (req, res, next): Promise<void> => {
       throw new BadRequestException('Short code invalid or expired')
     }
     const isValid =
-      moment().isBefore(authShortCode.expiresAt) && shortCode === authShortCode.shortCode
+      //@ts-ignore
+      moment().isBefore(moment(authShortCode.expiresAt.toDate()).subtract(1, 'hours')) &&
+      shortCode === authShortCode.shortCode
 
     if (!isValid) {
       throw new BadRequestException('Short code invalid or expired')
