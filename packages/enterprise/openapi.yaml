@@ -3101,6 +3101,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUpdateGroup'
 
+  /enterprise/admin/api/v3/organizations/{organizationId}/groups:
+    get:
+      summary: Get groups by organizationId
+      description: Get users
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationGroups'
+
   /enterprise/api/v3/users/self/groups:
     get:
       summary: Connected groups
