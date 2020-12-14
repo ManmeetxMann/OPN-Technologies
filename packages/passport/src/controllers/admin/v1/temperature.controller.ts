@@ -1,18 +1,18 @@
 import * as express from 'express'
 import {Request, Response, NextFunction} from 'express'
-import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {authMiddleware} from '../../../../common/src/middlewares/auth'
-import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {now} from '../../../../common/src/utils/times'
-import {User} from '../../../../common/src/data/user'
-import {TemperatureSaveRequest, TemperatureStatuses} from '../../models/temperature'
-import {PassportService} from '../../services/passport-service'
-import {TemperatureService} from '../../services/temperature-service'
-import {Config} from '../../../../common/src/utils/config'
+import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
+import {authMiddleware} from '../../../../../common/src/middlewares/auth'
+import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {now} from '../../../../../common/src/utils/times'
+import {User} from '../../../../../common/src/data/user'
+import {TemperatureSaveRequest, TemperatureStatuses} from '../../../models/temperature'
+import {PassportService} from '../../../services/passport-service'
+import {TemperatureService} from '../../../services/temperature-service'
+import {Config} from '../../../../../common/src/utils/config'
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
 
-class AdminController implements IControllerBase {
+class TemperatureAdminController implements IControllerBase {
   public router = express.Router()
   public path = '/passport/admin/api/v1'
   public temperatureService = new TemperatureService()
@@ -61,4 +61,4 @@ class AdminController implements IControllerBase {
   }
 }
 
-export default AdminController
+export default TemperatureAdminController

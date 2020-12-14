@@ -6,7 +6,7 @@ import loggerMiddleware from '../../common/src/middlewares/logger'
 import AdminController from './controllers/admin.controller'
 import UserController from './controllers/user.controller'
 import RootController from './controllers/root.controller'
-import TemperatureV1Controller from './controllers/v1/temperature.controller'
+import TemperatureV1Controller from './controllers/admin/v1/temperature.controller'
 
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
