@@ -184,7 +184,7 @@ const validateShortCode: Handler = async (req, res, next): Promise<void> => {
       shortCode === authShortCode.shortCode
 
     if (!isValid) {
-      throw new BadRequestException('Short code invalid or expired 2')
+      throw new BadRequestException('Short code invalid or expired')
     }
     await authShortCodeService.clearShortCode(authShortCode.id)
 
