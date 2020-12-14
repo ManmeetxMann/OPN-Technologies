@@ -4,7 +4,6 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {authMiddleware} from '../../../../../common/src/middlewares/auth'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {now} from '../../../../../common/src/utils/times'
-import {User} from '../../../../../common/src/data/user'
 import {TemperatureSaveRequest, TemperatureStatuses} from '../../../models/temperature'
 import {PassportService} from '../../../services/passport-service'
 import {TemperatureService} from '../../../services/temperature-service'
@@ -29,8 +28,7 @@ class TemperatureAdminController implements IControllerBase {
 
   saveTemperature = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId, locationId, temperature} = req.body as TemperatureSaveRequest
-      const authenticatedUser: User = res.locals.authenticatedUser || res.locals.connectedUser
+      const {organizationId, locationId, temperature, userId} = req.body as TemperatureSaveRequest
 
       if (!temperatureThreshold) {
         throw new BadRequestException('Threshold is not specified in config file')
@@ -45,7 +43,7 @@ class TemperatureAdminController implements IControllerBase {
         locationId,
         temperature,
         status,
-        userId: authenticatedUser.id,
+        userId,
       }
       const result = await this.temperatureService.save(data)
 

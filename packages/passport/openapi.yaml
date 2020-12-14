@@ -257,10 +257,13 @@ paths:
                   type: string
                 temperature: 
                   type: number
+                userId:
+                  type: string
               required:
                 - organizationId
                 - locationId
                 - temperature
+                - userId
               additionalProperties: false
 
       responses:
