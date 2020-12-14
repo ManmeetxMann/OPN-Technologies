@@ -1,5 +1,3 @@
-import DataModel from '../../../common/src/data/datamodel.base'
-
 export type Temperature = {
   temperature: number
   organizationId: string
@@ -21,9 +19,4 @@ export type TemperatureSaveRequest = {
   temperature: number
   organizationId: string
   locationId: string
-}
-
-export class TemperatureModel extends DataModel<TemperatureDBModel> {
-  public readonly rootPath = 'temperature'
-  readonly zeroSet = []
 }
