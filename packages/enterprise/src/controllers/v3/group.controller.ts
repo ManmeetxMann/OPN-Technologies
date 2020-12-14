@@ -8,6 +8,7 @@ import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {organizationGroupDTOResponse} from '../../models/organization'
 import {User, userDTOResponse} from '../../models/user'
 import {CursoredRequestFilter} from '../../../../common/src/types/request'
+import {dataConversionAndSortGroups} from '../../utils/transform'
 
 const organizationService = new OrganizationService()
 const userService = new UserService()
@@ -69,6 +70,19 @@ const updateGroup: Handler = async (req, res, next): Promise<void> => {
   }
 }
 
+const getGroups: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const {organizationId} = req.params as {organizationId: string}
+    const groups = await organizationService
+      .getGroups(organizationId)
+      .then(dataConversionAndSortGroups)
+
+    res.json(actionSucceed(groups.map(organizationGroupDTOResponse)))
+  } catch (error) {
+    next(error)
+  }
+}
+
 class GroupController implements IControllerBase {
   public router = express.Router()
 
@@ -83,7 +97,10 @@ class GroupController implements IControllerBase {
     const groupRouter = innerRouter().use(
       '/',
       authMiddleware,
-      innerRouter().get('/:groupId/users', getUsersByGroupId).put('/:groupId', updateGroup),
+      innerRouter()
+        .get('/:groupId/users', getUsersByGroupId)
+        .put('/:groupId', updateGroup)
+        .get('/', getGroups),
     )
 
     this.router.use(root, groupRouter)
