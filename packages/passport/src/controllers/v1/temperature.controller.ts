@@ -51,7 +51,7 @@ class AdminController implements IControllerBase {
       }
 
       if (status === TemperatureStatuses.Stop) {
-        await this.passportService.create(status, data.userId, [], false)
+        await this.passportService.create(status, data.userId, [], false, [organizationId])
       }
 
       res.json(actionSucceed(response))
