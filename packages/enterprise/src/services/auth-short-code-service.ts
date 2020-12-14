@@ -29,18 +29,24 @@ export class AuthShortCodeService {
       expiresAt,
       magicLink,
       organizationId,
-      email
+      email,
     })
 
     return shortCode
   }
 
-  async findAuthShortCode(shortCode: string, email: string, organizationId: string): Promise<AuthShortCode> {
-    return (await this.authShortCodeRepository
-      .getQueryFindWhereEqual('shortCode', shortCode)
-      .where('email', '==', email)
-      .where('organizationId', '==', organizationId)
-      .fetch())[0]
+  async findAuthShortCode(
+    shortCode: string,
+    email: string,
+    organizationId: string,
+  ): Promise<AuthShortCode> {
+    return (
+      await this.authShortCodeRepository
+        .getQueryFindWhereEqual('shortCode', shortCode)
+        .where('email', '==', email)
+        .where('organizationId', '==', organizationId)
+        .fetch()
+    )[0]
   }
 
   async clearShortCode(id: string): Promise<void> {
