@@ -77,7 +77,7 @@ const getGroups: Handler = async (req, res, next): Promise<void> => {
       .getGroups(organizationId)
       .then(dataConversionAndSortGroups)
 
-    res.json(actionSucceed(groups))
+    res.json(actionSucceed(groups.map(organizationGroupDTOResponse)))
   } catch (error) {
     next(error)
   }
