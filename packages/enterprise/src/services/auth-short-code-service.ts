@@ -24,7 +24,6 @@ export class AuthShortCodeService {
     })
 
     await this.authShortCodeRepository.add({
-      id: `${email}${organizationId}`,
       shortCode,
       expiresAt,
       magicLink,
