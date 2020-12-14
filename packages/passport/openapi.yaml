@@ -103,8 +103,7 @@ components:
             validFrom:
               type: string
             validUntil:
-              type: string        status:
-            type: object
+              type: string
         status:
           type: object
           additionalProperties: false

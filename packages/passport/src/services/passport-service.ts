@@ -95,9 +95,9 @@ export class PassportService {
           status,
           statusToken,
           userId,
-          dependantIds,
+          dependantIds: [],
           validFrom: serverTimestamp(),
-          validUntil: null,
+          validUntil: serverTimestamp(),
           includesGuardian,
         }),
       )
