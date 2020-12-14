@@ -9,6 +9,7 @@ import {TemperatureSaveRequest, TemperatureStatuses} from '../../../models/tempe
 import {PassportService} from '../../../services/passport-service'
 import {TemperatureService} from '../../../services/temperature-service'
 import {Config} from '../../../../../common/src/utils/config'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
 
@@ -30,6 +31,11 @@ class TemperatureAdminController implements IControllerBase {
     try {
       const {organizationId, locationId, temperature} = req.body as TemperatureSaveRequest
       const authenticatedUser: User = res.locals.authenticatedUser || res.locals.connectedUser
+
+      if (!temperatureThreshold) {
+        throw new BadRequestException('Threshold is not specified in config file')
+      }
+
       const status =
         temperature > temperatureThreshold ? TemperatureStatuses.Stop : TemperatureStatuses.Proceed
       const validFrom = now()
@@ -50,9 +56,7 @@ class TemperatureAdminController implements IControllerBase {
         validUntil: this.passportService.shortestTime(status, now()),
       }
 
-      if (status === TemperatureStatuses.Stop) {
-        await this.passportService.create(status, data.userId, [], false, [organizationId])
-      }
+      await this.passportService.create(status, data.userId, [], false, [organizationId])
 
       res.json(actionSucceed(response))
     } catch (error) {
