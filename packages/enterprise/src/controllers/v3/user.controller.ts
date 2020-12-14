@@ -171,17 +171,15 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
  */
 const validateShortCode: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {shortCode} = req.body
+    const {shortCode, organizationId, email} = req.body
 
-    const authShortCode = await authShortCodeService.findAuthShortCode(shortCode)
+    const authShortCode = await authShortCodeService.findAuthShortCode(shortCode, email, organizationId)
 
     if (!authShortCode) {
       throw new BadRequestException('Short code invalid or expired')
     }
-    const isValid =
-      //@ts-ignore
-      moment().isBefore(moment(authShortCode.expiresAt.toDate())) &&
-      shortCode === authShortCode.shortCode
+    //@ts-ignore
+    const isValid = moment().isBefore(moment(authShortCode.expiresAt.toDate()))
 
     if (!isValid) {
       throw new BadRequestException('Short code invalid or expired')

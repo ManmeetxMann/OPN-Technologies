@@ -3,6 +3,8 @@ export type AuthShortCode = {
   shortCode: string
   expiresAt: Date
   magicLink: string
+  email: string
+  organizationId: string
 }
 
 export type AuthLinkRequestRequest = {
