@@ -180,11 +180,11 @@ const validateShortCode: Handler = async (req, res, next): Promise<void> => {
     }
     const isValid =
       //@ts-ignore
-      moment().isBefore(moment(authShortCode.expiresAt.toDate()).subtract(1, 'hours')) &&
+      moment().isBefore(moment(authShortCode.expiresAt.toDate())) &&
       shortCode === authShortCode.shortCode
 
     if (!isValid) {
-      throw new BadRequestException('Short code invalid or expired')
+      throw new BadRequestException('Short code invalid or expired 2')
     }
     await authShortCodeService.clearShortCode(authShortCode.id)
 
