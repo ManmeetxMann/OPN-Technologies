@@ -25,7 +25,7 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 
 import CSVValidator from '../validations/csv.validations'
-import { DuplicateDataException } from '../../../common/src/exceptions/duplicate-data-exception'
+import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 
 class AdminController implements IControllerBase {
   public path = ''
@@ -118,8 +118,10 @@ class AdminController implements IControllerBase {
             } else {
               let currentAppointment = null
               try {
-                currentAppointment = await this.appoinmentService.getAppoinmentByBarCode(row.barCode)
-              }catch (getAppoinmentError) {
+                currentAppointment = await this.appoinmentService.getAppoinmentByBarCode(
+                  row.barCode,
+                )
+              } catch (getAppoinmentError) {
                 if (!(getAppoinmentError instanceof DuplicateDataException)) {
                   throw getAppoinmentError
                 }
@@ -128,7 +130,7 @@ class AdminController implements IControllerBase {
                 notFoundBarcodes.push(row)
                 return
               }
-              
+
               await Promise.all([
                 this.testResultsService.sendTestResults(
                   {...row, ...currentAppointment},
