@@ -12,6 +12,9 @@ import {
   appointmentUiDTOResponse,
 } from '../../models/appoinment'
 import {AppoinmentService} from '../../services/appoinment.service'
+import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+
+const isValidDate = (date: string): boolean => !isNaN(Date.parse(date))
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
@@ -41,6 +44,10 @@ class AdminAppointmentController implements IControllerBase {
         searchQuery,
         dateOfAppointment,
       } = req.query as AppointmentByOrganizationRequest
+
+      if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
+        throw new BadRequestException('dateOfAppointment is invalid')
+      }
 
       const appointments = await this.appointmentService.getAppointmentByOrganizationIdAndSearchParams(
         organizationId,
