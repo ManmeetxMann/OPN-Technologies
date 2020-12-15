@@ -25,6 +25,7 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 
 import CSVValidator from '../validations/csv.validations'
+import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 
 class AdminController implements IControllerBase {
   public path = ''
@@ -103,20 +104,11 @@ class AdminController implements IControllerBase {
       }, {})
 
       const notFoundBarcodes = []
-
-      const appointmentsByBarCode = (
-        await this.appoinmentService.getAppoinmentByDate(requestData.from, requestData.to)
-      ).reduce((acc, {barCode, ...currentValue}) => {
-        acc[barCode] = currentValue
-        return acc
-      }, {})
-
       await Promise.all(
         requestData.results.map(async ({sendAgain, ...row}) => {
           if (barcodeCounts[row.barCode] === 1) {
-            const testResults = await this.testResultsService.getResults(row.barCode)
-
             if (sendAgain) {
+              const testResults = await this.testResultsService.getResults(row.barCode)
               if (!testResults) {
                 throw new ResourceNotFoundException(
                   'Something wend wrong. Results are not available.',
@@ -124,11 +116,21 @@ class AdminController implements IControllerBase {
               }
               await this.testResultsService.sendTestResults({...testResults}, resultDate)
             } else {
-              const currentAppointment = appointmentsByBarCode[row.barCode]
+              let currentAppointment = null
+              try {
+                currentAppointment = await this.appoinmentService.getAppoinmentByBarCode(
+                  row.barCode,
+                )
+              } catch (getAppoinmentError) {
+                if (!(getAppoinmentError instanceof DuplicateDataException)) {
+                  throw getAppoinmentError
+                }
+              }
               if (!currentAppointment) {
                 notFoundBarcodes.push(row)
                 return
               }
+
               await Promise.all([
                 this.testResultsService.sendTestResults(
                   {...row, ...currentAppointment},
