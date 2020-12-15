@@ -74,7 +74,7 @@ async function trimFirstNameLastName(
     return Promise.resolve()
   }
   if (user.firstName == trimedFirstName && user.lastName == trimedLastName) {
-    console.info(`${userId} has no spaces for firstName and lastName`)
+    console.warn(`${userId} has no spaces for firstName and lastName`)
     return Promise.resolve()
   }
 
@@ -120,7 +120,7 @@ async function main() {
   } catch (error) {
     console.error('Error running migration', error)
   } finally {
-    console.warn(`Failed: ${failureCount} `)
+    console.log(`Failed: ${failureCount} `)
     console.log(`Total Records Checked: ${totalCount} `)
   }
 }
