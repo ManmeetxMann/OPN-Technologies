@@ -1,6 +1,6 @@
 import {PageableRequestFilter} from '../../../common/src/types/request'
 
-type AppointmentBase = {
+export type AppointmentBase = {
   firstName: string
   lastName: string
   email: string
@@ -73,70 +73,10 @@ export type BarCodeGeneratorUI = {
   getNextBarCodeTab: string
 }
 
-export enum ResultTypes {
-  Positive = 'Positive',
-  Negative = 'Negative',
-  Detected2019nCoV = '2019-nCoV Detected',
-}
-
-export type TestResultsBase = {
-  barCode: string
-  result: ResultTypes
-  famEGene: string
-  famCt: string
-  calRed61RdRpGene: string
-  calRed61Ct: string
-  quasar670NGene: string
-  quasar670Ct: string
-  hexIC: string
-  hexCt: string
-  resultDate: Date
-  packageCode: string
-  organizationId: string
-}
-
-export type TestResultsDTO = TestResultsBase
-
-export type TestResultsDBModel = AppointmentBase &
-  TestResultsBase & {
-    id: string
-    result: string
-    todaysDate?: Date //Deprecated
-  }
-
-export type TestResultsConfirmationRequest = TestResultsBase & {
-  needConfirmation?: boolean
-}
-
-export type TestResultsAgainRequest = TestResultsBase & {
-  sendAgain?: boolean
-}
-
 export type CheckAppointmentRequest = {
   from: string
   to: string
   barCodes: string[]
-}
-
-export type TestResultsDTOForEmail = TestResultsBase & AppointmentBase
-
-export type SendAndSaveTestResultsRequest = {
-  results: TestResultsAgainRequest[]
-  from: string
-  to: string
-  resultDate: Date
-}
-
-export type TestResultForPagination = {
-  barCode: string
-  firstName: string
-  lastName: string
-  result: ResultTypes
-  resultDate: Date
-  dateOfAppointment: string
-  timeOfAppointment: string
-  testType: string
-  id: string
 }
 
 export type AppointmentByOrganizationRequest = PageableRequestFilter & {

@@ -1,10 +1,5 @@
 import moment from 'moment-timezone'
 
-import {
-  TestResultsDTOForEmail,
-  TestResultsDBModel,
-  TestResultForPagination,
-} from '../models/appoinment'
 import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 
 import DataStore from '../../../common/src/data/datastore'
@@ -16,6 +11,11 @@ import {PdfService} from '../../../common/src/service/reports/pdf'
 import {Config} from '../../../common/src/utils/config'
 
 import template from '../templates/testResult'
+import {
+  TestResultsDTOForEmail,
+  TestResultsDBModel,
+  TestResultForPagination,
+} from '../models/test-result'
 
 export class TestResultsService {
   private testResultEmailTemplateId = (Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ??
