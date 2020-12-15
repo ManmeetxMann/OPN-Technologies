@@ -54,7 +54,7 @@ class TemperatureAdminController implements IControllerBase {
         validUntil: this.passportService.shortestTime(status, now()),
       }
 
-      await this.passportService.create(status, data.userId, [], false, [organizationId])
+      await this.passportService.create(status, data.userId, [], false)
 
       res.json(actionSucceed(response))
     } catch (error) {
