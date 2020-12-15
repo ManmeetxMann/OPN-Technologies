@@ -45,10 +45,10 @@ async function updateAllUsers(): Promise<Result[]> {
   const results: Result[] = []
 
   while (hasMore) {
-    const usersSnapshot = await database.collection('users').offset(offset).limit(1).get()
+    const usersSnapshot = await database.collection('users').offset(offset).limit(limit).get()
 
     offset += usersSnapshot.docs.length
-    hasMore = false
+    hasMore = !usersSnapshot.empty
 
     for (const user of usersSnapshot.docs) {
       const promises = []
