@@ -2,7 +2,7 @@ import {Config} from '../../../common/src/utils/config'
 import {now} from '../../../common/src/utils/times'
 import {safeTimestamp, GenericTimestamp} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {User, UserModel, UserCache} from '../../../common/src/data/user'
+import {User} from '../../../common/src/data/user'
 import {Range} from '../../../common/src/types/range'
 
 import {OrganizationService} from './organization-service'
@@ -21,6 +21,7 @@ import {ExposureReport} from '../../../access/src/models/trace'
 import {Access, AccessWithPassportStatusAndUser} from '../../../access/src/models/access'
 
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
+import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 
 import {Passport, PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {PassportService} from '../../../passport/src/services/passport-service'
@@ -28,7 +29,6 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 
 import * as _ from 'lodash'
 import moment from 'moment'
-import DataStore from '../../../common/src/data/datastore'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -112,7 +112,7 @@ const getPriorityAccess = (
 export class ReportService {
   private organizationService = new OrganizationService()
   private attestationService = new AttestationService()
-  private userRepo = new UserModel(new DataStore())
+  private questionnaireService = new QuestionnaireService()
   private userService = new UserService()
   private accessService = new AccessService()
   private passportService = new PassportService()
@@ -125,78 +125,36 @@ export class ReportService {
       from: live ? moment(now()).startOf('day').toDate() : new Date(from),
       to: live ? now() : new Date(to),
     }
-
-    let allUsers: User[] = []
-    let allMemberships: OrganizationUsersGroup[] = []
-
-    if (groupId) {
-      allMemberships = await this.organizationService.getUsersGroups(organizationId, groupId)
-      const userIds = new Set(_.map(allMemberships, 'userId'))
-      // fetches in groups of 10
-      allUsers = await this.userRepo.findWhereIdIn([...userIds])
-    } else {
-      ;[allUsers, allMemberships] = await Promise.all([
-        this.userRepo.findWhereArrayContains('organizationIds', organizationId),
-        this.organizationService.getUsersGroups(organizationId, null),
-      ])
-    }
-
-    const relevantUserIds = new Set<string>(_.map(allMemberships, 'userId'))
-    const allRelevantUsers = allUsers.filter((user) => relevantUserIds.has(user.id))
-
-    const allUsersById: Record<string, User> = {}
-    const usersById: Record<string, User> = {}
-    const dependantsById: Record<string, User> = {}
+    // Fetch user groups
+    const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
+    // Get users & dependants
+    const nonGuardiansUserIds = new Set<string>()
     const parentUserIds: Record<string, string> = {}
-    const cachedData: Record<string, UserCache> = {}
-    allRelevantUsers.forEach((user) => {
-      allUsersById[user.id] = user
-      if (user.delegates?.length) {
-        dependantsById[user.id] = user
-        const parent = user.delegates[0]
-        parentUserIds[user.id] = parent
-      } else {
-        usersById[user.id] = user
-      }
-      // const enteringAccess =
-      //   user.cache?.enteringAccess &&
-      //   (!locationId || user.cache.enteringAccess.locationId === locationId) &&
-      //   isInWindow(safeTimestamp(user.cache.enteringAccess.time))
-      //     ? user.cache.enteringAccess
-      //     : null
-      // const exitingAccess =
-      //   user.cache?.enteringAccess &&
-      //   (!locationId || user.cache.enteringAccess.locationId === locationId) &&
-      //   isInWindow(safeTimestamp(user.cache.enteringAccess.time))
-      //     ? user.cache.enteringAccess
-      //     : null
-      const passports =
-        user.cache?.passports &&
-        user.cache?.passports[organizationId] &&
-        safeTimestamp(user.cache.passports[organizationId].validUntil) >= betweenCreatedDate.from
-          ? user.cache.passports
-          : null
-      cachedData[user.id] = {
-        // enteringAccess,
-        // exitingAccess,
-        passports,
-      }
+    usersGroups.forEach(({userId, parentUserId}) => {
+      if (!!parentUserId) {
+        parentUserIds[userId] = parentUserId
+      } else nonGuardiansUserIds.add(userId)
     })
-    const usersGroupsByUserId: Record<string, OrganizationUsersGroup> = {}
-    allMemberships.forEach((membership) => {
-      if (usersGroupsByUserId[membership.userId]) {
-        console.warn(
-          `In org ${organizationId} user groups ${membership.id} and ${
-            usersGroupsByUserId[membership.userId].id
-          } collided`,
-        )
-      }
-      usersGroupsByUserId[membership.userId] = membership
-    })
+    const guardianIds = new Set(Object.values(parentUserIds))
+    const dependantIds = new Set(Object.keys(parentUserIds))
+    const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
+    const usersById = await this.getUsersById([...userIds])
+    const dependantsById = await this.getDependantsById(guardianIds, usersById, dependantIds)
 
+    // Fetch Guardians groups
+    const guardiansGroups: OrganizationUsersGroup[] = await Promise.all(
+      _.chunk([...guardianIds], 10).map((chunk) =>
+        this.organizationService.getUsersGroups(organizationId, null, chunk),
+      ),
+    ).then((results) => _.flatten(results as OrganizationUsersGroup[][]))
+
+    const allGroups = [...new Set([...(usersGroups ?? []), ...(guardiansGroups ?? [])])]
+    const usersGroupsByUserId: Record<string, OrganizationUsersGroup> = {}
+    allGroups.forEach((groupUser) => (usersGroupsByUserId[groupUser.userId] = groupUser))
+    // Get accesses
     const accesses = await this.getAccessesFor(
-      Object.keys(allUsersById),
-      Object.keys(dependantsById),
+      [...userIds],
+      [...dependantIds],
       parentUserIds,
       locationId,
       groupId,
@@ -204,8 +162,6 @@ export class ReportService {
       usersGroupsByUserId,
       usersById,
       dependantsById,
-      cachedData,
-      organizationId,
     )
 
     return {
@@ -640,75 +596,30 @@ export class ReportService {
     groupsByUserId: Record<string, OrganizationUsersGroup>,
     usersById: Record<string, User>,
     dependantsByIds: Record<string, User>,
-    // note - we expect expired passports to already be filtered out
-    cache: Record<string, UserCache>,
-    organizationId: string,
   ): Promise<AccessWithPassportStatusAndUser[]> {
-    const cachedIds = Object.keys(cache)
-    const validCachedIds: string[] = []
-
-    // presumed pending
-    const uncachedPassportUsers: string[] = []
-    const uncachedPassportDependants: string[] = []
-
-    // need to actually look them up
-    const mustFetchPassportUsers: string[] = []
-    const mustFetchPassportDependants: string[] = []
-
-    cachedIds.forEach((id) => {
-      const isDependant = !!dependantsByIds[id]
-      const passports = cache[id]?.passports
-      const record = passports ? passports[organizationId] : null
-      if (!record) {
-        ;(isDependant ? uncachedPassportDependants : uncachedPassportUsers).push(id)
-      } else if (safeTimestamp(record.validFrom) > betweenCreatedDate.to) {
-        ;(isDependant ? mustFetchPassportDependants : mustFetchPassportUsers).push(id)
-      } else {
-        validCachedIds.push(id)
-      }
-    })
-
-    // Fetch passports - N queries
+    // Fetch passports
     const passportsByUserIds = await this.passportService.findTheLatestValidPassports(
-      mustFetchPassportUsers,
-      mustFetchPassportDependants,
+      userIds,
+      dependantIds,
       betweenCreatedDate.to,
     )
-    const missedFetchIds = [...mustFetchPassportUsers, ...mustFetchPassportDependants].filter(
-      (id) => !passportsByUserIds[id],
-    )
-    validCachedIds.forEach((userId) => {
-      if (!(cache[userId]?.passports && cache[userId].passports[organizationId])) {
-        missedFetchIds.push(userId)
-        return
-      }
-      passportsByUserIds[userId] = {
-        status: cache[userId].passports[organizationId].status,
-        statusToken: cache[userId].passports[organizationId].statusToken,
-        userId,
-        parentUserId: parentUserIds[userId] ?? null,
-      } as Passport
-    })
-    const implicitPendingPassports = [
-      ...uncachedPassportUsers,
-      ...uncachedPassportDependants,
-      ...missedFetchIds,
-    ].map(
-      (userId) =>
-        ({
-          status: PassportStatuses.Pending,
-          userId,
-          parentUserId: parentUserIds[userId] ?? null,
-        } as Passport),
-    )
+    const implicitPendingPassports = [...userIds, ...dependantIds]
+      .filter((userId) => !passportsByUserIds[userId])
+      .map(
+        (userId) =>
+          ({
+            status: PassportStatuses.Pending,
+            userId,
+            parentUserId: parentUserIds[userId] ?? null,
+          } as Passport),
+      )
 
     // Fetch accesses by status-token
-    const proceedStatusTokensToFetch = Object.values(passportsByUserIds)
+    const proceedStatusTokens = Object.values(passportsByUserIds)
       .filter(({status}) => status === PassportStatuses.Proceed)
       .map(({statusToken}) => statusToken)
-    // N/10 Queries
     const accessesByStatusToken: Record<string, Access[]> = await Promise.all(
-      _.chunk(proceedStatusTokensToFetch, 10).map((chunk) =>
+      _.chunk(proceedStatusTokens, 10).map((chunk) =>
         this.accessService.findAllWith({
           statusTokens: chunk,
           locationId,
@@ -765,12 +676,7 @@ export class ReportService {
               ? ((access.dependants[userId]?.exitAt ?? null) as string)
               : access.exitAt,
             status,
-            user: {
-              ...user,
-              cache: null,
-              admin: null,
-              authUserId: null,
-            },
+            user,
             userId,
           }))
           .reduce(getPriorityAccess, null)
