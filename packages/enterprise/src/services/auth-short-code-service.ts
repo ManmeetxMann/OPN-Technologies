@@ -16,34 +16,36 @@ export class AuthShortCodeService {
     organizationId: string,
     userId: string,
   ): Promise<string> {
-    const shortCode = nanoid(6)
+    const shortCode = nanoid(6).toUpperCase()
     const expiresAt = moment().add(1, 'hours').toDate()
     const magicLink = await this.magicLinkService.generateMagicLink({
       email,
       meta: {organizationId, userId, shortCode},
     })
 
-    await this.authShortCodeRepository.add({
+    const authShortCode = await this.findAuthShortCode(email, organizationId)
+
+    const data = {
       shortCode,
       expiresAt,
       magicLink,
       organizationId,
       email,
-    })
+    }
+
+    if (authShortCode) data['id'] = authShortCode.id
+
+    await this.authShortCodeRepository.add(data)
 
     return shortCode
   }
 
-  async findAuthShortCode(
-    shortCode: string,
-    email: string,
-    organizationId: string,
-  ): Promise<AuthShortCode> {
+  async findAuthShortCode(email: string, organizationId: string): Promise<AuthShortCode> {
     return (
       await this.authShortCodeRepository
-        .getQueryFindWhereEqual('shortCode', shortCode)
-        .where('email', '==', email)
+        .getQueryFindWhereEqual('email', email)
         .where('organizationId', '==', organizationId)
+        .limit(1)
         .fetch()
     )[0]
   }
