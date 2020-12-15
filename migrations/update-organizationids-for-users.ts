@@ -72,13 +72,13 @@ async function copyOrganizationsToOrganizationIds(
     return Promise.resolve()
   }
 
-  if(hasOrganizationIdField){
+  if (hasOrganizationIdField) {
     console.info(`${userId} already have organizationIds`)
     //Already have organizationIds
     return Promise.resolve()
   }
 
-  if(!hasLegacyOrganizatioField){
+  if (!hasLegacyOrganizatioField) {
     //No Legacy Fields
     console.warn(`${userId} has no organizations or organizationIds field`)
     return Promise.resolve()
@@ -90,10 +90,10 @@ async function copyOrganizationsToOrganizationIds(
       {
         organizationIds: user.organizations,
         timestamps: {
-          migrations:{
-            copyOrganizationsToOrganizationIds:firestore.FieldValue.serverTimestamp()
-          }
-        }
+          migrations: {
+            copyOrganizationsToOrganizationIds: firestore.FieldValue.serverTimestamp(),
+          },
+        },
       },
       {
         merge: true,
@@ -110,7 +110,7 @@ async function main() {
     console.log('Migration Starting')
     const results = await updateAllUsers()
     results.forEach((result) => {
-      totalCount+=1
+      totalCount += 1
       if (result.status === ResultStatus.Fulfilled) {
         // @ts-ignore - We will always have a value if the status is fulfilled
         if (result.value) {
