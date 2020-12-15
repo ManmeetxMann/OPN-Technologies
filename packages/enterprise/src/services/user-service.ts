@@ -1,4 +1,4 @@
-import DataStore from '../../../common/src/data/datastore' 
+import DataStore from '../../../common/src/data/datastore'
 import {
   User,
   UserDependency,

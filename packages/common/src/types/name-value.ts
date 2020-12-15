@@ -1,4 +1,4 @@
-export type NameValue = { 
+export type NameValue = {
   name: string
   value: string
 }
