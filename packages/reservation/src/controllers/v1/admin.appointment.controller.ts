@@ -13,7 +13,7 @@ import {
 } from '../../models/appoinment'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
-import {isValidDate} from 'packages/common/src/utils/utils'
+import {isValidDate} from '../../../../common/src/utils/utils'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
