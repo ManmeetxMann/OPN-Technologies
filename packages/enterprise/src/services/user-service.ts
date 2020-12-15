@@ -1,4 +1,4 @@
-import DataStore from '../../../common/src/data/datastore'
+import DataStore from '../../../common/src/data/datastore' 
 import {
   User,
   UserDependency,
@@ -126,6 +126,17 @@ export class UserService {
 
     const sa0lowercase = searchArray[0].toLowerCase()
     const sa0titlecase = titleCase(searchArray[0])
+    const combinations = {
+      names: ['firstName', 'lastName'],
+      values: [
+        sa0lowercase,
+        `${sa0lowercase} `,
+        ` ${sa0lowercase} `,
+        sa0titlecase,
+        `${sa0titlecase} `,
+        ` ${sa0titlecase} `,
+      ],
+    }
 
     if (searchArray.length === 1) {
       if (email) {
@@ -137,22 +148,7 @@ export class UserService {
         )
       } else {
         searchPromises.push(
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('firstName', '==', sa0lowercase)
-            .fetch(),
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('lastName', '==', sa0lowercase)
-            .fetch(),
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('firstName', '==', sa0titlecase)
-            .fetch(),
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('lastName', '==', sa0titlecase)
-            .fetch(),
+          ...this.userRepository.searchQueryBuilder(organizationId, [], combinations),
         )
       }
     } else if (searchArray.length === 2) {
@@ -160,26 +156,11 @@ export class UserService {
         searchArray.splice(searchArray.indexOf(email), 1)
 
         searchPromises.push(
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('email', '==', email)
-            .where('firstName', '==', sa0lowercase)
-            .fetch(),
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('email', '==', email)
-            .where('lastName', '==', sa0lowercase)
-            .fetch(),
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('email', '==', email)
-            .where('firstName', '==', sa0titlecase)
-            .fetch(),
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('email', '==', email)
-            .where('lastName', '==', sa0titlecase)
-            .fetch(),
+          ...this.userRepository.searchQueryBuilder(
+            organizationId,
+            [{name: 'email', value: email}],
+            combinations,
+          ),
         )
       } else {
         searchPromises.push(

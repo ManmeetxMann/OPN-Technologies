@@ -1,14 +1,10 @@
 import DataStore from './datastore'
-import {
-  HasId,
-  OptionalIdStorable,
-  Storable,
-  DocumentSnapshot,
-} from '@firestore-simple/admin/dist/types'
+import {HasId, OptionalIdStorable, Storable} from '@firestore-simple/admin/dist/types'
 import {firestore} from 'firebase-admin'
 import {Collection, Query} from '@firestore-simple/admin'
 import * as _ from 'lodash'
 import {serverTimestamp} from '../utils/times'
+import {NameValue, NameValues} from '../../../common/src/types/name-value'
 
 export enum DataModelFieldMapOperatorType {
   Equals = '==',
@@ -82,12 +78,6 @@ export interface IDataModel<T extends HasId> {
     perPage: number,
     subPath?: string,
   ): Promise<T[]>
-
-  fetchByCursor(
-    query: Query<T, Omit<T, 'id'>>,
-    fromSnapshot: DocumentSnapshot,
-    limit: number,
-  ): Promise<{last: string | null; next: string | null; data: T[]}>
 
   fetchAllWithPagination(page: number, perPage: number, subPath: string): Promise<T[]>
 
@@ -297,22 +287,6 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
 
   public async updateAll(data: Array<Storable<T>>, subPath = ''): Promise<T[]> {
     return Promise.all(data.map((item) => this.update(item, subPath)))
-  }
-
-  public async fetchByCursor(
-    query: Query<T, Omit<T, 'id'>>,
-    fromSnapshot: DocumentSnapshot,
-    limit: number,
-  ): Promise<{last: string | null; next: string | null; data: T[]}> {
-    const unfilteredQuery = fromSnapshot ? query.startAfter(fromSnapshot) : query
-
-    const data = await unfilteredQuery.limit(limit).fetch()
-
-    return {
-      last: fromSnapshot?.ref?.id ?? null,
-      next: data.length < limit ? null : data[data.length - 1].id,
-      data,
-    }
   }
 
   public async fetchPage(
@@ -614,6 +588,37 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return this.collection(subPath)
       .fetchAll()
       .then((results) => results.length)
+  }
+
+  public searchQueryBuilder(
+    organizationId: string,
+    staticFields?: NameValue[],
+    combinedFields?: NameValues,
+  ): Query<T, Omit<T, 'id'>>[] {
+    // Build out base query to run
+    const baseQuery = () => {
+      // Base search
+      const baseQuery = this.getQueryFindWhereArrayContains('organizationIds', organizationId)
+
+      // Loop through fields as direct matches
+      let query = baseQuery
+      for (const staticField of staticFields) {
+        const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(staticField.name)
+        query = query.where(fieldPath, '==', staticField.value)
+      }
+      return query
+    }
+
+    // Loop through combined fields
+    const searchQueries = []
+    for (const field of combinedFields.names) {
+      for (const value of combinedFields.values) {
+        const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(field)
+        searchQueries.push(baseQuery().where(fieldPath, '==', value).fetch())
+      }
+    }
+
+    return searchQueries
   }
 }
 
