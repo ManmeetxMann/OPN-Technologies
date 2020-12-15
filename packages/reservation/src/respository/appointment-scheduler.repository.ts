@@ -6,7 +6,7 @@ import {
   AppointmentRequest,
   AppointmentUI,
 } from '../models/appoinment'
-import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 
 export class AppoinmentsSchedulerRepository extends AcuityScheduling {
   constructor() {
@@ -41,7 +41,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
   ): Promise<AppointmentDBModel[]> {
     return this.getAppointments(filter).then((appointments: AppointmentAcuityResponse[]) => {
       if (appointments.length > 1 && !isMultiple) {
-        throw new BadRequestException(
+        throw new DuplicateDataException(
           `Sorry, Results are not sent. Same Barcode is used by multiple appointments`,
         )
       }
@@ -67,7 +67,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
       dateOfAppointment: appointment.date,
       timeOfAppointment: appointment.time,
       location: appointment.location,
-      organizationId: appointment.organizationId,
+      organizationId: appointment.organizationId ?? null,
       canceled: appointment.canceled,
       dateTime: appointment.datetime,
     }
