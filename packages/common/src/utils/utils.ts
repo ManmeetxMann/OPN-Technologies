@@ -19,3 +19,5 @@ export const titleCase = (str: string): string => {
     return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
   })
 }
+
+export const isValidDate = (date: string): boolean => !isNaN(Date.parse(date))

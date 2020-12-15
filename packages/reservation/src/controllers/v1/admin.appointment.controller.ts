@@ -13,8 +13,7 @@ import {
 } from '../../models/appoinment'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
-
-const isValidDate = (date: string): boolean => !isNaN(Date.parse(date))
+import {isValidDate} from 'packages/common/src/utils/utils'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
