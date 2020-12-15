@@ -73,6 +73,7 @@ async function copyOrganizationsToOrganizationIds(
   }
 
   if(hasOrganizationIdField){
+    console.info(`${userId} already have organizationIds`)
     //Already have organizationIds
     return Promise.resolve()
   }
