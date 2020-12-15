@@ -1,6 +1,6 @@
-import {TestResultsDBModel} from '../models/appoinment'
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
+import {TestResultsDBModel} from '../models/test-result'
 
 export class TestResultsDBRepository extends DataModel<TestResultsDBModel> {
   public rootPath = 'test-results'
