@@ -2899,6 +2899,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
+  /enterprise/api/v3/users/auth/short-code:
+    post:
+      summary: User authentication
+      description: Sends a magic-link to authenticate by short-code the user
+      tags:
+        - Account management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                email:
+                  type: string
+                  nullable: false
+                organizationId:
+                  type: string
+                  nullable: false
+                shortCode:
+                  type: string
+                  nullable: false
+              required:
+                - email
+                - organizationId
+                - shortCode
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  magicLink:
+                    type: string
+                    nullable: false
+
   /enterprise/api/v3/users/auth/confirmation:
     post:
       summary: Account registration confirmation

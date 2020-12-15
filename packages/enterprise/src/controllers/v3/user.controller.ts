@@ -23,11 +23,15 @@ import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-re
 import {AdminProfile} from '../../../../common/src/data/admin'
 import {User as AuthenticatedUser} from '../../../../common/src/data/user'
 import {uniq, flatten} from 'lodash'
+import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+import {AuthShortCodeService} from '../../services/auth-short-code-service'
+import moment from 'moment'
 
 const authService = new AuthService()
 const userService = new UserService()
 const organizationService = new OrganizationService()
 const magicLinkService = new MagicLinkService()
+const authShortCodeService = new AuthShortCodeService()
 
 /**
  * Search a user(s) profile and returns a User(s)
@@ -148,9 +152,45 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
     const {email, organizationId, userId} = req.body as AuthenticationRequest
     await organizationService.getByIdOrThrow(organizationId)
 
-    await magicLinkService.send({email, meta: {organizationId, userId}})
+    const shortCode = await authShortCodeService.generateAndSaveShortCode(
+      email,
+      organizationId,
+      userId,
+    )
+
+    await magicLinkService.send({email, meta: {organizationId, userId, shortCode}})
 
     res.json(actionSucceed())
+  } catch (error) {
+    next(error)
+  }
+}
+
+/**
+ * Validate short code to authenticate a user
+ */
+const validateShortCode: Handler = async (req, res, next): Promise<void> => {
+  try {
+    const {shortCode, organizationId, email} = req.body
+
+    const authShortCode = await authShortCodeService.findAuthShortCode(
+      shortCode,
+      email,
+      organizationId,
+    )
+
+    if (!authShortCode) {
+      throw new BadRequestException('Short code invalid or expired')
+    }
+    //@ts-ignore
+    const isValid = moment().isBefore(moment(authShortCode.expiresAt.toDate()))
+
+    if (!isValid) {
+      throw new BadRequestException('Short code invalid or expired')
+    }
+    await authShortCodeService.clearShortCode(authShortCode.id)
+
+    res.json(actionSucceed({magicLink: authShortCode.magicLink}))
   } catch (error) {
     next(error)
   }
@@ -541,6 +581,7 @@ class UserController implements IControllerBase {
         .post('/', create)
         .post('/migration', migrate)
         .post('/auth', authenticate)
+        .post('/auth/short-code', validateShortCode)
         .post('/auth/confirmation', completeRegistration),
     )
 

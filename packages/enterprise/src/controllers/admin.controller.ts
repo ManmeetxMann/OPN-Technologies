@@ -6,7 +6,7 @@ import IControllerBase from '../../../common/src/interfaces/IControllerBase.inte
 import Validation from '../../../common/src/utils/validation'
 
 import {AuthService} from '../../../common/src/service/auth/auth-service'
-import {AuthLinkProcessRequest} from '../models/auth-link-request'
+import {AuthLinkProcessRequest} from '../models/auth'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
