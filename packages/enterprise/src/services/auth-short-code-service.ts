@@ -1,10 +1,12 @@
-import {nanoid} from 'nanoid'
+import {customAlphabet} from 'nanoid'
 import moment from 'moment'
 
 import DataStore from '../../../common/src/data/datastore'
 import {AuthShortCodeRepository} from '../repository/auth-short-code.repository'
 import {MagicLinkService} from '../../../common/src/service/messaging/magiclink-service'
 import {AuthShortCode} from '../models/auth'
+
+const nanoid = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890', 6)
 
 export class AuthShortCodeService {
   private dataStore = new DataStore()
@@ -16,7 +18,7 @@ export class AuthShortCodeService {
     organizationId: string,
     userId: string,
   ): Promise<string> {
-    const shortCode = nanoid(6).toUpperCase()
+    const shortCode = nanoid()
     const expiresAt = moment().add(1, 'hours').toDate()
     const magicLink = await this.magicLinkService.generateMagicLink({
       email,
@@ -45,7 +47,6 @@ export class AuthShortCodeService {
       await this.authShortCodeRepository
         .getQueryFindWhereEqual('email', email)
         .where('organizationId', '==', organizationId)
-        .limit(1)
         .fetch()
     )[0]
   }
