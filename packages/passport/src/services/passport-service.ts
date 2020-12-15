@@ -2,14 +2,13 @@ import {Passport, PassportModel, PassportStatus, PassportStatuses} from '../mode
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
-import {UserModel} from '../../../common/src/data/user'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {now, serverTimestamp} from '../../../common/src/utils/times'
 import moment from 'moment'
 import {firestore} from 'firebase-admin'
 import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
-import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
+import {isPassed} from '../../../common/src/utils/datetime-util'
 import {TemperatureStatuses} from '../models/temperature'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
@@ -25,7 +24,6 @@ export class PassportService {
   private userService = new UserService()
   private passportRepository = new PassportModel(this.dataStore)
   private identifierRepository = new IdentifiersModel(this.dataStore)
-  private userRepository = new UserModel(this.dataStore)
 
   async findTheLatestValidPassports(
     userIds: string[],
@@ -79,7 +77,6 @@ export class PassportService {
     userId: string,
     dependantIds: string[],
     includesGuardian: boolean,
-    organizationIds: string[],
   ): Promise<Passport> {
     if (dependantIds.length) {
       const allDependants = (await this.userService.getAllDependants(userId)).map(({id}) => id)
@@ -101,33 +98,14 @@ export class PassportService {
           includesGuardian,
         }),
       )
-      .then(({validFrom, validUntil, ...passport}) => {
-        const validUntilUpdated = this.shortestTime(
-          passport.status as PassportStatuses,
-          safeTimestamp(validFrom),
-        )
-        const toCache = {
-          id: passport.id,
-          validFrom: safeTimestamp(validFrom),
-          validUntil: validUntilUpdated,
-          status: passport.status,
-          statusToken: passport.statusToken,
-        }
-
-        const allUserIds: string[] = [...passport.dependantIds]
-        if (passport.includesGuardian) allUserIds.push(passport.userId)
-
-        allUserIds.forEach((id) =>
-          organizationIds.forEach((organizationId) =>
-            this.userRepository.updateProperty(id, `cache.passports.${organizationId}`, toCache),
-          ),
-        )
-        return {
-          ...passport,
-          validFrom,
-          validUntil: firestore.Timestamp.fromDate(validUntilUpdated),
-        }
-      })
+      .then(({validFrom, validUntil, ...passport}) => ({
+        ...passport,
+        validFrom,
+        validUntil: firestore.Timestamp.fromDate(
+          // @ts-ignore
+          this.shortestTime(passport.status, validFrom.toDate()),
+        ),
+      }))
       .then((passport) => this.passportRepository.update(passport))
       .then(mapDates)
   }

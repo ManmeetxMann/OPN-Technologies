@@ -56,7 +56,7 @@ class UserController implements IRouteController {
 
       return location.attestationRequired
         ? await this.enterWithAttestation(res, location, accessToken)
-        : await this.enterWithoutAttestation(res, accessToken, organizationId)
+        : await this.enterWithoutAttestation(res, accessToken)
     } catch (error) {
       next(error)
     }
@@ -177,11 +177,7 @@ class UserController implements IRouteController {
     return res.status(400).json(actionFailed('Access denied for access-token'))
   }
 
-  private async enterWithoutAttestation(
-    res: Response,
-    accessToken: string,
-    organizationId: string,
-  ): Promise<unknown> {
+  private async enterWithoutAttestation(res: Response, accessToken: string): Promise<unknown> {
     const access = await this.accessService.findOneByToken(accessToken)
     const {userId} = access
     const allIds = Object.keys(access.dependants)
@@ -201,9 +197,7 @@ class UserController implements IRouteController {
 
     const user = await this.userService.findOne(userId)
     const {base64Photo} = user
-    const passport = await this.passportService.create(PassportStatuses.Pending, userId, [], true, [
-      organizationId,
-    ])
+    const passport = await this.passportService.create(PassportStatuses.Pending, userId, [], true)
     const newAccess = await this.accessService.handleEnter(access)
 
     return res.json(

@@ -153,13 +153,11 @@ class UserController implements IControllerBase {
         (isPassed(validUntil) && status === PassportStatuses.Proceed)
 
       if (!existingPassport || mustReset(existingPassport)) {
-        const user = await this.userService.findOne(userId)
         const newPassport = await this.passportService.create(
           PassportStatuses.Pending,
           userId,
           dependantIds,
           includeGuardian,
-          user.organizationIds,
         )
         res.json(actionSucceed(newPassport))
         return
@@ -227,7 +225,6 @@ class UserController implements IControllerBase {
         userId,
         dependantIds,
         includeGuardian,
-        [organizationId],
       )
 
       // Stats

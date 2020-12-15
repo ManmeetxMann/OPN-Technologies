@@ -2,19 +2,6 @@ import DataModel from '../../../common/src/data/datamodel.base'
 import {AdminProfile} from './admin'
 import {FieldValue} from '../utils/firebase'
 
-export type UserCache = {
-  passports?: Record<
-    string,
-    {
-      id: string
-      statusToken: string
-      status: 'pending' | 'proceed' | 'caution' | 'stop'
-      validFrom: Date | FieldValue
-      validUntil: Date | FieldValue
-    }
-  >
-}
-
 // TODO: DEPRECATE
 export type User = {
   id: string
@@ -27,7 +14,6 @@ export type User = {
   admin?: AdminProfile | FieldValue
   authUserId?: string | FieldValue
   delegates: null | string[]
-  cache?: UserCache
 }
 
 export type UserWithGroup = {
