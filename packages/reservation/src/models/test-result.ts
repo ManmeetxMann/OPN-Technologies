@@ -5,7 +5,8 @@ export type TestResultsUiDTO = {
   firstName: string
   lastName: string
   testType: string
-  dateOfAppointment: string
+  dateTime: string
+  barCode: string
 }
 
 export const testResultUiDTOResponse = (
@@ -15,5 +16,6 @@ export const testResultUiDTOResponse = (
   firstName: appointment.firstName,
   lastName: appointment.lastName,
   testType: 'PCR',
-  dateOfAppointment: (appointment as AppointmentUI).dateOfAppointment,
+  barCode: appointment.barCode,
+  dateTime: (appointment as AppointmentUI).dateTime,
 })
