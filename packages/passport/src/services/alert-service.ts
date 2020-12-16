@@ -1,7 +1,7 @@
 import {Topic} from '@google-cloud/pubsub'
 
 import {Attestation, AttestationAnswers} from '../models/attestation'
-import {Passport, PassportStatus, PassportStatuses} from '../models/passport'
+import {Passport, PassportStatuses} from '../models/passport'
 import {AttestationService} from '../services/attestation-service'
 
 import {AccessService} from '../../../access/src/service/access.service'
@@ -64,102 +64,96 @@ export class AlertService {
     return earliestDate
   }
 
-  async sendAlert(
-      passport: Passport,
-      attestation: Attestation,
-      locationId: string,
-    ): Promise<void> {
-    const { status, dependantIds, includesGuardian, userId } = passport
-    const { answers } = attestation
+  async sendAlert(passport: Passport, attestation: Attestation, locationId: string): Promise<void> {
+    const {status, dependantIds, includesGuardian, userId} = passport
+    const {answers} = attestation
 
     const {organizationId, questionnaireId} = await this.organizationService.getLocationById(
-        locationId,
-      )
+      locationId,
+    )
 
     const count = dependantIds.length + (includesGuardian ? 1 : 0)
 
-      const dateOfTest = this.findTestDate(answers)
-      if (userId) {
-        const endTime = now().valueOf()
-        // if we have a test datetime, start the trace 48 hours before the test date
-        // otherwise, start the trace 48 hours before now
-        // The frontends default to sending the very start of the day
-        const startTime = (dateOfTest ? dateOfTest.valueOf() : endTime) - TRACE_LENGTH
-        this.topic.publish(
-          Buffer.from(
-            JSON.stringify({
-              userId,
-              dependantIds: dependantIds,
-              includesGuardian,
-              passportStatus: status,
-              startTime,
-              endTime,
+    const dateOfTest = this.findTestDate(answers)
+    if (userId) {
+      const endTime = now().valueOf()
+      // if we have a test datetime, start the trace 48 hours before the test date
+      // otherwise, start the trace 48 hours before now
+      // The frontends default to sending the very start of the day
+      const startTime = (dateOfTest ? dateOfTest.valueOf() : endTime) - TRACE_LENGTH
+      this.topic.publish(
+        Buffer.from(
+          JSON.stringify({
+            userId,
+            dependantIds: dependantIds,
+            includesGuardian,
+            passportStatus: status,
+            startTime,
+            endTime,
+            organizationId,
+            locationId,
+            questionnaireId,
+            answers: answers,
+          }),
+        ),
+      )
+      const organization = await this.organizationService.findOneById(organizationId)
+      if (organization.enablePushNotifications) {
+        //do not await here, this is a side effect
+        this.userService.findHealthAdminsForOrg(organizationId).then(
+          async (healthAdmins: User[]): Promise<void> => {
+            const ids = healthAdmins.map(({id}) => id)
+            if (!ids && ids.length) {
+              return
+            }
+            const tokens = (await this.registrationService.findForUserIds(ids))
+              .map((reg) => reg.pushToken)
+              .filter((exists) => exists)
+            const relevantUserIds = [...dependantIds]
+            if (includesGuardian) {
+              relevantUserIds.push(userId)
+            }
+            const groups = await this.organizationService.getUsersGroups(
               organizationId,
-              locationId,
-              questionnaireId,
-              answers: answers,
-            }),
-          ),
-        )
-        const organization = await this.organizationService.findOneById(organizationId)
-        if (organization.enablePushNotifications) {
-          //do not await here, this is a side effect
-          this.userService.findHealthAdminsForOrg(organizationId).then(
-            async (healthAdmins: User[]): Promise<void> => {
-              const ids = healthAdmins.map(({id}) => id)
-              if (!ids && ids.length) {
-                return
-              }
-              const tokens = (await this.registrationService.findForUserIds(ids))
-                .map((reg) => reg.pushToken)
-                .filter((exists) => exists)
-              const relevantUserIds = [...dependantIds]
-              if (includesGuardian) {
-                relevantUserIds.push(userId)
-              }
-              const groups = await this.organizationService.getUsersGroups(
-                organizationId,
-                null,
-                relevantUserIds,
-              )
-              const allGroups = await this.organizationService.getGroups(organizationId)
-              const groupNames = groups.map(
-                (group) => allGroups.find(({id}) => id === group.groupId).name,
-              )
-              const stop = status === PassportStatuses.Stop
-              const defaultFormat = stop
-                ? 'Someone in "__GROUPNAME" received a STOP badge. Tap to view admin dashboard. (__ORGLABEL)'
-                : 'Someone in "__GROUPNAME" received a CAUTION badge. Tap to view admin dashboard. (__ORGLABEL)'
-              const organizationIcon = stop
-                ? organization.notificationIconStop
-                : organization.notificationIconCaution
-              const icon = organizationIcon ?? DEFAULT_IMAGE
+              null,
+              relevantUserIds,
+            )
+            const allGroups = await this.organizationService.getGroups(organizationId)
+            const groupNames = groups.map(
+              (group) => allGroups.find(({id}) => id === group.groupId).name,
+            )
+            const stop = status === PassportStatuses.Stop
+            const defaultFormat = stop
+              ? 'Someone in "__GROUPNAME" received a STOP badge. Tap to view admin dashboard. (__ORGLABEL)'
+              : 'Someone in "__GROUPNAME" received a CAUTION badge. Tap to view admin dashboard. (__ORGLABEL)'
+            const organizationIcon = stop
+              ? organization.notificationIconStop
+              : organization.notificationIconCaution
+            const icon = organizationIcon ?? DEFAULT_IMAGE
 
-              const formatString =
-                (stop
-                  ? organization.notificationFormatStop
-                  : organization.notificationFormatCaution) ?? defaultFormat
+            const formatString =
+              (stop
+                ? organization.notificationFormatStop
+                : organization.notificationFormatCaution) ?? defaultFormat
 
-              const organizationLabel = organization.key.toString()
+            const organizationLabel = organization.key.toString()
 
-              groupNames.forEach((name) =>
-                sendMessage(
-                  '⚠️ Potential Exposure',
-                  formatString
-                    .replace('__GROUPNAME', name)
-                    .replace('__ORGLABEL', organizationLabel),
-                  icon,
-                  tokens.map((token) => ({token, data: {}})),
-                ),
-              )
-            },
-          )
-        }
-      } else {
-        console.warn(
-          `Could not execute a trace of attestation ${attestation.id} because userId was not provided`,
+            groupNames.forEach((name) =>
+              sendMessage(
+                '⚠️ Potential Exposure',
+                formatString.replace('__GROUPNAME', name).replace('__ORGLABEL', organizationLabel),
+                icon,
+                tokens.map((token) => ({token, data: {}})),
+              ),
+            )
+          },
         )
       }
-      await this.accessService.incrementAccessDenied(locationId, count)
+    } else {
+      console.warn(
+        `Could not execute a trace of attestation ${attestation.id} because userId was not provided`,
+      )
+    }
+    await this.accessService.incrementAccessDenied(locationId, count)
   }
 }
