@@ -89,7 +89,7 @@ async function trimFirstNameLastNameAndFixLastName(
     trimedLastName = user.lastNameInitial.trim()
   }
 
-  if (user.firstName == trimedFirstName && user.lastName == trimedLastName) {
+  if (user.firstName === trimedFirstName && user.lastName === trimedLastName) {
     //console.warn(`${userId} has no spaces for firstName and lastName`)
     return Promise.resolve()
   }
