@@ -4,6 +4,7 @@ import {
   AppointmentDTO,
   AppointmentDBModel,
   AppoinmentBarCodeSequenceDBModel,
+  AppointmentFilters,
 } from '../models/appoinment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppoinmentsDBRepository} from '../respository/appointment-db.repository'
@@ -19,6 +20,57 @@ export class AppoinmentService {
       .then((appoinment: AppointmentDBModel) => {
         return appoinment
       })
+  }
+
+  async getAppointmentById(id: number): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.getAppointmentById(id)
+  }
+
+  async getAppointmentByOrganizationIdAndSearchParams(
+    organizationId: string,
+    dateOfAppointment: string,
+    searchQuery = '',
+  ): Promise<AppointmentDTO[]> {
+    const filters: AppointmentFilters = {organizationId, showall: true}
+    if (dateOfAppointment) {
+      filters.maxDate = dateOfAppointment
+      filters.minDate = dateOfAppointment
+    }
+    if (!searchQuery) {
+      return this.appoinmentSchedulerRepository.getManyAppointments(filters)
+    } else {
+      const searchPromises = []
+      const searchArray = searchQuery.split(' ')
+      if (searchArray.length === 1) {
+        searchPromises.push(
+          this.appoinmentSchedulerRepository.getManyAppointments({
+            firstName: searchArray[0],
+            ...filters,
+          }),
+          this.appoinmentSchedulerRepository.getManyAppointments({
+            lastName: searchArray[0],
+            ...filters,
+          }),
+        )
+      } else {
+        searchPromises.push(
+          this.appoinmentSchedulerRepository.getManyAppointments({
+            firstName: searchArray[0],
+            lastName: searchArray[1],
+            ...filters,
+          }),
+          this.appoinmentSchedulerRepository.getManyAppointments({
+            firstName: searchArray[1],
+            lastName: searchArray[0],
+            ...filters,
+          }),
+        )
+      }
+
+      return Promise.all(searchPromises).then((appointmentsArray) => {
+        return appointmentsArray.flat()
+      })
+    }
   }
 
   async getAppoinmentByDate(startDate: string, endDate: string): Promise<AppointmentDTO[]> {
@@ -40,7 +92,8 @@ export class AppoinmentService {
         return id.concat(barCodeNumber.toString())
       })
   }
-  async addBarcodeAppointment(id: number, barCode: string): Promise<AppointmentDTO> {
-    return this.appoinmentSchedulerRepository.addBarcodeAppointment(id, barCode)
+
+  async updateAppoinment(id: number, data: unknown): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.updateAppoinment(id, data)
   }
 }

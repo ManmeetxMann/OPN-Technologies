@@ -39,6 +39,7 @@ abstract class EncryptedDataModel<T extends HasId> implements IDataModel<T> {
   delete = this.dataModel.delete
   count = this.dataModel.count
   fetchPage = this.dataModel.fetchPage
+  fetchByCursor = this.dataModel.fetchByCursor
   fetchAllWithPagination = this.dataModel.fetchAllWithPagination
   getQueryFindWhereArrayInMapContainsAny = this.dataModel.getQueryFindWhereArrayInMapContainsAny
   getQueryFindWhereArrayInMapContains = this.dataModel.getQueryFindWhereArrayInMapContains

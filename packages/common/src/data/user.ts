@@ -1,7 +1,6 @@
 import DataModel from '../../../common/src/data/datamodel.base'
 import {AdminProfile} from './admin'
 import {FieldValue} from '../utils/firebase'
-import DataStore from './datastore'
 
 // TODO: DEPRECATE
 export type User = {
@@ -14,6 +13,7 @@ export type User = {
   email?: string
   admin?: AdminProfile | FieldValue
   authUserId?: string | FieldValue
+  delegates: null | string[]
 }
 
 export type UserWithGroup = {
@@ -34,7 +34,8 @@ export type UserFilter = {
 }
 
 // TODO: DEPRECATE
-export type UserDependant = {
+export type UserDependant = User
+export type LegacyDependant = {
   id: string
   firstName: string
   lastName: string
@@ -45,14 +46,4 @@ export type UserDependant = {
 export class UserModel extends DataModel<User> {
   public readonly rootPath = 'users'
   readonly zeroSet = []
-}
-
-// TODO: DEPRECATE
-export class UserDependantModel extends DataModel<UserDependant> {
-  public rootPath
-  readonly zeroSet = []
-  constructor(dataStore: DataStore, userId: string) {
-    super(dataStore)
-    this.rootPath = `users/${userId}/dependants`
-  }
 }

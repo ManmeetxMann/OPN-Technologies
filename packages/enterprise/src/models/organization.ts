@@ -41,6 +41,7 @@ export type OrganizationGroup = {
   name: string
   checkInDisabled: boolean
   priority?: number
+  isPrivate: boolean
 }
 
 // A many-to-x representation of Users belonging to a group
@@ -71,6 +72,7 @@ export type OrganizationLocation = {
   } & OrganizationConfiguration)[]
   validFrom?: string
   validUntil?: string
+  nfcGateOnly?: boolean
 } & OrganizationConfiguration
 
 export type OrganizationConfiguration = {
@@ -95,3 +97,17 @@ export type OrganizationUsersGroupMoveOperation = {
   data: OrganizationUsersGroupMoveData[]
   dryRun: boolean
 }
+
+export type OrganizationGroupDTO = {
+  id: string
+  name: string
+  checkInDisabled: boolean
+  isPrivate: boolean
+}
+
+export const organizationGroupDTOResponse = (group: OrganizationGroup): OrganizationGroupDTO => ({
+  id: group.id,
+  name: group.name,
+  checkInDisabled: group.checkInDisabled,
+  isPrivate: group.isPrivate,
+})

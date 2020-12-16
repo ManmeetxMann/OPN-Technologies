@@ -31,21 +31,24 @@ export class MagicLinkService implements MessagingService<MagicLinkMessage> {
   private firebaseAuth = FirebaseManager.getInstance().getAdmin().auth()
 
   send(message: MagicLinkMessage): Promise<unknown> {
+    return this.generateMagicLink(message).then((signInLink) =>
+      this.emailService.send({
+        templateId: magicLinkEmailTemplateId,
+        to: [{email: message.email, name: message.name}],
+        params: {
+          link: signInLink,
+          token: message.meta.shortCode,
+        },
+      }),
+    )
+  }
+
+  generateMagicLink(message: MagicLinkMessage): Promise<string> {
     const additionalQueryParams = encodeQueryParams(message.meta ?? {})
     const url = additionalQueryParams
       ? `${magicLinkSettings.url}?${additionalQueryParams}`
       : magicLinkSettings.url
 
-    return this.firebaseAuth
-      .generateSignInWithEmailLink(message.email, {...magicLinkSettings, url})
-      .then((signInLink) =>
-        this.emailService.send({
-          templateId: magicLinkEmailTemplateId,
-          to: [{email: message.email, name: message.name}],
-          params: {
-            link: signInLink,
-          },
-        }),
-      )
+    return this.firebaseAuth.generateSignInWithEmailLink(message.email, {...magicLinkSettings, url})
   }
 }

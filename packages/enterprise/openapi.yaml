@@ -25,13 +25,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -150,6 +150,8 @@ components:
           type: string
         validUntil:
           type: string
+        nfcGateOnly:
+          type: boolean
       required:
         - title
         - attestationRequired
@@ -219,6 +221,34 @@ components:
         - attestationRequired
         - type
 
+    ResponseOfUpdateGroup:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationGroup'
+        page:
+          type: number
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
     OrganizationGroup:
       type: object
       additionalProperties: false
@@ -227,6 +257,8 @@ components:
           type: string
         name:
           type: string
+        isPrivate:
+          type: boolean
         checkInDisabled:
           type: boolean
           default: false
@@ -234,6 +266,7 @@ components:
           type: number
       required:
         - name
+        - isPrivate
 
     OrganizationConnectionRequestV1:
       type: object
@@ -416,6 +449,15 @@ components:
           items:
             type: string
           description: Organizaiton ids to become a NFC Gate Kiosk admin. Must be provided can be empty.
+        managementAdminForOrganizationId:
+          type: string
+          description: Organization IDs for admin dashboard to give access to user management/group management
+        testReportsAdminForOrganizationId:
+          type: string
+          description: Organization IDs for admin dashboard to to see test reports
+        testAppointmentsAdminForOrganizationId:
+          type: string
+          description: Organization IDs for admin dashboard to to see test appoinments and print bar codes
 
         groupIds:
           type: array
@@ -588,6 +630,21 @@ components:
           type: array
           items:
             type: string
+        appliesToUsers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
+              base64Photo:
+                type: string
+              group:
+                $ref: '#/components/schemas/OrganizationGroup'
         locationId:
           type: string
         attestationTime:
@@ -671,7 +728,12 @@ components:
           type: string
         showReporting:
           type: boolean
-
+        managementAdminForOrganizationId:
+          type: string
+        testReportsAdminForOrganizationId:
+          type: string
+        testAppointmentsAdminForOrganizationId:
+          type: string
     User:
       type: object
       deprecated: true
@@ -745,9 +807,15 @@ components:
           description: Photo URL
         groupName:
           type: string
+        groupId:
+          type: string
         memberId:
           type: string
           nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
       required:
         - firstName
         - lastName
@@ -822,6 +890,31 @@ components:
         - organizationId
         - photo
 
+    UpdateUserByAdminRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          nullable: false
+        lastName:
+          type: string
+          nullable: false
+        registrationId:
+          type: string
+          nullable: true
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+        memberId:
+          type: string
+          nullable: true
+        groupId:
+          type: string
+          nullable: true
+        organizationId:
+          type: string
+          nullable: true
 
     MigrateUserRequest:
       type: object
@@ -969,13 +1062,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1005,13 +1098,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1031,13 +1124,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1059,13 +1152,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1085,13 +1178,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1113,13 +1206,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1141,13 +1234,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1222,13 +1315,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1250,13 +1343,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1278,13 +1371,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1295,9 +1388,19 @@ components:
       additionalProperties: false
       properties:
         data:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserV3'
+          type: object
+          additionalProperties: false
+          properties:
+            users:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserV3'
+            last:
+              type: string
+            next:
+              type: string
+        page:
+          type: number
         status:
           type: object
           additionalProperties: false
@@ -1306,13 +1409,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1334,13 +1437,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1362,13 +1465,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1390,13 +1493,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1417,13 +1520,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1438,6 +1541,8 @@ components:
           properties:
             tagId:
               type: string
+            legacyTagId:
+              type: string
         status:
           type: object
           additionalProperties: false
@@ -1446,13 +1551,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1473,13 +1578,13 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
@@ -1501,19 +1606,55 @@ components:
               type: string
               enum:
                 [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
                 ]
             message:
               nullable: true
               type: string
         page:
           type: number
+
+    ResponseOfUsersByOrganizationV4:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserWithGroup'
+        last:
+          type: string
+          description: the previous given "from" index to fetch the previous page of the same query
+          nullable: true
+        next:
+          type: string
+          description: the new "from" index to fetch the next page of the same query
+          nullable: true
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
 
   responses:
     Response:
@@ -1682,6 +1823,12 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: includeNfcGates
+          schema:
+            type: boolean
+          description: Filters to only include NFC gates
+          required: false
       responses:
         '200':
           description: Successfully retrieved
@@ -2447,6 +2594,41 @@ paths:
                 $ref: '#/components/schemas/ResponseOfAdminProfile'
 
   /enterprise/admin/api/v3/users:
+    get:
+      summary: Organization users list
+      description: Get users by organizationId
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 0
+          required: true
+        - in: query
+          name: perPage
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsersByOrganization'
     post:
       summary: Create User
       description: Creates a user profile with `CreateUserByAdminRequest` payload and returns a `User`
@@ -2465,38 +2647,70 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
 
-
-  /enterprise/admin/api/v3/users/{organizationId}:
+  /enterprise/admin/api/v4/users:
     get:
-      summary: Organization users list
-      description: Get users by organizationId
+      summary: Fetch matching users within an organization
+      description: Returns a page of users matching filter for an organization
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: path
+        - in: query
           name: organizationId
           schema:
             type: string
           required: true
         - in: query
-          name: page
+          name: from
+          description: The `next` document ID given by the server at the previous request. Therefor optional for the very first request
+          required: false
           schema:
-            type: integer
-            minimum: 0
-          required: true
+            type: string
         - in: query
-          name: perPage
+          name: limit
+          description: The limit number of items. Defaults to 20 and caped to 50
+          required: false
           schema:
             type: integer
             minimum: 1
-          required: true
+            maximum: 50
+        - in: query
+          name: query
+          description: Email, firstname or lastname. Will be case-sensitive evaluated.
+          schema:
+            type: string
+          required: false
       responses:
         '200':
-          description: Successfully returned
+          description: Successfully found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseOfUsersByOrganization'
+                $ref: '#/components/schemas/ResponseOfUsersByOrganizationV4'
+
+  /enterprise/admin/api/v3/users/{userId}:
+    put:
+      summary: Update User
+      description: Update a user profile with `UpdateUserByAdminRequest` payload and returns a `User`
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserByAdminRequest'
+      responses:
+        '200':
+          description: Successfully Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUser'
 
   /enterprise/admin/api/v3/tags:
     post:
@@ -2534,6 +2748,10 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: legacyMode
+          schema:
+            type: boolean
       responses:
         '200':
           description: Successfully returned
@@ -2609,6 +2827,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUser'
 
+  /enterprise/api/v3/users/search:
+    get:
+      summary: Search users list
+      description: Find `User`(s) by admin
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Account management
+      parameters:
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsersByOrganization'
+
   /enterprise/api/v3/users/migration:
     post:
       summary: Profile Migration
@@ -2658,6 +2898,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+
+  /enterprise/api/v3/users/auth/short-code:
+    post:
+      summary: User authentication
+      description: Sends a magic-link to authenticate by short-code the user
+      tags:
+        - Account management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                email:
+                  type: string
+                  nullable: false
+                organizationId:
+                  type: string
+                  nullable: false
+                shortCode:
+                  type: string
+                  nullable: false
+              required:
+                - email
+                - organizationId
+                - shortCode
+      responses:
+        '200':
+          description: Successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  magicLink:
+                    type: string
+                    nullable: false
 
   /enterprise/api/v3/users/auth/confirmation:
     post:
@@ -2789,6 +3065,97 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+
+  /enterprise/admin/api/v3/organizations/{organizationId}/groups/{groupId}/users:
+    get:
+      summary: Get users by group Id
+      description: Get users within an group
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: from
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+      responses:
+        '200':
+          description: Successfull retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUsers'
+  /enterprise/admin/api/v3/organizations/{organizationId}/groups/{groupId}:
+    put:
+      summary: Update group by groupId
+      description: Update group data
+      parameters:
+        - in: path
+          name: groupId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties: false
+              properties:
+                isPrivate:
+                  type: string
+                  nullable: false
+                name:
+                  type: string
+                  nullable: false
+              required:
+                - name
+                - isPrivate
+      responses:
+        '200':
+          description: Successfull updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfUpdateGroup'
+
+  /enterprise/admin/api/v3/organizations/{organizationId}/groups:
+    get:
+      summary: Get groups by organizationId
+      description: Get users
+      parameters:
+        - in: path
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationGroups'
 
   /enterprise/api/v3/users/self/groups:
     get:

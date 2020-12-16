@@ -1,9 +1,8 @@
 import path from 'path'
 
-import {ResultTypes, TestResultsDTOForEmail} from '../models/appoinment'
 import {TableLayouts, Content} from '../../../common/src/service/reports/pdf-types'
-
 import {Config} from '../../../common/src/utils/config'
+import {TestResultsDTOForEmail, ResultTypes} from '../models/test-result'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
@@ -27,7 +26,8 @@ const generate = (
   params: TestResultsDTOForEmail,
   resultDate: string,
 ): {content: Content[]; tableLayouts: TableLayouts} => {
-  const isPositive = params.result === ResultTypes.Positive
+  const isPositive =
+    params.result === ResultTypes.Positive || params.result === ResultTypes.Detected2019nCoV
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
   return {
@@ -149,7 +149,7 @@ const generate = (
               },
               {
                 text:
-                  '\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 482-0042.\n\n',
+                  '\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.\n\n',
               },
             ]
           : [
@@ -160,7 +160,7 @@ const generate = (
               },
               {
                 text:
-                  ' Your results do not detect SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness.  A negative test means that the virus was not present in the sample we collected. Your results suggest you were negative at the time of testing. *\n\n* Although the possibility is low, a false negative result should be considered if you have had recent exposure to the virus along with symptoms consistent with COVID-19.\n\nIf you are the patron receiving the test and require further information, please visit the City of Toronto Public Health: https://www.toronto.ca/home/covid-19 \n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 482-0042.',
+                  ' Your results do not detect SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness.  A negative test means that the virus was not present in the sample we collected. Your results suggest you were negative at the time of testing. *\n\n* Although the possibility is low, a false negative result should be considered if you have had recent exposure to the virus along with symptoms consistent with COVID-19.\n\nIf you are the patron receiving the test and require further information, please visit the City of Toronto Public Health: https://www.toronto.ca/home/covid-19 \n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.',
               },
             ],
         margin: [0, isPositive ? 20 : 30, 0, 0],

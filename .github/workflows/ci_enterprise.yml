@@ -1,4 +1,4 @@
-name: OPN Enterprise Service CD Action
+name: Deploy Enterprise Service
 
 on:
   push:
@@ -6,125 +6,26 @@ on:
       - "packages/common/**"
       - "packages/enterprise/**"
       - ".github/workflows/ci_enterprise.yml"
-    branches: [ development ]
+      - ".github/actions/**"
+    branches: 
+      - master
+    tags:
+      - infra-dev-enterprise-*
+      - preprod-enterprise-*
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
-    - name: Setup Node.js
-      uses: actions/setup-node@v1
+        
+    - uses: ./.github/actions/deploy-gae
       with:
-        node-version: 10.x
-    - name: Setup GCloud
-      if: github.ref == 'refs/heads/development'
-      uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
-      with:
-        project_id: ${{ secrets.DEV_GCP_PROJECT_ID }}
-        service_account_key: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY }}
-    - run: npm install
-    - run: npm run install-all
-    - run: npm run lint-all
-    # - run: npm run test-all
-    - run: npm run cd-build-enterprise
-    - name: Create Environment Parameters
-      if: github.ref == 'refs/heads/development'
-      uses: DamianReeves/write-file-action@v1.0
-      with:
-        path: ./packages/enterprise/dist/common/.env
-        contents: |
-          # Environment Config for Dev Access
-          # Firebase:
-          FIREBASE_ADMINSDK_SA=${{ secrets.DEV_GCP_FIREBASEADMIN_SA_KEY_NOCR }}
-
-          # Firebase Auth Sign App Code Settings:
-          AUTH_EMAIL_SIGNIN_LINK=https://devopn.page.link/auth-finished
-          AUTH_EMAIL_SIGNIN_IOS=com.opentech.stayopn
-          AUTH_EMAIL_SIGNIN_ANDROID=com.opntech.stayopn
-          AUTH_EMAIL_SIGNIN_DOMAIN=devopn.page.link
-
-          # Email / SMTP Provider:
-          EMAIL_PROVIDER_API_KEY=${{ secrets.DEV_EMAILPROVIDER_KEY }}
-          EMAIL_PROVIDER_API_URL=https://api.sendinblue.com/v3/smtp/email
-          EMAIL_FROM_ADDRESS=no-reply@email.stayopn.net
-          EMAIL_FROM_NAME="StayOPN Team"
-          TEST_RESULT_BCC_EMAIL=${{ secrets.TEST_RESULT_BCC_EMAIL }}
-
-          # Links
-          LINK_PRIVACYPOLICY=https://dev.pages.opnte.ch/privacy-policy.html
-          LINK_TERMSOFSERVICE=https://dev.pages.opnte.ch/terms-of-service.html
-
-          # Domains 
-          DOMAIN_ACCESS=https://access-staging-dot-opn-platform-dev.nn.r.appspot.com/
-          DOMAIN_ENTERPRISE=https://enterprise-staging-dot-opn-platform-dev.nn.r.appspot.com/
-          DOMAIN_LOOKUP=https://lookup-staging-dot-opn-platform-dev.nn.r.appspot.com/
-          DOMAIN_PASSPORT=https://passport-staging-dot-opn-platform-dev.nn.r.appspot.com/
-          DOMAIN_REGISTRY=https://registry-staging-dot-opn-platform-dev.nn.r.appspot.com/
-
-          # App Engine
-          PUBSUB_TRACE_TOPIC=tracing
-          PUBSUB_TRACE_SUBSCRIPTION=executeTrace
-          GAE_PROJECT_NAME=opn-platform-dev
-
-          # Timezones
-          DEFAULT_TIME_ZONE=America/Toronto
-
-          # Passport Specific 
-          PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS=12
-          PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS=7
-          STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_WEEKS=2
-
-          # Features
-          FEATURE_CREATE_TOKEN_PERMISSIVE_MODE=enabled
-          FEATURE_PARENT_LOCATION_ID_MAY_BE_MISSING=enabled
-          FEATURE_ONLY_EMAIL_SUPPORT=enabled
-
-          # Auth Specific
-          APIDOCS_PASSWORD=${{ secrets.DEV_APIDOCS_PWD }}
-          RESERVATION_PASSWORD=${{ secrets.DEV_RESERVATION_PWD }}
-
-          # Enterprise Specific
-          PDF_GENERATION_EMAIL_THRESHOLD=100
-          GAE_LOCATION=northamerica-northeast1
-          QUEUE_NAME=longrunningtasks
-          REPORT_BUCKET_NAME=opn-reports-staging
-
-          # Accuity
-          ACUITY_SCHEDULER_USERNAME=${{ secrets.ACUITY_SCHEDULER_USERNAME }}
-          ACUITY_SCHEDULER_PASSWORD=${{ secrets.ACUITY_SCHEDULER_PASSWORD }}
-          ACUITY_SCHEDULER_API_URL=https://acuityscheduling.com
-          ACUITY_FIELD_BARCODE=${{ secrets.ACUITY_FIELD_BARCODE }}
-          ACUITY_FIELD_DATE_OF_BIRTH=${{ secrets.ACUITY_FIELD_DATE_OF_BIRTH }}
-          ACUITY_FIELD_NURSE_NAME=${{ secrets.ACUITY_FIELD_NURSE_NAME }}
-        write-mode: overwrite
-    - run: npm run cd-deploy-enterprise
-    - run: npm run cd-build-apidocs
-    - name: Create Environment Parameters for APIDocs
-      if: github.ref == 'refs/heads/development'
-      uses: DamianReeves/write-file-action@v1.0
-      with:
-        path: ./packages/apidocs/dist/common/.env
-        contents: |
-          # Environment Config for Dev Access
-          # Auth Specific
-          APIDOCS_PASSWORD=${{ secrets.DEV_APIDOCS_PWD }}
-        write-mode: overwrite
-    - run: npm run cd-deploy-apidocs
-    - name: Let Slack know
-      uses: 8398a7/action-slack@v3
-      with:
-        status: custom
-        fields: workflow,job,commit,repo,ref,author,took
-        custom_payload: |
-          {
-            username: 'action-slack',
-            icon_emoji: ':octocat:',
-            attachments: [{
-              color: '${{ job.status }}' === 'success' ? 'good' : '${{ job.status }}' === 'failure' ? 'danger' : 'warning',
-              text: `Latest Build to succeeded. Check API Docs: https://apidocs-dot-opn-platform-dev.nn.r.appspot.com`,
-            }]
-          }
+        service_name: "enterprise"
+      name: Build & Deploy to GAE
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          dev_service_account: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY}}
+          infra_dev_service_account: ${{ secrets.INFRA_DEV_GCP_CLOUDBUILD_SA_KEY}}
+          preprod_service_account: ${{ secrets.PREPROD_GCP_CLOUDBUILD_SA_KEY }}
+          prod_service_account: ${{ secrets.PROD_GCP_CLOUDBUILD_SA_KEY }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -124,6 +124,27 @@ document.addEventListener('DOMContentLoaded', () => {
   submitAgainBtn.addEventListener('click', async () => {
     const data = {
       barCode: getValueByElem(barCodeElem),
+      result: getValueByElem(resultElem),
+      famEGene: getValueByElem(famEGeneElem),
+      famCt: getValueByElem(famCtElem),
+      calRed61RdRpGene: getValueByElem(calRed61RdRpGeneElem),
+      calRed61Ct: getValueByElem(calRed61CtElem),
+      quasar670NGene: getValueByElem(quasar670NGeneElem),
+      quasar670Ct: getValueByElem(quasar670CtElem),
+      hexIC: getValueByElem(hexICElem),
+      hexCt: getValueByElem(hexCtElem),
+      resultDate: getValueByElem(resultDate),
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      email: userData.email,
+      phone: userData.phone,
+      dateOfBirth: userData.dateOfBirth,
+      registeredNursePractitioner: userData.registeredNursePractitioner,
+      dateOfAppointment: userData.dateOfAppointment,
+      appointmentId: userData.appointmentId,
+      timeOfAppointment: userData.timeOfAppointment,
+      id: getValueByElem(barCodeElem),
+      packageCode: userData.packageCode,
     }
 
     try {
@@ -167,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   resultSelect.addEventListener('change', ({target}) => {
     const {value: resultVal} = target
-    if (resultVal === 'Positive') {
+    if (resultVal === 'Positive' || resultVal === '2019-nCoV Detected') {
       famEGeneElem.value = '+'
       famCtElem.value = ''
       calRed61RdRpGeneElem.value = '+'

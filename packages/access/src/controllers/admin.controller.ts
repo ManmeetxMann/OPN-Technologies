@@ -236,14 +236,16 @@ class AdminController implements IRouteController {
   enterOrExitUsingATag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Get request inputs
-      const {tagId, locationId} = req.body
+      const {tagId, locationId, legacyMode} = req.body
 
-      // Get tag
-      const tag = await this.tagService.getById(tagId)
+      // Get tag appropriately
+      const tag =
+        legacyMode === true
+          ? await this.tagService.getByLegacyId(tagId)
+          : await this.tagService.getById(tagId)
       if (!tag) {
         throw new ResourceNotFoundException(`NFC Tag not found`)
       }
-
       // Save org
       const organizationId = tag.organizationId
 
@@ -260,11 +262,25 @@ class AdminController implements IRouteController {
         replyInsufficientPermission(res)
         return
       }
+      const user = await this.userService.findOne(tag.userId)
+      const parentUserId = user.delegates?.length ? user.delegates[0] : null
+      const isADependant = !!parentUserId
+      const latestPassport = await this.passportService.findLatestPassport(tag.userId, parentUserId)
+      // Make sure it's valid
+      if (
+        !latestPassport ||
+        ![parentUserId, tag.userId].includes(latestPassport.userId) ||
+        latestPassport.status !== 'proceed'
+      ) {
+        replyUnauthorizedEntry(res)
+        return
+      }
 
       // Let's get the access assuming that user is already Proceed
       // Note we are only looking for ones that authenticated by this admin account
       const access = await this.accessService.findLatest(
         tag.userId,
+        parentUserId,
         locationId,
         now(),
         authenticatedUserId,
@@ -272,23 +288,15 @@ class AdminController implements IRouteController {
 
       // Check if access does not exist or if they've exited
       // Note we are not checking for entered at as assuming that the enteredAt is there :-)
-      if (!access || !!access.exitAt) {
-        // Fetch latest passport
-        const passport = await this.passportService.findTheLatestValidPassport(tag.userId)
-
-        // Make sure it's valid
-        if (!passport || tag.userId !== passport.userId || passport.status !== 'proceed') {
-          replyUnauthorizedEntry(res)
-          return
-        }
-
+      const shouldEnter = !access || (isADependant ? access.dependants[tag.userId] : access)?.exitAt
+      if (shouldEnter) {
         // Create new Access
         const accessToken = await this.accessTokenService.createToken(
-          passport.statusToken,
+          latestPassport.statusToken,
           locationId,
-          tag.userId,
-          [],
-          true,
+          isADependant ? parentUserId : tag.userId,
+          isADependant ? [tag.userId] : [],
+          !isADependant,
           authenticatedUserId,
         )
 
@@ -296,18 +304,24 @@ class AdminController implements IRouteController {
         res.json(actionSucceed(accessForEntering))
       } else {
         // Get Latest Passport (as they need a valid access)
-        const passport = await this.passportService.findOneByToken(access.statusToken)
+        const specificPassport = await this.passportService.findOneByToken(access.statusToken)
 
         // Make sure it's valid
-        if (!passport || tag.userId !== passport.userId || passport.status !== 'proceed') {
+        if (
+          !specificPassport ||
+          ![parentUserId, tag.userId].includes(latestPassport.userId) ||
+          specificPassport.status !== 'proceed'
+        ) {
           replyUnauthorizedEntry(res)
           return
         }
 
         // Decide
-        const accessForEnteringOrExiting = !access.enteredAt
-          ? await this.accessService.handleEnter(access)
-          : await this.accessService.handleExit(access)
+        const shouldExit =
+          access && (isADependant ? access.dependants[tag.userId] : access)?.enteredAt
+        const accessForEnteringOrExiting = shouldExit
+          ? await this.accessService.handleExit(access)
+          : await this.accessService.handleEnter(access)
 
         res.json(actionSucceed(accessForEnteringOrExiting))
       }

@@ -1,11 +1,12 @@
 import moment from 'moment-timezone'
+import * as _ from 'lodash'
 
 import TraceRepository, {DailyReportRepository} from '../repository/trace.repository'
 import type {ExposureReport, StopStatus} from '../models/trace'
 import type {SinglePersonAccess} from '../models/attendance'
 import DataStore from '../../../common/src/data/datastore'
 import {AdminApprovalModel} from '../../../common/src/data/admin'
-import {UserModel} from '../../../common/src/data/user'
+import {UserModel, User} from '../../../common/src/data/user'
 import {getExposureSection, getHeaderSection, UserGroupData} from './exposureTemplate'
 import type {Answers} from './exposureTemplate'
 import {send} from '../../../common/src/service/messaging/send-email'
@@ -79,6 +80,7 @@ export default class TraceListener {
     this.orgRepo = new OrganizationModel(dataStore)
     this.userApprovalRepo = new AdminApprovalModel(dataStore)
     this.userRepo = new UserModel(dataStore)
+    this.locRepo = new AllLocationsModel(dataStore)
     this.questionnaireService = new QuestionnaireService()
     this.organizationService = new OrganizationService()
     this.userService = new UserService()
@@ -153,8 +155,8 @@ export default class TraceListener {
         const startOfDay = moment(dailyReport.date).tz(timeZone).toDate().valueOf()
         const endOfDay = moment(dailyReport.date).tz(timeZone).add(1, 'day').toDate().valueOf()
         // TODO: this could be made more efficient with some sorting
-        const overlapping = otherUsersAccesses
-          .map((access) =>
+        const overlapping = _.flatten(
+          otherUsersAccesses.map((access) =>
             mainUserAccesses
               .map((contaminated) => {
                 const intersection = overlap(contaminated, access, startOfDay, endOfDay)
@@ -181,8 +183,8 @@ export default class TraceListener {
                 includedOverlapJSONs.add(json)
                 return true
               }),
-          )
-          .reduce((flattened, page) => [...flattened, ...page], [])
+          ),
+        )
 
         overlapping.forEach((overlap) => {
           if (overlap.dependant) {
@@ -296,7 +298,7 @@ export default class TraceListener {
     //     ),
     //   )
     // ).reduce((flattened, page) => [...flattened, ...page], [])
-    const organizationAdmins = (
+    const organizationAdmins = _.flatten(
       await Promise.all(
         organizationPages.map((page) =>
           this.userApprovalRepo.findWhereArrayInMapContainsAny(
@@ -305,64 +307,73 @@ export default class TraceListener {
             page,
           ),
         ),
-      )
-    ).reduce((flattened, page) => [...flattened, ...page], [])
-    const users = (
-      await Promise.all(userPages.map((page) => this.userRepo.findWhereIdIn(page)))
-    ).reduce((flattened, page) => [...flattened, ...page], [])
+      ),
+    )
+    const users: User[] = _.flatten(
+      await Promise.all(userPages.map((page) => this.userRepo.findWhereIdIn(page))),
+    )
 
     const organizationData = await Promise.all(
       allOrganizations.map(async (orgId) => {
         return {
           org: await this.organizationService.findOneById(orgId),
-          groups: await this.organizationService.getGroups(orgId),
+          groups: (await this.organizationService.getGroups(orgId)).reduce((groupLookup, group) => {
+            groupLookup[group.id] = group
+            return groupLookup
+          }, {} as Record<string, OrganizationGroup>),
         }
       }),
     )
 
     const organizationLookup: Record<
       string,
-      {org: Organization; groups: OrganizationGroup[]}
-    > = organizationData.reduce(
-      (lookup, data) => ({
-        ...lookup,
-        [data.org.id]: data,
-      }),
-      {},
-    )
+      {org: Organization; groups: Record<string, OrganizationGroup>}
+    > = organizationData.reduce((lookup, data) => {
+      lookup[data.org.id] = data
+      return lookup
+    }, {})
     // TODO: this is an extremely expensive loop. See issue #429 in github
     const allUsersWithDependantsAndGroups = await Promise.all(
       users.map(async (user) => {
         return {
           id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
           orgId: user.organizationIds[0],
           groups: await this.organizationService.getUsersGroups(user.organizationIds[0], null, [
             user.id,
           ]),
-          dependants: await this.userService.getAllDependants(user.id),
+          delegates: user.delegates ?? [],
         }
       }),
     )
 
-    const userDependantLookup: Record<string, UserGroupData> = allUsersWithDependantsAndGroups
-      .map((lookup) => ({
+    const userDependantLookup: Record<string, UserGroupData> = _.flatten(
+      allUsersWithDependantsAndGroups.map((lookup) => ({
         id: lookup.id, // a userId
         orgId: lookup.orgId,
         groupNames: lookup.groups.map(
-          (membership) =>
-            organizationLookup[lookup.orgId].groups.find((group) => group.id === membership.groupId)
-              ?.name,
+          (membership) => organizationLookup[lookup.orgId].groups[membership.groupId]?.name,
         ),
-        dependants: lookup.dependants.map((dep) => ({
-          id: dep.id,
-          firstName: dep.firstName,
-          lastName: dep.lastName,
-          groupName: organizationLookup[lookup.orgId].groups.find(
-            (group) => group.id === dep.groupId,
-          )?.name,
-        })),
-      }))
-      .reduce((lookup, data) => ({...lookup, [data.id]: data}), {})
+        delegates: lookup.delegates,
+        dependants: [],
+      })),
+    )
+
+    const keys = Object.keys(userDependantLookup)
+    keys.forEach((userId) => {
+      const user = userDependantLookup[userId]
+      if (!user.delegates?.length) {
+        // not a dependant
+        return
+      }
+      user.delegates.forEach((delegateId) => {
+        const delegate = userDependantLookup[delegateId]
+        if (delegate) {
+          delegate.dependants.push(user)
+        }
+      })
+    })
 
     const sourceUser = users.find((u) => u.id === userId)
 
@@ -416,10 +427,7 @@ export default class TraceListener {
       .filter((u) => !u.expired)
       .map((user) => ({
         email: user.profile.email,
-        orgReports: user.profile.superAdminForOrganizationIds.reduce(
-          (flat, id) => [...flat, ...(reportsForOrganization[id] || [])],
-          [],
-        ),
+        orgReports: _.flatten(user.profile.superAdminForOrganizationIds),
         locReports: [],
         // TODO: we aren't sending reports to location admins for now, but
         // when we do we need to make sure to deduplicate here before we reenable

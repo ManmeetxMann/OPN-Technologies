@@ -1,8 +1,10 @@
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed, of} from '../../../common/src/utils/response-wrapper'
+import {
+  actionReplyInsufficientPermission,
+  actionSucceed,
+} from '../../../common/src/utils/response-wrapper'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 import {User, UserDependant} from '../../../common/src/data/user'
-import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {authMiddleware} from '../../../common/src/middlewares/auth'
 import {AdminProfile} from '../../../common/src/data/admin'
@@ -39,12 +41,18 @@ import {CloudTasksClient} from '@google-cloud/tasks'
 import * as _ from 'lodash'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
-const replyInsufficientPermission = (res: Response) =>
-  res
-    .status(403)
-    .json(
-      of(null, ResponseStatusCodes.AccessDenied, 'Insufficient permissions to fulfil the request'),
-    )
+
+const dataConversionAndSortGroups = (groups: OrganizationGroup[]): OrganizationGroup[] => {
+  return groups
+    .sort((a, b) => {
+      // if a has higher priority, return a negative number (a comes first)
+      const bias = (b.priority || 0) - (a.priority || 0)
+      return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
+    })
+    .map((group) => ({...group, isPrivate: group.isPrivate ?? false}))
+}
+const replyInsufficientPermission = (res: Response): Response =>
+  res.status(403).json(actionReplyInsufficientPermission())
 
 class OrganizationController implements IControllerBase {
   public router = Router()
@@ -234,7 +242,10 @@ class OrganizationController implements IControllerBase {
   getLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {parentLocationId} = req.query
+      const {parentLocationId, includeNfcGates} = req.query as {
+        parentLocationId?: string
+        includeNfcGates?: boolean
+      }
       const locations = await this.organizationService.getLocations(
         organizationId,
         parentLocationId as string | null,
@@ -243,9 +254,17 @@ class OrganizationController implements IControllerBase {
         locations.map(async (location) => this.populateZones(location, organizationId)),
       )
 
-      locations.sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))
+      // Filter NFC gates out
+      const filteredLocations = includeNfcGates
+        ? locations
+        : locations.filter((location) => {
+            return !('nfcGateOnly' in location && location.nfcGateOnly === true)
+          })
 
-      res.json(actionSucceed(locations))
+      // Sort
+      filteredLocations.sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))
+
+      res.json(actionSucceed(filteredLocations))
     } catch (error) {
       next(error)
     }
@@ -295,7 +314,7 @@ class OrganizationController implements IControllerBase {
   getGroupsForPublic = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const groups = await this.getGroups(organizationId)
+      const groups = await this.getPublicGroups(organizationId)
       res.json(actionSucceed(groups))
     } catch (error) {
       next(error)
@@ -570,11 +589,9 @@ class OrganizationController implements IControllerBase {
         (queryFrom as string) ??
         moment(now()).tz(timeZone).startOf('day').subtract(2, 'days').toISOString()
       const orgPromise = this.organizationService.findOneById(organizationId)
-      const lookup = await this.reportService.getLookups(
-        new Set([(parentUserId as string) ?? (userId as string)]),
-        new Set(parentUserId ? [userId as string] : []),
-        organizationId,
-      )
+      // @ts-ignore these are strings
+      const allIds: string[] = parentUserId ? [parentUserId, userId] : [userId]
+      const lookup = await this.reportService.getLookups(new Set(allIds), organizationId)
       const questionnaireIds = new Set<string>()
       Object.values(lookup.locationsLookup).forEach((location) => {
         if (location.questionnaireId) {
@@ -628,14 +645,11 @@ class OrganizationController implements IControllerBase {
 
       const memberships = await this.organizationService.getUsersGroups(organizationId, groupId)
       const userIds = new Set<string>()
-      const dependantIds = new Set<string>()
       memberships.forEach((membership) => {
         if (membership.parentUserId) {
           userIds.add(membership.parentUserId)
-          dependantIds.add(membership.userId)
-        } else {
-          userIds.add(membership.userId)
         }
+        userIds.add(membership.userId)
       })
       console.log(`${memberships.length} memberships found`)
       const membershipLimit = parseInt(Config.get('PDF_GENERATION_EMAIL_THRESHOLD') ?? '100', 10)
@@ -687,7 +701,7 @@ class OrganizationController implements IControllerBase {
       }
 
       const organizationPromise = this.organizationService.findOneById(organizationId)
-      const lookups = await this.reportService.getLookups(userIds, dependantIds, organizationId)
+      const lookups = await this.reportService.getLookups(userIds, organizationId)
       const questionnaireIds = new Set<string>()
       Object.values(lookups.locationsLookup).forEach((location) => {
         if (location.questionnaireId) {
@@ -705,12 +719,7 @@ class OrganizationController implements IControllerBase {
 
       const allTemplates = await Promise.all(
         memberships
-          .filter((membership) => {
-            if (membership.parentUserId) {
-              return lookups.dependantsLookup[membership.userId]
-            }
-            return lookups.usersLookup[membership.userId]
-          })
+          .filter((membership) => lookups.usersLookup[membership.userId])
           .map((membership) =>
             this.reportService
               .getUserReportTemplate(
@@ -736,7 +745,7 @@ class OrganizationController implements IControllerBase {
         throw new HttpException('There is no historical data available for this group.')
       }
       const tableLayouts = allTemplates.find(({tableLayouts}) => tableLayouts !== null).tableLayouts
-      const content = _.flatten(allTemplates)
+      const content = _.flatten(_.map(allTemplates, 'content'))
       console.log('generating stream')
       const pdfStream = this.pdfService.generatePDFStream(content, tableLayouts)
       res.contentType('application/pdf')
@@ -943,13 +952,12 @@ class OrganizationController implements IControllerBase {
 
       // ids of all the users we need more information about
       const allUserIds = new Set<string>()
-      const allDependantIds = new Set<string>()
       relevantTraces.forEach(({exposures}) =>
         exposures.forEach((exposure) => {
           exposure.overlapping.forEach((overlap) => {
             allUserIds.add(overlap.userId)
             if (overlap.dependant) {
-              allDependantIds.add(overlap.dependant.id)
+              allUserIds.add(overlap.dependant.id)
             }
           })
         }),
@@ -960,7 +968,7 @@ class OrganizationController implements IControllerBase {
         statusesLookup,
         usersLookup: usersById,
         membershipLookup,
-      } = await this.reportService.getLookups(allUserIds, allDependantIds, organizationId)
+      } = await this.reportService.getLookups(allUserIds, organizationId)
 
       // WARNING: adding properties to models may not cause them to appear here
       const result = relevantTraces.map(({date, duration, exposures}) => ({
@@ -1027,9 +1035,8 @@ class OrganizationController implements IControllerBase {
       // ids of all the users we need more information about
       // dependant info is already included in the trace
       const allUserIds = new Set<string>()
-      const allDependantIds = new Set<string>()
       rawTraces.forEach((exposure) => {
-        ;(exposure.dependantIds ?? []).forEach((id) => allDependantIds.add(id))
+        ;(exposure.dependantIds ?? []).forEach((id) => allUserIds.add(id))
         allUserIds.add(exposure.userId)
       })
 
@@ -1037,9 +1044,8 @@ class OrganizationController implements IControllerBase {
         locationsLookup: locationsById,
         statusesLookup,
         usersLookup: usersById,
-        dependantsLookup: allDependantsById,
         membershipLookup: groupsByUserOrDependantId,
-      } = await this.reportService.getLookups(allUserIds, allDependantIds, organizationId)
+      } = await this.reportService.getLookups(allUserIds, organizationId)
 
       // WARNING: adding properties to models may not cause them to appear here
       const result = rawTraces.map(({date, duration, exposures}) => ({
@@ -1072,9 +1078,7 @@ class OrganizationController implements IControllerBase {
                 start: overlap.start?.toDate() ?? null,
                 // @ts-ignore this is a firestore timestamp, not a string
                 end: overlap.end?.toDate() ?? null,
-                dependant: overlap.sourceDependantId
-                  ? allDependantsById[overlap.sourceDependantId]
-                  : null,
+                dependant: overlap.sourceDependantId ? usersById[overlap.sourceDependantId] : null,
               })),
           }))
           .filter(({overlapping}) => overlapping.length),
@@ -1092,14 +1096,28 @@ class OrganizationController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {userId, from, to} = req.query as UserContactTraceReportRequest
+      const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
+      const primaryUserId = parentUserId ?? userId
 
       // fetch attestation array in the time period
-      const [attestations, locations] = await Promise.all([
+      const [
+        allAttestations,
+        locations,
+        {guardian, dependants},
+        parentMembership,
+        dependantMemberships,
+        groups,
+      ] = await Promise.all([
         this.attestationService.getAttestationsInPeriod(userId, from, to),
         this.organizationService.getLocations(organizationId),
+        this.userService.getUserAndDependants(primaryUserId),
+        this.organizationService.getUsersGroups(organizationId, null, [primaryUserId]),
+        this.organizationService.getDependantGroups(organizationId, primaryUserId),
+        this.organizationService.getGroups(organizationId),
       ])
-      const attestedLocationIds = new Set<string>(_.uniq(attestations.map((att) => att.locationId)))
+      const allLocationIds = new Set(locations.map(({id}) => id))
+      const attestationsInOrg = allAttestations.filter((att) => allLocationIds.has(att.locationId))
+      const attestedLocationIds = new Set(attestationsInOrg.map((att) => att.locationId))
       const questionnaireIdsByLocationId: Record<string, string> = locations.reduce(
         (lookup, location) => {
           if (!attestedLocationIds.has(location.id)) {
@@ -1113,8 +1131,16 @@ class OrganizationController implements IControllerBase {
         },
         {},
       )
+
       const questionnaireIds: string[] = _.uniq(Object.values(questionnaireIdsByLocationId))
       const questionnaires = await this.questionnaireService.getQuestionnaires(questionnaireIds)
+
+      const allMemberships = [...parentMembership, ...dependantMemberships]
+      const groupsById: Record<string, OrganizationGroup> = groups.reduce((lookup, group) => {
+        lookup[group.id] = group
+        return lookup
+      }, {})
+
       const questionnairesById: Record<string, Questionnaire> = questionnaires.reduce(
         (lookup, questionnaire) => ({
           ...lookup,
@@ -1123,13 +1149,31 @@ class OrganizationController implements IControllerBase {
         {},
       )
 
-      const response = attestations.map(
+      const response = attestationsInOrg.map(
         // @ts-ignore 'timestamps' does not exist in typescript
-        ({timestamps, attestationTime, locationId, ...passThrough}) => ({
+        ({timestamps, attestationTime, locationId, appliesTo, ...passThrough}) => ({
           ...passThrough,
           locationId,
           attestationTime: safeTimestamp(attestationTime),
           questions: questionnairesById[questionnaireIdsByLocationId[locationId]]?.questions ?? {},
+          appliesTo,
+          appliesToUsers: appliesTo.map((appliesToId) => {
+            const user =
+              appliesToId === primaryUserId
+                ? guardian
+                : dependants.find((dep) => dep.id === appliesToId)
+            return {
+              id: appliesToId,
+              firstName: user?.firstName ?? 'deleted',
+              lastName: user?.lastName ?? 'user',
+              base64Photo: (user as User)?.base64Photo ?? '',
+              group:
+                groupsById[
+                  allMemberships.find((membership) => membership.userId === appliesToId)?.groupId ??
+                    ''
+                ] ?? null,
+            }
+          }),
         }),
       )
       res.json(actionSucceed(response))
@@ -1161,11 +1205,12 @@ class OrganizationController implements IControllerBase {
 
       const dependentsWithGroup = await Promise.all(
         dependents.map(async (dependent: UserDependant) => {
-          const group = await this.organizationService.getGroup(organizationId, dependent.groupId)
+          const group = await this.organizationService.getUserGroup(organizationId, dependent.id)
           const dependentStatus = await this.attestationService.latestStatus(dependent.id)
 
           return {
             ...dependent,
+            groupId: group.id,
             groupName: group.name,
             status: dependentStatus,
           }
@@ -1173,16 +1218,28 @@ class OrganizationController implements IControllerBase {
       )
 
       const response = {
-        parent: parentUserId
-          ? {
-              id: parent.id,
-              firstName: parent.firstName,
-              lastName: parent.lastName,
-              groupName: parentGroup.name,
-              base64Photo: parent.base64Photo,
-              status: parentStatus,
-            }
-          : null,
+        parent: {
+          id: parent.id,
+          firstName: parent.firstName,
+          lastName: parent.lastName,
+          groupId: parentGroup.id,
+          groupName: parentGroup.name,
+          base64Photo: parent.base64Photo,
+          status: parentStatus,
+        },
+        // Frontends break if this is not provided
+        // However, this should be null when parent is the user
+        // in the query args
+        // parent: parentUserId
+        //   ? {
+        //       id: parent.id,
+        //       firstName: parent.firstName,
+        //       lastName: parent.lastName,
+        //       groupName: parentGroup.name,
+        //       base64Photo: parent.base64Photo,
+        //       status: parentStatus,
+        //     }
+        //   : null,
         dependents: dependentsWithGroup.filter((dependant) => dependant.id !== userId),
       }
 
@@ -1193,15 +1250,13 @@ class OrganizationController implements IControllerBase {
   }
 
   private async getGroups(organizationId: string): Promise<OrganizationGroup[]> {
-    const groups = await this.organizationService.getGroups(organizationId).catch((error) => {
-      throw new HttpException(error.message)
-    })
-    groups.sort((a, b) => {
-      // if a has higher priority, return a negative number (a comes first)
-      const bias = (b.priority || 0) - (a.priority || 0)
-      return bias || a.name.localeCompare(b.name, 'en', {numeric: true})
-    })
-    return groups
+    return this.organizationService.getGroups(organizationId).then(dataConversionAndSortGroups)
+  }
+
+  private async getPublicGroups(organizationId: string): Promise<OrganizationGroup[]> {
+    return this.organizationService
+      .getPublicGroups(organizationId)
+      .then(dataConversionAndSortGroups)
   }
 }
 
