@@ -1,5 +1,6 @@
 /**
  * Trim FirstName, LastName in UserCollection
+ * Copy lastNameInitial to LastName if LastName empty
  */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
@@ -52,7 +53,7 @@ async function updateAllUsers(): Promise<Result[]> {
 
     for (const user of usersSnapshot.docs) {
       const promises = []
-      promises.push(trimFirstNameLastName(user))
+      promises.push(trimFirstNameLastNameAndFixLastName(user))
       const result = await promiseAllSettled(promises)
       results.push(...result)
     }
@@ -60,21 +61,36 @@ async function updateAllUsers(): Promise<Result[]> {
   return results
 }
 
-async function trimFirstNameLastName(
+async function trimFirstNameLastNameAndFixLastName(
   snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
 ) {
   const userId = snapshot.id
   const user = snapshot.data()
   const hasFirstName = user.hasOwnProperty('firstName')
   const hasLastName = user.hasOwnProperty('lastName')
-  const trimedFirstName = user.firstName.trim()
-  const trimedLastName = user.lastName.trim()
-  if (!hasFirstName || !hasLastName) {
-    console.warn(`${userId} missing firstName or lastName`)
+  const hasLastNameInitial = user.hasOwnProperty('lastNameInitial')
+  if (!hasFirstName) {
+    console.warn(`${userId} missing firstName`)
     return Promise.resolve()
   }
+
+  if (!hasLastName && !hasLastNameInitial) {
+    console.warn(`${userId} missing lastName and lastNameInitial`)
+    return Promise.resolve()
+  }
+
+  const trimedFirstName = user.firstName.trim()
+  let trimedLastName = ""
+  if (hasLastName) {
+    trimedLastName = user.lastName.trim()
+  }else{
+    copiedLastNameInitial += 1
+    console.warn(`${userId} copied lastNameInitial to lastName`)
+    trimedLastName = user.lastNameInitial.trim()
+  }
+  
   if (user.firstName == trimedFirstName && user.lastName == trimedLastName) {
-    console.warn(`${userId} has no spaces for firstName and lastName`)
+    //console.warn(`${userId} has no spaces for firstName and lastName`)
     return Promise.resolve()
   }
 
@@ -86,7 +102,7 @@ async function trimFirstNameLastName(
         lastName: trimedLastName,
         timestamps: {
           migrations: {
-            trimFirstNameLastName: firestore.FieldValue.serverTimestamp(),
+            trimFirstNameLastNameAndFixLastName: firestore.FieldValue.serverTimestamp(),
           },
         },
       },
@@ -112,6 +128,7 @@ async function main() {
           successCount += 1
         }
       } else {
+        console.log(result)
         failureCount += 1
       }
     })
@@ -121,6 +138,7 @@ async function main() {
     console.error('Error running migration', error)
   } finally {
     console.log(`Failed: ${failureCount} `)
+    console.log(`CopiedLastNameInitial: ${copiedLastNameInitial} `)
     console.log(`Total Records Checked: ${totalCount} `)
   }
 }
@@ -130,4 +148,5 @@ const limit = Number(Config.get('MIGRATION_DOCUMENTS_LIMIT')) || 500
 let successCount = 0
 let failureCount = 0
 let totalCount = 0
+let copiedLastNameInitial = 0
 main().then(() => console.log('Script Complete \n'))
