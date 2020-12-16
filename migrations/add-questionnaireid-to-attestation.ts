@@ -48,7 +48,7 @@ async function updateAllAttestation(): Promise<Result[]> {
 
   while (hasMore) {
     const attestationsSnapshot = await database
-      .collection('attestation')
+      .collection('attestations')
       .offset(offset)
       .limit(limit)
       .get()
