@@ -18,7 +18,7 @@ import * as _ from 'lodash'
 import {UserGroupRepository} from '../repository/user-group.repository'
 import {OrganizationUsersGroupModel} from '../repository/organization.repository'
 import {UserModel} from '../../../common/src/data/user'
-import {isEmail, titleCase} from '../../../common/src/utils/utils'
+import {isEmail, titleCase, cleanStringField} from '../../../common/src/utils/utils'
 import {CursoredUsersRequestFilter} from '../types/user-organization-request'
 
 export class UserService {
@@ -34,9 +34,9 @@ export class UserService {
       if (!!existedUser) throw new ResourceAlreadyExistsException(source.email)
 
       return this.userRepository.add({
-        firstName: source.firstName,
-        lastName: source.lastName,
-        email: source.email,
+        firstName: cleanStringField(source.firstName),
+        lastName: cleanStringField(source.lastName),
+        email: cleanStringField(source.email),
         photo: source.photo ?? null,
         phone: source.phone ?? null,
         registrationId: source.registrationId ?? null,
@@ -91,8 +91,8 @@ export class UserService {
     return this.getById(id).then((target) =>
       this.userRepository.update({
         ...target,
-        firstName: source.firstName ?? target.firstName,
-        lastName: source.lastName ?? target.lastName,
+        firstName: cleanStringField(source.firstName ?? target.firstName),
+        lastName: cleanStringField(source.lastName ?? target.lastName),
         photo: source.photo ?? target.photo ?? null,
       }),
     )
@@ -102,8 +102,8 @@ export class UserService {
     return this.getById(id).then((target) =>
       this.userRepository.update({
         ...target,
-        firstName: source.firstName ?? target.firstName,
-        lastName: source.lastName ?? target.lastName,
+        firstName: cleanStringField(source.firstName ?? target.firstName),
+        lastName: cleanStringField(source.lastName ?? target.lastName),
         photo: source.photo ?? target.photo ?? null,
         registrationId: source.registrationId ?? target.registrationId ?? null,
         phone: source.phone ?? target.phone ?? null,
