@@ -24,6 +24,7 @@ export type Organization = {
   // The icon for push notifications to use
   notificationIconCaution?: string
   notificationIconStop?: string
+  enableTemperatureCheck?: boolean
 }
 
 export enum OrganizationType {
