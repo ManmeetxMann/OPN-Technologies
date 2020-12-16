@@ -21,3 +21,8 @@ export const titleCase = (str: string): string => {
 }
 
 export const isValidDate = (date: string): boolean => !isNaN(Date.parse(date))
+
+export const cleanStringField = (str: string | null): string => {
+  if (!str) return str
+  return str.trim()
+}

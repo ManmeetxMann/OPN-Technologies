@@ -11,14 +11,7 @@ import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
 import {PackageService} from '../services/package.service'
-import {
-  TestResultsConfirmationRequest,
-  AppointmentDTO,
-  CheckAppointmentRequest,
-  SendAndSaveTestResultsRequest,
-  ResultTypes,
-  TestResultsDTOForEmail,
-} from '../models/appoinment'
+import {AppointmentDTO, CheckAppointmentRequest} from '../models/appoinment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -26,6 +19,12 @@ import {HttpException} from '../../../common/src/exceptions/httpexception'
 
 import CSVValidator from '../validations/csv.validations'
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
+import {
+  TestResultsConfirmationRequest,
+  SendAndSaveTestResultsRequest,
+  TestResultsDTOForEmail,
+  ResultTypes,
+} from '../models/test-result'
 
 class AdminController implements IControllerBase {
   public path = ''

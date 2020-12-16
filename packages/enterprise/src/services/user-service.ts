@@ -18,7 +18,7 @@ import * as _ from 'lodash'
 import {UserGroupRepository} from '../repository/user-group.repository'
 import {OrganizationUsersGroupModel} from '../repository/organization.repository'
 import {UserModel} from '../../../common/src/data/user'
-import {isEmail, titleCase} from '../../../common/src/utils/utils'
+import {isEmail, titleCase, cleanStringField} from '../../../common/src/utils/utils'
 import {CursoredUsersRequestFilter} from '../types/user-organization-request'
 
 export class UserService {
@@ -34,9 +34,9 @@ export class UserService {
       if (!!existedUser) throw new ResourceAlreadyExistsException(source.email)
 
       return this.userRepository.add({
-        firstName: source.firstName,
-        lastName: source.lastName,
-        email: source.email,
+        firstName: cleanStringField(source.firstName),
+        lastName: cleanStringField(source.lastName),
+        email: cleanStringField(source.email),
         photo: source.photo ?? null,
         phone: source.phone ?? null,
         registrationId: source.registrationId ?? null,
@@ -91,8 +91,8 @@ export class UserService {
     return this.getById(id).then((target) =>
       this.userRepository.update({
         ...target,
-        firstName: source.firstName ?? target.firstName,
-        lastName: source.lastName ?? target.lastName,
+        firstName: cleanStringField(source.firstName ?? target.firstName),
+        lastName: cleanStringField(source.lastName ?? target.lastName),
         photo: source.photo ?? target.photo ?? null,
       }),
     )
@@ -102,8 +102,8 @@ export class UserService {
     return this.getById(id).then((target) =>
       this.userRepository.update({
         ...target,
-        firstName: source.firstName ?? target.firstName,
-        lastName: source.lastName ?? target.lastName,
+        firstName: cleanStringField(source.firstName ?? target.firstName),
+        lastName: cleanStringField(source.lastName ?? target.lastName),
         photo: source.photo ?? target.photo ?? null,
         registrationId: source.registrationId ?? target.registrationId ?? null,
         phone: source.phone ?? target.phone ?? null,
@@ -126,6 +126,17 @@ export class UserService {
 
     const sa0lowercase = searchArray[0].toLowerCase()
     const sa0titlecase = titleCase(searchArray[0])
+    const combinations = {
+      names: ['firstName', 'lastName'],
+      values: [
+        sa0lowercase,
+        `${sa0lowercase} `,
+        ` ${sa0lowercase} `,
+        sa0titlecase,
+        `${sa0titlecase} `,
+        ` ${sa0titlecase} `,
+      ],
+    }
 
     if (searchArray.length === 1) {
       if (email) {
@@ -137,22 +148,7 @@ export class UserService {
         )
       } else {
         searchPromises.push(
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('firstName', '==', sa0lowercase)
-            .fetch(),
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('lastName', '==', sa0lowercase)
-            .fetch(),
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('firstName', '==', sa0titlecase)
-            .fetch(),
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('lastName', '==', sa0titlecase)
-            .fetch(),
+          ...this.userRepository.searchQueryBuilder(organizationId, [], combinations),
         )
       }
     } else if (searchArray.length === 2) {
@@ -160,26 +156,11 @@ export class UserService {
         searchArray.splice(searchArray.indexOf(email), 1)
 
         searchPromises.push(
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('email', '==', email)
-            .where('firstName', '==', sa0lowercase)
-            .fetch(),
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('email', '==', email)
-            .where('lastName', '==', sa0lowercase)
-            .fetch(),
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('email', '==', email)
-            .where('firstName', '==', sa0titlecase)
-            .fetch(),
-          this.userRepository
-            .getQueryFindWhereArrayContains('organizationIds', organizationId)
-            .where('email', '==', email)
-            .where('lastName', '==', sa0titlecase)
-            .fetch(),
+          ...this.userRepository.searchQueryBuilder(
+            organizationId,
+            [{name: 'email', value: email}],
+            combinations,
+          ),
         )
       } else {
         searchPromises.push(

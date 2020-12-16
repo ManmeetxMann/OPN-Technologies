@@ -1,9 +1,8 @@
 import path from 'path'
 
-import {ResultTypes, TestResultsDTOForEmail} from '../models/appoinment'
 import {TableLayouts, Content} from '../../../common/src/service/reports/pdf-types'
-
 import {Config} from '../../../common/src/utils/config'
+import {TestResultsDTOForEmail, ResultTypes} from '../models/test-result'
 
 const tableLayouts: TableLayouts = {
   mainTable: {

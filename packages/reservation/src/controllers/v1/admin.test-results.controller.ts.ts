@@ -11,7 +11,7 @@ import {
   AppointmentDTO,
   AppointmentUI,
 } from '../../models/appoinment'
-import {testResultUiDTOResponse} from '../../models/test-result'
+import {ResultTypes, testResultUiDTOResponse} from '../../models/test-result'
 
 class AdminController implements IControllerBase {
   public path = '/reservation/admin'
@@ -48,7 +48,7 @@ class AdminController implements IControllerBase {
           const result = await this.testResultsService
             .getResults(appointment.barCode)
             .then(({result}) => result)
-            .catch(() => 'Pending')
+            .catch(() => ResultTypes.Pending)
 
           return {
             ...testResultUiDTOResponse(appointment),
