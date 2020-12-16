@@ -35,7 +35,7 @@ export class UserService {
     const cleanUser = user
     cleanUser.firstName = cleanStringField(user.firstName)
     cleanUser.lastName = cleanStringField(user.lastName)
-    cleanUser.email = cleanStringField(user.email)
+    if (cleanUser.email) cleanUser.email = cleanStringField(user.email)
     return cleanUser
   }
 
