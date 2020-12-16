@@ -1,25 +1,42 @@
 import DataStore from '../../data/datastore'
 import {User, UserDependant, UserFilter, UserModel, LegacyDependant} from '../../data/user'
 import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
+import {cleanStringField} from '../../../../common/src/utils/utils'
 
 export class UserService {
   private dataStore = new DataStore()
   private userRepository = new UserModel(this.dataStore)
 
   create(user: User): Promise<User> {
-    return this.userRepository.add(user)
+    return this.userRepository.add(this.cleanUserData(user))
   }
 
   async update(user: User): Promise<void> {
-    await this.userRepository.update(user)
+    await this.userRepository.update(this.cleanUserData(user))
   }
 
   async updateProperty(id: string, fieldName: string, fieldValue: unknown): Promise<void> {
-    await this.userRepository.updateProperty(id, fieldName, fieldValue)
+    // Clean inputs first (note: this is ugly)
+    const value =
+      fieldName === 'firstName' || fieldName === 'lastName'
+        ? cleanStringField(fieldValue as string)
+        : fieldValue
+    await this.userRepository.updateProperty(id, fieldName, value)
   }
 
   async updateProperties(id: string, fields: Record<string, unknown>): Promise<void> {
+    // Clean inputs first (note: this is ugly)
+    if ('firstName' in fields) fields['firstName'] = cleanStringField(fields['firstName'] as string)
+    if ('lastName' in fields) fields['lastName'] = cleanStringField(fields['lastName'] as string)
     await this.userRepository.updateProperties(id, fields)
+  }
+
+  private cleanUserData(user: User): User {
+    const cleanUser = user
+    cleanUser.firstName = cleanStringField(user.firstName)
+    cleanUser.lastName = cleanStringField(user.lastName)
+    cleanUser.email = cleanStringField(user.email)
+    return cleanUser
   }
 
   findAllBy({userIds}: UserFilter): Promise<User[]> {
@@ -99,8 +116,8 @@ export class UserService {
   ): Promise<UserDependant[]> {
     const parent = await this.findOne(userId)
     const dependantsToAdd = dependants.map((dependant) => ({
-      firstName: dependant.firstName,
-      lastName: dependant.lastName,
+      firstName: cleanStringField(dependant.firstName),
+      lastName: cleanStringField(dependant.lastName),
       delegates: [userId],
       registrationId: '',
       base64Photo: '',
