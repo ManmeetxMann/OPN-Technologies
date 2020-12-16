@@ -9,6 +9,7 @@ import {PassportService} from '../../../services/passport-service'
 import {TemperatureService} from '../../../services/temperature-service'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import {AlertService} from '../../../services/alert-service'
 import {AttestationService} from '../../../services/attestation-service'
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
@@ -18,6 +19,7 @@ class TemperatureAdminController implements IControllerBase {
   public path = '/passport/admin/api/v1'
   public temperatureService = new TemperatureService()
   public passportService = new PassportService()
+  private alertService = new AlertService()
   private attestationService = new AttestationService()
 
   constructor() {
@@ -62,7 +64,13 @@ class TemperatureAdminController implements IControllerBase {
         validUntil: this.passportService.shortestTime(status, now()),
       }
 
-      await this.passportService.create(status, data.userId, [], false)
+      const passport = await this.passportService.create(status, data.userId, [], false, [organizationId])
+
+      if (status === TemperatureStatuses.Stop) {
+        const atestation = await this.attestationService.statusByLocationAndUserId(locationId, userId)
+
+        await this.alertService.sendAlert(passport, atestation, locationId)
+      }
 
       res.json(actionSucceed(response))
     } catch (error) {
