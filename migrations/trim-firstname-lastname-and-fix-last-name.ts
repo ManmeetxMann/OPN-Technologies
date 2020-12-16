@@ -80,15 +80,15 @@ async function trimFirstNameLastNameAndFixLastName(
   }
 
   const trimedFirstName = user.firstName.trim()
-  let trimedLastName = ""
+  let trimedLastName = ''
   if (hasLastName) {
     trimedLastName = user.lastName.trim()
-  }else{
+  } else {
     copiedLastNameInitial += 1
     console.warn(`${userId} copied lastNameInitial to lastName`)
     trimedLastName = user.lastNameInitial.trim()
   }
-  
+
   if (user.firstName == trimedFirstName && user.lastName == trimedLastName) {
     //console.warn(`${userId} has no spaces for firstName and lastName`)
     return Promise.resolve()
