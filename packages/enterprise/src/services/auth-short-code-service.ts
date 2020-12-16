@@ -17,7 +17,7 @@ export class AuthShortCodeService {
     email: string,
     organizationId: string,
     userId: string,
-  ): Promise<string> {
+  ): Promise<AuthShortCode> {
     const shortCode = nanoid()
     const expiresAt = moment().add(1, 'hours').toDate()
     const magicLink = await this.magicLinkService.generateMagicLink({
@@ -37,9 +37,7 @@ export class AuthShortCodeService {
 
     if (authShortCode) data['id'] = authShortCode.id
 
-    await this.authShortCodeRepository.add(data)
-
-    return shortCode
+    return this.authShortCodeRepository.add(data)
   }
 
   async findAuthShortCode(email: string, organizationId: string): Promise<AuthShortCode> {

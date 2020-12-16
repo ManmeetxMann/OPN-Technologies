@@ -152,13 +152,21 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
     const {email, organizationId, userId} = req.body as AuthenticationRequest
     await organizationService.getByIdOrThrow(organizationId)
 
-    const shortCode = await authShortCodeService.generateAndSaveShortCode(
+    const authShortCode = await authShortCodeService.generateAndSaveShortCode(
       email,
       organizationId,
       userId,
     )
 
-    await magicLinkService.send({email, meta: {organizationId, userId, shortCode}})
+    await magicLinkService.send({
+      email,
+      meta: {
+        organizationId,
+        userId,
+        shortCode: authShortCode.shortCode,
+        signInLink: authShortCode.magicLink,
+      },
+    })
 
     res.json(actionSucceed())
   } catch (error) {

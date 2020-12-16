@@ -14,6 +14,7 @@ export type MagicLinkMessage = {
   email: string
   name?: string
   meta?: Record<string, string>
+  signInLink?: string
 }
 
 const magicLinkSettings: auth.ActionCodeSettings = {
@@ -31,16 +32,14 @@ export class MagicLinkService implements MessagingService<MagicLinkMessage> {
   private firebaseAuth = FirebaseManager.getInstance().getAdmin().auth()
 
   send(message: MagicLinkMessage): Promise<unknown> {
-    return this.generateMagicLink(message).then((signInLink) =>
-      this.emailService.send({
-        templateId: magicLinkEmailTemplateId,
-        to: [{email: message.email, name: message.name}],
-        params: {
-          link: signInLink,
-          token: message.meta.shortCode,
-        },
-      }),
-    )
+    return this.emailService.send({
+      templateId: magicLinkEmailTemplateId,
+      to: [{email: message.email, name: message.name}],
+      params: {
+        link: message.meta.signInLink,
+        token: message.meta.shortCode,
+      },
+    })
   }
 
   generateMagicLink(message: MagicLinkMessage): Promise<string> {
