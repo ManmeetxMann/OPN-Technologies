@@ -16,8 +16,6 @@
 		"deploy-all": "lerna run deploy --stream",
 		"emulate-firebase": "cd firebase-emulation && firebase emulators:start --only firestore,pubsub --import=./rawState/",
 		"save-firebase": "cd firebase-emulation && firebase emulators:export",
-            "make-migrations": "lerna run migrations-up --stream",
-            "rollback-migrations": "lerna run migrations-down --stream",
 		"cd-build-registry": "lerna run --scope @opn/registry build --stream",
 		"cd-build-passport": "lerna run --scope @opn/passport build --stream",
 		"cd-build-enterprise": "lerna run --scope @opn/enterprise build --stream",
@@ -40,7 +38,8 @@
 		"migration:update-admin-approval-emails": "ts-node ./migrations/update-admin-approval-emails",
 		"migration:update-user-emails": "ts-node ./migrations/update-user-emails",
 		"migration:update-organizationids-for-users": "ts-node ./migrations/update-organizationids-for-users",
-		"migration:trim-firstname-lastname-and-fix-last-name": "ts-node ./migrations/trim-firstname-lastname-and-fix-last-name"
+		"migration:trim-firstname-lastname-and-fix-last-name": "ts-node ./migrations/trim-firstname-lastname-and-fix-last-name",
+		"migration:migrate-attestation-questionaireid-field": "ts-node ./migrations/add-questionnaireid-to-attestation"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
