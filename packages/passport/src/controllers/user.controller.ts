@@ -212,6 +212,12 @@ class UserController implements IControllerBase {
       if (includeGuardian) {
         appliesTo.push(userId)
       }
+
+      const organization = await this.organizationService.findOneById(organizationId)
+      if (passportStatus === PassportStatuses.TemperatureCheckRequired && !organization.enableTemperatureCheck) {
+        throw new BadRequestException('Temperature check is not included for this organization')
+      }
+
       const saved = await this.attestationService.save({
         answers,
         locationId,

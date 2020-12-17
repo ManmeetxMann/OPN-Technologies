@@ -12,13 +12,14 @@ export type Passport = {
   includesGuardian: boolean
 }
 
-export type PassportStatus = 'pending' | 'proceed' | 'caution' | 'stop'
+export type PassportStatus = 'pending' | 'proceed' | 'caution' | 'stop' | 'temperature_check_required'
 
 export enum PassportStatuses {
   Pending = 'pending',
   Proceed = 'proceed',
   Caution = 'caution',
   Stop = 'stop',
+  TemperatureCheckRequired = 'temperature_check_required'
 }
 
 export class PassportModel extends DataModel<Passport> {
