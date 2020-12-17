@@ -10,6 +10,7 @@ import {TemperatureService} from '../../../services/temperature-service'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {AttestationService} from '../../../services/attestation-service'
+import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
 
@@ -19,6 +20,7 @@ class TemperatureAdminController implements IControllerBase {
   public temperatureService = new TemperatureService()
   public passportService = new PassportService()
   private attestationService = new AttestationService()
+  public organizationService = new OrganizationService()
 
   constructor() {
     this.initRoutes()
@@ -34,6 +36,14 @@ class TemperatureAdminController implements IControllerBase {
 
       if (!temperatureThreshold) {
         throw new BadRequestException('Threshold is not specified in config file')
+      }
+
+      const isTemperatureCheckRequired = await this.organizationService.isTemperatureCheckRequired(
+        organizationId,
+      )
+
+      if (!isTemperatureCheckRequired) {
+        throw new BadRequestException('Temperature check is disabled for this organization')
       }
 
       const status =
