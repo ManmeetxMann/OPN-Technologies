@@ -176,12 +176,16 @@ export class AttestationService {
     return attestations
   }
 
-  async attestationByLocationAndUserId(userOrDependantId: string): Promise<Attestation> {
-    const [attestation] = await this.attestationRepository.findWhereArrayContainsWithMax(
+  async lastAttestationByUserId(userOrDependantId: string): Promise<Attestation> {
+    const [attestation] = await this.attestationRepository
+    .getQueryFindWhereArrayContains(
       'appliesTo',
-      [userOrDependantId],
-      'attestationTime',
+      userOrDependantId,
     )
+    .where('userId', '==', userOrDependantId)
+    .orderBy('attestationTime', 'desc')
+    .fetch()
+
 
     return attestation
   }
