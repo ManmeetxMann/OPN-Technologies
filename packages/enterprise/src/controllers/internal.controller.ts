@@ -158,7 +158,7 @@ class InternalController implements IControllerBase {
         isOpnSuperAdmin: isOpnSuperAdmin ?? false,
         isManagementDashboardAdmin: isManagementDashboardAdmin ?? false,
         isTestReportsAdmin: isTestReportsAdmin ?? false,
-        isAppointmentsAdmin: isTestAppointmentsAdmin ?? false,
+        isTestAppointmentsAdmin: isTestAppointmentsAdmin ?? false,
       })
       res.json(actionSucceed())
     } catch (error) {
