@@ -422,7 +422,6 @@ paths:
           name: organizationId
           schema:
             type: string
-          required: true
         - in: query
           name: dateOfAppointment
           schema:
