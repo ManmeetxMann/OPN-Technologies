@@ -16,7 +16,9 @@ async function main() {
   try {
     console.log('Starting Count')
     let after = null
-    const baseQuery = database.collection('users').where("organizationIds", "array-contains", "PPTEST")
+    const baseQuery = database
+      .collection('users')
+      .where('organizationIds', 'array-contains', 'PPTEST')
     const queryWithLimit = baseQuery.orderBy(firestore.FieldPath.documentId()).limit(limit)
     let pageIndex = 0
     while (true) {
@@ -29,7 +31,7 @@ async function main() {
       totalCount += page.length
       pageIndex += 1
       console.log(`On Page: ${pageIndex}`)
-      if(pageIndex==5){
+      if (pageIndex == 5) {
         break
       }
     }
