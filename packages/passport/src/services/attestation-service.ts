@@ -175,4 +175,14 @@ export class AttestationService {
     attestations.reverse()
     return attestations
   }
+
+  async lastAttestationByUserId(userOrDependantId: string): Promise<Attestation> {
+    const [attestation] = await this.attestationRepository
+      .getQueryFindWhereArrayContains('appliesTo', userOrDependantId)
+      .where('userId', '==', userOrDependantId)
+      .orderBy('attestationTime', 'desc')
+      .fetch()
+
+    return attestation
+  }
 }
