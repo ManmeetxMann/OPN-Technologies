@@ -10,10 +10,11 @@ export type AdminProfile = {
   healthAdminForOrganizationIds: string[]
   nfcAdminForOrganizationIds: string[]
   nfcGateKioskAdminForOrganizationIds: string[]
-  managementAdminForOrganizationId: string
-  testReportsAdminForOrganizationId: string
-  testAppointmentsAdminForOrganizationId: string
   showReporting: boolean
+  isOpnSuperAdmin: boolean
+  isManagementDashboardAdmin: boolean
+  isTestReportsAdmin: boolean
+  isAppointmentsAdmin: boolean
 }
 
 export type AdminApproval = {
