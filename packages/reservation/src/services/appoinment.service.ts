@@ -31,7 +31,11 @@ export class AppoinmentService {
     dateOfAppointment: string,
     searchQuery = '',
   ): Promise<AppointmentDTO[]> {
-    const filters: AppointmentFilters = {organizationId, showall: true}
+    const filters: AppointmentFilters = {showall: true}
+    if(organizationId){
+      filters.organizationId = organizationId
+    }
+
     if (dateOfAppointment) {
       filters.maxDate = dateOfAppointment
       filters.minDate = dateOfAppointment

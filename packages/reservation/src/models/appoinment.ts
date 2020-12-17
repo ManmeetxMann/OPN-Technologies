@@ -107,7 +107,7 @@ export type AppointmentUiDTO = {
 }
 
 export type AppointmentFilters = {
-  organizationId: string
+  organizationId?: string
   showall: boolean
   minDate?: string
   maxDate?: string
