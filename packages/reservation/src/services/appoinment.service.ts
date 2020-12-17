@@ -32,7 +32,7 @@ export class AppoinmentService {
     searchQuery = '',
   ): Promise<AppointmentDTO[]> {
     const filters: AppointmentFilters = {showall: true}
-    if(organizationId){
+    if (organizationId) {
       filters.organizationId = organizationId
     }
 
