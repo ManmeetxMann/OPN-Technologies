@@ -175,4 +175,14 @@ export class AttestationService {
     attestations.reverse()
     return attestations
   }
+
+  async attestationByLocationAndUserId(userOrDependantId: string): Promise<Attestation> {
+    const [attestation] = await this.attestationRepository.findWhereArrayContainsWithMax(
+      'appliesTo',
+      [userOrDependantId],
+      'attestationTime',
+    )
+
+    return attestation
+  }
 }

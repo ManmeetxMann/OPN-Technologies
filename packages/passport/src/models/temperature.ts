@@ -18,6 +18,5 @@ export enum TemperatureStatuses {
 export type TemperatureSaveRequest = {
   temperature: number
   organizationId: string
-  locationId: string
   userId: string
 }

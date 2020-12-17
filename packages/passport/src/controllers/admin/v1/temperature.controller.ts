@@ -9,6 +9,7 @@ import {PassportService} from '../../../services/passport-service'
 import {TemperatureService} from '../../../services/temperature-service'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import {AttestationService} from '../../../services/attestation-service'
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
 
@@ -17,6 +18,7 @@ class TemperatureAdminController implements IControllerBase {
   public path = '/passport/admin/api/v1'
   public temperatureService = new TemperatureService()
   public passportService = new PassportService()
+  private attestationService = new AttestationService()
 
   constructor() {
     this.initRoutes()
@@ -28,7 +30,7 @@ class TemperatureAdminController implements IControllerBase {
 
   saveTemperature = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId, locationId, temperature, userId} = req.body as TemperatureSaveRequest
+      const {organizationId, temperature, userId} = req.body as TemperatureSaveRequest
 
       if (!temperatureThreshold) {
         throw new BadRequestException('Threshold is not specified in config file')
@@ -38,9 +40,15 @@ class TemperatureAdminController implements IControllerBase {
         temperature > temperatureThreshold ? TemperatureStatuses.Stop : TemperatureStatuses.Proceed
       const validFrom = now()
 
+      const atestation = await this.attestationService.attestationByLocationAndUserId(userId)
+
+      if (!atestation) {
+        throw new BadRequestException('No attestation found for user')
+      }
+
       const data = {
         organizationId,
-        locationId,
+        locationId: atestation.locationId,
         temperature,
         status,
         userId,
