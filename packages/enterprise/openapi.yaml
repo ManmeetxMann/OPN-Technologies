@@ -453,16 +453,6 @@ components:
           items:
             type: string
           description: Organizaiton ids to become a NFC Gate Kiosk admin. Must be provided can be empty.
-        managementAdminForOrganizationId:
-          type: string
-          description: Organization IDs for admin dashboard to give access to user management/group management
-        testReportsAdminForOrganizationId:
-          type: string
-          description: Organization IDs for admin dashboard to to see test reports
-        testAppointmentsAdminForOrganizationId:
-          type: string
-          description: Organization IDs for admin dashboard to to see test appoinments and print bar codes
-
         groupIds:
           type: array
           items:
@@ -471,11 +461,27 @@ components:
         showReporting:
           type: boolean
           description: Show reporting feature
+        isOpnSuperAdmin:
+          type: boolean
+          description: OPN Super Admin
+        isManagementDashboardAdmin:
+          type: boolean
+          description: Is Management Dashboard Admin
+        isTestReportsAdmin:
+          type: boolean
+          description: Can see Test Reports
+        isTestAppointmentsAdmin:
+          type: boolean
+          description: Can see Test Appoinments
       required:
         - email
         - showReporting
         - organizationId
         - superAdminForOrganizationIds
+        - isOpnSuperAdmin
+        - isManagementDashboardAdmin
+        - isTestReportsAdmin
+        - isTestAppointmentsAdmin
 
     InternalAdminListRequest:
       type: object
@@ -732,12 +738,14 @@ components:
           type: string
         showReporting:
           type: boolean
-        managementAdminForOrganizationId:
-          type: string
-        testReportsAdminForOrganizationId:
-          type: string
-        testAppointmentsAdminForOrganizationId:
-          type: string
+        isOpnSuperAdmin:
+          type: boolean
+        isManagementDashboardAdmin:
+          type: boolean
+        isTestReportsAdmin:
+          type: boolean
+        isTestAppointmentsAdmin:
+          type: boolean
     User:
       type: object
       deprecated: true
