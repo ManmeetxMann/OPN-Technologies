@@ -38,7 +38,7 @@ class TemperatureAdminController implements IControllerBase {
         throw new BadRequestException('Threshold is not specified in config file')
       }
 
-      const isTemperatureCheckRequired = await this.organizationService.isTemperatureCheckRequired(
+      const isTemperatureCheckRequired = await this.organizationService.isTemperatureCheckEnabled(
         organizationId,
       )
 
