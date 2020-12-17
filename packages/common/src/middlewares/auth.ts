@@ -61,8 +61,6 @@ export const authMiddleware = async (
 
   // TODO: Check if user is "active"
 
-  console.log(connectedUser)
-
   // Set it for the actual route
   res.locals.connectedUser = connectedUser // TODO to be replaced with `authenticatedUser`
   res.locals.authenticatedUser = connectedUser
