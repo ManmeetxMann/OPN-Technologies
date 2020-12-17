@@ -14,7 +14,7 @@ export type AdminProfile = {
   isOpnSuperAdmin: boolean
   isManagementDashboardAdmin: boolean
   isTestReportsAdmin: boolean
-  isAppointmentsAdmin: boolean
+  isTestAppointmentsAdmin: boolean
 }
 
 export type AdminApproval = {
