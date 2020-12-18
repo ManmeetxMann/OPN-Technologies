@@ -99,9 +99,8 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
 
     const user = await userService.create({
       ...profile,
+      organizationId,
     })
-    // Connect to org
-    await userService.connectOrganization(user.id, organizationId)
 
     await organizationService.addUserToGroup(organizationId, groupId, user.id)
 

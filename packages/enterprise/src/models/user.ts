@@ -7,7 +7,7 @@ export type User = Auditable & {
   firstName: string
   lastName: string
   active: boolean
-
+  organizationIds: string[]
   authUserId?: string
   email?: string
   photo?: string // photo url
