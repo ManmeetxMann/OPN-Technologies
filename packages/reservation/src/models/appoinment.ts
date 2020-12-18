@@ -104,6 +104,7 @@ export type AppointmentUiDTO = {
   status?: string
   barCode: string
   dateTime?: string
+  dateOfBirth?: string
 }
 
 export type AppointmentFilters = {
@@ -123,4 +124,5 @@ export const appointmentUiDTOResponse = (
   barCode: appointment.barCode,
   location: (appointment as AppointmentUI).location,
   dateTime: (appointment as AppointmentUI).dateTime,
+  dateOfBirth: appointment.dateOfBirth,
 })
