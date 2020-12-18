@@ -2,7 +2,7 @@ import {NextFunction, Request, Response, Router} from 'express'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import IRouteController from '../../../../common/src/interfaces/IRouteController.interface'
 import {UserService} from '../../../../common/src/service/user/user-service'
-import {LegacyDependant} from '../../../../common/src/data/user'
+import {LegacyDependant, User} from '../../../../common/src/data/user'
 import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
 
 import * as _ from 'lodash'
@@ -68,15 +68,20 @@ class UserController implements IRouteController {
       const [existingGroups, existingDependants, added] = await Promise.all([
         this.organizationService.getDependantGroups(organizationId, userId),
         this.userService.getAllDependants(userId),
-        this.userService.addDependants(userId, dependants),
+        this.userService.addDependants(userId, dependants, organizationId),
       ])
 
-      const legacyExisting: LegacyDependant[] = existingDependants.map((dep) => ({
+      const dependantsForOrg: User[] = existingDependants.filter((dependant) =>
+        existingGroups.find((membership) => membership.userId === dependant.id) ? true : false,
+      )
+
+      const legacyExisting: LegacyDependant[] = dependantsForOrg.map((dep) => ({
         firstName: dep.firstName,
         lastName: dep.lastName,
         id: dep.id,
         groupId: existingGroups.find((membership) => membership.userId === dep.id)?.groupId,
       }))
+
       const legacyAdded: LegacyDependant[] = added.map((dep, index) => ({
         firstName: dep.firstName,
         lastName: dep.lastName,
@@ -94,6 +99,7 @@ class UserController implements IRouteController {
           ),
         ),
       )
+      console.log([...legacyExisting, ...legacyAdded])
       res.json(actionSucceed([...legacyExisting, ...legacyAdded]))
     } catch (error) {
       next(error)

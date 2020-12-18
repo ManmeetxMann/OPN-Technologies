@@ -109,19 +109,19 @@ export class UserService {
     }
     await this.userRepository.updateProperties(dependantId, fields)
   }
-  // TODO: validate this
+
   async addDependants(
     userId: string,
     dependants: (UserDependant | LegacyDependant)[],
+    organizationId: string,
   ): Promise<UserDependant[]> {
-    const parent = await this.findOne(userId)
     const dependantsToAdd = dependants.map((dependant) => ({
       firstName: cleanStringField(dependant.firstName),
       lastName: cleanStringField(dependant.lastName),
       delegates: [userId],
       registrationId: '',
       base64Photo: '',
-      organizationIds: parent.organizationIds,
+      organizationIds: [organizationId],
     }))
     // @ts-ignore no id needed
     return Promise.all(dependantsToAdd.map((dependant) => this.create(dependant)))
