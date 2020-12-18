@@ -169,9 +169,6 @@ class UserController implements IControllerBase {
         includeGuardian,
       )
 
-      // Stats
-      const count = dependantIds.length + (includeGuardian ? 1 : 0)
-      await this.accessService.incrementTodayPassportStatusCount(locationId, passportStatus, count)
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
         await this.alertService.sendAlert(passport, saved, organizationId, locationId)
       }

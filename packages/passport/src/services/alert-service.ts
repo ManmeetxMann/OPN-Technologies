@@ -8,11 +8,11 @@ import {User} from '../../../common/src/data/user'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
 import {sendMessage} from '../../../common/src/service/messaging/push-notify-service'
 import {UserService} from '../../../common/src/service/user/user-service'
-// import {now} from '../../../common/src/utils/times'
+import {now} from '../../../common/src/utils/times'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {Config} from '../../../common/src/utils/config'
 
-// const TRACE_LENGTH = 48 * 60 * 60 * 1000
+const TRACE_LENGTH = 48 * 60 * 60 * 1000
 const DEFAULT_IMAGE =
   'https://firebasestorage.googleapis.com/v0/b/opn-platform-ca-prod.appspot.com/o/OPN-Icon.png?alt=media&token=17b833df-767d-4467-9a77-44c50aad5a33'
 
@@ -83,16 +83,16 @@ export class AlertService {
 
   async sendAlert(
     passport: Passport,
-    attestation: Attestation | undefined,
+    attestation: Attestation,
     organizationId: string,
-    locationId: string = null,
+    locationId: string,
   ): Promise<void> {
     const {status, dependantIds, includesGuardian, userId} = passport
-    // TODO: should be uncommented after the locationID is in the temperature controller
-    // const {answers} = attestation
-    // const {questionnaireId} = await this.organizationService.getLocationById(locationId)
+    const {answers} = attestation
+    const {questionnaireId} = await this.organizationService.getLocationById(locationId)
 
     const count = dependantIds.length + (includesGuardian ? 1 : 0)
+    await this.accessService.incrementTodayPassportStatusCount(locationId, passport.status, count)
 
     if (userId) {
       // if we have a test datetime, start the trace 48 hours before the test date
@@ -100,26 +100,26 @@ export class AlertService {
       // The frontends default to sending the very start of the day
 
       // TODO: should be uncommented after the locationID is in the temperature controller
-      // const endTime = now().valueOf()
-      // const dateOfTest = this.findTestDate(answers)
-      // const startTime = (dateOfTest ? dateOfTest.valueOf() : endTime) - TRACE_LENGTH
+      const endTime = now().valueOf()
+      const dateOfTest = this.findTestDate(answers)
+      const startTime = (dateOfTest ? dateOfTest.valueOf() : endTime) - TRACE_LENGTH
 
-      // this.topic.publish(
-      //   Buffer.from(
-      //     JSON.stringify({
-      //       userId,
-      //       dependantIds: dependantIds,
-      //       includesGuardian,
-      //       passportStatus: status,
-      //       startTime,
-      //       endTime,
-      //       organizationId,
-      //       locationId,
-      //       questionnaireId,
-      //       answers: answers,
-      //     }),
-      //   ),
-      // )
+      this.topic.publish(
+        Buffer.from(
+          JSON.stringify({
+            userId,
+            dependantIds: dependantIds,
+            includesGuardian,
+            passportStatus: status,
+            startTime,
+            endTime,
+            organizationId,
+            locationId,
+            questionnaireId,
+            answers: answers,
+          }),
+        ),
+      )
 
       const organization = await this.organizationService.findOneById(organizationId)
       if (organization.enablePushNotifications) {
