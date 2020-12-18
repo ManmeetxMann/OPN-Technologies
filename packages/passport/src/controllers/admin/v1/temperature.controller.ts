@@ -69,12 +69,13 @@ class TemperatureAdminController implements IControllerBase {
       ])
 
       if (status === TemperatureStatuses.Stop) {
-        const atestation = await this.attestationService.statusByLocationAndUserId(
-          locationId,
-          userId,
-        )
+        // TODO should be uncommented after the location ID passed into controller
+        // const atestation = await this.attestationService.statusByLocationAndUserId(
+        //   locationId,
+        //   userId,
+        // )
 
-        await this.alertService.sendAlert(passport, atestation, locationId)
+        await this.alertService.sendAlert(passport, null, organizationId)
       }
 
       res.json(actionSucceed(response))

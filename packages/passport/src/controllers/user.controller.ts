@@ -1,6 +1,5 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
-import {PubSub, Topic} from '@google-cloud/pubsub'
 //import {isValidISODateString} from 'iso-datestring-validator'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
@@ -11,7 +10,6 @@ import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Attestation, AttestationAnswers} from '../models/attestation'
 import {AttestationService} from '../services/attestation-service'
 import {AccessService} from '../../../access/src/service/access.service'
-import {Config} from '../../../common/src/utils/config'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
 import {UserService} from '../../../common/src/service/user/user-service'
@@ -35,26 +33,11 @@ class UserController implements IControllerBase {
   private registrationService = new RegistrationService()
   private userService = new UserService()
   private questionnaireService = new QuestionnaireService()
-  private topic: Topic
+  // private topic: Topic
   private alertService = new AlertService()
 
   constructor() {
     this.initRoutes()
-    try {
-      const pubsub = new PubSub()
-      pubsub
-        .createTopic(Config.get('PUBSUB_TRACE_TOPIC'))
-        .catch((err) => {
-          if (err.code !== 6) {
-            throw err
-          }
-        })
-        .then(() => {
-          this.topic = pubsub.topic(Config.get('PUBSUB_TRACE_TOPIC'))
-        })
-    } catch (error) {
-      if (error.code !== 6) throw error
-    }
   }
 
   private async evaluateAnswers(
@@ -190,7 +173,7 @@ class UserController implements IControllerBase {
       const count = dependantIds.length + (includeGuardian ? 1 : 0)
       await this.accessService.incrementTodayPassportStatusCount(locationId, passportStatus, count)
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
-        await this.alertService.sendAlert(passport, saved, locationId)
+        await this.alertService.sendAlert(passport, saved, organizationId, locationId)
       }
 
       res.json(actionSucceed(passport))
