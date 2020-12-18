@@ -64,9 +64,7 @@ class TemperatureAdminController implements IControllerBase {
         validUntil: this.passportService.shortestTime(status, now()),
       }
 
-      const passport = await this.passportService.create(status, data.userId, [], false, [
-        organizationId,
-      ])
+      const passport = await this.passportService.create(status, data.userId, [], false)
 
       if (status === TemperatureStatuses.Stop) {
         // TODO should be uncommented after the location ID passed into controller
