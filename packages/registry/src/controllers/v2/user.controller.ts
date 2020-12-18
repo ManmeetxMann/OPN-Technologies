@@ -99,7 +99,7 @@ class UserController implements IRouteController {
           ),
         ),
       )
-      console.log([...legacyExisting, ...legacyAdded])
+      
       res.json(actionSucceed([...legacyExisting, ...legacyAdded]))
     } catch (error) {
       next(error)
