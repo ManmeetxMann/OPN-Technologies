@@ -31,9 +31,6 @@ async function main() {
       totalCount += page.length
       pageIndex += 1
       console.log(`On Page: ${pageIndex}`)
-      if (pageIndex == 5) {
-        break
-      }
     }
   } catch (error) {
     console.error('Error running migration', error)

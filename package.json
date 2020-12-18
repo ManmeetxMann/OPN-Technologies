@@ -3,8 +3,8 @@
 	"private": true,
 	"scripts": {
 		"clean-all": "lerna clean --yes && lerna run clean",
-		"lint-all": "eslint 'packages/**/**/*.ts' 'migrations/**/*.ts' --ignore-path .gitignore --max-warnings=0",
-		"lint-fix-all": "eslint 'packages/**/**/*.ts' 'migrations/**/*.ts' --ignore-path .gitignore --max-warnings=0 --fix",
+		"lint-all": "eslint 'packages/**/**/*.ts' 'migrations/**/*.ts' 'tools/**/*.ts' --ignore-path .gitignore --max-warnings=0",
+		"lint-fix-all": "eslint 'packages/**/**/*.ts' 'migrations/**/*.ts' 'tools/**/*.ts' --ignore-path .gitignore --max-warnings=0 --fix",
 		"test-all": "lerna run test --stream",
 		"test:coverage-all": "lerna run coverage --stream",
 		"install-all": "lerna bootstrap --hoist",
@@ -38,7 +38,8 @@
 		"migration:update-admin-approval-emails": "ts-node ./migrations/update-admin-approval-emails",
 		"migration:update-user-emails": "ts-node ./migrations/update-user-emails",
 		"migration:update-organizationids-for-users": "ts-node ./migrations/update-organizationids-for-users",
-		"migration:trim-firstname-lastname-and-fix-last-name": "ts-node ./migrations/trim-firstname-lastname-and-fix-last-name"
+		"migration:trim-firstname-lastname-and-fix-last-name": "ts-node ./migrations/trim-firstname-lastname-and-fix-last-name",
+		"tools:count-total-number-of-users": "ts-node ./tools/count-total-number-of-users"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
