@@ -213,7 +213,9 @@ class UserController implements IControllerBase {
         appliesTo.push(userId)
       }
 
-      const isTemperatureCheckEnabled = await this.organizationService.isTemperatureCheckEnabled(organizationId)
+      const isTemperatureCheckEnabled = await this.organizationService.isTemperatureCheckEnabled(
+        organizationId,
+      )
 
       if (isTemperatureCheckEnabled && passportStatus === PassportStatuses.Proceed) {
         passportStatus = PassportStatuses.TemperatureCheckRequired
