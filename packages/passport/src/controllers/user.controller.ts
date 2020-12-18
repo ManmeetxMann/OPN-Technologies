@@ -207,18 +207,16 @@ class UserController implements IControllerBase {
         throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
       }
       const answers: AttestationAnswers = req.body.answers
-      const passportStatus = await this.evaluateAnswers(questionnaireId, answers)
+      let passportStatus = await this.evaluateAnswers(questionnaireId, answers)
       const appliesTo = [...dependantIds]
       if (includeGuardian) {
         appliesTo.push(userId)
       }
 
-      const organization = await this.organizationService.findOneById(organizationId)
-      if (
-        passportStatus === PassportStatuses.TemperatureCheckRequired &&
-        !organization.enableTemperatureCheck
-      ) {
-        throw new BadRequestException('Temperature check is not included for this organization')
+      const isTemperatureCheckEnabled = await this.organizationService.isTemperatureCheckEnabled(organizationId)
+
+      if (isTemperatureCheckEnabled && passportStatus === PassportStatuses.Proceed) {
+        passportStatus = PassportStatuses.TemperatureCheckRequired
       }
 
       const saved = await this.attestationService.save({
