@@ -72,6 +72,7 @@ const getPassportsCountPerStatus = (
     [PassportStatuses.Proceed]: 0,
     [PassportStatuses.Caution]: 0,
     [PassportStatuses.Stop]: 0,
+    [PassportStatuses.TemperatureCheckRequired]: 0,
   }
   accesses.forEach(({status}) => (counts[status] += 1))
   return counts
