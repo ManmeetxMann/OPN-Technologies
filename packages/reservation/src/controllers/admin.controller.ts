@@ -20,10 +20,10 @@ import {HttpException} from '../../../common/src/exceptions/httpexception'
 import CSVValidator from '../validations/csv.validations'
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 import {
-  TestResultsConfirmationRequest,
-  SendAndSaveTestResultsRequest,
-  TestResultsDTOForEmail,
   ResultTypes,
+  SendAndSaveTestResultsRequest,
+  TestResultsConfirmationRequest,
+  TestResultsDTOForEmail,
 } from '../models/test-result'
 
 class AdminController implements IControllerBase {
@@ -113,7 +113,9 @@ class AdminController implements IControllerBase {
                   'Something wend wrong. Results are not available.',
                 )
               }
-              await this.testResultsService.sendTestResults({...testResults}, resultDate)
+              if(ResultTypes.Inconclusive !== row.result && ResultTypes.Invalid !== row.result){
+                await this.testResultsService.sendTestResults({...testResults}, resultDate)
+              }
             } else {
               let currentAppointment = null
               try {
@@ -129,12 +131,13 @@ class AdminController implements IControllerBase {
                 notFoundBarcodes.push(row)
                 return
               }
+              let sendTestResultsRef = new Function();
+              if(ResultTypes.Inconclusive !== row.result && ResultTypes.Invalid !== row.result) {
+                sendTestResultsRef = this.testResultsService.sendTestResults;
+              }
 
               await Promise.all([
-                this.testResultsService.sendTestResults(
-                  {...row, ...currentAppointment},
-                  resultDate,
-                ),
+                sendTestResultsRef({...row, ...currentAppointment}, resultDate),
                 this.testResultsService.saveResults({
                   ...row,
                   ...currentAppointment,
