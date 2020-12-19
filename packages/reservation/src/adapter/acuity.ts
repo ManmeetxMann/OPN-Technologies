@@ -27,7 +27,7 @@ abstract class AcuityScheduling {
     organizationId: Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
   }
 
-  protected async updateAppointment(
+  protected async updateAppointmentOnAcuity(
     id: number,
     fields: unknown,
   ): Promise<AppointmentAcuityResponse> {
