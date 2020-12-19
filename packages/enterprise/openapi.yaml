@@ -2861,25 +2861,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUsersByOrganization'
 
-  /enterprise/api/v3/users/migration:
-    post:
-      summary: Profile Migration
-      description: Creates a user profile and link/migrate existing user's data
-      tags:
-        - Account management
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MigrateUserRequest'
-      responses:
-        '200':
-          description: Successfully migrated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfUser'
-
   /enterprise/api/v3/users/auth:
     post:
       summary: User authentication

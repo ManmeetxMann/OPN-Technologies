@@ -7,7 +7,7 @@ import {AuthService} from '../../../../common/src/service/auth/auth-service'
 import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
-import {CreateUserRequest, MigrateUserRequest} from '../../types/new-user'
+import {CreateUserRequest} from '../../types/new-user'
 import {
   actionReplyInsufficientPermission,
   actionSucceed,
@@ -105,38 +105,11 @@ const create: Handler = async (req, res, next): Promise<void> => {
     // Create and activate user
     const user = await userService.create({
       ...profile,
+      organizationId,
       email: authUser.email,
       authUserId: authUser.uid,
       active: true,
     })
-
-    // Connect to org
-    await userService.connectOrganization(user.id, organizationId)
-
-    res.json(actionSucceed(userDTOResponse(user)))
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Migrate existing user profile(s)
- */
-const migrate: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {
-      email,
-      firstName,
-      lastName,
-      registrationId,
-      legacyProfiles,
-    } = req.body as MigrateUserRequest
-
-    const user = await userService.create({email, firstName, lastName, registrationId})
-
-    await userService.migrateExistingUser(legacyProfiles, user.id)
-
-    await magicLinkService.send({email, name: firstName})
 
     res.json(actionSucceed(userDTOResponse(user)))
   } catch (error) {
@@ -265,8 +238,8 @@ const completeRegistration: Handler = async (req, res, next): Promise<void> => {
 const getConnectedOrganizations: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
-    const organizationIds = await userService.getAllConnectedOrganizationIds(authenticatedUser.id)
-    const organizations = await organizationService.getAllByIds(organizationIds)
+    const user = await userService.getById(authenticatedUser.id)
+    const organizations = await organizationService.getAllByIds(user.organizationIds)
 
     res.json(actionSucceed(organizations))
   } catch (error) {
@@ -280,8 +253,8 @@ const getConnectedOrganizations: Handler = async (req, res, next): Promise<void>
 const getDependentConnectedOrganizations: Handler = async (req, res, next): Promise<void> => {
   try {
     const {dependentId} = req.params
-    const organizationIds = await userService.getAllConnectedOrganizationIds(dependentId)
-    const organizations = await organizationService.getAllByIds(organizationIds)
+    const user = await userService.getById(dependentId)
+    const organizations = await organizationService.getAllByIds(user.organizationIds)
 
     res.json(actionSucceed(organizations))
   } catch (error) {
@@ -341,10 +314,7 @@ const disconnectOrganization: Handler = async (req, res, next): Promise<void> =>
       throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
     }
 
-    // Disconnect Organization and groups
-    const groups = await organizationService.getGroups(organizationId)
-    const groupIds = new Set(groups.map(({id}) => id))
-    await userService.disconnectOrganization(authenticatedUser.id, organizationId, groupIds)
+    await userService.disconnectOrganization(authenticatedUser.id, organizationId)
 
     res.json(actionSucceed())
   } catch (error) {
@@ -363,10 +333,7 @@ const disconnectDependentOrganization: Handler = async (req, res, next): Promise
       throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
     }
 
-    // Disconnect Organization and groups
-    const groups = await organizationService.getGroups(organizationId)
-    const groupIds = new Set(groups.map(({id}) => id))
-    await userService.disconnectOrganization(dependentId, organizationId, groupIds)
+    await userService.disconnectOrganization(dependentId, organizationId)
 
     res.json(actionSucceed())
   } catch (error) {
@@ -585,7 +552,6 @@ class UserController implements IControllerBase {
       innerRouter()
         .get('/search', authMiddleware, search)
         .post('/', create)
-        .post('/migration', migrate)
         .post('/auth', authenticate)
         .post('/auth/short-code', validateShortCode)
         .post('/auth/confirmation', completeRegistration),
