@@ -14,7 +14,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
   }
 
   async updateAppointment(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
-    return this.updateAppointment(id, data)
+    return this.updateAppointmentOnAcuity(id, data)
   }
 
   async getAppointmentById(id: number): Promise<AppointmentDBModel> {
