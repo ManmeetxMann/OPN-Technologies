@@ -39,7 +39,8 @@
 		"migration:update-user-emails": "ts-node ./migrations/update-user-emails",
 		"migration:update-organizationids-for-users": "ts-node ./migrations/update-organizationids-for-users",
 		"migration:trim-firstname-lastname-and-fix-last-name": "ts-node ./migrations/trim-firstname-lastname-and-fix-last-name",
-		"tools:count-total-number-of-users": "ts-node ./tools/count-total-number-of-users"
+		"tools:count-total-number-of-users": "ts-node ./tools/count-total-number-of-users",
+		"tools:users-with-multi-orgs": "ts-node ./tools/users-with-multi-orgs"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
