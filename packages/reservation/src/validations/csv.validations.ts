@@ -36,7 +36,7 @@ export default {
         })
         .withMessage('must be numeric or N/A'),
       body('results.*.result')
-        .isIn(['Positive', 'Negative', '2019-nCoV Detected'])
+        .isIn(['Positive', 'Negative', '2019-nCoV Detected', 'Inconclusive', 'Invalid'])
         .withMessage('must be one of: Positive, Negative, 2019-nCoV Detected'),
       body('resultDate').isDate().withMessage('must be valid date'),
     ])

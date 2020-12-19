@@ -209,6 +209,8 @@ paths:
                             - Positive
                             - Negative
                             - 2019-nCoV Detected
+                            - Invalid
+                            - Inconclusive
                         famEGene:
                           type: string
                         famCt:
@@ -256,6 +258,8 @@ paths:
                     - Positive
                     - Negative
                     - 2019-nCoV Detected
+                    - Invalid
+                    - Inconclusive
                 famEGene:
                   type: string
                 famCt:
@@ -339,6 +343,8 @@ paths:
                     - Positive
                     - Negative
                     - 2019-nCoV Detected
+                    - Invalid
+                    - Inconclusive
                 famEGene:
                   type: string
                 famCt:
