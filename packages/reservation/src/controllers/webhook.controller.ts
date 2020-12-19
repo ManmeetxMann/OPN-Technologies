@@ -60,7 +60,7 @@ class WebhookController implements IControllerBase {
             dataForUpdate,
           )}`,
         )
-        await this.appoinmentService.updateAppoinment(id, dataForUpdate)
+        await this.appoinmentService.updateAppointment(id, dataForUpdate)
       } else {
         console.log(
           `WebhookController: NoUpdateToAcuity AppoinmentID: ${id} barCodeNumber: ${appointment.barCode}  organizationId: ${appointment.organizationId}`,

@@ -97,7 +97,7 @@ export class AppoinmentService {
       })
   }
 
-  async updateAppoinment(id: number, data: unknown): Promise<AppointmentDTO> {
-    return this.appoinmentSchedulerRepository.updateAppoinment(id, data)
+  async updateAppointment(id: number, data: unknown): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.updateAppointment(id, data)
   }
 }

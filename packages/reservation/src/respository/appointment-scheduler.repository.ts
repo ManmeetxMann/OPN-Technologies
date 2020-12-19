@@ -13,7 +13,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
     super()
   }
 
-  async updateAppoinment(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
+  async updateAppointment(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
     return this.updateAppointment(id, data)
   }
 
