@@ -14,6 +14,8 @@ export enum ResultTypes {
   Negative = 'Negative',
   Pending = 'Pending',
   Detected2019nCoV = '2019-nCoV Detected',
+  Invalid = 'Invalid',
+  Inconclusive = 'Inconclusive',
 }
 
 export type TestResultsBase = {
