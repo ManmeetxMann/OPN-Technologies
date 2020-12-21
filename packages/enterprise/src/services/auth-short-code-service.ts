@@ -41,11 +41,7 @@ export class AuthShortCodeService {
   }
 
   async findAuthShortCode(email: string): Promise<AuthShortCode> {
-    return (
-      await this.authShortCodeRepository
-        .getQueryFindWhereEqual('email', email)
-        .fetch()
-    )[0]
+    return (await this.authShortCodeRepository.getQueryFindWhereEqual('email', email).fetch())[0]
   }
 
   async clearShortCode(id: string): Promise<void> {

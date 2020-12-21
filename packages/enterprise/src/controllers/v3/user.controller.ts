@@ -123,8 +123,8 @@ const create: Handler = async (req, res, next): Promise<void> => {
 const authenticate: Handler = async (req, res, next): Promise<void> => {
   try {
     const {email, userId} = req.body as AuthenticationRequest
-    const organizationId = (req.body.organizationId) ?? ""
-    if(organizationId){
+    const organizationId = req.body.organizationId ?? ''
+    if (organizationId) {
       await organizationService.getByIdOrThrow(organizationId)
     }
 
