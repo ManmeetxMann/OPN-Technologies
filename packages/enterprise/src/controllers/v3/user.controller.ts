@@ -122,8 +122,11 @@ const create: Handler = async (req, res, next): Promise<void> => {
  */
 const authenticate: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {email, organizationId, userId} = req.body as AuthenticationRequest
-    await organizationService.getByIdOrThrow(organizationId)
+    const {email, userId} = req.body as AuthenticationRequest
+    const organizationId = req.body.organizationId ?? ''
+    if (organizationId) {
+      await organizationService.getByIdOrThrow(organizationId)
+    }
 
     const authShortCode = await authShortCodeService.generateAndSaveShortCode(
       email,
@@ -134,8 +137,6 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
     await magicLinkService.send({
       email,
       meta: {
-        organizationId,
-        userId,
         shortCode: authShortCode.shortCode,
         signInLink: authShortCode.magicLink,
       },
@@ -152,9 +153,9 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
  */
 const validateShortCode: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {shortCode, organizationId, email} = req.body
+    const {shortCode, email} = req.body
 
-    const authShortCode = await authShortCodeService.findAuthShortCode(email, organizationId)
+    const authShortCode = await authShortCodeService.findAuthShortCode(email)
 
     if (!authShortCode) {
       throw new BadRequestException('Short code invalid or expired')
