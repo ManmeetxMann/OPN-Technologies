@@ -113,7 +113,7 @@ class AdminController implements IControllerBase {
                   'Something wend wrong. Results are not available.',
                 )
               }
-              if(ResultTypes.Inconclusive !== row.result && ResultTypes.Invalid !== row.result){
+              if (ResultTypes.Inconclusive !== row.result && ResultTypes.Invalid !== row.result) {
                 await this.testResultsService.sendTestResults({...testResults}, resultDate)
               }
             } else {
@@ -131,9 +131,9 @@ class AdminController implements IControllerBase {
                 notFoundBarcodes.push(row)
                 return
               }
-              let sendTestResultsRef = new Function();
-              if(ResultTypes.Inconclusive !== row.result && ResultTypes.Invalid !== row.result) {
-                sendTestResultsRef = this.testResultsService.sendTestResults;
+              let sendTestResultsRef = new Function()
+              if (ResultTypes.Inconclusive !== row.result && ResultTypes.Invalid !== row.result) {
+                sendTestResultsRef = this.testResultsService.sendTestResults
               }
 
               await Promise.all([
