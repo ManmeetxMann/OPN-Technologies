@@ -49,7 +49,7 @@ class AdminAppointmentController implements IControllerBase {
       } = req.query as AppointmentByOrganizationRequest
 
       const {admin} = res.locals.authenticatedUser
-      console.log(admin?.isOpnSuperAdmin)
+
       admin.isOpnSuperAdmin = false
       if (!admin?.isOpnSuperAdmin && !organizationId) {
         throw new BadRequestException('"organizationId" is required for your role')
