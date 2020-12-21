@@ -3,7 +3,7 @@ import {flatten} from 'lodash'
 
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {authMiddleware} from '../../../../common/src/middlewares/auth'
+import {adminAuthMiddleware} from '../../../../common/src/middlewares/admin.auth'
 
 import {
   AppointmentByOrganizationRequest,
@@ -26,10 +26,10 @@ class AdminAppointmentController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.get(this.path + '/api/v1/appointments', authMiddleware, this.getListAppointments)
+    innerRouter.get(this.path + '/api/v1/appointments', adminAuthMiddleware, this.getListAppointments)
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
-      authMiddleware,
+      adminAuthMiddleware,
       this.getAppointmentById,
     )
 
@@ -43,6 +43,13 @@ class AdminAppointmentController implements IControllerBase {
         searchQuery,
         dateOfAppointment,
       } = req.query as AppointmentByOrganizationRequest
+
+      const {admin} = res.locals.authenticatedUser
+      console.log(admin?.isOpnSuperAdmin)
+      admin.isOpnSuperAdmin = false
+      if (!admin?.isOpnSuperAdmin && !organizationId) {
+        throw new BadRequestException('"organizationId" is required for your role')
+      }
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
         throw new BadRequestException('dateOfAppointment is invalid')
