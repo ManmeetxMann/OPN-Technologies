@@ -236,16 +236,19 @@ class AdminController implements IRouteController {
   enterOrExitUsingATag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Get request inputs
-      const {tagId, locationId, legacyMode} = req.body
+      const {tagId, locationId} = req.body
 
       // Get tag appropriately
-      const tag =
-        legacyMode === true
-          ? await this.tagService.getByLegacyId(tagId)
-          : await this.tagService.getById(tagId)
+      // Fix: Ticket #1035
+      // Note: there's a bug that legacy mode is always passed through as true... so must try both
+      let tag = await this.tagService.getByLegacyId(tagId)
+      if (!tag) {
+        tag = await this.tagService.getById(tagId)
+      }
       if (!tag) {
         throw new ResourceNotFoundException(`NFC Tag not found`)
       }
+
       // Save org
       const organizationId = tag.organizationId
 
