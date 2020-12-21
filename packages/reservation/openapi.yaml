@@ -3,6 +3,12 @@ info:
   title: Reservation API
   version: 1.0.0
 components:
+  securitySchemes:
+    bearerAuthJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     TestResult200:
       type: object
@@ -463,12 +469,13 @@ paths:
   /reservation/admin/api/v1/appointments:
     get:
       description: Get appointmenr list by organization ID
+      security:
+        - bearerAuthJWT: []
       parameters:
         - in: query
           name: organizationId
           schema:
             type: string
-          required: true
         - in: query
           name: searchQuery
           schema:
