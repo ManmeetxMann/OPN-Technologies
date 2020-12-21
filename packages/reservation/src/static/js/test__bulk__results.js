@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     content += `Total rows: ${data.length}<br/>`
     content += `Successfully: ${succeedRows.length}<br/>`
-    content += `Exists but is not marked for sent again: ${alreadyExist.length}<br/>`
+    content += `Exists but is not marked for sent again: ${sendAgainData.length}<br/>`
     content += `Failed: ${failedRows.length + isFatal.length + failedValidation.length}<br/>`
 
     if (succeedRows.length) {
