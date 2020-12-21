@@ -48,13 +48,6 @@ class AdminAppointmentController implements IControllerBase {
         dateOfAppointment,
       } = req.query as AppointmentByOrganizationRequest
 
-      const {admin} = res.locals.authenticatedUser
-
-      admin.isOpnSuperAdmin = false
-      if (!admin?.isOpnSuperAdmin && !organizationId) {
-        throw new BadRequestException('"organizationId" is required for your role')
-      }
-
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
         throw new BadRequestException('dateOfAppointment is invalid')
       }
