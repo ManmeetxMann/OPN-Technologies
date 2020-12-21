@@ -2877,13 +2877,12 @@ paths:
                   nullable: false
                 organizationId:
                   type: string
-                  nullable: false
+                  nullable: true
                 userId:
                   type: string
                   nullable: true
               required:
                 - email
-                - organizationId
       responses:
         '200':
           description: Successful
@@ -2906,15 +2905,11 @@ paths:
                 email:
                   type: string
                   nullable: false
-                organizationId:
-                  type: string
-                  nullable: false
                 shortCode:
                   type: string
                   nullable: false
               required:
                 - email
-                - organizationId
                 - shortCode
       responses:
         '200':
