@@ -53,7 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const presentationTable = document.getElementById('presentationTable')
   const warningMessage = document.getElementById('warning-message')
 
-  const datesBefore = document.getElementById('datesBefore')
   const datesToday = document.getElementById('resultDate')
 
   const sendButtonBulk = document.getElementById('sendButtonBulk')
@@ -173,10 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  datesBefore.addEventListener('change', async (e) => {
-    to = DateTime.utc().toLocaleString()
-    from = DateTime.utc().minus({days: e.target.value}).toLocaleString()
-  })
   
   sendButtonBulk.addEventListener('click', async (e) => {
     e.preventDefault()
