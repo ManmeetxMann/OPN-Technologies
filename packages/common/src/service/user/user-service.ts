@@ -2,7 +2,7 @@ import DataStore from '../../data/datastore'
 import {User, UserDependant, UserFilter, UserModel, LegacyDependant} from '../../data/user'
 import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
 import {cleanStringField} from '../../../../common/src/utils/utils'
-import { DataModelFieldMapOperatorType } from '../../../../common/src/data/datamodel.base'
+import {DataModelFieldMapOperatorType} from '../../../../common/src/data/datamodel.base'
 
 export class UserService {
   private dataStore = new DataStore()

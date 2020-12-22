@@ -92,7 +92,9 @@ class AdminController implements IControllerBase {
         await userService.updateProperties(connectedUser.id, {
           admin: FirebaseManager.getInstance().getFirestoreDeleteField(),
         })
-        console.log(`Admin Privledge removed from user id: ${connectedUser.id} and added to ${connectedId}`)
+        console.log(
+          `Admin Privledge removed from user id: ${connectedUser.id} and added to ${connectedId}`,
+        )
       }
 
       // Get the proper connected user then
