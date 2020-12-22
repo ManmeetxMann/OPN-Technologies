@@ -43,7 +43,12 @@ export const adminAuthMiddleware = async (
   //       would have been faster... but the claim won't propagate because they already
   //       had their claim... To be researched :-)
   const userService = new UserService()
-  const authenticatedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
+  let authenticatedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
+
+  if (!authenticatedUser) {
+    //Validate If Admin
+    authenticatedUser = await userService.findOneByAdminAuthUserId(validatedAuthUser.uid)
+  }
 
   if (!authenticatedUser) {
     // Forbidden
