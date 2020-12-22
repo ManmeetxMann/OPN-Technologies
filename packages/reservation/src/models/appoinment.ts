@@ -18,34 +18,34 @@ export type AppointmentBase = {
 }
 
 export enum AppointmentStatus {
-  pending = "pending",
-  inTransit = "inTransit",
-  received = "received",
-  inProgress = "inProgress",
-  reported = "reported",
+  pending = 'pending',
+  inTransit = 'inTransit',
+  received = 'received',
+  inProgress = 'inProgress',
+  reported = 'reported',
 }
 
 export enum Result {
-  pending = "pending",
-  positive = "positive",
-  negative = "negative",
-  covidDetected = "2019-nCoVDetected",
-  invalid = "invalid",
-  inconclusive = "inconclusive"
+  pending = 'pending',
+  positive = 'positive',
+  negative = 'negative',
+  covidDetected = '2019-nCoVDetected',
+  invalid = 'invalid',
+  inconclusive = 'inconclusive',
 }
 
 export type AppointmentDbBase = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: number;
-  dateOfBirth: string;
-  dateOfAppointment: string;
-  acuityAppointmentId: number;
-  timeOfAppointment?: string;
-  barCode: string;
-  packageCode?: string;
-  organizationId?: string;
+  firstName: string
+  lastName: string
+  email: string
+  phone: number
+  dateOfBirth: string
+  dateOfAppointment: string
+  acuityAppointmentId: number
+  timeOfAppointment?: string
+  barCode: string
+  packageCode?: string
+  organizationId?: string
   appointmentStatus: AppointmentStatus
   result: Result
 }

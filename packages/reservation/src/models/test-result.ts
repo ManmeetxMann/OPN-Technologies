@@ -35,7 +35,7 @@ export type TestResultsBase = {
 }
 
 export type TestResultsDBModel = AppointmentBase &
-    TestResultsBase & {
+  TestResultsBase & {
     id: string
     todaysDate?: Date //Deprecated
   }

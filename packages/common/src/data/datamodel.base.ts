@@ -217,6 +217,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
 
   protected doc(id: string, subPath = ''): firestore.DocumentReference {
     const path = subPath ? `${this.rootPath}/${subPath}` : this.rootPath
+    console.log(path)
     return this.datastore.firestoreAdmin.firestore().collection(path).doc(id)
   }
 
