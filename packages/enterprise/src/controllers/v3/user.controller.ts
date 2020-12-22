@@ -210,13 +210,24 @@ const completeRegistration: Handler = async (req, res, next): Promise<void> => {
     const {idToken, organizationId, userId} = req.body as RegistrationConfirmationRequest
     const authUser = await authService.verifyAuthToken(idToken)
 
-    if (!authUser) {
+    if (!authUser || !authUser.email) {
       throw new ForbiddenException('Cannot verify the given id-token')
     }
 
-    const user = await (userId
-      ? userService.getById(userId)
-      : userService.getByEmail(authUser.email))
+    let user = await userService.getByEmail(authUser.email)
+    if (!user) {
+      user = await userService.getById(userId)
+      if (!!user.email) {
+        console.error(
+          `UserIDUseDifferentEmail: ${userId} use email ${user.email} but requesting to login as ${authUser.email}!`,
+        )
+        throw new ForbiddenException(`UserID: ${userId} is using different Email`)
+      }
+    } else if (userId && userId !== user.id) {
+      console.log(
+        `UserIDIgnored: ${userId}: Email: ${authUser.email} is already used by UserID: ${user.id}`,
+      )
+    }
 
     await organizationService
       .getByIdOrThrow(organizationId)

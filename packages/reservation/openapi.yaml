@@ -215,6 +215,8 @@ paths:
                             - Positive
                             - Negative
                             - 2019-nCoV Detected
+                            - Invalid
+                            - Inconclusive
                         famEGene:
                           type: string
                         famCt:
@@ -262,6 +264,8 @@ paths:
                     - Positive
                     - Negative
                     - 2019-nCoV Detected
+                    - Invalid
+                    - Inconclusive
                 famEGene:
                   type: string
                 famCt:
@@ -345,6 +349,8 @@ paths:
                     - Positive
                     - Negative
                     - 2019-nCoV Detected
+                    - Invalid
+                    - Inconclusive
                 famEGene:
                   type: string
                 famCt:
@@ -420,28 +426,6 @@ paths:
               schema:
                 type: string
 
-  /reservation/admin/api/v1/test-results:
-    get:
-      description: Get test results by organization ID
-      parameters:
-        - in: query
-          name: organizationId
-          schema:
-            type: string
-        - in: query
-          name: dateOfAppointment
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successfully Return
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TestResult200'
-
   /admin/api/v1/check-appointments:
     post:
       description: Check appointments
@@ -465,6 +449,76 @@ paths:
             text/html:
               schema:
                 type: string
+
+  /webhook/acuity/schedule:
+    post:
+      description: Webhook for adding barcode to acuity
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: true
+              properties:
+                calendarID:
+                  type: string
+                appointmentTypeID:
+                  type: string
+                action:
+                  type: string
+                id:
+                  type: string
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /admin/js/print-label.js:
+    get:
+      description: Show JS for printing
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/javascript:
+              schema:
+                type: string
+
+  /admin/js/print-label-library.js:
+    get:
+      description: Show JS Library for printing
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            text/javascript:
+              schema:
+                type: string
+
+  /reservation/admin/api/v1/test-results:
+    get:
+      description: Get test results by organization ID
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+        - in: query
+          name: dateOfAppointment
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TestResult200'
 
   /reservation/admin/api/v1/appointments:
     get:
@@ -504,38 +558,12 @@ paths:
             type: string
           required: true
       responses:
-            '200':
-              description: Successfully Return
-              content:
-                  application/json:
-                    schema:
-                        $ref: '#/components/schemas/AppointmentResponse200'
-
-  /webhook/acuity/schedule:
-    post:
-      description: Webhook for adding barcode to acuity
-      requestBody:
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              additionalProperties: true
-              properties:
-                calendarID:
-                  type: string
-                appointmentTypeID:
-                  type: string
-                action:
-                  type: string
-                id:
-                  type: string
-      responses:
         '200':
-          description: Successfully handled
+          description: Successfully Return
           content:
-            text/html:
+            application/json:
               schema:
-                type: string
+                $ref: '#/components/schemas/AppointmentResponse200'
 
   /api/v1/appointment/create:
     post:
@@ -563,7 +591,6 @@ paths:
               schema:
                 type: string
 
-
   /reservation/admin/api/v1/packages:
     post:
       description: Add Package Codes for Orgs
@@ -589,24 +616,25 @@ paths:
               schema:
                 type: string
 
-  /admin/js/print-label.js:
-    get:
-      description: Show JS for printing
+  /reservation/admin/api/v1/appointments/{appointmentId}/cancel:
+    put:
+      description: Cancel appointment by appointment ID
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: number
+          required: true
+        - in: query
+          name: organizationId
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully Return
           content:
-            text/javascript:
+            application/json:
               schema:
-                type: string
-
-  /admin/js/print-label-library.js:
-    get:
-      description: Show JS Library for printing
-      responses:
-        '200':
-          description: Successfully Return
-          content:
-            text/javascript:
-              schema:
-                type: string
+                $ref: '#/components/schemas/AppointmentResponse200'

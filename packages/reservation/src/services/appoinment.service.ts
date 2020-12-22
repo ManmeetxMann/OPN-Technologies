@@ -38,8 +38,9 @@ export class AppoinmentService {
     organizationId: string,
     dateOfAppointment: string,
     searchQuery = '',
+    showCancelled = false,
   ): Promise<AppointmentDTO[]> {
-    const filters: AppointmentFilters = {showall: true}
+    const filters: AppointmentFilters = {showall: showCancelled}
     if (organizationId) {
       filters.organizationId = organizationId
     }
@@ -111,5 +112,9 @@ export class AppoinmentService {
 
   async updateAppointment(id: number, data: unknown): Promise<AppointmentDTO> {
     return this.appoinmentSchedulerRepository.updateAppointment(id, data)
+  }
+
+  async cancelAppointmentById(id: number): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.cancelAppointmentById(id)
   }
 }
