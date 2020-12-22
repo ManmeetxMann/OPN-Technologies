@@ -28,6 +28,10 @@ export type AppointmentDTO = AppointmentBase
 
 export type AppointmentDBModel = AppointmentBase
 
+export type AppointmentsDBModel = AppointmentBase & {
+  id: string
+}
+
 type AppointmentAcuityFormField = {
   fieldID: number
   value: string

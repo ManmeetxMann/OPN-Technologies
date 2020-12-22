@@ -5,13 +5,16 @@ import {
   AppointmentDBModel,
   AppoinmentBarCodeSequenceDBModel,
   AppointmentFilters,
+  AppointmentsDBModel,
 } from '../models/appoinment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
-import {AppoinmentsDBRepository} from '../respository/appointment-db.repository'
+import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
+import {AppointmentsDBRepository} from "../respository/appointments-db-repository";
 
 export class AppoinmentService {
   private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
-  private appoinmentDBRepository = new AppoinmentsDBRepository(new DataStore())
+  private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(new DataStore());
+  private appointmentsDBRepository = new AppointmentsDBRepository(new DataStore());
 
   async getAppoinmentByBarCode(barCodeNumber: string): Promise<AppointmentDTO> {
     const filters = {barCodeNumber: barCodeNumber}
@@ -77,6 +80,10 @@ export class AppoinmentService {
     }
   }
 
+  async saveAppointmentData(appointment: AppointmentsDBModel): Promise<AppointmentsDBModel> {
+    return this.appointmentsDBRepository.save(appointment)
+  }
+
   async getAppoinmentByDate(startDate: string, endDate: string): Promise<AppointmentDTO[]> {
     const filters = {
       minDate: startDate,
@@ -90,7 +97,7 @@ export class AppoinmentService {
   }
 
   async getNextBarCodeNumber(): Promise<string> {
-    return this.appoinmentDBRepository
+    return this.appointmentsBarCodeSequence
       .getNextBarCode()
       .then(({id, barCodeNumber}: AppoinmentBarCodeSequenceDBModel) => {
         return id.concat(barCodeNumber.toString())

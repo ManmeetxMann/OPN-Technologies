@@ -71,7 +71,7 @@ class WebhookController implements IControllerBase {
             }
 
             try {
-                await this.testResultsService.saveAppoinmentDataToTestResults({
+                await this.appoinmentService.saveAppointmentData({
                     ...appointment,
                     appointmentId: id,
                     id: appointment.barCode,

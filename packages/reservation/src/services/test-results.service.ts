@@ -14,7 +14,7 @@ import template from '../templates/testResult'
 import {
   TestResultsDTOForEmail,
   TestResultsDBModel,
-  TestResultForPagination, AppointmentTestResultsDBModel,
+  TestResultForPagination,
 } from '../models/test-result'
 
 export class TestResultsService {
@@ -66,10 +66,6 @@ export class TestResultsService {
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
     return this.faxService.send(faxNumber, name, pdfContent)
-  }
-
-  async saveAppoinmentDataToTestResults(testResults: AppointmentTestResultsDBModel): Promise<void> {
-    return this.testResultsDBRepository.save(testResults)
   }
 
   async saveResults(testResults: TestResultsDBModel): Promise<void> {
