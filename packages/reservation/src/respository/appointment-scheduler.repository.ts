@@ -19,9 +19,6 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
 
   async getAppointmentById(id: number): Promise<AppointmentDBModel> {
     return this.getAppointmentsById(id).then((appoinment: AppointmentAcuityResponse) => {
-      if (!appoinment.id) {
-        return
-      }
       return this.convertToAppointmentModel(appoinment)
     })
   }

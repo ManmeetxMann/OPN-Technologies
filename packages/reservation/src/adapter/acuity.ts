@@ -2,6 +2,7 @@ import fetch from 'node-fetch'
 import {Config} from '../../../common/src/utils/config'
 import querystring from 'querystring'
 import {AppointmentAcuityResponse} from '../models/appoinment'
+import { BadRequestException } from '../../../common/src/exceptions/bad-request-exception'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -41,8 +42,11 @@ abstract class AcuityScheduling {
         accept: 'application/json',
       },
     })
-    const appointment = await res.json()
-    return this.customFieldsToAppoinment(appointment)
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return this.customFieldsToAppoinment(result)
   }
 
   protected async updateAppointmentOnAcuity(
@@ -102,8 +106,11 @@ abstract class AcuityScheduling {
         accept: 'application/json',
       },
     })
-    const appointment = await res.json()
-    return this.customFieldsToAppoinment(appointment)
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return this.customFieldsToAppoinment(result)
   }
 
   private async mapCustomFieldsToAppoinment(
