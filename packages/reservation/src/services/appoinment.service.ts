@@ -30,8 +30,9 @@ export class AppoinmentService {
     organizationId: string,
     dateOfAppointment: string,
     searchQuery = '',
+    showCancelled = false,
   ): Promise<AppointmentDTO[]> {
-    const filters: AppointmentFilters = {showall: true}
+    const filters: AppointmentFilters = {showall: showCancelled}
     if (organizationId) {
       filters.organizationId = organizationId
     }

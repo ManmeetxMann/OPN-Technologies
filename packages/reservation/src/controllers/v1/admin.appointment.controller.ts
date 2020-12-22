@@ -57,10 +57,13 @@ class AdminAppointmentController implements IControllerBase {
         throw new BadRequestException('dateOfAppointment is invalid')
       }
 
+      const showCancelled = res.locals.authenticatedUser.admin?.isOpnSuperAdmin ?? false
+
       const appointments = await this.appointmentService.getAppointmentByOrganizationIdAndSearchParams(
         organizationId,
         dateOfAppointment,
         searchQuery,
+        showCancelled,
       )
 
       const appointmentsUniqueById = [
