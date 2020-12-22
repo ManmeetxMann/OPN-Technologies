@@ -11,7 +11,6 @@ export class AppointmentsRepository extends DataModel<AppointmentsDBModel> {
     }
 
     public async save(appointments: AppointmentDbBase): Promise<AppointmentsDBModel> {
-        console.log(appointments);
         return this.add(appointments)
     }
 }
