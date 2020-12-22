@@ -67,6 +67,7 @@ class UserController implements IControllerBase {
         // check if auth user is already there
         const usersByEmail = await this.enterpriseUserService.getByEmail(authUser.email)
         if (usersByEmail) {
+          console.log(`DuplicateEmailConnect: ${authUser.email}`)
           throw new ResourceAlreadyExistsException(authUser.email)
         }
       }

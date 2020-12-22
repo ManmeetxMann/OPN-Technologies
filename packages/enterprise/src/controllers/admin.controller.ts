@@ -85,18 +85,19 @@ class AdminController implements IControllerBase {
 
       // Check if auth user is connected to someone else
       const userService = new UserService()
-      let connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
+      let connectedUser = await userService.findOneByAdminAuthUserId(validatedAuthUser.uid)
 
       // If so let's remove if off of them
       if (!!connectedUser && connectedUser?.id !== connectedId) {
         await userService.updateProperties(connectedUser.id, {
-          authUserId: FirebaseManager.getInstance().getFirestoreDeleteField(),
           admin: FirebaseManager.getInstance().getFirestoreDeleteField(),
         })
+        console.log(`Admin Privledge removed from user id: ${connectedUser.id} and added to ${connectedId}`)
       }
 
       // Get the proper connected user then
       if (!connectedUser || connectedUser?.id !== connectedId) {
+        //New Admin
         connectedUser = await userService.findOneSilently(connectedId)
         if (!validatedAuthUser?.email) {
           console.error('ConnectedId is non-existent')
@@ -105,8 +106,8 @@ class AdminController implements IControllerBase {
       }
 
       // Set the connection
-      connectedUser.authUserId = validatedAuthUser.uid
       connectedUser.admin = approval.profile
+      connectedUser.admin.authUserId = validatedAuthUser.uid
       await userService.update(connectedUser)
 
       // Change the display name
