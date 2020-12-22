@@ -565,7 +565,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
 
-  /api/v1/appointment/create:
+  /reservation/acuity_webhook/api/v1/appointment/create:
     post:
       description: Webhook for adding barcode to acuity and cloning to firestore
       requestBody:

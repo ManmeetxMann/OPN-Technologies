@@ -10,7 +10,7 @@ import {AcuityUpdateDTO, AppointmentStatus, AppointmentUI, Result} from '../../.
 import {TestResultsService} from '../../../services/test-results.service'
 
 class AppointmentWebhookController implements IControllerBase {
-  public path = '/api/v1/appointment'
+  public path = '/reservation/acuity_webhook/api/v1/appointment'
   public router = Router()
   private appoinmentService = new AppoinmentService()
   private packageService = new PackageService()
