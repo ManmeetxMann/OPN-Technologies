@@ -100,4 +100,8 @@ export class AppoinmentService {
   async updateAppointment(id: number, data: unknown): Promise<AppointmentDTO> {
     return this.appoinmentSchedulerRepository.updateAppointment(id, data)
   }
+
+  async cancelAppointmentById(id: number): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.cancelAppointmentById(id)
+  }
 }

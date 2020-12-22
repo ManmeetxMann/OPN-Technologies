@@ -36,6 +36,11 @@ class AdminAppointmentController implements IControllerBase {
       adminAuthMiddleware,
       this.getAppointmentById,
     )
+    innerRouter.put(
+      this.path + '/api/v1/appointments/:appointmentId/cancel',
+      adminAuthMiddleware,
+      this.cancelAppointment,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -81,6 +86,31 @@ class AdminAppointmentController implements IControllerBase {
       const appointment = await this.appointmentService.getAppointmentById(Number(appointmentId))
 
       res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  cancelAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {appointmentId} = req.params as {appointmentId: string}
+      const {organizationId} = req.query as {organizationId: string}
+
+      const appointment = await this.appointmentService.getAppointmentById(Number(appointmentId))
+
+      if (!appointment) {
+        throw new BadRequestException(`Appointment "${appointmentId}" not found`)
+      }
+
+      if (organizationId && appointment.organizationId !== organizationId) {
+        throw new BadRequestException(
+          `OrganizationId "${organizationId}" does not match appointment "${appointmentId}"`,
+        )
+      }
+
+      await this.appointmentService.cancelAppointmentById(Number(appointmentId))
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
