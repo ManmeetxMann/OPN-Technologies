@@ -2,7 +2,7 @@
   "version": "8.7.0",
   "firestore": {
     "version": "1.11.5",
-    "path": "firestore_export",
-    "metadata_file": "firestore_export/firestore_export.overall_export_metadata"
+    "path": "2020-11-19-02-43-00",
+    "metadata_file": "2020-11-19-02-43-00/2020-11-19-02-43-00.overall_export_metadata"
   }
 }
