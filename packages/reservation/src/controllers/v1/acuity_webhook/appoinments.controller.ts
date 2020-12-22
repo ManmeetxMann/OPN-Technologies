@@ -6,12 +6,11 @@ import {PackageService} from '../../../services/package.service'
 import {ScheduleWebhookRequest} from '../../../models/webhook'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isEmpty} from 'lodash'
-import {AcuityUpdateDTO} from '../../../models/appoinment'
+import {AcuityUpdateDTO, AppointmentStatus, AppointmentUI, Result} from '../../../models/appoinment'
 import {TestResultsService} from '../../../services/test-results.service'
-import {app} from "../../../../../registry/src/server";
 
-class WebhookController implements IControllerBase {
-    public path = '/acuity_webhook'
+class AppointmentWebhookController implements IControllerBase {
+    public path = '/api/v1/appointment'
     public router = Router()
     private appoinmentService = new AppoinmentService()
     private packageService = new PackageService()
@@ -22,7 +21,7 @@ class WebhookController implements IControllerBase {
     }
 
     public initRoutes(): void {
-        this.router.post(this.path + '/api/v1/appointment/create', this.handleScheduleWebhook)
+        this.router.post(this.path + '/create', this.handleScheduleWebhook)
     }
 
     handleScheduleWebhook = async (
@@ -43,6 +42,13 @@ class WebhookController implements IControllerBase {
 
             if (!appointment.barCode) {
                 dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
+            } else {
+                const appointmentWithSameBarcodes = await this.appoinmentService.getAppoinmentDBByBarCode(appointment.barCode);
+                if (appointmentWithSameBarcodes.length > 0) {
+                    console.log(
+                        `WebhookController: DuplicateBarCode AppoinmentID: ${id} -  BarCode: ${appointment.barCode}`,
+                    )
+                }
             }
 
             if (appointment.packageCode && !appointment.organizationId) {
@@ -71,10 +77,13 @@ class WebhookController implements IControllerBase {
             }
 
             try {
+                const {id, ...insertingAppointment} = appointment as AppointmentUI;
                 await this.appoinmentService.saveAppointmentData({
-                    ...appointment,
-                    appointmentId: id,
-                    id: appointment.barCode,
+                    ...insertingAppointment,
+                    acuityAppointmentId: id,
+                    barCode: appointment.barCode,
+                    appointmentStatus: AppointmentStatus.pending,
+                    result: Result.pending
                 });
             } catch (e) {
                 console.log(
@@ -90,4 +99,4 @@ class WebhookController implements IControllerBase {
     }
 }
 
-export default WebhookController
+export default AppointmentWebhookController

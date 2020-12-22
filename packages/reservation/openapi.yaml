@@ -536,7 +536,33 @@ paths:
             text/html:
               schema:
                 type: string
-              
+
+  /api/v1/appointment/create:
+    post:
+      description: Webhook for adding barcode to acuity and cloning to firestore
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: true
+              properties:
+                calendarID:
+                  type: string
+                appointmentTypeID:
+                  type: string
+                action:
+                  type: string
+                id:
+                  type: string
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            text/html:
+              schema:
+                type: string
+
 
   /reservation/admin/api/v1/packages:
     post:

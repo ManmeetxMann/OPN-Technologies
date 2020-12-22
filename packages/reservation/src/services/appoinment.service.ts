@@ -6,15 +6,16 @@ import {
   AppoinmentBarCodeSequenceDBModel,
   AppointmentFilters,
   AppointmentsDBModel,
+  AppointmentDbBase,
 } from '../models/appoinment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
-import {AppointmentsDBRepository} from "../respository/appointments-db-repository";
+import {AppointmentsRepository} from "../respository/appointments-repository";
 
 export class AppoinmentService {
   private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(new DataStore());
-  private appointmentsDBRepository = new AppointmentsDBRepository(new DataStore());
+  private appointmentsRepository = new AppointmentsRepository(new DataStore());
 
   async getAppoinmentByBarCode(barCodeNumber: string): Promise<AppointmentDTO> {
     const filters = {barCodeNumber: barCodeNumber}
@@ -23,6 +24,10 @@ export class AppoinmentService {
       .then((appoinment: AppointmentDBModel) => {
         return appoinment
       })
+  }
+
+  async getAppoinmentDBByBarCode(barCodeNumber: string): Promise<AppointmentsDBModel[]> {
+    return this.appointmentsRepository.findWhereEqual("barCode", barCodeNumber)
   }
 
   async getAppointmentById(id: number): Promise<AppointmentDTO> {
@@ -80,8 +85,8 @@ export class AppoinmentService {
     }
   }
 
-  async saveAppointmentData(appointment: AppointmentsDBModel): Promise<AppointmentsDBModel> {
-    return this.appointmentsDBRepository.save(appointment)
+  async saveAppointmentData(appointment: AppointmentDbBase): Promise<AppointmentsDBModel> {
+    return this.appointmentsRepository.save(appointment)
   }
 
   async getAppoinmentByDate(startDate: string, endDate: string): Promise<AppointmentDTO[]> {

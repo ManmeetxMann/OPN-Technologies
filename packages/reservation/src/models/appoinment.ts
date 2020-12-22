@@ -17,6 +17,43 @@ export type AppointmentBase = {
   canceled?: boolean
 }
 
+export enum AppointmentStatus {
+  pending = "pending",
+  inTransit = "inTransit",
+  received = "received",
+  inProgress = "inProgress",
+  reported = "reported",
+}
+
+export enum Result {
+  pending = "pending",
+  positive = "positive",
+  negative = "negative",
+  covidDetected = "2019-nCoVDetected",
+  invalid = "invalid",
+  inconclusive = "inconclusive"
+}
+
+export type AppointmentDbBase = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: number;
+  dateOfBirth: string;
+  dateOfAppointment: string;
+  acuityAppointmentId: number;
+  timeOfAppointment?: string;
+  barCode: string;
+  packageCode?: string;
+  organizationId?: string;
+  appointmentStatus: AppointmentStatus
+  result: Result
+}
+
+export type AppointmentsDBModel = AppointmentDbBase & {
+  id: string
+}
+
 export type AppoinmentDataUI = {
   findAppoinmentTab: string
   invalidBarCodeNumber?: boolean
@@ -27,10 +64,6 @@ export type AppoinmentDataUI = {
 export type AppointmentDTO = AppointmentBase
 
 export type AppointmentDBModel = AppointmentBase
-
-export type AppointmentsDBModel = AppointmentBase & {
-  id: string
-}
 
 type AppointmentAcuityFormField = {
   fieldID: number
