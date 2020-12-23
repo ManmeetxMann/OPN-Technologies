@@ -38,15 +38,14 @@ class AdminAppointmentController implements IControllerBase {
       this.getAppointmentById,
     )
     innerRouter.put(
-<<<<<<< HEAD
       this.path + '/api/v1/appointments/:appointmentId/cancel',
       adminAuthMiddleware,
       this.cancelAppointment,
-=======
+    )
+    innerRouter.put(
       this.path + '/api/v1/appointments/add_labels',
       adminAuthMiddleware,
       this.addLabels,
->>>>>>> Feat: 1039 Appointment Update API to add Labels
     )
 
     this.router.use('/', innerRouter)

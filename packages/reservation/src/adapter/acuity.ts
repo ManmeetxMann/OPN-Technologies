@@ -28,7 +28,11 @@ abstract class AcuityScheduling {
     organizationId: Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
   }
 
-<<<<<<< HEAD
+  private labelsIdMapping = {
+    SameDay: Config.get('ACUITY_FIELD_SAME_DAY'),
+    NextDay: Config.get('ACUITY_FIELD_NEXT_DAY'),
+  }
+
   protected async cancelAppointment(id: number): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
@@ -48,11 +52,6 @@ abstract class AcuityScheduling {
       throw new BadRequestException(result.message)
     }
     return this.customFieldsToAppoinment(result)
-=======
-  private labelsIdMapping = {
-    SameDay: Config.get('ACUITY_FIELD_SAME_DAY'),
-    NextDay: Config.get('ACUITY_FIELD_NEXT_DAY'),
->>>>>>> Feat: 1039 Appointment Update API to add Labels
   }
 
   protected async updateAppointmentOnAcuity(
@@ -98,9 +97,11 @@ abstract class AcuityScheduling {
         labels: this.renameLabelKeysToId(fields),
       }),
     })
-    const appointment = await res.json()
-
-    return this.customFieldsToAppoinment(appointment)
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return this.customFieldsToAppoinment(result)
   }
 
   protected async getAppointments(filters: unknown): Promise<AppointmentAcuityResponse[]> {
