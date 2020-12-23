@@ -583,6 +583,11 @@ paths:
                   type: string
                 id:
                   type: string
+              required:
+                - calendarID
+                - appointmentTypeID
+                - action
+                - id
       responses:
         '200':
           description: Successfully Return
