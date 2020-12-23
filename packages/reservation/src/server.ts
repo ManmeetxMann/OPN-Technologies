@@ -16,6 +16,7 @@ import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
 import exphbs from 'express-handlebars'
 import path from 'path'
+import AppointmentWebhookController from './controllers/v1/acuity_webhook/appoinments.controller'
 
 //import * as debugClient from '@google-cloud/debug-agent'
 //debugClient.start({allowExpressions: true})
@@ -33,6 +34,7 @@ const app = new App({
     new TestResultController(),
     new PackageController(),
     new AppointmentController(),
+    new AppointmentWebhookController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],
