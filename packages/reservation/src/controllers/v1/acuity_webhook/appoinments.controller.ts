@@ -5,6 +5,7 @@ import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
 import {ScheduleWebhookRequest} from '../../../models/webhook'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
+import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {isEmpty} from 'lodash'
 import {AcuityUpdateDTO, AppointmentStatus, AppointmentUI, Result} from '../../../models/appoinment'
 import {TestResultsService} from '../../../services/test-results.service'
@@ -40,17 +41,18 @@ class AppointmentWebhookController implements IControllerBase {
 
       const dataForUpdate: AcuityUpdateDTO = {}
 
-      if (!appointment.barCode) {
-        dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
-      } else {
+      if (appointment.barCode) {
         const appointmentWithSameBarcodes = await this.appoinmentService.getAppoinmentDBByBarCode(
-          appointment.barCode,
+            appointment.barCode,
         )
         if (appointmentWithSameBarcodes.length > 0) {
           console.log(
-            `WebhookController: DuplicateBarCode AppoinmentID: ${id} -  BarCode: ${appointment.barCode}`,
+              `WebhookController: DuplicateBarCode AppoinmentID: ${id} -  BarCode: ${appointment.barCode}`,
           )
+          throw new DuplicateDataException(`Duplicate ${id} found, Barcode ${appointment.barCode}`)
         }
+      } else {
+        dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
       }
 
       if (appointment.packageCode && !appointment.organizationId) {
@@ -79,7 +81,7 @@ class AppointmentWebhookController implements IControllerBase {
       }
 
       try {
-        const {id, ...insertingAppointment} = appointment as AppointmentUI
+        const {id, appointmentId, ...insertingAppointment} = appointment as AppointmentUI
         await this.appoinmentService.saveAppointmentData({
           ...insertingAppointment,
           acuityAppointmentId: id,
