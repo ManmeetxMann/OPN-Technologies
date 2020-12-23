@@ -114,7 +114,12 @@ export class AppoinmentService {
     return this.appoinmentSchedulerRepository.updateAppointment(id, data)
   }
 
+<<<<<<< HEAD
   async cancelAppointmentById(id: number): Promise<AppointmentDTO> {
     return this.appoinmentSchedulerRepository.cancelAppointmentById(id)
+=======
+  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.addAppointmentLabel(id, data)
+>>>>>>> Feat: 1039 Appointment Update API to add Labels
   }
 }

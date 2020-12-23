@@ -10,6 +10,7 @@ import {
   AppointmentDTO,
   AppointmentUI,
   appointmentUiDTOResponse,
+  Label,
 } from '../../models/appoinment'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
@@ -37,9 +38,15 @@ class AdminAppointmentController implements IControllerBase {
       this.getAppointmentById,
     )
     innerRouter.put(
+<<<<<<< HEAD
       this.path + '/api/v1/appointments/:appointmentId/cancel',
       adminAuthMiddleware,
       this.cancelAppointment,
+=======
+      this.path + '/api/v1/appointments/add_labels',
+      adminAuthMiddleware,
+      this.addLabels,
+>>>>>>> Feat: 1039 Appointment Update API to add Labels
     )
 
     this.router.use('/', innerRouter)
@@ -114,6 +121,31 @@ class AdminAppointmentController implements IControllerBase {
       await this.appointmentService.cancelAppointmentById(Number(appointmentId))
 
       res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  addLabels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const dataToUpdate = req.body as {appointmentId: number; label: Label}[]
+
+      if (dataToUpdate.length > 50) {
+        throw new BadRequestException('Maximum appointments to be part of request is 50')
+      }
+
+      const result = await Promise.all(
+        dataToUpdate.map(async ({appointmentId, label}) => {
+          const appointment = await this.appointmentService.addAppointmentLabel(
+            Number(appointmentId),
+            {[label]: label},
+          )
+
+          return appointmentUiDTOResponse(appointment)
+        }),
+      )
+
+      res.json(actionSucceed(result))
     } catch (error) {
       next(error)
     }

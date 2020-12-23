@@ -84,6 +84,13 @@ export type AppointmentAcuityResponse = AppointmentBase & {
   location: string
   organizationId: string
   datetime: string
+  labels: LabelsAcuityResponse[]
+}
+
+export type LabelsAcuityResponse = {
+  id: number
+  name: Label
+  color: string
 }
 
 export type AppointmentSearchRequest = {
@@ -149,6 +156,11 @@ export type AppointmentFilters = {
   showall: boolean
   minDate?: string
   maxDate?: string
+}
+
+export enum Label {
+  SameDay = 'SameDay',
+  NextDay = 'NextDay',
 }
 
 export const appointmentUiDTOResponse = (

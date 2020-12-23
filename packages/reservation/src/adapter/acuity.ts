@@ -28,6 +28,7 @@ abstract class AcuityScheduling {
     organizationId: Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
   }
 
+<<<<<<< HEAD
   protected async cancelAppointment(id: number): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
@@ -47,6 +48,11 @@ abstract class AcuityScheduling {
       throw new BadRequestException(result.message)
     }
     return this.customFieldsToAppoinment(result)
+=======
+  private labelsIdMapping = {
+    SameDay: Config.get('ACUITY_FIELD_SAME_DAY'),
+    NextDay: Config.get('ACUITY_FIELD_NEXT_DAY'),
+>>>>>>> Feat: 1039 Appointment Update API to add Labels
   }
 
   protected async updateAppointmentOnAcuity(
@@ -69,6 +75,31 @@ abstract class AcuityScheduling {
       }),
     })
     const appointment = await res.json()
+
+    return this.customFieldsToAppoinment(appointment)
+  }
+
+  protected async updateAppointmentLabel(
+    id: number,
+    fields: unknown,
+  ): Promise<AppointmentAcuityResponse> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = `${APIURL}/api/v1/appointments/${id}?admin=true`
+
+    const res = await fetch(apiUrl, {
+      method: 'put',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        labels: this.renameLabelKeysToId(fields),
+      }),
+    })
+    const appointment = await res.json()
+
     return this.customFieldsToAppoinment(appointment)
   }
 
@@ -162,6 +193,19 @@ abstract class AcuityScheduling {
       acuityFilters.push({
         id: newKey,
         value: filters[key],
+      })
+    })
+
+    return acuityFilters
+  }
+
+  private renameLabelKeysToId(filters): AcuityFilter[] {
+    const acuityFilters = []
+    const keys = Object.keys(filters)
+    keys.forEach((key) => {
+      const newKey = this.labelsIdMapping[key] ? this.labelsIdMapping[key] : key
+      acuityFilters.push({
+        id: newKey,
       })
     })
 

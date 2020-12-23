@@ -643,3 +643,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
+
+  /reservation/admin/api/v1/appointments/add_labels:
+    put:
+      description: Get appointment by appointment ID
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                properties:
+                  appointmentId:
+                    type: number
+                  label:
+                    type: string
+                    enum:
+                      - SameDay
+                      - NextDay
+                required:
+                  - appointmentId
+                  - label
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: string
