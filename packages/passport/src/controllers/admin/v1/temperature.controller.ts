@@ -11,7 +11,7 @@ import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {AttestationService} from '../../../services/attestation-service'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
-import {PassportStatuses} from 'packages/passport/src/models/passport'
+import {PassportStatuses} from '../../../models/passport'
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
 
