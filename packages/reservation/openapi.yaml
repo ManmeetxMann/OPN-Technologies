@@ -521,6 +521,7 @@ paths:
           name: transportDate
           schema:
             type: string
+            format: date-time
       responses:
         '200':
           description: Succesfully retrieve transport run list

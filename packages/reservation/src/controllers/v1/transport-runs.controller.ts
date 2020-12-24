@@ -3,6 +3,7 @@ import {Handler, Router} from "express";
 import {adminAuthMiddleware} from "../../../../common/src/middlewares/admin.auth";
 import {TransportRunsService} from "../../services/transport-runs.service";
 import {actionSucceed} from "../../../../common/src/utils/response-wrapper";
+import {TransportRunsDTOResponse} from "../../models/transport-runs";
 
 class TransportRunsController implements IControllerBase {
     public path = '/reservation/admin/api/v1/transport-runs'
@@ -41,12 +42,10 @@ class TransportRunsController implements IControllerBase {
         try {
             const {transportDate} = req.query as {transportDate: string}
 
-            console.log(decodeURI(transportDate));
-
             const transportRuns = await this.transportRunsService.getByDate(transportDate);
 
             res.json(
-                actionSucceed(transportRuns),
+                actionSucceed(transportRuns.map(TransportRunsDTOResponse)),
             )
         } catch (error) {
             next(error)
