@@ -7,15 +7,21 @@ import {
   AppointmentFilters,
   AppointmentsDBModel,
   AppointmentDbBase,
+  AppointmentStatus,
 } from '../models/appoinment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
 import {AppointmentsRepository} from '../respository/appointments-repository'
+import {now} from '../../../common/src/utils/times'
+import {TransportRunsService} from "./transport-runs.service";
+import { ResourceNotFoundException } from '../../../common/src/exceptions/resource-not-found-exception'
 
 export class AppoinmentService {
   private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(new DataStore())
   private appointmentsRepository = new AppointmentsRepository(new DataStore())
+  private transportRunsService = new TransportRunsService()
+
 
   async getAppoinmentByBarCode(barCodeNumber: string): Promise<AppointmentDTO> {
     const filters = {barCodeNumber: barCodeNumber}
@@ -28,6 +34,10 @@ export class AppoinmentService {
 
   async getAppoinmentDBByBarCode(barCodeNumber: string): Promise<AppointmentsDBModel[]> {
     return this.appointmentsRepository.findWhereEqual('barCode', barCodeNumber)
+  }
+
+  async getAppointmentDBById(id: string): Promise<AppointmentsDBModel> {
+    return this.appointmentsRepository.get(id);
   }
 
   async getAppointmentById(id: number): Promise<AppointmentDTO> {
@@ -116,5 +126,19 @@ export class AppoinmentService {
 
   async cancelAppointmentById(id: number): Promise<AppointmentDTO> {
     return this.appoinmentSchedulerRepository.cancelAppointmentById(id)
+  }
+
+  async addTransportRun(appointmentId: string, transportRunId: string) {
+    const transportRuns = await this.transportRunsService.getByTransportRunId(transportRunId);
+    if ( transportRuns.length > 1) {
+      console.log(`More than 1 result for the transportRunId ${transportRunId}`)
+    } else if (transportRuns.length === 0) {
+      throw new ResourceNotFoundException(`Transport Run for the id ${transportRunId} Not found`);
+    }
+    return this.appointmentsRepository.updateProperties(appointmentId, {
+      transportRunId: transportRunId,
+      inTransitAt: now(),
+      appointmentStatus: AppointmentStatus.inTransit
+    })
   }
 }

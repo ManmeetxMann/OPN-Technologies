@@ -41,6 +41,11 @@ class AdminAppointmentController implements IControllerBase {
       adminAuthMiddleware,
       this.cancelAppointment,
     )
+    innerRouter.put(
+        this.path + '/api/v1/appointments/add-transport-run',
+        adminAuthMiddleware,
+        this.addTransportRun
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -112,6 +117,17 @@ class AdminAppointmentController implements IControllerBase {
       }
 
       await this.appointmentService.cancelAppointmentById(Number(appointmentId))
+
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+  addTransportRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {appointmentId, transportRunId} = req.body as {appointmentId: string, transportRunId: string}
+
+      await this.appointmentService.addTransportRun(appointmentId, transportRunId);
 
       res.json(actionSucceed())
     } catch (error) {
