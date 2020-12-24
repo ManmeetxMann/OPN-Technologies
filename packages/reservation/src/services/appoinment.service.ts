@@ -7,7 +7,6 @@ import {
   AppointmentFilters,
   AppointmentsDBModel,
   AppointmentDbBase,
-  AppointmentBase,
 } from '../models/appoinment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -123,7 +122,10 @@ export class AppoinmentService {
     return this.appoinmentSchedulerRepository.addAppointmentLabel(id, data)
   }
 
-  async updateAppointmentDB(id: string, data: Record<string, unknown>): Promise<AppointmentsDBModel> {
+  async updateAppointmentDB(
+    id: string,
+    data: Record<string, unknown>,
+  ): Promise<AppointmentsDBModel> {
     return this.appointmentsRepository.updateProperties(id, data)
   }
 }
