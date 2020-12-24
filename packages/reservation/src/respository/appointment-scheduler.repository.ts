@@ -17,6 +17,10 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
     return this.updateAppointmentOnAcuity(id, data)
   }
 
+  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
+    return this.updateAppointmentLabel(id, data)
+  }
+
   async getAppointmentById(id: number): Promise<AppointmentDBModel> {
     return this.getAppointmentsById(id).then((appoinment: AppointmentAcuityResponse) => {
       return this.convertToAppointmentModel(appoinment)
