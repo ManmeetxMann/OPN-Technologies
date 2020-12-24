@@ -780,45 +780,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse'
 
-  /reservation/admin/api/v1/appointments/add_labels:
+  /reservation/admin/api/v1/appointments/{barCode}/receive:
     put:
-      description: Add SameDay/NextDay Labesl to Appointments
-      tags:
-        - Appointment Management
-      security:
-        - bearerAuthJWT: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: object
-                additionalProperties: false
-                properties:
-                  appointmentId:
-                    type: number
-                  label:
-                    type: string
-                    enum:
-                      - SameDay
-                      - NextDay
-                required:
-                  - appointmentId
-                  - label
-      responses:
-        '200':
-          description: Successfully Return
-          content:
-            application/json:
-              schema:
-                type: string
-
-  /reservation/admin/api/v1/appointments/barcode/{barCode}:
-    get:
-      description: Get appointment by barCode
-      tags:
-        - Appointment Management
+      description: Update Appointment status to mark it received
       security:
         - bearerAuthJWT: []
       parameters:
@@ -827,6 +791,17 @@ paths:
           schema:
             type: string
           required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                location:
+                  type: string
+              required:
+                - location
       responses:
         '200':
           description: Successfully Return
