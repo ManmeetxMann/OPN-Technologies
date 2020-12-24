@@ -5,9 +5,7 @@ export type TransportRunsBase = {
 }
 
 export type TransportRunsDbModel = TransportRunsBase & {
-  transportRunId: string
-  transportDateTime: string
-  driverName: string
+  id: string
 }
 
 export type TransportRunsIdentifier = {
