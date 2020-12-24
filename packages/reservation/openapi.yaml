@@ -450,6 +450,28 @@ paths:
               schema:
                 type: string
 
+  /reservation/admin/api/v1/transport-runs:
+    post:
+      description: Create transport run
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                transportDateTime:
+                  type: string
+                driverName:
+                  type: string
+      responses:
+        '200':
+          description: Succesfully create transport
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
   /webhook/acuity/schedule:
     post:
       description: Webhook for adding barcode to acuity
