@@ -10,7 +10,8 @@ import {
 import {userDTOResponse} from '../../../models/user'
 import {User} from '../../../../../common/src/data/user'
 import {AdminProfile} from '../../../../../common/src/data/admin'
-import {authMiddleware} from '../../../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
+import {UserRoles} from '../../../../../common/src/types/authorization'
 import {CursoredUsersRequestFilter} from '../../../types/user-organization-request'
 import {OrganizationGroup} from '../../../models/organization'
 import {omit} from 'lodash'
@@ -94,7 +95,11 @@ class UserController implements IControllerBase {
     const innerRouter = () => Router({mergeParams: true})
     const root = '/enterprise/admin/api/v4/users'
 
-    this.router.use(root, authMiddleware, innerRouter().get('/', findAll))
+    this.router.use(
+      root,
+      authorizationMiddleware([UserRoles.OrgAdmin]),
+      innerRouter().get('/', findAll),
+    )
   }
 }
 
