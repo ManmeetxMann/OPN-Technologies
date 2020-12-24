@@ -47,6 +47,20 @@ export class AttestationService {
     return 'pending'
   }
 
+  async statusByLocationAndUserId(
+    locationId: string,
+    userOrDependantId: string,
+  ): Promise<Attestation> {
+    const [attestation] = await this.attestationRepository
+      .getQueryFindWhereArrayInMapContains('appliesTo', userOrDependantId, 'attestationTime')
+      .where('locationId', '==', locationId)
+      .orderBy('attestationTime', 'desc')
+      .limit(1)
+      .fetch()
+
+    return attestation
+  }
+
   async getTracesInPeriod(
     userId: string,
     from: string,
