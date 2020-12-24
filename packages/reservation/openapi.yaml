@@ -500,7 +500,9 @@ paths:
 
   /reservation/admin/api/v1/test-results:
     get:
-      description: Get test results by organization ID
+      description: Get Test results
+      tags:
+        - Test Management
       parameters:
         - in: query
           name: organizationId
@@ -522,7 +524,9 @@ paths:
 
   /reservation/admin/api/v1/appointments:
     get:
-      description: Get appointmenr list by organization ID
+      description: Get appointment list
+      tags:
+        - Appointment Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -551,6 +555,8 @@ paths:
   /reservation/admin/api/v1/appointments/{appointmentId}:
     get:
       description: Get appointment by appointment ID
+      tags:
+        - Appointment Management
       parameters:
         - in: path
           name: appointmentId
@@ -599,6 +605,8 @@ paths:
   /reservation/admin/api/v1/packages:
     post:
       description: Add Package Codes for Orgs
+      tags:
+        - Package Management
       requestBody:
         content:
           application/json:
@@ -624,6 +632,8 @@ paths:
   /reservation/admin/api/v1/appointments/{appointmentId}/cancel:
     put:
       description: Cancel appointment by appointment ID
+      tags:
+        - Appointment Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -646,7 +656,9 @@ paths:
 
   /reservation/admin/api/v1/appointments/add_labels:
     put:
-      description: Get appointment by appointment ID
+      description: Add SameDay/NextDay Labesl to Appointments
+      tags:
+        - Appointment Management
       security:
         - bearerAuthJWT: []
       requestBody:
