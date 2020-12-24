@@ -16,7 +16,8 @@ class TransportRunsController implements IControllerBase {
 
     public initRoutes(): void {
         const innerRouter = Router({mergeParams: true})
-        innerRouter.post(this.path + '/', adminAuthMiddleware, this.createTransportRun)
+        innerRouter.get(this.path + '/', this.listTransportRun)
+        innerRouter.post(this.path + '/', this.createTransportRun)
 
         this.router.use('/', innerRouter)
     }
@@ -33,7 +34,21 @@ class TransportRunsController implements IControllerBase {
                 }),
             )
         } catch (error) {
-            console.log(error);
+            next(error)
+        }
+    }
+    listTransportRun:Handler = async (req, res, next): Promise<void> => {
+        try {
+            const {transportDate} = req.query as {transportDate: string}
+
+            console.log(decodeURI(transportDate));
+
+            const transportRuns = await this.transportRunsService.getByDate(transportDate);
+
+            res.json(
+                actionSucceed(transportRuns),
+            )
+        } catch (error) {
             next(error)
         }
     }

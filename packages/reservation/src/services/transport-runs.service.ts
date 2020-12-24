@@ -21,4 +21,7 @@ export class TransportRunsService {
                 return {id: transportRun.id, transportRunId: transportRun.transportRunId}
             })
     }
+    getByDate(transportDateTime: string): Promise<TransportRunsIdentifier[]> {
+        return this.transportRunsRepository.findWhereEqual('transportDateTime', transportDateTime);
+    }
 }

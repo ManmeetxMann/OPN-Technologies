@@ -66,6 +66,40 @@ components:
             message:
               nullable: true
               type: string
+    TransportRunListResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              transportRunId:
+                type: string
+              transportDateTime:
+                type: string
+              driverName:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
     TransportRunResponse200:
       type: object
       additionalProperties: false
@@ -480,6 +514,20 @@ paths:
                 type: string
 
   /reservation/admin/api/v1/transport-runs:
+    get:
+      description: Retrieve transport run list
+      parameters:
+        - in: query
+          name: transportDate
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Succesfully retrieve transport run list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransportRunListResponse200'
     post:
       description: Create transport run
       requestBody:
