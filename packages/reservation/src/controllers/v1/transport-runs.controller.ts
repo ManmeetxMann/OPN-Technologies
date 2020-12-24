@@ -16,7 +16,7 @@ class TransportRunsController implements IControllerBase {
 
     public initRoutes(): void {
         const innerRouter = Router({mergeParams: true})
-        innerRouter.post(this.path + '/', this.createTransportRun)
+        innerRouter.post(this.path + '/', adminAuthMiddleware, this.createTransportRun)
 
         this.router.use('/', innerRouter)
     }
@@ -29,7 +29,7 @@ class TransportRunsController implements IControllerBase {
 
             res.json(
                 actionSucceed({
-                    id: transportRuns.id,
+                    transportRunId: transportRuns.id,
                 }),
             )
         } catch (error) {

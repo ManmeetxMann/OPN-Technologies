@@ -12,7 +12,7 @@ export class TransportRunsService {
             .getUniqueId('transportRun')
             .then((transportRunId) => {
                 return this.transportRunsRepository.add({
-                    transportRunId,
+                    transportRunId: `R${transportRunId}`,
                     transportDateTime: transportDateTime,
                     driverName: driverName,
                 })
