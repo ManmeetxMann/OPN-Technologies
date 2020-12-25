@@ -1,6 +1,10 @@
 import {firestore} from 'firebase-admin'
 import {Config} from './config'
 import {Request, Response} from 'express'
+import {GenericTimestamp, safeTimestamp} from './datetime-util'
+import moment from 'moment'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 // utility wrapper for time-related values
 // used for testing to change the server timestamp
@@ -33,3 +37,15 @@ export const now = (): Date => {
   }
   return new Date()
 }
+
+export const toDateFormat = (timestamp: GenericTimestamp): string => {
+  const date = safeTimestamp(timestamp)
+  return moment(date).tz(timeZone).format('MMMM D, YYYY')
+}
+
+export const toDateTimeFormat = (timestamp: GenericTimestamp): string => {
+  const date = safeTimestamp(timestamp)
+  return moment(date).tz(timeZone).format('h:mm A MMMM D, YYYY')
+}
+
+export const isValidDate = (date: string): boolean => !isNaN(Date.parse(date))

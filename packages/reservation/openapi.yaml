@@ -28,6 +28,37 @@ components:
         result:
           type: string
 
+    TestRunsResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        testRunId:
+          type: string
+        testRunDateTime:
+          type: string
+      required:
+        - testRunId
+        - testRunDateTime
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+          message:
+            nullable: true
+            type: string
+
     AppointmentResponse200:
       type: object
       additionalProperties: false
@@ -643,3 +674,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
+
+
+  /reservation/admin/api/v1/test-runs:
+    get:
+      description: Get list of Test Runs by date
+      security:
+        - bearerAuthJWT: []
+      parameters:
+      - in: query
+        name: testRunDate
+        schema:
+          type: string
+        required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestRunsResponse200'
+
+    post:
+      description: Add Test Run
+      security:
+        - bearerAuthJWT: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                testRunDateTime:
+                  type: string
+              required:
+                - testRunDateTime
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/TestRunsResponse200'
