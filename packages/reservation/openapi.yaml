@@ -516,6 +516,8 @@ paths:
   /reservation/admin/api/v1/transport-runs:
     get:
       description: Retrieve transport run list
+      tags:
+        - Transport Runs
       parameters:
         - in: query
           name: transportDate
@@ -532,6 +534,8 @@ paths:
                 $ref: '#/components/schemas/TransportRunListResponse200'
     post:
       description: Create transport run
+      tags:
+        - Transport Runs
       requestBody:
         content:
           application/json:
@@ -558,6 +562,8 @@ paths:
   /webhook/acuity/schedule:
     post:
       description: Webhook for adding barcode to acuity
+      tags:
+        - Acuity Webhooks
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -679,6 +685,8 @@ paths:
   /reservation/acuity_webhook/api/v1/appointment/create:
     post:
       description: Webhook for adding barcode to acuity and cloning to firestore
+      tags:
+        - Acuity Webhooks
       requestBody:
         content:
           application/x-www-form-urlencoded:
