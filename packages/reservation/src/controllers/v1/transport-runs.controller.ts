@@ -1,8 +1,8 @@
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {Handler, Router} from 'express'
-import {adminAuthMiddleware} from '../../../../common/src/middlewares/admin.auth'
 import {TransportRunsService} from '../../services/transport-runs.service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
+import {TransportRunsDTOResponse} from '../../models/transport-runs'
 
 class TransportRunsController implements IControllerBase {
   public path = '/reservation/admin/api/v1/transport-runs'
@@ -15,7 +15,8 @@ class TransportRunsController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.post(this.path + '/', adminAuthMiddleware, this.createTransportRun)
+    innerRouter.get(this.path + '/', this.listTransportRun)
+    innerRouter.post(this.path + '/', this.createTransportRun)
 
     this.router.use('/', innerRouter)
   }
@@ -35,7 +36,17 @@ class TransportRunsController implements IControllerBase {
         }),
       )
     } catch (error) {
-      console.log(error)
+      next(error)
+    }
+  }
+  listTransportRun: Handler = async (req, res, next): Promise<void> => {
+    try {
+      const {transportDate} = req.query as {transportDate: string}
+
+      const transportRuns = await this.transportRunsService.getByDate(transportDate)
+
+      res.json(actionSucceed(transportRuns.map(TransportRunsDTOResponse)))
+    } catch (error) {
       next(error)
     }
   }
