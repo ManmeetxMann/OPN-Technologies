@@ -5,11 +5,7 @@ import {isValidDate, toDateFormat} from '../../../../../common/src/utils/times'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {TestRunsService} from '../../../services/test-runs.service'
-import {
-  TestRunsRequest,
-  TestRunsPostRequest,
-  testRunDTOResponse,
-} from 'packages/reservation/src/models/test-runs'
+import {TestRunsRequest, TestRunsPostRequest, testRunDTOResponse} from '../../../models/test-runs'
 import {toDateTimeFormat} from '../../../../../common/src/utils/times'
 
 class TestRunsController implements IControllerBase {
