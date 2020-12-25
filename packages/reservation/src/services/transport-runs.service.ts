@@ -9,7 +9,7 @@ export class TransportRunsService {
   private identifier = new IdentifiersModel(new DataStore())
 
   create(transportDateTime: string, driverName: string): Promise<TransportRunsIdentifier> {
-    const transportDate = moment(transportDateTime).format("YYYY-MM-DD")
+    const transportDate = moment(transportDateTime).format('YYYY-MM-DD')
     return this.identifier
       .getUniqueId('transportRun')
       .then((transportRunId) => {
