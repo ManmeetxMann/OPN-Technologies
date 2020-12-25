@@ -9,7 +9,7 @@ import {
   TestRunsRequest,
   TestRunsPostRequest,
   testRunDTOResponse,
-} from 'packages/reservation/src/models/test-runs'
+} from '../../../../../reservation/src/models/test-runs'
 import {toDateTimeFormat} from '../../../../../common/src/utils/times'
 
 class TestRunsController implements IControllerBase {
@@ -47,7 +47,7 @@ class TestRunsController implements IControllerBase {
 
   createTestRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunDateTime} = req.query as TestRunsPostRequest
+      const {testRunDateTime} = req.body as TestRunsPostRequest
 
       if (testRunDateTime && !isValidDate(testRunDateTime)) {
         throw new BadRequestException('testRunDate is invalid')
