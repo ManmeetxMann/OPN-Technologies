@@ -1,9 +1,8 @@
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {Handler, Router} from 'express'
-import {adminAuthMiddleware} from '../../../../common/src/middlewares/admin.auth'
 import {TransportRunsService} from '../../services/transport-runs.service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {TransportRunsDTOResponse} from "../../models/transport-runs";
+import {TransportRunsDTOResponse} from '../../models/transport-runs'
 
 class TransportRunsController implements IControllerBase {
   public path = '/reservation/admin/api/v1/transport-runs'
@@ -17,7 +16,7 @@ class TransportRunsController implements IControllerBase {
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
     innerRouter.get(this.path + '/', this.listTransportRun)
-        innerRouter.post(this.path + '/', this.createTransportRun)
+    innerRouter.post(this.path + '/', this.createTransportRun)
 
     this.router.use('/', innerRouter)
   }
@@ -31,28 +30,26 @@ class TransportRunsController implements IControllerBase {
 
       const transportRun = await this.transportRunsService.create(transportDateTime, driverName)
 
-            res.json(
-                actionSucceed({
-                    transportRunId: transportRun.id,
-                }),
-            )
-        } catch (error) {
-            next(error)
-        }
+      res.json(
+        actionSucceed({
+          transportRunId: transportRun.id,
+        }),
+      )
+    } catch (error) {
+      next(error)
     }
-    listTransportRun:Handler = async (req, res, next): Promise<void> => {
-        try {
-            const {transportDate} = req.query as {transportDate: string}
+  }
+  listTransportRun: Handler = async (req, res, next): Promise<void> => {
+    try {
+      const {transportDate} = req.query as {transportDate: string}
 
-            const transportRuns = await this.transportRunsService.getByDate(transportDate);
+      const transportRuns = await this.transportRunsService.getByDate(transportDate)
 
-            res.json(
-                actionSucceed(transportRuns.map(TransportRunsDTOResponse)),
-            )
-        } catch (error) {
-            next(error)
-        }
+      res.json(actionSucceed(transportRuns.map(TransportRunsDTOResponse)))
+    } catch (error) {
+      next(error)
     }
+  }
 }
 
 export default TransportRunsController

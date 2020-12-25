@@ -4,7 +4,8 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {authMiddleware} from '../../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
+import {UserRoles} from '../../../../common/src/types/authorization'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {NfcTagService} from '../../../../common/src/service/hardware/nfctag-service'
 import {CreateNfcTagRequest} from '../../../../common/src/types/nfc-tag-request'
@@ -88,8 +89,8 @@ class AdminTagController implements IControllerBase {
     const tags = innerRouter().use(
       '/',
       innerRouter()
-        .post('/', authMiddleware, addNfcTagId)
-        .get('/:tagId/user', authMiddleware, getUserByTagId),
+        .post('/', authorizationMiddleware([UserRoles.OrgAdmin]), addNfcTagId)
+        .get('/:tagId/user', authorizationMiddleware([UserRoles.OrgAdmin]), getUserByTagId),
     )
 
     this.router.use(root, tags)

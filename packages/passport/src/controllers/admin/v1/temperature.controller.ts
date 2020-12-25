@@ -12,6 +12,7 @@ import {BadRequestException} from '../../../../../common/src/exceptions/bad-requ
 import {AlertService} from '../../../services/alert-service'
 import {AttestationService} from '../../../services/attestation-service'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
+import {PassportStatuses} from '../../../models/passport'
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
 
@@ -58,6 +59,10 @@ class TemperatureAdminController implements IControllerBase {
         throw new BadRequestException('No attestation found for user')
       }
 
+      if (atestation.status !== PassportStatuses.TemperatureCheckRequired) {
+        throw new BadRequestException('Temperature check not required for attestation')
+      }
+
       const data = {
         organizationId,
         locationId: atestation.locationId,
@@ -65,6 +70,7 @@ class TemperatureAdminController implements IControllerBase {
         status,
         userId,
       }
+
       const result = await this.temperatureService.save(data)
 
       const response = {

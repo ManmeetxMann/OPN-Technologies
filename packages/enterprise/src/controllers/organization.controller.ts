@@ -6,7 +6,8 @@ import {
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 import {User, UserDependant} from '../../../common/src/data/user'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {authMiddleware} from '../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../common/src/middlewares/authorization'
+import {UserRoles} from '../../../common/src/types/authorization'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
@@ -83,7 +84,7 @@ class OrganizationController implements IControllerBase {
       '/groups',
       innerRouter()
         .post('/', this.addGroups)
-        .get('/', authMiddleware, this.getGroupsForAdmin)
+        .get('/', authorizationMiddleware([UserRoles.OrgAdmin]), this.getGroupsForAdmin)
         .get('/public', this.getGroupsForPublic)
         .put('/', this.updateMultipleUserGroup)
         .post('/users', this.addUsersToGroups)
@@ -95,7 +96,7 @@ class OrganizationController implements IControllerBase {
     // prettier-ignore
     const stats = innerRouter().use(
       '/stats',
-      authMiddleware,
+      authorizationMiddleware([UserRoles.OrgAdmin]),
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/health', this.getStatsHealth)

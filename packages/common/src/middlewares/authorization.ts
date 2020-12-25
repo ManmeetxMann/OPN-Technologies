@@ -1,15 +1,19 @@
 import {NextFunction, Request, Response} from 'express'
-import {AdminProfile} from '../../../common/src/data/admin'
+
 import {AuthService} from '../service/auth/auth-service'
 import {UserService} from '../service/user/user-service'
 import {of} from '../utils/response-wrapper'
 import {ResponseStatusCodes} from '../types/response-status'
+import {UserRoles} from '../types/authorization'
+import {User} from '../data/user'
 
-export const adminAuthMiddleware = async (
+export const authorizationMiddleware = (allowedRoles?: [UserRoles]) => async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
+  const listOfAllowedRoles = allowedRoles ?? [UserRoles.RegUser]
+
   const bearerHeader = req.headers['authorization']
   if (!bearerHeader) {
     res.status(401).json(of(null, ResponseStatusCodes.Unauthorized, 'Authorization token required'))
@@ -38,14 +42,18 @@ export const adminAuthMiddleware = async (
     return
   }
 
-  // Grab our claim
-  // TODO: using claims to get the id and then calling a get(...) instead of query
-  //       would have been faster... but the claim won't propagate because they already
-  //       had their claim... To be researched :-)
   const userService = new UserService()
-  const authenticatedUser = await userService.findOneByAdminAuthUserId(validatedAuthUser.uid)
+  let connectedUser: User
+  if (listOfAllowedRoles.includes(UserRoles.OrgAdmin)) {
+    connectedUser = await userService.findOneByAdminAuthUserId(validatedAuthUser.uid)
+  } else {
+    connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
+    if (connectedUser) {
+      connectedUser.admin = null
+    }
+  }
 
-  if (!authenticatedUser) {
+  if (!connectedUser) {
     // Forbidden
     res
       .status(403)
@@ -59,29 +67,11 @@ export const adminAuthMiddleware = async (
     return
   }
 
-  const admin = authenticatedUser.admin as AdminProfile
-  const organizationId = req.query['organizationId'] as string | null
-  const isOpnSuperAdmin = admin?.isOpnSuperAdmin ?? false
-  const authorizedOrganizationIds = [
-    ...(admin?.superAdminForOrganizationIds ?? []),
-    admin?.adminForOrganizationId,
-  ].filter((id) => !!id)
-  const hasGrantedAccess = new Set(authorizedOrganizationIds).has(organizationId)
-  if (!isOpnSuperAdmin && !hasGrantedAccess) {
-    // Forbidden
-    res
-      .status(403)
-      .json(
-        of(
-          null,
-          ResponseStatusCodes.AccessDenied,
-          `Organization ID ${organizationId} is not accesible`,
-        ),
-      )
-    return
-  }
+  // TODO: Check if user is "active"
 
-  res.locals.authenticatedUser = authenticatedUser
+  // Set it for the actual route
+  res.locals.connectedUser = connectedUser // TODO to be replaced with `authenticatedUser`
+  res.locals.authenticatedUser = connectedUser
 
   // Done
   next()

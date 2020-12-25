@@ -1,8 +1,12 @@
-export type TransportRunsDbModel = {
-  id: string
+export type TransportRunsBase = {
   transportRunId: string
   transportDateTime: string
   driverName: string
+}
+
+export type TransportRunsDbModel = TransportRunsBase & {
+  id: string
+  transportDate: string
 }
 
 export type TransportRunsIdentifier = {
@@ -11,9 +15,9 @@ export type TransportRunsIdentifier = {
 }
 
 export const TransportRunsDTOResponse = (
-    transportRun: TransportRunsDbModel
-) => ({
-    transportRunId: transportRun.transportRunId,
-    transportDateTime: transportRun.transportDateTime,
-    driverName: transportRun.driverName,
+  transportRun: TransportRunsDbModel,
+): TransportRunsBase => ({
+  transportRunId: transportRun.transportRunId,
+  transportDateTime: transportRun.transportDateTime,
+  driverName: transportRun.driverName,
 })

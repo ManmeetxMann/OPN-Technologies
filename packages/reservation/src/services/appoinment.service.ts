@@ -141,4 +141,8 @@ export class AppoinmentService {
       appointmentStatus: AppointmentStatus.inTransit
     })
   }
+
+  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.addAppointmentLabel(id, data)
+  }
 }
