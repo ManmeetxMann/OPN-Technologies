@@ -66,6 +66,7 @@ components:
             message:
               nullable: true
               type: string
+
     TransportRunListResponse200:
       type: object
       additionalProperties: false
@@ -81,6 +82,45 @@ components:
                 type: string
               driverName:
                 type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    AppointmentTransportRunResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          properties:
+            items:
+              type: object
+              properties:
+                appointmentId:
+                  type: string
+                state:
+                  type: string
+                  enum:
+                    [
+                      succeed,
+                      failed
+                    ]
         status:
           type: object
           additionalProperties: false
@@ -569,8 +609,10 @@ paths:
               type: object
               additionalProperties: false
               properties:
-                appointmentId:
-                  type: string
+                appointmentIds:
+                  type: array
+                  items:
+                    type: string
                 transportRunId:
                   type: string
       responses:

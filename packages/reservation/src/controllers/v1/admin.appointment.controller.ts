@@ -11,15 +11,20 @@ import {
   AppointmentUI,
   appointmentUiDTOResponse,
   Label,
+  AppointmentAttachTransportStatus,
+  AppointmentsState,
 } from '../../models/appoinment'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {isValidDate} from '../../../../common/src/utils/utils'
+import {TransportRunsService} from '../../services/transport-runs.service'
+import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private appointmentService = new AppoinmentService()
+  private transportRunsService = new TransportRunsService()
 
   constructor() {
     this.initRoutes()
@@ -43,9 +48,9 @@ class AdminAppointmentController implements IControllerBase {
       this.cancelAppointment,
     )
     innerRouter.put(
-        this.path + '/api/v1/appointments/add-transport-run',
-        adminAuthMiddleware,
-        this.addTransportRun
+      this.path + '/api/v1/appointments/add-transport-run',
+      adminAuthMiddleware,
+      this.addTransportRun,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/add_labels',
@@ -131,11 +136,27 @@ class AdminAppointmentController implements IControllerBase {
   }
   addTransportRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {appointmentId, transportRunId} = req.body as {appointmentId: string, transportRunId: string}
+      const {appointmentIds, transportRunId} = req.body as {
+        appointmentIds: string[]
+        transportRunId: string
+      }
+      const transportRuns = await this.transportRunsService.getByTransportRunId(transportRunId)
+      if (transportRuns.length > 1) {
+        console.log(`More than 1 result for the transportRunId ${transportRunId}`)
+      } else if (transportRuns.length === 0) {
+        throw new ResourceNotFoundException(`Transport Run for the id ${transportRunId} Not found`)
+      }
 
-      await this.appointmentService.addTransportRun(appointmentId, transportRunId);
+      const appointmentsState: AppointmentsState[] = await Promise.all(
+        appointmentIds.map(async (appointmentId) => ({
+          appointmentId,
+          state: (await this.appointmentService.addTransportRun(appointmentId, transportRunId))
+            ? AppointmentAttachTransportStatus.Succeed
+            : AppointmentAttachTransportStatus.Failed,
+        })),
+      )
 
-      res.json(actionSucceed())
+      res.json(actionSucceed(appointmentsState))
     } catch (error) {
       next(error)
     }
