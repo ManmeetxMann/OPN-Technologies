@@ -10,7 +10,7 @@ export class TransportRunsService {
 
   create(transportDateTime: string, driverName: string): Promise<TransportRunsIdentifier> {
     const transportDate = moment(transportDateTime).utc().format('YYYY-MM-DD')
-    const transportDateTimeUTC = moment(transportDateTime).utc().toString();
+    const transportDateTimeUTC = moment(transportDateTime).utc().toString()
     return this.identifier
       .getUniqueId('transportRun')
       .then((transportRunId) => {
