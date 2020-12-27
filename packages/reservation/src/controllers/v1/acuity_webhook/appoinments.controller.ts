@@ -11,7 +11,7 @@ import {
   AppointmentAdditionalDTO,
   AppointmentStatus,
   AppointmentUI,
-  Result
+  Result,
 } from '../../../models/appoinment'
 import {TestResultsService} from '../../../services/test-results.service'
 
@@ -45,8 +45,8 @@ class AppointmentWebhookController implements IControllerBase {
       }
 
       const dataForUpdate: AppointmentAdditionalDTO = {
-        barCode: appointment.barCode
-      };
+        barCode: appointment.barCode,
+      }
 
       if (appointment.barCode) {
         const appointmentWithSameBarcodes = await this.appoinmentService.getAppoinmentDBByBarCode(
