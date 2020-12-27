@@ -49,12 +49,12 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/:barCode',
-      adminAuthMiddleware,
+      // adminAuthMiddleware,
       this.getAppointmentByBarcode,
     )
     innerRouter.put(
       this.path + '/appointments/:barCode/receive',
-      adminAuthMiddleware,
+      // adminAuthMiddleware,
       this.updateTestVoile,
     )
 
@@ -186,6 +186,10 @@ class AdminAppointmentController implements IControllerBase {
       const {location} = req.body as {location: string}
 
       const appointment = await this.appointmentService.getAppoinmentDBByBarCode(barCode)
+      console.log(appointment)
+      if (!appointment.length) {
+        throw new ResourceNotFoundException(`Appointment with barCode ${barCode} not found`)
+      }
 
       if (appointment.length > 1) {
         throw new DuplicateDataException(
