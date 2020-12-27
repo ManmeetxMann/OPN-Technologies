@@ -7,7 +7,12 @@ import {ScheduleWebhookRequest} from '../../../models/webhook'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {isEmpty} from 'lodash'
-import {AcuityUpdateDTO, AppointmentStatus, AppointmentUI, Result} from '../../../models/appoinment'
+import {
+  AppointmentAdditionalDTO,
+  AppointmentStatus,
+  AppointmentUI,
+  Result
+} from '../../../models/appoinment'
 import {TestResultsService} from '../../../services/test-results.service'
 
 class AppointmentWebhookController implements IControllerBase {
@@ -39,7 +44,9 @@ class AppointmentWebhookController implements IControllerBase {
         throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
       }
 
-      const dataForUpdate: AcuityUpdateDTO = {}
+      const dataForUpdate: AppointmentAdditionalDTO = {
+        barCode: appointment.barCode
+      };
 
       if (appointment.barCode) {
         const appointmentWithSameBarcodes = await this.appoinmentService.getAppoinmentDBByBarCode(
@@ -52,7 +59,7 @@ class AppointmentWebhookController implements IControllerBase {
           throw new DuplicateDataException(`Duplicate ${id} found, Barcode ${appointment.barCode}`)
         }
       } else {
-        dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
+        dataForUpdate['barCode'] = await this.appoinmentService.getNextBarCodeNumber()
       }
 
       if (appointment.packageCode && !appointment.organizationId) {
@@ -84,8 +91,8 @@ class AppointmentWebhookController implements IControllerBase {
         const {id, appointmentId, ...insertingAppointment} = appointment as AppointmentUI
         await this.appoinmentService.saveAppointmentData({
           ...insertingAppointment,
+          ...dataForUpdate,
           acuityAppointmentId: id,
-          barCode: appointment.barCode,
           appointmentStatus: AppointmentStatus.pending,
           result: Result.pending,
         })
