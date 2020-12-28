@@ -54,7 +54,7 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:barCode/receive',
-      // adminAuthMiddleware,
+      adminAuthMiddleware,
       this.updateTestVoile,
     )
 
