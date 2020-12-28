@@ -54,7 +54,7 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:barCode/receive',
-      adminAuthMiddleware,
+      // adminAuthMiddleware,
       this.updateTestVoile,
     )
 
@@ -186,7 +186,7 @@ class AdminAppointmentController implements IControllerBase {
       const {location} = req.body as {location: string}
 
       const appointment = await this.appointmentService.getAppoinmentDBByBarCode(barCode)
-      console.log(appointment)
+
       if (!appointment.length) {
         throw new ResourceNotFoundException(`Appointment with barCode ${barCode} not found`)
       }
@@ -203,7 +203,7 @@ class AdminAppointmentController implements IControllerBase {
         receivedAt: now(),
       })
 
-      res.json(actionSucceed(result))
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }

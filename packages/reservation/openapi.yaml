@@ -166,6 +166,9 @@ components:
             message:
               nullable: true
               type: string
+          page:
+            type: number
+            default: 0
 
 
 paths:
@@ -810,7 +813,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentResponse200'
+                $ref: '#/components/schemas/AppointmentResponse'
 
   /reservation/admin/api/v1/appointments/add_labels:
     put:
