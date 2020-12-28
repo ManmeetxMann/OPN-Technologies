@@ -36,7 +36,6 @@ class TestRunsController implements IControllerBase {
         throw new BadRequestException('testRunDate is invalid')
       }
 
-      console.log(toDateFormatWithoutTimezone(testRunDate))
       const testRuns = await this.testRunsService.getTestRunsByDate(
         toDateFormatWithoutTimezone(testRunDate),
       )
