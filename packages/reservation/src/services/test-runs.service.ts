@@ -13,7 +13,7 @@ export class TestRunsService {
   }
 
   create(testRunDateTime: string, testRunDate: string): Promise<TestRunDBModel> {
-    return this.identifier.getUniqueId('testRuns').then((id) => {
+    return this.identifier.getUniqueId('testRun').then((id) => {
       return this.testRunsRepository.add({
         testRunId: `T${id}`,
         testRunDateTime,
