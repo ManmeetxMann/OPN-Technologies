@@ -156,7 +156,11 @@ class AdminAppointmentController implements IControllerBase {
     }
   }
 
-  getAppointmentByBarcode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getAppointmentByBarcode = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const {barCode} = req.params as {barCode: string}
 
