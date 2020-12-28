@@ -76,9 +76,6 @@ components:
             message:
               nullable: true
               type: string
-        page:
-          type: number
-          default: 0
 
     TransportRunListResponse200:
       type: object
@@ -114,9 +111,6 @@ components:
             message:
               nullable: true
               type: string
-        page:
-          type: number
-          default: 0
 
     TransportRunResponse200:
       type: object
@@ -147,9 +141,6 @@ components:
             message:
               nullable: true
               type: string
-        page:
-          type: number
-          default: 0
 
     AppointmentResponse:
       type: object
@@ -177,9 +168,6 @@ components:
             message:
               nullable: true
               type: string
-        page:
-          type: number
-          default: 0
 
 
 paths:
