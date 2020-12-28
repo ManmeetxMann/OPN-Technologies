@@ -134,11 +134,6 @@ export type AcuityUpdateDTO = {
   organizationId?: string
 }
 
-export type AppointmentAdditionalDTO = {
-  barCode: string
-  organizationId?: string
-}
-
 export type AppointmentUI = AppointmentBase & {
   id?: number
   location?: string
