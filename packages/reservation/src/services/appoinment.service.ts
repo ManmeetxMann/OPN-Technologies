@@ -7,10 +7,13 @@ import {
   AppointmentFilters,
   AppointmentsDBModel,
   AppointmentDbBase,
+  AppointmentStatus,
+  AppointmentAttachTransportStatus,
 } from '../models/appoinment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
 import {AppointmentsRepository} from '../respository/appointments-repository'
+import {now} from '../../../common/src/utils/times'
 
 export class AppoinmentService {
   private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
@@ -28,6 +31,10 @@ export class AppoinmentService {
 
   async getAppoinmentDBByBarCode(barCodeNumber: string): Promise<AppointmentsDBModel[]> {
     return this.appointmentsRepository.findWhereEqual('barCode', barCodeNumber)
+  }
+
+  async getAppointmentDBById(id: string): Promise<AppointmentsDBModel> {
+    return this.appointmentsRepository.get(id)
   }
 
   async getAppointmentById(id: number): Promise<AppointmentDTO> {
@@ -116,6 +123,22 @@ export class AppoinmentService {
 
   async cancelAppointmentById(id: number): Promise<AppointmentDTO> {
     return this.appoinmentSchedulerRepository.cancelAppointmentById(id)
+  }
+
+  async addTransportRun(
+    appointmentId: string,
+    transportRunId: string,
+  ): Promise<AppointmentAttachTransportStatus> {
+    try {
+      await this.appointmentsRepository.updateProperties(appointmentId, {
+        transportRunId: transportRunId,
+        inTransitAt: now(),
+        appointmentStatus: AppointmentStatus.inTransit,
+      })
+      return AppointmentAttachTransportStatus.Succeed
+    } catch (e) {
+      return AppointmentAttachTransportStatus.Failed
+    }
   }
 
   async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentDTO> {

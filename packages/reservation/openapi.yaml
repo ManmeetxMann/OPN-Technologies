@@ -111,6 +111,45 @@ components:
             message:
               nullable: true
               type: string
+    AppointmentTransportRunResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          properties:
+            items:
+              type: object
+              properties:
+                appointmentId:
+                  type: string
+                state:
+                  type: string
+                  enum:
+                    [
+                      succeed,
+                      failed
+                    ]
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
 
     TransportRunResponse200:
       type: object
@@ -564,6 +603,37 @@ paths:
               required:
                 - transportDateTime
                 - driverName
+      responses:
+        '200':
+          description: Succesfully create transport
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+
+  /reservation/admin/api/v1/appointments/add-transport-run:
+    put:
+      description: Add transport run to appointment
+      tags:
+        - Transport Runs
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                appointmentIds:
+                  type: array
+                  items:
+                    type: string
+                transportRunId:
+                  type: string
+              required:
+                - appointmentIds
+                - transportRunId
       responses:
         '200':
           description: Succesfully create transport

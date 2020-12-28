@@ -12,6 +12,7 @@ import {
   AppointmentUI,
   appointmentUiDTOResponse,
   Label,
+  AppointmentsState,
 } from '../../models/appoinment'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
@@ -19,11 +20,13 @@ import {ResourceNotFoundException} from '../../../../common/src/exceptions/resou
 import {isValidDate} from '../../../../common/src/utils/utils'
 import {now} from '../../../../common/src/utils/times'
 import {DuplicateDataException} from '../../../../common/src/exceptions/duplicate-data-exception'
+import {TransportRunsService} from '../../services/transport-runs.service'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private appointmentService = new AppoinmentService()
+  private transportRunsService = new TransportRunsService()
 
   constructor() {
     this.initRoutes()
@@ -45,6 +48,11 @@ class AdminAppointmentController implements IControllerBase {
       this.path + '/api/v1/appointments/:appointmentId/cancel',
       adminAuthMiddleware,
       this.cancelAppointment,
+    )
+    innerRouter.put(
+      this.path + '/api/v1/appointments/add-transport-run',
+      adminAuthMiddleware,
+      this.addTransportRun,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/add_labels',
@@ -134,6 +142,31 @@ class AdminAppointmentController implements IControllerBase {
       await this.appointmentService.cancelAppointmentById(Number(appointmentId))
 
       res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+  addTransportRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {appointmentIds, transportRunId} = req.body as {
+        appointmentIds: string[]
+        transportRunId: string
+      }
+      const transportRuns = await this.transportRunsService.getByTransportRunId(transportRunId)
+      if (transportRuns.length > 1) {
+        console.log(`More than 1 result for the transportRunId ${transportRunId}`)
+      } else if (transportRuns.length === 0) {
+        throw new ResourceNotFoundException(`Transport Run for the id ${transportRunId} Not found`)
+      }
+
+      const appointmentsState: AppointmentsState[] = await Promise.all(
+        appointmentIds.map(async (appointmentId) => ({
+          appointmentId,
+          state: await this.appointmentService.addTransportRun(appointmentId, transportRunId),
+        })),
+      )
+
+      res.json(actionSucceed(appointmentsState))
     } catch (error) {
       next(error)
     }

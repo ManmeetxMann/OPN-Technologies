@@ -160,6 +160,16 @@ export type AppointmentFilters = {
   maxDate?: string
 }
 
+export type AppointmentsState = {
+  appointmentId: string
+  state: AppointmentAttachTransportStatus
+}
+
+export enum AppointmentAttachTransportStatus {
+  Succeed = 'succeed',
+  Failed = 'failed',
+}
+
 export enum Label {
   SameDay = 'SameDay',
   NextDay = 'NextDay',
