@@ -15,6 +15,7 @@ export type AppointmentBase = {
   certificate?: string
   organizationId?: string
   canceled?: boolean
+  dateTime: string
 }
 
 export enum AppointmentStatus {
@@ -137,6 +138,7 @@ export type AcuityUpdateDTO = {
 export type AppointmentAdditionalDTO = {
   barCode: string
   organizationId?: string
+  deadline?: string
 }
 
 export type AppointmentUI = AppointmentBase & {

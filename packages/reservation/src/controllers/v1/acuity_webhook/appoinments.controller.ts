@@ -14,6 +14,7 @@ import {
   Result,
 } from '../../../models/appoinment'
 import {TestResultsService} from '../../../services/test-results.service'
+import moment from 'moment'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -46,6 +47,14 @@ class AppointmentWebhookController implements IControllerBase {
 
       const dataForUpdate: AppointmentAdditionalDTO = {
         barCode: appointment.barCode,
+      }
+
+      const utcDateTime = moment(appointment.dateTime).utc()
+
+      if (utcDateTime.hours() > 12) {
+        dataForUpdate.deadline = utcDateTime.add(1, 'd').hours(11).minutes(59).format()
+      } else {
+        dataForUpdate.deadline = utcDateTime.hours(11).minutes(59).format()
       }
 
       if (appointment.barCode) {
