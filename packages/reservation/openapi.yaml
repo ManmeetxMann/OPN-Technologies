@@ -36,9 +36,6 @@ components:
           type: string
         testRunDateTime:
           type: string
-      required:
-        - testRunId
-        - testRunDateTime
         status:
           type: object
           additionalProperties: false
@@ -55,9 +52,12 @@ components:
                   access_denied,
                   resource_not_found,
                 ]
-          message:
-            nullable: true
-            type: string
+        message:
+          nullable: true
+          type: string
+      required:
+        - testRunId
+        - testRunDateTime
 
     AppointmentResponse200:
       type: object

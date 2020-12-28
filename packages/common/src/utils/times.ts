@@ -2,7 +2,7 @@ import {firestore} from 'firebase-admin'
 import {Config} from './config'
 import {Request, Response} from 'express'
 import {GenericTimestamp, safeTimestamp} from './datetime-util'
-import moment from 'moment'
+import moment from 'moment-timezone'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
