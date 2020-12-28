@@ -619,6 +619,9 @@ paths:
                     type: string
                 transportRunId:
                   type: string
+              required:
+                - appointmentIds
+                - transportRunId
       responses:
         '200':
           description: Succesfully create transport
