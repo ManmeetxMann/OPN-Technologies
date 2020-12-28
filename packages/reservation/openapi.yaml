@@ -778,7 +778,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentResponse200'
+                $ref: '#/components/schemas/Response'
 
   /reservation/admin/api/v1/appointments/add_labels:
     put:
