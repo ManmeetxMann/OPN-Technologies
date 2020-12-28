@@ -48,6 +48,8 @@ export type AppointmentDbBase = {
   organizationId?: string
   appointmentStatus: AppointmentStatus
   result: Result
+  location?: string
+  receivedAt?: Date
 }
 
 export type AppointmentsDBModel = AppointmentDbBase & {

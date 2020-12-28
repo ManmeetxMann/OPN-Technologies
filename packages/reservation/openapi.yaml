@@ -111,6 +111,7 @@ components:
             message:
               nullable: true
               type: string
+
     TransportRunResponse200:
       type: object
       additionalProperties: false
@@ -140,6 +141,7 @@ components:
             message:
               nullable: true
               type: string
+
     AppointmentResponse:
       type: object
       additionalProperties: false
@@ -772,6 +774,38 @@ paths:
           name: organizationId
           schema:
             type: string
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+
+  /reservation/admin/api/v1/appointments/{barCode}/receive:
+    put:
+      description: Update Appointment status to mark it received
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: barCode
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                location:
+                  type: string
+              required:
+                - location
       responses:
         '200':
           description: Successfully Return
