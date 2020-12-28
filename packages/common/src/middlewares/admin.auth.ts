@@ -62,12 +62,13 @@ export const adminAuthMiddleware = async (
   const admin = authenticatedUser.admin as AdminProfile
   const organizationId = req.query['organizationId'] as string | null
   const isOpnSuperAdmin = admin?.isOpnSuperAdmin ?? false
+  const isLabAdmin = admin?.isLabAdmin ?? false
   const authorizedOrganizationIds = [
     ...(admin?.superAdminForOrganizationIds ?? []),
     admin?.adminForOrganizationId,
   ].filter((id) => !!id)
   const hasGrantedAccess = new Set(authorizedOrganizationIds).has(organizationId)
-  if (!isOpnSuperAdmin && !hasGrantedAccess) {
+  if ((!isLabAdmin || !isOpnSuperAdmin) && !hasGrantedAccess) {
     // Forbidden
     res
       .status(403)
