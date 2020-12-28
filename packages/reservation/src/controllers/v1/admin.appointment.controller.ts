@@ -14,6 +14,7 @@ import {
 } from '../../models/appoinment'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../common/src/utils/utils'
 
 class AdminAppointmentController implements IControllerBase {
@@ -46,6 +47,11 @@ class AdminAppointmentController implements IControllerBase {
       this.path + '/api/v1/appointments/add_labels',
       adminAuthMiddleware,
       this.addLabels,
+    )
+    innerRouter.get(
+      this.path + '/api/v1/appointments/barcode/:barCode',
+      adminAuthMiddleware,
+      this.getAppointmentByBarcode,
     )
 
     this.router.use('/', innerRouter)
@@ -145,6 +151,26 @@ class AdminAppointmentController implements IControllerBase {
       )
 
       res.json(actionSucceed(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getAppointmentByBarcode = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {barCode} = req.params as {barCode: string}
+
+      const appointment = await this.appointmentService.getAppoinmentByBarCode(barCode)
+
+      if (!appointment) {
+        throw new ResourceNotFoundException(`Appointment with barCode ${barCode} not found`)
+      }
+
+      res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
     } catch (error) {
       next(error)
     }
