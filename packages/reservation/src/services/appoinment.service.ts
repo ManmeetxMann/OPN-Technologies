@@ -11,6 +11,7 @@ import {
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
 import {AppointmentsRepository} from '../respository/appointments-repository'
+import moment from 'moment'
 
 export class AppoinmentService {
   private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
@@ -120,5 +121,9 @@ export class AppoinmentService {
 
   async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentDTO> {
     return this.appoinmentSchedulerRepository.addAppointmentLabel(id, data)
+  }
+
+  makeDeadlineEndOfTheDay(datetime: moment.Moment) {
+    return datetime.hours(11).minutes(59).format()
   }
 }

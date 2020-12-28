@@ -52,9 +52,9 @@ class AppointmentWebhookController implements IControllerBase {
       const utcDateTime = moment(appointment.dateTime).utc()
 
       if (utcDateTime.hours() > 12) {
-        dataForUpdate.deadline = utcDateTime.add(1, 'd').hours(11).minutes(59).format()
+        dataForUpdate.deadline = this.appoinmentService.makeDeadlineEndOfTheDay(utcDateTime.add(1, 'd'))
       } else {
-        dataForUpdate.deadline = utcDateTime.hours(11).minutes(59).format()
+        dataForUpdate.deadline = this.appoinmentService.makeDeadlineEndOfTheDay(utcDateTime)
       }
 
       if (appointment.barCode) {
