@@ -36,17 +36,27 @@ components:
           type: object
           additionalProperties: false
           properties:
+            id:
+              type: number
             firstName:
               type: string
             lastName:
               type: string
-            email:
+            status:
               type: string
-              format: email
+            barCode:
+              type: string
+            location:
+              type: string
+            dateTime:
+              type: string
+            dateOfBirth:
+              type: string
           required:
+            - id
             - firstName
             - lastName
-            - email
+            - barCode
         status:
           type: object
           additionalProperties: false
@@ -66,6 +76,7 @@ components:
             message:
               nullable: true
               type: string
+
     TransportRunListResponse200:
       type: object
       additionalProperties: false
@@ -129,7 +140,7 @@ components:
             message:
               nullable: true
               type: string
-    Response:
+    AppointmentResponse:
       type: object
       additionalProperties: false
       properties:
@@ -557,7 +568,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/AppointmentResponse'
 
   /webhook/acuity/schedule:
     post:
@@ -666,6 +677,8 @@ paths:
   /reservation/admin/api/v1/appointments/{appointmentId}:
     get:
       description: Get appointment by appointment ID
+      security:
+        - bearerAuthJWT: []
       tags:
         - Appointment Management
       parameters:
@@ -713,7 +726,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/AppointmentResponse'
 
   /reservation/admin/api/v1/packages:
     post:
@@ -765,7 +778,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentResponse200'
+                $ref: '#/components/schemas/AppointmentResponse'
 
   /reservation/admin/api/v1/appointments/add_labels:
     put:
