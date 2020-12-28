@@ -201,7 +201,7 @@ class AdminAppointmentController implements IControllerBase {
         )
       }
 
-      const result = await this.appointmentService.updateAppointmentDB(appointment[0].id, {
+      await this.appointmentService.updateAppointmentDB(appointment[0].id, {
         appointmentStatus: AppointmentStatus.received,
         location,
         receivedAt: now(),
