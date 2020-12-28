@@ -140,7 +140,7 @@ components:
             message:
               nullable: true
               type: string
-    Response:
+    AppointmentResponse:
       type: object
       additionalProperties: false
       properties:
@@ -568,7 +568,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/AppointmentResponse'
 
   /webhook/acuity/schedule:
     post:
@@ -726,7 +726,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/AppointmentResponse'
 
   /reservation/admin/api/v1/packages:
     post:
@@ -778,7 +778,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/AppointmentResponse'
 
   /reservation/admin/api/v1/appointments/add_labels:
     put:
