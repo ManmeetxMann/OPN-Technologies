@@ -117,4 +117,8 @@ export class AppoinmentService {
   async cancelAppointmentById(id: number): Promise<AppointmentDTO> {
     return this.appoinmentSchedulerRepository.cancelAppointmentById(id)
   }
+
+  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.addAppointmentLabel(id, data)
+  }
 }

@@ -1,6 +1,7 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
-import {authMiddleware} from '../../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
+import {UserRoles} from '../../../../common/src/types/authorization'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-authority'
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
@@ -562,7 +563,7 @@ class UserController implements IControllerBase {
     const authentication = innerRouter().use(
       '/',
       innerRouter()
-        .get('/search', authMiddleware, search)
+        .get('/search', authorizationMiddleware([UserRoles.OrgAdmin]), search)
         .post('/', create)
         .post('/auth', authenticate)
         .post('/auth/short-code', validateShortCode)
@@ -590,7 +591,7 @@ class UserController implements IControllerBase {
 
     const selfProfile = innerRouter().use(
       '/self',
-      authMiddleware,
+      authorizationMiddleware(),
       innerRouter()
         .get('/', get)
         .put('/', update)

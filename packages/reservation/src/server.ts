@@ -12,6 +12,7 @@ import TestResultController from './controllers/v1/admin.test-results.controller
 import PackageController from './controllers/v1/admin.package.controller'
 import AppointmentController from './controllers/v1/admin.appointment.controller'
 import TestRunsController from './controllers/v1/admin/test-runs.controller'
+import TransportRunsController from './controllers/v1/transport-runs.controller'
 
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
@@ -35,6 +36,7 @@ const app = new App({
     new TestResultController(),
     new PackageController(),
     new AppointmentController(),
+    new TransportRunsController(),
     new AppointmentWebhookController(),
     new TestRunsController(),
   ],

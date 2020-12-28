@@ -97,6 +97,69 @@ components:
             message:
               nullable: true
               type: string
+    TransportRunListResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              transportRunId:
+                type: string
+              transportDateTime:
+                type: string
+              driverName:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    TransportRunResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            transportRunId:
+              type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
     Response:
       type: object
       additionalProperties: false
@@ -481,9 +544,57 @@ paths:
               schema:
                 type: string
 
+  /reservation/admin/api/v1/transport-runs:
+    get:
+      description: Retrieve transport run list
+      tags:
+        - Transport Runs
+      parameters:
+        - in: query
+          name: transportDate
+          schema:
+            type: string
+            format: date
+          required: true
+      responses:
+        '200':
+          description: Succesfully retrieve transport run list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransportRunListResponse200'
+    post:
+      description: Create transport run
+      tags:
+        - Transport Runs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                transportDateTime:
+                  type: string
+                  format: date-time
+                driverName:
+                  type: string
+              required:
+                - transportDateTime
+                - driverName
+      responses:
+        '200':
+          description: Succesfully create transport
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
   /webhook/acuity/schedule:
     post:
       description: Webhook for adding barcode to acuity
+      tags:
+        - Acuity Webhooks
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -531,7 +642,9 @@ paths:
 
   /reservation/admin/api/v1/test-results:
     get:
-      description: Get test results by organization ID
+      description: Get Test results
+      tags:
+        - Test Management
       parameters:
         - in: query
           name: organizationId
@@ -553,7 +666,9 @@ paths:
 
   /reservation/admin/api/v1/appointments:
     get:
-      description: Get appointmenr list by organization ID
+      description: Get appointment list
+      tags:
+        - Appointment Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -582,6 +697,8 @@ paths:
   /reservation/admin/api/v1/appointments/{appointmentId}:
     get:
       description: Get appointment by appointment ID
+      tags:
+        - Appointment Management
       parameters:
         - in: path
           name: appointmentId
@@ -599,6 +716,8 @@ paths:
   /reservation/acuity_webhook/api/v1/appointment/create:
     post:
       description: Webhook for adding barcode to acuity and cloning to firestore
+      tags:
+        - Acuity Webhooks
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -630,6 +749,8 @@ paths:
   /reservation/admin/api/v1/packages:
     post:
       description: Add Package Codes for Orgs
+      tags:
+        - Package Management
       requestBody:
         content:
           application/json:
@@ -655,6 +776,8 @@ paths:
   /reservation/admin/api/v1/appointments/{appointmentId}/cancel:
     put:
       description: Cancel appointment by appointment ID
+      tags:
+        - Appointment Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -674,6 +797,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
+
+  /reservation/admin/api/v1/appointments/add_labels:
+    put:
+      description: Add SameDay/NextDay Labesl to Appointments
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                properties:
+                  appointmentId:
+                    type: number
+                  label:
+                    type: string
+                    enum:
+                      - SameDay
+                      - NextDay
+                required:
+                  - appointmentId
+                  - label
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: string
 
 
   /reservation/admin/api/v1/test-runs:
