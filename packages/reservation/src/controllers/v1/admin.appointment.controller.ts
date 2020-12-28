@@ -11,7 +11,6 @@ import {
   AppointmentUI,
   appointmentUiDTOResponse,
   Label,
-  AppointmentAttachTransportStatus,
   AppointmentsState,
 } from '../../models/appoinment'
 import {AppoinmentService} from '../../services/appoinment.service'
@@ -150,9 +149,7 @@ class AdminAppointmentController implements IControllerBase {
       const appointmentsState: AppointmentsState[] = await Promise.all(
         appointmentIds.map(async (appointmentId) => ({
           appointmentId,
-          state: (await this.appointmentService.addTransportRun(appointmentId, transportRunId))
-            ? AppointmentAttachTransportStatus.Succeed
-            : AppointmentAttachTransportStatus.Failed,
+          state: await this.appointmentService.addTransportRun(appointmentId, transportRunId)
         })),
       )
 

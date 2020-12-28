@@ -602,6 +602,10 @@ paths:
   /reservation/admin/api/v1/appointments/add-transport-run:
     put:
       description: Add transport run to appointment
+      tags:
+        - Transport Runs
+      security:
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:

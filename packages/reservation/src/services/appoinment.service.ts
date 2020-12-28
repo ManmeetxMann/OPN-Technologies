@@ -7,7 +7,7 @@ import {
   AppointmentFilters,
   AppointmentsDBModel,
   AppointmentDbBase,
-  AppointmentStatus,
+  AppointmentStatus, AppointmentAttachTransportStatus,
 } from '../models/appoinment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -124,16 +124,16 @@ export class AppoinmentService {
     return this.appoinmentSchedulerRepository.cancelAppointmentById(id)
   }
 
-  async addTransportRun(appointmentId: string, transportRunId: string): Promise<boolean> {
+  async addTransportRun(appointmentId: string, transportRunId: string): Promise<AppointmentAttachTransportStatus> {
     try {
       await this.appointmentsRepository.updateProperties(appointmentId, {
         transportRunId: transportRunId,
         inTransitAt: now(),
         appointmentStatus: AppointmentStatus.inTransit,
       })
-      return true
+      return AppointmentAttachTransportStatus.Succeed
     } catch (e) {
-      return false
+      return AppointmentAttachTransportStatus.Failed
     }
   }
 
