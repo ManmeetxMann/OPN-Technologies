@@ -149,7 +149,7 @@ class AdminAppointmentController implements IControllerBase {
       const appointmentsState: AppointmentsState[] = await Promise.all(
         appointmentIds.map(async (appointmentId) => ({
           appointmentId,
-          state: await this.appointmentService.addTransportRun(appointmentId, transportRunId)
+          state: await this.appointmentService.addTransportRun(appointmentId, transportRunId),
         })),
       )
 
