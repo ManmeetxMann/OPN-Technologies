@@ -21,7 +21,7 @@ import {now} from '../../../../common/src/utils/times'
 import {DuplicateDataException} from '../../../../common/src/exceptions/duplicate-data-exception'
 
 class AdminAppointmentController implements IControllerBase {
-  public path = '/reservation/admin/api/v1'
+  public path = '/reservation/admin'
   public router = Router()
   private appointmentService = new AppoinmentService()
 
@@ -31,7 +31,7 @@ class AdminAppointmentController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.get(this.path + '/appointments', adminAuthMiddleware, this.getListAppointments)
+    innerRouter.get(this.path + '/api/v1/appointments', adminAuthMiddleware, this.getListAppointments)
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
       adminAuthMiddleware,
@@ -43,12 +43,12 @@ class AdminAppointmentController implements IControllerBase {
       this.cancelAppointment,
     )
     innerRouter.put(
-      this.path + '/api/v1/api/v1/appointments/add_labels',
+      this.path + '/api/v1/appointments/add_labels',
       adminAuthMiddleware,
       this.addLabels,
     )
     innerRouter.get(
-      this.path + '/api/v1/api/v1/appointments/barcode/:barCode',
+      this.path + '/api/v1/appointments/barcode/:barCode',
       adminAuthMiddleware,
       this.getAppointmentByBarcode,
     )
