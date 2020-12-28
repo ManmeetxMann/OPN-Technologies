@@ -144,4 +144,11 @@ export class AppoinmentService {
   async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentDTO> {
     return this.appoinmentSchedulerRepository.addAppointmentLabel(id, data)
   }
+
+  async updateAppointmentDB(
+    id: string,
+    data: Partial<AppointmentsDBModel>,
+  ): Promise<AppointmentsDBModel> {
+    return this.appointmentsRepository.updateProperties(id, data)
+  }
 }
