@@ -124,7 +124,7 @@ export class AppoinmentService {
 
   async updateAppointmentDB(
     id: string,
-    data: Record<string, unknown>,
+    data: Partial<AppointmentsDBModel>,
   ): Promise<AppointmentsDBModel> {
     return this.appointmentsRepository.updateProperties(id, data)
   }
