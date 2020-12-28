@@ -640,7 +640,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/AppointmentResponse'
 
   /webhook/acuity/schedule:
     post:
