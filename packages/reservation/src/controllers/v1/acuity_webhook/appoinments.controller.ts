@@ -41,7 +41,7 @@ class AppointmentWebhookController implements IControllerBase {
       }
 
       const dataForUpdate: AcuityUpdateDTO = {}
-      let deadline: string;
+      let deadline: string
 
       const utcDateTime = moment(appointment.dateTime).utc()
 
@@ -100,7 +100,7 @@ class AppointmentWebhookController implements IControllerBase {
           acuityAppointmentId: id,
           appointmentStatus: AppointmentStatus.pending,
           result: Result.pending,
-          deadline
+          deadline,
         })
       } catch (e) {
         console.log(
