@@ -44,9 +44,9 @@ class AppointmentWebhookController implements IControllerBase {
       let deadline: string
       const utcDateTime = moment(appointment.dateTime).utc()
 
-      const dateTime = utcDateTime.format();
-      const dateOfAppointment = utcDateTime.format("MMMM DD, YYYY");
-      const timeOfAppointment = utcDateTime.format("h:mma");
+      const dateTime = utcDateTime.format()
+      const dateOfAppointment = utcDateTime.format('MMMM DD, YYYY')
+      const timeOfAppointment = utcDateTime.format('h:mma')
 
       if (utcDateTime.hours() > 12) {
         deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
