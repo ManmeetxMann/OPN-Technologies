@@ -7,12 +7,7 @@ import {ScheduleWebhookRequest} from '../../../models/webhook'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {isEmpty} from 'lodash'
-import {
-  AppointmentAdditionalDTO,
-  AppointmentStatus,
-  AppointmentUI,
-  Result,
-} from '../../../models/appoinment'
+import {AppointmentStatus, AppointmentUI, Result, AcuityUpdateDTO} from '../../../models/appoinment'
 import {TestResultsService} from '../../../services/test-results.service'
 import moment from 'moment'
 
@@ -45,30 +40,29 @@ class AppointmentWebhookController implements IControllerBase {
         throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
       }
 
-      const dataForUpdate: AppointmentAdditionalDTO = {
-        barCode: appointment.barCode,
-      }
+      const dataForUpdate: AcuityUpdateDTO = {}
+      let deadline: string;
 
       const utcDateTime = moment(appointment.dateTime).utc()
 
       if (utcDateTime.hours() > 12) {
-        dataForUpdate.deadline = this.appoinmentService.makeDeadlineEndOfTheDay(utcDateTime.add(1, 'd'))
+        deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
       } else {
-        dataForUpdate.deadline = this.appoinmentService.makeDeadlineEndOfTheDay(utcDateTime)
+        deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime)
       }
 
-      if (appointment.barCode) {
+      if (!appointment.barCode) {
+        dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
+      } else {
         const appointmentWithSameBarcodes = await this.appoinmentService.getAppoinmentDBByBarCode(
           appointment.barCode,
         )
-        if (appointmentWithSameBarcodes.length > 0) {
+        if (appointmentWithSameBarcodes.length > 10) {
           console.log(
             `WebhookController: DuplicateBarCode AppoinmentID: ${id} -  BarCode: ${appointment.barCode}`,
           )
           throw new DuplicateDataException(`Duplicate ${id} found, Barcode ${appointment.barCode}`)
         }
-      } else {
-        dataForUpdate['barCode'] = await this.appoinmentService.getNextBarCodeNumber()
       }
 
       if (appointment.packageCode && !appointment.organizationId) {
@@ -98,12 +92,15 @@ class AppointmentWebhookController implements IControllerBase {
 
       try {
         const {id, appointmentId, ...insertingAppointment} = appointment as AppointmentUI
+        const {barCodeNumber, organizationId} = dataForUpdate
         await this.appoinmentService.saveAppointmentData({
           ...insertingAppointment,
-          ...dataForUpdate,
+          organizationId: appointment.organizationId || organizationId || null,
+          barCode: appointment.barCode || barCodeNumber,
           acuityAppointmentId: id,
           appointmentStatus: AppointmentStatus.pending,
           result: Result.pending,
+          deadline
         })
       } catch (e) {
         console.log(

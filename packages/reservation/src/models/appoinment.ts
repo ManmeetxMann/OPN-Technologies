@@ -49,6 +49,9 @@ export type AppointmentDbBase = {
   organizationId?: string
   appointmentStatus: AppointmentStatus
   result: Result
+  location?: string
+  receivedAt?: Date
+  deadline: string
 }
 
 export type AppointmentsDBModel = AppointmentDbBase & {
@@ -135,12 +138,6 @@ export type AcuityUpdateDTO = {
   organizationId?: string
 }
 
-export type AppointmentAdditionalDTO = {
-  barCode: string
-  organizationId?: string
-  deadline?: string
-}
-
 export type AppointmentUI = AppointmentBase & {
   id?: number
   location?: string
@@ -163,6 +160,16 @@ export type AppointmentFilters = {
   showall: boolean
   minDate?: string
   maxDate?: string
+}
+
+export type AppointmentsState = {
+  appointmentId: string
+  state: AppointmentAttachTransportStatus
+}
+
+export enum AppointmentAttachTransportStatus {
+  Succeed = 'succeed',
+  Failed = 'failed',
 }
 
 export enum Label {

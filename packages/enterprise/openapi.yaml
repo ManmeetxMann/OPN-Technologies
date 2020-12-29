@@ -93,6 +93,7 @@ components:
           type: string
         enablePushNotifications:
           type: boolean
+          default: true
         enableTemperatureCheck:
           type: boolean
           default: false

@@ -12,4 +12,5 @@ export type InternalAdminApprovalCreateRequest = {
   isManagementDashboardAdmin: boolean
   isTestReportsAdmin: boolean
   isTestAppointmentsAdmin: boolean
+  isLabAdmin: boolean
 }
