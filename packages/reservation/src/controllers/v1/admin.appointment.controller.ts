@@ -68,7 +68,7 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/add-test-run',
-      // adminAuthMiddleware,
+      adminAuthMiddleware,
       this.addTestRunToAppointments,
     )
 
