@@ -50,12 +50,12 @@ export const toDateTimeFormat = (timestamp: GenericTimestamp): string => {
 
 export const toDateFormatWithoutTimezone = (timestamp: GenericTimestamp): string => {
   const date = safeTimestamp(timestamp)
-  return moment(date).format('MMMM D, YYYY')
+  return moment(date).utc().format('YYYY-MM-DD')
 }
 
 export const toDateTimeFormatWithoutTimezone = (timestamp: GenericTimestamp): string => {
   const date = safeTimestamp(timestamp)
-  return moment(date).format('h:mm A MMMM D, YYYY')
+  return moment(date).utc().toString()
 }
 
 export const isValidDate = (date: string): boolean => !isNaN(Date.parse(date))
