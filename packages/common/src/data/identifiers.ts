@@ -11,6 +11,7 @@ export class IdentifiersModel extends DataModel<IdentifiersSchema> {
     {id: 'report', count: 10000},
     {id: 'nfcId', count: 1000},
     {id: 'transportRun', count: 1000},
+    {id: 'testRun', count: 1000},
   ]
 
   /**
