@@ -68,7 +68,7 @@ export const adminAuthMiddleware = async (
     admin?.adminForOrganizationId,
   ].filter((id) => !!id)
   const hasGrantedAccess = new Set(authorizedOrganizationIds).has(organizationId)
-  if ((!isLabAdmin || !isOpnSuperAdmin) && !hasGrantedAccess) {
+  if (!isLabAdmin && !isOpnSuperAdmin && !hasGrantedAccess) {
     // Forbidden
     res
       .status(403)
