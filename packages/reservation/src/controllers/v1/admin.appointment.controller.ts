@@ -8,19 +8,24 @@ import {adminAuthMiddleware} from '../../../../common/src/middlewares/admin.auth
 import {
   AppointmentByOrganizationRequest,
   AppointmentDTO,
+  AppointmentStatus,
   AppointmentUI,
   appointmentUiDTOResponse,
   Label,
+  AppointmentsState,
 } from '../../models/appoinment'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
-import {isValidDate} from '../../../../common/src/utils/times'
+import {now, isValidDate} from '../../../../common/src/utils/times'
+import {DuplicateDataException} from '../../../../common/src/exceptions/duplicate-data-exception'
+import {TransportRunsService} from '../../services/transport-runs.service'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private appointmentService = new AppoinmentService()
+  private transportRunsService = new TransportRunsService()
 
   constructor() {
     this.initRoutes()
@@ -44,6 +49,11 @@ class AdminAppointmentController implements IControllerBase {
       this.cancelAppointment,
     )
     innerRouter.put(
+      this.path + '/api/v1/appointments/add-transport-run',
+      adminAuthMiddleware,
+      this.addTransportRun,
+    )
+    innerRouter.put(
       this.path + '/api/v1/appointments/add_labels',
       adminAuthMiddleware,
       this.addLabels,
@@ -52,6 +62,11 @@ class AdminAppointmentController implements IControllerBase {
       this.path + '/api/v1/appointments/barcode/:barCode',
       adminAuthMiddleware,
       this.getAppointmentByBarcode,
+    )
+    innerRouter.put(
+      this.path + '/api/v1/appointments/:barCode/receive',
+      adminAuthMiddleware,
+      this.updateTestVoile,
     )
 
     this.router.use('/', innerRouter)
@@ -130,6 +145,31 @@ class AdminAppointmentController implements IControllerBase {
       next(error)
     }
   }
+  addTransportRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {appointmentIds, transportRunId} = req.body as {
+        appointmentIds: string[]
+        transportRunId: string
+      }
+      const transportRuns = await this.transportRunsService.getByTransportRunId(transportRunId)
+      if (transportRuns.length > 1) {
+        console.log(`More than 1 result for the transportRunId ${transportRunId}`)
+      } else if (transportRuns.length === 0) {
+        throw new ResourceNotFoundException(`Transport Run for the id ${transportRunId} Not found`)
+      }
+
+      const appointmentsState: AppointmentsState[] = await Promise.all(
+        appointmentIds.map(async (appointmentId) => ({
+          appointmentId,
+          state: await this.appointmentService.addTransportRun(appointmentId, transportRunId),
+        })),
+      )
+
+      res.json(actionSucceed(appointmentsState))
+    } catch (error) {
+      next(error)
+    }
+  }
 
   addLabels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -171,6 +211,35 @@ class AdminAppointmentController implements IControllerBase {
       }
 
       res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  updateTestVoile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {barCode} = req.params as {barCode: string}
+      const {location} = req.body as {location: string}
+
+      const appointment = await this.appointmentService.getAppoinmentDBByBarCode(barCode)
+
+      if (!appointment.length) {
+        throw new ResourceNotFoundException(`Appointment with barCode ${barCode} not found`)
+      }
+
+      if (appointment.length > 1) {
+        throw new DuplicateDataException(
+          `Sorry, Results are not sent. Same Barcode is used by multiple appointments`,
+        )
+      }
+
+      await this.appointmentService.updateAppointmentDB(appointment[0].id, {
+        appointmentStatus: AppointmentStatus.received,
+        location,
+        receivedAt: now(),
+      })
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }

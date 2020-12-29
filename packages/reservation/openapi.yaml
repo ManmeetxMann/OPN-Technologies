@@ -67,17 +67,27 @@ components:
           type: object
           additionalProperties: false
           properties:
+            id:
+              type: number
             firstName:
               type: string
             lastName:
               type: string
-            email:
+            status:
               type: string
-              format: email
+            barCode:
+              type: string
+            location:
+              type: string
+            dateTime:
+              type: string
+            dateOfBirth:
+              type: string
           required:
+            - id
             - firstName
             - lastName
-            - email
+            - barCode
         status:
           type: object
           additionalProperties: false
@@ -97,6 +107,7 @@ components:
             message:
               nullable: true
               type: string
+
     TransportRunListResponse200:
       type: object
       additionalProperties: false
@@ -131,6 +142,46 @@ components:
             message:
               nullable: true
               type: string
+    AppointmentTransportRunResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          properties:
+            items:
+              type: object
+              properties:
+                appointmentId:
+                  type: string
+                state:
+                  type: string
+                  enum:
+                    [
+                      succeed,
+                      failed
+                    ]
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
     TransportRunResponse200:
       type: object
       additionalProperties: false
@@ -160,7 +211,8 @@ components:
             message:
               nullable: true
               type: string
-    Response:
+
+    AppointmentResponse:
       type: object
       additionalProperties: false
       properties:
@@ -588,7 +640,38 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/AppointmentResponse'
+
+  /reservation/admin/api/v1/appointments/add-transport-run:
+    put:
+      description: Add transport run to appointment
+      tags:
+        - Transport Runs
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                appointmentIds:
+                  type: array
+                  items:
+                    type: string
+                transportRunId:
+                  type: string
+              required:
+                - appointmentIds
+                - transportRunId
+      responses:
+        '200':
+          description: Succesfully create transport
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
 
   /webhook/acuity/schedule:
     post:
@@ -697,6 +780,8 @@ paths:
   /reservation/admin/api/v1/appointments/{appointmentId}:
     get:
       description: Get appointment by appointment ID
+      security:
+        - bearerAuthJWT: []
       tags:
         - Appointment Management
       parameters:
@@ -744,7 +829,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/AppointmentResponse'
 
   /reservation/admin/api/v1/packages:
     post:
@@ -796,7 +881,39 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentResponse200'
+                $ref: '#/components/schemas/AppointmentResponse'
+
+  /reservation/admin/api/v1/appointments/{barCode}/receive:
+    put:
+      description: Update Appointment status to mark it received
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: barCode
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                location:
+                  type: string
+              required:
+                - location
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
 
   /reservation/admin/api/v1/appointments/add_labels:
     put:

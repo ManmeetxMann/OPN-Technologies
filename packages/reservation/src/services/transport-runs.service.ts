@@ -28,4 +28,7 @@ export class TransportRunsService {
   getByDate(transportDate: string): Promise<TransportRunsDbModel[]> {
     return this.transportRunsRepository.findWhereEqual('transportDate', transportDate)
   }
+  getByTransportRunId(transportRunId: string): Promise<TransportRunsDbModel[]> {
+    return this.transportRunsRepository.findWhereEqual('transportRunId', transportRunId)
+  }
 }
