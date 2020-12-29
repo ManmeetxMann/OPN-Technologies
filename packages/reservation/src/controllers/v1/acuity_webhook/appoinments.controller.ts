@@ -85,7 +85,7 @@ class AppointmentWebhookController implements IControllerBase {
         const {barCodeNumber, organizationId} = dataForUpdate
         await this.appoinmentService.saveAppointmentData({
           ...insertingAppointment,
-          organizationId: appointment.organizationId || organizationId,
+          organizationId: appointment.organizationId || organizationId || null,
           barCode: appointment.barCode || barCodeNumber,
           acuityAppointmentId: id,
           appointmentStatus: AppointmentStatus.pending,
