@@ -60,7 +60,7 @@ class AppointmentWebhookController implements IControllerBase {
         const appointmentWithSameBarcodes = await this.appoinmentService.getAppoinmentDBByBarCode(
           appointment.barCode,
         )
-        if (appointmentWithSameBarcodes.length > 10) {
+        if (appointmentWithSameBarcodes.length > 0) {
           console.log(
             `WebhookController: DuplicateBarCode AppoinmentID: ${id} -  BarCode: ${appointment.barCode}`,
           )
