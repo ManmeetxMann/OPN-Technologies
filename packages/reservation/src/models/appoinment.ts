@@ -15,6 +15,7 @@ export type AppointmentBase = {
   certificate?: string
   organizationId?: string
   canceled?: boolean
+  dateTime: string
 }
 
 export enum AppointmentStatus {
@@ -50,6 +51,8 @@ export type AppointmentDbBase = {
   result: Result
   location?: string
   receivedAt?: Date
+  deadline: string
+  dateTime: string
 }
 
 export type AppointmentsDBModel = AppointmentDbBase & {

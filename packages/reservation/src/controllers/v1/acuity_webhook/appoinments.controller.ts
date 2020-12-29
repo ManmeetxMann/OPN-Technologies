@@ -9,6 +9,7 @@ import {DuplicateDataException} from '../../../../../common/src/exceptions/dupli
 import {isEmpty} from 'lodash'
 import {AppointmentStatus, AppointmentUI, Result, AcuityUpdateDTO} from '../../../models/appoinment'
 import {TestResultsService} from '../../../services/test-results.service'
+import moment from 'moment'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -40,6 +41,18 @@ class AppointmentWebhookController implements IControllerBase {
       }
 
       const dataForUpdate: AcuityUpdateDTO = {}
+      let deadline: string
+      const utcDateTime = moment(appointment.dateTime).utc()
+
+      const dateTime = utcDateTime.format()
+      const dateOfAppointment = utcDateTime.format('MMMM DD, YYYY')
+      const timeOfAppointment = utcDateTime.format('h:mma')
+
+      if (utcDateTime.hours() > 12) {
+        deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
+      } else {
+        deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime)
+      }
 
       if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
@@ -90,6 +103,10 @@ class AppointmentWebhookController implements IControllerBase {
           acuityAppointmentId: id,
           appointmentStatus: AppointmentStatus.pending,
           result: Result.pending,
+          dateTime,
+          dateOfAppointment,
+          timeOfAppointment,
+          deadline,
         })
       } catch (e) {
         console.log(
