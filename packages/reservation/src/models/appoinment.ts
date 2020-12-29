@@ -52,6 +52,7 @@ export type AppointmentDbBase = {
   location?: string
   receivedAt?: Date
   deadline: string
+  dateTime: string
 }
 
 export type AppointmentsDBModel = AppointmentDbBase & {
