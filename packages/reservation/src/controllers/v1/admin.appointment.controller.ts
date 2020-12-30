@@ -263,7 +263,10 @@ class AdminAppointmentController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {appointmentIds, testRunId} = req.body as {appointmentIds: string[]; testRunId: string}
+      const {appointmentIds, testRunId} = req.body as {
+        appointmentIds: string[]
+        testRunId: string[]
+      }
 
       if (appointmentIds.length > 50) {
         throw new BadRequestException('Maximum appointments to be part of request is 50')

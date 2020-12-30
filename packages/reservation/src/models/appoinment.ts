@@ -20,7 +20,7 @@ export type AppointmentBase = {
   dateTime: string
   transportRunId?: string
   deadline?: string
-  testRunId?: string
+  testRunId?: string[]
   inProgressAt?: Date
 }
 
@@ -59,7 +59,7 @@ export type AppointmentDbBase = {
   receivedAt?: Date
   deadline: string
   dateTime: string
-  testRunId?: string
+  testRunId?: string[]
   inProgressAt?: Date
 }
 
