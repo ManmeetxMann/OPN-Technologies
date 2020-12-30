@@ -2,6 +2,7 @@ import DataStore from '../../../common/src/data/datastore'
 
 import {
   AppoinmentBarCodeSequenceDBModel,
+  AppointmentAcuityResponse,
   AppointmentAttachTransportStatus,
   AppointmentByOrganizationRequest,
   AppointmentDbBase,
@@ -137,8 +138,17 @@ export class AppoinmentService {
     return this.appointmentsRepository.get(id)
   }
 
-  async getAppointmentById(id: number): Promise<AppointmentDTO> {
-    return this.appoinmentSchedulerRepository.getAppointmentById(id)
+  async getAppointmentByAcuityId(id: number): Promise<AppointmentsDBModel> {
+    const appointments = await this.appointmentsRepository.findWhereEqual('acuityAppointmentId', id)
+    if (!appointments || !appointments.length) {
+      return null
+    }
+    if (appointments.length > 1) {
+      console.log(
+        `AppointmentService: getAppointmentByAcuityId returned multiple appointments AppoinmentID: ${id}`,
+      )
+    }
+    return appointments[0]
   }
 
   async getAppointmentByOrganizationIdAndSearchParams(
@@ -241,7 +251,7 @@ export class AppoinmentService {
     }
   }
 
-  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentDTO> {
+  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
     return this.appoinmentSchedulerRepository.addAppointmentLabel(id, data)
   }
 

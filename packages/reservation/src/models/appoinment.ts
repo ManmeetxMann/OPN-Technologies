@@ -1,4 +1,6 @@
 import {PageableRequestFilter} from '../../../common/src/types/request'
+import moment from 'moment-timezone'
+import {Config} from '../../../common/src/utils/config'
 
 export type AppointmentBase = {
   firstName: string
@@ -6,9 +8,9 @@ export type AppointmentBase = {
   email: string
   phone: number
   dateOfBirth: string
-  registeredNursePractitioner: string
+  registeredNursePractitioner?: string
   dateOfAppointment: string
-  appointmentId: number
+  appointmentId?: number
   timeOfAppointment?: string
   barCode?: string
   packageCode: string
@@ -143,11 +145,12 @@ export type AcuityUpdateDTO = {
 }
 
 export type AppointmentUI = AppointmentBase & {
-  id?: number
+  id?: string | number
   location?: string
   dateTime?: string
   transportRunId?: string
   deadline?: string
+  acuityAppointmentId?: number
 }
 
 export type AppointmentUiDTO = {
@@ -185,17 +188,20 @@ export enum Label {
   NextDay = 'NextDay',
 }
 
-export const appointmentUiDTOResponse = (
-  appointment: AppointmentDTO | AppointmentUI | AppointmentsDBModel,
-): AppointmentUiDTO => ({
-  id: (appointment as AppointmentUI).id,
-  firstName: appointment.firstName,
-  lastName: appointment.lastName,
-  status: (appointment as AppointmentUI).canceled ? 'Canceled' : 'Scheduled',
-  barCode: appointment.barCode,
-  location: (appointment as AppointmentUI).location,
-  dateTime: (appointment as AppointmentUI).dateTime,
-  dateOfBirth: appointment.dateOfBirth,
-  transportRunId: appointment.transportRunId,
-  deadline: appointment.deadline,
-})
+export const appointmentUiDTOResponse = (appointment: AppointmentsDBModel): AppointmentUiDTO => {
+  const timeZone = Config.get('DEFAULT_TIME_ZONE')
+  return {
+    id: (appointment as AppointmentUI).id,
+    firstName: appointment.firstName,
+    lastName: appointment.lastName,
+    status: appointment.appointmentStatus,
+    barCode: appointment.barCode,
+    location: (appointment as AppointmentUI).location,
+    dateTime: moment((appointment as AppointmentUI).dateTime)
+      .tz(timeZone)
+      .format(),
+    dateOfBirth: appointment.dateOfBirth,
+    transportRunId: appointment.transportRunId,
+    deadline: moment(appointment.deadline).tz(timeZone).format(),
+  }
+}

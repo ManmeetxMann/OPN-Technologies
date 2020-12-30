@@ -35,7 +35,7 @@ class AppointmentWebhookController implements IControllerBase {
     try {
       const {id} = req.body as ScheduleWebhookRequest
 
-      const appointment = await this.appoinmentService.getAppointmentById(id)
+      const appointment = await this.appoinmentService.getAppointmentByAcuityId(id)
 
       if (!appointment) {
         throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
@@ -95,13 +95,17 @@ class AppointmentWebhookController implements IControllerBase {
       }
 
       try {
-        const {id, appointmentId, ...insertingAppointment} = appointment as AppointmentUI
+        const {
+          acuityAppointmentId,
+          appointmentId,
+          ...insertingAppointment
+        } = appointment as AppointmentUI
         const {barCodeNumber, organizationId} = dataForUpdate
         await this.appoinmentService.saveAppointmentData({
           ...insertingAppointment,
           organizationId: appointment.organizationId || organizationId || null,
           barCode: appointment.barCode || barCodeNumber,
-          acuityAppointmentId: id,
+          acuityAppointmentId: acuityAppointmentId,
           appointmentStatus: AppointmentStatus.pending,
           result: Result.pending,
           dateTime,

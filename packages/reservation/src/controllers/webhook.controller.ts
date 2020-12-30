@@ -30,7 +30,7 @@ class WebhookController implements IControllerBase {
     try {
       const {id} = req.body as ScheduleWebhookRequest
 
-      const appointment = await this.appoinmentService.getAppointmentById(id)
+      const appointment = await this.appoinmentService.getAppointmentByAcuityId(id)
 
       if (!appointment) {
         throw new ResourceNotFoundException(`Appointmen with ${id} id not found`)
