@@ -17,8 +17,7 @@ import {
 import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
-import {isValidDate} from '../../../../common/src/utils/utils'
-import {now} from '../../../../common/src/utils/times'
+import {now, isValidDate} from '../../../../common/src/utils/times'
 import {DuplicateDataException} from '../../../../common/src/exceptions/duplicate-data-exception'
 import {TransportRunsService} from '../../services/transport-runs.service'
 

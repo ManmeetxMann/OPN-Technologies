@@ -12,6 +12,7 @@ on:
     tags:
       - infra-dev-lookup-*
       - preprod-lookup-*
+      - preprod-all-*
 
 jobs:
   build:

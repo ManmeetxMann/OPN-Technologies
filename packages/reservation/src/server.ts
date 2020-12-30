@@ -11,6 +11,7 @@ import WebhookController from './controllers/webhook.controller'
 import TestResultController from './controllers/v1/admin.test-results.controller.ts'
 import PackageController from './controllers/v1/admin.package.controller'
 import AppointmentController from './controllers/v1/admin.appointment.controller'
+import TestRunsController from './controllers/v1/admin/test-runs.controller'
 import TransportRunsController from './controllers/v1/transport-runs.controller'
 
 import {IdentifiersModel} from '../../common/src/data/identifiers'
@@ -37,6 +38,7 @@ const app = new App({
     new AppointmentController(),
     new TransportRunsController(),
     new AppointmentWebhookController(),
+    new TestRunsController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],
