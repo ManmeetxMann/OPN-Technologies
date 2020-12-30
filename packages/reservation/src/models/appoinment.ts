@@ -16,6 +16,8 @@ export type AppointmentBase = {
   organizationId?: string
   canceled?: boolean
   dateTime: string
+  transportRunId?: string
+  deadline?: string
 }
 
 export enum AppointmentStatus {
@@ -57,6 +59,7 @@ export type AppointmentDbBase = {
 
 export type AppointmentsDBModel = AppointmentDbBase & {
   id: string
+  transportRunId?: string
 }
 
 export type AppoinmentDataUI = {
@@ -143,10 +146,12 @@ export type AppointmentUI = AppointmentBase & {
   id?: number
   location?: string
   dateTime?: string
+  transportRunId?: string
+  deadline?: string
 }
 
 export type AppointmentUiDTO = {
-  id: number
+  id: number | string
   firstName: string
   lastName: string
   location?: string
@@ -154,6 +159,8 @@ export type AppointmentUiDTO = {
   barCode: string
   dateTime?: string
   dateOfBirth?: string
+  transportRunId?: string
+  deadline?: string
 }
 
 export type AppointmentFilters = {
@@ -179,7 +186,7 @@ export enum Label {
 }
 
 export const appointmentUiDTOResponse = (
-  appointment: AppointmentDTO | AppointmentUI,
+  appointment: AppointmentDTO | AppointmentUI | AppointmentsDBModel,
 ): AppointmentUiDTO => ({
   id: (appointment as AppointmentUI).id,
   firstName: appointment.firstName,
@@ -189,4 +196,6 @@ export const appointmentUiDTOResponse = (
   location: (appointment as AppointmentUI).location,
   dateTime: (appointment as AppointmentUI).dateTime,
   dateOfBirth: appointment.dateOfBirth,
+  transportRunId: appointment.transportRunId,
+  deadline: appointment.deadline,
 })

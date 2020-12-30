@@ -1,20 +1,23 @@
 import DataStore from '../../../common/src/data/datastore'
 
 import {
-  AppointmentDTO,
-  AppointmentDBModel,
   AppoinmentBarCodeSequenceDBModel,
+  AppointmentAttachTransportStatus,
+  AppointmentByOrganizationRequest,
+  AppointmentDbBase,
+  AppointmentDBModel,
+  AppointmentDTO,
   AppointmentFilters,
   AppointmentsDBModel,
-  AppointmentDbBase,
   AppointmentStatus,
-  AppointmentAttachTransportStatus,
 } from '../models/appoinment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
 import {AppointmentsRepository} from '../respository/appointments-repository'
 import moment from 'moment'
-import {now} from '../../../common/src/utils/times'
+import {dateFormats, now} from '../../../common/src/utils/times'
+import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
+import {flatten} from 'lodash'
 
 export class AppoinmentService {
   private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
@@ -32,6 +35,102 @@ export class AppoinmentService {
 
   async getAppoinmentDBByBarCode(barCodeNumber: string): Promise<AppointmentsDBModel[]> {
     return this.appointmentsRepository.findWhereEqual('barCode', barCodeNumber)
+  }
+
+  async getAppointmentsDB(
+    queryParams: AppointmentByOrganizationRequest,
+  ): Promise<AppointmentsDBModel[]> {
+    const conditions = []
+    if (queryParams.organizationId) {
+      conditions.push({
+        map: '/',
+        key: 'organizationId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: queryParams.organizationId,
+      })
+    }
+    if (queryParams.dateOfAppointment) {
+      conditions.push({
+        map: '/',
+        key: 'dateOfAppointment',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: moment(queryParams.dateOfAppointment).format(dateFormats.longMonth),
+      })
+    }
+    if (queryParams.searchQuery) {
+      const fullName = queryParams.searchQuery.split(' ')
+      const searchPromises = []
+
+      conditions.push({
+        map: '/',
+        key: 'dateOfAppointment',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: moment(queryParams.dateOfAppointment).format(dateFormats.longMonth),
+      })
+      if (fullName.length === 1) {
+        searchPromises.push(
+          this.appointmentsRepository.findWhereEqualInMap([
+            ...conditions,
+            {
+              map: '/',
+              key: 'firstName',
+              operator: DataModelFieldMapOperatorType.Equals,
+              value: fullName[0],
+            },
+          ]),
+          this.appointmentsRepository.findWhereEqualInMap([
+            ...conditions,
+            {
+              map: '/',
+              key: 'lastName',
+              operator: DataModelFieldMapOperatorType.Equals,
+              value: fullName[0],
+            },
+          ]),
+        )
+      } else {
+        searchPromises.push(
+          this.appointmentsRepository.findWhereEqualInMap([
+            ...conditions,
+            {
+              map: '/',
+              key: 'firstName',
+              operator: DataModelFieldMapOperatorType.Equals,
+              value: fullName[0],
+            },
+            {
+              map: '/',
+              key: 'lastName',
+              operator: DataModelFieldMapOperatorType.Equals,
+              value: fullName[1],
+            },
+          ]),
+          this.appointmentsRepository.findWhereEqualInMap([
+            ...conditions,
+            {
+              map: '/',
+              key: 'firstName',
+              operator: DataModelFieldMapOperatorType.Equals,
+              value: fullName[1],
+            },
+            {
+              map: '/',
+              key: 'lastName',
+              operator: DataModelFieldMapOperatorType.Equals,
+              value: fullName[0],
+            },
+          ]),
+        )
+      }
+      const foundAppointments = await Promise.all(searchPromises).then((appointmentsArray) =>
+        flatten(appointmentsArray),
+      )
+      return [
+        ...new Map(flatten(foundAppointments).map((item) => [item.id, item])).values(),
+      ] as AppointmentsDBModel[]
+    } else {
+      return this.appointmentsRepository.findWhereEqualInMap(conditions)
+    }
   }
 
   async getAppointmentDBById(id: string): Promise<AppointmentsDBModel> {

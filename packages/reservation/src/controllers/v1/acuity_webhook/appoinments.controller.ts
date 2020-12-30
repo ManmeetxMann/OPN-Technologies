@@ -10,6 +10,7 @@ import {isEmpty} from 'lodash'
 import {AppointmentStatus, AppointmentUI, Result, AcuityUpdateDTO} from '../../../models/appoinment'
 import {TestResultsService} from '../../../services/test-results.service'
 import moment from 'moment'
+import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -45,8 +46,8 @@ class AppointmentWebhookController implements IControllerBase {
       const utcDateTime = moment(appointment.dateTime).utc()
 
       const dateTime = utcDateTime.format()
-      const dateOfAppointment = utcDateTime.format('MMMM DD, YYYY')
-      const timeOfAppointment = utcDateTime.format('h:mma')
+      const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
+      const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
 
       if (utcDateTime.hours() > 12) {
         deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))

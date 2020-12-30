@@ -33,3 +33,11 @@ export const now = (): Date => {
   }
   return new Date()
 }
+
+export enum dateFormats {
+  longMonth = 'MMMM DD, YYYY',
+}
+
+export enum timeFormats {
+  standard12h = 'h:mma',
+}
