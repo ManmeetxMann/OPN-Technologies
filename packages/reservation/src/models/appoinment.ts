@@ -137,6 +137,7 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   organizationId?: string
   searchQuery?: string
   dateOfAppointment?: string
+  transportRunId?: string
 }
 
 export type AcuityUpdateDTO = {

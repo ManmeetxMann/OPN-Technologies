@@ -58,6 +58,14 @@ export class AppoinmentService {
         value: moment(queryParams.dateOfAppointment).format(dateFormats.longMonth),
       })
     }
+    if (queryParams.transportRunId) {
+      conditions.push({
+        map: '/',
+        key: 'transportRunId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: queryParams.transportRunId,
+      })
+    }
     if (queryParams.searchQuery) {
       const fullName = queryParams.searchQuery.split(' ')
       const searchPromises = []
