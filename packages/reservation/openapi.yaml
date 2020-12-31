@@ -322,11 +322,11 @@ paths:
           application/json:
             schema:
               properties:
-                barCode:
+                barCodeNumber:
                   type: string
               required:
-                - barCode
-              example: { barCode: "X0000000000" }
+                - barCodeNumber
+              example: { barCodeNumber: "X0000000000" }
 
       responses:
         '200':
