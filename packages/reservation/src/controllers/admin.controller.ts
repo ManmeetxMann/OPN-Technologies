@@ -131,20 +131,18 @@ class AdminController implements IControllerBase {
                 notFoundBarcodes.push(row)
                 return
               }
-              let sendTestResultsRef = new Function()
+              
               if (ResultTypes.Inconclusive !== row.result && ResultTypes.Invalid !== row.result) {
-                sendTestResultsRef = this.testResultsService.sendTestResults
+                await this.testResultsService.sendTestResults({...row, ...currentAppointment}, resultDate)
               }
 
-              await Promise.all([
-                sendTestResultsRef({...row, ...currentAppointment}, resultDate),
-                this.testResultsService.saveResults({
-                  ...row,
-                  ...currentAppointment,
-                  appointmentId: currentAppointment.appointmentId,
-                  id: row.barCode,
-                }),
-              ])
+              await this.testResultsService.saveResults({
+                ...row,
+                ...currentAppointment,
+                appointmentId: currentAppointment.appointmentId,
+                id: row.barCode,
+              })
+              
             }
           } else {
             notFoundBarcodes.push(row)
