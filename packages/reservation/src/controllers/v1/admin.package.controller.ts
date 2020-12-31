@@ -27,6 +27,11 @@ class AdminController implements IControllerBase {
       packageValidations.packageValidation(),
       this.addPackageCode,
     )
+    innerRouter.get(
+      this.path + '/api/v1/packages',
+      // authMiddleware,
+      this.getPackageList,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -46,6 +51,18 @@ class AdminController implements IControllerBase {
       console.warn(`${results} updated for the organization ${organizationId}`)
 
       res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getPackageList = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {all} = req.query as {all: string}
+
+      const results = await this.packageService.getPackageList(Boolean(all))
+
+      res.json(actionSucceed(results))
     } catch (error) {
       next(error)
     }

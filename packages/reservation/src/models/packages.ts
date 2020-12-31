@@ -15,3 +15,8 @@ export type SavePackageAndOrganizationRequest = {
   organizationId?: string
   packageCode?: string
 }
+
+export type SavePackageAndOrganizationRequest = {
+  organizationId?: string
+  packageCode?: string
+}

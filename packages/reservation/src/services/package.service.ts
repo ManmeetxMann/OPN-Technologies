@@ -3,8 +3,11 @@ import DataStore from '../../../common/src/data/datastore'
 import {PackageBase} from '../models/packages'
 import {PackageRepository} from '../respository/package.repository'
 import {TestResultsDBRepository} from '../respository/test-results-db.repository'
+import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
+import {TestResultsDBModel} from '../models/test-result'
 
 export class PackageService {
+  private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
   private packageRepository = new PackageRepository(new DataStore())
   private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
 
@@ -50,5 +53,43 @@ export class PackageService {
   async isExist(packageCode: string): Promise<boolean> {
     const result = await this.packageRepository.findWhereEqual('packageCode', packageCode)
     return !!result.length
+  }
+
+  async getPackageList(all: boolean): Promise<unknown> {
+    const packagesAcuity = await this.appoinmentSchedulerRepository.getManyAppointments({})
+
+    let pachagesDb
+
+    if (all) {
+      const packageCodes: string[] = packagesAcuity.map(({packageCode}) => packageCode)
+      pachagesDb = await this.testResultsDBRepository.findWhereIn('packageCode', packageCodes)
+    }
+    const result = new Map()
+
+    packagesAcuity.map((packageCode) => {
+      const pachageDb = pachagesDb?.find(
+        (item: TestResultsDBModel) => item.packageCode === packageCode.packageCode,
+      )
+
+      const packageMap = result.get(packageCode.packageCode)
+
+      if (!packageMap) {
+        return result.set(packageCode.packageCode, {
+          packageCode: packageCode.packageCode,
+          name: `${packageCode.firstName} ${packageCode.firstName}`,
+          remainingCounts: 1,
+          organizationId: pachageDb?.organizationId,
+        })
+      }
+
+      result.set(packageCode.packageCode, {
+        packageCode: packageMap.packageCode,
+        name: packageMap.name,
+        remainingCounts: ++packageMap.remainingCounts,
+        organizationId: packageMap.organizationId,
+      })
+    })
+
+    return Array.from(result.values())
   }
 }
