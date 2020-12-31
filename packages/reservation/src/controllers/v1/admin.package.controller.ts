@@ -29,7 +29,7 @@ class AdminController implements IControllerBase {
     )
     innerRouter.get(
       this.path + '/api/v1/packages',
-      // authMiddleware,
+      authMiddleware,
       this.getPackageList,
     )
 
