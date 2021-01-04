@@ -142,6 +142,10 @@ export class AppoinmentService {
     }
   }
 
+  async getAppointmentByIdFromAcuity(id: number): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.getAppointmentById(id)
+  }
+
   async getAppointmentDBById(id: string): Promise<AppointmentsDBModel> {
     return this.appointmentsRepository.get(id)
   }
