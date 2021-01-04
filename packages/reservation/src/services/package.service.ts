@@ -64,7 +64,7 @@ export class PackageService {
       packagesDb = await this.packageRepository.findWhereIn('packageCode', packageCodes)
     }
     const result = new Map()
-    console.log(packagesDb.length)
+
     packagesAcuity.map((packageCode) => {
       const pachageDb = packagesDb?.find(
         (item: TestResultsDBModel) => item.packageCode === packageCode.certificate,
