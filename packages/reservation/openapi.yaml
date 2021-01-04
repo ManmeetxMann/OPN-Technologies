@@ -891,7 +891,7 @@ paths:
                       type: string
                     remainingCounts:
                       type: number
-                    organizationId:
+                    organization:
                       type: string
                   required:
                     - packageCode

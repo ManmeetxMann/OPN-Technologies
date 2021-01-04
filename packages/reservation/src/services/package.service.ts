@@ -4,12 +4,13 @@ import {PackageBase, PackageListItem} from '../models/packages'
 import {PackageRepository} from '../respository/package.repository'
 import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
-import {TestResultsDBModel} from '../models/test-result'
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 export class PackageService {
   private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
   private packageRepository = new PackageRepository(new DataStore())
   private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
+  private organizationService = new OrganizationService()
 
   async getAllByOrganizationId(
     organizationId: string,
@@ -57,18 +58,22 @@ export class PackageService {
 
   async getPackageList(all: boolean): Promise<PackageListItem[]> {
     const packagesAcuity = await this.appoinmentSchedulerRepository.getPackagesList()
-    let packagesDb
+    const packagesOrganization = new Map()
+    const result = new Map()
 
     if (all) {
       const packageCodes: string[] = packagesAcuity.map(({certificate}) => certificate)
-      packagesDb = await this.packageRepository.findWhereIn('packageCode', packageCodes)
+      const packages = await this.packageRepository.findWhereIn('packageCode', packageCodes)
+      const organizationIds = packages.map(({organizationId}) => organizationId)
+      const organizations = await this.organizationService.getAllByIds(organizationIds)
+      organizations.map(({id, name}) => {
+        const packageEntity = packages.find(({organizationId}) => organizationId === id)
+        packagesOrganization.set(packageEntity.packageCode, {organizationName: name})
+      })
     }
-    const result = new Map()
 
     packagesAcuity.map((packageCode) => {
-      const pachageDb = packagesDb?.find(
-        (item: TestResultsDBModel) => item.packageCode === packageCode.certificate,
-      )
+      const organization = packagesOrganization.get(packageCode.certificate)
 
       const packageMap = result.get(packageCode.certificate)
 
@@ -77,7 +82,7 @@ export class PackageService {
           packageCode: packageCode.certificate,
           name: packageCode.name,
           remainingCounts: 1,
-          organizationId: pachageDb?.organizationId,
+          organization: organization?.organizationName || '',
         })
       }
 
@@ -85,7 +90,7 @@ export class PackageService {
         packageCode: packageMap.packageCode,
         name: packageMap.name,
         remainingCounts: ++packageMap.remainingCounts,
-        organizationId: packageMap.organizationId,
+        organization: packageMap.organization,
       })
     })
 

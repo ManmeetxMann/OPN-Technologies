@@ -37,5 +37,5 @@ export type PackageListItem = {
   packageCode: number
   name: string
   remainingCounts: number
-  organizationId: string
+  organization: string
 }
