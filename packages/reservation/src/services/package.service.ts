@@ -1,6 +1,6 @@
 import DataStore from '../../../common/src/data/datastore'
 
-import {PackageBase} from '../models/packages'
+import {PackageBase, PackageListItem} from '../models/packages'
 import {PackageRepository} from '../respository/package.repository'
 import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
@@ -55,34 +55,33 @@ export class PackageService {
     return !!result.length
   }
 
-  async getPackageList(all: boolean): Promise<unknown> {
-    const packagesAcuity = await this.appoinmentSchedulerRepository.getManyAppointments({})
-
-    let pachagesDb
+  async getPackageList(all: boolean): Promise<PackageListItem[]> {
+    const packagesAcuity = await this.appoinmentSchedulerRepository.getPackagesList()
+    let packagesDb
 
     if (all) {
-      const packageCodes: string[] = packagesAcuity.map(({packageCode}) => packageCode)
-      pachagesDb = await this.testResultsDBRepository.findWhereIn('packageCode', packageCodes)
+      const packageCodes: string[] = packagesAcuity.map(({certificate}) => certificate)
+      packagesDb = await this.packageRepository.findWhereIn('packageCode', packageCodes)
     }
     const result = new Map()
-
+    console.log(packagesDb.length)
     packagesAcuity.map((packageCode) => {
-      const pachageDb = pachagesDb?.find(
-        (item: TestResultsDBModel) => item.packageCode === packageCode.packageCode,
+      const pachageDb = packagesDb?.find(
+        (item: TestResultsDBModel) => item.packageCode === packageCode.certificate,
       )
 
-      const packageMap = result.get(packageCode.packageCode)
+      const packageMap = result.get(packageCode.certificate)
 
       if (!packageMap) {
-        return result.set(packageCode.packageCode, {
-          packageCode: packageCode.packageCode,
-          name: `${packageCode.firstName} ${packageCode.firstName}`,
+        return result.set(packageCode.certificate, {
+          packageCode: packageCode.certificate,
+          name: packageCode.name,
           remainingCounts: 1,
           organizationId: pachageDb?.organizationId,
         })
       }
 
-      result.set(packageCode.packageCode, {
+      result.set(packageCode.certificate, {
         packageCode: packageMap.packageCode,
         name: packageMap.name,
         remainingCounts: ++packageMap.remainingCounts,

@@ -1,5 +1,6 @@
 import AcuityScheduling from '../adapter/acuity'
 import {AppointmentAcuityResponse} from '../models/appointment'
+import {Certificate} from '../models/packages'
 
 export class AppoinmentsSchedulerRepository extends AcuityScheduling {
   constructor() {
@@ -22,5 +23,9 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
 
   async cancelAppointmentByIdOnAcuity(id: number): Promise<AppointmentAcuityResponse> {
     return this.cancelAppointmentOnAcuity(id)
+  }
+
+  async getPackagesList(): Promise<Certificate[]> {
+    return this.getPackages()
   }
 }

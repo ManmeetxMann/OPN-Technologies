@@ -15,3 +15,27 @@ export type SavePackageAndOrganizationRequest = {
   organizationId?: string
   packageCode?: string
 }
+
+export type Certificate = {
+  id: number
+  certificate: string
+  productID: number
+  orderID: number
+  appointmentTypeIDs: number[]
+  appointmentTypes: Record<string, string>
+  name: string
+  email: string
+  type: string
+  remainingCounts?: Record<string, number>
+  remainingMinutes?: number
+  remainingValue?: string
+  remainingValueLocal?: string
+  expiration?: Date
+}
+
+export type PackageListItem = {
+  packageCode: number
+  name: string
+  remainingCounts: number
+  organizationId: string
+}

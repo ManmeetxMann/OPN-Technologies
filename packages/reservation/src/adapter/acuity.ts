@@ -3,6 +3,7 @@ import {Config} from '../../../common/src/utils/config'
 import querystring from 'querystring'
 import {AppointmentAcuityResponse} from '../models/appointment'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {Certificate} from '../models/packages'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -145,6 +146,27 @@ abstract class AcuityScheduling {
       throw new BadRequestException(result.message)
     }
     return this.customFieldsToAppoinment(result)
+  }
+
+  protected async getPackages(): Promise<Certificate[]> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = APIURL + `/api/v1/certificates`
+    console.log(apiUrl) //To know request path for dependency
+
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return result
   }
 
   private async mapCustomFieldsToAppoinment(
