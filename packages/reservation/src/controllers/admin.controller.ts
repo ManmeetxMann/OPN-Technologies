@@ -131,9 +131,12 @@ class AdminController implements IControllerBase {
                 notFoundBarcodes.push(row)
                 return
               }
-              
+
               if (ResultTypes.Inconclusive !== row.result && ResultTypes.Invalid !== row.result) {
-                await this.testResultsService.sendTestResults({...row, ...currentAppointment}, resultDate)
+                await this.testResultsService.sendTestResults(
+                  {...row, ...currentAppointment},
+                  resultDate,
+                )
               }
 
               await this.testResultsService.saveResults({
@@ -142,7 +145,6 @@ class AdminController implements IControllerBase {
                 appointmentId: currentAppointment.appointmentId,
                 id: row.barCode,
               })
-              
             }
           } else {
             notFoundBarcodes.push(row)
