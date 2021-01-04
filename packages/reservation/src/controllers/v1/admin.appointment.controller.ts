@@ -76,6 +76,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         searchQuery,
         dateOfAppointment,
+        transportRunId,
       } = req.query as AppointmentByOrganizationRequest
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
@@ -86,6 +87,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         dateOfAppointment,
         searchQuery,
+        transportRunId,
       })
 
       res.json(
