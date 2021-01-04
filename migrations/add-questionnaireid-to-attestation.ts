@@ -56,12 +56,11 @@ async function updateAllAttestation(): Promise<Result[]> {
     offset += attestationsSnapshot.docs.length
     hasMore = !attestationsSnapshot.empty
 
-    for (const attestation of attestationsSnapshot.docs) {
-      const promises = []
-      promises.push(addQuestionnaireIdToAttestation(attestation, questionnaires.docs))
-      const result = await promiseAllSettled(promises)
-      results.push(...result)
-    }
+    const promises = attestationsSnapshot.docs.map((attestation) =>
+      addQuestionnaireIdToAttestation(attestation, questionnaires.docs),
+    )
+    const resultsPage = await promiseAllSettled(promises)
+    results.push(...resultsPage)
   }
   return results
 }
