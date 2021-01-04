@@ -11,11 +11,14 @@ import WebhookController from './controllers/webhook.controller'
 import TestResultController from './controllers/v1/admin.test-results.controller.ts'
 import PackageController from './controllers/v1/admin.package.controller'
 import AppointmentController from './controllers/v1/admin.appointment.controller'
+import TestRunsController from './controllers/v1/admin/test-runs.controller'
+import TransportRunsController from './controllers/v1/transport-runs.controller'
 
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
 import exphbs from 'express-handlebars'
 import path from 'path'
+import AppointmentWebhookController from './controllers/v1/acuity_webhook/appoinments.controller'
 
 //import * as debugClient from '@google-cloud/debug-agent'
 //debugClient.start({allowExpressions: true})
@@ -33,6 +36,9 @@ const app = new App({
     new TestResultController(),
     new PackageController(),
     new AppointmentController(),
+    new TransportRunsController(),
+    new AppointmentWebhookController(),
+    new TestRunsController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],
@@ -41,6 +47,7 @@ const app = new App({
 //Attach handlebar only for Reservation Server
 app.app.engine('handlebars', exphbs())
 app.app.set('view engine', 'handlebars')
+app.app.set('views', path.join(__dirname, 'views'))
 app.app.use('/static', express.static(path.join(__dirname, 'static')))
 
 app.listen()

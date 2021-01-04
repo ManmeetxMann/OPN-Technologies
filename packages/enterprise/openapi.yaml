@@ -93,6 +93,11 @@ components:
           type: string
         enablePushNotifications:
           type: boolean
+          default: true
+        enableTemperatureCheck:
+          type: boolean
+          default: false
+          nullable: true
       required:
         - name
 
@@ -449,16 +454,6 @@ components:
           items:
             type: string
           description: Organizaiton ids to become a NFC Gate Kiosk admin. Must be provided can be empty.
-        managementAdminForOrganizationId:
-          type: string
-          description: Organization IDs for admin dashboard to give access to user management/group management
-        testReportsAdminForOrganizationId:
-          type: string
-          description: Organization IDs for admin dashboard to to see test reports
-        testAppointmentsAdminForOrganizationId:
-          type: string
-          description: Organization IDs for admin dashboard to to see test appoinments and print bar codes
-
         groupIds:
           type: array
           items:
@@ -467,11 +462,27 @@ components:
         showReporting:
           type: boolean
           description: Show reporting feature
+        isOpnSuperAdmin:
+          type: boolean
+          description: OPN Super Admin
+        isManagementDashboardAdmin:
+          type: boolean
+          description: Is Management Dashboard Admin
+        isTestReportsAdmin:
+          type: boolean
+          description: Can see Test Reports
+        isTestAppointmentsAdmin:
+          type: boolean
+          description: Can see Test Appoinments
       required:
         - email
         - showReporting
         - organizationId
         - superAdminForOrganizationIds
+        - isOpnSuperAdmin
+        - isManagementDashboardAdmin
+        - isTestReportsAdmin
+        - isTestAppointmentsAdmin
 
     InternalAdminListRequest:
       type: object
@@ -728,12 +739,14 @@ components:
           type: string
         showReporting:
           type: boolean
-        managementAdminForOrganizationId:
-          type: string
-        testReportsAdminForOrganizationId:
-          type: string
-        testAppointmentsAdminForOrganizationId:
-          type: string
+        isOpnSuperAdmin:
+          type: boolean
+        isManagementDashboardAdmin:
+          type: boolean
+        isTestReportsAdmin:
+          type: boolean
+        isTestAppointmentsAdmin:
+          type: boolean
     User:
       type: object
       deprecated: true
@@ -2849,25 +2862,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUsersByOrganization'
 
-  /enterprise/api/v3/users/migration:
-    post:
-      summary: Profile Migration
-      description: Creates a user profile and link/migrate existing user's data
-      tags:
-        - Account management
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MigrateUserRequest'
-      responses:
-        '200':
-          description: Successfully migrated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfUser'
-
   /enterprise/api/v3/users/auth:
     post:
       summary: User authentication
@@ -2884,13 +2878,12 @@ paths:
                   nullable: false
                 organizationId:
                   type: string
-                  nullable: false
+                  nullable: true
                 userId:
                   type: string
                   nullable: true
               required:
                 - email
-                - organizationId
       responses:
         '200':
           description: Successful
@@ -2913,15 +2906,11 @@ paths:
                 email:
                   type: string
                   nullable: false
-                organizationId:
-                  type: string
-                  nullable: false
                 shortCode:
                   type: string
                   nullable: false
               required:
                 - email
-                - organizationId
                 - shortCode
       responses:
         '200':

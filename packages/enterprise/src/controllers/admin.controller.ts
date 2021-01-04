@@ -11,7 +11,8 @@ import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {authMiddleware} from '../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../common/src/middlewares/authorization'
+import {UserRoles} from '../../../common/src/types/authorization'
 import {FirebaseManager} from '../../../common/src/utils/firebase'
 import {now} from '../../../common/src/utils/times'
 
@@ -27,10 +28,26 @@ class AdminController implements IControllerBase {
   public initRoutes(): void {
     this.router.post(this.path + '/auth/signIn/request', this.authSignInLinkRequest)
     this.router.post(this.path + '/auth/signIn/process', this.authSignInProcess)
-    this.router.post(this.path + '/team/status', authMiddleware, this.teamStatus)
-    this.router.post(this.path + '/team/review', authMiddleware, this.teamReview)
-    this.router.post(this.path + '/billing/config', authMiddleware, this.billingConfig)
-    this.router.get(this.path + '/self', authMiddleware, this.adminInfo)
+    this.router.post(
+      this.path + '/team/status',
+      authorizationMiddleware([UserRoles.OrgAdmin]),
+      this.teamStatus,
+    )
+    this.router.post(
+      this.path + '/team/review',
+      authorizationMiddleware([UserRoles.OrgAdmin]),
+      this.teamReview,
+    )
+    this.router.post(
+      this.path + '/billing/config',
+      authorizationMiddleware([UserRoles.OrgAdmin]),
+      this.billingConfig,
+    )
+    this.router.get(
+      this.path + '/self',
+      authorizationMiddleware([UserRoles.OrgAdmin]),
+      this.adminInfo,
+    )
   }
 
   authSignInLinkRequest = async (
@@ -85,18 +102,21 @@ class AdminController implements IControllerBase {
 
       // Check if auth user is connected to someone else
       const userService = new UserService()
-      let connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
+      let connectedUser = await userService.findOneByAdminAuthUserId(validatedAuthUser.uid)
 
       // If so let's remove if off of them
       if (!!connectedUser && connectedUser?.id !== connectedId) {
         await userService.updateProperties(connectedUser.id, {
-          authUserId: FirebaseManager.getInstance().getFirestoreDeleteField(),
           admin: FirebaseManager.getInstance().getFirestoreDeleteField(),
         })
+        console.log(
+          `Admin Privledge removed from user id: ${connectedUser.id} and added to ${connectedId}`,
+        )
       }
 
       // Get the proper connected user then
       if (!connectedUser || connectedUser?.id !== connectedId) {
+        //New Admin
         connectedUser = await userService.findOneSilently(connectedId)
         if (!validatedAuthUser?.email) {
           console.error('ConnectedId is non-existent')
@@ -105,8 +125,8 @@ class AdminController implements IControllerBase {
       }
 
       // Set the connection
-      connectedUser.authUserId = validatedAuthUser.uid
       connectedUser.admin = approval.profile
+      connectedUser.admin.authUserId = validatedAuthUser.uid
       await userService.update(connectedUser)
 
       // Change the display name

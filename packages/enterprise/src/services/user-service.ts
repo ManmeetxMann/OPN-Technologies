@@ -1,22 +1,14 @@
+import * as _ from 'lodash'
 import DataStore from '../../../common/src/data/datastore'
-import {
-  User,
-  UserDependency,
-  UserGroup,
-  UserOrganization,
-  UserOrganizationProfile,
-} from '../models/user'
-import {NewUser, LegacyProfile} from '../types/new-user'
+import {User, UserDependency, UserGroup, UserOrganizationProfile} from '../models/user'
+import {NewUser} from '../types/new-user'
 import {UpdateUserByAdminRequest, UpdateUserRequest} from '../types/update-user-request'
 import {UserRepository} from '../repository/user.repository'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {UserOrganizationRepository} from '../repository/user-organization.repository'
 import {UserOrganizationProfileRepository} from '../repository/user-organization-profile.repository'
 import {UserDependencyRepository} from '../repository/user-dependency.repository'
-import * as _ from 'lodash'
 import {UserGroupRepository} from '../repository/user-group.repository'
-import {OrganizationUsersGroupModel} from '../repository/organization.repository'
 import {UserModel} from '../../../common/src/data/user'
 import {isEmail, titleCase, cleanStringField} from '../../../common/src/utils/utils'
 import {CursoredUsersRequestFilter} from '../types/user-organization-request'
@@ -24,7 +16,6 @@ import {CursoredUsersRequestFilter} from '../types/user-organization-request'
 export class UserService {
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
-  private userOrganizationRepository = new UserOrganizationRepository(this.dataStore)
   private userOrganizationProfileRepository = new UserOrganizationProfileRepository(this.dataStore)
   private userGroupRepository = new UserGroupRepository(this.dataStore)
   private userDependencyRepository = new UserDependencyRepository(this.dataStore)
@@ -42,49 +33,9 @@ export class UserService {
         registrationId: source.registrationId ?? null,
         authUserId: source.authUserId ?? null,
         active: source.active ?? false,
-        memberId: source.memberId ?? null,
+        organizationIds: [source.organizationId],
       } as User)
     })
-  }
-
-  migrateExistingUser(legacyProfiles: LegacyProfile[], newUserId: string): Promise<void> {
-    return Promise.all(
-      legacyProfiles.map(async ({userId, organizationId, groupId, dependentIds}) => {
-        // Create dependents
-        const uniqueDependentIds = new Set(dependentIds)
-        const migratedDependentIds: string[] = await this.userRepository
-          .collection(`${userId}/dependants`)
-          .fetchAll()
-          .then((dependents: unknown[]) =>
-            Promise.all(
-              dependents
-                .filter(({id}) => uniqueDependentIds.has(id))
-                .map(({id, firstName, lastName}) =>
-                  this.userRepository.add({id, firstName, lastName, active: true} as User),
-                ),
-            ),
-          )
-          .then((results) => results.map(({id}) => id))
-
-        // Link dependents to principal user
-        await this.userDependencyRepository.addAll(
-          dependentIds.map((id) => ({userId: id, parentUserId: newUserId} as UserDependency)),
-        )
-
-        // Connect to organizations
-        const userOrganizations = [newUserId, ...migratedDependentIds].map(
-          (id) => ({userId: id, organizationId} as UserOrganization),
-        )
-        await this.userOrganizationRepository.addAll(userOrganizations)
-
-        // Connect groups
-        await this.userGroupRepository.add({userId: newUserId, groupId} as UserGroup)
-        await new OrganizationUsersGroupModel(this.dataStore, organizationId)
-          .findWhereIn('userId', migratedDependentIds)
-          .then((targets) => targets.map(({userId, groupId}) => ({userId, groupId} as UserGroup)))
-          .then((targets) => this.userGroupRepository.addAll(targets))
-      }),
-    ).then()
   }
 
   update(id: string, source: UpdateUserRequest): Promise<User> {
@@ -290,12 +241,6 @@ export class UserService {
     return this.userRepository.update({...user, active: true})
   }
 
-  getAllConnectedOrganizationIds(userId: string): Promise<string[]> {
-    return this.userOrganizationRepository
-      .findWhereEqual('userId', userId)
-      .then((results) => results.map(({organizationId}) => organizationId))
-  }
-
   addDependents(dependents: User[], parentUserId: string): Promise<User[]> {
     return Promise.all(
       dependents
@@ -355,52 +300,28 @@ export class UserService {
       .then((results) => this.getAllByIds(results.map(({parentUserId}) => parentUserId)))
   }
 
-  connectOrganization(userId: string, organizationId: string): Promise<UserOrganization> {
-    return (
-      this.findOneUserOrganizationBy(userId, organizationId)
-        .then((existing) =>
-          existing
-            ? existing
-            : this.userOrganizationRepository.add({
-                organizationId,
-                userId,
-              } as UserOrganization),
-        )
-        // TODO TO BE REMOVED: Support for legacy APIs
-        .then((userGroup) => {
-          const legacyUserRepository = new UserModel(this.dataStore)
-          return legacyUserRepository
-            .get(userId)
-            .then((user) =>
-              legacyUserRepository.updateProperty(
-                userId,
-                'organizationIds',
-                Array.from(new Set([...(user.organizationIds ?? []), organizationId])),
-              ),
-            )
-            .then(() => userGroup)
-        })
-    )
-    // TODO: End of legacy support
+  connectOrganization(userId: string, organizationId: string): void {
+    const userRepository = new UserModel(this.dataStore)
+    userRepository
+      .get(userId)
+      .then((user) =>
+        userRepository.updateProperty(
+          userId,
+          'organizationIds',
+          Array.from(new Set([...(user.organizationIds ?? []), organizationId])),
+        ),
+      )
   }
 
-  disconnectOrganization(
-    userId: string,
-    organizationId: string,
-    groupIds: Set<string>,
-  ): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return this.dataStore.firestoreORM.runTransaction((_transaction) =>
-      this.disconnectGroups(userId, groupIds).then(() =>
-        this.findOneUserOrganizationBy(userId, organizationId).then((existing) => {
-          if (existing) return this.userOrganizationRepository.delete(existing.id)
-
-          throw new ResourceNotFoundException(
-            `User [${userId}] is not connected to organization [${organizationId}]`,
-          )
-        }),
-      ),
-    )
+  disconnectOrganization(userId: string, organizationId: string): Promise<void> {
+    const userRepository = new UserModel(this.dataStore)
+    return userRepository.get(userId).then((user) => {
+      userRepository.updateProperty(
+        userId,
+        'organizationIds',
+        user.organizationIds.filter((orgId) => orgId != organizationId),
+      )
+    })
   }
 
   getAllGroupIdsForUser(userId: string): Promise<Set<string>> {
@@ -454,18 +375,6 @@ export class UserService {
         .then(() => this.connectGroups(userId, [toGroupId]))
         .then(),
     )
-  }
-
-  private findOneUserOrganizationBy(
-    userId: string,
-    organizationId: string,
-  ): Promise<UserOrganization> {
-    return this.userOrganizationRepository
-      .collection()
-      .where('userId', '==', userId)
-      .where('organizationId', '==', organizationId)
-      .fetch()
-      .then((results) => results[0])
   }
 
   private findUserGroupsBy(userId: string, groupIds?: string[]): Promise<UserGroup[]> {

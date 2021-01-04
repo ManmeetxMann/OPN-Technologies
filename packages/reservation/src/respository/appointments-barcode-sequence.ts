@@ -2,7 +2,7 @@ import {AppoinmentBarCodeSequenceDBModel} from '../models/appoinment'
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 
-export class AppoinmentsDBRepository extends DataModel<AppoinmentBarCodeSequenceDBModel> {
+export class AppointmentsBarCodeSequence extends DataModel<AppoinmentBarCodeSequenceDBModel> {
   public rootPath = 'appointment-barcode-sequence'
   readonly zeroSet = []
   constructor(dataStore: DataStore) {

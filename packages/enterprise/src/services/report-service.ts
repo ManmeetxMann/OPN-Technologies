@@ -1,6 +1,5 @@
-import {Config} from '../../../common/src/utils/config'
-import {now} from '../../../common/src/utils/times'
-import {safeTimestamp, GenericTimestamp} from '../../../common/src/utils/datetime-util'
+import {now, toDateTimeFormat, toDateFormat} from '../../../common/src/utils/times'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {User} from '../../../common/src/data/user'
 import {Range} from '../../../common/src/types/range'
@@ -29,18 +28,6 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 
 import * as _ from 'lodash'
 import moment from 'moment'
-
-const timeZone = Config.get('DEFAULT_TIME_ZONE')
-
-const toDateFormat = (timestamp: GenericTimestamp): string => {
-  const date = safeTimestamp(timestamp)
-  return moment(date).tz(timeZone).format('MMMM D, YYYY')
-}
-
-const toDateTimeFormat = (timestamp: GenericTimestamp): string => {
-  const date = safeTimestamp(timestamp)
-  return moment(date).tz(timeZone).format('h:mm A MMMM D, YYYY')
-}
 
 type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
 type Lookups = {
@@ -72,6 +59,7 @@ const getPassportsCountPerStatus = (
     [PassportStatuses.Proceed]: 0,
     [PassportStatuses.Caution]: 0,
     [PassportStatuses.Stop]: 0,
+    [PassportStatuses.TemperatureCheckRequired]: 0,
   }
   accesses.forEach(({status}) => (counts[status] += 1))
   return counts

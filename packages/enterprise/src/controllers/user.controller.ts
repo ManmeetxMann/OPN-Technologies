@@ -6,6 +6,7 @@ import Validation from '../../../common/src/utils/validation'
 import {OrganizationService} from '../services/organization-service'
 import {OrganizationConnectionRequest} from '../models/organization-connection-request'
 import {UserService} from '../../../common/src/service/user/user-service'
+import {UserService as EnterpriseUserService} from '../services/user-service'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
 import {User, UserEdit, UserWithGroup, UserDependant} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
@@ -21,6 +22,7 @@ class UserController implements IControllerBase {
   public router = express.Router()
   private organizationService = new OrganizationService()
   private userService = new UserService()
+  private enterpriseUserService = new EnterpriseUserService()
   private registrationService = new RegistrationService()
   private authService = new AuthService()
 
@@ -57,17 +59,16 @@ class UserController implements IControllerBase {
       const group = await this.organizationService.getGroup(organization.id, groupId)
 
       const authUser = !!idToken ? await this.authService.verifyAuthToken(idToken) : null
-      if (idToken && !authUser) {
+      if (idToken && (!authUser || !authUser.email)) {
         throw new UnauthorizedException(`Cannot verify id-token`)
       }
 
       if (authUser) {
         // check if auth user is already there
-        const usersByAuthId = await this.userService.findAllByAuthUserId(authUser.uid)
-        if (usersByAuthId && usersByAuthId.length) {
-          if (usersByAuthId.some((user) => user.email === authUser.email)) {
-            throw new ResourceAlreadyExistsException(authUser.email)
-          }
+        const usersByEmail = await this.enterpriseUserService.getByEmail(authUser.email)
+        if (usersByEmail) {
+          console.log(`DuplicateEmailConnect: ${authUser.email}`)
+          throw new ResourceAlreadyExistsException(authUser.email)
         }
       }
 

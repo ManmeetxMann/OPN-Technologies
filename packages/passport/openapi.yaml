@@ -255,15 +255,12 @@ paths:
               properties:
                 organizationId:
                   type: string
-                locationId:
-                  type: string
                 temperature:
                   type: number
                 userId:
                   type: string
               required:
                 - organizationId
-                - locationId
                 - temperature
                 - userId
               additionalProperties: false

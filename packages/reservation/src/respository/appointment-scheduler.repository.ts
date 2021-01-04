@@ -13,14 +13,18 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
     super()
   }
 
-  async updateAppoinment(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
-    return this.updateAppointment(id, data)
+  async updateAppointment(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
+    return this.updateAppointmentOnAcuity(id, data)
+  }
+
+  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
+    return this.updateAppointmentLabel(id, data)
   }
 
   async getAppointmentById(id: number): Promise<AppointmentDBModel> {
-    return this.getAppointmentsById(id).then((appointment: AppointmentAcuityResponse) =>
-      this.convertToAppointmentModel(appointment),
-    )
+    return this.getAppointmentsById(id).then((appoinment: AppointmentAcuityResponse) => {
+      return this.convertToAppointmentModel(appoinment)
+    })
   }
 
   async getManyAppointments(data: AppointmentRequest): Promise<AppointmentDBModel[]> {
@@ -33,6 +37,10 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
         return appointments[0]
       },
     )
+  }
+
+  async cancelAppointmentById(id: number): Promise<AppointmentAcuityResponse> {
+    return this.cancelAppointment(id)
   }
 
   private async getAppointmentsByFilter(

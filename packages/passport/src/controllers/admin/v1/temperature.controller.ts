@@ -9,6 +9,10 @@ import {PassportService} from '../../../services/passport-service'
 import {TemperatureService} from '../../../services/temperature-service'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import {AlertService} from '../../../services/alert-service'
+import {AttestationService} from '../../../services/attestation-service'
+import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
+import {PassportStatuses} from '../../../models/passport'
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
 
@@ -17,6 +21,9 @@ class TemperatureAdminController implements IControllerBase {
   public path = '/passport/admin/api/v1'
   public temperatureService = new TemperatureService()
   public passportService = new PassportService()
+  private alertService = new AlertService()
+  private attestationService = new AttestationService()
+  public organizationService = new OrganizationService()
 
   constructor() {
     this.initRoutes()
@@ -28,23 +35,42 @@ class TemperatureAdminController implements IControllerBase {
 
   saveTemperature = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId, locationId, temperature, userId} = req.body as TemperatureSaveRequest
+      const {organizationId, temperature, userId} = req.body as TemperatureSaveRequest
 
       if (!temperatureThreshold) {
         throw new BadRequestException('Threshold is not specified in config file')
+      }
+
+      const isTemperatureCheckEnabled = await this.organizationService.isTemperatureCheckEnabled(
+        organizationId,
+      )
+
+      if (!isTemperatureCheckEnabled) {
+        throw new BadRequestException('Temperature check is disabled for this organization')
       }
 
       const status =
         temperature > temperatureThreshold ? TemperatureStatuses.Stop : TemperatureStatuses.Proceed
       const validFrom = now()
 
+      const atestation = await this.attestationService.lastAttestationByUserId(userId)
+
+      if (!atestation) {
+        throw new BadRequestException('No attestation found for user')
+      }
+
+      if (atestation.status !== PassportStatuses.TemperatureCheckRequired) {
+        throw new BadRequestException('Temperature check not required for attestation')
+      }
+
       const data = {
         organizationId,
-        locationId,
+        locationId: atestation.locationId,
         temperature,
         status,
         userId,
       }
+
       const result = await this.temperatureService.save(data)
 
       const response = {
@@ -54,7 +80,16 @@ class TemperatureAdminController implements IControllerBase {
         validUntil: this.passportService.shortestTime(status, now()),
       }
 
-      await this.passportService.create(status, data.userId, [], false)
+      const passport = await this.passportService.create(status, data.userId, [], false)
+
+      if (status === TemperatureStatuses.Stop) {
+        await this.alertService.sendAlert(
+          passport,
+          atestation,
+          organizationId,
+          atestation.locationId,
+        )
+      }
 
       res.json(actionSucceed(response))
     } catch (error) {

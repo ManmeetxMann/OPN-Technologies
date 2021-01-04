@@ -53,7 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const presentationTable = document.getElementById('presentationTable')
   const warningMessage = document.getElementById('warning-message')
 
-  const datesBefore = document.getElementById('datesBefore')
   const datesToday = document.getElementById('resultDate')
 
   const sendButtonBulk = document.getElementById('sendButtonBulk')
@@ -62,6 +61,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const successModal = document.getElementById('successModal')
   const successModalContent = document.getElementById('successModalContent')
   const successModalClose = document.getElementById('successModalClose')
+
+  const isValidResultType = (result) => {
+    return !['Positive', 'Negative', '2019-nCoV Detected', 'Invalid', 'Inconclusive'].includes(result);
+  }
 
   successModalClose.addEventListener('click', () => {
     closeModal(successModal)
@@ -151,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if ([6, 8, 10, 12].includes(i) && !(col === 'N/A' || !isNaN(parseInt(col)))) {
               markWarning(trElem, tdElem)
             }
-            if (i === 13 && !['Positive', 'Negative', '2019-nCoV Detected'].includes(col)) {
+            if (i === 13 && isValidResultType(col)) {
               markWarning(trElem, tdElem)
             }
             if (i === 3 && barcodeCounts[col] > 1) {
@@ -169,10 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  datesBefore.addEventListener('change', async (e) => {
-    to = DateTime.utc().toLocaleString()
-    from = DateTime.utc().minus({days: e.target.value}).toLocaleString()
-  })
   
   sendButtonBulk.addEventListener('click', async (e) => {
     e.preventDefault()
@@ -201,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isInvalidNum = [6, 8, 10, 12].some(
           (num) => !(row[num] === 'N/A' || !isNaN(parseInt(row[num]))),
         )
-        const isResultWrong = row[13] && !['Positive', 'Negative', '2019-nCoV Detected'].includes(row[13])
+        const isResultWrong = row[13] && isValidResultType(row[13])
         const isDuplicate = barcodeCounts[row[3]] > 1
         
         if (isInvalidNum || isResultWrong || !(row[12] <= 40 || row[12] === 'N/A')) {
@@ -222,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
           !isDuplicate
         )
       })
-      .map((row) => ({
+      .map((row, i) => ({
         barCode: row[3],
         famEGene: row[5],
         famCt: row[6],
@@ -231,11 +230,10 @@ document.addEventListener('DOMContentLoaded', () => {
         quasar670NGene: row[9],
         quasar670Ct: row[10],
         hexIC: row[11],
-
         hexCt: row[12],
         result: row[13],
         resultDate: resultDate,
-        sendAgain: sendAgainDataVice.indexOf(row[0]) !== -1,
+        sendAgain: sendAgainDataVice.indexOf(`${i}`) !== -1,
       }))
 
     const dataChunks = _.chunk(dataSentBackend, 5)
@@ -296,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     content += `Total rows: ${data.length}<br/>`
     content += `Successfully: ${succeedRows.length}<br/>`
-    content += `Exists but is not marked for sent again: ${alreadyExist.length}<br/>`
+    content += `Exists but is not marked for sent again: ${sendAgainData.length}<br/>`
     content += `Failed: ${failedRows.length + isFatal.length + failedValidation.length}<br/>`
 
     if (succeedRows.length) {

@@ -3,6 +3,12 @@ info:
   title: Reservation API
   version: 1.0.0
 components:
+  securitySchemes:
+    bearerAuthJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     TestResult200:
       type: object
@@ -22,6 +28,37 @@ components:
         result:
           type: string
 
+    TestRunsResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        testRunId:
+          type: string
+        testRunDateTime:
+          type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+        message:
+          nullable: true
+          type: string
+      required:
+        - testRunId
+        - testRunDateTime
+
     AppointmentResponse200:
       type: object
       additionalProperties: false
@@ -30,17 +67,27 @@ components:
           type: object
           additionalProperties: false
           properties:
+            id:
+              type: number
             firstName:
               type: string
             lastName:
               type: string
-            email:
+            status:
               type: string
-              format: email
+            barCode:
+              type: string
+            location:
+              type: string
+            dateTime:
+              type: string
+            dateOfBirth:
+              type: string
           required:
+            - id
             - firstName
             - lastName
-            - email
+            - barCode
         status:
           type: object
           additionalProperties: false
@@ -60,7 +107,112 @@ components:
             message:
               nullable: true
               type: string
-    Response:
+
+    TransportRunListResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              transportRunId:
+                type: string
+              transportDateTime:
+                type: string
+              driverName:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    AppointmentTransportRunResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          properties:
+            items:
+              type: object
+              properties:
+                appointmentId:
+                  type: string
+                state:
+                  type: string
+                  enum:
+                    [
+                      succeed,
+                      failed
+                    ]
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    TransportRunResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            transportRunId:
+              type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    AppointmentResponse:
       type: object
       additionalProperties: false
       properties:
@@ -209,6 +361,8 @@ paths:
                             - Positive
                             - Negative
                             - 2019-nCoV Detected
+                            - Invalid
+                            - Inconclusive
                         famEGene:
                           type: string
                         famCt:
@@ -256,6 +410,8 @@ paths:
                     - Positive
                     - Negative
                     - 2019-nCoV Detected
+                    - Invalid
+                    - Inconclusive
                 famEGene:
                   type: string
                 famCt:
@@ -339,6 +495,8 @@ paths:
                     - Positive
                     - Negative
                     - 2019-nCoV Detected
+                    - Invalid
+                    - Inconclusive
                 famEGene:
                   type: string
                 famCt:
@@ -414,29 +572,6 @@ paths:
               schema:
                 type: string
 
-  /reservation/admin/api/v1/test-results:
-    get:
-      description: Get test results by organization ID
-      parameters:
-        - in: query
-          name: organizationId
-          schema:
-            type: string
-          required: true
-        - in: query
-          name: dateOfAppointment
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successfully Return
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TestResult200'
-
   /admin/api/v1/check-appointments:
     post:
       description: Check appointments
@@ -461,53 +596,88 @@ paths:
               schema:
                 type: string
 
-  /reservation/admin/api/v1/appointments:
+  /reservation/admin/api/v1/transport-runs:
     get:
-      description: Get appointmenr list by organization ID
+      description: Retrieve transport run list
+      tags:
+        - Transport Runs
       parameters:
         - in: query
-          name: organizationId
+          name: transportDate
           schema:
             type: string
+            format: date
           required: true
-        - in: query
-          name: searchQuery
-          schema:
-            type: string
-        - in: query
-          name: dateOfAppointment
-          schema:
-            type: string
       responses:
         '200':
-          description: Successfully Return
+          description: Succesfully retrieve transport run list
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AppointmentResponse200'
-
-  /reservation/admin/api/v1/appointments/{appointmentId}:
-    get:
-      description: Get appointment by appointment ID
-      parameters:
-        - in: path
-          name: appointmentId
-          schema:
-            type: string
-          required: true
+                $ref: '#/components/schemas/TransportRunListResponse200'
+    post:
+      description: Create transport run
+      tags:
+        - Transport Runs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                transportDateTime:
+                  type: string
+                  format: date-time
+                driverName:
+                  type: string
+              required:
+                - transportDateTime
+                - driverName
       responses:
-            '200':
-              description: Successfully Return
-              content:
-                  application/json:
-                    schema:
-                        $ref: '#/components/schemas/AppointmentResponse200'
+        '200':
+          description: Succesfully create transport
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+
+  /reservation/admin/api/v1/appointments/add-transport-run:
+    put:
+      description: Add transport run to appointment
+      tags:
+        - Transport Runs
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                appointmentIds:
+                  type: array
+                  items:
+                    type: string
+                transportRunId:
+                  type: string
+              required:
+                - appointmentIds
+                - transportRunId
+      responses:
+        '200':
+          description: Succesfully create transport
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
 
   /webhook/acuity/schedule:
     post:
       description: Webhook for adding barcode to acuity
+      tags:
+        - Acuity Webhooks
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -523,32 +693,6 @@ paths:
                   type: string
                 id:
                   type: string
-      responses:
-        '200':
-          description: Successfully handled
-          content:
-            text/html:
-              schema:
-                type: string
-              
-
-  /reservation/admin/api/v1/packages:
-    post:
-      description: Add Package Codes for Orgs
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              properties:
-                packageCode:
-                  type: string
-                organizationId:
-                  type: string
-              required:
-                - packageCode
-                - organizationId
       responses:
         '200':
           description: Successfully handled
@@ -578,3 +722,294 @@ paths:
             text/javascript:
               schema:
                 type: string
+
+  /reservation/admin/api/v1/test-results:
+    get:
+      description: Get Test results
+      tags:
+        - Test Management
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+        - in: query
+          name: dateOfAppointment
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TestResult200'
+
+  /reservation/admin/api/v1/appointments:
+    get:
+      description: Get appointment list
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
+        - in: query
+          name: dateOfAppointment
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentResponse200'
+
+  /reservation/admin/api/v1/appointments/{appointmentId}:
+    get:
+      description: Get appointment by appointment ID
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Appointment Management
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse200'
+
+  /reservation/acuity_webhook/api/v1/appointment/create:
+    post:
+      description: Webhook for adding barcode to acuity and cloning to firestore
+      tags:
+        - Acuity Webhooks
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: true
+              properties:
+                calendarID:
+                  type: string
+                appointmentTypeID:
+                  type: string
+                action:
+                  type: string
+                id:
+                  type: string
+              required:
+                - calendarID
+                - appointmentTypeID
+                - action
+                - id
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+
+  /reservation/admin/api/v1/packages:
+    post:
+      description: Add Package Codes for Orgs
+      tags:
+        - Package Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                packageCode:
+                  type: string
+                organizationId:
+                  type: string
+              required:
+                - packageCode
+                - organizationId
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /reservation/admin/api/v1/appointments/{appointmentId}/cancel:
+    put:
+      description: Cancel appointment by appointment ID
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: number
+          required: true
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+
+  /reservation/admin/api/v1/appointments/{barCode}/receive:
+    put:
+      description: Update Appointment status to mark it received
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: barCode
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                location:
+                  type: string
+              required:
+                - location
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+
+  /reservation/admin/api/v1/appointments/add_labels:
+    put:
+      description: Add SameDay/NextDay Labesl to Appointments
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                properties:
+                  appointmentId:
+                    type: number
+                  label:
+                    type: string
+                    enum:
+                      - SameDay
+                      - NextDay
+                required:
+                  - appointmentId
+                  - label
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: string
+
+
+  /reservation/admin/api/v1/test-runs:
+    get:
+      description: Get list of Test Runs by date
+      security:
+        - bearerAuthJWT: []
+      parameters:
+      - in: query
+        name: testRunDate
+        schema:
+          type: string
+        required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestRunsResponse200'
+
+    post:
+      description: Add Test Run
+      security:
+        - bearerAuthJWT: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                testRunDateTime:
+                  type: string
+                  format: date-time
+              required:
+                - testRunDateTime
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/TestRunsResponse200'
+
+  /reservation/admin/api/v1/appointments/barcode/{barCode}:
+    get:
+      description: Get appointment by barCode
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: barCode
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse200'

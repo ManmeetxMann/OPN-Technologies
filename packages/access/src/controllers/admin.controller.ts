@@ -13,7 +13,8 @@ import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {authMiddleware} from '../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../common/src/middlewares/authorization'
+import {UserRoles} from '../../../common/src/types/authorization'
 import {now} from '../../../common/src/utils/times'
 import moment from 'moment-timezone'
 import * as _ from 'lodash'
@@ -56,12 +57,16 @@ class AdminController implements IRouteController {
   public initRoutes(): void {
     const routes = express
       .Router()
-      .post('/stats', authMiddleware, this.stats)
-      .post('/stats/v2', authMiddleware, this.statsV2)
-      .post('/enter', authMiddleware, this.enter)
-      .post('/exit', authMiddleware, this.exit)
-      .post('/createToken', authMiddleware, this.createToken)
-      .post('/enterorexit/tag', authMiddleware, this.enterOrExitUsingATag)
+      .post('/stats', authorizationMiddleware([UserRoles.OrgAdmin]), this.stats)
+      .post('/stats/v2', authorizationMiddleware([UserRoles.OrgAdmin]), this.statsV2)
+      .post('/enter', authorizationMiddleware([UserRoles.OrgAdmin]), this.enter)
+      .post('/exit', authorizationMiddleware([UserRoles.OrgAdmin]), this.exit)
+      .post('/createToken', authorizationMiddleware([UserRoles.OrgAdmin]), this.createToken)
+      .post(
+        '/enterorexit/tag',
+        authorizationMiddleware([UserRoles.OrgAdmin]),
+        this.enterOrExitUsingATag,
+      )
       .get('/:organizationId/locations/accessible', this.getAccessibleLocations)
     this.router.use('/admin', routes)
   }
@@ -236,16 +241,19 @@ class AdminController implements IRouteController {
   enterOrExitUsingATag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Get request inputs
-      const {tagId, locationId, legacyMode} = req.body
+      const {tagId, locationId} = req.body
 
       // Get tag appropriately
-      const tag =
-        legacyMode === true
-          ? await this.tagService.getByLegacyId(tagId)
-          : await this.tagService.getById(tagId)
+      // Fix: Ticket #1035
+      // Note: there's a bug that legacy mode is always passed through as true... so must try both
+      let tag = await this.tagService.getByLegacyId(tagId)
+      if (!tag) {
+        tag = await this.tagService.getById(tagId)
+      }
       if (!tag) {
         throw new ResourceNotFoundException(`NFC Tag not found`)
       }
+
       // Save org
       const organizationId = tag.organizationId
 

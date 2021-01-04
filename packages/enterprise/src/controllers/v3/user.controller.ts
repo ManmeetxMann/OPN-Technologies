@@ -1,13 +1,14 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
-import {authMiddleware} from '../../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
+import {UserRoles} from '../../../../common/src/types/authorization'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-authority'
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
 import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
-import {CreateUserRequest, MigrateUserRequest} from '../../types/new-user'
+import {CreateUserRequest} from '../../types/new-user'
 import {
   actionReplyInsufficientPermission,
   actionSucceed,
@@ -105,38 +106,11 @@ const create: Handler = async (req, res, next): Promise<void> => {
     // Create and activate user
     const user = await userService.create({
       ...profile,
+      organizationId,
       email: authUser.email,
       authUserId: authUser.uid,
       active: true,
     })
-
-    // Connect to org
-    await userService.connectOrganization(user.id, organizationId)
-
-    res.json(actionSucceed(userDTOResponse(user)))
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * Migrate existing user profile(s)
- */
-const migrate: Handler = async (req, res, next): Promise<void> => {
-  try {
-    const {
-      email,
-      firstName,
-      lastName,
-      registrationId,
-      legacyProfiles,
-    } = req.body as MigrateUserRequest
-
-    const user = await userService.create({email, firstName, lastName, registrationId})
-
-    await userService.migrateExistingUser(legacyProfiles, user.id)
-
-    await magicLinkService.send({email, name: firstName})
 
     res.json(actionSucceed(userDTOResponse(user)))
   } catch (error) {
@@ -149,16 +123,25 @@ const migrate: Handler = async (req, res, next): Promise<void> => {
  */
 const authenticate: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {email, organizationId, userId} = req.body as AuthenticationRequest
-    await organizationService.getByIdOrThrow(organizationId)
+    const {email, userId} = req.body as AuthenticationRequest
+    const organizationId = req.body.organizationId ?? ''
+    if (organizationId) {
+      await organizationService.getByIdOrThrow(organizationId)
+    }
 
-    const shortCode = await authShortCodeService.generateAndSaveShortCode(
+    const authShortCode = await authShortCodeService.generateAndSaveShortCode(
       email,
       organizationId,
       userId,
     )
 
-    await magicLinkService.send({email, meta: {organizationId, userId, shortCode}})
+    await magicLinkService.send({
+      email,
+      meta: {
+        shortCode: authShortCode.shortCode,
+        signInLink: authShortCode.magicLink,
+      },
+    })
 
     res.json(actionSucceed())
   } catch (error) {
@@ -171,9 +154,9 @@ const authenticate: Handler = async (req, res, next): Promise<void> => {
  */
 const validateShortCode: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {shortCode, organizationId, email} = req.body
+    const {shortCode, email} = req.body
 
-    const authShortCode = await authShortCodeService.findAuthShortCode(email, organizationId)
+    const authShortCode = await authShortCodeService.findAuthShortCode(email)
 
     if (!authShortCode) {
       throw new BadRequestException('Short code invalid or expired')
@@ -228,13 +211,24 @@ const completeRegistration: Handler = async (req, res, next): Promise<void> => {
     const {idToken, organizationId, userId} = req.body as RegistrationConfirmationRequest
     const authUser = await authService.verifyAuthToken(idToken)
 
-    if (!authUser) {
+    if (!authUser || !authUser.email) {
       throw new ForbiddenException('Cannot verify the given id-token')
     }
 
-    const user = await (userId
-      ? userService.getById(userId)
-      : userService.getByEmail(authUser.email))
+    let user = await userService.getByEmail(authUser.email)
+    if (!user) {
+      user = await userService.getById(userId)
+      if (!!user.email) {
+        console.error(
+          `UserIDUseDifferentEmail: ${userId} use email ${user.email} but requesting to login as ${authUser.email}!`,
+        )
+        throw new ForbiddenException(`UserID: ${userId} is using different Email`)
+      }
+    } else if (userId && userId !== user.id) {
+      console.log(
+        `UserIDIgnored: ${userId}: Email: ${authUser.email} is already used by UserID: ${user.id}`,
+      )
+    }
 
     await organizationService
       .getByIdOrThrow(organizationId)
@@ -257,8 +251,8 @@ const completeRegistration: Handler = async (req, res, next): Promise<void> => {
 const getConnectedOrganizations: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as User
-    const organizationIds = await userService.getAllConnectedOrganizationIds(authenticatedUser.id)
-    const organizations = await organizationService.getAllByIds(organizationIds)
+    const user = await userService.getById(authenticatedUser.id)
+    const organizations = await organizationService.getAllByIds(user.organizationIds)
 
     res.json(actionSucceed(organizations))
   } catch (error) {
@@ -272,8 +266,8 @@ const getConnectedOrganizations: Handler = async (req, res, next): Promise<void>
 const getDependentConnectedOrganizations: Handler = async (req, res, next): Promise<void> => {
   try {
     const {dependentId} = req.params
-    const organizationIds = await userService.getAllConnectedOrganizationIds(dependentId)
-    const organizations = await organizationService.getAllByIds(organizationIds)
+    const user = await userService.getById(dependentId)
+    const organizations = await organizationService.getAllByIds(user.organizationIds)
 
     res.json(actionSucceed(organizations))
   } catch (error) {
@@ -333,10 +327,7 @@ const disconnectOrganization: Handler = async (req, res, next): Promise<void> =>
       throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
     }
 
-    // Disconnect Organization and groups
-    const groups = await organizationService.getGroups(organizationId)
-    const groupIds = new Set(groups.map(({id}) => id))
-    await userService.disconnectOrganization(authenticatedUser.id, organizationId, groupIds)
+    await userService.disconnectOrganization(authenticatedUser.id, organizationId)
 
     res.json(actionSucceed())
   } catch (error) {
@@ -355,10 +346,7 @@ const disconnectDependentOrganization: Handler = async (req, res, next): Promise
       throw new ResourceNotFoundException(`Cannot find organization [${organizationId}]`)
     }
 
-    // Disconnect Organization and groups
-    const groups = await organizationService.getGroups(organizationId)
-    const groupIds = new Set(groups.map(({id}) => id))
-    await userService.disconnectOrganization(dependentId, organizationId, groupIds)
+    await userService.disconnectOrganization(dependentId, organizationId)
 
     res.json(actionSucceed())
   } catch (error) {
@@ -575,9 +563,8 @@ class UserController implements IControllerBase {
     const authentication = innerRouter().use(
       '/',
       innerRouter()
-        .get('/search', authMiddleware, search)
+        .get('/search', authorizationMiddleware([UserRoles.OrgAdmin]), search)
         .post('/', create)
-        .post('/migration', migrate)
         .post('/auth', authenticate)
         .post('/auth/short-code', validateShortCode)
         .post('/auth/confirmation', completeRegistration),
@@ -604,7 +591,7 @@ class UserController implements IControllerBase {
 
     const selfProfile = innerRouter().use(
       '/self',
-      authMiddleware,
+      authorizationMiddleware(),
       innerRouter()
         .get('/', get)
         .put('/', update)

@@ -12,9 +12,6 @@ import {ExposureResult} from '../types/status-changes-result'
 import {Config} from '../../../common/src/utils/config'
 
 import moment from 'moment'
-import 'moment-timezone'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {UpdateAttestationRequest} from '../types/update-attestation-request'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -48,6 +45,20 @@ export class AttestationService {
       return attestation.status
     }
     return 'pending'
+  }
+
+  async statusByLocationAndUserId(
+    locationId: string,
+    userOrDependantId: string,
+  ): Promise<Attestation> {
+    const [attestation] = await this.attestationRepository
+      .getQueryFindWhereArrayInMapContains('appliesTo', userOrDependantId, 'attestationTime')
+      .where('locationId', '==', locationId)
+      .orderBy('attestationTime', 'desc')
+      .limit(1)
+      .fetch()
+
+    return attestation
   }
 
   async getTracesInPeriod(
@@ -179,23 +190,13 @@ export class AttestationService {
     return attestations
   }
 
-  async getAllAttestations(): Promise<Attestation[]> {
-    return this.attestationRepository.fetchAll()
-  }
+  async lastAttestationByUserId(userOrDependantId: string): Promise<Attestation> {
+    const [attestation] = await this.attestationRepository
+      .getQueryFindWhereArrayContains('appliesTo', userOrDependantId)
+      .where('userId', '==', userOrDependantId)
+      .orderBy('attestationTime', 'desc')
+      .fetch()
 
-  update(id: string, source: UpdateAttestationRequest): Promise<Attestation> {
-    return this.getById(id).then((target) =>
-      this.attestationRepository.update({
-        ...target,
-        ...source,
-      }),
-    )
-  }
-
-  getById(id: string): Promise<Attestation> {
-    return this.attestationRepository.get(id).then((target) => {
-      if (target) return target
-      throw new ResourceNotFoundException(`Cannot find attestation [${id}]`)
-    })
+    return attestation
   }
 }

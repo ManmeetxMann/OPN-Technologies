@@ -5,13 +5,21 @@ import {
   AppointmentDBModel,
   AppoinmentBarCodeSequenceDBModel,
   AppointmentFilters,
+  AppointmentsDBModel,
+  AppointmentDbBase,
+  AppointmentStatus,
+  AppointmentAttachTransportStatus,
 } from '../models/appoinment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
-import {AppoinmentsDBRepository} from '../respository/appointment-db.repository'
+import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
+import {AppointmentsRepository} from '../respository/appointments-repository'
+import moment from 'moment'
+import {now} from '../../../common/src/utils/times'
 
 export class AppoinmentService {
   private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
-  private appoinmentDBRepository = new AppoinmentsDBRepository(new DataStore())
+  private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(new DataStore())
+  private appointmentsRepository = new AppointmentsRepository(new DataStore())
 
   async getAppoinmentByBarCode(barCodeNumber: string): Promise<AppointmentDTO> {
     const filters = {barCodeNumber: barCodeNumber}
@@ -22,6 +30,14 @@ export class AppoinmentService {
       })
   }
 
+  async getAppoinmentDBByBarCode(barCodeNumber: string): Promise<AppointmentsDBModel[]> {
+    return this.appointmentsRepository.findWhereEqual('barCode', barCodeNumber)
+  }
+
+  async getAppointmentDBById(id: string): Promise<AppointmentsDBModel> {
+    return this.appointmentsRepository.get(id)
+  }
+
   async getAppointmentById(id: number): Promise<AppointmentDTO> {
     return this.appoinmentSchedulerRepository.getAppointmentById(id)
   }
@@ -30,8 +46,13 @@ export class AppoinmentService {
     organizationId: string,
     dateOfAppointment: string,
     searchQuery = '',
+    showCancelled = false,
   ): Promise<AppointmentDTO[]> {
-    const filters: AppointmentFilters = {organizationId, showall: true}
+    const filters: AppointmentFilters = {showall: showCancelled}
+    if (organizationId) {
+      filters.organizationId = organizationId
+    }
+
     if (dateOfAppointment) {
       filters.maxDate = dateOfAppointment
       filters.minDate = dateOfAppointment
@@ -73,6 +94,10 @@ export class AppoinmentService {
     }
   }
 
+  async saveAppointmentData(appointment: AppointmentDbBase): Promise<AppointmentsDBModel> {
+    return this.appointmentsRepository.save(appointment)
+  }
+
   async getAppoinmentByDate(startDate: string, endDate: string): Promise<AppointmentDTO[]> {
     const filters = {
       minDate: startDate,
@@ -86,14 +111,49 @@ export class AppoinmentService {
   }
 
   async getNextBarCodeNumber(): Promise<string> {
-    return this.appoinmentDBRepository
+    return this.appointmentsBarCodeSequence
       .getNextBarCode()
       .then(({id, barCodeNumber}: AppoinmentBarCodeSequenceDBModel) => {
         return id.concat(barCodeNumber.toString())
       })
   }
 
-  async updateAppoinment(id: number, data: unknown): Promise<AppointmentDTO> {
-    return this.appoinmentSchedulerRepository.updateAppoinment(id, data)
+  async updateAppointment(id: number, data: unknown): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.updateAppointment(id, data)
+  }
+
+  async cancelAppointmentById(id: number): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.cancelAppointmentById(id)
+  }
+
+  async addTransportRun(
+    appointmentId: string,
+    transportRunId: string,
+  ): Promise<AppointmentAttachTransportStatus> {
+    try {
+      await this.appointmentsRepository.updateProperties(appointmentId, {
+        transportRunId: transportRunId,
+        inTransitAt: now(),
+        appointmentStatus: AppointmentStatus.inTransit,
+      })
+      return AppointmentAttachTransportStatus.Succeed
+    } catch (e) {
+      return AppointmentAttachTransportStatus.Failed
+    }
+  }
+
+  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentDTO> {
+    return this.appoinmentSchedulerRepository.addAppointmentLabel(id, data)
+  }
+
+  makeTimeEndOfTheDay(datetime: moment.Moment): string {
+    return datetime.hours(11).minutes(59).format()
+  }
+
+  async updateAppointmentDB(
+    id: string,
+    data: Partial<AppointmentsDBModel>,
+  ): Promise<AppointmentsDBModel> {
+    return this.appointmentsRepository.updateProperties(id, data)
   }
 }

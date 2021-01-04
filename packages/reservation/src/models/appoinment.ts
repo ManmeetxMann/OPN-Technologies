@@ -15,6 +15,48 @@ export type AppointmentBase = {
   certificate?: string
   organizationId?: string
   canceled?: boolean
+  dateTime: string
+}
+
+export enum AppointmentStatus {
+  pending = 'pending',
+  inTransit = 'inTransit',
+  received = 'received',
+  inProgress = 'inProgress',
+  reported = 'reported',
+}
+
+export enum Result {
+  pending = 'pending',
+  positive = 'positive',
+  negative = 'negative',
+  covidDetected = '2019-nCoVDetected',
+  invalid = 'invalid',
+  inconclusive = 'inconclusive',
+}
+
+export type AppointmentDbBase = {
+  firstName: string
+  lastName: string
+  email: string
+  phone: number
+  dateOfBirth: string
+  dateOfAppointment: string
+  acuityAppointmentId: number
+  timeOfAppointment?: string
+  barCode: string
+  packageCode?: string
+  organizationId?: string
+  appointmentStatus: AppointmentStatus
+  result: Result
+  location?: string
+  receivedAt?: Date
+  deadline: string
+  dateTime: string
+}
+
+export type AppointmentsDBModel = AppointmentDbBase & {
+  id: string
 }
 
 export type AppoinmentDataUI = {
@@ -47,6 +89,13 @@ export type AppointmentAcuityResponse = AppointmentBase & {
   location: string
   organizationId: string
   datetime: string
+  labels: LabelsAcuityResponse[]
+}
+
+export type LabelsAcuityResponse = {
+  id: number
+  name: Label
+  color: string
 }
 
 export type AppointmentSearchRequest = {
@@ -104,13 +153,29 @@ export type AppointmentUiDTO = {
   status?: string
   barCode: string
   dateTime?: string
+  dateOfBirth?: string
 }
 
 export type AppointmentFilters = {
-  organizationId: string
+  organizationId?: string
   showall: boolean
   minDate?: string
   maxDate?: string
+}
+
+export type AppointmentsState = {
+  appointmentId: string
+  state: AppointmentAttachTransportStatus
+}
+
+export enum AppointmentAttachTransportStatus {
+  Succeed = 'succeed',
+  Failed = 'failed',
+}
+
+export enum Label {
+  SameDay = 'SameDay',
+  NextDay = 'NextDay',
 }
 
 export const appointmentUiDTOResponse = (
@@ -123,4 +188,5 @@ export const appointmentUiDTOResponse = (
   barCode: appointment.barCode,
   location: (appointment as AppointmentUI).location,
   dateTime: (appointment as AppointmentUI).dateTime,
+  dateOfBirth: appointment.dateOfBirth,
 })

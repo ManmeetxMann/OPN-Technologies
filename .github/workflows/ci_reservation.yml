@@ -11,6 +11,7 @@ on:
     tags:
       - infra-dev-reservation-*
       - preprod-reservation-*
+      - preprod-all-*
 
 jobs:
   build:

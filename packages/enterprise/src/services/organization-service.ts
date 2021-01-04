@@ -464,4 +464,8 @@ export class OrganizationService {
       },
     )
   }
+
+  async isTemperatureCheckEnabled(organizationId: string): Promise<boolean> {
+    return (await this.findOneById(organizationId)).enableTemperatureCheck
+  }
 }
