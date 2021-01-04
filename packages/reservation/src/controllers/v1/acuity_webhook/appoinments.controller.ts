@@ -10,6 +10,7 @@ import {isEmpty} from 'lodash'
 import {AppointmentStatus, AppointmentUI, Result, AcuityUpdateDTO} from '../../../models/appoinment'
 import {TestResultsService} from '../../../services/test-results.service'
 import moment from 'moment'
+import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -34,7 +35,7 @@ class AppointmentWebhookController implements IControllerBase {
     try {
       const {id} = req.body as ScheduleWebhookRequest
 
-      const appointment = await this.appoinmentService.getAppointmentById(id)
+      const appointment = await this.appoinmentService.getAppointmentByAcuityId(id)
 
       if (!appointment) {
         throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
@@ -45,8 +46,8 @@ class AppointmentWebhookController implements IControllerBase {
       const utcDateTime = moment(appointment.dateTime).utc()
 
       const dateTime = utcDateTime.format()
-      const dateOfAppointment = utcDateTime.format('MMMM DD, YYYY')
-      const timeOfAppointment = utcDateTime.format('h:mma')
+      const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
+      const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
 
       if (utcDateTime.hours() > 12) {
         deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
@@ -94,13 +95,17 @@ class AppointmentWebhookController implements IControllerBase {
       }
 
       try {
-        const {id, appointmentId, ...insertingAppointment} = appointment as AppointmentUI
+        const {
+          acuityAppointmentId,
+          appointmentId,
+          ...insertingAppointment
+        } = appointment as AppointmentUI
         const {barCodeNumber, organizationId} = dataForUpdate
         await this.appoinmentService.saveAppointmentData({
           ...insertingAppointment,
           organizationId: appointment.organizationId || organizationId || null,
           barCode: appointment.barCode || barCodeNumber,
-          acuityAppointmentId: id,
+          acuityAppointmentId: acuityAppointmentId,
           appointmentStatus: AppointmentStatus.pending,
           result: Result.pending,
           dateTime,

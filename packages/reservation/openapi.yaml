@@ -83,6 +83,10 @@ components:
               type: string
             dateOfBirth:
               type: string
+            transportRunId:
+              type: string
+            deadline:
+              type: string
           required:
             - id
             - firstName
@@ -767,6 +771,7 @@ paths:
           name: dateOfAppointment
           schema:
             type: string
+          required: true
       responses:
         '200':
           description: Successfully Return

@@ -72,7 +72,7 @@ export type SendAndSaveTestResultsRequest = {
 export const testResultUiDTOResponse = (
   appointment: AppointmentDTO | AppointmentUI,
 ): TestResultsUiDTO => ({
-  id: (appointment as AppointmentUI).id,
+  id: (appointment as AppointmentUI).acuityAppointmentId,
   firstName: appointment.firstName,
   lastName: appointment.lastName,
   testType: 'PCR',

@@ -1,5 +1,4 @@
 import {NextFunction, Request, Response, Router} from 'express'
-import {flatten} from 'lodash'
 
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
@@ -7,12 +6,11 @@ import {adminAuthMiddleware} from '../../../../common/src/middlewares/admin.auth
 
 import {
   AppointmentByOrganizationRequest,
-  AppointmentDTO,
   AppointmentStatus,
-  AppointmentUI,
   appointmentUiDTOResponse,
   Label,
   AppointmentsState,
+  AppointmentsDBModel,
 } from '../../models/appoinment'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
@@ -84,22 +82,15 @@ class AdminAppointmentController implements IControllerBase {
         throw new BadRequestException('dateOfAppointment is invalid')
       }
 
-      const showCancelled = res.locals.authenticatedUser.admin?.isOpnSuperAdmin ?? false
-
-      const appointments = await this.appointmentService.getAppointmentByOrganizationIdAndSearchParams(
+      const appointments = await this.appointmentService.getAppointmentsDB({
         organizationId,
         dateOfAppointment,
         searchQuery,
-        showCancelled,
-      )
-
-      const appointmentsUniqueById = [
-        ...new Map(flatten(appointments).map((item) => [item.id, item])).values(),
-      ]
+      })
 
       res.json(
         actionSucceed(
-          appointmentsUniqueById.map((appointment: AppointmentDTO | AppointmentUI) => ({
+          appointments.map((appointment: AppointmentsDBModel) => ({
             ...appointmentUiDTOResponse(appointment),
           })),
         ),
@@ -113,7 +104,9 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {appointmentId} = req.params as {appointmentId: string}
 
-      const appointment = await this.appointmentService.getAppointmentById(Number(appointmentId))
+      const appointment = await this.appointmentService.getAppointmentByAcuityId(
+        Number(appointmentId),
+      )
 
       res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
     } catch (error) {
@@ -126,7 +119,9 @@ class AdminAppointmentController implements IControllerBase {
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId} = req.query as {organizationId: string}
 
-      const appointment = await this.appointmentService.getAppointmentById(Number(appointmentId))
+      const appointment = await this.appointmentService.getAppointmentByAcuityId(
+        Number(appointmentId),
+      )
 
       if (!appointment) {
         throw new BadRequestException(`Appointment "${appointmentId}" not found`)
@@ -186,7 +181,11 @@ class AdminAppointmentController implements IControllerBase {
             {[label]: label},
           )
 
-          return appointmentUiDTOResponse(appointment)
+          const appointmentDb = await this.appointmentService.getAppointmentByAcuityId(
+            appointment.id,
+          )
+
+          return appointmentDb ? appointmentUiDTOResponse(appointmentDb) : null
         }),
       )
 
@@ -204,13 +203,19 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {barCode} = req.params as {barCode: string}
 
-      const appointment = await this.appointmentService.getAppoinmentByBarCode(barCode)
+      const appointments = await this.appointmentService.getAppoinmentDBByBarCode(barCode)
 
-      if (!appointment) {
+      if (!appointments || !appointments.length) {
         throw new ResourceNotFoundException(`Appointment with barCode ${barCode} not found`)
       }
 
-      res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
+      if (appointments.length > 1) {
+        console.log(
+          `AdminAppointmentController: getAppointmentByBarcode returned multiple appointments barCode: ${barCode}`,
+        )
+      }
+
+      res.json(actionSucceed({...appointmentUiDTOResponse(appointments[0])}))
     } catch (error) {
       next(error)
     }

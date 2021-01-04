@@ -66,9 +66,19 @@ class AdminController implements IControllerBase {
     try {
       const {barCodeNumber} = req.body
 
-      const appointment = await this.appoinmentService.getAppoinmentByBarCode(barCodeNumber)
+      const appointment = await this.appoinmentService.getAppoinmentDBByBarCode(barCodeNumber)
 
-      res.json(actionSucceed(appointment))
+      if (appointment.length > 1) {
+        console.log(
+          `AdminController: Multiple Appointments with barcode. Barcode: ${barCodeNumber}`,
+        )
+      }
+
+      if (!appointment && !appointment.length) {
+        throw new ResourceNotFoundException(`Appointment with barCode ${barCodeNumber} not found`)
+      }
+
+      res.json(actionSucceed(appointment[0]))
     } catch (error) {
       next(error)
     }
