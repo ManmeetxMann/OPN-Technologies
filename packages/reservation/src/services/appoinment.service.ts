@@ -47,10 +47,6 @@ export class AppoinmentService {
     queryParams: AppointmentByOrganizationRequest,
   ): Promise<AppointmentDBModel[]> {
     const conditions = []
-    console.log(
-      '====================',
-      this.makeTimeEndOfTheDay(moment(queryParams.deadlineDate).utc()),
-    )
     if (queryParams.organizationId) {
       conditions.push({
         map: '/',
