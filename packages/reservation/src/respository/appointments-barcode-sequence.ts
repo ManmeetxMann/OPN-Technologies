@@ -1,4 +1,4 @@
-import {AppoinmentBarCodeSequenceDBModel} from '../models/appoinment'
+import {AppoinmentBarCodeSequenceDBModel} from '../models/appointment'
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 

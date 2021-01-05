@@ -6,7 +6,7 @@ import {PackageService} from '../services/package.service'
 import {ScheduleWebhookRequest} from '../models/webhook'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {isEmpty} from 'lodash'
-import {AcuityUpdateDTO} from '../models/appoinment'
+import {AcuityUpdateDTO} from '../models/appointment'
 
 class WebhookController implements IControllerBase {
   public path = '/webhook'

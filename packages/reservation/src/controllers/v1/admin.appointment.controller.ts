@@ -10,8 +10,8 @@ import {
   appointmentUiDTOResponse,
   Label,
   AppointmentsState,
-  AppointmentsDBModel,
-} from '../../models/appoinment'
+  AppointmentDBModel,
+} from '../../models/appointment'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
@@ -92,7 +92,7 @@ class AdminAppointmentController implements IControllerBase {
 
       res.json(
         actionSucceed(
-          appointments.map((appointment: AppointmentsDBModel) => ({
+          appointments.map((appointment: AppointmentDBModel) => ({
             ...appointmentUiDTOResponse(appointment),
           })),
         ),
@@ -178,13 +178,13 @@ class AdminAppointmentController implements IControllerBase {
 
       const result = await Promise.all(
         dataToUpdate.map(async ({appointmentId, label}) => {
-          const appointment = await this.appointmentService.addAppointmentLabel(
+          await this.appointmentService.addAppointmentLabel(
             Number(appointmentId),
             {[label]: label},
           )
 
           const appointmentDb = await this.appointmentService.getAppointmentByAcuityId(
-            appointment.id,
+            appointmentId,
           )
 
           return appointmentDb ? appointmentUiDTOResponse(appointmentDb) : null
@@ -205,19 +205,9 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {barCode} = req.params as {barCode: string}
 
-      const appointments = await this.appointmentService.getAppoinmentDBByBarCode(barCode)
+      const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
 
-      if (!appointments || !appointments.length) {
-        throw new ResourceNotFoundException(`Appointment with barCode ${barCode} not found`)
-      }
-
-      if (appointments.length > 1) {
-        console.log(
-          `AdminAppointmentController: getAppointmentByBarcode returned multiple appointments barCode: ${barCode}`,
-        )
-      }
-
-      res.json(actionSucceed({...appointmentUiDTOResponse(appointments[0])}))
+      res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
     } catch (error) {
       next(error)
     }
@@ -227,20 +217,10 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {barCode} = req.params as {barCode: string}
       const {location} = req.body as {location: string}
+      const blockDuplicate = true
+      const appointment = await this.appointmentService.getAppointmentByBarCode(barCode, blockDuplicate)
 
-      const appointment = await this.appointmentService.getAppoinmentDBByBarCode(barCode)
-
-      if (!appointment.length) {
-        throw new ResourceNotFoundException(`Appointment with barCode ${barCode} not found`)
-      }
-
-      if (appointment.length > 1) {
-        throw new DuplicateDataException(
-          `Sorry, Results are not sent. Same Barcode is used by multiple appointments`,
-        )
-      }
-
-      await this.appointmentService.updateAppointmentDB(appointment[0].id, {
+      await this.appointmentService.updateAppointmentDB(appointment.id, {
         appointmentStatus: AppointmentStatus.received,
         location,
         receivedAt: now(),

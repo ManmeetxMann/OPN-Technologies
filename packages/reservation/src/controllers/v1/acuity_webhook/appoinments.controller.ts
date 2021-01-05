@@ -5,9 +5,8 @@ import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
 import {ScheduleWebhookRequest} from '../../../models/webhook'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
-import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {isEmpty} from 'lodash'
-import {AppointmentStatus, AppointmentUI, Result, AcuityUpdateDTO} from '../../../models/appoinment'
+import {AppointmentStatus, AppointmentBase, AcuityUpdateDTO, ResultTypes} from '../../../models/appointment'
 import {TestResultsService} from '../../../services/test-results.service'
 import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
@@ -24,10 +23,10 @@ class AppointmentWebhookController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.post(this.path + '/create', this.handleScheduleWebhook)
+    this.router.post(this.path + '/create', this.handleCreateAppointment)
   }
 
-  handleScheduleWebhook = async (
+  handleCreateAppointment = async (
     req: Request,
     res: Response,
     next: NextFunction,
@@ -58,15 +57,11 @@ class AppointmentWebhookController implements IControllerBase {
       if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
       } else {
-        const appointmentWithSameBarcodes = await this.appoinmentService.getAppoinmentDBByBarCode(
+        const blockDuplicate = true
+        await this.appoinmentService.getAppointmentByBarCode(
           appointment.barCode,
+          blockDuplicate
         )
-        if (appointmentWithSameBarcodes.length > 0) {
-          console.log(
-            `WebhookController: DuplicateBarCode AppoinmentID: ${id} -  BarCode: ${appointment.barCode}`,
-          )
-          throw new DuplicateDataException(`Duplicate ${id} found, Barcode ${appointment.barCode}`)
-        }
       }
 
       if (appointment.packageCode && !appointment.organizationId) {
@@ -97,28 +92,27 @@ class AppointmentWebhookController implements IControllerBase {
       try {
         const {
           acuityAppointmentId,
-          appointmentId,
           ...insertingAppointment
-        } = appointment as AppointmentUI
+        } = appointment as AppointmentBase
         const {barCodeNumber, organizationId} = dataForUpdate
-        await this.appoinmentService.saveAppointmentData({
+        const data = {
           ...insertingAppointment,
           organizationId: appointment.organizationId || organizationId || null,
           barCode: appointment.barCode || barCodeNumber,
           acuityAppointmentId: acuityAppointmentId,
           appointmentStatus: AppointmentStatus.pending,
-          result: Result.pending,
+          result: ResultTypes.Pending,
           dateTime,
           dateOfAppointment,
           timeOfAppointment,
           deadline,
-        })
+        }
+        await this.appoinmentService.saveAppointmentData(data)
       } catch (e) {
         console.log(
-          `WebhookController: SaveToTestResults Failed AppoinmentID: ${id} barCodeNumber: ${JSON.stringify(
-            dataForUpdate,
-          )}`,
+          `WebhookController: SaveToTestResults Failed AppoinmentID: ${id}`,
         )
+        console.log(e)
       }
 
       res.json(actionSucceed(''))

@@ -2,16 +2,13 @@ import DataStore from '../../../common/src/data/datastore'
 
 import {
   AppoinmentBarCodeSequenceDBModel,
-  AppointmentAcuityResponse,
   AppointmentAttachTransportStatus,
   AppointmentByOrganizationRequest,
-  AppointmentDbBase,
   AppointmentDBModel,
-  AppointmentDTO,
-  AppointmentFilters,
-  AppointmentsDBModel,
   AppointmentStatus,
-} from '../models/appoinment'
+  AppointmentBase,
+  AppointmentModelBase,
+} from '../models/appointment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
 import {AppointmentsRepository} from '../respository/appointments-repository'
@@ -19,28 +16,37 @@ import moment from 'moment'
 import {dateFormats, now} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {flatten} from 'lodash'
+import { ResourceNotFoundException } from '../../../common/src/exceptions/resource-not-found-exception'
+import { DuplicateDataException } from '../../../common/src/exceptions/duplicate-data-exception'
 
 export class AppoinmentService {
   private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(new DataStore())
   private appointmentsRepository = new AppointmentsRepository(new DataStore())
 
-  async getAppoinmentByBarCode(barCodeNumber: string): Promise<AppointmentDTO> {
-    const filters = {barCodeNumber: barCodeNumber}
-    return this.appoinmentSchedulerRepository
-      .getAppointment(filters)
-      .then((appoinment: AppointmentDBModel) => {
-        return appoinment
-      })
-  }
+  async getAppointmentByBarCode(barCodeNumber: string, blockDuplicate?: boolean): Promise<AppointmentDBModel> {
+    const shouldBlockDuplicate = (blockDuplicate)??false
+    const appointments = await this.appointmentsRepository.findWhereEqual('barCode', barCodeNumber)
 
-  async getAppoinmentDBByBarCode(barCodeNumber: string): Promise<AppointmentsDBModel[]> {
-    return this.appointmentsRepository.findWhereEqual('barCode', barCodeNumber)
+    if (appointments.length > 1) {
+      console.log(
+        `AdminController: Multiple Appointments with barcode. Barcode: ${barCodeNumber}`,
+      )
+      if(shouldBlockDuplicate){
+        throw new DuplicateDataException(
+          `Sorry, Results are not sent. Same Barcode is used by multiple appointments`,
+        )
+      }
+    }
+    if (!appointments || appointments.length == 0) {
+      throw new ResourceNotFoundException(`Appointment with barCode ${barCodeNumber} not found`)
+    }
+    return appointments[0]
   }
 
   async getAppointmentsDB(
     queryParams: AppointmentByOrganizationRequest,
-  ): Promise<AppointmentsDBModel[]> {
+  ): Promise<AppointmentDBModel[]> {
     const conditions = []
     if (queryParams.organizationId) {
       conditions.push({
@@ -136,21 +142,21 @@ export class AppoinmentService {
       )
       return [
         ...new Map(flatten(foundAppointments).map((item) => [item.id, item])).values(),
-      ] as AppointmentsDBModel[]
+      ] as AppointmentDBModel[]
     } else {
       return this.appointmentsRepository.findWhereEqualInMap(conditions)
     }
   }
 
-  async getAppointmentByIdFromAcuity(id: number): Promise<AppointmentDTO> {
+  async getAppointmentByIdFromAcuity(id: number): Promise<AppointmentBase> {
     return this.appoinmentSchedulerRepository.getAppointmentById(id)
   }
 
-  async getAppointmentDBById(id: string): Promise<AppointmentsDBModel> {
+  async getAppointmentDBById(id: string): Promise<AppointmentDBModel> {
     return this.appointmentsRepository.get(id)
   }
 
-  async getAppointmentByAcuityId(id: number): Promise<AppointmentsDBModel> {
+  async getAppointmentByAcuityId(id: number): Promise<AppointmentDBModel> {
     const appointments = await this.appointmentsRepository.findWhereEqual('acuityAppointmentId', id)
     if (!appointments || !appointments.length) {
       return null
@@ -163,72 +169,8 @@ export class AppoinmentService {
     return appointments[0]
   }
 
-  async getAppointmentByOrganizationIdAndSearchParams(
-    organizationId: string,
-    dateOfAppointment: string,
-    searchQuery = '',
-    showCancelled = false,
-  ): Promise<AppointmentDTO[]> {
-    const filters: AppointmentFilters = {showall: showCancelled}
-    if (organizationId) {
-      filters.organizationId = organizationId
-    }
-
-    if (dateOfAppointment) {
-      filters.maxDate = dateOfAppointment
-      filters.minDate = dateOfAppointment
-    }
-    if (!searchQuery) {
-      return this.appoinmentSchedulerRepository.getManyAppointments(filters)
-    } else {
-      const searchPromises = []
-      const searchArray = searchQuery.split(' ')
-      if (searchArray.length === 1) {
-        searchPromises.push(
-          this.appoinmentSchedulerRepository.getManyAppointments({
-            firstName: searchArray[0],
-            ...filters,
-          }),
-          this.appoinmentSchedulerRepository.getManyAppointments({
-            lastName: searchArray[0],
-            ...filters,
-          }),
-        )
-      } else {
-        searchPromises.push(
-          this.appoinmentSchedulerRepository.getManyAppointments({
-            firstName: searchArray[0],
-            lastName: searchArray[1],
-            ...filters,
-          }),
-          this.appoinmentSchedulerRepository.getManyAppointments({
-            firstName: searchArray[1],
-            lastName: searchArray[0],
-            ...filters,
-          }),
-        )
-      }
-
-      return Promise.all(searchPromises).then((appointmentsArray) => {
-        return appointmentsArray.flat()
-      })
-    }
-  }
-
-  async saveAppointmentData(appointment: AppointmentDbBase): Promise<AppointmentsDBModel> {
+  async saveAppointmentData(appointment: AppointmentModelBase): Promise<AppointmentDBModel> {
     return this.appointmentsRepository.save(appointment)
-  }
-
-  async getAppoinmentByDate(startDate: string, endDate: string): Promise<AppointmentDTO[]> {
-    const filters = {
-      minDate: startDate,
-      maxDate: endDate,
-    }
-    return this.appoinmentSchedulerRepository
-      .getManyAppointments(filters)
-      .then((appoinment: AppointmentDBModel[]) => {
-        return appoinment
-      })
   }
 
   async getNextBarCodeNumber(): Promise<string> {
@@ -239,11 +181,11 @@ export class AppoinmentService {
       })
   }
 
-  async updateAppointment(id: number, data: unknown): Promise<AppointmentDTO> {
+  async updateAppointment(id: number, data: unknown): Promise<AppointmentBase> {
     return this.appoinmentSchedulerRepository.updateAppointment(id, data)
   }
 
-  async cancelAppointmentById(id: number): Promise<AppointmentDTO> {
+  async cancelAppointmentById(id: number): Promise<AppointmentBase> {
     return this.appoinmentSchedulerRepository.cancelAppointmentById(id)
   }
 
@@ -263,7 +205,7 @@ export class AppoinmentService {
     }
   }
 
-  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
+  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentBase> {
     return this.appoinmentSchedulerRepository.addAppointmentLabel(id, data)
   }
 
@@ -273,8 +215,8 @@ export class AppoinmentService {
 
   async updateAppointmentDB(
     id: string,
-    data: Partial<AppointmentsDBModel>,
-  ): Promise<AppointmentsDBModel> {
+    data: Partial<AppointmentDBModel>,
+  ): Promise<AppointmentDBModel> {
     return this.appointmentsRepository.updateProperties(id, data)
   }
 }

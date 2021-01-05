@@ -1,4 +1,4 @@
-import {AppointmentDTO, AppointmentUI, AppointmentBase} from './appoinment'
+import { AppointmentBase, ResultTypes } from "./appointment"
 
 export type TestResultsUiDTO = {
   id: number
@@ -9,13 +9,18 @@ export type TestResultsUiDTO = {
   barCode: string
 }
 
-export enum ResultTypes {
-  Positive = 'Positive',
-  Negative = 'Negative',
-  Pending = 'Pending',
-  Detected2019nCoV = '2019-nCoV Detected',
-  Invalid = 'Invalid',
-  Inconclusive = 'Inconclusive',
+type ClientDetails = {
+  firstName: string
+  lastName: string
+  email: string
+  phone: number
+  dateOfBirth: string
+  registeredNursePractitioner?: string
+  dateOfAppointment: string
+  appointmentId?: number
+  timeOfAppointment?: string
+  barCode?: string
+  dateTime: string
 }
 
 export type TestResultsBase = {
@@ -34,7 +39,7 @@ export type TestResultsBase = {
   organizationId: string
 }
 
-export type TestResultsDBModel = AppointmentBase &
+export type TestResultsDBModel = ClientDetails &
   TestResultsBase & {
     id: string
     todaysDate?: Date //Deprecated
@@ -60,7 +65,7 @@ export type TestResultForPagination = {
   id: string
 }
 
-export type TestResultsDTOForEmail = TestResultsBase & AppointmentBase
+export type TestResultsDTOForEmail = TestResultsBase & ClientDetails
 
 export type SendAndSaveTestResultsRequest = {
   results: TestResultsAgainRequest[]
@@ -70,12 +75,12 @@ export type SendAndSaveTestResultsRequest = {
 }
 
 export const testResultUiDTOResponse = (
-  appointment: AppointmentDTO | AppointmentUI,
+  appointment: AppointmentBase,
 ): TestResultsUiDTO => ({
-  id: (appointment as AppointmentUI).acuityAppointmentId,
+  id: appointment.acuityAppointmentId,
   firstName: appointment.firstName,
   lastName: appointment.lastName,
   testType: 'PCR',
   barCode: appointment.barCode,
-  dateTime: (appointment as AppointmentUI).dateTime,
+  dateTime: appointment.dateTime,
 })

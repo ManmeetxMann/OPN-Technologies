@@ -12,7 +12,7 @@ import {Config} from '../../../common/src/utils/config'
 
 import {AppoinmentService} from '../services/appoinment.service'
 
-import {AppointmentDTO, BarCodeGeneratorUI, AppoinmentDataUI} from '../models/appoinment'
+import {BarCodeGeneratorUI, AppoinmentDataUI} from '../models/appointment'
 
 import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 
@@ -49,12 +49,9 @@ class PortalController implements IControllerBase {
       if (isEmpty(barCode)) {
         throw new BadRequestException('Please provide Bar Code Number')
       }
-      const appointment: AppointmentDTO = await this.appoinmentService.getAppoinmentByBarCode(
+      const appointment = await this.appoinmentService.getAppointmentByBarCode(
         barCode,
       )
-      if (!appointment) {
-        throw new ResourceNotFoundException('Record With That Bar Code not found')
-      }
       templateData.appointment = appointment
     } catch (err) {
       templateData.invalidBarCodeNumber = true

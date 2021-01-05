@@ -1,7 +1,7 @@
 import fetch from 'node-fetch'
 import {Config} from '../../../common/src/utils/config'
 import querystring from 'querystring'
-import {AppointmentAcuityResponse} from '../models/appoinment'
+import {AppointmentAcuityResponse} from '../models/appointment'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')

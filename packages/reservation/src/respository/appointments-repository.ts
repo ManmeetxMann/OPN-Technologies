@@ -1,8 +1,8 @@
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
-import {AppointmentDbBase, AppointmentsDBModel} from '../models/appoinment'
+import {AppointmentDBModel, AppointmentModelBase} from '../models/appointment'
 
-export class AppointmentsRepository extends DataModel<AppointmentsDBModel> {
+export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
   readonly zeroSet = []
 
@@ -10,7 +10,7 @@ export class AppointmentsRepository extends DataModel<AppointmentsDBModel> {
     super(dataStore)
   }
 
-  public async save(appointments: AppointmentDbBase): Promise<AppointmentsDBModel> {
+  public async save(appointments: AppointmentModelBase): Promise<AppointmentDBModel> {
     return this.add(appointments)
   }
 }
