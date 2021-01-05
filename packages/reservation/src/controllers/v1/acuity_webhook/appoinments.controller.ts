@@ -9,7 +9,7 @@ import {isEmpty} from 'lodash'
 import {AppointmentStatus, AcuityUpdateDTO, ResultTypes} from '../../../models/appointment'
 import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
-import { DuplicateDataException } from '../../../../../common/src/exceptions/duplicate-data-exception'
+import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -83,7 +83,7 @@ class AppointmentWebhookController implements IControllerBase {
       }
 
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
-      if(appointmentFromDb){
+      if (appointmentFromDb) {
         console.log(
           `WebhookController: AlreadyAdded AcuityID: ${id} FirebaseID: ${appointmentFromDb.id}`,
         )
@@ -110,13 +110,11 @@ class AppointmentWebhookController implements IControllerBase {
           phone: appointment.phone,
           registeredNursePractitioner: appointment.registeredNursePractitioner,
           result: ResultTypes.Pending,
-          timeOfAppointment
+          timeOfAppointment,
         }
         await this.appoinmentService.saveAppointmentData(data)
       } catch (e) {
-        console.log(
-          `WebhookController: SaveToTestResults Failed AppoinmentID: ${id}`,
-        )
+        console.log(`WebhookController: SaveToTestResults Failed AppoinmentID: ${id}`)
         console.log(e)
       }
 

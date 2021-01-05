@@ -99,7 +99,7 @@ class AdminController implements IControllerBase {
       }, {})
 
       const notFoundBarcodes = []
-      const response = await Promise.all(
+      await Promise.all(
         requestData.results.map(async ({sendAgain, ...row}) => {
           if (barcodeCounts[row.barCode] === 1) {
             if (sendAgain) {
@@ -118,7 +118,7 @@ class AdminController implements IControllerBase {
                 const blockDuplicate = true
                 currentAppointment = await this.appoinmentService.getAppointmentByBarCode(
                   row.barCode,
-                  blockDuplicate
+                  blockDuplicate,
                 )
               } catch (getAppoinmentError) {
                 console.error(getAppoinmentError.message)
@@ -178,7 +178,9 @@ class AdminController implements IControllerBase {
       }
 
       if (requestData.needConfirmation) {
-        const appointment = await this.appoinmentService.getAppointmentByBarCode(requestData.barCode)
+        const appointment = await this.appoinmentService.getAppointmentByBarCode(
+          requestData.barCode,
+        )
 
         res.json(actionSucceed(appointment))
         return

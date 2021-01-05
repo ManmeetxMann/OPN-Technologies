@@ -37,7 +37,7 @@ export type AppointmentModelBase = {
   packageCode?: string
   phone: number
   receivedAt?: Date
-  registeredNursePractitioner?:string
+  registeredNursePractitioner?: string
   result: ResultTypes
   testRunId?: string[]
   timeOfAppointment: string
@@ -45,7 +45,7 @@ export type AppointmentModelBase = {
 }
 
 export type AppointmentDBModel = AppointmentModelBase & {
-    id: string
+  id: string
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -55,7 +55,6 @@ export type AppoinmentDataUI = {
   barCode: string
   appointment?: AppointmentDBModel
 }
-
 
 type AppointmentAcuityFormField = {
   fieldID: number
@@ -160,9 +159,7 @@ export const appointmentUiDTOResponse = (appointment: AppointmentDBModel): Appoi
     status: appointment.appointmentStatus,
     barCode: appointment.barCode,
     location: appointment.location,
-    dateTime: moment(appointment.dateTime)
-      .tz(timeZone)
-      .format(),
+    dateTime: moment(appointment.dateTime).tz(timeZone).format(),
     dateOfBirth: appointment.dateOfBirth,
     transportRunId: appointment.transportRunId,
     deadline: moment(appointment.deadline).tz(timeZone).format(),

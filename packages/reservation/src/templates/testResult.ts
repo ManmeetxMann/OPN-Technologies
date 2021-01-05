@@ -2,7 +2,7 @@ import path from 'path'
 
 import {TableLayouts, Content} from '../../../common/src/service/reports/pdf-types'
 import {Config} from '../../../common/src/utils/config'
-import { ResultTypes } from '../models/appointment'
+import {ResultTypes} from '../models/appointment'
 import {TestResultsDTOForEmail} from '../models/test-result'
 
 const tableLayouts: TableLayouts = {

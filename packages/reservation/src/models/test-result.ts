@@ -1,4 +1,4 @@
-import { ResultTypes } from "./appointment"
+import {ResultTypes} from './appointment'
 
 export type TestResultsUiDTO = {
   id: number
@@ -74,9 +74,7 @@ export type SendAndSaveTestResultsRequest = {
   resultDate: Date
 }
 
-export const testResultUiDTOResponse = (
-  appointment: ClientDetails,
-): TestResultsUiDTO => ({
+export const testResultUiDTOResponse = (appointment: ClientDetails): TestResultsUiDTO => ({
   id: appointment.appointmentId,
   firstName: appointment.firstName,
   lastName: appointment.lastName,

@@ -16,26 +16,25 @@ import moment from 'moment'
 import {dateFormats, now} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {flatten} from 'lodash'
-import { ResourceNotFoundException } from '../../../common/src/exceptions/resource-not-found-exception'
-import { DuplicateDataException } from '../../../common/src/exceptions/duplicate-data-exception'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 
 export class AppoinmentService {
   private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(new DataStore())
   private appointmentsRepository = new AppointmentsRepository(new DataStore())
 
-  async getAppointmentByBarCode(barCodeNumber: string, blockDuplicate?: boolean): Promise<AppointmentDBModel> {
-    const shouldBlockDuplicate = (blockDuplicate)??false
+  async getAppointmentByBarCode(
+    barCodeNumber: string,
+    blockDuplicate?: boolean,
+  ): Promise<AppointmentDBModel> {
+    const shouldBlockDuplicate = blockDuplicate ?? false
     const appointments = await this.appointmentsRepository.findWhereEqual('barCode', barCodeNumber)
 
     if (appointments.length > 1) {
-      console.log(
-        `AdminController: Multiple Appointments with barcode. Barcode: ${barCodeNumber}`,
-      )
-      if(shouldBlockDuplicate){
-        throw new DuplicateDataException(
-          `Same Barcode used by multiple appointments`,
-        )
+      console.log(`AdminController: Multiple Appointments with barcode. Barcode: ${barCodeNumber}`)
+      if (shouldBlockDuplicate) {
+        throw new DuplicateDataException(`Same Barcode used by multiple appointments`)
       }
     }
     if (!appointments || appointments.length == 0) {
@@ -156,8 +155,11 @@ export class AppoinmentService {
     return this.appointmentsRepository.get(id)
   }
 
-  async getAppointmentByAcuityId(id: number|string): Promise<AppointmentDBModel> {
-    const appointments = await this.appointmentsRepository.findWhereEqual('acuityAppointmentId', Number(id))
+  async getAppointmentByAcuityId(id: number | string): Promise<AppointmentDBModel> {
+    const appointments = await this.appointmentsRepository.findWhereEqual(
+      'acuityAppointmentId',
+      Number(id),
+    )
     if (!appointments || !appointments.length) {
       return null
     }

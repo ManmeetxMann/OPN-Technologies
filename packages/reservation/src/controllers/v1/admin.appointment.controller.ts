@@ -16,7 +16,6 @@ import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {now, isValidDate} from '../../../../common/src/utils/times'
-import {DuplicateDataException} from '../../../../common/src/exceptions/duplicate-data-exception'
 import {TransportRunsService} from '../../services/transport-runs.service'
 
 class AdminAppointmentController implements IControllerBase {
@@ -183,10 +182,7 @@ class AdminAppointmentController implements IControllerBase {
 
       const result = await Promise.all(
         dataToUpdate.map(async ({appointmentId, label}) => {
-          await this.appointmentService.addAppointmentLabel(
-            Number(appointmentId),
-            {[label]: label},
-          )
+          await this.appointmentService.addAppointmentLabel(Number(appointmentId), {[label]: label})
 
           const appointmentDb = await this.appointmentService.getAppointmentByAcuityId(
             appointmentId,
@@ -223,7 +219,10 @@ class AdminAppointmentController implements IControllerBase {
       const {barCode} = req.params as {barCode: string}
       const {location} = req.body as {location: string}
       const blockDuplicate = true
-      const appointment = await this.appointmentService.getAppointmentByBarCode(barCode, blockDuplicate)
+      const appointment = await this.appointmentService.getAppointmentByBarCode(
+        barCode,
+        blockDuplicate,
+      )
 
       await this.appointmentService.updateAppointmentDB(appointment.id, {
         appointmentStatus: AppointmentStatus.received,

@@ -5,7 +5,6 @@ import moment from 'moment-timezone'
 import {isEmpty} from 'lodash'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
@@ -49,9 +48,7 @@ class PortalController implements IControllerBase {
       if (isEmpty(barCode)) {
         throw new BadRequestException('Please provide Bar Code Number')
       }
-      const appointment = await this.appoinmentService.getAppointmentByBarCode(
-        barCode,
-      )
+      const appointment = await this.appoinmentService.getAppointmentByBarCode(barCode)
       templateData.appointment = appointment
     } catch (err) {
       templateData.invalidBarCodeNumber = true
