@@ -93,12 +93,35 @@ class OrganizationController implements IControllerBase {
         .delete('/:groupId', this.removeGroup)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
-    const publicStats = innerRouter().use(
-      // this has to be more specific than the general 'stats' section
-      '/stats/family',
-      authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
-      innerRouter().get('/', this.getFamilyStats),
-    )
+    // this has to be more specific than the general 'stats' section
+    // TODO: move these to a separate route prefix, to avoid repetition
+    const publicStats = [
+      innerRouter().use(
+        '/stats/family',
+        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        innerRouter().get('/', this.getFamilyStats),
+      ),
+      innerRouter().use(
+        '/stats/contact-trace-locations',
+        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        innerRouter().get('/', this.getUserContactTraceLocations),
+      ),
+      innerRouter().use(
+        '/stats/contact-traces',
+        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        innerRouter().get('/', this.getUserContactTraces),
+      ),
+      innerRouter().use(
+        '/stats/contact-trace-exposures',
+        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        innerRouter().get('/', this.getUserContactTraceExposures),
+      ),
+      innerRouter().use(
+        '/stats/contact-trace-attestations',
+        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        innerRouter().get('/', this.getUserContactTraceAttestations),
+      ),
+    ]
     // prettier-ignore
     const stats = innerRouter().use(
       '/stats',
@@ -106,10 +129,6 @@ class OrganizationController implements IControllerBase {
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/health', this.getStatsHealth)
-        .get('/contact-trace-locations', this.getUserContactTraceLocations)
-        .get('/contact-traces', this.getUserContactTraces)
-        .get('/contact-trace-exposures', this.getUserContactTraceExposures)
-        .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
         .get('/group-report', this.getGroupReport)
         .get('/user-report', this.getUserReport)
     )
@@ -118,7 +137,7 @@ class OrganizationController implements IControllerBase {
       Router().post('/', this.create), // TODO: must be a protected route
       Router().post('/:organizationId/scheduling', this.updateReportInfo), // TODO: must be a protected route
       Router().get('/one', this.findOneByKeyOrId),
-      Router().use('/:organizationId', locations, groups, publicStats, stats),
+      Router().use('/:organizationId', locations, groups, [...publicStats], stats),
       Router().get('/:organizationId/config', this.getOrgConfig),
     )
 
@@ -949,6 +968,13 @@ class OrganizationController implements IControllerBase {
       } = req.query as UserContactTraceReportRequest
       const to = queryTo ?? now().toISOString()
       const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
+      const authenticatedUser = res.locals.connectedUser as User
+      try {
+        this.validatePermission(authenticatedUser, organizationId, userId, parentUserId)
+      } catch {
+        replyInsufficientPermission(res)
+        return
+      }
 
       let isParentUser = true
       if (parentUserId) {
