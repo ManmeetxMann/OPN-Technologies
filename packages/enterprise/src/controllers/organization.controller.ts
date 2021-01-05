@@ -93,6 +93,12 @@ class OrganizationController implements IControllerBase {
         .delete('/:groupId', this.removeGroup)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
+    const publicStats = innerRouter().use(
+      // this has to be more specific than the general 'stats' section
+      '/stats/family',
+      authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+      innerRouter().get('/', this.getFamilyStats),
+    )
     // prettier-ignore
     const stats = innerRouter().use(
       '/stats',
@@ -107,17 +113,12 @@ class OrganizationController implements IControllerBase {
         .get('/group-report', this.getGroupReport)
         .get('/user-report', this.getUserReport)
     )
-    const publicStats = innerRouter().use(
-      '/stats',
-      authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
-      innerRouter().get('/family', this.getFamilyStats),
-    )
     const organizations = Router().use(
       '/organizations',
       Router().post('/', this.create), // TODO: must be a protected route
       Router().post('/:organizationId/scheduling', this.updateReportInfo), // TODO: must be a protected route
       Router().get('/one', this.findOneByKeyOrId),
-      Router().use('/:organizationId', locations, groups, stats, publicStats),
+      Router().use('/:organizationId', locations, groups, publicStats, stats),
       Router().get('/:organizationId/config', this.getOrgConfig),
     )
 
