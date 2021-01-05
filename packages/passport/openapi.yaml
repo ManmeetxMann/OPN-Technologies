@@ -193,6 +193,8 @@ paths:
                   additionalProperties: true
                 userId:
                   type: string
+                questionnaireId:
+                  type: string
                 dependantIds:
                   type: array
                   items:
@@ -253,7 +255,7 @@ paths:
               properties:
                 organizationId:
                   type: string
-                temperature: 
+                temperature:
                   type: number
                 userId:
                   type: string

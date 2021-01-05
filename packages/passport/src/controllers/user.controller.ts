@@ -169,6 +169,7 @@ class UserController implements IControllerBase {
         userId,
         appliesTo,
         status: passportStatus,
+        questionnaireId,
       } as Attestation)
 
       const passport = await this.passportService.create(

@@ -46,4 +46,8 @@ export class QuestionnaireService {
 
     return answerLogic
   }
+
+  async getAllQuestionnaires(): Promise<Questionnaire[]> {
+    return this.questionnaireRepository.fetchAll()
+  }
 }
