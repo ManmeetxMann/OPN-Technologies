@@ -1018,3 +1018,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
+
+  /reservation/admin/api/v1/appointments/add-test-run:
+    put:
+      description: Add Test Run to Appointments
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                appointmentIds:
+                  type: array
+                  items:
+                    type: string                    
+                testRunId:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - appointmentIds
+                - testRunId
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: string

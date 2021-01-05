@@ -1,3 +1,5 @@
+import {firestore} from 'firebase-admin'
+
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 import {AppointmentDBModel, AppointmentModelBase} from '../models/appointment'
@@ -12,5 +14,17 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
 
   public async save(appointments: AppointmentModelBase): Promise<AppointmentDBModel> {
     return this.add(appointments)
+  }
+
+  public updateWithUnion(
+    id: string,
+    data: Partial<AppointmentsDBModel>,
+  ): Promise<AppointmentsDBModel> {
+    if (data.testRunId?.length) {
+      // @ts-ignore
+      data.testRunId = firestore.FieldValue.arrayUnion(...data.testRunId) as string[]
+    }
+
+    return this.updateProperties(id, data)
   }
 }

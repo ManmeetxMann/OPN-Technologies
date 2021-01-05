@@ -23,23 +23,25 @@ export type AppointmentModelBase = {
   acuityAppointmentId: number
   appointmentStatus: AppointmentStatus
   barCode: string
+  canceled: boolean
+  dateOfAppointment: string
   dateOfBirth: string
   dateTime: string
-  dateOfAppointment: string
   deadline: string
   email: string
   firstName: string
+  inProgressAt?: Date
   lastName: string
   location?: string
   organizationId?: string
-  phone: number
   packageCode?: string
-  result: ResultTypes
+  phone: number
   receivedAt?: Date
   registeredNursePractitioner?:string
+  result: ResultTypes
+  testRunId?: string[]
   timeOfAppointment: string
   transportRunId?: string
-  canceled: boolean
 }
 
 export type AppointmentDBModel = AppointmentModelBase & {
