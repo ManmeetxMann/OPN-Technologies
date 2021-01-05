@@ -137,7 +137,7 @@ class OrganizationController implements IControllerBase {
       Router().post('/', this.create), // TODO: must be a protected route
       Router().post('/:organizationId/scheduling', this.updateReportInfo), // TODO: must be a protected route
       Router().get('/one', this.findOneByKeyOrId),
-      Router().use('/:organizationId', locations, groups, [...publicStats], stats),
+      Router().use('/:organizationId', locations, groups, ...publicStats, stats),
       Router().get('/:organizationId/config', this.getOrgConfig),
     )
 
