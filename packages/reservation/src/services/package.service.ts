@@ -61,7 +61,7 @@ export class PackageService {
     const packagesOrganization = new Map()
     const result = new Map()
 
-    if (all) {
+    if (!all) {
       const packageCodes: string[] = packagesAcuity.map(({certificate}) => certificate)
       const packages = await this.packageRepository.findWhereIn('packageCode', packageCodes)
       const organizationIds = packages.map(({organizationId}) => organizationId)
