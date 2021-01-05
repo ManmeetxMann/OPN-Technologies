@@ -10,6 +10,7 @@ import {AppointmentStatus, AppointmentBase, AcuityUpdateDTO, ResultTypes} from '
 import {TestResultsService} from '../../../services/test-results.service'
 import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
+import { DuplicateDataException } from 'packages/common/src/exceptions/duplicate-data-exception'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -40,7 +41,6 @@ class AppointmentWebhookController implements IControllerBase {
         throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
       }
 
-      const dataForUpdate: AcuityUpdateDTO = {}
       let deadline: string
       const utcDateTime = moment(appointment.dateTime).utc()
 
@@ -54,14 +54,23 @@ class AppointmentWebhookController implements IControllerBase {
         deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime)
       }
 
+      const dataForUpdate: AcuityUpdateDTO = {}
       if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
       } else {
-        const blockDuplicate = true
-        await this.appoinmentService.getAppointmentByBarCode(
-          appointment.barCode,
-          blockDuplicate
-        )
+        try{
+          const blockDuplicate = true
+          await this.appoinmentService.getAppointmentByBarCode(
+            appointment.barCode,
+            blockDuplicate
+          )
+        }catch(getAppoinmentError){
+          //It is Ok if Resource Not Found
+          if (!(getAppoinmentError instanceof ResourceNotFoundException)) {
+            throw getAppoinmentError
+          }
+        }
+        
       }
 
       if (appointment.packageCode && !appointment.organizationId) {
