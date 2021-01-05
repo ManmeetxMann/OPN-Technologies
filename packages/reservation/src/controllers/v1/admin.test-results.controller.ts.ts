@@ -8,8 +8,8 @@ import {TestResultsService} from '../../services/test-results.service'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {
   AppointmentByOrganizationRequest,
-  AppointmentBase,
   ResultTypes,
+  AppointmentDBModel,
 } from '../../models/appointment'
 import {testResultUiDTOResponse} from '../../models/test-result'
 
@@ -46,14 +46,14 @@ class AdminController implements IControllerBase {
       ]
 
       const responseAppointments = await Promise.all(
-        appointmentsUniqueById.map(async (appointment: AppointmentBase) => {
+        appointmentsUniqueById.map(async (appointment: AppointmentDBModel) => {
           const result = await this.testResultsService
             .getResults(appointment.barCode)
             .then(({result}) => result)
             .catch(() => ResultTypes.Pending)
 
           return {
-            ...testResultUiDTOResponse(appointment),
+            ...testResultUiDTOResponse({...appointment, appointmentId:appointment.acuityAppointmentId}),
             result,
           }
         }),

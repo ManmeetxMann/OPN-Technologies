@@ -6,7 +6,6 @@ import {
   AppointmentByOrganizationRequest,
   AppointmentDBModel,
   AppointmentStatus,
-  AppointmentBase,
   AppointmentModelBase,
   AppointmentAcuityResponse,
 } from '../models/appointment'

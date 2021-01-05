@@ -1,4 +1,4 @@
-import { AppointmentBase, ResultTypes } from "./appointment"
+import { ResultTypes } from "./appointment"
 
 export type TestResultsUiDTO = {
   id: number
@@ -75,9 +75,9 @@ export type SendAndSaveTestResultsRequest = {
 }
 
 export const testResultUiDTOResponse = (
-  appointment: AppointmentBase,
+  appointment: ClientDetails,
 ): TestResultsUiDTO => ({
-  id: appointment.acuityAppointmentId,
+  id: appointment.appointmentId,
   firstName: appointment.firstName,
   lastName: appointment.lastName,
   testType: 'PCR',

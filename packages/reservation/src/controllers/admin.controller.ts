@@ -10,7 +10,7 @@ import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 
 import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
-import {AppointmentBase, AppointmentDBModel, CheckAppointmentRequest, ResultTypes} from '../models/appointment'
+import {AppointmentDBModel, CheckAppointmentRequest, ResultTypes} from '../models/appointment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -198,7 +198,7 @@ class AdminController implements IControllerBase {
           this.testResultsService.sendTestResults({...requestData, ...appointment}, resultDate)
           return appointment
         })
-        .then((appointment: AppointmentBase) => {
+        .then((appointment: AppointmentDBModel) => {
           this.testResultsService.saveResults({
             ...requestData,
             ...appointment,

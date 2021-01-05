@@ -2,25 +2,6 @@ import {PageableRequestFilter} from '../../../common/src/types/request'
 import moment from 'moment-timezone'
 import {Config} from '../../../common/src/utils/config'
 
-export type AppointmentBase = {
-  acuityAppointmentId: number
-  barCode?: string
-  dateOfAppointment: string
-  dateOfBirth: string
-  dateTime: string
-  deadline?: string
-  email: string
-  firstName: string
-  lastName: string
-  location?: string
-  organizationId?: string
-  packageCode?: string
-  phone: number
-  registeredNursePractitioner?: string
-  timeOfAppointment?: string
-  transportRunId?: string
-}
-
 export enum AppointmentStatus {
   pending = 'pending',
   inTransit = 'inTransit',
@@ -40,12 +21,12 @@ export enum ResultTypes {
 
 export type AppointmentModelBase = {
   acuityAppointmentId: number
-  appointmentStatus?: AppointmentStatus
+  appointmentStatus: AppointmentStatus
   barCode: string
   dateOfBirth: string
   dateTime: string
   dateOfAppointment: string
-  deadline?: string
+  deadline: string
   email: string
   firstName: string
   lastName: string
@@ -53,7 +34,7 @@ export type AppointmentModelBase = {
   organizationId?: string
   phone: number
   packageCode?: string
-  result?: ResultTypes
+  result: ResultTypes
   receivedAt?: Date
   registeredNursePractitioner?:string
   timeOfAppointment: string
@@ -65,12 +46,14 @@ export type AppointmentDBModel = AppointmentModelBase & {
     id: string
 }
 
+//Legacy: Should be removed once Appointment Check is move dto Dashboard
 export type AppoinmentDataUI = {
   findAppoinmentTab: string
   invalidBarCodeNumber?: boolean
   barCode: string
-  appointment?: AppointmentBase
+  appointment?: AppointmentDBModel
 }
+
 
 type AppointmentAcuityFormField = {
   fieldID: number
@@ -107,20 +90,6 @@ export type LabelsAcuityResponse = {
   name: Label
   color: string
 }
-
-export type AppointmentSearchRequest = {
-  barCodeNumber?: string
-  organizationId?: string
-  firstName?: string
-  lastName?: string
-}
-
-export type AppointmentSearchByDateRequest = {
-  maxDate: string
-  minDate: string
-}
-
-export type AppointmentRequest = AppointmentSearchRequest | AppointmentSearchByDateRequest
 
 export type AppoinmentBarCodeSequenceDBModel = {
   id: string
@@ -163,13 +132,6 @@ export type AppointmentUiDTO = {
   location?: string
   transportRunId?: string
   deadline?: string
-}
-
-export type AppointmentFilters = {
-  organizationId?: string
-  showall: boolean
-  minDate?: string
-  maxDate?: string
 }
 
 export type AppointmentsState = {
