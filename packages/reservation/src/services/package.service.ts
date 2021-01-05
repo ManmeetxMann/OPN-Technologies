@@ -60,37 +60,43 @@ export class PackageService {
     const packagesAcuity = await this.appoinmentSchedulerRepository.getPackagesList()
     const result = new Map()
 
-    await Promise.all(packagesAcuity.map(async packageCode => {
-      const packageMap = result.get(packageCode.certificate)
+    await Promise.all(
+      packagesAcuity.map(async (packageCode) => {
+        const packageMap = result.get(packageCode.certificate)
 
-      if (!packageMap) {
-        const packageData = {
-          packageCode: packageCode.certificate,
-          name: packageCode.name,
-          remainingCounts: null,
-          organization: '',
-        }
-
-        if (!all) {
-          const [packages] = await this.packageRepository.findWhereEqual('packageCode', packageCode.certificate)
-          if (packages) {
-            const organizations = await this.organizationService.findOneById(packages.organizationId)
-            packageData.organization = organizations?.name
+        if (!packageMap) {
+          const packageData = {
+            packageCode: packageCode.certificate,
+            name: packageCode.name,
+            remainingCounts: null,
+            organization: '',
           }
+
+          if (!all) {
+            const [packages] = await this.packageRepository.findWhereEqual(
+              'packageCode',
+              packageCode.certificate,
+            )
+            if (packages) {
+              const organizations = await this.organizationService.findOneById(
+                packages.organizationId,
+              )
+              packageData.organization = organizations?.name
+            }
+          }
+
+          return result.set(packageCode.certificate, {
+            ...packageData,
+            remainingCounts: 1,
+          })
         }
 
-        return result.set(packageCode.certificate, {
-          ...packageData,
-          remainingCounts: 1,
+        result.set(packageCode.certificate, {
+          ...packageMap,
+          remainingCounts: ++packageMap.remainingCounts,
         })
-      }
-
-      result.set(packageCode.certificate, {
-        ...packageMap,
-        remainingCounts: ++packageMap.remainingCounts,
-      })
-    }))
-
+      }),
+    )
 
     // if (!all) {
     //   const packageCodes: string[] = packagesAcuity.map(({certificate}) => certificate)
