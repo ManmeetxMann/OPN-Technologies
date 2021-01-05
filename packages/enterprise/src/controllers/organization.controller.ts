@@ -104,9 +104,13 @@ class OrganizationController implements IControllerBase {
         .get('/contact-traces', this.getUserContactTraces)
         .get('/contact-trace-exposures', this.getUserContactTraceExposures)
         .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
-        .get('/family', this.getFamilyStats)
         .get('/group-report', this.getGroupReport)
         .get('/user-report', this.getUserReport)
+    )
+    const publicStats = innerRouter().use(
+      '/stats',
+      authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+      innerRouter().get('/family', this.getFamilyStats),
     )
     const organizations = Router().use(
       '/organizations',
@@ -114,6 +118,7 @@ class OrganizationController implements IControllerBase {
       Router().post('/:organizationId/scheduling', this.updateReportInfo), // TODO: must be a protected route
       Router().get('/one', this.findOneByKeyOrId),
       Router().use('/:organizationId', locations, groups, stats),
+      Router().use('/:organizationId', locations, groups, stats, publicStats),
       Router().get('/:organizationId/config', this.getOrgConfig),
     )
 
@@ -1195,6 +1200,21 @@ class OrganizationController implements IControllerBase {
     try {
       const {organizationId} = req.params
       const {userId, parentUserId} = req.query as FamilyStatusReportRequest
+
+      const authenticatedUser = res.locals.connectedUser as User
+      if (authenticatedUser.admin) {
+        // if they are an admin, it must for for this organization
+        if ((authenticatedUser.admin as AdminProfile).adminForOrganizationId !== organizationId) {
+          replyInsufficientPermission(res)
+          return
+        }
+      } else {
+        // if they are a regular user, they must be asking about themself or their dependant
+        if ((parentUserId || userId) !== authenticatedUser.id) {
+          replyInsufficientPermission(res)
+          return
+        }
+      }
 
       const isParentUser = !parentUserId
 
