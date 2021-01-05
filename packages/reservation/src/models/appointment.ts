@@ -113,6 +113,7 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   searchQuery?: string
   dateOfAppointment?: string
   transportRunId?: string
+  testRunId?: string
 }
 
 //Update to Acuity Service

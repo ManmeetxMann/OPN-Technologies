@@ -71,6 +71,14 @@ export class AppoinmentService {
         value: queryParams.transportRunId,
       })
     }
+    if (queryParams.testRunId) {
+      conditions.push({
+        map: '/',
+        key: 'testRunId',
+        operator: DataModelFieldMapOperatorType.ArrayContains,
+        value: queryParams.testRunId,
+      })
+    }
     if (queryParams.searchQuery) {
       const fullName = queryParams.searchQuery.split(' ')
       const searchPromises = []

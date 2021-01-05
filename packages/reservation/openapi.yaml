@@ -772,6 +772,14 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: testRunId
+          schema:
+            type: string
+        - in: query
+          name: transportRunId
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully Return
