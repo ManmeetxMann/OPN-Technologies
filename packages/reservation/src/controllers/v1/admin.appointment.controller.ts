@@ -34,7 +34,7 @@ class AdminAppointmentController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.get(
       this.path + '/api/v1/appointments',
-      // adminAuthMiddleware,
+      adminAuthMiddleware,
       this.getListAppointments,
     )
     innerRouter.get(
