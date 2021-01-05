@@ -20,6 +20,8 @@ export type AppointmentBase = {
   dateTime: string
   transportRunId?: string
   deadline?: string
+  testRunId?: string[]
+  inProgressAt?: Date
 }
 
 export enum AppointmentStatus {
@@ -57,6 +59,8 @@ export type AppointmentDbBase = {
   receivedAt?: Date
   deadline: string
   dateTime: string
+  testRunId?: string[]
+  inProgressAt?: Date
 }
 
 export type AppointmentsDBModel = AppointmentDbBase & {

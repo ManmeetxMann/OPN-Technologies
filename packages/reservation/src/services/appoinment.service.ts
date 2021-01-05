@@ -275,6 +275,6 @@ export class AppoinmentService {
     id: string,
     data: Partial<AppointmentsDBModel>,
   ): Promise<AppointmentsDBModel> {
-    return this.appointmentsRepository.updateProperties(id, data)
+    return this.appointmentsRepository.updateWithUnion(id, data)
   }
 }
