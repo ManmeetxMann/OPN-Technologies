@@ -3,24 +3,22 @@ import moment from 'moment-timezone'
 import {Config} from '../../../common/src/utils/config'
 
 export type AppointmentBase = {
+  acuityAppointmentId: number
+  barCode?: string
+  dateOfAppointment: string
+  dateOfBirth: string
+  dateTime: string
+  deadline?: string
+  email: string
   firstName: string
   lastName: string
-  email: string
-  phone: number
-  dateOfBirth: string
-  registeredNursePractitioner?: string
-  dateOfAppointment: string
-  timeOfAppointment?: string
-  barCode?: string
-  packageCode?: string
-  certificate?: string
-  organizationId?: string
-  canceled?: boolean
-  dateTime: string
-  transportRunId?: string
-  deadline?: string
   location?: string
-  acuityAppointmentId: number
+  organizationId?: string
+  packageCode?: string
+  phone: number
+  registeredNursePractitioner?: string
+  timeOfAppointment?: string
+  transportRunId?: string
 }
 
 export enum AppointmentStatus {
@@ -41,14 +39,13 @@ export enum ResultTypes {
 }
 
 export type AppointmentModelBase = {
-  id?: string
   acuityAppointmentId: number
-  appointmentStatus: AppointmentStatus
+  appointmentStatus?: AppointmentStatus
   barCode: string
   dateOfBirth: string
   dateTime: string
   dateOfAppointment: string
-  deadline: string
+  deadline?: string
   email: string
   firstName: string
   lastName: string
@@ -56,11 +53,12 @@ export type AppointmentModelBase = {
   organizationId?: string
   phone: number
   packageCode?: string
-  result: ResultTypes
+  result?: ResultTypes
   receivedAt?: Date
   registeredNursePractitioner?:string
   timeOfAppointment: string
   transportRunId?: string
+  canceled: boolean
 }
 
 export type AppointmentDBModel = AppointmentModelBase & {

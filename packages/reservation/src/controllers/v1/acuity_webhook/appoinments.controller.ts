@@ -6,18 +6,15 @@ import {PackageService} from '../../../services/package.service'
 import {ScheduleWebhookRequest} from '../../../models/webhook'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isEmpty} from 'lodash'
-import {AppointmentStatus, AppointmentBase, AcuityUpdateDTO, ResultTypes} from '../../../models/appointment'
-import {TestResultsService} from '../../../services/test-results.service'
+import {AppointmentStatus, AcuityUpdateDTO, ResultTypes, AppointmentModelBase} from '../../../models/appointment'
 import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
-import { DuplicateDataException } from 'packages/common/src/exceptions/duplicate-data-exception'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
   public router = Router()
   private appoinmentService = new AppoinmentService()
   private packageService = new PackageService()
-  private testResultsService = new TestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -42,7 +39,7 @@ class AppointmentWebhookController implements IControllerBase {
       }
 
       let deadline: string
-      const utcDateTime = moment(appointment.dateTime).utc()
+      const utcDateTime = moment(appointment.datetime).utc()
 
       const dateTime = utcDateTime.format()
       const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
@@ -73,14 +70,14 @@ class AppointmentWebhookController implements IControllerBase {
         
       }
 
-      if (appointment.packageCode && !appointment.organizationId) {
-        const packageResult = await this.packageService.getByPackageCode(appointment.packageCode)
+      if (appointment.certificate && !appointment.organizationId) {
+        const packageResult = await this.packageService.getByPackageCode(appointment.certificate)
 
         if (packageResult) {
           dataForUpdate['organizationId'] = packageResult.organizationId
         } else {
           console.log(
-            `WebhookController: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.packageCode}`,
+            `WebhookController: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`,
           )
         }
       }
@@ -99,22 +96,27 @@ class AppointmentWebhookController implements IControllerBase {
       }
 
       try {
-        const {
-          acuityAppointmentId,
-          ...insertingAppointment
-        } = appointment as AppointmentBase
+        
         const {barCodeNumber, organizationId} = dataForUpdate
         const data = {
-          ...insertingAppointment,
-          organizationId: appointment.organizationId || organizationId || null,
-          barCode: appointment.barCode || barCodeNumber,
-          acuityAppointmentId: acuityAppointmentId,
+          acuityAppointmentId: appointment.id,
           appointmentStatus: AppointmentStatus.pending,
-          result: ResultTypes.Pending,
-          dateTime,
+          barCode: appointment.barCode || barCodeNumber,
+          canceled: appointment.canceled,
           dateOfAppointment,
-          timeOfAppointment,
+          dateOfBirth: appointment.dateOfBirth,
+          dateTime,
           deadline,
+          email: appointment.email,
+          firstName: appointment.firstName,
+          lastName: appointment.lastName,
+          location: appointment.location,
+          organizationId: appointment.organizationId || organizationId || null,
+          packageCode: appointment.certificate,
+          phone: appointment.phone,
+          registeredNursePractitioner: appointment.registeredNursePractitioner,
+          result: ResultTypes.Pending,
+          timeOfAppointment
         }
         await this.appoinmentService.saveAppointmentData(data)
       } catch (e) {

@@ -33,7 +33,7 @@ abstract class AcuityScheduling {
     NextDay: Config.get('ACUITY_FIELD_NEXT_DAY'),
   }
 
-  protected async cancelAppointment(id: number): Promise<AppointmentAcuityResponse> {
+  protected async cancelAppointmentOnAcuity(id: number): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = APIURL + `/api/v1/appointments/${id}/cancel`
@@ -54,7 +54,7 @@ abstract class AcuityScheduling {
     return this.customFieldsToAppoinment(result)
   }
 
-  protected async updateAppointmentOnAcuity(
+  protected async updateAppointmentOnAcuityService(
     id: number,
     fields: unknown,
   ): Promise<AppointmentAcuityResponse> {
@@ -124,7 +124,7 @@ abstract class AcuityScheduling {
     })
   }
 
-  protected async getAppointmentsById(id: number): Promise<AppointmentAcuityResponse> {
+  protected async getAppointmentByIdFromAcuityService(id: number): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = APIURL + `/api/v1/appointments/${id}`

@@ -10,7 +10,6 @@ import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 
 import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
-import {PackageService} from '../services/package.service'
 import {AppointmentBase, AppointmentDBModel, CheckAppointmentRequest, ResultTypes} from '../models/appointment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -18,7 +17,6 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 
 import CSVValidator from '../validations/csv.validations'
-import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 import {
   SendAndSaveTestResultsRequest,
   TestResultsConfirmationRequest,
@@ -30,7 +28,6 @@ class AdminController implements IControllerBase {
   public router = Router()
   private appoinmentService = new AppoinmentService()
   private testResultsService = new TestResultsService()
-  private packageService = new PackageService()
 
   constructor() {
     this.initRoutes()
@@ -102,7 +99,7 @@ class AdminController implements IControllerBase {
       }, {})
 
       const notFoundBarcodes = []
-      await Promise.all(
+      const response = await Promise.all(
         requestData.results.map(async ({sendAgain, ...row}) => {
           if (barcodeCounts[row.barCode] === 1) {
             if (sendAgain) {
@@ -124,9 +121,7 @@ class AdminController implements IControllerBase {
                   blockDuplicate
                 )
               } catch (getAppoinmentError) {
-                if (!(getAppoinmentError instanceof DuplicateDataException)) {
-                  throw getAppoinmentError
-                }
+                console.error(getAppoinmentError.message)
               }
               if (!currentAppointment) {
                 notFoundBarcodes.push(row)

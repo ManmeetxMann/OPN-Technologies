@@ -8,6 +8,7 @@ import {
   AppointmentStatus,
   AppointmentBase,
   AppointmentModelBase,
+  AppointmentAcuityResponse,
 } from '../models/appointment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -148,8 +149,8 @@ export class AppoinmentService {
     }
   }
 
-  async getAppointmentByIdFromAcuity(id: number): Promise<AppointmentBase> {
-    return this.appoinmentSchedulerRepository.getAppointmentById(id)
+  async getAppointmentByIdFromAcuity(id: number): Promise<AppointmentAcuityResponse> {
+    return this.appoinmentSchedulerRepository.getAppointmentByIdFromAcuity(id)
   }
 
   async getAppointmentDBById(id: string): Promise<AppointmentDBModel> {
@@ -181,12 +182,12 @@ export class AppoinmentService {
       })
   }
 
-  async updateAppointment(id: number, data: unknown): Promise<AppointmentBase> {
-    return this.appoinmentSchedulerRepository.updateAppointment(id, data)
+  async updateAppointment(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
+    return this.appoinmentSchedulerRepository.updateAppointmentOnAcuity(id, data)
   }
 
-  async cancelAppointmentById(id: number): Promise<AppointmentBase> {
-    return this.appoinmentSchedulerRepository.cancelAppointmentById(id)
+  async cancelAppointmentById(id: number): Promise<AppointmentAcuityResponse> {
+    return this.appoinmentSchedulerRepository.cancelAppointmentByIdOnAcuity(id)
   }
 
   async addTransportRun(
@@ -205,8 +206,8 @@ export class AppoinmentService {
     }
   }
 
-  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentBase> {
-    return this.appoinmentSchedulerRepository.addAppointmentLabel(id, data)
+  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
+    return this.appoinmentSchedulerRepository.addAppointmentLabelOnAcuity(id, data)
   }
 
   makeTimeEndOfTheDay(datetime: moment.Moment): string {
