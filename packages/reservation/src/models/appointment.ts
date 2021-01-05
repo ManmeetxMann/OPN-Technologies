@@ -2,28 +2,6 @@ import {PageableRequestFilter} from '../../../common/src/types/request'
 import moment from 'moment-timezone'
 import {Config} from '../../../common/src/utils/config'
 
-export type AppointmentBase = {
-  firstName: string
-  lastName: string
-  email: string
-  phone: number
-  dateOfBirth: string
-  registeredNursePractitioner?: string
-  dateOfAppointment: string
-  appointmentId?: number
-  timeOfAppointment?: string
-  barCode?: string
-  packageCode: string
-  certificate?: string
-  organizationId?: string
-  canceled?: boolean
-  dateTime: string
-  transportRunId?: string
-  deadline?: string
-  testRunId?: string[]
-  inProgressAt?: Date
-}
-
 export enum AppointmentStatus {
   pending = 'pending',
   inTransit = 'inTransit',
@@ -32,52 +10,51 @@ export enum AppointmentStatus {
   reported = 'reported',
 }
 
-export enum Result {
-  pending = 'pending',
-  positive = 'positive',
-  negative = 'negative',
-  covidDetected = '2019-nCoVDetected',
-  invalid = 'invalid',
-  inconclusive = 'inconclusive',
+export enum ResultTypes {
+  Positive = 'Positive',
+  Negative = 'Negative',
+  Pending = 'Pending',
+  Detected2019nCoV = '2019-nCoV Detected',
+  Invalid = 'Invalid',
+  Inconclusive = 'Inconclusive',
 }
 
-export type AppointmentDbBase = {
-  firstName: string
-  lastName: string
-  email: string
-  phone: number
-  dateOfBirth: string
-  dateOfAppointment: string
+export type AppointmentModelBase = {
   acuityAppointmentId: number
-  timeOfAppointment?: string
-  barCode: string
-  packageCode?: string
-  organizationId?: string
   appointmentStatus: AppointmentStatus
-  result: Result
-  location?: string
-  receivedAt?: Date
-  deadline: string
+  barCode: string
+  canceled: boolean
+  dateOfAppointment: string
+  dateOfBirth: string
   dateTime: string
-  testRunId?: string[]
+  deadline: string
+  email: string
+  firstName: string
   inProgressAt?: Date
-}
-
-export type AppointmentsDBModel = AppointmentDbBase & {
-  id: string
+  lastName: string
+  location?: string
+  organizationId?: string
+  packageCode?: string
+  phone: number
+  receivedAt?: Date
+  registeredNursePractitioner?: string
+  result: ResultTypes
+  testRunId?: string[]
+  timeOfAppointment: string
   transportRunId?: string
 }
 
+export type AppointmentDBModel = AppointmentModelBase & {
+  id: string
+}
+
+//Legacy: Should be removed once Appointment Check is move dto Dashboard
 export type AppoinmentDataUI = {
   findAppoinmentTab: string
   invalidBarCodeNumber?: boolean
   barCode: string
-  appointment?: AppointmentDTO
+  appointment?: AppointmentDBModel
 }
-
-export type AppointmentDTO = AppointmentBase
-
-export type AppointmentDBModel = AppointmentBase
 
 type AppointmentAcuityFormField = {
   fieldID: number
@@ -89,7 +66,7 @@ type AppointmentAcuityForm = {
 }
 
 //Response From Acuity
-export type AppointmentAcuityResponse = AppointmentBase & {
+export type AppointmentAcuityResponse = {
   id: number
   date: string
   time: string
@@ -99,6 +76,14 @@ export type AppointmentAcuityResponse = AppointmentBase & {
   organizationId: string
   datetime: string
   labels: LabelsAcuityResponse[]
+  firstName: string
+  lastName: string
+  email: string
+  phone: number
+  dateOfBirth: string
+  registeredNursePractitioner: string
+  barCode: string
+  canceled: boolean
 }
 
 export type LabelsAcuityResponse = {
@@ -106,20 +91,6 @@ export type LabelsAcuityResponse = {
   name: Label
   color: string
 }
-
-export type AppointmentSearchRequest = {
-  barCodeNumber?: string
-  organizationId?: string
-  firstName?: string
-  lastName?: string
-}
-
-export type AppointmentSearchByDateRequest = {
-  maxDate: string
-  minDate: string
-}
-
-export type AppointmentRequest = AppointmentSearchRequest | AppointmentSearchByDateRequest
 
 export type AppoinmentBarCodeSequenceDBModel = {
   id: string
@@ -144,38 +115,24 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   transportRunId?: string
 }
 
+//Update to Acuity Service
 export type AcuityUpdateDTO = {
   barCodeNumber?: string
   organizationId?: string
 }
 
-export type AppointmentUI = AppointmentBase & {
-  id?: string | number
-  location?: string
-  dateTime?: string
-  transportRunId?: string
-  deadline?: string
-  acuityAppointmentId?: number
-}
-
+//DTO for API Responses
 export type AppointmentUiDTO = {
-  id: number | string
+  id: string
   firstName: string
   lastName: string
-  location?: string
-  status?: string
+  status: string
   barCode: string
-  dateTime?: string
-  dateOfBirth?: string
+  dateTime: string
+  dateOfBirth: string
+  location?: string
   transportRunId?: string
   deadline?: string
-}
-
-export type AppointmentFilters = {
-  organizationId?: string
-  showall: boolean
-  minDate?: string
-  maxDate?: string
 }
 
 export type AppointmentsState = {
@@ -193,18 +150,16 @@ export enum Label {
   NextDay = 'NextDay',
 }
 
-export const appointmentUiDTOResponse = (appointment: AppointmentsDBModel): AppointmentUiDTO => {
+export const appointmentUiDTOResponse = (appointment: AppointmentDBModel): AppointmentUiDTO => {
   const timeZone = Config.get('DEFAULT_TIME_ZONE')
   return {
-    id: (appointment as AppointmentUI).id,
+    id: appointment.id,
     firstName: appointment.firstName,
     lastName: appointment.lastName,
     status: appointment.appointmentStatus,
     barCode: appointment.barCode,
-    location: (appointment as AppointmentUI).location,
-    dateTime: moment((appointment as AppointmentUI).dateTime)
-      .tz(timeZone)
-      .format(),
+    location: appointment.location,
+    dateTime: moment(appointment.dateTime).tz(timeZone).format(),
     dateOfBirth: appointment.dateOfBirth,
     transportRunId: appointment.transportRunId,
     deadline: moment(appointment.deadline).tz(timeZone).format(),

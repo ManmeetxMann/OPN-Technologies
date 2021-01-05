@@ -1,7 +1,7 @@
 import fetch from 'node-fetch'
 import {Config} from '../../../common/src/utils/config'
 import querystring from 'querystring'
-import {AppointmentAcuityResponse} from '../models/appoinment'
+import {AppointmentAcuityResponse} from '../models/appointment'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
@@ -33,7 +33,7 @@ abstract class AcuityScheduling {
     NextDay: Config.get('ACUITY_FIELD_NEXT_DAY'),
   }
 
-  protected async cancelAppointment(id: number): Promise<AppointmentAcuityResponse> {
+  protected async cancelAppointmentOnAcuity(id: number): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = APIURL + `/api/v1/appointments/${id}/cancel`
@@ -54,7 +54,7 @@ abstract class AcuityScheduling {
     return this.customFieldsToAppoinment(result)
   }
 
-  protected async updateAppointmentOnAcuity(
+  protected async updateAppointmentOnAcuityService(
     id: number,
     fields: unknown,
   ): Promise<AppointmentAcuityResponse> {
@@ -124,7 +124,9 @@ abstract class AcuityScheduling {
     })
   }
 
-  protected async getAppointmentsById(id: number): Promise<AppointmentAcuityResponse> {
+  protected async getAppointmentByIdFromAcuityService(
+    id: number,
+  ): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = APIURL + `/api/v1/appointments/${id}`

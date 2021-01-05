@@ -5,29 +5,27 @@ import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
 import {ScheduleWebhookRequest} from '../../../models/webhook'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
-import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {isEmpty} from 'lodash'
-import {AppointmentStatus, AppointmentUI, Result, AcuityUpdateDTO} from '../../../models/appoinment'
-import {TestResultsService} from '../../../services/test-results.service'
+import {AppointmentStatus, AcuityUpdateDTO, ResultTypes} from '../../../models/appointment'
 import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
+import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
   public router = Router()
   private appoinmentService = new AppoinmentService()
   private packageService = new PackageService()
-  private testResultsService = new TestResultsService()
 
   constructor() {
     this.initRoutes()
   }
 
   public initRoutes(): void {
-    this.router.post(this.path + '/create', this.handleScheduleWebhook)
+    this.router.post(this.path + '/create', this.handleCreateAppointment)
   }
 
-  handleScheduleWebhook = async (
+  handleCreateAppointment = async (
     req: Request,
     res: Response,
     next: NextFunction,
@@ -41,9 +39,8 @@ class AppointmentWebhookController implements IControllerBase {
         throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
       }
 
-      const dataForUpdate: AcuityUpdateDTO = {}
       let deadline: string
-      const utcDateTime = moment(appointment.dateTime).utc()
+      const utcDateTime = moment(appointment.datetime).utc()
 
       const dateTime = utcDateTime.format()
       const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
@@ -55,28 +52,19 @@ class AppointmentWebhookController implements IControllerBase {
         deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime)
       }
 
+      const dataForUpdate: AcuityUpdateDTO = {}
       if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
-      } else {
-        const appointmentWithSameBarcodes = await this.appoinmentService.getAppoinmentDBByBarCode(
-          appointment.barCode,
-        )
-        if (appointmentWithSameBarcodes.length > 0) {
-          console.log(
-            `WebhookController: DuplicateBarCode AppoinmentID: ${id} -  BarCode: ${appointment.barCode}`,
-          )
-          throw new DuplicateDataException(`Duplicate ${id} found, Barcode ${appointment.barCode}`)
-        }
       }
 
-      if (appointment.packageCode && !appointment.organizationId) {
-        const packageResult = await this.packageService.getByPackageCode(appointment.packageCode)
+      if (appointment.certificate && !appointment.organizationId) {
+        const packageResult = await this.packageService.getByPackageCode(appointment.certificate)
 
         if (packageResult) {
           dataForUpdate['organizationId'] = packageResult.organizationId
         } else {
           console.log(
-            `WebhookController: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.packageCode}`,
+            `WebhookController: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`,
           )
         }
       }
@@ -94,31 +82,40 @@ class AppointmentWebhookController implements IControllerBase {
         )
       }
 
-      try {
-        const {
-          acuityAppointmentId,
-          appointmentId,
-          ...insertingAppointment
-        } = appointment as AppointmentUI
-        const {barCodeNumber, organizationId} = dataForUpdate
-        await this.appoinmentService.saveAppointmentData({
-          ...insertingAppointment,
-          organizationId: appointment.organizationId || organizationId || null,
-          barCode: appointment.barCode || barCodeNumber,
-          acuityAppointmentId: acuityAppointmentId,
-          appointmentStatus: AppointmentStatus.pending,
-          result: Result.pending,
-          dateTime,
-          dateOfAppointment,
-          timeOfAppointment,
-          deadline,
-        })
-      } catch (e) {
+      const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
+      if (appointmentFromDb) {
         console.log(
-          `WebhookController: SaveToTestResults Failed AppoinmentID: ${id} barCodeNumber: ${JSON.stringify(
-            dataForUpdate,
-          )}`,
+          `WebhookController: AlreadyAdded AcuityID: ${id} FirebaseID: ${appointmentFromDb.id}`,
         )
+        throw new DuplicateDataException(`AcuityID: ${id} already added`)
+      }
+
+      try {
+        const {barCodeNumber, organizationId} = dataForUpdate
+        const data = {
+          acuityAppointmentId: appointment.id,
+          appointmentStatus: AppointmentStatus.pending,
+          barCode: appointment.barCode || barCodeNumber,
+          canceled: appointment.canceled,
+          dateOfAppointment,
+          dateOfBirth: appointment.dateOfBirth,
+          dateTime,
+          deadline,
+          email: appointment.email,
+          firstName: appointment.firstName,
+          lastName: appointment.lastName,
+          location: appointment.location,
+          organizationId: appointment.organizationId || organizationId || null,
+          packageCode: appointment.certificate,
+          phone: appointment.phone,
+          registeredNursePractitioner: appointment.registeredNursePractitioner,
+          result: ResultTypes.Pending,
+          timeOfAppointment,
+        }
+        await this.appoinmentService.saveAppointmentData(data)
+      } catch (e) {
+        console.log(`WebhookController: SaveToTestResults Failed AppoinmentID: ${id}`)
+        console.log(e)
       }
 
       res.json(actionSucceed(''))

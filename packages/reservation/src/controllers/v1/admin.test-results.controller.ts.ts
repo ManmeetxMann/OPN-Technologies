@@ -8,10 +8,10 @@ import {TestResultsService} from '../../services/test-results.service'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {
   AppointmentByOrganizationRequest,
-  AppointmentDTO,
-  AppointmentUI,
-} from '../../models/appoinment'
-import {ResultTypes, testResultUiDTOResponse} from '../../models/test-result'
+  ResultTypes,
+  AppointmentDBModel,
+} from '../../models/appointment'
+import {testResultUiDTOResponse} from '../../models/test-result'
 
 class AdminController implements IControllerBase {
   public path = '/reservation/admin'
@@ -34,28 +34,29 @@ class AdminController implements IControllerBase {
     try {
       const {organizationId, dateOfAppointment} = req.query as AppointmentByOrganizationRequest
 
-      const showCancelled = res.locals.authenticatedUser.admin?.isOpnSuperAdmin ?? false
+      //const showCancelled = res.locals.authenticatedUser.admin?.isOpnSuperAdmin ?? false
 
-      const appointments = await this.appointmentService.getAppointmentByOrganizationIdAndSearchParams(
+      const appointments = await this.appointmentService.getAppointmentsDB({
         organizationId,
         dateOfAppointment,
-        null,
-        showCancelled,
-      )
+      })
 
       const appointmentsUniqueById = [
         ...new Map(flatten(appointments).map((item) => [item.id, item])).values(),
       ]
 
       const responseAppointments = await Promise.all(
-        appointmentsUniqueById.map(async (appointment: AppointmentDTO | AppointmentUI) => {
+        appointmentsUniqueById.map(async (appointment: AppointmentDBModel) => {
           const result = await this.testResultsService
             .getResults(appointment.barCode)
             .then(({result}) => result)
             .catch(() => ResultTypes.Pending)
 
           return {
-            ...testResultUiDTOResponse(appointment),
+            ...testResultUiDTOResponse({
+              ...appointment,
+              appointmentId: appointment.acuityAppointmentId,
+            }),
             result,
           }
         }),

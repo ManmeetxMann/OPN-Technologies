@@ -10,17 +10,14 @@ import {middlewareGenerator} from '../../../common/src/middlewares/basic-auth'
 
 import {AppoinmentService} from '../services/appoinment.service'
 import {TestResultsService} from '../services/test-results.service'
-import {PackageService} from '../services/package.service'
-import {AppointmentDTO, CheckAppointmentRequest} from '../models/appoinment'
+import {AppointmentDBModel, CheckAppointmentRequest, ResultTypes} from '../models/appointment'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 
 import CSVValidator from '../validations/csv.validations'
-import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 import {
-  ResultTypes,
   SendAndSaveTestResultsRequest,
   TestResultsConfirmationRequest,
   TestResultsDTOForEmail,
@@ -31,7 +28,6 @@ class AdminController implements IControllerBase {
   public router = Router()
   private appoinmentService = new AppoinmentService()
   private testResultsService = new TestResultsService()
-  private packageService = new PackageService()
 
   constructor() {
     this.initRoutes()
@@ -66,19 +62,9 @@ class AdminController implements IControllerBase {
     try {
       const {barCodeNumber} = req.body
 
-      const appointment = await this.appoinmentService.getAppoinmentDBByBarCode(barCodeNumber)
+      const appointment = await this.appoinmentService.getAppointmentByBarCode(barCodeNumber)
 
-      if (appointment.length > 1) {
-        console.log(
-          `AdminController: Multiple Appointments with barcode. Barcode: ${barCodeNumber}`,
-        )
-      }
-
-      if (!appointment && !appointment.length) {
-        throw new ResourceNotFoundException(`Appointment with barCode ${barCodeNumber} not found`)
-      }
-
-      res.json(actionSucceed(appointment[0]))
+      res.json(actionSucceed(appointment))
     } catch (error) {
       next(error)
     }
@@ -129,13 +115,13 @@ class AdminController implements IControllerBase {
             } else {
               let currentAppointment = null
               try {
-                currentAppointment = await this.appoinmentService.getAppoinmentByBarCode(
+                const blockDuplicate = true
+                currentAppointment = await this.appoinmentService.getAppointmentByBarCode(
                   row.barCode,
+                  blockDuplicate,
                 )
               } catch (getAppoinmentError) {
-                if (!(getAppoinmentError instanceof DuplicateDataException)) {
-                  throw getAppoinmentError
-                }
+                console.error(getAppoinmentError.message)
               }
               if (!currentAppointment) {
                 notFoundBarcodes.push(row)
@@ -192,7 +178,9 @@ class AdminController implements IControllerBase {
       }
 
       if (requestData.needConfirmation) {
-        const appointment = await this.appoinmentService.getAppoinmentByBarCode(requestData.barCode)
+        const appointment = await this.appoinmentService.getAppointmentByBarCode(
+          requestData.barCode,
+        )
 
         res.json(actionSucceed(appointment))
         return
@@ -207,16 +195,16 @@ class AdminController implements IControllerBase {
       }
 
       await this.appoinmentService
-        .getAppoinmentByBarCode(requestData.barCode)
-        .then((appointment: AppointmentDTO) => {
+        .getAppointmentByBarCode(requestData.barCode)
+        .then((appointment: AppointmentDBModel) => {
           this.testResultsService.sendTestResults({...requestData, ...appointment}, resultDate)
           return appointment
         })
-        .then((appointment: AppointmentDTO) => {
+        .then((appointment: AppointmentDBModel) => {
           this.testResultsService.saveResults({
             ...requestData,
             ...appointment,
-            appointmentId: appointment.appointmentId,
+            appointmentId: appointment.acuityAppointmentId,
             id: requestData.barCode,
           })
         })

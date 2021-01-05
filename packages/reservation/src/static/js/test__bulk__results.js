@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const sendAgainDataVice = [...document.getElementsByClassName('sendAgainCheckbox')]
       .filter((row) => row.checked)
-      .map((row) => row.getAttribute('data-index'))
+      .map((row) => row.getAttribute('data-barcode'))
 
     const failedValidation = []
     const duplicatedRow = []
@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         hexCt: row[12],
         result: row[13],
         resultDate: resultDate,
-        sendAgain: sendAgainDataVice.indexOf(`${i}`) !== -1,
+        sendAgain: sendAgainDataVice.indexOf(row[3]) !== -1,
       }))
 
     const dataChunks = _.chunk(dataSentBackend, 5)

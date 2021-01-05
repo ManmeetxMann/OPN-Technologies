@@ -6,7 +6,7 @@ import {PackageService} from '../services/package.service'
 import {ScheduleWebhookRequest} from '../models/webhook'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {isEmpty} from 'lodash'
-import {AcuityUpdateDTO} from '../models/appoinment'
+import {AcuityUpdateDTO} from '../models/appointment'
 
 class WebhookController implements IControllerBase {
   public path = '/webhook'
@@ -42,14 +42,14 @@ class WebhookController implements IControllerBase {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
       }
 
-      if (appointment.packageCode && !appointment.organizationId) {
-        const packageResult = await this.packageService.getByPackageCode(appointment.packageCode)
+      if (appointment.certificate && !appointment.organizationId) {
+        const packageResult = await this.packageService.getByPackageCode(appointment.certificate)
 
         if (packageResult) {
           dataForUpdate['organizationId'] = packageResult.organizationId
         } else {
           console.log(
-            `WebhookController: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.packageCode}`,
+            `WebhookController: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`,
           )
         }
       }

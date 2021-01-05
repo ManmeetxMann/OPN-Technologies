@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response.ok) {
         if (!isSecond && confirmBeforeSend === '1') {
           openModal(confirmMailSendModal)
-          confirmAppointmentId.innerHTML = responseData.data.appointmentId
+          confirmAppointmentId.innerHTML = responseData.data.acuityAppointmentId
           confirmDateOfAppointment.innerHTML = responseData.data.dateOfAppointment
           confirmDateOfBirth.innerHTML = responseData.data.dateOfBirth
           confirmEmail.innerHTML = responseData.data.email
@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
       dateOfBirth: userData.dateOfBirth,
       registeredNursePractitioner: userData.registeredNursePractitioner,
       dateOfAppointment: userData.dateOfAppointment,
-      appointmentId: userData.appointmentId,
+      appointmentId: userData.acuityAppointmentId,
       timeOfAppointment: userData.timeOfAppointment,
       id: getValueByElem(barCodeElem),
       packageCode: userData.packageCode,

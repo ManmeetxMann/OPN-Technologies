@@ -1,83 +1,26 @@
 import AcuityScheduling from '../adapter/acuity'
-import {
-  AppointmentSearchRequest,
-  AppointmentDBModel,
-  AppointmentAcuityResponse,
-  AppointmentRequest,
-  AppointmentUI,
-} from '../models/appoinment'
-import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
+import {AppointmentAcuityResponse} from '../models/appointment'
 
 export class AppoinmentsSchedulerRepository extends AcuityScheduling {
   constructor() {
     super()
   }
 
-  async updateAppointment(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
-    return this.updateAppointmentOnAcuity(id, data)
+  //Used by Webhooks
+  async updateAppointmentOnAcuity(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
+    return this.updateAppointmentOnAcuityService(id, data)
   }
 
-  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
+  async addAppointmentLabelOnAcuity(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
     return this.updateAppointmentLabel(id, data)
   }
 
-  async getAppointmentById(id: number): Promise<AppointmentDBModel> {
-    return this.getAppointmentsById(id).then((appoinment: AppointmentAcuityResponse) => {
-      return this.convertToAppointmentModel(appoinment)
-    })
+  //Used by Webhooks
+  async getAppointmentByIdFromAcuity(id: number): Promise<AppointmentAcuityResponse> {
+    return this.getAppointmentByIdFromAcuityService(id)
   }
 
-  async getManyAppointments(data: AppointmentRequest): Promise<AppointmentDBModel[]> {
-    return this.getAppointmentsByFilter(data, true)
-  }
-
-  async getAppointment(data: AppointmentSearchRequest): Promise<AppointmentDBModel> {
-    return this.getAppointmentsByFilter(data, false).then(
-      (appointments: AppointmentAcuityResponse[]) => {
-        return appointments[0]
-      },
-    )
-  }
-
-  async cancelAppointmentById(id: number): Promise<AppointmentAcuityResponse> {
-    return this.cancelAppointment(id)
-  }
-
-  private async getAppointmentsByFilter(
-    filter: AppointmentRequest,
-    isMultiple: boolean,
-  ): Promise<AppointmentDBModel[]> {
-    return this.getAppointments(filter).then((appointments: AppointmentAcuityResponse[]) => {
-      if (appointments.length > 1 && !isMultiple) {
-        throw new DuplicateDataException(
-          `Sorry, Results are not sent. Same Barcode is used by multiple appointments`,
-        )
-      }
-
-      return appointments.map((appointment: AppointmentAcuityResponse) =>
-        this.convertToAppointmentModel(appointment),
-      )
-    })
-  }
-
-  private convertToAppointmentModel(appointment: AppointmentAcuityResponse): AppointmentUI {
-    return {
-      firstName: appointment.firstName,
-      lastName: appointment.lastName,
-      email: appointment.email,
-      phone: appointment.phone,
-      appointmentId: appointment.id,
-      id: appointment.id,
-      dateOfBirth: appointment.dateOfBirth,
-      registeredNursePractitioner: appointment.registeredNursePractitioner,
-      barCode: appointment.barCode,
-      packageCode: appointment.certificate,
-      dateOfAppointment: appointment.date,
-      timeOfAppointment: appointment.time,
-      location: appointment.location,
-      organizationId: appointment.organizationId ?? null,
-      canceled: appointment.canceled,
-      dateTime: appointment.datetime,
-    }
+  async cancelAppointmentByIdOnAcuity(id: number): Promise<AppointmentAcuityResponse> {
+    return this.cancelAppointmentOnAcuity(id)
   }
 }
