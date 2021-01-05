@@ -47,6 +47,10 @@ export class AppoinmentService {
     queryParams: AppointmentByOrganizationRequest,
   ): Promise<AppointmentDBModel[]> {
     const conditions = []
+    console.log(
+      '====================',
+      this.makeTimeEndOfTheDay(moment(queryParams.deadlineDate).utc()),
+    )
     if (queryParams.organizationId) {
       conditions.push({
         map: '/',
@@ -61,6 +65,14 @@ export class AppoinmentService {
         key: 'dateOfAppointment',
         operator: DataModelFieldMapOperatorType.Equals,
         value: moment(queryParams.dateOfAppointment).format(dateFormats.longMonth),
+      })
+    }
+    if (queryParams.deadlineDate) {
+      conditions.push({
+        map: '/',
+        key: 'deadline',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: this.makeTimeEndOfTheDay(moment(queryParams.deadlineDate).utc()),
       })
     }
     if (queryParams.transportRunId) {

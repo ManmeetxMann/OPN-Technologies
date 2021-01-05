@@ -18,6 +18,8 @@ import {ResourceNotFoundException} from '../../../../common/src/exceptions/resou
 import {now, isValidDate} from '../../../../common/src/utils/times'
 import {TransportRunsService} from '../../services/transport-runs.service'
 
+const isJustOneOf = (a: unknown, b: unknown) => !(a && b) || !(!a && !b)
+
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
@@ -32,7 +34,7 @@ class AdminAppointmentController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.get(
       this.path + '/api/v1/appointments',
-      adminAuthMiddleware,
+      // adminAuthMiddleware,
       this.getListAppointments,
     )
     innerRouter.get(
@@ -81,10 +83,19 @@ class AdminAppointmentController implements IControllerBase {
         searchQuery,
         dateOfAppointment,
         transportRunId,
+        deadlineDate,
       } = req.query as AppointmentByOrganizationRequest
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
         throw new BadRequestException('dateOfAppointment is invalid')
+      }
+
+      if (deadlineDate && !isValidDate(deadlineDate)) {
+        throw new BadRequestException('deadlineDate is invalid')
+      }
+
+      if (!isJustOneOf(deadlineDate, dateOfAppointment)) {
+        throw new BadRequestException('Required just deadlineDate or dateOfAppointment, not both')
       }
 
       const appointments = await this.appointmentService.getAppointmentsDB({
@@ -92,6 +103,7 @@ class AdminAppointmentController implements IControllerBase {
         dateOfAppointment,
         searchQuery,
         transportRunId,
+        deadlineDate,
       })
 
       res.json(
