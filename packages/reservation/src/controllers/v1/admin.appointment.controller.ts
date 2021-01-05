@@ -18,6 +18,8 @@ import {ResourceNotFoundException} from '../../../../common/src/exceptions/resou
 import {now, isValidDate} from '../../../../common/src/utils/times'
 import {TransportRunsService} from '../../services/transport-runs.service'
 
+const isJustOneOf = (a: unknown, b: unknown) => !(a && b) || !(!a && !b)
+
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
@@ -82,6 +84,7 @@ class AdminAppointmentController implements IControllerBase {
         dateOfAppointment,
         transportRunId,
         testRunId,
+        deadlineDate,
       } = req.query as AppointmentByOrganizationRequest
 
       if (testRunId && transportRunId) {
@@ -94,12 +97,21 @@ class AdminAppointmentController implements IControllerBase {
         throw new BadRequestException('dateOfAppointment is invalid')
       }
 
+      if (deadlineDate && !isValidDate(deadlineDate)) {
+        throw new BadRequestException('deadlineDate is invalid')
+      }
+
+      if (!isJustOneOf(deadlineDate, dateOfAppointment)) {
+        throw new BadRequestException('Required just deadlineDate or dateOfAppointment, not both')
+      }
+
       const appointments = await this.appointmentService.getAppointmentsDB({
         organizationId,
         dateOfAppointment,
         searchQuery,
         transportRunId,
         testRunId,
+        deadlineDate,
       })
 
       res.json(

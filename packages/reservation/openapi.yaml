@@ -771,7 +771,7 @@ paths:
           name: dateOfAppointment
           schema:
             type: string
-          required: true
+            format: date
         - in: query
           name: testRunId
           schema:
@@ -780,6 +780,11 @@ paths:
           name: transportRunId
           schema:
             type: string
+        - in: query
+          name: deadlineDate
+          schema:
+            type: string
+            format: date
       responses:
         '200':
           description: Successfully Return

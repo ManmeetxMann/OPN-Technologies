@@ -7,7 +7,7 @@ import {ResponseStatusCodes} from '../types/response-status'
 import {UserRoles} from '../types/authorization'
 import {User} from '../data/user'
 
-export const authorizationMiddleware = (allowedRoles?: [UserRoles]) => async (
+export const authorizationMiddleware = (allowedRoles?: UserRoles[]) => async (
   req: Request,
   res: Response,
   next: NextFunction,
@@ -44,9 +44,12 @@ export const authorizationMiddleware = (allowedRoles?: [UserRoles]) => async (
 
   const userService = new UserService()
   let connectedUser: User
-  if (listOfAllowedRoles.includes(UserRoles.OrgAdmin)) {
+  const seekAdminAuth = listOfAllowedRoles.includes(UserRoles.OrgAdmin || UserRoles.SuperAdmin)
+  const seekRegularAuth = listOfAllowedRoles.includes(UserRoles.RegUser)
+  if (seekAdminAuth) {
     connectedUser = await userService.findOneByAdminAuthUserId(validatedAuthUser.uid)
-  } else {
+  }
+  if (!connectedUser && seekRegularAuth) {
     connectedUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
     if (connectedUser) {
       connectedUser.admin = null
@@ -61,7 +64,9 @@ export const authorizationMiddleware = (allowedRoles?: [UserRoles]) => async (
         of(
           null,
           ResponseStatusCodes.AccessDenied,
-          `Cannot find user with auth-uid [${validatedAuthUser.uid}]`,
+          `Cannot find ${seekRegularAuth ? 'user' : 'admin user'} with authUserId [${
+            validatedAuthUser.uid
+          }]`,
         ),
       )
     return
