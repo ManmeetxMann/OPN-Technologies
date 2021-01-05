@@ -58,41 +58,72 @@ export class PackageService {
 
   async getPackageList(all: boolean): Promise<PackageListItem[]> {
     const packagesAcuity = await this.appoinmentSchedulerRepository.getPackagesList()
-    const packagesOrganization = new Map()
     const result = new Map()
 
-    if (!all) {
-      const packageCodes: string[] = packagesAcuity.map(({certificate}) => certificate)
-      const packages = await this.packageRepository.findWhereIn('packageCode', packageCodes)
-      const organizationIds = packages.map(({organizationId}) => organizationId)
-      const organizations = await this.organizationService.getAllByIds(organizationIds)
-      organizations.map(({id, name}) => {
-        const packageEntity = packages.find(({organizationId}) => organizationId === id)
-        packagesOrganization.set(packageEntity.packageCode, {organizationName: name})
-      })
-    }
-
-    packagesAcuity.map((packageCode) => {
-      const organization = packagesOrganization.get(packageCode.certificate)
-
+    await Promise.all(packagesAcuity.map(async packageCode => {
       const packageMap = result.get(packageCode.certificate)
 
       if (!packageMap) {
-        return result.set(packageCode.certificate, {
+        const packageData = {
           packageCode: packageCode.certificate,
           name: packageCode.name,
+          remainingCounts: null,
+          organization: '',
+        }
+
+        if (!all) {
+          const [packages] = await this.packageRepository.findWhereEqual('packageCode', packageCode.certificate)
+          if (packages) {
+            const organizations = await this.organizationService.findOneById(packages.organizationId)
+            packageData.organization = organizations?.name
+          }
+        }
+
+        return result.set(packageCode.certificate, {
+          ...packageData,
           remainingCounts: 1,
-          organization: organization?.organizationName || '',
         })
       }
 
       result.set(packageCode.certificate, {
-        packageCode: packageMap.packageCode,
-        name: packageMap.name,
+        ...packageMap,
         remainingCounts: ++packageMap.remainingCounts,
-        organization: packageMap.organization,
       })
-    })
+    }))
+
+
+    // if (!all) {
+    //   const packageCodes: string[] = packagesAcuity.map(({certificate}) => certificate)
+    //   const packages = await this.packageRepository.findWhereIn('packageCode', packageCodes)
+    //   const organizationIds = packages.map(({organizationId}) => organizationId)
+    //   const organizations = await this.organizationService.getAllByIds(organizationIds)
+    //   organizations.map(({id, name}) => {
+    //     const packageEntity = packages.find(({organizationId}) => organizationId === id)
+    //     packagesOrganization.set(packageEntity.packageCode, {organizationName: name})
+    //   })
+    // }
+
+    // packagesAcuity.map((packageCode) => {
+    //   const organization = packagesOrganization.get(packageCode.certificate)
+
+    //   const packageMap = result.get(packageCode.certificate)
+
+    //   if (!packageMap) {
+    //     return result.set(packageCode.certificate, {
+    //       packageCode: packageCode.certificate,
+    //       name: packageCode.name,
+    //       remainingCounts: 1,
+    //       organization: organization?.organizationName || '',
+    //     })
+    //   }
+
+    //   result.set(packageCode.certificate, {
+    //     packageCode: packageMap.packageCode,
+    //     name: packageMap.name,
+    //     remainingCounts: ++packageMap.remainingCounts,
+    //     organization: packageMap.organization,
+    //   })
+    // })
 
     return Array.from(result.values())
   }
