@@ -143,6 +143,25 @@ class OrganizationController implements IControllerBase {
     )
   }
 
+  private validatePermission = (
+    authenticatedUser: User,
+    organizationId: string,
+    userId: string,
+    parentUserId: string,
+  ): void => {
+    if (authenticatedUser.admin) {
+      // if they are an admin, it must for for this organization
+      if ((authenticatedUser.admin as AdminProfile).adminForOrganizationId !== organizationId) {
+        throw 'Invalid'
+      }
+    } else {
+      // if they are a regular user, they must be asking about themself or their dependant
+      if ((parentUserId || userId) !== authenticatedUser.id) {
+        throw 'Invalid'
+      }
+    }
+  }
+
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const organization = await this.organizationService
@@ -826,6 +845,13 @@ class OrganizationController implements IControllerBase {
         from: queryFrom,
         to: queryTo,
       } = req.query as UserContactTraceReportRequest
+      const authenticatedUser = res.locals.connectedUser as User
+      try {
+        this.validatePermission(authenticatedUser, organizationId, userId, parentUserId)
+      } catch {
+        replyInsufficientPermission(res)
+        return
+      }
       const to = queryTo ?? now().toISOString()
       const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
 
@@ -1034,6 +1060,13 @@ class OrganizationController implements IControllerBase {
         from: queryFrom,
         to: queryTo,
       } = req.query as UserContactTraceReportRequest
+      const authenticatedUser = res.locals.connectedUser as User
+      try {
+        this.validatePermission(authenticatedUser, organizationId, userId, parentUserId)
+      } catch {
+        replyInsufficientPermission(res)
+        return
+      }
       const to = queryTo ?? now().toISOString()
       const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
 
@@ -1112,7 +1145,13 @@ class OrganizationController implements IControllerBase {
       const {organizationId} = req.params
       const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
       const primaryUserId = parentUserId ?? userId
-
+      const authenticatedUser = res.locals.connectedUser as User
+      try {
+        this.validatePermission(authenticatedUser, organizationId, userId, parentUserId)
+      } catch {
+        replyInsufficientPermission(res)
+        return
+      }
       // fetch attestation array in the time period
       const [
         allAttestations,
@@ -1202,18 +1241,11 @@ class OrganizationController implements IControllerBase {
       const {userId, parentUserId} = req.query as FamilyStatusReportRequest
 
       const authenticatedUser = res.locals.connectedUser as User
-      if (authenticatedUser.admin) {
-        // if they are an admin, it must for for this organization
-        if ((authenticatedUser.admin as AdminProfile).adminForOrganizationId !== organizationId) {
-          replyInsufficientPermission(res)
-          return
-        }
-      } else {
-        // if they are a regular user, they must be asking about themself or their dependant
-        if ((parentUserId || userId) !== authenticatedUser.id) {
-          replyInsufficientPermission(res)
-          return
-        }
+      try {
+        this.validatePermission(authenticatedUser, organizationId, userId, parentUserId)
+      } catch {
+        replyInsufficientPermission(res)
+        return
       }
 
       const isParentUser = !parentUserId
