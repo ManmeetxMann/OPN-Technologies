@@ -34,7 +34,7 @@ export class AppoinmentService {
       )
       if(shouldBlockDuplicate){
         throw new DuplicateDataException(
-          `Sorry, Results are not sent. Same Barcode is used by multiple appointments`,
+          `Same Barcode used by multiple appointments`,
         )
       }
     }
@@ -156,8 +156,8 @@ export class AppoinmentService {
     return this.appointmentsRepository.get(id)
   }
 
-  async getAppointmentByAcuityId(id: number): Promise<AppointmentDBModel> {
-    const appointments = await this.appointmentsRepository.findWhereEqual('acuityAppointmentId', id)
+  async getAppointmentByAcuityId(id: number|string): Promise<AppointmentDBModel> {
+    const appointments = await this.appointmentsRepository.findWhereEqual('acuityAppointmentId', Number(id))
     if (!appointments || !appointments.length) {
       return null
     }

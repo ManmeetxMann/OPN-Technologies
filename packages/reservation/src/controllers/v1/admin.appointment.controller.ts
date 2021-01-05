@@ -111,9 +111,10 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {appointmentId} = req.params as {appointmentId: string}
 
-      const appointment = await this.appointmentService.getAppointmentByAcuityId(
-        Number(appointmentId),
-      )
+      const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
+      if (!appointment) {
+        throw new ResourceNotFoundException(`Appointment "${appointmentId}" not found`)
+      }
 
       res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
     } catch (error) {
@@ -126,12 +127,10 @@ class AdminAppointmentController implements IControllerBase {
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId} = req.query as {organizationId: string}
 
-      const appointment = await this.appointmentService.getAppointmentByAcuityId(
-        Number(appointmentId),
-      )
+      const appointment = await this.appointmentService.getAppointmentByAcuityId(appointmentId)
 
       if (!appointment) {
-        throw new BadRequestException(`Appointment "${appointmentId}" not found`)
+        throw new ResourceNotFoundException(`Appointment "${appointmentId}" not found`)
       }
 
       if (organizationId && appointment.organizationId !== organizationId) {
@@ -147,6 +146,7 @@ class AdminAppointmentController implements IControllerBase {
       next(error)
     }
   }
+
   addTransportRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {appointmentIds, transportRunId} = req.body as {

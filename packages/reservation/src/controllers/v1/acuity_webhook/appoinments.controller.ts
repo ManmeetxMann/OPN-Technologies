@@ -6,9 +6,10 @@ import {PackageService} from '../../../services/package.service'
 import {ScheduleWebhookRequest} from '../../../models/webhook'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isEmpty} from 'lodash'
-import {AppointmentStatus, AcuityUpdateDTO, ResultTypes, AppointmentModelBase} from '../../../models/appointment'
+import {AppointmentStatus, AcuityUpdateDTO, ResultTypes} from '../../../models/appointment'
 import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
+import { DuplicateDataException } from '../../../../../common/src/exceptions/duplicate-data-exception'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -54,20 +55,6 @@ class AppointmentWebhookController implements IControllerBase {
       const dataForUpdate: AcuityUpdateDTO = {}
       if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
-      } else {
-        try{
-          const blockDuplicate = true
-          await this.appoinmentService.getAppointmentByBarCode(
-            appointment.barCode,
-            blockDuplicate
-          )
-        }catch(getAppoinmentError){
-          //It is Ok if Resource Not Found
-          if (!(getAppoinmentError instanceof ResourceNotFoundException)) {
-            throw getAppoinmentError
-          }
-        }
-        
       }
 
       if (appointment.certificate && !appointment.organizationId) {
@@ -95,8 +82,15 @@ class AppointmentWebhookController implements IControllerBase {
         )
       }
 
+      const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
+      if(appointmentFromDb){
+        console.log(
+          `WebhookController: AlreadyAdded AcuityID: ${id} FirebaseID: ${appointmentFromDb.id}`,
+        )
+        throw new DuplicateDataException(`AcuityID: ${id} already added`)
+      }
+
       try {
-        
         const {barCodeNumber, organizationId} = dataForUpdate
         const data = {
           acuityAppointmentId: appointment.id,

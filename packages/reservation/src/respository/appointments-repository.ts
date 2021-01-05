@@ -18,8 +18,8 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
 
   public updateWithUnion(
     id: string,
-    data: Partial<AppointmentsDBModel>,
-  ): Promise<AppointmentsDBModel> {
+    data: Partial<AppointmentDBModel>,
+  ): Promise<AppointmentDBModel> {
     if (data.testRunId?.length) {
       // @ts-ignore
       data.testRunId = firestore.FieldValue.arrayUnion(...data.testRunId) as string[]
