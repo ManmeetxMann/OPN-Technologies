@@ -63,6 +63,14 @@ export class AppoinmentService {
         value: moment(queryParams.dateOfAppointment).format(dateFormats.longMonth),
       })
     }
+    if (queryParams.deadlineDate) {
+      conditions.push({
+        map: '/',
+        key: 'deadline',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: this.makeTimeEndOfTheDay(moment(queryParams.deadlineDate).utc()),
+      })
+    }
     if (queryParams.transportRunId) {
       conditions.push({
         map: '/',

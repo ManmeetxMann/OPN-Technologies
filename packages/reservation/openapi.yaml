@@ -771,7 +771,12 @@ paths:
           name: dateOfAppointment
           schema:
             type: string
-          required: true
+            format: date
+        - in: query
+          name: deadlineDate
+          schema:
+            type: string
+            format: date
       responses:
         '200':
           description: Successfully Return
