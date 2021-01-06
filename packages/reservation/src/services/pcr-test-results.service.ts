@@ -3,6 +3,7 @@ import {TestResultsReportingTrackerRepository, TestResultsReportingTrackerPCRRes
 import DataStore from '../../../common/src/data/datastore'
 import { PCRTestResultRequest } from '../models/pcr-test-results'
 import {CreateReportForPCRResultsResponse, ResultReportStatus} from '../models/test-results-reporting'
+import { BadRequestException } from '../../../common/src/exceptions/bad-request-exception'
 
 export class PCRTestResultsService {
 	private datastore = new DataStore()
@@ -15,8 +16,12 @@ export class PCRTestResultsService {
 			reportTrackerId = reportTracker.id
 		}else{
 			reportTrackerId = testResultData.reportTrackerId
+			const reportTracker = await this.testResultsReportingTracker.get(reportTrackerId)
+			if(!reportTracker){
+				throw new BadRequestException('Invalid Report Tracker ID')
+			}
 		}
-		
+
 		const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(this.datastore, reportTrackerId)
 		const resultDate = testResultData.resultDate
 		const pcrResults = testResultData.results.map((result) => {
