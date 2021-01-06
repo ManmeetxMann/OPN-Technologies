@@ -37,7 +37,7 @@ export class PCRTestResultsService {
 		await testResultsReportingTrackerPCRResult.saveAll(pcrResults)
 
 		const taskClient = new OPNCloudTasks('report-results')
-		taskClient.createTask({reportTrackerId:reportTrackerId}, '/internal/process-pcr-test-results')
+		taskClient.createTask({reportTrackerId:reportTrackerId}, '/reservation/internal/api/v1/process-pcr-test-results')
 
 		return {
 			reportTrackerId: reportTrackerId

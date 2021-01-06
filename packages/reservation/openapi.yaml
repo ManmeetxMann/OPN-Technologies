@@ -10,6 +10,33 @@ components:
       bearerFormat: JWT
 
   schemas:
+    Response:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          nullable: true
+          type: object
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+              
     TestResult200:
       type: object
       deprecated: false
@@ -348,6 +375,17 @@ components:
       required:
         - results
         - resultDate
+
+    ProcessPCRResultsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reportTrackerId:
+          type: string
+          description: Report Tracker ID
+        
+      required:
+        - reportTrackerId
 
 paths:
   /admin/page/next-bar-code:
@@ -1223,3 +1261,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PCRTestResultsResponse200'
+
+  /reservation/internal/api/v1/process-pcr-test-results:
+    post:
+      description: Process PCR Results 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessPCRResultsRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
