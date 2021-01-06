@@ -29,5 +29,3 @@ export type PCRTestResultRequest = {
   results: PCRTestResultData[]
   resultDate: Date
 }
-
-  

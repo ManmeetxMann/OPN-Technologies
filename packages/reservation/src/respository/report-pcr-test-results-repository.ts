@@ -1,10 +1,13 @@
-import {firestore} from 'firebase-admin'
-
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
-import {TestResultsReportingTrackerDBModel, TestResultsReportingTrackerPCRResultsDBModel} from '../models/test-results-reporting'
+import {
+  TestResultsReportingTrackerDBModel,
+  TestResultsReportingTrackerPCRResultsDBModel,
+} from '../models/test-results-reporting'
 
-export class TestResultsReportingTrackerRepository extends DataModel<TestResultsReportingTrackerDBModel> {
+export class TestResultsReportingTrackerRepository extends DataModel<
+  TestResultsReportingTrackerDBModel
+> {
   public rootPath = 'test-results-reporting-tracker'
   readonly zeroSet = []
 
@@ -17,7 +20,9 @@ export class TestResultsReportingTrackerRepository extends DataModel<TestResults
   }
 }
 
-export class TestResultsReportingTrackerPCRResultsRepository extends DataModel<TestResultsReportingTrackerPCRResultsDBModel> {
+export class TestResultsReportingTrackerPCRResultsRepository extends DataModel<
+  TestResultsReportingTrackerPCRResultsDBModel
+> {
   public rootPath
   readonly zeroSet = []
   constructor(dataStore: DataStore, reportTrackerId: string) {
@@ -25,7 +30,9 @@ export class TestResultsReportingTrackerPCRResultsRepository extends DataModel<T
     this.rootPath = `test-results-reporting-tracker/${reportTrackerId}/pcr-results`
   }
 
-  public async saveAll(pcrResults:Omit<TestResultsReportingTrackerPCRResultsDBModel, 'id'>[]): Promise<TestResultsReportingTrackerPCRResultsDBModel[]> {
+  public async saveAll(
+    pcrResults: Omit<TestResultsReportingTrackerPCRResultsDBModel, 'id'>[],
+  ): Promise<TestResultsReportingTrackerPCRResultsDBModel[]> {
     return this.addAll(pcrResults)
   }
 }

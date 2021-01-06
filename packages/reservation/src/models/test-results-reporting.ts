@@ -1,14 +1,14 @@
-import { PCRTestResultData } from "./pcr-test-results"
+import {PCRTestResultData} from './pcr-test-results'
 
 export enum ResultReportStatus {
   RequestReceived = 'RequestReceived',
   Processing = 'Processing',
   Failed = 'Failed',
-  SuccessfullyReported = 'SuccessfullyReported'
+  SuccessfullyReported = 'SuccessfullyReported',
 }
 
 export type TestResultsReportingTrackerDBModel = {
-  id:string
+  id: string
 }
 
 type PCRTestResultDataWithDate = PCRTestResultData & {
@@ -19,7 +19,7 @@ export type TestResultsReportingTrackerPCRResultsDBModel = {
   id: string
   status: ResultReportStatus
   data: PCRTestResultDataWithDate
-  details?:string
+  details?: string
 }
 
 export type CreateReportForPCRResultsResponse = {

@@ -3,13 +3,11 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
-import {
-  PCRTestResultRequest,
-} from '../../../models/pcr-test-results'
+import {PCRTestResultRequest} from '../../../models/pcr-test-results'
 import moment from 'moment'
-import { now } from '../../../../../common/src/utils/times'
-import { Config } from '../../../../../common/src/utils/config'
-import { BadRequestException } from '../../../../../common/src/exceptions/bad-request-exception'
+import {now} from '../../../../../common/src/utils/times'
+import {Config} from '../../../../../common/src/utils/config'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
@@ -21,12 +19,20 @@ class PCRTestResultController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.post(this.path + '/api/v1/pcr-test-results', adminAuthMiddleware, this.createReportForPCRResults)
+    innerRouter.post(
+      this.path + '/api/v1/pcr-test-results',
+      adminAuthMiddleware,
+      this.createReportForPCRResults,
+    )
 
     this.router.use('/', innerRouter)
   }
 
-  createReportForPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  createReportForPCRResults = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const data = req.body as PCRTestResultRequest
       const timeZone = Config.get('DEFAULT_TIME_ZONE')

@@ -17,7 +17,11 @@ class ProcessPCRResultsReporting implements IControllerBase {
     this.router.use('/', innerRouter)
   }
 
-  processPCRTestResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  processPCRTestResults = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       console.log(req.body)
       //const data = req.body as PCRTestResultRequest
