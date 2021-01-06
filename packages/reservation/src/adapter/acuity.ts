@@ -80,7 +80,7 @@ abstract class AcuityScheduling {
   }
 
   protected async updateAppointmentLabel(
-    id: number,
+    id: number | string,
     fields: unknown,
   ): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)

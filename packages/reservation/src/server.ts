@@ -12,9 +12,10 @@ import ProcessPCRResultController from './controllers/v1/internal/process-pcr-te
 import WebhookController from './controllers/webhook.controller'
 import TestResultController from './controllers/v1/admin.test-results.controller.ts'
 import PackageController from './controllers/v1/admin.package.controller'
-import AppointmentController from './controllers/v1/admin.appointment.controller'
+import AppointmentControllerV1 from './controllers/v1/admin.appointment.controller'
 import TestRunsController from './controllers/v1/admin/test-runs.controller'
 import TransportRunsController from './controllers/v1/transport-runs.controller'
+import AppointmentControllerV2 from './controllers/v2/admin.appointment.controller'
 
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
@@ -37,12 +38,13 @@ const app = new App({
     new WebhookController(),
     new TestResultController(),
     new PackageController(),
-    new AppointmentController(),
+    new AppointmentControllerV1(),
     new TransportRunsController(),
     new AppointmentWebhookController(),
     new TestRunsController(),
     new ProcessPCRResultController(),
     new PCRTestResultController(),
+    new AppointmentControllerV2(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],

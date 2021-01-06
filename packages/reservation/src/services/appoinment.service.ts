@@ -223,7 +223,10 @@ export class AppoinmentService {
     }
   }
 
-  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
+  async addAppointmentLabel(
+    id: number | string,
+    data: unknown,
+  ): Promise<AppointmentAcuityResponse> {
     return this.appoinmentSchedulerRepository.addAppointmentLabelOnAcuity(id, data)
   }
 
