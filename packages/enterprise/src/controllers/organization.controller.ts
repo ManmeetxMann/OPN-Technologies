@@ -14,6 +14,7 @@ import {now} from '../../../common/src/utils/times'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {Config} from '../../../common/src/utils/config'
 import {PdfService} from '../../../common/src/service/reports/pdf'
+import {adminOrSelf} from '../middleware/admin-or-self'
 
 import {
   Organization,
@@ -93,12 +94,40 @@ class OrganizationController implements IControllerBase {
         .delete('/:groupId', this.removeGroup)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
-    const publicStats = innerRouter().use(
-      // this has to be more specific than the general 'stats' section
-      '/stats/family',
-      authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
-      innerRouter().get('/', this.getFamilyStats),
-    )
+    // this has to be more specific than the general 'stats' section
+    // TODO: move these to a separate route prefix, to avoid repetition
+    const publicStats = [
+      innerRouter().use(
+        '/stats/family',
+        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        adminOrSelf,
+        innerRouter().get('/', this.getFamilyStats),
+      ),
+      innerRouter().use(
+        '/stats/contact-trace-locations',
+        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        adminOrSelf,
+        innerRouter().get('/', this.getUserContactTraceLocations),
+      ),
+      innerRouter().use(
+        '/stats/contact-traces',
+        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        adminOrSelf,
+        innerRouter().get('/', this.getUserContactTraces),
+      ),
+      innerRouter().use(
+        '/stats/contact-trace-exposures',
+        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        adminOrSelf,
+        innerRouter().get('/', this.getUserContactTraceExposures),
+      ),
+      innerRouter().use(
+        '/stats/contact-trace-attestations',
+        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        adminOrSelf,
+        innerRouter().get('/', this.getUserContactTraceAttestations),
+      ),
+    ]
     // prettier-ignore
     const stats = innerRouter().use(
       '/stats',
@@ -106,10 +135,6 @@ class OrganizationController implements IControllerBase {
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/health', this.getStatsHealth)
-        .get('/contact-trace-locations', this.getUserContactTraceLocations)
-        .get('/contact-traces', this.getUserContactTraces)
-        .get('/contact-trace-exposures', this.getUserContactTraceExposures)
-        .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
         .get('/group-report', this.getGroupReport)
         .get('/user-report', this.getUserReport)
     )
@@ -118,7 +143,7 @@ class OrganizationController implements IControllerBase {
       Router().post('/', this.create), // TODO: must be a protected route
       Router().post('/:organizationId/scheduling', this.updateReportInfo), // TODO: must be a protected route
       Router().get('/one', this.findOneByKeyOrId),
-      Router().use('/:organizationId', locations, groups, publicStats, stats),
+      Router().use('/:organizationId', locations, groups, ...publicStats, stats),
       Router().get('/:organizationId/config', this.getOrgConfig),
     )
 
@@ -141,6 +166,25 @@ class OrganizationController implements IControllerBase {
         allowsSelfCheckInOut,
       }),
     )
+  }
+
+  private validatePermission = (
+    authenticatedUser: User,
+    organizationId: string,
+    userId: string,
+    parentUserId: string,
+  ): void => {
+    if (authenticatedUser.admin) {
+      // if they are an admin, it must for for this organization
+      if ((authenticatedUser.admin as AdminProfile).adminForOrganizationId !== organizationId) {
+        throw 'Invalid'
+      }
+    } else {
+      // if they are a regular user, they must be asking about themself or their dependant
+      if ((parentUserId || userId) !== authenticatedUser.id) {
+        throw 'Invalid'
+      }
+    }
   }
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -992,27 +1036,20 @@ class OrganizationController implements IControllerBase {
           date,
           organizationId,
           location: locationsById[locationId],
-          overlapping: overlapping.map(({userId, dependant, start, end}) => ({
-            userId,
-            status: statusesLookup[userId] ?? PassportStatuses.Pending,
-            group: membershipLookup[userId],
-            firstName: usersById[userId].firstName,
-            lastName: usersById[userId].lastName,
-            base64Photo: usersById[userId].base64Photo,
-            // @ts-ignore this is a firestore timestamp, not a string
-            start: start?.toDate() ?? null,
-            // @ts-ignore this is a firestore timestamp, not a string
-            end: end?.toDate() ?? null,
-            dependant: dependant
-              ? {
-                  id: dependant.id,
-                  firstName: dependant.firstName,
-                  lastName: dependant.lastName,
-                  group: membershipLookup[dependant.id],
-                  status: statusesLookup[dependant.id] ?? PassportStatuses.Pending,
-                }
-              : null,
-          })),
+          overlapping: overlapping.map((overlap) => {
+            const userId = overlap.dependant.id ?? overlap.userId
+            return {
+              userId,
+              status: statusesLookup[userId] ?? PassportStatuses.Pending,
+              group: membershipLookup[userId],
+              firstName: usersById[userId].firstName,
+              lastName: usersById[userId].lastName,
+              base64Photo: usersById[userId].base64Photo,
+              start: overlap.start ? safeTimestamp(overlap.start) : null,
+              end: overlap.end ? safeTimestamp(overlap.end) : null,
+              dependant: null,
+            }
+          }),
         })),
       }))
       res.json(actionSucceed(result))
@@ -1047,7 +1084,6 @@ class OrganizationController implements IControllerBase {
       )
 
       // ids of all the users we need more information about
-      // dependant info is already included in the trace
       const allUserIds = new Set<string>()
       rawTraces.forEach((exposure) => {
         ;(exposure.dependantIds ?? []).forEach((id) => allUserIds.add(id))
@@ -1081,19 +1117,20 @@ class OrganizationController implements IControllerBase {
                   //@ts-ignore these are timestamps, not strings
                   moment(overlap.start.toDate()) <= moment(to),
               )
-              .map((overlap) => ({
-                userId: overlap.sourceUserId,
-                status: statusesLookup[overlap.sourceUserId] ?? PassportStatuses.Pending,
-                group: groupsByUserOrDependantId[overlap.sourceUserId],
-                firstName: usersById[overlap.sourceUserId].firstName,
-                lastName: usersById[overlap.sourceUserId].lastName,
-                base64Photo: usersById[overlap.sourceUserId].base64Photo,
-                // @ts-ignore this is a firestore timestamp, not a string
-                start: overlap.start?.toDate() ?? null,
-                // @ts-ignore this is a firestore timestamp, not a string
-                end: overlap.end?.toDate() ?? null,
-                dependant: overlap.sourceDependantId ? usersById[overlap.sourceDependantId] : null,
-              })),
+              .map((overlap) => {
+                const userId = overlap.sourceDependantId ?? overlap.sourceUserId
+                return {
+                  userId,
+                  status: statusesLookup[userId] ?? PassportStatuses.Pending,
+                  group: groupsByUserOrDependantId[userId],
+                  firstName: usersById[userId].firstName,
+                  lastName: usersById[userId].lastName,
+                  base64Photo: usersById[userId].base64Photo,
+                  start: overlap.start ? safeTimestamp(overlap.start) : null,
+                  end: overlap.end ? safeTimestamp(overlap.end) : null,
+                  dependant: null,
+                }
+              }),
           }))
           .filter(({overlapping}) => overlapping.length),
       }))
@@ -1112,7 +1149,6 @@ class OrganizationController implements IControllerBase {
       const {organizationId} = req.params
       const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
       const primaryUserId = parentUserId ?? userId
-
       // fetch attestation array in the time period
       const [
         allAttestations,
@@ -1200,21 +1236,6 @@ class OrganizationController implements IControllerBase {
     try {
       const {organizationId} = req.params
       const {userId, parentUserId} = req.query as FamilyStatusReportRequest
-
-      const authenticatedUser = res.locals.connectedUser as User
-      if (authenticatedUser.admin) {
-        // if they are an admin, it must for for this organization
-        if ((authenticatedUser.admin as AdminProfile).adminForOrganizationId !== organizationId) {
-          replyInsufficientPermission(res)
-          return
-        }
-      } else {
-        // if they are a regular user, they must be asking about themself or their dependant
-        if ((parentUserId || userId) !== authenticatedUser.id) {
-          replyInsufficientPermission(res)
-          return
-        }
-      }
 
       const isParentUser = !parentUserId
 
