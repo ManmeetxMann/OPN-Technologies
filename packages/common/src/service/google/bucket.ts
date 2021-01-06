@@ -1,4 +1,4 @@
-import {Storage, CreateBucketRequest, Bucket} from '@google-cloud/storage'
+import {Storage, Bucket} from '@google-cloud/storage'
 
 import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
 import {Stream} from 'stream'
@@ -11,12 +11,6 @@ export default class {
   constructor(bucketName: string) {
     this.bucketName = bucketName
     this.initializeBucket()
-  }
-
-  private async createBucket(options?: CreateBucketRequest): Promise<Bucket> {
-    // [bucket, metadata]
-    const [bucket] = await this.client.createBucket(this.bucketName, options)
-    return bucket
   }
 
   private async getBucket(): Promise<Bucket> {

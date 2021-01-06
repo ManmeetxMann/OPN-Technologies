@@ -40,7 +40,7 @@ class PCRTestResultController implements IControllerBase {
         )
       }
       const reportTracker = await this.pcrTestResultsService.createReportForPCRResults(data)
-      console.log(data)
+      
       res.json(actionSucceed(reportTracker))
     } catch (error) {
       next(error)
