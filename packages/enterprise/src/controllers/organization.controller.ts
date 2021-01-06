@@ -1036,27 +1036,20 @@ class OrganizationController implements IControllerBase {
           date,
           organizationId,
           location: locationsById[locationId],
-          overlapping: overlapping.map(({userId, dependant, start, end}) => ({
-            userId,
-            status: statusesLookup[userId] ?? PassportStatuses.Pending,
-            group: membershipLookup[userId],
-            firstName: usersById[userId].firstName,
-            lastName: usersById[userId].lastName,
-            base64Photo: usersById[userId].base64Photo,
-            // @ts-ignore this is a firestore timestamp, not a string
-            start: start?.toDate() ?? null,
-            // @ts-ignore this is a firestore timestamp, not a string
-            end: end?.toDate() ?? null,
-            dependant: dependant
-              ? {
-                  id: dependant.id,
-                  firstName: dependant.firstName,
-                  lastName: dependant.lastName,
-                  group: membershipLookup[dependant.id],
-                  status: statusesLookup[dependant.id] ?? PassportStatuses.Pending,
-                }
-              : null,
-          })),
+          overlapping: overlapping.map((overlap) => {
+            const userId = overlap.dependant.id ?? overlap.userId
+            return {
+              userId,
+              status: statusesLookup[userId] ?? PassportStatuses.Pending,
+              group: membershipLookup[userId],
+              firstName: usersById[userId].firstName,
+              lastName: usersById[userId].lastName,
+              base64Photo: usersById[userId].base64Photo,
+              start: overlap.start ? safeTimestamp(overlap.start) : null,
+              end: overlap.end ? safeTimestamp(overlap.end) : null,
+              dependant: null,
+            }
+          }),
         })),
       }))
       res.json(actionSucceed(result))
@@ -1091,7 +1084,6 @@ class OrganizationController implements IControllerBase {
       )
 
       // ids of all the users we need more information about
-      // dependant info is already included in the trace
       const allUserIds = new Set<string>()
       rawTraces.forEach((exposure) => {
         ;(exposure.dependantIds ?? []).forEach((id) => allUserIds.add(id))
@@ -1125,19 +1117,20 @@ class OrganizationController implements IControllerBase {
                   //@ts-ignore these are timestamps, not strings
                   moment(overlap.start.toDate()) <= moment(to),
               )
-              .map((overlap) => ({
-                userId: overlap.sourceUserId,
-                status: statusesLookup[overlap.sourceUserId] ?? PassportStatuses.Pending,
-                group: groupsByUserOrDependantId[overlap.sourceUserId],
-                firstName: usersById[overlap.sourceUserId].firstName,
-                lastName: usersById[overlap.sourceUserId].lastName,
-                base64Photo: usersById[overlap.sourceUserId].base64Photo,
-                // @ts-ignore this is a firestore timestamp, not a string
-                start: overlap.start?.toDate() ?? null,
-                // @ts-ignore this is a firestore timestamp, not a string
-                end: overlap.end?.toDate() ?? null,
-                dependant: overlap.sourceDependantId ? usersById[overlap.sourceDependantId] : null,
-              })),
+              .map((overlap) => {
+                const userId = overlap.sourceDependantId ?? overlap.sourceUserId
+                return {
+                  userId,
+                  status: statusesLookup[userId] ?? PassportStatuses.Pending,
+                  group: groupsByUserOrDependantId[userId],
+                  firstName: usersById[userId].firstName,
+                  lastName: usersById[userId].lastName,
+                  base64Photo: usersById[userId].base64Photo,
+                  start: overlap.start ? safeTimestamp(overlap.start) : null,
+                  end: overlap.end ? safeTimestamp(overlap.end) : null,
+                  dependant: null,
+                }
+              }),
           }))
           .filter(({overlapping}) => overlapping.length),
       }))
