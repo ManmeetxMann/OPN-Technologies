@@ -87,6 +87,8 @@ components:
               type: string
             deadline:
               type: string
+            latestResult:
+              type: string
           required:
             - id
             - firstName
