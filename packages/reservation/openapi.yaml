@@ -875,6 +875,41 @@ paths:
             text/html:
               schema:
                 type: string
+    get:
+      description: Get Packages list
+      tags:
+        - Package Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: all
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            text/html:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    packageCode:
+                      type: string
+                    name:
+                      type: string
+                    remainingCounts:
+                      type: number
+                    organization:
+                      type: string
+                  required:
+                    - packageCode
+                    - name
+                    - remainingCounts
 
   /reservation/admin/api/v1/appointments/{appointmentId}/cancel:
     put:
