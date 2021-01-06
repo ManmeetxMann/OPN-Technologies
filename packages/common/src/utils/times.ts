@@ -60,9 +60,9 @@ export const toDateFormatWithoutTimezone = (timestamp: GenericTimestamp): string
   return moment(date).utc().format('YYYY-MM-DD')
 }
 
-export const toDateTimeFormatWithoutTimezone = (timestamp: GenericTimestamp): string => {
+export const toDateTimeFormatWithoutTimezone = (timestamp: GenericTimestamp): Date => {
   const date = safeTimestamp(timestamp)
-  return moment(date).utc().toString()
+  return moment(date).utc().toDate()
 }
 
 export const isValidDate = (date: string): boolean => !isNaN(Date.parse(date))
