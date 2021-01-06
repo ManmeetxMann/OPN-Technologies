@@ -25,7 +25,7 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
     return this.cancelAppointmentOnAcuity(id)
   }
 
-  async getPackagesList(): Promise<Certificate[]> {
+ getPackagesList(): Promise<Certificate[]> {
     return this.getPackages()
   }
 }
