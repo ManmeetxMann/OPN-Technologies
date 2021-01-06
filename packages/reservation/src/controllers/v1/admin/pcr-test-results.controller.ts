@@ -1,7 +1,6 @@
 import {NextFunction, Request, Response, Router} from 'express'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-
 import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {
@@ -40,7 +39,7 @@ class PCRTestResultController implements IControllerBase {
         )
       }
       const reportTracker = await this.pcrTestResultsService.createReportForPCRResults(data)
-      
+
       res.json(actionSucceed(reportTracker))
     } catch (error) {
       next(error)

@@ -4,6 +4,7 @@ import DataStore from '../../../common/src/data/datastore'
 import { PCRTestResultRequest } from '../models/pcr-test-results'
 import {CreateReportForPCRResultsResponse, ResultReportStatus} from '../models/test-results-reporting'
 import { BadRequestException } from '../../../common/src/exceptions/bad-request-exception'
+import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 
 export class PCRTestResultsService {
 	private datastore = new DataStore()
@@ -33,7 +34,11 @@ export class PCRTestResultsService {
 				status: ResultReportStatus.RequestReceived
 			}
 		})
-		testResultsReportingTrackerPCRResult.saveAll(pcrResults)
+		await testResultsReportingTrackerPCRResult.saveAll(pcrResults)
+
+		const taskClient = new OPNCloudTasks('report-results')
+		taskClient.createTask({reportTrackerId:reportTrackerId}, '/internal/process-pcr-test-results')
+
 		return {
 			reportTrackerId: reportTrackerId
 		}
