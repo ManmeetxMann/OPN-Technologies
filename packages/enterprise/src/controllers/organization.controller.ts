@@ -14,6 +14,7 @@ import {now} from '../../../common/src/utils/times'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {Config} from '../../../common/src/utils/config'
 import {PdfService} from '../../../common/src/service/reports/pdf'
+import {adminOrSelf} from '../middleware/admin-or-self'
 
 import {
   Organization,
@@ -99,26 +100,31 @@ class OrganizationController implements IControllerBase {
       innerRouter().use(
         '/stats/family',
         authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        adminOrSelf,
         innerRouter().get('/', this.getFamilyStats),
       ),
       innerRouter().use(
         '/stats/contact-trace-locations',
         authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        adminOrSelf,
         innerRouter().get('/', this.getUserContactTraceLocations),
       ),
       innerRouter().use(
         '/stats/contact-traces',
         authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        adminOrSelf,
         innerRouter().get('/', this.getUserContactTraces),
       ),
       innerRouter().use(
         '/stats/contact-trace-exposures',
         authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        adminOrSelf,
         innerRouter().get('/', this.getUserContactTraceExposures),
       ),
       innerRouter().use(
         '/stats/contact-trace-attestations',
         authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        adminOrSelf,
         innerRouter().get('/', this.getUserContactTraceAttestations),
       ),
     ]
@@ -864,13 +870,6 @@ class OrganizationController implements IControllerBase {
         from: queryFrom,
         to: queryTo,
       } = req.query as UserContactTraceReportRequest
-      const authenticatedUser = res.locals.connectedUser as User
-      try {
-        this.validatePermission(authenticatedUser, organizationId, userId, parentUserId)
-      } catch {
-        replyInsufficientPermission(res)
-        return
-      }
       const to = queryTo ?? now().toISOString()
       const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
 
@@ -968,13 +967,6 @@ class OrganizationController implements IControllerBase {
       } = req.query as UserContactTraceReportRequest
       const to = queryTo ?? now().toISOString()
       const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
-      const authenticatedUser = res.locals.connectedUser as User
-      try {
-        this.validatePermission(authenticatedUser, organizationId, userId, parentUserId)
-      } catch {
-        replyInsufficientPermission(res)
-        return
-      }
 
       let isParentUser = true
       if (parentUserId) {
@@ -1086,13 +1078,6 @@ class OrganizationController implements IControllerBase {
         from: queryFrom,
         to: queryTo,
       } = req.query as UserContactTraceReportRequest
-      const authenticatedUser = res.locals.connectedUser as User
-      try {
-        this.validatePermission(authenticatedUser, organizationId, userId, parentUserId)
-      } catch {
-        replyInsufficientPermission(res)
-        return
-      }
       const to = queryTo ?? now().toISOString()
       const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
 
@@ -1171,13 +1156,6 @@ class OrganizationController implements IControllerBase {
       const {organizationId} = req.params
       const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
       const primaryUserId = parentUserId ?? userId
-      const authenticatedUser = res.locals.connectedUser as User
-      try {
-        this.validatePermission(authenticatedUser, organizationId, userId, parentUserId)
-      } catch {
-        replyInsufficientPermission(res)
-        return
-      }
       // fetch attestation array in the time period
       const [
         allAttestations,
@@ -1265,14 +1243,6 @@ class OrganizationController implements IControllerBase {
     try {
       const {organizationId} = req.params
       const {userId, parentUserId} = req.query as FamilyStatusReportRequest
-
-      const authenticatedUser = res.locals.connectedUser as User
-      try {
-        this.validatePermission(authenticatedUser, organizationId, userId, parentUserId)
-      } catch {
-        replyInsufficientPermission(res)
-        return
-      }
 
       const isParentUser = !parentUserId
 
