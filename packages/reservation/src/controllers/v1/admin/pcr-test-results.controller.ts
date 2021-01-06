@@ -39,9 +39,9 @@ class PCRTestResultController implements IControllerBase {
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
-      this.pcrTestResultsService.createReportForPCRResults(data)
+      const reportTracker = await this.pcrTestResultsService.createReportForPCRResults(data)
       console.log(data)
-      res.json(actionSucceed())
+      res.json(actionSucceed(reportTracker))
     } catch (error) {
       next(error)
     }

@@ -21,3 +21,7 @@ export type TestResultsReportingTrackerPCRResultsDBModel = {
   data: PCRTestResultDataWithDate
   details?:string
 }
+
+export type CreateReportForPCRResultsResponse = {
+  reportTrackerId: string
+}

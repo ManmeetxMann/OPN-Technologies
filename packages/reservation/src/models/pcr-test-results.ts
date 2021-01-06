@@ -25,6 +25,7 @@ export type PCRTestResultData = {
 }
 
 export type PCRTestResultRequest = {
+  reportTrackerId?: string
   results: PCRTestResultData[]
   resultDate: Date
 }

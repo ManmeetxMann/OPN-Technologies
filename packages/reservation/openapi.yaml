@@ -275,6 +275,8 @@ components:
       type: object
       additionalProperties: false
       properties:
+        reportTrackerId:
+          type: string
         resultDate:
           type: string
         results:
