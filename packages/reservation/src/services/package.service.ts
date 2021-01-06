@@ -58,79 +58,39 @@ export class PackageService {
 
   async getPackageList(all: boolean): Promise<PackageListItem[]> {
     const packagesAcuity = await this.appoinmentSchedulerRepository.getPackagesList()
-    const result = new Map()
+    const packagesOrganization = new Map()
 
-    await Promise.all(
-      packagesAcuity.map(async (packageCode) => {
-        const packageMap = result.get(packageCode.certificate)
+    if (!all) {
+      const packageCodes: string[] = packagesAcuity.map(({certificate}) => certificate)
+      const packages = await this.packageRepository.findWhereIn('packageCode', packageCodes)
+      const organizationIds = packages.map(({organizationId}) => organizationId)
+      const organizations = await this.organizationService.getAllByIds(organizationIds)
 
-        if (!packageMap) {
-          const packageData = {
-            packageCode: packageCode.certificate,
-            name: packageCode.name,
-            remainingCounts: null,
-            organization: '',
-          }
+      organizations.map(({id, name}) => {
+        const packageEntity = packages.find(({organizationId}) => organizationId === id)
+        packagesOrganization.set(packageEntity.packageCode, {organizationName: name})
+      })
+    }
 
-          if (!all) {
-            const [packages] = await this.packageRepository.findWhereEqual(
-              'packageCode',
-              packageCode.certificate,
-            )
-            if (packages) {
-              const organizations = await this.organizationService.findOneById(
-                packages.organizationId,
-              )
-              packageData.organization = organizations?.name
-            }
-          }
+    return packagesAcuity.map(
+      (packageCode): PackageListItem => {
+        const organization = packagesOrganization.get(packageCode.certificate)
+        const remainingCountValues = Object.values(packageCode.remainingCounts || {})
+        let remainingCounts
 
-          return result.set(packageCode.certificate, {
-            ...packageData,
-            remainingCounts: 1,
-          })
+        if (remainingCountValues.length) {
+          remainingCounts = remainingCountValues.reduce(
+            (accumulator, current) => accumulator + current,
+          )
         }
 
-        result.set(packageCode.certificate, {
-          ...packageMap,
-          remainingCounts: ++packageMap.remainingCounts,
-        })
-      }),
+        return {
+          packageCode: packageCode.certificate,
+          name: packageCode.name,
+          remainingCounts: remainingCounts || 0,
+          organization: organization?.organizationName || '',
+        }
+      },
     )
-
-    // if (!all) {
-    //   const packageCodes: string[] = packagesAcuity.map(({certificate}) => certificate)
-    //   const packages = await this.packageRepository.findWhereIn('packageCode', packageCodes)
-    //   const organizationIds = packages.map(({organizationId}) => organizationId)
-    //   const organizations = await this.organizationService.getAllByIds(organizationIds)
-    //   organizations.map(({id, name}) => {
-    //     const packageEntity = packages.find(({organizationId}) => organizationId === id)
-    //     packagesOrganization.set(packageEntity.packageCode, {organizationName: name})
-    //   })
-    // }
-
-    // packagesAcuity.map((packageCode) => {
-    //   const organization = packagesOrganization.get(packageCode.certificate)
-
-    //   const packageMap = result.get(packageCode.certificate)
-
-    //   if (!packageMap) {
-    //     return result.set(packageCode.certificate, {
-    //       packageCode: packageCode.certificate,
-    //       name: packageCode.name,
-    //       remainingCounts: 1,
-    //       organization: organization?.organizationName || '',
-    //     })
-    //   }
-
-    //   result.set(packageCode.certificate, {
-    //     packageCode: packageMap.packageCode,
-    //     name: packageMap.name,
-    //     remainingCounts: ++packageMap.remainingCounts,
-    //     organization: packageMap.organization,
-    //   })
-    // })
-
-    return Array.from(result.values())
   }
 }

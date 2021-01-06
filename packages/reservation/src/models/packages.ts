@@ -34,7 +34,7 @@ export type Certificate = {
 }
 
 export type PackageListItem = {
-  packageCode: number
+  packageCode: string
   name: string
   remainingCounts: number
   organization: string
