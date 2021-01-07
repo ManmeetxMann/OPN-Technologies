@@ -3,7 +3,7 @@ import path from 'path'
 import {TableLayouts, Content} from '../../../common/src/service/reports/pdf-types'
 import {Config} from '../../../common/src/utils/config'
 import {ResultTypes} from '../models/appointment'
-import { PCRTestResultEmailDTO } from '../models/pcr-test-results'
+import {PCRTestResultEmailDTO} from '../models/pcr-test-results'
 import {TestResultsDTOForEmail} from '../models/test-result'
 
 const tableLayouts: TableLayouts = {
@@ -25,7 +25,7 @@ const tableLayouts: TableLayouts = {
   },
 }
 const generate = (
-  params: PCRTestResultEmailDTO|TestResultsDTOForEmail,
+  params: PCRTestResultEmailDTO | TestResultsDTOForEmail,
   resultDate: string,
 ): {content: Content[]; tableLayouts: TableLayouts} => {
   const isPositive =

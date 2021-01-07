@@ -1,4 +1,3 @@
-import { type } from 'os'
 import {ResultTypes} from './appointment'
 
 export enum PCRResultActions {
@@ -34,18 +33,19 @@ export type PCRTestResultData = {
   resultDate: Date
 }
 
-export type AppointmentDataForPCRResult = {
+type AppointmentDataForPCRResult = {
   firstName: string
   lastName: string
   appointmentId: string
 }
 
-export type PCRTestResultDBModel = Omit<PCRTestResultData, "action"|"notify"> & AppointmentDataForPCRResult & {
-  id: string
-  result: ResultTypes
-}
+export type PCRTestResultDBModel = Omit<PCRTestResultData, 'action' | 'notify'> &
+  AppointmentDataForPCRResult & {
+    id: string
+    result: ResultTypes
+  }
 
-export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, "id"> & {
+export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, 'id'> & {
   email: string
   phone: number
   dateOfBirth: string
@@ -62,7 +62,7 @@ export type PCRTestResultRequest = {
 }
 
 export type ProcessPCRResultRequest = {
-  reportTrackerId: string,
+  reportTrackerId: string
   resultId: string
 }
 
@@ -84,4 +84,3 @@ export type TestResultsReportingTrackerPCRResultsDBModel = {
 export type CreateReportForPCRResultsResponse = {
   reportTrackerId: string
 }
-

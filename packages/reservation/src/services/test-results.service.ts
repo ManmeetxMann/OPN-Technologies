@@ -11,11 +11,7 @@ import {PdfService} from '../../../common/src/service/reports/pdf'
 import {Config} from '../../../common/src/utils/config'
 
 import template from '../templates/testResult'
-import {
-  TestResultsDTOForEmail,
-  TestResultsDBModel,
-  TestResultForPagination,
-} from '../models/test-result'
+import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/test-result'
 
 export class TestResultsService {
   private testResultEmailTemplateId = (Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ??
@@ -83,5 +79,4 @@ export class TestResultsService {
   async getResults(barCode: string): Promise<TestResultsDBModel> {
     return this.testResultsDBRepository.get(barCode)
   }
-
 }

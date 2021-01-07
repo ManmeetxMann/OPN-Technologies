@@ -1,26 +1,30 @@
 import moment from 'moment'
 import DataStore from '../../../common/src/data/datastore'
 
-import { Config } from '../../../common/src/utils/config'
+import {Config} from '../../../common/src/utils/config'
 import {AppoinmentService} from './appoinment.service'
 
 import {EmailService} from '../../../common/src/service/messaging/email-service'
 import {PdfService} from '../../../common/src/service/reports/pdf'
 
-import {
-  PCRTestResultsRepository
-} from '../respository/pcr-test-results-repository'
+import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
 import {
   TestResultsReportingTrackerRepository,
   TestResultsReportingTrackerPCRResultsRepository,
 } from '../respository/test-results-reporting-tracker-repository'
 
-import {CreateReportForPCRResultsResponse,
-  ResultReportStatus,PCRTestResultRequest, PCRTestResultData, PCRResultActions, AppointmentDataForPCRResult, PCRTestResultEmailDTO, PCRTestResultDBModel} from '../models/pcr-test-results'
+import {
+  CreateReportForPCRResultsResponse,
+  ResultReportStatus,
+  PCRTestResultRequest,
+  PCRTestResultData,
+  PCRResultActions,
+  PCRTestResultEmailDTO,
+} from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
-import { ResultTypes } from '../models/appointment'
+import {ResultTypes} from '../models/appointment'
 import testResultPDFTemplate from '../templates/testResult'
 
 export class PCRTestResultsService {
@@ -68,7 +72,7 @@ export class PCRTestResultsService {
       taskClient.createTask(
         {
           reportTrackerId: reportTrackerId,
-          resultId: result.id
+          resultId: result.id,
         },
         '/reservation/internal/api/v1/process-pcr-test-result',
       )
@@ -79,61 +83,62 @@ export class PCRTestResultsService {
     }
   }
 
-  async processPCRTestResult(
-    reportTrackerId: string,
-    resultId: string
-  ): Promise<void> {
+  async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
     const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
       this.datastore,
       reportTrackerId,
     )
-    
+
     const pcrResults = await testResultsReportingTrackerPCRResult.get(resultId)
-    if(!pcrResults){
-      throw new BadRequestException(`ProcessPCRTestResultFailed: ID: ${resultId} does not exists`) 
+    if (!pcrResults) {
+      throw new BadRequestException(`ProcessPCRTestResultFailed: ID: ${resultId} does not exists`)
     }
 
-    if(pcrResults.status !== ResultReportStatus.RequestReceived){
-      //throw new BadRequestException(`ProcessPCRTestResultFailed: ID: ${resultId} BarCode: ${pcrResults.data.barCode} has status ${pcrResults.status}`) 
+    if (pcrResults.status !== ResultReportStatus.RequestReceived) {
+      //throw new BadRequestException(`ProcessPCRTestResultFailed: ID: ${resultId} BarCode: ${pcrResults.data.barCode} has status ${pcrResults.status}`)
     }
 
-    await testResultsReportingTrackerPCRResult.updateProperty(resultId, 'status', ResultReportStatus.Processing)
+    await testResultsReportingTrackerPCRResult.updateProperty(
+      resultId,
+      'status',
+      ResultReportStatus.Processing,
+    )
     await this.handlePCRResultSaveAndSend(pcrResults.data)
   }
 
-  async handlePCRResultSaveAndSend(resultData:PCRTestResultData): Promise<void> {
+  async handlePCRResultSaveAndSend(resultData: PCRTestResultData): Promise<void> {
     let finalResult = resultData.autoResult
     let sendNotification = resultData.notify
-    switch(resultData.action){ 
-      case PCRResultActions.DoNothing: { 
+    switch (resultData.action) {
+      case PCRResultActions.DoNothing: {
         console.log('Nothing')
-        break; 
-      } 
-      case PCRResultActions.ReRunToday: { 
+        break
+      }
+      case PCRResultActions.ReRunToday: {
         console.log('ReRunToday')
-        break; 
-      } 
-      case PCRResultActions.ReRunTomorrow: { 
+        break
+      }
+      case PCRResultActions.ReRunTomorrow: {
         console.log('ReRunTomorrow')
-        break; 
-      } 
-      case PCRResultActions.RequestReSample: { 
+        break
+      }
+      case PCRResultActions.RequestReSample: {
         console.log('RequestReSample')
-        break; 
-      } 
+        break
+      }
       case PCRResultActions.MarkAsNegative: {
         finalResult = ResultTypes.Negative
-        break; 
-      } 
+        break
+      }
       case PCRResultActions.MarkAsPositive: {
         finalResult = ResultTypes.Positive
-        break; 
-      } 
-      default: { 
+        break
+      }
+      default: {
         sendNotification = true
-        break; 
-      } 
-    } 
+        break
+      }
+    }
 
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
 
@@ -141,11 +146,11 @@ export class PCRTestResultsService {
     delete resultData.action
     delete resultData.notify
     const pcrResultDataForDb = {
-      ...resultData, 
-      result:finalResult,
+      ...resultData,
+      result: finalResult,
       firstName: appointment.firstName,
       lastName: appointment.lastName,
-      appointmentId: appointment.id
+      appointmentId: appointment.id,
     }
     await this.pcrTestResultsRepository.save(pcrResultDataForDb)
 
@@ -157,14 +162,14 @@ export class PCRTestResultsService {
       dateTime: appointment.dateTime,
       dateOfAppointment: appointment.dateOfAppointment,
       timeOfAppointment: appointment.timeOfAppointment,
-      registeredNursePractitioner: appointment.registeredNursePractitioner
+      registeredNursePractitioner: appointment.registeredNursePractitioner,
     }
-    await this.sendTestResults(pcrResultDataForEmail)
+    if (sendNotification) {
+      await this.sendTestResults(pcrResultDataForEmail)
+    }
   }
 
-  async sendTestResults(
-    testResults: PCRTestResultEmailDTO
-  ): Promise<void> {
+  async sendTestResults(testResults: PCRTestResultEmailDTO): Promise<void> {
     const resultDate = moment(testResults.resultDate).format('LL')
 
     const {content, tableLayouts} = testResultPDFTemplate(testResults, resultDate)
@@ -185,7 +190,7 @@ export class PCRTestResultsService {
       ],
       bcc: [
         {
-          email: Config.get('TEST_RESULT_BCC_EMAIL')
+          email: Config.get('TEST_RESULT_BCC_EMAIL'),
         },
       ],
     })
