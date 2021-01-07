@@ -17,6 +17,7 @@ import {BadRequestException} from '../../../../common/src/exceptions/bad-request
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {now, isValidDate} from '../../../../common/src/utils/times'
 import {TransportRunsService} from '../../services/transport-runs.service'
+import {UserAdmin} from '../../../../enterprise/src/models/user'
 
 const isJustOneOf = (a: unknown, b: unknown) => !(a && b) || !(!a && !b)
 
@@ -168,6 +169,7 @@ class AdminAppointmentController implements IControllerBase {
 
   addTransportRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const {admin} = res.locals.authenticatedUser as UserAdmin
       const {appointmentIds, transportRunId} = req.body as {
         appointmentIds: string[]
         transportRunId: string
@@ -182,7 +184,7 @@ class AdminAppointmentController implements IControllerBase {
       const appointmentsState: AppointmentsState[] = await Promise.all(
         appointmentIds.map(async (appointmentId) => ({
           appointmentId,
-          state: await this.appointmentService.addTransportRun(appointmentId, transportRunId),
+          state: await this.appointmentService.addTransportRun(appointmentId, transportRunId, admin.authUserId),
         })),
       )
 
@@ -236,6 +238,8 @@ class AdminAppointmentController implements IControllerBase {
 
   updateTestVoile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const {admin} = res.locals.authenticatedUser as UserAdmin
+
       const {barCode} = req.params as {barCode: string}
       const {location} = req.body as {location: string}
       const blockDuplicate = true
@@ -247,8 +251,7 @@ class AdminAppointmentController implements IControllerBase {
       await this.appointmentService.updateAppointmentDB(appointment.id, {
         appointmentStatus: AppointmentStatus.received,
         location,
-        receivedAt: now(),
-      })
+      }, admin.authUserId)
 
       res.json(actionSucceed())
     } catch (error) {
@@ -262,6 +265,8 @@ class AdminAppointmentController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
+      const {admin} = res.locals.authenticatedUser as UserAdmin
+
       const {appointmentIds, testRunId} = req.body as {
         appointmentIds: string[]
         testRunId: string[]
@@ -276,8 +281,7 @@ class AdminAppointmentController implements IControllerBase {
           this.appointmentService.updateAppointmentDB(id, {
             testRunId,
             appointmentStatus: AppointmentStatus.inProgress,
-            inProgressAt: now(),
-          })
+          }, admin.authUserId)
         }),
       )
 

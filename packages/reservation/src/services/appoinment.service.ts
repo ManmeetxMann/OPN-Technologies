@@ -2,16 +2,16 @@ import DataStore from '../../../common/src/data/datastore'
 
 import {
   AppoinmentBarCodeSequenceDBModel,
+  AppointmentAcuityResponse,
   AppointmentAttachTransportStatus,
   AppointmentByOrganizationRequest,
   AppointmentDBModel,
-  AppointmentStatus,
   AppointmentModelBase,
-  AppointmentAcuityResponse,
+  AppointmentStatus,
 } from '../models/appointment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
-import {AppointmentsRepository} from '../respository/appointments-repository'
+import {AppointmentsRepository, StatusHistoryRepository} from '../respository/appointments-repository'
 import moment from 'moment'
 import {dateFormats, now} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
@@ -20,6 +20,7 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 
 export class AppoinmentService {
+  private dataStore = new DataStore()
   private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(new DataStore())
   private appointmentsRepository = new AppointmentsRepository(new DataStore())
@@ -207,14 +208,30 @@ export class AppoinmentService {
     return this.appoinmentSchedulerRepository.cancelAppointmentByIdOnAcuity(id)
   }
 
+  private getUsersGroupRepositoryFor(appointmentId: string) {
+    return new StatusHistoryRepository(this.dataStore, appointmentId)
+  }
+
+  async addStatusHistoryById(appointmentId: string, newStatus: AppointmentStatus, createdBy: string) {
+    const appointment = await this.getAppointmentDBById(appointmentId);
+    return this.getUsersGroupRepositoryFor(appointmentId).add({
+      newStatus: newStatus,
+      previousStatus: appointment.appointmentStatus,
+      createdOn: now(),
+      createdBy,
+    })
+  }
+
   async addTransportRun(
     appointmentId: string,
     transportRunId: string,
+    userId: string
   ): Promise<AppointmentAttachTransportStatus> {
     try {
+      await this.addStatusHistoryById(appointmentId, AppointmentStatus.inTransit, userId);
+
       await this.appointmentsRepository.updateProperties(appointmentId, {
         transportRunId: transportRunId,
-        inTransitAt: now(),
         appointmentStatus: AppointmentStatus.inTransit,
       })
       return AppointmentAttachTransportStatus.Succeed
@@ -234,7 +251,9 @@ export class AppoinmentService {
   async updateAppointmentDB(
     id: string,
     data: Partial<AppointmentDBModel>,
+    userId: string
   ): Promise<AppointmentDBModel> {
+    await this.addStatusHistoryById(id, data.appointmentStatus, userId);
     return this.appointmentsRepository.updateWithUnion(id, data)
   }
 }

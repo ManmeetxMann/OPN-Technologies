@@ -153,19 +153,18 @@ components:
         data:
           type: array
           additionalProperties: false
-          properties:
-            items:
-              type: object
-              properties:
-                appointmentId:
-                  type: string
-                state:
-                  type: string
-                  enum:
-                    [
-                      succeed,
-                      failed
-                    ]
+          items:
+            type: object
+            properties:
+              appointmentId:
+                type: string
+              state:
+                type: string
+                enum:
+                  [
+                    succeed,
+                    failed
+                  ]
         status:
           type: object
           additionalProperties: false
