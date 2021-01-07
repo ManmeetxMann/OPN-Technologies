@@ -1,3 +1,4 @@
+import {firestore} from 'firebase-admin'
 import {Auditable} from '../../../common/src/types/auditable'
 
 export type TestRunsRequest = {
@@ -16,7 +17,7 @@ export type TestRunDBModel = Auditable &
 
 export type TestRun = {
   testRunId: string
-  testRunDateTime: string
+  testRunDateTime: firestore.Timestamp
 }
 
 export const testRunDTOResponse = (testRun: TestRunDBModel): TestRun => ({

@@ -151,7 +151,8 @@ components:
               transportRunId:
                 type: string
               transportDateTime:
-                type: string
+                  type: string
+                  format: date-time
               driverName:
                 type: string
         status:

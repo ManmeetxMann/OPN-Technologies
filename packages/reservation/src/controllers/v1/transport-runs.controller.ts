@@ -28,7 +28,10 @@ class TransportRunsController implements IControllerBase {
         driverName: string
       }
 
-      const transportRun = await this.transportRunsService.create(transportDateTime, driverName)
+      const transportRun = await this.transportRunsService.create(
+        new Date(transportDateTime),
+        driverName,
+      )
 
       res.json(
         actionSucceed({
