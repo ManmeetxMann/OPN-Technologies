@@ -230,6 +230,39 @@ export class AppoinmentService {
     })
   }
 
+  async updateAppointmentDB(
+    id: string,
+    data: Partial<AppointmentDBModel>,
+    userId: string,
+  ): Promise<AppointmentDBModel> {
+    await this.addStatusHistoryById(id, data.appointmentStatus, userId)
+    return this.appointmentsRepository.updateWithUnion(id, data)
+  }
+
+  async makeInProgress(
+    appointmentId: string,
+    testRunId: string[],
+    userId: string,
+  ): Promise<AppointmentDBModel> {
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.inProgress, userId)
+    return this.appointmentsRepository.updateProperties(appointmentId, {
+      appointmentStatus: AppointmentStatus.inProgress,
+      testRunId,
+    })
+  }
+
+  async makeReceived(
+    appointmentId: string,
+    location: string,
+    userId: string,
+  ): Promise<AppointmentDBModel> {
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.received, userId)
+    return this.appointmentsRepository.updateProperties(appointmentId, {
+      appointmentStatus: AppointmentStatus.received,
+      location,
+    })
+  }
+
   async addTransportRun(
     appointmentId: string,
     transportRunId: string,
@@ -254,14 +287,5 @@ export class AppoinmentService {
 
   makeTimeEndOfTheDay(datetime: moment.Moment): string {
     return datetime.hours(11).minutes(59).format()
-  }
-
-  async updateAppointmentDB(
-    id: string,
-    data: Partial<AppointmentDBModel>,
-    userId: string,
-  ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(id, data.appointmentStatus, userId)
-    return this.appointmentsRepository.updateWithUnion(id, data)
   }
 }

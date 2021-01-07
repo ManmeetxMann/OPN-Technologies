@@ -6,7 +6,6 @@ import {adminAuthMiddleware} from '../../../../common/src/middlewares/admin.auth
 
 import {
   AppointmentByOrganizationRequest,
-  AppointmentStatus,
   appointmentUiDTOResponse,
   Label,
   AppointmentsState,
@@ -17,7 +16,7 @@ import {BadRequestException} from '../../../../common/src/exceptions/bad-request
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../common/src/utils/times'
 import {TransportRunsService} from '../../services/transport-runs.service'
-import {UserAdmin} from '../../../../enterprise/src/models/user'
+import {getAdminId} from '../../../../common/src/utils/auth'
 
 const isJustOneOf = (a: unknown, b: unknown) => !(a && b) || !(!a && !b)
 
@@ -169,7 +168,8 @@ class AdminAppointmentController implements IControllerBase {
 
   addTransportRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {admin} = res.locals.authenticatedUser as UserAdmin
+      const adminId = getAdminId(res.locals.authenticatedUser)
+
       const {appointmentIds, transportRunId} = req.body as {
         appointmentIds: string[]
         transportRunId: string
@@ -187,7 +187,7 @@ class AdminAppointmentController implements IControllerBase {
           state: await this.appointmentService.addTransportRun(
             appointmentId,
             transportRunId,
-            admin.authUserId,
+            adminId,
           ),
         })),
       )
@@ -242,7 +242,7 @@ class AdminAppointmentController implements IControllerBase {
 
   updateTestVoile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {admin} = res.locals.authenticatedUser as UserAdmin
+      const adminId = getAdminId(res.locals.authenticatedUser)
 
       const {barCode} = req.params as {barCode: string}
       const {location} = req.body as {location: string}
@@ -252,14 +252,7 @@ class AdminAppointmentController implements IControllerBase {
         blockDuplicate,
       )
 
-      await this.appointmentService.updateAppointmentDB(
-        appointment.id,
-        {
-          appointmentStatus: AppointmentStatus.received,
-          location,
-        },
-        admin.authUserId,
-      )
+      await this.appointmentService.makeReceived(appointment.id, location, adminId)
 
       res.json(actionSucceed())
     } catch (error) {
@@ -273,7 +266,7 @@ class AdminAppointmentController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {admin} = res.locals.authenticatedUser as UserAdmin
+      const adminId = getAdminId(res.locals.authenticatedUser)
 
       const {appointmentIds, testRunId} = req.body as {
         appointmentIds: string[]
@@ -285,16 +278,7 @@ class AdminAppointmentController implements IControllerBase {
       }
 
       await Promise.all(
-        appointmentIds.map((id) => {
-          this.appointmentService.updateAppointmentDB(
-            id,
-            {
-              testRunId,
-              appointmentStatus: AppointmentStatus.inProgress,
-            },
-            admin.authUserId,
-          )
-        }),
+        appointmentIds.map((id) => this.appointmentService.makeInProgress(id, testRunId, adminId)),
       )
 
       res.json(actionSucceed())

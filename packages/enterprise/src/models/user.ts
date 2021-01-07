@@ -16,29 +16,6 @@ export type User = Auditable & {
   memberId?: string
 }
 
-export type UserAdmin = User & {
-  admin?: Admin
-}
-
-export type Admin = {
-  email: string
-  adminForOrganizationId: string
-  enabled: boolean
-  nfcAdminForOrganizationIds: string[]
-  adminForLocationIds: string[]
-  nfcGateKioskAdminForOrganizationIds: string[]
-  healthAdminForOrganizationIds: string[]
-  showReporting: boolean
-  authUserId: string
-  isLabAdmin: string
-  isOpnSuperAdmin: boolean
-  isTestReportsAdmin: boolean
-  adminForGroupIds: string[]
-  superAdminForOrganizationIds: string[]
-  isManagementDashboardAdmin: boolean
-  isTestAppointmentsAdmin: boolean
-}
-
 export type UserDTO = {
   id: string
   firstName: string
