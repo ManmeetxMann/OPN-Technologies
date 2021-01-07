@@ -230,15 +230,6 @@ export class AppoinmentService {
     })
   }
 
-  async updateAppointmentDB(
-    id: string,
-    data: Partial<AppointmentDBModel>,
-    userId: string,
-  ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(id, data.appointmentStatus, userId)
-    return this.appointmentsRepository.updateWithUnion(id, data)
-  }
-
   async makeInProgress(
     appointmentId: string,
     testRunId: string[],
