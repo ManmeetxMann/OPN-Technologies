@@ -8,10 +8,14 @@ import {
   AppointmentDBModel,
   AppointmentModelBase,
   AppointmentStatus,
+  AppointmentStatusHistoryDb,
 } from '../models/appointment'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
-import {AppointmentsRepository, StatusHistoryRepository} from '../respository/appointments-repository'
+import {
+  AppointmentsRepository,
+  StatusHistoryRepository,
+} from '../respository/appointments-repository'
 import moment from 'moment'
 import {dateFormats, now} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
@@ -212,8 +216,12 @@ export class AppoinmentService {
     return new StatusHistoryRepository(this.dataStore, appointmentId)
   }
 
-  async addStatusHistoryById(appointmentId: string, newStatus: AppointmentStatus, createdBy: string) {
-    const appointment = await this.getAppointmentDBById(appointmentId);
+  async addStatusHistoryById(
+    appointmentId: string,
+    newStatus: AppointmentStatus,
+    createdBy: string,
+  ): Promise<AppointmentStatusHistoryDb> {
+    const appointment = await this.getAppointmentDBById(appointmentId)
     return this.getUsersGroupRepositoryFor(appointmentId).add({
       newStatus: newStatus,
       previousStatus: appointment.appointmentStatus,
@@ -225,10 +233,10 @@ export class AppoinmentService {
   async addTransportRun(
     appointmentId: string,
     transportRunId: string,
-    userId: string
+    userId: string,
   ): Promise<AppointmentAttachTransportStatus> {
     try {
-      await this.addStatusHistoryById(appointmentId, AppointmentStatus.inTransit, userId);
+      await this.addStatusHistoryById(appointmentId, AppointmentStatus.inTransit, userId)
 
       await this.appointmentsRepository.updateProperties(appointmentId, {
         transportRunId: transportRunId,
@@ -251,9 +259,9 @@ export class AppoinmentService {
   async updateAppointmentDB(
     id: string,
     data: Partial<AppointmentDBModel>,
-    userId: string
+    userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(id, data.appointmentStatus, userId);
+    await this.addStatusHistoryById(id, data.appointmentStatus, userId)
     return this.appointmentsRepository.updateWithUnion(id, data)
   }
 }

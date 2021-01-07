@@ -15,7 +15,7 @@ import {
 import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
-import {now, isValidDate} from '../../../../common/src/utils/times'
+import {isValidDate} from '../../../../common/src/utils/times'
 import {TransportRunsService} from '../../services/transport-runs.service'
 import {UserAdmin} from '../../../../enterprise/src/models/user'
 
@@ -184,7 +184,11 @@ class AdminAppointmentController implements IControllerBase {
       const appointmentsState: AppointmentsState[] = await Promise.all(
         appointmentIds.map(async (appointmentId) => ({
           appointmentId,
-          state: await this.appointmentService.addTransportRun(appointmentId, transportRunId, admin.authUserId),
+          state: await this.appointmentService.addTransportRun(
+            appointmentId,
+            transportRunId,
+            admin.authUserId,
+          ),
         })),
       )
 
@@ -248,10 +252,14 @@ class AdminAppointmentController implements IControllerBase {
         blockDuplicate,
       )
 
-      await this.appointmentService.updateAppointmentDB(appointment.id, {
-        appointmentStatus: AppointmentStatus.received,
-        location,
-      }, admin.authUserId)
+      await this.appointmentService.updateAppointmentDB(
+        appointment.id,
+        {
+          appointmentStatus: AppointmentStatus.received,
+          location,
+        },
+        admin.authUserId,
+      )
 
       res.json(actionSucceed())
     } catch (error) {
@@ -278,10 +286,14 @@ class AdminAppointmentController implements IControllerBase {
 
       await Promise.all(
         appointmentIds.map((id) => {
-          this.appointmentService.updateAppointmentDB(id, {
-            testRunId,
-            appointmentStatus: AppointmentStatus.inProgress,
-          }, admin.authUserId)
+          this.appointmentService.updateAppointmentDB(
+            id,
+            {
+              testRunId,
+              appointmentStatus: AppointmentStatus.inProgress,
+            },
+            admin.authUserId,
+          )
         }),
       )
 

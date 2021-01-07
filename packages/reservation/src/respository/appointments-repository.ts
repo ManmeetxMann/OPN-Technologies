@@ -2,7 +2,11 @@ import {firestore} from 'firebase-admin'
 
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
-import {AppointmentDBModel, AppointmentModelBase, AppointmentStatusHistoryDb} from '../models/appointment'
+import {
+  AppointmentDBModel,
+  AppointmentModelBase,
+  AppointmentStatusHistoryDb,
+} from '../models/appointment'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'

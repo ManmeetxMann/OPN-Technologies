@@ -142,12 +142,11 @@ export type AppointmentsState = {
   state: AppointmentAttachTransportStatus
 }
 
-
 export type AppointmentStatusHistory = {
-  newStatus: AppointmentStatus,
-  previousStatus: AppointmentStatus,
-  createdOn: Date,
-  createdBy: string,
+  newStatus: AppointmentStatus
+  previousStatus: AppointmentStatus
+  createdOn: Date
+  createdBy: string
 }
 
 export type AppointmentStatusHistoryDb = AppointmentStatusHistory & {
