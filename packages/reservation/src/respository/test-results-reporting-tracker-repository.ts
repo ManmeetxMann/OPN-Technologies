@@ -3,7 +3,7 @@ import DataStore from '../../../common/src/data/datastore'
 import {
   TestResultsReportingTrackerDBModel,
   TestResultsReportingTrackerPCRResultsDBModel,
-} from '../models/test-results-reporting'
+} from '../models/pcr-test-results'
 
 export class TestResultsReportingTrackerRepository extends DataModel<
   TestResultsReportingTrackerDBModel

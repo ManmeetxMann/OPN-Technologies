@@ -8,7 +8,7 @@ import loggerMiddleware from '../../common/src/middlewares/logger'
 import AdminController from './controllers/admin.controller'
 import PortalController from './controllers/portal.controller'
 import PCRTestResultController from './controllers/v1/admin/pcr-test-results.controller'
-import ProcessPCRResultsReporting from './controllers/v1/internal/process-pcr-test-results-reporting.controller'
+import ProcessPCRResultController from './controllers/v1/internal/process-pcr-test-result.controller'
 import WebhookController from './controllers/webhook.controller'
 import TestResultController from './controllers/v1/admin.test-results.controller.ts'
 import PackageController from './controllers/v1/admin.package.controller'
@@ -41,7 +41,7 @@ const app = new App({
     new TransportRunsController(),
     new AppointmentWebhookController(),
     new TestRunsController(),
-    new ProcessPCRResultsReporting(),
+    new ProcessPCRResultController(),
     new PCRTestResultController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],

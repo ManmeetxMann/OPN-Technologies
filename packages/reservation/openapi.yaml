@@ -383,9 +383,13 @@ components:
         reportTrackerId:
           type: string
           description: Report Tracker ID
+        resultId:
+          type: string
+          description: Stored Result ID
         
       required:
         - reportTrackerId
+        - resultId
 
 paths:
   /admin/page/next-bar-code:
@@ -1262,7 +1266,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PCRTestResultsResponse200'
 
-  /reservation/internal/api/v1/process-pcr-test-results:
+  /reservation/internal/api/v1/process-pcr-test-result:
     post:
       description: Process PCR Results 
       requestBody:
