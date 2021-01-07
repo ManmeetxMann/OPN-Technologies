@@ -988,9 +988,13 @@ class OrganizationController implements IControllerBase {
         .map((trace) => {
           const exposures = trace.exposures.map((exposure) => {
             const overlapping = exposure.overlapping
-              .filter((overlap) =>
-                isParentUser ? !overlap.sourceDependantId : overlap.sourceDependantId === userId,
-              )
+              .filter((overlap) => {
+                if (isParentUser) {
+                  return overlap.sourceUserId === userId && !overlap.sourceDependantId
+                } else {
+                  return overlap.sourceDependantId === userId
+                }
+              })
               .filter(
                 (overlap) =>
                   //@ts-ignore these are timestamps, not strings
@@ -1107,9 +1111,13 @@ class OrganizationController implements IControllerBase {
             organizationId,
             location: locationsById[locationId],
             overlapping: overlapping
-              .filter(
-                (overlap) => (parentUserId ? overlap.dependant?.id : overlap.userId) === userId,
-              )
+              .filter((overlap) => {
+                if (parentUserId) {
+                  return overlap.dependant?.id === userId
+                } else {
+                  return overlap.userId === userId && !overlap.dependant
+                }
+              })
               .filter(
                 (overlap) =>
                   //@ts-ignore these are timestamps, not strings
