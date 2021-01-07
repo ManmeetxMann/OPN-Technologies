@@ -1037,7 +1037,7 @@ class OrganizationController implements IControllerBase {
           organizationId,
           location: locationsById[locationId],
           overlapping: overlapping.map((overlap) => {
-            const userId = overlap.dependant.id ?? overlap.userId
+            const userId = overlap.dependant?.id ?? overlap.userId
             return {
               userId,
               status: statusesLookup[userId] ?? PassportStatuses.Pending,
