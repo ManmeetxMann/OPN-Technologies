@@ -10,6 +10,33 @@ components:
       bearerFormat: JWT
 
   schemas:
+    Response:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          nullable: true
+          type: object
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+              
     TestResult200:
       type: object
       deprecated: false
@@ -146,6 +173,7 @@ components:
             message:
               nullable: true
               type: string
+
     AppointmentTransportRunResponse200:
       type: object
       additionalProperties: false
@@ -216,6 +244,33 @@ components:
               nullable: true
               type: string
 
+    PCRTestResultsResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
     AppointmentResponse:
       type: object
       additionalProperties: false
@@ -243,6 +298,98 @@ components:
               nullable: true
               type: string
 
+    PCRTestResultsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reportTrackerId:
+          type: string
+        resultDate:
+          type: string
+        results:
+          type: array
+          items:
+              type: object
+              required:
+                - action
+                - autoResult
+                - barCode
+                - calRed61Ct
+                - calRed61RdRpGene
+                - famCt
+                - famEGene
+                - hexCt
+                - hexIC
+                - quasar670Ct
+                - quasar670NGene
+              properties:
+                action:
+                  type: string
+                  default: NoOverwrite
+                  enum:
+                    - NoOverwrite
+                    - DoNothing
+                    - ReRunToday
+                    - ReRunTomorrow
+                    - RequestReSample
+                    - MarkAsPositive
+                    - MarkAsNegative
+                autoResult:
+                  type: string
+                  enum:
+                    - Positive
+                    - Negative
+                    - 2019-nCoV Detected
+                    - Invalid
+                    - Inconclusive
+                barCode:
+                  type: string
+                  minLength: 1
+                calRed61RdRpGene:
+                  type: string
+                  minLength: 1
+                calRed61Ct:
+                  type: string
+                  minLength: 1
+                famEGene:
+                  type: string
+                  minLength: 1
+                famCt:
+                  type: string
+                  minLength: 1
+                hexIC:
+                  type: string
+                  minLength: 1
+                hexCt:
+                  type: string
+                  minLength: 1
+                notify:
+                  type: boolean
+                  default: false  
+                quasar670NGene:
+                  type: string
+                  minLength: 1
+                quasar670Ct:
+                  type: string
+                  minLength: 1
+      required:
+        - results
+        - resultDate
+
+    ProcessPCRResultsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reportTrackerId:
+          type: string
+          description: Report Tracker ID
+        resultId:
+          type: string
+          description: Stored Result ID
+        
+      required:
+        - reportTrackerId
+        - resultId
 
 paths:
   /admin/page/next-bar-code:
@@ -1002,7 +1149,6 @@ paths:
               schema:
                 type: string
 
-
   /reservation/admin/api/v1/test-runs:
     get:
       description: Get list of Test Runs by date
@@ -1099,3 +1245,39 @@ paths:
             application/json:
               schema:
                 type: string
+
+  /reservation/admin/api/v1/pcr-test-results:
+    post:
+      description: Send PCR Results
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PCRTestResultsRequest'
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PCRTestResultsResponse200'
+
+  /reservation/internal/api/v1/process-pcr-test-result:
+    post:
+      description: Process PCR Results 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessPCRResultsRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'

@@ -11,11 +11,7 @@ import {PdfService} from '../../../common/src/service/reports/pdf'
 import {Config} from '../../../common/src/utils/config'
 
 import template from '../templates/testResult'
-import {
-  TestResultsDTOForEmail,
-  TestResultsDBModel,
-  TestResultForPagination,
-} from '../models/test-result'
+import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/test-result'
 
 export class TestResultsService {
   private testResultEmailTemplateId = (Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ??
@@ -82,39 +78,5 @@ export class TestResultsService {
 
   async getResults(barCode: string): Promise<TestResultsDBModel> {
     return this.testResultsDBRepository.get(barCode)
-  }
-
-  async getResultsByPackageCode(packageCode: string): Promise<TestResultsDBModel[]> {
-    return this.testResultsDBRepository.findWhereEqual('packageCode', packageCode)
-  }
-
-  async getAllByOrganizationId(
-    organizationId: string,
-    dateOfAppointmentStr: string,
-    page: number,
-    perPage: number,
-  ): Promise<TestResultForPagination[]> {
-    const testResultQuery = this.testResultsDBRepository.getQueryFindWhereEqual(
-      'organizationId',
-      organizationId,
-    )
-
-    testResultQuery.where('dateOfAppointment', '==', dateOfAppointmentStr)
-
-    const testResults = await this.testResultsDBRepository.fetchPage(testResultQuery, page, perPage)
-
-    return testResults.map(
-      (result: TestResultsDBModel): TestResultForPagination => ({
-        barCode: result.barCode,
-        firstName: result.firstName,
-        lastName: result.lastName,
-        result: result.result,
-        resultDate: result.resultDate,
-        dateOfAppointment: result.dateOfAppointment,
-        timeOfAppointment: result.timeOfAppointment,
-        testType: 'PCR',
-        id: result.id,
-      }),
-    )
   }
 }
