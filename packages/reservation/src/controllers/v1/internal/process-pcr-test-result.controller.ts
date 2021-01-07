@@ -1,5 +1,5 @@
 import {NextFunction, Request, Response, Router} from 'express'
-import {ProcessPCRResultRequest} from 'packages/reservation/src/models/pcr-test-results'
+import {ProcessPCRResultRequest} from '../../../models/pcr-test-results'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
