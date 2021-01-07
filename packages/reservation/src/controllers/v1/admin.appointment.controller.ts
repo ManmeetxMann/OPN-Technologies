@@ -6,7 +6,6 @@ import {adminAuthMiddleware} from '../../../../common/src/middlewares/admin.auth
 
 import {
   AppointmentByOrganizationRequest,
-  AppointmentStatus,
   appointmentUiDTOResponse,
   Label,
   AppointmentsState,
@@ -15,8 +14,9 @@ import {
 import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
-import {now, isValidDate} from '../../../../common/src/utils/times'
+import {isValidDate} from '../../../../common/src/utils/times'
 import {TransportRunsService} from '../../services/transport-runs.service'
+import {getAdminId} from '../../../../common/src/utils/auth'
 
 const isJustOneOf = (a: unknown, b: unknown) => !(a && b) || !(!a && !b)
 
@@ -168,6 +168,8 @@ class AdminAppointmentController implements IControllerBase {
 
   addTransportRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const adminId = getAdminId(res.locals.authenticatedUser)
+
       const {appointmentIds, transportRunId} = req.body as {
         appointmentIds: string[]
         transportRunId: string
@@ -182,7 +184,11 @@ class AdminAppointmentController implements IControllerBase {
       const appointmentsState: AppointmentsState[] = await Promise.all(
         appointmentIds.map(async (appointmentId) => ({
           appointmentId,
-          state: await this.appointmentService.addTransportRun(appointmentId, transportRunId),
+          state: await this.appointmentService.addTransportRun(
+            appointmentId,
+            transportRunId,
+            adminId,
+          ),
         })),
       )
 
@@ -236,6 +242,8 @@ class AdminAppointmentController implements IControllerBase {
 
   updateTestVoile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const adminId = getAdminId(res.locals.authenticatedUser)
+
       const {barCode} = req.params as {barCode: string}
       const {location} = req.body as {location: string}
       const blockDuplicate = true
@@ -244,11 +252,7 @@ class AdminAppointmentController implements IControllerBase {
         blockDuplicate,
       )
 
-      await this.appointmentService.updateAppointmentDB(appointment.id, {
-        appointmentStatus: AppointmentStatus.received,
-        location,
-        receivedAt: now(),
-      })
+      await this.appointmentService.makeReceived(appointment.id, location, adminId)
 
       res.json(actionSucceed())
     } catch (error) {
@@ -262,6 +266,8 @@ class AdminAppointmentController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
+      const adminId = getAdminId(res.locals.authenticatedUser)
+
       const {appointmentIds, testRunId} = req.body as {
         appointmentIds: string[]
         testRunId: string[]
@@ -272,13 +278,7 @@ class AdminAppointmentController implements IControllerBase {
       }
 
       await Promise.all(
-        appointmentIds.map((id) => {
-          this.appointmentService.updateAppointmentDB(id, {
-            testRunId,
-            appointmentStatus: AppointmentStatus.inProgress,
-            inProgressAt: now(),
-          })
-        }),
+        appointmentIds.map((id) => this.appointmentService.makeInProgress(id, testRunId, adminId)),
       )
 
       res.json(actionSucceed())

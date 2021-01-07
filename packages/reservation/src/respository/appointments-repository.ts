@@ -2,7 +2,11 @@ import {firestore} from 'firebase-admin'
 
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
-import {AppointmentDBModel, AppointmentModelBase} from '../models/appointment'
+import {
+  AppointmentDBModel,
+  AppointmentModelBase,
+  AppointmentStatusHistoryDb,
+} from '../models/appointment'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
@@ -26,5 +30,14 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     }
 
     return this.updateProperties(id, data)
+  }
+}
+
+export class StatusHistoryRepository extends DataModel<AppointmentStatusHistoryDb> {
+  public rootPath
+  readonly zeroSet = []
+  constructor(dataStore: DataStore, organizationId: string) {
+    super(dataStore)
+    this.rootPath = `appointments/${organizationId}/status-history`
   }
 }
