@@ -1,6 +1,11 @@
+import moment from 'moment'
 import DataStore from '../../../common/src/data/datastore'
 
+import { Config } from '../../../common/src/utils/config'
 import {AppoinmentService} from './appoinment.service'
+
+import {EmailService} from '../../../common/src/service/messaging/email-service'
+import {PdfService} from '../../../common/src/service/reports/pdf'
 
 import {
   PCRTestResultsRepository
@@ -12,15 +17,19 @@ import {
 } from '../respository/test-results-reporting-tracker-repository'
 
 import {CreateReportForPCRResultsResponse,
-  ResultReportStatus,PCRTestResultRequest, PCRTestResultData, PCRResultActions} from '../models/pcr-test-results'
+  ResultReportStatus,PCRTestResultRequest, PCRTestResultData, PCRResultActions, AppointmentDataForPCRResult, PCRTestResultEmailDTO, PCRTestResultDBModel} from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import { ResultTypes } from '../models/appointment'
+import testResultPDFTemplate from '../templates/testResult'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.datastore)
+  private appointmentService = new AppoinmentService()
+  private emailService = new EmailService()
+  private pdfService = new PdfService()
 
   async createReportForPCRResults(
     testResultData: PCRTestResultRequest,
@@ -90,7 +99,6 @@ export class PCRTestResultsService {
 
     await testResultsReportingTrackerPCRResult.updateProperty(resultId, 'status', ResultReportStatus.Processing)
     await this.handlePCRResultSaveAndSend(pcrResults.data)
-    console.log(pcrResults)
   }
 
   async handlePCRResultSaveAndSend(resultData:PCRTestResultData): Promise<void> {
@@ -127,22 +135,59 @@ export class PCRTestResultsService {
       } 
     } 
 
-    await this.savePCRResults(resultData, finalResult)
-  }
+    const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
 
-  async savePCRResults(resultData:PCRTestResultData, finalResult:string): Promise<void> {
-    const appointmentService = new AppoinmentService()
-    const appointment = await appointmentService.getAppointmentByBarCode(resultData.barCode)
-    //Save PCR Result
+    //Save PCR Test results
     delete resultData.action
     delete resultData.notify
-    this.pcrTestResultsRepository.save({
+    const pcrResultDataForDb = {
       ...resultData, 
-      result: finalResult,
+      result:finalResult,
       firstName: appointment.firstName,
       lastName: appointment.lastName,
       appointmentId: appointment.id
-    }) 
+    }
+    await this.pcrTestResultsRepository.save(pcrResultDataForDb)
+
+    const pcrResultDataForEmail = {
+      ...pcrResultDataForDb,
+      email: appointment.email,
+      phone: appointment.phone,
+      dateOfBirth: appointment.dateOfBirth,
+      dateTime: appointment.dateTime,
+      dateOfAppointment: appointment.dateOfAppointment,
+      timeOfAppointment: appointment.timeOfAppointment,
+      registeredNursePractitioner: appointment.registeredNursePractitioner
+    }
+    await this.sendTestResults(pcrResultDataForEmail)
   }
 
+  async sendTestResults(
+    testResults: PCRTestResultEmailDTO
+  ): Promise<void> {
+    const resultDate = moment(testResults.resultDate).format('LL')
+
+    const {content, tableLayouts} = testResultPDFTemplate(testResults, resultDate)
+    const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
+
+    this.emailService.send({
+      templateId: (Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2) as number,
+      to: [{email: testResults.email, name: `${testResults.firstName} ${testResults.lastName}`}],
+      params: {
+        BARCODE: testResults.barCode,
+        DATE_OF_RESULT: resultDate,
+      },
+      attachment: [
+        {
+          content: pdfContent,
+          name: `FHHealth.ca Result - ${testResults.barCode} - ${resultDate}.pdf`,
+        },
+      ],
+      bcc: [
+        {
+          email: Config.get('TEST_RESULT_BCC_EMAIL')
+        },
+      ],
+    })
+  }
 }

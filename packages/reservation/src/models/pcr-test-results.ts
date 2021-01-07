@@ -31,14 +31,28 @@ export type PCRTestResultData = {
   notify: boolean
   quasar670Ct: string
   quasar670NGene: string
+  resultDate: Date
 }
 
-export type PCRTestResultDBModel = Omit<PCRTestResultData, "action"|"notify"> & {
-  id: string
-  result: ResultTypes
+export type AppointmentDataForPCRResult = {
   firstName: string
   lastName: string
   appointmentId: string
+}
+
+export type PCRTestResultDBModel = Omit<PCRTestResultData, "action"|"notify"> & AppointmentDataForPCRResult & {
+  id: string
+  result: ResultTypes
+}
+
+export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, "id"> & {
+  email: string
+  phone: number
+  dateOfBirth: string
+  registeredNursePractitioner?: string
+  dateOfAppointment: string
+  timeOfAppointment: string
+  dateTime: string
 }
 
 export type PCRTestResultRequest = {
