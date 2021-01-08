@@ -163,6 +163,14 @@ export enum AppointmentAttachTransportStatus {
   Failed = 'failed',
 }
 
+export enum AppointmentWebhookActions {
+  Scheduled = 'scheduled',
+  Rescheduled = 'rescheduled',
+  Canceled = 'canceled',
+  Changed = 'changed',
+  OrderCompleted = 'order.completed',
+}
+
 export enum Label {
   SameDay = 'SameDay',
   NextDay = 'NextDay',
