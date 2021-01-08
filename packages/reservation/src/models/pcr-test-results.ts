@@ -59,6 +59,7 @@ export type PCRTestResultDBModel = PCRTestResultData &
   AppointmentDataForPCRResult & {
     id: string
     result: ResultTypes
+    waitingResult: boolean
   }
 
 export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, 'id'> & {

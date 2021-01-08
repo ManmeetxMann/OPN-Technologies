@@ -21,11 +21,13 @@ import {
   PCRTestResultData,
   PCRResultActions,
   PCRTestResultEmailDTO,
+  PCRTestResultDBModel,
 } from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import testResultPDFTemplate from '../templates/pcrTestResult'
 import {ResultTypes} from '../models/appointment'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -126,6 +128,23 @@ export class PCRTestResultsService {
     return finalResult
   }
 
+  async getTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
+      'barCode',
+      barCodeNumber,
+    )
+
+    if (!pcrTestResults || pcrTestResults.length == 0) {
+      throw new ResourceNotFoundException(`PCRTestResult with barCode ${barCodeNumber} not found`)
+    }
+    const pcrTestResult = pcrTestResults.filter((result) => result.waitingResult)
+    if (!pcrTestResult || pcrTestResult.length == 0) {
+      throw new ResourceNotFoundException(`No Results are waiting for barcode: ${barCodeNumber}`)
+    }
+    //Only one Result should be waiting
+    return pcrTestResult[0]
+  }
+
   async handlePCRResultSaveAndSend(resultData: PCRTestResultData): Promise<void> {
     const finalResult = this.getFinalResult(
       resultData.resultSpecs.action,
@@ -133,6 +152,7 @@ export class PCRTestResultsService {
       resultData.barCode,
     )
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
+    const testResult = await this.getTestResultByBarCode(resultData.barCode)
 
     await this.updateAppointmentStatus(resultData, appointment.id)
 
@@ -145,8 +165,10 @@ export class PCRTestResultsService {
       appointmentId: appointment.id,
       organizationId: appointment.organizationId,
       dateOfAppointment: appointment.dateOfAppointment,
+      waitingResult: false,
     }
-    await this.pcrTestResultsRepository.save(pcrResultDataForDb)
+    await this.pcrTestResultsRepository.updateProperties(testResult.id, pcrResultDataForDb)
+    //await this.pcrTestResultsRepository.save(pcrResultDataForDb)
 
     //Send Notification
     if (resultData.resultSpecs.notify) {
