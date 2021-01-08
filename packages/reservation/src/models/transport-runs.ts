@@ -1,6 +1,8 @@
+import {firestore} from 'firebase-admin'
+
 export type TransportRunsBase = {
   transportRunId: string
-  transportDateTime: string
+  transportDateTime: firestore.Timestamp
   driverName: string
 }
 

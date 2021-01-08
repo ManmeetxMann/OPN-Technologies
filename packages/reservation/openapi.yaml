@@ -114,6 +114,8 @@ components:
               type: string
             deadline:
               type: string
+            latestResult:
+              type: string
           required:
             - id
             - firstName
@@ -151,7 +153,8 @@ components:
               transportRunId:
                 type: string
               transportDateTime:
-                type: string
+                  type: string
+                  format: date-time
               driverName:
                 type: string
         status:
@@ -181,19 +184,18 @@ components:
         data:
           type: array
           additionalProperties: false
-          properties:
-            items:
-              type: object
-              properties:
-                appointmentId:
-                  type: string
-                state:
-                  type: string
-                  enum:
-                    [
-                      succeed,
-                      failed
-                    ]
+          items:
+            type: object
+            properties:
+              appointmentId:
+                type: string
+              state:
+                type: string
+                enum:
+                  [
+                    succeed,
+                    failed
+                  ]
         status:
           type: object
           additionalProperties: false

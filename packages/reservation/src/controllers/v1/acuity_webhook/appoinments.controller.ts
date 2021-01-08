@@ -111,7 +111,7 @@ class AppointmentWebhookController implements IControllerBase {
           packageCode: appointment.certificate,
           phone: appointment.phone,
           registeredNursePractitioner: appointment.registeredNursePractitioner,
-          result: ResultTypes.Pending,
+          latestResult: ResultTypes.Pending,
           timeOfAppointment,
         }
         await this.appoinmentService.saveAppointmentData(data)

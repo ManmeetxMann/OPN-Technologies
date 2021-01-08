@@ -40,7 +40,7 @@ export type AppointmentModelBase = {
   phone: number
   receivedAt?: Date
   registeredNursePractitioner?: string
-  result: ResultTypes
+  latestResult: ResultTypes
   testRunId?: string[]
   timeOfAppointment: string
   transportRunId?: string
@@ -139,11 +139,23 @@ export type AppointmentUiDTO = {
   location?: string
   transportRunId?: string
   deadline?: string
+  latestResult?: string
 }
 
 export type AppointmentsState = {
   appointmentId: string
   state: AppointmentAttachTransportStatus
+}
+
+export type AppointmentStatusHistory = {
+  newStatus: AppointmentStatus
+  previousStatus: AppointmentStatus
+  createdOn: Date
+  createdBy: string
+}
+
+export type AppointmentStatusHistoryDb = AppointmentStatusHistory & {
+  id: string
 }
 
 export enum AppointmentAttachTransportStatus {
@@ -169,5 +181,6 @@ export const appointmentUiDTOResponse = (appointment: AppointmentDBModel): Appoi
     dateOfBirth: appointment.dateOfBirth,
     transportRunId: appointment.transportRunId,
     deadline: moment(appointment.deadline).tz(timeZone).format(),
+    latestResult: appointment.latestResult,
   }
 }
