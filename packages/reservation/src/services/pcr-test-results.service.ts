@@ -25,7 +25,7 @@ import {
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import testResultPDFTemplate from '../templates/testResult'
-import { ResultTypes } from '../models/appointment'
+import {ResultTypes} from '../models/appointment'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
