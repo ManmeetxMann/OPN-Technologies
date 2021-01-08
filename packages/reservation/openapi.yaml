@@ -1372,3 +1372,91 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+
+  /reservation/admin/api/v2/appointments/add-labels:
+    put:
+      description: Add SameDay/NextDay Labesl to Appointments
+      tags:
+        - Appointment Management v2
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                appointmentIds:
+                  type: array
+                  items: 
+                    type: string
+                label:
+                  type: string
+                  enum:
+                    - SameDay
+                    - NextDay
+              required:
+                - appointmentIds
+                - label
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: number
+                        firstName:
+                          type: string
+                        lastName:
+                          type: string
+                        status:
+                          type: string
+                        barCode:
+                          type: string
+                        location:
+                          type: string
+                        dateTime:
+                          type: string
+                        dateOfBirth:
+                          type: string
+                        transportRunId:
+                          type: string
+                        deadline:
+                          type: string
+                      required:
+                        - id
+                        - firstName
+                        - lastName
+                        - barCode
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          [
+                              succeed,
+                              failed,
+                              validation_error,
+                              internal_server_error,
+                              unauthorized,
+                              access_denied,
+                              resource_not_found,
+                          ]
+                      message:
+                        nullable: true
+                        type: string
+                  page: 
+                    type: number
