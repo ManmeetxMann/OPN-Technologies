@@ -21,11 +21,13 @@ import {
   PCRTestResultData,
   PCRResultActions,
   PCRTestResultEmailDTO,
+  PCRTestResultDBModel,
 } from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
+import testResultPDFTemplate from '../templates/pcrTestResult'
 import {ResultTypes} from '../models/appointment'
-import testResultPDFTemplate from '../templates/testResult'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -103,89 +105,128 @@ export class PCRTestResultsService {
       'status',
       ResultReportStatus.Processing,
     )
-    await this.handlePCRResultSaveAndSend(pcrResults.data)
+    await this.handlePCRResultSaveAndSend({
+      barCode: pcrResults.data.barCode,
+      resultSpecs: pcrResults.data,
+    })
   }
 
-  async handlePCRResultSaveAndSend(resultData: PCRTestResultData): Promise<void> {
-    let finalResult = resultData.autoResult
-    let sendNotification = resultData.notify
-    switch (resultData.action) {
-      case PCRResultActions.DoNothing: {
-        console.log('Nothing')
-        break
-      }
-      case PCRResultActions.ReRunToday: {
-        console.log('ReRunToday')
-        break
-      }
-      case PCRResultActions.ReRunTomorrow: {
-        console.log('ReRunTomorrow')
-        break
-      }
-      case PCRResultActions.RequestReSample: {
-        console.log('RequestReSample')
-        break
-      }
+  getFinalResult(action: PCRResultActions, autoResult: ResultTypes, barCode: string): ResultTypes {
+    let finalResult = autoResult
+    switch (action) {
       case PCRResultActions.MarkAsNegative: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
         finalResult = ResultTypes.Negative
         break
       }
       case PCRResultActions.MarkAsPositive: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as Positive`)
         finalResult = ResultTypes.Positive
         break
       }
-      default: {
-        sendNotification = true
-        break
-      }
     }
+    return finalResult
+  }
 
+  async getTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
+      'barCode',
+      barCodeNumber,
+    )
+
+    if (!pcrTestResults || pcrTestResults.length == 0) {
+      throw new ResourceNotFoundException(`PCRTestResult with barCode ${barCodeNumber} not found`)
+    }
+    const pcrTestResult = pcrTestResults.filter((result) => result.waitingResult)
+    if (!pcrTestResult || pcrTestResult.length == 0) {
+      throw new ResourceNotFoundException(`No Results are waiting for barcode: ${barCodeNumber}`)
+    }
+    //Only one Result should be waiting
+    return pcrTestResult[0]
+  }
+
+  async handlePCRResultSaveAndSend(resultData: PCRTestResultData): Promise<void> {
+    const finalResult = this.getFinalResult(
+      resultData.resultSpecs.action,
+      resultData.resultSpecs.autoResult,
+      resultData.barCode,
+    )
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
+    const testResult = await this.getTestResultByBarCode(resultData.barCode)
+
+    await this.updateAppointmentStatus(resultData, appointment.id)
 
     //Save PCR Test results
-    delete resultData.action
-    delete resultData.notify
     const pcrResultDataForDb = {
       ...resultData,
       result: finalResult,
       firstName: appointment.firstName,
       lastName: appointment.lastName,
       appointmentId: appointment.id,
-    }
-    await this.pcrTestResultsRepository.save(pcrResultDataForDb)
-
-    const pcrResultDataForEmail = {
-      ...pcrResultDataForDb,
-      email: appointment.email,
-      phone: appointment.phone,
-      dateOfBirth: appointment.dateOfBirth,
-      dateTime: appointment.dateTime,
+      organizationId: appointment.organizationId,
       dateOfAppointment: appointment.dateOfAppointment,
-      timeOfAppointment: appointment.timeOfAppointment,
-      registeredNursePractitioner: appointment.registeredNursePractitioner,
+      waitingResult: false,
+      displayForNonAdmins: true,
     }
-    if (sendNotification) {
-      await this.sendTestResults(pcrResultDataForEmail)
+    await this.pcrTestResultsRepository.updateProperties(testResult.id, pcrResultDataForDb)
+    //await this.pcrTestResultsRepository.save(pcrResultDataForDb)
+
+    //Send Notification
+    if (resultData.resultSpecs.notify) {
+      const pcrResultDataForEmail = {
+        ...pcrResultDataForDb,
+        email: appointment.email,
+        phone: appointment.phone,
+        dateOfBirth: appointment.dateOfBirth,
+        dateTime: appointment.dateTime,
+        timeOfAppointment: appointment.timeOfAppointment,
+        registeredNursePractitioner: appointment.registeredNursePractitioner,
+      }
+      this.sendNotification(pcrResultDataForEmail)
     }
   }
 
-  async sendTestResults(testResults: PCRTestResultEmailDTO): Promise<void> {
-    const resultDate = moment(testResults.resultDate).format('LL')
+  async sendNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+    switch (resultData.resultSpecs.action) {
+      case PCRResultActions.ReRunToday: {
+        console.log(`SendNotification: ${resultData.barCode} ReRunToday`)
+        await this.sendRerunNotification(resultData, 'TODAY')
+        break
+      }
+      case PCRResultActions.ReRunTomorrow: {
+        console.log(`SendNotification: ${resultData.barCode} ReRunTomorrow`)
+        await this.sendRerunNotification(resultData, 'Tomorrow')
+        break
+      }
+      case PCRResultActions.RequestReSample: {
+        console.log(`SendNotification: ${resultData.barCode} RequestReSample`)
+        //await this.sendReSampleNotification(resultData, 'H7KSSSGH6')
+        const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
+        console.log(appointmentBookingBaseURL)
+        break
+      }
+      default: {
+        await this.sendTestResults(resultData)
+      }
+    }
+  }
 
-    const {content, tableLayouts} = testResultPDFTemplate(testResults, resultDate)
+  async sendTestResults(resultData: PCRTestResultEmailDTO): Promise<void> {
+    const resultDate = moment(resultData.resultSpecs.resultDate).format('LL')
+    const {content, tableLayouts} = testResultPDFTemplate(resultData, resultDate)
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
     this.emailService.send({
       templateId: (Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2) as number,
-      to: [{email: testResults.email, name: `${testResults.firstName} ${testResults.lastName}`}],
+      to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
-        BARCODE: testResults.barCode,
+        BARCODE: resultData.barCode,
         DATE_OF_RESULT: resultDate,
       },
       attachment: [
         {
           content: pdfContent,
-          name: `FHHealth.ca Result - ${testResults.barCode} - ${resultDate}.pdf`,
+          name: `FHHealth.ca Result - ${resultData.barCode} - ${resultDate}.pdf`,
         },
       ],
       bcc: [
@@ -194,5 +235,67 @@ export class PCRTestResultsService {
         },
       ],
     })
+  }
+
+  async sendRerunNotification(resultData: PCRTestResultEmailDTO, day: string): Promise<void> {
+    this.emailService.send({
+      templateId: (Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 4) as number,
+      to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
+      params: {
+        DAY: day,
+      },
+      bcc: [
+        {
+          email: Config.get('TEST_RESULT_BCC_EMAIL'),
+        },
+      ],
+    })
+  }
+
+  async sendReSampleNotification(
+    resultData: PCRTestResultEmailDTO,
+    packageCode: string,
+  ): Promise<void> {
+    this.emailService.send({
+      templateId: (Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 5) as number,
+      to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
+      params: {
+        PACKAGE_CODE: packageCode,
+      },
+      bcc: [
+        {
+          email: Config.get('TEST_RESULT_BCC_EMAIL'),
+        },
+      ],
+    })
+  }
+
+  async updateAppointmentStatus(
+    resultData: PCRTestResultData,
+    appointmentId: string,
+  ): Promise<void> {
+    switch (resultData.resultSpecs.action) {
+      case PCRResultActions.ReRunToday: {
+        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for today`)
+        await this.appointmentService.changeStatusToReRunRequired(appointmentId, true)
+        break
+      }
+      case PCRResultActions.ReRunTomorrow: {
+        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for tomorrow`)
+        await this.appointmentService.changeStatusToReRunRequired(appointmentId, false)
+        break
+      }
+      case PCRResultActions.RequestReSample: {
+        console.log(`TestResultReSample: ${resultData.barCode} is requested`)
+        await this.appointmentService.changeStatusToReSampleRequired(appointmentId)
+        break
+      }
+    }
+  }
+
+  async saveDefaultTestResults(
+    defaultTestResults: Omit<PCRTestResultDBModel, 'id'>,
+  ): Promise<void> {
+    await this.pcrTestResultsRepository.save(defaultTestResults)
   }
 }

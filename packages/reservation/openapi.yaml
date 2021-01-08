@@ -300,7 +300,7 @@ components:
               nullable: true
               type: string
 
-    PCRTestResultsRequest:
+    PCRTestResultsRequestBulk:
       type: object
       additionalProperties: false
       properties:
@@ -377,6 +377,75 @@ components:
       required:
         - results
         - resultDate
+
+    PCRTestResultsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        resultDate:
+          type: string
+        action:
+          type: string
+          default: NoOverwrite
+          enum:
+            - NoOverwrite
+            - DoNothing
+            - ReRunToday
+            - ReRunTomorrow
+            - RequestReSample
+            - MarkAsPositive
+            - MarkAsNegative
+        autoResult:
+          type: string
+          enum:
+            - Positive
+            - Negative
+            - 2019-nCoV Detected
+            - Invalid
+            - Inconclusive
+        barCode:
+          type: string
+          minLength: 1
+        calRed61RdRpGene:
+          type: string
+          minLength: 1
+        calRed61Ct:
+          type: string
+          minLength: 1
+        famEGene:
+          type: string
+          minLength: 1
+        famCt:
+          type: string
+          minLength: 1
+        hexIC:
+          type: string
+          minLength: 1
+        hexCt:
+          type: string
+          minLength: 1
+        notify:
+          type: boolean
+          default: false  
+        quasar670NGene:
+          type: string
+          minLength: 1
+        quasar670Ct:
+          type: string
+          minLength: 1
+      required:
+        - resultDate
+        - action
+        - autoResult
+        - barCode
+        - calRed61Ct
+        - calRed61RdRpGene
+        - famCt
+        - famEGene
+        - hexCt
+        - hexIC
+        - quasar670Ct
+        - quasar670NGene
 
     ProcessPCRResultsRequest:
       type: object
@@ -1248,6 +1317,26 @@ paths:
               schema:
                 type: string
 
+  /reservation/admin/api/v1/pcr-test-results-bulk:
+    post:
+      description: Send Multiple PCR Results
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PCRTestResultsRequestBulk'
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PCRTestResultsResponse200'
+  
   /reservation/admin/api/v1/pcr-test-results:
     post:
       description: Send PCR Results

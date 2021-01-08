@@ -3,6 +3,7 @@ import {NextFunction, Request, Response, Router} from 'express'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
+import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {ScheduleWebhookRequest} from '../../../models/webhook'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isEmpty} from 'lodash'
@@ -16,6 +17,7 @@ class AppointmentWebhookController implements IControllerBase {
   public router = Router()
   private appoinmentService = new AppoinmentService()
   private packageService = new PackageService()
+  private pcrTestResultsService = new PCRTestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -31,7 +33,7 @@ class AppointmentWebhookController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {id} = req.body as ScheduleWebhookRequest
+      const {id, calendarID, appointmentTypeID} = req.body as ScheduleWebhookRequest
 
       const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
 
@@ -94,9 +96,11 @@ class AppointmentWebhookController implements IControllerBase {
         const {barCodeNumber, organizationId} = dataForUpdate
         const data = {
           acuityAppointmentId: appointment.id,
+          appointmentTypeID,
           appointmentStatus: AppointmentStatus.pending,
           barCode: appointment.barCode || barCodeNumber,
           canceled: appointment.canceled,
+          calendarID,
           dateOfAppointment,
           dateOfBirth: appointment.dateOfBirth,
           dateTime,
@@ -112,7 +116,22 @@ class AppointmentWebhookController implements IControllerBase {
           latestResult: ResultTypes.Pending,
           timeOfAppointment,
         }
-        await this.appoinmentService.saveAppointmentData(data)
+        const savedAppoinment = await this.appoinmentService.saveAppointmentData(data)
+        if (savedAppoinment) {
+          //Save Pending Test Results
+          const pcrResultDataForDb = {
+            barCode: appointment.barCode || barCodeNumber,
+            result: ResultTypes.Pending,
+            firstName: appointment.firstName,
+            lastName: appointment.lastName,
+            appointmentId: savedAppoinment.id,
+            organizationId: appointment.organizationId,
+            dateOfAppointment,
+            waitingResult: true,
+            displayForNonAdmins: true,
+          }
+          await this.pcrTestResultsService.saveDefaultTestResults(pcrResultDataForDb)
+        }
       } catch (e) {
         console.log(`WebhookController: SaveToTestResults Failed AppoinmentID: ${id}`)
         console.log(e)

@@ -3,7 +3,7 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
-import {PCRTestResultRequest} from '../../../models/pcr-test-results'
+import {PCRTestResultRequest, PCRTestResultRequestData} from '../../../models/pcr-test-results'
 import moment from 'moment'
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
@@ -20,9 +20,14 @@ class PCRTestResultController implements IControllerBase {
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
     innerRouter.post(
-      this.path + '/api/v1/pcr-test-results',
+      this.path + '/api/v1/pcr-test-results-bulk',
       adminAuthMiddleware,
       this.createReportForPCRResults,
+    )
+    innerRouter.post(
+      this.path + '/api/v1/pcr-test-results',
+      adminAuthMiddleware,
+      this.createPCRResults,
     )
 
     this.router.use('/', innerRouter)
@@ -47,6 +52,29 @@ class PCRTestResultController implements IControllerBase {
       const reportTracker = await this.pcrTestResultsService.createReportForPCRResults(data)
 
       res.json(actionSucceed(reportTracker))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  createPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = req.body as PCRTestResultRequestData
+      const timeZone = Config.get('DEFAULT_TIME_ZONE')
+      const fromDate = moment(now()).tz(timeZone).subtract(30, 'days').startOf('day')
+      const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
+
+      if (!moment(data.resultDate).isBetween(fromDate, toDate, undefined, '[]')) {
+        throw new BadRequestException(
+          `Date does not match the time range (from ${fromDate} - to ${toDate})`,
+        )
+      }
+      const sendResult = await this.pcrTestResultsService.handlePCRResultSaveAndSend({
+        barCode: data.barCode,
+        resultSpecs: data,
+      })
+
+      res.json(actionSucceed(sendResult))
     } catch (error) {
       next(error)
     }

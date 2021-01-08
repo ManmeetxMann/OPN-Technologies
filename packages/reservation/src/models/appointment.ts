@@ -8,6 +8,8 @@ export enum AppointmentStatus {
   received = 'received',
   inProgress = 'inProgress',
   reported = 'reported',
+  reRunRequired = 'reRunRequired',
+  reSampleRequired = 'reSampleRequired',
 }
 
 export enum ResultTypes {
@@ -42,6 +44,8 @@ export type AppointmentModelBase = {
   testRunId?: string[]
   timeOfAppointment: string
   transportRunId?: string
+  appointmentTypeID: number
+  calendarID: number
 }
 
 export type AppointmentDBModel = AppointmentModelBase & {
