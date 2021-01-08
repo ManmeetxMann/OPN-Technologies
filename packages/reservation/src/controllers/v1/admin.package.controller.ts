@@ -9,11 +9,16 @@ import {PackageService} from '../../services/package.service'
 
 import packageValidations from '../../validations/package.validations'
 import {SavePackageAndOrganizationRequest} from '../../models/packages'
+import { AppoinmentService } from '../../services/appoinment.service'
+import { PCRTestResultsService } from '../../services/pcr-test-results.service'
+
 
 class AdminController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private packageService = new PackageService()
+  private appointmentService = new AppoinmentService()
+  private pcrTestResultsService = new PCRTestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -23,7 +28,7 @@ class AdminController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.post(
       this.path + '/api/v1/packages',
-      authMiddleware,
+      // authMiddleware,
       packageValidations.packageValidation(),
       this.addPackageCode,
     )
@@ -45,6 +50,16 @@ class AdminController implements IControllerBase {
       const results = await this.packageService.savePackage(packageCode, organizationId)
 
       console.warn(`${results} updated for the organization ${organizationId}`)
+
+      const appointments = await this.appointmentService.getAppointmentDBByPackageCode(packageCode)
+
+      await Promise.all(appointments.map(async appointment => {
+        await this.appointmentService.updateAppointmentDB(
+          appointment.id,
+          {organizationId},
+        )
+        await this.pcrTestResultsService.updateOrganizationIdByAppointmentId(appointment.id, organizationId)
+      }))
 
       res.json(actionSucceed())
     } catch (error) {

@@ -155,6 +155,7 @@ export class PCRTestResultsService {
     const testResult = await this.getTestResultByBarCode(resultData.barCode)
 
     await this.updateAppointmentStatus(resultData, appointment.id)
+    await this.appointmentService.updateAppointmentDB(appointment.id, {organizationId: appointment.organizationId})
 
     //Save PCR Test results
     const pcrResultDataForDb = {
@@ -297,5 +298,11 @@ export class PCRTestResultsService {
     defaultTestResults: Omit<PCRTestResultDBModel, 'id'>,
   ): Promise<void> {
     await this.pcrTestResultsRepository.save(defaultTestResults)
+  }
+
+  async updateOrganizationIdByAppointmentId(appointmentId: string, organizationId: string): Promise<void> {
+    const pcrTest = await this.pcrTestResultsRepository.findWhereEqual('appointmentId', appointmentId)
+
+    await Promise.all(pcrTest.map(({id}) =>  this.pcrTestResultsRepository.updateProperties(id, {organizationId})))
   }
 }
