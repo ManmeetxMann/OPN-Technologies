@@ -60,6 +60,7 @@ export type PCRTestResultDBModel = PCRTestResultData &
     id: string
     result: ResultTypes
     waitingResult: boolean
+    displayForNonAdmins: boolean
   }
 
 export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, 'id'> & {
