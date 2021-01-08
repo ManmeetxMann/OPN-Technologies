@@ -7,7 +7,12 @@ import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {ScheduleWebhookRequest} from '../../../models/webhook'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isEmpty} from 'lodash'
-import {AppointmentStatus, AcuityUpdateDTO, ResultTypes, AppointmentWebhookActions} from '../../../models/appointment'
+import {
+  AppointmentStatus,
+  AcuityUpdateDTO,
+  ResultTypes,
+  AppointmentWebhookActions,
+} from '../../../models/appointment'
 import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
@@ -38,7 +43,7 @@ class AppointmentWebhookController implements IControllerBase {
       const {id, action, calendarID, appointmentTypeID} = req.body as ScheduleWebhookRequest
 
       if (action !== AppointmentWebhookActions.Scheduled) {
-        throw new BadRequestException("Only scheduled Action is allowed")
+        throw new BadRequestException('Only scheduled Action is allowed')
       }
 
       const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
@@ -158,7 +163,7 @@ class AppointmentWebhookController implements IControllerBase {
       const {id, action, calendarID, appointmentTypeID} = req.body as ScheduleWebhookRequest
 
       if (action === AppointmentWebhookActions.Scheduled) {
-        throw new BadRequestException("Scheduled Action is not allowed")
+        throw new BadRequestException('Scheduled Action is not allowed')
       }
 
       const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
@@ -199,9 +204,7 @@ class AppointmentWebhookController implements IControllerBase {
 
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
       if (!appointmentFromDb) {
-        console.log(
-          `WebhookController: AppointmentNotExist AcuityID: ${id}`,
-        )
+        console.log(`WebhookController: AppointmentNotExist AcuityID: ${id}`)
         throw new ResourceNotFoundException(`AcuityID: ${id} not found`)
       }
 
@@ -231,7 +234,9 @@ class AppointmentWebhookController implements IControllerBase {
         }
         await this.appoinmentService.updateAppointmentDB(appointmentFromDb.id, data)
 
-        const pcrTestResult = await this.pcrTestResultsService.getTestResultsByAppointmentId(appointmentFromDb.id)
+        const pcrTestResult = await this.pcrTestResultsService.getTestResultsByAppointmentId(
+          appointmentFromDb.id,
+        )
 
         if (pcrTestResult) {
           if (action === AppointmentWebhookActions.Canceled) {
@@ -249,7 +254,10 @@ class AppointmentWebhookController implements IControllerBase {
               displayForNonAdmins: true,
             }
 
-            await this.pcrTestResultsService.updateDefaultTestResults(pcrTestResult.id, pcrResultDataForDb)
+            await this.pcrTestResultsService.updateDefaultTestResults(
+              pcrTestResult.id,
+              pcrResultDataForDb,
+            )
           }
         }
       } catch (e) {
@@ -262,7 +270,6 @@ class AppointmentWebhookController implements IControllerBase {
       next(error)
     }
   }
-
 }
 
 export default AppointmentWebhookController

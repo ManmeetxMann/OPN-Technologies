@@ -293,26 +293,28 @@ export class PCRTestResultsService {
     }
   }
 
-  async getTestResultsByAppointmentId(appointmentId: string) {
+  async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
     const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
       'appointmentId',
       appointmentId,
     )
 
     if (!pcrTestResults || pcrTestResults.length == 0) {
-      throw new ResourceNotFoundException(`PCRTestResult with appointment ${appointmentId} not found`)
+      throw new ResourceNotFoundException(
+        `PCRTestResult with appointment ${appointmentId} not found`,
+      )
     }
 
     if (pcrTestResults.length > 1) {
-      console.log(`GetTestResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `)
+      console.log(
+        `GetTestResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
+      )
     }
 
     return pcrTestResults[0]
   }
 
-  async deleteTestResults(
-    id: string,
-  ): Promise<void> {
+  async deleteTestResults(id: string): Promise<void> {
     await this.pcrTestResultsRepository.delete(id)
   }
 
