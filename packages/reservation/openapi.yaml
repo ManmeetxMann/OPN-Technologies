@@ -1248,7 +1248,7 @@ paths:
               schema:
                 type: string
 
-  /reservation/admin/api/v1/pcr-test-results:
+  /reservation/admin/api/v1/pcr-test-results-bulk:
     post:
       description: Send PCR Results
       tags:

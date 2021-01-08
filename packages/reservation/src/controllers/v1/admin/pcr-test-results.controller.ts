@@ -20,7 +20,7 @@ class PCRTestResultController implements IControllerBase {
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
     innerRouter.post(
-      this.path + '/api/v1/pcr-test-results',
+      this.path + '/api/v1/pcr-test-results-bulk',
       adminAuthMiddleware,
       this.createReportForPCRResults,
     )

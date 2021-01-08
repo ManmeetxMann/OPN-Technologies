@@ -3,7 +3,7 @@ import path from 'path'
 import {TableLayouts, Content} from '../../../common/src/service/reports/pdf-types'
 import {Config} from '../../../common/src/utils/config'
 import {ResultTypes} from '../models/appointment'
-import {TestResultsDTOForEmail} from '../models/test-result'
+import {PCRTestResultEmailDTO} from '../models/pcr-test-results'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
@@ -24,7 +24,7 @@ const tableLayouts: TableLayouts = {
   },
 }
 const generate = (
-  params: TestResultsDTOForEmail,
+  params: PCRTestResultEmailDTO,
   resultDate: string,
 ): {content: Content[]; tableLayouts: TableLayouts} => {
   const isPositive =
@@ -223,35 +223,35 @@ const generate = (
                 color: '#FFFFFF',
               },
               {
-                text: params.famEGene,
+                text: params.resultSpecs.famEGene,
                 alignment: 'center',
               },
               {
-                text: params.famCt,
+                text: params.resultSpecs.famCt,
                 alignment: 'center',
               },
               {
-                text: params.calRed61RdRpGene,
+                text: params.resultSpecs.calRed61RdRpGene,
                 alignment: 'center',
               },
               {
-                text: params.calRed61Ct,
+                text: params.resultSpecs.calRed61Ct,
                 alignment: 'center',
               },
               {
-                text: params.quasar670NGene,
+                text: params.resultSpecs.quasar670NGene,
                 alignment: 'center',
               },
               {
-                text: params.quasar670Ct,
+                text: params.resultSpecs.quasar670Ct,
                 alignment: 'center',
               },
               {
-                text: params.hexIC,
+                text: params.resultSpecs.hexIC,
                 alignment: 'center',
               },
               {
-                text: params.hexCt,
+                text: params.resultSpecs.hexCt,
                 alignment: 'center',
               },
             ],

@@ -24,7 +24,7 @@ import {
 } from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
-import testResultPDFTemplate from '../templates/testResult'
+import testResultPDFTemplate from '../templates/pcrTestResult'
 import {ResultTypes} from '../models/appointment'
 
 export class PCRTestResultsService {
@@ -103,7 +103,10 @@ export class PCRTestResultsService {
       'status',
       ResultReportStatus.Processing,
     )
-    await this.handlePCRResultSaveAndSend(pcrResults.data)
+    await this.handlePCRResultSaveAndSend({
+      barCode: pcrResults.data.barCode,
+      resultSpecs: pcrResults.data,
+    })
   }
 
   getFinalResult(action: PCRResultActions, autoResult: ResultTypes, barCode: string): ResultTypes {
@@ -125,8 +128,8 @@ export class PCRTestResultsService {
 
   async handlePCRResultSaveAndSend(resultData: PCRTestResultData): Promise<void> {
     const finalResult = this.getFinalResult(
-      resultData.action,
-      resultData.autoResult,
+      resultData.resultSpecs.action,
+      resultData.resultSpecs.autoResult,
       resultData.barCode,
     )
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
@@ -141,18 +144,18 @@ export class PCRTestResultsService {
       lastName: appointment.lastName,
       appointmentId: appointment.id,
       organizationId: appointment.organizationId,
+      dateOfAppointment: appointment.dateOfAppointment,
     }
     await this.pcrTestResultsRepository.save(pcrResultDataForDb)
 
     //Send Notification
-    if (resultData.notify) {
+    if (resultData.resultSpecs.notify) {
       const pcrResultDataForEmail = {
         ...pcrResultDataForDb,
         email: appointment.email,
         phone: appointment.phone,
         dateOfBirth: appointment.dateOfBirth,
         dateTime: appointment.dateTime,
-        dateOfAppointment: appointment.dateOfAppointment,
         timeOfAppointment: appointment.timeOfAppointment,
         registeredNursePractitioner: appointment.registeredNursePractitioner,
       }
@@ -161,7 +164,7 @@ export class PCRTestResultsService {
   }
 
   async sendNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
-    switch (resultData.action) {
+    switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
         console.log(`SendNotification: ${resultData.barCode} ReRunToday`)
         await this.sendRerunNotification(resultData, 'TODAY')
@@ -186,7 +189,7 @@ export class PCRTestResultsService {
   }
 
   async sendTestResults(resultData: PCRTestResultEmailDTO): Promise<void> {
-    const resultDate = moment(resultData.resultDate).format('LL')
+    const resultDate = moment(resultData.resultSpecs.resultDate).format('LL')
     const {content, tableLayouts} = testResultPDFTemplate(resultData, resultDate)
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
@@ -248,7 +251,7 @@ export class PCRTestResultsService {
     resultData: PCRTestResultData,
     appointmentId: string,
   ): Promise<void> {
-    switch (resultData.action) {
+    switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
         console.log(`TestResultReRun: ${resultData.barCode} is added to queue for today`)
         await this.appointmentService.changeStatusToReRunRequired(appointmentId, true)

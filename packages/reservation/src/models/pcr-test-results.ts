@@ -17,10 +17,9 @@ export enum ResultReportStatus {
   SuccessfullyReported = 'SuccessfullyReported',
 }
 
-export type PCRTestResultData = {
+type PCRResultSpecs = {
   action: PCRResultActions
   autoResult: ResultTypes
-  barCode: string
   calRed61Ct: string
   calRed61RdRpGene: string
   famCt: string
@@ -33,11 +32,27 @@ export type PCRTestResultData = {
   resultDate: Date
 }
 
+export type PCRTestResultRequestData = PCRResultSpecs & {
+  barCode: string
+}
+
+export type PCRTestResultRequest = {
+  reportTrackerId?: string
+  results: PCRTestResultRequestData[]
+  resultDate: Date
+}
+
+export type PCRTestResultData = {
+  barCode: string
+  resultSpecs?: PCRResultSpecs
+}
+
 type AppointmentDataForPCRResult = {
   firstName: string
   lastName: string
   appointmentId: string
   organizationId: string
+  dateOfAppointment: string
 }
 
 export type PCRTestResultDBModel = PCRTestResultData &
@@ -51,15 +66,8 @@ export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, 'id'> & {
   phone: number
   dateOfBirth: string
   registeredNursePractitioner?: string
-  dateOfAppointment: string
   timeOfAppointment: string
   dateTime: string
-}
-
-export type PCRTestResultRequest = {
-  reportTrackerId?: string
-  results: PCRTestResultData[]
-  resultDate: Date
 }
 
 export type ProcessPCRResultRequest = {
@@ -71,14 +79,10 @@ export type TestResultsReportingTrackerDBModel = {
   id: string
 }
 
-type PCRTestResultDataWithDate = PCRTestResultData & {
-  resultDate: Date
-}
-
 export type TestResultsReportingTrackerPCRResultsDBModel = {
   id: string
   status: ResultReportStatus
-  data: PCRTestResultDataWithDate
+  data: PCRTestResultRequestData
   details?: string
 }
 
