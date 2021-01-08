@@ -236,7 +236,7 @@ export class AppoinmentService {
 
   async makeInProgress(
     appointmentId: string,
-    testRunId: string[],
+    testRunId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.inProgress, userId)

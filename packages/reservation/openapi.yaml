@@ -1336,9 +1336,7 @@ paths:
                   items:
                     type: string                    
                 testRunId:
-                  type: array
-                  items:
-                    type: string
+                  type: string
               required:
                 - appointmentIds
                 - testRunId
