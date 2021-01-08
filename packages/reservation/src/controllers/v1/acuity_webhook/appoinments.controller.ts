@@ -117,7 +117,7 @@ class AppointmentWebhookController implements IControllerBase {
           timeOfAppointment,
         }
         const savedAppoinment = await this.appoinmentService.saveAppointmentData(data)
-        if(savedAppoinment){
+        if (savedAppoinment) {
           //Save Pending Test Results
           const pcrResultDataForDb = {
             barCode: appointment.barCode || barCodeNumber,
@@ -128,7 +128,7 @@ class AppointmentWebhookController implements IControllerBase {
             organizationId: appointment.organizationId,
             dateOfAppointment,
             waitingResult: true,
-            displayForNonAdmins: true
+            displayForNonAdmins: true,
           }
           await this.pcrTestResultsService.saveDefaultTestResults(pcrResultDataForDb)
         }
