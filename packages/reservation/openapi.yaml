@@ -1370,4 +1370,5 @@ paths:
                       message:
                         nullable: true
                         type: string
-                  page: 0
+                  page: 
+                    type: number

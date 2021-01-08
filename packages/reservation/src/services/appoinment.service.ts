@@ -171,6 +171,10 @@ export class AppoinmentService {
     return this.appointmentsRepository.get(id)
   }
 
+  async getAppointmentsDBByIds(appointmentsIds: string[]): Promise<AppointmentDBModel[]> {
+    return this.appointmentsRepository.findWhereIdIn(appointmentsIds)
+  }
+
   async getAppointmentByAcuityId(id: number | string): Promise<AppointmentDBModel> {
     const appointments = await this.appointmentsRepository.findWhereEqual(
       'acuityAppointmentId',
@@ -223,10 +227,7 @@ export class AppoinmentService {
     }
   }
 
-  async addAppointmentLabel(
-    id: number | string,
-    data: unknown,
-  ): Promise<AppointmentAcuityResponse> {
+  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
     return this.appoinmentSchedulerRepository.addAppointmentLabelOnAcuity(id, data)
   }
 

@@ -32,15 +32,16 @@ class AdminAppointmentController implements IControllerBase {
         throw new BadRequestException('Maximum appointments to be part of request is 50')
       }
 
-      const result = await Promise.all(
-        appointmentIds.map(async (appointmentId) => {
-          await this.appointmentService.addAppointmentLabel(appointmentId, {[label]: label})
+      const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+      const result = []
 
-          const appointmentDb = await this.appointmentService.getAppointmentByAcuityId(
-            appointmentId,
-          )
+      await Promise.all(
+        appointments.map(async (appointmentDb) => {
+          await this.appointmentService.addAppointmentLabel(appointmentDb.acuityAppointmentId, {
+            [label]: label,
+          })
 
-          return appointmentDb ? appointmentUiDTOResponse(appointmentDb) : null
+          result.push(appointmentUiDTOResponse(appointmentDb))
         }),
       )
 
