@@ -4,7 +4,7 @@ import path from 'path'
 
 //Settings Common for All Environments
 const applicationSettings = {
-  ACUITY_CALENDAR_URL: 'https://app.acuityscheduling.com/schedule.php'
+  ACUITY_CALENDAR_URL: 'https://app.acuityscheduling.com/schedule.php',
 }
 
 // Class to handle env vars
@@ -19,8 +19,8 @@ export class Config {
     if (!Config.loaded) {
       Config.load()
     }
-    
-    const variable = process.env[parameter]??applicationSettings[parameter]
+
+    const variable = process.env[parameter] ?? applicationSettings[parameter]
     if (!variable && !parameter.startsWith('FEATURE_') && !parameter.startsWith('DEBUG_')) {
       console.warn(`${parameter} is not defined in this environment. This is likely an error`)
     }

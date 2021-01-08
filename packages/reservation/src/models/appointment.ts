@@ -44,7 +44,7 @@ export type AppointmentModelBase = {
   testRunId?: string[]
   timeOfAppointment: string
   transportRunId?: string
-  appointmentTypeID: number,
+  appointmentTypeID: number
   calendarID: number
 }
 

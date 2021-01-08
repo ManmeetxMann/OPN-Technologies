@@ -24,7 +24,6 @@ import {
 } from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
-import {AppointmentDBModel, ResultTypes} from '../models/appointment'
 import testResultPDFTemplate from '../templates/testResult'
 
 export class PCRTestResultsService {
@@ -106,7 +105,7 @@ export class PCRTestResultsService {
     await this.handlePCRResultSaveAndSend(pcrResults.data)
   }
 
-  getFinalResult(action:PCRResultActions, autoResult:ResultTypes, barCode: string): ResultTypes{
+  getFinalResult(action: PCRResultActions, autoResult: ResultTypes, barCode: string): ResultTypes {
     let finalResult = autoResult
     switch (action) {
       case PCRResultActions.MarkAsNegative: {
@@ -124,7 +123,11 @@ export class PCRTestResultsService {
   }
 
   async handlePCRResultSaveAndSend(resultData: PCRTestResultData): Promise<void> {
-    const finalResult = this.getFinalResult(resultData.action, resultData.autoResult, resultData.barCode)
+    const finalResult = this.getFinalResult(
+      resultData.action,
+      resultData.autoResult,
+      resultData.barCode,
+    )
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
 
     await this.updateAppointmentStatus(resultData, appointment.id)
@@ -180,7 +183,7 @@ export class PCRTestResultsService {
       }
     }
   }
-  
+
   async sendTestResults(resultData: PCRTestResultEmailDTO): Promise<void> {
     const resultDate = moment(resultData.resultDate).format('LL')
     const {content, tableLayouts} = testResultPDFTemplate(resultData, resultDate)
@@ -206,14 +209,13 @@ export class PCRTestResultsService {
       ],
     })
   }
-  
-  async sendRerunNotification(resultData: PCRTestResultEmailDTO, day: string): Promise<void> {
 
+  async sendRerunNotification(resultData: PCRTestResultEmailDTO, day: string): Promise<void> {
     this.emailService.send({
       templateId: (Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 4) as number,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
-        DAY: day
+        DAY: day,
       },
       bcc: [
         {
@@ -223,13 +225,15 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendReSampleNotification(resultData: PCRTestResultEmailDTO, packageCode: string): Promise<void> {
-
+  async sendReSampleNotification(
+    resultData: PCRTestResultEmailDTO,
+    packageCode: string,
+  ): Promise<void> {
     this.emailService.send({
       templateId: (Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 5) as number,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
-        PACKAGE_CODE: packageCode
+        PACKAGE_CODE: packageCode,
       },
       bcc: [
         {
@@ -239,7 +243,10 @@ export class PCRTestResultsService {
     })
   }
 
-  async updateAppointmentStatus(resultData: PCRTestResultData, appointmentId: string): Promise<void> {
+  async updateAppointmentStatus(
+    resultData: PCRTestResultData,
+    appointmentId: string,
+  ): Promise<void> {
     switch (resultData.action) {
       case PCRResultActions.ReRunToday: {
         console.log(`TestResultReRun: ${resultData.barCode} is added to queue for today`)
@@ -258,5 +265,4 @@ export class PCRTestResultsService {
       }
     }
   }
-
 }
