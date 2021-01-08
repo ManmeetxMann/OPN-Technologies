@@ -31,7 +31,7 @@ class AppointmentWebhookController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {id} = req.body as ScheduleWebhookRequest
+      const {id, calendarID, appointmentTypeID} = req.body as ScheduleWebhookRequest
 
       const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
 
@@ -94,9 +94,11 @@ class AppointmentWebhookController implements IControllerBase {
         const {barCodeNumber, organizationId} = dataForUpdate
         const data = {
           acuityAppointmentId: appointment.id,
+          appointmentTypeID,
           appointmentStatus: AppointmentStatus.pending,
           barCode: appointment.barCode || barCodeNumber,
           canceled: appointment.canceled,
+          calendarID,
           dateOfAppointment,
           dateOfBirth: appointment.dateOfBirth,
           dateTime,

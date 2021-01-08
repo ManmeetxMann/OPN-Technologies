@@ -237,4 +237,26 @@ export class AppoinmentService {
   ): Promise<AppointmentDBModel> {
     return this.appointmentsRepository.updateWithUnion(id, data)
   }
+
+  async changeStatusToReRunRequired(appointmentId:string, today: boolean): Promise<AppointmentDBModel>{
+    const utcDateTime = moment().utc()
+    const deadline = (today)? this.makeTimeEndOfTheDay(utcDateTime):this.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
+    return this.appointmentsRepository.updateProperties(appointmentId, {
+      appointmentStatus: AppointmentStatus.reRunRequired,
+      deadline: deadline
+    })
+  }
+
+  async changeStatusToReSampleRequired(appointmentId:string): Promise<AppointmentDBModel>{
+    return this.appointmentsRepository.updateProperties(appointmentId, {
+      appointmentStatus: AppointmentStatus.reSampleRequired,
+    })
+  }
+
+  async changeStatusToReported(appointmentId:string): Promise<AppointmentDBModel>{
+    return this.appointmentsRepository.updateProperties(appointmentId, {
+      appointmentStatus: AppointmentStatus.reported,
+    })
+  }
+
 }

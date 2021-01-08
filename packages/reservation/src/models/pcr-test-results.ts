@@ -37,9 +37,10 @@ type AppointmentDataForPCRResult = {
   firstName: string
   lastName: string
   appointmentId: string
+  organizationId: string
 }
 
-export type PCRTestResultDBModel = Omit<PCRTestResultData, 'action' | 'notify'> &
+export type PCRTestResultDBModel = PCRTestResultData &
   AppointmentDataForPCRResult & {
     id: string
     result: ResultTypes
