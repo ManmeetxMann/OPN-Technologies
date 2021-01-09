@@ -97,33 +97,28 @@ class PCRTestResultController implements IControllerBase {
         throw new BadRequestException('Maximum appointments to be part of request is 50')
       }
 
-      let formedPcrTests: PCRTestResultHistoryDTO[] = [];
-
       const pcrTests = await this.pcrTestResultsService.getPCRTestsByBarcode(barcode)
 
-      pcrTests.forEach((pcrTest) => {
-        const testSameBarcode = formedPcrTests.find(formedPcrTest => formedPcrTest.barCode === pcrTest.barCode);
-        if (testSameBarcode) {
-          if (pcrTest.waitingResult) {
-            testSameBarcode.waitingResult = true;
-            return
+      let formedPcrTests: PCRTestResultHistoryDTO[] = barcode.map(code => {
+        const testSameBarcode = pcrTests.filter(pcrTest => pcrTest.barCode === code)
+        if (testSameBarcode.length) {
+          return {
+            id: testSameBarcode[0].id,
+            barCode: code,
+            results: testSameBarcode.map(testSame => ({
+              ...testSame.resultSpecs,
+              result: testSame.result
+            })),
+            waitingResult: !!pcrTests.find(pcrTest => !!pcrTest.waitingResult)
           }
-          testSameBarcode.results.push({
-            ...pcrTest.resultSpecs,
-            result: pcrTest.result
-          })
-          return
         }
-        formedPcrTests.push({
-          id: pcrTest.id,
-          barCode: pcrTest.barCode,
-          results: [{
-            ...pcrTest.resultSpecs,
-            result: pcrTest.result
-          }],
-          waitingResult: pcrTest.waitingResult
-        })
-      })
+        return {
+          id: code,
+          barCode: code,
+          results: [],
+          waitingResult: false
+        }
+      });
 
       res.json(actionSucceed(formedPcrTests.map(PCRTestResultHistoryResponse)))
     } catch (error) {
