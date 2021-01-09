@@ -16,10 +16,16 @@ export type TransportRunsIdentifier = {
   transportRunId: string
 }
 
-export const TransportRunsDTOResponse = (
-  transportRun: TransportRunsDbModel,
-): TransportRunsBase => ({
+type TransportRunsUi = {
+  transportRunId: string
+  transportDateTime: string
+  driverName: string
+}
+
+export const TransportRunsDTOResponse = (transportRun: TransportRunsDbModel): TransportRunsUi => ({
   transportRunId: transportRun.transportRunId,
-  transportDateTime: transportRun.transportDateTime,
+  transportDateTime: transportRun.transportDateTime.hasOwnProperty('_seconds')
+    ? transportRun.transportDateTime.toDate().toDateString()
+    : new Date(`${transportRun.transportDateTime}`).toISOString(),
   driverName: transportRun.driverName,
 })

@@ -20,7 +20,14 @@ export type TestRun = {
   testRunDateTime: firestore.Timestamp
 }
 
-export const testRunDTOResponse = (testRun: TestRunDBModel): TestRun => ({
+type TestRunUi = {
+  testRunId: string
+  testRunDateTime: string
+}
+
+export const testRunDTOResponse = (testRun: TestRunDBModel): TestRunUi => ({
   testRunId: testRun.testRunId,
-  testRunDateTime: testRun.testRunDateTime,
+  testRunDateTime: testRun.testRunDateTime.hasOwnProperty('_seconds')
+    ? testRun.testRunDateTime.toDate().toISOString()
+    : new Date(`${testRun.testRunDateTime}`).toISOString(),
 })
