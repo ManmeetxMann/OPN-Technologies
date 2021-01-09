@@ -31,6 +31,13 @@ export class PackageService {
     return result[0]
   }
 
+  async savePackage(packageCode: string, organizationId: string = null): Promise<void> {
+    await this.packageRepository.add({
+      packageCode: packageCode,
+      organizationId,
+    })
+  }
+
   async isExist(packageCode: string): Promise<boolean> {
     const result = await this.packageRepository.findWhereEqual('packageCode', packageCode)
     return !!result.length

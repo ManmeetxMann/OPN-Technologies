@@ -46,6 +46,8 @@ class AdminController implements IControllerBase {
         throw new BadRequestException(`Package code ${packageCode} already exist`)
       }
 
+      await this.packageService.savePackage(packageCode, organizationId)
+
       const appointments = await this.appointmentService.getAppointmentDBByPackageCode(packageCode)
 
       await Promise.all(

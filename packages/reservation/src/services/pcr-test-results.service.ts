@@ -155,9 +155,6 @@ export class PCRTestResultsService {
     const testResult = await this.getTestResultByBarCode(resultData.barCode)
 
     await this.updateAppointmentStatus(resultData, appointment.id)
-    await this.appointmentService.updateAppointmentDB(appointment.id, {
-      organizationId: appointment.organizationId,
-    })
 
     //Save PCR Test results
     const pcrResultDataForDb = {
