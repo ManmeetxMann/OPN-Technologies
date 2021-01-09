@@ -17,13 +17,13 @@ export type AdminProfile = {
   isTestReportsAdmin: boolean
   isTestAppointmentsAdmin: boolean
   isLabAdmin: boolean
-  isLabAppointmentsAdmin?: boolean
-  isLabResultsAdmin?: boolean
-  isTransportsRunsAdmin?: boolean
-  isReceivingAdmin?: boolean
-  isTestRunsAdmin?: boolean
-  isDueTodayAdmin?: boolean
-  isBulkUploadAdmin?: boolean
+  isLabAppointmentsAdmin: boolean
+  isLabResultsAdmin: boolean
+  isTransportsRunsAdmin: boolean
+  isReceivingAdmin: boolean
+  isTestRunsAdmin: boolean
+  isDueTodayAdmin: boolean
+  isBulkUploadAdmin: boolean
 }
 
 export type AdminApproval = {
