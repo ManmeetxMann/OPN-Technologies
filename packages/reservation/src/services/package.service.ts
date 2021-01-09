@@ -2,14 +2,12 @@ import DataStore from '../../../common/src/data/datastore'
 
 import {PackageBase, PackageListItem} from '../models/packages'
 import {PackageRepository} from '../respository/package.repository'
-import {TestResultsDBRepository} from '../respository/test-results-db.repository'
 import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 export class PackageService {
   private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
   private packageRepository = new PackageRepository(new DataStore())
-  private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
   private organizationService = new OrganizationService()
 
   async getAllByOrganizationId(
@@ -33,22 +31,11 @@ export class PackageService {
     return result[0]
   }
 
-  async savePackage(packageCode: string, organizationId: string = null): Promise<number> {
+  async savePackage(packageCode: string, organizationId: string = null): Promise<void> {
     await this.packageRepository.add({
       packageCode: packageCode,
       organizationId,
     })
-
-    await this.testResultsDBRepository.updateAllFromCollectionWhereEqual(
-      'packageCode',
-      packageCode,
-      {organizationId},
-    )
-
-    const updated = await this.testResultsDBRepository.findWhereEqual('packageCode', packageCode)
-
-    // do not pay attention to this moment, I will correct it later
-    return updated.length
   }
 
   async isExist(packageCode: string): Promise<boolean> {

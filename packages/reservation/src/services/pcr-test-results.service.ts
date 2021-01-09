@@ -168,6 +168,7 @@ export class PCRTestResultsService {
       waitingResult: false,
       displayForNonAdmins: true,
     }
+
     await this.pcrTestResultsRepository.updateProperties(testResult.id, pcrResultDataForDb)
     //await this.pcrTestResultsRepository.save(pcrResultDataForDb)
 
@@ -329,5 +330,14 @@ export class PCRTestResultsService {
     defaultTestResults: Omit<PCRTestResultDBModel, 'id'>,
   ): Promise<void> {
     await this.pcrTestResultsRepository.save(defaultTestResults)
+  }
+
+  async updateOrganizationIdByAppointmentId(
+    appointmentId: string,
+    organizationId: string,
+  ): Promise<void> {
+    const {id} = await this.getTestResultsByAppointmentId(appointmentId)
+
+    await this.pcrTestResultsRepository.updateProperties(id, {organizationId})
   }
 }

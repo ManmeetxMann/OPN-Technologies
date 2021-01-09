@@ -316,4 +316,8 @@ export class AppoinmentService {
       appointmentStatus: AppointmentStatus.reported,
     })
   }
+
+  async getAppointmentDBByPackageCode(packageCode: string): Promise<AppointmentDBModel[]> {
+    return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
+  }
 }
