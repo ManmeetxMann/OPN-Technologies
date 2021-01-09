@@ -61,14 +61,32 @@ export const adminAuthMiddleware = async (
 
   const admin = authenticatedUser.admin as AdminProfile
   const organizationId = req.query['organizationId'] as string | null
-  const isOpnSuperAdmin = admin?.isOpnSuperAdmin ?? false
+  const isOpnSuperAdmin = admin?.isOpnSuperAdmin
   const isLabAdmin = admin?.isLabAdmin ?? false
+  const isLabAppointmentsAdmin = admin?.isLabAppointmentsAdmin
+  const isLabResultsAdmin = admin?.isLabResultsAdmin
+  const isTransportsRunsAdmin = admin?.isTransportsRunsAdmin
+  const isReceivingAdmin = admin?.isReceivingAdmin
+  const isTestRunsAdmin = admin?.isTestRunsAdmin
+  const isDueTodayAdmin = admin?.isDueTodayAdmin
+  const isBulkUploadAdmin = admin?.isBulkUploadAdmin
   const authorizedOrganizationIds = [
     ...(admin?.superAdminForOrganizationIds ?? []),
     admin?.adminForOrganizationId,
   ].filter((id) => !!id)
   const hasGrantedAccess = new Set(authorizedOrganizationIds).has(organizationId)
-  if (!isLabAdmin && !isOpnSuperAdmin && !hasGrantedAccess) {
+  if (
+    !isLabAdmin &&
+    !isOpnSuperAdmin &&
+    !hasGrantedAccess &&
+    !isLabAppointmentsAdmin &&
+    !isLabResultsAdmin &&
+    !isTransportsRunsAdmin &&
+    !isReceivingAdmin &&
+    !isTestRunsAdmin &&
+    !isDueTodayAdmin &&
+    !isBulkUploadAdmin
+  ) {
     // Forbidden
     res
       .status(403)
