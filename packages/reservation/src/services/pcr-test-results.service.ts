@@ -298,4 +298,10 @@ export class PCRTestResultsService {
   ): Promise<void> {
     await this.pcrTestResultsRepository.save(defaultTestResults)
   }
+
+  async getPCRTestsByBarcode(
+    barCodes: string[]
+  ): Promise<PCRTestResultDBModel[]> {
+    return this.pcrTestResultsRepository.findWhereIn('barCode', barCodes)
+  }
 }

@@ -3,7 +3,12 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
-import {PCRTestResultRequest, PCRTestResultRequestData} from '../../../models/pcr-test-results'
+import {
+  PCRListQueryRequest,
+  PCRTestResultHistoryDTO, PCRTestResultHistoryResponse,
+  PCRTestResultRequest,
+  PCRTestResultRequestData,
+} from '../../../models/pcr-test-results'
 import moment from 'moment'
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
@@ -28,6 +33,11 @@ class PCRTestResultController implements IControllerBase {
       this.path + '/api/v1/pcr-test-results',
       adminAuthMiddleware,
       this.createPCRResults,
+    )
+    innerRouter.post(
+      this.path + '/api/v1/pcr-test-results/history',
+      adminAuthMiddleware,
+      this.listPCRResults,
     )
 
     this.router.use('/', innerRouter)
@@ -75,6 +85,47 @@ class PCRTestResultController implements IControllerBase {
       })
 
       res.json(actionSucceed(sendResult))
+    } catch (error) {
+      next(error)
+    }
+  }
+  listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {barcode} = req.body as PCRListQueryRequest
+      console.log(req.body)
+      if (barcode.length > 50) {
+        throw new BadRequestException('Maximum appointments to be part of request is 50')
+      }
+
+      let formedPcrTests: PCRTestResultHistoryDTO[] = [];
+
+      const pcrTests = await this.pcrTestResultsService.getPCRTestsByBarcode(barcode)
+
+      pcrTests.forEach((pcrTest) => {
+        const testSameBarcode = formedPcrTests.find(formedPcrTest => formedPcrTest.barCode === pcrTest.barCode);
+        if (testSameBarcode) {
+          if (pcrTest.waitingResult) {
+            testSameBarcode.waitingResult = true;
+            return
+          }
+          testSameBarcode.results.push({
+            ...pcrTest.resultSpecs,
+            result: pcrTest.result
+          })
+          return
+        }
+        formedPcrTests.push({
+          id: pcrTest.id,
+          barCode: pcrTest.barCode,
+          results: [{
+            ...pcrTest.resultSpecs,
+            result: pcrTest.result
+          }],
+          waitingResult: pcrTest.waitingResult
+        })
+      })
+
+      res.json(actionSucceed(formedPcrTests.map(PCRTestResultHistoryResponse)))
     } catch (error) {
       next(error)
     }
