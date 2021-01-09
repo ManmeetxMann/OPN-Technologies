@@ -155,7 +155,9 @@ export class PCRTestResultsService {
     const testResult = await this.getTestResultByBarCode(resultData.barCode)
 
     await this.updateAppointmentStatus(resultData, appointment.id)
-    await this.appointmentService.updateAppointmentDB(appointment.id, {organizationId: appointment.organizationId})
+    await this.appointmentService.updateAppointmentDB(appointment.id, {
+      organizationId: appointment.organizationId,
+    })
 
     //Save PCR Test results
     const pcrResultDataForDb = {
@@ -169,6 +171,7 @@ export class PCRTestResultsService {
       waitingResult: false,
       displayForNonAdmins: true,
     }
+
     await this.pcrTestResultsRepository.updateProperties(testResult.id, pcrResultDataForDb)
     //await this.pcrTestResultsRepository.save(pcrResultDataForDb)
 
@@ -332,9 +335,12 @@ export class PCRTestResultsService {
     await this.pcrTestResultsRepository.save(defaultTestResults)
   }
 
-  async updateOrganizationIdByAppointmentId(appointmentId: string, organizationId: string): Promise<void> {
-    const pcrTest = await this.pcrTestResultsRepository.findWhereEqual('appointmentId', appointmentId)
+  async updateOrganizationIdByAppointmentId(
+    appointmentId: string,
+    organizationId: string,
+  ): Promise<void> {
+    const {id} = await this.getTestResultsByAppointmentId(appointmentId)
 
-    await Promise.all(pcrTest.map(({id}) =>  this.pcrTestResultsRepository.updateProperties(id, {organizationId})))
+    await this.pcrTestResultsRepository.updateProperties(id, {organizationId})
   }
 }
