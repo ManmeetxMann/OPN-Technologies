@@ -149,6 +149,7 @@ export type PCRTestResultListDTO = {
   lastName: string
   testType: string
   dateOfAppointment: string
+  barCode: string
   result: ResultTypes
 }
 
@@ -158,6 +159,7 @@ export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResu
   lastName: pcrResult.lastName,
   testType: 'PCR',
   dateOfAppointment: pcrResult.dateOfAppointment,
+  barCode: pcrResult.barCode,
   result: pcrResult.result,
 })
 
