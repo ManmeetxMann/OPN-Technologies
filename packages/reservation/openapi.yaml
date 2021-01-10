@@ -1428,6 +1428,8 @@ paths:
                           type: string
                         dateOfAppointment:
                           type: string
+                        barCode:
+                          type: string
                         result:
                           type: string
                           enum:
