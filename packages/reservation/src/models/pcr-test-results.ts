@@ -133,3 +133,26 @@ export const PCRTestResultHistoryResponse = (
     result: result.result,
   })),
 })
+
+export type PcrTestResultsListRequest = {
+  organizationId?: string
+  dateOfAppointment: string
+}
+
+export type PCRTestResultListDTO = {
+  id: string
+  firstName: string
+  lastName: string
+  testType: string
+  dateOfAppointment: string
+  result: ResultTypes
+}
+
+export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResultListDTO => ({
+  id: pcrResult.id,
+  firstName: pcrResult.firstName,
+  lastName: pcrResult.lastName,
+  testType: 'PCR',
+  dateOfAppointment: pcrResult.dateOfAppointment,
+  result: pcrResult.result,
+})

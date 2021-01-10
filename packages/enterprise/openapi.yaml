@@ -747,6 +747,20 @@ components:
           type: boolean
         isTestAppointmentsAdmin:
           type: boolean
+        isLabAppointmentsAdmin:
+          type: boolean
+        isLabResultsAdmin:
+          type: boolean
+        isTransportsRunsAdmin:
+          type: boolean
+        isReceivingAdmin:
+          type: boolean
+        isTestRunsAdmin:
+          type: boolean
+        isDueTodayAdmin:
+          type: boolean
+        isBulkUploadAdmin:
+          type: boolean
     User:
       type: object
       deprecated: true

@@ -1034,6 +1034,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
 
+  /reservation/acuity_webhook/api/v1/appointment/update:
+    post:
+      description: Webhook for updating appointment in firestore
+      tags:
+        - Acuity Webhooks
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: true
+              properties:
+                calendarID:
+                  type: string
+                appointmentTypeID:
+                  type: string
+                action:
+                  type: string
+                id:
+                  type: string
+              required:
+                - calendarID
+                - appointmentTypeID
+                - action
+                - id
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+
   /reservation/acuity_webhook/api/v1/appointment/create:
     post:
       description: Webhook for adding barcode to acuity and cloning to firestore
@@ -1303,9 +1336,7 @@ paths:
                   items:
                     type: string                    
                 testRunId:
-                  type: array
-                  items:
-                    type: string
+                  type: string
               required:
                 - appointmentIds
                 - testRunId
@@ -1356,6 +1387,79 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PCRTestResultsResponse200'
+    get:
+      description: Retrieve list of PCR Results
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+        - in: query
+          name: dateOfAppointment
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                        firstName:
+                          type: string
+                        lastName:
+                          type: string
+                        testType:
+                          type: string
+                        dateOfAppointment:
+                          type: string
+                        result:
+                          type: string
+                          enum:
+                            [
+                              Positive,
+                              Negative,
+                              Pending,
+                              2019-nCoV Detected,
+                              Invalid,
+                              Inconclusive,
+                            ]
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          [
+                            succeed,
+                            failed,
+                            validation_error,
+                            internal_server_error,
+                            unauthorized,
+                            access_denied,
+                            resource_not_found,
+                          ]
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
 
   /reservation/internal/api/v1/process-pcr-test-result:
     post:

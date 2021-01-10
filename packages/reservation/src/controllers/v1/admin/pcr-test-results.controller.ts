@@ -9,6 +9,8 @@ import {
   PCRTestResultHistoryResponse,
   PCRTestResultRequest,
   PCRTestResultRequestData,
+  PcrTestResultsListRequest,
+  pcrResultsResponse,
 } from '../../../models/pcr-test-results'
 import moment from 'moment'
 import {now} from '../../../../../common/src/utils/times'
@@ -39,6 +41,11 @@ class PCRTestResultController implements IControllerBase {
       this.path + '/api/v1/pcr-test-results/history',
       adminAuthMiddleware,
       this.listPCRResultsHistory,
+    )
+    innerRouter.get(
+      this.path + '/api/v1/pcr-test-results',
+      adminAuthMiddleware,
+      this.listPCRResults,
     )
 
     this.router.use('/', innerRouter)
@@ -126,6 +133,20 @@ class PCRTestResultController implements IControllerBase {
       })
 
       res.json(actionSucceed(formedPcrTests.map(PCRTestResultHistoryResponse)))
+    } catch (error) {
+      next(error)
+    }
+  }
+  listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId, dateOfAppointment} = req.query as PcrTestResultsListRequest
+
+      const pcrResults = await this.pcrTestResultsService.getPCRResults({
+        organizationId,
+        dateOfAppointment,
+      })
+
+      res.json(actionSucceed(pcrResults.map(pcrResultsResponse)))
     } catch (error) {
       next(error)
     }
