@@ -3,7 +3,17 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
-import {PCRTestResultRequest, PCRTestResultRequestData} from '../../../models/pcr-test-results'
+import {
+  PCRListQueryRequest,
+  PCRTestResultHistoryDTO,
+  PCRTestResultHistoryResponse,
+  ListPCRResultRequest,
+  PCRTestResultRequest,
+  PCRTestResultRequestData,
+  pcrTestResultsResponse,
+  PcrTestResultsListRequest,
+  pcrResultsResponse,
+} from '../../../models/pcr-test-results'
 import moment from 'moment'
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
@@ -28,6 +38,21 @@ class PCRTestResultController implements IControllerBase {
       this.path + '/api/v1/pcr-test-results',
       adminAuthMiddleware,
       this.createPCRResults,
+    )
+    innerRouter.post(
+      this.path + '/api/v1/pcr-test-results/history',
+      adminAuthMiddleware,
+      this.listPCRResultsHistory,
+    )
+    innerRouter.get(
+      this.path + '/api/v1/pcr-test-results',
+      adminAuthMiddleware,
+      this.listPCRResults,
+    )
+    innerRouter.get(
+      this.path + '/api/v1/pcr-test-results-bulk/report-status',
+      adminAuthMiddleware,
+      this.listPCRTestResult,
     )
 
     this.router.use('/', innerRouter)
@@ -76,6 +101,71 @@ class PCRTestResultController implements IControllerBase {
 
       res.json(actionSucceed(sendResult))
     } catch (error) {
+      next(error)
+    }
+  }
+  listPCRResultsHistory = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {barcode} = req.body as PCRListQueryRequest
+      console.log(req.body)
+      if (barcode.length > 50) {
+        throw new BadRequestException('Maximum appointments to be part of request is 50')
+      }
+
+      const pcrTests = await this.pcrTestResultsService.getPCRTestsByBarcode(barcode)
+
+      const formedPcrTests: PCRTestResultHistoryDTO[] = barcode.map((code) => {
+        const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
+        if (testSameBarcode.length) {
+          return {
+            id: testSameBarcode[0].id,
+            barCode: code,
+            results: testSameBarcode.map((testSame) => ({
+              ...testSame.resultSpecs,
+              result: testSame.result,
+            })),
+            waitingResult: !!pcrTests.find((pcrTest) => !!pcrTest.waitingResult),
+          }
+        }
+        return {
+          id: code,
+          barCode: code,
+          results: [],
+          waitingResult: false,
+        }
+      })
+
+      res.json(actionSucceed(formedPcrTests.map(PCRTestResultHistoryResponse)))
+    } catch (error) {
+      next(error)
+    }
+  }
+  listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {organizationId, dateOfAppointment} = req.query as PcrTestResultsListRequest
+
+      const pcrResults = await this.pcrTestResultsService.getPCRResults({
+        organizationId,
+        dateOfAppointment,
+      })
+
+      res.json(actionSucceed(pcrResults.map(pcrResultsResponse)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  listPCRTestResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {reportTrackerId} = req.query as ListPCRResultRequest
+      const pcrTestResults = await this.pcrTestResultsService.listPCRTestResult(reportTrackerId)
+      res.json(actionSucceed(pcrTestResults.map(pcrTestResultsResponse)))
+    } catch (error) {
+      console.log(error)
       next(error)
     }
   }

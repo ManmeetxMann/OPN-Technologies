@@ -10,24 +10,27 @@ import {PdfService} from '../../../common/src/service/reports/pdf'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
 import {
-  TestResultsReportingTrackerRepository,
   TestResultsReportingTrackerPCRResultsRepository,
+  TestResultsReportingTrackerRepository,
 } from '../respository/test-results-reporting-tracker-repository'
 
 import {
   CreateReportForPCRResultsResponse,
-  ResultReportStatus,
-  PCRTestResultRequest,
-  PCRTestResultData,
   PCRResultActions,
-  PCRTestResultEmailDTO,
+  PCRTestResultData,
   PCRTestResultDBModel,
+  PCRTestResultEmailDTO,
+  PCRTestResultRequest,
+  ResultReportStatus,
+  TestResultsReportingTrackerPCRResultsDBModel,
 } from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import testResultPDFTemplate from '../templates/pcrTestResult'
 import {ResultTypes} from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
+import {dateFormats} from '../../../common/src/utils/times'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -111,6 +114,17 @@ export class PCRTestResultsService {
     })
   }
 
+  async listPCRTestResult(
+    reportTrackerId: string,
+  ): Promise<TestResultsReportingTrackerPCRResultsDBModel[]> {
+    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
+      this.datastore,
+      reportTrackerId,
+    )
+
+    return testResultsReportingTrackerPCRResult.fetchAll()
+  }
+
   getFinalResult(action: PCRResultActions, autoResult: ResultTypes, barCode: string): ResultTypes {
     let finalResult = autoResult
     switch (action) {
@@ -154,7 +168,7 @@ export class PCRTestResultsService {
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
     const testResult = await this.getTestResultByBarCode(resultData.barCode)
 
-    await this.updateAppointmentStatus(resultData, appointment.id)
+    await this.handleActions(resultData, appointment.id)
 
     //Save PCR Test results
     const pcrResultDataForDb = {
@@ -271,7 +285,7 @@ export class PCRTestResultsService {
     })
   }
 
-  async updateAppointmentStatus(
+  async handleActions(
     resultData: PCRTestResultData,
     appointmentId: string,
   ): Promise<void> {
@@ -292,6 +306,32 @@ export class PCRTestResultsService {
         break
       }
     }
+  }
+
+  async getPCRResults({
+    organizationId,
+    dateOfAppointment,
+  }: {
+    organizationId: string
+    dateOfAppointment: string
+  }): Promise<PCRTestResultDBModel[]> {
+    const pcrTestResultsQuery = [
+      {
+        map: '/',
+        key: 'dateOfAppointment',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: moment(dateOfAppointment).format(dateFormats.longMonth),
+      },
+    ]
+    if (organizationId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'organizationId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: organizationId,
+      })
+    }
+    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
   }
 
   async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
@@ -330,6 +370,10 @@ export class PCRTestResultsService {
     defaultTestResults: Omit<PCRTestResultDBModel, 'id'>,
   ): Promise<void> {
     await this.pcrTestResultsRepository.save(defaultTestResults)
+  }
+
+  async getPCRTestsByBarcode(barCodes: string[]): Promise<PCRTestResultDBModel[]> {
+    return this.pcrTestResultsRepository.findWhereIn('barCode', barCodes)
   }
 
   async updateOrganizationIdByAppointmentId(

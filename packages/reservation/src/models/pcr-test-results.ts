@@ -36,6 +36,10 @@ export type PCRTestResultRequestData = PCRResultSpecs & {
   barCode: string
 }
 
+export type PCRListQueryRequest = {
+  barcode: string[]
+}
+
 export type PCRTestResultRequest = {
   reportTrackerId?: string
   results: PCRTestResultRequestData[]
@@ -63,6 +67,25 @@ export type PCRTestResultDBModel = PCRTestResultData &
     displayForNonAdmins: boolean
   }
 
+export type PCRTestResultHistoryDTO = {
+  id: string
+  barCode: string
+  waitingResult: boolean
+  results: PCRResults[]
+}
+
+export type PCRResults = {
+  famEGene: string
+  famCt: string
+  calRed61RdRpGene: string
+  calRed61Ct: string
+  quasar670NGene: string
+  quasar670Ct: string
+  hexIC: string
+  hexCt: string
+  result: string
+}
+
 export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, 'id'> & {
   email: string
   phone: number
@@ -75,6 +98,10 @@ export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, 'id'> & {
 export type ProcessPCRResultRequest = {
   reportTrackerId: string
   resultId: string
+}
+
+export type ListPCRResultRequest = {
+  reportTrackerId: string
 }
 
 export type TestResultsReportingTrackerDBModel = {
@@ -91,3 +118,59 @@ export type TestResultsReportingTrackerPCRResultsDBModel = {
 export type CreateReportForPCRResultsResponse = {
   reportTrackerId: string
 }
+
+export const PCRTestResultHistoryResponse = (
+  pcrTests: PCRTestResultHistoryDTO,
+): PCRTestResultHistoryDTO => ({
+  id: pcrTests.id,
+  barCode: pcrTests.barCode,
+  waitingResult: pcrTests.waitingResult,
+  results: pcrTests.results.map((result) => ({
+    famEGene: result.famEGene,
+    famCt: result.famCt,
+    calRed61RdRpGene: result.calRed61RdRpGene,
+    calRed61Ct: result.calRed61Ct,
+    quasar670NGene: result.quasar670NGene,
+    quasar670Ct: result.quasar670Ct,
+    hexIC: result.hexIC,
+    hexCt: result.hexCt,
+    result: result.result,
+  })),
+})
+
+export type PcrTestResultsListRequest = {
+  organizationId?: string
+  dateOfAppointment: string
+}
+
+export type PCRTestResultListDTO = {
+  id: string
+  firstName: string
+  lastName: string
+  testType: string
+  dateOfAppointment: string
+  barCode: string
+  result: ResultTypes
+}
+
+export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResultListDTO => ({
+  id: pcrResult.id,
+  firstName: pcrResult.firstName,
+  lastName: pcrResult.lastName,
+  testType: 'PCR',
+  dateOfAppointment: pcrResult.dateOfAppointment,
+  barCode: pcrResult.barCode,
+  result: pcrResult.result,
+})
+
+export type pcrTestResultsDTO = {
+  barCode: string
+  status: ResultReportStatus
+}
+
+export const pcrTestResultsResponse = (
+  pcrTestResult: TestResultsReportingTrackerPCRResultsDBModel,
+): pcrTestResultsDTO => ({
+  barCode: pcrTestResult.data.barCode,
+  status: pcrTestResult.status,
+})
