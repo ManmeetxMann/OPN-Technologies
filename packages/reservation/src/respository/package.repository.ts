@@ -11,6 +11,6 @@ export class PackageRepository extends DataModel<PackageBase> {
   }
 
   public async save(testResults: PackageBase): Promise<void> {
-    this.add(testResults)
+    await this.add(testResults)
   }
 }

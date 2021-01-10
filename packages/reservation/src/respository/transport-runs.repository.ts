@@ -10,8 +10,7 @@ export class TransportRunsRepository extends DataModel<TransportRunsDbModel> {
     super(dataStore)
   }
 
-  // @TODO Remove this if needed
   public async save(testResults: TransportRunsDbModel): Promise<void> {
-    this.add(testResults)
+    await this.add(testResults)
   }
 }

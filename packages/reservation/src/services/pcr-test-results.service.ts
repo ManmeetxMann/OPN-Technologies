@@ -70,8 +70,8 @@ export class PCRTestResultsService {
     const savedResults = await testResultsReportingTrackerPCRResult.saveAll(pcrResults)
 
     const taskClient = new OPNCloudTasks('report-results')
-    savedResults.map((result) => {
-      taskClient.createTask(
+    savedResults.map(async (result) => {
+      await taskClient.createTask(
         {
           reportTrackerId: reportTrackerId,
           resultId: result.id,
@@ -183,7 +183,7 @@ export class PCRTestResultsService {
         timeOfAppointment: appointment.timeOfAppointment,
         registeredNursePractitioner: appointment.registeredNursePractitioner,
       }
-      this.sendNotification(pcrResultDataForEmail)
+      await this.sendNotification(pcrResultDataForEmail)
     }
   }
 
@@ -217,7 +217,7 @@ export class PCRTestResultsService {
     const {content, tableLayouts} = testResultPDFTemplate(resultData, resultDate)
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
-    this.emailService.send({
+    await this.emailService.send({
       templateId: Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
@@ -239,7 +239,7 @@ export class PCRTestResultsService {
   }
 
   async sendRerunNotification(resultData: PCRTestResultEmailDTO, day: string): Promise<void> {
-    this.emailService.send({
+    await this.emailService.send({
       templateId: Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 4,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
@@ -257,7 +257,7 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     packageCode: string,
   ): Promise<void> {
-    this.emailService.send({
+    await this.emailService.send({
       templateId: Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 5,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
