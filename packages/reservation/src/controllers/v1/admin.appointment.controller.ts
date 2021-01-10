@@ -270,7 +270,7 @@ class AdminAppointmentController implements IControllerBase {
 
       const {appointmentIds, testRunId} = req.body as {
         appointmentIds: string[]
-        testRunId: string[]
+        testRunId: string
       }
 
       if (appointmentIds.length > 50) {

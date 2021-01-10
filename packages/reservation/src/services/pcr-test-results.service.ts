@@ -168,6 +168,7 @@ export class PCRTestResultsService {
       waitingResult: false,
       displayForNonAdmins: true,
     }
+
     await this.pcrTestResultsRepository.updateProperties(testResult.id, pcrResultDataForDb)
     //await this.pcrTestResultsRepository.save(pcrResultDataForDb)
 
@@ -293,6 +294,38 @@ export class PCRTestResultsService {
     }
   }
 
+  async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
+      'appointmentId',
+      appointmentId,
+    )
+
+    if (!pcrTestResults || pcrTestResults.length == 0) {
+      throw new ResourceNotFoundException(
+        `PCRTestResult with appointment ${appointmentId} not found`,
+      )
+    }
+
+    if (pcrTestResults.length > 1) {
+      console.log(
+        `GetTestResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
+      )
+    }
+
+    return pcrTestResults[0]
+  }
+
+  async deleteTestResults(id: string): Promise<void> {
+    await this.pcrTestResultsRepository.delete(id)
+  }
+
+  async updateDefaultTestResults(
+    id: string,
+    defaultTestResults: Partial<PCRTestResultDBModel>,
+  ): Promise<void> {
+    await this.pcrTestResultsRepository.updateProperties(id, defaultTestResults)
+  }
+
   async saveDefaultTestResults(
     defaultTestResults: Omit<PCRTestResultDBModel, 'id'>,
   ): Promise<void> {
@@ -301,5 +334,14 @@ export class PCRTestResultsService {
 
   async getPCRTestsByBarcode(barCodes: string[]): Promise<PCRTestResultDBModel[]> {
     return this.pcrTestResultsRepository.findWhereIn('barCode', barCodes)
+  }
+
+  async updateOrganizationIdByAppointmentId(
+    appointmentId: string,
+    organizationId: string,
+  ): Promise<void> {
+    const {id} = await this.getTestResultsByAppointmentId(appointmentId)
+
+    await this.pcrTestResultsRepository.updateProperties(id, {organizationId})
   }
 }

@@ -236,7 +236,7 @@ export class AppoinmentService {
 
   async makeInProgress(
     appointmentId: string,
-    testRunId: string[],
+    testRunId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.inProgress, userId)
@@ -288,7 +288,7 @@ export class AppoinmentService {
     id: string,
     data: Partial<AppointmentDBModel>,
   ): Promise<AppointmentDBModel> {
-    return this.appointmentsRepository.updateWithUnion(id, data)
+    return this.appointmentsRepository.updateProperties(id, data)
   }
 
   async changeStatusToReRunRequired(
@@ -315,5 +315,9 @@ export class AppoinmentService {
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.reported,
     })
+  }
+
+  async getAppointmentDBByPackageCode(packageCode: string): Promise<AppointmentDBModel[]> {
+    return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
   }
 }
