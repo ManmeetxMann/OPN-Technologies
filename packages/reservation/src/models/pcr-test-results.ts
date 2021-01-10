@@ -77,6 +77,10 @@ export type ProcessPCRResultRequest = {
   resultId: string
 }
 
+export type ListPCRResultRequest = {
+  reportTrackerId: string
+}
+
 export type TestResultsReportingTrackerDBModel = {
   id: string
 }
@@ -91,3 +95,15 @@ export type TestResultsReportingTrackerPCRResultsDBModel = {
 export type CreateReportForPCRResultsResponse = {
   reportTrackerId: string
 }
+
+export type pcrTestResultsDTO = {
+  barCode: string
+  status: ResultReportStatus
+}
+
+export const pcrTestResultsResponse = (
+  pcrTestResult: TestResultsReportingTrackerPCRResultsDBModel,
+): pcrTestResultsDTO => ({
+  barCode: pcrTestResult.data.barCode,
+  status: pcrTestResult.status,
+})

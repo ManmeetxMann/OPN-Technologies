@@ -3,7 +3,12 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
-import {PCRTestResultRequest, PCRTestResultRequestData} from '../../../models/pcr-test-results'
+import {
+  ListPCRResultRequest,
+  PCRTestResultRequest,
+  PCRTestResultRequestData,
+  pcrTestResultsResponse,
+} from '../../../models/pcr-test-results'
 import moment from 'moment'
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
@@ -28,6 +33,11 @@ class PCRTestResultController implements IControllerBase {
       this.path + '/api/v1/pcr-test-results',
       adminAuthMiddleware,
       this.createPCRResults,
+    )
+    innerRouter.get(
+      this.path + '/api/v1/pcr-test-results-bulk/report-status',
+      adminAuthMiddleware,
+      this.listPCRTestResult,
     )
 
     this.router.use('/', innerRouter)
@@ -76,6 +86,17 @@ class PCRTestResultController implements IControllerBase {
 
       res.json(actionSucceed(sendResult))
     } catch (error) {
+      next(error)
+    }
+  }
+
+  listPCRTestResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {reportTrackerId} = req.query as ListPCRResultRequest
+      const pcrTestResults = await this.pcrTestResultsService.listPCRTestResult(reportTrackerId)
+      res.json(actionSucceed(pcrTestResults.map(pcrTestResultsResponse)))
+    } catch (error) {
+      console.log(error)
       next(error)
     }
   }
