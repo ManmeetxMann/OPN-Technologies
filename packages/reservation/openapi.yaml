@@ -1564,6 +1564,70 @@ paths:
                         type: string
                   page: 
                     type: number
+  /reservation/admin/api/v1/pcr-test-results-bulk/report-status:
+    get:
+      description: Get appointment by barCode
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: reportTrackerId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        barCode:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            [
+                              RequestReceived,
+                              Processing,
+                              Failed,
+                              SuccessfullyReported,
+                            ]
+                      required:
+                        - barCode
+                        - status
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          [
+                            succeed,
+                            failed,
+                            validation_error,
+                            internal_server_error,
+                            unauthorized,
+                            access_denied,
+                            resource_not_found,
+                          ]
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
+
   /reservation/admin/api/v1/pcr-test-results/history:
     post:
       description: Get PCR Test Results by Barcode

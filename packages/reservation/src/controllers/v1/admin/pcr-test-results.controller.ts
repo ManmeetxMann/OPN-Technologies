@@ -7,8 +7,10 @@ import {
   PCRListQueryRequest,
   PCRTestResultHistoryDTO,
   PCRTestResultHistoryResponse,
+  ListPCRResultRequest,
   PCRTestResultRequest,
   PCRTestResultRequestData,
+  pcrTestResultsResponse,
   PcrTestResultsListRequest,
   pcrResultsResponse,
 } from '../../../models/pcr-test-results'
@@ -46,6 +48,11 @@ class PCRTestResultController implements IControllerBase {
       this.path + '/api/v1/pcr-test-results',
       adminAuthMiddleware,
       this.listPCRResults,
+    )
+    innerRouter.get(
+      this.path + '/api/v1/pcr-test-results-bulk/report-status',
+      adminAuthMiddleware,
+      this.listPCRTestResult,
     )
 
     this.router.use('/', innerRouter)
@@ -148,6 +155,17 @@ class PCRTestResultController implements IControllerBase {
 
       res.json(actionSucceed(pcrResults.map(pcrResultsResponse)))
     } catch (error) {
+      next(error)
+    }
+  }
+
+  listPCRTestResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {reportTrackerId} = req.query as ListPCRResultRequest
+      const pcrTestResults = await this.pcrTestResultsService.listPCRTestResult(reportTrackerId)
+      res.json(actionSucceed(pcrTestResults.map(pcrTestResultsResponse)))
+    } catch (error) {
+      console.log(error)
       next(error)
     }
   }

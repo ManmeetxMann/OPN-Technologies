@@ -22,6 +22,7 @@ import {
   PCRTestResultEmailDTO,
   PCRTestResultRequest,
   ResultReportStatus,
+  TestResultsReportingTrackerPCRResultsDBModel,
 } from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
@@ -111,6 +112,17 @@ export class PCRTestResultsService {
       barCode: pcrResults.data.barCode,
       resultSpecs: pcrResults.data,
     })
+  }
+
+  async listPCRTestResult(
+    reportTrackerId: string,
+  ): Promise<TestResultsReportingTrackerPCRResultsDBModel[]> {
+    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
+      this.datastore,
+      reportTrackerId,
+    )
+
+    return testResultsReportingTrackerPCRResult.fetchAll()
   }
 
   getFinalResult(action: PCRResultActions, autoResult: ResultTypes, barCode: string): ResultTypes {
