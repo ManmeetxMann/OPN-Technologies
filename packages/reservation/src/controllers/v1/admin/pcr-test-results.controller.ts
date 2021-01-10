@@ -5,7 +5,8 @@ import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.a
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {
   PCRListQueryRequest,
-  PCRTestResultHistoryDTO, PCRTestResultHistoryResponse,
+  PCRTestResultHistoryDTO,
+  PCRTestResultHistoryResponse,
   PCRTestResultRequest,
   PCRTestResultRequestData,
 } from '../../../models/pcr-test-results'
@@ -37,7 +38,7 @@ class PCRTestResultController implements IControllerBase {
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results/history',
       adminAuthMiddleware,
-      this.listPCRResults,
+      this.listPCRResultsHistory,
     )
 
     this.router.use('/', innerRouter)
@@ -89,7 +90,11 @@ class PCRTestResultController implements IControllerBase {
       next(error)
     }
   }
-  listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  listPCRResultsHistory = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const {barcode} = req.body as PCRListQueryRequest
       console.log(req.body)
@@ -99,26 +104,26 @@ class PCRTestResultController implements IControllerBase {
 
       const pcrTests = await this.pcrTestResultsService.getPCRTestsByBarcode(barcode)
 
-      let formedPcrTests: PCRTestResultHistoryDTO[] = barcode.map(code => {
-        const testSameBarcode = pcrTests.filter(pcrTest => pcrTest.barCode === code)
+      const formedPcrTests: PCRTestResultHistoryDTO[] = barcode.map((code) => {
+        const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
         if (testSameBarcode.length) {
           return {
             id: testSameBarcode[0].id,
             barCode: code,
-            results: testSameBarcode.map(testSame => ({
+            results: testSameBarcode.map((testSame) => ({
               ...testSame.resultSpecs,
-              result: testSame.result
+              result: testSame.result,
             })),
-            waitingResult: !!pcrTests.find(pcrTest => !!pcrTest.waitingResult)
+            waitingResult: !!pcrTests.find((pcrTest) => !!pcrTest.waitingResult),
           }
         }
         return {
           id: code,
           barCode: code,
           results: [],
-          waitingResult: false
+          waitingResult: false,
         }
-      });
+      })
 
       res.json(actionSucceed(formedPcrTests.map(PCRTestResultHistoryResponse)))
     } catch (error) {

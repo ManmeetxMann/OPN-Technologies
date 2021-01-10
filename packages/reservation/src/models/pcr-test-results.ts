@@ -68,7 +68,7 @@ export type PCRTestResultDBModel = PCRTestResultData &
   }
 
 export type PCRTestResultHistoryDTO = {
-  id:	string
+  id: string
   barCode: string
   waitingResult: boolean
   results: PCRResults[]
@@ -115,11 +115,13 @@ export type CreateReportForPCRResultsResponse = {
   reportTrackerId: string
 }
 
-export const PCRTestResultHistoryResponse = (pcrTests: PCRTestResultHistoryDTO) => ({
+export const PCRTestResultHistoryResponse = (
+  pcrTests: PCRTestResultHistoryDTO,
+): PCRTestResultHistoryDTO => ({
   id: pcrTests.id,
   barCode: pcrTests.barCode,
   waitingResult: pcrTests.waitingResult,
-  results: pcrTests.results.map(result => ({
+  results: pcrTests.results.map((result) => ({
     famEGene: result.famEGene,
     famCt: result.famCt,
     calRed61RdRpGene: result.calRed61RdRpGene,
@@ -128,6 +130,6 @@ export const PCRTestResultHistoryResponse = (pcrTests: PCRTestResultHistoryDTO) 
     quasar670Ct: result.quasar670Ct,
     hexIC: result.hexIC,
     hexCt: result.hexCt,
-    result: result.result
-  }))
+    result: result.result,
+  })),
 })

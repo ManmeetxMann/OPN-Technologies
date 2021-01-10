@@ -299,9 +299,7 @@ export class PCRTestResultsService {
     await this.pcrTestResultsRepository.save(defaultTestResults)
   }
 
-  async getPCRTestsByBarcode(
-    barCodes: string[]
-  ): Promise<PCRTestResultDBModel[]> {
+  async getPCRTestsByBarcode(barCodes: string[]): Promise<PCRTestResultDBModel[]> {
     return this.pcrTestResultsRepository.findWhereIn('barCode', barCodes)
   }
 }
