@@ -218,7 +218,7 @@ export class PCRTestResultsService {
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
     this.emailService.send({
-      templateId: (Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2) as number,
+      templateId: Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
         BARCODE: resultData.barCode,
@@ -240,7 +240,7 @@ export class PCRTestResultsService {
 
   async sendRerunNotification(resultData: PCRTestResultEmailDTO, day: string): Promise<void> {
     this.emailService.send({
-      templateId: (Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 4) as number,
+      templateId: Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 4,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
         DAY: day,
@@ -258,7 +258,7 @@ export class PCRTestResultsService {
     packageCode: string,
   ): Promise<void> {
     this.emailService.send({
-      templateId: (Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 5) as number,
+      templateId: Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 5,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
         PACKAGE_CODE: packageCode,

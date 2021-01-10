@@ -55,7 +55,7 @@ class UserController implements IControllerBase {
       stop,
     }: EvaluationCriteria = await this.questionnaireService.getAnswerLogic(questionnaireId)
 
-    const score = (values as number[])
+    const score = values
       .map((value: number, index: number) => (responses[index] ? value : 0))
       .reduce((total, current) => total + current)
 

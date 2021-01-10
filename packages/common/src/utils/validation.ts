@@ -27,7 +27,7 @@ class Validation {
       // Now check
       const headerName = 'authorization'
       if (req.headers && req.headers[headerName]) {
-        const partsString = req.headers[headerName] as string
+        const partsString = req.headers[headerName]
         const parts = partsString.split(' ')
         if (parts.length === 2 && parts[0] === 'Bearer') {
           const token = parts[1]

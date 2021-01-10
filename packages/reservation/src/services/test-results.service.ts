@@ -14,8 +14,7 @@ import template from '../templates/testResult'
 import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/test-result'
 
 export class TestResultsService {
-  private testResultEmailTemplateId = (Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ??
-    2) as number
+  private testResultEmailTemplateId = Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2
   private testResultBccEmail = Config.get('TEST_RESULT_BCC_EMAIL')
   private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
   private emailService = new EmailService()
