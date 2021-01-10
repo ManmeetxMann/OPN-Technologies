@@ -110,7 +110,7 @@ export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResu
   id: pcrResult.id,
   firstName: pcrResult.firstName,
   lastName: pcrResult.lastName,
-  testType: "PCR",
+  testType: 'PCR',
   dateOfAppointment: pcrResult.dateOfAppointment,
   result: pcrResult.result,
 })

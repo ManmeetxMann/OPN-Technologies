@@ -95,7 +95,7 @@ class PCRTestResultController implements IControllerBase {
 
       const pcrResults = await this.pcrTestResultsService.getPCRResults({
         organizationId,
-        dateOfAppointment
+        dateOfAppointment,
       })
 
       res.json(actionSucceed(pcrResults.map(pcrResultsResponse)))

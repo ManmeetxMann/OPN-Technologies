@@ -296,7 +296,13 @@ export class PCRTestResultsService {
     }
   }
 
-  async getPCRResults({organizationId, dateOfAppointment}: {organizationId: string, dateOfAppointment: string}) {
+  async getPCRResults({
+    organizationId,
+    dateOfAppointment,
+  }: {
+    organizationId: string
+    dateOfAppointment: string
+  }): Promise<PCRTestResultDBModel[]> {
     const pcrTestResultsQuery = [
       {
         map: '/',
@@ -304,11 +310,11 @@ export class PCRTestResultsService {
         operator: DataModelFieldMapOperatorType.Equals,
         value: moment(dateOfAppointment).format(dateFormats.longMonth),
       },
-    ];
+    ]
     if (organizationId) {
       pcrTestResultsQuery.push({
         map: '/',
-          key: 'organizationId',
+        key: 'organizationId',
         operator: DataModelFieldMapOperatorType.Equals,
         value: organizationId,
       })
