@@ -1564,3 +1564,92 @@ paths:
                         type: string
                   page: 
                     type: number
+  /reservation/admin/api/v1/pcr-test-results/history:
+    post:
+      description: Get PCR Test Results by Barcode
+      tags:
+        - PCR Results Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                barcode:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - barcode
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                        barCode:
+                          type: string
+                        waitingResult:
+                          type: boolean
+                        results:
+                          type: array
+                          items:
+                            type: object
+                            additionalProperties: false
+                            properties:
+                              famEGene:
+                                type: string
+                              famCt:
+                                type: string
+                              calRed61RdRpGene:
+                                type: string
+                              calRed61Ct:
+                                type: string
+                              quasar670NGene:
+                                type: string
+                              quasar670Ct:
+                                type: string
+                              hexIC:
+                                type: string
+                              hexCt:
+                                type: string
+                              result:
+                                type: string
+                      required:
+                        - id
+                        - firstName
+                        - lastName
+                        - barCode
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          [
+                            succeed,
+                            failed,
+                            validation_error,
+                            internal_server_error,
+                            unauthorized,
+                            access_denied,
+                            resource_not_found,
+                          ]
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
