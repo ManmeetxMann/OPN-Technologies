@@ -10,24 +10,26 @@ import {PdfService} from '../../../common/src/service/reports/pdf'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
 import {
-  TestResultsReportingTrackerRepository,
   TestResultsReportingTrackerPCRResultsRepository,
+  TestResultsReportingTrackerRepository,
 } from '../respository/test-results-reporting-tracker-repository'
 
 import {
   CreateReportForPCRResultsResponse,
-  ResultReportStatus,
-  PCRTestResultRequest,
-  PCRTestResultData,
   PCRResultActions,
-  PCRTestResultEmailDTO,
+  PCRTestResultData,
   PCRTestResultDBModel,
+  PCRTestResultEmailDTO,
+  PCRTestResultRequest,
+  ResultReportStatus,
 } from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import testResultPDFTemplate from '../templates/pcrTestResult'
 import {ResultTypes} from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
+import {dateFormats} from '../../../common/src/utils/times'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -292,6 +294,32 @@ export class PCRTestResultsService {
         break
       }
     }
+  }
+
+  async getPCRResults({
+    organizationId,
+    dateOfAppointment,
+  }: {
+    organizationId: string
+    dateOfAppointment: string
+  }): Promise<PCRTestResultDBModel[]> {
+    const pcrTestResultsQuery = [
+      {
+        map: '/',
+        key: 'dateOfAppointment',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: moment(dateOfAppointment).format(dateFormats.longMonth),
+      },
+    ]
+    if (organizationId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'organizationId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: organizationId,
+      })
+    }
+    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
   }
 
   async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
