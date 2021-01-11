@@ -1,6 +1,6 @@
-function mapper(appoinments: any[]) {
+function mapper(appoinments) {
   return appoinments.map((appointment) => {
-    appointment.forms.forEach((form: {values: any[]}) => {
+    appointment.forms.forEach((form: {values}) => {
       form.values.some((field) => {
         if (field.fieldID == 8561464) {
           appointment.DOB = field.value

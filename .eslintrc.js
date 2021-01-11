@@ -9,6 +9,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 2019, // Allows parsing of modern ECMA features
     sourceType: 'module', // Allows for the use of imports
+    project: "./tsconfig.json"
   },
   rules: {
     '@typescript-eslint/no-explicit-any': 2,
