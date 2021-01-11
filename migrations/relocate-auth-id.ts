@@ -67,7 +67,7 @@ async function moveAuthId(userSnapshot: firestore.QueryDocumentSnapshot<firestor
   const user = userSnapshot.data()
   const {authUserId} = user
   if (!user.admin?.email) {
-    console.warn(`${user.id} is not an admin but has an authUserId`)
+    console.warn(`${userSnapshot.id} is not an admin but has an authUserId`)
     return userSnapshot.ref.set(
       {
         authUserId: firestore.FieldValue.delete(),
@@ -78,6 +78,12 @@ async function moveAuthId(userSnapshot: firestore.QueryDocumentSnapshot<firestor
       },
     )
   }
+
+  if (user.admin.authUserId) {
+    console.warn(`${userSnapshot.id} contains two authUserId values, continuing`)
+    return
+  }
+
   return userSnapshot.ref.set(
     {
       admin: {
