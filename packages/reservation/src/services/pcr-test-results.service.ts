@@ -3,6 +3,7 @@ import DataStore from '../../../common/src/data/datastore'
 
 import {Config} from '../../../common/src/utils/config'
 import {AppoinmentService} from './appoinment.service'
+import {CouponService} from './coupon.service'
 
 import {EmailService} from '../../../common/src/service/messaging/email-service'
 import {PdfService} from '../../../common/src/service/reports/pdf'
@@ -15,6 +16,7 @@ import {
 } from '../respository/test-results-reporting-tracker-repository'
 
 import {
+  AppointmentDataDTO,
   CreateReportForPCRResultsResponse,
   PCRResultActions,
   PCRTestResultData,
@@ -37,8 +39,10 @@ export class PCRTestResultsService {
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.datastore)
   private appointmentService = new AppoinmentService()
+  private couponService = new CouponService()
   private emailService = new EmailService()
   private pdfService = new PdfService()
+  private couponCode: string
 
   async createReportForPCRResults(
     testResultData: PCRTestResultRequest,
@@ -168,7 +172,11 @@ export class PCRTestResultsService {
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
     const testResult = await this.getTestResultByBarCode(resultData.barCode)
 
-    await this.handleActions(resultData, appointment.id)
+    await this.handleActions(resultData, {
+      id: appointment.id,
+      organizationId: appointment.organizationId,
+      email: appointment.email,
+    })
 
     //Save PCR Test results
     const pcrResultDataForDb = {
@@ -215,9 +223,7 @@ export class PCRTestResultsService {
       }
       case PCRResultActions.RequestReSample: {
         console.log(`SendNotification: ${resultData.barCode} RequestReSample`)
-        //await this.sendReSampleNotification(resultData, 'H7KSSSGH6')
-        const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
-        console.log(appointmentBookingBaseURL)
+        await this.sendReSampleNotification(resultData)
         break
       }
       default: {
@@ -267,15 +273,20 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendReSampleNotification(
-    resultData: PCRTestResultEmailDTO,
-    packageCode: string,
-  ): Promise<void> {
+  async sendReSampleNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+    const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
+    const owner = Config.get('ACUITY_SCHEDULER_USERNAME')
+    const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${this.couponCode}`
+    const templateId = resultData.organizationId
+      ? Config.getInt('TEST_RESULT_ORG_RESAMPLE_NOTIFICATION_TEMPLATE_ID') ?? 6
+      : Config.getInt('TEST_RESULT_NO_ORG_RESAMPLE_NOTIFICATION_TEMPLATE_ID') ?? 5
+
     await this.emailService.send({
-      templateId: Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 5,
+      templateId: templateId,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
-        PACKAGE_CODE: packageCode,
+        COUPON_CODE: this.couponCode,
+        BOOKING_LINK: appointmentBookingLink,
       },
       bcc: [
         {
@@ -287,22 +298,33 @@ export class PCRTestResultsService {
 
   async handleActions(
     resultData: PCRTestResultData,
-    appointmentId: string,
+    appointment: AppointmentDataDTO,
   ): Promise<void> {
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
         console.log(`TestResultReRun: ${resultData.barCode} is added to queue for today`)
-        await this.appointmentService.changeStatusToReRunRequired(appointmentId, true)
+        await this.appointmentService.changeStatusToReRunRequired(appointment.id, true)
         break
       }
       case PCRResultActions.ReRunTomorrow: {
         console.log(`TestResultReRun: ${resultData.barCode} is added to queue for tomorrow`)
-        await this.appointmentService.changeStatusToReRunRequired(appointmentId, false)
+        await this.appointmentService.changeStatusToReRunRequired(appointment.id, false)
         break
       }
       case PCRResultActions.RequestReSample: {
         console.log(`TestResultReSample: ${resultData.barCode} is requested`)
-        await this.appointmentService.changeStatusToReSampleRequired(appointmentId)
+        await this.appointmentService.changeStatusToReSampleRequired(appointment.id)
+        if (!appointment.organizationId) {
+          this.couponCode = await this.couponService.createCoupon(appointment.email)
+          console.log(
+            `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
+          )
+          await this.couponService.saveCoupon(
+            this.couponCode,
+            appointment.organizationId,
+            resultData.barCode,
+          )
+        }
         break
       }
     }

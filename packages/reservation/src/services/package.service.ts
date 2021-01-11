@@ -2,11 +2,11 @@ import DataStore from '../../../common/src/data/datastore'
 
 import {PackageBase, PackageListItem} from '../models/packages'
 import {PackageRepository} from '../respository/package.repository'
-import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
+import {AcuityRepository} from '../respository/acuity.repository'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 export class PackageService {
-  private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
+  private acuityRepository = new AcuityRepository()
   private packageRepository = new PackageRepository(new DataStore())
   private organizationService = new OrganizationService()
 
@@ -44,7 +44,7 @@ export class PackageService {
   }
 
   async getPackageList(all: boolean): Promise<PackageListItem[]> {
-    const packagesAcuity = await this.appoinmentSchedulerRepository.getPackagesList()
+    const packagesAcuity = await this.acuityRepository.getPackagesList()
     const packagesOrganization = new Map()
 
     if (!all) {

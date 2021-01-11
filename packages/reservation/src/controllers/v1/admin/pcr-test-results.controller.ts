@@ -66,7 +66,11 @@ class PCRTestResultController implements IControllerBase {
     try {
       const data = req.body as PCRTestResultRequest
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
-      const fromDate = moment(now()).tz(timeZone).subtract(30, 'days').startOf('day')
+      const fromDate = moment(now())
+        .tz(timeZone)
+        .subtract(30, 'days')
+        .startOf('day')
+        .format('YYYY-MM-DD')
       const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
 
       if (!moment(data.resultDate).isBetween(fromDate, toDate, undefined, '[]')) {
@@ -86,7 +90,11 @@ class PCRTestResultController implements IControllerBase {
     try {
       const data = req.body as PCRTestResultRequestData
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
-      const fromDate = moment(now()).tz(timeZone).subtract(30, 'days').startOf('day')
+      const fromDate = moment(now())
+        .tz(timeZone)
+        .subtract(30, 'days')
+        .startOf('day')
+        .format('YYYY-MM-DD')
       const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
 
       if (!moment(data.resultDate).isBetween(fromDate, toDate, undefined, '[]')) {
