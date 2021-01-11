@@ -53,10 +53,10 @@ export const authorizationMiddleware = (allowedRoles?: UserRoles[]) => async (
   if (!connectedUser) {
     const regularUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
     if (regularUser) {
-      if (seekAdminAuth && connectedUser.admin) {
+      if (seekAdminAuth && regularUser.admin) {
         connectedUser = regularUser
         console.warn(
-          `Admin user ${connectedUser.id} was allowed to authenticated using user.authUserId`,
+          `Admin user ${connectedUser.id} was allowed to authenticate using user.authUserId`,
         )
       } else if (seekRegularAuth) {
         connectedUser = regularUser
