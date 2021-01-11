@@ -10,7 +10,7 @@ import {
   AppointmentStatus,
   AppointmentStatusHistoryDb,
 } from '../models/appointment'
-import {AppoinmentsSchedulerRepository} from '../respository/appointment-scheduler.repository'
+import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
 import {
   AppointmentsRepository,
@@ -25,7 +25,7 @@ import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-d
 
 export class AppoinmentService {
   private dataStore = new DataStore()
-  private appoinmentSchedulerRepository = new AppoinmentsSchedulerRepository()
+  private acuityRepository = new AcuityRepository()
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(new DataStore())
   private appointmentsRepository = new AppointmentsRepository(new DataStore())
 
@@ -169,7 +169,7 @@ export class AppoinmentService {
   }
 
   async getAppointmentByIdFromAcuity(id: number): Promise<AppointmentAcuityResponse> {
-    return this.appoinmentSchedulerRepository.getAppointmentByIdFromAcuity(id)
+    return this.acuityRepository.getAppointmentByIdFromAcuity(id)
   }
 
   async getAppointmentDBById(id: string): Promise<AppointmentDBModel> {
@@ -209,11 +209,11 @@ export class AppoinmentService {
   }
 
   async updateAppointment(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
-    return this.appoinmentSchedulerRepository.updateAppointmentOnAcuity(id, data)
+    return this.acuityRepository.updateAppointmentOnAcuity(id, data)
   }
 
   async cancelAppointmentById(id: number): Promise<AppointmentAcuityResponse> {
-    return this.appoinmentSchedulerRepository.cancelAppointmentByIdOnAcuity(id)
+    return this.acuityRepository.cancelAppointmentByIdOnAcuity(id)
   }
 
   private getUsersGroupRepositoryFor(appointmentId: string) {
@@ -277,7 +277,7 @@ export class AppoinmentService {
   }
 
   async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
-    return this.appoinmentSchedulerRepository.addAppointmentLabelOnAcuity(id, data)
+    return this.acuityRepository.addAppointmentLabelOnAcuity(id, data)
   }
 
   makeTimeEndOfTheDay(datetime: moment.Moment): string {

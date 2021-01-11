@@ -196,8 +196,8 @@ export class ReportService {
     partialLookup: Lookups,
     questionnaires: Questionnaire[],
   ): Promise<ReturnType<typeof userTemplate>> {
-    const userId = (secondaryId || primaryId) as string
-    const dependantId = secondaryId ? (primaryId as string) : null
+    const userId = secondaryId || primaryId
+    const dependantId = secondaryId ? primaryId : null
 
     const [
       attestations,
@@ -205,23 +205,10 @@ export class ReportService {
       userTraces,
       {enteringAccesses, exitingAccesses},
     ] = await Promise.all([
-      this.attestationService.getAttestationsInPeriod(
-        primaryId as string,
-        from as string,
-        to as string,
-      ),
-      this.attestationService.getExposuresInPeriod(
-        primaryId as string,
-        from as string,
-        to as string,
-      ),
-      this.attestationService.getTracesInPeriod(userId, from as string, to as string, dependantId),
-      this.getAccessHistory(
-        from as string,
-        to as string,
-        primaryId as string,
-        secondaryId as string,
-      ),
+      this.attestationService.getAttestationsInPeriod(primaryId, from, to),
+      this.attestationService.getExposuresInPeriod(primaryId, from, to),
+      this.attestationService.getTracesInPeriod(userId, from, to, dependantId),
+      this.getAccessHistory(from, to, primaryId, secondaryId),
     ])
     // sort by descending attestation time
     // (default ascending)
@@ -453,7 +440,7 @@ export class ReportService {
   ): Promise<Lookups> => {
     const [allUsers, userGroups, allGroups, allLocations, statuses] = await Promise.all([
       // N/10 queries
-      this.getUsersById([...userIds]).then((byId) => Object.values(byId) as User[]),
+      this.getUsersById([...userIds]).then((byId) => Object.values(byId)),
       // N/10 queries
       this.organizationService.getUsersGroups(organizationId, null, [...userIds]),
       cachedGroupsById ? null : this.organizationService.getGroups(organizationId),

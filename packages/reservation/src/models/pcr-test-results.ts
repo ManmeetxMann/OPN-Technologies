@@ -152,6 +152,11 @@ export type PCRTestResultListDTO = {
   barCode: string
   result: ResultTypes
 }
+export type AppointmentDataDTO = {
+  id: string
+  organizationId: string
+  email: string
+}
 
 export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResultListDTO => ({
   id: pcrResult.id,

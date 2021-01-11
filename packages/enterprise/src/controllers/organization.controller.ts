@@ -306,7 +306,7 @@ class OrganizationController implements IControllerBase {
       }
       const locations = await this.organizationService.getLocations(
         organizationId,
-        parentLocationId as string | null,
+        parentLocationId,
       )
       await Promise.all(
         locations.map(async (location) => this.populateZones(location, organizationId)),
@@ -1224,7 +1224,7 @@ class OrganizationController implements IControllerBase {
               id: appliesToId,
               firstName: user?.firstName ?? 'deleted',
               lastName: user?.lastName ?? 'user',
-              base64Photo: (user as User)?.base64Photo ?? '',
+              base64Photo: user?.base64Photo ?? '',
               group:
                 groupsById[
                   allMemberships.find((membership) => membership.userId === appliesToId)?.groupId ??

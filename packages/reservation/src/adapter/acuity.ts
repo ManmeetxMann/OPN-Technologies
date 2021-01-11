@@ -4,6 +4,7 @@ import querystring from 'querystring'
 import {AppointmentAcuityResponse} from '../models/appointment'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {Certificate} from '../models/packages'
+import {AcuityCouponCodeResponse} from '../models/coupons'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -112,17 +113,16 @@ abstract class AcuityScheduling {
       APIURL + '/api/v1/appointments?max=1000&' + querystring.stringify(this.renameKeys(filters))
     console.log(apiUrl) //To know request path for dependency
 
-    return fetch(apiUrl, {
+    const res = await fetch(apiUrl, {
       method: 'get',
       headers: {
         Authorization: 'Basic ' + userPassBase64,
         'Content-Type': 'application/json',
         accept: 'application/json',
       },
-    }).then((res) => {
-      const appointments = res.json()
-      return this.mapCustomFieldsToAppoinment(appointments)
     })
+    const appointments = await res.json()
+    return this.mapCustomFieldsToAppoinment(appointments)
   }
 
   protected async getAppointmentByIdFromAcuityService(
@@ -169,10 +169,37 @@ abstract class AcuityScheduling {
     return result
   }
 
+  protected async createCouponCodeOnAcuityService(
+    couponID: number,
+    emailToLockCoupon: string,
+  ): Promise<AcuityCouponCodeResponse> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = `${APIURL}/api/v1/certificates`
+
+    const res = await fetch(apiUrl, {
+      method: 'post',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        couponID: couponID,
+        email: emailToLockCoupon,
+      }),
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return result
+  }
+
   private async mapCustomFieldsToAppoinment(
     appoinments: AppointmentAcuityResponse[],
   ): Promise<AppointmentAcuityResponse[]> {
-    return (await appoinments).map(this.customFieldsToAppoinment)
+    return appoinments.map(this.customFieldsToAppoinment)
   }
 
   private customFieldsToAppoinment(

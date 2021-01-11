@@ -14,8 +14,7 @@ import template from '../templates/testResult'
 import {TestResultsDTOForEmail, TestResultsDBModel} from '../models/test-result'
 
 export class TestResultsService {
-  private testResultEmailTemplateId = (Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ??
-    2) as number
+  private testResultEmailTemplateId = Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2
   private testResultBccEmail = Config.get('TEST_RESULT_BCC_EMAIL')
   private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
   private emailService = new EmailService()
@@ -32,7 +31,7 @@ export class TestResultsService {
     const {content, tableLayouts} = template(testResults, resultDate)
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
-    this.emailService.send({
+    await this.emailService.send({
       templateId: this.testResultEmailTemplateId,
       to: [{email: testResults.email, name: `${testResults.firstName} ${testResults.lastName}`}],
       params: {
@@ -55,8 +54,9 @@ export class TestResultsService {
 
   async sendFax(testResults: TestResultsDTOForEmail, faxNumber: string): Promise<string> {
     const resultDateRaw = testResults.resultDate
+    const date = new Date()
     const resultDate = moment(resultDateRaw).format('LL')
-    const name = `${testResults.barCode} - ${new Date()}`
+    const name = `${testResults.barCode} - ${date}`
 
     const {content, tableLayouts} = template(testResults, resultDate)
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
@@ -65,7 +65,7 @@ export class TestResultsService {
   }
 
   async saveResults(testResults: TestResultsDBModel): Promise<void> {
-    this.testResultsDBRepository.save(testResults)
+    await this.testResultsDBRepository.save(testResults)
   }
 
   async resultAlreadySentMany(barCode: string[]): Promise<string[]> {

@@ -11,6 +11,6 @@ export class TestResultsDBRepository extends DataModel<TestResultsDBModel> {
   }
 
   public async save(testResults: TestResultsDBModel): Promise<void> {
-    this.add(testResults)
+    await this.add(testResults)
   }
 }

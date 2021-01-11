@@ -2,7 +2,7 @@ import AcuityScheduling from '../adapter/acuity'
 import {AppointmentAcuityResponse} from '../models/appointment'
 import {Certificate} from '../models/packages'
 
-export class AppoinmentsSchedulerRepository extends AcuityScheduling {
+export class AcuityRepository extends AcuityScheduling {
   constructor() {
     super()
   }
@@ -25,7 +25,15 @@ export class AppoinmentsSchedulerRepository extends AcuityScheduling {
     return this.cancelAppointmentOnAcuity(id)
   }
 
-  getPackagesList(): Promise<Certificate[]> {
+  async getPackagesList(): Promise<Certificate[]> {
     return this.getPackages()
+  }
+
+  async createCouponCode(couponID: number, emailToLockCoupon: string): Promise<string> {
+    const couponCodeResponse = await this.createCouponCodeOnAcuityService(
+      couponID,
+      emailToLockCoupon,
+    )
+    return couponCodeResponse.certificate
   }
 }
