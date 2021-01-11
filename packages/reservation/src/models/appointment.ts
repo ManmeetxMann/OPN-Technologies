@@ -46,7 +46,7 @@ export type AppointmentModelBase = {
   transportRunId?: string
   appointmentTypeID: number
   calendarID: number
-  voileLocaton?: string
+  vialLocaton?: string
 }
 
 export type AppointmentDBModel = AppointmentModelBase & {
@@ -141,7 +141,7 @@ export type AppointmentUiDTO = {
   transportRunId?: string
   deadline?: string
   latestResult?: string
-  voileLocaton?: string
+  vialLocaton?: string
 }
 
 export type AppointmentsState = {
@@ -192,6 +192,6 @@ export const appointmentUiDTOResponse = (appointment: AppointmentDBModel): Appoi
     transportRunId: appointment.transportRunId,
     deadline: moment(appointment.deadline).tz(timeZone).format(),
     latestResult: appointment.latestResult,
-    voileLocaton: appointment.voileLocaton,
+    vialLocaton: appointment.vialLocaton,
   }
 }

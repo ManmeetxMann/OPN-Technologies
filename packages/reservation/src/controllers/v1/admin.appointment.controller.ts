@@ -65,7 +65,7 @@ class AdminAppointmentController implements IControllerBase {
     innerRouter.put(
       this.path + '/api/v1/appointments/:barCode/receive',
       adminAuthMiddleware,
-      this.updateTestVoile,
+      this.updateTestVial,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/add-test-run',
@@ -240,7 +240,7 @@ class AdminAppointmentController implements IControllerBase {
     }
   }
 
-  updateTestVoile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  updateTestVial = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getAdminId(res.locals.authenticatedUser)
 

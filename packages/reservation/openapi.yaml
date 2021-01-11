@@ -116,7 +116,7 @@ components:
               type: string
             latestResult:
               type: string
-            voileLocaton:
+            vialLocaton:
               type: string
           required:
             - id
