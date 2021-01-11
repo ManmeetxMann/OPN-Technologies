@@ -63,6 +63,7 @@ type AppointmentDataForPCRResult = {
 export type PCRTestResultDBModel = PCRTestResultData &
   AppointmentDataForPCRResult & {
     id: string
+    linkedBarCodes: string[]
     result: ResultTypes
     waitingResult: boolean
     displayForNonAdmins: boolean
@@ -87,7 +88,7 @@ export type PCRResults = {
   result: string
 }
 
-export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, 'id'> & {
+export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, 'id'|'linkedBarCodes'> & {
   email: string
   phone: number
   dateOfBirth: string

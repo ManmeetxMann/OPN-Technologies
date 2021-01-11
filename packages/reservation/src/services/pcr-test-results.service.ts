@@ -132,6 +132,53 @@ export class PCRTestResultsService {
     return testResultsReportingTrackerPCRResult.fetchAll()
   }
 
+  async getPCRResults({
+    organizationId,
+    dateOfAppointment,
+  }: {
+    organizationId: string
+    dateOfAppointment: string
+  }): Promise<PCRTestResultDBModel[]> {
+    const pcrTestResultsQuery = [
+      {
+        map: '/',
+        key: 'dateOfAppointment',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: moment(dateOfAppointment).format(dateFormats.longMonth),
+      },
+    ]
+    if (organizationId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'organizationId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: organizationId,
+      })
+    }
+    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+  }
+
+  async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
+      'appointmentId',
+      appointmentId,
+    )
+
+    if (!pcrTestResults || pcrTestResults.length == 0) {
+      throw new ResourceNotFoundException(
+        `PCRTestResult with appointment ${appointmentId} not found`,
+      )
+    }
+
+    if (pcrTestResults.length > 1) {
+      console.log(
+        `GetTestResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
+      )
+    }
+
+    return pcrTestResults[0]
+  }
+  
   getFinalResult(action: PCRResultActions, autoResult: ResultTypes, barCode: string): ResultTypes {
     let finalResult = autoResult
     switch (action) {
@@ -329,53 +376,6 @@ export class PCRTestResultsService {
         break
       }
     }
-  }
-
-  async getPCRResults({
-    organizationId,
-    dateOfAppointment,
-  }: {
-    organizationId: string
-    dateOfAppointment: string
-  }): Promise<PCRTestResultDBModel[]> {
-    const pcrTestResultsQuery = [
-      {
-        map: '/',
-        key: 'dateOfAppointment',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: moment(dateOfAppointment).format(dateFormats.longMonth),
-      },
-    ]
-    if (organizationId) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'organizationId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: organizationId,
-      })
-    }
-    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
-  }
-
-  async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
-    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
-      'appointmentId',
-      appointmentId,
-    )
-
-    if (!pcrTestResults || pcrTestResults.length == 0) {
-      throw new ResourceNotFoundException(
-        `PCRTestResult with appointment ${appointmentId} not found`,
-      )
-    }
-
-    if (pcrTestResults.length > 1) {
-      console.log(
-        `GetTestResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
-      )
-    }
-
-    return pcrTestResults[0]
   }
 
   async deleteTestResults(id: string): Promise<void> {
