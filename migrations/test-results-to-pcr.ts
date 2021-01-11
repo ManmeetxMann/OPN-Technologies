@@ -43,7 +43,11 @@ async function updateTestResults(): Promise<Result[]> {
   const results: Result[] = []
 
   while (hasMore) {
-    const testResultSnapshot = await database.collection('test-results').offset(offset).limit(limit).get()
+    const testResultSnapshot = await database
+      .collection('test-results')
+      .offset(offset)
+      .limit(limit)
+      .get()
 
     offset += testResultSnapshot.docs.length
     hasMore = !testResultSnapshot.empty
@@ -64,18 +68,17 @@ async function createPcrTestResult(
   const testResult = snapshot.data()
 
   try {
-    console.log("testResult", testResult)
     return database.collection('pcr-test-results').add({
       appointmentId: testResult.appointmentId,
       barCode: testResult.barCode,
       dateOfAppointment: testResult.dateOfAppointment,
-      displayForNonAdmins: true, // ???
+      displayForNonAdmins: true,
       firstName: testResult.firstName,
       lastName: testResult.lastName,
       organizationId: testResult.organizationId,
       result: testResult.result,
       resultSpecs: {
-        action: 'RequestReSample', // ???
+        action: 'NoOverwrite',
         autoResult: testResult.result,
         barCode: testResult.barCode,
         calRed61Ct: testResult.calRed61Ct,
@@ -84,16 +87,16 @@ async function createPcrTestResult(
         famEGene: testResult.famEGene,
         hexCt: testResult.hexCt,
         hexIC: testResult.hexIC,
-        notify: true, // ???
+        notify: true,
         quasar670Ct: testResult.quasar670Ct,
         quasar670NGene: testResult.quasar670NGene,
-        resultDate: testResult.resultDate
+        resultDate: testResult.resultDate,
       },
       timestamps: {
         createdAt: testResult.timestamps.createdAt,
-        updatedAt: testResult.timestamps.updatedAt
+        updatedAt: testResult.timestamps.updatedAt,
       },
-      waitingResult: false // ???
+      waitingResult: false,
     })
   } catch (error) {
     throw error
