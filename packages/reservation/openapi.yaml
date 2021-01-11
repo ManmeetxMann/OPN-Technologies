@@ -118,6 +118,8 @@ components:
               type: string
             vialLocaton:
               type: string
+            testRunId:
+              type: string
           required:
             - id
             - firstName
