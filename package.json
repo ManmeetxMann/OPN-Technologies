@@ -37,6 +37,7 @@
 		"migration:migrate-dependants": "ts-node ./migrations/migrate-dependants",
 		"migration:update-admin-approval-emails": "ts-node ./migrations/update-admin-approval-emails",
 		"migration:update-user-emails": "ts-node ./migrations/update-user-emails",
+		"migration:relocate-auth-id": "ts-node ./migrations/relocate-auth-id",
 		"migration:update-organizationids-for-users": "ts-node ./migrations/update-organizationids-for-users",
 		"migration:trim-firstname-lastname-and-fix-last-name": "ts-node ./migrations/trim-firstname-lastname-and-fix-last-name",
 		"migration:migrate-attestation-questionaireid-field": "ts-node ./migrations/add-questionnaireid-to-attestation"
