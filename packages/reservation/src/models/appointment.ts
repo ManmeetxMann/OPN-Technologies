@@ -41,7 +41,7 @@ export type AppointmentModelBase = {
   receivedAt?: Date
   registeredNursePractitioner?: string
   latestResult: ResultTypes
-  testRunId?: string[]
+  testRunId?: string
   timeOfAppointment: string
   transportRunId?: string
   appointmentTypeID: number
@@ -142,6 +142,7 @@ export type AppointmentUiDTO = {
   deadline?: string
   latestResult?: string
   vialLocaton?: string
+  testRunId?: string
 }
 
 export type AppointmentsState = {
@@ -193,5 +194,6 @@ export const appointmentUiDTOResponse = (appointment: AppointmentDBModel): Appoi
     deadline: moment(appointment.deadline).tz(timeZone).format(),
     latestResult: appointment.latestResult,
     vialLocaton: appointment.vialLocaton,
+    testRunId: appointment.testRunId,
   }
 }
