@@ -73,7 +73,8 @@ export class AppoinmentService {
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: this.makeTimeEndOfTheDay(moment(queryParams.deadlineDate).utc()),
+        // do not remove the addition of the hours, without it the filter does not work correct
+        value: this.makeTimeEndOfTheDay(moment(queryParams.deadlineDate).add(3, 'hours').utc()),
       })
     }
     if (queryParams.transportRunId) {
@@ -88,7 +89,7 @@ export class AppoinmentService {
       conditions.push({
         map: '/',
         key: 'testRunId',
-        operator: DataModelFieldMapOperatorType.ArrayContains,
+        operator: DataModelFieldMapOperatorType.Equals,
         value: queryParams.testRunId,
       })
     }
