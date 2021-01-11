@@ -497,6 +497,13 @@ components:
         - isManagementDashboardAdmin
         - isTestReportsAdmin
         - isTestAppointmentsAdmin
+        - isLabAppointmentsAdmin
+        - isLabResultsAdmin
+        - isTransportsRunsAdmin
+        - isReceivingAdmin
+        - isTestRunsAdmin
+        - isDueTodayAdmin
+        - isBulkUploadAdmin
 
     InternalAdminListRequest:
       type: object
