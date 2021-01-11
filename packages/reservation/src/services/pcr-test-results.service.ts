@@ -46,6 +46,7 @@ export class PCRTestResultsService {
 
   async createReportForPCRResults(
     testResultData: PCRTestResultRequest,
+    adminId: string
   ): Promise<CreateReportForPCRResultsResponse> {
     let reportTrackerId: string
     if (!testResultData.reportTrackerId) {
@@ -71,6 +72,7 @@ export class PCRTestResultsService {
           resultDate,
         },
         status: ResultReportStatus.RequestReceived,
+        adminId: adminId
       }
     })
 
@@ -115,6 +117,7 @@ export class PCRTestResultsService {
     await this.handlePCRResultSaveAndSend({
       barCode: pcrResults.data.barCode,
       resultSpecs: pcrResults.data,
+      adminId: pcrResults.adminId
     })
   }
 
@@ -303,28 +306,26 @@ export class PCRTestResultsService {
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
         console.log(`TestResultReRun: ${resultData.barCode} is added to queue for today`)
-        await this.appointmentService.changeStatusToReRunRequired(appointment.id, true)
+        await this.appointmentService.changeStatusToReRunRequired(appointment.id, true, resultData.adminId)
         break
       }
       case PCRResultActions.ReRunTomorrow: {
         console.log(`TestResultReRun: ${resultData.barCode} is added to queue for tomorrow`)
-        await this.appointmentService.changeStatusToReRunRequired(appointment.id, false)
+        await this.appointmentService.changeStatusToReRunRequired(appointment.id, false, resultData.adminId)
         break
       }
       case PCRResultActions.RequestReSample: {
         console.log(`TestResultReSample: ${resultData.barCode} is requested`)
-        await this.appointmentService.changeStatusToReSampleRequired(appointment.id)
-        if (!appointment.organizationId) {
-          this.couponCode = await this.couponService.createCoupon(appointment.email)
-          console.log(
-            `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
-          )
-          await this.couponService.saveCoupon(
-            this.couponCode,
-            appointment.organizationId,
-            resultData.barCode,
-          )
-        }
+        await this.appointmentService.changeStatusToReSampleRequired(appointment.id, resultData.adminId)
+        this.couponCode = await this.couponService.createCoupon(appointment.email)
+        console.log(
+          `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
+        )
+        await this.couponService.saveCoupon(
+          this.couponCode,
+          appointment.organizationId,
+          resultData.barCode,
+        )
         break
       }
     }

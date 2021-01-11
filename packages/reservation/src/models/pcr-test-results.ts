@@ -48,6 +48,7 @@ export type PCRTestResultRequest = {
 
 export type PCRTestResultData = {
   barCode: string
+  adminId: string
   resultSpecs?: PCRResultSpecs
 }
 
@@ -110,6 +111,7 @@ export type TestResultsReportingTrackerDBModel = {
 
 export type TestResultsReportingTrackerPCRResultsDBModel = {
   id: string
+  adminId: string
   status: ResultReportStatus
   data: PCRTestResultRequestData
   details?: string

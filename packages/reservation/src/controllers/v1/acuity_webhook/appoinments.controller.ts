@@ -140,6 +140,7 @@ class AppointmentWebhookController implements IControllerBase {
             dateOfAppointment,
             waitingResult: true,
             displayForNonAdmins: true,
+            adminId: 'WEBHOOK'
           }
           await this.pcrTestResultsService.saveDefaultTestResults(pcrResultDataForDb)
         }

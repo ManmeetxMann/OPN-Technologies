@@ -216,7 +216,7 @@ export class AppoinmentService {
     return this.acuityRepository.cancelAppointmentByIdOnAcuity(id)
   }
 
-  private getUsersGroupRepositoryFor(appointmentId: string) {
+  private getStatusHistoryRepository(appointmentId: string) {
     return new StatusHistoryRepository(this.dataStore, appointmentId)
   }
 
@@ -226,7 +226,7 @@ export class AppoinmentService {
     createdBy: string,
   ): Promise<AppointmentStatusHistoryDb> {
     const appointment = await this.getAppointmentDBById(appointmentId)
-    return this.getUsersGroupRepositoryFor(appointmentId).add({
+    return this.getStatusHistoryRepository(appointmentId).add({
       newStatus: newStatus,
       previousStatus: appointment.appointmentStatus,
       createdOn: now(),
@@ -294,24 +294,30 @@ export class AppoinmentService {
   async changeStatusToReRunRequired(
     appointmentId: string,
     today: boolean,
+    userId: string
   ): Promise<AppointmentDBModel> {
     const utcDateTime = moment().utc()
     const deadline = today
       ? this.makeTimeEndOfTheDay(utcDateTime)
       : this.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.reRunRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.reRunRequired,
       deadline: deadline,
     })
   }
 
-  async changeStatusToReSampleRequired(appointmentId: string): Promise<AppointmentDBModel> {
+  async changeStatusToReSampleRequired(appointmentId: string,
+    userId: string): Promise<AppointmentDBModel> {
+      await this.addStatusHistoryById(appointmentId, AppointmentStatus.reSampleRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.reSampleRequired,
     })
   }
 
-  async changeStatusToReported(appointmentId: string): Promise<AppointmentDBModel> {
+  async changeStatusToReported(appointmentId: string,
+    userId: string): Promise<AppointmentDBModel> {
+      await this.addStatusHistoryById(appointmentId, AppointmentStatus.reported, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.reported,
     })
