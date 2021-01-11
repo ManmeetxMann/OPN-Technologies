@@ -22,6 +22,9 @@ import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.
 import {flatten} from 'lodash'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
+import {Config} from '../../../common/src/utils/config'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 export class AppoinmentService {
   private dataStore = new DataStore()
@@ -73,8 +76,9 @@ export class AppoinmentService {
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.Equals,
-        // do not remove the addition of the hours, without it the filter does not work correct
-        value: this.makeTimeEndOfTheDay(moment(queryParams.deadlineDate).add(3, 'hours').utc()),
+        value: this.makeTimeEndOfTheDay(
+          moment.tz(`${queryParams.deadlineDate}`, 'YYYY-MM-DD', timeZone).utc(),
+        ),
       })
     }
     if (queryParams.transportRunId) {
