@@ -139,7 +139,7 @@ export class PCRTestResultsService {
       console.log(`processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `)
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
         status: ResultReportStatus.Failed,
-        details: error,
+        details: error.toString(),
       })
     }
   }
@@ -398,6 +398,10 @@ export class PCRTestResultsService {
         registeredNursePractitioner: appointment.registeredNursePractitioner,
       }
       await this.sendNotification(pcrResultDataForEmail)
+    } else {
+      console.log(
+        `handlePCRResultSaveAndSend: Not Notification is sent for ${resultData.barCode}. Notify is off.`,
+      )
     }
   }
 
@@ -464,32 +468,29 @@ export class PCRTestResultsService {
   async sendNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
-        console.log(`SendNotification: ${resultData.barCode} ReRunToday`)
+        console.log(`SendNotification: Success: ${resultData.barCode} ReRunToday`)
         await this.sendRerunNotification(resultData, 'TODAY')
         break
       }
       case PCRResultActions.ReRunTomorrow: {
-        console.log(`SendNotification: ${resultData.barCode} ReRunTomorrow`)
+        console.log(`SendNotification: Success: ${resultData.barCode} ReRunTomorrow`)
         await this.sendRerunNotification(resultData, 'Tomorrow')
         break
       }
       case PCRResultActions.RequestReSample: {
-        console.log(`SendNotification: ${resultData.barCode} RequestReSample`)
+        console.log(`SendNotification: Success: ${resultData.barCode} RequestReSample`)
         await this.sendReSampleNotification(resultData)
         break
       }
       default: {
-        const whiteListedResultsForNotification = [
-          ResultTypes.Detected2019nCoV,
-          ResultTypes.Negative,
-          ResultTypes.Positive,
-        ]
+        const whiteListedResultsForNotification = [ResultTypes.Negative, ResultTypes.Positive]
         if (whiteListedResultsForNotification.includes(resultData.result)) {
           await this.sendTestResults(resultData)
+          console.log(`SendNotification: Success: Sent Results for ${resultData.barCode}`)
         } else {
           //WARNING
           console.log(
-            `SendNotification: ${resultData.barCode} with result ${resultData.result} requested to send notification. Blocked by system.`,
+            `SendNotification: Failed:  Blocked by system. ${resultData.barCode} with result ${resultData.result} requested to send notification.`,
           )
         }
       }
