@@ -13,11 +13,13 @@ import {
   pcrTestResultsResponse,
   PcrTestResultsListRequest,
   pcrResultsResponse,
+  PcrTestResultsListByDeadlineRequest,
 } from '../../../models/pcr-test-results'
 import moment from 'moment'
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import {getAdminId} from '../../../../../common/src/utils/auth'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
@@ -52,7 +54,12 @@ class PCRTestResultController implements IControllerBase {
     innerRouter.get(
       this.path + '/api/v1/pcr-test-results-bulk/report-status',
       adminAuthMiddleware,
-      this.listPCRTestResult,
+      this.listPCRTestResultReportStatus,
+    )
+    innerRouter.get(
+      this.path + '/api/v1/pcr-test-results/by-deadline',
+      adminAuthMiddleware,
+      this.listPCRResultsByDeadline,
     )
 
     this.router.use('/', innerRouter)
@@ -64,6 +71,7 @@ class PCRTestResultController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
+      const adminId = getAdminId(res.locals.authenticatedUser)
       const data = req.body as PCRTestResultRequest
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
@@ -78,7 +86,10 @@ class PCRTestResultController implements IControllerBase {
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
-      const reportTracker = await this.pcrTestResultsService.createReportForPCRResults(data)
+      const reportTracker = await this.pcrTestResultsService.createReportForPCRResults(
+        data,
+        adminId,
+      )
 
       res.json(actionSucceed(reportTracker))
     } catch (error) {
@@ -88,6 +99,7 @@ class PCRTestResultController implements IControllerBase {
 
   createPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const adminId = getAdminId(res.locals.authenticatedUser)
       const data = req.body as PCRTestResultRequestData
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
@@ -105,6 +117,7 @@ class PCRTestResultController implements IControllerBase {
       const sendResult = await this.pcrTestResultsService.handlePCRResultSaveAndSend({
         barCode: data.barCode,
         resultSpecs: data,
+        adminId,
       })
 
       res.json(actionSucceed(sendResult))
@@ -112,6 +125,7 @@ class PCRTestResultController implements IControllerBase {
       next(error)
     }
   }
+
   listPCRResultsHistory = async (
     req: Request,
     res: Response,
@@ -152,6 +166,7 @@ class PCRTestResultController implements IControllerBase {
       next(error)
     }
   }
+
   listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId, dateOfAppointment} = req.query as PcrTestResultsListRequest
@@ -167,10 +182,32 @@ class PCRTestResultController implements IControllerBase {
     }
   }
 
-  listPCRTestResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  listPCRResultsByDeadline = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {deadline} = req.query as PcrTestResultsListByDeadlineRequest
+
+      const pcrResults = await this.pcrTestResultsService.getPCRResultsByDeadline(deadline)
+
+      res.json(actionSucceed(pcrResults.map(pcrResultsResponse)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  listPCRTestResultReportStatus = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const {reportTrackerId} = req.query as ListPCRResultRequest
-      const pcrTestResults = await this.pcrTestResultsService.listPCRTestResult(reportTrackerId)
+      const pcrTestResults = await this.pcrTestResultsService.listPCRTestResultReportStatus(
+        reportTrackerId,
+      )
       res.json(actionSucceed(pcrTestResults.map(pcrTestResultsResponse)))
     } catch (error) {
       console.log(error)

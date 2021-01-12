@@ -48,6 +48,7 @@ export type PCRTestResultRequest = {
 
 export type PCRTestResultData = {
   barCode: string
+  adminId: string
   resultSpecs?: PCRResultSpecs
 }
 
@@ -62,9 +63,12 @@ type AppointmentDataForPCRResult = {
 export type PCRTestResultDBModel = PCRTestResultData &
   AppointmentDataForPCRResult & {
     id: string
+    linkedBarCodes: string[]
     result: ResultTypes
     waitingResult: boolean
     displayForNonAdmins: boolean
+    deadline: string
+    testRunId?: string
   }
 
 export type PCRTestResultHistoryDTO = {
@@ -86,7 +90,10 @@ export type PCRResults = {
   result: string
 }
 
-export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, 'id'> & {
+export type PCRTestResultEmailDTO = Omit<
+  PCRTestResultDBModel,
+  'id' | 'linkedBarCodes' | 'deadline'
+> & {
   email: string
   phone: number
   dateOfBirth: string
@@ -110,6 +117,7 @@ export type TestResultsReportingTrackerDBModel = {
 
 export type TestResultsReportingTrackerPCRResultsDBModel = {
   id: string
+  adminId: string
   status: ResultReportStatus
   data: PCRTestResultRequestData
   details?: string
@@ -138,6 +146,10 @@ export const PCRTestResultHistoryResponse = (
   })),
 })
 
+export type PcrTestResultsListByDeadlineRequest = {
+  deadline: string
+}
+
 export type PcrTestResultsListRequest = {
   organizationId?: string
   dateOfAppointment: string
@@ -151,11 +163,6 @@ export type PCRTestResultListDTO = {
   dateOfAppointment: string
   barCode: string
   result: ResultTypes
-}
-export type AppointmentDataDTO = {
-  id: string
-  organizationId: string
-  email: string
 }
 
 export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResultListDTO => ({

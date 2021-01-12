@@ -1570,6 +1570,7 @@ paths:
                         type: string
                   page: 
                     type: number
+
   /reservation/admin/api/v1/pcr-test-results-bulk/report-status:
     get:
       description: Get appointment by barCode
@@ -1723,3 +1724,25 @@ paths:
                         type: string
                   page:
                     type: number
+
+  /reservation/admin/api/v1/pcr-test-results/by-deadline:
+    get:
+      description: Get Results by Deadline
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: deadline
+          schema:
+            type: string
+            format: date
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'

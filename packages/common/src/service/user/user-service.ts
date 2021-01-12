@@ -57,6 +57,9 @@ export class UserService {
 
   async findOneByAuthUserId(authUserId: string): Promise<User> {
     const results = await this.userRepository.findWhereEqual('authUserId', authUserId)
+    if (results.length > 1) {
+      console.warn(`${results.length} users found with authUserId ${authUserId}`)
+    }
     return results.length > 0 ? results.shift() : null
   }
 
@@ -69,6 +72,9 @@ export class UserService {
         value: authUserId,
       },
     ])
+    if (results.length > 1) {
+      console.warn(`${results.length} users found with admin.authUserId ${authUserId}`)
+    }
     return results.length > 0 ? results.shift() : null
   }
 

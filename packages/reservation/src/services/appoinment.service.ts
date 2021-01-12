@@ -221,7 +221,7 @@ export class AppoinmentService {
     return this.acuityRepository.cancelAppointmentByIdOnAcuity(id)
   }
 
-  private getUsersGroupRepositoryFor(appointmentId: string) {
+  private getStatusHistoryRepository(appointmentId: string) {
     return new StatusHistoryRepository(this.dataStore, appointmentId)
   }
 
@@ -231,7 +231,7 @@ export class AppoinmentService {
     createdBy: string,
   ): Promise<AppointmentStatusHistoryDb> {
     const appointment = await this.getAppointmentDBById(appointmentId)
-    return this.getUsersGroupRepositoryFor(appointmentId).add({
+    return this.getStatusHistoryRepository(appointmentId).add({
       newStatus: newStatus,
       previousStatus: appointment.appointmentStatus,
       createdOn: now(),
@@ -244,9 +244,9 @@ export class AppoinmentService {
     testRunId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.inProgress, userId)
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.InProgress, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.inProgress,
+      appointmentStatus: AppointmentStatus.InProgress,
       testRunId,
     })
   }
@@ -256,9 +256,9 @@ export class AppoinmentService {
     vialLocaton: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.received, userId)
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.Received, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.received,
+      appointmentStatus: AppointmentStatus.Received,
       vialLocaton,
     })
   }
@@ -269,11 +269,11 @@ export class AppoinmentService {
     userId: string,
   ): Promise<AppointmentAttachTransportStatus> {
     try {
-      await this.addStatusHistoryById(appointmentId, AppointmentStatus.inTransit, userId)
+      await this.addStatusHistoryById(appointmentId, AppointmentStatus.InTransit, userId)
 
       await this.appointmentsRepository.updateProperties(appointmentId, {
         transportRunId: transportRunId,
-        appointmentStatus: AppointmentStatus.inTransit,
+        appointmentStatus: AppointmentStatus.InTransit,
       })
       return AppointmentAttachTransportStatus.Succeed
     } catch (e) {
@@ -286,7 +286,7 @@ export class AppoinmentService {
   }
 
   makeTimeEndOfTheDay(datetime: moment.Moment): string {
-    return datetime.hours(11).minutes(59).format()
+    return datetime.hours(11).minutes(59).seconds(0).format()
   }
 
   async updateAppointmentDB(
@@ -299,26 +299,33 @@ export class AppoinmentService {
   async changeStatusToReRunRequired(
     appointmentId: string,
     today: boolean,
+    userId: string,
   ): Promise<AppointmentDBModel> {
     const utcDateTime = moment().utc()
     const deadline = today
       ? this.makeTimeEndOfTheDay(utcDateTime)
       : this.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReRunRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.reRunRequired,
+      appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
     })
   }
 
-  async changeStatusToReSampleRequired(appointmentId: string): Promise<AppointmentDBModel> {
+  async changeStatusToReSampleRequired(
+    appointmentId: string,
+    userId: string,
+  ): Promise<AppointmentDBModel> {
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReSampleRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.reSampleRequired,
+      appointmentStatus: AppointmentStatus.ReSampleRequired,
     })
   }
 
-  async changeStatusToReported(appointmentId: string): Promise<AppointmentDBModel> {
+  async changeStatusToReported(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.Reported, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.reported,
+      appointmentStatus: AppointmentStatus.Reported,
     })
   }
 
