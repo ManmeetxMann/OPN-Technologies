@@ -123,7 +123,7 @@ export class PCRTestResultsService {
       'status',
       ResultReportStatus.Processing,
     )
-    try{
+    try {
       await this.handlePCRResultSaveAndSend({
         barCode: pcrResults.data.barCode,
         resultSpecs: pcrResults.data,
@@ -134,17 +134,13 @@ export class PCRTestResultsService {
         'status',
         ResultReportStatus.SuccessfullyReported,
       )
-    }catch(error){
+    } catch (error) {
       //CRITICAL
-      console.log(
-        `processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `,
-      )
-      await testResultsReportingTrackerPCRResult.updateProperties(
-        resultId,{
-          status:ResultReportStatus.Failed,
-          details: error
-        }
-      )
+      console.log(`processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `)
+      await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
+        status: ResultReportStatus.Failed,
+        details: error,
+      })
     }
   }
 
@@ -360,7 +356,7 @@ export class PCRTestResultsService {
   }
 
   async handlePCRResultSaveAndSend(resultData: PCRTestResultData): Promise<void> {
-    if(resultData.resultSpecs.action === PCRResultActions.DoNothing){
+    if (resultData.resultSpecs.action === PCRResultActions.DoNothing) {
       console.log(`handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}`)
       return
     }
@@ -483,12 +479,18 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        const whiteListedResultsForNotification = [ResultTypes.Detected2019nCoV, ResultTypes.Negative, ResultTypes.Positive]
-        if(whiteListedResultsForNotification.includes(resultData.result)){
+        const whiteListedResultsForNotification = [
+          ResultTypes.Detected2019nCoV,
+          ResultTypes.Negative,
+          ResultTypes.Positive,
+        ]
+        if (whiteListedResultsForNotification.includes(resultData.result)) {
           await this.sendTestResults(resultData)
-        }else{
+        } else {
           //WARNING
-          console.log(`SendNotification: ${resultData.barCode} with result ${resultData.result} requested to send notification. Blocked by system.`)
+          console.log(
+            `SendNotification: ${resultData.barCode} with result ${resultData.result} requested to send notification. Blocked by system.`,
+          )
         }
       }
     }
