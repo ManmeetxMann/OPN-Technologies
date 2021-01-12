@@ -1,8 +1,8 @@
-import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
+import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {Handler, Router} from 'express'
-import {TransportRunsService} from '../../services/transport-runs.service'
-import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {TransportRunsDTOResponse} from '../../models/transport-runs'
+import {TransportRunsService} from '../../../services/transport-runs.service'
+import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {TransportRunsDTOResponse} from '../../../models/transport-runs'
 
 class TransportRunsController implements IControllerBase {
   public path = '/reservation/admin/api/v1/transport-runs'

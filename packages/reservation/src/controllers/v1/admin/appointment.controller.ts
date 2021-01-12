@@ -1,8 +1,8 @@
 import {NextFunction, Request, Response, Router} from 'express'
 
-import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {adminAuthMiddleware} from '../../../../common/src/middlewares/admin.auth'
+import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
+import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
 
 import {
   AppointmentByOrganizationRequest,
@@ -10,13 +10,13 @@ import {
   Label,
   AppointmentsState,
   AppointmentDBModel,
-} from '../../models/appointment'
-import {AppoinmentService} from '../../services/appoinment.service'
-import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
-import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
-import {isValidDate} from '../../../../common/src/utils/times'
-import {TransportRunsService} from '../../services/transport-runs.service'
-import {getAdminId} from '../../../../common/src/utils/auth'
+} from '../../../models/appointment'
+import {AppoinmentService} from '../../../services/appoinment.service'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
+import {isValidDate} from '../../../../../common/src/utils/times'
+import {TransportRunsService} from '../../../services/transport-runs.service'
+import {getAdminId} from '../../../../../common/src/utils/auth'
 
 const isJustOneOf = (a: unknown, b: unknown) => !(a && b) || !(!a && !b)
 

@@ -1,16 +1,16 @@
 import {NextFunction, Request, Response, Router} from 'express'
 
-import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {authMiddleware} from '../../../../common/src/middlewares/auth'
-import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
+import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {authMiddleware} from '../../../../../common/src/middlewares/auth'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 
-import {PackageService} from '../../services/package.service'
+import {PackageService} from '../../../services/package.service'
 
-import packageValidations from '../../validations/package.validations'
-import {SavePackageAndOrganizationRequest} from '../../models/packages'
-import {AppoinmentService} from '../../services/appoinment.service'
-import {PCRTestResultsService} from '../../services/pcr-test-results.service'
+import packageValidations from '../../../validations/package.validations'
+import {SavePackageAndOrganizationRequest} from '../../../models/packages'
+import {AppoinmentService} from '../../../services/appoinment.service'
+import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 
 class AdminController implements IControllerBase {
   public path = '/reservation/admin'
