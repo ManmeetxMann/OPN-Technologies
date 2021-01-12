@@ -1,17 +1,17 @@
 import {NextFunction, Request, Response, Router} from 'express'
 import {flatten} from 'lodash'
-import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
+import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
+import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 
-import {adminAuthMiddleware} from '../../../../common/src/middlewares/admin.auth'
-import {TestResultsService} from '../../services/test-results.service'
-import {AppoinmentService} from '../../services/appoinment.service'
+import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
+import {TestResultsService} from '../../../services/test-results.service'
+import {AppoinmentService} from '../../../services/appoinment.service'
 import {
   AppointmentByOrganizationRequest,
   ResultTypes,
   AppointmentDBModel,
-} from '../../models/appointment'
-import {testResultUiDTOResponse} from '../../models/test-result'
+} from '../../../models/appointment'
+import {testResultUiDTOResponse} from '../../../models/test-result'
 
 class AdminController implements IControllerBase {
   public path = '/reservation/admin'
