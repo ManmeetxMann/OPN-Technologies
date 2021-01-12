@@ -53,7 +53,7 @@ class TemperatureAdminController implements IControllerBase {
         temperature > temperatureThreshold ? TemperatureStatuses.Stop : TemperatureStatuses.Proceed
       const validFrom = now()
 
-      const atestation = await this.attestationService.lastAttestationByUserId(userId)
+      const atestation = await this.attestationService.lastAttestationByUserId(userId, organizationId)
 
       if (!atestation) {
         throw new BadRequestException('No attestation found for user')

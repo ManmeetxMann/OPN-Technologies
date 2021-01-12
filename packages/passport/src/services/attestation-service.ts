@@ -35,16 +35,14 @@ export class AttestationService {
       }))
   }
 
-  async latestStatus(userOrDependantId: string): Promise<PassportStatus> {
-    const [attestation] = await this.attestationRepository.findWhereArrayContainsWithMax(
-      'appliesTo',
-      userOrDependantId,
-      'attestationTime',
-    )
-    if (attestation) {
-      return attestation.status
-    }
-    return 'pending'
+  async latestStatus(userOrDependantId: string, organizationId: string): Promise<PassportStatus> {
+
+    const [attestation] = await this.attestationRepository
+      .getQueryFindWhereArrayContains('appliesTo', userOrDependantId)
+      .where('organizationId', '==', organizationId)
+      .orderBy('attestationTime', 'desc')
+      .fetch()
+    return attestation?.status ?? 'pending'
   }
 
   async statusByLocationAndUserId(
@@ -190,10 +188,11 @@ export class AttestationService {
     return attestations
   }
 
-  async lastAttestationByUserId(userOrDependantId: string): Promise<Attestation> {
+  async lastAttestationByUserId(userOrDependantId: string, organizationId: string): Promise<Attestation> {
     const [attestation] = await this.attestationRepository
       .getQueryFindWhereArrayContains('appliesTo', userOrDependantId)
       .where('userId', '==', userOrDependantId)
+      .where('organizationId', '==', organizationId)
       .orderBy('attestationTime', 'desc')
       .fetch()
 

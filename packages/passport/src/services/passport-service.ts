@@ -135,12 +135,14 @@ export class PassportService {
   async findLatestPassport(
     userId: string,
     parentUserId: string | null = null,
+    organizationId: string | null = null,
     nowDate: Date = now(),
   ): Promise<Passport> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
     const directPassports = await this.passportRepository
       .collection()
       .where('userId', '==', userId)
+      .where('organizationId', '==', organizationId)
       .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
       .orderBy('validUntil', 'desc')
       .fetch()
@@ -149,6 +151,7 @@ export class PassportService {
           await this.passportRepository
             .collection()
             .where('userId', '==', parentUserId)
+            .where('organizationId', '==', organizationId)
             .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
             .orderBy('validUntil', 'desc')
             .fetch()
