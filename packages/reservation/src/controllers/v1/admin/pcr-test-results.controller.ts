@@ -12,7 +12,6 @@ import {
   PCRTestResultRequestData,
   pcrTestResultsResponse,
   PcrTestResultsListRequest,
-  pcrResultsResponse,
   PcrTestResultsListByDeadlineRequest,
 } from '../../../models/pcr-test-results'
 import moment from 'moment'
@@ -170,14 +169,27 @@ class PCRTestResultController implements IControllerBase {
 
   listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId, dateOfAppointment} = req.query as PcrTestResultsListRequest
+      const {
+        testRunId,
+        deadline,
+        organizationId,
+        dateOfAppointment,
+      } = req.query as PcrTestResultsListRequest
+
+      if (!(testRunId || deadline) && !dateOfAppointment) {
+        throw new BadRequestException(
+          '"dateOfAppointment" is required if "testRunId" or "deadline" haven\'t been passed',
+        )
+      }
 
       const pcrResults = await this.pcrTestResultsService.getPCRResults({
         organizationId,
         dateOfAppointment,
+        deadline,
+        testRunId,
       })
 
-      res.json(actionSucceed(pcrResults.map(pcrResultsResponse)))
+      res.json(actionSucceed(pcrResults))
     } catch (error) {
       next(error)
     }
