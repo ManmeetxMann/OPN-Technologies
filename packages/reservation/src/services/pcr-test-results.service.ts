@@ -519,4 +519,17 @@ export class PCRTestResultsService {
         await this.pcrTestResultsRepository.updateProperties(pcrTestResult.id, {organizationId}),
     )
   }
+
+  async addTestRunToPCR(
+    testRunId: string,
+    pcrTestResultId: string,
+    adminId: string,
+  ): Promise<void> {
+    const pcrTestResults = await this.pcrTestResultsRepository.get(pcrTestResultId)
+    if (!pcrTestResults) {
+      throw new ResourceNotFoundException(`PCR Result with id ${pcrTestResultId} not found`)
+    }
+    await this.pcrTestResultsRepository.updateProperty(pcrTestResultId, 'testRunId', testRunId)
+    await this.appointmentService.makeInProgress(pcrTestResults.appointmentId, testRunId, adminId)
+  }
 }
