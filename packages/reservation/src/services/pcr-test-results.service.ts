@@ -94,6 +94,10 @@ export class PCRTestResultsService {
     }
   }
 
+  async deleteTestResults(id: string): Promise<void> {
+    await this.pcrTestResultsRepository.delete(id)
+  }
+
   async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
     const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
       this.datastore,
@@ -158,7 +162,7 @@ export class PCRTestResultsService {
     return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
   }
 
-  async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
+  async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel[]> {
     const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
       'appointmentId',
       appointmentId,
@@ -170,13 +174,7 @@ export class PCRTestResultsService {
       )
     }
 
-    if (pcrTestResults.length > 1) {
-      console.log(
-        `GetTestResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
-      )
-    }
-
-    return pcrTestResults[0]
+    return pcrTestResults
   }
 
   async getWaitingPCRResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
@@ -205,8 +203,9 @@ export class PCRTestResultsService {
     }
 
     if (pcrTestResults.length > 1) {
+      //CRITICAL
       console.log(
-        `GetTestResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
+        `getWaitingPCRResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
       )
     }
 
@@ -327,6 +326,49 @@ export class PCRTestResultsService {
     }
   }
 
+  async handleActions(
+    resultData: PCRTestResultData,
+    appointment: AppointmentDataDTO,
+  ): Promise<void> {
+    switch (resultData.resultSpecs.action) {
+      case PCRResultActions.ReRunToday: {
+        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for today`)
+        await this.appointmentService.changeStatusToReRunRequired(
+          appointment.id,
+          true,
+          resultData.adminId,
+        )
+        break
+      }
+      case PCRResultActions.ReRunTomorrow: {
+        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for tomorrow`)
+        await this.appointmentService.changeStatusToReRunRequired(
+          appointment.id,
+          false,
+          resultData.adminId,
+        )
+        break
+      }
+      case PCRResultActions.RequestReSample: {
+        console.log(`TestResultReSample: ${resultData.barCode} is requested`)
+        await this.appointmentService.changeStatusToReSampleRequired(
+          appointment.id,
+          resultData.adminId,
+        )
+        this.couponCode = await this.couponService.createCoupon(appointment.email)
+        console.log(
+          `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
+        )
+        await this.couponService.saveCoupon(
+          this.couponCode,
+          appointment.organizationId,
+          resultData.barCode,
+        )
+        break
+      }
+    }
+  }
+
   async sendNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
@@ -414,53 +456,6 @@ export class PCRTestResultsService {
     })
   }
 
-  async handleActions(
-    resultData: PCRTestResultData,
-    appointment: AppointmentDataDTO,
-  ): Promise<void> {
-    switch (resultData.resultSpecs.action) {
-      case PCRResultActions.ReRunToday: {
-        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for today`)
-        await this.appointmentService.changeStatusToReRunRequired(
-          appointment.id,
-          true,
-          resultData.adminId,
-        )
-        break
-      }
-      case PCRResultActions.ReRunTomorrow: {
-        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for tomorrow`)
-        await this.appointmentService.changeStatusToReRunRequired(
-          appointment.id,
-          false,
-          resultData.adminId,
-        )
-        break
-      }
-      case PCRResultActions.RequestReSample: {
-        console.log(`TestResultReSample: ${resultData.barCode} is requested`)
-        await this.appointmentService.changeStatusToReSampleRequired(
-          appointment.id,
-          resultData.adminId,
-        )
-        this.couponCode = await this.couponService.createCoupon(appointment.email)
-        console.log(
-          `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
-        )
-        await this.couponService.saveCoupon(
-          this.couponCode,
-          appointment.organizationId,
-          resultData.barCode,
-        )
-        break
-      }
-    }
-  }
-
-  async deleteTestResults(id: string): Promise<void> {
-    await this.pcrTestResultsRepository.delete(id)
-  }
-
   async updateDefaultTestResults(
     id: string,
     defaultTestResults: Partial<PCRTestResultDBModel>,
@@ -482,8 +477,7 @@ export class PCRTestResultsService {
     appointmentId: string,
     organizationId: string,
   ): Promise<void> {
-    const {id} = await this.getTestResultsByAppointmentId(appointmentId)
-
-    await this.pcrTestResultsRepository.updateProperties(id, {organizationId})
+    const pcrTestResults = await this.getTestResultsByAppointmentId(appointmentId)
+    pcrTestResults.map(async (pcrTestResult)=>await this.pcrTestResultsRepository.updateProperties(pcrTestResult.id, {organizationId}))
   }
 }
