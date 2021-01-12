@@ -220,17 +220,16 @@ class PCRTestResultController implements IControllerBase {
     }
   }
 
-  addTestRunToPCR = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  addTestRunToPCR = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getAdminId(res.locals.authenticatedUser)
 
-      const {pcrTestResultIds, testRunId}: {
-        pcrTestResultIds: string[],
-        testRunId: string,
+      const {
+        pcrTestResultIds,
+        testRunId,
+      }: {
+        pcrTestResultIds: string[]
+        testRunId: string
       } = req.body
 
       if (pcrTestResultIds.length > 50) {
@@ -238,11 +237,12 @@ class PCRTestResultController implements IControllerBase {
       }
 
       await Promise.all(
-          pcrTestResultIds.map((pcrTestResultId) => this.pcrTestResultsService.addTestRunToPCR(testRunId, pcrTestResultId, adminId)),
+        pcrTestResultIds.map((pcrTestResultId) =>
+          this.pcrTestResultsService.addTestRunToPCR(testRunId, pcrTestResultId, adminId),
+        ),
       )
 
       res.json(actionSucceed())
-
     } catch (error) {
       next(error)
     }
