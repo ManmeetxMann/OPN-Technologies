@@ -123,11 +123,29 @@ export class PCRTestResultsService {
       'status',
       ResultReportStatus.Processing,
     )
-    await this.handlePCRResultSaveAndSend({
-      barCode: pcrResults.data.barCode,
-      resultSpecs: pcrResults.data,
-      adminId: pcrResults.adminId,
-    })
+    try{
+      await this.handlePCRResultSaveAndSend({
+        barCode: pcrResults.data.barCode,
+        resultSpecs: pcrResults.data,
+        adminId: pcrResults.adminId,
+      })
+      await testResultsReportingTrackerPCRResult.updateProperty(
+        resultId,
+        'status',
+        ResultReportStatus.SuccessfullyReported,
+      )
+    }catch(error){
+      //CRITICAL
+      console.log(
+        `processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `,
+      )
+      await testResultsReportingTrackerPCRResult.updateProperties(
+        resultId,{
+          status:ResultReportStatus.Failed,
+          details: error
+        }
+      )
+    }
   }
 
   async listPCRTestResultReportStatus(
@@ -219,7 +237,7 @@ export class PCRTestResultsService {
       appointmentId,
     )
 
-    if (!pcrTestResults || pcrTestResults.length == 0) {
+    if (!pcrTestResults || pcrTestResults.length === 0) {
       throw new ResourceNotFoundException(
         `PCRTestResult with appointment ${appointmentId} not found`,
       )
@@ -247,7 +265,7 @@ export class PCRTestResultsService {
       pcrTestResultsQuery,
     )
 
-    if (!pcrTestResults || pcrTestResults.length == 0) {
+    if (!pcrTestResults || pcrTestResults.length === 0) {
       throw new ResourceNotFoundException(
         `PCRTestResult with appointment ${appointmentId} not found`,
       )
@@ -291,11 +309,11 @@ export class PCRTestResultsService {
       barCodeNumber,
     )
 
-    if (!pcrTestResults || pcrTestResults.length == 0) {
+    if (!pcrTestResults || pcrTestResults.length === 0) {
       throw new ResourceNotFoundException(`PCRTestResult with barCode ${barCodeNumber} not found`)
     }
     const pcrTestResult = pcrTestResults.filter((result) => result.waitingResult)
-    if (!pcrTestResult || pcrTestResult.length == 0) {
+    if (!pcrTestResult || pcrTestResult.length === 0) {
       throw new ResourceNotFoundException(`No Results are waiting for barcode: ${barCodeNumber}`)
     }
     //Only one Result should be waiting
@@ -321,7 +339,7 @@ export class PCRTestResultsService {
       pcrTestResultsQuery,
     )
 
-    if (!pcrTestResults || pcrTestResults.length == 0) {
+    if (!pcrTestResults || pcrTestResults.length === 0) {
       throw new ResourceNotFoundException(
         `PCRTestResult with barCode ${barCodeNumber} and ReSample Requested not found`,
       )
@@ -332,16 +350,21 @@ export class PCRTestResultsService {
   }
 
   async handlePCRResultSaveAndSend(resultData: PCRTestResultData): Promise<void> {
-    const finalResult = this.getFinalResult(
-      resultData.resultSpecs.action,
-      resultData.resultSpecs.autoResult,
-      resultData.barCode,
-    )
+    if(resultData.resultSpecs.action === PCRResultActions.DoNothing){
+      console.log(`handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}`)
+      return
+    }
+
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
     const testResult = await this.getTestResultByBarCode(resultData.barCode)
 
     await this.handleActions(resultData, appointment.id)
 
+    const finalResult = this.getFinalResult(
+      resultData.resultSpecs.action,
+      resultData.resultSpecs.autoResult,
+      resultData.barCode,
+    )
     //Save PCR Test results
     const pcrResultDataForDbUpdate = {
       ...resultData,
@@ -450,7 +473,13 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        await this.sendTestResults(resultData)
+        const whiteListedResultsForNotification = [ResultTypes.Detected2019nCoV, ResultTypes.Negative, ResultTypes.Positive]
+        if(whiteListedResultsForNotification.includes(resultData.result)){
+          await this.sendTestResults(resultData)
+        }else{
+          //WARNING
+          console.log(`SendNotification: ${resultData.barCode} with result ${resultData.result} requested to send notification. Blocked by system.`)
+        }
       }
     }
   }
