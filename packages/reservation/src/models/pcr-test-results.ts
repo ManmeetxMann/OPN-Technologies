@@ -88,7 +88,7 @@ export type PCRResults = {
   result: string
 }
 
-export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, 'id'|'linkedBarCodes'> & {
+export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, 'id' | 'linkedBarCodes'> & {
   email: string
   phone: number
   dateOfBirth: string

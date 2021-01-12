@@ -18,7 +18,7 @@ import moment from 'moment'
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import { getAdminId } from '../../../../../common/src/utils/auth'
+import {getAdminId} from '../../../../../common/src/utils/auth'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
@@ -80,7 +80,10 @@ class PCRTestResultController implements IControllerBase {
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
-      const reportTracker = await this.pcrTestResultsService.createReportForPCRResults(data, adminId)
+      const reportTracker = await this.pcrTestResultsService.createReportForPCRResults(
+        data,
+        adminId,
+      )
 
       res.json(actionSucceed(reportTracker))
     } catch (error) {
@@ -108,7 +111,7 @@ class PCRTestResultController implements IControllerBase {
       const sendResult = await this.pcrTestResultsService.handlePCRResultSaveAndSend({
         barCode: data.barCode,
         resultSpecs: data,
-        adminId
+        adminId,
       })
 
       res.json(actionSucceed(sendResult))
@@ -116,7 +119,7 @@ class PCRTestResultController implements IControllerBase {
       next(error)
     }
   }
-  
+
   listPCRResultsHistory = async (
     req: Request,
     res: Response,

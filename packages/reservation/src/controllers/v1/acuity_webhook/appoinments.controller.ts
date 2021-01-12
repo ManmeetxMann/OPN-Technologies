@@ -149,7 +149,6 @@ class AppointmentWebhookController implements IControllerBase {
             waitingResult: true,
           }
           await this.pcrTestResultsService.saveDefaultTestResults(pcrResultDataForDb)
-
         }
       } catch (e) {
         console.log(`WebhookController: SaveToTestResults Failed AppoinmentID: ${id}`)
@@ -271,9 +270,11 @@ class AppointmentWebhookController implements IControllerBase {
               pcrResultDataForDb,
             )
           }
-        }else{
+        } else {
           //TODO CRITICAL
-          console.log(`WebhookController: UpdateAppointment No Test Results for AppointmentID: ${appointmentFromDb.id}`)
+          console.log(
+            `WebhookController: UpdateAppointment No Test Results for AppointmentID: ${appointmentFromDb.id}`,
+          )
         }
       } catch (e) {
         //TODO CRITICAL
@@ -287,21 +288,20 @@ class AppointmentWebhookController implements IControllerBase {
     }
   }
 
-  private getlinkedBarcodes = async (couponCode:string):Promise<string[]> =>  {
+  private getlinkedBarcodes = async (couponCode: string): Promise<string[]> => {
     let linkedBarcodes = []
-    if(couponCode){
+    if (couponCode) {
       //Get Coupon
       const coupon = await this.couponService.getByCouponCode(couponCode)
       //Get Linked Barcodes for LastBarCode
       const pcrResult = await this.pcrTestResultsService.getTestResultByBarCode(coupon.lastBarcode)
       linkedBarcodes.push(coupon.lastBarcode)
-      if(pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length){
+      if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
         linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
       }
     }
     return linkedBarcodes
   }
-
 }
 
 export default AppointmentWebhookController

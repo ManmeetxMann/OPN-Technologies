@@ -294,7 +294,7 @@ export class AppoinmentService {
   async changeStatusToReRunRequired(
     appointmentId: string,
     today: boolean,
-    userId: string
+    userId: string,
   ): Promise<AppointmentDBModel> {
     const utcDateTime = moment().utc()
     const deadline = today
@@ -307,17 +307,18 @@ export class AppoinmentService {
     })
   }
 
-  async changeStatusToReSampleRequired(appointmentId: string,
-    userId: string): Promise<AppointmentDBModel> {
-      await this.addStatusHistoryById(appointmentId, AppointmentStatus.reSampleRequired, userId)
+  async changeStatusToReSampleRequired(
+    appointmentId: string,
+    userId: string,
+  ): Promise<AppointmentDBModel> {
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.reSampleRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.reSampleRequired,
     })
   }
 
-  async changeStatusToReported(appointmentId: string,
-    userId: string): Promise<AppointmentDBModel> {
-      await this.addStatusHistoryById(appointmentId, AppointmentStatus.reported, userId)
+  async changeStatusToReported(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.reported, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.reported,
     })
