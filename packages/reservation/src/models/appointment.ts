@@ -16,7 +16,6 @@ export enum ResultTypes {
   Positive = 'Positive',
   Negative = 'Negative',
   Pending = 'Pending',
-  Detected2019nCoV = '2019-nCoV Detected',
   Invalid = 'Invalid',
   Inconclusive = 'Inconclusive',
   ReSampleRequested = 'ReSampleRequested',
