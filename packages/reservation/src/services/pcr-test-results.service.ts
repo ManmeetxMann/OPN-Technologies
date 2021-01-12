@@ -46,6 +46,7 @@ export class PCRTestResultsService {
 
   async createReportForPCRResults(
     testResultData: PCRTestResultRequest,
+    adminId: string,
   ): Promise<CreateReportForPCRResultsResponse> {
     let reportTrackerId: string
     if (!testResultData.reportTrackerId) {
@@ -71,6 +72,7 @@ export class PCRTestResultsService {
           resultDate,
         },
         status: ResultReportStatus.RequestReceived,
+        adminId: adminId,
       }
     })
 
@@ -90,6 +92,10 @@ export class PCRTestResultsService {
     return {
       reportTrackerId: reportTrackerId,
     }
+  }
+
+  async deleteTestResults(id: string): Promise<void> {
+    await this.pcrTestResultsRepository.delete(id)
   }
 
   async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
@@ -115,6 +121,7 @@ export class PCRTestResultsService {
     await this.handlePCRResultSaveAndSend({
       barCode: pcrResults.data.barCode,
       resultSpecs: pcrResults.data,
+      adminId: pcrResults.adminId,
     })
   }
 
@@ -129,9 +136,90 @@ export class PCRTestResultsService {
     return testResultsReportingTrackerPCRResult.fetchAll()
   }
 
+  async getPCRResults({
+    organizationId,
+    dateOfAppointment,
+  }: {
+    organizationId: string
+    dateOfAppointment: string
+  }): Promise<PCRTestResultDBModel[]> {
+    const pcrTestResultsQuery = [
+      {
+        map: '/',
+        key: 'dateOfAppointment',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: moment(dateOfAppointment).format(dateFormats.longMonth),
+      },
+    ]
+    if (organizationId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'organizationId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: organizationId,
+      })
+    }
+    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+  }
+
+  async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel[]> {
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
+      'appointmentId',
+      appointmentId,
+    )
+
+    if (!pcrTestResults || pcrTestResults.length == 0) {
+      throw new ResourceNotFoundException(
+        `PCRTestResult with appointment ${appointmentId} not found`,
+      )
+    }
+
+    return pcrTestResults
+  }
+
+  async getWaitingPCRResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
+    const pcrTestResultsQuery = [
+      {
+        map: '/',
+        key: 'appointmentId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: appointmentId,
+      },
+      {
+        map: '/',
+        key: 'waitingResult',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      },
+    ]
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+      pcrTestResultsQuery,
+    )
+
+    if (!pcrTestResults || pcrTestResults.length == 0) {
+      throw new ResourceNotFoundException(
+        `PCRTestResult with appointment ${appointmentId} not found`,
+      )
+    }
+
+    if (pcrTestResults.length > 1) {
+      //CRITICAL
+      console.log(
+        `getWaitingPCRResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
+      )
+    }
+
+    return pcrTestResults[0]
+  }
+
   getFinalResult(action: PCRResultActions, autoResult: ResultTypes, barCode: string): ResultTypes {
     let finalResult = autoResult
     switch (action) {
+      case PCRResultActions.RequestReSample: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
+        finalResult = ResultTypes.ReSampleRequested
+        break
+      }
       case PCRResultActions.MarkAsNegative: {
         console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
         finalResult = ResultTypes.Negative
@@ -161,6 +249,35 @@ export class PCRTestResultsService {
     }
     //Only one Result should be waiting
     return pcrTestResult[0]
+  }
+
+  async getReSampledTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
+    const pcrTestResultsQuery = [
+      {
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: barCodeNumber,
+      },
+      {
+        map: '/',
+        key: 'result',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: ResultTypes.ReSampleRequested,
+      },
+    ]
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+      pcrTestResultsQuery,
+    )
+
+    if (!pcrTestResults || pcrTestResults.length == 0) {
+      throw new ResourceNotFoundException(
+        `PCRTestResult with barCode ${barCodeNumber} and ReSample Requested not found`,
+      )
+    }
+
+    //Only one Result should be waiting
+    return pcrTestResults[0]
   }
 
   async handlePCRResultSaveAndSend(resultData: PCRTestResultData): Promise<void> {
@@ -206,6 +323,49 @@ export class PCRTestResultsService {
         registeredNursePractitioner: appointment.registeredNursePractitioner,
       }
       await this.sendNotification(pcrResultDataForEmail)
+    }
+  }
+
+  async handleActions(
+    resultData: PCRTestResultData,
+    appointment: AppointmentDataDTO,
+  ): Promise<void> {
+    switch (resultData.resultSpecs.action) {
+      case PCRResultActions.ReRunToday: {
+        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for today`)
+        await this.appointmentService.changeStatusToReRunRequired(
+          appointment.id,
+          true,
+          resultData.adminId,
+        )
+        break
+      }
+      case PCRResultActions.ReRunTomorrow: {
+        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for tomorrow`)
+        await this.appointmentService.changeStatusToReRunRequired(
+          appointment.id,
+          false,
+          resultData.adminId,
+        )
+        break
+      }
+      case PCRResultActions.RequestReSample: {
+        console.log(`TestResultReSample: ${resultData.barCode} is requested`)
+        await this.appointmentService.changeStatusToReSampleRequired(
+          appointment.id,
+          resultData.adminId,
+        )
+        this.couponCode = await this.couponService.createCoupon(appointment.email)
+        console.log(
+          `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
+        )
+        await this.couponService.saveCoupon(
+          this.couponCode,
+          appointment.organizationId,
+          resultData.barCode,
+        )
+        break
+      }
     }
   }
 
@@ -296,91 +456,6 @@ export class PCRTestResultsService {
     })
   }
 
-  async handleActions(
-    resultData: PCRTestResultData,
-    appointment: AppointmentDataDTO,
-  ): Promise<void> {
-    switch (resultData.resultSpecs.action) {
-      case PCRResultActions.ReRunToday: {
-        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for today`)
-        await this.appointmentService.changeStatusToReRunRequired(appointment.id, true)
-        break
-      }
-      case PCRResultActions.ReRunTomorrow: {
-        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for tomorrow`)
-        await this.appointmentService.changeStatusToReRunRequired(appointment.id, false)
-        break
-      }
-      case PCRResultActions.RequestReSample: {
-        console.log(`TestResultReSample: ${resultData.barCode} is requested`)
-        await this.appointmentService.changeStatusToReSampleRequired(appointment.id)
-        if (!appointment.organizationId) {
-          this.couponCode = await this.couponService.createCoupon(appointment.email)
-          console.log(
-            `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
-          )
-          await this.couponService.saveCoupon(
-            this.couponCode,
-            appointment.organizationId,
-            resultData.barCode,
-          )
-        }
-        break
-      }
-    }
-  }
-
-  async getPCRResults({
-    organizationId,
-    dateOfAppointment,
-  }: {
-    organizationId: string
-    dateOfAppointment: string
-  }): Promise<PCRTestResultDBModel[]> {
-    const pcrTestResultsQuery = [
-      {
-        map: '/',
-        key: 'dateOfAppointment',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: moment(dateOfAppointment).format(dateFormats.longMonth),
-      },
-    ]
-    if (organizationId) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'organizationId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: organizationId,
-      })
-    }
-    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
-  }
-
-  async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
-    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
-      'appointmentId',
-      appointmentId,
-    )
-
-    if (!pcrTestResults || pcrTestResults.length == 0) {
-      throw new ResourceNotFoundException(
-        `PCRTestResult with appointment ${appointmentId} not found`,
-      )
-    }
-
-    if (pcrTestResults.length > 1) {
-      console.log(
-        `GetTestResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
-      )
-    }
-
-    return pcrTestResults[0]
-  }
-
-  async deleteTestResults(id: string): Promise<void> {
-    await this.pcrTestResultsRepository.delete(id)
-  }
-
   async updateDefaultTestResults(
     id: string,
     defaultTestResults: Partial<PCRTestResultDBModel>,
@@ -402,8 +477,10 @@ export class PCRTestResultsService {
     appointmentId: string,
     organizationId: string,
   ): Promise<void> {
-    const {id} = await this.getTestResultsByAppointmentId(appointmentId)
-
-    await this.pcrTestResultsRepository.updateProperties(id, {organizationId})
+    const pcrTestResults = await this.getTestResultsByAppointmentId(appointmentId)
+    pcrTestResults.map(
+      async (pcrTestResult) =>
+        await this.pcrTestResultsRepository.updateProperties(pcrTestResult.id, {organizationId}),
+    )
   }
 }
