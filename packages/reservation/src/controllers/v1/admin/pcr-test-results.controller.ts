@@ -187,11 +187,12 @@ class PCRTestResultController implements IControllerBase {
         deadline,
         organizationId,
         dateOfAppointment,
+        barCode,
       } = req.query as PcrTestResultsListRequest
 
-      if (!(testRunId || deadline) && !dateOfAppointment) {
+      if (!(testRunId || deadline || barCode) && !dateOfAppointment) {
         throw new BadRequestException(
-          '"dateOfAppointment" is required if "testRunId" or "deadline" haven\'t been passed',
+          '"dateOfAppointment" is required if "barCode", "testRunId" or "deadline" haven\'t been passed',
         )
       }
 
@@ -200,6 +201,7 @@ class PCRTestResultController implements IControllerBase {
         dateOfAppointment,
         deadline,
         testRunId,
+        barCode,
       })
 
       res.json(actionSucceed(pcrResults))
