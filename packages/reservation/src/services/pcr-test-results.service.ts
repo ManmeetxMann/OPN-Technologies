@@ -125,7 +125,7 @@ export class PCRTestResultsService {
     })
   }
 
-  async listPCRTestResult(
+  async listPCRTestResultReportStatus(
     reportTrackerId: string,
   ): Promise<TestResultsReportingTrackerPCRResultsDBModel[]> {
     const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
@@ -160,6 +160,13 @@ export class PCRTestResultsService {
       })
     }
     return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+  }
+
+  async getPCRResultsByDeadline(deadline: string): Promise<PCRTestResultDBModel[]> {
+    return this.pcrTestResultsRepository.findWhereEqual(
+      'deadline',
+        deadline,
+    )
   }
 
   async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel[]> {
