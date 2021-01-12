@@ -90,7 +90,10 @@ export type PCRResults = {
   result: string
 }
 
-export type PCRTestResultEmailDTO = Omit<PCRTestResultDBModel, 'id' | 'linkedBarCodes' | 'deadline'> & {
+export type PCRTestResultEmailDTO = Omit<
+  PCRTestResultDBModel,
+  'id' | 'linkedBarCodes' | 'deadline'
+> & {
   email: string
   phone: number
   dateOfBirth: string
@@ -160,11 +163,6 @@ export type PCRTestResultListDTO = {
   dateOfAppointment: string
   barCode: string
   result: ResultTypes
-}
-export type AppointmentDataDTO = {
-  id: string
-  organizationId: string
-  email: string
 }
 
 export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResultListDTO => ({

@@ -182,7 +182,11 @@ class PCRTestResultController implements IControllerBase {
     }
   }
 
-  listPCRResultsByDeadline = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  listPCRResultsByDeadline = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const {deadline} = req.query as PcrTestResultsListByDeadlineRequest
 
@@ -194,10 +198,16 @@ class PCRTestResultController implements IControllerBase {
     }
   }
 
-  listPCRTestResultReportStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  listPCRTestResultReportStatus = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const {reportTrackerId} = req.query as ListPCRResultRequest
-      const pcrTestResults = await this.pcrTestResultsService.listPCRTestResultReportStatus(reportTrackerId)
+      const pcrTestResults = await this.pcrTestResultsService.listPCRTestResultReportStatus(
+        reportTrackerId,
+      )
       res.json(actionSucceed(pcrTestResults.map(pcrTestResultsResponse)))
     } catch (error) {
       console.log(error)
