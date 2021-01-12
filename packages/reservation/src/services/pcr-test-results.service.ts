@@ -505,6 +505,9 @@ export class PCRTestResultsService {
     adminId: string,
   ): Promise<void> {
     const pcrTestResults = await this.pcrTestResultsRepository.get(pcrTestResultId)
+    if (!pcrTestResults) {
+      throw new ResourceNotFoundException(`PCR Result with id ${pcrTestResultId} not found`)
+    }
     await this.pcrTestResultsRepository.updateProperty(pcrTestResultId, 'testRunId', testRunId)
     await this.appointmentService.makeInProgress(pcrTestResults.appointmentId, testRunId, adminId)
   }

@@ -9,6 +9,14 @@ export class TestRunsService {
   private identifier = new IdentifiersModel(this.dataStore)
   private testRunsRepository = new TestRunsRepository(new DataStore())
 
+  async getTestRunByTestRunId(testRunId: string): Promise<TestRunDBModel> {
+    const testRuns = await this.testRunsRepository.findWhereEqual('testRunId', testRunId)
+    if (testRuns.length > 1) {
+      console.log(`Multiple Test run found with TestRunId, testRunId: ${testRunId}`)
+    }
+    return testRuns[0]
+  }
+
   getTestRunsByDate(date: string): Promise<TestRunDBModel[]> {
     return this.testRunsRepository.findWhereEqual('testRunDate', date)
   }

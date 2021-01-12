@@ -20,11 +20,14 @@ import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {getAdminId} from '../../../../../common/src/utils/auth'
+import {TestRunsService} from '../../../services/test-runs.service'
+import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
+  private testRunService = new TestRunsService()
   constructor() {
     this.initRoutes()
   }
@@ -234,6 +237,12 @@ class PCRTestResultController implements IControllerBase {
 
       if (pcrTestResultIds.length > 50) {
         throw new BadRequestException('Maximum appointments to be part of request is 50')
+      }
+
+      const testRun = await this.testRunService.getTestRunByTestRunId(testRunId)
+
+      if (!testRun) {
+        throw new ResourceNotFoundException(`Test Run with id ${testRunId} not found`)
       }
 
       await Promise.all(
