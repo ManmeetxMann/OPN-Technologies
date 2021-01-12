@@ -286,7 +286,7 @@ export class AppoinmentService {
   }
 
   makeTimeEndOfTheDay(datetime: moment.Moment): string {
-    return datetime.hours(11).minutes(59).format()
+    return datetime.hours(11).minutes(59).seconds(0).format()
   }
 
   async updateAppointmentDB(

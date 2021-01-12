@@ -478,6 +478,9 @@ export class PCRTestResultsService {
     organizationId: string,
   ): Promise<void> {
     const pcrTestResults = await this.getTestResultsByAppointmentId(appointmentId)
-    pcrTestResults.map(async (pcrTestResult)=>await this.pcrTestResultsRepository.updateProperties(pcrTestResult.id, {organizationId}))
+    pcrTestResults.map(
+      async (pcrTestResult) =>
+        await this.pcrTestResultsRepository.updateProperties(pcrTestResult.id, {organizationId}),
+    )
   }
 }
