@@ -19,7 +19,7 @@ export enum ResultTypes {
   Detected2019nCoV = '2019-nCoV Detected',
   Invalid = 'Invalid',
   Inconclusive = 'Inconclusive',
-  ReSampleRequested = 'ReSampleRequested'
+  ReSampleRequested = 'ReSampleRequested',
 }
 
 export type AppointmentModelBase = {

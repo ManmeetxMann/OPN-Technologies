@@ -194,7 +194,9 @@ export class PCRTestResultsService {
         value: true,
       },
     ]
-    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+      pcrTestResultsQuery,
+    )
 
     if (!pcrTestResults || pcrTestResults.length == 0) {
       throw new ResourceNotFoundException(
@@ -250,7 +252,6 @@ export class PCRTestResultsService {
     return pcrTestResult[0]
   }
 
-
   async getReSampledTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
     const pcrTestResultsQuery = [
       {
@@ -266,10 +267,14 @@ export class PCRTestResultsService {
         value: ResultTypes.ReSampleRequested,
       },
     ]
-    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+      pcrTestResultsQuery,
+    )
 
     if (!pcrTestResults || pcrTestResults.length == 0) {
-      throw new ResourceNotFoundException(`PCRTestResult with barCode ${barCodeNumber} and ReSample Requested not found`)
+      throw new ResourceNotFoundException(
+        `PCRTestResult with barCode ${barCodeNumber} and ReSample Requested not found`,
+      )
     }
 
     //Only one Result should be waiting

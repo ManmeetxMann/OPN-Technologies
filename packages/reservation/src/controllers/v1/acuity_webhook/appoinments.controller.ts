@@ -297,19 +297,23 @@ class AppointmentWebhookController implements IControllerBase {
     if (couponCode) {
       //Get Coupon
       const coupon = await this.couponService.getByCouponCode(couponCode)
-      if(coupon){
+      if (coupon) {
         linkedBarcodes.push(coupon.lastBarcode)
-        try{
+        try {
           //Get Linked Barcodes for LastBarCode
-          const pcrResult = await this.pcrTestResultsService.getReSampledTestResultByBarCode(coupon.lastBarcode)
+          const pcrResult = await this.pcrTestResultsService.getReSampledTestResultByBarCode(
+            coupon.lastBarcode,
+          )
           if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
             linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
           }
-        }catch(error){
+        } catch (error) {
           //CRITICAL
-          console.log(`WebhookController: Coupon Code: ${couponCode} Last BarCode: ${coupon.lastBarcode} ${error}`)
+          console.log(
+            `WebhookController: Coupon Code: ${couponCode} Last BarCode: ${coupon.lastBarcode} ${error}`,
+          )
         }
-      }else{
+      } else {
         console.log(`WebhookController: ${couponCode} is not coupon. Hence no history for Barcodes`)
       }
     }
