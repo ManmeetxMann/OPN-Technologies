@@ -3,7 +3,6 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
-import {AppoinmentService} from '../../../services/appoinment.service'
 import {
   PCRListQueryRequest,
   PCRTestResultHistoryDTO,
@@ -15,7 +14,6 @@ import {
   PcrTestResultsListRequest,
   pcrResultsResponse,
   PcrTestResultsListByDeadlineRequest,
-  PCRTestResultByDeadlineListDTO,
 } from '../../../models/pcr-test-results'
 import moment from 'moment'
 import {now} from '../../../../../common/src/utils/times'
@@ -27,7 +25,6 @@ class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
-  private appointmentService = new AppoinmentService()
 
   constructor() {
     this.initRoutes()
@@ -195,26 +192,8 @@ class PCRTestResultController implements IControllerBase {
       const {deadline} = req.query as PcrTestResultsListByDeadlineRequest
 
       const pcrResults = await this.pcrTestResultsService.getPCRResultsByDeadline(deadline)
-      const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
-      const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
 
-      const result = pcrResults.map(
-        (pcr): PCRTestResultByDeadlineListDTO => {
-          const appointment = appointments.find(({id}) => pcr.appointmentId === id)
-          return {
-            id: pcr.id,
-            barCode: appointment.barCode,
-            result: pcr.result,
-            vialLocation: appointment.vialLocaton,
-            status: appointment.appointmentStatus,
-            dateTime: appointment.dateTime,
-            deadline: appointment.deadline,
-            testRunId: pcr.testRunId,
-          }
-        },
-      )
-
-      res.json(actionSucceed(result))
+      res.json(actionSucceed(pcrResults))
     } catch (error) {
       next(error)
     }

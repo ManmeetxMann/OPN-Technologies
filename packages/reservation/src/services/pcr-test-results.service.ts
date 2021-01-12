@@ -18,6 +18,7 @@ import {
 import {
   CreateReportForPCRResultsResponse,
   PCRResultActions,
+  PCRTestResultByDeadlineListDTO,
   PCRTestResultData,
   PCRTestResultDBModel,
   PCRTestResultEmailDTO,
@@ -32,6 +33,7 @@ import {AppointmentDBModel, ResultTypes} from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
+import {makeTimeEndOfTheDay} from '../../../common/src/utils/utils'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -163,15 +165,28 @@ export class PCRTestResultsService {
     return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
   }
 
-  async getPCRResultsByDeadline(deadline: string): Promise<PCRTestResultDBModel[]> {
-    return this.pcrTestResultsRepository.findWhereEqual(
+  async getPCRResultsByDeadline(deadline: string): Promise<PCRTestResultByDeadlineListDTO[]> {
+    const pcrResults = await this.pcrTestResultsRepository.findWhereEqual(
       'deadline',
-      this.makeTimeEndOfTheDay(moment.tz(`${deadline}`, 'YYYY-MM-DD', timeZone).utc()),
+      makeTimeEndOfTheDay(moment.tz(`${deadline}`, 'YYYY-MM-DD', timeZone).utc()),
     )
-  }
 
-  makeTimeEndOfTheDay(datetime: moment.Moment): string {
-    return datetime.hours(11).minutes(59).seconds(0).format()
+    const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
+    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+
+    return pcrResults.map((pcr) => {
+      const appointment = appointments.find(({id}) => pcr.appointmentId === id)
+      return {
+        id: pcr.id,
+        barCode: appointment.barCode,
+        result: pcr.result,
+        vialLocation: appointment.vialLocaton,
+        status: appointment.appointmentStatus,
+        dateTime: appointment.dateTime,
+        deadline: appointment.deadline,
+        testRunId: pcr.testRunId,
+      }
+    })
   }
 
   async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel[]> {
