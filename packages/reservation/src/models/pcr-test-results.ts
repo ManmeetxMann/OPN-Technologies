@@ -71,6 +71,10 @@ export type PCRTestResultDBModel = PCRTestResultData &
     testRunId?: string
   }
 
+export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
+  linkedResults?: PCRTestResultDBModel[]
+}
+
 export type PCRTestResultHistoryDTO = {
   id: string
   barCode: string

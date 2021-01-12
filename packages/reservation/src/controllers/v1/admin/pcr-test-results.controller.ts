@@ -138,7 +138,7 @@ class PCRTestResultController implements IControllerBase {
         throw new BadRequestException('Maximum appointments to be part of request is 50')
       }
 
-      const pcrTests = await this.pcrTestResultsService.getPCRTestsByBarcode(barcode)
+      const pcrTests = await this.pcrTestResultsService.getPCRTestsByBarcodeWithLinked(barcode)
 
       const formedPcrTests: PCRTestResultHistoryDTO[] = barcode.map((code) => {
         const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
@@ -146,10 +146,21 @@ class PCRTestResultController implements IControllerBase {
           return {
             id: testSameBarcode[0].id,
             barCode: code,
-            results: testSameBarcode.map((testSame) => ({
-              ...testSame.resultSpecs,
-              result: testSame.result,
-            })),
+            results: testSameBarcode
+              .map((testSame) => {
+                const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
+                  ...linkedResult.resultSpecs,
+                  result: linkedResult.result,
+                }))
+                return [
+                  {
+                    ...testSame.resultSpecs,
+                    result: testSame.result,
+                  },
+                  ...linkedSameTests,
+                ]
+              })
+              .flat(),
             waitingResult: !!pcrTests.find((pcrTest) => !!pcrTest.waitingResult),
           }
         }
