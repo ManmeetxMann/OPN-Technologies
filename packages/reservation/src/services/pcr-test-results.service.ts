@@ -23,6 +23,7 @@ import {
   PCRTestResultDBModel,
   PCRTestResultEmailDTO,
   PCRTestResultListDTO,
+  PCRTestResultLinkedDBModel,
   PCRTestResultRequest,
   PcrTestResultsListRequest,
   ResultReportStatus,
@@ -560,6 +561,26 @@ export class PCRTestResultsService {
     return this.pcrTestResultsRepository.findWhereIn('barCode', barCodes)
   }
 
+  async getPCRTestsByBarcodeWithLinked(barCodes: string[]): Promise<PCRTestResultLinkedDBModel[]> {
+    const testResults = await this.getPCRTestsByBarcode(barCodes)
+    let testResultsLinked: PCRTestResultLinkedDBModel[] = []
+    testResultsLinked = await Promise.all(
+      testResults.map(async (testResult) => {
+        if (testResult?.linkedBarCodes?.length) {
+          return {
+            ...testResult,
+            linkedResults: await this.getPCRTestsByBarcode([...testResult?.linkedBarCodes]),
+          }
+        }
+        return {
+          ...testResult,
+          linkedResults: [],
+        }
+      }),
+    )
+    return testResultsLinked
+  }
+
   async updateOrganizationIdByAppointmentId(
     appointmentId: string,
     organizationId: string,
@@ -569,5 +590,18 @@ export class PCRTestResultsService {
       async (pcrTestResult) =>
         await this.pcrTestResultsRepository.updateProperties(pcrTestResult.id, {organizationId}),
     )
+  }
+
+  async addTestRunToPCR(
+    testRunId: string,
+    pcrTestResultId: string,
+    adminId: string,
+  ): Promise<void> {
+    const pcrTestResults = await this.pcrTestResultsRepository.get(pcrTestResultId)
+    if (!pcrTestResults) {
+      throw new ResourceNotFoundException(`PCR Result with id ${pcrTestResultId} not found`)
+    }
+    await this.pcrTestResultsRepository.updateProperty(pcrTestResultId, 'testRunId', testRunId)
+    await this.appointmentService.makeInProgress(pcrTestResults.appointmentId, testRunId, adminId)
   }
 }
