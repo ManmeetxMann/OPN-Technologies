@@ -1,6 +1,6 @@
 import DataStore from '../../../common/src/data/datastore'
 
-import {PackageBase, PackageListItem} from '../models/packages'
+import {Certificate, PackageBase, PackageListItem} from '../models/packages'
 import {PackageRepository} from '../respository/package.repository'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
@@ -79,5 +79,26 @@ export class PackageService {
         }
       },
     )
+  }
+
+  async getPackageListByOrganizationId(organizationId: string): Promise<Certificate[]> {
+    const packagesAcuity = await this.acuityRepository.getPackagesList()
+    console.log('1 = ', packagesAcuity.length)
+    // if (!packagesAcuity.length) {
+    //   return []
+    // }
+    
+    const packageCodeWithRemaining = packagesAcuity.filter(packageCode => {
+      return packageCode.remainingCounts && Object.keys(packageCode.remainingCounts).length
+    })
+    console.log('2 = ', packageCodeWithRemaining.length)
+    // if (!packageCodeWithRemaining.length) {
+    //   return []
+    // }
+
+    const packages = await this.packageRepository.findWhereIn('organizationId', organizationId)
+    const packageCodeIds = packages.map(({packageCode}) => packageCode)
+    console.log('3 = ', packages.length)
+    return packageCodeWithRemaining.filter(({certificate}) => packageCodeIds.includes(certificate))
   }
 }

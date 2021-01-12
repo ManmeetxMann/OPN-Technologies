@@ -16,6 +16,7 @@ import AppointmentControllerV1 from './controllers/v1/admin/appointment.controll
 import TestRunsController from './controllers/v1/admin/test-runs.controller'
 import TransportRunsController from './controllers/v1/admin/transport-runs.controller'
 import AppointmentControllerV2 from './controllers/v2/admin.appointment.controller'
+import BookingLocationController from './controllers/v1/booking-locations.controller'
 
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
@@ -45,6 +46,7 @@ const app = new App({
     new ProcessPCRResultController(),
     new PCRTestResultController(),
     new AppointmentControllerV2(),
+    new BookingLocationController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],
