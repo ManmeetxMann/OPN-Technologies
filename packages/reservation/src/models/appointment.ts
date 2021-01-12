@@ -3,13 +3,13 @@ import moment from 'moment-timezone'
 import {Config} from '../../../common/src/utils/config'
 
 export enum AppointmentStatus {
-  pending = 'pending',
-  inTransit = 'inTransit',
-  received = 'received',
-  inProgress = 'inProgress',
-  reported = 'reported',
-  reRunRequired = 'reRunRequired',
-  reSampleRequired = 'reSampleRequired',
+  Pending = 'Pending',
+  InTransit = 'InTransit',
+  Received = 'Received',
+  InProgress = 'InProgress',
+  Reported = 'Reported',
+  ReRunRequired = 'ReRunRequired',
+  ReSampleRequired = 'ReSampleRequired',
 }
 
 export enum ResultTypes {
@@ -19,6 +19,7 @@ export enum ResultTypes {
   Detected2019nCoV = '2019-nCoV Detected',
   Invalid = 'Invalid',
   Inconclusive = 'Inconclusive',
+  ReSampleRequested = 'ReSampleRequested'
 }
 
 export type AppointmentModelBase = {

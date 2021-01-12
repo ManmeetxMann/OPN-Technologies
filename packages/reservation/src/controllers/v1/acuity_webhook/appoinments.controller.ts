@@ -112,7 +112,7 @@ class AppointmentWebhookController implements IControllerBase {
         const data = {
           acuityAppointmentId: appointment.id,
           appointmentTypeID,
-          appointmentStatus: AppointmentStatus.pending,
+          appointmentStatus: AppointmentStatus.Pending,
           barCode: barCode,
           canceled: appointment.canceled,
           calendarID,
@@ -222,7 +222,6 @@ class AppointmentWebhookController implements IControllerBase {
         const data = {
           acuityAppointmentId: appointment.id,
           appointmentTypeID,
-          appointmentStatus: AppointmentStatus.pending,
           barCode: barCode,
           canceled: appointment.canceled,
           calendarID,
@@ -238,18 +237,20 @@ class AppointmentWebhookController implements IControllerBase {
           packageCode: appointment.certificate,
           phone: appointment.phone,
           registeredNursePractitioner: appointment.registeredNursePractitioner,
-          latestResult: ResultTypes.Pending,
           timeOfAppointment,
         }
         await this.appoinmentService.updateAppointmentDB(appointmentFromDb.id, data)
 
-        const pcrTestResult = await this.pcrTestResultsService.getTestResultsByAppointmentId(
+        const pcrTestResult = await this.pcrTestResultsService.getWaitingPCRResultsByAppointmentId(
           appointmentFromDb.id,
         )
 
         if (pcrTestResult) {
           if (action === AppointmentWebhookActions.Canceled) {
             await this.pcrTestResultsService.deleteTestResults(pcrTestResult.id)
+            console.log(
+              `WebhookController: Appointment Cancelled hence Removed PCR Results ID: ${pcrTestResult.id}`,
+            )
           } else {
             const linkedBarcodes = await this.getlinkedBarcodes(appointment.certificate)
             const pcrResultDataForDb = {
@@ -268,6 +269,9 @@ class AppointmentWebhookController implements IControllerBase {
             await this.pcrTestResultsService.updateDefaultTestResults(
               pcrTestResult.id,
               pcrResultDataForDb,
+            )
+            console.log(
+              `WebhookController: Updated Results for PCR Results ID: ${pcrTestResult.id}`,
             )
           }
         } else {
@@ -293,13 +297,23 @@ class AppointmentWebhookController implements IControllerBase {
     if (couponCode) {
       //Get Coupon
       const coupon = await this.couponService.getByCouponCode(couponCode)
-      //Get Linked Barcodes for LastBarCode
-      const pcrResult = await this.pcrTestResultsService.getTestResultByBarCode(coupon.lastBarcode)
-      linkedBarcodes.push(coupon.lastBarcode)
-      if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
-        linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
+      if(coupon){
+        linkedBarcodes.push(coupon.lastBarcode)
+        try{
+          //Get Linked Barcodes for LastBarCode
+          const pcrResult = await this.pcrTestResultsService.getReSampledTestResultByBarCode(coupon.lastBarcode)
+          if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
+            linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
+          }
+        }catch(error){
+          //CRITICAL
+          console.log(`WebhookController: Coupon Code: ${couponCode} Last BarCode: ${coupon.lastBarcode} ${error}`)
+        }
+      }else{
+        console.log(`WebhookController: ${couponCode} is not coupon. Hence no history for Barcodes`)
       }
     }
+    console.log(`WebhookController: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`)
     return linkedBarcodes
   }
 }

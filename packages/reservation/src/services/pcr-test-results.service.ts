@@ -179,9 +179,46 @@ export class PCRTestResultsService {
     return pcrTestResults[0]
   }
 
+  async getWaitingPCRResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
+    const pcrTestResultsQuery = [
+      {
+        map: '/',
+        key: 'appointmentId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: appointmentId,
+      },
+      {
+        map: '/',
+        key: 'waitingResult',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      },
+    ]
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+
+    if (!pcrTestResults || pcrTestResults.length == 0) {
+      throw new ResourceNotFoundException(
+        `PCRTestResult with appointment ${appointmentId} not found`,
+      )
+    }
+
+    if (pcrTestResults.length > 1) {
+      console.log(
+        `GetTestResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
+      )
+    }
+
+    return pcrTestResults[0]
+  }
+
   getFinalResult(action: PCRResultActions, autoResult: ResultTypes, barCode: string): ResultTypes {
     let finalResult = autoResult
     switch (action) {
+      case PCRResultActions.RequestReSample: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
+        finalResult = ResultTypes.ReSampleRequested
+        break
+      }
       case PCRResultActions.MarkAsNegative: {
         console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
         finalResult = ResultTypes.Negative
@@ -211,6 +248,32 @@ export class PCRTestResultsService {
     }
     //Only one Result should be waiting
     return pcrTestResult[0]
+  }
+
+
+  async getReSampledTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
+    const pcrTestResultsQuery = [
+      {
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: barCodeNumber,
+      },
+      {
+        map: '/',
+        key: 'result',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: ResultTypes.ReSampleRequested,
+      },
+    ]
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+
+    if (!pcrTestResults || pcrTestResults.length == 0) {
+      throw new ResourceNotFoundException(`PCRTestResult with barCode ${barCodeNumber} and ReSample Requested not found`)
+    }
+
+    //Only one Result should be waiting
+    return pcrTestResults[0]
   }
 
   async handlePCRResultSaveAndSend(resultData: PCRTestResultData): Promise<void> {

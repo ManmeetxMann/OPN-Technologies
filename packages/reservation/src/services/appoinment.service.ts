@@ -239,9 +239,9 @@ export class AppoinmentService {
     testRunId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.inProgress, userId)
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.InProgress, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.inProgress,
+      appointmentStatus: AppointmentStatus.InProgress,
       testRunId,
     })
   }
@@ -251,9 +251,9 @@ export class AppoinmentService {
     vialLocaton: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.received, userId)
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.Received, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.received,
+      appointmentStatus: AppointmentStatus.Received,
       vialLocaton,
     })
   }
@@ -264,11 +264,11 @@ export class AppoinmentService {
     userId: string,
   ): Promise<AppointmentAttachTransportStatus> {
     try {
-      await this.addStatusHistoryById(appointmentId, AppointmentStatus.inTransit, userId)
+      await this.addStatusHistoryById(appointmentId, AppointmentStatus.InTransit, userId)
 
       await this.appointmentsRepository.updateProperties(appointmentId, {
         transportRunId: transportRunId,
-        appointmentStatus: AppointmentStatus.inTransit,
+        appointmentStatus: AppointmentStatus.InTransit,
       })
       return AppointmentAttachTransportStatus.Succeed
     } catch (e) {
@@ -300,9 +300,9 @@ export class AppoinmentService {
     const deadline = today
       ? this.makeTimeEndOfTheDay(utcDateTime)
       : this.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.reRunRequired, userId)
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReRunRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.reRunRequired,
+      appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
     })
   }
@@ -311,16 +311,16 @@ export class AppoinmentService {
     appointmentId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.reSampleRequired, userId)
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReSampleRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.reSampleRequired,
+      appointmentStatus: AppointmentStatus.ReSampleRequired,
     })
   }
 
   async changeStatusToReported(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.reported, userId)
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.Reported, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.reported,
+      appointmentStatus: AppointmentStatus.Reported,
     })
   }
 
