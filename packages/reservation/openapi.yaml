@@ -331,9 +331,9 @@ components:
               properties:
                 action:
                   type: string
-                  default: NoOverwrite
+                  default: SendThisResult
                   enum:
-                    - NoOverwrite
+                    - SendThisResult
                     - DoNothing
                     - ReRunToday
                     - ReRunTomorrow
@@ -390,9 +390,9 @@ components:
           type: string
         action:
           type: string
-          default: NoOverwrite
+          default: SendThisResult
           enum:
-            - NoOverwrite
+            - SendThisResult
             - DoNothing
             - ReRunToday
             - ReRunTomorrow

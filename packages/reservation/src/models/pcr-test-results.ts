@@ -1,7 +1,7 @@
 import {AppointmentStatus, ResultTypes} from './appointment'
 
 export enum PCRResultActions {
-  NoOverwrite = 'NoOverwrite',
+  SendThisResult = 'SendThisResult',
   DoNothing = 'DoNothing',
   ReRunToday = 'ReRunToday',
   ReRunTomorrow = 'ReRunTomorrow',
