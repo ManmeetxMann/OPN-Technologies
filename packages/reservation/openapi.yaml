@@ -1733,7 +1733,7 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: path
+        - in: query
           name: deadline
           schema:
             type: string
@@ -1745,4 +1745,69 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                        barCode:
+                          type: string
+                        result:
+                          type: string
+                          enum: 
+                            [
+                              Positive,
+                              Negative,
+                              Pending,
+                              Detected2019nCoV,
+                              Invalid,
+                              Inconclusive,
+                              ReSampleRequested,
+                            ]
+                        vialLocation:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            [
+                              Pending,
+                              InTransit,
+                              Received,
+                              InProgress,
+                              Reported,
+                              ReRunRequired,
+                              ReSampleRequired,
+                            ]
+                        dateTime:
+                          type: string
+                        deadline:
+                          type: string
+                        testRunId:
+                          type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          [
+                            succeed,
+                            failed,
+                            validation_error,
+                            internal_server_error,
+                            unauthorized,
+                            access_denied,
+                            resource_not_found,
+                          ]
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number

@@ -33,6 +33,8 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
 
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
+
 export class PCRTestResultsService {
   private datastore = new DataStore()
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
@@ -162,7 +164,14 @@ export class PCRTestResultsService {
   }
 
   async getPCRResultsByDeadline(deadline: string): Promise<PCRTestResultDBModel[]> {
-    return this.pcrTestResultsRepository.findWhereEqual('deadline', deadline)
+    return this.pcrTestResultsRepository.findWhereEqual(
+      'deadline',
+      this.makeTimeEndOfTheDay(moment.tz(`${deadline}`, 'YYYY-MM-DD', timeZone).utc()),
+    )
+  }
+
+  makeTimeEndOfTheDay(datetime: moment.Moment): string {
+    return datetime.hours(11).minutes(59).seconds(0).format()
   }
 
   async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel[]> {
