@@ -7,6 +7,8 @@ import querystring from 'querystring'
 import fetch from 'node-fetch'
 import moment from 'moment-timezone'
 
+const startDate = Config.get('ACUITY_MIGRATION_START_DATE')
+
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
   credential: credential.cert(serviceAccount),
@@ -105,7 +107,7 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
   const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
   const userPassBase64 = userPassBuf.toString('base64')
   const apiUrl =
-    APIURL + '/api/v1/appointments?max=500&' + querystring.stringify(renameKeys(filters))
+    APIURL + '/api/v1/appointments?max=1500&' + querystring.stringify(renameKeys(filters))
   console.log(apiUrl) //To know request path for dependency
 
   return fetch(apiUrl, {
@@ -176,8 +178,8 @@ async function updateTestResults(): Promise<Result[]> {
   const results: Result[] = []
 
   const filters = {
-    minDate: '2020-09-01',
-    maxDate: '2020-09-02',
+    minDate: startDate,
+    maxDate: moment(startDate).add(1, 'd').format('YYYY-MM-DD'),
   }
 
   while (moment(new Date()).diff(moment(filters.maxDate).add(1, 'd').format('YYYY-MM-DD')) > 0) {
