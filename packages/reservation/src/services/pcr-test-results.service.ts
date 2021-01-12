@@ -20,7 +20,7 @@ import {
   PCRResultActions,
   PCRTestResultData,
   PCRTestResultDBModel,
-  PCRTestResultEmailDTO,
+  PCRTestResultEmailDTO, PCRTestResultLinkedDBModel,
   PCRTestResultRequest,
   ResultReportStatus,
   TestResultsReportingTrackerPCRResultsDBModel,
@@ -486,6 +486,24 @@ export class PCRTestResultsService {
 
   async getPCRTestsByBarcode(barCodes: string[]): Promise<PCRTestResultDBModel[]> {
     return this.pcrTestResultsRepository.findWhereIn('barCode', barCodes)
+  }
+
+  async getPCRTestsByBarcodeWithLinked(barCodes: string[]): Promise<PCRTestResultLinkedDBModel[]> {
+    const testResults = await this.getPCRTestsByBarcode(barCodes)
+    let testResultsLinked: PCRTestResultLinkedDBModel[] = [];
+    testResultsLinked = await Promise.all(testResults.map(async (testResult) => {
+      if (testResult?.linkedBarCodes?.length) {
+        return {
+          ...testResult,
+          linkedResults: await this.getPCRTestsByBarcode([...testResult?.linkedBarCodes])
+        }
+      }
+      return {
+        ...testResult,
+        linkedResults: []
+      }
+    }))
+    return testResultsLinked
   }
 
   async updateOrganizationIdByAppointmentId(
