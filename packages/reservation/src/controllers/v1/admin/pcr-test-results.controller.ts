@@ -146,19 +146,21 @@ class PCRTestResultController implements IControllerBase {
           return {
             id: testSameBarcode[0].id,
             barCode: code,
-            results: testSameBarcode.map((testSame) => {
-              const linkedSameTests = testSame.linkedResults.map(linkedResult => ({
-                ...linkedResult.resultSpecs,
-                result: linkedResult.result,
-              }))
-              return [
+            results: testSameBarcode
+              .map((testSame) => {
+                const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
+                  ...linkedResult.resultSpecs,
+                  result: linkedResult.result,
+                }))
+                return [
                   {
                     ...testSame.resultSpecs,
                     result: testSame.result,
                   },
-                  ...linkedSameTests
-              ];
-            }).flat(),
+                  ...linkedSameTests,
+                ]
+              })
+              .flat(),
             waitingResult: !!pcrTests.find((pcrTest) => !!pcrTest.waitingResult),
           }
         }
