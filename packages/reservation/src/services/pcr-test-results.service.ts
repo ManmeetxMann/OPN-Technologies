@@ -18,7 +18,6 @@ import {
 import {
   CreateReportForPCRResultsResponse,
   PCRResultActions,
-  PCRTestResultByDeadlineListDTO,
   PCRTestResultData,
   PCRTestResultDBModel,
   PCRTestResultEmailDTO,
@@ -210,30 +209,6 @@ export class PCRTestResultsService {
         lastName: pcr.lastName,
         testType: 'PCR',
         dateOfAppointment: pcr.dateOfAppointment,
-      }
-    })
-  }
-
-  async getPCRResultsByDeadline(deadline: string): Promise<PCRTestResultByDeadlineListDTO[]> {
-    const pcrResults = await this.pcrTestResultsRepository.findWhereEqual(
-      'deadline',
-      makeTimeEndOfTheDay(moment.tz(`${deadline}`, 'YYYY-MM-DD', timeZone).utc()),
-    )
-
-    const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
-    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
-
-    return pcrResults.map((pcr) => {
-      const appointment = appointments.find(({id}) => pcr.appointmentId === id)
-      return {
-        id: pcr.id,
-        barCode: appointment.barCode,
-        result: pcr.result,
-        vialLocation: appointment.vialLocaton,
-        status: appointment.appointmentStatus,
-        dateTime: appointment.dateTime,
-        deadline: appointment.deadline,
-        testRunId: pcr.testRunId,
       }
     })
   }
