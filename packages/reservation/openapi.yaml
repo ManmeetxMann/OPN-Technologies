@@ -1635,6 +1635,37 @@ paths:
                   page:
                     type: number
 
+  /reservation/admin/api/v1/pcr-test-results/add-test-run:
+    put:
+      description: Add transport run to appointment
+      tags:
+        - Transport Runs
+      security:
+        - bearerAuthJWT: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                pcrTestResultIds:
+                  type: array
+                  items:
+                    type: string
+                testRunId:
+                  type: string
+              required:
+                - pcrTestResultIds
+                - testRunId
+      responses:
+        '200':
+          description: Succesfully added PcrTestResult
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+
   /reservation/admin/api/v1/pcr-test-results/history:
     post:
       description: Get PCR Test Results by Barcode

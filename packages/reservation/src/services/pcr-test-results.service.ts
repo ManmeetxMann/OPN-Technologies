@@ -32,6 +32,7 @@ import {AppointmentDBModel, ResultTypes} from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
+import {getAdminId} from "../../../common/src/utils/auth";
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -497,5 +498,15 @@ export class PCRTestResultsService {
       async (pcrTestResult) =>
         await this.pcrTestResultsRepository.updateProperties(pcrTestResult.id, {organizationId}),
     )
+  }
+
+  async addTestRunToPCR(
+      testRunId: string,
+      pcrTestResultId: string,
+      adminId: string
+  ): Promise<void> {
+    const pcrTestResults = await this.pcrTestResultsRepository.get(pcrTestResultId)
+    await this.pcrTestResultsRepository.updateProperty(pcrTestResultId, "testRunId", testRunId)
+    await this.appointmentService.makeInProgress(pcrTestResults.appointmentId, testRunId, adminId)
   }
 }
