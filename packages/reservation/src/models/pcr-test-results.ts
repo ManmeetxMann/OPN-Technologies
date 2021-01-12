@@ -1,4 +1,4 @@
-import {ResultTypes} from './appointment'
+import {AppointmentStatus, ResultTypes} from './appointment'
 
 export enum PCRResultActions {
   NoOverwrite = 'NoOverwrite',
@@ -157,6 +157,8 @@ export type PcrTestResultsListByDeadlineRequest = {
 export type PcrTestResultsListRequest = {
   organizationId?: string
   dateOfAppointment: string
+  deadline?: string
+  testRunId?: string
 }
 
 export type PCRTestResultListDTO = {
@@ -167,6 +169,22 @@ export type PCRTestResultListDTO = {
   dateOfAppointment: string
   barCode: string
   result: ResultTypes
+  vialLocation?: string
+  status?: AppointmentStatus
+  dateTime?: string
+  deadline?: string
+  testRunId?: string
+}
+
+export type PCRTestResultByDeadlineListDTO = {
+  id: string
+  barCode: string
+  result: ResultTypes
+  vialLocation: string
+  status: AppointmentStatus
+  dateTime: string
+  deadline: string
+  testRunId: string
 }
 
 export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResultListDTO => ({

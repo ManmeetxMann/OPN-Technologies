@@ -12,8 +12,6 @@ import {
   PCRTestResultRequestData,
   pcrTestResultsResponse,
   PcrTestResultsListRequest,
-  pcrResultsResponse,
-  PcrTestResultsListByDeadlineRequest,
 } from '../../../models/pcr-test-results'
 import moment from 'moment'
 import {now} from '../../../../../common/src/utils/times'
@@ -28,6 +26,7 @@ class PCRTestResultController implements IControllerBase {
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
+
   constructor() {
     this.initRoutes()
   }
@@ -58,11 +57,6 @@ class PCRTestResultController implements IControllerBase {
       this.path + '/api/v1/pcr-test-results-bulk/report-status',
       adminAuthMiddleware,
       this.listPCRTestResultReportStatus,
-    )
-    innerRouter.get(
-      this.path + '/api/v1/pcr-test-results/by-deadline',
-      adminAuthMiddleware,
-      this.listPCRResultsByDeadline,
     )
     innerRouter.put(
       this.path + '/api/v1/pcr-test-results/add-test-run',
@@ -188,30 +182,27 @@ class PCRTestResultController implements IControllerBase {
 
   listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId, dateOfAppointment} = req.query as PcrTestResultsListRequest
+      const {
+        testRunId,
+        deadline,
+        organizationId,
+        dateOfAppointment,
+      } = req.query as PcrTestResultsListRequest
+
+      if (!(testRunId || deadline) && !dateOfAppointment) {
+        throw new BadRequestException(
+          '"dateOfAppointment" is required if "testRunId" or "deadline" haven\'t been passed',
+        )
+      }
 
       const pcrResults = await this.pcrTestResultsService.getPCRResults({
         organizationId,
         dateOfAppointment,
+        deadline,
+        testRunId,
       })
 
-      res.json(actionSucceed(pcrResults.map(pcrResultsResponse)))
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  listPCRResultsByDeadline = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      const {deadline} = req.query as PcrTestResultsListByDeadlineRequest
-
-      const pcrResults = await this.pcrTestResultsService.getPCRResultsByDeadline(deadline)
-
-      res.json(actionSucceed(pcrResults.map(pcrResultsResponse)))
+      res.json(actionSucceed(pcrResults))
     } catch (error) {
       next(error)
     }

@@ -21,8 +21,10 @@ import {
   PCRTestResultData,
   PCRTestResultDBModel,
   PCRTestResultEmailDTO,
+  PCRTestResultListDTO,
   PCRTestResultLinkedDBModel,
   PCRTestResultRequest,
+  PcrTestResultsListRequest,
   ResultReportStatus,
   TestResultsReportingTrackerPCRResultsDBModel,
 } from '../models/pcr-test-results'
@@ -33,6 +35,9 @@ import {AppointmentDBModel, ResultTypes} from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
+import {makeTimeEndOfTheDay} from '../../../common/src/utils/utils'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -139,18 +144,20 @@ export class PCRTestResultsService {
   async getPCRResults({
     organizationId,
     dateOfAppointment,
-  }: {
-    organizationId: string
-    dateOfAppointment: string
-  }): Promise<PCRTestResultDBModel[]> {
-    const pcrTestResultsQuery = [
-      {
+    deadline,
+    testRunId,
+  }: PcrTestResultsListRequest): Promise<PCRTestResultListDTO[]> {
+    const pcrTestResultsQuery = []
+
+    if (dateOfAppointment) {
+      pcrTestResultsQuery.push({
         map: '/',
         key: 'dateOfAppointment',
         operator: DataModelFieldMapOperatorType.Equals,
         value: moment(dateOfAppointment).format(dateFormats.longMonth),
-      },
-    ]
+      })
+    }
+
     if (organizationId) {
       pcrTestResultsQuery.push({
         map: '/',
@@ -159,11 +166,51 @@ export class PCRTestResultsService {
         value: organizationId,
       })
     }
-    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
-  }
 
-  async getPCRResultsByDeadline(deadline: string): Promise<PCRTestResultDBModel[]> {
-    return this.pcrTestResultsRepository.findWhereEqual('deadline', deadline)
+    if (deadline) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'deadline',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: makeTimeEndOfTheDay(moment.tz(`${deadline}`, 'YYYY-MM-DD', timeZone).utc()),
+      })
+    }
+
+    if (testRunId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testRunId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: testRunId,
+      })
+    }
+
+    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+
+    let appointments
+    if (deadline || testRunId) {
+      const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
+      appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+    }
+
+    return pcrResults.map((pcr) => {
+      const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
+
+      return {
+        id: pcr.id,
+        barCode: pcr.barCode,
+        result: pcr.result,
+        vialLocation: appointment?.vialLocaton,
+        status: appointment?.appointmentStatus,
+        dateTime: appointment?.dateTime,
+        deadline: pcr.deadline,
+        testRunId: pcr.testRunId,
+        firstName: pcr.firstName,
+        lastName: pcr.lastName,
+        testType: 'PCR',
+        dateOfAppointment: pcr.dateOfAppointment,
+      }
+    })
   }
 
   async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel[]> {

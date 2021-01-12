@@ -18,6 +18,7 @@ import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import {makeTimeEndOfTheDay} from '../../../../../common/src/utils/utils'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -62,9 +63,9 @@ class AppointmentWebhookController implements IControllerBase {
       const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
 
       if (utcDateTime.hours() > 12) {
-        deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
+        deadline = makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
       } else {
-        deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime)
+        deadline = makeTimeEndOfTheDay(utcDateTime)
       }
 
       const dataForUpdate: AcuityUpdateDTO = {}
@@ -188,9 +189,9 @@ class AppointmentWebhookController implements IControllerBase {
       const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
 
       if (utcDateTime.hours() > 12) {
-        deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
+        deadline = makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
       } else {
-        deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime)
+        deadline = makeTimeEndOfTheDay(utcDateTime)
       }
 
       const dataForUpdate: AcuityUpdateDTO = {}

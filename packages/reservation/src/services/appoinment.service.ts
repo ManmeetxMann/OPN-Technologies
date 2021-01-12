@@ -23,6 +23,7 @@ import {flatten} from 'lodash'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 import {Config} from '../../../common/src/utils/config'
+import {makeTimeEndOfTheDay} from '../../../common/src/utils/utils'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -76,7 +77,7 @@ export class AppoinmentService {
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: this.makeTimeEndOfTheDay(
+        value: makeTimeEndOfTheDay(
           moment.tz(`${queryParams.deadlineDate}`, 'YYYY-MM-DD', timeZone).utc(),
         ),
       })
@@ -285,10 +286,6 @@ export class AppoinmentService {
     return this.acuityRepository.addAppointmentLabelOnAcuity(id, data)
   }
 
-  makeTimeEndOfTheDay(datetime: moment.Moment): string {
-    return datetime.hours(11).minutes(59).seconds(0).format()
-  }
-
   async updateAppointmentDB(
     id: string,
     data: Partial<AppointmentDBModel>,
@@ -303,8 +300,8 @@ export class AppoinmentService {
   ): Promise<AppointmentDBModel> {
     const utcDateTime = moment().utc()
     const deadline = today
-      ? this.makeTimeEndOfTheDay(utcDateTime)
-      : this.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
+      ? makeTimeEndOfTheDay(utcDateTime)
+      : makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReRunRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.ReRunRequired,
