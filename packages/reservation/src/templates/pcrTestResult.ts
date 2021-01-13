@@ -27,8 +27,7 @@ const generate = (
   params: PCRTestResultEmailDTO,
   resultDate: string,
 ): {content: Content[]; tableLayouts: TableLayouts} => {
-  const isPositive =
-    params.result === ResultTypes.Positive || params.result === ResultTypes.Detected2019nCoV
+  const isPositive = params.result === ResultTypes.Positive
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
   return {

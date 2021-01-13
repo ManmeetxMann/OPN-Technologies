@@ -18,6 +18,7 @@ import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import {makeDeadline} from '../../../../../common/src/utils/datetime-util'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -54,19 +55,13 @@ class AppointmentWebhookController implements IControllerBase {
         throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
       }
 
-      let deadline: string
       const utcDateTime = moment(appointment.datetime).utc()
 
       const dateTime = utcDateTime.format()
       const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
       const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
 
-      if (utcDateTime.hours() > 12) {
-        deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
-      } else {
-        deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime)
-      }
-
+      const deadline: string = makeDeadline(utcDateTime)
       const dataForUpdate: AcuityUpdateDTO = {}
       if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
@@ -180,19 +175,13 @@ class AppointmentWebhookController implements IControllerBase {
         throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
       }
 
-      let deadline: string
       const utcDateTime = moment(appointment.datetime).utc()
 
       const dateTime = utcDateTime.format()
       const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
       const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
 
-      if (utcDateTime.hours() > 12) {
-        deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
-      } else {
-        deadline = this.appoinmentService.makeTimeEndOfTheDay(utcDateTime)
-      }
-
+      const deadline: string = makeDeadline(utcDateTime)
       const dataForUpdate: AcuityUpdateDTO = {}
       if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
@@ -213,8 +202,17 @@ class AppointmentWebhookController implements IControllerBase {
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
       if (!appointmentFromDb) {
         //TODO CRITICAL
-        console.log(`WebhookController: AppointmentNotExist AcuityID: ${id}`)
+        console.log(`WebhookController: AppointmentNotExist for AcuityID: ${id}`)
         throw new ResourceNotFoundException(`AcuityID: ${id} not found`)
+      }
+
+      let appointmentStatus = appointmentFromDb.appointmentStatus
+      if (
+        appointment.canceled &&
+        appointmentFromDb.appointmentStatus != AppointmentStatus.Canceled
+      ) {
+        console.log(`WebhookController: UPDATE:  Appointment Status will be updated to Cancelled`)
+        appointmentStatus = AppointmentStatus.Canceled
       }
 
       try {
@@ -222,6 +220,7 @@ class AppointmentWebhookController implements IControllerBase {
         const barCode = appointment.barCode || barCodeNumber
         const data = {
           acuityAppointmentId: appointment.id,
+          appointmentStatus: appointmentStatus,
           appointmentTypeID,
           barCode: barCode,
           canceled: appointment.canceled,
@@ -241,16 +240,20 @@ class AppointmentWebhookController implements IControllerBase {
           timeOfAppointment,
         }
         await this.appoinmentService.updateAppointmentDB(appointmentFromDb.id, data)
-
+        console.log(
+          `WebhookController: SuccessUpdatedAppointments for AppointmentID: ${appointmentFromDb.id} AcuityID: ${id}`,
+        )
         const pcrTestResult = await this.pcrTestResultsService.getWaitingPCRResultsByAppointmentId(
           appointmentFromDb.id,
         )
-
         if (pcrTestResult) {
-          if (action === AppointmentWebhookActions.Canceled) {
+          if (
+            action === AppointmentWebhookActions.Canceled ||
+            appointmentStatus === AppointmentStatus.Canceled
+          ) {
             await this.pcrTestResultsService.deleteTestResults(pcrTestResult.id)
             console.log(
-              `WebhookController: Appointment Cancelled hence Removed PCR Results ID: ${pcrTestResult.id}`,
+              `WebhookController: AppointmentCancelled ID: ${appointmentFromDb.id} Removed PCR Results ID: ${pcrTestResult.id}`,
             )
           } else {
             const linkedBarcodes = await this.getlinkedBarcodes(appointment.certificate)
@@ -273,19 +276,20 @@ class AppointmentWebhookController implements IControllerBase {
               pcrResultDataForDb,
             )
             console.log(
-              `WebhookController: Updated Results for PCR Results ID: ${pcrTestResult.id}`,
+              `WebhookController: SuccessUpdatedPCRResults for PCRResultsID: ${pcrTestResult.id}`,
             )
           }
         } else {
           //TODO CRITICAL
           console.log(
-            `WebhookController: UpdateAppointment No Test Results for AppointmentID: ${appointmentFromDb.id}`,
+            `WebhookController: FailedToUpdatePCRResults for AppointmentID: ${appointmentFromDb.id}. No Results`,
           )
         }
       } catch (e) {
         //TODO CRITICAL
-        console.log(`WebhookController: UpdateAppointment Failed AppoinmentID: ${id}`)
-        console.log(e)
+        console.log(
+          `WebhookController: FailedToUpdateAppointment for AppoinmentID: ${id} ${e.toString()}`,
+        )
       }
 
       res.json(actionSucceed(''))
@@ -315,11 +319,11 @@ class AppointmentWebhookController implements IControllerBase {
             `WebhookController: Coupon Code: ${couponCode} Last BarCode: ${coupon.lastBarcode} ${error}`,
           )
         }
+        console.log(`WebhookController: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`)
       } else {
         console.log(`WebhookController: ${couponCode} is not coupon. Hence no history for Barcodes`)
       }
     }
-    console.log(`WebhookController: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`)
     return linkedBarcodes
   }
 }

@@ -116,7 +116,7 @@ components:
               type: string
             latestResult:
               type: string
-            vialLocaton:
+            vialLocation:
               type: string
             testRunId:
               type: string
@@ -331,9 +331,9 @@ components:
               properties:
                 action:
                   type: string
-                  default: NoOverwrite
+                  default: SendThisResult
                   enum:
-                    - NoOverwrite
+                    - SendThisResult
                     - DoNothing
                     - ReRunToday
                     - ReRunTomorrow
@@ -345,7 +345,6 @@ components:
                   enum:
                     - Positive
                     - Negative
-                    - 2019-nCoV Detected
                     - Invalid
                     - Inconclusive
                 barCode:
@@ -390,9 +389,9 @@ components:
           type: string
         action:
           type: string
-          default: NoOverwrite
+          default: SendThisResult
           enum:
-            - NoOverwrite
+            - SendThisResult
             - DoNothing
             - ReRunToday
             - ReRunTomorrow
@@ -404,7 +403,6 @@ components:
           enum:
             - Positive
             - Negative
-            - 2019-nCoV Detected
             - Invalid
             - Inconclusive
         barCode:
@@ -586,7 +584,6 @@ paths:
                           enum:
                             - Positive
                             - Negative
-                            - 2019-nCoV Detected
                             - Invalid
                             - Inconclusive
                         famEGene:
@@ -635,7 +632,6 @@ paths:
                   enum:
                     - Positive
                     - Negative
-                    - 2019-nCoV Detected
                     - Invalid
                     - Inconclusive
                 famEGene:
@@ -720,7 +716,6 @@ paths:
                   enum:
                     - Positive
                     - Negative
-                    - 2019-nCoV Detected
                     - Invalid
                     - Inconclusive
                 famEGene:
@@ -1177,7 +1172,7 @@ paths:
         - in: path
           name: appointmentId
           schema:
-            type: number
+            type: string
           required: true
         - in: query
           name: organizationId
@@ -1222,40 +1217,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse'
-
-  /reservation/admin/api/v1/appointments/add_labels:
-    put:
-      description: Add SameDay/NextDay Labesl to Appointments
-      tags:
-        - Appointment Management
-      security:
-        - bearerAuthJWT: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: object
-                additionalProperties: false
-                properties:
-                  appointmentId:
-                    type: number
-                  label:
-                    type: string
-                    enum:
-                      - SameDay
-                      - NextDay
-                required:
-                  - appointmentId
-                  - label
-      responses:
-        '200':
-          description: Successfully Return
-          content:
-            application/json:
-              schema:
-                type: string
 
   /reservation/admin/api/v1/test-runs:
     get:
@@ -1321,37 +1282,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
 
-  /reservation/admin/api/v1/appointments/add-test-run:
-    put:
-      description: Add Test Run to Appointments
-      tags:
-        - Appointment Management
-      security:
-        - bearerAuthJWT: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              properties:
-                appointmentIds:
-                  type: array
-                  items:
-                    type: string                    
-                testRunId:
-                  type: string
-              required:
-                - appointmentIds
-                - testRunId
-      responses:
-        '200':
-          description: Successfully Return
-          content:
-            application/json:
-              schema:
-                type: string
-
   /reservation/admin/api/v1/pcr-test-results-bulk:
     post:
       description: Send Multiple PCR Results
@@ -1404,7 +1334,20 @@ paths:
             type: string
         - in: query
           name: dateOfAppointment
-          required: true
+          # required: true
+          schema:
+            type: string
+        - in: query
+          name: deadline
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: testRunId
+          schema:
+            type: string
+        - in: query
+          name: barCode
           schema:
             type: string
       responses:
@@ -1441,10 +1384,29 @@ paths:
                               Positive,
                               Negative,
                               Pending,
-                              2019-nCoV Detected,
                               Invalid,
                               Inconclusive,
                             ]
+                        vialLocation:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            [
+                              Pending,
+                              InTransit,
+                              Received,
+                              InProgress,
+                              Reported,
+                              ReRunRequired,
+                              ReSampleRequired,
+                            ]
+                        dateTime:
+                          type: string
+                        deadline:
+                          type: string
+                        testRunId:
+                          type: string
                   status:
                     type: object
                     additionalProperties: false
@@ -1487,7 +1449,7 @@ paths:
     put:
       description: Add SameDay/NextDay Labesl to Appointments
       tags:
-        - Appointment Management v2
+        - Appointment Management
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -1635,6 +1597,37 @@ paths:
                   page:
                     type: number
 
+  /reservation/admin/api/v1/pcr-test-results/add-test-run:
+    put:
+      description: Add transport run to appointment
+      tags:
+        - Transport Runs
+      security:
+        - bearerAuthJWT: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                pcrTestResultIds:
+                  type: array
+                  items:
+                    type: string
+                testRunId:
+                  type: string
+              required:
+                - pcrTestResultIds
+                - testRunId
+      responses:
+        '200':
+          description: Succesfully added PcrTestResult
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+
   /reservation/admin/api/v1/pcr-test-results/history:
     post:
       description: Get PCR Test Results by Barcode
@@ -1724,25 +1717,3 @@ paths:
                         type: string
                   page:
                     type: number
-
-  /reservation/admin/api/v1/pcr-test-results/by-deadline:
-    get:
-      description: Get Results by Deadline
-      tags:
-        - PCR Results Management
-      security:
-        - bearerAuthJWT: []
-      parameters:
-        - in: path
-          name: deadline
-          schema:
-            type: string
-            format: date
-          required: true
-      responses:
-        '200':
-          description: Successfully Return
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'

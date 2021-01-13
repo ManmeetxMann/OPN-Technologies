@@ -10,13 +10,13 @@ export enum AppointmentStatus {
   Reported = 'Reported',
   ReRunRequired = 'ReRunRequired',
   ReSampleRequired = 'ReSampleRequired',
+  Canceled = 'Canceled',
 }
 
 export enum ResultTypes {
   Positive = 'Positive',
   Negative = 'Negative',
   Pending = 'Pending',
-  Detected2019nCoV = '2019-nCoV Detected',
   Invalid = 'Invalid',
   Inconclusive = 'Inconclusive',
   ReSampleRequested = 'ReSampleRequested',
@@ -42,12 +42,11 @@ export type AppointmentModelBase = {
   receivedAt?: Date
   registeredNursePractitioner?: string
   latestResult: ResultTypes
-  testRunId?: string
   timeOfAppointment: string
   transportRunId?: string
   appointmentTypeID: number
   calendarID: number
-  vialLocaton?: string
+  vialLocation?: string
 }
 
 export type AppointmentDBModel = AppointmentModelBase & {
@@ -90,6 +89,7 @@ export type AppointmentAcuityResponse = {
   registeredNursePractitioner: string
   barCode: string
   canceled: boolean
+  canClientCancel: boolean
 }
 
 export type LabelsAcuityResponse = {
@@ -142,7 +142,7 @@ export type AppointmentUiDTO = {
   transportRunId?: string
   deadline?: string
   latestResult?: string
-  vialLocaton?: string
+  vialLocation?: string
   testRunId?: string
 }
 
@@ -194,7 +194,6 @@ export const appointmentUiDTOResponse = (appointment: AppointmentDBModel): Appoi
     transportRunId: appointment.transportRunId,
     deadline: moment(appointment.deadline).tz(timeZone).format(),
     latestResult: appointment.latestResult,
-    vialLocaton: appointment.vialLocaton,
-    testRunId: appointment.testRunId,
+    vialLocation: appointment.vialLocation,
   }
 }

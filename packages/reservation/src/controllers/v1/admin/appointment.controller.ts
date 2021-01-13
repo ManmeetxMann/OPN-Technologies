@@ -7,7 +7,6 @@ import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.a
 import {
   AppointmentByOrganizationRequest,
   appointmentUiDTOResponse,
-  Label,
   AppointmentsState,
   AppointmentDBModel,
 } from '../../../models/appointment'
@@ -52,11 +51,6 @@ class AdminAppointmentController implements IControllerBase {
       adminAuthMiddleware,
       this.addTransportRun,
     )
-    innerRouter.put(
-      this.path + '/api/v1/appointments/add_labels',
-      adminAuthMiddleware,
-      this.addLabels,
-    )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/:barCode',
       adminAuthMiddleware,
@@ -66,11 +60,6 @@ class AdminAppointmentController implements IControllerBase {
       this.path + '/api/v1/appointments/:barCode/receive',
       adminAuthMiddleware,
       this.updateTestVial,
-    )
-    innerRouter.put(
-      this.path + '/api/v1/appointments/add-test-run',
-      adminAuthMiddleware,
-      this.addTestRunToAppointments,
     )
 
     this.router.use('/', innerRouter)
@@ -143,22 +132,11 @@ class AdminAppointmentController implements IControllerBase {
 
   cancelAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const adminId = getAdminId(res.locals.authenticatedUser)
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId} = req.query as {organizationId: string}
 
-      const appointment = await this.appointmentService.getAppointmentByAcuityId(appointmentId)
-
-      if (!appointment) {
-        throw new ResourceNotFoundException(`Appointment "${appointmentId}" not found`)
-      }
-
-      if (organizationId && appointment.organizationId !== organizationId) {
-        throw new BadRequestException(
-          `OrganizationId "${organizationId}" does not match appointment "${appointmentId}"`,
-        )
-      }
-
-      await this.appointmentService.cancelAppointmentById(Number(appointmentId))
+      await this.appointmentService.cancelAppointment(appointmentId, adminId, organizationId)
 
       res.json(actionSucceed())
     } catch (error) {
@@ -198,32 +176,6 @@ class AdminAppointmentController implements IControllerBase {
     }
   }
 
-  addLabels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const dataToUpdate = req.body as {appointmentId: number; label: Label}[]
-
-      if (dataToUpdate.length > 50) {
-        throw new BadRequestException('Maximum appointments to be part of request is 50')
-      }
-
-      const result = await Promise.all(
-        dataToUpdate.map(async ({appointmentId, label}) => {
-          await this.appointmentService.addAppointmentLabel(Number(appointmentId), {[label]: label})
-
-          const appointmentDb = await this.appointmentService.getAppointmentByAcuityId(
-            appointmentId,
-          )
-
-          return appointmentDb ? appointmentUiDTOResponse(appointmentDb) : null
-        }),
-      )
-
-      res.json(actionSucceed(result))
-    } catch (error) {
-      next(error)
-    }
-  }
-
   getAppointmentByBarcode = async (
     req: Request,
     res: Response,
@@ -253,33 +205,6 @@ class AdminAppointmentController implements IControllerBase {
       )
 
       await this.appointmentService.makeReceived(appointment.id, location, adminId)
-
-      res.json(actionSucceed())
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  addTestRunToAppointments = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
-
-      const {appointmentIds, testRunId} = req.body as {
-        appointmentIds: string[]
-        testRunId: string
-      }
-
-      if (appointmentIds.length > 50) {
-        throw new BadRequestException('Maximum appointments to be part of request is 50')
-      }
-
-      await Promise.all(
-        appointmentIds.map((id) => this.appointmentService.makeInProgress(id, testRunId, adminId)),
-      )
 
       res.json(actionSucceed())
     } catch (error) {
