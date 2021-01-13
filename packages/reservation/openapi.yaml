@@ -1172,7 +1172,7 @@ paths:
         - in: path
           name: appointmentId
           schema:
-            type: number
+            type: string
           required: true
         - in: query
           name: organizationId

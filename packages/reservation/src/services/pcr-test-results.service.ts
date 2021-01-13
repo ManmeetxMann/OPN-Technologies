@@ -253,22 +253,8 @@ export class PCRTestResultsService {
   }
 
   async getWaitingPCRResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
-    const pcrTestResultsQuery = [
-      {
-        map: '/',
-        key: 'appointmentId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: appointmentId,
-      },
-      {
-        map: '/',
-        key: 'waitingResult',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: true,
-      },
-    ]
-    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
-      pcrTestResultsQuery,
+    const pcrTestResults = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
+      appointmentId,
     )
 
     if (!pcrTestResults || pcrTestResults.length === 0) {
@@ -276,14 +262,6 @@ export class PCRTestResultsService {
         `PCRTestResult with appointment ${appointmentId} not found`,
       )
     }
-
-    if (pcrTestResults.length > 1) {
-      //CRITICAL
-      console.log(
-        `getWaitingPCRResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
-      )
-    }
-
     return pcrTestResults[0]
   }
 
@@ -309,7 +287,7 @@ export class PCRTestResultsService {
     return finalResult
   }
 
-  async getTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
+  async getWaitingPCRResultsByByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
     const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
       'barCode',
       barCodeNumber,
@@ -362,7 +340,7 @@ export class PCRTestResultsService {
     }
 
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
-    const testResult = await this.getTestResultByBarCode(resultData.barCode)
+    const testResult = await this.getWaitingPCRResultsByByBarCode(resultData.barCode)
 
     await this.handleActions(resultData, appointment.id)
 
