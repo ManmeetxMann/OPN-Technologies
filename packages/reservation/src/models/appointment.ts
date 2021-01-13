@@ -10,6 +10,7 @@ export enum AppointmentStatus {
   Reported = 'Reported',
   ReRunRequired = 'ReRunRequired',
   ReSampleRequired = 'ReSampleRequired',
+  Canceled = 'Canceled',
 }
 
 export enum ResultTypes {
@@ -88,6 +89,7 @@ export type AppointmentAcuityResponse = {
   registeredNursePractitioner: string
   barCode: string
   canceled: boolean
+  canClientCancel: boolean
 }
 
 export type LabelsAcuityResponse = {
