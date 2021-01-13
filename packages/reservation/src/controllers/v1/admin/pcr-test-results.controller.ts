@@ -145,21 +145,22 @@ class PCRTestResultController implements IControllerBase {
       const formedPcrTests: PCRTestResultHistoryDTO[] = barcode.map((code) => {
         const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
         const results = testSameBarcode
-            .map((testSame) => {
-              const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
-                ...linkedResult.resultSpecs,
-                result: linkedResult.result,
-              }))
-              return [
-                {
-                  ...testSame.resultSpecs,
-                  result: testSame.result,
-                },
-                ...linkedSameTests,
-              ]
-            }).flat()
+          .map((testSame) => {
+            const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
+              ...linkedResult.resultSpecs,
+              result: linkedResult.result,
+            }))
+            return [
+              {
+                ...testSame.resultSpecs,
+                result: testSame.result,
+              },
+              ...linkedSameTests,
+            ]
+          })
+          .flat()
         const waitingResult = !!pcrTests.find(
-            (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
+          (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
         )
         if (testSameBarcode.length) {
           return {
