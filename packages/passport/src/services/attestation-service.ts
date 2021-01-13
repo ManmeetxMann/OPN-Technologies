@@ -36,7 +36,6 @@ export class AttestationService {
   }
 
   async latestStatus(userOrDependantId: string, organizationId: string): Promise<PassportStatus> {
-
     const [attestation] = await this.attestationRepository
       .getQueryFindWhereArrayContains('appliesTo', userOrDependantId)
       .where('organizationId', '==', organizationId)
@@ -188,7 +187,10 @@ export class AttestationService {
     return attestations
   }
 
-  async lastAttestationByUserId(userOrDependantId: string, organizationId: string): Promise<Attestation> {
+  async lastAttestationByUserId(
+    userOrDependantId: string,
+    organizationId: string,
+  ): Promise<Attestation> {
     const [attestation] = await this.attestationRepository
       .getQueryFindWhereArrayContains('appliesTo', userOrDependantId)
       .where('userId', '==', userOrDependantId)

@@ -80,26 +80,44 @@ class UserController implements IControllerBase {
     try {
       // Fetch passport status token
       // or create a pending one if any
-      const {statusToken, userId, includeGuardian} = req.body
+      // TODO: frontends never send organizationId
+      const {statusToken, userId, includeGuardian, organizationId} = req.body
       const dependantIds: string[] = req.body.dependantIds ?? []
       if (!includeGuardian && dependantIds.length === 0) {
         throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
       }
-
+      let orgId = organizationId
       const existingPassport = statusToken
         ? await this.passportService.findOneByToken(statusToken)
         : null
-
+      if (existingPassport?.organizationId) {
+        orgId = existingPassport.organizationId
+      }
       const mustReset = ({status, validUntil}: Passport): boolean =>
         status === PassportStatuses.Pending ||
         (isPassed(validUntil) && status === PassportStatuses.Proceed)
 
       if (!existingPassport || mustReset(existingPassport)) {
+        if (!orgId) {
+          // need to determine based on the user
+          const user = await this.userService.findOne(userId)
+          const {organizationIds} = user
+          if (!organizationIds?.length) {
+            throw new BadRequestException('User has no organizations')
+          }
+          if (organizationIds.length > 1) {
+            console.warn(
+              `${userId} has many organizations and did not specify which one, using ${organizationIds[0]}`,
+            )
+          }
+          orgId = organizationIds[0]
+        }
         const newPassport = await this.passportService.create(
           PassportStatuses.Pending,
           userId,
           dependantIds,
           includeGuardian,
+          orgId,
         )
         res.json(actionSucceed(newPassport))
         return
@@ -177,6 +195,7 @@ class UserController implements IControllerBase {
         userId,
         dependantIds,
         includeGuardian,
+        organizationId,
       )
 
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {

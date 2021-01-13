@@ -77,6 +77,7 @@ export class PassportService {
     userId: string,
     dependantIds: string[],
     includesGuardian: boolean,
+    organizationId: string,
   ): Promise<Passport> {
     if (dependantIds.length) {
       const allDependants = (await this.userService.getAllDependants(userId)).map(({id}) => id)
@@ -92,6 +93,7 @@ export class PassportService {
           status,
           statusToken,
           userId,
+          organizationId,
           dependantIds,
           validFrom: serverTimestamp(),
           validUntil: null,
