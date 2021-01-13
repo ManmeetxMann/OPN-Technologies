@@ -163,7 +163,9 @@ class PCRTestResultController implements IControllerBase {
                 ]
               })
               .flat(),
-            waitingResult: !!pcrTests.find((pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult),
+            waitingResult: !!pcrTests.find(
+              (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
+            ),
           }
         }
         return {
