@@ -474,7 +474,7 @@ components:
         isTestAppointmentsAdmin:
           type: boolean
           description: Can see Test Appoinments
-        isLabAdmin:
+        isLabUser:
           type: boolean
         isLabAppointmentsAdmin:
           type: boolean
@@ -499,7 +499,7 @@ components:
         - isManagementDashboardAdmin
         - isTestReportsAdmin
         - isTestAppointmentsAdmin
-        - isLabAdmin
+        - isLabUser
         - isLabAppointmentsAdmin
         - isLabResultsAdmin
         - isTransportsRunsAdmin
@@ -773,7 +773,7 @@ components:
           type: boolean
         isLabAppointmentsAdmin:
           type: boolean
-        isLabAdmin:
+        isLabUser:
           type: boolean
         isLabResultsAdmin:
           type: boolean

@@ -117,13 +117,13 @@ export const authorizationMiddleware = (requiredRole?: UserRoles[]) => async (
 const authorizedWithoutOrgId = (admin: AdminProfile, organizationId: string): boolean => {
   //IF OPN Super Admin or LAB User then Allow Access Without ORG ID
   const isOpnSuperAdmin = admin?.isOpnSuperAdmin ?? false
-  const isLabAdmin = admin?.isLabAdmin ?? false
+  const isLabUser = admin?.isLabUser ?? false
   const authorizedOrganizationIds = [
     ...(admin?.superAdminForOrganizationIds ?? []),
     admin?.adminForOrganizationId,
   ].filter((id) => !!id)
   const hasGrantedAccess = new Set(authorizedOrganizationIds).has(organizationId)
-  if (!isLabAdmin && !isOpnSuperAdmin && !hasGrantedAccess) {
+  if (!isLabUser && !isOpnSuperAdmin && !hasGrantedAccess) {
     return false
   }
   return true
