@@ -174,7 +174,7 @@ async function fetchAcuity(): Promise<Result[]> {
     maxDate: moment(startDate).add(1, 'd').format('YYYY-MM-DD'),
   }
 
-  while (moment("2021-01-18").diff(moment(filters.maxDate).add(1, 'd').format('YYYY-MM-DD')) > 0) {
+  while (moment(new Date()).diff(moment(filters.maxDate).add(1, 'd').format('YYYY-MM-DD')) > 0) {
     const acuityAppointments = await getAppointments(filters)
     await Promise.all(
       acuityAppointments.map(async (acuity) => {
