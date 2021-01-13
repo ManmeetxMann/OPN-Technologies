@@ -198,7 +198,13 @@ class UserController implements IRouteController {
 
     const user = await this.userService.findOne(userId)
     const {base64Photo} = user
-    const passport = await this.passportService.create(PassportStatuses.Pending, userId, [], true, organizationId)
+    const passport = await this.passportService.create(
+      PassportStatuses.Pending,
+      userId,
+      [],
+      true,
+      organizationId,
+    )
     const newAccess = await this.accessService.handleEnter(access)
 
     return res.json(

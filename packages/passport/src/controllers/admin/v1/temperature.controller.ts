@@ -83,7 +83,13 @@ class TemperatureAdminController implements IControllerBase {
         validUntil: this.passportService.shortestTime(status, now()),
       }
 
-      const passport = await this.passportService.create(status, data.userId, [], false, organizationId)
+      const passport = await this.passportService.create(
+        status,
+        data.userId,
+        [],
+        false,
+        organizationId,
+      )
 
       if (status === TemperatureStatuses.Stop) {
         await this.alertService.sendAlert(
