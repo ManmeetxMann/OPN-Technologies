@@ -62,11 +62,6 @@ class AdminAppointmentController implements IControllerBase {
       adminAuthMiddleware,
       this.updateTestVial,
     )
-    innerRouter.put(
-      this.path + '/api/v1/appointments/add-test-run',
-      adminAuthMiddleware,
-      this.addTestRunToAppointments,
-    )
 
     this.router.use('/', innerRouter)
   }
@@ -229,32 +224,6 @@ class AdminAppointmentController implements IControllerBase {
     }
   }
 
-  addTestRunToAppointments = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
-
-      const {appointmentIds, testRunId} = req.body as {
-        appointmentIds: string[]
-        testRunId: string
-      }
-
-      if (appointmentIds.length > 50) {
-        throw new BadRequestException('Maximum appointments to be part of request is 50')
-      }
-
-      await Promise.all(
-        appointmentIds.map((id) => this.appointmentService.makeInProgress(id, testRunId, adminId)),
-      )
-
-      res.json(actionSucceed())
-    } catch (error) {
-      next(error)
-    }
-  }
 }
 
 export default AdminAppointmentController
