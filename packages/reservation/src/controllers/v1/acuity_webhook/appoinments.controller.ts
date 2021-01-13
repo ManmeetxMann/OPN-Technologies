@@ -18,7 +18,7 @@ import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {makeTimeEndOfTheDay} from '../../../../../common/src/utils/utils'
+import {makeDeadline} from '../../../../../common/src/utils/datetime-util'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -55,19 +55,13 @@ class AppointmentWebhookController implements IControllerBase {
         throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
       }
 
-      let deadline: string
       const utcDateTime = moment(appointment.datetime).utc()
 
       const dateTime = utcDateTime.format()
       const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
       const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
 
-      if (utcDateTime.hours() > 12) {
-        deadline = makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
-      } else {
-        deadline = makeTimeEndOfTheDay(utcDateTime)
-      }
-
+      const deadline: string = makeDeadline(utcDateTime)
       const dataForUpdate: AcuityUpdateDTO = {}
       if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
@@ -181,19 +175,13 @@ class AppointmentWebhookController implements IControllerBase {
         throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
       }
 
-      let deadline: string
       const utcDateTime = moment(appointment.datetime).utc()
 
       const dateTime = utcDateTime.format()
       const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
       const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
 
-      if (utcDateTime.hours() > 12) {
-        deadline = makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
-      } else {
-        deadline = makeTimeEndOfTheDay(utcDateTime)
-      }
-
+      const deadline: string = makeDeadline(utcDateTime)
       const dataForUpdate: AcuityUpdateDTO = {}
       if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
