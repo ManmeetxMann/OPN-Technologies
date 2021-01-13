@@ -224,7 +224,7 @@ export class PCRTestResultsService {
         id: pcr.id,
         barCode: pcr.barCode,
         result: pcr.result,
-        vialLocation: appointment?.vialLocaton,
+        vialLocation: appointment?.vialLocation,
         status: appointment?.appointmentStatus,
         dateTime: appointment?.dateTime,
         deadline: pcr.deadline,
