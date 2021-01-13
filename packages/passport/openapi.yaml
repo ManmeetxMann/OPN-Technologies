@@ -149,7 +149,7 @@ paths:
 
   /user/status/get:
     post:
-      description: Get user's passport by statusToken or create a pending one if any. Not including userId is deprecated and will be removed
+      description: Get user's passport for the organization by statusToken or create a pending one if any. Not including userId or organizationId is deprecated and will be removed
       requestBody:
         content:
           application/json:
@@ -159,6 +159,8 @@ paths:
                   type: string
                   nullable: true
                 userId:
+                  type: string
+                organizationId:
                   type: string
                 dependantIds:
                   type: array

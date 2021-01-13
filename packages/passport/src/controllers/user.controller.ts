@@ -91,6 +91,9 @@ class UserController implements IControllerBase {
         ? await this.passportService.findOneByToken(statusToken)
         : null
       if (existingPassport?.organizationId) {
+        if (orgId && orgId !== existingPassport.organizationId) {
+          console.warn('MISMATCH: specified organization id does not match the passport')
+        }
         orgId = existingPassport.organizationId
       }
       const mustReset = ({status, validUntil}: Passport): boolean =>
