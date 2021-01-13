@@ -52,11 +52,6 @@ class AdminAppointmentController implements IControllerBase {
       adminAuthMiddleware,
       this.addTransportRun,
     )
-    innerRouter.put(
-      this.path + '/api/v1/appointments/add_labels',
-      adminAuthMiddleware,
-      this.addLabels,
-    )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/:barCode',
       adminAuthMiddleware,
@@ -193,32 +188,6 @@ class AdminAppointmentController implements IControllerBase {
       )
 
       res.json(actionSucceed(appointmentsState))
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  addLabels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const dataToUpdate = req.body as {appointmentId: number; label: Label}[]
-
-      if (dataToUpdate.length > 50) {
-        throw new BadRequestException('Maximum appointments to be part of request is 50')
-      }
-
-      const result = await Promise.all(
-        dataToUpdate.map(async ({appointmentId, label}) => {
-          await this.appointmentService.addAppointmentLabel(Number(appointmentId), {[label]: label})
-
-          const appointmentDb = await this.appointmentService.getAppointmentByAcuityId(
-            appointmentId,
-          )
-
-          return appointmentDb ? appointmentUiDTOResponse(appointmentDb) : null
-        }),
-      )
-
-      res.json(actionSucceed(result))
     } catch (error) {
       next(error)
     }
