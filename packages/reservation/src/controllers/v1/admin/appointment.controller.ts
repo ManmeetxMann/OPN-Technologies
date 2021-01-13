@@ -17,7 +17,7 @@ import {ResourceNotFoundException} from '../../../../../common/src/exceptions/re
 import {isValidDate} from '../../../../../common/src/utils/times'
 import {TransportRunsService} from '../../../services/transport-runs.service'
 import {getAdminId} from '../../../../../common/src/utils/auth'
-import { UserRoles } from '../../../../../common/src/types/authorization'
+import {UserRoles} from '../../../../../common/src/types/authorization'
 
 const isJustOneOf = (a: unknown, b: unknown) => !(a && b) || !(!a && !b)
 

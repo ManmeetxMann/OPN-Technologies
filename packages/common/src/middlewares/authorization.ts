@@ -6,7 +6,7 @@ import {of} from '../utils/response-wrapper'
 import {ResponseStatusCodes} from '../types/response-status'
 import {UserRoles} from '../types/authorization'
 import {User} from '../data/user'
-import { AdminProfile } from '../data/admin'
+import {AdminProfile} from '../data/admin'
 
 export const authorizationMiddleware = (requiredRole?: UserRoles[]) => async (
   req: Request,
@@ -83,7 +83,7 @@ export const authorizationMiddleware = (requiredRole?: UserRoles[]) => async (
 
   const organizationId = req.query['organizationId'] as string | null
   const admin = connectedUser.admin as AdminProfile
-  if(!authorizedWithoutOrgId(admin, organizationId)){
+  if (!authorizedWithoutOrgId(admin, organizationId)) {
     // Forbidden
     res
       .status(403)
@@ -97,20 +97,12 @@ export const authorizationMiddleware = (requiredRole?: UserRoles[]) => async (
     return
   }
 
-  if(!isAllowed(admin, listOfRequiredRoles)){
-    console.warn(
-      `Admin user ${connectedUser.id} is not allowed for ${listOfRequiredRoles}`,
-    )
+  if (!isAllowed(admin, listOfRequiredRoles)) {
+    console.warn(`Admin user ${connectedUser.id} is not allowed for ${listOfRequiredRoles}`)
     // Forbidden
     res
       .status(403)
-      .json(
-        of(
-          null,
-          ResponseStatusCodes.AccessDenied,
-          `Required Permissions are missing`,
-        ),
-      )
+      .json(of(null, ResponseStatusCodes.AccessDenied, `Required Permissions are missing`))
     return
   }
 
@@ -122,7 +114,7 @@ export const authorizationMiddleware = (requiredRole?: UserRoles[]) => async (
   next()
 }
 
-const authorizedWithoutOrgId = (admin:AdminProfile, organizationId:string): boolean=>{  
+const authorizedWithoutOrgId = (admin: AdminProfile, organizationId: string): boolean => {
   //IF OPN Super Admin or LAB User then Allow Access Without ORG ID
   const isOpnSuperAdmin = admin?.isOpnSuperAdmin ?? false
   const isLabAdmin = admin?.isLabAdmin ?? false
@@ -137,9 +129,9 @@ const authorizedWithoutOrgId = (admin:AdminProfile, organizationId:string): bool
   return true
 }
 
-const isAllowed = (admin:AdminProfile, listOfRequiredRoles:UserRoles[]): boolean=>{ 
+const isAllowed = (admin: AdminProfile, listOfRequiredRoles: UserRoles[]): boolean => {
   const seekAppointmentAdmin = listOfRequiredRoles.includes(UserRoles.AppointmentsAdmin)
-  if(seekAppointmentAdmin && !admin.isTestAppointmentsAdmin && !admin.isLabAppointmentsAdmin){
+  if (seekAppointmentAdmin && !admin.isTestAppointmentsAdmin && !admin.isLabAppointmentsAdmin) {
     return false
   }
   return true
