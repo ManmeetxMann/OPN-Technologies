@@ -135,13 +135,13 @@ const formatAcuityToAppointment = (appointment) => {
     barCode: findByFieldIdForms(
         findByIdForms(appointment.forms, acuityDataId).values,
         acuityDataIds.barCode,
-    ),
+    ).value,
     canceled: appointment.canceled,
     dateOfAppointment: dateOfAppointment,
     dateOfBirth: findByFieldIdForms(
         findByIdForms(appointment.forms, acuityBirthDayDataId).values,
         acuityDataIds.birthDay,
-    ),
+    ).value,
     dateTime: dateTime,
     deadline: deadline,
     email: appointment.email,
@@ -151,13 +151,13 @@ const formatAcuityToAppointment = (appointment) => {
     organizationId: findByFieldIdForms(
       findByIdForms(appointment.forms, acuityDataId).values,
       acuityDataIds.organizationId,
-    ),
+    ).value,
     packageCode: appointment.certificate,
     phone: appointment.phone,
     registeredNursePractitioner: findByFieldIdForms(
       findByIdForms(appointment.forms, acuityDataId).values,
       acuityDataIds.nurse,
-    ),
+    ).value,
     result: 'Pending',
     timeOfAppointment: timeOfAppointment,
     timestamps: {
