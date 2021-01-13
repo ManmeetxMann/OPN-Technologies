@@ -26,7 +26,7 @@ import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.
 import {Config} from '../../../common/src/utils/config'
 import {makeTimeEndOfTheDay} from '../../../common/src/utils/utils'
 
-import { BadRequestException } from '../../../common/src/exceptions/bad-request-exception'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 
@@ -225,52 +225,78 @@ export class AppoinmentService {
     return this.acuityRepository.updateAppointmentOnAcuity(id, data)
   }
 
-  async cancelAppointment(appointmentId: string, userId: string, organizationId?:string): Promise<void> {
+  async cancelAppointment(
+    appointmentId: string,
+    userId: string,
+    organizationId?: string,
+  ): Promise<void> {
     const appointmentFromDB = await this.getAppointmentDBById(appointmentId)
     if (!appointmentFromDB) {
-      console.log(`AppoinmentService: cancelAppointment AppointmentIDFromDB: "${appointmentId}" not found`)
+      console.log(
+        `AppoinmentService: cancelAppointment AppointmentIDFromDB: "${appointmentId}" not found`,
+      )
       throw new ResourceNotFoundException(`Invalid Appointment ID`)
     }
     if (organizationId && appointmentFromDB.organizationId !== organizationId) {
-      console.log(`OrganizationId "${organizationId}" does not match appointment "${appointmentId}"`)
+      console.log(
+        `OrganizationId "${organizationId}" does not match appointment "${appointmentId}"`,
+      )
       throw new BadRequestException(`Appointment doesn't belong to selected Organization`)
     }
 
-    const appointmentFromAcuity = await this.getAppointmentByIdFromAcuity(appointmentFromDB.acuityAppointmentId)
+    const appointmentFromAcuity = await this.getAppointmentByIdFromAcuity(
+      appointmentFromDB.acuityAppointmentId,
+    )
     if (!appointmentFromAcuity) {
       //CRITICAL
-      console.log(`OrganizationId "AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" not found. CRITICAL`)
+      console.log(
+        `OrganizationId "AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" not found. CRITICAL`,
+      )
       throw new ResourceNotFoundException(`Something is wrong. Please contact Admin.`)
     }
 
-    if(appointmentFromAcuity.canceled){
-      console.log(`AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" is already cancelled!`)
+    if (appointmentFromAcuity.canceled) {
+      console.log(
+        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" is already cancelled!`,
+      )
       throw new BadRequestException(`Appointment is allready cancelled`)
     }
 
-    if(!appointmentFromAcuity.canClientCancel){
-      console.log(`AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" can not be cancelled. Client Cancellation is not available.`)
+    if (!appointmentFromAcuity.canClientCancel) {
+      console.log(
+        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" can not be cancelled. Client Cancellation is not available.`,
+      )
       throw new BadRequestException(`Appointment Cancellation is not available.`)
     }
 
-    const appointmentStatus = await this.acuityRepository.cancelAppointmentByIdOnAcuity(appointmentFromDB.acuityAppointmentId)
-    if(appointmentStatus.canceled){
-      console.log(`AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" is successfully cancelled`)
+    const appointmentStatus = await this.acuityRepository.cancelAppointmentByIdOnAcuity(
+      appointmentFromDB.acuityAppointmentId,
+    )
+    if (appointmentStatus.canceled) {
+      console.log(
+        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" is successfully cancelled`,
+      )
       //Update Appointment DB to be Cancelled
       await this.makeCancelled(appointmentId, userId)
-      try{
+      try {
         const pcrTestResult = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
           appointmentFromDB.id,
         )
-        if(pcrTestResult){
+        if (pcrTestResult) {
           //Remove any Results
-          //Only one Waiting Result is Expected 
+          //Only one Waiting Result is Expected
           await this.pcrTestResultsRepository.delete(pcrTestResult[0].id)
-        }else{
-          console.log(`AppoinmentService:cancelAppointment:FailedDeletePCRResults No PCR Results linked to AppointmentIDFromDB: "${appointmentFromDB.id}"`)
+        } else {
+          console.log(
+            `AppoinmentService:cancelAppointment:FailedDeletePCRResults No PCR Results linked to AppointmentIDFromDB: "${appointmentFromDB.id}"`,
+          )
         }
-      }catch(error){
-        console.log(`AppoinmentService:cancelAppointment:FailedDeletePCRResults linked to AppointmentIDFromDB: "${appointmentFromDB.id}" ${error.toString()}`)
+      } catch (error) {
+        console.log(
+          `AppoinmentService:cancelAppointment:FailedDeletePCRResults linked to AppointmentIDFromDB: "${
+            appointmentFromDB.id
+          }" ${error.toString()}`,
+        )
       }
     }
   }
@@ -293,10 +319,7 @@ export class AppoinmentService {
     })
   }
 
-  async makeCancelled(
-    appointmentId: string,
-    userId: string,
-  ): Promise<AppointmentDBModel> {
+  async makeCancelled(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.InProgress, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Canceled,

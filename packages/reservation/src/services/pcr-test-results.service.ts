@@ -253,7 +253,9 @@ export class PCRTestResultsService {
   }
 
   async getWaitingPCRResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
-    const pcrTestResults = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(appointmentId)
+    const pcrTestResults = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
+      appointmentId,
+    )
 
     if (!pcrTestResults || pcrTestResults.length === 0) {
       throw new ResourceNotFoundException(

@@ -207,7 +207,10 @@ class AppointmentWebhookController implements IControllerBase {
       }
 
       let appointmentStatus = appointmentFromDb.appointmentStatus
-      if(appointment.canceled && appointmentFromDb.appointmentStatus!=AppointmentStatus.Canceled){
+      if (
+        appointment.canceled &&
+        appointmentFromDb.appointmentStatus != AppointmentStatus.Canceled
+      ) {
         console.log(`WebhookController: UPDATE:  Appointment Status will be updated to Cancelled`)
         appointmentStatus = AppointmentStatus.Canceled
       }
@@ -244,7 +247,10 @@ class AppointmentWebhookController implements IControllerBase {
           appointmentFromDb.id,
         )
         if (pcrTestResult) {
-          if (action === AppointmentWebhookActions.Canceled || appointmentStatus===AppointmentStatus.Canceled) {
+          if (
+            action === AppointmentWebhookActions.Canceled ||
+            appointmentStatus === AppointmentStatus.Canceled
+          ) {
             await this.pcrTestResultsService.deleteTestResults(pcrTestResult.id)
             console.log(
               `WebhookController: AppointmentCancelled ID: ${appointmentFromDb.id} Removed PCR Results ID: ${pcrTestResult.id}`,
@@ -281,7 +287,9 @@ class AppointmentWebhookController implements IControllerBase {
         }
       } catch (e) {
         //TODO CRITICAL
-        console.log(`WebhookController: FailedToUpdateAppointment for AppoinmentID: ${id} ${e.toString()}`)
+        console.log(
+          `WebhookController: FailedToUpdateAppointment for AppoinmentID: ${id} ${e.toString()}`,
+        )
       }
 
       res.json(actionSucceed(''))
