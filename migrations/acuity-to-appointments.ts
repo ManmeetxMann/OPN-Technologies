@@ -3,11 +3,11 @@
  */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
-import querystring, { ParsedUrlQueryInput } from 'querystring'
+import querystring, {ParsedUrlQueryInput} from 'querystring'
 import fetch from 'node-fetch'
 import moment from 'moment-timezone'
 
-const startDate = Config.get('ACUITY_MIGRATION_START_DATE')
+const startDate = '2020-09-01'
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -94,7 +94,9 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
   const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
   const userPassBase64 = userPassBuf.toString('base64')
   const apiUrl =
-    APIURL + '/api/v1/appointments?max=1500&' + querystring.stringify(filters as ParsedUrlQueryInput)
+    APIURL +
+    '/api/v1/appointments?max=1500&' +
+    querystring.stringify(filters as ParsedUrlQueryInput)
   console.log(apiUrl) //To know request path for dependency
 
   return fetch(apiUrl, {
@@ -133,14 +135,14 @@ const formatAcuityToAppointment = (appointment) => {
     acuityAppointmentId: appointment.id,
     appointmentStatus: 'pending',
     barCode: findByFieldIdForms(
-        findByIdForms(appointment.forms, acuityDataId).values,
-        acuityDataIds.barCode,
+      findByIdForms(appointment.forms, acuityDataId).values,
+      acuityDataIds.barCode,
     ).value,
     canceled: appointment.canceled,
     dateOfAppointment: dateOfAppointment,
     dateOfBirth: findByFieldIdForms(
-        findByIdForms(appointment.forms, acuityBirthDayDataId).values,
-        acuityDataIds.birthDay,
+      findByIdForms(appointment.forms, acuityBirthDayDataId).values,
+      acuityDataIds.birthDay,
     ).value,
     dateTime: dateTime,
     deadline: deadline,
@@ -190,20 +192,20 @@ async function fetchAcuity(): Promise<Result[]> {
   }
 
   return results
-
 }
 
 async function createAppointment(appointment) {
   try {
-    const a = await database.collection('appointments')
-                            .where("acuityAppointmentId", "==", appointment.acuityAppointmentId)
-                            .get()
+    const a = await database
+      .collection('appointments')
+      .where('acuityAppointmentId', '==', appointment.acuityAppointmentId)
+      .get()
     if (a.size > 0) {
       return
     }
     return database.collection('appointments').add(appointment)
   } catch (error) {
-    console.log(error);
+    console.log(error)
     throw error
   }
 }
