@@ -254,13 +254,13 @@ export class AppoinmentService {
 
   async makeReceived(
     appointmentId: string,
-    vialLocaton: string,
+    vialLocation: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.Received, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Received,
-      vialLocaton,
+      vialLocation,
     })
   }
 

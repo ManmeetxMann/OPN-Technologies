@@ -116,7 +116,7 @@ components:
               type: string
             latestResult:
               type: string
-            vialLocaton:
+            vialLocation:
               type: string
             testRunId:
               type: string
