@@ -7,7 +7,6 @@ import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.a
 import {
   AppointmentByOrganizationRequest,
   appointmentUiDTOResponse,
-  Label,
   AppointmentsState,
   AppointmentDBModel,
 } from '../../../models/appointment'
@@ -223,7 +222,6 @@ class AdminAppointmentController implements IControllerBase {
       next(error)
     }
   }
-
 }
 
 export default AdminAppointmentController

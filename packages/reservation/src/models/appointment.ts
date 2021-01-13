@@ -192,6 +192,6 @@ export const appointmentUiDTOResponse = (appointment: AppointmentDBModel): Appoi
     transportRunId: appointment.transportRunId,
     deadline: moment(appointment.deadline).tz(timeZone).format(),
     latestResult: appointment.latestResult,
-    vialLocation: appointment.vialLocation
+    vialLocation: appointment.vialLocation,
   }
 }
