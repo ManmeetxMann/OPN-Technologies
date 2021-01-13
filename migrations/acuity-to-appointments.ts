@@ -3,7 +3,7 @@
  */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
-import querystring from 'querystring'
+import querystring, { ParsedUrlQueryInput } from 'querystring'
 import fetch from 'node-fetch'
 import moment from 'moment-timezone'
 
@@ -17,12 +17,14 @@ initializeApp({
 const database = firestore()
 
 const acuityDataId = 1564839
+const acuityBirthDayDataId = 1567398
 
 const acuityDataIds = {
   barCode: 8622334,
   nurse: 8622344,
   organizationId: 8842033,
   agreement: 8981060,
+  birthDay: 8637043,
 }
 
 export enum ResultStatus {
@@ -88,26 +90,11 @@ export async function promiseAllSettled(promises: Promise<unknown>[]): Promise<R
     ),
   )
 }
-const renameKeys = (filters) => {
-  const acuityFilters = {}
-  const keys = Object.keys(filters)
-  keys.forEach((key) => {
-    const newKey = this.fieldMapping[key] ? this.fieldMapping[key] : key
-    acuityFilters[newKey] = filters[key]
-  })
-
-  return acuityFilters
-}
-const mapCustomFieldsToAppoinment = async (
-  appoinments: Promise<AppointmentAcuityResponse[]>,
-): Promise<AppointmentAcuityResponse[]> => {
-  return (await appoinments).map(this.customFieldsToAppoinment)
-}
 const getAppointments = async (filters: unknown): Promise<AppointmentAcuityResponse[]> => {
   const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
   const userPassBase64 = userPassBuf.toString('base64')
   const apiUrl =
-    APIURL + '/api/v1/appointments?max=1500&' + querystring.stringify(renameKeys(filters))
+    APIURL + '/api/v1/appointments?max=1500&' + querystring.stringify(filters as ParsedUrlQueryInput)
   console.log(apiUrl) //To know request path for dependency
 
   return fetch(apiUrl, {
@@ -118,8 +105,7 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
       accept: 'application/json',
     },
   }).then((res) => {
-    const appointments = res.json()
-    return mapCustomFieldsToAppoinment(appointments)
+    return res.json()
   })
 }
 const makeTimeEndOfTheDay = (datetime: moment.Moment): string => {
@@ -146,10 +132,16 @@ const formatAcuityToAppointment = (appointment) => {
   return {
     acuityAppointmentId: appointment.id,
     appointmentStatus: 'pending',
-    barCode: appointment.barCode,
+    barCode: findByFieldIdForms(
+        findByIdForms(appointment.forms, acuityDataId).values,
+        acuityDataIds.barCode,
+    ),
     canceled: appointment.canceled,
     dateOfAppointment: dateOfAppointment,
-    dateOfBirth: appointment.dateOfBirth,
+    dateOfBirth: findByFieldIdForms(
+        findByIdForms(appointment.forms, acuityBirthDayDataId).values,
+        acuityDataIds.birthDay,
+    ),
     dateTime: dateTime,
     deadline: deadline,
     email: appointment.email,
@@ -174,7 +166,7 @@ const formatAcuityToAppointment = (appointment) => {
     },
   }
 }
-async function updateTestResults(): Promise<Result[]> {
+async function fetchAcuity(): Promise<Result[]> {
   const results: Result[] = []
 
   const filters = {
@@ -182,7 +174,7 @@ async function updateTestResults(): Promise<Result[]> {
     maxDate: moment(startDate).add(1, 'd').format('YYYY-MM-DD'),
   }
 
-  while (moment(new Date()).diff(moment(filters.maxDate).add(1, 'd').format('YYYY-MM-DD')) > 0) {
+  while (moment("2021-01-18").diff(moment(filters.maxDate).add(1, 'd').format('YYYY-MM-DD')) > 0) {
     const acuityAppointments = await getAppointments(filters)
     await Promise.all(
       acuityAppointments.map(async (acuity) => {
@@ -198,12 +190,20 @@ async function updateTestResults(): Promise<Result[]> {
   }
 
   return results
+
 }
 
 async function createAppointment(appointment) {
   try {
+    const a = await database.collection('appointments')
+                            .where("acuityAppointmentId", "==", appointment.acuityAppointmentId)
+                            .get()
+    if (a.size > 0) {
+      return
+    }
     return database.collection('appointments').add(appointment)
   } catch (error) {
+    console.log(error);
     throw error
   }
 }
@@ -211,7 +211,7 @@ async function createAppointment(appointment) {
 async function main() {
   try {
     console.log('Migration Starting')
-    const results = await updateTestResults()
+    const results = await fetchAcuity()
     results.forEach((result) => {
       if (result.status === ResultStatus.Fulfilled) {
         // @ts-ignore - We will always have a value if the status is fulfilled
