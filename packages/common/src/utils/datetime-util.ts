@@ -2,7 +2,7 @@ import {now} from './times'
 
 import moment from 'moment-timezone'
 import {firestore} from 'firebase-admin'
-import {makeTimeEndOfTheDay} from './utils'
+import {makeTimeEndOfTheDayMoment} from './utils'
 import {Config} from './config'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
@@ -48,10 +48,11 @@ export const safeTimestamp = (timestamp: GenericTimestamp): Date => {
 
 export const makeDeadline = (utcDateTime: moment.Moment): string => {
   let deadline
-  if (utcDateTime.clone().tz(timeZone).hours() > 12) {
-    deadline = makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
+  const tzDateTime = utcDateTime.clone().tz(timeZone)
+  if (tzDateTime.hours() > 12) {
+    deadline = makeTimeEndOfTheDayMoment(tzDateTime.add(1, 'd'))
   } else {
-    deadline = makeTimeEndOfTheDay(utcDateTime)
+    deadline = makeTimeEndOfTheDayMoment(tzDateTime)
   }
-  return deadline
+  return deadline.utc().format()
 }
