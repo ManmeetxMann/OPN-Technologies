@@ -368,7 +368,7 @@ export class PCRTestResultsService {
         ? await this.createNewWaitingResult(appointment, resultData.adminId)
         : waitingPCRTestResult
 
-    await this.handleActions(resultData, appointment.id)
+    await this.handleActions(resultData, appointment)
 
     const finalResult = this.getFinalResult(
       resultData.resultSpecs.action,
@@ -430,32 +430,37 @@ export class PCRTestResultsService {
     return await this.saveDefaultTestResults(pcrResultDataForDbCreate)
   }
 
-  async handleActions(resultData: PCRTestResultData, appointmentId: string): Promise<void> {
+  async handleActions(
+    resultData: PCRTestResultData,
+    appointment: AppointmentDBModel,
+  ): Promise<void> {
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
         console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for today`)
-        const appointment = await this.appointmentService.changeStatusToReRunRequired(
-          appointmentId,
-          DeadlineLabel.SameDay,
-          resultData.adminId,
-        )
-        await this.createNewWaitingResult(appointment, resultData.adminId)
+        const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
+          appointmentId: appointment.id,
+          deadlineLabel: DeadlineLabel.SameDay,
+          userId: resultData.adminId,
+          dateTimeOfAppointment: appointment.dateTime,
+        })
+        await this.createNewWaitingResult(updatedAppointment, resultData.adminId)
         break
       }
       case PCRResultActions.ReRunTomorrow: {
         console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for tomorrow`)
-        const appointment = await this.appointmentService.changeStatusToReRunRequired(
-          appointmentId,
-          DeadlineLabel.NextDay,
-          resultData.adminId,
-        )
-        await this.createNewWaitingResult(appointment, resultData.adminId)
+        const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
+          appointmentId: appointment.id,
+          deadlineLabel: DeadlineLabel.NextDay,
+          userId: resultData.adminId,
+          dateTimeOfAppointment: appointment.dateTime,
+        })
+        await this.createNewWaitingResult(updatedAppointment, resultData.adminId)
         break
       }
       case PCRResultActions.RequestReSample: {
         console.log(`TestResultReSample: for ${resultData.barCode} is requested`)
-        const appointment = await this.appointmentService.changeStatusToReSampleRequired(
-          appointmentId,
+        await this.appointmentService.changeStatusToReSampleRequired(
+          appointment.id,
           resultData.adminId,
         )
         this.couponCode = await this.couponService.createCoupon(appointment.email)
@@ -471,7 +476,7 @@ export class PCRTestResultsService {
       }
       default: {
         console.log(`${resultData.resultSpecs.action}: for ${resultData.barCode} is requested`)
-        await this.appointmentService.changeStatusToReported(appointmentId, resultData.adminId)
+        await this.appointmentService.changeStatusToReported(appointment.id, resultData.adminId)
       }
     }
   }

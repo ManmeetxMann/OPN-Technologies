@@ -158,6 +158,13 @@ export type AppointmentStatusHistory = {
   createdBy: string
 }
 
+export type AppointmentChangeToRerunRequest = {
+  appointmentId: string
+  deadlineLabel: DeadlineLabel
+  userId: string
+  dateTimeOfAppointment: string
+}
+
 export type AppointmentStatusHistoryDb = AppointmentStatusHistory & {
   id: string
 }

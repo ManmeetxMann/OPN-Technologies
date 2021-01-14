@@ -8,6 +8,7 @@ import {
   AppointmentAcuityResponse,
   AppointmentAttachTransportStatus,
   AppointmentByOrganizationRequest,
+  AppointmentChangeToRerunRequest,
   AppointmentDBModel,
   AppointmentModelBase,
   AppointmentStatus,
@@ -389,14 +390,16 @@ export class AppoinmentService {
   }
 
   async changeStatusToReRunRequired(
-    appointmentId: string,
-    deadlineLabel: DeadlineLabel,
-    userId: string,
+    data: AppointmentChangeToRerunRequest,
   ): Promise<AppointmentDBModel> {
     const utcDateTime = moment.utc()
-    const deadline = makeDeadline(utcDateTime, deadlineLabel)
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReRunRequired, userId)
-    return this.appointmentsRepository.updateProperties(appointmentId, {
+    const deadline = makeDeadline(utcDateTime, data.deadlineLabel)
+    await this.addStatusHistoryById(
+      data.appointmentId,
+      AppointmentStatus.ReRunRequired,
+      data.userId,
+    )
+    return this.appointmentsRepository.updateProperties(data.appointmentId, {
       appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
     })
