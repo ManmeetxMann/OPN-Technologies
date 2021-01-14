@@ -35,9 +35,7 @@ import {AppointmentDBModel, ResultTypes} from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
-import {makeTimeEndOfTheDay} from '../../../common/src/utils/utils'
-
-const timeZone = Config.get('DEFAULT_TIME_ZONE')
+import {makeDeadline} from '../../../common/src/utils/datetime-util'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -183,11 +181,12 @@ export class PCRTestResultsService {
     }
 
     if (deadline) {
+      const deadlineFormatted = makeDeadline(moment(deadline))
       pcrTestResultsQuery.push({
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: makeTimeEndOfTheDay(moment.tz(`${deadline}`, 'YYYY-MM-DD', timeZone).utc()),
+        value: deadlineFormatted,
       })
     }
 
