@@ -469,6 +469,13 @@ export class PCRTestResultsService {
         )
         break
       }
+      default: {
+        console.log(`${resultData.resultSpecs.action}: for ${resultData.barCode} is requested`)
+        await this.appointmentService.changeStatusToReported(
+          appointmentId,
+          resultData.adminId,
+        )
+      }
     }
   }
 
