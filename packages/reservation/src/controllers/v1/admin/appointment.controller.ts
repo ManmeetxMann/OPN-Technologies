@@ -63,6 +63,11 @@ class AdminAppointmentController implements IControllerBase {
       adminAuthMiddleware,
       this.updateTestVial,
     )
+    innerRouter.put(
+      this.path + '/api/v1/appointments/receive',
+      adminAuthMiddleware,
+      this.addVialLocation,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -207,6 +212,31 @@ class AdminAppointmentController implements IControllerBase {
       )
 
       await this.appointmentService.makeReceived(appointment.id, location, adminId)
+
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  addVialLocation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const adminId = getAdminId(res.locals.authenticatedUser)
+
+      const {appointmentIds, vialLocation} = req.body as {
+        appointmentIds: string[]
+        vialLocation: string
+      }
+
+      if (appointmentIds.length > 50) {
+        throw new BadRequestException('Allowed maximum 50 appointments in array')
+      }
+
+      await Promise.all(
+        appointmentIds.map((appointment) => {
+          return this.appointmentService.makeReceived(appointment, vialLocation, adminId)
+        }),
+      )
 
       res.json(actionSucceed())
     } catch (error) {
