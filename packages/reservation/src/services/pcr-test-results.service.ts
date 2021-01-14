@@ -124,11 +124,14 @@ export class PCRTestResultsService {
       ResultReportStatus.Processing,
     )
     try {
-      await this.handlePCRResultSaveAndSend({
-        barCode: pcrResults.data.barCode,
-        resultSpecs: pcrResults.data,
-        adminId: pcrResults.adminId,
-      })
+      await this.handlePCRResultSaveAndSend(
+        {
+          barCode: pcrResults.data.barCode,
+          resultSpecs: pcrResults.data,
+          adminId: pcrResults.adminId,
+        },
+        false,
+      )
       await testResultsReportingTrackerPCRResult.updateProperty(
         resultId,
         'status',
@@ -287,21 +290,15 @@ export class PCRTestResultsService {
     return finalResult
   }
 
-  async getWaitingPCRResultsByByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
+  async getPCRResultsByByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel[]> {
     const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
       'barCode',
       barCodeNumber,
     )
-
     if (!pcrTestResults || pcrTestResults.length === 0) {
       throw new ResourceNotFoundException(`PCRTestResult with barCode ${barCodeNumber} not found`)
     }
-    const pcrTestResult = pcrTestResults.filter((result) => result.waitingResult)
-    if (!pcrTestResult || pcrTestResult.length === 0) {
-      throw new ResourceNotFoundException(`No Results are waiting for barcode: ${barCodeNumber}`)
-    }
-    //Only one Result should be waiting
-    return pcrTestResult[0]
+    return pcrTestResults
   }
 
   async getReSampledTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
@@ -333,14 +330,36 @@ export class PCRTestResultsService {
     return pcrTestResults[0]
   }
 
-  async handlePCRResultSaveAndSend(resultData: PCRTestResultData): Promise<void> {
+  async getWaitingPCRTestResult(
+    pcrTestResults: PCRTestResultDBModel[],
+  ): Promise<PCRTestResultDBModel> {
+    const pcrWaitingTestResult = pcrTestResults.filter((result) => result.waitingResult)
+    return pcrWaitingTestResult && pcrWaitingTestResult.length !== 0
+      ? pcrWaitingTestResult[0]
+      : undefined
+  }
+
+  async handlePCRResultSaveAndSend(
+    resultData: PCRTestResultData,
+    iSingleResult: boolean,
+  ): Promise<void> {
     if (resultData.resultSpecs.action === PCRResultActions.DoNothing) {
       console.log(`handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}`)
       return
     }
 
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
-    const testResult = await this.getWaitingPCRResultsByByBarCode(resultData.barCode)
+    const pcrTestResults = await this.getPCRResultsByByBarCode(resultData.barCode)
+    const waitingPCRTestResult = await this.getWaitingPCRTestResult(pcrTestResults)
+    if (!waitingPCRTestResult && !iSingleResult) {
+      throw new ResourceNotFoundException(
+        `PCRTestResult with barCode ${resultData.barCode} not waiting for results`,
+      )
+    }
+    const testResult =
+      iSingleResult && !waitingPCRTestResult
+        ? await this.createNewWaitingResult(appointment, resultData.adminId)
+        : waitingPCRTestResult
 
     await this.handleActions(resultData, appointment.id)
 
@@ -383,7 +402,10 @@ export class PCRTestResultsService {
     }
   }
 
-  async createNewWaitingResult(appointment: AppointmentDBModel, adminId: string): Promise<void> {
+  async createNewWaitingResult(
+    appointment: AppointmentDBModel,
+    adminId: string,
+  ): Promise<PCRTestResultDBModel> {
     const pcrResultDataForDbCreate = {
       adminId: adminId,
       appointmentId: appointment.id,
@@ -398,7 +420,7 @@ export class PCRTestResultsService {
       result: ResultTypes.Pending,
       waitingResult: true,
     }
-    await this.saveDefaultTestResults(pcrResultDataForDbCreate)
+    return await this.saveDefaultTestResults(pcrResultDataForDbCreate)
   }
 
   async handleActions(resultData: PCRTestResultData, appointmentId: string): Promise<void> {
@@ -548,8 +570,8 @@ export class PCRTestResultsService {
 
   async saveDefaultTestResults(
     defaultTestResults: Omit<PCRTestResultDBModel, 'id'>,
-  ): Promise<void> {
-    await this.pcrTestResultsRepository.save(defaultTestResults)
+  ): Promise<PCRTestResultDBModel> {
+    return await this.pcrTestResultsRepository.save(defaultTestResults)
   }
 
   async getPCRTestsByBarcode(barCodes: string[]): Promise<PCRTestResultDBModel[]> {
