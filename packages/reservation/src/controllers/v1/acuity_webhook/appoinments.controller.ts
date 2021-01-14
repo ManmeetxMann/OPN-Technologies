@@ -18,7 +18,7 @@ import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {makeDeadline} from '../../../../../common/src/utils/datetime-util'
+import {makeDeadline} from '../../../utils/datetime.helper'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -60,13 +60,12 @@ class AppointmentWebhookController implements IControllerBase {
       const dateTime = utcDateTime.format()
       const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
       const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
-
-      const deadline: string = makeDeadline(utcDateTime)
+      const label = appointment.labels ? appointment.labels[0]?.name : null
+      const deadline: string = makeDeadline(utcDateTime, label)
       const dataForUpdate: AcuityUpdateDTO = {}
       if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
       }
-
       if (appointment.certificate && !appointment.organizationId) {
         //Update ORGs
         const packageResult = await this.packageService.getByPackageCode(appointment.certificate)
@@ -180,8 +179,8 @@ class AppointmentWebhookController implements IControllerBase {
       const dateTime = utcDateTime.format()
       const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
       const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
-
-      const deadline: string = makeDeadline(utcDateTime)
+      const label = appointment.labels ? appointment.labels[0]?.name : null
+      const deadline: string = makeDeadline(utcDateTime, label)
       const dataForUpdate: AcuityUpdateDTO = {}
       if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()

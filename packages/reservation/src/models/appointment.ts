@@ -94,7 +94,7 @@ export type AppointmentAcuityResponse = {
 
 export type LabelsAcuityResponse = {
   id: number
-  name: Label
+  name: DeadlineLabel
   color: string
 }
 
@@ -158,6 +158,12 @@ export type AppointmentStatusHistory = {
   createdBy: string
 }
 
+export type AppointmentChangeToRerunRequest = {
+  appointment: AppointmentDBModel
+  deadlineLabel: DeadlineLabel
+  userId: string
+}
+
 export type AppointmentStatusHistoryDb = AppointmentStatusHistory & {
   id: string
 }
@@ -175,7 +181,7 @@ export enum AppointmentWebhookActions {
   OrderCompleted = 'order.completed',
 }
 
-export enum Label {
+export enum DeadlineLabel {
   SameDay = 'SameDay',
   NextDay = 'NextDay',
 }

@@ -31,11 +31,11 @@ import {
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import testResultPDFTemplate from '../templates/pcrTestResult'
-import {AppointmentDBModel, ResultTypes} from '../models/appointment'
+import {AppointmentDBModel, DeadlineLabel, ResultTypes} from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
-import {makeDeadline} from '../../../common/src/utils/datetime-util'
+import {makeDeadline} from '../utils/datetime.helper'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -368,7 +368,7 @@ export class PCRTestResultsService {
         ? await this.createNewWaitingResult(appointment, resultData.adminId)
         : waitingPCRTestResult
 
-    await this.handleActions(resultData, appointment.id)
+    await this.handleActions(resultData, appointment)
 
     const finalResult = this.getFinalResult(
       resultData.resultSpecs.action,
@@ -430,32 +430,35 @@ export class PCRTestResultsService {
     return await this.saveDefaultTestResults(pcrResultDataForDbCreate)
   }
 
-  async handleActions(resultData: PCRTestResultData, appointmentId: string): Promise<void> {
+  async handleActions(
+    resultData: PCRTestResultData,
+    appointment: AppointmentDBModel,
+  ): Promise<void> {
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
         console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for today`)
-        const appointment = await this.appointmentService.changeStatusToReRunRequired(
-          appointmentId,
-          true,
-          resultData.adminId,
-        )
-        await this.createNewWaitingResult(appointment, resultData.adminId)
+        const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
+          appointment: appointment,
+          deadlineLabel: DeadlineLabel.SameDay,
+          userId: resultData.adminId,
+        })
+        await this.createNewWaitingResult(updatedAppointment, resultData.adminId)
         break
       }
       case PCRResultActions.ReRunTomorrow: {
         console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for tomorrow`)
-        const appointment = await this.appointmentService.changeStatusToReRunRequired(
-          appointmentId,
-          false,
-          resultData.adminId,
-        )
-        await this.createNewWaitingResult(appointment, resultData.adminId)
+        const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
+          appointment: appointment,
+          deadlineLabel: DeadlineLabel.NextDay,
+          userId: resultData.adminId,
+        })
+        await this.createNewWaitingResult(updatedAppointment, resultData.adminId)
         break
       }
       case PCRResultActions.RequestReSample: {
         console.log(`TestResultReSample: for ${resultData.barCode} is requested`)
-        const appointment = await this.appointmentService.changeStatusToReSampleRequired(
-          appointmentId,
+        await this.appointmentService.changeStatusToReSampleRequired(
+          appointment.id,
           resultData.adminId,
         )
         this.couponCode = await this.couponService.createCoupon(appointment.email)
@@ -471,7 +474,7 @@ export class PCRTestResultsService {
       }
       default: {
         console.log(`${resultData.resultSpecs.action}: for ${resultData.barCode} is requested`)
-        await this.appointmentService.changeStatusToReported(appointmentId, resultData.adminId)
+        await this.appointmentService.changeStatusToReported(appointment.id, resultData.adminId)
       }
     }
   }
