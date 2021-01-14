@@ -2,15 +2,15 @@ import DataStore from '../../../common/src/data/datastore'
 import {TransportRunsRepository} from '../respository/transport-runs.repository'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {TransportRunsDbModel, TransportRunsIdentifier} from '../models/transport-runs'
-import moment from 'moment-timezone'
 import {firestore} from 'firebase-admin'
+import {getDateFromDatetime} from '../../../common/src/utils/datetime-util'
 
 export class TransportRunsService {
   private transportRunsRepository = new TransportRunsRepository(new DataStore())
   private identifier = new IdentifiersModel(new DataStore())
 
   create(transportDateTime: Date, driverName: string): Promise<TransportRunsIdentifier> {
-    const transportDate = moment(transportDateTime).utc().format('YYYY-MM-DD')
+    const transportDate = getDateFromDatetime(transportDateTime)
 
     return this.identifier
       .getUniqueId('transportRun')
