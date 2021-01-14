@@ -46,10 +46,10 @@ export const safeTimestamp = (timestamp: GenericTimestamp): Date => {
   throw `${timestamp} cannot be interpreted as a date`
 }
 
-export const makeDeadline = (utcDateTime: moment.Moment): string => {
+export const makeDeadline = (utcDateTime: moment.Moment, nextDay = false): string => {
   let deadline
   const tzDateTime = utcDateTime.clone().tz(timeZone)
-  if (tzDateTime.hours() > 12) {
+  if (tzDateTime.hours() > 12 || nextDay) {
     deadline = makeTimeEndOfTheDayMoment(tzDateTime.add(1, 'd'))
   } else {
     deadline = makeTimeEndOfTheDayMoment(tzDateTime)

@@ -9,6 +9,7 @@ import {
   AppointmentModelBase,
   AppointmentStatus,
   AppointmentStatusHistoryDb,
+  Label,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -24,6 +25,7 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 import {Config} from '../../../common/src/utils/config'
 import {makeTimeEndOfTheDay} from '../../../common/src/utils/utils'
+import {makeDeadline} from '../../../common/src/utils/datetime-util'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -283,6 +285,15 @@ export class AppoinmentService {
   }
 
   async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
+    const appointment = await this.getAppointmentByAcuityId(id)
+
+    const deadline = makeDeadline(
+      moment(appointment.dateTime).tz(timeZone).utc(),
+      Boolean(data[Label.NextDay]),
+    )
+
+    await this.updateAppointmentDB(appointment.id, {deadline})
+
     return this.acuityRepository.addAppointmentLabelOnAcuity(id, data)
   }
 
@@ -295,13 +306,11 @@ export class AppoinmentService {
 
   async changeStatusToReRunRequired(
     appointmentId: string,
-    today: boolean,
+    nextDay: boolean,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    const utcDateTime = moment().utc()
-    const deadline = today
-      ? makeTimeEndOfTheDay(utcDateTime)
-      : makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
+    const utcDateTime = moment().tz(timeZone).utc()
+    const deadline = makeDeadline(utcDateTime, nextDay)
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReRunRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.ReRunRequired,

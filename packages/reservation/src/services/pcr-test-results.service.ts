@@ -429,7 +429,7 @@ export class PCRTestResultsService {
         console.log(`TestResultReRun: ${resultData.barCode} is added to queue for today`)
         const appointment = await this.appointmentService.changeStatusToReRunRequired(
           appointmentId,
-          true,
+          false,
           resultData.adminId,
         )
         await this.createNewWaitingResult(appointment, resultData.adminId)
@@ -439,7 +439,7 @@ export class PCRTestResultsService {
         console.log(`TestResultReRun: ${resultData.barCode} is added to queue for tomorrow`)
         const appointment = await this.appointmentService.changeStatusToReRunRequired(
           appointmentId,
-          false,
+          true,
           resultData.adminId,
         )
         await this.createNewWaitingResult(appointment, resultData.adminId)
