@@ -351,18 +351,6 @@ export class AppoinmentService {
     })
   }
 
-  async addVialLocation(
-    appointmentId: string,
-    vialLocation: string,
-    userId: string,
-  ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.Received, userId)
-    return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.Received,
-      vialLocation,
-    })
-  }
-
   async addTransportRun(
     appointmentId: string,
     transportRunId: string,
