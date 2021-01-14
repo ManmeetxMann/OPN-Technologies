@@ -1717,3 +1717,34 @@ paths:
                         type: string
                   page:
                     type: number
+
+  /reservation/admin/api/v1/appointments/receive:
+    put:
+      description: Update Appointment vialLocation
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                vialLocation:
+                  type: string
+                appointmentIds:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - appointmentIds
+                - vialLocation
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'

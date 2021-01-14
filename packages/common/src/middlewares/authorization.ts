@@ -81,7 +81,8 @@ export const authorizationMiddleware = (requiredRole?: UserRoles[]) => async (
     return
   }
 
-  const organizationId = req.query['organizationId'] as string | null
+  const organizationId =
+    (req.query.organizationId as string) ?? (req.body?.organizationId as string) ?? null
   const admin = connectedUser.admin as AdminProfile
   if (!authorizedWithoutOrgId(admin, organizationId)) {
     // Forbidden
@@ -109,6 +110,8 @@ export const authorizationMiddleware = (requiredRole?: UserRoles[]) => async (
   // Set it for the actual route
   res.locals.connectedUser = connectedUser // TODO to be replaced with `authenticatedUser`
   res.locals.authenticatedUser = connectedUser
+  // TODO: conrollers should use this instead of reading the query/body/header so we can refactor separately
+  res.locals.organizationId = organizationId
 
   // Done
   next()

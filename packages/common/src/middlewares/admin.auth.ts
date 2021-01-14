@@ -60,7 +60,8 @@ export const adminAuthMiddleware = async (
   }
 
   const admin = authenticatedUser.admin as AdminProfile
-  const organizationId = req.query['organizationId'] as string | null
+  const organizationId =
+    (req.query.organizationId as string) ?? (req.body?.organizationId as string) ?? null
   const isOpnSuperAdmin = admin?.isOpnSuperAdmin ?? false
   const isLabUser = admin?.isLabUser ?? false
   const authorizedOrganizationIds = [
@@ -83,6 +84,8 @@ export const adminAuthMiddleware = async (
   }
 
   res.locals.authenticatedUser = authenticatedUser
+  // TODO: conrollers should use this instead of reading the query/body/header so we can refactor separately
+  res.locals.organizationId = organizationId
 
   // Done
   next()
