@@ -3,6 +3,8 @@
  */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
+import {makeTimeEndOfTheDayMoment} from "../packages/common/src/utils/utils";
+import moment from 'moment';
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -19,6 +21,19 @@ export enum ResultStatus {
 type Result = {
   status: ResultStatus
   value: unknown
+}
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
+
+export const makeDeadline = (utcDateTime: moment.Moment): string => {
+  let deadline
+  const tzDateTime = utcDateTime.clone().tz(timeZone)
+  if (tzDateTime.hours() > 12) {
+    deadline = makeTimeEndOfTheDayMoment(tzDateTime.add(1, 'd'))
+  } else {
+    deadline = makeTimeEndOfTheDayMoment(tzDateTime)
+  }
+  return deadline.utc().format()
 }
 
 export async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]> {
@@ -77,6 +92,8 @@ async function createPcrTestResult(
       lastName: testResult.lastName,
       organizationId: testResult.organizationId,
       result: testResult.result,
+      linkedBarCodes: [],
+      deadline: makeDeadline(moment(testResult.dateTime)),
       resultSpecs: {
         action: 'SendThisResult',
         autoResult: testResult.result,

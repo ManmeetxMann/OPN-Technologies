@@ -40,7 +40,8 @@
 		"migration:relocate-auth-id": "ts-node ./migrations/relocate-auth-id",
 		"migration:update-organizationids-for-users": "ts-node ./migrations/update-organizationids-for-users",
 		"migration:trim-firstname-lastname-and-fix-last-name": "ts-node ./migrations/trim-firstname-lastname-and-fix-last-name",
-		"migration:migrate-attestation-questionaireid-field": "ts-node ./migrations/add-questionnaireid-to-attestation"
+		"migration:migrate-attestation-questionaireid-field": "ts-node ./migrations/add-questionnaireid-to-attestation",
+		"migration:test-results-to-pcr": "ts-node ./migrations/test-results-to-pcr"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
