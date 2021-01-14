@@ -61,7 +61,7 @@ export const adminAuthMiddleware = async (
 
   const admin = authenticatedUser.admin as AdminProfile
   const organizationId =
-    (req.query['organizationId'] as string) ?? (req.body['organizationId'] as string) ?? null
+    (req.query.organizationId as string) ?? (req.body?.organizationId as string) ?? null
   const isOpnSuperAdmin = admin?.isOpnSuperAdmin ?? false
   const isLabUser = admin?.isLabUser ?? false
   const authorizedOrganizationIds = [
