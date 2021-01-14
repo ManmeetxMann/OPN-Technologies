@@ -15,7 +15,6 @@ type AcuityFilter = {
 }
 
 abstract class AcuityScheduling {
-
   private fieldIdMapping = {
     barCodeNumber: Config.get('ACUITY_FIELD_BARCODE'),
     dateOfBirth: Config.get('ACUITY_FIELD_DATE_OF_BIRTH'),
@@ -97,7 +96,9 @@ abstract class AcuityScheduling {
     if (result.status_code) {
       throw new BadRequestException(result.message)
     }
-    console.log(`AcuityAdapter: updateAppointmentLabelOnAcuityService ${label} for AppointmentId: ${id}`)
+    console.log(
+      `AcuityAdapter: updateAppointmentLabelOnAcuityService ${label} for AppointmentId: ${id}`,
+    )
     return this.customFieldsToAppoinment(result)
   }
 
@@ -169,7 +170,9 @@ abstract class AcuityScheduling {
     if (result.status_code) {
       throw new BadRequestException(result.message)
     }
-    console.log(`AcuityAdapter: createCouponCodeOnAcuityService Success: For COUPON GROUP ID: ${couponID}`)
+    console.log(
+      `AcuityAdapter: createCouponCodeOnAcuityService Success: For COUPON GROUP ID: ${couponID}`,
+    )
     return result
   }
 
@@ -211,7 +214,7 @@ abstract class AcuityScheduling {
     return acuityFilters
   }
 
-  private getPayloadForLabels(label:DeadlineLabel): AcuityFilter[] {
+  private getPayloadForLabels(label: DeadlineLabel): AcuityFilter[] {
     const acuityFilters = []
     acuityFilters.push({
       id: this.labelsIdMapping[label] ? this.labelsIdMapping[label] : label,

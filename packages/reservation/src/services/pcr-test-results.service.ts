@@ -440,7 +440,7 @@ export class PCRTestResultsService {
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
           appointment: appointment,
           deadlineLabel: DeadlineLabel.SameDay,
-          userId: resultData.adminId
+          userId: resultData.adminId,
         })
         await this.createNewWaitingResult(updatedAppointment, resultData.adminId)
         break
@@ -450,7 +450,7 @@ export class PCRTestResultsService {
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
           appointment: appointment,
           deadlineLabel: DeadlineLabel.NextDay,
-          userId: resultData.adminId
+          userId: resultData.adminId,
         })
         await this.createNewWaitingResult(updatedAppointment, resultData.adminId)
         break

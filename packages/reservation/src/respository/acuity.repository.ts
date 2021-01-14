@@ -12,7 +12,10 @@ export class AcuityRepository extends AcuityScheduling {
     return this.updateAppointmentOnAcuityService(id, data)
   }
 
-  async addAppointmentLabelOnAcuity(id: number, label: DeadlineLabel): Promise<AppointmentAcuityResponse> {
+  async addAppointmentLabelOnAcuity(
+    id: number,
+    label: DeadlineLabel,
+  ): Promise<AppointmentAcuityResponse> {
     return this.updateAppointmentLabelOnAcuityService(id, label)
   }
 

@@ -377,7 +377,7 @@ export class AppoinmentService {
     const deadline = makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label)
     await this.acuityRepository.addAppointmentLabelOnAcuity(id, label)
 
-    return  this.updateAppointmentDB(appointment.id, {deadline})
+    return this.updateAppointmentDB(appointment.id, {deadline})
   }
 
   async updateAppointmentDB(
@@ -397,7 +397,10 @@ export class AppoinmentService {
       AppointmentStatus.ReRunRequired,
       data.userId,
     )
-    await this.acuityRepository.addAppointmentLabelOnAcuity(data.appointment.acuityAppointmentId, data.deadlineLabel)
+    await this.acuityRepository.addAppointmentLabelOnAcuity(
+      data.appointment.acuityAppointmentId,
+      data.deadlineLabel,
+    )
     return this.appointmentsRepository.updateProperties(data.appointment.id, {
       appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
