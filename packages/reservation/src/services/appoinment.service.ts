@@ -392,7 +392,7 @@ export class AppoinmentService {
   async changeStatusToReRunRequired(
     data: AppointmentChangeToRerunRequest,
   ): Promise<AppointmentDBModel> {
-    const utcDateTime = moment.utc()
+    const utcDateTime = moment(data.dateTimeOfAppointment).utc()
     const deadline = makeDeadline(utcDateTime, data.deadlineLabel)
     await this.addStatusHistoryById(
       data.appointmentId,
