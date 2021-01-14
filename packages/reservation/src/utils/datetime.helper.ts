@@ -19,7 +19,7 @@ export const makeDeadline = (utcDateTime: moment.Moment, deadlineLabel?: Deadlin
 }
 
 export const makeTimeEndOfTheDayMoment = (datetime: moment.Moment): moment.Moment => {
-  return datetime.hours(11).minutes(59).seconds(0)
+  return datetime.hours(23).minutes(59).seconds(0)
 }
 
 export const makeTimeEndOfTheDay = (datetime: moment.Moment): string => {
