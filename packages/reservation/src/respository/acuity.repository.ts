@@ -1,5 +1,5 @@
 import AcuityScheduling from '../adapter/acuity'
-import {AppointmentAcuityResponse} from '../models/appointment'
+import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
 import {Certificate} from '../models/packages'
 
 export class AcuityRepository extends AcuityScheduling {
@@ -12,8 +12,8 @@ export class AcuityRepository extends AcuityScheduling {
     return this.updateAppointmentOnAcuityService(id, data)
   }
 
-  async addAppointmentLabelOnAcuity(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
-    return this.updateAppointmentLabel(id, data)
+  async addAppointmentLabelOnAcuity(id: number, label: DeadlineLabel): Promise<AppointmentAcuityResponse> {
+    return this.updateAppointmentLabelOnAcuityService(id, label)
   }
 
   //Used by Webhooks
@@ -22,11 +22,11 @@ export class AcuityRepository extends AcuityScheduling {
   }
 
   async cancelAppointmentByIdOnAcuity(id: number): Promise<AppointmentAcuityResponse> {
-    return this.cancelAppointmentOnAcuity(id)
+    return this.cancelAppointmentOnAcuityService(id)
   }
 
   async getPackagesList(): Promise<Certificate[]> {
-    return this.getPackages()
+    return this.getPackagesFromAcuityService()
   }
 
   async createCouponCode(couponID: number, emailToLockCoupon: string): Promise<string> {
