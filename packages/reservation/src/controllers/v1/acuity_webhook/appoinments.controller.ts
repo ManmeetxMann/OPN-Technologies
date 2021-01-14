@@ -13,7 +13,6 @@ import {
   AcuityUpdateDTO,
   ResultTypes,
   AppointmentWebhookActions,
-  DeadlineLabel,
 } from '../../../models/appointment'
 import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
@@ -62,7 +61,7 @@ class AppointmentWebhookController implements IControllerBase {
       const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
       const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
       const label = appointment.labels ? appointment.labels[0]?.name : null
-      const deadline: string = makeDeadline(utcDateTime, label === DeadlineLabel.NextDay)
+      const deadline: string = makeDeadline(utcDateTime, label)
       const dataForUpdate: AcuityUpdateDTO = {}
       if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
@@ -181,7 +180,7 @@ class AppointmentWebhookController implements IControllerBase {
       const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
       const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
       const label = appointment.labels ? appointment.labels[0]?.name : null
-      const deadline: string = makeDeadline(utcDateTime, label === DeadlineLabel.NextDay)
+      const deadline: string = makeDeadline(utcDateTime, label)
       const dataForUpdate: AcuityUpdateDTO = {}
       if (!appointment.barCode) {
         dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()

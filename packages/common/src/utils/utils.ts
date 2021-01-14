@@ -24,4 +24,3 @@ export const cleanStringField = (str: string | null): string => {
   if (!str) return str
   return str.trim()
 }
-

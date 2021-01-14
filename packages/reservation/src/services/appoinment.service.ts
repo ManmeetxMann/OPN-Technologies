@@ -371,17 +371,14 @@ export class AppoinmentService {
     }
   }
 
-  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
+  async addAppointmentLabel(id: number, label: DeadlineLabel): Promise<AppointmentAcuityResponse> {
     const appointment = await this.getAppointmentByAcuityId(id)
 
-    const deadline = makeDeadline(
-      moment(appointment.dateTime).tz(timeZone).utc(),
-      Boolean(data[DeadlineLabel.NextDay]),
-    )
+    const deadline = makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label)
 
     await this.updateAppointmentDB(appointment.id, {deadline})
 
-    return this.acuityRepository.addAppointmentLabelOnAcuity(id, data)
+    return this.acuityRepository.addAppointmentLabelOnAcuity(id, label)
   }
 
   async updateAppointmentDB(
@@ -393,11 +390,11 @@ export class AppoinmentService {
 
   async changeStatusToReRunRequired(
     appointmentId: string,
-    nextDay: boolean,
+    deadlineLabel: DeadlineLabel,
     userId: string,
   ): Promise<AppointmentDBModel> {
     const utcDateTime = moment.utc()
-    const deadline = makeDeadline(utcDateTime, nextDay)
+    const deadline = makeDeadline(utcDateTime, deadlineLabel)
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReRunRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.ReRunRequired,

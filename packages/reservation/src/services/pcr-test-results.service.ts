@@ -31,7 +31,7 @@ import {
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import testResultPDFTemplate from '../templates/pcrTestResult'
-import {AppointmentDBModel, ResultTypes} from '../models/appointment'
+import {AppointmentDBModel, DeadlineLabel, ResultTypes} from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
@@ -436,7 +436,7 @@ export class PCRTestResultsService {
         console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for today`)
         const appointment = await this.appointmentService.changeStatusToReRunRequired(
           appointmentId,
-          false,
+          DeadlineLabel.SameDay,
           resultData.adminId,
         )
         await this.createNewWaitingResult(appointment, resultData.adminId)
@@ -446,7 +446,7 @@ export class PCRTestResultsService {
         console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for tomorrow`)
         const appointment = await this.appointmentService.changeStatusToReRunRequired(
           appointmentId,
-          true,
+          DeadlineLabel.NextDay,
           resultData.adminId,
         )
         await this.createNewWaitingResult(appointment, resultData.adminId)

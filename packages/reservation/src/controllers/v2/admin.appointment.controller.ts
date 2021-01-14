@@ -37,9 +37,10 @@ class AdminAppointmentController implements IControllerBase {
 
       await Promise.all(
         appointments.map(async (appointmentDb) => {
-          await this.appointmentService.addAppointmentLabel(appointmentDb.acuityAppointmentId, {
-            [label]: label,
-          })
+          await this.appointmentService.addAppointmentLabel(
+            appointmentDb.acuityAppointmentId,
+            label,
+          )
 
           result.push(appointmentUiDTOResponse(appointmentDb))
         }),
