@@ -74,28 +74,28 @@ class AppointmentWebhookController implements IControllerBase {
           dataForUpdate['organizationId'] = packageResult.organizationId
         } else {
           console.log(
-            `WebhookController: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`,
+            `WebhookController: CreateAppointment NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`,
           )
         }
       }
 
       if (!isEmpty(dataForUpdate)) {
         console.log(
-          `WebhookController: SaveToAcuity AppoinmentID: ${id} barCodeNumber: ${JSON.stringify(
+          `WebhookController: CreateAppointment SaveToAcuity AppoinmentID: ${id} barCodeNumber: ${JSON.stringify(
             dataForUpdate,
           )}`,
         )
         await this.appoinmentService.updateAppointment(id, dataForUpdate)
       } else {
         console.log(
-          `WebhookController: NoUpdateToAcuity AppoinmentID: ${id} barCodeNumber: ${appointment.barCode}  organizationId: ${appointment.organizationId}`,
+          `WebhookController: CreateAppointment NoUpdateToAcuity AppoinmentID: ${id} barCodeNumber: ${appointment.barCode}  organizationId: ${appointment.organizationId}`,
         )
       }
 
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
       if (appointmentFromDb) {
-        console.log(
-          `WebhookController: AlreadyAdded AcuityID: ${id} FirebaseID: ${appointmentFromDb.id}`,
+        console.error(
+          `WebhookController: CreateAppointment AlreadyAdded AcuityID: ${id} FirebaseID: ${appointmentFromDb.id}`,
         )
         throw new DuplicateDataException(`AcuityID: ${id} already added`)
       }
@@ -126,6 +126,9 @@ class AppointmentWebhookController implements IControllerBase {
           timeOfAppointment,
         }
         const savedAppoinment = await this.appoinmentService.saveAppointmentData(data)
+        console.log(
+          `WebhookController: CreateAppointment: SuccessCreateAppointment for AppointmentID: ${savedAppoinment.id} AcuityID: ${id}`,
+        )
         if (savedAppoinment) {
           const linkedBarcodes = await this.getlinkedBarcodes(appointment.certificate)
           //Save Pending Test Results
@@ -143,11 +146,17 @@ class AppointmentWebhookController implements IControllerBase {
             result: ResultTypes.Pending,
             waitingResult: true,
           }
-          await this.pcrTestResultsService.saveDefaultTestResults(pcrResultDataForDb)
+          const pcrTestResult = await this.pcrTestResultsService.saveDefaultTestResults(
+            pcrResultDataForDb,
+          )
+          console.log(
+            `WebhookController: CreateAppointment: SuccessCreatePCRResults for AppointmentID: ${savedAppoinment.id} PCR Results ID: ${pcrTestResult.id}`,
+          )
         }
       } catch (e) {
-        console.log(`WebhookController: SaveToTestResults Failed AppoinmentID: ${id}`)
-        console.log(e)
+        console.error(
+          `WebhookController: SaveToTestResults Failed AppoinmentID: ${id}  ${e.toString()}`,
+        )
       }
 
       res.json(actionSucceed(''))
@@ -171,6 +180,9 @@ class AppointmentWebhookController implements IControllerBase {
       const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
 
       if (!appointment) {
+        console.error(
+          `WebhookController: UpdateAppointment: AppointmentNotExist for AcuityID On Acuity: ${id}`,
+        )
         throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
       }
 
@@ -200,8 +212,9 @@ class AppointmentWebhookController implements IControllerBase {
 
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
       if (!appointmentFromDb) {
-        //TODO CRITICAL
-        console.log(`WebhookController: UpdateAppointment: AppointmentNotExist for AcuityID: ${id}`)
+        console.error(
+          `WebhookController: UpdateAppointment: AppointmentNotExist for AcuityID: ${id} in DB`,
+        )
         throw new ResourceNotFoundException(`AcuityID: ${id} not found`)
       }
 
@@ -282,13 +295,12 @@ class AppointmentWebhookController implements IControllerBase {
           }
         }
       } catch (e) {
-        //TODO CRITICAL
         if (appointmentStatus === AppointmentStatus.Canceled) {
           console.log(
             `WebhookController: UpdateAppointment: Cancelled AppoinmentID: ${id}. Hence No PCR Results Updates.`,
           )
         } else {
-          console.log(
+          console.error(
             `WebhookController: UpdateAppointment: FailedToUpdateAppointment for AppoinmentID: ${id} ${e.toString()}`,
           )
         }
@@ -316,14 +328,15 @@ class AppointmentWebhookController implements IControllerBase {
             linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
           }
         } catch (error) {
-          //CRITICAL
-          console.log(
-            `WebhookController: Coupon Code: ${couponCode} Last BarCode: ${coupon.lastBarcode} ${error}`,
+          console.error(
+            `WebhookController: Coupon Code: ${couponCode} Last BarCode: ${
+              coupon.lastBarcode
+            }. No Test Results to Link. ${error.toString()}`,
           )
         }
         console.log(`WebhookController: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`)
       } else {
-        console.log(`WebhookController: ${couponCode} is not coupon. Hence no history for Barcodes`)
+        console.log(`WebhookController: ${couponCode} is not coupon.`)
       }
     }
     return linkedBarcodes
