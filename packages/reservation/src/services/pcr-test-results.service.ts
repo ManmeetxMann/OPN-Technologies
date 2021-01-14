@@ -136,7 +136,7 @@ export class PCRTestResultsService {
           'status',
           ResultReportStatus.RequestIgnoredAsPerRequest,
         )
-      }else{
+      } else {
         await testResultsReportingTrackerPCRResult.updateProperty(
           resultId,
           'status',
@@ -471,10 +471,7 @@ export class PCRTestResultsService {
       }
       default: {
         console.log(`${resultData.resultSpecs.action}: for ${resultData.barCode} is requested`)
-        await this.appointmentService.changeStatusToReported(
-          appointmentId,
-          resultData.adminId,
-        )
+        await this.appointmentService.changeStatusToReported(appointmentId, resultData.adminId)
       }
     }
   }
