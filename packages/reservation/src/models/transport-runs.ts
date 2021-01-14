@@ -25,6 +25,6 @@ type TransportRunsUi = {
 
 export const TransportRunsDTOResponse = (transportRun: TransportRunsDbModel): TransportRunsUi => ({
   transportRunId: transportRun.transportRunId,
-  transportDateTime: moment(transportRun.transportDateTime).utc().format(),
+  transportDateTime: moment(transportRun.transportDateTime.toDate()).utc().format(),
   driverName: transportRun.driverName,
 })
