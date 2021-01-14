@@ -3,8 +3,8 @@
  */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
-import {makeTimeEndOfTheDayMoment} from "../packages/common/src/utils/utils";
-import moment from 'moment';
+import {makeTimeEndOfTheDayMoment} from '../packages/common/src/utils/utils'
+import moment from 'moment'
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
