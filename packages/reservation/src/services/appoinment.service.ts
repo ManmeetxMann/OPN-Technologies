@@ -372,14 +372,12 @@ export class AppoinmentService {
     }
   }
 
-  async addAppointmentLabel(id: number, label: DeadlineLabel): Promise<AppointmentAcuityResponse> {
+  async addAppointmentLabel(id: number, label: DeadlineLabel): Promise<AppointmentDBModel> {
     const appointment = await this.getAppointmentByAcuityId(id)
-
     const deadline = makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label)
+    await this.acuityRepository.addAppointmentLabelOnAcuity(id, label)
 
-    await this.updateAppointmentDB(appointment.id, {deadline})
-
-    return this.acuityRepository.addAppointmentLabelOnAcuity(id, label)
+    return  this.updateAppointmentDB(appointment.id, {deadline})
   }
 
   async updateAppointmentDB(
@@ -392,14 +390,15 @@ export class AppoinmentService {
   async changeStatusToReRunRequired(
     data: AppointmentChangeToRerunRequest,
   ): Promise<AppointmentDBModel> {
-    const utcDateTime = moment(data.dateTimeOfAppointment).utc()
+    const utcDateTime = moment(data.appointment.dateTime).utc()
     const deadline = makeDeadline(utcDateTime, data.deadlineLabel)
     await this.addStatusHistoryById(
-      data.appointmentId,
+      data.appointment.id,
       AppointmentStatus.ReRunRequired,
       data.userId,
     )
-    return this.appointmentsRepository.updateProperties(data.appointmentId, {
+    await this.acuityRepository.addAppointmentLabelOnAcuity(data.appointment.acuityAppointmentId, data.deadlineLabel)
+    return this.appointmentsRepository.updateProperties(data.appointment.id, {
       appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
     })

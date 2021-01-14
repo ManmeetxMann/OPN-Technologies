@@ -438,10 +438,9 @@ export class PCRTestResultsService {
       case PCRResultActions.ReRunToday: {
         console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for today`)
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
-          appointmentId: appointment.id,
+          appointment: appointment,
           deadlineLabel: DeadlineLabel.SameDay,
-          userId: resultData.adminId,
-          dateTimeOfAppointment: appointment.dateTime,
+          userId: resultData.adminId
         })
         await this.createNewWaitingResult(updatedAppointment, resultData.adminId)
         break
@@ -449,10 +448,9 @@ export class PCRTestResultsService {
       case PCRResultActions.ReRunTomorrow: {
         console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for tomorrow`)
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
-          appointmentId: appointment.id,
+          appointment: appointment,
           deadlineLabel: DeadlineLabel.NextDay,
-          userId: resultData.adminId,
-          dateTimeOfAppointment: appointment.dateTime,
+          userId: resultData.adminId
         })
         await this.createNewWaitingResult(updatedAppointment, resultData.adminId)
         break
