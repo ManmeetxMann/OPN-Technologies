@@ -34,8 +34,6 @@ class AdminController implements IControllerBase {
     try {
       const {organizationId, dateOfAppointment} = req.query as AppointmentByOrganizationRequest
 
-      //const showCancelled = res.locals.authenticatedUser.admin?.isOpnSuperAdmin ?? false
-
       const appointments = await this.appointmentService.getAppointmentsDB({
         organizationId,
         dateOfAppointment,

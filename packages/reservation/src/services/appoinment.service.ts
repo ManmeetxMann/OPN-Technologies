@@ -1,3 +1,6 @@
+import moment from 'moment'
+import {flatten} from 'lodash'
+
 import DataStore from '../../../common/src/data/datastore'
 
 import {
@@ -17,23 +20,26 @@ import {
   AppointmentsRepository,
   StatusHistoryRepository,
 } from '../respository/appointments-repository'
-import moment from 'moment'
+import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
+
 import {dateFormats, now} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
-import {flatten} from 'lodash'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 import {Config} from '../../../common/src/utils/config'
 import {makeTimeEndOfTheDay} from '../../../common/src/utils/utils'
 import {makeDeadline} from '../../../common/src/utils/datetime-util'
+
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 export class AppoinmentService {
   private dataStore = new DataStore()
   private acuityRepository = new AcuityRepository()
-  private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(new DataStore())
-  private appointmentsRepository = new AppointmentsRepository(new DataStore())
+  private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(this.dataStore)
+  private appointmentsRepository = new AppointmentsRepository(this.dataStore)
+  private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
 
   async getAppointmentByBarCode(
     barCodeNumber: string,
@@ -197,6 +203,7 @@ export class AppoinmentService {
       return null
     }
     if (appointments.length > 1) {
+      //CRITICAL
       console.log(
         `AppointmentService: getAppointmentByAcuityId returned multiple appointments AppoinmentID: ${id}`,
       )
@@ -220,8 +227,80 @@ export class AppoinmentService {
     return this.acuityRepository.updateAppointmentOnAcuity(id, data)
   }
 
-  async cancelAppointmentById(id: number): Promise<AppointmentAcuityResponse> {
-    return this.acuityRepository.cancelAppointmentByIdOnAcuity(id)
+  async cancelAppointment(
+    appointmentId: string,
+    userId: string,
+    organizationId?: string,
+  ): Promise<void> {
+    const appointmentFromDB = await this.getAppointmentDBById(appointmentId)
+    if (!appointmentFromDB) {
+      console.log(
+        `AppoinmentService: cancelAppointment AppointmentIDFromDB: "${appointmentId}" not found`,
+      )
+      throw new ResourceNotFoundException(`Invalid Appointment ID`)
+    }
+    if (organizationId && appointmentFromDB.organizationId !== organizationId) {
+      console.log(
+        `OrganizationId "${organizationId}" does not match appointment "${appointmentId}"`,
+      )
+      throw new BadRequestException(`Appointment doesn't belong to selected Organization`)
+    }
+
+    const appointmentFromAcuity = await this.getAppointmentByIdFromAcuity(
+      appointmentFromDB.acuityAppointmentId,
+    )
+    if (!appointmentFromAcuity) {
+      //CRITICAL
+      console.log(
+        `OrganizationId "AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" not found. CRITICAL`,
+      )
+      throw new ResourceNotFoundException(`Something is wrong. Please contact Admin.`)
+    }
+
+    if (appointmentFromAcuity.canceled) {
+      console.log(
+        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" is already cancelled!`,
+      )
+      throw new BadRequestException(`Appointment is allready cancelled`)
+    }
+
+    if (!appointmentFromAcuity.canClientCancel) {
+      console.log(
+        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" can not be cancelled. Client Cancellation is not available.`,
+      )
+      throw new BadRequestException(`Appointment Cancellation is not available.`)
+    }
+
+    const appointmentStatus = await this.acuityRepository.cancelAppointmentByIdOnAcuity(
+      appointmentFromDB.acuityAppointmentId,
+    )
+    if (appointmentStatus.canceled) {
+      console.log(
+        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" is successfully cancelled`,
+      )
+      //Update Appointment DB to be Cancelled
+      await this.makeCancelled(appointmentId, userId)
+      try {
+        const pcrTestResult = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
+          appointmentFromDB.id,
+        )
+        if (pcrTestResult) {
+          //Remove any Results
+          //Only one Waiting Result is Expected
+          await this.pcrTestResultsRepository.delete(pcrTestResult[0].id)
+        } else {
+          console.log(
+            `AppoinmentService:cancelAppointment:FailedDeletePCRResults No PCR Results linked to AppointmentIDFromDB: "${appointmentFromDB.id}"`,
+          )
+        }
+      } catch (error) {
+        console.log(
+          `AppoinmentService:cancelAppointment:FailedDeletePCRResults linked to AppointmentIDFromDB: "${
+            appointmentFromDB.id
+          }" ${error.toString()}`,
+        )
+      }
+    }
   }
 
   private getStatusHistoryRepository(appointmentId: string) {
@@ -242,6 +321,14 @@ export class AppoinmentService {
     })
   }
 
+  async makeCancelled(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.InProgress, userId)
+    return this.appointmentsRepository.updateProperties(appointmentId, {
+      appointmentStatus: AppointmentStatus.Canceled,
+      cancelled: true,
+    })
+  }
+
   async makeInProgress(
     appointmentId: string,
     testRunId: string,
@@ -256,13 +343,13 @@ export class AppoinmentService {
 
   async makeReceived(
     appointmentId: string,
-    vialLocaton: string,
+    vialLocation: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.Received, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Received,
-      vialLocaton,
+      vialLocation,
     })
   }
 

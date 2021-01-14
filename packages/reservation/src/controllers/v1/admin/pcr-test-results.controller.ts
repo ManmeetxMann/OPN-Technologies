@@ -116,11 +116,14 @@ class PCRTestResultController implements IControllerBase {
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
-      const sendResult = await this.pcrTestResultsService.handlePCRResultSaveAndSend({
-        barCode: data.barCode,
-        resultSpecs: data,
-        adminId,
-      })
+      const sendResult = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
+        {
+          barCode: data.barCode,
+          resultSpecs: data,
+          adminId,
+        },
+        true,
+      )
 
       res.json(actionSucceed(sendResult))
     } catch (error) {
@@ -144,28 +147,30 @@ class PCRTestResultController implements IControllerBase {
 
       const formedPcrTests: PCRTestResultHistoryDTO[] = barcode.map((code) => {
         const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
+        const results = testSameBarcode
+          .map((testSame) => {
+            const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
+              ...linkedResult.resultSpecs,
+              result: linkedResult.result,
+            }))
+            return [
+              {
+                ...testSame.resultSpecs,
+                result: testSame.result,
+              },
+              ...linkedSameTests,
+            ]
+          })
+          .flat()
+        const waitingResult = !!pcrTests.find(
+          (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
+        )
         if (testSameBarcode.length) {
           return {
             id: testSameBarcode[0].id,
             barCode: code,
-            results: testSameBarcode
-              .map((testSame) => {
-                const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
-                  ...linkedResult.resultSpecs,
-                  result: linkedResult.result,
-                }))
-                return [
-                  {
-                    ...testSame.resultSpecs,
-                    result: testSame.result,
-                  },
-                  ...linkedSameTests,
-                ]
-              })
-              .flat(),
-            waitingResult: !!pcrTests.find(
-              (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
-            ),
+            results: waitingResult ? [] : results,
+            waitingResult,
           }
         }
         return {
