@@ -116,11 +116,14 @@ class PCRTestResultController implements IControllerBase {
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
-      const sendResult = await this.pcrTestResultsService.handlePCRResultSaveAndSend({
-        barCode: data.barCode,
-        resultSpecs: data,
-        adminId,
-      })
+      const sendResult = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
+        {
+          barCode: data.barCode,
+          resultSpecs: data,
+          adminId,
+        },
+        true,
+      )
 
       res.json(actionSucceed(sendResult))
     } catch (error) {
