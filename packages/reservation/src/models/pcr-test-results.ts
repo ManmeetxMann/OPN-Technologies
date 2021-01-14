@@ -15,6 +15,7 @@ export enum ResultReportStatus {
   Processing = 'Processing',
   Failed = 'Failed',
   SuccessfullyReported = 'SuccessfullyReported',
+  RequestIgnoredAsPerRequest = 'RequestIgnoredAsPerRequest',
 }
 
 type PCRResultSpecs = {

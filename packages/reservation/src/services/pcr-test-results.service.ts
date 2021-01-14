@@ -130,11 +130,19 @@ export class PCRTestResultsService {
         },
         false,
       )
-      await testResultsReportingTrackerPCRResult.updateProperty(
-        resultId,
-        'status',
-        ResultReportStatus.SuccessfullyReported,
-      )
+      if (pcrResults.data.action === PCRResultActions.DoNothing) {
+        await testResultsReportingTrackerPCRResult.updateProperty(
+          resultId,
+          'status',
+          ResultReportStatus.RequestIgnoredAsPerRequest,
+        )
+      } else {
+        await testResultsReportingTrackerPCRResult.updateProperty(
+          resultId,
+          'status',
+          ResultReportStatus.SuccessfullyReported,
+        )
+      }
     } catch (error) {
       //CRITICAL
       console.log(`processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `)
@@ -425,7 +433,7 @@ export class PCRTestResultsService {
   async handleActions(resultData: PCRTestResultData, appointmentId: string): Promise<void> {
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
-        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for today`)
+        console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for today`)
         const appointment = await this.appointmentService.changeStatusToReRunRequired(
           appointmentId,
           true,
@@ -435,7 +443,7 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.ReRunTomorrow: {
-        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for tomorrow`)
+        console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for tomorrow`)
         const appointment = await this.appointmentService.changeStatusToReRunRequired(
           appointmentId,
           false,
@@ -445,7 +453,7 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.RequestReSample: {
-        console.log(`TestResultReSample: ${resultData.barCode} is requested`)
+        console.log(`TestResultReSample: for ${resultData.barCode} is requested`)
         const appointment = await this.appointmentService.changeStatusToReSampleRequired(
           appointmentId,
           resultData.adminId,
@@ -460,6 +468,10 @@ export class PCRTestResultsService {
           resultData.barCode,
         )
         break
+      }
+      default: {
+        console.log(`${resultData.resultSpecs.action}: for ${resultData.barCode} is requested`)
+        await this.appointmentService.changeStatusToReported(appointmentId, resultData.adminId)
       }
     }
   }
