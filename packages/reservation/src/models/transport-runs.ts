@@ -1,4 +1,5 @@
 import {firestore} from 'firebase-admin'
+import moment from 'moment-timezone'
 
 export type TransportRunsBase = {
   transportRunId: string
@@ -24,8 +25,6 @@ type TransportRunsUi = {
 
 export const TransportRunsDTOResponse = (transportRun: TransportRunsDbModel): TransportRunsUi => ({
   transportRunId: transportRun.transportRunId,
-  transportDateTime: transportRun.transportDateTime.hasOwnProperty('_seconds')
-    ? transportRun.transportDateTime.toDate().toDateString()
-    : new Date(`${transportRun.transportDateTime}`).toISOString(),
+  transportDateTime: moment(transportRun.transportDateTime).utc().format(),
   driverName: transportRun.driverName,
 })
