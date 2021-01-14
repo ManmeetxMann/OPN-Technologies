@@ -71,9 +71,13 @@ class UserController implements IControllerBase {
   }
 
   public initRoutes(): void {
+    // TODO: deprecate
     this.router.post(this.path + '/status/get', this.check)
+    // TODO: deprecate
     this.router.post(this.path + '/status/update', this.update)
     this.router.post(this.path + '/testNotify', this.testNotify)
+    this.router.post('api/v1/status/get', this.check)
+    this.router.post('api/v1/status/update', this.update)
   }
 
   check = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
