@@ -19,7 +19,7 @@ import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {makeDeadline} from '../../../../../common/src/utils/datetime-util'
+import {makeDeadline} from '../../../utils/datetime.helper'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'

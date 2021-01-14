@@ -35,7 +35,7 @@ import {AppointmentDBModel, ResultTypes} from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
-import {makeDeadline} from '../../../common/src/utils/datetime-util'
+import {makeDeadline} from '../utils/datetime.helper'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()

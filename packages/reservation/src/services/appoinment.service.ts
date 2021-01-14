@@ -25,8 +25,8 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {dateFormats, now} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
-import {makeTimeEndOfTheDay} from '../../../common/src/utils/utils'
-import {makeDeadline} from '../../../common/src/utils/datetime-util'
+import {makeTimeEndOfTheDay} from '../utils/datetime.helper'
+import {makeDeadline} from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
