@@ -56,7 +56,7 @@ class TestRunsController implements IControllerBase {
 
       const testRun = await this.testRunsService.create(
         toDateTimeFormatWithoutTimezone(testRunDateTime),
-        toDateFormatWithoutTimezone(testRunDateTime),
+        testRunDateTime,
       )
 
       res.json(actionSucceed(testRunDTOResponse(testRun)))
