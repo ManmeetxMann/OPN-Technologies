@@ -4,7 +4,7 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {adminAuthMiddleware} from '../../../../common/src/middlewares/admin.auth'
 
-import {appointmentUiDTOResponse, Label} from '../../models/appointment'
+import {appointmentUiDTOResponse, DeadlineLabel} from '../../models/appointment'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 
@@ -26,7 +26,7 @@ class AdminAppointmentController implements IControllerBase {
 
   addLabels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {appointmentIds, label} = req.body as {appointmentIds: string[]; label: Label}
+      const {appointmentIds, label} = req.body as {appointmentIds: string[]; label: DeadlineLabel}
 
       if (appointmentIds.length > 50) {
         throw new BadRequestException('Maximum appointments to be part of request is 50')

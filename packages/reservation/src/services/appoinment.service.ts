@@ -12,7 +12,7 @@ import {
   AppointmentModelBase,
   AppointmentStatus,
   AppointmentStatusHistoryDb,
-  Label,
+  DeadlineLabel,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -376,7 +376,7 @@ export class AppoinmentService {
 
     const deadline = makeDeadline(
       moment(appointment.dateTime).tz(timeZone).utc(),
-      Boolean(data[Label.NextDay]),
+      Boolean(data[DeadlineLabel.NextDay]),
     )
 
     await this.updateAppointmentDB(appointment.id, {deadline})
@@ -396,7 +396,7 @@ export class AppoinmentService {
     nextDay: boolean,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    const utcDateTime = moment().tz(timeZone).utc()
+    const utcDateTime = moment.utc()
     const deadline = makeDeadline(utcDateTime, nextDay)
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReRunRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
