@@ -5,7 +5,6 @@ import {TestRunDBModel} from '../models/test-runs'
 import {firestore} from 'firebase-admin'
 import {getDateFromDatetime} from '../utils/datetime.helper'
 
-
 export class TestRunsService {
   private dataStore = new DataStore()
   private identifier = new IdentifiersModel(this.dataStore)
