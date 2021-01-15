@@ -584,6 +584,7 @@ class OrganizationController implements IControllerBase {
       const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
 
       if (!canAccessOrganization) {
+        console.warn(`OrganizationController: getStatsInDetailForGroupsOrLocations: Can not access OrganizationID: ${organizationId}`)
         replyInsufficientPermission(res)
         return
       }
@@ -592,6 +593,7 @@ class OrganizationController implements IControllerBase {
       if (groupId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForGroupIds?.includes(groupId)
         if (!hasGrantedPermission) {
+          console.warn(`OrganizationController: getStatsInDetailForGroupsOrLocations: Can not access GroupId: ${groupId}`)
           replyInsufficientPermission(res)
           return
         }
@@ -603,6 +605,7 @@ class OrganizationController implements IControllerBase {
       if (locationId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForLocationIds?.includes(locationId)
         if (!hasGrantedPermission) {
+          console.warn(`OrganizationController: getStatsInDetailForGroupsOrLocations: Can not access LocationId: ${locationId}`)
           replyInsufficientPermission(res)
           return
         }
@@ -612,6 +615,7 @@ class OrganizationController implements IControllerBase {
 
       // If no group and no location is specified, make sure we are the health admin
       if (!groupId && !locationId && !isHealthAdmin) {
+        console.warn(`OrganizationController: getStatsInDetailForGroupsOrLocations: Is not HealthAdmin for OrganizationID: ${organizationId}`)
         replyInsufficientPermission(res)
         return
       }
