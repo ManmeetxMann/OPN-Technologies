@@ -2,6 +2,7 @@ import {Config} from '../../../common/src/utils/config'
 import {DeadlineLabel} from '../models/appointment'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
+import moment from 'moment-timezone'
 
 export const makeDeadline = (utcDateTime: moment.Moment, deadlineLabel?: DeadlineLabel): string => {
   let deadline
@@ -24,4 +25,8 @@ export const makeTimeEndOfTheDayMoment = (datetime: moment.Moment): moment.Momen
 
 export const makeTimeEndOfTheDay = (datetime: moment.Moment): string => {
   return makeTimeEndOfTheDayMoment(datetime).format()
+}
+
+export const getDateFromDatetime = (transportDateTime: Date | string): string => {
+  return moment(transportDateTime).tz(timeZone).format('YYYY-MM-DD')
 }
