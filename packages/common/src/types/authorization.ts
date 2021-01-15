@@ -3,10 +3,12 @@ export enum RequiredUserPermission {
   OrgAdmin = 'OrgAdmin',
   RegUser = 'RegUser',
   OrgAppointmentsAdmin = 'OrgAppointmentsAdmin',
-  OrgPCRTestResultsAdmin = 'OrgPCRTestResultsAdmin',
+  OrgPCRTestResults = 'OrgPCRTestResults',
   LabAppointmentsAdmin = 'LabAppointmentsAdmin',
-  LabPCRTestResultsAdmin = 'LabPCRTestResultsAdmin',
+  LabPCRTestResults = 'LabPCRTestResults',
   LabReceiving = 'LabReceiving',
   LabTransportRuns = 'LabTransportRuns',
-  LabTestRuns = 'LabTestRuns'
+  LabTestRuns = 'LabTestRuns',
+  LabSendResults = 'LabSendResults',
+  LabDueToday = 'LabDueToday'
 }
