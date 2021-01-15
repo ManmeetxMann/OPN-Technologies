@@ -2,7 +2,8 @@ import {NextFunction, Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-import {authMiddleware} from '../../../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 
 import {PackageService} from '../../../services/package.service'
@@ -27,11 +28,15 @@ class AdminController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.post(
       this.path + '/api/v1/packages',
-      authMiddleware,
+      authorizationMiddleware([RequiredUserPermission.OPNAdmin]),
       packageValidations.packageValidation(),
       this.addPackageCode,
     )
-    innerRouter.get(this.path + '/api/v1/packages', authMiddleware, this.getPackageList)
+    innerRouter.get(
+      this.path + '/api/v1/packages',
+      authorizationMiddleware([RequiredUserPermission.OPNAdmin]),
+      this.getPackageList,
+    )
 
     this.router.use('/', innerRouter)
   }
