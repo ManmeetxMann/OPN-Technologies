@@ -22,8 +22,8 @@ export class TestRunsService {
     return this.testRunsRepository.findWhereEqual('testRunDate', date)
   }
 
-  create(testRunDateTime: Date, testRunDateTimeOriginal: string): Promise<TestRunDBModel> {
-    const testRunDate = getDateFromDatetime(testRunDateTimeOriginal)
+  create(testRunDateTime: Date): Promise<TestRunDBModel> {
+    const testRunDate = getDateFromDatetime(testRunDateTime)
     return this.identifier.getUniqueId('testRun').then((id) => {
       return this.testRunsRepository.add({
         testRunId: `T${id}`,

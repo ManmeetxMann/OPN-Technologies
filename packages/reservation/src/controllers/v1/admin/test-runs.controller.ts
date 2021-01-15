@@ -1,11 +1,7 @@
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {NextFunction, Request, Response, Router} from 'express'
 import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
-import {
-  isValidDate,
-  toDateFormatWithoutTimezone,
-  toDateTimeFormatWithoutTimezone,
-} from '../../../../../common/src/utils/times'
+import {isValidDate, toDateFormatWithoutTimezone} from '../../../../../common/src/utils/times'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {TestRunsService} from '../../../services/test-runs.service'
@@ -54,10 +50,7 @@ class TestRunsController implements IControllerBase {
         throw new BadRequestException('testRunDate is invalid')
       }
 
-      const testRun = await this.testRunsService.create(
-        toDateTimeFormatWithoutTimezone(testRunDateTime),
-        testRunDateTime,
-      )
+      const testRun = await this.testRunsService.create(new Date(testRunDateTime))
 
       res.json(actionSucceed(testRunDTOResponse(testRun)))
     } catch (error) {
