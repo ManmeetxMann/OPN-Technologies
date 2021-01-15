@@ -152,7 +152,11 @@ class AdminUserController implements IControllerBase {
     const route = innerRouter().use(
       '/',
       innerRouter()
-        .get('/', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), getUsersByOrganizationId)
+        .get(
+          '/',
+          authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
+          getUsersByOrganizationId,
+        )
         .post('/', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), createUser)
         .put('/:userId', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), updateUser),
     )

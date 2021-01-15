@@ -132,8 +132,13 @@ const authorizedWithoutOrgId = (admin: AdminProfile, organizationId: string): bo
   return true
 }
 
-const isAllowed = (admin: AdminProfile, listOfRequiredPermissions: RequiredUserPermission[]): boolean => {
-  const seekAppointmentAdmin = listOfRequiredPermissions.includes(RequiredUserPermission.LabAppointmentsAdmin)
+const isAllowed = (
+  admin: AdminProfile,
+  listOfRequiredPermissions: RequiredUserPermission[],
+): boolean => {
+  const seekAppointmentAdmin = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabAppointmentsAdmin,
+  )
   if (seekAppointmentAdmin && !admin.isTestAppointmentsAdmin && !admin.isLabAppointmentsAdmin) {
     return false
   }

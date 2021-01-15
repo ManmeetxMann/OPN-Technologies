@@ -61,7 +61,11 @@ class AdminController implements IRouteController {
       .post('/stats/v2', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), this.statsV2)
       .post('/enter', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), this.enter)
       .post('/exit', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), this.exit)
-      .post('/createToken', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), this.createToken)
+      .post(
+        '/createToken',
+        authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
+        this.createToken,
+      )
       .post(
         '/enterorexit/tag',
         authorizationMiddleware([RequiredUserPermission.OrgAdmin]),

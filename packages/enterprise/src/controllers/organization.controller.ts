@@ -85,7 +85,11 @@ class OrganizationController implements IControllerBase {
       '/groups',
       innerRouter()
         .post('/', this.addGroups)
-        .get('/', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), this.getGroupsForAdmin)
+        .get(
+          '/',
+          authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
+          this.getGroupsForAdmin,
+        )
         .get('/public', this.getGroupsForPublic)
         .put('/', this.updateMultipleUserGroup)
         .post('/users', this.addUsersToGroups)
