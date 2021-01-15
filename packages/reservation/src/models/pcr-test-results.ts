@@ -1,7 +1,7 @@
-import {ResultTypes} from './appointment'
+import {AppointmentStatus, ResultTypes} from './appointment'
 
 export enum PCRResultActions {
-  NoOverwrite = 'NoOverwrite',
+  SendThisResult = 'SendThisResult',
   DoNothing = 'DoNothing',
   ReRunToday = 'ReRunToday',
   ReRunTomorrow = 'ReRunTomorrow',
@@ -15,6 +15,7 @@ export enum ResultReportStatus {
   Processing = 'Processing',
   Failed = 'Failed',
   SuccessfullyReported = 'SuccessfullyReported',
+  RequestIgnoredAsPerRequest = 'RequestIgnoredAsPerRequest',
 }
 
 type PCRResultSpecs = {
@@ -70,6 +71,10 @@ export type PCRTestResultDBModel = PCRTestResultData &
     deadline: string
     testRunId?: string
   }
+
+export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
+  linkedResults?: PCRTestResultDBModel[]
+}
 
 export type PCRTestResultHistoryDTO = {
   id: string
@@ -153,6 +158,9 @@ export type PcrTestResultsListByDeadlineRequest = {
 export type PcrTestResultsListRequest = {
   organizationId?: string
   dateOfAppointment: string
+  deadline?: string
+  testRunId?: string
+  barCode?: string
 }
 
 export type PCRTestResultListDTO = {
@@ -163,6 +171,22 @@ export type PCRTestResultListDTO = {
   dateOfAppointment: string
   barCode: string
   result: ResultTypes
+  vialLocation?: string
+  status?: AppointmentStatus
+  dateTime?: string
+  deadline?: string
+  testRunId?: string
+}
+
+export type PCRTestResultByDeadlineListDTO = {
+  id: string
+  barCode: string
+  result: ResultTypes
+  vialLocation: string
+  status: AppointmentStatus
+  dateTime: string
+  deadline: string
+  testRunId: string
 }
 
 export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResultListDTO => ({

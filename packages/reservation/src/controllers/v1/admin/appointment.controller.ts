@@ -2,12 +2,11 @@ import {NextFunction, Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
+import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 
 import {
   AppointmentByOrganizationRequest,
   appointmentUiDTOResponse,
-  Label,
   AppointmentsState,
   AppointmentDBModel,
 } from '../../../models/appointment'
@@ -17,6 +16,7 @@ import {ResourceNotFoundException} from '../../../../../common/src/exceptions/re
 import {isValidDate} from '../../../../../common/src/utils/times'
 import {TransportRunsService} from '../../../services/transport-runs.service'
 import {getAdminId} from '../../../../../common/src/utils/auth'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 
 const isJustOneOf = (a: unknown, b: unknown) => !(a && b) || !(!a && !b)
 
@@ -34,43 +34,50 @@ class AdminAppointmentController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.get(
       this.path + '/api/v1/appointments',
-      adminAuthMiddleware,
+      authorizationMiddleware([
+        RequiredUserPermission.LabAppointmentsAdmin,
+        RequiredUserPermission.OrgAppointmentsAdmin,
+      ]),
       this.getListAppointments,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
-      adminAuthMiddleware,
+      authorizationMiddleware([
+        RequiredUserPermission.LabAppointmentsAdmin,
+        RequiredUserPermission.OrgAppointmentsAdmin,
+      ]),
       this.getAppointmentById,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/cancel',
-      adminAuthMiddleware,
+      authorizationMiddleware([
+        RequiredUserPermission.LabAppointmentsAdmin,
+        RequiredUserPermission.OrgAppointmentsAdmin,
+      ]),
       this.cancelAppointment,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/add-transport-run',
-      adminAuthMiddleware,
+      authorizationMiddleware([RequiredUserPermission.LabAppointmentsAdmin]),
       this.addTransportRun,
-    )
-    innerRouter.put(
-      this.path + '/api/v1/appointments/add_labels',
-      adminAuthMiddleware,
-      this.addLabels,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/:barCode',
-      adminAuthMiddleware,
+      authorizationMiddleware([
+        RequiredUserPermission.LabAppointmentsAdmin,
+        RequiredUserPermission.OrgAppointmentsAdmin,
+      ]),
       this.getAppointmentByBarcode,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:barCode/receive',
-      adminAuthMiddleware,
+      authorizationMiddleware([RequiredUserPermission.LabReceivingAdmin]),
       this.updateTestVial,
     )
     innerRouter.put(
-      this.path + '/api/v1/appointments/add-test-run',
-      adminAuthMiddleware,
-      this.addTestRunToAppointments,
+      this.path + '/api/v1/appointments/receive',
+      authorizationMiddleware([RequiredUserPermission.LabReceivingAdmin]),
+      this.addVialLocation,
     )
 
     this.router.use('/', innerRouter)
@@ -143,22 +150,11 @@ class AdminAppointmentController implements IControllerBase {
 
   cancelAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const adminId = getAdminId(res.locals.authenticatedUser)
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId} = req.query as {organizationId: string}
 
-      const appointment = await this.appointmentService.getAppointmentByAcuityId(appointmentId)
-
-      if (!appointment) {
-        throw new ResourceNotFoundException(`Appointment "${appointmentId}" not found`)
-      }
-
-      if (organizationId && appointment.organizationId !== organizationId) {
-        throw new BadRequestException(
-          `OrganizationId "${organizationId}" does not match appointment "${appointmentId}"`,
-        )
-      }
-
-      await this.appointmentService.cancelAppointmentById(Number(appointmentId))
+      await this.appointmentService.cancelAppointment(appointmentId, adminId, organizationId)
 
       res.json(actionSucceed())
     } catch (error) {
@@ -193,32 +189,6 @@ class AdminAppointmentController implements IControllerBase {
       )
 
       res.json(actionSucceed(appointmentsState))
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  addLabels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const dataToUpdate = req.body as {appointmentId: number; label: Label}[]
-
-      if (dataToUpdate.length > 50) {
-        throw new BadRequestException('Maximum appointments to be part of request is 50')
-      }
-
-      const result = await Promise.all(
-        dataToUpdate.map(async ({appointmentId, label}) => {
-          await this.appointmentService.addAppointmentLabel(Number(appointmentId), {[label]: label})
-
-          const appointmentDb = await this.appointmentService.getAppointmentByAcuityId(
-            appointmentId,
-          )
-
-          return appointmentDb ? appointmentUiDTOResponse(appointmentDb) : null
-        }),
-      )
-
-      res.json(actionSucceed(result))
     } catch (error) {
       next(error)
     }
@@ -260,25 +230,23 @@ class AdminAppointmentController implements IControllerBase {
     }
   }
 
-  addTestRunToAppointments = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  addVialLocation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getAdminId(res.locals.authenticatedUser)
 
-      const {appointmentIds, testRunId} = req.body as {
+      const {appointmentIds, vialLocation} = req.body as {
         appointmentIds: string[]
-        testRunId: string
+        vialLocation: string
       }
 
       if (appointmentIds.length > 50) {
-        throw new BadRequestException('Maximum appointments to be part of request is 50')
+        throw new BadRequestException('Allowed maximum 50 appointments in array')
       }
 
       await Promise.all(
-        appointmentIds.map((id) => this.appointmentService.makeInProgress(id, testRunId, adminId)),
+        appointmentIds.map((appointment) => {
+          return this.appointmentService.makeReceived(appointment, vialLocation, adminId)
+        }),
       )
 
       res.json(actionSucceed())

@@ -78,7 +78,7 @@ async function createPcrTestResult(
       organizationId: testResult.organizationId,
       result: testResult.result,
       resultSpecs: {
-        action: 'NoOverwrite',
+        action: 'SendThisResult',
         autoResult: testResult.result,
         barCode: testResult.barCode,
         calRed61Ct: testResult.calRed61Ct,

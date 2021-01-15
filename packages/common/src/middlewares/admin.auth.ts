@@ -60,15 +60,19 @@ export const adminAuthMiddleware = async (
   }
 
   const admin = authenticatedUser.admin as AdminProfile
-  const organizationId = req.query['organizationId'] as string | null
+  const organizationId =
+    (req.query.organizationId as string) ??
+    (req.params?.organizationId as string) ??
+    (req.body?.organizationId as string) ??
+    null
   const isOpnSuperAdmin = admin?.isOpnSuperAdmin ?? false
-  const isLabAdmin = admin?.isLabAdmin ?? false
+  const isLabUser = admin?.isLabUser ?? false
   const authorizedOrganizationIds = [
     ...(admin?.superAdminForOrganizationIds ?? []),
     admin?.adminForOrganizationId,
   ].filter((id) => !!id)
   const hasGrantedAccess = new Set(authorizedOrganizationIds).has(organizationId)
-  if (!isLabAdmin && !isOpnSuperAdmin && !hasGrantedAccess) {
+  if (!isLabUser && !isOpnSuperAdmin && !hasGrantedAccess) {
     // Forbidden
     res
       .status(403)
@@ -83,6 +87,8 @@ export const adminAuthMiddleware = async (
   }
 
   res.locals.authenticatedUser = authenticatedUser
+  // TODO: conrollers should use this instead of reading the query/body/header so we can refactor separately
+  res.locals.organizationId = organizationId
 
   // Done
   next()
