@@ -173,12 +173,17 @@ export enum AppointmentAttachTransportStatus {
   Failed = 'failed',
 }
 
-export enum AppointmentWebhookActions {
+export enum AcuityWebhookActions {
   Scheduled = 'scheduled',
   Rescheduled = 'rescheduled',
   Canceled = 'canceled',
   Changed = 'changed',
   OrderCompleted = 'order.completed',
+}
+
+export enum WebhookEndpoints {
+  Create = 'Create',
+  Update = 'Update',
 }
 
 export enum DeadlineLabel {
