@@ -3,6 +3,7 @@ import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {TestRunsRepository} from '../respository/test-runs.repository'
 import {TestRunDBModel} from '../models/test-runs'
 import {firestore} from 'firebase-admin'
+import {getDateFromDatetime} from '../utils/datetime.helper'
 
 export class TestRunsService {
   private dataStore = new DataStore()
@@ -21,7 +22,8 @@ export class TestRunsService {
     return this.testRunsRepository.findWhereEqual('testRunDate', date)
   }
 
-  create(testRunDateTime: Date, testRunDate: string): Promise<TestRunDBModel> {
+  create(testRunDateTime: Date): Promise<TestRunDBModel> {
+    const testRunDate = getDateFromDatetime(testRunDateTime)
     return this.identifier.getUniqueId('testRun').then((id) => {
       return this.testRunsRepository.add({
         testRunId: `T${id}`,
