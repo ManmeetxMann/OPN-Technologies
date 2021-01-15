@@ -6,6 +6,7 @@ export enum RequiredUserPermission {
   OrgPCRTestResultsAdmin = 'OrgPCRTestResultsAdmin',
   LabAppointmentsAdmin = 'LabAppointmentsAdmin',
   LabPCRTestResultsAdmin = 'LabPCRTestResultsAdmin',
-  LabReceivingAdmin = 'LabReceivingAdmin',
-  LabTransportRunAdmin = 'LabTransportRunAdmin',
+  LabReceiving = 'LabReceiving',
+  LabTransportRuns = 'LabTransportRuns',
+  LabTestRuns = 'LabTestRuns'
 }

@@ -71,12 +71,12 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:barCode/receive',
-      authorizationMiddleware([RequiredUserPermission.LabReceivingAdmin]),
+      authorizationMiddleware([RequiredUserPermission.LabReceiving]),
       this.updateTestVial,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/receive',
-      authorizationMiddleware([RequiredUserPermission.LabReceivingAdmin]),
+      authorizationMiddleware([RequiredUserPermission.LabReceiving]),
       this.addVialLocation,
     )
 
