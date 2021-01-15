@@ -16,11 +16,14 @@ import {
   AppointmentAcuityResponse,
   WebhookEndpoints,
 } from '../../../models/appointment'
-import moment from 'moment'
+import moment from 'moment-timezone'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {makeDeadline} from '../../../utils/datetime.helper'
+import {Config} from '../../../../../common/src/utils/config'
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -71,7 +74,7 @@ class AppointmentWebhookController implements IControllerBase {
 
       try {
         const utcDateTime = moment(appointment.datetime).utc()
-        const dateTimeTz = moment(appointment.datetime)
+        const dateTimeTz = moment(appointment.datetime).tz(timeZone)
 
         const dateTime = utcDateTime.format()
         const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
@@ -179,7 +182,7 @@ class AppointmentWebhookController implements IControllerBase {
       try {
         const utcDateTime = moment(appointment.datetime).utc()
 
-        const dateTimeTz = moment(appointment.datetime)
+        const dateTimeTz = moment(appointment.datetime).tz(timeZone)
 
         const dateTime = utcDateTime.format()
         const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
