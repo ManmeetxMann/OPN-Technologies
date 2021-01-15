@@ -1107,6 +1107,8 @@ paths:
   /reservation/admin/api/v1/packages:
     post:
       description: Add Package Codes for Orgs
+      security:
+        - bearerAuthJWT: []
       tags:
         - Package Management
       requestBody:

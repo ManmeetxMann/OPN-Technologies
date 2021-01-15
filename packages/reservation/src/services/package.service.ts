@@ -1,6 +1,6 @@
 import DataStore from '../../../common/src/data/datastore'
 
-import {Certificate, PackageBase, PackageListItem} from '../models/packages'
+import {Certificate, PackageBase, PackageListItem, BookingLocations} from '../models/packages'
 import {PackageRepository} from '../respository/package.repository'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
@@ -81,24 +81,48 @@ export class PackageService {
     )
   }
 
+  async getBookingLocations(organizationId: string): Promise<BookingLocations[]> {
+    const packages = await this.getPackageListByOrganizationId(organizationId)
+    const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
+    const calendars = await this.acuityRepository.getCalendarList()
+    const packagesAppointmentTypes = packages
+      .map(({appointmentTypes}) => Object.keys(appointmentTypes))
+      .flat()
+
+    const bookingLocation = packagesAppointmentTypes.map((appointmentTypeID) => {
+      const appointmentType = appointmentTypes.find(({id}) => id === Number(appointmentTypeID))
+
+      return appointmentType.calendarIDs.map((calendarId) => {
+        const calendar = calendars.find(({id}) => id === calendarId)
+        const idBuf = {
+          appointmentTypeId: appointmentType.id,
+          calendarTimezone: calendar.timezone,
+          calendarId: calendar.id,
+        }
+        const id = Buffer.from(idBuf.toString()).toString('base64')
+
+        return {
+          id,
+          appointmentTypeName: appointmentType.name,
+          name: calendar.name,
+          address: calendar.location,
+        }
+      })
+    })
+
+    return bookingLocation.flat()
+  }
+
   async getPackageListByOrganizationId(organizationId: string): Promise<Certificate[]> {
     const packagesAcuity = await this.acuityRepository.getPackagesList()
-    console.log('1 = ', packagesAcuity.length)
-    // if (!packagesAcuity.length) {
-    //   return []
-    // }
-    
-    const packageCodeWithRemaining = packagesAcuity.filter(packageCode => {
+
+    const packageCodeWithRemaining = packagesAcuity.filter((packageCode) => {
       return packageCode.remainingCounts && Object.keys(packageCode.remainingCounts).length
     })
-    console.log('2 = ', packageCodeWithRemaining.length)
-    // if (!packageCodeWithRemaining.length) {
-    //   return []
-    // }
 
-    const packages = await this.packageRepository.findWhereIn('organizationId', organizationId)
+    const packages = await this.packageRepository.findWhereEqual('organizationId', organizationId)
     const packageCodeIds = packages.map(({packageCode}) => packageCode)
-    console.log('3 = ', packages.length)
+
     return packageCodeWithRemaining.filter(({certificate}) => packageCodeIds.includes(certificate))
   }
 }

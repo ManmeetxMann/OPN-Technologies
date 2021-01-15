@@ -1,6 +1,7 @@
 import AcuityScheduling from '../adapter/acuity'
-import {AppointmentAcuityResponse} from '../models/appointment'
+import {AppointmentAcuityResponse, Calendar} from '../models/appointment'
 import {Certificate} from '../models/packages'
+import {AppointmentTypes} from '../models/appointment'
 
 export class AcuityRepository extends AcuityScheduling {
   constructor() {
@@ -35,5 +36,13 @@ export class AcuityRepository extends AcuityScheduling {
       emailToLockCoupon,
     )
     return couponCodeResponse.certificate
+  }
+
+  getAppointmentTypeList(): Promise<AppointmentTypes[]> {
+    return this.getAppointmentTypes()
+  }
+
+  getCalendarList(): Promise<Calendar[]> {
+    return this.getCalendars()
   }
 }
