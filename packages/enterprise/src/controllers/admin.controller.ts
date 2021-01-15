@@ -12,7 +12,7 @@ import {AdminApprovalService} from '../../../common/src/service/user/admin-servi
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {authorizationMiddleware} from '../../../common/src/middlewares/authorization'
-import {UserRoles} from '../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../common/src/types/authorization'
 import {FirebaseManager} from '../../../common/src/utils/firebase'
 import {now} from '../../../common/src/utils/times'
 
@@ -30,22 +30,22 @@ class AdminController implements IControllerBase {
     this.router.post(this.path + '/auth/signIn/process', this.authSignInProcess)
     this.router.post(
       this.path + '/team/status',
-      authorizationMiddleware([UserRoles.OrgAdmin]),
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
       this.teamStatus,
     )
     this.router.post(
       this.path + '/team/review',
-      authorizationMiddleware([UserRoles.OrgAdmin]),
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
       this.teamReview,
     )
     this.router.post(
       this.path + '/billing/config',
-      authorizationMiddleware([UserRoles.OrgAdmin]),
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
       this.billingConfig,
     )
     this.router.get(
       this.path + '/self',
-      authorizationMiddleware([UserRoles.OrgAdmin]),
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
       this.adminInfo,
     )
   }

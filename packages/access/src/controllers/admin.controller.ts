@@ -14,7 +14,7 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {authorizationMiddleware} from '../../../common/src/middlewares/authorization'
-import {UserRoles} from '../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../common/src/types/authorization'
 import {now} from '../../../common/src/utils/times'
 import moment from 'moment-timezone'
 import * as _ from 'lodash'
@@ -57,14 +57,18 @@ class AdminController implements IRouteController {
   public initRoutes(): void {
     const routes = express
       .Router()
-      .post('/stats', authorizationMiddleware([UserRoles.OrgAdmin]), this.stats)
-      .post('/stats/v2', authorizationMiddleware([UserRoles.OrgAdmin]), this.statsV2)
-      .post('/enter', authorizationMiddleware([UserRoles.OrgAdmin]), this.enter)
-      .post('/exit', authorizationMiddleware([UserRoles.OrgAdmin]), this.exit)
-      .post('/createToken', authorizationMiddleware([UserRoles.OrgAdmin]), this.createToken)
+      .post('/stats', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), this.stats)
+      .post('/stats/v2', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), this.statsV2)
+      .post('/enter', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), this.enter)
+      .post('/exit', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), this.exit)
+      .post(
+        '/createToken',
+        authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
+        this.createToken,
+      )
       .post(
         '/enterorexit/tag',
-        authorizationMiddleware([UserRoles.OrgAdmin]),
+        authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
         this.enterOrExitUsingATag,
       )
       .get('/:organizationId/locations/accessible', this.getAccessibleLocations)
