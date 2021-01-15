@@ -3,9 +3,9 @@ import {NextFunction, Request, Response, Router} from 'express'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
-import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {isValidDate} from '../../../../../common/src/utils/times'
 import {getAdminId} from '../../../../../common/src/utils/auth'
 
@@ -35,37 +35,33 @@ class AdminAppointmentController implements IControllerBase {
     innerRouter.get(
       this.path + '/api/v1/appointments',
       authorizationMiddleware([
-        RequiredUserPermission.LabAppointmentsAdmin,
-        RequiredUserPermission.OrgAppointmentsAdmin,
+        RequiredUserPermission.LabAppointments
       ]),
       this.getListAppointments,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
       authorizationMiddleware([
-        RequiredUserPermission.LabAppointmentsAdmin,
-        RequiredUserPermission.OrgAppointmentsAdmin,
+        RequiredUserPermission.LabAppointments,
       ]),
       this.getAppointmentById,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/cancel',
       authorizationMiddleware([
-        RequiredUserPermission.LabAppointmentsAdmin,
-        RequiredUserPermission.OrgAppointmentsAdmin,
+        RequiredUserPermission.LabAppointments,
       ]),
       this.cancelAppointment,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/add-transport-run',
-      authorizationMiddleware([RequiredUserPermission.LabAppointmentsAdmin]),
+      authorizationMiddleware([RequiredUserPermission.LabAppointments]),
       this.addTransportRun,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/:barCode',
       authorizationMiddleware([
-        RequiredUserPermission.LabAppointmentsAdmin,
-        RequiredUserPermission.OrgAppointmentsAdmin,
+        RequiredUserPermission.LabAppointments,
       ]),
       this.getAppointmentByBarcode,
     )

@@ -22,7 +22,7 @@ class AdminAppointmentController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.put(
       this.path + '/appointments/add-labels',
-      authorizationMiddleware([RequiredUserPermission.LabAppointmentsAdmin]),
+      authorizationMiddleware([RequiredUserPermission.LabAppointments]),
       this.addLabels,
     )
 
