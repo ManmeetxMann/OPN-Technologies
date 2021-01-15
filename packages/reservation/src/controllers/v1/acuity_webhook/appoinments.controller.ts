@@ -71,9 +71,11 @@ class AppointmentWebhookController implements IControllerBase {
 
       try {
         const utcDateTime = moment(appointment.datetime).utc()
+        const dateTimeTz = moment(appointment.datetime)
+
         const dateTime = utcDateTime.format()
-        const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
-        const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
+        const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
+        const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
         const label = appointment.labels ? appointment.labels[0]?.name : null
         const deadline: string = makeDeadline(utcDateTime, label)
         const {barCodeNumber, organizationId} = dataForUpdate
@@ -177,9 +179,11 @@ class AppointmentWebhookController implements IControllerBase {
       try {
         const utcDateTime = moment(appointment.datetime).utc()
 
+        const dateTimeTz = moment(appointment.datetime)
+
         const dateTime = utcDateTime.format()
-        const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
-        const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
+        const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
+        const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
         const label = appointment.labels ? appointment.labels[0]?.name : null
         const deadline: string = makeDeadline(utcDateTime, label)
 
