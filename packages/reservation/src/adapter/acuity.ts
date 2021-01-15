@@ -1,6 +1,11 @@
 import fetch from 'node-fetch'
 import {Config} from '../../../common/src/utils/config'
-import {AppointmentAcuityResponse, DeadlineLabel, Calendar, AppointmentTypes} from '../models/appointment'
+import {
+  AppointmentAcuityResponse,
+  DeadlineLabel,
+  Calendar,
+  AppointmentTypes,
+} from '../models/appointment'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {Certificate} from '../models/packages'
 import {AcuityCouponCodeResponse} from '../models/coupons'
