@@ -1,7 +1,7 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
-import {UserRoles} from '../../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
@@ -152,9 +152,9 @@ class AdminUserController implements IControllerBase {
     const route = innerRouter().use(
       '/',
       innerRouter()
-        .get('/', authorizationMiddleware([UserRoles.OrgAdmin]), getUsersByOrganizationId)
-        .post('/', authorizationMiddleware([UserRoles.OrgAdmin]), createUser)
-        .put('/:userId', authorizationMiddleware([UserRoles.OrgAdmin]), updateUser),
+        .get('/', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), getUsersByOrganizationId)
+        .post('/', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), createUser)
+        .put('/:userId', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), updateUser),
     )
 
     this.router.use(root, route)
