@@ -3,7 +3,7 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
-import { RequiredUserPermission } from '../../../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 
 import {TransportRunsService} from '../../../services/transport-runs.service'
 import {TransportRunsDTOResponse} from '../../../models/transport-runs'
@@ -19,8 +19,19 @@ class TransportRunsController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.get(this.path + '/', authorizationMiddleware([RequiredUserPermission.LabTransportRuns, RequiredUserPermission.LabAppointmentsAdmin]), this.listTransportRun)
-    innerRouter.post(this.path + '/',authorizationMiddleware([RequiredUserPermission.LabTransportRuns]), this.createTransportRun)
+    innerRouter.get(
+      this.path + '/',
+      authorizationMiddleware([
+        RequiredUserPermission.LabTransportRuns,
+        RequiredUserPermission.LabAppointmentsAdmin,
+      ]),
+      this.listTransportRun,
+    )
+    innerRouter.post(
+      this.path + '/',
+      authorizationMiddleware([RequiredUserPermission.LabTransportRuns]),
+      this.createTransportRun,
+    )
 
     this.router.use('/', innerRouter)
   }

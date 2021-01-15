@@ -10,5 +10,5 @@ export enum RequiredUserPermission {
   LabTransportRuns = 'LabTransportRuns',
   LabTestRuns = 'LabTestRuns',
   LabSendResults = 'LabSendResults',
-  LabDueToday = 'LabDueToday'
+  LabDueToday = 'LabDueToday',
 }

@@ -4,7 +4,7 @@ import moment from 'moment'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
-import { RequiredUserPermission } from '../../../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
@@ -54,7 +54,10 @@ class PCRTestResultController implements IControllerBase {
     )
     innerRouter.get(
       this.path + '/api/v1/pcr-test-results',
-      authorizationMiddleware([RequiredUserPermission.OrgPCRTestResults,RequiredUserPermission.LabPCRTestResults]),
+      authorizationMiddleware([
+        RequiredUserPermission.OrgPCRTestResults,
+        RequiredUserPermission.LabPCRTestResults,
+      ]),
       this.listPCRResults,
     )
     innerRouter.get(

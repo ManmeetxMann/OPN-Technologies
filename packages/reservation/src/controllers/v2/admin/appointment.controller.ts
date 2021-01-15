@@ -7,7 +7,7 @@ import {authorizationMiddleware} from '../../../../../common/src/middlewares/aut
 import {appointmentUiDTOResponse, DeadlineLabel} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import { RequiredUserPermission } from '../../../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin/api/v2'
@@ -20,7 +20,11 @@ class AdminAppointmentController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.put(this.path + '/appointments/add-labels', authorizationMiddleware([RequiredUserPermission.LabAppointmentsAdmin]), this.addLabels)
+    innerRouter.put(
+      this.path + '/appointments/add-labels',
+      authorizationMiddleware([RequiredUserPermission.LabAppointmentsAdmin]),
+      this.addLabels,
+    )
 
     this.router.use('/', innerRouter)
   }

@@ -4,7 +4,7 @@ import {flatten} from 'lodash'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
-import { RequiredUserPermission } from '../../../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 
 import {TestResultsService} from '../../../services/test-results.service'
 import {AppoinmentService} from '../../../services/appoinment.service'
@@ -27,7 +27,11 @@ class AdminController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.get(this.path + '/api/v1/test-results', authorizationMiddleware([RequiredUserPermission.OrgPCRTestResults]), this.getListResult)
+    innerRouter.get(
+      this.path + '/api/v1/test-results',
+      authorizationMiddleware([RequiredUserPermission.OrgPCRTestResults]),
+      this.getListResult,
+    )
 
     this.router.use('/', innerRouter)
   }

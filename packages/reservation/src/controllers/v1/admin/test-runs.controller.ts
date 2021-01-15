@@ -2,7 +2,7 @@ import {NextFunction, Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
-import { RequiredUserPermission } from '../../../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {isValidDate, toDateFormatWithoutTimezone} from '../../../../../common/src/utils/times'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
@@ -21,8 +21,19 @@ class TestRunsController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.get(this.path, authorizationMiddleware([RequiredUserPermission.LabTestRuns, RequiredUserPermission.LabDueToday]), this.getListTestRuns)
-    innerRouter.post(this.path, authorizationMiddleware([RequiredUserPermission.LabTestRuns]), this.createTestRun)
+    innerRouter.get(
+      this.path,
+      authorizationMiddleware([
+        RequiredUserPermission.LabTestRuns,
+        RequiredUserPermission.LabDueToday,
+      ]),
+      this.getListTestRuns,
+    )
+    innerRouter.post(
+      this.path,
+      authorizationMiddleware([RequiredUserPermission.LabTestRuns]),
+      this.createTestRun,
+    )
 
     this.router.use('/', innerRouter)
   }
