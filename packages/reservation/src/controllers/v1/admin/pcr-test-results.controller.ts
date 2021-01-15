@@ -54,10 +54,7 @@ class PCRTestResultController implements IControllerBase {
     )
     innerRouter.get(
       this.path + '/api/v1/pcr-test-results',
-      authorizationMiddleware([
-        RequiredUserPermission.OrgPCRTestResults,
-        RequiredUserPermission.LabPCRTestResults,
-      ]),
+      authorizationMiddleware([RequiredUserPermission.LabPCRTestResults]),
       this.listPCRResults,
     )
     innerRouter.get(

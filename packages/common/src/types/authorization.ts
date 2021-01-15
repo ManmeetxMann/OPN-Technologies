@@ -1,10 +1,9 @@
 export enum RequiredUserPermission {
   SuperAdmin = 'SuperAdmin',
+  OPNAdmin = 'OPNAdmin',
   OrgAdmin = 'OrgAdmin',
   RegUser = 'RegUser',
-  OrgAppointmentsAdmin = 'OrgAppointmentsAdmin',
-  OrgPCRTestResults = 'OrgPCRTestResults',
-  LabAppointmentsAdmin = 'LabAppointmentsAdmin',
+  LabAppointments = 'LabAppointments',
   LabPCRTestResults = 'LabPCRTestResults',
   LabReceiving = 'LabReceiving',
   LabTransportRuns = 'LabTransportRuns',

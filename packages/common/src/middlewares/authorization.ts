@@ -88,6 +88,7 @@ export const authorizationMiddleware = (requiredPermissions?: RequiredUserPermis
     null
   const admin = connectedUser.admin as AdminProfile
   if (!authorizedWithoutOrgId(admin, organizationId)) {
+    console.warn(`${organizationId} is not accesible to ${connectedUser.id}`)
     // Forbidden
     res
       .status(403)
@@ -101,7 +102,7 @@ export const authorizationMiddleware = (requiredPermissions?: RequiredUserPermis
     return
   }
 
-  if (!isAllowed(admin, listOfRequiredRoles)) {
+  if (!isAllowed(admin, listOfRequiredRoles, connectedUser.id)) {
     console.warn(`Admin user ${connectedUser.id} is not allowed for ${listOfRequiredRoles}`)
     // Forbidden
     res
@@ -138,11 +139,18 @@ const authorizedWithoutOrgId = (admin: AdminProfile, organizationId: string): bo
 const isAllowed = (
   admin: AdminProfile,
   listOfRequiredPermissions: RequiredUserPermission[],
+  userId: string,
 ): boolean => {
-  const seekAppointmentAdmin = listOfRequiredPermissions.includes(
-    RequiredUserPermission.LabAppointmentsAdmin,
+  const seekLabAppointmentAdmin = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabAppointments,
   )
-  if (seekAppointmentAdmin && !admin.isTestAppointmentsAdmin && !admin.isLabAppointmentsAdmin) {
+  const seekOPNAdmin = listOfRequiredPermissions.includes(RequiredUserPermission.OPNAdmin)
+  if (seekLabAppointmentAdmin && !admin.isLabAppointmentsAdmin && !admin.isTestAppointmentsAdmin) {
+    console.warn(`Admin user ${userId} needs isLabAppointmentsAdmin or isTestAppointmentsAdmin`)
+    return false
+  }
+  if (seekOPNAdmin && !admin.isOpnSuperAdmin) {
+    console.warn(`Admin user ${userId} needs isOpnSuperAdmin`)
     return false
   }
   return true

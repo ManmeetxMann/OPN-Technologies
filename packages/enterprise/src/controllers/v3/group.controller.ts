@@ -1,7 +1,8 @@
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import * as express from 'express'
 import {Handler, Router} from 'express'
-import {authMiddleware} from '../../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import {OrganizationService} from '../../services/organization-service'
 import {UserService} from '../../services/user-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
@@ -96,7 +97,7 @@ class GroupController implements IControllerBase {
 
     const groupRouter = innerRouter().use(
       '/',
-      authMiddleware,
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
       innerRouter()
         .get('/:groupId/users', getUsersByGroupId)
         .put('/:groupId', updateGroup)
