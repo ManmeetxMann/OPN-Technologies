@@ -12,7 +12,9 @@ import {
   AppointmentStatus,
   AcuityUpdateDTO,
   ResultTypes,
-  AppointmentWebhookActions,
+  AcuityWebhookActions,
+  AppointmentAcuityResponse,
+  WebhookEndpoints,
 } from '../../../models/appointment'
 import moment from 'moment'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
@@ -45,52 +47,19 @@ class AppointmentWebhookController implements IControllerBase {
     try {
       const {id, action, calendarID, appointmentTypeID} = req.body as ScheduleWebhookRequest
 
-      if (action !== AppointmentWebhookActions.Scheduled) {
+      if (action !== AcuityWebhookActions.Scheduled) {
         throw new BadRequestException('Only scheduled Action is allowed')
       }
 
       const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
-
       if (!appointment) {
         throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
       }
-
-      const utcDateTime = moment(appointment.datetime).utc()
-
-      const dateTime = utcDateTime.format()
-      const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
-      const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
-      const label = appointment.labels ? appointment.labels[0]?.name : null
-      const deadline: string = makeDeadline(utcDateTime, label)
-      const dataForUpdate: AcuityUpdateDTO = {}
-      if (!appointment.barCode) {
-        dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
-      }
-      if (appointment.certificate && !appointment.organizationId) {
-        //Update ORGs
-        const packageResult = await this.packageService.getByPackageCode(appointment.certificate)
-
-        if (packageResult) {
-          dataForUpdate['organizationId'] = packageResult.organizationId
-        } else {
-          console.log(
-            `WebhookController: CreateAppointment NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`,
-          )
-        }
-      }
-
-      if (!isEmpty(dataForUpdate)) {
-        console.log(
-          `WebhookController: CreateAppointment SaveToAcuity AppoinmentID: ${id} barCodeNumber: ${JSON.stringify(
-            dataForUpdate,
-          )}`,
-        )
-        await this.appoinmentService.updateAppointment(id, dataForUpdate)
-      } else {
-        console.log(
-          `WebhookController: CreateAppointment NoUpdateToAcuity AppoinmentID: ${id} barCodeNumber: ${appointment.barCode}  organizationId: ${appointment.organizationId}`,
-        )
-      }
+      const dataForUpdate = await this.updateInformationOnAcuity(
+        id,
+        appointment,
+        WebhookEndpoints.Create,
+      )
 
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
       if (appointmentFromDb) {
@@ -101,8 +70,15 @@ class AppointmentWebhookController implements IControllerBase {
       }
 
       try {
+        const utcDateTime = moment(appointment.datetime).utc()
+        const dateTime = utcDateTime.format()
+        const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
+        const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
+        const label = appointment.labels ? appointment.labels[0]?.name : null
+        const deadline: string = makeDeadline(utcDateTime, label)
         const {barCodeNumber, organizationId} = dataForUpdate
         const barCode = appointment.barCode || barCodeNumber
+
         const data = {
           acuityAppointmentId: appointment.id,
           appointmentTypeID,
@@ -173,63 +149,51 @@ class AppointmentWebhookController implements IControllerBase {
     try {
       const {id, action, calendarID, appointmentTypeID} = req.body as ScheduleWebhookRequest
 
-      if (action === AppointmentWebhookActions.Scheduled) {
+      if (action === AcuityWebhookActions.Scheduled) {
         throw new BadRequestException('Scheduled Action is not allowed')
       }
 
       const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
-
       if (!appointment) {
         console.error(
           `WebhookController: UpdateAppointment: AppointmentNotExist for AcuityID On Acuity: ${id}`,
         )
         throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
       }
-
-      const utcDateTime = moment(appointment.datetime).utc()
-
-      const dateTime = utcDateTime.format()
-      const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
-      const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
-      const label = appointment.labels ? appointment.labels[0]?.name : null
-      const deadline: string = makeDeadline(utcDateTime, label)
-      const dataForUpdate: AcuityUpdateDTO = {}
-      if (!appointment.barCode) {
-        dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
-      }
-
-      if (appointment.certificate && !appointment.organizationId) {
-        const packageResult = await this.packageService.getByPackageCode(appointment.certificate)
-
-        if (packageResult) {
-          dataForUpdate['organizationId'] = packageResult.organizationId
-        } else {
-          console.log(
-            `WebhookController: UpdateAppointment: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`,
-          )
-        }
-      }
+      const dataForUpdate = await this.updateInformationOnAcuity(
+        id,
+        appointment,
+        WebhookEndpoints.Update,
+      )
 
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
       if (!appointmentFromDb) {
         console.error(
-          `WebhookController: UpdateAppointment: AppointmentNotExist for AcuityID: ${id} in DB`,
+          `WebhookController: UpdateAppointment: Failed AppointmentNotExist for AcuityID: ${id} in DB`,
         )
         throw new ResourceNotFoundException(`AcuityID: ${id} not found`)
       }
 
-      let appointmentStatus = appointmentFromDb.appointmentStatus
-      if (
-        appointment.canceled &&
-        appointmentFromDb.appointmentStatus != AppointmentStatus.Canceled
-      ) {
-        console.log(
-          `WebhookController: UpdateAppointment:  Appointment Status will be updated to Cancelled`,
-        )
-        appointmentStatus = AppointmentStatus.Canceled
-      }
-
       try {
+        const utcDateTime = moment(appointment.datetime).utc()
+
+        const dateTime = utcDateTime.format()
+        const dateOfAppointment = utcDateTime.format(dateFormats.longMonth)
+        const timeOfAppointment = utcDateTime.format(timeFormats.standard12h)
+        const label = appointment.labels ? appointment.labels[0]?.name : null
+        const deadline: string = makeDeadline(utcDateTime, label)
+
+        let appointmentStatus = appointmentFromDb.appointmentStatus
+        if (
+          appointment.canceled &&
+          appointmentFromDb.appointmentStatus != AppointmentStatus.Canceled
+        ) {
+          console.log(
+            `WebhookController: UpdateAppointment:  Appointment Status will be updated to Cancelled`,
+          )
+          appointmentStatus = AppointmentStatus.Canceled
+        }
+
         const {barCodeNumber, organizationId} = dataForUpdate
         const barCode = appointment.barCode || barCodeNumber
         const data = {
@@ -262,7 +226,7 @@ class AppointmentWebhookController implements IControllerBase {
         )
         if (pcrTestResult) {
           if (
-            action === AppointmentWebhookActions.Canceled ||
+            action === AcuityWebhookActions.Canceled ||
             appointmentStatus === AppointmentStatus.Canceled
           ) {
             await this.pcrTestResultsService.deleteTestResults(pcrTestResult.id)
@@ -295,7 +259,7 @@ class AppointmentWebhookController implements IControllerBase {
           }
         }
       } catch (e) {
-        if (appointmentStatus === AppointmentStatus.Canceled) {
+        if (appointment.canceled) {
           console.log(
             `WebhookController: UpdateAppointment: Cancelled AppoinmentID: ${id}. Hence No PCR Results Updates.`,
           )
@@ -310,6 +274,43 @@ class AppointmentWebhookController implements IControllerBase {
     } catch (error) {
       next(error)
     }
+  }
+
+  private updateInformationOnAcuity = async (
+    id: number,
+    appointment: AppointmentAcuityResponse,
+    endpoint: WebhookEndpoints,
+  ): Promise<AcuityUpdateDTO> => {
+    const dataForUpdate: AcuityUpdateDTO = {}
+    if (!appointment.barCode) {
+      dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
+    }
+    if (appointment.certificate && !appointment.organizationId) {
+      //Update ORGs
+      const packageResult = await this.packageService.getByPackageCode(appointment.certificate)
+
+      if (packageResult) {
+        dataForUpdate['organizationId'] = packageResult.organizationId
+      } else {
+        console.log(
+          `WebhookController: ${endpoint}Appointment NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`,
+        )
+      }
+    }
+
+    if (!isEmpty(dataForUpdate)) {
+      const savedOnAcuity = await this.appoinmentService.updateAppointment(id, dataForUpdate)
+      console.log(
+        `WebhookController: ${endpoint}Appointment SaveToAcuity AppoinmentID: ${
+          savedOnAcuity.id
+        } barCodeNumber: ${JSON.stringify(dataForUpdate)}`,
+      )
+    } else {
+      console.log(
+        `WebhookController: ${endpoint}Appointment NoUpdateToAcuity AppoinmentID: ${id} barCodeNumber: ${appointment.barCode}  organizationId: ${appointment.organizationId}`,
+      )
+    }
+    return dataForUpdate
   }
 
   private getlinkedBarcodes = async (couponCode: string): Promise<string[]> => {
