@@ -2,9 +2,6 @@ import {now} from './times'
 
 import moment from 'moment-timezone'
 import {firestore} from 'firebase-admin'
-import {Config} from './config'
-
-const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 // some timestamps are invalid and the "day" part is actually
 // the day of the year. This function accepts a (valid or invalid)
@@ -44,8 +41,4 @@ export const safeTimestamp = (timestamp: GenericTimestamp): Date => {
     return timestamp.toDate()
   }
   throw `${timestamp} cannot be interpreted as a date`
-}
-
-export const getDateFromDatetime = (transportDateTime: Date | string): string => {
-  return moment(transportDateTime).tz(timeZone).format('YYYY-MM-DD')
 }

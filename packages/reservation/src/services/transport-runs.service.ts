@@ -3,7 +3,7 @@ import {TransportRunsRepository} from '../respository/transport-runs.repository'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {TransportRunsDbModel, TransportRunsIdentifier} from '../models/transport-runs'
 import {firestore} from 'firebase-admin'
-import {getDateFromDatetime} from '../../../common/src/utils/datetime-util'
+import {getDateFromDatetime} from '../utils/datetime.helper'
 
 export class TransportRunsService {
   private transportRunsRepository = new TransportRunsRepository(new DataStore())
