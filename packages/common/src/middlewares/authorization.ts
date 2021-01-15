@@ -82,7 +82,10 @@ export const authorizationMiddleware = (requiredRole?: UserRoles[]) => async (
   }
 
   const organizationId =
-    (req.query.organizationId as string) ?? (req.body?.organizationId as string) ?? null
+    (req.query.organizationId as string) ??
+    (req.params?.organizationId as string) ??
+    (req.body?.organizationId as string) ??
+    null
   const admin = connectedUser.admin as AdminProfile
   if (!authorizedWithoutOrgId(admin, organizationId)) {
     // Forbidden
