@@ -11,7 +11,7 @@ import {userDTOResponse} from '../../../models/user'
 import {User} from '../../../../../common/src/data/user'
 import {AdminProfile} from '../../../../../common/src/data/admin'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
-import {UserRoles} from '../../../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {CursoredUsersRequestFilter} from '../../../types/user-organization-request'
 import {OrganizationGroup} from '../../../models/organization'
 import {omit} from 'lodash'
@@ -97,7 +97,7 @@ class UserController implements IControllerBase {
 
     this.router.use(
       root,
-      authorizationMiddleware([UserRoles.OrgAdmin]),
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
       innerRouter().get('/', findAll),
     )
   }

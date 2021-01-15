@@ -4,16 +4,16 @@ import {AuthService} from '../service/auth/auth-service'
 import {UserService} from '../service/user/user-service'
 import {of} from '../utils/response-wrapper'
 import {ResponseStatusCodes} from '../types/response-status'
-import {UserRoles} from '../types/authorization'
+import {RequiredUserPermission} from '../types/authorization'
 import {User} from '../data/user'
 import {AdminProfile} from '../data/admin'
 
-export const authorizationMiddleware = (requiredRole?: UserRoles[]) => async (
+export const authorizationMiddleware = (requiredPermissions?: RequiredUserPermission[]) => async (
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  const listOfRequiredRoles = requiredRole ?? [UserRoles.RegUser]
+  const listOfRequiredRoles = requiredPermissions ?? [RequiredUserPermission.RegUser]
 
   const bearerHeader = req.headers['authorization']
   if (!bearerHeader) {
@@ -45,7 +45,7 @@ export const authorizationMiddleware = (requiredRole?: UserRoles[]) => async (
 
   const userService = new UserService()
   let connectedUser: User
-  const seekRegularAuth = listOfRequiredRoles.includes(UserRoles.RegUser)
+  const seekRegularAuth = listOfRequiredRoles.includes(RequiredUserPermission.RegUser)
   if (!seekRegularAuth) {
     connectedUser = await userService.findOneByAdminAuthUserId(validatedAuthUser.uid)
   }
@@ -135,8 +135,13 @@ const authorizedWithoutOrgId = (admin: AdminProfile, organizationId: string): bo
   return true
 }
 
-const isAllowed = (admin: AdminProfile, listOfRequiredRoles: UserRoles[]): boolean => {
-  const seekAppointmentAdmin = listOfRequiredRoles.includes(UserRoles.AppointmentsAdmin)
+const isAllowed = (
+  admin: AdminProfile,
+  listOfRequiredPermissions: RequiredUserPermission[],
+): boolean => {
+  const seekAppointmentAdmin = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabAppointmentsAdmin,
+  )
   if (seekAppointmentAdmin && !admin.isTestAppointmentsAdmin && !admin.isLabAppointmentsAdmin) {
     return false
   }
