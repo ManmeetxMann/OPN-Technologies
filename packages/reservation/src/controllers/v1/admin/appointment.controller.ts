@@ -34,23 +34,17 @@ class AdminAppointmentController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.get(
       this.path + '/api/v1/appointments',
-      authorizationMiddleware([
-        RequiredUserPermission.LabAppointments
-      ]),
+      authorizationMiddleware([RequiredUserPermission.LabAppointments]),
       this.getListAppointments,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
-      authorizationMiddleware([
-        RequiredUserPermission.LabAppointments,
-      ]),
+      authorizationMiddleware([RequiredUserPermission.LabAppointments]),
       this.getAppointmentById,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/cancel',
-      authorizationMiddleware([
-        RequiredUserPermission.LabAppointments,
-      ]),
+      authorizationMiddleware([RequiredUserPermission.LabAppointments]),
       this.cancelAppointment,
     )
     innerRouter.put(
@@ -60,9 +54,7 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/:barCode',
-      authorizationMiddleware([
-        RequiredUserPermission.LabAppointments,
-      ]),
+      authorizationMiddleware([RequiredUserPermission.LabAppointments]),
       this.getAppointmentByBarcode,
     )
     innerRouter.put(
