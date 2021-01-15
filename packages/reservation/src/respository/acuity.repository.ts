@@ -1,9 +1,5 @@
 import AcuityScheduling from '../adapter/acuity'
-<<<<<<< HEAD
-import {AppointmentAcuityResponse, Calendar} from '../models/appointment'
-=======
-import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
->>>>>>> 6eef572521f05d013d8d698846716c21bbe86aec
+import {AppointmentAcuityResponse, Calendar, DeadlineLabel} from '../models/appointment'
 import {Certificate} from '../models/packages'
 import {AppointmentTypes} from '../models/appointment'
 

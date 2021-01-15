@@ -1,11 +1,6 @@
 import fetch from 'node-fetch'
 import {Config} from '../../../common/src/utils/config'
-<<<<<<< HEAD
-import querystring from 'querystring'
-import {AppointmentAcuityResponse, Calendar, AppointmentTypes} from '../models/appointment'
-=======
-import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
->>>>>>> 6eef572521f05d013d8d698846716c21bbe86aec
+import {AppointmentAcuityResponse, DeadlineLabel, Calendar, AppointmentTypes} from '../models/appointment'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {Certificate} from '../models/packages'
 import {AcuityCouponCodeResponse} from '../models/coupons'
