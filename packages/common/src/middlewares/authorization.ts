@@ -8,13 +8,11 @@ import {RequiredUserPermission} from '../types/authorization'
 import {User} from '../data/user'
 import {AdminProfile} from '../data/admin'
 
-export const authorizationMiddleware = (requiredPermissions?: RequiredUserPermission[]) => async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  const listOfRequiredRoles = requiredPermissions ?? [RequiredUserPermission.RegUser]
-
+export const authorizationMiddleware = (
+  listOfRequiredRoles: RequiredUserPermission[],
+  byPassOrgCheck?: boolean,
+) => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const byPassOrganizationCheck = byPassOrgCheck ?? false
   const bearerHeader = req.headers['authorization']
   if (!bearerHeader) {
     res.status(401).json(of(null, ResponseStatusCodes.Unauthorized, 'Authorization token required'))
@@ -87,7 +85,7 @@ export const authorizationMiddleware = (requiredPermissions?: RequiredUserPermis
     (req.body?.organizationId as string) ??
     null
   const admin = connectedUser.admin as AdminProfile
-  if (!authorizedWithoutOrgId(admin, organizationId)) {
+  if (!byPassOrganizationCheck && !authorizedWithoutOrgId(admin, organizationId)) {
     console.warn(`${organizationId} is not accesible to ${connectedUser.id}`)
     // Forbidden
     res
