@@ -30,7 +30,7 @@ class AdminController implements IControllerBase {
     this.router.post(this.path + '/auth/signIn/process', this.authSignInProcess)
     this.router.get(
       this.path + '/self',
-      authorizationMiddleware([RequiredUserPermission.RegUser]),
+      authorizationMiddleware([RequiredUserPermission.RegUser], true),
       this.adminInfo,
     )
   }
