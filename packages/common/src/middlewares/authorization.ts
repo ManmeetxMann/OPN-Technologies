@@ -8,11 +8,10 @@ import {RequiredUserPermission} from '../types/authorization'
 import {User} from '../data/user'
 import {AdminProfile} from '../data/admin'
 
-export const authorizationMiddleware = (listOfRequiredRoles: RequiredUserPermission[], byPassOrgCheck?: boolean) => async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
+export const authorizationMiddleware = (
+  listOfRequiredRoles: RequiredUserPermission[],
+  byPassOrgCheck?: boolean,
+) => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const byPassOrganizationCheck = byPassOrgCheck ?? false
   const bearerHeader = req.headers['authorization']
   if (!bearerHeader) {
