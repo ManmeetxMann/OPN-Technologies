@@ -45,7 +45,7 @@ class AdminController implements IControllerBase {
     )
     this.router.get(
       this.path + '/self',
-      authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
+      authorizationMiddleware([RequiredUserPermission.RegUser]),
       this.adminInfo,
     )
   }
