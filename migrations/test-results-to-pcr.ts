@@ -26,13 +26,10 @@ type Result = {
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 export const makeDeadline = (utcDateTime: moment.Moment): string => {
-  let deadline
   const tzDateTime = utcDateTime.clone().tz(timeZone)
-  if (tzDateTime.hours() > 12) {
-    deadline = makeTimeEndOfTheDayMoment(tzDateTime.add(1, 'd'))
-  } else {
-    deadline = makeTimeEndOfTheDayMoment(tzDateTime)
-  }
+  const deadline = makeTimeEndOfTheDayMoment(
+    tzDateTime.hours() > 12 ? tzDateTime.add(1, 'd') : tzDateTime,
+  )
   return deadline.utc().format()
 }
 
