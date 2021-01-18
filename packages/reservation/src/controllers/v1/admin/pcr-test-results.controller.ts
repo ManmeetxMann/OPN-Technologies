@@ -1,8 +1,19 @@
 import {NextFunction, Request, Response, Router} from 'express'
+import moment from 'moment'
+
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
+import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
+import {now} from '../../../../../common/src/utils/times'
+import {Config} from '../../../../../common/src/utils/config'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import {getAdminId} from '../../../../../common/src/utils/auth'
+import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
+
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
+import {TestRunsService} from '../../../services/test-runs.service'
+
 import {
   PCRListQueryRequest,
   PCRTestResultHistoryDTO,
@@ -13,13 +24,6 @@ import {
   pcrTestResultsResponse,
   PcrTestResultsListRequest,
 } from '../../../models/pcr-test-results'
-import moment from 'moment'
-import {now} from '../../../../../common/src/utils/times'
-import {Config} from '../../../../../common/src/utils/config'
-import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {getAdminId} from '../../../../../common/src/utils/auth'
-import {TestRunsService} from '../../../services/test-runs.service'
-import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
@@ -35,32 +39,32 @@ class PCRTestResultController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results-bulk',
-      adminAuthMiddleware,
+      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
       this.createReportForPCRResults,
     )
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results',
-      adminAuthMiddleware,
+      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
       this.createPCRResults,
     )
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results/history',
-      adminAuthMiddleware,
+      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
       this.listPCRResultsHistory,
     )
     innerRouter.get(
       this.path + '/api/v1/pcr-test-results',
-      adminAuthMiddleware,
+      authorizationMiddleware([RequiredUserPermission.LabPCRTestResults]),
       this.listPCRResults,
     )
     innerRouter.get(
       this.path + '/api/v1/pcr-test-results-bulk/report-status',
-      adminAuthMiddleware,
+      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
       this.listPCRTestResultReportStatus,
     )
     innerRouter.put(
       this.path + '/api/v1/pcr-test-results/add-test-run',
-      adminAuthMiddleware,
+      authorizationMiddleware([RequiredUserPermission.LabDueToday]),
       this.addTestRunToPCR,
     )
 

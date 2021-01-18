@@ -591,7 +591,7 @@ class UserController implements IControllerBase {
 
     const selfProfile = innerRouter().use(
       '/self',
-      authorizationMiddleware(),
+      authorizationMiddleware([RequiredUserPermission.RegUser]),
       innerRouter()
         .get('/', get)
         .put('/', update)
