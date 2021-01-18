@@ -99,7 +99,7 @@ export class PackageService {
           calendarTimezone: calendar.timezone,
           calendarId: calendar.id,
         }
-        const id = Buffer.from(idBuf.toString()).toString('base64')
+        const id = Buffer.from(JSON.stringify(idBuf)).toString('base64')
 
         return {
           id,
