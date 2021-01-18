@@ -27,10 +27,10 @@ export type AppointmentModelBase = {
   appointmentStatus: AppointmentStatus
   barCode: string
   canceled: boolean
-  dateOfAppointment: string
+  dateOfAppointment?: string
   dateOfBirth: string
-  dateTime: string
-  deadline: string
+  dateTime?: string
+  deadline?: string
   email: string
   firstName: string
   inProgressAt?: Date
@@ -42,11 +42,21 @@ export type AppointmentModelBase = {
   receivedAt?: Date
   registeredNursePractitioner?: string
   latestResult: ResultTypes
-  timeOfAppointment: string
+  timeOfAppointment?: string
   transportRunId?: string
   appointmentTypeID: number
   calendarID: number
   vialLocation?: string
+  slotId?: string
+  address?: string
+  addressUnit?: string
+  addressForTesting?: string
+  additionalAddressNotes?: string
+  couponCode?: string
+  shareTestResultWithEmployer?: boolean
+  readTermsAndConditions?: boolean
+  receiveResultsViaEmail?: boolean
+  receiveNotificationsFromGov?: boolean
 }
 
 export type AppointmentDBModel = AppointmentModelBase & {
@@ -112,6 +122,29 @@ export type CheckAppointmentRequest = {
   from: string
   to: string
   barCodes: string[]
+}
+
+export type CreateAppointmentRequest = {
+  slotId: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: {
+    code: number
+    number: number
+  }
+  dateOfBirth: string
+  address: string
+  addressUnit: string
+  addressForTesting: string
+  additionalAddressNotes: string
+  couponCode: string
+  shareTestResultWithEmployer: boolean
+  readTermsAndConditions: boolean
+  receiveResultsViaEmail: boolean
+  receiveNotificationsFromGov: boolean
+  vialLocation: string
+  appointmentIds: string[]
 }
 
 export type AppointmentByOrganizationRequest = PageableRequestFilter & {

@@ -14,6 +14,7 @@ import {
   AppointmentStatus,
   AppointmentStatusHistoryDb,
   DeadlineLabel,
+  CreateAppointmentRequest,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -426,5 +427,48 @@ export class AppoinmentService {
 
   async getAppointmentDBByPackageCode(packageCode: string): Promise<AppointmentDBModel[]> {
     return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
+  }
+
+  createAppointment({
+    slotId,
+    firstName,
+    lastName,
+    email,
+    phone,
+    dateOfBirth,
+    address,
+    addressUnit,
+    addressForTesting,
+    additionalAddressNotes,
+    couponCode,
+    shareTestResultWithEmployer,
+    readTermsAndConditions,
+    receiveResultsViaEmail,
+    receiveNotificationsFromGov,
+  }: CreateAppointmentRequest): Promise<AppointmentDBModel> {
+    return this.appointmentsRepository.save({
+      acuityAppointmentId: 0,
+      appointmentStatus: undefined,
+      appointmentTypeID: 0,
+      barCode: '',
+      calendarID: 0,
+      canceled: false,
+      latestResult: undefined,
+      slotId,
+      firstName,
+      lastName,
+      email,
+      phone: Number(`${phone.code}${phone.number}`),
+      dateOfBirth,
+      address,
+      addressUnit,
+      addressForTesting,
+      additionalAddressNotes,
+      couponCode,
+      shareTestResultWithEmployer,
+      readTermsAndConditions,
+      receiveResultsViaEmail,
+      receiveNotificationsFromGov,
+    })
   }
 }

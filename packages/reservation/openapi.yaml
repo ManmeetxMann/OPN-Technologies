@@ -1748,3 +1748,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+
+  /reservation/api/v1/appointments:
+    post:
+      description: Create Appointment
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                slotId:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    code:
+                      type: number
+                    number:
+                      type: number
+                dateOfBirth:
+                  type: string
+                  format: date
+                address:
+                  type: string
+                addressUnit:
+                  type: string
+                addressForTesting:
+                  type: string
+                additionalAddressNotes:
+                  type: string
+                couponCode:
+                  type: string
+                shareTestResultWithEmployer:
+                  type: boolean
+                readTermsAndConditions:
+                  type: boolean
+                receiveResultsViaEmail:
+                  type: boolean
+                receiveNotificationsFromGov:
+                  type: boolean
+                vialLocation:
+                  type: string
+                appointmentIds:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - slotId
+                - firstName
+                - lastName
+                - email
+                - status
+                - dateOfBirth
+                - address
+                - addressUnit
+                - addressForTesting
+                - additionalAddressNotes
+                - couponCode
+                - shareTestResultWithEmployer
+                - readTermsAndConditions
+                - receiveResultsViaEmail
+                - receiveNotificationsFromGov
+                - vialLocation
+                - appointmentIds
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
