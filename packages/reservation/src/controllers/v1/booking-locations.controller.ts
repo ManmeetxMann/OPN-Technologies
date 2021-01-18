@@ -17,12 +17,12 @@ class BookingLocationController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.get(this.path + '/', authMiddleware, this.getPackageList)
+    innerRouter.get(this.path + '/', authMiddleware, this.getBookingLocations)
 
     this.router.use('/', innerRouter)
   }
 
-  getPackageList = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getBookingLocations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.query as {organizationId: string}
 

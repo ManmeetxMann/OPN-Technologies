@@ -1,7 +1,8 @@
 import AcuityScheduling from '../adapter/acuity'
-import {AppointmentAcuityResponse, Calendar, DeadlineLabel} from '../models/appointment'
+import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
 import {Certificate} from '../models/packages'
-import {AppointmentTypes} from '../models/appointment'
+import {AppointmentTypes} from '../models/appointment-types'
+import {Calendar} from '../models/calendar'
 
 export class AcuityRepository extends AcuityScheduling {
   constructor() {
