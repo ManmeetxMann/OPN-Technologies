@@ -84,23 +84,69 @@ export const authorizationMiddleware = (
     (req.params?.organizationId as string) ??
     (req.body?.organizationId as string) ??
     null
-  const admin = connectedUser.admin as AdminProfile
-  if (!byPassOrganizationCheck && !authorizedWithoutOrgId(admin, organizationId)) {
-    console.warn(`${organizationId} is not accesible to ${connectedUser.id}`)
+
+  if (!byPassOrganizationCheck && !organizationId) {
+    console.warn(`${connectedUser.id} did not provide an organizationId`)
     // Forbidden
-    res
-      .status(403)
-      .json(
-        of(
-          null,
-          ResponseStatusCodes.AccessDenied,
-          `Organization ID ${organizationId} is not accesible`,
-        ),
-      )
+    res.status(403).json(of(null, ResponseStatusCodes.AccessDenied, `Organization ID not provided`))
     return
   }
 
-  if (!isAllowed(admin, listOfRequiredRoles, connectedUser.id)) {
+  const admin = connectedUser.admin as AdminProfile
+  if (!byPassOrganizationCheck) {
+    if (admin) {
+      // user authenticated as an admin, needs to be valid
+      if (!authorizedWithoutOrgId(admin, organizationId)) {
+        console.warn(`${organizationId} is not accesible to ${connectedUser.id}`)
+        // Forbidden
+        res
+          .status(403)
+          .json(
+            of(
+              null,
+              ResponseStatusCodes.AccessDenied,
+              `Organization ID ${organizationId} is not accesible`,
+            ),
+          )
+        return
+      }
+    } else {
+      if (!seekRegularAuth) {
+        // not an admin but admin required
+        console.warn(`${organizationId} is not admin-accesible to ${connectedUser.id}`)
+        // Forbidden
+        res
+          .status(403)
+          .json(
+            of(
+              null,
+              ResponseStatusCodes.AccessDenied,
+              `Organization ID ${organizationId} is not accesible`,
+            ),
+          )
+        return
+      }
+
+      // just need to be a member of the organization
+      if (!(connectedUser.organizationIds ?? []).includes(organizationId)) {
+        console.warn(`${organizationId} is not connected to ${connectedUser.id}`)
+        // Forbidden
+        res
+          .status(403)
+          .json(
+            of(
+              null,
+              ResponseStatusCodes.AccessDenied,
+              `Organization ID ${organizationId} is not accesible`,
+            ),
+          )
+        return
+      }
+    }
+  }
+
+  // this check is only required for admins
+  if (admin && !isAllowed(admin, listOfRequiredRoles, connectedUser.id)) {
     console.warn(`Admin user ${connectedUser.id} is not allowed for ${listOfRequiredRoles}`)
     // Forbidden
     res
@@ -112,7 +158,7 @@ export const authorizationMiddleware = (
   // Set it for the actual route
   res.locals.connectedUser = connectedUser // TODO to be replaced with `authenticatedUser`
   res.locals.authenticatedUser = connectedUser
-  // TODO: conrollers should use this instead of reading the query/body/header so we can refactor separately
+  // TODO: controllers should use this instead of reading the query/body/header so we can refactor separately
   res.locals.organizationId = organizationId
 
   // Done
