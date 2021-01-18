@@ -5,6 +5,7 @@ import {authorizationMiddleware} from '../../../../common/src/middlewares/author
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import {CreateAppointmentRequest} from '../../models/appointment'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
+import AdminController from "./admin/package.controller";
 
 class AppointmentController implements IControllerBase {
   public path = '/reservation'
@@ -72,3 +73,5 @@ class AppointmentController implements IControllerBase {
     }
   }
 }
+
+export default AppointmentController
