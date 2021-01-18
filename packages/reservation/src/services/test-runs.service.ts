@@ -24,7 +24,7 @@ export class TestRunsService {
     return new DateTestRunsRepository(this.dataStore, testRunDate)
   }
 
-  create(testRunDateTime: Date): Promise<TestRunDBModel> {
+  create(testRunDateTime: Date, name: string): Promise<TestRunDBModel> {
     const testRunDate = getDateFromDatetime(testRunDateTime)
     return this.getIdentifierRepository(testRunDate)
       .getUniqueId('testRun')
@@ -34,6 +34,7 @@ export class TestRunsService {
           testRunId: `T${id}`,
           testRunDateTime: firestore.Timestamp.fromDate(testRunDateTime),
           testRunDate,
+          name,
         } as TestRunDBModel)
       })
   }

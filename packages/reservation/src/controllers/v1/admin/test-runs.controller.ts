@@ -23,15 +23,15 @@ class TestRunsController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.get(
       this.path,
-      authorizationMiddleware([
-        RequiredUserPermission.LabTestRuns,
-        RequiredUserPermission.LabDueToday,
-      ]),
+      authorizationMiddleware(
+        [RequiredUserPermission.LabTestRuns, RequiredUserPermission.LabDueToday],
+        true,
+      ),
       this.getListTestRuns,
     )
     innerRouter.post(
       this.path,
-      authorizationMiddleware([RequiredUserPermission.LabTestRuns]),
+      authorizationMiddleware([RequiredUserPermission.LabTestRuns], true),
       this.createTestRun,
     )
 
@@ -58,13 +58,13 @@ class TestRunsController implements IControllerBase {
 
   createTestRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunDateTime} = req.body as TestRunsPostRequest
+      const {name, testRunDateTime} = req.body as TestRunsPostRequest
 
       if (testRunDateTime && !isValidDate(testRunDateTime)) {
         throw new BadRequestException('testRunDate is invalid')
       }
 
-      const testRun = await this.testRunsService.create(new Date(testRunDateTime))
+      const testRun = await this.testRunsService.create(new Date(testRunDateTime), name)
 
       res.json(actionSucceed(testRunDTOResponse(testRun)))
     } catch (error) {
