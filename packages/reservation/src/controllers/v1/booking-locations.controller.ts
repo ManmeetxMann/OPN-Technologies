@@ -2,7 +2,8 @@ import {NextFunction, Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {authMiddleware} from '../../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 
 import {PackageService} from '../../services/package.service'
 
@@ -17,7 +18,11 @@ class BookingLocationController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.get(this.path + '/', authMiddleware, this.getBookingLocations)
+    innerRouter.get(
+      this.path + '/',
+      authorizationMiddleware([RequiredUserPermission.RegUser]),
+      this.getBookingLocations,
+    )
 
     this.router.use('/', innerRouter)
   }
