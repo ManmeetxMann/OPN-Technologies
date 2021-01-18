@@ -49,4 +49,13 @@ export class AcuityRepository extends AcuityScheduling {
   getCalendarList(): Promise<Calendar[]> {
     return this.getCalendars()
   }
+
+  async getAvailabitilyDates(
+    appointmentTypeID: number,
+    month: string,
+    calendarID: number,
+    timezone: string,
+  ): Promise<{date: string}[]> {
+    return this.getAvailabitilyDatesList(appointmentTypeID, month, calendarID, timezone)
+  }
 }

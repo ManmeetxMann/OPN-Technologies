@@ -435,4 +435,21 @@ export class AppoinmentService {
   async getAppointmentDBByPackageCode(packageCode: string): Promise<AppointmentDBModel[]> {
     return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
   }
+
+  async getAvailabitilyDateList(
+    id: string,
+    year: number,
+    month: number,
+  ): Promise<{date: string}[]> {
+    const {appointmentTypeId, calendarTimezone, calendarId} = JSON.parse(
+      Buffer.from(id, 'base64').toString(),
+    )
+
+    return this.acuityRepository.getAvailabitilyDates(
+      appointmentTypeId,
+      `${year}-${month}`,
+      calendarId,
+      calendarTimezone,
+    )
+  }
 }
