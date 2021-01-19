@@ -43,8 +43,10 @@ export const authorizationMiddleware = (
 
   const userService = new UserService()
   let connectedUser: User
-  const regUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
-  const adminUser = await userService.findOneByAdminAuthUserId(validatedAuthUser.uid)
+  const [regUser, adminUser] = await Promise.all([
+    userService.findOneByAuthUserId(validatedAuthUser.uid),
+    userService.findOneByAdminAuthUserId(validatedAuthUser.uid),
+  ])
 
   const seekRegularAuth = listOfRequiredRoles.includes(RequiredUserPermission.RegUser)
   const seekAdminAuth = listOfRequiredRoles.some((role) => role !== RequiredUserPermission.RegUser)
@@ -56,10 +58,10 @@ export const authorizationMiddleware = (
     if (adminUser) {
       connectedUser = adminUser
     } else if (regUser?.admin) {
-      connectedUser = regUser
       console.warn(
         `Admin user ${connectedUser.id} was allowed to authenticate using user.authUserId`,
       )
+      connectedUser = regUser
     }
   }
   if (!connectedUser) {
