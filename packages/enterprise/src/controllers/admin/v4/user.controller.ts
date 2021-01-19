@@ -97,7 +97,7 @@ class UserController implements IControllerBase {
 
     this.router.use(
       root,
-      authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin], true),
       innerRouter().get('/', findAll),
     )
   }

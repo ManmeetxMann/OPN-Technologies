@@ -10,9 +10,8 @@ import {AdminProfile} from '../data/admin'
 
 export const authorizationMiddleware = (
   listOfRequiredRoles: RequiredUserPermission[],
-  byPassOrgCheck?: boolean,
+  requireOrg = false,
 ) => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const byPassOrganizationCheck = byPassOrgCheck ?? false
   const bearerHeader = req.headers['authorization']
   if (!bearerHeader) {
     res.status(401).json(of(null, ResponseStatusCodes.Unauthorized, 'Authorization token required'))
@@ -88,7 +87,7 @@ export const authorizationMiddleware = (
 
   const admin = connectedUser.admin as AdminProfile
 
-  if (!byPassOrganizationCheck) {
+  if (requireOrg) {
     if (!organizationId) {
       if (!authorizedWithoutOrgId(admin, organizationId)) {
         console.warn(`${connectedUser.id} did not provide an organizationId`)

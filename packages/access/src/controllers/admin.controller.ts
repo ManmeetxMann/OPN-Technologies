@@ -55,22 +55,17 @@ class AdminController implements IRouteController {
   }
 
   public initRoutes(): void {
+    // TODO: all of these should specify the organizationId
+    const requireAdmin = authorizationMiddleware([RequiredUserPermission.OrgAdmin], false)
+    const requireAdminWithOrg = authorizationMiddleware([RequiredUserPermission.OrgAdmin], true)
     const routes = express
       .Router()
-      .post('/stats', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), this.stats)
-      .post('/stats/v2', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), this.statsV2)
-      .post('/enter', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), this.enter)
-      .post('/exit', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), this.exit)
-      .post(
-        '/createToken',
-        authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
-        this.createToken,
-      )
-      .post(
-        '/enterorexit/tag',
-        authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
-        this.enterOrExitUsingATag,
-      )
+      .post('/stats', requireAdmin, this.stats)
+      .post('/stats/v2', requireAdminWithOrg, this.statsV2)
+      .post('/enter', requireAdmin, this.enter)
+      .post('/exit', requireAdmin, this.exit)
+      .post('/createToken', requireAdmin, this.createToken)
+      .post('/enterorexit/tag', requireAdmin, this.enterOrExitUsingATag)
       .get('/:organizationId/locations/accessible', this.getAccessibleLocations)
     this.router.use('/admin', routes)
   }

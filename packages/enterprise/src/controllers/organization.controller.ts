@@ -87,7 +87,7 @@ class OrganizationController implements IControllerBase {
         .post('/', this.addGroups)
         .get(
           '/',
-          authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
+          authorizationMiddleware([RequiredUserPermission.OrgAdmin], true),
           this.getGroupsForAdmin,
         )
         .get('/public', this.getGroupsForPublic)
@@ -100,34 +100,38 @@ class OrganizationController implements IControllerBase {
     )
     // this has to be more specific than the general 'stats' section
     // TODO: move these to a separate route prefix, to avoid repetition
+    const sharedAccess = authorizationMiddleware(
+      [RequiredUserPermission.OrgAdmin, RequiredUserPermission.RegUser],
+      true,
+    )
     const publicStats = [
       innerRouter().use(
         '/stats/family',
-        authorizationMiddleware([RequiredUserPermission.OrgAdmin, RequiredUserPermission.RegUser]),
+        sharedAccess,
         adminOrSelf,
         innerRouter().get('/', this.getFamilyStats),
       ),
       innerRouter().use(
         '/stats/contact-trace-locations',
-        authorizationMiddleware([RequiredUserPermission.OrgAdmin, RequiredUserPermission.RegUser]),
+        sharedAccess,
         adminOrSelf,
         innerRouter().get('/', this.getUserContactTraceLocations),
       ),
       innerRouter().use(
         '/stats/contact-traces',
-        authorizationMiddleware([RequiredUserPermission.OrgAdmin, RequiredUserPermission.RegUser]),
+        sharedAccess,
         adminOrSelf,
         innerRouter().get('/', this.getUserContactTraces),
       ),
       innerRouter().use(
         '/stats/contact-trace-exposures',
-        authorizationMiddleware([RequiredUserPermission.OrgAdmin, RequiredUserPermission.RegUser]),
+        sharedAccess,
         adminOrSelf,
         innerRouter().get('/', this.getUserContactTraceExposures),
       ),
       innerRouter().use(
         '/stats/contact-trace-attestations',
-        authorizationMiddleware([RequiredUserPermission.OrgAdmin, RequiredUserPermission.RegUser]),
+        sharedAccess,
         adminOrSelf,
         innerRouter().get('/', this.getUserContactTraceAttestations),
       ),
@@ -135,7 +139,7 @@ class OrganizationController implements IControllerBase {
     // prettier-ignore
     const stats = innerRouter().use(
       '/stats',
-      authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin], true),
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/health', this.getStatsHealth)
