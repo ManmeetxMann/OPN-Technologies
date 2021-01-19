@@ -154,6 +154,13 @@ const generateDeadline = (utcDateTime) => {
   return deadline
 }
 
+function handleBoolean(yesOrNo: string) {
+  if(yesOrNo === "yes"){
+    return true
+  }
+  return false
+}
+
 function piData(realData: string) {
   const randomName = uniqueNamesGenerator({
     dictionaries: [names, adjectives, colors],
@@ -232,10 +239,10 @@ async function createAppointment(acuityAppointment) {
   let organizationId = ''
   let address = ''
   let addressUnit = ''
-  let readTermsAndConditions = false
-  let receiveResultsViaEmail = false
-  let receiveNotificationsFromGov = false
-  let agreeToConductFHHealthAccessment = false
+  let readTermsAndConditions = ''
+  let receiveResultsViaEmail = ''
+  let receiveNotificationsFromGov = ''
+  let agreeToConductFHHealthAccessment = ''
 
   let registeredNursePractitioner = ''
   try {
@@ -340,7 +347,7 @@ async function createAppointment(acuityAppointment) {
       acuityAppointmentId: acuityAppointment.id,
       address: address,
       addressUnit: addressUnit,
-      agreeToConductFHHealthAccessment: agreeToConductFHHealthAccessment,
+      agreeToConductFHHealthAccessment: handleBoolean(agreeToConductFHHealthAccessment),
       appointmentStatus: 'Pending', //TODO
       barCode: barCode,
       canceled: acuityAppointment.canceled,
@@ -356,9 +363,9 @@ async function createAppointment(acuityAppointment) {
       organizationId: organizationId,
       packageCode: acuityAppointment.certificate,
       phone: acuityAppointment.phone,
-      readTermsAndConditions: readTermsAndConditions,
-      receiveNotificationsFromGov: receiveNotificationsFromGov,
-      receiveResultsViaEmail: receiveResultsViaEmail,
+      readTermsAndConditions: handleBoolean(readTermsAndConditions),
+      receiveNotificationsFromGov: handleBoolean(receiveNotificationsFromGov),
+      receiveResultsViaEmail: handleBoolean(receiveResultsViaEmail),
       registeredNursePractitioner: registeredNursePractitioner,
       //shareTestResultWithEmployer: boolean,//TODO
       timeOfAppointment: timeOfAppointment,
