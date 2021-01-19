@@ -21,7 +21,7 @@ class AppointmentAvailabilityController implements IControllerBase {
 
     innerRouter.get(
       this.path + '/slots',
-    //   authorizationMiddleware([RequiredUserPermission.RegUser]),
+      authorizationMiddleware([RequiredUserPermission.RegUser]),
       this.getAvailableSlots,
     )
 
