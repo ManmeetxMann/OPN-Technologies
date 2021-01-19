@@ -1773,18 +1773,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /reservation/admin/api/v1/booking-locations:
+  /reservation/admin/api/v1/availability/slots:
     get:
-      description: Get list Booking Locations
+      description: Get Appointment Available Slots 
       tags:
-        - Booking locations
+        - Appointment availability
       security:
         - bearerAuthJWT: []
       parameters:
         - in: query
-          name: organizationId
+          name: id
           schema:
             type: string
+          required: true
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
           required: true
       responses:
         '200':
@@ -1801,19 +1807,13 @@ paths:
                       type: object
                       additionalProperties: false
                       properties:
-                        appointmentTypeName:
+                        label:
                           type: string
                         id:
                           type: string
-                        name:
-                          type: string
-                        address:
-                          type: string
                       required:
-                        - appointmentTypeName
+                        - label
                         - id
-                        - name
-                        - address
                   status:
                     type: object
                     additionalProperties: false

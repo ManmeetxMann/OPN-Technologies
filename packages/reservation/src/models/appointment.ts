@@ -192,6 +192,11 @@ export enum DeadlineLabel {
   NextDay = 'NextDay',
 }
 
+export type AvailableSlotResponse = {
+  id: string
+  label: string
+}
+
 export const appointmentUiDTOResponse = (appointment: AppointmentDBModel): AppointmentUiDTO => {
   const timeZone = Config.get('DEFAULT_TIME_ZONE')
   return {

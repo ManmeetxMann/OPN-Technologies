@@ -13,6 +13,7 @@ import {
   AppointmentModelBase,
   AppointmentStatus,
   AppointmentStatusHistoryDb,
+  AvailableSlotResponse,
   DeadlineLabel,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
@@ -434,5 +435,35 @@ export class AppoinmentService {
 
   async getAppointmentDBByPackageCode(packageCode: string): Promise<AppointmentDBModel[]> {
     return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
+  }
+
+  async getAvailableSlots(id: string, date: string): Promise<AvailableSlotResponse[]> {
+    console.log(id)
+    const {appointmentTypeId, calendarTimezone, calendarId} = JSON.parse(
+      Buffer.from(id, 'base64').toString(),
+    )
+
+    const slotsList = await this.acuityRepository.getAvailableSlots(
+      appointmentTypeId,
+      date,
+      calendarId,
+      calendarTimezone,
+    )
+
+    return slotsList.map(({time}) => {
+      const idBuf = {
+        appointmentTypeId,
+        calendarTimezone,
+        calendarId,
+        date,
+        time,
+      }
+      const id = Buffer.from(JSON.stringify(idBuf)).toString('base64')
+
+      return {
+        id,
+        label: moment(time).tz(calendarTimezone).format('hh:mmA'),
+      }
+    })
   }
 }
