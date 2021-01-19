@@ -31,6 +31,12 @@ const acuityFormFieldIdsNonProd = {
   organizationId: 8842033,
   agreement: 8981060,
   birthDay: 8637043,
+  homeAddress: 9082854,
+  homeAddeessUnit: 9082855,
+  readTermsAndConditions: 9082890,
+  receiveResultsViaEmail: 9082891,
+  agreeToConductFHHealthAccessment: 9082892,
+  receiveNotificationsFromGov: 9082893
 }
 const acuityFormFieldIdsProd = {
   barCode: 8594852,
@@ -38,10 +44,18 @@ const acuityFormFieldIdsProd = {
   organizationId: 8854779,
   agreement: 8981060,
   birthDay: 8561464,
+  homeAddress: 8738660,
+  homeAddeessUnit: 8738661,
+  readTermsAndConditions: 8562278,
+  receiveResultsViaEmail: 8595773,
+  agreeToConductFHHealthAccessment: 8946232,
+  receiveNotificationsFromGov: 8595854
 }
 
-const acuityBarCodeFormId = ACUITY_ENV_NON_PROD ? 1564839 : 1559910 //PROD: 1559910 TEST: 1564839
-const acuityBirthDayFormId = ACUITY_ENV_NON_PROD ? 1567398 : 1554251 //PROD: 1554251 TEST: 1567398
+const acuityHomeAddressFormId = ACUITY_ENV_NON_PROD ? 1644637 : 1585198 //TEST:1644637 PROD:1585198 
+const acuityBarCodeFormId = ACUITY_ENV_NON_PROD ? 1564839 : 1559910 //TEST:1564839 PROD:1559910 
+const acuityBirthDayFormId = ACUITY_ENV_NON_PROD ? 1567398 : 1554251 //TEST:1567398 PROD:1554251 
+const acuityTermsAndConditionFormId = ACUITY_ENV_NON_PROD ? 1644640 : 1554370 //TEST:1644640 PROD:1554370 
 
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
 
@@ -130,6 +144,7 @@ const makeTimeEndOfTheDay = (datetime: moment.Moment): string => {
 }
 
 const generateDeadline = (utcDateTime) => {
+  //TODO: Handle Labels
   let deadline
   if (utcDateTime.hours() > 12) {
     deadline = makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
@@ -215,6 +230,12 @@ async function createAppointment(acuityAppointment) {
   let barCode = ''
   let dateOfBirth = ''
   let organizationId = ''
+  let address = ''
+  let addressUnit = ''
+  let readTermsAndConditions = false
+  let receiveResultsViaEmail = false
+  let receiveNotificationsFromGov = false
+  let agreeToConductFHHealthAccessment = false
 
   let registeredNursePractitioner = ''
   try {
@@ -257,13 +278,70 @@ async function createAppointment(acuityAppointment) {
     ).value
   } catch (e) {
     console.warn(`Invalid registeredNursePractitioner: ${e.message}`)
-    //return Promise.resolve()
+  }
+
+
+  try {
+    address = findByFieldIdForms(
+      findByIdForms(acuityAppointment.forms, acuityHomeAddressFormId).values,
+      acuityFormFieldIds.homeAddress,
+    ).value
+  } catch (e) {
+    console.warn(`Invalid address: ${e.message}`)
+  }
+
+  try {
+    addressUnit = findByFieldIdForms(
+      findByIdForms(acuityAppointment.forms, acuityHomeAddressFormId).values,
+      acuityFormFieldIds.homeAddeessUnit,
+    ).value
+  } catch (e) {
+    console.warn(`Invalid addressUnit: ${e.message}`)
+  }
+
+  try {
+    readTermsAndConditions = findByFieldIdForms(
+      findByIdForms(acuityAppointment.forms, acuityTermsAndConditionFormId).values,
+      acuityFormFieldIds.readTermsAndConditions,
+    ).value
+  } catch (e) {
+    console.warn(`Invalid readTermsAndConditions: ${e.message}`)
+  }
+
+  try {
+    receiveResultsViaEmail = findByFieldIdForms(
+      findByIdForms(acuityAppointment.forms, acuityTermsAndConditionFormId).values,
+      acuityFormFieldIds.receiveResultsViaEmail,
+    ).value
+  } catch (e) {
+    console.warn(`Invalid receiveResultsViaEmail: ${e.message}`)
+  }
+
+  try {
+    receiveNotificationsFromGov = findByFieldIdForms(
+      findByIdForms(acuityAppointment.forms, acuityTermsAndConditionFormId).values,
+      acuityFormFieldIds.receiveNotificationsFromGov,
+    ).value
+  } catch (e) {
+    console.warn(`Invalid receiveNotificationsFromGov: ${e.message}`)
+  }
+
+  try {
+    agreeToConductFHHealthAccessment = findByFieldIdForms(
+      findByIdForms(acuityAppointment.forms, acuityTermsAndConditionFormId).values,
+      acuityFormFieldIds.agreeToConductFHHealthAccessment,
+    ).value
+  } catch (e) {
+    console.warn(`Invalid agreeToConductFHHealthAccessment: ${e.message}`)
   }
 
   try {
     const appointment = {
       acuityAppointmentId: acuityAppointment.id,
-      appointmentStatus: 'Pending',
+      address: address,
+      addressUnit: addressUnit,
+      agreeToConductFHHealthAccessment: agreeToConductFHHealthAccessment,
+      appointmentStatus: 'Pending', //TODO
       barCode: barCode,
       canceled: acuityAppointment.canceled,
       dateOfAppointment: dateOfAppointment,
@@ -273,12 +351,16 @@ async function createAppointment(acuityAppointment) {
       email: piEmail(acuityAppointment.email),
       firstName: piData(acuityAppointment.firstName),
       lastName: piData(acuityAppointment.lastName),
+      latestResult: 'Pending',
       location: acuityAppointment.location,
       organizationId: organizationId,
       packageCode: acuityAppointment.certificate,
       phone: acuityAppointment.phone,
+      readTermsAndConditions: readTermsAndConditions,
+      receiveNotificationsFromGov: receiveNotificationsFromGov,
+      receiveResultsViaEmail: receiveResultsViaEmail,
       registeredNursePractitioner: registeredNursePractitioner,
-      result: 'Pending',
+      //shareTestResultWithEmployer: boolean,//TODO
       timeOfAppointment: timeOfAppointment,
       timestamps: {
         createdAt: firestore.FieldValue.serverTimestamp(),
