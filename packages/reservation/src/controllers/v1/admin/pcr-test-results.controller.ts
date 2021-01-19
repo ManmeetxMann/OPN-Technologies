@@ -39,32 +39,32 @@ class PCRTestResultController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results-bulk',
-      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
+      authorizationMiddleware([RequiredUserPermission.LabSendResults], true),
       this.createReportForPCRResults,
     )
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results',
-      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
+      authorizationMiddleware([RequiredUserPermission.LabSendResults], true),
       this.createPCRResults,
     )
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results/history',
-      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
+      authorizationMiddleware([RequiredUserPermission.LabSendResults], true),
       this.listPCRResultsHistory,
     )
     innerRouter.get(
       this.path + '/api/v1/pcr-test-results',
-      authorizationMiddleware([RequiredUserPermission.LabPCRTestResults]),
+      authorizationMiddleware([RequiredUserPermission.LabPCRTestResults], true),
       this.listPCRResults,
     )
     innerRouter.get(
       this.path + '/api/v1/pcr-test-results-bulk/report-status',
-      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
+      authorizationMiddleware([RequiredUserPermission.LabSendResults], true),
       this.listPCRTestResultReportStatus,
     )
     innerRouter.put(
       this.path + '/api/v1/pcr-test-results/add-test-run',
-      authorizationMiddleware([RequiredUserPermission.LabDueToday]),
+      authorizationMiddleware([RequiredUserPermission.LabDueToday], true),
       this.addTestRunToPCR,
     )
 
@@ -149,41 +149,45 @@ class PCRTestResultController implements IControllerBase {
 
       const pcrTests = await this.pcrTestResultsService.getPCRTestsByBarcodeWithLinked(barcode)
 
-      const formedPcrTests: PCRTestResultHistoryDTO[] = barcode.map((code) => {
-        const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
-        const results = testSameBarcode
-          .map((testSame) => {
-            const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
-              ...linkedResult.resultSpecs,
-              result: linkedResult.result,
-            }))
-            return [
-              {
-                ...testSame.resultSpecs,
-                result: testSame.result,
-              },
-              ...linkedSameTests,
-            ]
-          })
-          .flat()
-        const waitingResult = !!pcrTests.find(
-          (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
-        )
-        if (testSameBarcode.length) {
-          return {
-            id: testSameBarcode[0].id,
-            barCode: code,
-            results: waitingResult ? [] : results,
-            waitingResult,
+      const formedPcrTests: PCRTestResultHistoryDTO[] = await Promise.all(
+        barcode.map(async (code) => {
+          const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
+          const results = testSameBarcode
+            .map((testSame) => {
+              const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
+                ...linkedResult.resultSpecs,
+                result: linkedResult.result,
+              }))
+              return [
+                {
+                  ...testSame.resultSpecs,
+                  result: testSame.result,
+                },
+                ...linkedSameTests,
+              ]
+            })
+            .flat()
+          const waitingResult = !!pcrTests.find(
+            (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
+          )
+          if (testSameBarcode.length) {
+            return {
+              id: testSameBarcode[0].id,
+              barCode: code,
+              results: waitingResult ? [] : results,
+              waitingResult,
+              ...(!waitingResult && {reason: await this.pcrTestResultsService.getReason(code)}),
+            }
           }
-        }
-        return {
-          id: code,
-          barCode: code,
-          results: [],
-          waitingResult: false,
-        }
-      })
+          return {
+            id: code,
+            barCode: code,
+            results: [],
+            waitingResult: false,
+            reason: await this.pcrTestResultsService.getReason(code),
+          }
+        }),
+      )
 
       res.json(actionSucceed(formedPcrTests.map(PCRTestResultHistoryResponse)))
     } catch (error) {

@@ -1,4 +1,4 @@
-import {AppointmentStatus, ResultTypes} from './appointment'
+import {AppointmentReasons, AppointmentStatus, ResultTypes} from './appointment'
 
 export enum PCRResultActions {
   SendThisResult = 'SendThisResult',
@@ -81,6 +81,7 @@ export type PCRTestResultHistoryDTO = {
   barCode: string
   waitingResult: boolean
   results: PCRResults[]
+  reason: AppointmentReasons
 }
 
 export type PCRResults = {
@@ -149,6 +150,7 @@ export const PCRTestResultHistoryResponse = (
     hexCt: result.hexCt,
     result: result.result,
   })),
+  reason: pcrTests.reason,
 })
 
 export type PcrTestResultsListByDeadlineRequest = {

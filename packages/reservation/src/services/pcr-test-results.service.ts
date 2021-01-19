@@ -21,8 +21,8 @@ import {
   PCRTestResultData,
   PCRTestResultDBModel,
   PCRTestResultEmailDTO,
-  PCRTestResultListDTO,
   PCRTestResultLinkedDBModel,
+  PCRTestResultListDTO,
   PCRTestResultRequest,
   PcrTestResultsListRequest,
   ResultReportStatus,
@@ -31,7 +31,13 @@ import {
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import testResultPDFTemplate from '../templates/pcrTestResult'
-import {AppointmentDBModel, DeadlineLabel, ResultTypes} from '../models/appointment'
+import {
+  AppointmentDBModel,
+  AppointmentReasons,
+  AppointmentStatus,
+  DeadlineLabel,
+  ResultTypes,
+} from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
@@ -634,5 +640,19 @@ export class PCRTestResultsService {
     }
     await this.pcrTestResultsRepository.updateProperty(pcrTestResultId, 'testRunId', testRunId)
     await this.appointmentService.makeInProgress(pcrTestResults.appointmentId, testRunId, adminId)
+  }
+
+  async getReason(barCode: string): Promise<AppointmentReasons> {
+    const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
+    switch (appointment.appointmentStatus) {
+      case AppointmentStatus.Reported:
+        return AppointmentReasons.AlreadyReported
+      case AppointmentStatus.ReRunRequired:
+        return AppointmentReasons.ReSampleAlreadyRequested
+      case AppointmentStatus.InProgress:
+        return AppointmentReasons.InProgress
+      default:
+        return AppointmentReasons.NoInProgress
+    }
   }
 }
