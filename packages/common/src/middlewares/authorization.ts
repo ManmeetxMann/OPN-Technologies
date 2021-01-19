@@ -52,7 +52,6 @@ export const authorizationMiddleware = (
 
   if (seekRegularAuth && regUser) {
     connectedUser = regUser
-    connectedUser.admin = null
   } else if (seekAdminAuth) {
     if (adminUser) {
       connectedUser = adminUser
@@ -97,7 +96,7 @@ export const authorizationMiddleware = (
           .json(of(null, ResponseStatusCodes.AccessDenied, `Organization ID not provided`))
         return
       }
-    } else if (admin) {
+    } else if (admin && !seekRegularAuth) {
       // user authenticated as an admin, needs to be valid
       if (!isAllowed(connectedUser, listOfRequiredRoles)) {
         console.warn(`${organizationId} is not accesible to ${connectedUser.id}`)
