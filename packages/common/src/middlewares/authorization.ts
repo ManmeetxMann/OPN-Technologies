@@ -43,26 +43,25 @@ export const authorizationMiddleware = (
 
   const userService = new UserService()
   let connectedUser: User
-  const seekRegularAuth = listOfRequiredRoles.includes(RequiredUserPermission.RegUser)
-  if (!seekRegularAuth) {
-    connectedUser = await userService.findOneByAdminAuthUserId(validatedAuthUser.uid)
-  }
+  const regUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
+  const adminUser = await userService.findOneByAdminAuthUserId(validatedAuthUser.uid)
 
-  if (!connectedUser) {
-    const regularUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
-    if (regularUser) {
-      if (!seekRegularAuth && regularUser.admin) {
-        connectedUser = regularUser
-        console.warn(
-          `Admin user ${connectedUser.id} was allowed to authenticate using user.authUserId`,
-        )
-      } else if (seekRegularAuth) {
-        connectedUser = regularUser
-        connectedUser.admin = null
-      }
+  const seekRegularAuth = listOfRequiredRoles.includes(RequiredUserPermission.RegUser)
+  const seekAdminAuth = listOfRequiredRoles.some((role) => role !== RequiredUserPermission.RegUser)
+
+  if (seekRegularAuth && regUser) {
+    connectedUser = regUser
+    connectedUser.admin = null
+  } else if (seekAdminAuth) {
+    if (adminUser) {
+      connectedUser = adminUser
+    } else if (regUser?.admin) {
+      connectedUser = regUser
+      console.warn(
+        `Admin user ${connectedUser.id} was allowed to authenticate using user.authUserId`,
+      )
     }
   }
-
   if (!connectedUser) {
     // Forbidden
     res
