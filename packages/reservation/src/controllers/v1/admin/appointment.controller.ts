@@ -80,6 +80,7 @@ class AdminAppointmentController implements IControllerBase {
         transportRunId,
         testRunId,
         deadlineDate,
+        appointmentStatus,
       } = req.query as AppointmentByOrganizationRequest
 
       if (testRunId && transportRunId) {
@@ -107,6 +108,7 @@ class AdminAppointmentController implements IControllerBase {
         transportRunId,
         testRunId,
         deadlineDate,
+        appointmentStatus,
       })
 
       res.json(
