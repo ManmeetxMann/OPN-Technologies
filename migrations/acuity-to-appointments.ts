@@ -10,8 +10,9 @@ import {uniqueNamesGenerator, adjectives, names, colors} from 'unique-names-gene
 
 const ANONYMOUS_PI_DATA = true
 const ACUITY_ENV_NON_PROD = false
-const START_DATE = '2020-12-31' //Starting from OCT 1st
-const END_DATE = '2021-01-30' //new Date()
+const START_DATE = '2020-11-01' //Starting from OCT 1st
+const END_DATE = '2020-11-30' //new Date()
+
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
 
@@ -36,7 +37,8 @@ const acuityFormFieldIdsNonProd = {
   readTermsAndConditions: 9082890,
   receiveResultsViaEmail: 9082891,
   agreeToConductFHHealthAccessment: 9082892,
-  receiveNotificationsFromGov: 9082893
+  receiveNotificationsFromGov: 9082893,
+  shareTestResultWithEmployer: 'XXX',
 }
 const acuityFormFieldIdsProd = {
   barCode: 8594852,
@@ -49,13 +51,15 @@ const acuityFormFieldIdsProd = {
   readTermsAndConditions: 8562278,
   receiveResultsViaEmail: 8595773,
   agreeToConductFHHealthAccessment: 8946232,
-  receiveNotificationsFromGov: 8595854
+  receiveNotificationsFromGov: 8595854,
+  shareTestResultWithEmployer: 8691773,
 }
 
-const acuityHomeAddressFormId = ACUITY_ENV_NON_PROD ? 1644637 : 1585198 //TEST:1644637 PROD:1585198 
-const acuityBarCodeFormId = ACUITY_ENV_NON_PROD ? 1564839 : 1559910 //TEST:1564839 PROD:1559910 
-const acuityBirthDayFormId = ACUITY_ENV_NON_PROD ? 1567398 : 1554251 //TEST:1567398 PROD:1554251 
-const acuityTermsAndConditionFormId = ACUITY_ENV_NON_PROD ? 1644640 : 1554370 //TEST:1644640 PROD:1554370 
+const acuityHomeAddressFormId = ACUITY_ENV_NON_PROD ? 1644637 : 1585198 //TEST:1644637 PROD:1585198
+const acuityBarCodeFormId = ACUITY_ENV_NON_PROD ? 1564839 : 1559910 //TEST:1564839 PROD:1559910
+const acuityBirthDayFormId = ACUITY_ENV_NON_PROD ? 1567398 : 1554251 //TEST:1567398 PROD:1554251
+const acuityTermsAndConditionFormId = ACUITY_ENV_NON_PROD ? 1644640 : 1554370 //TEST:1644640 PROD:1554370
+const acuityShareTestResultWithEmployerFormId = ACUITY_ENV_NON_PROD ? 'XXX' : 1576924 //TEST:1644640 PROD:1554370
 
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
 
@@ -155,7 +159,7 @@ const generateDeadline = (utcDateTime) => {
 }
 
 function handleBoolean(yesOrNo: string) {
-  if(yesOrNo === "yes"){
+  if (yesOrNo === 'yes') {
     return true
   }
   return false
@@ -223,7 +227,7 @@ async function createAppointment(acuityAppointment) {
     .get()
 
   if (appointmentInDb.size > 0) {
-    console.warn(`Appointment ID: ${acuityAppointment.id} already exists`)
+    console.warn(`AppointmentID: ${acuityAppointment.id} already exists`)
     return Promise.resolve()
   }
 
@@ -243,6 +247,7 @@ async function createAppointment(acuityAppointment) {
   let receiveResultsViaEmail = ''
   let receiveNotificationsFromGov = ''
   let agreeToConductFHHealthAccessment = ''
+  let shareTestResultWithEmployer = ''
 
   let registeredNursePractitioner = ''
   try {
@@ -251,7 +256,7 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.barCode,
     ).value
   } catch (e) {
-    console.warn(`Invalid BarCode: ${e.message}`)
+    console.warn(`AppointmentID: ${acuityAppointment.id} Invalid BarCode: ${e.message}`)
     throw e
   }
 
@@ -261,7 +266,7 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.birthDay,
     ).value
   } catch (e) {
-    console.warn(`Invalid Date of Birth: ${e.message}`)
+    console.warn(`AppointmentID: ${acuityAppointment.id} Invalid Date of Birth: ${e.message}`)
   }
 
   try {
@@ -274,7 +279,9 @@ async function createAppointment(acuityAppointment) {
       organizationId = organizationIdField.value
     }
   } catch (e) {
-    console.warn(`Invalid ORG for ${acuityAppointment.id}: ${e.message}`)
+    console.warn(
+      `AppointmentID: ${acuityAppointment.id} Invalid ORG for ${acuityAppointment.id}: ${e.message}`,
+    )
     //return Promise.resolve()
   }
 
@@ -284,9 +291,10 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.nurse,
     ).value
   } catch (e) {
-    console.warn(`Invalid registeredNursePractitioner: ${e.message}`)
+    console.warn(
+      `AppointmentID: ${acuityAppointment.id} Invalid registeredNursePractitioner: ${e.message}`,
+    )
   }
-
 
   try {
     address = findByFieldIdForms(
@@ -303,7 +311,7 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.homeAddeessUnit,
     ).value
   } catch (e) {
-    console.warn(`Invalid addressUnit: ${e.message}`)
+    console.warn(`AppointmentID: ${acuityAppointment.id} Invalid addressUnit: ${e.message}`)
   }
 
   try {
@@ -312,7 +320,9 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.readTermsAndConditions,
     ).value
   } catch (e) {
-    console.warn(`Invalid readTermsAndConditions: ${e.message}`)
+    console.warn(
+      `AppointmentID: ${acuityAppointment.id} Invalid readTermsAndConditions: ${e.message}`,
+    )
   }
 
   try {
@@ -321,7 +331,9 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.receiveResultsViaEmail,
     ).value
   } catch (e) {
-    console.warn(`Invalid receiveResultsViaEmail: ${e.message}`)
+    console.warn(
+      `AppointmentID: ${acuityAppointment.id} Invalid receiveResultsViaEmail: ${e.message}`,
+    )
   }
 
   try {
@@ -330,7 +342,9 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.receiveNotificationsFromGov,
     ).value
   } catch (e) {
-    console.warn(`Invalid receiveNotificationsFromGov: ${e.message}`)
+    console.warn(
+      `AppointmentID: ${acuityAppointment.id} Invalid receiveNotificationsFromGov: ${e.message}`,
+    )
   }
 
   try {
@@ -339,7 +353,20 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.agreeToConductFHHealthAccessment,
     ).value
   } catch (e) {
-    console.warn(`Invalid agreeToConductFHHealthAccessment: ${e.message}`)
+    console.warn(
+      `AppointmentID: ${acuityAppointment.id} Invalid agreeToConductFHHealthAccessment: ${e.message}`,
+    )
+  }
+
+  try {
+    shareTestResultWithEmployer = findByFieldIdForms(
+      findByIdForms(acuityAppointment.forms, acuityShareTestResultWithEmployerFormId).values,
+      acuityFormFieldIds.shareTestResultWithEmployer,
+    ).value
+  } catch (e) {
+    console.warn(
+      `AppointmentID: ${acuityAppointment.id} Invalid shareTestResultWithEmployer: ${e.message}`,
+    )
   }
 
   try {
@@ -367,7 +394,7 @@ async function createAppointment(acuityAppointment) {
       receiveNotificationsFromGov: handleBoolean(receiveNotificationsFromGov),
       receiveResultsViaEmail: handleBoolean(receiveResultsViaEmail),
       registeredNursePractitioner: registeredNursePractitioner,
-      //shareTestResultWithEmployer: boolean,//TODO
+      shareTestResultWithEmployer: shareTestResultWithEmployer,
       timeOfAppointment: timeOfAppointment,
       timestamps: {
         createdAt: firestore.FieldValue.serverTimestamp(),
