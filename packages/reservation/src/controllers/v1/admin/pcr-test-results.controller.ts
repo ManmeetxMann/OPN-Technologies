@@ -167,6 +167,9 @@ class PCRTestResultController implements IControllerBase {
             (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
           )
           if (testSameBarcode.length) {
+            if (testSameBarcode.length > 1) {
+              console.log(`Warning tests with same barcode are more than one. Barcode: ${code}.`)
+            }
             return {
               id: testSameBarcode[0].id,
               barCode: code,
