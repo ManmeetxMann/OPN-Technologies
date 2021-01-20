@@ -19,7 +19,7 @@ export type TestRunDBModel = Auditable &
 export type TestRun = {
   testRunId: string
   testRunDateTime: firestore.Timestamp
-  name
+  name: string
 }
 
 type TestRunUi = {
