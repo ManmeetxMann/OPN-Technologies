@@ -21,6 +21,7 @@ import TransportRunsController from './controllers/v1/admin/transport-runs.contr
 import AppointmentControllerV2 from './controllers/v2/admin/appointment.controller'
 import AppointmentWebhookController from './controllers/v1/acuity_webhook/appoinments.controller'
 import BookingLocationController from './controllers/v1/booking-locations.controller'
+import AppointmentAvailabilityController from './controllers/v1/admin/appointment-availability.controller'
 
 //import * as debugClient from '@google-cloud/debug-agent'
 //debugClient.start({allowExpressions: true})
@@ -45,6 +46,7 @@ const app = new App({
     new PCRTestResultController(),
     new AppointmentControllerV2(),
     new BookingLocationController(),
+    new AppointmentAvailabilityController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],
