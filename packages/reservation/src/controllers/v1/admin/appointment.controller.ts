@@ -2,8 +2,12 @@ import {NextFunction, Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
+import {isValidDate} from '../../../../../common/src/utils/times'
+import {getAdminId} from '../../../../../common/src/utils/auth'
 
 import {
   AppointmentByOrganizationRequest,
@@ -12,12 +16,7 @@ import {
   AppointmentDBModel,
 } from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
-import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
-import {isValidDate} from '../../../../../common/src/utils/times'
 import {TransportRunsService} from '../../../services/transport-runs.service'
-import {getAdminId} from '../../../../../common/src/utils/auth'
-import {UserRoles} from '../../../../../common/src/types/authorization'
 
 const isJustOneOf = (a: unknown, b: unknown) => !(a && b) || !(!a && !b)
 
@@ -33,41 +32,36 @@ class AdminAppointmentController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.get(
-      this.path + '/api/v1/appointments',
-      authorizationMiddleware([UserRoles.AppointmentsAdmin]),
-      this.getListAppointments,
-    )
+    const apptAuth = authorizationMiddleware([RequiredUserPermission.LabAppointments])
+    const apptAuthWithOrg = authorizationMiddleware([RequiredUserPermission.LabAppointments], true)
+    const receivingAuth = authorizationMiddleware([RequiredUserPermission.LabReceiving])
+    innerRouter.get(this.path + '/api/v1/appointments', apptAuthWithOrg, this.getListAppointments)
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
-      adminAuthMiddleware,
+      apptAuth,
       this.getAppointmentById,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/cancel',
-      adminAuthMiddleware,
+      apptAuthWithOrg,
       this.cancelAppointment,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/add-transport-run',
-      adminAuthMiddleware,
+      apptAuth,
       this.addTransportRun,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/:barCode',
-      adminAuthMiddleware,
+      apptAuth,
       this.getAppointmentByBarcode,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:barCode/receive',
-      adminAuthMiddleware,
+      receivingAuth,
       this.updateTestVial,
     )
-    innerRouter.put(
-      this.path + '/api/v1/appointments/receive',
-      adminAuthMiddleware,
-      this.addVialLocation,
-    )
+    innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
 
     this.router.use('/', innerRouter)
   }
@@ -81,6 +75,7 @@ class AdminAppointmentController implements IControllerBase {
         transportRunId,
         testRunId,
         deadlineDate,
+        appointmentStatus,
       } = req.query as AppointmentByOrganizationRequest
 
       if (testRunId && transportRunId) {
@@ -108,6 +103,7 @@ class AdminAppointmentController implements IControllerBase {
         transportRunId,
         testRunId,
         deadlineDate,
+        appointmentStatus,
       })
 
       res.json(

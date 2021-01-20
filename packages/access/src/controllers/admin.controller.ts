@@ -14,7 +14,7 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {authorizationMiddleware} from '../../../common/src/middlewares/authorization'
-import {UserRoles} from '../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../common/src/types/authorization'
 import {now} from '../../../common/src/utils/times'
 import moment from 'moment-timezone'
 import * as _ from 'lodash'
@@ -55,18 +55,17 @@ class AdminController implements IRouteController {
   }
 
   public initRoutes(): void {
+    // TODO: all of these should specify the organizationId
+    const requireAdmin = authorizationMiddleware([RequiredUserPermission.OrgAdmin], false)
+    const requireAdminWithOrg = authorizationMiddleware([RequiredUserPermission.OrgAdmin], true)
     const routes = express
       .Router()
-      .post('/stats', authorizationMiddleware([UserRoles.OrgAdmin]), this.stats)
-      .post('/stats/v2', authorizationMiddleware([UserRoles.OrgAdmin]), this.statsV2)
-      .post('/enter', authorizationMiddleware([UserRoles.OrgAdmin]), this.enter)
-      .post('/exit', authorizationMiddleware([UserRoles.OrgAdmin]), this.exit)
-      .post('/createToken', authorizationMiddleware([UserRoles.OrgAdmin]), this.createToken)
-      .post(
-        '/enterorexit/tag',
-        authorizationMiddleware([UserRoles.OrgAdmin]),
-        this.enterOrExitUsingATag,
-      )
+      .post('/stats', requireAdmin, this.stats)
+      .post('/stats/v2', requireAdminWithOrg, this.statsV2)
+      .post('/enter', requireAdmin, this.enter)
+      .post('/exit', requireAdmin, this.exit)
+      .post('/createToken', requireAdmin, this.createToken)
+      .post('/enterorexit/tag', requireAdmin, this.enterOrExitUsingATag)
       .get('/:organizationId/locations/accessible', this.getAccessibleLocations)
     this.router.use('/admin', routes)
   }

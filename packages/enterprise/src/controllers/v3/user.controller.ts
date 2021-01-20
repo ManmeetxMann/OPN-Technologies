@@ -1,7 +1,7 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
-import {UserRoles} from '../../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-authority'
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
@@ -558,53 +558,59 @@ class UserController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = () => Router({mergeParams: true})
+
     const root = '/enterprise/api/v3/users'
 
     const authentication = innerRouter().use(
       '/',
       innerRouter()
-        .get('/search', authorizationMiddleware([UserRoles.OrgAdmin]), search)
+        .get('/search', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), search)
         .post('/', create)
         .post('/auth', authenticate)
         .post('/auth/short-code', validateShortCode)
         .post('/auth/confirmation', completeRegistration),
     )
 
+    // authenticate the user without requiring an organizationId
+    const regUser = authorizationMiddleware([RequiredUserPermission.RegUser], false)
+    // authenticate the user while requiring an organizationId
+    const regUserWithOrg = authorizationMiddleware([RequiredUserPermission.RegUser], true)
+
     const dependents = innerRouter().use(
       '/dependents',
-      innerRouter().get('/', getDependents).post('/', addDependents).use(
+      innerRouter().get('/', regUser, getDependents).post('/', regUser, addDependents).use(
         '/:dependentId',
         assertHasAuthorityOnDependent,
         innerRouter()
-          .put('/', updateDependent)
-          .delete('/', removeDependent)
+          .put('/', regUser, updateDependent)
+          .delete('/', regUser, removeDependent)
 
-          .get('/organizations', getDependentConnectedOrganizations)
-          .post('/organizations', connectDependentToOrganization)
-          .delete('/organizations/:organizationId', disconnectDependentOrganization)
+          .get('/organizations', regUser, getDependentConnectedOrganizations)
+          .post('/organizations', regUserWithOrg, connectDependentToOrganization)
+          .delete('/organizations/:organizationId', regUserWithOrg, disconnectDependentOrganization)
 
-          .get('/groups', getAllDependentConnectedGroupsInAnOrganization)
-          .post('/groups', connectDependentToGroup)
-          .put('/groups', updateDependentGroup),
+          .get('/groups', regUserWithOrg, getAllDependentConnectedGroupsInAnOrganization)
+          .post('/groups', regUserWithOrg, connectDependentToGroup)
+          .put('/groups', regUserWithOrg, updateDependentGroup),
       ),
     )
 
     const selfProfile = innerRouter().use(
       '/self',
-      authorizationMiddleware(),
       innerRouter()
-        .get('/', get)
-        .put('/', update)
+        .get('/', regUser, get)
+        .put('/', regUser, update)
+        .get('/organizations', regUser, getConnectedOrganizations)
+        // regUser is not an error even though this request contains organizationId
+        .post('/organizations', regUser, connectOrganization)
 
-        .get('/organizations', getConnectedOrganizations)
-        .post('/organizations', connectOrganization)
-        .delete('/organizations/:organizationId', disconnectOrganization)
+        .delete('/organizations/:organizationId', regUserWithOrg, disconnectOrganization)
 
-        .get('/groups', getAllConnectedGroupsInAnOrganization)
-        .post('/groups', connectGroup)
-        .delete('/groups/:groupId', disconnectGroup)
+        .get('/groups', regUserWithOrg, getAllConnectedGroupsInAnOrganization)
+        .post('/groups', regUserWithOrg, connectGroup)
+        .delete('/groups/:groupId', regUser, disconnectGroup)
 
-        .get('/parents', getParents)
+        .get('/parents', regUser, getParents)
 
         .use(dependents),
     )

@@ -94,7 +94,7 @@ export type AppointmentAcuityResponse = {
 
 export type LabelsAcuityResponse = {
   id: number
-  name: Label
+  name: DeadlineLabel
   color: string
 }
 
@@ -121,6 +121,7 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   transportRunId?: string
   testRunId?: string
   deadlineDate?: string
+  appointmentStatus?: AppointmentStatus[]
 }
 
 //Update to Acuity Service
@@ -158,6 +159,12 @@ export type AppointmentStatusHistory = {
   createdBy: string
 }
 
+export type AppointmentChangeToRerunRequest = {
+  appointment: AppointmentDBModel
+  deadlineLabel: DeadlineLabel
+  userId: string
+}
+
 export type AppointmentStatusHistoryDb = AppointmentStatusHistory & {
   id: string
 }
@@ -167,7 +174,7 @@ export enum AppointmentAttachTransportStatus {
   Failed = 'failed',
 }
 
-export enum AppointmentWebhookActions {
+export enum AcuityWebhookActions {
   Scheduled = 'scheduled',
   Rescheduled = 'rescheduled',
   Canceled = 'canceled',
@@ -175,7 +182,12 @@ export enum AppointmentWebhookActions {
   OrderCompleted = 'order.completed',
 }
 
-export enum Label {
+export enum WebhookEndpoints {
+  Create = 'Create',
+  Update = 'Update',
+}
+
+export enum DeadlineLabel {
   SameDay = 'SameDay',
   NextDay = 'NextDay',
 }

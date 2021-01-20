@@ -1,8 +1,19 @@
 import {NextFunction, Request, Response, Router} from 'express'
+import moment from 'moment'
+
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
+import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
+import {now} from '../../../../../common/src/utils/times'
+import {Config} from '../../../../../common/src/utils/config'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import {getAdminId} from '../../../../../common/src/utils/auth'
+import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
+
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
+import {TestRunsService} from '../../../services/test-runs.service'
+
 import {
   PCRListQueryRequest,
   PCRTestResultHistoryDTO,
@@ -13,13 +24,6 @@ import {
   pcrTestResultsResponse,
   PcrTestResultsListRequest,
 } from '../../../models/pcr-test-results'
-import moment from 'moment'
-import {now} from '../../../../../common/src/utils/times'
-import {Config} from '../../../../../common/src/utils/config'
-import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {getAdminId} from '../../../../../common/src/utils/auth'
-import {TestRunsService} from '../../../services/test-runs.service'
-import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
@@ -33,34 +37,29 @@ class PCRTestResultController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
+    const sendResultsAuth = authorizationMiddleware([RequiredUserPermission.LabSendResults])
+    const dueTodayAuth = authorizationMiddleware([RequiredUserPermission.LabDueToday])
+    const testResultsAuth = authorizationMiddleware([RequiredUserPermission.LabSendResults], true)
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results-bulk',
-      adminAuthMiddleware,
+      sendResultsAuth,
       this.createReportForPCRResults,
     )
-    innerRouter.post(
-      this.path + '/api/v1/pcr-test-results',
-      adminAuthMiddleware,
-      this.createPCRResults,
-    )
+    innerRouter.post(this.path + '/api/v1/pcr-test-results', sendResultsAuth, this.createPCRResults)
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results/history',
-      adminAuthMiddleware,
+      sendResultsAuth,
       this.listPCRResultsHistory,
     )
-    innerRouter.get(
-      this.path + '/api/v1/pcr-test-results',
-      adminAuthMiddleware,
-      this.listPCRResults,
-    )
+    innerRouter.get(this.path + '/api/v1/pcr-test-results', testResultsAuth, this.listPCRResults)
     innerRouter.get(
       this.path + '/api/v1/pcr-test-results-bulk/report-status',
-      adminAuthMiddleware,
+      sendResultsAuth,
       this.listPCRTestResultReportStatus,
     )
     innerRouter.put(
       this.path + '/api/v1/pcr-test-results/add-test-run',
-      adminAuthMiddleware,
+      dueTodayAuth,
       this.addTestRunToPCR,
     )
 
@@ -116,7 +115,7 @@ class PCRTestResultController implements IControllerBase {
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
-      const sendResult = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
+      const resultId = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
         {
           barCode: data.barCode,
           resultSpecs: data,
@@ -125,7 +124,7 @@ class PCRTestResultController implements IControllerBase {
         true,
       )
 
-      res.json(actionSucceed(sendResult))
+      res.json(actionSucceed({id: resultId}))
     } catch (error) {
       next(error)
     }

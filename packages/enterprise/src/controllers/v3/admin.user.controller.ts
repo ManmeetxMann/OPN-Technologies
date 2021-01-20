@@ -1,7 +1,7 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
-import {UserRoles} from '../../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
@@ -148,13 +148,13 @@ class AdminUserController implements IControllerBase {
   public initRoutes(): void {
     const innerRouter = () => Router({mergeParams: true})
     const root = '/enterprise/admin/api/v3/users'
-
+    const requireAdminWithOrg = authorizationMiddleware([RequiredUserPermission.OrgAdmin], true)
     const route = innerRouter().use(
       '/',
       innerRouter()
-        .get('/', authorizationMiddleware([UserRoles.OrgAdmin]), getUsersByOrganizationId)
-        .post('/', authorizationMiddleware([UserRoles.OrgAdmin]), createUser)
-        .put('/:userId', authorizationMiddleware([UserRoles.OrgAdmin]), updateUser),
+        .get('/', requireAdminWithOrg, getUsersByOrganizationId)
+        .post('/', requireAdminWithOrg, createUser)
+        .put('/:userId', requireAdminWithOrg, updateUser),
     )
 
     this.router.use(root, route)

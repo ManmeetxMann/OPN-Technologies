@@ -3,8 +3,6 @@ import {NextFunction, Request, Response} from 'express'
 
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 
-import Validation from '../../../common/src/utils/validation'
-
 import {AuthService} from '../../../common/src/service/auth/auth-service'
 import {AuthLinkProcessRequest} from '../models/auth'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
@@ -12,9 +10,8 @@ import {AdminApprovalService} from '../../../common/src/service/user/admin-servi
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {authorizationMiddleware} from '../../../common/src/middlewares/authorization'
-import {UserRoles} from '../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../common/src/types/authorization'
 import {FirebaseManager} from '../../../common/src/utils/firebase'
-import {now} from '../../../common/src/utils/times'
 
 class AdminController implements IControllerBase {
   public path = '/admin'
@@ -28,24 +25,9 @@ class AdminController implements IControllerBase {
   public initRoutes(): void {
     this.router.post(this.path + '/auth/signIn/request', this.authSignInLinkRequest)
     this.router.post(this.path + '/auth/signIn/process', this.authSignInProcess)
-    this.router.post(
-      this.path + '/team/status',
-      authorizationMiddleware([UserRoles.OrgAdmin]),
-      this.teamStatus,
-    )
-    this.router.post(
-      this.path + '/team/review',
-      authorizationMiddleware([UserRoles.OrgAdmin]),
-      this.teamReview,
-    )
-    this.router.post(
-      this.path + '/billing/config',
-      authorizationMiddleware([UserRoles.OrgAdmin]),
-      this.billingConfig,
-    )
     this.router.get(
       this.path + '/self',
-      authorizationMiddleware([UserRoles.OrgAdmin]),
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
       this.adminInfo,
     )
   }
@@ -147,98 +129,6 @@ class AdminController implements IControllerBase {
     } catch (error) {
       next(error)
     }
-  }
-
-  teamStatus = (req: Request, res: Response): void => {
-    // Test
-    console.log(res.locals.connectedUser)
-
-    const response = {
-      data: {
-        status: [
-          {
-            id: '987654321',
-            firstName: 'Sean',
-            lastName: 'S',
-            badge: 'proceed',
-          },
-          {
-            id: '987654321',
-            firstName: 'Sean',
-            lastName: 'S',
-            badge: 'proceed',
-          },
-          {
-            id: '987654321',
-            firstName: 'Sean',
-            lastName: 'S',
-            badge: 'proceed',
-          },
-        ],
-        attestationDue: [
-          {
-            id: '987654321',
-            firstName: 'Sean',
-            lastName: 'S',
-          },
-          {
-            id: '987654321',
-            firstName: 'Sean',
-            lastName: 'S',
-          },
-          {
-            id: '987654321',
-            firstName: 'Sean',
-            lastName: 'S',
-          },
-        ],
-        serverTimestamp: now().toISOString(),
-      },
-      status: 'complete',
-    }
-
-    res.json(response)
-  }
-
-  teamReview = (req: Request, res: Response): void => {
-    if (!Validation.validate(['connectedId', 'approval'], req, res, 'authRequestToken')) {
-      return
-    }
-
-    const response = {
-      // data : {
-      //     authToken : "987654321234567890"
-      // },
-      serverTimestamp: now().toISOString(),
-      status: 'complete',
-    }
-
-    res.json(response)
-  }
-
-  billingConfig = (req: Request, res: Response): void => {
-    if (!Validation.validate([], req, res, 'authRequestToken')) {
-      return
-    }
-
-    const response = {
-      data: {
-        billing: {
-          enabled: true,
-          statement: {
-            numberOfUsers: 10,
-            lastBillingDate: '765434567765434567',
-            amountPaid: '$ 100.23 USD',
-            nextBillingDate: '765434567765434567',
-            amountDue: '$ 100.23 USD',
-          },
-        },
-      },
-      serverTimestamp: now().toISOString(),
-      status: 'complete',
-    }
-
-    res.json(response)
   }
 
   adminInfo = async (req: Request, res: Response): Promise<void> => {

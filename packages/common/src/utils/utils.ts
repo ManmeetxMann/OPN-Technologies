@@ -24,11 +24,3 @@ export const cleanStringField = (str: string | null): string => {
   if (!str) return str
   return str.trim()
 }
-
-export const makeTimeEndOfTheDayMoment = (datetime: moment.Moment): moment.Moment => {
-  return datetime.hours(11).minutes(59).seconds(0)
-}
-
-export const makeTimeEndOfTheDay = (datetime: moment.Moment): string => {
-  return makeTimeEndOfTheDayMoment(datetime).format()
-}

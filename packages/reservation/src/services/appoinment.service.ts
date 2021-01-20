@@ -8,10 +8,12 @@ import {
   AppointmentAcuityResponse,
   AppointmentAttachTransportStatus,
   AppointmentByOrganizationRequest,
+  AppointmentChangeToRerunRequest,
   AppointmentDBModel,
   AppointmentModelBase,
   AppointmentStatus,
   AppointmentStatusHistoryDb,
+  DeadlineLabel,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -24,7 +26,8 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {dateFormats, now} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
-import {makeTimeEndOfTheDay} from '../../../common/src/utils/utils'
+import {makeTimeEndOfTheDay} from '../utils/datetime.helper'
+import {makeDeadline} from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -76,6 +79,14 @@ export class AppoinmentService {
         key: 'dateOfAppointment',
         operator: DataModelFieldMapOperatorType.Equals,
         value: moment(queryParams.dateOfAppointment).format(dateFormats.longMonth),
+      })
+    }
+    if (queryParams.appointmentStatus) {
+      conditions.push({
+        map: '/',
+        key: 'appointmentStatus',
+        operator: DataModelFieldMapOperatorType.In,
+        value: queryParams.appointmentStatus,
       })
     }
     if (queryParams.deadlineDate) {
@@ -369,8 +380,12 @@ export class AppoinmentService {
     }
   }
 
-  async addAppointmentLabel(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
-    return this.acuityRepository.addAppointmentLabelOnAcuity(id, data)
+  async addAppointmentLabel(id: number, label: DeadlineLabel): Promise<AppointmentDBModel> {
+    const appointment = await this.getAppointmentByAcuityId(id)
+    const deadline = makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label)
+    await this.acuityRepository.addAppointmentLabelOnAcuity(id, label)
+
+    return this.updateAppointmentDB(appointment.id, {deadline})
   }
 
   async updateAppointmentDB(
@@ -381,16 +396,20 @@ export class AppoinmentService {
   }
 
   async changeStatusToReRunRequired(
-    appointmentId: string,
-    today: boolean,
-    userId: string,
+    data: AppointmentChangeToRerunRequest,
   ): Promise<AppointmentDBModel> {
-    const utcDateTime = moment().utc()
-    const deadline = today
-      ? makeTimeEndOfTheDay(utcDateTime)
-      : makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReRunRequired, userId)
-    return this.appointmentsRepository.updateProperties(appointmentId, {
+    const utcDateTime = moment(data.appointment.dateTime).utc()
+    const deadline = makeDeadline(utcDateTime, data.deadlineLabel)
+    await this.addStatusHistoryById(
+      data.appointment.id,
+      AppointmentStatus.ReRunRequired,
+      data.userId,
+    )
+    await this.acuityRepository.addAppointmentLabelOnAcuity(
+      data.appointment.acuityAppointmentId,
+      data.deadlineLabel,
+    )
+    return this.appointmentsRepository.updateProperties(data.appointment.id, {
       appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
     })

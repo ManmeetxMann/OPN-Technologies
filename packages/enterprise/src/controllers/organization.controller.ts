@@ -7,7 +7,7 @@ import {HttpException} from '../../../common/src/exceptions/httpexception'
 import {User, UserDependant} from '../../../common/src/data/user'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {authorizationMiddleware} from '../../../common/src/middlewares/authorization'
-import {UserRoles} from '../../../common/src/types/authorization'
+import {RequiredUserPermission} from '../../../common/src/types/authorization'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
@@ -85,7 +85,11 @@ class OrganizationController implements IControllerBase {
       '/groups',
       innerRouter()
         .post('/', this.addGroups)
-        .get('/', authorizationMiddleware([UserRoles.OrgAdmin]), this.getGroupsForAdmin)
+        .get(
+          '/',
+          authorizationMiddleware([RequiredUserPermission.OrgAdmin], true),
+          this.getGroupsForAdmin,
+        )
         .get('/public', this.getGroupsForPublic)
         .put('/', this.updateMultipleUserGroup)
         .post('/users', this.addUsersToGroups)
@@ -96,34 +100,38 @@ class OrganizationController implements IControllerBase {
     )
     // this has to be more specific than the general 'stats' section
     // TODO: move these to a separate route prefix, to avoid repetition
+    const sharedAccess = authorizationMiddleware(
+      [RequiredUserPermission.OrgAdmin, RequiredUserPermission.RegUser],
+      true,
+    )
     const publicStats = [
       innerRouter().use(
         '/stats/family',
-        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        sharedAccess,
         adminOrSelf,
         innerRouter().get('/', this.getFamilyStats),
       ),
       innerRouter().use(
         '/stats/contact-trace-locations',
-        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        sharedAccess,
         adminOrSelf,
         innerRouter().get('/', this.getUserContactTraceLocations),
       ),
       innerRouter().use(
         '/stats/contact-traces',
-        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        sharedAccess,
         adminOrSelf,
         innerRouter().get('/', this.getUserContactTraces),
       ),
       innerRouter().use(
         '/stats/contact-trace-exposures',
-        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        sharedAccess,
         adminOrSelf,
         innerRouter().get('/', this.getUserContactTraceExposures),
       ),
       innerRouter().use(
         '/stats/contact-trace-attestations',
-        authorizationMiddleware([UserRoles.OrgAdmin, UserRoles.RegUser]),
+        sharedAccess,
         adminOrSelf,
         innerRouter().get('/', this.getUserContactTraceAttestations),
       ),
@@ -131,7 +139,7 @@ class OrganizationController implements IControllerBase {
     // prettier-ignore
     const stats = innerRouter().use(
       '/stats',
-      authorizationMiddleware([UserRoles.OrgAdmin]),
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin], true),
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/health', this.getStatsHealth)
@@ -584,6 +592,9 @@ class OrganizationController implements IControllerBase {
       const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
 
       if (!canAccessOrganization) {
+        console.warn(
+          `OrganizationController: getStatsInDetailForGroupsOrLocations: Can not access OrganizationID: ${organizationId}`,
+        )
         replyInsufficientPermission(res)
         return
       }
@@ -592,6 +603,9 @@ class OrganizationController implements IControllerBase {
       if (groupId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForGroupIds?.includes(groupId)
         if (!hasGrantedPermission) {
+          console.warn(
+            `OrganizationController: getStatsInDetailForGroupsOrLocations: Can not access GroupId: ${groupId}`,
+          )
           replyInsufficientPermission(res)
           return
         }
@@ -603,6 +617,9 @@ class OrganizationController implements IControllerBase {
       if (locationId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForLocationIds?.includes(locationId)
         if (!hasGrantedPermission) {
+          console.warn(
+            `OrganizationController: getStatsInDetailForGroupsOrLocations: Can not access LocationId: ${locationId}`,
+          )
           replyInsufficientPermission(res)
           return
         }
@@ -612,6 +629,9 @@ class OrganizationController implements IControllerBase {
 
       // If no group and no location is specified, make sure we are the health admin
       if (!groupId && !locationId && !isHealthAdmin) {
+        console.warn(
+          `OrganizationController: getStatsInDetailForGroupsOrLocations: Is not HealthAdmin for OrganizationID: ${organizationId}`,
+        )
         replyInsufficientPermission(res)
         return
       }
