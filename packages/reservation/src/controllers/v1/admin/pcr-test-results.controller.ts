@@ -39,32 +39,32 @@ class PCRTestResultController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results-bulk',
-      authorizationMiddleware([RequiredUserPermission.LabSendResults], true),
+      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
       this.createReportForPCRResults,
     )
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results',
-      authorizationMiddleware([RequiredUserPermission.LabSendResults], true),
+      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
       this.createPCRResults,
     )
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results/history',
-      authorizationMiddleware([RequiredUserPermission.LabSendResults], true),
+      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
       this.listPCRResultsHistory,
     )
     innerRouter.get(
       this.path + '/api/v1/pcr-test-results',
-      authorizationMiddleware([RequiredUserPermission.LabPCRTestResults], true),
+      authorizationMiddleware([RequiredUserPermission.LabPCRTestResults]),
       this.listPCRResults,
     )
     innerRouter.get(
       this.path + '/api/v1/pcr-test-results-bulk/report-status',
-      authorizationMiddleware([RequiredUserPermission.LabSendResults], true),
+      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
       this.listPCRTestResultReportStatus,
     )
     innerRouter.put(
       this.path + '/api/v1/pcr-test-results/add-test-run',
-      authorizationMiddleware([RequiredUserPermission.LabDueToday], true),
+      authorizationMiddleware([RequiredUserPermission.LabDueToday]),
       this.addTestRunToPCR,
     )
 
