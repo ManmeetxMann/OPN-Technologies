@@ -3,6 +3,7 @@ import {DateTestRunsRepository, TestRunsRepository} from '../respository/test-ru
 import {TestRunDBModel} from '../models/test-runs'
 import {firestore} from 'firebase-admin'
 import {getDateFromDatetime} from '../utils/datetime.helper'
+import moment from 'moment'
 
 export class TestRunsService {
   private dataStore = new DataStore()
@@ -26,12 +27,13 @@ export class TestRunsService {
 
   create(testRunDateTime: Date, name: string): Promise<TestRunDBModel> {
     const testRunDate = getDateFromDatetime(testRunDateTime)
+    const idDate = moment(testRunDate).format('YYYYMM')
+
     return this.getIdentifierRepository(testRunDate)
       .getUniqueId('testRun')
       .then((id) => {
-        console.log(`${testRunDate} - T${id}`)
         return this.testRunsRepository.add({
-          testRunId: `T${id}`,
+          testRunId: `T${idDate}-${id}`,
           testRunDateTime: firestore.Timestamp.fromDate(testRunDateTime),
           testRunDate,
           name,
