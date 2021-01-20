@@ -40,7 +40,9 @@
 		"migration:relocate-auth-id": "ts-node ./migrations/relocate-auth-id",
 		"migration:update-organizationids-for-users": "ts-node ./migrations/update-organizationids-for-users",
 		"migration:trim-firstname-lastname-and-fix-last-name": "ts-node ./migrations/trim-firstname-lastname-and-fix-last-name",
-		"migration:migrate-attestation-questionaireid-field": "ts-node ./migrations/add-questionnaireid-to-attestation"
+		"migration:migrate-attestation-questionaireid-field": "ts-node ./migrations/add-questionnaireid-to-attestation",
+		"migration:test-results-to-pcr": "ts-node ./migrations/test-results-to-pcr",
+		"migration:migration-acuity-to-appointments": "ts-node ./migrations/acuity-to-appointments"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
@@ -60,7 +62,8 @@
 		"ts-node": "^8.10.2",
 		"typescript": "^3.9.5",
 		"node-fetch": "^2.6.0",
-		"firebase-tools": "^8.7.0"
+		"firebase-tools": "^8.7.0",
+		"unique-names-generator": "4.3.1"
 	},
 	"dependencies": {}
 }

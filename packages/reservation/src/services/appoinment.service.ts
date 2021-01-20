@@ -82,6 +82,14 @@ export class AppoinmentService {
         value: moment(queryParams.dateOfAppointment).format(dateFormats.longMonth),
       })
     }
+    if (queryParams.appointmentStatus) {
+      conditions.push({
+        map: '/',
+        key: 'appointmentStatus',
+        operator: DataModelFieldMapOperatorType.In,
+        value: queryParams.appointmentStatus,
+      })
+    }
     if (queryParams.deadlineDate) {
       conditions.push({
         map: '/',
@@ -470,5 +478,22 @@ export class AppoinmentService {
       receiveResultsViaEmail,
       receiveNotificationsFromGov,
     })
+  }
+
+  async getAvailabitlityDateList(
+    id: string,
+    year: number,
+    month: number,
+  ): Promise<{date: string}[]> {
+    const {appointmentTypeId, calendarTimezone, calendarId} = JSON.parse(
+      Buffer.from(id, 'base64').toString(),
+    )
+
+    return this.acuityRepository.getAvailabilityDates(
+      appointmentTypeId,
+      `${year}-${month}`,
+      calendarId,
+      calendarTimezone,
+    )
   }
 }

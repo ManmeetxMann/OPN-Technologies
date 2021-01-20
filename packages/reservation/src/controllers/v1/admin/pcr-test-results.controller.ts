@@ -13,6 +13,7 @@ import {ResourceNotFoundException} from '../../../../../common/src/exceptions/re
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {TestRunsService} from '../../../services/test-runs.service'
+import {flatten} from 'lodash'
 
 import {
   PCRListQueryRequest,
@@ -37,34 +38,29 @@ class PCRTestResultController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
+    const sendResultsAuth = authorizationMiddleware([RequiredUserPermission.LabSendResults])
+    const dueTodayAuth = authorizationMiddleware([RequiredUserPermission.LabDueToday])
+    const testResultsAuth = authorizationMiddleware([RequiredUserPermission.LabSendResults], true)
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results-bulk',
-      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
+      sendResultsAuth,
       this.createReportForPCRResults,
     )
-    innerRouter.post(
-      this.path + '/api/v1/pcr-test-results',
-      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
-      this.createPCRResults,
-    )
+    innerRouter.post(this.path + '/api/v1/pcr-test-results', sendResultsAuth, this.createPCRResults)
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results/history',
-      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
+      sendResultsAuth,
       this.listPCRResultsHistory,
     )
-    innerRouter.get(
-      this.path + '/api/v1/pcr-test-results',
-      authorizationMiddleware([RequiredUserPermission.LabPCRTestResults]),
-      this.listPCRResults,
-    )
+    innerRouter.get(this.path + '/api/v1/pcr-test-results', testResultsAuth, this.listPCRResults)
     innerRouter.get(
       this.path + '/api/v1/pcr-test-results-bulk/report-status',
-      authorizationMiddleware([RequiredUserPermission.LabSendResults]),
+      sendResultsAuth,
       this.listPCRTestResultReportStatus,
     )
     innerRouter.put(
       this.path + '/api/v1/pcr-test-results/add-test-run',
-      authorizationMiddleware([RequiredUserPermission.LabDueToday]),
+      dueTodayAuth,
       this.addTestRunToPCR,
     )
 
@@ -120,7 +116,7 @@ class PCRTestResultController implements IControllerBase {
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
-      const sendResult = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
+      const resultId = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
         {
           barCode: data.barCode,
           resultSpecs: data,
@@ -129,7 +125,7 @@ class PCRTestResultController implements IControllerBase {
         true,
       )
 
-      res.json(actionSucceed(sendResult))
+      res.json(actionSucceed({id: resultId}))
     } catch (error) {
       next(error)
     }
@@ -149,41 +145,48 @@ class PCRTestResultController implements IControllerBase {
 
       const pcrTests = await this.pcrTestResultsService.getPCRTestsByBarcodeWithLinked(barcode)
 
-      const formedPcrTests: PCRTestResultHistoryDTO[] = barcode.map((code) => {
-        const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
-        const results = testSameBarcode
-          .map((testSame) => {
-            const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
-              ...linkedResult.resultSpecs,
-              result: linkedResult.result,
-            }))
-            return [
-              {
-                ...testSame.resultSpecs,
-                result: testSame.result,
-              },
-              ...linkedSameTests,
-            ]
-          })
-          .flat()
-        const waitingResult = !!pcrTests.find(
-          (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
-        )
-        if (testSameBarcode.length) {
-          return {
-            id: testSameBarcode[0].id,
-            barCode: code,
-            results: waitingResult ? [] : results,
-            waitingResult,
+      const formedPcrTests: PCRTestResultHistoryDTO[] = await Promise.all(
+        barcode.map(async (code) => {
+          const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
+          const results = flatten(
+            testSameBarcode.map((testSame) => {
+              const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
+                ...linkedResult.resultSpecs,
+                result: linkedResult.result,
+              }))
+              return [
+                {
+                  ...testSame.resultSpecs,
+                  result: testSame.result,
+                },
+                ...linkedSameTests,
+              ]
+            }),
+          )
+          const waitingResult = !!pcrTests.find(
+            (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
+          )
+          if (testSameBarcode.length) {
+            if (testSameBarcode.length > 1) {
+              console.log(`Warning tests with same barcode are more than one. Barcode: ${code}.`)
+            }
+            return {
+              id: testSameBarcode[0].id,
+              barCode: code,
+              results: waitingResult ? [] : results,
+              waitingResult,
+              ...(!waitingResult && {reason: await this.pcrTestResultsService.getReason(code)}),
+            }
           }
-        }
-        return {
-          id: code,
-          barCode: code,
-          results: [],
-          waitingResult: false,
-        }
-      })
+          return {
+            id: code,
+            barCode: code,
+            results: [],
+            waitingResult: false,
+            reason: await this.pcrTestResultsService.getReason(code),
+          }
+        }),
+      )
 
       res.json(actionSucceed(formedPcrTests.map(PCRTestResultHistoryResponse)))
     } catch (error) {

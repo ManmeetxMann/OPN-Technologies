@@ -97,7 +97,7 @@ class GroupController implements IControllerBase {
 
     const groupRouter = innerRouter().use(
       '/',
-      authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin], true),
       innerRouter()
         .get('/:groupId/users', getUsersByGroupId)
         .put('/:groupId', updateGroup)

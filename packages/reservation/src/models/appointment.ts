@@ -13,6 +13,13 @@ export enum AppointmentStatus {
   Canceled = 'Canceled',
 }
 
+export enum AppointmentReasons {
+  AlreadyReported = 'Already Reported',
+  ReSampleAlreadyRequested = 'ReSample Already Requested',
+  InProgress = 'In Progress',
+  NoInProgress = 'No In Progress',
+}
+
 export enum ResultTypes {
   Positive = 'Positive',
   Negative = 'Negative',
@@ -154,6 +161,7 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   transportRunId?: string
   testRunId?: string
   deadlineDate?: string
+  appointmentStatus?: AppointmentStatus[]
 }
 
 //Update to Acuity Service
