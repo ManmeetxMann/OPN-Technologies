@@ -13,6 +13,7 @@ import {ResourceNotFoundException} from '../../../../../common/src/exceptions/re
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {TestRunsService} from '../../../services/test-runs.service'
+import {flatten} from 'lodash'
 
 import {
   PCRListQueryRequest,
@@ -144,41 +145,48 @@ class PCRTestResultController implements IControllerBase {
 
       const pcrTests = await this.pcrTestResultsService.getPCRTestsByBarcodeWithLinked(barcode)
 
-      const formedPcrTests: PCRTestResultHistoryDTO[] = barcode.map((code) => {
-        const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
-        const results = testSameBarcode
-          .map((testSame) => {
-            const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
-              ...linkedResult.resultSpecs,
-              result: linkedResult.result,
-            }))
-            return [
-              {
-                ...testSame.resultSpecs,
-                result: testSame.result,
-              },
-              ...linkedSameTests,
-            ]
-          })
-          .flat()
-        const waitingResult = !!pcrTests.find(
-          (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
-        )
-        if (testSameBarcode.length) {
-          return {
-            id: testSameBarcode[0].id,
-            barCode: code,
-            results: waitingResult ? [] : results,
-            waitingResult,
+      const formedPcrTests: PCRTestResultHistoryDTO[] = await Promise.all(
+        barcode.map(async (code) => {
+          const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
+          const results = flatten(
+            testSameBarcode.map((testSame) => {
+              const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
+                ...linkedResult.resultSpecs,
+                result: linkedResult.result,
+              }))
+              return [
+                {
+                  ...testSame.resultSpecs,
+                  result: testSame.result,
+                },
+                ...linkedSameTests,
+              ]
+            }),
+          )
+          const waitingResult = !!pcrTests.find(
+            (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
+          )
+          if (testSameBarcode.length) {
+            if (testSameBarcode.length > 1) {
+              console.log(`Warning tests with same barcode are more than one. Barcode: ${code}.`)
+            }
+            return {
+              id: testSameBarcode[0].id,
+              barCode: code,
+              results: waitingResult ? [] : results,
+              waitingResult,
+              ...(!waitingResult && {reason: await this.pcrTestResultsService.getReason(code)}),
+            }
           }
-        }
-        return {
-          id: code,
-          barCode: code,
-          results: [],
-          waitingResult: false,
-        }
-      })
+          return {
+            id: code,
+            barCode: code,
+            results: [],
+            waitingResult: false,
+            reason: await this.pcrTestResultsService.getReason(code),
+          }
+        }),
+      )
 
       res.json(actionSucceed(formedPcrTests.map(PCRTestResultHistoryResponse)))
     } catch (error) {

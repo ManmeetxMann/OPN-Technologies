@@ -21,8 +21,8 @@ import {
   PCRTestResultData,
   PCRTestResultDBModel,
   PCRTestResultEmailDTO,
-  PCRTestResultListDTO,
   PCRTestResultLinkedDBModel,
+  PCRTestResultListDTO,
   PCRTestResultRequest,
   PcrTestResultsListRequest,
   ResultReportStatus,
@@ -34,6 +34,7 @@ import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import testResultPDFTemplate from '../templates/pcrTestResult'
 import {
   AppointmentDBModel,
+  AppointmentReasons,
   AppointmentStatus,
   DeadlineLabel,
   ResultTypes,
@@ -704,5 +705,17 @@ export class PCRTestResultsService {
     }
     await this.pcrTestResultsRepository.updateProperty(pcrTestResultId, 'testRunId', testRunId)
     await this.appointmentService.makeInProgress(pcrTestResults.appointmentId, testRunId, adminId)
+  }
+
+  async getReason(barCode: string): Promise<AppointmentReasons> {
+    const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
+    switch (appointment.appointmentStatus) {
+      case AppointmentStatus.Reported:
+        return AppointmentReasons.AlreadyReported
+      case AppointmentStatus.ReSampleRequired:
+        return AppointmentReasons.ReSampleAlreadyRequested
+      default:
+        return AppointmentReasons.NoInProgress
+    }
   }
 }

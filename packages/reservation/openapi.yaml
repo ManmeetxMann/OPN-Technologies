@@ -1715,6 +1715,15 @@ paths:
                                 type: string
                               result:
                                 type: string
+                        reason:
+                          type: string
+                          enum:
+                            [
+                                Already Reported,
+                                ReSample Already Requested,
+                                In Progress,
+                                No In Progress,
+                            ]
                       required:
                         - id
                         - firstName
