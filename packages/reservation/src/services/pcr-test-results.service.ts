@@ -357,7 +357,7 @@ export class PCRTestResultsService {
   async handlePCRResultSaveAndSend(
     resultData: PCRTestResultData,
     isSingleResult: boolean,
-  ): Promise<void> {
+  ): Promise<string> {
     if (resultData.resultSpecs.action === PCRResultActions.DoNothing) {
       console.log(`handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}. It is Ignored`)
       return
@@ -428,6 +428,8 @@ export class PCRTestResultsService {
         `handlePCRResultSaveAndSend: Not Notification is sent for ${resultData.barCode}. Notify is off.`,
       )
     }
+    //UPdated ID
+    return testResult.id
   }
 
   async createNewWaitingResult(
