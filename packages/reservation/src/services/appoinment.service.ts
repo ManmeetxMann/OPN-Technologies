@@ -436,7 +436,7 @@ export class AppoinmentService {
     return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
   }
 
-  async getAvailabitilyDateList(
+  async getAvailabitlityDateList(
     id: string,
     year: number,
     month: number,
@@ -445,7 +445,7 @@ export class AppoinmentService {
       Buffer.from(id, 'base64').toString(),
     )
 
-    return this.acuityRepository.getAvailabitilyDates(
+    return this.acuityRepository.getAvailabilityDates(
       appointmentTypeId,
       `${year}-${month}`,
       calendarId,
