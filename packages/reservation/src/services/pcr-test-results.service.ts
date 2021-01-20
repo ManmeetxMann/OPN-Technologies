@@ -493,15 +493,17 @@ export class PCRTestResultsService {
           appointment.id,
           resultData.adminId,
         )
-        this.couponCode = await this.couponService.createCoupon(appointment.email)
-        console.log(
-          `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
-        )
-        await this.couponService.saveCoupon(
-          this.couponCode,
-          appointment.organizationId,
-          resultData.barCode,
-        )
+        if(!appointment.organizationId){
+          this.couponCode = await this.couponService.createCoupon(appointment.email)
+          console.log(
+            `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
+          )
+          await this.couponService.saveCoupon(
+            this.couponCode,
+            appointment.organizationId,
+            resultData.barCode,
+          )
+        }
         break
       }
       default: {
