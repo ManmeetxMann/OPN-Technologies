@@ -10,6 +10,12 @@ export enum PCRResultActions {
   MarkAsNegative = 'MarkAsNegative',
 }
 
+export enum PCRResultActionsAllowedResend {
+  SendThisResult = 'SendThisResult',
+  MarkAsPositive = 'MarkAsPositive',
+  MarkAsNegative = 'MarkAsNegative',
+}
+
 export enum ResultReportStatus {
   RequestReceived = 'RequestReceived',
   Processing = 'Processing',

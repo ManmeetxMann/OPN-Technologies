@@ -27,11 +27,12 @@ import {
   PcrTestResultsListRequest,
   ResultReportStatus,
   TestResultsReportingTrackerPCRResultsDBModel,
+  PCRResultActionsAllowedResend,
 } from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import testResultPDFTemplate from '../templates/pcrTestResult'
-import {AppointmentDBModel, DeadlineLabel, ResultTypes} from '../models/appointment'
+import {AppointmentDBModel, AppointmentStatus, DeadlineLabel, ResultTypes} from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
@@ -145,7 +146,7 @@ export class PCRTestResultsService {
       }
     } catch (error) {
       //CRITICAL
-      console.log(`processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `)
+      console.error(`processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `)
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
         status: ResultReportStatus.Failed,
         details: error.toString(),
@@ -346,25 +347,44 @@ export class PCRTestResultsService {
       : undefined
   }
 
+  allowedForResend(action: PCRResultActions):boolean{
+    if (action in PCRResultActionsAllowedResend){
+      return true
+    }
+    return false
+  }
+
   async handlePCRResultSaveAndSend(
     resultData: PCRTestResultData,
-    iSingleResult: boolean,
+    isSingleResult: boolean,
   ): Promise<void> {
     if (resultData.resultSpecs.action === PCRResultActions.DoNothing) {
-      console.log(`handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}`)
+      console.log(`handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}. It is Ignored`)
       return
     }
 
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
     const pcrTestResults = await this.getPCRResultsByByBarCode(resultData.barCode)
     const waitingPCRTestResult = await this.getWaitingPCRTestResult(pcrTestResults)
-    if (!waitingPCRTestResult && !iSingleResult) {
+    const isAlreadyReported = appointment.appointmentStatus === AppointmentStatus.Reported
+
+    if (!waitingPCRTestResult && (!isSingleResult || !isAlreadyReported)) {
+      console.error(`handlePCRResultSaveAndSend: FailedToSend NotWaitingForResults SingleResult: ${isSingleResult} Current Appointment Status: ${appointment.appointmentStatus}`)
       throw new ResourceNotFoundException(
-        `PCRTestResult with barCode ${resultData.barCode} not waiting for results`,
+        `PCR Test Result with barCode ${resultData.barCode} is not waiting for results.`,
       )
     }
+
+    if(!waitingPCRTestResult && isSingleResult && isAlreadyReported && !this.allowedForResend(resultData.resultSpecs.action)){
+      console.error(`handlePCRResultSaveAndSend: FailedToSend Already Reported not allowed to do Action: ${resultData.resultSpecs.action}`)
+      throw new ResourceNotFoundException(
+        `PCR Test Result with barCode ${resultData.barCode} is already Reported. It is not allowed to do ${resultData.resultSpecs.action} `,
+      )
+    }
+
+    //Create New Waiting Result for Resend
     const testResult =
-      iSingleResult && !waitingPCRTestResult
+    isSingleResult && !waitingPCRTestResult
         ? await this.createNewWaitingResult(appointment, resultData.adminId)
         : waitingPCRTestResult
 
@@ -375,7 +395,8 @@ export class PCRTestResultsService {
       resultData.resultSpecs.autoResult,
       resultData.barCode,
     )
-    //Save PCR Test results
+
+    //Update PCR Test results
     const pcrResultDataForDbUpdate = {
       ...resultData,
       result: finalResult,
@@ -385,7 +406,7 @@ export class PCRTestResultsService {
       organizationId: appointment.organizationId,
       dateOfAppointment: appointment.dateOfAppointment,
       waitingResult: false,
-      displayForNonAdmins: true,
+      displayForNonAdmins: true, //TODO
     }
 
     await this.pcrTestResultsRepository.updateProperties(testResult.id, pcrResultDataForDbUpdate)
