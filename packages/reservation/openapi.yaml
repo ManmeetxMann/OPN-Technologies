@@ -1359,10 +1359,10 @@ paths:
           schema:
             type: string
         - in: query
-          name: dateOfAppointment
+          name: dueToday
           # required: true
           schema:
-            type: string
+            type: boolean
         - in: query
           name: deadline
           schema:

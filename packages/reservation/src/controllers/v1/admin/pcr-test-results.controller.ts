@@ -213,22 +213,16 @@ class PCRTestResultController implements IControllerBase {
         testRunId,
         deadline,
         organizationId,
-        dateOfAppointment,
         barCode,
+        dueToday,
       } = req.query as PcrTestResultsListRequest
-
-      if (!(testRunId || deadline || barCode) && !dateOfAppointment) {
-        throw new BadRequestException(
-          '"dateOfAppointment" is required if "barCode", "testRunId" or "deadline" haven\'t been passed',
-        )
-      }
 
       const pcrResults = await this.pcrTestResultsService.getPCRResults({
         organizationId,
-        dateOfAppointment,
         deadline,
         testRunId,
         barCode,
+        dueToday,
       })
 
       res.json(actionSucceed(pcrResults))
