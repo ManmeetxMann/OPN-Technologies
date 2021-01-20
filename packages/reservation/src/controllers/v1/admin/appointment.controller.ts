@@ -32,41 +32,36 @@ class AdminAppointmentController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.get(
-      this.path + '/api/v1/appointments',
-      authorizationMiddleware([RequiredUserPermission.LabAppointments]),
-      this.getListAppointments,
-    )
+    const apptAuth = authorizationMiddleware([RequiredUserPermission.LabAppointments])
+    const apptAuthWithOrg = authorizationMiddleware([RequiredUserPermission.LabAppointments], true)
+    const receivingAuth = authorizationMiddleware([RequiredUserPermission.LabReceiving])
+    innerRouter.get(this.path + '/api/v1/appointments', apptAuthWithOrg, this.getListAppointments)
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
-      authorizationMiddleware([RequiredUserPermission.LabAppointments]),
+      apptAuth,
       this.getAppointmentById,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/cancel',
-      authorizationMiddleware([RequiredUserPermission.LabAppointments]),
+      apptAuthWithOrg,
       this.cancelAppointment,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/add-transport-run',
-      authorizationMiddleware([RequiredUserPermission.LabAppointments]),
+      apptAuth,
       this.addTransportRun,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/:barCode',
-      authorizationMiddleware([RequiredUserPermission.LabAppointments]),
+      apptAuth,
       this.getAppointmentByBarcode,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:barCode/receive',
-      authorizationMiddleware([RequiredUserPermission.LabReceiving]),
+      receivingAuth,
       this.updateTestVial,
     )
-    innerRouter.put(
-      this.path + '/api/v1/appointments/receive',
-      authorizationMiddleware([RequiredUserPermission.LabReceiving]),
-      this.addVialLocation,
-    )
+    innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
 
     this.router.use('/', innerRouter)
   }
