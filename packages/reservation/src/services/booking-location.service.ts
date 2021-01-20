@@ -1,4 +1,5 @@
 import DataStore from '../../../common/src/data/datastore'
+import {uniq} from 'lodash'
 
 import {Certificate, BookingLocations} from '../models/packages'
 import {PackageRepository} from '../respository/package.repository'
@@ -12,13 +13,13 @@ export class BookingLocationService {
     const packages = await this.getPackageListByOrganizationId(organizationId)
     const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
     const calendars = await this.acuityRepository.getCalendarList()
-    const packagesAppointmentTypes = packages
-      .map(({appointmentTypes}) => Object.keys(appointmentTypes))
-      .flat()
+    const packagesAppointmentTypes = uniq(
+      packages.map(({appointmentTypes}) => Object.keys(appointmentTypes)).flat(),
+    )
 
-    const bookingLocations = new Map<string, BookingLocations>()
+    const bookingLocations = []
 
-    packagesAppointmentTypes.forEach((appointmentTypeID) => {
+    packagesAppointmentTypes.map((appointmentTypeID) => {
       const appointmentType = appointmentTypes.find(({id}) => id === Number(appointmentTypeID))
 
       if (appointmentType) {
@@ -31,7 +32,7 @@ export class BookingLocationService {
           }
           const id = Buffer.from(JSON.stringify(idBuf)).toString('base64')
 
-          bookingLocations.set(id, {
+          bookingLocations.push({
             id,
             appointmentTypeName: appointmentType.name,
             name: calendar.name,
@@ -41,7 +42,7 @@ export class BookingLocationService {
       }
     })
 
-    return Array.from(bookingLocations.values())
+    return bookingLocations
   }
 
   async getPackageListByOrganizationId(organizationId: string): Promise<Certificate[]> {
