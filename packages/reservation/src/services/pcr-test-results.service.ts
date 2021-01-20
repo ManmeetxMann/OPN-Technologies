@@ -465,6 +465,7 @@ export class PCRTestResultsService {
     runNumber: number,
     reSampleNumber: number
   ): Promise<void> {
+    const nextRunNumber = runNumber+1
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
         console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for today`)
@@ -473,7 +474,7 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.SameDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(updatedAppointment, resultData.adminId, runNumber, reSampleNumber)
+        await this.createNewWaitingResult(updatedAppointment, resultData.adminId, nextRunNumber, reSampleNumber)
         break
       }
       case PCRResultActions.ReRunTomorrow: {
@@ -483,7 +484,7 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.NextDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(updatedAppointment, resultData.adminId, runNumber, reSampleNumber)
+        await this.createNewWaitingResult(updatedAppointment, resultData.adminId, nextRunNumber, reSampleNumber)
         break
       }
       case PCRResultActions.RequestReSample: {
