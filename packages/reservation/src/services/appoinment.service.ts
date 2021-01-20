@@ -81,6 +81,14 @@ export class AppoinmentService {
         value: moment(queryParams.dateOfAppointment).format(dateFormats.longMonth),
       })
     }
+    if (queryParams.appointmentStatus) {
+      conditions.push({
+        map: '/',
+        key: 'appointmentStatus',
+        operator: DataModelFieldMapOperatorType.In,
+        value: queryParams.appointmentStatus,
+      })
+    }
     if (queryParams.deadlineDate) {
       conditions.push({
         map: '/',
