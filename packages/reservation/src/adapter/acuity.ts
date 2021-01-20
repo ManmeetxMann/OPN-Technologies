@@ -232,7 +232,7 @@ abstract class AcuityScheduling {
       APIURL +
         `/api/v1/availability/times?appointmentTypeID=${appointmentTypeID}&date=${date}&calendarID=${calendarID}&timezone=${timezone}`,
     )
-    console.log('[ACUITY: Get availability dates list] ', apiUrl) //To know request path for dependency
+    console.log('[ACUITY: Get availability slots for date] ', apiUrl) //To know request path for dependency
 
     const res = await fetch(apiUrl, {
       method: 'get',
