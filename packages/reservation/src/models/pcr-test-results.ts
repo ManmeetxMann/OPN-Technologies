@@ -77,6 +77,7 @@ export type PCRTestResultDBModel = PCRTestResultData &
     deadline: string
     testRunId?: string
     runNumber: number
+    reSampleNumber: number
   }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -104,7 +105,7 @@ export type PCRResults = {
 
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,
-  'id' | 'linkedBarCodes' | 'deadline' | 'runNumber'
+  'id' | 'linkedBarCodes' | 'deadline' | 'runNumber' | 'reSampleNumber'
 > & {
   email: string
   phone: number

@@ -383,13 +383,14 @@ export class PCRTestResultsService {
     }
 
     //Create New Waiting Result for Resend
-    const runNumber = 0
+    const runNumber = 0 //Not Relevant for Resend
+    const reSampleNumber = 0 //Not Relevant for Resend
     const testResult =
     isSingleResult && !waitingPCRTestResult
-        ? await this.createNewWaitingResult(appointment, resultData.adminId, runNumber)
+        ? await this.createNewWaitingResult(appointment, resultData.adminId, runNumber, reSampleNumber)
         : waitingPCRTestResult
 
-    await this.handleActions(resultData, appointment, testResult.runNumber)
+    await this.handleActions(resultData, appointment, testResult.runNumber, testResult.reSampleNumber)
 
     const finalResult = this.getFinalResult(
       resultData.resultSpecs.action,
@@ -436,7 +437,8 @@ export class PCRTestResultsService {
   async createNewWaitingResult(
     appointment: AppointmentDBModel,
     adminId: string,
-    runNumber:number
+    runNumber:number,
+    reSampleNumber: number
   ): Promise<PCRTestResultDBModel> {
     const pcrResultDataForDbCreate = {
       adminId: adminId,
@@ -451,7 +453,8 @@ export class PCRTestResultsService {
       organizationId: appointment.organizationId,
       result: ResultTypes.Pending,
       waitingResult: true,
-      runNumber: runNumber
+      runNumber: runNumber,
+      reSampleNumber: reSampleNumber
     }
     return await this.saveDefaultTestResults(pcrResultDataForDbCreate)
   }
@@ -459,7 +462,8 @@ export class PCRTestResultsService {
   async handleActions(
     resultData: PCRTestResultData,
     appointment: AppointmentDBModel,
-    runNumber: number
+    runNumber: number,
+    reSampleNumber: number
   ): Promise<void> {
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
@@ -469,7 +473,7 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.SameDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(updatedAppointment, resultData.adminId, runNumber)
+        await this.createNewWaitingResult(updatedAppointment, resultData.adminId, runNumber, reSampleNumber)
         break
       }
       case PCRResultActions.ReRunTomorrow: {
@@ -479,7 +483,7 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.NextDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(updatedAppointment, resultData.adminId, runNumber)
+        await this.createNewWaitingResult(updatedAppointment, resultData.adminId, runNumber, reSampleNumber)
         break
       }
       case PCRResultActions.RequestReSample: {

@@ -126,6 +126,7 @@ class AppointmentWebhookController implements IControllerBase {
             organizationId: appointment.organizationId,
             result: ResultTypes.Pending,
             runNumber: 1 ,//Start the Run
+            reSampleNumber: linkedBarcodes.length+1,
             waitingResult: true
           }
           const pcrTestResult = await this.pcrTestResultsService.saveDefaultTestResults(
