@@ -63,6 +63,8 @@ components:
           type: string
         testRunDateTime:
           type: string
+        name:
+          type: string
         status:
           type: object
           additionalProperties: false
@@ -998,6 +1000,23 @@ paths:
           schema:
             type: string
         - in: query
+          name: appointmentStatus
+          explode: true
+          style: form
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - Pending
+                - InTransit
+                - Received
+                - InProgress
+                - Reported
+                - ReRunRequired
+                - ReSampleRequired
+                - Canceled
+        - in: query
           name: deadlineDate
           schema:
             type: string
@@ -1253,8 +1272,11 @@ paths:
                 testRunDateTime:
                   type: string
                   format: date-time
+                name:
+                  type: string
               required:
                 - testRunDateTime
+                - name
       responses:
         '200':
           description: Successfully handled

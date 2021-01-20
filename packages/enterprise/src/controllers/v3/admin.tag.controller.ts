@@ -89,10 +89,10 @@ class AdminTagController implements IControllerBase {
     const tags = innerRouter().use(
       '/',
       innerRouter()
-        .post('/', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), addNfcTagId)
+        .post('/', authorizationMiddleware([RequiredUserPermission.OrgAdmin], true), addNfcTagId)
         .get(
           '/:tagId/user',
-          authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
+          authorizationMiddleware([RequiredUserPermission.OrgAdmin], false),
           getUserByTagId,
         ),
     )

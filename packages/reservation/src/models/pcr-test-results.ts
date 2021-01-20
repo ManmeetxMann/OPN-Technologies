@@ -10,6 +10,12 @@ export enum PCRResultActions {
   MarkAsNegative = 'MarkAsNegative',
 }
 
+export enum PCRResultActionsAllowedResend {
+  SendThisResult = 'SendThisResult',
+  MarkAsPositive = 'MarkAsPositive',
+  MarkAsNegative = 'MarkAsNegative',
+}
+
 export enum ResultReportStatus {
   RequestReceived = 'RequestReceived',
   Processing = 'Processing',
@@ -70,6 +76,8 @@ export type PCRTestResultDBModel = PCRTestResultData &
     displayForNonAdmins: boolean
     deadline: string
     testRunId?: string
+    runNumber: number
+    reSampleNumber: number
   }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -97,7 +105,7 @@ export type PCRResults = {
 
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,
-  'id' | 'linkedBarCodes' | 'deadline'
+  'id' | 'linkedBarCodes' | 'deadline' | 'runNumber' | 'reSampleNumber'
 > & {
   email: string
   phone: number
