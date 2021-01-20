@@ -11,9 +11,10 @@ import {getAdminId} from '../../../../../common/src/utils/auth'
 
 import {
   AppointmentByOrganizationRequest,
-  appointmentUiDTOResponse,
-  AppointmentsState,
   AppointmentDBModel,
+  AppointmentsState,
+  AppointmentStatus,
+  appointmentUiDTOResponse,
 } from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {TransportRunsService} from '../../../services/transport-runs.service'
@@ -125,14 +126,27 @@ class AdminAppointmentController implements IControllerBase {
 
   getAppointmentById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {appointmentId} = req.params as {appointmentId: string}
+      const {appointmentId, organizationId} = req.params as {
+        appointmentId: string
+        organizationId: string
+      }
 
       const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
       if (!appointment) {
         throw new ResourceNotFoundException(`Appointment "${appointmentId}" not found`)
       }
 
-      res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
+      res.json(
+        actionSucceed({
+          ...appointmentUiDTOResponse({
+            ...appointment,
+            canCancel: this.appointmentService.getCanCancel(
+              !!organizationId,
+              appointment.appointmentStatus,
+            ),
+          }),
+        }),
+      )
     } catch (error) {
       next(error)
     }

@@ -435,4 +435,13 @@ export class AppoinmentService {
   async getAppointmentDBByPackageCode(packageCode: string): Promise<AppointmentDBModel[]> {
     return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
   }
+
+  getCanCancel(organizationIdExistence: boolean, appointmentStatus: AppointmentStatus): boolean {
+    return (
+      (organizationIdExistence && appointmentStatus === AppointmentStatus.Pending) ||
+      (!organizationIdExistence && appointmentStatus === AppointmentStatus.Canceled) ||
+      (!organizationIdExistence && appointmentStatus === AppointmentStatus.Reported) ||
+      (!organizationIdExistence && appointmentStatus === AppointmentStatus.ReSampleRequired)
+    )
+  }
 }

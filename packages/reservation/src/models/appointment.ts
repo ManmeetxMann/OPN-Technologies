@@ -145,6 +145,8 @@ export type AppointmentUiDTO = {
   latestResult?: string
   vialLocation?: string
   testRunId?: string
+  appointment?: boolean
+  canCancel?: boolean
 }
 
 export type AppointmentsState = {
@@ -192,7 +194,9 @@ export enum DeadlineLabel {
   NextDay = 'NextDay',
 }
 
-export const appointmentUiDTOResponse = (appointment: AppointmentDBModel): AppointmentUiDTO => {
+export const appointmentUiDTOResponse = (
+  appointment: AppointmentDBModel & {canCancel?: boolean},
+): AppointmentUiDTO => {
   const timeZone = Config.get('DEFAULT_TIME_ZONE')
   return {
     id: appointment.id,
@@ -207,5 +211,6 @@ export const appointmentUiDTOResponse = (appointment: AppointmentDBModel): Appoi
     deadline: moment(appointment.deadline).tz(timeZone).format(),
     latestResult: appointment.latestResult,
     vialLocation: appointment.vialLocation,
+    canCancel: appointment.canCancel,
   }
 }
