@@ -572,9 +572,9 @@ class UserController implements IControllerBase {
     )
 
     // authenticate the user without requiring an organizationId
-    const regUser = authorizationMiddleware([RequiredUserPermission.RegUser], true)
+    const regUser = authorizationMiddleware([RequiredUserPermission.RegUser], false)
     // authenticate the user while requiring an organizationId
-    const regUserWithOrg = authorizationMiddleware([RequiredUserPermission.RegUser], false)
+    const regUserWithOrg = authorizationMiddleware([RequiredUserPermission.RegUser], true)
 
     const dependents = innerRouter().use(
       '/dependents',
