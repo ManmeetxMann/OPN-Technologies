@@ -152,7 +152,7 @@ abstract class AcuityScheduling {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = APIURL + `/api/v1/appointment-types`
-    console.log(apiUrl) //To know request path for dependency
+    console.log('[ACUITY: Get appointment types] ', apiUrl) //To know request path for dependency
 
     const res = await fetch(apiUrl, {
       method: 'get',
@@ -172,8 +172,8 @@ abstract class AcuityScheduling {
   protected async getCalendars(): Promise<Calendar[]> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
-    const apiUrl = APIURL + `/api/v1/calendars`
-    console.log(apiUrl) //To know request path for dependency
+    const apiUrl = encodeURI(APIURL + `/api/v1/calendars`)
+    console.log('[ACUITY: Get calendars] ', apiUrl) //To know request path for dependency
 
     const res = await fetch(apiUrl, {
       method: 'get',

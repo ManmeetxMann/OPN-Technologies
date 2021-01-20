@@ -5,12 +5,12 @@ import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 
-import {PackageService} from '../../services/package.service'
+import {BookingLocationService} from '../../services/booking-location.service'
 
 class BookingLocationController implements IControllerBase {
   public path = '/reservation/admin/api/v1/booking-locations'
   public router = Router()
-  private packageService = new PackageService()
+  private bookingLocationService = new BookingLocationService()
 
   constructor() {
     this.initRoutes()
@@ -31,7 +31,7 @@ class BookingLocationController implements IControllerBase {
     try {
       const {organizationId} = req.query as {organizationId: string}
 
-      const results = await this.packageService.getBookingLocations(organizationId)
+      const results = await this.bookingLocationService.getBookingLocations(organizationId)
 
       res.json(actionSucceed(results))
     } catch (error) {
