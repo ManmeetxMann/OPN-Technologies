@@ -516,18 +516,18 @@ export class PCRTestResultsService {
   async sendNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
-        console.log(`SendNotification: Success: ${resultData.barCode} ReRunToday`)
         await this.sendRerunNotification(resultData, 'TODAY')
+        console.log(`SendNotification: Success: ${resultData.barCode} ReRunToday`)
         break
       }
       case PCRResultActions.ReRunTomorrow: {
-        console.log(`SendNotification: Success: ${resultData.barCode} ReRunTomorrow`)
         await this.sendRerunNotification(resultData, 'Tomorrow')
+        console.log(`SendNotification: Success: ${resultData.barCode} ReRunTomorrow`)
         break
       }
       case PCRResultActions.RequestReSample: {
-        console.log(`SendNotification: Success: ${resultData.barCode} RequestReSample`)
         await this.sendReSampleNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} RequestReSample`)
         break
       }
       default: {
