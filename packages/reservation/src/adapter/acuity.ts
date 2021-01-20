@@ -220,14 +220,42 @@ abstract class AcuityScheduling {
     return result
   }
 
+  protected async getAvailabilityDatesList(
+    appointmentTypeID: number,
+    month: string,
+    calendarID: number,
+    timezone: string,
+  ): Promise<{date: string}[]> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = encodeURI(
+      APIURL +
+        `/api/v1/availability/dates?appointmentTypeID=${appointmentTypeID}&month=${month}&calendarID=${calendarID}&timezone=${timezone}`,
+    )
+    console.log('[ACUITY: Get availability dates list] ', apiUrl) //To know request path for dependency
+
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return result
+  }
+
   protected async getAvailableSlotsList(
     appointmentTypeID: number,
     date: string,
     calendarID: number,
     timezone: string,
   ): Promise<{time: Date}[]> {
-    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
-    const userPassBase64 = userPassBuf.toString('base64')
+
     const apiUrl = encodeURI(
       APIURL +
         `/api/v1/availability/times?appointmentTypeID=${appointmentTypeID}&date=${date}&calendarID=${calendarID}&timezone=${timezone}`,

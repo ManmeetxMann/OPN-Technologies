@@ -437,6 +437,23 @@ export class AppoinmentService {
     return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
   }
 
+  async getAvailabitlityDateList(
+    id: string,
+    year: number,
+    month: number,
+  ): Promise<{date: string}[]> {
+    const {appointmentTypeId, calendarTimezone, calendarId} = JSON.parse(
+      Buffer.from(id, 'base64').toString(),
+    )
+
+    return this.acuityRepository.getAvailabilityDates(
+      appointmentTypeId,
+      `${year}-${month}`,
+      calendarId,
+      calendarTimezone,
+    )
+  }
+
   async getAvailableSlots(id: string, date: string): Promise<AvailableSlotResponse[]> {
     const {appointmentTypeId, calendarTimezone, calendarId} = JSON.parse(
       Buffer.from(id, 'base64').toString(),

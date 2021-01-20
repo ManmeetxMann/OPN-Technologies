@@ -24,6 +24,11 @@ class AppointmentAvailabilityController implements IControllerBase {
       authorizationMiddleware([RequiredUserPermission.RegUser]),
       this.getAvailableSlots,
     )
+    innerRouter.get(
+      this.path + '/dates',
+      authorizationMiddleware([RequiredUserPermission.RegUser]),
+      this.getAvailabilityDateList,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -35,6 +40,26 @@ class AppointmentAvailabilityController implements IControllerBase {
       const availableSlots = await this.appointmentService.getAvailableSlots(id, date)
 
       res.json(actionSucceed(availableSlots.map(({id, label}) => ({id, label}))))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getAvailabilityDateList = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {year, month, id} = req.query as {year: string; month: string; id: string}
+
+      const availableDates = await this.appointmentService.getAvailabitlityDateList(
+        id,
+        Number(year),
+        Number(month),
+      )
+
+      res.json(actionSucceed(availableDates.map(({date}) => ({date}))))
     } catch (error) {
       next(error)
     }
