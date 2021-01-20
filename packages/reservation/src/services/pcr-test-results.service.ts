@@ -383,12 +383,13 @@ export class PCRTestResultsService {
     }
 
     //Create New Waiting Result for Resend
+    const runNumber = 0
     const testResult =
     isSingleResult && !waitingPCRTestResult
-        ? await this.createNewWaitingResult(appointment, resultData.adminId)
+        ? await this.createNewWaitingResult(appointment, resultData.adminId, runNumber)
         : waitingPCRTestResult
 
-    await this.handleActions(resultData, appointment)
+    await this.handleActions(resultData, appointment, testResult.runNumber)
 
     const finalResult = this.getFinalResult(
       resultData.resultSpecs.action,
@@ -435,6 +436,7 @@ export class PCRTestResultsService {
   async createNewWaitingResult(
     appointment: AppointmentDBModel,
     adminId: string,
+    runNumber:number
   ): Promise<PCRTestResultDBModel> {
     const pcrResultDataForDbCreate = {
       adminId: adminId,
@@ -449,6 +451,7 @@ export class PCRTestResultsService {
       organizationId: appointment.organizationId,
       result: ResultTypes.Pending,
       waitingResult: true,
+      runNumber: runNumber
     }
     return await this.saveDefaultTestResults(pcrResultDataForDbCreate)
   }
@@ -456,6 +459,7 @@ export class PCRTestResultsService {
   async handleActions(
     resultData: PCRTestResultData,
     appointment: AppointmentDBModel,
+    runNumber: number
   ): Promise<void> {
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
@@ -465,7 +469,7 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.SameDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(updatedAppointment, resultData.adminId)
+        await this.createNewWaitingResult(updatedAppointment, resultData.adminId, runNumber)
         break
       }
       case PCRResultActions.ReRunTomorrow: {
@@ -475,7 +479,7 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.NextDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(updatedAppointment, resultData.adminId)
+        await this.createNewWaitingResult(updatedAppointment, resultData.adminId, runNumber)
         break
       }
       case PCRResultActions.RequestReSample: {

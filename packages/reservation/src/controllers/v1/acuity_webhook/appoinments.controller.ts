@@ -125,7 +125,8 @@ class AppointmentWebhookController implements IControllerBase {
             linkedBarCodes: linkedBarcodes,
             organizationId: appointment.organizationId,
             result: ResultTypes.Pending,
-            waitingResult: true,
+            runNumber: 1 ,//Start the Run
+            waitingResult: true
           }
           const pcrTestResult = await this.pcrTestResultsService.saveDefaultTestResults(
             pcrResultDataForDb,
@@ -231,40 +232,43 @@ class AppointmentWebhookController implements IControllerBase {
         const pcrTestResult = await this.pcrTestResultsService.getWaitingPCRResultsByAppointmentId(
           appointmentFromDb.id,
         )
-        if (pcrTestResult) {
-          if (
-            action === AcuityWebhookActions.Canceled ||
-            appointmentStatus === AppointmentStatus.Canceled
-          ) {
-            await this.pcrTestResultsService.deleteTestResults(pcrTestResult.id)
-            console.log(
-              `WebhookController: UpdateAppointment: AppointmentCancelled ID: ${appointmentFromDb.id} Removed PCR Results ID: ${pcrTestResult.id}`,
-            )
-          } else {
-            const linkedBarcodes = await this.getlinkedBarcodes(appointment.certificate)
-            const pcrResultDataForDb = {
-              appointmentId: appointmentFromDb.id,
-              barCode: barCode,
-              dateOfAppointment,
-              displayForNonAdmins: true,
-              deadline,
-              firstName: appointment.firstName,
-              lastName: appointment.lastName,
-              linkedBarCodes: linkedBarcodes,
-              organizationId: appointment.organizationId,
-              result: ResultTypes.Pending,
-              waitingResult: true,
-            }
+        //getWaitingPCRResultsByAppointmentId will throw exception if pcrTestResult doesn't exists
 
-            await this.pcrTestResultsService.updateDefaultTestResults(
-              pcrTestResult.id,
-              pcrResultDataForDb,
-            )
-            console.log(
-              `WebhookController: UpdateAppointment: SuccessUpdatedPCRResults for PCRResultsID: ${pcrTestResult.id}`,
-            )
+        if (
+          action === AcuityWebhookActions.Canceled ||
+          appointmentStatus === AppointmentStatus.Canceled
+        ) {
+          await this.pcrTestResultsService.deleteTestResults(pcrTestResult.id)
+          console.log(
+            `WebhookController: UpdateAppointment: AppointmentCancelled ID: ${appointmentFromDb.id} Removed PCR Results ID: ${pcrTestResult.id}`,
+          )
+        } else {
+          const linkedBarcodes = await this.getlinkedBarcodes(appointment.certificate)
+          const pcrResultDataForDb = {
+            adminId: 'WEBHOOK',
+            appointmentId: appointmentFromDb.id,
+            barCode: barCode,
+            dateOfAppointment,
+            displayForNonAdmins: true,
+            deadline,
+            firstName: appointment.firstName,
+            lastName: appointment.lastName,
+            linkedBarCodes: linkedBarcodes,
+            organizationId: appointment.organizationId,
+            //result: ResultTypes.Pending,
+            //runNumber: 1 ,//Start the Run
+            //waitingResult: true,
           }
+
+          await this.pcrTestResultsService.updateDefaultTestResults(
+            pcrTestResult.id,
+            pcrResultDataForDb,
+          )
+          console.log(
+            `WebhookController: UpdateAppointment: SuccessUpdatedPCRResults for PCRResultsID: ${pcrTestResult.id}`,
+          )
         }
+        
       } catch (e) {
         if (appointment.canceled) {
           console.log(
