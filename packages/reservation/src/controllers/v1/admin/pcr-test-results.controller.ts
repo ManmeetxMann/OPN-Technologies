@@ -13,6 +13,7 @@ import {ResourceNotFoundException} from '../../../../../common/src/exceptions/re
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {TestRunsService} from '../../../services/test-runs.service'
+import {flatten} from 'lodash'
 
 import {
   PCRListQueryRequest,
@@ -147,8 +148,8 @@ class PCRTestResultController implements IControllerBase {
       const formedPcrTests: PCRTestResultHistoryDTO[] = await Promise.all(
         barcode.map(async (code) => {
           const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
-          const results = testSameBarcode
-            .map((testSame) => {
+          const results = flatten(
+            testSameBarcode.map((testSame) => {
               const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
                 ...linkedResult.resultSpecs,
                 result: linkedResult.result,
@@ -160,8 +161,8 @@ class PCRTestResultController implements IControllerBase {
                 },
                 ...linkedSameTests,
               ]
-            })
-            .flat()
+            }),
+          )
           const waitingResult = !!pcrTests.find(
             (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
           )

@@ -712,10 +712,8 @@ export class PCRTestResultsService {
     switch (appointment.appointmentStatus) {
       case AppointmentStatus.Reported:
         return AppointmentReasons.AlreadyReported
-      case AppointmentStatus.ReRunRequired:
+      case AppointmentStatus.ReSampleRequired:
         return AppointmentReasons.ReSampleAlreadyRequested
-      case AppointmentStatus.InProgress:
-        return AppointmentReasons.InProgress
       default:
         return AppointmentReasons.NoInProgress
     }
