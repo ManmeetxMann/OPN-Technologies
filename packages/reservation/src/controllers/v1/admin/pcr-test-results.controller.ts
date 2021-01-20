@@ -124,7 +124,7 @@ class PCRTestResultController implements IControllerBase {
         true,
       )
 
-      res.json(actionSucceed({id:resultId}))
+      res.json(actionSucceed({id: resultId}))
     } catch (error) {
       next(error)
     }

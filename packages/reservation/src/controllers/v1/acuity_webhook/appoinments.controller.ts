@@ -125,9 +125,9 @@ class AppointmentWebhookController implements IControllerBase {
             linkedBarCodes: linkedBarcodes,
             organizationId: appointment.organizationId,
             result: ResultTypes.Pending,
-            runNumber: 1 ,//Start the Run
-            reSampleNumber: linkedBarcodes.length+1,
-            waitingResult: true
+            runNumber: 1, //Start the Run
+            reSampleNumber: linkedBarcodes.length + 1,
+            waitingResult: true,
           }
           const pcrTestResult = await this.pcrTestResultsService.saveDefaultTestResults(
             pcrResultDataForDb,
@@ -269,7 +269,6 @@ class AppointmentWebhookController implements IControllerBase {
             `WebhookController: UpdateAppointment: SuccessUpdatedPCRResults for PCRResultsID: ${pcrTestResult.id}`,
           )
         }
-        
       } catch (e) {
         if (appointment.canceled) {
           console.log(

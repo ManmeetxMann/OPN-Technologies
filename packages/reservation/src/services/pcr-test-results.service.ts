@@ -32,7 +32,12 @@ import {
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import testResultPDFTemplate from '../templates/pcrTestResult'
-import {AppointmentDBModel, AppointmentStatus, DeadlineLabel, ResultTypes} from '../models/appointment'
+import {
+  AppointmentDBModel,
+  AppointmentStatus,
+  DeadlineLabel,
+  ResultTypes,
+} from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
@@ -347,8 +352,8 @@ export class PCRTestResultsService {
       : undefined
   }
 
-  allowedForResend(action: PCRResultActions):boolean{
-    if (action in PCRResultActionsAllowedResend){
+  allowedForResend(action: PCRResultActions): boolean {
+    if (action in PCRResultActionsAllowedResend) {
       return true
     }
     return false
@@ -359,7 +364,9 @@ export class PCRTestResultsService {
     isSingleResult: boolean,
   ): Promise<string> {
     if (resultData.resultSpecs.action === PCRResultActions.DoNothing) {
-      console.log(`handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}. It is Ignored`)
+      console.log(
+        `handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}. It is Ignored`,
+      )
       return
     }
 
@@ -369,14 +376,23 @@ export class PCRTestResultsService {
     const isAlreadyReported = appointment.appointmentStatus === AppointmentStatus.Reported
 
     if (!waitingPCRTestResult && (!isSingleResult || !isAlreadyReported)) {
-      console.error(`handlePCRResultSaveAndSend: FailedToSend NotWaitingForResults SingleResult: ${isSingleResult} Current Appointment Status: ${appointment.appointmentStatus}`)
+      console.error(
+        `handlePCRResultSaveAndSend: FailedToSend NotWaitingForResults SingleResult: ${isSingleResult} Current Appointment Status: ${appointment.appointmentStatus}`,
+      )
       throw new ResourceNotFoundException(
         `PCR Test Result with barCode ${resultData.barCode} is not waiting for results.`,
       )
     }
 
-    if(!waitingPCRTestResult && isSingleResult && isAlreadyReported && !this.allowedForResend(resultData.resultSpecs.action)){
-      console.error(`handlePCRResultSaveAndSend: FailedToSend Already Reported not allowed to do Action: ${resultData.resultSpecs.action}`)
+    if (
+      !waitingPCRTestResult &&
+      isSingleResult &&
+      isAlreadyReported &&
+      !this.allowedForResend(resultData.resultSpecs.action)
+    ) {
+      console.error(
+        `handlePCRResultSaveAndSend: FailedToSend Already Reported not allowed to do Action: ${resultData.resultSpecs.action}`,
+      )
       throw new ResourceNotFoundException(
         `PCR Test Result with barCode ${resultData.barCode} is already Reported. It is not allowed to do ${resultData.resultSpecs.action} `,
       )
@@ -386,11 +402,21 @@ export class PCRTestResultsService {
     const runNumber = 0 //Not Relevant for Resend
     const reSampleNumber = 0 //Not Relevant for Resend
     const testResult =
-    isSingleResult && !waitingPCRTestResult
-        ? await this.createNewWaitingResult(appointment, resultData.adminId, runNumber, reSampleNumber)
+      isSingleResult && !waitingPCRTestResult
+        ? await this.createNewWaitingResult(
+            appointment,
+            resultData.adminId,
+            runNumber,
+            reSampleNumber,
+          )
         : waitingPCRTestResult
 
-    await this.handleActions(resultData, appointment, testResult.runNumber, testResult.reSampleNumber)
+    await this.handleActions(
+      resultData,
+      appointment,
+      testResult.runNumber,
+      testResult.reSampleNumber,
+    )
 
     const finalResult = this.getFinalResult(
       resultData.resultSpecs.action,
@@ -437,8 +463,8 @@ export class PCRTestResultsService {
   async createNewWaitingResult(
     appointment: AppointmentDBModel,
     adminId: string,
-    runNumber:number,
-    reSampleNumber: number
+    runNumber: number,
+    reSampleNumber: number,
   ): Promise<PCRTestResultDBModel> {
     const pcrResultDataForDbCreate = {
       adminId: adminId,
@@ -454,7 +480,7 @@ export class PCRTestResultsService {
       result: ResultTypes.Pending,
       waitingResult: true,
       runNumber: runNumber,
-      reSampleNumber: reSampleNumber
+      reSampleNumber: reSampleNumber,
     }
     return await this.saveDefaultTestResults(pcrResultDataForDbCreate)
   }
@@ -463,9 +489,9 @@ export class PCRTestResultsService {
     resultData: PCRTestResultData,
     appointment: AppointmentDBModel,
     runNumber: number,
-    reSampleNumber: number
+    reSampleNumber: number,
   ): Promise<void> {
-    const nextRunNumber = runNumber+1
+    const nextRunNumber = runNumber + 1
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
         console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for today`)
@@ -474,7 +500,12 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.SameDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(updatedAppointment, resultData.adminId, nextRunNumber, reSampleNumber)
+        await this.createNewWaitingResult(
+          updatedAppointment,
+          resultData.adminId,
+          nextRunNumber,
+          reSampleNumber,
+        )
         break
       }
       case PCRResultActions.ReRunTomorrow: {
@@ -484,7 +515,12 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.NextDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(updatedAppointment, resultData.adminId, nextRunNumber, reSampleNumber)
+        await this.createNewWaitingResult(
+          updatedAppointment,
+          resultData.adminId,
+          nextRunNumber,
+          reSampleNumber,
+        )
         break
       }
       case PCRResultActions.RequestReSample: {
@@ -493,7 +529,7 @@ export class PCRTestResultsService {
           appointment.id,
           resultData.adminId,
         )
-        if(!appointment.organizationId){
+        if (!appointment.organizationId) {
           this.couponCode = await this.couponService.createCoupon(appointment.email)
           console.log(
             `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
