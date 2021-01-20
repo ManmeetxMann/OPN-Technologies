@@ -18,6 +18,12 @@ class AppointmentAvailabilityController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
+
+    innerRouter.get(
+      this.path + '/slots',
+      authorizationMiddleware([RequiredUserPermission.RegUser]),
+      this.getAvailableSlots,
+    )
     innerRouter.get(
       this.path + '/dates',
       authorizationMiddleware([RequiredUserPermission.RegUser]),
@@ -25,6 +31,18 @@ class AppointmentAvailabilityController implements IControllerBase {
     )
 
     this.router.use('/', innerRouter)
+  }
+
+  getAvailableSlots = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {id, date} = req.query as {id: string; date: string}
+
+      const availableSlots = await this.appointmentService.getAvailableSlots(id, date)
+
+      res.json(actionSucceed(availableSlots.map(({id, label}) => ({id, label}))))
+    } catch (error) {
+      next(error)
+    }
   }
 
   getAvailabilityDateList = async (

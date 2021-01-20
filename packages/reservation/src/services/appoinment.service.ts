@@ -13,6 +13,7 @@ import {
   AppointmentModelBase,
   AppointmentStatus,
   AppointmentStatusHistoryDb,
+  AvailableSlotResponse,
   DeadlineLabel,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
@@ -23,7 +24,7 @@ import {
 } from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
-import {dateFormats, now} from '../../../common/src/utils/times'
+import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
 import {makeTimeEndOfTheDay} from '../utils/datetime.helper'
@@ -451,5 +452,34 @@ export class AppoinmentService {
       calendarId,
       calendarTimezone,
     )
+  }
+
+  async getAvailableSlots(id: string, date: string): Promise<AvailableSlotResponse[]> {
+    const {appointmentTypeId, calendarTimezone, calendarId} = JSON.parse(
+      Buffer.from(id, 'base64').toString(),
+    )
+
+    const slotsList = await this.acuityRepository.getAvailableSlots(
+      appointmentTypeId,
+      date,
+      calendarId,
+      calendarTimezone,
+    )
+
+    return slotsList.map(({time}) => {
+      const idBuf = {
+        appointmentTypeId,
+        calendarTimezone,
+        calendarId,
+        date,
+        time,
+      }
+      const id = Buffer.from(JSON.stringify(idBuf)).toString('base64')
+
+      return {
+        id,
+        label: moment(time).tz(calendarTimezone).format(timeFormats.standard12h),
+      }
+    })
   }
 }
