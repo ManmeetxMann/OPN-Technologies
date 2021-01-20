@@ -1121,6 +1121,8 @@ paths:
   /reservation/admin/api/v1/packages:
     post:
       description: Add Package Codes for Orgs
+      security:
+        - bearerAuthJWT: []
       tags:
         - Package Management
       requestBody:
@@ -1770,3 +1772,66 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+
+  /reservation/admin/api/v1/booking-locations:
+    get:
+      description: Get list Booking Locations
+      tags:
+        - Booking locations
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        appointmentTypeName:
+                          type: string
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        address:
+                          type: string
+                      required:
+                        - appointmentTypeName
+                        - id
+                        - name
+                        - address
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          [
+                            succeed,
+                            failed,
+                            validation_error,
+                            internal_server_error,
+                            unauthorized,
+                            access_denied,
+                            resource_not_found,
+                          ]
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number

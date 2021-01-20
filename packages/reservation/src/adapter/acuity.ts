@@ -4,6 +4,8 @@ import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {Certificate} from '../models/packages'
 import {AcuityCouponCodeResponse} from '../models/coupons'
+import {AppointmentTypes} from '../models/appointment-types'
+import {Calendar} from '../models/calendar'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -130,6 +132,48 @@ abstract class AcuityScheduling {
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = APIURL + `/api/v1/certificates`
     console.log(apiUrl) //To know request path for dependency
+
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return result
+  }
+
+  protected async getAppointmentTypes(): Promise<AppointmentTypes[]> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = APIURL + `/api/v1/appointment-types`
+    console.log('[ACUITY: Get appointment types] ', apiUrl) //To know request path for dependency
+
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return result
+  }
+
+  protected async getCalendars(): Promise<Calendar[]> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = encodeURI(APIURL + `/api/v1/calendars`)
+    console.log('[ACUITY: Get calendars] ', apiUrl) //To know request path for dependency
 
     const res = await fetch(apiUrl, {
       method: 'get',
