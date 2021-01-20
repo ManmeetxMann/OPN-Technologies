@@ -63,6 +63,8 @@ components:
           type: string
         testRunDateTime:
           type: string
+        name:
+          type: string
         status:
           type: object
           additionalProperties: false
@@ -1268,8 +1270,11 @@ paths:
                 testRunDateTime:
                   type: string
                   format: date-time
+                name:
+                  type: string
               required:
                 - testRunDateTime
+                - name
       responses:
         '200':
           description: Successfully handled
