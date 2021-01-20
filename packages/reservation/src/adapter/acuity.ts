@@ -255,7 +255,8 @@ abstract class AcuityScheduling {
     calendarID: number,
     timezone: string,
   ): Promise<{time: Date}[]> {
-
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = encodeURI(
       APIURL +
         `/api/v1/availability/times?appointmentTypeID=${appointmentTypeID}&date=${date}&calendarID=${calendarID}&timezone=${timezone}`,
