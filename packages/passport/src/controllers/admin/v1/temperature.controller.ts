@@ -35,7 +35,7 @@ class TemperatureAdminController implements IControllerBase {
   public initRoutes(): void {
     this.router.post(
       this.path + '/temperature',
-      authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin], true),
       this.saveTemperature,
     )
   }
