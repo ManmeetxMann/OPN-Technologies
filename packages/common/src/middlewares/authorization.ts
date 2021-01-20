@@ -10,9 +10,8 @@ import {AdminProfile} from '../data/admin'
 
 export const authorizationMiddleware = (
   listOfRequiredRoles: RequiredUserPermission[],
-  byPassOrgCheck?: boolean,
+  requireOrg = false,
 ) => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const byPassOrganizationCheck = byPassOrgCheck ?? false
   const bearerHeader = req.headers['authorization']
   if (!bearerHeader) {
     res.status(401).json(of(null, ResponseStatusCodes.Unauthorized, 'Authorization token required'))
@@ -43,26 +42,26 @@ export const authorizationMiddleware = (
 
   const userService = new UserService()
   let connectedUser: User
-  const seekRegularAuth = listOfRequiredRoles.includes(RequiredUserPermission.RegUser)
-  if (!seekRegularAuth) {
-    connectedUser = await userService.findOneByAdminAuthUserId(validatedAuthUser.uid)
-  }
+  const [regUser, adminUser] = await Promise.all([
+    userService.findOneByAuthUserId(validatedAuthUser.uid),
+    userService.findOneByAdminAuthUserId(validatedAuthUser.uid),
+  ])
 
-  if (!connectedUser) {
-    const regularUser = await userService.findOneByAuthUserId(validatedAuthUser.uid)
-    if (regularUser) {
-      if (!seekRegularAuth && regularUser.admin) {
-        connectedUser = regularUser
-        console.warn(
-          `Admin user ${connectedUser.id} was allowed to authenticate using user.authUserId`,
-        )
-      } else if (seekRegularAuth) {
-        connectedUser = regularUser
-        connectedUser.admin = null
-      }
+  const seekRegularAuth = listOfRequiredRoles.includes(RequiredUserPermission.RegUser)
+  const seekAdminAuth = listOfRequiredRoles.some((role) => role !== RequiredUserPermission.RegUser)
+
+  if (seekRegularAuth && regUser) {
+    connectedUser = regUser
+  } else if (seekAdminAuth) {
+    if (adminUser) {
+      connectedUser = adminUser
+    } else if (regUser?.admin) {
+      console.warn(
+        `Admin user ${connectedUser.id} was allowed to authenticate using user.authUserId`,
+      )
+      connectedUser = regUser
     }
   }
-
   if (!connectedUser) {
     // Forbidden
     res
@@ -85,18 +84,21 @@ export const authorizationMiddleware = (
     (req.body?.organizationId as string) ??
     null
 
-  if (!byPassOrganizationCheck && !organizationId) {
-    console.warn(`${connectedUser.id} did not provide an organizationId`)
-    // Forbidden
-    res.status(403).json(of(null, ResponseStatusCodes.AccessDenied, `Organization ID not provided`))
-    return
-  }
-
   const admin = connectedUser.admin as AdminProfile
-  if (!byPassOrganizationCheck) {
-    if (admin) {
-      // user authenticated as an admin, needs to be valid
+
+  if (requireOrg) {
+    if (!organizationId) {
       if (!authorizedWithoutOrgId(admin, organizationId)) {
+        console.warn(`${connectedUser.id} did not provide an organizationId`)
+        // Forbidden
+        res
+          .status(403)
+          .json(of(null, ResponseStatusCodes.AccessDenied, `Organization ID not provided`))
+        return
+      }
+    } else if (admin && !seekRegularAuth) {
+      // user authenticated as an admin, needs to be valid
+      if (!isAllowed(connectedUser, listOfRequiredRoles)) {
         console.warn(`${organizationId} is not accesible to ${connectedUser.id}`)
         // Forbidden
         res
@@ -146,7 +148,7 @@ export const authorizationMiddleware = (
   }
 
   // this check is only required for admins
-  if (admin && !isAllowed(admin, listOfRequiredRoles, connectedUser.id)) {
+  if (admin && !isAllowed(connectedUser, listOfRequiredRoles)) {
     console.warn(`Admin user ${connectedUser.id} is not allowed for ${listOfRequiredRoles}`)
     // Forbidden
     res
@@ -181,19 +183,24 @@ const authorizedWithoutOrgId = (admin: AdminProfile, organizationId: string): bo
 }
 
 const isAllowed = (
-  admin: AdminProfile,
+  connectedUser: User,
   listOfRequiredPermissions: RequiredUserPermission[],
-  userId: string,
 ): boolean => {
+  const admin = connectedUser.admin as AdminProfile | null
+  const userId = connectedUser.id
   const seekLabAppointmentAdmin = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabAppointments,
   )
   const seekOPNAdmin = listOfRequiredPermissions.includes(RequiredUserPermission.OPNAdmin)
-  if (seekLabAppointmentAdmin && !admin.isLabAppointmentsAdmin && !admin.isTestAppointmentsAdmin) {
+  if (
+    seekLabAppointmentAdmin &&
+    !admin?.isLabAppointmentsAdmin &&
+    !admin?.isTestAppointmentsAdmin
+  ) {
     console.warn(`Admin user ${userId} needs isLabAppointmentsAdmin or isTestAppointmentsAdmin`)
     return false
   }
-  if (seekOPNAdmin && !admin.isOpnSuperAdmin) {
+  if (seekOPNAdmin && !admin?.isOpnSuperAdmin) {
     console.warn(`Admin user ${userId} needs isOpnSuperAdmin`)
     return false
   }

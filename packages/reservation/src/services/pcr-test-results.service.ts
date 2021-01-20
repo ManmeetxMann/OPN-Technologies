@@ -27,11 +27,17 @@ import {
   PcrTestResultsListRequest,
   ResultReportStatus,
   TestResultsReportingTrackerPCRResultsDBModel,
+  PCRResultActionsAllowedResend,
 } from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import testResultPDFTemplate from '../templates/pcrTestResult'
-import {AppointmentDBModel, DeadlineLabel, ResultTypes} from '../models/appointment'
+import {
+  AppointmentDBModel,
+  AppointmentStatus,
+  DeadlineLabel,
+  ResultTypes,
+} from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
@@ -145,7 +151,7 @@ export class PCRTestResultsService {
       }
     } catch (error) {
       //CRITICAL
-      console.log(`processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `)
+      console.error(`processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `)
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
         status: ResultReportStatus.Failed,
         details: error.toString(),
@@ -346,36 +352,79 @@ export class PCRTestResultsService {
       : undefined
   }
 
+  allowedForResend(action: PCRResultActions): boolean {
+    if (action in PCRResultActionsAllowedResend) {
+      return true
+    }
+    return false
+  }
+
   async handlePCRResultSaveAndSend(
     resultData: PCRTestResultData,
-    iSingleResult: boolean,
-  ): Promise<void> {
+    isSingleResult: boolean,
+  ): Promise<string> {
     if (resultData.resultSpecs.action === PCRResultActions.DoNothing) {
-      console.log(`handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}`)
+      console.log(
+        `handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}. It is Ignored`,
+      )
       return
     }
 
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
     const pcrTestResults = await this.getPCRResultsByByBarCode(resultData.barCode)
     const waitingPCRTestResult = await this.getWaitingPCRTestResult(pcrTestResults)
-    if (!waitingPCRTestResult && !iSingleResult) {
+    const isAlreadyReported = appointment.appointmentStatus === AppointmentStatus.Reported
+
+    if (!waitingPCRTestResult && (!isSingleResult || !isAlreadyReported)) {
+      console.error(
+        `handlePCRResultSaveAndSend: FailedToSend NotWaitingForResults SingleResult: ${isSingleResult} Current Appointment Status: ${appointment.appointmentStatus}`,
+      )
       throw new ResourceNotFoundException(
-        `PCRTestResult with barCode ${resultData.barCode} not waiting for results`,
+        `PCR Test Result with barCode ${resultData.barCode} is not waiting for results.`,
       )
     }
+
+    if (
+      !waitingPCRTestResult &&
+      isSingleResult &&
+      isAlreadyReported &&
+      !this.allowedForResend(resultData.resultSpecs.action)
+    ) {
+      console.error(
+        `handlePCRResultSaveAndSend: FailedToSend Already Reported not allowed to do Action: ${resultData.resultSpecs.action}`,
+      )
+      throw new ResourceNotFoundException(
+        `PCR Test Result with barCode ${resultData.barCode} is already Reported. It is not allowed to do ${resultData.resultSpecs.action} `,
+      )
+    }
+
+    //Create New Waiting Result for Resend
+    const runNumber = 0 //Not Relevant for Resend
+    const reSampleNumber = 0 //Not Relevant for Resend
     const testResult =
-      iSingleResult && !waitingPCRTestResult
-        ? await this.createNewWaitingResult(appointment, resultData.adminId)
+      isSingleResult && !waitingPCRTestResult
+        ? await this.createNewWaitingResult(
+            appointment,
+            resultData.adminId,
+            runNumber,
+            reSampleNumber,
+          )
         : waitingPCRTestResult
 
-    await this.handleActions(resultData, appointment)
+    await this.handleActions(
+      resultData,
+      appointment,
+      testResult.runNumber,
+      testResult.reSampleNumber,
+    )
 
     const finalResult = this.getFinalResult(
       resultData.resultSpecs.action,
       resultData.resultSpecs.autoResult,
       resultData.barCode,
     )
-    //Save PCR Test results
+
+    //Update PCR Test results
     const pcrResultDataForDbUpdate = {
       ...resultData,
       result: finalResult,
@@ -385,7 +434,7 @@ export class PCRTestResultsService {
       organizationId: appointment.organizationId,
       dateOfAppointment: appointment.dateOfAppointment,
       waitingResult: false,
-      displayForNonAdmins: true,
+      displayForNonAdmins: true, //TODO
     }
 
     await this.pcrTestResultsRepository.updateProperties(testResult.id, pcrResultDataForDbUpdate)
@@ -407,11 +456,15 @@ export class PCRTestResultsService {
         `handlePCRResultSaveAndSend: Not Notification is sent for ${resultData.barCode}. Notify is off.`,
       )
     }
+    //UPdated ID
+    return testResult.id
   }
 
   async createNewWaitingResult(
     appointment: AppointmentDBModel,
     adminId: string,
+    runNumber: number,
+    reSampleNumber: number,
   ): Promise<PCRTestResultDBModel> {
     const pcrResultDataForDbCreate = {
       adminId: adminId,
@@ -426,6 +479,8 @@ export class PCRTestResultsService {
       organizationId: appointment.organizationId,
       result: ResultTypes.Pending,
       waitingResult: true,
+      runNumber: runNumber,
+      reSampleNumber: reSampleNumber,
     }
     return await this.saveDefaultTestResults(pcrResultDataForDbCreate)
   }
@@ -433,7 +488,10 @@ export class PCRTestResultsService {
   async handleActions(
     resultData: PCRTestResultData,
     appointment: AppointmentDBModel,
+    runNumber: number,
+    reSampleNumber: number,
   ): Promise<void> {
+    const nextRunNumber = runNumber + 1
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
         console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for today`)
@@ -442,7 +500,12 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.SameDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(updatedAppointment, resultData.adminId)
+        await this.createNewWaitingResult(
+          updatedAppointment,
+          resultData.adminId,
+          nextRunNumber,
+          reSampleNumber,
+        )
         break
       }
       case PCRResultActions.ReRunTomorrow: {
@@ -452,7 +515,12 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.NextDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(updatedAppointment, resultData.adminId)
+        await this.createNewWaitingResult(
+          updatedAppointment,
+          resultData.adminId,
+          nextRunNumber,
+          reSampleNumber,
+        )
         break
       }
       case PCRResultActions.RequestReSample: {
@@ -461,15 +529,17 @@ export class PCRTestResultsService {
           appointment.id,
           resultData.adminId,
         )
-        this.couponCode = await this.couponService.createCoupon(appointment.email)
-        console.log(
-          `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
-        )
-        await this.couponService.saveCoupon(
-          this.couponCode,
-          appointment.organizationId,
-          resultData.barCode,
-        )
+        if (!appointment.organizationId) {
+          this.couponCode = await this.couponService.createCoupon(appointment.email)
+          console.log(
+            `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
+          )
+          await this.couponService.saveCoupon(
+            this.couponCode,
+            appointment.organizationId,
+            resultData.barCode,
+          )
+        }
         break
       }
       default: {
@@ -482,18 +552,18 @@ export class PCRTestResultsService {
   async sendNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.ReRunToday: {
-        console.log(`SendNotification: Success: ${resultData.barCode} ReRunToday`)
         await this.sendRerunNotification(resultData, 'TODAY')
+        console.log(`SendNotification: Success: ${resultData.barCode} ReRunToday`)
         break
       }
       case PCRResultActions.ReRunTomorrow: {
-        console.log(`SendNotification: Success: ${resultData.barCode} ReRunTomorrow`)
         await this.sendRerunNotification(resultData, 'Tomorrow')
+        console.log(`SendNotification: Success: ${resultData.barCode} ReRunTomorrow`)
         break
       }
       case PCRResultActions.RequestReSample: {
-        console.log(`SendNotification: Success: ${resultData.barCode} RequestReSample`)
         await this.sendReSampleNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} RequestReSample`)
         break
       }
       default: {

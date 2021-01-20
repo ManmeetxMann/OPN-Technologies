@@ -29,7 +29,7 @@ class AdminController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.get(
       this.path + '/api/v1/test-results',
-      authorizationMiddleware([RequiredUserPermission.LabPCRTestResults]),
+      authorizationMiddleware([RequiredUserPermission.LabPCRTestResults], true),
       this.getListResult,
     )
 

@@ -148,17 +148,13 @@ class AdminUserController implements IControllerBase {
   public initRoutes(): void {
     const innerRouter = () => Router({mergeParams: true})
     const root = '/enterprise/admin/api/v3/users'
-
+    const requireAdminWithOrg = authorizationMiddleware([RequiredUserPermission.OrgAdmin], true)
     const route = innerRouter().use(
       '/',
       innerRouter()
-        .get(
-          '/',
-          authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
-          getUsersByOrganizationId,
-        )
-        .post('/', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), createUser)
-        .put('/:userId', authorizationMiddleware([RequiredUserPermission.OrgAdmin]), updateUser),
+        .get('/', requireAdminWithOrg, getUsersByOrganizationId)
+        .post('/', requireAdminWithOrg, createUser)
+        .put('/:userId', requireAdminWithOrg, updateUser),
     )
 
     this.router.use(root, route)
