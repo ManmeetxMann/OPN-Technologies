@@ -228,10 +228,11 @@ abstract class AcuityScheduling {
   ): Promise<{time: Date}[]> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
-    const apiUrl =
+    const apiUrl = encodeURI(
       APIURL +
-      `/api/v1/availability/times?appointmentTypeID=${appointmentTypeID}&date=${date}&calendarID=${calendarID}&timezone=${timezone}`
-    console.log(apiUrl) //To know request path for dependency
+        `/api/v1/availability/times?appointmentTypeID=${appointmentTypeID}&date=${date}&calendarID=${calendarID}&timezone=${timezone}`,
+    )
+    console.log('[ACUITY: Get availability dates list] ', apiUrl) //To know request path for dependency
 
     const res = await fetch(apiUrl, {
       method: 'get',

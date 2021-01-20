@@ -1785,6 +1785,7 @@ paths:
           name: id
           schema:
             type: string
+            default: eyJhcHBvaW50bWVudFR5cGVJZCI6MTk0MjIwMTgsImNhbGVuZGFyVGltZXpvbmUiOiJBbWVyaWNhL1Rvcm9udG8iLCJjYWxlbmRhcklkIjo0NTcxMTAzfQ==
           required: true
         - in: query
           name: date

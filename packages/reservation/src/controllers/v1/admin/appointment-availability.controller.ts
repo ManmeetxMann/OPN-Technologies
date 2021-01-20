@@ -34,7 +34,7 @@ class AppointmentAvailabilityController implements IControllerBase {
 
       const availableSlots = await this.appointmentService.getAvailableSlots(id, date)
 
-      res.json(actionSucceed(availableSlots))
+      res.json(actionSucceed(availableSlots.map(({id, label}) => ({id, label}))))
     } catch (error) {
       next(error)
     }

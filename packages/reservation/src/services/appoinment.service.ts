@@ -24,7 +24,7 @@ import {
 } from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
-import {dateFormats, now} from '../../../common/src/utils/times'
+import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
 import {makeTimeEndOfTheDay} from '../utils/datetime.helper'
@@ -438,7 +438,6 @@ export class AppoinmentService {
   }
 
   async getAvailableSlots(id: string, date: string): Promise<AvailableSlotResponse[]> {
-    console.log(id)
     const {appointmentTypeId, calendarTimezone, calendarId} = JSON.parse(
       Buffer.from(id, 'base64').toString(),
     )
@@ -462,7 +461,7 @@ export class AppoinmentService {
 
       return {
         id,
-        label: moment(time).tz(calendarTimezone).format('hh:mmA'),
+        label: moment(time).tz(calendarTimezone).format(timeFormats.standard12h),
       }
     })
   }
