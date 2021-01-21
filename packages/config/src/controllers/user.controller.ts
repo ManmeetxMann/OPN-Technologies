@@ -36,6 +36,7 @@ class UserController implements IControllerBase {
           lookup: Config.get('DOMAIN_LOOKUP'),
           passport: Config.get('DOMAIN_PASSPORT'),
           registry: Config.get('DOMAIN_REGISTRY'),
+          reservation: Config.get('DOMAIN_RESERVATION'),
         },
         links: {
           privacyPolicy: Config.get('LINK_PRIVACYPOLICY'),
