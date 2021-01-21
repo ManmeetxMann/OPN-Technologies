@@ -1782,7 +1782,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /reservation/admin/api/v1/availability/slots:
+  /reservation/api/v1/availability/slots:
     get:
       description: Get Appointment Available Slots 
       tags:
@@ -1845,7 +1845,7 @@ paths:
                   page:
                     type: number
 
-  /reservation/admin/api/v1/availability/dates:
+  /reservation/api/v1/availability/dates:
     get:
       description: Get availability date list
       tags:
