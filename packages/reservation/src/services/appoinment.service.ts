@@ -265,7 +265,12 @@ export class AppoinmentService {
     const canCancel = this.getCanCancel(isLabUser, appointmentFromDB.appointmentStatus)
 
     if (!canCancel) {
-      throw new BadRequestException('Cannot cancel this appointment')
+      console.warn(
+        `cancelAppointment: Failed for appointmentId ${appointmentId} isLabUser: ${isLabUser} appointmentStatus: ${appointmentFromDB.appointmentStatus}`,
+      )
+      throw new BadRequestException(
+        `Appointment can't be cancelled. It is already in ${appointmentFromDB.appointmentStatus} state`,
+      )
     }
 
     if (organizationId && appointmentFromDB.organizationId !== organizationId) {
