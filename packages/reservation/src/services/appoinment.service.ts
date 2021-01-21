@@ -200,6 +200,17 @@ export class AppoinmentService {
     return this.appointmentsRepository.get(id)
   }
 
+  async getAppointmentDBByIdWithCancel(
+    id: string,
+    isLabUser: boolean,
+  ): Promise<AppointmentDBModel & {canCancel: boolean}> {
+    const appointment = await this.getAppointmentDBById(id)
+    return {
+      ...appointment,
+      canCancel: this.getCanCancel(isLabUser, appointment.appointmentStatus),
+    }
+  }
+
   async getAppointmentsDBByIds(appointmentsIds: string[]): Promise<AppointmentDBModel[]> {
     return this.appointmentsRepository.findWhereIdIn(appointmentsIds)
   }
@@ -240,6 +251,7 @@ export class AppoinmentService {
   async cancelAppointment(
     appointmentId: string,
     userId: string,
+    isLabUser: boolean,
     organizationId?: string,
   ): Promise<void> {
     const appointmentFromDB = await this.getAppointmentDBById(appointmentId)
@@ -249,6 +261,13 @@ export class AppoinmentService {
       )
       throw new ResourceNotFoundException(`Invalid Appointment ID`)
     }
+
+    const canCancel = this.getCanCancel(isLabUser, appointmentFromDB.appointmentStatus)
+
+    if (!canCancel) {
+      throw new BadRequestException('Cannot cancel this appointment')
+    }
+
     if (organizationId && appointmentFromDB.organizationId !== organizationId) {
       console.log(
         `OrganizationId "${organizationId}" does not match appointment "${appointmentId}"`,
@@ -265,20 +284,6 @@ export class AppoinmentService {
         `OrganizationId "AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" not found. CRITICAL`,
       )
       throw new ResourceNotFoundException(`Something is wrong. Please contact Admin.`)
-    }
-
-    if (appointmentFromAcuity.canceled) {
-      console.log(
-        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" is already cancelled!`,
-      )
-      throw new BadRequestException(`Appointment is allready cancelled`)
-    }
-
-    if (!appointmentFromAcuity.canClientCancel) {
-      console.log(
-        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" can not be cancelled. Client Cancellation is not available.`,
-      )
-      throw new BadRequestException(`Appointment Cancellation is not available.`)
     }
 
     const appointmentStatus = await this.acuityRepository.cancelAppointmentByIdOnAcuity(
@@ -481,5 +486,15 @@ export class AppoinmentService {
         label: moment(time).tz(calendarTimezone).format(timeFormats.standard12h),
       }
     })
+  }
+
+  getCanCancel(isLabUser: boolean, appointmentStatus: AppointmentStatus): boolean {
+    return (
+      (!isLabUser && appointmentStatus === AppointmentStatus.Pending) ||
+      (isLabUser &&
+        appointmentStatus !== AppointmentStatus.Canceled &&
+        appointmentStatus !== AppointmentStatus.Reported &&
+        appointmentStatus !== AppointmentStatus.ReSampleRequired)
+    )
   }
 }
