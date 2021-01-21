@@ -268,7 +268,9 @@ export class AppoinmentService {
       console.warn(
         `cancelAppointment: Failed for appointmentId ${appointmentId} isLabUser: ${isLabUser} appointmentStatus: ${appointmentFromDB.appointmentStatus}`,
       )
-      throw new BadRequestException(`Appointment can't be cancelled. It is already in ${appointmentFromDB.appointmentStatus} state`)
+      throw new BadRequestException(
+        `Appointment can't be cancelled. It is already in ${appointmentFromDB.appointmentStatus} state`,
+      )
     }
 
     if (organizationId && appointmentFromDB.organizationId !== organizationId) {
