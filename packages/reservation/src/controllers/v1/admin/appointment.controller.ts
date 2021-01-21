@@ -120,7 +120,7 @@ class AdminAppointmentController implements IControllerBase {
 
   getAppointmentById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {appointmentId} = req.params as { appointmentId: string }
+      const {appointmentId} = req.params as {appointmentId: string}
 
       const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
       if (!appointment) {
