@@ -200,6 +200,17 @@ export class AppoinmentService {
     return this.appointmentsRepository.get(id)
   }
 
+  async getAppointmentDBByIdWithCancel(
+    id: string,
+    isLabUser: boolean,
+  ): Promise<AppointmentDBModel & {canCancel: boolean}> {
+    const appointment = await this.getAppointmentDBById(id)
+    return {
+      ...appointment,
+      canCancel: this.getCanCancel(isLabUser, appointment.appointmentStatus),
+    }
+  }
+
   async getAppointmentsDBByIds(appointmentsIds: string[]): Promise<AppointmentDBModel[]> {
     return this.appointmentsRepository.findWhereIdIn(appointmentsIds)
   }

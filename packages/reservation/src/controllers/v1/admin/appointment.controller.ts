@@ -121,23 +121,19 @@ class AdminAppointmentController implements IControllerBase {
   getAppointmentById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {appointmentId} = req.params as {appointmentId: string}
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
-      const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
+      const appointment = await this.appointmentService.getAppointmentDBByIdWithCancel(
+        appointmentId,
+        isLabUser,
+      )
       if (!appointment) {
         throw new ResourceNotFoundException(`Appointment "${appointmentId}" not found`)
       }
 
-      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
-
       res.json(
         actionSucceed({
-          ...appointmentUiDTOResponse({
-            ...appointment,
-            canCancel: this.appointmentService.getCanCancel(
-              isLabUser,
-              appointment.appointmentStatus,
-            ),
-          }),
+          ...appointmentUiDTOResponse(appointment),
         }),
       )
     } catch (error) {
