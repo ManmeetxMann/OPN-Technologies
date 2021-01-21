@@ -266,20 +266,6 @@ export class AppoinmentService {
       throw new ResourceNotFoundException(`Something is wrong. Please contact Admin.`)
     }
 
-    if (appointmentFromAcuity.canceled) {
-      console.log(
-        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" is already cancelled!`,
-      )
-      throw new BadRequestException(`Appointment is allready cancelled`)
-    }
-
-    if (!appointmentFromAcuity.canClientCancel) {
-      console.log(
-        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" can not be cancelled. Client Cancellation is not available.`,
-      )
-      throw new BadRequestException(`Appointment Cancellation is not available.`)
-    }
-
     const appointmentStatus = await this.acuityRepository.cancelAppointmentByIdOnAcuity(
       appointmentFromDB.acuityAppointmentId,
     )
@@ -436,12 +422,13 @@ export class AppoinmentService {
     return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
   }
 
-  getCanCancel(organizationIdExistence: boolean, appointmentStatus: AppointmentStatus): boolean {
+  getCanCancel(isLabId: boolean, appointmentStatus: AppointmentStatus): boolean {
     return (
-      (organizationIdExistence && appointmentStatus === AppointmentStatus.Pending) ||
-      (!organizationIdExistence && appointmentStatus === AppointmentStatus.Canceled) ||
-      (!organizationIdExistence && appointmentStatus === AppointmentStatus.Reported) ||
-      (!organizationIdExistence && appointmentStatus === AppointmentStatus.ReSampleRequired)
+      (!isLabId && appointmentStatus === AppointmentStatus.Pending) ||
+      (isLabId &&
+        appointmentStatus !== AppointmentStatus.Canceled &&
+        appointmentStatus !== AppointmentStatus.Reported &&
+        appointmentStatus !== AppointmentStatus.ReSampleRequired)
     )
   }
 }

@@ -7,13 +7,12 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
-import {getAdminId} from '../../../../../common/src/utils/auth'
+import {getAdminId, getIsLabUser} from '../../../../../common/src/utils/auth'
 
 import {
   AppointmentByOrganizationRequest,
   AppointmentDBModel,
   AppointmentsState,
-  AppointmentStatus,
   appointmentUiDTOResponse,
 } from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
@@ -126,22 +125,21 @@ class AdminAppointmentController implements IControllerBase {
 
   getAppointmentById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {appointmentId, organizationId} = req.params as {
-        appointmentId: string
-        organizationId: string
-      }
+      const {appointmentId} = req.params as { appointmentId: string }
 
       const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
       if (!appointment) {
         throw new ResourceNotFoundException(`Appointment "${appointmentId}" not found`)
       }
 
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+
       res.json(
         actionSucceed({
           ...appointmentUiDTOResponse({
             ...appointment,
             canCancel: this.appointmentService.getCanCancel(
-              !!organizationId,
+              isLabUser,
               appointment.appointmentStatus,
             ),
           }),
@@ -155,11 +153,20 @@ class AdminAppointmentController implements IControllerBase {
   cancelAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getAdminId(res.locals.authenticatedUser)
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId} = req.query as {organizationId: string}
 
       const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
-      this.appointmentService.getCanCancel(!!organizationId, appointment.appointmentStatus)
+      const canCancel = this.appointmentService.getCanCancel(
+        isLabUser,
+        appointment.appointmentStatus,
+      )
+
+      if (!canCancel) {
+        throw new BadRequestException('Cannot cancel this appointment')
+      }
 
       await this.appointmentService.cancelAppointment(appointmentId, adminId, organizationId)
 
