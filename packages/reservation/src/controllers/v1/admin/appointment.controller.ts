@@ -153,17 +153,12 @@ class AdminAppointmentController implements IControllerBase {
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId} = req.query as {organizationId: string}
 
-      const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
-      const canCancel = this.appointmentService.getCanCancel(
+      await this.appointmentService.cancelAppointment(
+        appointmentId,
+        adminId,
         isLabUser,
-        appointment.appointmentStatus,
+        organizationId,
       )
-
-      if (!canCancel) {
-        throw new BadRequestException('Cannot cancel this appointment')
-      }
-
-      await this.appointmentService.cancelAppointment(appointmentId, adminId, organizationId)
 
       res.json(actionSucceed())
     } catch (error) {

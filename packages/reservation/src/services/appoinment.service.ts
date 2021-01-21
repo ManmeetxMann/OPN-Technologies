@@ -240,6 +240,7 @@ export class AppoinmentService {
   async cancelAppointment(
     appointmentId: string,
     userId: string,
+    isLabUser: boolean,
     organizationId?: string,
   ): Promise<void> {
     const appointmentFromDB = await this.getAppointmentDBById(appointmentId)
@@ -249,6 +250,13 @@ export class AppoinmentService {
       )
       throw new ResourceNotFoundException(`Invalid Appointment ID`)
     }
+
+    const canCancel = this.getCanCancel(isLabUser, appointmentFromDB.appointmentStatus)
+
+    if (!canCancel) {
+      throw new BadRequestException('Cannot cancel this appointment')
+    }
+
     if (organizationId && appointmentFromDB.organizationId !== organizationId) {
       console.log(
         `OrganizationId "${organizationId}" does not match appointment "${appointmentId}"`,
@@ -469,10 +477,10 @@ export class AppoinmentService {
     })
   }
 
-  getCanCancel(isLabId: boolean, appointmentStatus: AppointmentStatus): boolean {
+  getCanCancel(isLabUser: boolean, appointmentStatus: AppointmentStatus): boolean {
     return (
-      (!isLabId && appointmentStatus === AppointmentStatus.Pending) ||
-      (isLabId &&
+      (!isLabUser && appointmentStatus === AppointmentStatus.Pending) ||
+      (isLabUser &&
         appointmentStatus !== AppointmentStatus.Canceled &&
         appointmentStatus !== AppointmentStatus.Reported &&
         appointmentStatus !== AppointmentStatus.ReSampleRequired)
