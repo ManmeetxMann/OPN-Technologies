@@ -58,13 +58,13 @@ class TestRunsController implements IControllerBase {
 
   createTestRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunDateTime} = req.body as TestRunsPostRequest
+      const {name, testRunDateTime} = req.body as TestRunsPostRequest
 
       if (testRunDateTime && !isValidDate(testRunDateTime)) {
         throw new BadRequestException('testRunDate is invalid')
       }
 
-      const testRun = await this.testRunsService.create(new Date(testRunDateTime))
+      const testRun = await this.testRunsService.create(new Date(testRunDateTime), name)
 
       res.json(actionSucceed(testRunDTOResponse(testRun)))
     } catch (error) {

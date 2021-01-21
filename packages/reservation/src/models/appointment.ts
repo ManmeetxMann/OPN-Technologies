@@ -13,6 +13,13 @@ export enum AppointmentStatus {
   Canceled = 'Canceled',
 }
 
+export enum AppointmentReasons {
+  AlreadyReported = 'Already Reported',
+  ReSampleAlreadyRequested = 'ReSample Already Requested',
+  InProgress = 'In Progress',
+  NoInProgress = 'No In Progress',
+}
+
 export enum ResultTypes {
   Positive = 'Positive',
   Negative = 'Negative',
@@ -192,6 +199,11 @@ export enum WebhookEndpoints {
 export enum DeadlineLabel {
   SameDay = 'SameDay',
   NextDay = 'NextDay',
+}
+
+export type AvailableSlotResponse = {
+  id: string
+  label: string
 }
 
 export const appointmentUiDTOResponse = (

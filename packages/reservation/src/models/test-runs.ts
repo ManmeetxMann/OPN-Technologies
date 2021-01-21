@@ -7,6 +7,7 @@ export type TestRunsRequest = {
 
 export type TestRunsPostRequest = {
   testRunDateTime: string
+  name: string
 }
 
 export type TestRunDBModel = Auditable &
@@ -18,11 +19,13 @@ export type TestRunDBModel = Auditable &
 export type TestRun = {
   testRunId: string
   testRunDateTime: firestore.Timestamp
+  name: string
 }
 
 type TestRunUi = {
   testRunId: string
   testRunDateTime: string
+  name: string
 }
 
 export const testRunDTOResponse = (testRun: TestRunDBModel): TestRunUi => ({
@@ -30,4 +33,5 @@ export const testRunDTOResponse = (testRun: TestRunDBModel): TestRunUi => ({
   testRunDateTime: testRun.testRunDateTime.hasOwnProperty('_seconds')
     ? testRun.testRunDateTime.toDate().toISOString()
     : new Date(`${testRun.testRunDateTime}`).toISOString(),
+  name: testRun.name,
 })

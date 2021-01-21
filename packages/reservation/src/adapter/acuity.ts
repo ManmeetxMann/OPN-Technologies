@@ -4,6 +4,8 @@ import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {Certificate} from '../models/packages'
 import {AcuityCouponCodeResponse} from '../models/coupons'
+import {AppointmentTypes} from '../models/appointment-types'
+import {Calendar} from '../models/calendar'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -146,6 +148,48 @@ abstract class AcuityScheduling {
     return result
   }
 
+  protected async getAppointmentTypes(): Promise<AppointmentTypes[]> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = APIURL + `/api/v1/appointment-types`
+    console.log('[ACUITY: Get appointment types] ', apiUrl) //To know request path for dependency
+
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return result
+  }
+
+  protected async getCalendars(): Promise<Calendar[]> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = encodeURI(APIURL + `/api/v1/calendars`)
+    console.log('[ACUITY: Get calendars] ', apiUrl) //To know request path for dependency
+
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return result
+  }
+
   protected async createCouponCodeOnAcuityService(
     couponID: number,
     emailToLockCoupon: string,
@@ -173,6 +217,64 @@ abstract class AcuityScheduling {
     console.log(
       `AcuityAdapter: createCouponCodeOnAcuityService Success: For COUPON GROUP ID: ${couponID}`,
     )
+    return result
+  }
+
+  protected async getAvailabilityDatesList(
+    appointmentTypeID: number,
+    month: string,
+    calendarID: number,
+    timezone: string,
+  ): Promise<{date: string}[]> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = encodeURI(
+      APIURL +
+        `/api/v1/availability/dates?appointmentTypeID=${appointmentTypeID}&month=${month}&calendarID=${calendarID}&timezone=${timezone}`,
+    )
+    console.log('[ACUITY: Get availability dates list] ', apiUrl) //To know request path for dependency
+
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return result
+  }
+
+  protected async getAvailableSlotsList(
+    appointmentTypeID: number,
+    date: string,
+    calendarID: number,
+    timezone: string,
+  ): Promise<{time: Date}[]> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = encodeURI(
+      APIURL +
+        `/api/v1/availability/times?appointmentTypeID=${appointmentTypeID}&date=${date}&calendarID=${calendarID}&timezone=${timezone}`,
+    )
+    console.log('[ACUITY: Get availability slots for date] ', apiUrl) //To know request path for dependency
+
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
     return result
   }
 

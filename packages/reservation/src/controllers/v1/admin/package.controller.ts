@@ -28,7 +28,7 @@ class AdminController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.post(
       this.path + '/api/v1/packages',
-      authorizationMiddleware([RequiredUserPermission.OPNAdmin]),
+      authorizationMiddleware([RequiredUserPermission.OPNAdmin], true),
       packageValidations.packageValidation(),
       this.addPackageCode,
     )

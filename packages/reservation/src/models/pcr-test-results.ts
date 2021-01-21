@@ -1,4 +1,4 @@
-import {AppointmentStatus, ResultTypes} from './appointment'
+import {AppointmentReasons, AppointmentStatus, ResultTypes} from './appointment'
 
 export enum PCRResultActions {
   SendThisResult = 'SendThisResult',
@@ -6,6 +6,12 @@ export enum PCRResultActions {
   ReRunToday = 'ReRunToday',
   ReRunTomorrow = 'ReRunTomorrow',
   RequestReSample = 'RequestReSample',
+  MarkAsPositive = 'MarkAsPositive',
+  MarkAsNegative = 'MarkAsNegative',
+}
+
+export enum PCRResultActionsAllowedResend {
+  SendThisResult = 'SendThisResult',
   MarkAsPositive = 'MarkAsPositive',
   MarkAsNegative = 'MarkAsNegative',
 }
@@ -70,6 +76,8 @@ export type PCRTestResultDBModel = PCRTestResultData &
     displayForNonAdmins: boolean
     deadline: string
     testRunId?: string
+    runNumber: number
+    reSampleNumber: number
   }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -81,6 +89,7 @@ export type PCRTestResultHistoryDTO = {
   barCode: string
   waitingResult: boolean
   results: PCRResults[]
+  reason: AppointmentReasons
 }
 
 export type PCRResults = {
@@ -97,7 +106,7 @@ export type PCRResults = {
 
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,
-  'id' | 'linkedBarCodes' | 'deadline'
+  'id' | 'linkedBarCodes' | 'deadline' | 'runNumber' | 'reSampleNumber'
 > & {
   email: string
   phone: number
@@ -149,6 +158,7 @@ export const PCRTestResultHistoryResponse = (
     hexCt: result.hexCt,
     result: result.result,
   })),
+  reason: pcrTests.reason,
 })
 
 export type PcrTestResultsListByDeadlineRequest = {
