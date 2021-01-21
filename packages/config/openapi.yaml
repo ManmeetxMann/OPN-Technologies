@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  title: Registry Endpoint
+  title: Config Endpoint
   version: 1.0.0
 
 components:
@@ -32,6 +32,42 @@ components:
 paths:
   /:
     post:
+      description: Get Config
+      deprecated: true
+      responses:
+        "200":
+          description: Successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - complete
+                      - error
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                        updates:
+                          type: object
+                          additionalProperties: false
+                        services:
+                          type: object
+                          additionalProperties: false
+                        badgeValidityPeriod:
+                          type: object
+                          additionalProperties: false
+                        badges:
+                          type: object
+                          additionalProperties: false
+        default:
+          $ref: "#/components/responses/error"
+
+    get:
       description: Get Config
       responses:
         "200":
