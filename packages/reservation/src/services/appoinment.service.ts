@@ -13,8 +13,9 @@ import {
   AppointmentModelBase,
   AppointmentStatus,
   AppointmentStatusHistoryDb,
-  DeadlineLabel,
   CreateAppointmentRequest,
+  DeadlineLabel,
+  ResultTypes,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -24,11 +25,10 @@ import {
 } from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
-import {dateFormats, now} from '../../../common/src/utils/times'
+import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
-import {makeTimeEndOfTheDay} from '../utils/datetime.helper'
-import {makeDeadline} from '../utils/datetime.helper'
+import {makeDeadline, makeTimeEndOfTheDay} from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -437,7 +437,7 @@ export class AppoinmentService {
     return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
   }
 
-  createAppointment({
+  async createAppointment({
     slotId,
     firstName,
     lastName,
@@ -454,14 +454,29 @@ export class AppoinmentService {
     receiveResultsViaEmail,
     receiveNotificationsFromGov,
   }: CreateAppointmentRequest): Promise<AppointmentDBModel> {
+    const {time, appointmentTypeId, calendarId, ...slotData} = JSON.parse(
+      Buffer.from(slotId, 'base64').toString(),
+    )
+    console.log(slotData)
+    const utcDateTime = moment(slotData.time).utc()
+    const dateTimeTz = moment(slotData.time).tz(timeZone)
+
+    const dateTime = utcDateTime.format()
+    const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
+    const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
+    const deadline: string = makeDeadline(utcDateTime)
     return this.appointmentsRepository.save({
+      dateOfAppointment,
+      dateTime,
+      deadline,
+      timeOfAppointment,
       acuityAppointmentId: 0,
-      appointmentStatus: undefined,
-      appointmentTypeID: 0,
-      barCode: '',
-      calendarID: 0,
+      appointmentStatus: AppointmentStatus.Pending,
+      appointmentTypeID: appointmentTypeId,
+      barCode: await this.appoinmentService.getNextBarCodeNumber(),
+      calendarID: calendarId,
       canceled: false,
-      latestResult: undefined,
+      latestResult: ResultTypes.Pending,
       slotId,
       firstName,
       lastName,

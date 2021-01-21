@@ -1833,18 +1833,11 @@ paths:
                   type: boolean
                 receiveNotificationsFromGov:
                   type: boolean
-                vialLocation:
-                  type: string
-                appointmentIds:
-                  type: array
-                  items:
-                    type: string
               required:
                 - slotId
                 - firstName
                 - lastName
                 - email
-                - status
                 - dateOfBirth
                 - address
                 - addressUnit
@@ -1855,8 +1848,6 @@ paths:
                 - readTermsAndConditions
                 - receiveResultsViaEmail
                 - receiveNotificationsFromGov
-                - vialLocation
-                - appointmentIds
       responses:
         '200':
           description: Successfully Return

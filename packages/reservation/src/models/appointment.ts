@@ -34,10 +34,10 @@ export type AppointmentModelBase = {
   appointmentStatus: AppointmentStatus
   barCode: string
   canceled: boolean
-  dateOfAppointment?: string
+  dateOfAppointment: string
   dateOfBirth: string
-  dateTime?: string
-  deadline?: string
+  dateTime: string
+  deadline: string
   email: string
   firstName: string
   inProgressAt?: Date
@@ -49,7 +49,7 @@ export type AppointmentModelBase = {
   receivedAt?: Date
   registeredNursePractitioner?: string
   latestResult: ResultTypes
-  timeOfAppointment?: string
+  timeOfAppointment: string
   transportRunId?: string
   appointmentTypeID: number
   calendarID: number
