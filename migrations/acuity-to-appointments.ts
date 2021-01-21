@@ -38,9 +38,9 @@ const acuityFormFieldIdsNonProd = {
   receiveResultsViaEmail: 9082891,
   agreeToConductFHHealthAccessment: 9082892,
   receiveNotificationsFromGov: 9082893,
-  shareTestResultWithEmployer: 'XXX',
-  addressForTesting: 'XXX',
-  additionalAddressNotes: 'XXX',
+  shareTestResultWithEmployer: 9112802,
+  addressForTesting: 9112811,
+  additionalAddressNotes: 9112814,
 }
 const acuityFormFieldIdsProd = {
   barCode: 8594852,
@@ -63,8 +63,8 @@ const acuityHomeAddressFormId = ACUITY_ENV_NON_PROD ? 1644637 : 1585198 //TEST:1
 const acuityBarCodeFormId = ACUITY_ENV_NON_PROD ? 1564839 : 1559910 //TEST:1564839 PROD:1559910
 const acuityBirthDayFormId = ACUITY_ENV_NON_PROD ? 1567398 : 1554251 //TEST:1567398 PROD:1554251
 const acuityTermsAndConditionFormId = ACUITY_ENV_NON_PROD ? 1644640 : 1554370 //TEST:1644640 PROD:1554370
-const acuityShareTestResultWithEmployerFormId = ACUITY_ENV_NON_PROD ? 'XXX' : 1576924 //TEST:XX PROD:1576924
-const acuityMobileUnitFormId = ACUITY_ENV_NON_PROD ? 'XXX' : 1564716 //TEST:XX PROD:1564716
+const acuityShareTestResultWithEmployerFormId = ACUITY_ENV_NON_PROD ? 1649724 : 1576924 //TEST:XX PROD:1576924
+const acuityMobileUnitFormId = ACUITY_ENV_NON_PROD ? 1649727 : 1564716 //TEST:XX PROD:1564716
 
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
 

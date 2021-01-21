@@ -7,13 +7,13 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
-import {getAdminId} from '../../../../../common/src/utils/auth'
+import {getAdminId, getIsLabUser} from '../../../../../common/src/utils/auth'
 
 import {
   AppointmentByOrganizationRequest,
-  appointmentUiDTOResponse,
-  AppointmentsState,
   AppointmentDBModel,
+  AppointmentsState,
+  appointmentUiDTOResponse,
 } from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {TransportRunsService} from '../../../services/transport-runs.service'
@@ -121,13 +121,21 @@ class AdminAppointmentController implements IControllerBase {
   getAppointmentById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {appointmentId} = req.params as {appointmentId: string}
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
-      const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
+      const appointment = await this.appointmentService.getAppointmentDBByIdWithCancel(
+        appointmentId,
+        isLabUser,
+      )
       if (!appointment) {
         throw new ResourceNotFoundException(`Appointment "${appointmentId}" not found`)
       }
 
-      res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
+      res.json(
+        actionSucceed({
+          ...appointmentUiDTOResponse(appointment),
+        }),
+      )
     } catch (error) {
       next(error)
     }
@@ -136,10 +144,17 @@ class AdminAppointmentController implements IControllerBase {
   cancelAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getAdminId(res.locals.authenticatedUser)
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId} = req.query as {organizationId: string}
 
-      await this.appointmentService.cancelAppointment(appointmentId, adminId, organizationId)
+      await this.appointmentService.cancelAppointment(
+        appointmentId,
+        adminId,
+        isLabUser,
+        organizationId,
+      )
 
       res.json(actionSucceed())
     } catch (error) {

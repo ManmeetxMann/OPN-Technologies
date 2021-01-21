@@ -50,6 +50,15 @@ export class AcuityRepository extends AcuityScheduling {
     return this.getCalendars()
   }
 
+  getAvailableSlots(
+    appointmentTypeId: number,
+    date: string,
+    calendarId: number,
+    calendarTimezone: string,
+  ): Promise<{time: Date}[]> {
+    return this.getAvailableSlotsList(appointmentTypeId, date, calendarId, calendarTimezone)
+  }
+
   async getAvailabilityDates(
     appointmentTypeID: number,
     month: string,

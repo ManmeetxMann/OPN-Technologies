@@ -8,7 +8,7 @@ import {RequiredUserPermission} from '../../../../common/src/types/authorization
 import {BookingLocationService} from '../../services/booking-location.service'
 
 class BookingLocationController implements IControllerBase {
-  public path = '/reservation/admin/api/v1/booking-locations'
+  public path = '/reservation/api/v1/booking-locations'
   public router = Router()
   private bookingLocationService = new BookingLocationService()
 

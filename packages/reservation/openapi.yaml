@@ -1856,18 +1856,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /reservation/admin/api/v1/booking-locations:
+  /reservation/api/v1/availability/slots:
     get:
-      description: Get list Booking Locations
+      description: Get Appointment Available Slots
       tags:
-        - Booking locations
+        - Appointment availability
       security:
         - bearerAuthJWT: []
       parameters:
         - in: query
-          name: organizationId
+          name: id
           schema:
             type: string
+          required: true
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
           required: true
       responses:
         '200':
@@ -1884,19 +1890,13 @@ paths:
                       type: object
                       additionalProperties: false
                       properties:
-                        appointmentTypeName:
+                        label:
                           type: string
                         id:
                           type: string
-                        name:
-                          type: string
-                        address:
-                          type: string
                       required:
-                        - appointmentTypeName
+                        - label
                         - id
-                        - name
-                        - address
                   status:
                     type: object
                     additionalProperties: false
@@ -1919,7 +1919,7 @@ paths:
                   page:
                     type: number
 
-  /reservation/admin/api/v1/availability/dates:
+  /reservation/api/v1/availability/dates:
     get:
       description: Get availability date list
       tags:
@@ -1962,6 +1962,69 @@ paths:
                           format: date
                       required:
                         - date
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          [
+                            succeed,
+                            failed,
+                            validation_error,
+                            internal_server_error,
+                            unauthorized,
+                            access_denied,
+                            resource_not_found,
+                          ]
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
+
+  /reservation/api/v1/booking-locations:
+    get:
+      description: Get list Booking Locations
+      tags:
+        - Booking locations
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        appointmentTypeName:
+                          type: string
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        address:
+                          type: string
+                      required:
+                        - appointmentTypeName
+                        - id
+                        - name
+                        - address
                   status:
                     type: object
                     additionalProperties: false
