@@ -1,14 +1,14 @@
 import {NextFunction, Request, Response, Router} from 'express'
 
-import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
-import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
-import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
+import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
+import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
+import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
+import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 
-import {AppoinmentService} from '../../../services/appoinment.service'
+import {AppoinmentService} from '../../services/appoinment.service'
 
 class AppointmentAvailabilityController implements IControllerBase {
-  public path = '/reservation/admin/api/v1/availability'
+  public path = '/reservation/api/v1/availability'
   public router = Router()
   private appointmentService = new AppoinmentService()
 
