@@ -23,6 +23,7 @@ export type UserDTO = {
   email: string
   photo: string // photo url
   organizationIds: string[]
+  isAdminEnabled: boolean
 }
 
 export type UserDependency = Auditable & {
@@ -57,4 +58,5 @@ export const userDTOResponse = (user: User | LegacyUser): UserDTO => ({
   email: user.email,
   photo: (user as User).photo ?? (user as LegacyUser).base64Photo,
   organizationIds: (user as LegacyUser).organizationIds,
+  isAdminEnabled: !!(user as LegacyUser).admin,
 })
