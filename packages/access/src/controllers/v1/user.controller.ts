@@ -1,20 +1,25 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
-import IRouteController from '../../../../common/src/interfaces/IRouteController.interface'
 
-import Validation from '../../../../common/src/utils/validation'
+import IRouteController from '../../../../common/src/interfaces/IRouteController.interface'
+import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
+import {isPassed} from '../../../../common/src/utils/datetime-util'
+import {actionFailed, actionSucceed} from '../../../../common/src/utils/response-wrapper'
+import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+import {ResourceNotFoundException} from 'packages/common/src/exceptions/resource-not-found-exception'
+import {UserService} from '../../../../common/src/service/user/user-service'
+import {RequiredUserPermission} from '../../../../common/src/types/authorization'
+
 import {PassportService} from '../../../../passport/src/services/passport-service'
 import {AttestationService} from '../../../../passport/src/services/attestation-service'
 import {PassportStatuses} from '../../../../passport/src/models/passport'
-import {isPassed} from '../../../../common/src/utils/datetime-util'
-import {AccessService} from '../../service/access.service'
-import {AccessTokenService} from '../../service/access-token.service'
-import {actionFailed, actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {now} from '../../../../common/src/utils/times'
-import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+
 import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
 import {OrganizationLocation} from '../../../../enterprise/src/models/organization'
-import {UserService} from '../../../../common/src/service/user/user-service'
+
+import {AccessService} from '../../service/access.service'
+import {AccessTokenService} from '../../service/access-token.service'
+import {AccessModel} from '../../repository/access.repository'
 
 class UserController implements IRouteController {
   public router = express.Router()
@@ -34,25 +39,95 @@ class UserController implements IRouteController {
   }
 
   public initRoutes(): void {
+    const auth = authorizationMiddleware([RequiredUserPermission.RegUser], true)
     const routes = express
       .Router()
-      .post('/token', this.createToken)
-      .post('/entry', this.enter)
-      .post('/exit', this.exit)
-    this.router.use('/access/api/v1', routes)
+      .post('/entryToken', this.createToken) // create a token to be scanned by an admin
+      .post('/entry', this.enter) // create a token and immediately enter
+      .post('/exit', this.exit) // exit, wherever the user currently is
+    this.router.use('/access/api/v1', auth, routes)
+  }
+
+  private async createAccess(
+    statusToken: string,
+    locationId: string,
+    userId: string,
+    includeGuardian: boolean,
+    organizationId: string,
+    dependantIds: string[],
+  ): Promise<AccessModel> {
+    if (!includeGuardian && dependantIds.length === 0) {
+      throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
+    }
+    if (dependantIds.length) {
+      const allDependants = await this.userService.getAllDependants(userId, true)
+      dependantIds.forEach((id) => {
+        const dependant = allDependants.find((dep) => dep.id === id)
+        if (!dependant?.organizationIds.includes(organizationId)) {
+          throw new ResourceNotFoundException(
+            `No dependant ${id} in organization ${organizationId}`,
+          )
+        }
+      })
+    }
+    return this.accessTokenService.createToken(
+      statusToken,
+      locationId,
+      userId,
+      dependantIds,
+      includeGuardian,
+    )
+  }
+
+  createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {statusToken, locationId, userId, includeGuardian, organizationId} = req.body
+      const dependantIds: string[] = req.body.dependantIds ?? []
+      // errors if no location is found
+      await this.lookupLocation(organizationId, locationId)
+      const access = await this.createAccess(
+        statusToken,
+        locationId,
+        userId,
+        includeGuardian,
+        organizationId,
+        dependantIds,
+      )
+
+      const response = access
+        ? actionSucceed(access)
+        : actionFailed('Access denied: Cannot grant access for the given status-token')
+
+      res.status(access ? 200 : 403).json(response)
+    } catch (error) {
+      next(error)
+    }
   }
 
   enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
     try {
-      const {organizationId, locationId, accessToken} = req.body
-      const location = await this.organizationService.getLocation(organizationId, locationId)
-
+      const {statusToken, locationId, userId, includeGuardian, organizationId} = req.body
+      const dependantIds: string[] = req.body.dependantIds ?? []
+      // errors if no location is found
+      const location = await this.lookupLocation(organizationId, locationId)
       if (!location.allowsSelfCheckInOut)
         throw new BadRequestException("Location doesn't allow self-check-in")
 
       if (!location.allowAccess)
         throw new BadRequestException("Location can't be directly checked in to")
 
+      const access = await this.createAccess(
+        statusToken,
+        locationId,
+        userId,
+        includeGuardian,
+        organizationId,
+        dependantIds,
+      )
+      if (!access) {
+        throw new BadRequestException("Couldn't create access")
+      }
+      const accessToken = access.token
       return location.attestationRequired
         ? await this.enterWithAttestation(res, location, accessToken)
         : await this.enterWithoutAttestation(res, accessToken)
@@ -97,32 +172,6 @@ class UserController implements IRouteController {
     }
   }
 
-  createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const {statusToken, locationId, userId, includeGuardian} = req.body
-      const dependantIds: string[] = req.body.dependantIds ?? []
-      if (!includeGuardian && dependantIds.length === 0) {
-        throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
-      }
-
-      const access = await this.accessTokenService.createToken(
-        statusToken,
-        locationId,
-        userId,
-        dependantIds,
-        includeGuardian,
-      )
-
-      const response = access
-        ? actionSucceed(access)
-        : actionFailed('Access denied: Cannot grant access for the given status-token')
-
-      res.status(access ? 200 : 403).json(response)
-    } catch (error) {
-      next(error)
-    }
-  }
-
   private async enterWithAttestation(
     res: Response,
     location: OrganizationLocation,
@@ -157,6 +206,17 @@ class UserController implements IRouteController {
     }
 
     return res.status(400).json(actionFailed('Access denied for access-token'))
+  }
+
+  private async lookupLocation(
+    organizationId: string,
+    locationId: string,
+  ): Promise<OrganizationLocation> {
+    const location = await this.organizationService.getLocation(organizationId, locationId)
+    if (!location) {
+      throw new ResourceNotFoundException(`location ${organizationId}/${locationId} does not exist`)
+    }
+    return location
   }
 
   private async enterWithoutAttestation(res: Response, accessToken: string): Promise<unknown> {
