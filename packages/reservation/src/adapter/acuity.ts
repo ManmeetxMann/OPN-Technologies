@@ -6,7 +6,7 @@ import {Certificate} from '../models/packages'
 import {AcuityCouponCodeResponse} from '../models/coupons'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
-import { AcuityAvailableSlots } from '../models/acuity'
+import {AcuityAvailableSlots} from '../models/acuity'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')

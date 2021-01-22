@@ -9,12 +9,9 @@ export type AvailableSlotsUIDTO = {
   totalSlotsAvailable: number
 }
 
-export const slotUiDTOResponse = (
-  times: AvailableTimes[]
-): AvailableSlotsUIDTO => {
-
-  const totalSlotsAvailable = times.reduce((totalSlots, time)=>{
-    return totalSlots+=time.slotsAvailable
+export const slotUiDTOResponse = (times: AvailableTimes[]): AvailableSlotsUIDTO => {
+  const totalSlotsAvailable = times.reduce((totalSlots, time) => {
+    return (totalSlots += time.slotsAvailable)
   }, 0)
 
   return {

@@ -6,7 +6,7 @@ import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 
 import {AppoinmentService} from '../../services/appoinment.service'
-import { slotUiDTOResponse } from '../../models/available-times'
+import {slotUiDTOResponse} from '../../models/available-times'
 
 class AppointmentAvailabilityController implements IControllerBase {
   public path = '/reservation/api/v1/availability'
