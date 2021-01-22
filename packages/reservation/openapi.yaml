@@ -1782,11 +1782,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /reservation/api/v1/availability/slots:
+  /reservation/api/v1/availability/times:
     get:
-      description: Get Appointment Available Slots 
+      description: Get Appointment Available Times 
       tags:
-        - Appointment availability
+        - Appointment Booking
       security:
         - bearerAuthJWT: []
       parameters:
@@ -1811,18 +1811,27 @@ paths:
                 additionalProperties: false
                 properties:
                   data:
-                    type: array
-                    items:
-                      type: object
-                      additionalProperties: false
-                      properties:
-                        label:
-                          type: string
-                        id:
-                          type: string
-                      required:
-                        - label
-                        - id
+                    type: object
+                    additionalProperties: false
+                    properties: 
+                      totalSlotsAvailable:
+                        type: number
+                      times:
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            id:
+                              type: string
+                            label:
+                              type: string
+                            slotsAvailable:
+                              type: number
+                          required:
+                            - id
+                            - label
+                            - slotsAvailable
                   status:
                     type: object
                     additionalProperties: false
@@ -1849,7 +1858,7 @@ paths:
     get:
       description: Get availability date list
       tags:
-        - Appointment availability
+        - Appointment Booking
       security:
         - bearerAuthJWT: []
       parameters:
@@ -1914,7 +1923,7 @@ paths:
     get:
       description: Get list Booking Locations
       tags:
-        - Booking locations
+        - Appointment Booking
       security:
         - bearerAuthJWT: []
       parameters:
