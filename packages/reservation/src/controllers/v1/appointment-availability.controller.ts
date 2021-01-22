@@ -6,6 +6,7 @@ import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 
 import {AppoinmentService} from '../../services/appoinment.service'
+import {slotUiDTOResponse} from '../../models/available-times'
 
 class AppointmentAvailabilityController implements IControllerBase {
   public path = '/reservation/api/v1/availability'
@@ -20,7 +21,7 @@ class AppointmentAvailabilityController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
 
     innerRouter.get(
-      this.path + '/slots',
+      this.path + '/times',
       authorizationMiddleware([RequiredUserPermission.RegUser]),
       this.getAvailableSlots,
     )
@@ -39,7 +40,7 @@ class AppointmentAvailabilityController implements IControllerBase {
 
       const availableSlots = await this.appointmentService.getAvailableSlots(id, date)
 
-      res.json(actionSucceed(availableSlots.map(({id, label}) => ({id, label}))))
+      res.json(actionSucceed(slotUiDTOResponse(availableSlots)))
     } catch (error) {
       next(error)
     }
