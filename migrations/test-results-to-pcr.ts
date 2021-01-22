@@ -87,26 +87,34 @@ async function createPcrTestResult(
     .where('acuityAppointmentId', '==', legacyTestResult.appointmentId)
     .get()
 
-  if (!appointmentInDb) {
+  if (!appointmentInDb || appointmentInDb.docs.length == 0) {
     console.warn(`AcuityAppointmentId: ${legacyTestResult.appointmentId} doesn't exists`)
     return Promise.reject()
   }
 
+  if (appointmentInDb.docs.length > 1) {
+    console.warn(`AppointmentID: ${legacyTestResult.appointmentId} exists multiple times`)
+    return Promise.reject()
+  }
+  
+  //Only Single Appointment
+  const appointment = appointmentInDb.docs[0]; 
+  const pcrResult = (legacyTestResult.result==='2019-nCoV Detected')?'Positive':legacyTestResult.result
   try {
-    const pcrTestResult = database.collection('pcr-test-results').add({
-      appointmentId: legacyTestResult.appointmentId,
+    const pcrTestResult = await database.collection('pcr-test-results').add({
+      appointmentId: appointment.id,
       barCode: legacyTestResult.barCode,
       dateOfAppointment: legacyTestResult.dateOfAppointment,
       displayForNonAdmins: true,
       firstName: legacyTestResult.firstName,
       lastName: legacyTestResult.lastName,
       organizationId: legacyTestResult.organizationId,
-      result: legacyTestResult.result,
+      result: pcrResult,
       linkedBarCodes: [],
       deadline: makeDeadline(moment(legacyTestResult.dateTime)),
       resultSpecs: {
         action: 'SendThisResult',
-        autoResult: legacyTestResult.result,
+        autoResult: pcrResult,
         barCode: legacyTestResult.barCode,
         calRed61Ct: legacyTestResult.calRed61Ct,
         calRed61RdRpGene: legacyTestResult.calRed61RdRpGene,
@@ -128,11 +136,11 @@ async function createPcrTestResult(
       },
       waitingResult: false,
     })
-    const pcrTestResultData = await pcrTestResult
-    
-    if(pcrTestResultData.id){
-      console.info(`Successfully Copied results for ${legacyTestResultId} to ${pcrTestResultData.id}`)
-      return pcrTestResult
+    //Update Appointments
+    updateAppointment(appointment, pcrResult)
+    if(pcrTestResult.id){
+      console.info(`Successfully Copied results for ${legacyTestResultId} to ${pcrTestResult.id}`)
+      return Promise.resolve()
     }
     console.warn(`Failed to Save pcrTestResult`)
     return Promise.reject()
@@ -142,13 +150,38 @@ async function createPcrTestResult(
   }
 }
 
+async function updateAppointment(
+  snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
+  latestResult: string
+) {
+  try {
+    return await snapshot.ref.set(
+      {
+        latestResult: latestResult,
+        appointmentStatus: 'Reported',
+        timestamps: {
+          migrations: {
+            testResultsToPCRResults: firestore.FieldValue.serverTimestamp(),
+          },
+        }
+      },
+      {
+        merge: true,
+      },
+    )
+  } catch (error) {
+    throw error
+  }
+}
+
+
 async function main() {
   try {
     console.log('Migration Starting')
     const results = await updateTestResults()
     results.forEach((result) => {
+      totalCount += 1
       if (result.status === ResultStatus.Fulfilled) {
-        // @ts-ignore - We will always have a value if the status is fulfilled
         if (result.value) {
           successCount += 1
         }
@@ -156,19 +189,19 @@ async function main() {
         failureCount += 1
       }
     })
-
     console.log(`Succesfully updated ${successCount} `)
   } catch (error) {
     console.error('Error running migration', error)
   } finally {
-    if (failureCount > 0) {
-      console.warn(`Failed updating ${failureCount} `)
-    }
+    console.warn(`Failed updating ${failureCount} `)
+    console.log(`Total Appointments Processed: ${totalCount} `)
   }
 }
 
 // Maximum batch size to query for
-const limit = Number(Config.get('MIGRATION_DOCUMENTS_LIMIT')) || 5
 let successCount = 0
 let failureCount = 0
+let totalCount = 0
+const limit = 50
+
 main().then(() => console.log('Script Complete \n'))
