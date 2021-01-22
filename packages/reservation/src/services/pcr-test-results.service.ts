@@ -269,8 +269,8 @@ export class PCRTestResultsService {
         lastName: pcr.lastName,
         testType: 'PCR',
         dateOfAppointment: pcr.dateOfAppointment,
-        // runNumber: pcr.runNumber,
-        // reSampleNumber: pcr.reSampleNumber
+        runNumber: pcr.runNumber,
+        reSampleNumber: pcr.reSampleNumber
       }
     })
   }
