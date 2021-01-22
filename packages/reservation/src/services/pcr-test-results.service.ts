@@ -270,7 +270,7 @@ export class PCRTestResultsService {
         testType: 'PCR',
         dateOfAppointment: pcr.dateOfAppointment,
         runNumber: pcr.runNumber,
-        reSampleNumber: pcr.reSampleNumber
+        reSampleNumber: pcr.reSampleNumber,
       }
     })
   }
