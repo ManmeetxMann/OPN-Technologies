@@ -106,6 +106,7 @@ class AppointmentWebhookController implements IControllerBase {
           latestResult: ResultTypes.Pending,
           timeOfAppointment,
         }
+        // @ts-ignore @TODO CHANGE this
         const savedAppoinment = await this.appoinmentService.saveAppointmentData(data)
         console.log(
           `WebhookController: CreateAppointment: SuccessCreateAppointment for AppointmentID: ${savedAppoinment.id} AcuityID: ${id}`,

@@ -3,6 +3,7 @@ import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
 import {Certificate} from '../models/packages'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
+import {AcuityCreateResponse} from "../models/coupons";
 
 export class AcuityRepository extends AcuityScheduling {
   constructor() {
@@ -40,6 +41,28 @@ export class AcuityRepository extends AcuityScheduling {
       emailToLockCoupon,
     )
     return couponCodeResponse.certificate
+  }
+
+  async createAppointment(
+    datetime: string,
+    appointmentTypeID: number,
+    firstName: string,
+    lastName: string,
+    email: string,
+    phone: string,
+    certificate: string,
+    fields: Record<string, string | boolean>,
+  ): Promise<AcuityCreateResponse> {
+    return this.createAppointmentOnAcuityService(
+      datetime,
+      appointmentTypeID,
+      firstName,
+      lastName,
+      email,
+      phone,
+      certificate,
+      fields,
+    )
   }
 
   getAppointmentTypeList(): Promise<AppointmentTypes[]> {

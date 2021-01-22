@@ -54,16 +54,15 @@ export type AppointmentModelBase = {
   appointmentTypeID: number
   calendarID: number
   vialLocation?: string
-  slotId?: string
-  address?: string
-  addressUnit?: string
-  addressForTesting?: string
-  additionalAddressNotes?: string
-  couponCode?: string
-  shareTestResultWithEmployer?: boolean
-  readTermsAndConditions?: boolean
-  receiveResultsViaEmail?: boolean
-  receiveNotificationsFromGov?: boolean
+  address: string
+  addressUnit: string
+  addressForTesting: string
+  additionalAddressNotes: string
+  couponCode: string
+  shareTestResultWithEmployer: boolean
+  readTermsAndConditions: boolean
+  receiveResultsViaEmail: boolean
+  receiveNotificationsFromGov: boolean
 }
 
 export type AppointmentDBModel = AppointmentModelBase & {
@@ -148,6 +147,7 @@ export type CreateAppointmentRequest = {
   couponCode: string
   shareTestResultWithEmployer: boolean
   readTermsAndConditions: boolean
+  agreeToConductFHHealthAccessment: boolean
   receiveResultsViaEmail: boolean
   receiveNotificationsFromGov: boolean
   vialLocation: string

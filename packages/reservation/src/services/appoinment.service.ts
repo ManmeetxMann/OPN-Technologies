@@ -457,48 +457,70 @@ export class AppoinmentService {
     couponCode,
     shareTestResultWithEmployer,
     readTermsAndConditions,
+    agreeToConductFHHealthAccessment,
     receiveResultsViaEmail,
     receiveNotificationsFromGov,
-  }: CreateAppointmentRequest): Promise<AppointmentDBModel> {
+  }: CreateAppointmentRequest): Promise<void> {
     const {time, appointmentTypeId, calendarId, ...slotData} = JSON.parse(
       Buffer.from(slotId, 'base64').toString(),
     )
     console.log(slotData)
-    const utcDateTime = moment(slotData.time).utc()
-    const dateTimeTz = moment(slotData.time).tz(timeZone)
+    const utcDateTime = moment(time).utc()
+    // const dateTimeTz = moment(slotData.time).tz(timeZone)
 
     const dateTime = utcDateTime.format()
-    const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
-    const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
-    const deadline: string = makeDeadline(utcDateTime)
-    return this.appointmentsRepository.save({
-      dateOfAppointment,
+    // const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
+    // const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
+    // const deadline: string = makeDeadline(utcDateTime)
+    const data = await this.acuityRepository.createAppointment(
       dateTime,
-      deadline,
-      timeOfAppointment,
-      acuityAppointmentId: 0,
-      appointmentStatus: AppointmentStatus.Pending,
-      appointmentTypeID: appointmentTypeId,
-      barCode: await this.appoinmentService.getNextBarCodeNumber(),
-      calendarID: calendarId,
-      canceled: false,
-      latestResult: ResultTypes.Pending,
-      slotId,
+      appointmentTypeId,
       firstName,
       lastName,
       email,
-      phone: Number(`${phone.code}${phone.number}`),
-      dateOfBirth,
-      address,
-      addressUnit,
-      addressForTesting,
-      additionalAddressNotes,
-      couponCode,
-      shareTestResultWithEmployer,
-      readTermsAndConditions,
-      receiveResultsViaEmail,
-      receiveNotificationsFromGov,
-    })
+      `${phone.code}${phone.number}`,
+      '',
+      {
+        dateOfBirth,
+        address,
+        addressUnit,
+        addressForTesting,
+        additionalAddressNotes,
+        shareTestResultWithEmployer,
+        readTermsAndConditions,
+        agreeToConductFHHealthAccessment,
+        receiveResultsViaEmail,
+        receiveNotificationsFromGov,
+      },
+    )
+    console.log(data)
+    // return this.appointmentsRepository.save({
+    //   dateOfAppointment, // Will be added by webhook
+    //   dateTime, // Added to acuity
+    //   deadline, // Will be added by webhook
+    //   timeOfAppointment, // Will be added by webhook
+    //   acuityAppointmentId: 0, // Will be added by webhook
+    //   appointmentStatus: AppointmentStatus.Pending, // Will be added by webhook
+    //   appointmentTypeID: appointmentTypeId, // Will be added by webhook
+    //   barCode: await this.getNextBarCodeNumber(), // Will be added by webhook
+    //   calendarID: calendarId, // Will be added by webhook
+    //   canceled: false, // Will be added by webhook
+    //   latestResult: ResultTypes.Pending, // Will be added by webhook
+    //   firstName, // Added to acuity
+    //   lastName, // Added to acuity
+    //   email, // Added to acuity
+    //   phone: Number(`${phone.code}${phone.number}`), // Added to acuity
+    //   dateOfBirth, // Should be by form
+    //   address, // Should be by form
+    //   addressUnit, // Should be by form
+    //   addressForTesting, // Should be by form
+    //   additionalAddressNotes, // Should be by form
+    //   couponCode,
+    //   shareTestResultWithEmployer, // Should be by form
+    //   readTermsAndConditions, // Should be by form
+    //   receiveResultsViaEmail, // Should be by form
+    //   receiveNotificationsFromGov, // Should be by form
+    // })
   }
 
   async getAvailabitlityDateList(
