@@ -237,7 +237,7 @@ export class PCRTestResultsService {
     }
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
- 
+
     let appointments
     if (deadline || testRunId || barCode || isDueToday) {
       const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)

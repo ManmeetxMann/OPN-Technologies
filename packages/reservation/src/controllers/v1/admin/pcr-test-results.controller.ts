@@ -228,7 +228,11 @@ class PCRTestResultController implements IControllerBase {
       res.json(actionSucceed(pcrResults))
     } catch (error) {
       if (error.message.includes('9 FAILED_PRECONDITION')) {
-        return next(new BadRequestException(`Internal server error. Please create index for pcr-test-result collection`))
+        return next(
+          new BadRequestException(
+            `Internal server error. Please create index for pcr-test-result collection`,
+          ),
+        )
       }
 
       next(error)
