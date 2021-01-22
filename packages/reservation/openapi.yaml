@@ -1360,9 +1360,9 @@ paths:
             type: string
         - in: query
           name: dueToday
-          # required: true
           schema:
             type: boolean
+            default: false
         - in: query
           name: deadline
           schema:

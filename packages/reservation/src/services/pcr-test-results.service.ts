@@ -261,9 +261,7 @@ export class PCRTestResultsService {
         vialLocation: appointment?.vialLocation,
         status: appointment?.appointmentStatus,
         dateTime: appointment?.dateTime,
-        deadline: pcr.deadline.hasOwnProperty('_seconds')
-          ? pcr.deadline.toDate().toISOString()
-          : new Date(`${pcr.deadline}`).toISOString(),
+        deadline: pcr.deadline.toDate().toISOString(),
         testRunId: pcr.testRunId,
         firstName: pcr.firstName,
         lastName: pcr.lastName,
