@@ -184,6 +184,7 @@ export class PCRTestResultsService {
     dueToday,
   }: PcrTestResultsListRequest): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
+    const isDueToday = Boolean(dueToday)
 
     if (organizationId) {
       pcrTestResultsQuery.push({
@@ -194,7 +195,20 @@ export class PCRTestResultsService {
       })
     }
 
-    if (deadline) {
+    if (isDueToday) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'deadline',
+        operator: DataModelFieldMapOperatorType.Less,
+        value: firestore.Timestamp.fromDate(moment(deadline).tz(timeZone).toDate()),
+      })
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'result',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: ResultTypes.Positive,
+      })
+    } else if (deadline) {
       const deadlineFormatted = makeDeadline(moment(deadline))
       pcrTestResultsQuery.push({
         map: '/',
@@ -223,17 +237,19 @@ export class PCRTestResultsService {
     }
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
-
+ 
     let appointments
-    if (deadline || testRunId || barCode || Boolean(dueToday)) {
+    if (deadline || testRunId || barCode || isDueToday) {
       const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
       appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
 
-      if (Boolean(dueToday)) {
+      if (isDueToday) {
         const statuses = [AppointmentStatus.Received, AppointmentStatus.ReRunRequired]
-        appointments = appointments.filter(({appointmentStatus}) => statuses.includes(appointmentStatus))
+        appointments = appointments.filter(({appointmentStatus}) =>
+          statuses.includes(appointmentStatus),
+        )
       }
-    } 
+    }
 
     return pcrResults.map((pcr) => {
       const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
@@ -245,12 +261,16 @@ export class PCRTestResultsService {
         vialLocation: appointment?.vialLocation,
         status: appointment?.appointmentStatus,
         dateTime: appointment?.dateTime,
-        deadline: pcr.deadline,
+        deadline: pcr.deadline.hasOwnProperty('_seconds')
+          ? pcr.deadline.toDate().toISOString()
+          : new Date(`${pcr.deadline}`).toISOString(),
         testRunId: pcr.testRunId,
         firstName: pcr.firstName,
         lastName: pcr.lastName,
         testType: 'PCR',
         dateOfAppointment: pcr.dateOfAppointment,
+        // runNumber: pcr.runNumber,
+        // reSampleNumber: pcr.reSampleNumber
       }
     })
   }
@@ -523,7 +543,7 @@ export class PCRTestResultsService {
       barCode: appointment.barCode,
       dateOfAppointment: appointment.dateOfAppointment,
       displayForNonAdmins: true,
-      deadline: appointment.deadline,
+      deadline: firestore.Timestamp.fromDate(moment(appointment.deadline).tz(timeZone).toDate()),
       firstName: appointment.firstName,
       lastName: appointment.lastName,
       linkedBarCodes: [],

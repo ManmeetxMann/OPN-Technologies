@@ -77,7 +77,7 @@ export type PCRTestResultDBModel = PCRTestResultData &
     result: ResultTypes
     waitingResult: boolean
     displayForNonAdmins: boolean
-    deadline: string
+    deadline: firestore.Timestamp
     testRunId?: string
     runNumber: number
     reSampleNumber: number

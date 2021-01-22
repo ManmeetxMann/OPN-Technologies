@@ -22,6 +22,7 @@ import {DuplicateDataException} from '../../../../../common/src/exceptions/dupli
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {makeDeadline} from '../../../utils/datetime.helper'
 import {Config} from '../../../../../common/src/utils/config'
+import {firestore} from 'firebase-admin'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -119,7 +120,7 @@ class AppointmentWebhookController implements IControllerBase {
             barCode: barCode,
             dateOfAppointment,
             displayForNonAdmins: true,
-            deadline,
+            deadline: firestore.Timestamp.fromDate(moment(deadline).tz(timeZone).toDate()),
             firstName: appointment.firstName,
             lastName: appointment.lastName,
             linkedBarCodes: linkedBarcodes,
@@ -251,7 +252,7 @@ class AppointmentWebhookController implements IControllerBase {
             barCode: barCode,
             dateOfAppointment,
             displayForNonAdmins: true,
-            deadline,
+            deadline: firestore.Timestamp.fromDate(moment(deadline).tz(timeZone).toDate()),
             firstName: appointment.firstName,
             lastName: appointment.lastName,
             linkedBarCodes: linkedBarcodes,
