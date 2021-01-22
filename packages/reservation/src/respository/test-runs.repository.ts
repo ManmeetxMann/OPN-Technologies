@@ -1,7 +1,9 @@
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
-import {TestRunDBModel} from '../models/test-runs'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
+import DBSchema from '../dbschemas/test-runs.schema'
+
+import {TestRunDBModel} from '../models/test-runs'
 
 export class TestRunsRepository extends DataModel<TestRunDBModel> {
   public rootPath = 'test-runs'
@@ -9,6 +11,11 @@ export class TestRunsRepository extends DataModel<TestRunDBModel> {
 
   constructor(dataStore: DataStore) {
     super(dataStore)
+  }
+
+  async save(data: TestRunDBModel): Promise<TestRunDBModel> {
+    const validatedData = await DBSchema.validateAsync(data)
+    return this.add(validatedData)
   }
 }
 

@@ -32,7 +32,7 @@ export class TestRunsService {
     return this.getIdentifierRepository(testRunDate)
       .getUniqueId('testRun')
       .then((id) => {
-        return this.testRunsRepository.add({
+        return this.testRunsRepository.save({
           testRunId: `T${idDate}-${id}`,
           testRunDateTime: firestore.Timestamp.fromDate(testRunDateTime),
           testRunDate,
