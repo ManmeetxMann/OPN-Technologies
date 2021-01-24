@@ -13,7 +13,6 @@ import {
   AppointmentModelBase,
   AppointmentStatus,
   AppointmentStatusHistoryDb,
-  AvailableSlotResponse,
   DeadlineLabel,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
@@ -33,6 +32,7 @@ import {makeDeadline} from '../utils/datetime.helper'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
+import {AvailableTimes} from '../models/available-times'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -474,7 +474,7 @@ export class AppoinmentService {
     )
   }
 
-  async getAvailableSlots(id: string, date: string): Promise<AvailableSlotResponse[]> {
+  async getAvailableSlots(id: string, date: string): Promise<AvailableTimes[]> {
     let serializedId
 
     try {
@@ -495,7 +495,7 @@ export class AppoinmentService {
       calendarTimezone,
     )
 
-    return slotsList.map(({time}) => {
+    return slotsList.map(({time, slotsAvailable}) => {
       const idBuf = {
         appointmentTypeId,
         calendarTimezone,
@@ -508,6 +508,7 @@ export class AppoinmentService {
       return {
         id,
         label: moment(time).tz(calendarTimezone).format(timeFormats.standard12h),
+        slotsAvailable: slotsAvailable,
       }
     })
   }

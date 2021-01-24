@@ -201,11 +201,6 @@ export enum DeadlineLabel {
   NextDay = 'NextDay',
 }
 
-export type AvailableSlotResponse = {
-  id: string
-  label: string
-}
-
 export const appointmentUiDTOResponse = (
   appointment: AppointmentDBModel & {canCancel?: boolean},
 ): AppointmentUiDTO => {

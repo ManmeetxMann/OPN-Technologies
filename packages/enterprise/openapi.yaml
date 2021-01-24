@@ -841,6 +841,8 @@ components:
         memberId:
           type: string
           nullable: true
+        isAdminEnabled:
+          type: boolean
       required:
         - firstName
         - lastName

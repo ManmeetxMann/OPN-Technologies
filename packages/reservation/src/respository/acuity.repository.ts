@@ -3,6 +3,7 @@ import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
 import {Certificate} from '../models/packages'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
+import {AcuityAvailableSlots} from '../models/acuity'
 
 export class AcuityRepository extends AcuityScheduling {
   constructor() {
@@ -55,7 +56,7 @@ export class AcuityRepository extends AcuityScheduling {
     date: string,
     calendarId: number,
     calendarTimezone: string,
-  ): Promise<{time: Date}[]> {
+  ): Promise<AcuityAvailableSlots[]> {
     return this.getAvailableSlotsList(appointmentTypeId, date, calendarId, calendarTimezone)
   }
 

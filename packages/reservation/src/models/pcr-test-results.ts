@@ -90,6 +90,8 @@ export type PCRTestResultHistoryDTO = {
   waitingResult: boolean
   results: PCRResults[]
   reason: AppointmentReasons
+  reSampleNumber?: number
+  runNumber?: number
 }
 
 export type PCRResults = {
@@ -158,6 +160,8 @@ export const PCRTestResultHistoryResponse = (
     hexCt: result.hexCt,
     result: result.result,
   })),
+  reSampleNumber: pcrTests.reSampleNumber,
+  runNumber: pcrTests.runNumber,
   reason: pcrTests.reason,
 })
 
