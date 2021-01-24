@@ -5,5 +5,5 @@ export default Joi.object({
   testRunId: Joi.string().required(),
   testRunDate: Joi.string().required(),
   testRunDateTime: FirestoreTimestamp.isValid(),
-  name: Joi.string().required(),
+  name: Joi.string().allow(''),
 })
