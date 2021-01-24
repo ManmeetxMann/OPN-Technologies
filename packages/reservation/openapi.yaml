@@ -1655,6 +1655,8 @@ paths:
   /reservation/admin/api/v1/pcr-test-results/history:
     post:
       description: Get PCR Test Results by Barcode
+      security:
+        - bearerAuthJWT: []
       tags:
         - PCR Results Management
       requestBody:

@@ -138,7 +138,7 @@ class PCRTestResultController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {barcode} = req.body as PCRListQueryRequest
-      console.log(req.body)
+
       if (barcode.length > 50) {
         throw new BadRequestException('Maximum appointments to be part of request is 50')
       }
@@ -163,9 +163,12 @@ class PCRTestResultController implements IControllerBase {
               ]
             }),
           )
-          const waitingResult = !!pcrTests.find(
-            (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
-          )
+          // const waitingResult = !!pcrTests.find(
+          //   (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
+          // )
+          const pcrTest = pcrTests.find((pcrTest) => pcrTest.barCode === code)
+          const waitingResult = !!pcrTest.waitingResult
+
           if (testSameBarcode.length) {
             if (testSameBarcode.length > 1) {
               console.log(`Warning tests with same barcode are more than one. Barcode: ${code}.`)
@@ -173,9 +176,11 @@ class PCRTestResultController implements IControllerBase {
             return {
               id: testSameBarcode[0].id,
               barCode: code,
-              results: waitingResult ? [] : results,
+              results: pcrTest ? [] : results,
               waitingResult,
               ...(!waitingResult && {reason: await this.pcrTestResultsService.getReason(code)}),
+              reSampleNumber: pcrTest.reSampleNumber,
+              runNumber: pcrTest.runNumber,
             }
           }
           return {
@@ -184,6 +189,8 @@ class PCRTestResultController implements IControllerBase {
             results: [],
             waitingResult: false,
             reason: await this.pcrTestResultsService.getReason(code),
+            reSampleNumber: pcrTest.reSampleNumber,
+            runNumber: pcrTest.runNumber,
           }
         }),
       )
