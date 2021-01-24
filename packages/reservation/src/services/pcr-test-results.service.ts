@@ -456,7 +456,7 @@ export class PCRTestResultsService {
       displayForNonAdmins: true, //TODO
     }
 
-    await this.pcrTestResultsRepository.updateProperties(testResult.id, pcrResultDataForDbUpdate)
+    await this.pcrTestResultsRepository.updateData(testResult.id, pcrResultDataForDbUpdate)
 
     //Send Notification
     if (resultData.resultSpecs.notify) {
@@ -668,7 +668,7 @@ export class PCRTestResultsService {
     id: string,
     defaultTestResults: Partial<PCRTestResultDBModel>,
   ): Promise<void> {
-    await this.pcrTestResultsRepository.updateProperties(id, defaultTestResults)
+    await this.pcrTestResultsRepository.updateData(id, defaultTestResults)
   }
 
   async saveDefaultTestResults(
@@ -708,7 +708,7 @@ export class PCRTestResultsService {
     const pcrTestResults = await this.getTestResultsByAppointmentId(appointmentId)
     pcrTestResults.map(
       async (pcrTestResult) =>
-        await this.pcrTestResultsRepository.updateProperties(pcrTestResult.id, {organizationId}),
+        await this.pcrTestResultsRepository.updateData(pcrTestResult.id, {organizationId}),
     )
   }
 
