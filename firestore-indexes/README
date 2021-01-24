@@ -1,0 +1,4 @@
+firebase init firestore
+
+### DEPLOY
+firebase deploy --only firestore:indexes
