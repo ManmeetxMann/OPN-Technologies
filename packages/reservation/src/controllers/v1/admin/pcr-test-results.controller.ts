@@ -123,6 +123,7 @@ class PCRTestResultController implements IControllerBase {
           adminId,
         },
         true,
+        data.sendUpdatedResults
       )
 
       res.json(actionSucceed({id: resultId}))

@@ -436,6 +436,9 @@ components:
         quasar670Ct:
           type: string
           minLength: 1
+        sendUpdatedResults:
+          type: boolean
+          default: false
       required:
         - resultDate
         - action

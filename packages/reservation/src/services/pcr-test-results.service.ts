@@ -136,6 +136,7 @@ export class PCRTestResultsService {
           adminId: pcrResults.adminId,
         },
         false,
+        false
       )
       if (pcrResults.data.action === PCRResultActions.DoNothing) {
         await testResultsReportingTrackerPCRResult.updateProperty(
@@ -305,9 +306,10 @@ export class PCRTestResultsService {
   }
 
   async getPCRResultsByByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel[]> {
-    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualWithMax(
       'barCode',
       barCodeNumber,
+      'updatedAt'
     )
     if (!pcrTestResults || pcrTestResults.length === 0) {
       throw new ResourceNotFoundException(`PCRTestResult with barCode ${barCodeNumber} not found`)
@@ -353,6 +355,17 @@ export class PCRTestResultsService {
       : undefined
   }
 
+  async getLatestPCRTestResult(
+    pcrTestResults: PCRTestResultDBModel[],
+  ): Promise<PCRTestResultDBModel> {
+    //var min = pcrTestResults.reduce(function (a, pcrResult) { return a < pcrResult.timestamps.createdAt ? a : b; });
+
+    const pcrWaitingTestResult = pcrTestResults.filter((result) => result.waitingResult)
+    return pcrWaitingTestResult && pcrWaitingTestResult.length !== 0
+      ? pcrWaitingTestResult[0]
+      : undefined
+  }
+
   allowedForResend(action: PCRResultActions): boolean {
     if (action in PCRResultActionsAllowedResend) {
       return true
@@ -363,6 +376,7 @@ export class PCRTestResultsService {
   async handlePCRResultSaveAndSend(
     resultData: PCRTestResultData,
     isSingleResult: boolean,
+    sendUpdatedResults: boolean
   ): Promise<string> {
     if (resultData.resultSpecs.action === PCRResultActions.DoNothing) {
       console.log(
@@ -397,6 +411,10 @@ export class PCRTestResultsService {
       throw new ResourceNotFoundException(
         `PCR Test Result with barCode ${resultData.barCode} is already Reported. It is not allowed to do ${resultData.resultSpecs.action} `,
       )
+    }
+
+    if (!waitingPCRTestResult && isSingleResult && isAlreadyReported && !sendUpdatedResults){
+      const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
     }
 
     //Create New Waiting Result for Resend
@@ -654,7 +672,7 @@ export class PCRTestResultsService {
   }
 
   async saveDefaultTestResults(
-    defaultTestResults: Omit<PCRTestResultDBModel, 'id'>,
+    defaultTestResults: Omit<PCRTestResultDBModel, 'id' | 'updatedAt'>,
   ): Promise<PCRTestResultDBModel> {
     return await this.pcrTestResultsRepository.save(defaultTestResults)
   }
