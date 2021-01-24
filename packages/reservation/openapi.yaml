@@ -394,7 +394,6 @@ components:
           default: SendThisResult
           enum:
             - SendThisResult
-            - DoNothing
             - ReRunToday
             - ReRunTomorrow
             - RequestReSample
