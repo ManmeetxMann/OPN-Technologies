@@ -215,25 +215,15 @@ class PCRTestResultController implements IControllerBase {
 
   listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {
-        testRunId,
-        deadline,
-        organizationId,
-        dateOfAppointment,
-        barCode,
-      } = req.query as PcrTestResultsListRequest
+      const {deadline, organizationId, barCode} = req.query as PcrTestResultsListRequest
 
-      if (!(testRunId || deadline || barCode) && !dateOfAppointment) {
-        throw new BadRequestException(
-          '"dateOfAppointment" is required if "barCode", "testRunId" or "deadline" haven\'t been passed',
-        )
+      if (!barCode && !deadline) {
+        throw new BadRequestException('"deadline" is required if "barCode" is not specified')
       }
 
       const pcrResults = await this.pcrTestResultsService.getPCRResults({
         organizationId,
-        dateOfAppointment,
         deadline,
-        testRunId,
         barCode,
       })
 
