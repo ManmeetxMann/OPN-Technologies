@@ -105,6 +105,7 @@ class UserController implements IRouteController {
   }
 
   enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
+    // TODO: this should probably fail if the user is checked in somewhere else
     try {
       const {statusToken, locationId, userId, includeGuardian, organizationId} = req.body
       const dependantIds: string[] = req.body.dependantIds ?? []
@@ -127,16 +128,16 @@ class UserController implements IRouteController {
       if (!access) {
         throw new BadRequestException("Couldn't create access")
       }
-      const accessToken = access.token
       return location.attestationRequired
-        ? await this.enterWithAttestation(res, location, accessToken)
-        : await this.enterWithoutAttestation(res, accessToken)
+        ? await this.enterWithAttestation(res, access)
+        : await this.enterWithoutAttestation(res, access)
     } catch (error) {
       next(error)
     }
   }
 
   exit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // TODO: this should simply remove the user from their current location, wherever it is
     try {
       const {organizationId, locationId, accessToken} = req.body
       const location = await this.organizationService.getLocation(organizationId, locationId)
@@ -172,37 +173,14 @@ class UserController implements IRouteController {
     }
   }
 
-  private async enterWithAttestation(
-    res: Response,
-    location: OrganizationLocation,
-    accessToken: string,
-  ): Promise<unknown> {
-    const access = await this.accessService.findOneByToken(accessToken)
+  private async enterWithAttestation(res: Response, access: AccessModel): Promise<unknown> {
     const passport = await this.passportService.findOneByToken(access.statusToken)
-
-    if (location.id != access.locationId)
-      throw new BadRequestException('Access-location mismatch with the entering location')
 
     const canEnter = passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil)
 
     if (canEnter) {
       const newAccess = await this.accessService.handleEnter(access)
-      const {dependants, userId, includesGuardian} = newAccess
-      const user = await this.userService.findOne(userId)
-      const {base64Photo} = user
-      return res.json(
-        actionSucceed({
-          passport,
-          base64Photo,
-          dependants,
-          includesGuardian,
-          access: {
-            ...newAccess,
-            user,
-            status: passport.status,
-          },
-        }),
-      )
+      return res.json(actionSucceed(newAccess))
     }
 
     return res.status(400).json(actionFailed('Access denied for access-token'))
@@ -219,8 +197,7 @@ class UserController implements IRouteController {
     return location
   }
 
-  private async enterWithoutAttestation(res: Response, accessToken: string): Promise<unknown> {
-    const access = await this.accessService.findOneByToken(accessToken)
+  private async enterWithoutAttestation(res: Response, access: AccessModel): Promise<unknown> {
     const {userId} = access
     const allIds = Object.keys(access.dependants)
     if (access.includesGuardian) {
@@ -235,30 +212,9 @@ class UserController implements IRouteController {
     if (allStatuses.includes('caution')) {
       throw new BadRequestException(`current status is caution`)
     }
-    const status = allStatuses.includes('pending') ? 'pending' : 'proceed'
-
-    const user = await this.userService.findOne(userId)
-    const {base64Photo} = user
-    const passport = await this.passportService.create(PassportStatuses.Pending, userId, [], true)
     const newAccess = await this.accessService.handleEnter(access)
 
-    return res.json(
-      actionSucceed({
-        passport,
-        base64Photo,
-        dependants: access.dependants,
-        includesGuardian: access.includesGuardian,
-        access: {
-          ...newAccess,
-          // @ts-ignore timestamp, not string
-          enteredAt: newAccess.enteredAt?.toDate(),
-          // @ts-ignore timestamp, not string
-          exitAt: newAccess.exitAt?.toDate(),
-          status,
-          user,
-        },
-      }),
-    )
+    return res.json(actionSucceed(newAccess))
   }
 }
 
