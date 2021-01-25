@@ -44,8 +44,8 @@ import {
 } from '../models/appointment'
 
 import testResultPDFTemplate from '../templates/pcrTestResult'
-import {makeDeadline} from '../utils/datetime.helper'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
+import {makeFirestoreTimestamp} from '../utils/datetime.helper'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -200,7 +200,7 @@ export class PCRTestResultsService {
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.Less,
-        value: firestore.Timestamp.fromDate(moment(deadline).tz(timeZone).toDate()),
+        value: makeFirestoreTimestamp(deadline),
       })
       pcrTestResultsQuery.push({
         map: '/',
@@ -209,12 +209,11 @@ export class PCRTestResultsService {
         value: ResultTypes.Positive,
       })
     } else if (deadline) {
-      const deadlineFormatted = makeDeadline(moment(deadline))
       pcrTestResultsQuery.push({
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: deadlineFormatted,
+        value: makeFirestoreTimestamp(deadline),
       })
     }
 
@@ -493,6 +492,7 @@ export class PCRTestResultsService {
     //Update PCR Test results
     const pcrResultDataForDbUpdate = {
       ...resultData,
+      deadline: makeFirestoreTimestamp(appointment.deadline),
       result: finalResult,
       firstName: appointment.firstName,
       lastName: appointment.lastName,
@@ -541,7 +541,7 @@ export class PCRTestResultsService {
       barCode: appointment.barCode,
       dateOfAppointment: appointment.dateOfAppointment,
       displayForNonAdmins: true,
-      deadline: firestore.Timestamp.fromDate(moment(appointment.deadline).tz(timeZone).toDate()),
+      deadline: makeFirestoreTimestamp(appointment.deadline),
       firstName: appointment.firstName,
       lastName: appointment.lastName,
       linkedBarCodes: [],
