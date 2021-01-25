@@ -41,6 +41,7 @@ class PCRTestResultController implements IControllerBase {
     const sendResultsAuth = authorizationMiddleware([RequiredUserPermission.LabSendResults])
     const dueTodayAuth = authorizationMiddleware([RequiredUserPermission.LabDueToday])
     const testResultsAuth = authorizationMiddleware([RequiredUserPermission.LabSendResults], true)
+
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results-bulk',
       sendResultsAuth,
@@ -62,6 +63,11 @@ class PCRTestResultController implements IControllerBase {
       this.path + '/api/v1/pcr-test-results/add-test-run',
       dueTodayAuth,
       this.addTestRunToPCR,
+    )
+    innerRouter.get(
+      this.path + '/api/v1/pcr-test-results/due-deadline',
+      dueTodayAuth,
+      this.listDueDeadline,
     )
 
     this.router.use('/', innerRouter)
@@ -283,6 +289,21 @@ class PCRTestResultController implements IControllerBase {
       )
 
       res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  listDueDeadline = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {
+        testRunId,
+        deadline,
+      } = req.query as PcrTestResultsListRequest
+
+      const pcrResults = await this.pcrTestResultsService.getDueDeadline({deadline, testRunId})
+
+      res.json(actionSucceed(pcrResults))
     } catch (error) {
       next(error)
     }

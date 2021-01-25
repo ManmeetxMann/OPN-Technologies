@@ -175,7 +175,7 @@ export type PcrTestResultsListByDeadlineRequest = {
 
 export type PcrTestResultsListRequest = {
   organizationId?: string
-  dateOfAppointment: string
+  dateOfAppointment?: string
   deadline?: string
   testRunId?: string
   barCode?: string
@@ -186,7 +186,7 @@ export type PCRTestResultListDTO = {
   firstName: string
   lastName: string
   testType: string
-  dateOfAppointment: string
+  dateOfAppointment?: string
   barCode: string
   result: ResultTypes
   vialLocation?: string
