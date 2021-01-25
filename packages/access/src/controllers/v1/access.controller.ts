@@ -43,9 +43,9 @@ class UserController implements IRouteController {
     const auth = authorizationMiddleware([RequiredUserPermission.RegUser], true)
     const routes = express
       .Router()
-      .post('/entryToken', this.createToken) // create a token to be scanned by an admin
-      .post('/entry', this.enter) // create a token and immediately enter
-      .post('/exit', this.exit) // exit, wherever the user currently is
+      .post('/access/entry-token', this.createToken) // create a token to be scanned by an admin
+      .post('/access/enter', this.enter) // create a token and immediately enter
+      .post('/access/exit', this.exit) // exit, wherever the user currently is
     this.router.use('/access/api/v1', auth, routes)
   }
 
