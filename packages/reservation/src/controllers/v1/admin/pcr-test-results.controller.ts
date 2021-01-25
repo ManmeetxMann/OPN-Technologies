@@ -24,6 +24,7 @@ import {
   PCRTestResultRequestData,
   pcrTestResultsResponse,
   PcrTestResultsListRequest,
+  PcrTestResultsListByDeadlineRequest,
 } from '../../../models/pcr-test-results'
 
 class PCRTestResultController implements IControllerBase {
@@ -286,10 +287,7 @@ class PCRTestResultController implements IControllerBase {
 
   listDueDeadline = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {
-        testRunId,
-        deadline,
-      } = req.query as PcrTestResultsListRequest
+      const {testRunId, deadline} = req.query as PcrTestResultsListByDeadlineRequest
 
       const pcrResults = await this.pcrTestResultsService.getDueDeadline({deadline, testRunId})
 

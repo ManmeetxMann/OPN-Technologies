@@ -19,8 +19,6 @@ import {
   TestResultsReportingTrackerRepository,
 } from '../respository/test-results-reporting-tracker-repository'
 
-import {firestore} from 'firebase-admin'
-
 import {
   CreateReportForPCRResultsResponse,
   PCRResultActions,
@@ -34,6 +32,8 @@ import {
   ResultReportStatus,
   TestResultsReportingTrackerPCRResultsDBModel,
   PCRResultActionsAllowedResend,
+  PcrTestResultsListByDeadlineRequest,
+  PCRTestResultByDeadlineListDTO,
 } from '../models/pcr-test-results'
 
 import {
@@ -46,7 +46,7 @@ import {
 
 import testResultPDFTemplate from '../templates/pcrTestResult'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
-import {makeFirestoreTimestamp, makeTimeEndOfTheDayMoment} from '../utils/datetime.helper'
+import {makeFirestoreTimestamp} from '../utils/datetime.helper'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -747,7 +747,10 @@ export class PCRTestResultsService {
     }
   }
 
-  async getDueDeadline({deadline, testRunId}: PcrTestResultsListRequest) {
+  async getDueDeadline({
+    deadline,
+    testRunId,
+  }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrTestResultsQuery = []
 
     if (deadline) {
@@ -755,8 +758,7 @@ export class PCRTestResultsService {
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.LessOrEqual,
-        // value: deadlineFormatted,
-        value: firestore.Timestamp.fromDate(makeTimeEndOfTheDayMoment(moment(deadline).tz('America/Toronto')).toDate())
+        value: makeFirestoreTimestamp(deadline),
       })
     }
 
@@ -771,26 +773,21 @@ export class PCRTestResultsService {
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
     const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
-    console.log(appointmentIds)
     const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
 
-    return pcrResults.map(pcr => {
+    return pcrResults.map((pcr) => {
       const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
 
       return {
         id: pcr.id,
         barCode: pcr.barCode,
-        // deadline: `pcr.deadline.toDate().toISOString()`,
-        deadline: pcr.deadline.hasOwnProperty('_seconds')
-        // @ts-ignore
-          ? pcr.deadline.toDate().toISOString()
-          : new Date(`${pcr.deadline}`).toISOString(),
-        status:	appointment?.appointmentStatus,
+        deadline: pcr.deadline.toDate().toISOString(),
+        status: appointment?.appointmentStatus,
         testRunId: pcr.testRunId,
         dateOfAppointment: pcr.dateOfAppointment,
         vialLocation: appointment?.vialLocation,
-        runNumber: `R${pcr.runNumber}`,
-        reSampleNumber: `S${pcr.reSampleNumber}`,
+        runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
+        reSampleNumber: pcr.reSampleNumber ? `S${pcr.reSampleNumber}` : null,
       }
     })
   }
