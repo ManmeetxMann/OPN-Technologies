@@ -72,8 +72,34 @@ components:
               exitAt:
                 type: string
                 nullable: true
-
-
+    V1Access:
+      type: object
+      additionalProperties: false
+      properties:
+        token:
+          type: string
+        locationId:
+          type: string
+        enteredAt:
+          type: string
+          nullable: true
+        exitAt:
+          type: string
+          nullable: true
+        includesGuardian:
+          type: boolean
+        dependants:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+              firstName:
+                type: string
+              lastName:
+                type: string
     Passport:
       type: object
       additionalProperties: false
