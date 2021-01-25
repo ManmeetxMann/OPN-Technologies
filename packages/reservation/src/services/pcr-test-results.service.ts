@@ -1,15 +1,20 @@
 import moment from 'moment'
-import DataStore from '../../../common/src/data/datastore'
 
+import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
+import {EmailService} from '../../../common/src/service/messaging/email-service'
+import {PdfService} from '../../../common/src/service/reports/pdf'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
+import {dateFormats} from '../../../common/src/utils/times'
+import {toDateFormat} from '../../../common/src/utils/times'
+import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
+
 import {AppoinmentService} from './appoinment.service'
 import {CouponService} from './coupon.service'
 
-import {EmailService} from '../../../common/src/service/messaging/email-service'
-import {PdfService} from '../../../common/src/service/reports/pdf'
-
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
-
 import {
   TestResultsReportingTrackerPCRResultsRepository,
   TestResultsReportingTrackerRepository,
@@ -29,9 +34,7 @@ import {
   TestResultsReportingTrackerPCRResultsDBModel,
   PCRResultActionsAllowedResend,
 } from '../models/pcr-test-results'
-import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
-import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
-import testResultPDFTemplate from '../templates/pcrTestResult'
+
 import {
   AppointmentDBModel,
   AppointmentReasons,
@@ -39,11 +42,8 @@ import {
   DeadlineLabel,
   ResultTypes,
 } from '../models/appointment'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
-import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
-import {dateFormats} from '../../../common/src/utils/times'
-import {toDateFormat} from '../../../common/src/utils/times'
+
+import testResultPDFTemplate from '../templates/pcrTestResult'
 import {makeDeadline} from '../utils/datetime.helper'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 
@@ -398,7 +398,10 @@ export class PCRTestResultsService {
       resultData.barCode,
     )
 
-    if (!this.whiteListedResultsForNotification.includes(finalResult) && resultData.resultSpecs.action === PCRResultActions.SendThisResult) {
+    if (
+      !this.whiteListedResultsForNotification.includes(finalResult) &&
+      resultData.resultSpecs.action === PCRResultActions.SendThisResult
+    ) {
       console.error(
         `handlePCRResultSaveAndSend: Failed Barcode: ${resultData.barCode} SendThisResult action is not allowed for result ${finalResult} is not allowed`,
       )
@@ -444,7 +447,7 @@ export class PCRTestResultsService {
       )
     }
 
-    if(waitingPCRTestResult && !inProgress){
+    if (waitingPCRTestResult && !inProgress) {
       console.error(
         `handlePCRResultSaveAndSend: Failed PCRResultID ${waitingPCRTestResult.id} Barcode: ${resultData.barCode} is not inProgress`,
       )
