@@ -205,7 +205,7 @@ export class PCRTestResultsService {
         map: '/',
         key: 'result',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: ResultTypes.Positive,
+        value: ResultTypes.Pending,
       })
     } else if (deadline) {
       pcrTestResultsQuery.push({
@@ -265,8 +265,6 @@ export class PCRTestResultsService {
         lastName: pcr.lastName,
         testType: 'PCR',
         dateOfAppointment: pcr.dateOfAppointment,
-        runNumber: pcr.runNumber,
-        reSampleNumber: pcr.reSampleNumber,
       }
     })
   }

@@ -217,6 +217,10 @@ class PCRTestResultController implements IControllerBase {
         dueToday,
       } = req.query as PcrTestResultsListRequest
 
+      if (!barCode && !deadline) {
+        throw new BadRequestException('"deadline" is required if "barCode" is not specified')
+      }
+
       const pcrResults = await this.pcrTestResultsService.getPCRResults({
         organizationId,
         deadline,
