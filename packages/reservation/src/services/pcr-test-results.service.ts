@@ -264,7 +264,6 @@ export class PCRTestResultsService {
         firstName: pcr.firstName,
         lastName: pcr.lastName,
         testType: 'PCR',
-        dateOfAppointment: pcr.dateOfAppointment,
       }
     })
   }

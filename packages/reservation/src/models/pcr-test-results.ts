@@ -186,7 +186,7 @@ export type PCRTestResultListDTO = {
   firstName: string
   lastName: string
   testType: string
-  dateOfAppointment: string
+  dateOfAppointment?: string
   barCode: string
   result: ResultTypes
   vialLocation?: string
