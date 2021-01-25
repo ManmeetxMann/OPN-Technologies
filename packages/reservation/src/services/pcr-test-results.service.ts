@@ -180,10 +180,8 @@ export class PCRTestResultsService {
     deadline,
     testRunId,
     barCode,
-    dueToday,
   }: PcrTestResultsListRequest): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
-    const isDueToday = Boolean(dueToday)
 
     if (organizationId) {
       pcrTestResultsQuery.push({
@@ -194,20 +192,7 @@ export class PCRTestResultsService {
       })
     }
 
-    if (isDueToday) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'deadline',
-        operator: DataModelFieldMapOperatorType.LessOrEqual,
-        value: makeFirestoreTimestamp(deadline),
-      })
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'result',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: ResultTypes.Pending,
-      })
-    } else if (deadline) {
+    if (deadline) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'deadline',
@@ -237,16 +222,9 @@ export class PCRTestResultsService {
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
 
     let appointments
-    if (deadline || testRunId || barCode || isDueToday) {
+    if (deadline || testRunId || barCode) {
       const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
       appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
-
-      if (isDueToday) {
-        const statuses = [AppointmentStatus.Received, AppointmentStatus.ReRunRequired]
-        appointments = appointments.filter(({appointmentStatus}) =>
-          statuses.includes(appointmentStatus),
-        )
-      }
     }
 
     return pcrResults.map((pcr) => {
@@ -256,8 +234,6 @@ export class PCRTestResultsService {
         id: pcr.id,
         barCode: pcr.barCode,
         result: pcr.result,
-        vialLocation: appointment?.vialLocation,
-        status: appointment?.appointmentStatus,
         dateTime: appointment?.dateTime,
         deadline: pcr.deadline.toDate().toISOString(),
         testRunId: pcr.testRunId,

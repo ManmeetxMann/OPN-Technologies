@@ -1359,11 +1359,6 @@ paths:
           schema:
             type: string
         - in: query
-          name: dueToday
-          schema:
-            type: boolean
-            default: false
-        - in: query
           name: deadline
           schema:
             type: string
@@ -1412,20 +1407,6 @@ paths:
                               Pending,
                               Invalid,
                               Inconclusive,
-                            ]
-                        vialLocation:
-                          type: string
-                        status:
-                          type: string
-                          enum:
-                            [
-                              Pending,
-                              InTransit,
-                              Received,
-                              InProgress,
-                              Reported,
-                              ReRunRequired,
-                              ReSampleRequired,
                             ]
                         dateTime:
                           type: string

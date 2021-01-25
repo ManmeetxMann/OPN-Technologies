@@ -214,7 +214,6 @@ class PCRTestResultController implements IControllerBase {
         deadline,
         organizationId,
         barCode,
-        dueToday,
       } = req.query as PcrTestResultsListRequest
 
       if (!barCode && !deadline) {
@@ -226,7 +225,6 @@ class PCRTestResultController implements IControllerBase {
         deadline,
         testRunId,
         barCode,
-        dueToday,
       })
 
       res.json(actionSucceed(pcrResults))

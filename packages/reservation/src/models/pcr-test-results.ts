@@ -178,7 +178,6 @@ export type PcrTestResultsListRequest = {
   deadline?: string
   testRunId?: string
   barCode?: string
-  dueToday?: string
 }
 
 export type PCRTestResultListDTO = {
