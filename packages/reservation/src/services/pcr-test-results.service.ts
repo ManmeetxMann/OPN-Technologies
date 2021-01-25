@@ -18,6 +18,7 @@ import {
 import {
   CreateReportForPCRResultsResponse,
   PCRResultActions,
+  PCRResultActionsAllowedResend,
   PCRTestResultData,
   PCRTestResultDBModel,
   PCRTestResultEmailDTO,
@@ -27,7 +28,6 @@ import {
   PcrTestResultsListRequest,
   ResultReportStatus,
   TestResultsReportingTrackerPCRResultsDBModel,
-  PCRResultActionsAllowedResend,
 } from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
@@ -38,6 +38,7 @@ import {
   AppointmentStatus,
   DeadlineLabel,
   ResultTypes,
+  AppointmentAcuityResponse,
 } from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
@@ -717,5 +718,58 @@ export class PCRTestResultsService {
       default:
         return AppointmentReasons.NoInProgress
     }
+  }
+
+  public getlinkedBarcodes = async (couponCode: string): Promise<string[]> => {
+    let linkedBarcodes = []
+    if (couponCode) {
+      //Get Coupon
+      const coupon = await this.couponService.getByCouponCode(couponCode)
+      if (coupon) {
+        linkedBarcodes.push(coupon.lastBarcode)
+        try {
+          //Get Linked Barcodes for LastBarCode
+          const pcrResult = await this.getReSampledTestResultByBarCode(coupon.lastBarcode)
+          if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
+            linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
+          }
+        } catch (error) {
+          console.error(
+            `WebhookController: Coupon Code: ${couponCode} Last BarCode: ${
+              coupon.lastBarcode
+            }. No Test Results to Link. ${error.toString()}`,
+          )
+        }
+        console.log(`WebhookController: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`)
+      } else {
+        console.log(`WebhookController: ${couponCode} is not coupon.`)
+      }
+    }
+    return linkedBarcodes
+  }
+
+  public async createLinkedPcrTests(
+    savedAppointment: AppointmentDBModel,
+    appointment: AppointmentAcuityResponse,
+  ): Promise<PCRTestResultDBModel> {
+    const linkedBarcodes = await this.getlinkedBarcodes(appointment.certificate)
+    //Save Pending Test Results
+    const pcrResultDataForDb = {
+      adminId: 'WEBHOOK',
+      appointmentId: savedAppointment.id,
+      barCode: savedAppointment.barCode,
+      dateOfAppointment: savedAppointment.dateOfAppointment,
+      displayForNonAdmins: true,
+      deadline: savedAppointment.deadline,
+      firstName: appointment.firstName,
+      lastName: appointment.lastName,
+      linkedBarCodes: linkedBarcodes,
+      organizationId: appointment.organizationId,
+      result: ResultTypes.Pending,
+      runNumber: 1, //Start the Run
+      reSampleNumber: linkedBarcodes.length + 1,
+      waitingResult: true,
+    }
+    return this.saveDefaultTestResults(pcrResultDataForDb)
   }
 }

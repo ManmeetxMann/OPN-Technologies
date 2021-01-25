@@ -106,6 +106,14 @@ export type AppointmentAcuityResponse = {
   barCode: string
   canceled: boolean
   canClientCancel: boolean
+  address: string
+  addressUnit: string
+  addressForTesting: string
+  additionalAddressNotes: string
+  shareTestResultWithEmployer: boolean
+  readTermsAndConditions: boolean
+  receiveResultsViaEmail: boolean
+  receiveNotificationsFromGov: boolean
 }
 
 export type LabelsAcuityResponse = {

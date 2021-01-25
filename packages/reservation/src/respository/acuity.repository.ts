@@ -52,7 +52,7 @@ export class AcuityRepository extends AcuityScheduling {
     phone: string,
     certificate: string,
     fields: Record<string, string | boolean>,
-  ): Promise<AcuityCreateResponse> {
+  ): Promise<AppointmentAcuityResponse> {
     return this.createAppointmentOnAcuityService(
       datetime,
       appointmentTypeID,

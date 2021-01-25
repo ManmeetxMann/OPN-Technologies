@@ -240,7 +240,7 @@ abstract class AcuityScheduling {
     phone: string,
     certificate: string,
     fields: Record<string, string | boolean>,
-  ): Promise<AcuityCreateResponse> {
+  ): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = `${APIURL}/api/v1/appointments`
@@ -269,7 +269,7 @@ abstract class AcuityScheduling {
       throw new BadRequestException(result.message)
     }
     console.log(`AcuityAdapter: createCouponCodeOnAcuityService Success: For email: ${email}`)
-    return result
+    return this.customFieldsToAppoinment(result)
   }
 
   protected async getAvailabilityDatesList(
@@ -347,6 +347,30 @@ abstract class AcuityScheduling {
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ORGANIZATION_ID'))) {
             appointment.organizationId = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS'))) {
+            appointment.address = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS_UNIT'))) {
+            appointment.addressUnit = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS_FOR_TESTING'))) {
+            appointment.addressForTesting = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDITIONAL_ADDRESS_NOTES'))) {
+            appointment.additionalAddressNotes = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_SHARE_TEST_RESULT_WITH_EMPLOYER'))) {
+            appointment.shareTestResultWithEmployer = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_READ_TERMS_AND_CONDITIONS'))) {
+            appointment.readTermsAndConditions = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_RECEIVE_RESULTS_VIA_EMAIL'))) {
+            appointment.receiveResultsViaEmail = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_RECEIVE_NOTIFICATIONS_FROM_GOV'))) {
+            appointment.receiveNotificationsFromGov = field.value === 'yes'
           }
         })
       })

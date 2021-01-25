@@ -47,7 +47,7 @@ class AppointmentController implements IControllerBase {
         vialLocation,
         appointmentIds,
       } = req.body as CreateAppointmentRequest
-      await this.appointmentService.createAppointment({
+      await this.appointmentService.createAcuityAppointment({
         slotId,
         firstName,
         lastName,
