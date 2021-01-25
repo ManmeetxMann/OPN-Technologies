@@ -168,7 +168,7 @@ export const PCRTestResultHistoryResponse = (
   reSampleNumber: pcrTests.reSampleNumber,
   runNumber: pcrTests.runNumber,
   reason: pcrTests.reason,
-  dateOfAppointment: pcrTests.dateOfAppointment
+  dateOfAppointment: pcrTests.dateOfAppointment,
 })
 
 export type PcrTestResultsListByDeadlineRequest = {
