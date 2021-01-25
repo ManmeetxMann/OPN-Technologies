@@ -198,7 +198,7 @@ export class PCRTestResultsService {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'deadline',
-        operator: DataModelFieldMapOperatorType.Less,
+        operator: DataModelFieldMapOperatorType.LessOrEqual,
         value: makeFirestoreTimestamp(deadline),
       })
       pcrTestResultsQuery.push({
