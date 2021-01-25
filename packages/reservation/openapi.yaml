@@ -1359,19 +1359,10 @@ paths:
           schema:
             type: string
         - in: query
-          name: dateOfAppointment
-          # required: true
-          schema:
-            type: string
-        - in: query
           name: deadline
           schema:
             type: string
             format: date
-        - in: query
-          name: testRunId
-          schema:
-            type: string
         - in: query
           name: barCode
           schema:
@@ -1413,25 +1404,9 @@ paths:
                               Invalid,
                               Inconclusive,
                             ]
-                        vialLocation:
-                          type: string
-                        status:
-                          type: string
-                          enum:
-                            [
-                              Pending,
-                              InTransit,
-                              Received,
-                              InProgress,
-                              Reported,
-                              ReRunRequired,
-                              ReSampleRequired,
-                            ]
                         dateTime:
                           type: string
                         deadline:
-                          type: string
-                        testRunId:
                           type: string
                   status:
                     type: object

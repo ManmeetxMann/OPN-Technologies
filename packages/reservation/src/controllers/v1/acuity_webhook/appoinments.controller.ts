@@ -20,7 +20,7 @@ import moment from 'moment-timezone'
 import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {makeDeadline} from '../../../utils/datetime.helper'
+import {makeDeadline, makeFirestoreTimestamp} from '../../../utils/datetime.helper'
 import {Config} from '../../../../../common/src/utils/config'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
@@ -119,7 +119,7 @@ class AppointmentWebhookController implements IControllerBase {
             barCode: barCode,
             dateOfAppointment,
             displayForNonAdmins: true,
-            deadline,
+            deadline: makeFirestoreTimestamp(deadline),
             firstName: appointment.firstName,
             lastName: appointment.lastName,
             linkedBarCodes: linkedBarcodes,
@@ -251,7 +251,7 @@ class AppointmentWebhookController implements IControllerBase {
             barCode: barCode,
             dateOfAppointment,
             displayForNonAdmins: true,
-            deadline,
+            deadline: makeFirestoreTimestamp(deadline),
             firstName: appointment.firstName,
             lastName: appointment.lastName,
             linkedBarCodes: linkedBarcodes,

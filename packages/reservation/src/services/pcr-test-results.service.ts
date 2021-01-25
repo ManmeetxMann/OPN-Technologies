@@ -7,7 +7,6 @@ import {PdfService} from '../../../common/src/service/reports/pdf'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
-import {dateFormats} from '../../../common/src/utils/times'
 import {toDateFormat} from '../../../common/src/utils/times'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 
@@ -44,8 +43,8 @@ import {
 } from '../models/appointment'
 
 import testResultPDFTemplate from '../templates/pcrTestResult'
-import {makeDeadline} from '../utils/datetime.helper'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
+import {makeFirestoreTimestamp} from '../utils/datetime.helper'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -178,21 +177,10 @@ export class PCRTestResultsService {
 
   async getPCRResults({
     organizationId,
-    dateOfAppointment,
     deadline,
-    testRunId,
     barCode,
   }: PcrTestResultsListRequest): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
-
-    if (dateOfAppointment) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'dateOfAppointment',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: moment(dateOfAppointment).format(dateFormats.longMonth),
-      })
-    }
 
     if (organizationId) {
       pcrTestResultsQuery.push({
@@ -204,21 +192,11 @@ export class PCRTestResultsService {
     }
 
     if (deadline) {
-      const deadlineFormatted = makeDeadline(moment(deadline))
       pcrTestResultsQuery.push({
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: deadlineFormatted,
-      })
-    }
-
-    if (testRunId) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'testRunId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: testRunId,
+        value: makeFirestoreTimestamp(deadline),
       })
     }
 
@@ -233,11 +211,8 @@ export class PCRTestResultsService {
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
 
-    let appointments
-    if (deadline || testRunId || barCode) {
-      const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
-      appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
-    }
+    const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
+    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
 
     return pcrResults.map((pcr) => {
       const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
@@ -246,15 +221,12 @@ export class PCRTestResultsService {
         id: pcr.id,
         barCode: pcr.barCode,
         result: pcr.result,
-        vialLocation: appointment?.vialLocation,
-        status: appointment?.appointmentStatus,
         dateTime: appointment?.dateTime,
-        deadline: pcr.deadline,
+        deadline: pcr.deadline.toDate().toISOString(),
         testRunId: pcr.testRunId,
         firstName: pcr.firstName,
         lastName: pcr.lastName,
         testType: 'PCR',
-        dateOfAppointment: pcr.dateOfAppointment,
       }
     })
   }
@@ -479,6 +451,7 @@ export class PCRTestResultsService {
     //Update PCR Test results
     const pcrResultDataForDbUpdate = {
       ...resultData,
+      deadline: makeFirestoreTimestamp(appointment.deadline),
       result: finalResult,
       firstName: appointment.firstName,
       lastName: appointment.lastName,
@@ -527,7 +500,7 @@ export class PCRTestResultsService {
       barCode: appointment.barCode,
       dateOfAppointment: appointment.dateOfAppointment,
       displayForNonAdmins: true,
-      deadline: appointment.deadline,
+      deadline: makeFirestoreTimestamp(appointment.deadline),
       firstName: appointment.firstName,
       lastName: appointment.lastName,
       linkedBarCodes: [],

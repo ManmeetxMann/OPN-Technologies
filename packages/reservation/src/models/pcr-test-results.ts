@@ -77,7 +77,7 @@ export type PCRTestResultDBModel = PCRTestResultData &
     result: ResultTypes
     waitingResult: boolean
     displayForNonAdmins: boolean
-    deadline: string
+    deadline: firestore.Timestamp
     testRunId?: string
     runNumber: number
     reSampleNumber: number
@@ -175,9 +175,7 @@ export type PcrTestResultsListByDeadlineRequest = {
 
 export type PcrTestResultsListRequest = {
   organizationId?: string
-  dateOfAppointment: string
   deadline?: string
-  testRunId?: string
   barCode?: string
 }
 
@@ -186,7 +184,7 @@ export type PCRTestResultListDTO = {
   firstName: string
   lastName: string
   testType: string
-  dateOfAppointment: string
+  dateOfAppointment?: string
   barCode: string
   result: ResultTypes
   vialLocation?: string
