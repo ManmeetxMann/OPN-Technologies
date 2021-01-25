@@ -6,7 +6,7 @@ import {authorizationMiddleware} from '../../../../common/src/middlewares/author
 import {isPassed} from '../../../../common/src/utils/datetime-util'
 import {actionFailed, actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
-import {ResourceNotFoundException} from 'packages/common/src/exceptions/resource-not-found-exception'
+import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {UserService} from '../../../../common/src/service/user/user-service'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 
