@@ -40,9 +40,11 @@ import {
   ResultTypes,
 } from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import { ResourceAlreadyExistsException } from '../../../common/src/exceptions/resource-already-exists-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
 import {makeDeadline} from '../utils/datetime.helper'
+import { ResultAlreadySentException } from '../exceptions/result_already_sent'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -358,12 +360,7 @@ export class PCRTestResultsService {
   async getLatestPCRTestResult(
     pcrTestResults: PCRTestResultDBModel[],
   ): Promise<PCRTestResultDBModel> {
-    //var min = pcrTestResults.reduce(function (a, pcrResult) { return a < pcrResult.timestamps.createdAt ? a : b; });
-
-    const pcrWaitingTestResult = pcrTestResults.filter((result) => result.waitingResult)
-    return pcrWaitingTestResult && pcrWaitingTestResult.length !== 0
-      ? pcrWaitingTestResult[0]
-      : undefined
+    return pcrTestResults.reduce(function (lastPCRResult, pcrResult) { return lastPCRResult.updatedAt < pcrResult.updatedAt ? lastPCRResult : pcrResult }, pcrTestResults[0]);
   }
 
   allowedForResend(action: PCRResultActions): boolean {
@@ -377,7 +374,7 @@ export class PCRTestResultsService {
     resultData: PCRTestResultData,
     isSingleResult: boolean,
     sendUpdatedResults: boolean
-  ): Promise<string> {
+  ): Promise<PCRTestResultDBModel> {
     if (resultData.resultSpecs.action === PCRResultActions.DoNothing) {
       console.log(
         `handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}. It is Ignored`,
@@ -408,13 +405,19 @@ export class PCRTestResultsService {
       console.error(
         `handlePCRResultSaveAndSend: FailedToSend Already Reported not allowed to do Action: ${resultData.resultSpecs.action}`,
       )
-      throw new ResourceNotFoundException(
+      throw new ResourceAlreadyExistsException(
         `PCR Test Result with barCode ${resultData.barCode} is already Reported. It is not allowed to do ${resultData.resultSpecs.action} `,
       )
     }
 
     if (!waitingPCRTestResult && isSingleResult && isAlreadyReported && !sendUpdatedResults){
       const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
+      console.error(
+        `handlePCRResultSaveAndSend: SendUpdatedResult Flag Requested PCR Result ID ${latestPCRTestResult.id} Already Exists`,
+      )
+      throw new ResultAlreadySentException(
+        `For ${latestPCRTestResult.barCode}, a "${latestPCRTestResult.result}" result has already been sent on ${latestPCRTestResult.updatedAt}. Do you wish to save updated results and send again to client?`,
+      )
     }
 
     //Create New Waiting Result for Resend
@@ -476,7 +479,7 @@ export class PCRTestResultsService {
       )
     }
     //UPdated ID
-    return testResult.id
+    return testResult
   }
 
   async createNewWaitingResult(
