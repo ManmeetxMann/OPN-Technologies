@@ -96,6 +96,7 @@ export type PCRTestResultHistoryDTO = {
   reason: AppointmentReasons
   reSampleNumber?: number
   runNumber?: number
+  dateOfAppointment: string
 }
 
 export type PCRResults = {
@@ -167,6 +168,7 @@ export const PCRTestResultHistoryResponse = (
   reSampleNumber: pcrTests.reSampleNumber,
   runNumber: pcrTests.runNumber,
   reason: pcrTests.reason,
+  dateOfAppointment: pcrTests.dateOfAppointment
 })
 
 export type PcrTestResultsListByDeadlineRequest = {

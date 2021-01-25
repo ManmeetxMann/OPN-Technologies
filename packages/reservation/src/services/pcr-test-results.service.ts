@@ -760,8 +760,7 @@ export class PCRTestResultsService {
     await this.appointmentService.makeInProgress(pcrTestResults.appointmentId, testRunId, adminId)
   }
 
-  async getReason(barCode: string): Promise<AppointmentReasons> {
-    const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
+  async getReason(appointment: AppointmentDBModel): Promise<AppointmentReasons> {
     switch (appointment.appointmentStatus) {
       case AppointmentStatus.Reported:
         return AppointmentReasons.AlreadyReported

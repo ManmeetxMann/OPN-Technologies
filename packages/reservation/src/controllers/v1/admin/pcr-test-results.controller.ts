@@ -25,12 +25,14 @@ import {
   pcrTestResultsResponse,
   PcrTestResultsListRequest,
 } from '../../../models/pcr-test-results'
+import {AppoinmentService} from '../../../services/appoinment.service'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
+  private appointmentService = new AppoinmentService()
 
   constructor() {
     this.initRoutes()
@@ -173,7 +175,14 @@ class PCRTestResultController implements IControllerBase {
           //   (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
           // )
           const pcrTest = pcrTests.find((pcrTest) => pcrTest.barCode === code)
-          const waitingResult = !!pcrTest.waitingResult
+          const waitingResult = pcrTest && pcrTest.waitingResult
+
+          let appointment
+          try {
+            appointment = await this.appointmentService.getAppointmentByBarCode(code)
+          } catch (e) {
+            appointment = {}
+          }
 
           if (testSameBarcode.length) {
             if (testSameBarcode.length > 1) {
@@ -182,11 +191,14 @@ class PCRTestResultController implements IControllerBase {
             return {
               id: testSameBarcode[0].id,
               barCode: code,
-              results: pcrTest ? [] : results,
+              results: waitingResult ? [] : results,
               waitingResult,
-              ...(!waitingResult && {reason: await this.pcrTestResultsService.getReason(code)}),
+              ...(!waitingResult && {
+                reason: await this.pcrTestResultsService.getReason(appointment),
+              }),
               reSampleNumber: pcrTest.reSampleNumber,
               runNumber: pcrTest.runNumber,
+              dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
             }
           }
           return {
@@ -194,9 +206,10 @@ class PCRTestResultController implements IControllerBase {
             barCode: code,
             results: [],
             waitingResult: false,
-            reason: await this.pcrTestResultsService.getReason(code),
-            reSampleNumber: pcrTest.reSampleNumber,
-            runNumber: pcrTest.runNumber,
+            reason: await this.pcrTestResultsService.getReason(appointment),
+            reSampleNumber: pcrTest?.reSampleNumber,
+            runNumber: pcrTest?.runNumber,
+            dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
           }
         }),
       )
