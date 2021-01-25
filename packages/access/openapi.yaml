@@ -195,7 +195,7 @@ components:
         - userId
         - includeGuardian
     
-    V1StatusTokenExchangeRequest:
+    V1EntryOrExitRequest:
       type: object
       additionalProperties: false
       properties:
@@ -455,14 +455,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfAccess'
 
-  /access/api/v1/entryToken:
+  /access/api/v1/acess/entryToken:
     post:
       description: Create a token which an admin could scan
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/V1StatusTokenExchangeRequest'
+              $ref: '#/components/schemas/V1EntryOrExitRequest'
       responses:
         '200':
           description: Successfully exchanged
@@ -471,14 +471,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/V1ResponseOfAccess'
   
-  /access/api/v1/entry:
+  /access/api/v1/access/entry:
     post:
       description: Enter the specified location
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/V1StatusTokenExchangeRequest'
+              $ref: '#/components/schemas/V1EntryOrExitRequest'
       responses:
         '200':
           description: Successfully entered
@@ -487,14 +487,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/V1ResponseOfAccess'
   
-  /access/api/v1/exit:
+  /access/api/v1/access/exit:
     post:
       description: Exit the location the specified token was used to enter
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/V1StatusTokenExchangeRequest'
+              $ref: '#/components/schemas/V1EntryOrExitRequest'
       responses:
         '200':
           description: Successfully exited
