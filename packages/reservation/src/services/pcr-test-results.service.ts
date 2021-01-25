@@ -43,6 +43,7 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import { ResourceAlreadyExistsException } from '../../../common/src/exceptions/resource-already-exists-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
+import { toDateFormat } from '../../../common/src/utils/times'
 import {makeDeadline} from '../utils/datetime.helper'
 import { ResultAlreadySentException } from '../exceptions/result_already_sent'
 
@@ -416,7 +417,7 @@ export class PCRTestResultsService {
         `handlePCRResultSaveAndSend: SendUpdatedResult Flag Requested PCR Result ID ${latestPCRTestResult.id} Already Exists`,
       )
       throw new ResultAlreadySentException(
-        `For ${latestPCRTestResult.barCode}, a "${latestPCRTestResult.result}" result has already been sent on ${latestPCRTestResult.updatedAt}. Do you wish to save updated results and send again to client?`,
+        `For ${latestPCRTestResult.barCode}, a "${latestPCRTestResult.result}" result has already been sent on ${toDateFormat(latestPCRTestResult.updatedAt)}. Do you wish to save updated results and send again to client?`,
       )
     }
 

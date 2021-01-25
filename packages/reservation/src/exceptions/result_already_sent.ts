@@ -9,8 +9,8 @@ export class ResultAlreadySentException extends Error {
 
   constructor(
     message = DEFAULT_ERROR_MSG,
-    status = 200,
-    code = ResponseStatusCodes.ResourceAlreadyExists,
+    status = 400,
+    code = ResponseStatusCodes.ResultAlreadySent,
   ) {
     super(message)
     this.status = status
