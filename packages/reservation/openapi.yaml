@@ -1364,10 +1364,6 @@ paths:
             type: string
             format: date
         - in: query
-          name: testRunId
-          schema:
-            type: string
-        - in: query
           name: barCode
           schema:
             type: string
@@ -1411,8 +1407,6 @@ paths:
                         dateTime:
                           type: string
                         deadline:
-                          type: string
-                        testRunId:
                           type: string
                   status:
                     type: object

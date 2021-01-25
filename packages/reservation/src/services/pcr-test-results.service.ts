@@ -178,7 +178,6 @@ export class PCRTestResultsService {
   async getPCRResults({
     organizationId,
     deadline,
-    testRunId,
     barCode,
   }: PcrTestResultsListRequest): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
@@ -201,15 +200,6 @@ export class PCRTestResultsService {
       })
     }
 
-    if (testRunId) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'testRunId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: testRunId,
-      })
-    }
-
     if (barCode) {
       pcrTestResultsQuery.push({
         map: '/',
@@ -221,11 +211,8 @@ export class PCRTestResultsService {
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
 
-    let appointments
-    if (deadline || testRunId || barCode) {
-      const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
-      appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
-    }
+    const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
+    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
 
     return pcrResults.map((pcr) => {
       const appointment = appointments?.find(({id}) => pcr.appointmentId === id)

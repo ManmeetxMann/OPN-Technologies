@@ -176,7 +176,6 @@ export type PcrTestResultsListByDeadlineRequest = {
 export type PcrTestResultsListRequest = {
   organizationId?: string
   deadline?: string
-  testRunId?: string
   barCode?: string
 }
 
