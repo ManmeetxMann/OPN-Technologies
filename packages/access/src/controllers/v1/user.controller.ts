@@ -20,6 +20,7 @@ import {OrganizationLocation} from '../../../../enterprise/src/models/organizati
 import {AccessService} from '../../service/access.service'
 import {AccessTokenService} from '../../service/access-token.service'
 import {AccessModel} from '../../repository/access.repository'
+import {accessDTOResponse} from '../../models/access'
 
 class UserController implements IRouteController {
   public router = express.Router()
@@ -145,29 +146,13 @@ class UserController implements IRouteController {
         throw new BadRequestException("Location doesn't allow self-check-out")
 
       const access = await this.accessService.findOneByToken(accessToken)
-      const {userId, statusToken, includesGuardian, dependants} = access
 
       if (location.id != access.locationId)
         throw new BadRequestException('Access-location mismatch with the entering location')
 
-      const passport = await this.passportService.findOneByToken(statusToken)
-      const user = await this.userService.findOne(userId)
-      const {base64Photo} = user
       const newAccess = await this.accessService.handleExit(access)
 
-      res.json(
-        actionSucceed({
-          passport,
-          base64Photo,
-          dependants,
-          includesGuardian,
-          access: {
-            ...newAccess,
-            user,
-            status: passport.status,
-          },
-        }),
-      )
+      res.json(actionSucceed(accessDTOResponse(newAccess)))
     } catch (error) {
       next(error)
     }
@@ -180,7 +165,7 @@ class UserController implements IRouteController {
 
     if (canEnter) {
       const newAccess = await this.accessService.handleEnter(access)
-      return res.json(actionSucceed(newAccess))
+      return res.json(actionSucceed(accessDTOResponse(newAccess)))
     }
 
     return res.status(400).json(actionFailed('Access denied for access-token'))
@@ -214,7 +199,7 @@ class UserController implements IRouteController {
     }
     const newAccess = await this.accessService.handleEnter(access)
 
-    return res.json(actionSucceed(newAccess))
+    return res.json(actionSucceed(accessDTOResponse(newAccess)))
   }
 }
 

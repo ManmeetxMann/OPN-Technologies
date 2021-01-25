@@ -128,6 +128,21 @@ components:
         - accessToken
         - userId
 
+    V1ExitRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        accessToken:
+          type: string
+        organizationId:
+          type: string
+        locationId:
+          type: string
+      required:
+        - accessToken
+        - organizationId
+        - locationId
+
     SelfEntryOrExitRequest:
       type: object
       additionalProperties: false
@@ -179,6 +194,31 @@ components:
         - locationId
         - userId
         - includeGuardian
+    
+    V1StatusTokenExchangeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        statusToken:
+          type: string
+        locationId:
+          type: string
+        userId:
+          type: string
+        includeGuardian:
+          type: boolean
+        organizationId:
+          type: string
+        dependantIds:
+          type: array
+          items:
+            type: string
+      required:
+        - statusToken
+        - locationId
+        - userId
+        - organizationId
+        - includeGuardian
 
     Statistics:
       type: object
@@ -225,6 +265,32 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Access'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    V1ResponseOfAccess:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/V1Access'
         status:
           type: object
           additionalProperties: false
@@ -388,6 +454,56 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfAccess'
+
+  /access/api/v1/entryToken:
+    post:
+      description: Create a token which an admin could scan
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V1StatusTokenExchangeRequest'
+      responses:
+        '200':
+          description: Successfully exchanged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfAccess'
+  
+  /access/api/v1/entry:
+    post:
+      description: Enter the specified location
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V1StatusTokenExchangeRequest'
+      responses:
+        '200':
+          description: Successfully entered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfAccess'
+  
+  /access/api/v1/exit:
+    post:
+      description: Exit the location the specified token was used to enter
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V1StatusTokenExchangeRequest'
+      responses:
+        '200':
+          description: Successfully exited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfAccess'
+  
+
 
   /admin/createToken:
     post:
