@@ -1,4 +1,4 @@
-import { serverTimestamp } from '../../../common/src/utils/times'
+import {serverTimestamp} from '../../../common/src/utils/times'
 import DataModel, {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 import {PCRTestResultDBModel} from '../models/pcr-test-results'
@@ -11,15 +11,14 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     super(dataStore)
   }
 
-  public async save(data: Omit<PCRTestResultDBModel, 'id'|'updatedAt'>): Promise<PCRTestResultDBModel> {
+  public async save(
+    data: Omit<PCRTestResultDBModel, 'id' | 'updatedAt'>,
+  ): Promise<PCRTestResultDBModel> {
     return this.add({...data, updatedAt: serverTimestamp()})
   }
 
-  async updateData(
-    id: string,
-    pcrTestResults: Partial<PCRTestResultDBModel>,
-  ): Promise<void> {
-    await this.updateProperties(id, {...pcrTestResults, updatedAt: serverTimestamp()})
+  async updateData(id: string, pcrTestResults: Partial<PCRTestResultDBModel>): Promise<PCRTestResultDBModel> {
+    return await this.updateProperties(id, {...pcrTestResults, updatedAt: serverTimestamp()})
   }
 
   async getWaitingPCRResultsByAppointmentId(

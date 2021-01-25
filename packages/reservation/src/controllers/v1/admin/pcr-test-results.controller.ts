@@ -2,7 +2,7 @@ import {NextFunction, Request, Response, Router} from 'express'
 import moment from 'moment'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {actionSucceed,actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {now} from '../../../../../common/src/utils/times'
@@ -116,17 +116,17 @@ class PCRTestResultController implements IControllerBase {
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
-      const resultSent = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
+      const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
         {
           barCode: data.barCode,
           resultSpecs: data,
           adminId,
         },
         true,
-        data.sendUpdatedResults
+        data.sendUpdatedResults,
       )
-
-      res.json(actionSucceed({id: resultSent.id}))
+      const successMessage = `For ${pcrResultRecorded.barCode}, a "${pcrResultRecorded.result}" has been  recorded and sent to the client`
+      res.json(actionSuccess({id: pcrResultRecorded.id}, successMessage))
     } catch (error) {
       next(error)
     }

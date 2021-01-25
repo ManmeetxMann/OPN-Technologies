@@ -14,6 +14,8 @@ export const of = <T>(
   },
   page,
 })
+export const actionSuccess = <T>(data: T = null, message = ''): ResponseWrapper<T> =>
+  of(data, ResponseStatusCodes.Succeed, message)
 
 export const actionSucceed = <T>(data: T = null, page = 0): ResponseWrapper<T> =>
   of(data, ResponseStatusCodes.Succeed, null, page)

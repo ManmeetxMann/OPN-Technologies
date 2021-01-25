@@ -43,7 +43,7 @@ type PCRResultSpecs = {
 
 export type PCRTestResultRequestData = PCRResultSpecs & {
   barCode: string
-  sendUpdatedResults?:boolean
+  sendUpdatedResults?: boolean
 }
 
 export type PCRListQueryRequest = {
