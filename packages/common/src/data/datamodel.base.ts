@@ -567,7 +567,6 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     return this.collection(subPath)
       .where(fieldPath, '==', value)
       .orderBy(sortKey, 'desc')
-      .limit(1)
       .fetch()
   }
 

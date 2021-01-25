@@ -56,6 +56,7 @@ export class PCRTestResultsService {
   private emailService = new EmailService()
   private pdfService = new PdfService()
   private couponCode: string
+  private whiteListedResultsForNotification = [ResultTypes.Negative, ResultTypes.Positive]
 
   async createReportForPCRResults(
     testResultData: PCRTestResultRequest,
@@ -387,8 +388,24 @@ export class PCRTestResultsService {
 
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
     const pcrTestResults = await this.getPCRResultsByByBarCode(resultData.barCode)
+
     const waitingPCRTestResult = await this.getWaitingPCRTestResult(pcrTestResults)
     const isAlreadyReported = appointment.appointmentStatus === AppointmentStatus.Reported
+    const inProgress = appointment.appointmentStatus === AppointmentStatus.InProgress
+    const finalResult = this.getFinalResult(
+      resultData.resultSpecs.action,
+      resultData.resultSpecs.autoResult,
+      resultData.barCode,
+    )
+
+    if (!this.whiteListedResultsForNotification.includes(finalResult) && resultData.resultSpecs.action === PCRResultActions.SendThisResult) {
+      console.error(
+        `handlePCRResultSaveAndSend: Failed Barcode: ${resultData.barCode} SendThisResult action is not allowed for result ${finalResult} is not allowed`,
+      )
+      throw new BadRequestException(
+        `Barcode: ${resultData.barCode} not allowed use action SendThisResult for ${finalResult} Results`,
+      )
+    }
 
     if (!waitingPCRTestResult && (!isSingleResult || !isAlreadyReported)) {
       console.error(
@@ -408,14 +425,14 @@ export class PCRTestResultsService {
       console.error(
         `handlePCRResultSaveAndSend: FailedToSend Already Reported not allowed to do Action: ${resultData.resultSpecs.action}`,
       )
-      throw new ResourceAlreadyExistsException(
+      throw new BadRequestException(
         `PCR Test Result with barCode ${resultData.barCode} is already Reported. It is not allowed to do ${resultData.resultSpecs.action} `,
       )
     }
 
     if (!waitingPCRTestResult && isSingleResult && isAlreadyReported && !sendUpdatedResults) {
       const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
-      console.error(
+      console.info(
         `handlePCRResultSaveAndSend: SendUpdatedResult Flag Requested PCR Result ID ${latestPCRTestResult.id} Already Exists`,
       )
       throw new ResultAlreadySentException(
@@ -424,6 +441,15 @@ export class PCRTestResultsService {
         }" result has already been sent on ${toDateFormat(
           latestPCRTestResult.updatedAt,
         )}. Do you wish to save updated results and send again to client?`,
+      )
+    }
+
+    if(waitingPCRTestResult && !inProgress){
+      console.error(
+        `handlePCRResultSaveAndSend: Failed PCRResultID ${waitingPCRTestResult.id} Barcode: ${resultData.barCode} is not inProgress`,
+      )
+      throw new BadRequestException(
+        `PCR Test Result with barCode ${resultData.barCode} is not InProgress`,
       )
     }
 
@@ -445,12 +471,6 @@ export class PCRTestResultsService {
       appointment,
       testResult.runNumber,
       testResult.reSampleNumber,
-    )
-
-    const finalResult = this.getFinalResult(
-      resultData.resultSpecs.action,
-      resultData.resultSpecs.autoResult,
-      resultData.barCode,
     )
 
     //Update PCR Test results
@@ -599,8 +619,7 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        const whiteListedResultsForNotification = [ResultTypes.Negative, ResultTypes.Positive]
-        if (whiteListedResultsForNotification.includes(resultData.result)) {
+        if (this.whiteListedResultsForNotification.includes(resultData.result)) {
           await this.sendTestResults(resultData)
           console.log(`SendNotification: Success: Sent Results for ${resultData.barCode}`)
         } else {
