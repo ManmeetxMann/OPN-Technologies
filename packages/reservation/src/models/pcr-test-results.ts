@@ -1,3 +1,5 @@
+import {firestore} from 'firebase-admin'
+
 import {AppointmentReasons, AppointmentStatus, ResultTypes} from './appointment'
 
 export enum PCRResultActions {
@@ -41,6 +43,7 @@ type PCRResultSpecs = {
 
 export type PCRTestResultRequestData = PCRResultSpecs & {
   barCode: string
+  sendUpdatedResults?: boolean
 }
 
 export type PCRListQueryRequest = {
@@ -78,6 +81,7 @@ export type PCRTestResultDBModel = PCRTestResultData &
     testRunId?: string
     runNumber: number
     reSampleNumber: number
+    updatedAt: firestore.Timestamp
   }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -108,7 +112,7 @@ export type PCRResults = {
 
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,
-  'id' | 'linkedBarCodes' | 'deadline' | 'runNumber' | 'reSampleNumber'
+  'id' | 'linkedBarCodes' | 'deadline' | 'runNumber' | 'reSampleNumber' | 'updatedAt'
 > & {
   email: string
   phone: number

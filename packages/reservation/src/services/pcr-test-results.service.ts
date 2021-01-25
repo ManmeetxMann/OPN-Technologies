@@ -40,9 +40,12 @@ import {
   ResultTypes,
 } from '../models/appointment'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {dateFormats} from '../../../common/src/utils/times'
+import {toDateFormat} from '../../../common/src/utils/times'
 import {makeDeadline} from '../utils/datetime.helper'
+import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -135,6 +138,7 @@ export class PCRTestResultsService {
           resultSpecs: pcrResults.data,
           adminId: pcrResults.adminId,
         },
+        false,
         false,
       )
       if (pcrResults.data.action === PCRResultActions.DoNothing) {
@@ -305,9 +309,10 @@ export class PCRTestResultsService {
   }
 
   async getPCRResultsByByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel[]> {
-    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualWithMax(
       'barCode',
       barCodeNumber,
+      'updatedAt',
     )
     if (!pcrTestResults || pcrTestResults.length === 0) {
       throw new ResourceNotFoundException(`PCRTestResult with barCode ${barCodeNumber} not found`)
@@ -353,6 +358,14 @@ export class PCRTestResultsService {
       : undefined
   }
 
+  async getLatestPCRTestResult(
+    pcrTestResults: PCRTestResultDBModel[],
+  ): Promise<PCRTestResultDBModel> {
+    return pcrTestResults.reduce(function (lastPCRResult, pcrResult) {
+      return lastPCRResult.updatedAt < pcrResult.updatedAt ? lastPCRResult : pcrResult
+    }, pcrTestResults[0])
+  }
+
   allowedForResend(action: PCRResultActions): boolean {
     if (action in PCRResultActionsAllowedResend) {
       return true
@@ -363,7 +376,8 @@ export class PCRTestResultsService {
   async handlePCRResultSaveAndSend(
     resultData: PCRTestResultData,
     isSingleResult: boolean,
-  ): Promise<string> {
+    sendUpdatedResults: boolean,
+  ): Promise<PCRTestResultDBModel> {
     if (resultData.resultSpecs.action === PCRResultActions.DoNothing) {
       console.log(
         `handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}. It is Ignored`,
@@ -394,8 +408,22 @@ export class PCRTestResultsService {
       console.error(
         `handlePCRResultSaveAndSend: FailedToSend Already Reported not allowed to do Action: ${resultData.resultSpecs.action}`,
       )
-      throw new ResourceNotFoundException(
+      throw new ResourceAlreadyExistsException(
         `PCR Test Result with barCode ${resultData.barCode} is already Reported. It is not allowed to do ${resultData.resultSpecs.action} `,
+      )
+    }
+
+    if (!waitingPCRTestResult && isSingleResult && isAlreadyReported && !sendUpdatedResults) {
+      const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
+      console.error(
+        `handlePCRResultSaveAndSend: SendUpdatedResult Flag Requested PCR Result ID ${latestPCRTestResult.id} Already Exists`,
+      )
+      throw new ResultAlreadySentException(
+        `For ${latestPCRTestResult.barCode}, a "${
+          latestPCRTestResult.result
+        }" result has already been sent on ${toDateFormat(
+          latestPCRTestResult.updatedAt,
+        )}. Do you wish to save updated results and send again to client?`,
       )
     }
 
@@ -438,7 +466,10 @@ export class PCRTestResultsService {
       displayForNonAdmins: true, //TODO
     }
 
-    await this.pcrTestResultsRepository.updateProperties(testResult.id, pcrResultDataForDbUpdate)
+    const pcrResultRecorded = await this.pcrTestResultsRepository.updateData(
+      testResult.id,
+      pcrResultDataForDbUpdate,
+    )
 
     //Send Notification
     if (resultData.resultSpecs.notify) {
@@ -457,8 +488,8 @@ export class PCRTestResultsService {
         `handlePCRResultSaveAndSend: Not Notification is sent for ${resultData.barCode}. Notify is off.`,
       )
     }
-    //UPdated ID
-    return testResult.id
+
+    return pcrResultRecorded
   }
 
   async createNewWaitingResult(
@@ -650,11 +681,11 @@ export class PCRTestResultsService {
     id: string,
     defaultTestResults: Partial<PCRTestResultDBModel>,
   ): Promise<void> {
-    await this.pcrTestResultsRepository.updateProperties(id, defaultTestResults)
+    await this.pcrTestResultsRepository.updateData(id, defaultTestResults)
   }
 
   async saveDefaultTestResults(
-    defaultTestResults: Omit<PCRTestResultDBModel, 'id'>,
+    defaultTestResults: Omit<PCRTestResultDBModel, 'id' | 'updatedAt'>,
   ): Promise<PCRTestResultDBModel> {
     return await this.pcrTestResultsRepository.save(defaultTestResults)
   }
@@ -690,7 +721,7 @@ export class PCRTestResultsService {
     const pcrTestResults = await this.getTestResultsByAppointmentId(appointmentId)
     pcrTestResults.map(
       async (pcrTestResult) =>
-        await this.pcrTestResultsRepository.updateProperties(pcrTestResult.id, {organizationId}),
+        await this.pcrTestResultsRepository.updateData(pcrTestResult.id, {organizationId}),
     )
   }
 
