@@ -17,7 +17,10 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     return this.add({...data, updatedAt: serverTimestamp()})
   }
 
-  async updateData(id: string, pcrTestResults: Partial<PCRTestResultDBModel>): Promise<PCRTestResultDBModel> {
+  async updateData(
+    id: string,
+    pcrTestResults: Partial<PCRTestResultDBModel>,
+  ): Promise<PCRTestResultDBModel> {
     return await this.updateProperties(id, {...pcrTestResults, updatedAt: serverTimestamp()})
   }
 

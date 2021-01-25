@@ -2,7 +2,7 @@ import {NextFunction, Request, Response, Router} from 'express'
 import moment from 'moment'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed,actionSuccess} from '../../../../../common/src/utils/response-wrapper'
+import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {now} from '../../../../../common/src/utils/times'
@@ -116,6 +116,11 @@ class PCRTestResultController implements IControllerBase {
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
+
+      if (Number(data.hexCt) > 40) {
+        throw new BadRequestException(`Invalid Hex Ct. Should be less than 40`)
+      }
+
       const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
         {
           barCode: data.barCode,

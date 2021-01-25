@@ -466,7 +466,10 @@ export class PCRTestResultsService {
       displayForNonAdmins: true, //TODO
     }
 
-    const pcrResultRecorded = await this.pcrTestResultsRepository.updateData(testResult.id, pcrResultDataForDbUpdate)
+    const pcrResultRecorded = await this.pcrTestResultsRepository.updateData(
+      testResult.id,
+      pcrResultDataForDbUpdate,
+    )
 
     //Send Notification
     if (resultData.resultSpecs.notify) {
@@ -485,7 +488,7 @@ export class PCRTestResultsService {
         `handlePCRResultSaveAndSend: Not Notification is sent for ${resultData.barCode}. Notify is off.`,
       )
     }
-    
+
     return pcrResultRecorded
   }
 
