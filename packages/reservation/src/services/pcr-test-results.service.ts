@@ -32,6 +32,8 @@ import {
   ResultReportStatus,
   TestResultsReportingTrackerPCRResultsDBModel,
   PCRResultActionsAllowedResend,
+  PcrTestResultsListByDeadlineRequest,
+  PCRTestResultByDeadlineListDTO,
 } from '../models/pcr-test-results'
 
 import {
@@ -743,5 +745,50 @@ export class PCRTestResultsService {
       default:
         return AppointmentReasons.NoInProgress
     }
+  }
+
+  async getDueDeadline({
+    deadline,
+    testRunId,
+  }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
+    const pcrTestResultsQuery = []
+
+    if (deadline) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'deadline',
+        operator: DataModelFieldMapOperatorType.LessOrEqual,
+        value: makeFirestoreTimestamp(deadline),
+      })
+    }
+
+    if (testRunId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testRunId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: testRunId,
+      })
+    }
+
+    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
+    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+
+    return pcrResults.map((pcr) => {
+      const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
+
+      return {
+        id: pcr.id,
+        barCode: pcr.barCode,
+        deadline: pcr.deadline.toDate().toISOString(),
+        status: appointment?.appointmentStatus,
+        testRunId: pcr.testRunId,
+        dateOfAppointment: pcr.dateOfAppointment,
+        vialLocation: appointment?.vialLocation,
+        runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
+        reSampleNumber: pcr.reSampleNumber ? `S${pcr.reSampleNumber}` : null,
+      }
+    })
   }
 }

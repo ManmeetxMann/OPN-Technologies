@@ -171,6 +171,7 @@ export const PCRTestResultHistoryResponse = (
 
 export type PcrTestResultsListByDeadlineRequest = {
   deadline: string
+  testRunId?: string
 }
 
 export type PcrTestResultsListRequest = {
@@ -197,12 +198,13 @@ export type PCRTestResultListDTO = {
 export type PCRTestResultByDeadlineListDTO = {
   id: string
   barCode: string
-  result: ResultTypes
   vialLocation: string
   status: AppointmentStatus
-  dateTime: string
+  dateOfAppointment: string
   deadline: string
   testRunId: string
+  runNumber: string
+  reSampleNumber: string
 }
 
 export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResultListDTO => ({

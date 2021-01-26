@@ -1964,3 +1964,86 @@ paths:
                         type: string
                   page:
                     type: number
+
+  /reservation/admin/api/v1/pcr-test-results/due-deadline:
+    get:
+      description: Retrieve list of PCR Results
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: deadline
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: testRunId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                        barCode:
+                          type: string
+                        deadline:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            [
+                              Pending,
+                              InTransit,
+                              Received,
+                              InProgress,
+                              Reported,
+                              ReRunRequired,
+                              ReSampleRequired,
+                            ]
+                        testRunId:
+                          type: string
+                        dateOfAppointment:
+                          type: string
+                        vialLocation:
+                          type: string
+                        runNumber:
+                          type: string
+                        reSampleNumber:
+                          type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          [
+                            succeed,
+                            failed,
+                            validation_error,
+                            internal_server_error,
+                            unauthorized,
+                            access_denied,
+                            resource_not_found,
+                          ]
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
