@@ -146,11 +146,10 @@ export class PCRTestResultsService {
         false,
       )
 
-      await testResultsReportingTrackerPCRResult.updateProperty(
-        resultId,
-        'status',
-        this.getReportStatus(pcrResults.data.action),
-      )
+      await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
+        status: await this.getReportStatus(pcrResults.data.action),
+        details: 'Action Completed',
+      })
     } catch (error) {
       //CRITICAL
       console.error(`processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `)

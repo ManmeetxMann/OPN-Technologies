@@ -10,18 +10,21 @@ import {isValidDate} from '../../../../../common/src/utils/times'
 import {getAdminId, getIsLabUser} from '../../../../../common/src/utils/auth'
 
 import {
+  appointmentByBarcodeUiDTOResponse,
   AppointmentByOrganizationRequest,
   AppointmentDBModel,
   AppointmentsState,
   appointmentUiDTOResponse,
 } from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
+import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 import {TransportRunsService} from '../../../services/transport-runs.service'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private appointmentService = new AppoinmentService()
+  private organizationService = new OrganizationService()
   private transportRunsService = new TransportRunsService()
 
   constructor() {
@@ -180,8 +183,14 @@ class AdminAppointmentController implements IControllerBase {
       const {barCode} = req.query as {barCode: string}
 
       const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
-
-      res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
+      let organizationName: string
+      if (appointment.organizationId) {
+        const organization = await this.organizationService.getByIdOrThrow(
+          appointment.organizationId,
+        )
+        organizationName = organization.name
+      }
+      res.json(actionSucceed({...appointmentByBarcodeUiDTOResponse(appointment, organizationName)}))
     } catch (error) {
       next(error)
     }

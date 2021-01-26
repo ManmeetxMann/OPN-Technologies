@@ -153,6 +153,7 @@ export type AppointmentUiDTO = {
   vialLocation?: string
   appointment?: boolean
   canCancel?: boolean
+  registeredNursePractitioner?: string
 }
 
 export type AppointmentsState = {
@@ -218,5 +219,25 @@ export const appointmentUiDTOResponse = (
     latestResult: appointment.latestResult,
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
+  }
+}
+
+export const appointmentByBarcodeUiDTOResponse = (
+  appointment: AppointmentDBModel,
+  organizationName?: string,
+): AppointmentUiDTO & {organizationName?: string} => {
+  const timeZone = Config.get('DEFAULT_TIME_ZONE')
+  return {
+    id: appointment.id,
+    firstName: appointment.firstName,
+    lastName: appointment.lastName,
+    status: appointment.appointmentStatus,
+    barCode: appointment.barCode,
+    location: appointment.location,
+    dateTime: moment(appointment.dateTime).tz(timeZone).format(),
+    dateOfBirth: appointment.dateOfBirth,
+    deadline: moment(appointment.deadline).tz(timeZone).format(),
+    registeredNursePractitioner: appointment.registeredNursePractitioner,
+    organizationName: organizationName,
   }
 }
