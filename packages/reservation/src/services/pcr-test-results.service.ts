@@ -788,6 +788,7 @@ export class PCRTestResultsService {
         vialLocation: appointment?.vialLocation,
         runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
         reSampleNumber: pcr.reSampleNumber ? `S${pcr.reSampleNumber}` : null,
+        dateTime: appointment.dateTime,
       }
     })
   }
