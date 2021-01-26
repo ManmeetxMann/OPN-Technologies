@@ -147,6 +147,61 @@ components:
               nullable: true
               type: string
 
+    AppointmentBarCodeLookupResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: number
+            firstName:
+              type: string
+            lastName:
+              type: string
+            status:
+              type: string
+            barCode:
+              type: string
+            location:
+              type: string
+            dateTime:
+              type: string
+            dateOfBirth:
+              type: string
+            deadline:
+              type: string
+            registeredNursePractitioner:
+              type: string
+            organizationName:
+              type: string
+          required:
+            - id
+            - firstName
+            - lastName
+            - barCode
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
     TransportRunListResponse200:
       type: object
       additionalProperties: false
@@ -1269,7 +1324,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentResponse200'
+                $ref: '#/components/schemas/AppointmentBarCodeLookupResponse200'
 
   /reservation/admin/api/v1/pcr-test-results-bulk:
     post:
