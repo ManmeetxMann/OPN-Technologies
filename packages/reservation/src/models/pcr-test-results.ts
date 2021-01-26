@@ -19,11 +19,13 @@ export enum PCRResultActionsAllowedResend {
 }
 
 export enum ResultReportStatus {
-  RequestReceived = 'RequestReceived',
-  Processing = 'Processing',
   Failed = 'Failed',
-  SuccessfullyReported = 'SuccessfullyReported',
-  RequestIgnoredAsPerRequest = 'RequestIgnoredAsPerRequest',
+  Processing = 'Processing',
+  RequestReceived = 'RequestReceived',
+  SentReRunRequest = 'SentReRunRequest',
+  SentReSampleRequest = 'SentReSampleRequest',
+  SentResult = 'SentResult',
+  Skipped = 'Skipped',
 }
 
 type PCRResultSpecs = {
@@ -229,6 +231,7 @@ export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResu
 export type pcrTestResultsDTO = {
   barCode: string
   status: ResultReportStatus
+  details?: string
 }
 
 export const pcrTestResultsResponse = (
@@ -236,4 +239,5 @@ export const pcrTestResultsResponse = (
 ): pcrTestResultsDTO => ({
   barCode: pcrTestResult.data.barCode,
   status: pcrTestResult.status,
+  details: pcrTestResult.details,
 })

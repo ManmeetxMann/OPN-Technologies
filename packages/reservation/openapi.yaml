@@ -1525,16 +1525,21 @@ paths:
                       type: object
                       additionalProperties: false
                       properties:
+                        details:
+                          type: string
                         barCode:
                           type: string
                         status:
                           type: string
                           enum:
                             [
-                              RequestReceived,
-                              Processing,
                               Failed,
-                              SuccessfullyReported,
+                              Processing,
+                              RequestReceived,
+                              SentReRunRequest,
+                              SentReSampleRequest,
+                              SentResult,
+                              Skipped,
                             ]
                       required:
                         - barCode

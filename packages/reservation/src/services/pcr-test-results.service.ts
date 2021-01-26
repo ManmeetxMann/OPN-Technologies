@@ -125,7 +125,9 @@ export class PCRTestResultsService {
     }
 
     if (pcrResults.status !== ResultReportStatus.RequestReceived) {
-      //throw new BadRequestException(`ProcessPCRTestResultFailed: ID: ${resultId} BarCode: ${pcrResults.data.barCode} has status ${pcrResults.status}`)
+      throw new BadRequestException(
+        `ProcessPCRTestResultFailed: ID: ${resultId} BarCode: ${pcrResults.data.barCode} has status ${pcrResults.status}`,
+      )
     }
 
     await testResultsReportingTrackerPCRResult.updateProperty(
@@ -143,19 +145,12 @@ export class PCRTestResultsService {
         false,
         false,
       )
-      if (pcrResults.data.action === PCRResultActions.DoNothing) {
-        await testResultsReportingTrackerPCRResult.updateProperty(
-          resultId,
-          'status',
-          ResultReportStatus.RequestIgnoredAsPerRequest,
-        )
-      } else {
-        await testResultsReportingTrackerPCRResult.updateProperty(
-          resultId,
-          'status',
-          ResultReportStatus.SuccessfullyReported,
-        )
-      }
+
+      await testResultsReportingTrackerPCRResult.updateProperty(
+        resultId,
+        'status',
+        this.getReportStatus(pcrResults.data.action),
+      )
     } catch (error) {
       //CRITICAL
       console.error(`processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `)
@@ -790,5 +785,28 @@ export class PCRTestResultsService {
         dateTime: appointment.dateTime,
       }
     })
+  }
+
+  async getReportStatus(action: PCRResultActions): Promise<ResultReportStatus> {
+    let status: ResultReportStatus
+
+    switch (action) {
+      case PCRResultActions.DoNothing: {
+        status = ResultReportStatus.Skipped
+        break
+      }
+      case PCRResultActions.RequestReSample: {
+        status = ResultReportStatus.SentReSampleRequest
+        break
+      }
+      case PCRResultActions.ReRunToday || PCRResultActions.ReRunTomorrow: {
+        status = ResultReportStatus.SentReRunRequest
+        break
+      }
+      default: {
+        status = ResultReportStatus.SentResult
+      }
+    }
+    return status
   }
 }
