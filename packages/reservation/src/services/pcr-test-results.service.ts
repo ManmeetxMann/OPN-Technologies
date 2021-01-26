@@ -149,7 +149,7 @@ export class PCRTestResultsService {
       await testResultsReportingTrackerPCRResult.updateProperty(
         resultId,
         'status',
-        this.getReportStatus(pcrResults.data.action),
+        await this.getReportStatus(pcrResults.data.action),
       )
     } catch (error) {
       //CRITICAL
