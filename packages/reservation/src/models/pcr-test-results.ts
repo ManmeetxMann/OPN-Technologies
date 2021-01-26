@@ -94,8 +94,8 @@ export type PCRTestResultHistoryDTO = {
   waitingResult: boolean
   results: PCRResults[]
   reason: AppointmentReasons
-  reSampleNumber?: number | string
-  runNumber?: number | string
+  reSampleNumber: number | string
+  runNumber: number | string
   dateOfAppointment: string
 }
 
