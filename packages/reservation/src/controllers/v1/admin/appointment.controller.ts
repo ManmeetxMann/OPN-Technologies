@@ -10,6 +10,7 @@ import {isValidDate} from '../../../../../common/src/utils/times'
 import {getAdminId, getIsLabUser} from '../../../../../common/src/utils/auth'
 
 import {
+  appointmentByBarcodeUiDTOResponse,
   AppointmentByOrganizationRequest,
   AppointmentDBModel,
   AppointmentsState,
@@ -180,8 +181,9 @@ class AdminAppointmentController implements IControllerBase {
       const {barCode} = req.query as {barCode: string}
 
       const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
-
-      res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
+      let organizationName:string
+       
+      res.json(actionSucceed({...appointmentByBarcodeUiDTOResponse(appointment, organizationName)}))
     } catch (error) {
       next(error)
     }
