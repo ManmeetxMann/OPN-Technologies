@@ -57,6 +57,11 @@ class AdminAppointmentController implements IControllerBase {
       apptAuth,
       this.getAppointmentByBarcode,
     )
+    innerRouter.get(
+      this.path + '/api/v1/appointments/barcode/get-new-code',
+      apptAuth,
+      this.getNextBarcode,
+    )
     innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
 
     this.router.use('/', innerRouter)
@@ -191,6 +196,20 @@ class AdminAppointmentController implements IControllerBase {
         organizationName = organization.name
       }
       res.json(actionSucceed({...appointmentByBarcodeUiDTOResponse(appointment, organizationName)}))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getNextBarcode = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+
+      const barCode = await this.appointmentService.getNextBarCodeNumber()
+      res.json(actionSucceed({barCode}))
     } catch (error) {
       next(error)
     }

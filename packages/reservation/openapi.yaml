@@ -88,6 +88,34 @@ components:
         - testRunId
         - testRunDateTime
 
+    GenerateNextBarCodeResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        barCode:
+          type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+        message:
+          nullable: true
+          type: string
+      required:
+        - barCode
+
     AppointmentResponse200:
       type: object
       additionalProperties: false
@@ -1325,6 +1353,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentBarCodeLookupResponse200'
+
+  /reservation/admin/api/v1/appointments/barcode/get-new-code:
+    get:
+      description: Genrerate New BarCode
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateNextBarCodeResponse'
 
   /reservation/admin/api/v1/pcr-test-results-bulk:
     post:
