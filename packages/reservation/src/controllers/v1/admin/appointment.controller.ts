@@ -68,7 +68,6 @@ class AdminAppointmentController implements IControllerBase {
         searchQuery,
         dateOfAppointment,
         transportRunId,
-        deadlineDate,
         appointmentStatus,
       } = req.query as AppointmentByOrganizationRequest
 
@@ -76,20 +75,11 @@ class AdminAppointmentController implements IControllerBase {
         throw new BadRequestException('dateOfAppointment is invalid')
       }
 
-      if (deadlineDate && !isValidDate(deadlineDate)) {
-        throw new BadRequestException('deadlineDate is invalid')
-      }
-
-      if (!isJustOneOf(deadlineDate, dateOfAppointment)) {
-        throw new BadRequestException('Required just deadlineDate or dateOfAppointment, not both')
-      }
-
       const appointments = await this.appointmentService.getAppointmentsDB({
         organizationId,
         dateOfAppointment,
         searchQuery,
         transportRunId,
-        deadlineDate,
         appointmentStatus,
       })
 

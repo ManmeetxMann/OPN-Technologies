@@ -1014,11 +1014,6 @@ paths:
                 - ReRunRequired
                 - ReSampleRequired
                 - Canceled
-        - in: query
-          name: deadlineDate
-          schema:
-            type: string
-            format: date
       responses:
         '200':
           description: Successfully Return

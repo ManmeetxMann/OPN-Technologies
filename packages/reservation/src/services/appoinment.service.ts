@@ -84,6 +84,7 @@ export class AppoinmentService {
         value: queryParams.organizationId,
       })
     }
+    
     if (queryParams.dateOfAppointment) {
       conditions.push({
         map: '/',
@@ -92,6 +93,7 @@ export class AppoinmentService {
         value: moment(queryParams.dateOfAppointment).format(dateFormats.longMonth),
       })
     }
+
     if (queryParams.appointmentStatus) {
       conditions.push({
         map: '/',
@@ -100,16 +102,7 @@ export class AppoinmentService {
         value: queryParams.appointmentStatus,
       })
     }
-    if (queryParams.deadlineDate) {
-      conditions.push({
-        map: '/',
-        key: 'deadline',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: makeTimeEndOfTheDay(
-          moment.tz(`${queryParams.deadlineDate}`, 'YYYY-MM-DD', timeZone).utc(),
-        ),
-      })
-    }
+
     if (queryParams.transportRunId) {
       conditions.push({
         map: '/',
@@ -118,6 +111,7 @@ export class AppoinmentService {
         value: queryParams.transportRunId,
       })
     }
+
     if (queryParams.searchQuery) {
       const fullName = queryParams.searchQuery.split(' ')
       const searchPromises = []
