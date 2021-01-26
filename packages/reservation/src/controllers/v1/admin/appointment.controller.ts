@@ -56,11 +56,6 @@ class AdminAppointmentController implements IControllerBase {
       apptAuth,
       this.getAppointmentByBarcode,
     )
-    innerRouter.put(
-      this.path + '/api/v1/appointments/:barCode/receive',
-      receivingAuth,
-      this.updateTestVial,
-    )
     innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
 
     this.router.use('/', innerRouter)
@@ -197,26 +192,6 @@ class AdminAppointmentController implements IControllerBase {
       const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
 
       res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  updateTestVial = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
-
-      const {barCode} = req.params as {barCode: string}
-      const {location} = req.body as {location: string}
-      const blockDuplicate = true
-      const appointment = await this.appointmentService.getAppointmentByBarCode(
-        barCode,
-        blockDuplicate,
-      )
-
-      await this.appointmentService.makeReceived(appointment.id, location, adminId)
-
-      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
