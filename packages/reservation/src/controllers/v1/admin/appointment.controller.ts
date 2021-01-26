@@ -18,8 +18,6 @@ import {
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {TransportRunsService} from '../../../services/transport-runs.service'
 
-const isJustOneOf = (a: unknown, b: unknown) => !(a && b) || !(!a && !b)
-
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
@@ -56,11 +54,6 @@ class AdminAppointmentController implements IControllerBase {
       apptAuth,
       this.getAppointmentByBarcode,
     )
-    innerRouter.put(
-      this.path + '/api/v1/appointments/:barCode/receive',
-      receivingAuth,
-      this.updateTestVial,
-    )
     innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
 
     this.router.use('/', innerRouter)
@@ -69,41 +62,25 @@ class AdminAppointmentController implements IControllerBase {
   getListAppointments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {
+        appointmentStatus,
+        barCode,
+        dateOfAppointment,
         organizationId,
         searchQuery,
-        dateOfAppointment,
         transportRunId,
-        testRunId,
-        deadlineDate,
-        appointmentStatus,
       } = req.query as AppointmentByOrganizationRequest
-
-      if (testRunId && transportRunId) {
-        throw new BadRequestException(
-          'You cannot pass both "testRunId" and "transportRunId" parameters at the same time',
-        )
-      }
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
         throw new BadRequestException('dateOfAppointment is invalid')
       }
 
-      if (deadlineDate && !isValidDate(deadlineDate)) {
-        throw new BadRequestException('deadlineDate is invalid')
-      }
-
-      if (!isJustOneOf(deadlineDate, dateOfAppointment)) {
-        throw new BadRequestException('Required just deadlineDate or dateOfAppointment, not both')
-      }
-
       const appointments = await this.appointmentService.getAppointmentsDB({
+        appointmentStatus,
+        barCode,
         organizationId,
         dateOfAppointment,
         searchQuery,
         transportRunId,
-        testRunId,
-        deadlineDate,
-        appointmentStatus,
       })
 
       res.json(
@@ -205,26 +182,6 @@ class AdminAppointmentController implements IControllerBase {
       const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
 
       res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  updateTestVial = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
-
-      const {barCode} = req.params as {barCode: string}
-      const {location} = req.body as {location: string}
-      const blockDuplicate = true
-      const appointment = await this.appointmentService.getAppointmentByBarCode(
-        barCode,
-        blockDuplicate,
-      )
-
-      await this.appointmentService.makeReceived(appointment.id, location, adminId)
-
-      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }

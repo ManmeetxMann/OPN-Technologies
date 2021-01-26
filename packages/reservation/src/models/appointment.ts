@@ -127,8 +127,7 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   searchQuery?: string
   dateOfAppointment?: string
   transportRunId?: string
-  testRunId?: string
-  deadlineDate?: string
+  barCode?: string
   appointmentStatus?: AppointmentStatus[]
 }
 
@@ -152,7 +151,6 @@ export type AppointmentUiDTO = {
   deadline?: string
   latestResult?: string
   vialLocation?: string
-  testRunId?: string
   appointment?: boolean
   canCancel?: boolean
 }

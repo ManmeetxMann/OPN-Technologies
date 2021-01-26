@@ -26,7 +26,6 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
-import {makeTimeEndOfTheDay} from '../utils/datetime.helper'
 import {makeDeadline} from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -84,6 +83,16 @@ export class AppoinmentService {
         value: queryParams.organizationId,
       })
     }
+
+    if (queryParams.barCode) {
+      conditions.push({
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: queryParams.barCode,
+      })
+    }
+
     if (queryParams.dateOfAppointment) {
       conditions.push({
         map: '/',
@@ -92,6 +101,7 @@ export class AppoinmentService {
         value: moment(queryParams.dateOfAppointment).format(dateFormats.longMonth),
       })
     }
+
     if (queryParams.appointmentStatus) {
       conditions.push({
         map: '/',
@@ -100,16 +110,7 @@ export class AppoinmentService {
         value: queryParams.appointmentStatus,
       })
     }
-    if (queryParams.deadlineDate) {
-      conditions.push({
-        map: '/',
-        key: 'deadline',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: makeTimeEndOfTheDay(
-          moment.tz(`${queryParams.deadlineDate}`, 'YYYY-MM-DD', timeZone).utc(),
-        ),
-      })
-    }
+
     if (queryParams.transportRunId) {
       conditions.push({
         map: '/',
@@ -118,14 +119,7 @@ export class AppoinmentService {
         value: queryParams.transportRunId,
       })
     }
-    if (queryParams.testRunId) {
-      conditions.push({
-        map: '/',
-        key: 'testRunId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: queryParams.testRunId,
-      })
-    }
+
     if (queryParams.searchQuery) {
       const fullName = queryParams.searchQuery.split(' ')
       const searchPromises = []
