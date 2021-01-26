@@ -213,6 +213,7 @@ export type PCRTestResultByDeadlineListDTO = {
   testRunId: string
   runNumber: string
   reSampleNumber: string
+  dateTime: string
 }
 
 export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResultListDTO => ({
