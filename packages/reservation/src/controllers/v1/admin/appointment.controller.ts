@@ -50,7 +50,7 @@ class AdminAppointmentController implements IControllerBase {
       this.addTransportRun,
     )
     innerRouter.get(
-      this.path + '/api/v1/appointments/barcode/:barCode',
+      this.path + '/api/v1/appointments/barcode/lookup',
       apptAuth,
       this.getAppointmentByBarcode,
     )
@@ -177,7 +177,7 @@ class AdminAppointmentController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {barCode} = req.params as {barCode: string}
+      const {barCode} = req.query as {barCode: string}
 
       const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
 

@@ -1250,7 +1250,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/TestRunsResponse200'
 
-  /reservation/admin/api/v1/appointments/barcode/{barCode}:
+  /reservation/admin/api/v1/appointments/barcode/lookup:
     get:
       description: Get appointment by barCode
       tags:
@@ -1258,7 +1258,7 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: path
+        - in: query
           name: barCode
           schema:
             type: string
