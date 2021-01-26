@@ -201,13 +201,8 @@ class AdminAppointmentController implements IControllerBase {
     }
   }
 
-  getNextBarcode = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  getNextBarcode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-
       const barCode = await this.appointmentService.getNextBarCodeNumber()
       res.json(actionSucceed({barCode}))
     } catch (error) {
