@@ -64,11 +64,12 @@ class AdminAppointmentController implements IControllerBase {
   getListAppointments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {
+        appointmentStatus,
+        barCode,
+        dateOfAppointment,
         organizationId,
         searchQuery,
-        dateOfAppointment,
         transportRunId,
-        appointmentStatus,
       } = req.query as AppointmentByOrganizationRequest
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
@@ -76,11 +77,12 @@ class AdminAppointmentController implements IControllerBase {
       }
 
       const appointments = await this.appointmentService.getAppointmentsDB({
+        appointmentStatus,
+        barCode,
         organizationId,
         dateOfAppointment,
         searchQuery,
         transportRunId,
-        appointmentStatus,
       })
 
       res.json(

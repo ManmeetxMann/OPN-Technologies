@@ -85,6 +85,15 @@ export class AppoinmentService {
       })
     }
     
+    if (queryParams.barCode) {
+      conditions.push({
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: queryParams.barCode,
+      })
+    }
+
     if (queryParams.dateOfAppointment) {
       conditions.push({
         map: '/',
