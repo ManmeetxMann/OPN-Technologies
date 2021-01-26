@@ -73,16 +73,9 @@ class AdminAppointmentController implements IControllerBase {
         searchQuery,
         dateOfAppointment,
         transportRunId,
-        testRunId,
         deadlineDate,
         appointmentStatus,
       } = req.query as AppointmentByOrganizationRequest
-
-      if (testRunId && transportRunId) {
-        throw new BadRequestException(
-          'You cannot pass both "testRunId" and "transportRunId" parameters at the same time',
-        )
-      }
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
         throw new BadRequestException('dateOfAppointment is invalid')
@@ -101,7 +94,6 @@ class AdminAppointmentController implements IControllerBase {
         dateOfAppointment,
         searchQuery,
         transportRunId,
-        testRunId,
         deadlineDate,
         appointmentStatus,
       })

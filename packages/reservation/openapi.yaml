@@ -994,10 +994,6 @@ paths:
             type: string
             format: date
         - in: query
-          name: testRunId
-          schema:
-            type: string
-        - in: query
           name: transportRunId
           schema:
             type: string
