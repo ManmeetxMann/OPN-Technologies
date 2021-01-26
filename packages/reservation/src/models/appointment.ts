@@ -18,6 +18,7 @@ export enum AppointmentReasons {
   ReSampleAlreadyRequested = 'ReSample Already Requested',
   InProgress = 'In Progress',
   NoInProgress = 'No In Progress',
+  NotFound = 'Test not found',
 }
 
 export enum ResultTypes {

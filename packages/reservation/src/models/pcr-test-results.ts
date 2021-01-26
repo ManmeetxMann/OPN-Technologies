@@ -94,8 +94,8 @@ export type PCRTestResultHistoryDTO = {
   waitingResult: boolean
   results: PCRResults[]
   reason: AppointmentReasons
-  reSampleNumber?: number
-  runNumber?: number
+  reSampleNumber?: number | string
+  runNumber?: number | string
   dateOfAppointment: string
 }
 
@@ -109,6 +109,9 @@ export type PCRResults = {
   hexIC: string
   hexCt: string
   result: string
+  reSampleNumber: string
+  runNumber: string
+  dateOfAppointment: string
 }
 
 export type PCRTestResultEmailDTO = Omit<
@@ -164,6 +167,9 @@ export const PCRTestResultHistoryResponse = (
     hexIC: result.hexIC,
     hexCt: result.hexCt,
     result: result.result,
+    reSampleNumber: result.reSampleNumber,
+    runNumber: result.runNumber,
+    dateOfAppointment: result.dateOfAppointment,
   })),
   reSampleNumber: pcrTests.reSampleNumber,
   runNumber: pcrTests.runNumber,

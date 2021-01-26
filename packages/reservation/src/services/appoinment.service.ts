@@ -62,6 +62,16 @@ export class AppoinmentService {
     return appointments[0]
   }
 
+  async getAppointmentByBarCodeNullable(
+    barCodeNumber: string,
+  ): Promise<AppointmentDBModel | false> {
+    const appointments = await this.appointmentsRepository.findWhereEqual('barCode', barCodeNumber)
+    if (appointments.length > 1) {
+      console.log(`AdminController: Multiple Appointments with barcode. Barcode: ${barCodeNumber}`)
+    }
+    return appointments.length ? appointments[0] : false
+  }
+
   async getAppointmentsDB(
     queryParams: AppointmentByOrganizationRequest,
   ): Promise<AppointmentDBModel[]> {

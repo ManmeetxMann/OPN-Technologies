@@ -26,6 +26,7 @@ import {
   PcrTestResultsListRequest,
 } from '../../../models/pcr-test-results'
 import {AppoinmentService} from '../../../services/appoinment.service'
+import {AppointmentDBModel, AppointmentReasons} from '../../../models/appointment'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
@@ -157,32 +158,48 @@ class PCRTestResultController implements IControllerBase {
         barcode.map(async (code) => {
           const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
           const results = flatten(
-            testSameBarcode.map((testSame) => {
-              const linkedSameTests = testSame.linkedResults.map((linkedResult) => ({
-                ...linkedResult.resultSpecs,
-                result: linkedResult.result,
-              }))
-              return [
-                {
-                  ...testSame.resultSpecs,
-                  result: testSame.result,
-                },
-                ...linkedSameTests,
-              ]
-            }),
+            await Promise.all(
+              testSameBarcode.map(async (testSame) => {
+                const appointment = await this.appointmentService.getAppointmentByBarCodeNullable(
+                  testSame.barCode,
+                )
+                const linkedSameTests = await Promise.all(
+                  testSame.linkedResults.map(async (linkedResult) => {
+                    const linkedAppointment = await this.appointmentService.getAppointmentByBarCodeNullable(
+                      linkedResult.barCode,
+                    )
+                    return {
+                      ...linkedResult.resultSpecs,
+                      result: linkedResult.result,
+                      reSampleNumber: linkedResult.reSampleNumber,
+                      runNumber: linkedResult.runNumber,
+                      dateOfAppointment: linkedAppointment
+                        ? linkedAppointment.dateOfAppointment
+                        : '',
+                    }
+                  }),
+                )
+                return [
+                  {
+                    ...testSame.resultSpecs,
+                    result: testSame.result,
+                    reSampleNumber: testSame.reSampleNumber,
+                    runNumber: testSame.runNumber,
+                    dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
+                  },
+                  ...linkedSameTests,
+                ]
+              }),
+            ),
           )
+
           // const waitingResult = !!pcrTests.find(
           //   (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
           // )
           const pcrTest = pcrTests.find((pcrTest) => pcrTest.barCode === code)
           const waitingResult = pcrTest && pcrTest.waitingResult
 
-          let appointment
-          try {
-            appointment = await this.appointmentService.getAppointmentByBarCode(code)
-          } catch (e) {
-            appointment = {}
-          }
+          const appointment = await this.appointmentService.getAppointmentByBarCodeNullable(code)
 
           if (testSameBarcode.length) {
             if (testSameBarcode.length > 1) {
@@ -194,7 +211,7 @@ class PCRTestResultController implements IControllerBase {
               results: waitingResult ? [] : results,
               waitingResult,
               ...(!waitingResult && {
-                reason: await this.pcrTestResultsService.getReason(appointment),
+                reason: await this.pcrTestResultsService.getReason(<AppointmentDBModel>appointment),
               }),
               reSampleNumber: pcrTest.reSampleNumber,
               runNumber: pcrTest.runNumber,
@@ -206,9 +223,9 @@ class PCRTestResultController implements IControllerBase {
             barCode: code,
             results: [],
             waitingResult: false,
-            reason: await this.pcrTestResultsService.getReason(appointment),
-            reSampleNumber: pcrTest?.reSampleNumber,
-            runNumber: pcrTest?.runNumber,
+            reason: AppointmentReasons.NotFound,
+            reSampleNumber: '',
+            runNumber: '',
             dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
           }
         }),
