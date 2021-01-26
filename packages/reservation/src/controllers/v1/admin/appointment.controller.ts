@@ -183,11 +183,13 @@ class AdminAppointmentController implements IControllerBase {
       const {barCode} = req.query as {barCode: string}
 
       const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
-      let organizationName:string
-      if(appointment.organizationId){
-        const organization = await this.organizationService.getByIdOrThrow(appointment.organizationId)
+      let organizationName: string
+      if (appointment.organizationId) {
+        const organization = await this.organizationService.getByIdOrThrow(
+          appointment.organizationId,
+        )
         organizationName = organization.name
-      }      
+      }
       res.json(actionSucceed({...appointmentByBarcodeUiDTOResponse(appointment, organizationName)}))
     } catch (error) {
       next(error)

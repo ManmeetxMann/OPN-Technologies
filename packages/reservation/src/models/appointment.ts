@@ -222,9 +222,9 @@ export const appointmentUiDTOResponse = (
   }
 }
 
-
 export const appointmentByBarcodeUiDTOResponse = (
-  appointment: AppointmentDBModel , organizationName?: string,
+  appointment: AppointmentDBModel,
+  organizationName?: string,
 ): AppointmentUiDTO & {organizationName?: string} => {
   const timeZone = Config.get('DEFAULT_TIME_ZONE')
   return {
@@ -238,6 +238,6 @@ export const appointmentByBarcodeUiDTOResponse = (
     dateOfBirth: appointment.dateOfBirth,
     deadline: moment(appointment.deadline).tz(timeZone).format(),
     registeredNursePractitioner: appointment.registeredNursePractitioner,
-    organizationName: organizationName
+    organizationName: organizationName,
   }
 }
