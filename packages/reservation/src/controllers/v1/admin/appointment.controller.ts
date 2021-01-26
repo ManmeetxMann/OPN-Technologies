@@ -18,8 +18,6 @@ import {
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {TransportRunsService} from '../../../services/transport-runs.service'
 
-const isJustOneOf = (a: unknown, b: unknown) => !(a && b) || !(!a && !b)
-
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()

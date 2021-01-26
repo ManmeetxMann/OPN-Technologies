@@ -26,7 +26,6 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
-import {makeTimeEndOfTheDay} from '../utils/datetime.helper'
 import {makeDeadline} from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -84,7 +83,7 @@ export class AppoinmentService {
         value: queryParams.organizationId,
       })
     }
-    
+
     if (queryParams.barCode) {
       conditions.push({
         map: '/',
