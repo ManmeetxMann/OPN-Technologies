@@ -23,16 +23,8 @@ type Result = {
   value: unknown
 }
 
-const timeZone = Config.get('DEFAULT_TIME_ZONE')
-const makeTimeEndOfTheDay = (datetime: moment.Moment): string => {
-  return datetime.hours(11).minutes(59).format()
-}
-export const makeDeadline = (utcDateTime: moment.Moment): string => {
-  const tzDateTime = utcDateTime.clone().tz(timeZone)
-  const deadline = makeTimeEndOfTheDay(
-    tzDateTime.hours() > 12 ? tzDateTime.add(1, 'd') : tzDateTime,
-  )
-  return deadline
+export const makeFirestoreTimestamp = (date: Date): firestore.Timestamp => {
+  return firestore.Timestamp.fromDate(date)
 }
 
 export async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]> {
@@ -102,6 +94,9 @@ async function createPcrTestResult(
   const pcrResult =
     legacyTestResult.result === '2019-nCoV Detected' ? 'Positive' : legacyTestResult.result
   try {
+    const convertedDeadline = appointment.data().deadline._seconds
+      ? appointment.data().deadline
+      : makeFirestoreTimestamp(moment(appointment.data().deadline).toDate())
     const pcrTestResult = await database.collection('pcr-test-results').add({
       appointmentId: appointment.id,
       barCode: legacyTestResult.barCode,
@@ -112,11 +107,10 @@ async function createPcrTestResult(
       organizationId: legacyTestResult.organizationId,
       result: pcrResult,
       linkedBarCodes: [],
-      deadline: makeDeadline(moment(legacyTestResult.dateTime)),
+      deadline: convertedDeadline,
       resultSpecs: {
         action: 'SendThisResult',
         autoResult: pcrResult,
-        barCode: legacyTestResult.barCode,
         calRed61Ct: legacyTestResult.calRed61Ct,
         calRed61RdRpGene: legacyTestResult.calRed61RdRpGene,
         famCt: legacyTestResult.famCt,
@@ -135,6 +129,7 @@ async function createPcrTestResult(
           testResultsToPCRResults: firestore.FieldValue.serverTimestamp(),
         },
       },
+      updatedAt: legacyTestResult.timestamps.updatedAt | legacyTestResult.timestamps.createdAt,
       waitingResult: false,
     })
     //Update Appointments
