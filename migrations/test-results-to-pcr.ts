@@ -96,10 +96,11 @@ async function createPcrTestResult(
     console.warn(`AppointmentID: ${legacyTestResult.appointmentId} exists multiple times`)
     return Promise.reject()
   }
-  
+
   //Only Single Appointment
-  const appointment = appointmentInDb.docs[0]; 
-  const pcrResult = (legacyTestResult.result==='2019-nCoV Detected')?'Positive':legacyTestResult.result
+  const appointment = appointmentInDb.docs[0]
+  const pcrResult =
+    legacyTestResult.result === '2019-nCoV Detected' ? 'Positive' : legacyTestResult.result
   try {
     const pcrTestResult = await database.collection('pcr-test-results').add({
       appointmentId: appointment.id,
@@ -138,7 +139,7 @@ async function createPcrTestResult(
     })
     //Update Appointments
     updateAppointment(appointment, pcrResult)
-    if(pcrTestResult.id){
+    if (pcrTestResult.id) {
       console.info(`Successfully Copied results for ${legacyTestResultId} to ${pcrTestResult.id}`)
       return Promise.resolve()
     }
@@ -152,7 +153,7 @@ async function createPcrTestResult(
 
 async function updateAppointment(
   snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
-  latestResult: string
+  latestResult: string,
 ) {
   try {
     return await snapshot.ref.set(
@@ -163,7 +164,7 @@ async function updateAppointment(
           migrations: {
             testResultsToPCRResults: firestore.FieldValue.serverTimestamp(),
           },
-        }
+        },
       },
       {
         merge: true,
@@ -173,7 +174,6 @@ async function updateAppointment(
     throw error
   }
 }
-
 
 async function main() {
   try {
