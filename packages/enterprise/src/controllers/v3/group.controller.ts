@@ -7,9 +7,10 @@ import {OrganizationService} from '../../services/organization-service'
 import {UserService} from '../../services/user-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {organizationGroupDTOResponse} from '../../models/organization'
-import {User, userDTOResponse} from '../../models/user'
+import {userDTOResponse} from '../../models/user'
 import {CursoredRequestFilter} from '../../../../common/src/types/request'
 import {dataConversionAndSortGroups} from '../../utils/transform'
+import {AuthUser} from "../../../../common/src/data/user";
 
 const organizationService = new OrganizationService()
 const userService = new UserService()
@@ -34,7 +35,7 @@ const getUsersByGroupId: Handler = async (req, res, next): Promise<void> => {
     const users = await userService.getAllByIds(userIds.map((user) => user.userId))
     res.json(
       actionSucceed({
-        users: users.map((user: User) => {
+        users: users.map((user: AuthUser) => {
           return {
             ...userDTOResponse(user),
             createdAt:

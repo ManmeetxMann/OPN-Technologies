@@ -63,3 +63,17 @@ export class UserModel extends DataModel<User> {
   public readonly rootPath = 'users'
   readonly zeroSet = []
 }
+
+export type AuthUser = Auditable & {
+  id: string
+  firstName: string
+  lastName: string
+  active: boolean
+  organizationIds: string[]
+  authUserId?: string
+  email?: string
+  photo?: string // photo url
+  phone?: Phone
+  registrationId?: string
+  memberId?: string
+}

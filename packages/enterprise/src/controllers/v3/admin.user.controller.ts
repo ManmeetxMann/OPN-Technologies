@@ -6,13 +6,14 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {User, userDTOResponse} from '../../models/user'
+import {userDTOResponse} from '../../models/user'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {CreateUserByAdminRequest} from '../../types/new-user'
 import {UpdateUserByAdminRequest} from '../../types/update-user-request'
 import {UsersByOrganizationRequest} from '../../types/user-organization-request'
 import {OrganizationGroup} from '../../models/organization'
 import {flatten} from 'lodash'
+import {AuthUser} from "../../../../common/src/data/user";
 
 const userService = new UserService()
 const organizationService = new OrganizationService()
@@ -63,7 +64,7 @@ const getUsersByOrganizationId: Handler = async (req, res, next): Promise<void> 
     )
 
     const resultUsers = await Promise.all(
-      users.map(async (user: User) => {
+      users.map(async (user: AuthUser) => {
         return {
           ...userDTOResponse(user),
           groupId: groupsByUserId[user.id]?.id,

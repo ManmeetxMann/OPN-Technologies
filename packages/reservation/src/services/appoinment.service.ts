@@ -573,17 +573,18 @@ export class AppoinmentService {
     organizationId,
     userId,
   }: CreateAppointmentRequest): Promise<void> {
-    const {time, appointmentTypeId, calendarId, ...slotData} = JSON.parse(
-      Buffer.from(slotId, 'base64').toString(),
-    )
-    console.log(slotData)
+    let slotData
+
+    try {
+      slotData = JSON.parse(Buffer.from(slotId, 'base64').toString())
+    } catch (error) {
+      throw new BadRequestException('Invalid Id')
+    }
+
+    const {time, appointmentTypeId, calendarId} = slotData
     const utcDateTime = moment(time).utc()
-    // const dateTimeTz = moment(slotData.time).tz(timeZone)
 
     const dateTime = utcDateTime.format()
-    // const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
-    // const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
-    // const deadline: string = makeDeadline(utcDateTime)
     const data = await this.acuityRepository.createAppointment(
       dateTime,
       appointmentTypeId,

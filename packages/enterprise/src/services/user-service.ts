@@ -1,6 +1,6 @@
 import * as _ from 'lodash'
 import DataStore from '../../../common/src/data/datastore'
-import {User, UserDependency, UserGroup, UserOrganizationProfile} from '../models/user'
+import {UserDependency, UserGroup, UserOrganizationProfile} from '../models/user'
 import {NewUser} from '../types/new-user'
 import {UpdateUserByAdminRequest, UpdateUserRequest} from '../types/update-user-request'
 import {UserRepository} from '../repository/user.repository'
@@ -9,7 +9,7 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {UserOrganizationProfileRepository} from '../repository/user-organization-profile.repository'
 import {UserDependencyRepository} from '../repository/user-dependency.repository'
 import {UserGroupRepository} from '../repository/user-group.repository'
-import {UserModel} from '../../../common/src/data/user'
+import {AuthUser, UserModel} from '../../../common/src/data/user'
 import {isEmail, titleCase, cleanStringField} from '../../../common/src/utils/utils'
 import {CursoredUsersRequestFilter} from '../types/user-organization-request'
 
@@ -20,7 +20,7 @@ export class UserService {
   private userGroupRepository = new UserGroupRepository(this.dataStore)
   private userDependencyRepository = new UserDependencyRepository(this.dataStore)
 
-  create(source: NewUser): Promise<User> {
+  create(source: NewUser): Promise<AuthUser> {
     return this.getByEmail(source.email).then((existedUser) => {
       if (!!existedUser) throw new ResourceAlreadyExistsException(source.email)
 
@@ -34,11 +34,11 @@ export class UserService {
         authUserId: source.authUserId ?? null,
         active: source.active ?? false,
         organizationIds: [source.organizationId],
-      } as User)
+      } as AuthUser)
     })
   }
 
-  update(id: string, source: UpdateUserRequest): Promise<User> {
+  update(id: string, source: UpdateUserRequest): Promise<AuthUser> {
     return this.getById(id).then((target) =>
       this.userRepository.update({
         ...target,
@@ -49,7 +49,7 @@ export class UserService {
     )
   }
 
-  updateByAdmin(id: string, source: UpdateUserByAdminRequest): Promise<User> {
+  updateByAdmin(id: string, source: UpdateUserByAdminRequest): Promise<AuthUser> {
     return this.getById(id).then((target) =>
       this.userRepository.update({
         ...target,
@@ -63,14 +63,14 @@ export class UserService {
     )
   }
 
-  getById(id: string): Promise<User> {
+  getById(id: string): Promise<AuthUser> {
     return this.userRepository.get(id).then((target) => {
       if (target) return target
       throw new ResourceNotFoundException(`Cannot find user [${id}]`)
     })
   }
 
-  searchByQueryAndOrganizationId(organizationId: string, query: string): Promise<User[]> {
+  searchByQueryAndOrganizationId(organizationId: string, query: string): Promise<AuthUser[]> {
     const searchArray = query.split(' ')
     const searchPromises = []
     const email = searchArray.find((string) => isEmail(string))
@@ -188,7 +188,7 @@ export class UserService {
     from,
     limit,
     query,
-  }: CursoredUsersRequestFilter): Promise<User[]> {
+  }: CursoredUsersRequestFilter): Promise<AuthUser[]> {
     // Pre-build organization-filtered query
     // That has to be a function to avoid mutating the same query object in the below for-loop
     const organizationContextualQuery = () =>
@@ -204,7 +204,7 @@ export class UserService {
 
     // Build and fetch all query combinations
     const searchKeywords = query.split(' ')
-    const filterableFields: (keyof Omit<User, 'id'>)[] = ['email', 'firstName', 'lastName']
+    const filterableFields: (keyof Omit<AuthUser, 'id'>)[] = ['email', 'firstName', 'lastName']
     const combinationQueries = []
     for (const field of filterableFields) {
       for (const keyword of searchKeywords) {
@@ -219,7 +219,7 @@ export class UserService {
     )
   }
 
-  getAllByOrganizationId(organizationId: string, page: number, perPage: number): Promise<User[]> {
+  getAllByOrganizationId(organizationId: string, page: number, perPage: number): Promise<AuthUser[]> {
     const userIdsQuery = this.userRepository.getQueryFindWhereArrayContains(
       'organizationIds',
       organizationId,
@@ -227,21 +227,21 @@ export class UserService {
     return this.userRepository.fetchPage(userIdsQuery, page, perPage)
   }
 
-  getByEmail(email: string): Promise<User> {
+  getByEmail(email: string): Promise<AuthUser> {
     return this.userRepository.findWhereEqual('email', email).then((results) => results[0])
   }
 
-  getAllByIds(userIds: string[]): Promise<User[]> {
+  getAllByIds(userIds: string[]): Promise<AuthUser[]> {
     return Promise.all(
       _.chunk(userIds, 10).map((chunk) => this.userRepository.findWhereIdIn(chunk)),
-    ).then((results) => _.flatten(results as User[][]))
+    ).then((results) => _.flatten(results as AuthUser[][]))
   }
 
-  activate(user: User): Promise<User> {
+  activate(user: AuthUser): Promise<AuthUser> {
     return this.userRepository.update({...user, active: true})
   }
 
-  addDependents(dependents: User[], parentUserId: string): Promise<User[]> {
+  addDependents(dependents: AuthUser[], parentUserId: string): Promise<AuthUser[]> {
     return Promise.all(
       dependents
         // Normalize
@@ -284,7 +284,7 @@ export class UserService {
       })
   }
 
-  getDirectDependents(userId: string): Promise<User[]> {
+  getDirectDependents(userId: string): Promise<AuthUser[]> {
     return this.userDependencyRepository
       .collection()
       .where('parentUserId', '==', userId)
@@ -292,7 +292,7 @@ export class UserService {
       .then((results) => this.getAllByIds(results.map(({userId}) => userId)))
   }
 
-  getParents(userId: string): Promise<User[]> {
+  getParents(userId: string): Promise<AuthUser[]> {
     return this.userDependencyRepository
       .collection()
       .where('userId', '==', userId)
