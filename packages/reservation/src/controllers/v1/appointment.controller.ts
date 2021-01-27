@@ -6,7 +6,7 @@ import {RequiredUserPermission} from '../../../../common/src/types/authorization
 import {CreateAppointmentRequest} from '../../models/appointment'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {getOrganizationId, getUserId} from '../../../../common/src/utils/auth'
-import {AuthUser} from "../../../../common/src/data/user";
+import {AuthUser} from '../../../../common/src/data/user'
 
 class AppointmentController implements IControllerBase {
   public path = '/reservation'

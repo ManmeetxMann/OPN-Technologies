@@ -13,7 +13,7 @@ import {UpdateUserByAdminRequest} from '../../types/update-user-request'
 import {UsersByOrganizationRequest} from '../../types/user-organization-request'
 import {OrganizationGroup} from '../../models/organization'
 import {flatten} from 'lodash'
-import {AuthUser} from "../../../../common/src/data/user";
+import {AuthUser} from '../../../../common/src/data/user'
 
 const userService = new UserService()
 const organizationService = new OrganizationService()

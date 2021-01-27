@@ -10,7 +10,7 @@ import {organizationGroupDTOResponse} from '../../models/organization'
 import {userDTOResponse} from '../../models/user'
 import {CursoredRequestFilter} from '../../../../common/src/types/request'
 import {dataConversionAndSortGroups} from '../../utils/transform'
-import {AuthUser} from "../../../../common/src/data/user";
+import {AuthUser} from '../../../../common/src/data/user'
 
 const organizationService = new OrganizationService()
 const userService = new UserService()
