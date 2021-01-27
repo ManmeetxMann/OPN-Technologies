@@ -6,12 +6,12 @@ export default Joi.object({
   appointmentId: Joi.string().required(),
   barCode: Joi.string().required(),
   dateOfAppointment: Joi.string().required(),
-  deadline: Joi.string().required(),
+  deadline: FirestoreTimestamp.isValid().required(),
   displayForNonAdmins: Joi.boolean().required(),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
   linkedBarCodes: Joi.array().required(),
-  organizationId: Joi.string().required(),
+  organizationId: Joi.string(),
   reSampleNumber: Joi.number().required(),
   result: Joi.string().required(),
   resultSpecs: Joi.object({
@@ -30,6 +30,6 @@ export default Joi.object({
   }),
   runNumber: Joi.number().required(),
   testRunId: Joi.string(),
-  updatedAt: FirestoreTimestamp.isValid(),
+  //updatedAt: FirestoreTimestamp.isValid().required(), //Added after validation
   waitingResult: Joi.boolean().required(),
 })
