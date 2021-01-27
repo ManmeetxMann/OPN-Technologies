@@ -243,6 +243,8 @@ class AdminAppointmentController implements IControllerBase {
         throw new BadRequestException('Allowed maximum 50 appointments in array')
       }
 
+      await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
+
       await Promise.all(
         appointmentIds.map((appointment) => {
           return this.appointmentService.makeReceived(appointment, vialLocation, adminId)
