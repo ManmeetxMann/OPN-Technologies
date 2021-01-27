@@ -183,6 +183,7 @@ class PCRTestResultController implements IControllerBase {
                       dateOfAppointment: linkedAppointment
                         ? linkedAppointment.dateOfAppointment
                         : '',
+                      barCode: linkedResult.barCode,
                     }
                   }),
                 )
@@ -193,6 +194,7 @@ class PCRTestResultController implements IControllerBase {
                     reSampleNumber: testSame.reSampleNumber,
                     runNumber: testSame.runNumber,
                     dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
+                    barCode: testSame.barCode,
                   },
                   ...linkedSameTests,
                 ]

@@ -114,6 +114,7 @@ export type PCRResults = {
   reSampleNumber: string
   runNumber: string
   dateOfAppointment: string
+  barCode: string
 }
 
 export type PCRTestResultEmailDTO = Omit<
@@ -169,12 +170,13 @@ export const PCRTestResultHistoryResponse = (
     hexIC: result.hexIC,
     hexCt: result.hexCt,
     result: result.result,
-    reSampleNumber: result.reSampleNumber,
-    runNumber: result.runNumber,
+    barCode: result.barCode,
+    reSampleNumber: result.reSampleNumber ? `S${result.reSampleNumber}` : '',
+    runNumber: result.runNumber ? `R${result.runNumber}` : '',
     dateOfAppointment: result.dateOfAppointment,
   })),
-  reSampleNumber: pcrTests.reSampleNumber,
-  runNumber: pcrTests.runNumber,
+  reSampleNumber: pcrTests.reSampleNumber ? `S${pcrTests.reSampleNumber}` : '',
+  runNumber: pcrTests.runNumber ? `R${pcrTests.runNumber}` : '',
   reason: pcrTests.reason,
   dateOfAppointment: pcrTests.dateOfAppointment,
 })
