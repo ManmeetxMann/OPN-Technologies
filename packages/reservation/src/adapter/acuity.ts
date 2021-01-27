@@ -23,6 +23,17 @@ abstract class AcuityScheduling {
     dateOfBirth: Config.get('ACUITY_FIELD_DATE_OF_BIRTH'),
     registeredNursePractitioner: Config.get('ACUITY_FIELD_NURSE_NAME'),
     organizationId: Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
+    address: Config.get('ACUITY_FIELD_ADDRESS'),
+    addressUnit: Config.get('ACUITY_FIELD_ADDRESS_UNIT'),
+    addressForTesting: Config.get('ACUITY_FIELD_ADDRESS_FOR_TESTING'),
+    additionalAddressNotes: Config.get('ACUITY_FIELD_ADDITIONAL_ADDRESS_NOTES'),
+    shareTestResultWithEmployer: Config.get('ACUITY_FIELD_SHARE_TEST_RESULT_WITH_EMPLOYER'),
+    readTermsAndConditions: Config.get('ACUITY_FIELD_READ_TERMS_AND_CONDITIONS'),
+    receiveResultsViaEmail: Config.get('ACUITY_FIELD_RECEIVE_RESULTS_VIA_EMAIL'),
+    agreeToConductFHHealthAssessment: Config.get(
+      'ACUITY_FIELD_AGREE_TO_CONDUCT_FH_HEALTH_ACCESSMENT',
+    ),
+    receiveNotificationsFromGov: Config.get('ACUITY_FIELD_RECEIVE_NOTIFICATIONS_FROM_GOV'),
   }
 
   private labelsIdMapping = {
@@ -221,6 +232,47 @@ abstract class AcuityScheduling {
     return result
   }
 
+  protected async createAppointmentOnAcuityService(
+    datetime: string,
+    appointmentTypeID: number,
+    firstName: string,
+    lastName: string,
+    email: string,
+    phone: string,
+    certificate: string,
+    fields: Record<string, string | boolean>,
+  ): Promise<AppointmentAcuityResponse> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = `${APIURL}/api/v1/appointments`
+
+    const res = await fetch(apiUrl, {
+      method: 'post',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        datetime,
+        appointmentTypeID,
+        calendarID: 4571103,
+        firstName,
+        lastName,
+        email,
+        phone,
+        certificate,
+        fields: this.handleBooleans(this.renameKeysToId(fields)), // [{id: 1, value: 'Party time!'}]
+      }),
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    console.log(`AcuityAdapter: createCouponCodeOnAcuityService Success: For email: ${email}`)
+    return this.customFieldsToAppoinment(result)
+  }
+
   protected async getAvailabilityDatesList(
     appointmentTypeID: number,
     month: string,
@@ -297,10 +349,46 @@ abstract class AcuityScheduling {
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ORGANIZATION_ID'))) {
             appointment.organizationId = field.value
           }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS'))) {
+            appointment.address = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS_UNIT'))) {
+            appointment.addressUnit = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS_FOR_TESTING'))) {
+            appointment.addressForTesting = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDITIONAL_ADDRESS_NOTES'))) {
+            appointment.additionalAddressNotes = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_SHARE_TEST_RESULT_WITH_EMPLOYER'))) {
+            appointment.shareTestResultWithEmployer = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_READ_TERMS_AND_CONDITIONS'))) {
+            appointment.readTermsAndConditions = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_RECEIVE_RESULTS_VIA_EMAIL'))) {
+            appointment.receiveResultsViaEmail = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_RECEIVE_NOTIFICATIONS_FROM_GOV'))) {
+            appointment.receiveNotificationsFromGov = field.value === 'yes'
+          }
         })
       })
     }
     return appointment
+  }
+
+  private handleBooleans(filters: AcuityFilter[]): AcuityFilter[] {
+    return filters.map((filter) => {
+      if (typeof filter.value === 'boolean') {
+        return {
+          ...filter,
+          value: filter.value ? 'yes' : 'no',
+        }
+      }
+      return filter
+    })
   }
 
   private renameKeysToId(filters): AcuityFilter[] {

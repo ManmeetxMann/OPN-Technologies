@@ -14,7 +14,7 @@ import {
   actionSucceed,
 } from '../../../../common/src/utils/response-wrapper'
 import {AuthenticationRequest} from '../../types/authentication-request'
-import {User, userDTOResponse} from '../../models/user'
+import {userDTOResponse} from '../../models/user'
 import {UpdateUserRequest} from '../../types/update-user-request'
 import {RegistrationConfirmationRequest} from '../../types/registration-confirmation-request'
 import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
@@ -22,7 +22,7 @@ import {ConnectOrganizationRequest} from '../../types/user-organization-request'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {ConnectGroupRequest, UpdateGroupRequest} from '../../types/user-group-request'
 import {AdminProfile} from '../../../../common/src/data/admin'
-import {User as AuthenticatedUser} from '../../../../common/src/data/user'
+import {AuthUser, User as AuthenticatedUser} from '../../../../common/src/data/user'
 import {uniq, flatten} from 'lodash'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {AuthShortCodeService} from '../../services/auth-short-code-service'
@@ -66,7 +66,7 @@ const search: Handler = async (req, res, next): Promise<void> => {
         ]
 
         return await Promise.all(
-          usersUniqueById.map(async (user: User) => {
+          usersUniqueById.map(async (user: AuthUser) => {
             const groupName = await organizationService
               .getUserGroup(organizationId, user.id)
               .then(({name}) => name)
@@ -182,7 +182,7 @@ const validateShortCode: Handler = async (req, res, next): Promise<void> => {
  */
 const get: Handler = async (req, res, next): Promise<void> => {
   try {
-    const authenticatedUser = res.locals.authenticatedUser as User
+    const authenticatedUser = res.locals.authenticatedUser as AuthUser
     res.json(actionSucceed(userDTOResponse(authenticatedUser)))
   } catch (error) {
     next(error)
@@ -194,7 +194,7 @@ const get: Handler = async (req, res, next): Promise<void> => {
  */
 const update: Handler = async (req, res, next): Promise<void> => {
   try {
-    const authenticatedUser = res.locals.authenticatedUser as User
+    const authenticatedUser = res.locals.authenticatedUser as AuthUser
     const source = req.body as UpdateUserRequest
     const updatedUser = await userService.update(authenticatedUser.id, source)
     res.json(actionSucceed(userDTOResponse(updatedUser)))
@@ -250,7 +250,7 @@ const completeRegistration: Handler = async (req, res, next): Promise<void> => {
  */
 const getConnectedOrganizations: Handler = async (req, res, next): Promise<void> => {
   try {
-    const authenticatedUser = res.locals.authenticatedUser as User
+    const authenticatedUser = res.locals.authenticatedUser as AuthUser
     const user = await userService.getById(authenticatedUser.id)
     const organizations = await organizationService.getAllByIds(user.organizationIds)
 
@@ -280,7 +280,7 @@ const getDependentConnectedOrganizations: Handler = async (req, res, next): Prom
  */
 const connectOrganization: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {id} = res.locals.authenticatedUser as User
+    const {id} = res.locals.authenticatedUser as AuthUser
     const {organizationId} = req.body as ConnectOrganizationRequest
     const organization = await organizationService.findOneById(organizationId)
     if (!organization) {
@@ -320,7 +320,7 @@ const connectDependentToOrganization: Handler = async (req, res, next): Promise<
  */
 const disconnectOrganization: Handler = async (req, res, next): Promise<void> => {
   try {
-    const authenticatedUser = res.locals.authenticatedUser as User
+    const authenticatedUser = res.locals.authenticatedUser as AuthUser
     const {organizationId} = req.params
     const organization = await organizationService.findOneById(organizationId)
     if (!organization) {
@@ -359,7 +359,7 @@ const disconnectDependentOrganization: Handler = async (req, res, next): Promise
  */
 const getAllConnectedGroupsInAnOrganization: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {id} = res.locals.authenticatedUser as User
+    const {id} = res.locals.authenticatedUser as AuthUser
     const {organizationId} = req.query
     const groupIds = await userService.getAllGroupIdsForUser(id)
     const groups = (
@@ -399,7 +399,7 @@ const getAllDependentConnectedGroupsInAnOrganization: Handler = async (
  */
 const connectGroup: Handler = async (req, res, next): Promise<void> => {
   try {
-    const authenticatedUser = res.locals.authenticatedUser as User
+    const authenticatedUser = res.locals.authenticatedUser as AuthUser
     const {organizationId, groupId} = req.body as ConnectGroupRequest
 
     // validate that the group exists
@@ -437,7 +437,7 @@ const connectDependentToGroup: Handler = async (req, res, next): Promise<void> =
  */
 const disconnectGroup: Handler = async (req, res, next): Promise<void> => {
   try {
-    const authenticatedUser = res.locals.authenticatedUser as User
+    const authenticatedUser = res.locals.authenticatedUser as AuthUser
     const {groupId} = req.params
     await userService.disconnectGroups(authenticatedUser.id, new Set([groupId]))
 
@@ -473,7 +473,7 @@ const updateDependentGroup: Handler = async (req, res, next): Promise<void> => {
  */
 const getParents: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {id} = res.locals.authenticatedUser as User
+    const {id} = res.locals.authenticatedUser as AuthUser
     const parents = await userService.getParents(id)
     res.json(actionSucceed(parents.map(userDTOResponse)))
   } catch (error) {
@@ -487,7 +487,7 @@ const getParents: Handler = async (req, res, next): Promise<void> => {
  */
 const getDependents: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {id} = res.locals.authenticatedUser as User
+    const {id} = res.locals.authenticatedUser as AuthUser
     const dependents = await userService.getDirectDependents(id)
     res.json(actionSucceed(dependents.map(userDTOResponse)))
   } catch (error) {
@@ -502,8 +502,8 @@ const getDependents: Handler = async (req, res, next): Promise<void> => {
  */
 const addDependents: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {id} = res.locals.authenticatedUser as User
-    const users = req.body as User[]
+    const {id} = res.locals.authenticatedUser as AuthUser
+    const users = req.body as AuthUser[]
     const dependents = await userService.addDependents(users, id)
     res.json(actionSucceed(dependents.map(userDTOResponse)))
   } catch (error) {
@@ -532,7 +532,7 @@ const updateDependent: Handler = async (req, res, next): Promise<void> => {
  */
 const removeDependent: Handler = async (req, res, next): Promise<void> => {
   try {
-    const {id} = res.locals.authenticatedUser as User
+    const {id} = res.locals.authenticatedUser as AuthUser
     const {dependentId} = req.params
     const hard = req.query.hard ?? false
     await userService.removeDependent(dependentId, id)

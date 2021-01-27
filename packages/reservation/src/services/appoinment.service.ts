@@ -13,7 +13,9 @@ import {
   AppointmentModelBase,
   AppointmentStatus,
   AppointmentStatusHistoryDb,
+  CreateAppointmentRequest,
   DeadlineLabel,
+  ResultTypes,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -236,6 +238,106 @@ export class AppoinmentService {
     return appointments[0]
   }
 
+  createAppointmentFromAcuity(
+    acuityAppointment: AppointmentAcuityResponse,
+    additionalData: {
+      barCodeNumber: string
+      organizationId: string
+      appointmentTypeID: number
+      calendarID: number
+      appointmentStatus: AppointmentStatus
+      latestResult: ResultTypes
+      couponCode?: string
+      userId?: string
+    },
+  ): Promise<AppointmentDBModel> {
+    const data = this.appointmentFromAcuity(acuityAppointment, additionalData)
+    return this.saveAppointmentData(data)
+  }
+
+  updateAppointmentFromAcuity(
+    id: string,
+    acuityAppointment: AppointmentAcuityResponse,
+    additionalData: {
+      barCodeNumber: string
+      organizationId: string
+      appointmentTypeID: number
+      calendarID: number
+      appointmentStatus: AppointmentStatus
+    },
+  ): Promise<AppointmentDBModel> {
+    const data = this.appointmentFromAcuity(acuityAppointment, additionalData)
+    return this.updateAppointmentDB(id, data)
+  }
+
+  private appointmentFromAcuity(
+    acuityAppointment: AppointmentAcuityResponse,
+    additionalData: {
+      barCodeNumber: string
+      organizationId: string
+      appointmentTypeID: number
+      calendarID: number
+      appointmentStatus: AppointmentStatus
+      latestResult?: ResultTypes
+      couponCode?: string
+      userId?: string
+    },
+  ): AppointmentModelBase {
+    const utcDateTime = moment(acuityAppointment.datetime).utc()
+    const dateTimeTz = moment(acuityAppointment.datetime).tz(timeZone)
+
+    const dateTime = utcDateTime.format()
+    const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
+    const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
+    const label = acuityAppointment.labels ? acuityAppointment.labels[0]?.name : null
+    const deadline: string = makeDeadline(utcDateTime, label)
+    const {
+      barCodeNumber,
+      organizationId,
+      appointmentTypeID,
+      calendarID,
+      appointmentStatus,
+      latestResult,
+      couponCode = '',
+      userId = '',
+    } = additionalData
+    const barCode = acuityAppointment.barCode || barCodeNumber
+
+    return {
+      acuityAppointmentId: acuityAppointment.id,
+      appointmentStatus,
+      appointmentTypeID,
+      barCode: barCode,
+      canceled: acuityAppointment.canceled,
+      calendarID,
+      dateOfAppointment,
+      dateOfBirth: acuityAppointment.dateOfBirth,
+      dateTime,
+      deadline,
+      email: acuityAppointment.email,
+      firstName: acuityAppointment.firstName,
+      lastName: acuityAppointment.lastName,
+      location: acuityAppointment.location,
+      organizationId: acuityAppointment.organizationId || organizationId || null,
+      packageCode: acuityAppointment.certificate,
+      phone: acuityAppointment.phone,
+      registeredNursePractitioner: acuityAppointment.registeredNursePractitioner,
+      latestResult,
+      timeOfAppointment,
+      additionalAddressNotes: acuityAppointment.additionalAddressNotes,
+      address: acuityAppointment.address,
+      addressForTesting: acuityAppointment.addressForTesting,
+      addressUnit: acuityAppointment.addressUnit,
+      readTermsAndConditions: acuityAppointment.readTermsAndConditions,
+      receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
+      receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
+      shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
+      couponCode,
+      ...(latestResult ? {latestResult} : {}),
+      userId,
+    }
+  }
+
   async saveAppointmentData(appointment: AppointmentModelBase): Promise<AppointmentDBModel> {
     return this.appointmentsRepository.save(appointment)
   }
@@ -449,6 +551,71 @@ export class AppoinmentService {
 
   async getAppointmentDBByPackageCode(packageCode: string): Promise<AppointmentDBModel[]> {
     return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
+  }
+
+  async createAcuityAppointment({
+    slotId,
+    firstName,
+    lastName,
+    email,
+    phone,
+    dateOfBirth,
+    address,
+    addressUnit,
+    addressForTesting,
+    additionalAddressNotes,
+    couponCode,
+    shareTestResultWithEmployer,
+    readTermsAndConditions,
+    agreeToConductFHHealthAssessment,
+    receiveResultsViaEmail,
+    receiveNotificationsFromGov,
+    organizationId,
+    userId,
+  }: CreateAppointmentRequest): Promise<void> {
+    let slotData
+
+    try {
+      slotData = JSON.parse(Buffer.from(slotId, 'base64').toString())
+    } catch (error) {
+      throw new BadRequestException('Invalid Id')
+    }
+
+    const {time, appointmentTypeId, calendarId} = slotData
+    const utcDateTime = moment(time).utc()
+
+    const dateTime = utcDateTime.format()
+    const data = await this.acuityRepository.createAppointment(
+      dateTime,
+      appointmentTypeId,
+      firstName,
+      lastName,
+      email,
+      `${phone.code}${phone.number}`,
+      '',
+      {
+        dateOfBirth,
+        address,
+        addressUnit,
+        addressForTesting,
+        additionalAddressNotes,
+        shareTestResultWithEmployer,
+        readTermsAndConditions,
+        agreeToConductFHHealthAssessment,
+        receiveResultsViaEmail,
+        receiveNotificationsFromGov,
+      },
+    )
+    await this.createAppointmentFromAcuity(data, {
+      barCodeNumber: await this.getNextBarCodeNumber(),
+      appointmentTypeID: appointmentTypeId,
+      calendarID: calendarId,
+      appointmentStatus: AppointmentStatus.Pending,
+      latestResult: ResultTypes.Pending,
+      organizationId,
+      couponCode,
+      userId,
+    })
   }
 
   async getAvailabitlityDateList(

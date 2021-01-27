@@ -55,6 +55,16 @@ export type AppointmentModelBase = {
   appointmentTypeID: number
   calendarID: number
   vialLocation?: string
+  address: string
+  addressUnit: string
+  addressForTesting: string
+  additionalAddressNotes: string
+  couponCode: string
+  shareTestResultWithEmployer: boolean
+  readTermsAndConditions: boolean
+  receiveResultsViaEmail: boolean
+  receiveNotificationsFromGov: boolean
+  userId?: string
 }
 
 export type AppointmentDBModel = AppointmentModelBase & {
@@ -98,6 +108,14 @@ export type AppointmentAcuityResponse = {
   barCode: string
   canceled: boolean
   canClientCancel: boolean
+  address: string
+  addressUnit: string
+  addressForTesting: string
+  additionalAddressNotes: string
+  shareTestResultWithEmployer: boolean
+  readTermsAndConditions: boolean
+  receiveResultsViaEmail: boolean
+  receiveNotificationsFromGov: boolean
 }
 
 export type LabelsAcuityResponse = {
@@ -120,6 +138,30 @@ export type CheckAppointmentRequest = {
   from: string
   to: string
   barCodes: string[]
+}
+
+export type CreateAppointmentRequest = {
+  slotId: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: {
+    code: number
+    number: number
+  }
+  dateOfBirth: string
+  address: string
+  addressUnit: string
+  addressForTesting: string
+  additionalAddressNotes: string
+  couponCode: string
+  shareTestResultWithEmployer: boolean
+  readTermsAndConditions: boolean
+  agreeToConductFHHealthAssessment: boolean
+  receiveResultsViaEmail: boolean
+  receiveNotificationsFromGov: boolean
+  organizationId: string
+  userId: string
 }
 
 export type AppointmentByOrganizationRequest = PageableRequestFilter & {
