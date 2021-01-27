@@ -299,7 +299,7 @@ export class AppoinmentService {
       appointmentStatus,
       latestResult,
       couponCode = '',
-      userId,
+      userId = '',
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
 
