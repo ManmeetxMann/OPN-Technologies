@@ -2047,3 +2047,66 @@ paths:
                         type: string
                   page:
                     type: number
+
+  /reservation/api/v1/appointments/self:
+    get:
+      description: Get user appointment list
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties: 
+                        locationName:
+                          type:	string
+                        locationAddress:
+                          type: string
+                        firstName:
+                          type:	string
+                        lastName:
+                          type:	string
+                        dateOfAppointment:
+                          type:	string
+                        timeOfAppointment:
+                          type: string
+                      required:
+                        - locationName
+                        - locationAddress
+                        - firstName
+                        - lastName
+                        - dateOfAppointment
+                        - timeOfAppointment
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          [
+                            succeed,
+                            failed,
+                            validation_error,
+                            internal_server_error,
+                            unauthorized,
+                            access_denied,
+                            resource_not_found,
+                          ]
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number

@@ -80,7 +80,7 @@ class AppointmentWebhookController implements IControllerBase {
         const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
         const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
         const label = appointment.labels ? appointment.labels[0]?.name : null
-        const deadline: string = makeDeadline(utcDateTime, label)
+        const deadline = makeFirestoreTimestamp(makeDeadline(utcDateTime, label))
         const {barCodeNumber, organizationId} = dataForUpdate
         const barCode = appointment.barCode || barCodeNumber
 
@@ -119,7 +119,7 @@ class AppointmentWebhookController implements IControllerBase {
             barCode: barCode,
             dateOfAppointment,
             displayForNonAdmins: true,
-            deadline: makeFirestoreTimestamp(deadline),
+            deadline: deadline,
             firstName: appointment.firstName,
             lastName: appointment.lastName,
             linkedBarCodes: linkedBarcodes,
@@ -190,7 +190,7 @@ class AppointmentWebhookController implements IControllerBase {
         const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
         const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
         const label = appointment.labels ? appointment.labels[0]?.name : null
-        const deadline: string = makeDeadline(utcDateTime, label)
+        const deadline = makeFirestoreTimestamp(makeDeadline(utcDateTime, label))
 
         let appointmentStatus = appointmentFromDb.appointmentStatus
         if (
@@ -251,7 +251,7 @@ class AppointmentWebhookController implements IControllerBase {
             barCode: barCode,
             dateOfAppointment,
             displayForNonAdmins: true,
-            deadline: makeFirestoreTimestamp(deadline),
+            deadline: deadline,
             firstName: appointment.firstName,
             lastName: appointment.lastName,
             linkedBarCodes: linkedBarcodes,

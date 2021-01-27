@@ -14,6 +14,8 @@ import {
   AppointmentStatus,
   AppointmentStatusHistoryDb,
   DeadlineLabel,
+  UserAppointment,
+  userAppointmentDTOResponse,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -26,8 +28,7 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
-import {makeTimeEndOfTheDay} from '../utils/datetime.helper'
-import {makeDeadline} from '../utils/datetime.helper'
+import {makeTimeEndOfTheDay, makeDeadline, makeFirestoreTimestamp} from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -403,7 +404,9 @@ export class AppoinmentService {
 
   async addAppointmentLabel(id: number, label: DeadlineLabel): Promise<AppointmentDBModel> {
     const appointment = await this.getAppointmentByAcuityId(id)
-    const deadline = makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label)
+    const deadline = makeFirestoreTimestamp(
+      makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label),
+    )
     await this.acuityRepository.addAppointmentLabelOnAcuity(id, label)
 
     return this.updateAppointmentDB(appointment.id, {deadline})
@@ -531,5 +534,28 @@ export class AppoinmentService {
         appointmentStatus !== AppointmentStatus.Reported &&
         appointmentStatus !== AppointmentStatus.ReSampleRequired)
     )
+  }
+
+  async getAppointmentByUserId(userId: string): Promise<UserAppointment[]> {
+    const appointmentResultsQuery = [
+      {
+        map: '/',
+        key: 'deadline',
+        operator: DataModelFieldMapOperatorType.GreatOrEqual,
+        value: makeFirestoreTimestamp(moment().toDate()),
+      },
+      {
+        map: '/',
+        key: 'userId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: userId,
+      },
+    ]
+
+    const appointments = await this.appointmentsRepository.findWhereEqualInMap(
+      appointmentResultsQuery,
+    )
+
+    return appointments.map(userAppointmentDTOResponse)
   }
 }

@@ -1,6 +1,7 @@
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import moment from 'moment-timezone'
 import {Config} from '../../../common/src/utils/config'
+import {firestore} from 'firebase-admin'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
@@ -38,7 +39,7 @@ export type AppointmentModelBase = {
   dateOfAppointment: string
   dateOfBirth: string
   dateTime: string
-  deadline: string
+  deadline: firestore.Timestamp
   email: string
   firstName: string
   inProgressAt?: Date
@@ -55,6 +56,7 @@ export type AppointmentModelBase = {
   appointmentTypeID: number
   calendarID: number
   vialLocation?: string
+  userId?: string
 }
 
 export type AppointmentDBModel = AppointmentModelBase & {
@@ -222,3 +224,23 @@ export const appointmentUiDTOResponse = (
     canCancel: appointment.canCancel,
   }
 }
+
+export type UserAppointment = {
+  dateOfAppointment: string
+  firstName: string
+  lastName: string
+  locationName: string
+  locationAddress: string
+  timeOfAppointment: string
+}
+
+export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): UserAppointment => ({
+  firstName: appointment.firstName,
+  lastName: appointment.lastName,
+  locationName: appointment.location,
+  locationAddress: 'appointment.address', // quotes will be removed after merge https://github.com/OPN-Technologies/services/pull/1233
+  dateOfAppointment: appointment.dateOfAppointment,
+  timeOfAppointment: appointment.timeOfAppointment,
+})
+
+// 1611784740  1611784740
