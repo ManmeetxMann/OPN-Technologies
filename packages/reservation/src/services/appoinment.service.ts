@@ -242,6 +242,8 @@ export class AppoinmentService {
       calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult: ResultTypes
+      couponCode?: string
+      userId?: string
     },
   ): Promise<AppointmentDBModel> {
     const data = this.appointmentFromAcuity(acuityAppointment, additionalData)
@@ -272,6 +274,8 @@ export class AppoinmentService {
       calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult?: ResultTypes
+      couponCode?: string
+      userId?: string
     },
   ): AppointmentModelBase {
     const utcDateTime = moment(acuityAppointment.datetime).utc()
@@ -289,6 +293,8 @@ export class AppoinmentService {
       calendarID,
       appointmentStatus,
       latestResult,
+      couponCode = '',
+      userId
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
 
@@ -321,8 +327,9 @@ export class AppoinmentService {
       receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
       receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
       shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
-      couponCode: '',
+      couponCode,
       ...(latestResult ? {latestResult} : {}),
+      userId
     }
   }
 
@@ -550,9 +557,11 @@ export class AppoinmentService {
     couponCode,
     shareTestResultWithEmployer,
     readTermsAndConditions,
-    agreeToConductFHHealthAccessment,
+    agreeToConductFHHealthAssessment,
     receiveResultsViaEmail,
     receiveNotificationsFromGov,
+    organizationId,
+    userId,
   }: CreateAppointmentRequest): Promise<void> {
     const {time, appointmentTypeId, calendarId, ...slotData} = JSON.parse(
       Buffer.from(slotId, 'base64').toString(),
@@ -581,47 +590,21 @@ export class AppoinmentService {
         additionalAddressNotes,
         shareTestResultWithEmployer,
         readTermsAndConditions,
-        agreeToConductFHHealthAccessment,
+        agreeToConductFHHealthAssessment,
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
       },
     )
     await this.createAppointmentFromAcuity(data, {
       barCodeNumber: await this.getNextBarCodeNumber(),
-      organizationId: string,
       appointmentTypeID: appointmentTypeId,
       calendarID: calendarId,
       appointmentStatus: AppointmentStatus.Pending,
       latestResult: ResultTypes.Pending,
+      organizationId,
+      couponCode,
+      userId,
     })
-    console.log(data)
-    // return this.appointmentsRepository.save({
-    //   dateOfAppointment, // Will be added by webhook
-    //   dateTime, // Added to acuity
-    //   deadline, // Will be added by webhook
-    //   timeOfAppointment, // Will be added by webhook
-    //   acuityAppointmentId: 0, // Will be added by webhook
-    //   appointmentStatus: AppointmentStatus.Pending, // Will be added by webhook
-    //   appointmentTypeID: appointmentTypeId, // Will be added by webhook
-    //   barCode: await this.getNextBarCodeNumber(), // Will be added by webhook
-    //   calendarID: calendarId, // Will be added by webhook
-    //   canceled: false, // Will be added by webhook
-    //   latestResult: ResultTypes.Pending, // Will be added by webhook
-    //   firstName, // Added to acuity
-    //   lastName, // Added to acuity
-    //   email, // Added to acuity
-    //   phone: Number(`${phone.code}${phone.number}`), // Added to acuity
-    //   dateOfBirth, // Should be by form
-    //   address, // Should be by form
-    //   addressUnit, // Should be by form
-    //   addressForTesting, // Should be by form
-    //   additionalAddressNotes, // Should be by form
-    //   couponCode,
-    //   shareTestResultWithEmployer, // Should be by form
-    //   readTermsAndConditions, // Should be by form
-    //   receiveResultsViaEmail, // Should be by form
-    //   receiveNotificationsFromGov, // Should be by form
-    // })
   }
 
   async getAvailabitlityDateList(

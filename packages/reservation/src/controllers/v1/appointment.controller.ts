@@ -5,6 +5,8 @@ import {authorizationMiddleware} from '../../../../common/src/middlewares/author
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import {CreateAppointmentRequest} from '../../models/appointment'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
+import {User} from '../../../../enterprise/src/models/user'
+import {getOrganizationId, getUserId} from '../../../../common/src/utils/auth'
 
 class AppointmentController implements IControllerBase {
   public path = '/reservation'
@@ -41,13 +43,15 @@ class AppointmentController implements IControllerBase {
         couponCode,
         shareTestResultWithEmployer,
         readTermsAndConditions,
-        agreeToConductFHHealthAccessment,
+        agreeToConductFHHealthAssessment,
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
-        vialLocation,
-        appointmentIds,
       } = req.body as CreateAppointmentRequest
+      const authenticatedUser = res.locals.authenticatedUser as User
+      const organizationId = getOrganizationId(authenticatedUser)
+      const userId = getUserId(authenticatedUser)
       await this.appointmentService.createAcuityAppointment({
+        organizationId,
         slotId,
         firstName,
         lastName,
@@ -61,11 +65,10 @@ class AppointmentController implements IControllerBase {
         couponCode,
         shareTestResultWithEmployer,
         readTermsAndConditions,
-        agreeToConductFHHealthAccessment,
+        agreeToConductFHHealthAssessment,
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
-        vialLocation,
-        appointmentIds,
+        userId,
       })
 
       res.json(actionSucceed())

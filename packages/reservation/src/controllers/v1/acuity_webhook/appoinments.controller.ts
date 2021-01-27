@@ -15,14 +15,8 @@ import {
   WebhookEndpoints,
   ResultTypes,
 } from '../../../models/appointment'
-import moment from 'moment-timezone'
-import {dateFormats, timeFormats} from '../../../../../common/src/utils/times'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {makeDeadline} from '../../../utils/datetime.helper'
-import {Config} from '../../../../../common/src/utils/config'
-
-const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -142,16 +136,6 @@ class AppointmentWebhookController implements IControllerBase {
       }
 
       try {
-        const utcDateTime = moment(appointment.datetime).utc()
-
-        const dateTimeTz = moment(appointment.datetime).tz(timeZone)
-
-        const dateTime = utcDateTime.format()
-        const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
-        const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
-        const label = appointment.labels ? appointment.labels[0]?.name : null
-        const deadline: string = makeDeadline(utcDateTime, label)
-
         let appointmentStatus = appointmentFromDb.appointmentStatus
         if (
           appointment.canceled &&

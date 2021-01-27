@@ -3,7 +3,7 @@ import {Config} from '../../../common/src/utils/config'
 import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {Certificate} from '../models/packages'
-import {AcuityCouponCodeResponse, AcuityCreateResponse} from '../models/coupons'
+import {AcuityCouponCodeResponse} from '../models/coupons'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
 
@@ -29,7 +29,7 @@ abstract class AcuityScheduling {
     shareTestResultWithEmployer: Config.get('ACUITY_FIELD_SHARE_TEST_RESULT_WITH_EMPLOYER'),
     readTermsAndConditions: Config.get('ACUITY_FIELD_READ_TERMS_AND_CONDITIONS'),
     receiveResultsViaEmail: Config.get('ACUITY_FIELD_RECEIVE_RESULTS_VIA_EMAIL'),
-    agreeToConductFHHealthAccessment: Config.get(
+    agreeToConductFHHealthAssessment: Config.get(
       'ACUITY_FIELD_AGREE_TO_CONDUCT_FH_HEALTH_ACCESSMENT',
     ),
     receiveNotificationsFromGov: Config.get('ACUITY_FIELD_RECEIVE_NOTIFICATIONS_FROM_GOV'),

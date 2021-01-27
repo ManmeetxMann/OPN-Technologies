@@ -1827,7 +1827,7 @@ paths:
                   type: string
                 shareTestResultWithEmployer:
                   type: boolean
-                agreeToConductFHHealthAccessment:
+                agreeToConductFHHealthAssessment:
                   type: boolean
                 readTermsAndConditions:
                   type: boolean
@@ -1848,7 +1848,7 @@ paths:
                 - couponCode
                 - shareTestResultWithEmployer
                 - readTermsAndConditions
-                - agreeToConductFHHealthAccessment
+                - agreeToConductFHHealthAssessment
                 - receiveResultsViaEmail
                 - receiveNotificationsFromGov
       responses:

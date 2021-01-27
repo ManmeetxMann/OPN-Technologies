@@ -3,7 +3,6 @@ import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
 import {Certificate} from '../models/packages'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
-import {AcuityCreateResponse} from "../models/coupons";
 
 export class AcuityRepository extends AcuityScheduling {
   constructor() {

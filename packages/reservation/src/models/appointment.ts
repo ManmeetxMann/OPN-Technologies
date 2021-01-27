@@ -63,6 +63,7 @@ export type AppointmentModelBase = {
   readTermsAndConditions: boolean
   receiveResultsViaEmail: boolean
   receiveNotificationsFromGov: boolean
+  userId?: string
 }
 
 export type AppointmentDBModel = AppointmentModelBase & {
@@ -155,11 +156,11 @@ export type CreateAppointmentRequest = {
   couponCode: string
   shareTestResultWithEmployer: boolean
   readTermsAndConditions: boolean
-  agreeToConductFHHealthAccessment: boolean
+  agreeToConductFHHealthAssessment: boolean
   receiveResultsViaEmail: boolean
   receiveNotificationsFromGov: boolean
-  vialLocation: string
-  appointmentIds: string[]
+  organizationId: string
+  userId: string
 }
 
 export type AppointmentByOrganizationRequest = PageableRequestFilter & {
