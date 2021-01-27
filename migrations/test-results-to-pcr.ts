@@ -129,7 +129,7 @@ async function createPcrTestResult(
           testResultsToPCRResults: firestore.FieldValue.serverTimestamp(),
         },
       },
-      updatedAt: legacyTestResult.timestamps.updatedAt,
+      updatedAt: legacyTestResult.timestamps.updatedAt | legacyTestResult.timestamps.createdAt,
       waitingResult: false,
     })
     //Update Appointments
