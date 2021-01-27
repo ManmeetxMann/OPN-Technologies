@@ -6,7 +6,7 @@ import {authorizationMiddleware} from '../../../../../common/src/middlewares/aut
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 
 import {OrganizationService} from '../../../services/organization-service'
-import { Organization, organizationDTOResponse } from '../../../models/organization'
+import {Organization, organizationDTOResponse} from '../../../models/organization'
 
 class AdminOrganizationController implements IControllerBase {
   public path = '/enterprise/admin'
@@ -19,7 +19,7 @@ class AdminOrganizationController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    
+
     innerRouter.get(
       this.path + '/api/v1/organizations',
       authorizationMiddleware([RequiredUserPermission.OPNAdmin]),
@@ -47,15 +47,14 @@ class AdminOrganizationController implements IControllerBase {
   createOrganization = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const organization = await this.organizationService.create({
-          ...req.body,
-          enableTemperatureCheck: req.body.enableTemperatureCheck || false,
-        } as Organization)
+        ...req.body,
+        enableTemperatureCheck: req.body.enableTemperatureCheck || false,
+      } as Organization)
       res.json(actionSucceed(organization))
     } catch (error) {
       next(error)
     }
   }
-  
 }
 
 export default AdminOrganizationController

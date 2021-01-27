@@ -17,7 +17,6 @@ import {PdfService} from '../../../common/src/service/reports/pdf'
 import {adminOrSelf} from '../middleware/admin-or-self'
 
 import {
-  Organization,
   OrganizationGroup,
   OrganizationLocation,
   OrganizationUsersGroup,
@@ -193,7 +192,6 @@ class OrganizationController implements IControllerBase {
       }
     }
   }
-
 
   updateReportInfo = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const {organizationId} = req.params

@@ -121,9 +121,9 @@ export const organizationGroupDTOResponse = (group: OrganizationGroup): Organiza
 })
 
 export const organizationDTOResponse = (organizations: Organization[]): OrganizationListDTO[] => {
-  return organizations.map((organization)=> ({
+  return organizations.map((organization) => ({
     id: organization.id,
     key: organization.key,
-    name: organization.name
+    name: organization.name,
   }))
 }
