@@ -3,6 +3,7 @@ export type OrganizationReminderSchedule = {
   enabledOnWeekends: boolean
   timeOfDayMillis: number
 }
+
 export type Organization = {
   id: string
   key: number
@@ -25,6 +26,12 @@ export type Organization = {
   notificationIconCaution?: string
   notificationIconStop?: string
   enableTemperatureCheck?: boolean
+}
+
+export type OrganizationListDTO = {
+  id: string
+  key: number
+  name: string
 }
 
 export enum OrganizationType {
@@ -112,3 +119,11 @@ export const organizationGroupDTOResponse = (group: OrganizationGroup): Organiza
   checkInDisabled: group.checkInDisabled,
   isPrivate: group.isPrivate,
 })
+
+export const organizationDTOResponse = (organizations: Organization[]): OrganizationListDTO[] => {
+  return organizations.map((organization)=> ({
+    id: organization.id,
+    key: organization.key,
+    name: organization.name
+  }))
+}
