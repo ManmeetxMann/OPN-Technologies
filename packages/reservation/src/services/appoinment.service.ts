@@ -13,7 +13,6 @@ import {
   AppointmentModelBase,
   AppointmentStatus,
   AppointmentStatusHistoryDb,
-  AvailableSlotResponse,
   CreateAppointmentRequest,
   DeadlineLabel,
   ResultTypes,
@@ -29,11 +28,12 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
-import {makeDeadline, makeTimeEndOfTheDay} from '../utils/datetime.helper'
+import {makeDeadline} from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
+import {AvailableTimes} from '../models/available-times'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -63,6 +63,16 @@ export class AppoinmentService {
     return appointments[0]
   }
 
+  async getAppointmentByBarCodeNullable(
+    barCodeNumber: string,
+  ): Promise<AppointmentDBModel | false> {
+    const appointments = await this.appointmentsRepository.findWhereEqual('barCode', barCodeNumber)
+    if (appointments.length > 1) {
+      console.log(`AdminController: Multiple Appointments with barcode. Barcode: ${barCodeNumber}`)
+    }
+    return appointments.length ? appointments[0] : false
+  }
+
   async getAppointmentsDB(
     queryParams: AppointmentByOrganizationRequest,
   ): Promise<AppointmentDBModel[]> {
@@ -75,6 +85,16 @@ export class AppoinmentService {
         value: queryParams.organizationId,
       })
     }
+
+    if (queryParams.barCode) {
+      conditions.push({
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: queryParams.barCode,
+      })
+    }
+
     if (queryParams.dateOfAppointment) {
       conditions.push({
         map: '/',
@@ -83,6 +103,7 @@ export class AppoinmentService {
         value: moment(queryParams.dateOfAppointment).format(dateFormats.longMonth),
       })
     }
+
     if (queryParams.appointmentStatus) {
       conditions.push({
         map: '/',
@@ -91,16 +112,7 @@ export class AppoinmentService {
         value: queryParams.appointmentStatus,
       })
     }
-    if (queryParams.deadlineDate) {
-      conditions.push({
-        map: '/',
-        key: 'deadline',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: makeTimeEndOfTheDay(
-          moment.tz(`${queryParams.deadlineDate}`, 'YYYY-MM-DD', timeZone).utc(),
-        ),
-      })
-    }
+
     if (queryParams.transportRunId) {
       conditions.push({
         map: '/',
@@ -109,14 +121,7 @@ export class AppoinmentService {
         value: queryParams.transportRunId,
       })
     }
-    if (queryParams.testRunId) {
-      conditions.push({
-        map: '/',
-        key: 'testRunId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: queryParams.testRunId,
-      })
-    }
+
     if (queryParams.searchQuery) {
       const fullName = queryParams.searchQuery.split(' ')
       const searchPromises = []
@@ -294,7 +299,7 @@ export class AppoinmentService {
       appointmentStatus,
       latestResult,
       couponCode = '',
-      userId
+      userId,
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
 
@@ -329,7 +334,7 @@ export class AppoinmentService {
       shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
       couponCode,
       ...(latestResult ? {latestResult} : {}),
-      userId
+      userId,
     }
   }
 
@@ -366,7 +371,12 @@ export class AppoinmentService {
     const canCancel = this.getCanCancel(isLabUser, appointmentFromDB.appointmentStatus)
 
     if (!canCancel) {
-      throw new BadRequestException('Cannot cancel this appointment')
+      console.warn(
+        `cancelAppointment: Failed for appointmentId ${appointmentId} isLabUser: ${isLabUser} appointmentStatus: ${appointmentFromDB.appointmentStatus}`,
+      )
+      throw new BadRequestException(
+        `Appointment can't be cancelled. It is already in ${appointmentFromDB.appointmentStatus} state`,
+      )
     }
 
     if (organizationId && appointmentFromDB.organizationId !== organizationId) {
@@ -612,9 +622,19 @@ export class AppoinmentService {
     year: number,
     month: number,
   ): Promise<{date: string}[]> {
-    const {appointmentTypeId, calendarTimezone, calendarId} = JSON.parse(
-      Buffer.from(id, 'base64').toString(),
-    )
+    let serializedId
+
+    try {
+      serializedId = JSON.parse(Buffer.from(id, 'base64').toString())
+    } catch (error) {
+      throw new BadRequestException('Invalid Id')
+    }
+
+    const {appointmentTypeId, calendarTimezone, calendarId} = serializedId
+
+    if (!appointmentTypeId || !calendarTimezone || !calendarId) {
+      throw new BadRequestException('Invalid Id ')
+    }
 
     return this.acuityRepository.getAvailabilityDates(
       appointmentTypeId,
@@ -624,10 +644,19 @@ export class AppoinmentService {
     )
   }
 
-  async getAvailableSlots(id: string, date: string): Promise<AvailableSlotResponse[]> {
-    const {appointmentTypeId, calendarTimezone, calendarId} = JSON.parse(
-      Buffer.from(id, 'base64').toString(),
-    )
+  async getAvailableSlots(id: string, date: string): Promise<AvailableTimes[]> {
+    let serializedId
+
+    try {
+      serializedId = JSON.parse(Buffer.from(id, 'base64').toString())
+    } catch (error) {
+      throw new BadRequestException('Invalid Id')
+    }
+    const {appointmentTypeId, calendarTimezone, calendarId} = serializedId
+
+    if (!appointmentTypeId || !calendarTimezone || !calendarId) {
+      throw new BadRequestException('Invalid Id')
+    }
 
     const slotsList = await this.acuityRepository.getAvailableSlots(
       appointmentTypeId,
@@ -636,7 +665,7 @@ export class AppoinmentService {
       calendarTimezone,
     )
 
-    return slotsList.map(({time}) => {
+    return slotsList.map(({time, slotsAvailable}) => {
       const idBuf = {
         appointmentTypeId,
         calendarTimezone,
@@ -649,6 +678,7 @@ export class AppoinmentService {
       return {
         id,
         label: moment(time).tz(calendarTimezone).format(timeFormats.standard12h),
+        slotsAvailable: slotsAvailable,
       }
     })
   }

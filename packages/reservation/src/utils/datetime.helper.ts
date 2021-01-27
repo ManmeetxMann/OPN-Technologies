@@ -1,5 +1,6 @@
 import {Config} from '../../../common/src/utils/config'
 import {DeadlineLabel} from '../models/appointment'
+import {firestore} from 'firebase-admin'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 import moment from 'moment-timezone'
@@ -29,4 +30,8 @@ export const makeTimeEndOfTheDay = (datetime: moment.Moment): string => {
 
 export const getDateFromDatetime = (transportDateTime: Date | string): string => {
   return moment(transportDateTime).tz(timeZone).format('YYYY-MM-DD')
+}
+
+export const makeFirestoreTimestamp = (date: Date | string): firestore.Timestamp => {
+  return firestore.Timestamp.fromDate(makeTimeEndOfTheDayMoment(moment(date)).toDate())
 }

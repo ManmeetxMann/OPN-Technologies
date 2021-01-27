@@ -18,6 +18,7 @@ export enum AppointmentReasons {
   ReSampleAlreadyRequested = 'ReSample Already Requested',
   InProgress = 'In Progress',
   NoInProgress = 'No In Progress',
+  NotFound = 'Test not found',
 }
 
 export enum ResultTypes {
@@ -168,8 +169,7 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   searchQuery?: string
   dateOfAppointment?: string
   transportRunId?: string
-  testRunId?: string
-  deadlineDate?: string
+  barCode?: string
   appointmentStatus?: AppointmentStatus[]
 }
 
@@ -193,9 +193,9 @@ export type AppointmentUiDTO = {
   deadline?: string
   latestResult?: string
   vialLocation?: string
-  testRunId?: string
   appointment?: boolean
   canCancel?: boolean
+  registeredNursePractitioner?: string
 }
 
 export type AppointmentsState = {
@@ -243,11 +243,6 @@ export enum DeadlineLabel {
   NextDay = 'NextDay',
 }
 
-export type AvailableSlotResponse = {
-  id: string
-  label: string
-}
-
 export const appointmentUiDTOResponse = (
   appointment: AppointmentDBModel & {canCancel?: boolean},
 ): AppointmentUiDTO => {
@@ -266,5 +261,25 @@ export const appointmentUiDTOResponse = (
     latestResult: appointment.latestResult,
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
+  }
+}
+
+export const appointmentByBarcodeUiDTOResponse = (
+  appointment: AppointmentDBModel,
+  organizationName?: string,
+): AppointmentUiDTO & {organizationName?: string} => {
+  const timeZone = Config.get('DEFAULT_TIME_ZONE')
+  return {
+    id: appointment.id,
+    firstName: appointment.firstName,
+    lastName: appointment.lastName,
+    status: appointment.appointmentStatus,
+    barCode: appointment.barCode,
+    location: appointment.location,
+    dateTime: moment(appointment.dateTime).tz(timeZone).format(),
+    dateOfBirth: appointment.dateOfBirth,
+    deadline: moment(appointment.deadline).tz(timeZone).format(),
+    registeredNursePractitioner: appointment.registeredNursePractitioner,
+    organizationName: organizationName,
   }
 }

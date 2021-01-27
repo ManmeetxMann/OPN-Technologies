@@ -1,3 +1,5 @@
+import {firestore} from 'firebase-admin'
+
 import {AppointmentReasons, AppointmentStatus, ResultTypes} from './appointment'
 
 export enum PCRResultActions {
@@ -17,11 +19,13 @@ export enum PCRResultActionsAllowedResend {
 }
 
 export enum ResultReportStatus {
-  RequestReceived = 'RequestReceived',
-  Processing = 'Processing',
   Failed = 'Failed',
-  SuccessfullyReported = 'SuccessfullyReported',
-  RequestIgnoredAsPerRequest = 'RequestIgnoredAsPerRequest',
+  Processing = 'Processing',
+  RequestReceived = 'RequestReceived',
+  SentReRunRequest = 'SentReRunRequest',
+  SentReSampleRequest = 'SentReSampleRequest',
+  SentResult = 'SentResult',
+  Skipped = 'Skipped',
 }
 
 type PCRResultSpecs = {
@@ -41,6 +45,7 @@ type PCRResultSpecs = {
 
 export type PCRTestResultRequestData = PCRResultSpecs & {
   barCode: string
+  sendUpdatedResults?: boolean
 }
 
 export type PCRListQueryRequest = {
@@ -74,10 +79,11 @@ export type PCRTestResultDBModel = PCRTestResultData &
     result: ResultTypes
     waitingResult: boolean
     displayForNonAdmins: boolean
-    deadline: string
+    deadline: firestore.Timestamp
     testRunId?: string
     runNumber: number
     reSampleNumber: number
+    updatedAt: firestore.Timestamp
   }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -90,6 +96,9 @@ export type PCRTestResultHistoryDTO = {
   waitingResult: boolean
   results: PCRResults[]
   reason: AppointmentReasons
+  reSampleNumber: number | string
+  runNumber: number | string
+  dateOfAppointment: string
 }
 
 export type PCRResults = {
@@ -102,11 +111,14 @@ export type PCRResults = {
   hexIC: string
   hexCt: string
   result: string
+  reSampleNumber: string
+  runNumber: string
+  dateOfAppointment: string
 }
 
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,
-  'id' | 'linkedBarCodes' | 'deadline' | 'runNumber' | 'reSampleNumber'
+  'id' | 'linkedBarCodes' | 'deadline' | 'runNumber' | 'reSampleNumber' | 'updatedAt'
 > & {
   email: string
   phone: number
@@ -157,19 +169,24 @@ export const PCRTestResultHistoryResponse = (
     hexIC: result.hexIC,
     hexCt: result.hexCt,
     result: result.result,
+    reSampleNumber: result.reSampleNumber,
+    runNumber: result.runNumber,
+    dateOfAppointment: result.dateOfAppointment,
   })),
+  reSampleNumber: pcrTests.reSampleNumber,
+  runNumber: pcrTests.runNumber,
   reason: pcrTests.reason,
+  dateOfAppointment: pcrTests.dateOfAppointment,
 })
 
 export type PcrTestResultsListByDeadlineRequest = {
   deadline: string
+  testRunId?: string
 }
 
 export type PcrTestResultsListRequest = {
   organizationId?: string
-  dateOfAppointment: string
   deadline?: string
-  testRunId?: string
   barCode?: string
 }
 
@@ -178,7 +195,7 @@ export type PCRTestResultListDTO = {
   firstName: string
   lastName: string
   testType: string
-  dateOfAppointment: string
+  dateOfAppointment?: string
   barCode: string
   result: ResultTypes
   vialLocation?: string
@@ -191,12 +208,14 @@ export type PCRTestResultListDTO = {
 export type PCRTestResultByDeadlineListDTO = {
   id: string
   barCode: string
-  result: ResultTypes
   vialLocation: string
   status: AppointmentStatus
-  dateTime: string
+  dateOfAppointment: string
   deadline: string
   testRunId: string
+  runNumber: string
+  reSampleNumber: string
+  dateTime: string
 }
 
 export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResultListDTO => ({
@@ -212,6 +231,7 @@ export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResu
 export type pcrTestResultsDTO = {
   barCode: string
   status: ResultReportStatus
+  details?: string
 }
 
 export const pcrTestResultsResponse = (
@@ -219,4 +239,5 @@ export const pcrTestResultsResponse = (
 ): pcrTestResultsDTO => ({
   barCode: pcrTestResult.data.barCode,
   status: pcrTestResult.status,
+  details: pcrTestResult.details,
 })

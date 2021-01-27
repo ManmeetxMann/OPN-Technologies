@@ -564,11 +564,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     subPath = '',
   ): Promise<T[]> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
-    return this.collection(subPath)
-      .where(fieldPath, '==', value)
-      .orderBy(sortKey, 'desc')
-      .limit(1)
-      .fetch()
+    return this.collection(subPath).where(fieldPath, '==', value).orderBy(sortKey, 'desc').fetch()
   }
 
   public async findWhereArrayContainsWithMax(
