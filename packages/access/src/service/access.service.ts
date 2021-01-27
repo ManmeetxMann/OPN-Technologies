@@ -3,7 +3,7 @@ import {UserDependant, LegacyDependant} from '../../../common/src/data/user'
 import {UserService} from '../../../common/src/service/user/user-service'
 import DataStore from '../../../common/src/data/datastore'
 import {AccessModel, AccessRepository} from '../repository/access.repository'
-import {Access, AccessFilter} from '../models/access'
+import {Access, AccessFilter, AccessWithDependantNames} from '../models/access'
 import {firestore} from 'firebase-admin'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -22,11 +22,6 @@ import {AccessFilterWithDependent} from '../types'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
-
-// a regular access, but with the names of dependants fetched
-type AccessWithDependantNames = Omit<Access, 'dependants'> & {
-  dependants: UserDependant[]
-}
 
 export class AccessService {
   private dataStore = new DataStore()
