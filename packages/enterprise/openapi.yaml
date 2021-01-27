@@ -101,6 +101,21 @@ components:
       required:
         - name
 
+    OrganizationSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        name:
+          type: string
+      required:
+        - id
+        - key
+        - name
+
     OrganizationLocation:
       type: object
       additionalProperties: false
@@ -1191,6 +1206,32 @@ components:
               nullable: true
               type: string
 
+    ResponseOfOrganizationSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationSummary'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
     ResponseOfOrganizationLocations:
       type: object
       additionalProperties: false
@@ -1735,9 +1776,26 @@ paths:
         '200':
           description: Successfully set
 
-  /organizations:
+  /enterprise/admin/api/v1/organizations:
+    get:
+      description: Get List of Organizations
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Organization management
+      responses:
+        '200':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationSummary'
     post:
       description: Create new organization
+      tags:
+        - Organization management
       requestBody:
         content:
           application/json:
