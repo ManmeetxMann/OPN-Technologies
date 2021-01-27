@@ -22,7 +22,6 @@ import {
 import {
   CreateReportForPCRResultsResponse,
   PCRResultActions,
-  PCRResultActionsAllowedResend,
   PCRTestResultData,
   PCRTestResultDBModel,
   PCRTestResultEmailDTO,
