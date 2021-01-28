@@ -41,13 +41,11 @@ export type AppointmentModelBase = {
   deadline: string
   email: string
   firstName: string
-  inProgressAt?: Date
   lastName: string
   location?: string
   organizationId?: string
   packageCode?: string
   phone: number
-  receivedAt?: Date
   registeredNursePractitioner?: string
   latestResult: ResultTypes
   timeOfAppointment: string
