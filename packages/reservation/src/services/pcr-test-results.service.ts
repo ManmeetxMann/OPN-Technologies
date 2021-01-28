@@ -48,6 +48,7 @@ import {
 import testResultPDFTemplate from '../templates/pcrTestResult'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {makeFirestoreTimestamp} from '../utils/datetime.helper'
+import App from 'packages/common/src/express/app'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -205,7 +206,7 @@ export class PCRTestResultsService {
         value: barCode,
       })
     }
-
+    console.log(pcrTestResultsQuery)
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
 
     const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
@@ -446,6 +447,7 @@ export class PCRTestResultsService {
     )
 
     //Update PCR Test results
+    console.log('Update PCR Test results', appointment.deadline)
     const pcrResultDataForDbUpdate = {
       ...resultData,
       deadline: makeFirestoreTimestamp(appointment.deadline),
@@ -819,26 +821,33 @@ export class PCRTestResultsService {
         value: testRunId,
       })
     }
-
+    console.log(pcrTestResultsQuery)
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
     const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
     const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
 
-    return pcrResults.map((pcr) => {
+    const pcrFiltred = [] 
+    
+    pcrResults.map((pcr) => {
       const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
-
-      return {
-        id: pcr.id,
-        barCode: pcr.barCode,
-        deadline: pcr.deadline.toDate().toISOString(),
-        status: appointment?.appointmentStatus,
-        testRunId: pcr.testRunId,
-        vialLocation: appointment?.vialLocation,
-        runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
-        reSampleNumber: pcr.reSampleNumber ? `S${pcr.reSampleNumber}` : null,
-        dateTime: appointment.dateTime,
-      }
+      const allowedAppointmentStatus = [AppointmentStatus.InProgress, AppointmentStatus.ReRunRequired, AppointmentStatus.Received]
+      // if (appointment && allowedAppointmentStatus.includes(appointment.appointmentStatus)) {
+        console.log(pcr.barCode, pcr.deadline, 1612130440)
+        pcrFiltred.push({
+          id: pcr.id,
+          barCode: pcr.barCode,
+          deadline: moment(pcr.deadline.toDate()).tz('America/Toronto'),
+          status: appointment?.appointmentStatus,
+          testRunId: pcr.testRunId,
+          vialLocation: appointment?.vialLocation,
+          runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
+          reSampleNumber: pcr.reSampleNumber ? `S${pcr.reSampleNumber}` : null,
+          dateTime: appointment.dateTime,
+        })
+      // }
     })
+
+    return pcrFiltred
   }
 
   async getReportStatus(action: PCRResultActions): Promise<ResultReportStatus> {

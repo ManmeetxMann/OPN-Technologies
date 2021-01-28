@@ -33,5 +33,5 @@ export const getDateFromDatetime = (transportDateTime: Date | string): string =>
 }
 
 export const makeFirestoreTimestamp = (date: Date | string): firestore.Timestamp => {
-  return firestore.Timestamp.fromDate(makeTimeEndOfTheDayMoment(moment(date)).toDate())
+  return firestore.Timestamp.fromDate(makeTimeEndOfTheDayMoment(moment(date).tz(timeZone).utc()).milliseconds(0).toDate())
 }

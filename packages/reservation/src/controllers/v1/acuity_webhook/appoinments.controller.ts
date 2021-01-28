@@ -92,6 +92,7 @@ class AppointmentWebhookController implements IControllerBase {
           )
         }
       } catch (e) {
+        console.log(e)
         console.error(
           `AppointmentWebhookController: SaveToTestResults Failed AppoinmentID: ${id}  ${e.toString()}`,
         )
