@@ -11,7 +11,7 @@ export default Joi.object({
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
   linkedBarCodes: Joi.array().required(),
-  organizationId: Joi.string(),
+  organizationId: Joi.string().allow(''),
   reSampleNumber: Joi.number().required(),
   result: Joi.string().required(),
   resultSpecs: Joi.object({

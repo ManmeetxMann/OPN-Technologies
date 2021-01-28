@@ -68,7 +68,7 @@ type AppointmentDataForPCRResult = {
   firstName: string
   lastName: string
   appointmentId: string
-  organizationId: string
+  organizationId?: string
   dateOfAppointment: string
 }
 
