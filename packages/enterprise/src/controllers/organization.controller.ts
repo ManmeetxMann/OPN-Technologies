@@ -17,7 +17,6 @@ import {PdfService} from '../../../common/src/service/reports/pdf'
 import {adminOrSelf} from '../middleware/admin-or-self'
 
 import {
-  Organization,
   OrganizationGroup,
   OrganizationLocation,
   OrganizationUsersGroup,
@@ -148,7 +147,6 @@ class OrganizationController implements IControllerBase {
     )
     const organizations = Router().use(
       '/organizations',
-      Router().post('/', this.create), // TODO: must be a protected route
       Router().post('/:organizationId/scheduling', this.updateReportInfo), // TODO: must be a protected route
       Router().get('/one', this.findOneByKeyOrId),
       Router().use('/:organizationId', locations, groups, ...publicStats, stats),
@@ -192,22 +190,6 @@ class OrganizationController implements IControllerBase {
       if ((parentUserId || userId) !== authenticatedUser.id) {
         throw 'Invalid'
       }
-    }
-  }
-
-  create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const organization = await this.organizationService
-        .create({
-          ...req.body,
-          enableTemperatureCheck: req.body.enableTemperatureCheck || false,
-        } as Organization)
-        .catch((error) => {
-          throw new HttpException(error.message)
-        })
-      res.json(actionSucceed(organization))
-    } catch (error) {
-      next(error)
     }
   }
 

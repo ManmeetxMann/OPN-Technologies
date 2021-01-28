@@ -31,7 +31,8 @@ export enum ResultTypes {
   ReSampleRequested = 'ReSampleRequested',
 }
 
-export type AppointmentModelBase = {
+export type AppointmentDBModel = {
+  id: string
   acuityAppointmentId: number
   appointmentStatus: AppointmentStatus
   barCode: string
@@ -42,13 +43,11 @@ export type AppointmentModelBase = {
   deadline: firestore.Timestamp
   email: string
   firstName: string
-  inProgressAt?: Date
   lastName: string
   location?: string
   organizationId?: string
   packageCode?: string
   phone: number
-  receivedAt?: Date
   registeredNursePractitioner?: string
   latestResult: ResultTypes
   timeOfAppointment: string
@@ -56,11 +55,20 @@ export type AppointmentModelBase = {
   appointmentTypeID: number
   calendarID: number
   vialLocation?: string
+  address: string
+  addressUnit: string
+  addressForTesting: string
+  additionalAddressNotes: string
+  couponCode: string
+  travelID?: string
+  travelIDIssuingCountry?: string
+  ohipCard?: string
+  swabMethod?: string
+  shareTestResultWithEmployer: boolean
+  readTermsAndConditions: boolean
+  receiveResultsViaEmail: boolean
+  receiveNotificationsFromGov: boolean
   userId?: string
-}
-
-export type AppointmentDBModel = AppointmentModelBase & {
-  id: string
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -82,24 +90,36 @@ type AppointmentAcuityForm = {
 
 //Response From Acuity
 export type AppointmentAcuityResponse = {
-  id: number
-  date: string
-  time: string
-  forms: Array<AppointmentAcuityForm>
-  certificate: string
-  location: string
-  organizationId: string
-  datetime: string
-  labels: LabelsAcuityResponse[]
-  firstName: string
-  lastName: string
-  email: string
-  phone: number
-  dateOfBirth: string
-  registeredNursePractitioner: string
+  additionalAddressNotes: string
+  address: string
+  addressForTesting: string
+  addressUnit: string
   barCode: string
   canceled: boolean
   canClientCancel: boolean
+  certificate: string
+  date: string
+  dateOfBirth: string
+  datetime: string
+  email: string
+  firstName: string
+  forms: Array<AppointmentAcuityForm>
+  id: number
+  labels: LabelsAcuityResponse[]
+  lastName: string
+  location: string
+  ohipCard?: string
+  organizationId?: string
+  phone: number
+  readTermsAndConditions: boolean
+  receiveNotificationsFromGov: boolean
+  receiveResultsViaEmail: boolean
+  registeredNursePractitioner?: string
+  shareTestResultWithEmployer: boolean
+  swabMethod?: string
+  time: string
+  travelID?: string
+  travelIDIssuingCountry?: string
 }
 
 export type LabelsAcuityResponse = {
@@ -124,13 +144,36 @@ export type CheckAppointmentRequest = {
   barCodes: string[]
 }
 
+export type CreateAppointmentRequest = {
+  slotId: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: {
+    code: number
+    number: number
+  }
+  dateOfBirth: string
+  address: string
+  addressUnit: string
+  addressForTesting: string
+  additionalAddressNotes: string
+  couponCode: string
+  shareTestResultWithEmployer: boolean
+  readTermsAndConditions: boolean
+  agreeToConductFHHealthAssessment: boolean
+  receiveResultsViaEmail: boolean
+  receiveNotificationsFromGov: boolean
+  organizationId: string
+  userId: string
+}
+
 export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   organizationId?: string
   searchQuery?: string
   dateOfAppointment?: string
   transportRunId?: string
-  testRunId?: string
-  deadlineDate?: string
+  barCode?: string
   appointmentStatus?: AppointmentStatus[]
 }
 
@@ -154,9 +197,9 @@ export type AppointmentUiDTO = {
   deadline?: string
   latestResult?: string
   vialLocation?: string
-  testRunId?: string
   appointment?: boolean
   canCancel?: boolean
+  registeredNursePractitioner?: string
 }
 
 export type AppointmentsState = {
@@ -238,9 +281,27 @@ export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): Use
   firstName: appointment.firstName,
   lastName: appointment.lastName,
   locationName: appointment.location,
-  locationAddress: 'appointment.address', // quotes will be removed after merge https://github.com/OPN-Technologies/services/pull/1233
+  locationAddress: appointment.address,
   dateOfAppointment: appointment.dateOfAppointment,
   timeOfAppointment: appointment.timeOfAppointment,
 })
 
-// 1611784740  1611784740
+export const appointmentByBarcodeUiDTOResponse = (
+  appointment: AppointmentDBModel,
+  organizationName?: string,
+): AppointmentUiDTO & {organizationName?: string} => {
+  const timeZone = Config.get('DEFAULT_TIME_ZONE')
+  return {
+    id: appointment.id,
+    firstName: appointment.firstName,
+    lastName: appointment.lastName,
+    status: appointment.appointmentStatus,
+    barCode: appointment.barCode,
+    location: appointment.location,
+    dateTime: moment(appointment.dateTime).tz(timeZone).format(),
+    dateOfBirth: appointment.dateOfBirth,
+    deadline: moment(appointment.deadline).tz(timeZone).format(),
+    registeredNursePractitioner: appointment.registeredNursePractitioner,
+    organizationName: organizationName,
+  }
+}

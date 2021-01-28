@@ -101,6 +101,21 @@ components:
       required:
         - name
 
+    OrganizationSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        name:
+          type: string
+      required:
+        - id
+        - key
+        - name
+
     OrganizationLocation:
       type: object
       additionalProperties: false
@@ -1191,6 +1206,32 @@ components:
               nullable: true
               type: string
 
+    ResponseOfOrganizationSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationSummary'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
     ResponseOfOrganizationLocations:
       type: object
       additionalProperties: false
@@ -1735,9 +1776,28 @@ paths:
         '200':
           description: Successfully set
 
-  /organizations:
+  /enterprise/admin/api/v1/organizations:
+    get:
+      description: Get List of Organizations
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Organization Management
+      responses:
+        '200':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationSummary'
     post:
       description: Create new organization
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Organization Management
       requestBody:
         content:
           application/json:
@@ -1754,6 +1814,8 @@ paths:
   /organizations/one:
     get:
       description: Find one organization by key or id
+      tags:
+        - Organization Management
       parameters:
         - in: query
           name: key
@@ -1775,6 +1837,8 @@ paths:
   /organizations/{organizationId}/scheduling:
     post:
       description: Update an organization's mailing schedule
+      tags:
+        - Organization Management
       parameters:
         - in: path
           name: organizationId
@@ -1812,6 +1876,8 @@ paths:
   /organizations/{organizationId}/locations:
     post:
       description: Add locations to an organization
+      tags:
+        - Location Management
       parameters:
         - in: path
           name: organizationId
@@ -1842,6 +1908,8 @@ paths:
                   $ref: '#/components/schemas/ResponseOfOrganizationLocations'
     put:
       description: Update locations
+      tags:
+        - Location Management
       parameters:
         - in: path
           name: organizationId
@@ -1866,6 +1934,8 @@ paths:
                   $ref: '#/components/schemas/ResponseOfOrganizationLocations'
     get:
       description: Get organization locations
+      tags:
+        - Location Management
       parameters:
         - in: query
           name: parentLocationId
@@ -1897,6 +1967,8 @@ paths:
   /organizations/{organizationId}/locations/{locationId}:
     get:
       description: Get a location
+      tags:
+        - Location Management
       parameters:
         - in: path
           name: organizationId
@@ -1921,6 +1993,8 @@ paths:
   /organizations/{organizationId}/groups/public:
     get:
       description: Get organization groups
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -1940,6 +2014,8 @@ paths:
   /organizations/{organizationId}/groups:
     post:
       description: Add groups to an organization
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -1964,6 +2040,8 @@ paths:
                   $ref: '#/components/schemas/ResponseOfOrganizationGroups'
     get:
       description: Get organization groups
+      tags:
+        - Group Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -1983,6 +2061,8 @@ paths:
                   $ref: '#/components/schemas/ResponseOfOrganizationGroups'
     put:
       description: Move users in between groups
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -2007,6 +2087,8 @@ paths:
   /organizations/{organizationId}/stats:
     get:
       description: Get stats for one organization (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2042,6 +2124,8 @@ paths:
   /organizations/{organizationId}/stats/user-report:
     get:
       description: Get pdf for one user (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2079,6 +2163,8 @@ paths:
   /organizations/{organizationId}/stats/group-report:
     get:
       description: Get user reports for an entire group (admin access required). This may take a long time
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2113,6 +2199,8 @@ paths:
   /organizations/{organizationId}/stats/contact-trace-locations:
     get:
       description: Get contact traces locations (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2150,6 +2238,8 @@ paths:
   /organizations/{organizationId}/stats/contact-traces:
     get:
       description: Get contact traces (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2185,6 +2275,8 @@ paths:
   /organizations/{organizationId}/stats/contact-trace-exposures:
     get:
       description: Get contact traces exposures (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2220,6 +2312,8 @@ paths:
   /organizations/{organizationId}/stats/contact-trace-attestations:
     get:
       description: Get contact traces attestations (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2251,6 +2345,8 @@ paths:
   /organizations/{organizationId}/stats/family:
     get:
       description: Get family data for the given userId
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2279,6 +2375,8 @@ paths:
   /organizations/{organizationId}/stats/health:
     get:
       description: Get stats summary for one organization (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2310,6 +2408,8 @@ paths:
   /organizations/{organizationId}/groups/{groupId}/users:
     post:
       description: Add users to a group (admin access required)
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -2342,6 +2442,8 @@ paths:
   /organizations/{organizationId}/groups/{groupId}:
     delete:
       description: Remove a group
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -2370,6 +2472,8 @@ paths:
   /organizations/{organizationId}/groups/zombie-users:
     delete:
       description: Remove dead users
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -2389,6 +2493,8 @@ paths:
   /organizations/{organizationId}/groups/{groupId}/users/{userId}:
     delete:
       description: Take a user off a group (admin access required)
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -2417,6 +2523,8 @@ paths:
 
     put:
       description: Update a groupId for a user (admin access required)
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -2452,6 +2560,8 @@ paths:
   /organizations/{organizationId}/config:
     get:
       description: Get app config info for the organization
+      tags:
+        - Organization Management
       parameters:
         - in: path
           name: organizationId
@@ -2652,6 +2762,8 @@ paths:
     get:
       summary: Organization users list
       description: Get users by organizationId
+      tags:
+        - Account Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2687,6 +2799,8 @@ paths:
     post:
       summary: Create User
       description: Creates a user profile with `CreateUserByAdminRequest` payload and returns a `User`
+      tags:
+        - Account Management
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -2706,6 +2820,8 @@ paths:
     get:
       summary: Fetch matching users within an organization
       description: Returns a page of users matching filter for an organization
+      tags:
+        - Account Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2746,6 +2862,8 @@ paths:
     put:
       summary: Update User
       description: Update a user profile with `UpdateUserByAdminRequest` payload and returns a `User`
+      tags:
+        - Account Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2770,6 +2888,8 @@ paths:
   /enterprise/admin/api/v3/tags:
     post:
       description: Create NFC TagId
+      tags:
+        - Tag Management
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -2795,6 +2915,8 @@ paths:
   /enterprise/admin/api/v3/tags/{tagId}/user:
     get:
       description: Get user details by tagId
+      tags:
+        - Tag Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2818,6 +2940,8 @@ paths:
   /internal/group-report:
     post:
       description: Request a report be sent to an email
+      tags:
+        - Internal Tasks
       requestBody:
         content:
           application/json:
@@ -2834,6 +2958,8 @@ paths:
   /internal/admin/operations/create:
     post:
       description: Internal Admin Approval Creation API
+      tags:
+        - Internal Tasks
       requestBody:
         content:
           application/json:
@@ -2850,6 +2976,8 @@ paths:
   /internal/admin/operations/list:
     post:
       description: Internal Admin List API
+      tags:
+        - Internal Tasks
       requestBody:
         content:
           application/json:
@@ -2868,7 +2996,7 @@ paths:
       summary: Account Registration
       description: Creates a user profile with `CreateUserRequest` payload and returns a `User`
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -2889,7 +3017,7 @@ paths:
       security:
         - bearerAuthJWT: []
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: query
           name: searchQuery
@@ -2909,7 +3037,7 @@ paths:
       summary: User authentication
       description: Sends a magic-link to authenticate the user
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -2939,7 +3067,7 @@ paths:
       summary: User authentication
       description: Sends a magic-link to authenticate by short-code the user
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -2971,7 +3099,7 @@ paths:
       summary: Account registration confirmation
       description: Completes user registration with magic-link information
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -3004,7 +3132,7 @@ paths:
       security:
         - bearerAuthJWT: []
       tags:
-        - Account management
+        - Account Management
       responses:
         '200':
           description: Successfull retrieved
@@ -3017,7 +3145,7 @@ paths:
       summary: Account update
       description: Updates authenticated user (only first name, last name and photo)
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -3045,7 +3173,7 @@ paths:
       summary: Connected organizations
       description: Get all the authenticated-user's organizations
       tags:
-        - Account management
+        - Account Management
       responses:
         '200':
           description: Successfull retrieved
@@ -3058,7 +3186,7 @@ paths:
       summary: Organization connection
       description: Connect an organization to the authenticated user, if relation doesn't yet exist
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -3082,7 +3210,7 @@ paths:
       summary: Unlink organization
       description: Removes the authenticated user from an organization and all the groups within that organization
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: organizationId
@@ -3101,6 +3229,8 @@ paths:
     get:
       summary: Get users by group Id
       description: Get users within an group
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: groupId
@@ -3130,10 +3260,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfUsers'
+
   /enterprise/admin/api/v3/organizations/{organizationId}/groups/{groupId}:
     put:
       summary: Update group by groupId
       description: Update group data
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: groupId
@@ -3172,6 +3305,8 @@ paths:
     get:
       summary: Get groups by organizationId
       description: Get users
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -3193,7 +3328,7 @@ paths:
       summary: Connected groups
       description: Get all the authenticated-user's connected-groups within an organization
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: query
           name: organizationId
@@ -3212,7 +3347,7 @@ paths:
       summary: Group connection
       description: Connects the authenticated user to a group if not linked already
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -3240,7 +3375,7 @@ paths:
       summary: Unlink group
       description: Removes the authenticated user from a group
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: groupId
@@ -3260,7 +3395,7 @@ paths:
       summary: Account dependents
       description: Gets the authenticated user's direct dependents
       tags:
-        - Account management
+        - Account Management
       responses:
         '200':
           description: Successfull retrieved
@@ -3275,7 +3410,7 @@ paths:
         Create and/or links one or multiple user(s) to the authenticated user
         If the "dependent.id" is provided, the found dependent will be linked
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -3296,7 +3431,7 @@ paths:
       summary: Account parents
       description: Gets the authenticated user's direct-parents
       tags:
-        - Account management
+        - Account Management
       responses:
         '200':
           description: Successfull retrieved
@@ -3312,7 +3447,7 @@ paths:
         Remove a user as a dependent of the authenticated user
         Delete the dependent's data if query param `hard` is true
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: dependentId
@@ -3338,7 +3473,7 @@ paths:
       summary: Connected organizations
       description: Get all the organizations connected with an authenticated-user's dependent
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: dependentId
@@ -3357,7 +3492,7 @@ paths:
       summary: Organization connection
       description: Connect an organization to a dependent, if relation doesn't yet exist
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: dependentId
@@ -3387,7 +3522,7 @@ paths:
       summary: Unlink dependent from an organization
       description: Removes the authenticated user's dependent from an organization and all the groups within that organization
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: dependentId
@@ -3412,7 +3547,7 @@ paths:
       summary: Connected groups
       description: Get all the connected-groups of a dependent
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: query
           name: dependentId
@@ -3431,7 +3566,7 @@ paths:
       summary: Group connection
       description: Connects an authenticated-user's dependent to a group if not linked already
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: dependentId
@@ -3464,7 +3599,7 @@ paths:
       summary: Update Group
       description: Update a user's dependent group within the same organization
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: dependentId

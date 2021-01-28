@@ -49,6 +49,10 @@ export class OrganizationService {
     )
   }
 
+  async getOrganizations(): Promise<Organization[]> {
+    return this.organizationRepository.fetchAll()
+  }
+
   async addLocations(
     organizationId: string,
     locations: OrganizationLocation[],

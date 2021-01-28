@@ -1,15 +1,15 @@
 /**
- * This script just overwrite Client Emails in user collections so that no notfication is sent by mistake
+ * This script to copy Test Results to PCR Results Collection
  */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
-import {makeTimeEndOfTheDayMoment} from '../packages/common/src/utils/utils'
-import moment from 'moment'
+import moment from 'moment-timezone'
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
   credential: credential.cert(serviceAccount),
 })
+console.log(serviceAccount.project_id)
 
 const database = firestore()
 
@@ -23,14 +23,8 @@ type Result = {
   value: unknown
 }
 
-const timeZone = Config.get('DEFAULT_TIME_ZONE')
-
-export const makeDeadline = (utcDateTime: moment.Moment): string => {
-  const tzDateTime = utcDateTime.clone().tz(timeZone)
-  const deadline = makeTimeEndOfTheDayMoment(
-    tzDateTime.hours() > 12 ? tzDateTime.add(1, 'd') : tzDateTime,
-  )
-  return deadline.utc().format()
+export const makeFirestoreTimestamp = (date: Date): firestore.Timestamp => {
+  return firestore.Timestamp.fromDate(date)
 }
 
 export async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]> {
@@ -62,7 +56,8 @@ async function updateTestResults(): Promise<Result[]> {
       .get()
 
     offset += testResultSnapshot.docs.length
-    hasMore = !testResultSnapshot.empty
+    //hasMore = !testResultSnapshot.empty
+    hasMore = false
 
     for (const testResult of testResultSnapshot.docs) {
       const promises = []
@@ -77,41 +72,99 @@ async function updateTestResults(): Promise<Result[]> {
 async function createPcrTestResult(
   snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
 ) {
-  const testResult = snapshot.data()
+  const legacyTestResultId = snapshot.id
+  const legacyTestResult = snapshot.data()
+  const appointmentInDb = await database
+    .collection('appointments')
+    .where('acuityAppointmentId', '==', legacyTestResult.appointmentId)
+    .get()
 
+  if (!appointmentInDb || appointmentInDb.docs.length == 0) {
+    console.warn(`AcuityAppointmentId: ${legacyTestResult.appointmentId} doesn't exists`)
+    return Promise.reject()
+  }
+
+  if (appointmentInDb.docs.length > 1) {
+    console.warn(`AppointmentID: ${legacyTestResult.appointmentId} exists multiple times`)
+    return Promise.reject()
+  }
+
+  //Only Single Appointment
+  const appointment = appointmentInDb.docs[0]
+  const pcrResult =
+    legacyTestResult.result === '2019-nCoV Detected' ? 'Positive' : legacyTestResult.result
   try {
-    return database.collection('pcr-test-results').add({
-      appointmentId: testResult.appointmentId,
-      barCode: testResult.barCode,
-      dateOfAppointment: testResult.dateOfAppointment,
+    const convertedDeadline = appointment.data().deadline._seconds
+      ? appointment.data().deadline
+      : makeFirestoreTimestamp(moment(appointment.data().deadline).toDate())
+    const pcrTestResult = await database.collection('pcr-test-results').add({
+      appointmentId: appointment.id,
+      barCode: legacyTestResult.barCode,
+      dateOfAppointment: legacyTestResult.dateOfAppointment,
       displayForNonAdmins: true,
-      firstName: testResult.firstName,
-      lastName: testResult.lastName,
-      organizationId: testResult.organizationId,
-      result: testResult.result,
+      firstName: legacyTestResult.firstName,
+      lastName: legacyTestResult.lastName,
+      organizationId: legacyTestResult.organizationId,
+      result: pcrResult,
       linkedBarCodes: [],
-      deadline: makeDeadline(moment(testResult.dateTime)),
+      deadline: convertedDeadline,
       resultSpecs: {
         action: 'SendThisResult',
-        autoResult: testResult.result,
-        barCode: testResult.barCode,
-        calRed61Ct: testResult.calRed61Ct,
-        calRed61RdRpGene: testResult.calRed61RdRpGene,
-        famCt: testResult.famCt,
-        famEGene: testResult.famEGene,
-        hexCt: testResult.hexCt,
-        hexIC: testResult.hexIC,
+        autoResult: pcrResult,
+        calRed61Ct: legacyTestResult.calRed61Ct,
+        calRed61RdRpGene: legacyTestResult.calRed61RdRpGene,
+        famCt: legacyTestResult.famCt,
+        famEGene: legacyTestResult.famEGene,
+        hexCt: legacyTestResult.hexCt,
+        hexIC: legacyTestResult.hexIC,
         notify: true,
-        quasar670Ct: testResult.quasar670Ct,
-        quasar670NGene: testResult.quasar670NGene,
-        resultDate: testResult.resultDate,
+        quasar670Ct: legacyTestResult.quasar670Ct,
+        quasar670NGene: legacyTestResult.quasar670NGene,
+        resultDate: legacyTestResult.resultDate,
       },
       timestamps: {
-        createdAt: testResult.timestamps.createdAt,
-        updatedAt: testResult.timestamps.updatedAt,
+        createdAt: legacyTestResult.timestamps.createdAt,
+        updatedAt: legacyTestResult.timestamps.updatedAt,
+        migrations: {
+          testResultsToPCRResults: firestore.FieldValue.serverTimestamp(),
+        },
       },
+      updatedAt: legacyTestResult.timestamps.updatedAt | legacyTestResult.timestamps.createdAt,
       waitingResult: false,
     })
+    //Update Appointments
+    updateAppointment(appointment, pcrResult)
+    if (pcrTestResult.id) {
+      console.info(`Successfully Copied results for ${legacyTestResultId} to ${pcrTestResult.id}`)
+      return Promise.resolve()
+    }
+    console.warn(`Failed to Save pcrTestResult`)
+    return Promise.reject()
+  } catch (error) {
+    console.warn(error)
+    throw error
+  }
+}
+
+async function updateAppointment(
+  snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
+  latestResult: string,
+) {
+  try {
+    return await snapshot.ref.set(
+      {
+        latestResult: latestResult,
+        appointmentStatus: 'Reported',
+        timestamps: {
+          migrations: {
+            testResultsToPCRResults: firestore.FieldValue.serverTimestamp(),
+          },
+        },
+      },
+      {
+        merge: true,
+      },
+    )
   } catch (error) {
     throw error
   }
@@ -122,8 +175,8 @@ async function main() {
     console.log('Migration Starting')
     const results = await updateTestResults()
     results.forEach((result) => {
+      totalCount += 1
       if (result.status === ResultStatus.Fulfilled) {
-        // @ts-ignore - We will always have a value if the status is fulfilled
         if (result.value) {
           successCount += 1
         }
@@ -131,19 +184,19 @@ async function main() {
         failureCount += 1
       }
     })
-
     console.log(`Succesfully updated ${successCount} `)
   } catch (error) {
     console.error('Error running migration', error)
   } finally {
-    if (failureCount > 0) {
-      console.warn(`Failed updating ${failureCount} `)
-    }
+    console.warn(`Failed updating ${failureCount} `)
+    console.log(`Total Appointments Processed: ${totalCount} `)
   }
 }
 
 // Maximum batch size to query for
-const limit = Number(Config.get('MIGRATION_DOCUMENTS_LIMIT')) || 500
 let successCount = 0
 let failureCount = 0
+let totalCount = 0
+const limit = 50
+
 main().then(() => console.log('Script Complete \n'))

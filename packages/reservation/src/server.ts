@@ -46,6 +46,7 @@ const app = new App({
     new ProcessPCRResultController(),
     new PCRTestResultController(),
     new AppointmentControllerV2(),
+    new AppointmentController(),
     new BookingLocationController(),
     new AppointmentAvailabilityController(),
     new AppointmentController(),

@@ -112,7 +112,7 @@ class PCRTestResultController implements IControllerBase {
   createPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getAdminId(res.locals.authenticatedUser)
-      const data = req.body as PCRTestResultRequestData
+      const {barCode, ...data} = req.body as PCRTestResultRequestData
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
         .tz(timeZone)
@@ -133,7 +133,7 @@ class PCRTestResultController implements IControllerBase {
 
       const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
         {
-          barCode: data.barCode,
+          barCode,
           resultSpecs: data,
           adminId,
         },
@@ -183,6 +183,7 @@ class PCRTestResultController implements IControllerBase {
                       dateOfAppointment: linkedAppointment
                         ? linkedAppointment.dateOfAppointment
                         : '',
+                      barCode: linkedResult.barCode,
                     }
                   }),
                 )
@@ -193,6 +194,7 @@ class PCRTestResultController implements IControllerBase {
                     reSampleNumber: testSame.reSampleNumber,
                     runNumber: testSame.runNumber,
                     dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
+                    barCode: testSame.barCode,
                   },
                   ...linkedSameTests,
                 ]

@@ -1,6 +1,6 @@
 import DataModel from './datamodel.base'
 import crypto from 'crypto'
-import {IdentifiersSchema} from '../schemas/identifiers'
+import {IdentifiersSchema} from '../interfaces/identifiers'
 
 export class IdentifiersModel extends DataModel<IdentifiersSchema> {
   readonly rootPath = '__identifiers'

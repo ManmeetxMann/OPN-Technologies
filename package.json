@@ -6,7 +6,7 @@
 		"lint-all": "eslint 'packages/**/**/*.ts' 'migrations/**/*.ts' --ignore-path .gitignore --max-warnings=0",
 		"lint-fix-all": "eslint 'packages/**/**/*.ts' 'migrations/**/*.ts' --ignore-path .gitignore --max-warnings=0 --fix",
 		"test-all": "lerna run test --stream",
-		"test:coverage-all": "lerna run coverage --stream",
+		"test:coverage-all": "lerna run test:coverage --stream",
 		"install-all": "lerna bootstrap --hoist",
 		"initialize-all": "lerna run initialize --stream",
 		"dev-all": "lerna run dev --stream",

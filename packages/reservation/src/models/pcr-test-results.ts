@@ -19,11 +19,13 @@ export enum PCRResultActionsAllowedResend {
 }
 
 export enum ResultReportStatus {
-  RequestReceived = 'RequestReceived',
-  Processing = 'Processing',
   Failed = 'Failed',
-  SuccessfullyReported = 'SuccessfullyReported',
-  RequestIgnoredAsPerRequest = 'RequestIgnoredAsPerRequest',
+  Processing = 'Processing',
+  RequestReceived = 'RequestReceived',
+  SentReRunRequest = 'SentReRunRequest',
+  SentReSampleRequest = 'SentReSampleRequest',
+  SentResult = 'SentResult',
+  Skipped = 'Skipped',
 }
 
 type PCRResultSpecs = {
@@ -66,7 +68,7 @@ type AppointmentDataForPCRResult = {
   firstName: string
   lastName: string
   appointmentId: string
-  organizationId: string
+  organizationId?: string
   dateOfAppointment: string
 }
 
@@ -112,6 +114,7 @@ export type PCRResults = {
   reSampleNumber: string
   runNumber: string
   dateOfAppointment: string
+  barCode: string
 }
 
 export type PCRTestResultEmailDTO = Omit<
@@ -167,12 +170,13 @@ export const PCRTestResultHistoryResponse = (
     hexIC: result.hexIC,
     hexCt: result.hexCt,
     result: result.result,
-    reSampleNumber: result.reSampleNumber,
-    runNumber: result.runNumber,
+    barCode: result.barCode,
+    reSampleNumber: result.reSampleNumber ? `S${result.reSampleNumber}` : '',
+    runNumber: result.runNumber ? `R${result.runNumber}` : '',
     dateOfAppointment: result.dateOfAppointment,
   })),
-  reSampleNumber: pcrTests.reSampleNumber,
-  runNumber: pcrTests.runNumber,
+  reSampleNumber: pcrTests.reSampleNumber ? `S${pcrTests.reSampleNumber}` : '',
+  runNumber: pcrTests.runNumber ? `R${pcrTests.runNumber}` : '',
   reason: pcrTests.reason,
   dateOfAppointment: pcrTests.dateOfAppointment,
 })
@@ -208,11 +212,11 @@ export type PCRTestResultByDeadlineListDTO = {
   barCode: string
   vialLocation: string
   status: AppointmentStatus
-  dateOfAppointment: string
   deadline: string
   testRunId: string
   runNumber: string
   reSampleNumber: string
+  dateTime: string
 }
 
 export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResultListDTO => ({
@@ -228,6 +232,7 @@ export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResu
 export type pcrTestResultsDTO = {
   barCode: string
   status: ResultReportStatus
+  details?: string
 }
 
 export const pcrTestResultsResponse = (
@@ -235,4 +240,5 @@ export const pcrTestResultsResponse = (
 ): pcrTestResultsDTO => ({
   barCode: pcrTestResult.data.barCode,
   status: pcrTestResult.status,
+  details: pcrTestResult.details,
 })

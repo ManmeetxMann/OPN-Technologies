@@ -1,7 +1,7 @@
 import {firestore} from 'firebase-admin'
 import {PassportStatus} from '../../../passport/src/models/passport'
 import {Range} from '../../../common/src/types/range'
-import {User} from '../../../common/src/data/user'
+import {User, UserDependant} from '../../../common/src/data/user'
 
 export type AccessWithPassportStatusAndUser = Access & {
   user: User
@@ -28,6 +28,23 @@ export type Access = {
   delegateAdminUserId?: string
 }
 
+export type AccessWithDependantNames = Omit<Access, 'dependants'> & {
+  dependants: UserDependant[]
+}
+
+export type AccessDTO = {
+  token: string
+  locationId: string
+  enteredAt: string | null
+  exitAt: string | null
+  includesGuardian: boolean
+  dependants: {
+    id: string
+    firstName: string
+    lastName: string
+  }[]
+}
+
 export type AccessFilter = {
   userIds?: string[]
   locationId?: string
@@ -51,3 +68,16 @@ export type AccessStatsCheckInsPerHour = {
   date: string
   count: number
 }
+
+export const accessDTOResponse = (access: AccessWithDependantNames): AccessDTO => ({
+  token: access.token,
+  locationId: access.locationId,
+  enteredAt: access.enteredAt,
+  exitAt: access.exitAt,
+  includesGuardian: access.includesGuardian,
+  dependants: access.dependants?.map((dep) => ({
+    id: dep.id,
+    firstName: dep.firstName,
+    lastName: dep.lastName,
+  })),
+})
