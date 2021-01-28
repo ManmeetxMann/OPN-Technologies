@@ -833,7 +833,6 @@ export class PCRTestResultsService {
         deadline: pcr.deadline.toDate().toISOString(),
         status: appointment?.appointmentStatus,
         testRunId: pcr.testRunId,
-        dateOfAppointment: pcr.dateOfAppointment,
         vialLocation: appointment?.vialLocation,
         runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
         reSampleNumber: pcr.reSampleNumber ? `S${pcr.reSampleNumber}` : null,
