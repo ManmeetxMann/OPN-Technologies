@@ -30,7 +30,8 @@ export enum ResultTypes {
   ReSampleRequested = 'ReSampleRequested',
 }
 
-export type AppointmentModelBase = {
+export type AppointmentDBModel = {
+  id: string
   acuityAppointmentId: number
   appointmentStatus: AppointmentStatus
   barCode: string
@@ -58,15 +59,15 @@ export type AppointmentModelBase = {
   addressForTesting: string
   additionalAddressNotes: string
   couponCode: string
+  travelID?: string
+  travelIDIssuingCountry?: string
+  ohipCard?: string
+  swabMethod?: string
   shareTestResultWithEmployer: boolean
   readTermsAndConditions: boolean
   receiveResultsViaEmail: boolean
   receiveNotificationsFromGov: boolean
   userId?: string
-}
-
-export type AppointmentDBModel = AppointmentModelBase & {
-  id: string
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard

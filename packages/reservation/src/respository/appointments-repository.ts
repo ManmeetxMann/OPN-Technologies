@@ -2,7 +2,6 @@ import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 import {
   AppointmentDBModel,
-  AppointmentModelBase,
   AppointmentStatusHistoryDb,
 } from '../models/appointment'
 
@@ -14,7 +13,7 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     super(dataStore)
   }
 
-  public async save(appointments: AppointmentModelBase): Promise<AppointmentDBModel> {
+  public async save(appointments: Omit<AppointmentDBModel, 'id'>): Promise<AppointmentDBModel> {
     return this.add(appointments)
   }
 }

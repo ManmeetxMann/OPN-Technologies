@@ -10,7 +10,6 @@ import {
   AppointmentByOrganizationRequest,
   AppointmentChangeToRerunRequest,
   AppointmentDBModel,
-  AppointmentModelBase,
   AppointmentStatus,
   AppointmentStatusHistoryDb,
   CreateAppointmentRequest,
@@ -252,7 +251,7 @@ export class AppoinmentService {
     },
   ): Promise<AppointmentDBModel> {
     const data = this.appointmentFromAcuity(acuityAppointment, additionalData)
-    return this.saveAppointmentData(data)
+    return this.appointmentsRepository.save(data)
   }
 
   updateAppointmentFromAcuity(
@@ -282,7 +281,7 @@ export class AppoinmentService {
       couponCode?: string
       userId?: string
     },
-  ): AppointmentModelBase {
+  ): Omit<AppointmentDBModel, 'id'> {
     const utcDateTime = moment(acuityAppointment.datetime).utc()
     const dateTimeTz = moment(acuityAppointment.datetime).tz(timeZone)
 
@@ -328,6 +327,10 @@ export class AppoinmentService {
       address: acuityAppointment.address,
       addressForTesting: acuityAppointment.addressForTesting,
       addressUnit: acuityAppointment.addressUnit,
+      travelID: acuityAppointment.travelID,
+      travelIDIssuingCountry: acuityAppointment.travelIDIssuingCountry,
+      ohipCard: acuityAppointment.ohipCard,
+      swabMethod: acuityAppointment.swabMethod,
       readTermsAndConditions: acuityAppointment.readTermsAndConditions,
       receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
       receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
@@ -336,10 +339,6 @@ export class AppoinmentService {
       ...(latestResult ? {latestResult} : {}),
       userId,
     }
-  }
-
-  async saveAppointmentData(appointment: AppointmentModelBase): Promise<AppointmentDBModel> {
-    return this.appointmentsRepository.save(appointment)
   }
 
   async getNextBarCodeNumber(): Promise<string> {
