@@ -824,21 +824,31 @@ export class PCRTestResultsService {
     const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
     const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
 
-    return pcrResults.map((pcr) => {
-      const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
+    const pcrFiltred = []
 
-      return {
-        id: pcr.id,
-        barCode: pcr.barCode,
-        deadline: pcr.deadline.toDate().toISOString(),
-        status: appointment?.appointmentStatus,
-        testRunId: pcr.testRunId,
-        vialLocation: appointment?.vialLocation,
-        runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
-        reSampleNumber: pcr.reSampleNumber ? `S${pcr.reSampleNumber}` : null,
-        dateTime: appointment.dateTime,
+    pcrResults.map((pcr) => {
+      const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
+      const allowedAppointmentStatus = [
+        AppointmentStatus.InProgress,
+        AppointmentStatus.ReRunRequired,
+        AppointmentStatus.Received,
+      ]
+      if (appointment && allowedAppointmentStatus.includes(appointment.appointmentStatus)) {
+        pcrFiltred.push({
+          id: pcr.id,
+          barCode: pcr.barCode,
+          deadline: pcr.deadline.toDate(),
+          status: appointment?.appointmentStatus,
+          testRunId: pcr.testRunId,
+          vialLocation: appointment?.vialLocation,
+          runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
+          reSampleNumber: pcr.reSampleNumber ? `S${pcr.reSampleNumber}` : null,
+          dateTime: appointment.dateTime,
+        })
       }
     })
+
+    return pcrFiltred
   }
 
   async getReportStatus(action: PCRResultActions): Promise<ResultReportStatus> {
