@@ -373,6 +373,18 @@ abstract class AcuityScheduling {
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_RECEIVE_NOTIFICATIONS_FROM_GOV'))) {
             appointment.receiveNotificationsFromGov = field.value === 'yes'
           }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_TRAVEL_ID'))) {
+            appointment.travelID = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_TRAVEL_ID_ISSUEING_COUNTRY'))) {
+            appointment.travelIDIssuingCountry = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_OHIP_CARD'))) {
+            appointment.ohipCard = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_SWAB_METHOD'))) {
+            appointment.swabMethod = field.value
+          }
         })
       })
     }

@@ -90,32 +90,36 @@ type AppointmentAcuityForm = {
 
 //Response From Acuity
 export type AppointmentAcuityResponse = {
-  id: number
-  date: string
-  time: string
-  forms: Array<AppointmentAcuityForm>
-  certificate: string
-  location: string
-  organizationId: string
-  datetime: string
-  labels: LabelsAcuityResponse[]
-  firstName: string
-  lastName: string
-  email: string
-  phone: number
-  dateOfBirth: string
-  registeredNursePractitioner: string
+  additionalAddressNotes: string
+  address: string
+  addressForTesting: string
+  addressUnit: string
   barCode: string
   canceled: boolean
   canClientCancel: boolean
-  address: string
-  addressUnit: string
-  addressForTesting: string
-  additionalAddressNotes: string
-  shareTestResultWithEmployer: boolean
+  certificate: string
+  date: string
+  dateOfBirth: string
+  datetime: string
+  email: string
+  firstName: string
+  forms: Array<AppointmentAcuityForm>
+  id: number
+  labels: LabelsAcuityResponse[]
+  lastName: string
+  location: string
+  ohipCard: string
+  organizationId?: string
+  phone: number
   readTermsAndConditions: boolean
-  receiveResultsViaEmail: boolean
   receiveNotificationsFromGov: boolean
+  receiveResultsViaEmail: boolean
+  registeredNursePractitioner?: string
+  shareTestResultWithEmployer: boolean
+  swabMethod?: string
+  time: string
+  travelID?: string
+  travelIDIssuingCountry?: string
 }
 
 export type LabelsAcuityResponse = {
