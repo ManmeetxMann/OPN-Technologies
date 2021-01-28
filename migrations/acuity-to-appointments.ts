@@ -43,8 +43,9 @@ const acuityFormFieldIdsNonProd = {
   additionalAddressNotes: 9112814,
   travelId: 9158228,
   travelIdIssueingCountry: 9158231,
-  ohipCard: 9158225,
-  swabMethod: 9158271
+  healthCardForOrgs: 9158793,
+  healthCardForNonOrgs: 9158796,
+  swabMethod: 9158271,
 }
 
 const acuityFormFieldIdsProd = {
@@ -64,8 +65,9 @@ const acuityFormFieldIdsProd = {
   additionalAddressNotes: 8621732,
   travelId: 'XXX',
   travelIdIssueingCountry: 'XXX',
-  ohipCard: 'XXX',
-  swabMethod: 'XXX'
+  healthCardForOrgs: 'XXX',
+  healthCardForNonOrgs: 'XXX',
+  swabMethod: 'XXX',
 }
 
 const acuityHomeAddressFormId = ACUITY_ENV_NON_PROD ? 1644637 : 1585198 //TEST:1644637 PROD:1585198
@@ -74,8 +76,7 @@ const acuityBirthDayFormId = ACUITY_ENV_NON_PROD ? 1567398 : 1554251 //TEST:1567
 const acuityTermsAndConditionFormId = ACUITY_ENV_NON_PROD ? 1644640 : 1554370 //TEST:1644640 PROD:1554370
 const acuityShareTestResultWithEmployerFormId = ACUITY_ENV_NON_PROD ? 1649724 : 1576924 //TEST:XX PROD:1576924
 const acuityMobileUnitFormId = ACUITY_ENV_NON_PROD ? 1649727 : 1564716 //TEST:XX PROD:1564716
-const acuityTravelDetailsFormId = ACUITY_ENV_NON_PROD ? 1657461 : 1657461 
-
+//const acuityTravelDetailsFormId = ACUITY_ENV_NON_PROD ? 1657461 : 1657461
 
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
 
