@@ -48,7 +48,6 @@ import {
 import testResultPDFTemplate from '../templates/pcrTestResult'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {makeFirestoreTimestamp} from '../utils/datetime.helper'
-import App from 'packages/common/src/express/app'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -206,7 +205,7 @@ export class PCRTestResultsService {
         value: barCode,
       })
     }
-    console.log(pcrTestResultsQuery)
+
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
 
     const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
@@ -447,7 +446,6 @@ export class PCRTestResultsService {
     )
 
     //Update PCR Test results
-    console.log('Update PCR Test results', appointment.deadline)
     const pcrResultDataForDbUpdate = {
       ...resultData,
       deadline: makeFirestoreTimestamp(appointment.deadline),
@@ -826,11 +824,15 @@ export class PCRTestResultsService {
     const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
     const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
 
-    const pcrFiltred = [] 
-    
+    const pcrFiltred = []
+
     pcrResults.map((pcr) => {
       const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
-      const allowedAppointmentStatus = [AppointmentStatus.InProgress, AppointmentStatus.ReRunRequired, AppointmentStatus.Received]
+      const allowedAppointmentStatus = [
+        AppointmentStatus.InProgress,
+        AppointmentStatus.ReRunRequired,
+        AppointmentStatus.Received,
+      ]
       if (appointment && allowedAppointmentStatus.includes(appointment.appointmentStatus)) {
         pcrFiltred.push({
           id: pcr.id,
