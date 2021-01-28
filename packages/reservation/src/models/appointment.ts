@@ -106,7 +106,7 @@ export type AppointmentAcuityResponse = {
   labels: LabelsAcuityResponse[]
   lastName: string
   location: string
-  ohipCard: string
+  ohipCard?: string
   organizationId?: string
   phone: number
   readTermsAndConditions: boolean
