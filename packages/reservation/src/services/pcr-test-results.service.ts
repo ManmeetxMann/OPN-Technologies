@@ -783,7 +783,7 @@ export class PCRTestResultsService {
       barCode: savedAppointment.barCode,
       dateOfAppointment: savedAppointment.dateOfAppointment,
       displayForNonAdmins: true,
-      deadline: makeFirestoreTimestamp(savedAppointment.deadline),
+      deadline: savedAppointment.deadline,
       firstName: appointment.firstName,
       lastName: appointment.lastName,
       linkedBarCodes: linkedBarcodes,

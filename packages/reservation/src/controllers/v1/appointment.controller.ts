@@ -22,7 +22,7 @@ class AppointmentController implements IControllerBase {
 
     const selfAuth = authorizationMiddleware([RequiredUserPermission.RegUser])
 
-    innerRouter.get(this.path + '/self', selfAuth, this.getUserAppointment)
+    innerRouter.get(this.path + '/api/v1/appointments/self', selfAuth, this.getUserAppointment)
     innerRouter.post(
       this.path + '/api/v1/appointments',
       authorizationMiddleware([RequiredUserPermission.RegUser]),
