@@ -448,7 +448,7 @@ export class PCRTestResultsService {
     //Update PCR Test results
     const pcrResultDataForDbUpdate = {
       ...resultData,
-      deadline: makeFirestoreTimestamp(appointment.deadline),
+      deadline: appointment.deadline,
       result: finalResult,
       firstName: appointment.firstName,
       lastName: appointment.lastName,
@@ -497,7 +497,7 @@ export class PCRTestResultsService {
       barCode: appointment.barCode,
       dateOfAppointment: appointment.dateOfAppointment,
       displayForNonAdmins: true,
-      deadline: makeFirestoreTimestamp(appointment.deadline),
+      deadline: appointment.deadline,
       firstName: appointment.firstName,
       lastName: appointment.lastName,
       linkedBarCodes: [],
@@ -783,7 +783,7 @@ export class PCRTestResultsService {
       barCode: savedAppointment.barCode,
       dateOfAppointment: savedAppointment.dateOfAppointment,
       displayForNonAdmins: true,
-      deadline: makeFirestoreTimestamp(savedAppointment.deadline),
+      deadline: savedAppointment.deadline,
       firstName: appointment.firstName,
       lastName: appointment.lastName,
       linkedBarCodes: linkedBarcodes,

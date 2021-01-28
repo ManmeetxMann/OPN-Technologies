@@ -17,7 +17,6 @@ import {
 } from '../../../models/appointment'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {makeFirestoreTimestamp} from '../../../utils/datetime.helper'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -187,7 +186,7 @@ class AppointmentWebhookController implements IControllerBase {
             barCode: barCode,
             dateOfAppointment: updatedAppointment.dateOfAppointment,
             displayForNonAdmins: true,
-            deadline: makeFirestoreTimestamp(updatedAppointment.deadline),
+            deadline: updatedAppointment.deadline,
             firstName: appointment.firstName,
             lastName: appointment.lastName,
             linkedBarCodes: linkedBarcodes,

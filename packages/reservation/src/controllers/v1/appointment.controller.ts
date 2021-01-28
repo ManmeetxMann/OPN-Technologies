@@ -19,6 +19,10 @@ class AppointmentController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
+
+    const selfAuth = authorizationMiddleware([RequiredUserPermission.RegUser])
+
+    innerRouter.get(this.path + '/api/v1/appointments/self', selfAuth, this.getUserAppointment)
     innerRouter.post(
       this.path + '/api/v1/appointments',
       authorizationMiddleware([RequiredUserPermission.RegUser]),
@@ -27,6 +31,19 @@ class AppointmentController implements IControllerBase {
 
     this.router.use('/', innerRouter)
   }
+
+  getUserAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = getUserId(res.locals.authenticatedUser)
+
+      const result = await this.appointmentService.getAppointmentByUserId(userId)
+
+      res.json(actionSucceed(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
   createAppointments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {
