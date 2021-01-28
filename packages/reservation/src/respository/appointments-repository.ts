@@ -1,9 +1,6 @@
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
-import {
-  AppointmentDBModel,
-  AppointmentStatusHistoryDb,
-} from '../models/appointment'
+import {AppointmentDBModel, AppointmentStatusHistoryDb} from '../models/appointment'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
