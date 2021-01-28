@@ -49,21 +49,21 @@ class WebhookController implements IControllerBase {
           dataForUpdate['organizationId'] = packageResult.organizationId
         } else {
           console.log(
-            `WebhookController: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`,
+            `LegacyWebhookController: NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`,
           )
         }
       }
 
       if (!isEmpty(dataForUpdate)) {
         console.log(
-          `WebhookController: SaveToAcuity AppoinmentID: ${id} barCodeNumber: ${JSON.stringify(
+          `LegacyWebhookController: SaveToAcuity AppoinmentID: ${id} barCodeNumber: ${JSON.stringify(
             dataForUpdate,
           )}`,
         )
         await this.appoinmentService.updateAppointment(id, dataForUpdate)
       } else {
         console.log(
-          `WebhookController: NoUpdateToAcuity AppoinmentID: ${id} barCodeNumber: ${appointment.barCode}  organizationId: ${appointment.organizationId}`,
+          `LegacyWebhookController: NoUpdateToAcuity AppoinmentID: ${id} barCodeNumber: ${appointment.barCode}  organizationId: ${appointment.organizationId}`,
         )
       }
 

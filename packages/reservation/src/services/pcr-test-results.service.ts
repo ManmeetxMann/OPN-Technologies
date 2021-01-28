@@ -756,14 +756,16 @@ export class PCRTestResultsService {
           }
         } catch (error) {
           console.error(
-            `WebhookController: Coupon Code: ${couponCode} Last BarCode: ${
+            `PCRTestResultsService: Coupon Code: ${couponCode} Last BarCode: ${
               coupon.lastBarcode
             }. No Test Results to Link. ${error.toString()}`,
           )
         }
-        console.log(`WebhookController: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`)
+        console.log(
+          `PCRTestResultsService: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`,
+        )
       } else {
-        console.log(`WebhookController: ${couponCode} is not coupon.`)
+        console.log(`PCRTestResultsService: ${couponCode} is not coupon.`)
       }
     }
     return linkedBarcodes

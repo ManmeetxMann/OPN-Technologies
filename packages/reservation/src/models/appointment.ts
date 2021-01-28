@@ -30,7 +30,8 @@ export enum ResultTypes {
   ReSampleRequested = 'ReSampleRequested',
 }
 
-export type AppointmentModelBase = {
+export type AppointmentDBModel = {
+  id: string
   acuityAppointmentId: number
   appointmentStatus: AppointmentStatus
   barCode: string
@@ -41,13 +42,11 @@ export type AppointmentModelBase = {
   deadline: string
   email: string
   firstName: string
-  inProgressAt?: Date
   lastName: string
   location?: string
   organizationId?: string
   packageCode?: string
   phone: number
-  receivedAt?: Date
   registeredNursePractitioner?: string
   latestResult: ResultTypes
   timeOfAppointment: string
@@ -60,15 +59,15 @@ export type AppointmentModelBase = {
   addressForTesting: string
   additionalAddressNotes: string
   couponCode: string
+  travelID?: string
+  travelIDIssuingCountry?: string
+  ohipCard?: string
+  swabMethod?: string
   shareTestResultWithEmployer: boolean
   readTermsAndConditions: boolean
   receiveResultsViaEmail: boolean
   receiveNotificationsFromGov: boolean
   userId?: string
-}
-
-export type AppointmentDBModel = AppointmentModelBase & {
-  id: string
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -90,32 +89,36 @@ type AppointmentAcuityForm = {
 
 //Response From Acuity
 export type AppointmentAcuityResponse = {
-  id: number
-  date: string
-  time: string
-  forms: Array<AppointmentAcuityForm>
-  certificate: string
-  location: string
-  organizationId: string
-  datetime: string
-  labels: LabelsAcuityResponse[]
-  firstName: string
-  lastName: string
-  email: string
-  phone: number
-  dateOfBirth: string
-  registeredNursePractitioner: string
+  additionalAddressNotes: string
+  address: string
+  addressForTesting: string
+  addressUnit: string
   barCode: string
   canceled: boolean
   canClientCancel: boolean
-  address: string
-  addressUnit: string
-  addressForTesting: string
-  additionalAddressNotes: string
-  shareTestResultWithEmployer: boolean
+  certificate: string
+  date: string
+  dateOfBirth: string
+  datetime: string
+  email: string
+  firstName: string
+  forms: Array<AppointmentAcuityForm>
+  id: number
+  labels: LabelsAcuityResponse[]
+  lastName: string
+  location: string
+  ohipCard?: string
+  organizationId?: string
+  phone: number
   readTermsAndConditions: boolean
-  receiveResultsViaEmail: boolean
   receiveNotificationsFromGov: boolean
+  receiveResultsViaEmail: boolean
+  registeredNursePractitioner?: string
+  shareTestResultWithEmployer: boolean
+  swabMethod?: string
+  time: string
+  travelID?: string
+  travelIDIssuingCountry?: string
 }
 
 export type LabelsAcuityResponse = {
