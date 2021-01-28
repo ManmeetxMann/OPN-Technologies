@@ -22,6 +22,7 @@ import AppointmentControllerV2 from './controllers/v2/admin/appointment.controll
 import AppointmentWebhookController from './controllers/v1/acuity_webhook/appoinments.controller'
 import BookingLocationController from './controllers/v1/booking-locations.controller'
 import AppointmentAvailabilityController from './controllers/v1/appointment-availability.controller'
+import AppointmentController from './controllers/v1/appointment.controller'
 
 //import * as debugClient from '@google-cloud/debug-agent'
 //debugClient.start({allowExpressions: true})
@@ -45,6 +46,7 @@ const app = new App({
     new ProcessPCRResultController(),
     new PCRTestResultController(),
     new AppointmentControllerV2(),
+    new AppointmentController(),
     new BookingLocationController(),
     new AppointmentAvailabilityController(),
   ],

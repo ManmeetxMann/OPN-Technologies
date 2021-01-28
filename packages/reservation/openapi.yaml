@@ -1827,9 +1827,86 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
+  /reservation/api/v1/appointments:
+    post:
+      description: Create Appointment
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                slotId:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    code:
+                      type: number
+                    number:
+                      type: number
+                dateOfBirth:
+                  type: string
+                  format: date
+                address:
+                  type: string
+                addressUnit:
+                  type: string
+                addressForTesting:
+                  type: string
+                additionalAddressNotes:
+                  type: string
+                couponCode:
+                  type: string
+                shareTestResultWithEmployer:
+                  type: boolean
+                agreeToConductFHHealthAssessment:
+                  type: boolean
+                readTermsAndConditions:
+                  type: boolean
+                receiveResultsViaEmail:
+                  type: boolean
+                receiveNotificationsFromGov:
+                  type: boolean
+              required:
+                - slotId
+                - firstName
+                - lastName
+                - email
+                - dateOfBirth
+                - address
+                - addressUnit
+                - addressForTesting
+                - additionalAddressNotes
+                - couponCode
+                - shareTestResultWithEmployer
+                - readTermsAndConditions
+                - agreeToConductFHHealthAssessment
+                - receiveResultsViaEmail
+                - receiveNotificationsFromGov
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
   /reservation/api/v1/availability/times:
     get:
-      description: Get Appointment Available Times 
+      description: Get Appointment Available Times
       tags:
         - Appointment Booking
       security:
@@ -1858,7 +1935,7 @@ paths:
                   data:
                     type: object
                     additionalProperties: false
-                    properties: 
+                    properties:
                       totalSlotsAvailable:
                         type: number
                       times:

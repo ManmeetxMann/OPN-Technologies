@@ -42,6 +42,7 @@ import {
   AppointmentStatus,
   DeadlineLabel,
   ResultTypes,
+  AppointmentAcuityResponse,
 } from '../models/appointment'
 
 import testResultPDFTemplate from '../templates/pcrTestResult'
@@ -740,6 +741,61 @@ export class PCRTestResultsService {
     }
   }
 
+  public getlinkedBarcodes = async (couponCode: string): Promise<string[]> => {
+    let linkedBarcodes = []
+    if (couponCode) {
+      //Get Coupon
+      const coupon = await this.couponService.getByCouponCode(couponCode)
+      if (coupon) {
+        linkedBarcodes.push(coupon.lastBarcode)
+        try {
+          //Get Linked Barcodes for LastBarCode
+          const pcrResult = await this.getReSampledTestResultByBarCode(coupon.lastBarcode)
+          if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
+            linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
+          }
+        } catch (error) {
+          console.error(
+            `PCRTestResultsService: Coupon Code: ${couponCode} Last BarCode: ${
+              coupon.lastBarcode
+            }. No Test Results to Link. ${error.toString()}`,
+          )
+        }
+        console.log(
+          `PCRTestResultsService: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`,
+        )
+      } else {
+        console.log(`PCRTestResultsService: ${couponCode} is not coupon.`)
+      }
+    }
+    return linkedBarcodes
+  }
+
+  public async createLinkedPcrTests(
+    savedAppointment: AppointmentDBModel,
+    appointment: AppointmentAcuityResponse,
+  ): Promise<PCRTestResultDBModel> {
+    const linkedBarcodes = await this.getlinkedBarcodes(appointment.certificate)
+    //Save Pending Test Results
+    const pcrResultDataForDb = {
+      adminId: 'WEBHOOK',
+      appointmentId: savedAppointment.id,
+      barCode: savedAppointment.barCode,
+      dateOfAppointment: savedAppointment.dateOfAppointment,
+      displayForNonAdmins: true,
+      deadline: makeFirestoreTimestamp(savedAppointment.deadline),
+      firstName: appointment.firstName,
+      lastName: appointment.lastName,
+      linkedBarCodes: linkedBarcodes,
+      organizationId: appointment.organizationId,
+      result: ResultTypes.Pending,
+      runNumber: 1, //Start the Run
+      reSampleNumber: linkedBarcodes.length + 1,
+      waitingResult: true,
+    }
+    return this.saveDefaultTestResults(pcrResultDataForDb)
+  }
+
   async getDueDeadline({
     deadline,
     testRunId,
@@ -777,7 +833,6 @@ export class PCRTestResultsService {
         deadline: pcr.deadline.toDate().toISOString(),
         status: appointment?.appointmentStatus,
         testRunId: pcr.testRunId,
-        dateOfAppointment: pcr.dateOfAppointment,
         vialLocation: appointment?.vialLocation,
         runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
         reSampleNumber: pcr.reSampleNumber ? `S${pcr.reSampleNumber}` : null,

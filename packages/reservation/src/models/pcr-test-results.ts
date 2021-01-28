@@ -68,7 +68,7 @@ type AppointmentDataForPCRResult = {
   firstName: string
   lastName: string
   appointmentId: string
-  organizationId: string
+  organizationId?: string
   dateOfAppointment: string
 }
 
@@ -212,7 +212,6 @@ export type PCRTestResultByDeadlineListDTO = {
   barCode: string
   vialLocation: string
   status: AppointmentStatus
-  dateOfAppointment: string
   deadline: string
   testRunId: string
   runNumber: string
