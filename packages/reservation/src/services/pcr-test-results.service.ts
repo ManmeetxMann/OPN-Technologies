@@ -761,7 +761,9 @@ export class PCRTestResultsService {
             }. No Test Results to Link. ${error.toString()}`,
           )
         }
-        console.log(`PCRTestResultsService: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`)
+        console.log(
+          `PCRTestResultsService: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`,
+        )
       } else {
         console.log(`PCRTestResultsService: ${couponCode} is not coupon.`)
       }
