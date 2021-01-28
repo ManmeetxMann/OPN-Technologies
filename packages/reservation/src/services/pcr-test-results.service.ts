@@ -821,7 +821,7 @@ export class PCRTestResultsService {
         value: testRunId,
       })
     }
-    console.log(pcrTestResultsQuery)
+
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
     const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
     const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
@@ -831,12 +831,11 @@ export class PCRTestResultsService {
     pcrResults.map((pcr) => {
       const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
       const allowedAppointmentStatus = [AppointmentStatus.InProgress, AppointmentStatus.ReRunRequired, AppointmentStatus.Received]
-      // if (appointment && allowedAppointmentStatus.includes(appointment.appointmentStatus)) {
-        console.log(pcr.barCode, pcr.deadline, 1612130440)
+      if (appointment && allowedAppointmentStatus.includes(appointment.appointmentStatus)) {
         pcrFiltred.push({
           id: pcr.id,
           barCode: pcr.barCode,
-          deadline: moment(pcr.deadline.toDate()).tz('America/Toronto'),
+          deadline: pcr.deadline.toDate(),
           status: appointment?.appointmentStatus,
           testRunId: pcr.testRunId,
           vialLocation: appointment?.vialLocation,
@@ -844,7 +843,7 @@ export class PCRTestResultsService {
           reSampleNumber: pcr.reSampleNumber ? `S${pcr.reSampleNumber}` : null,
           dateTime: appointment.dateTime,
         })
-      // }
+      }
     })
 
     return pcrFiltred
