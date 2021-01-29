@@ -29,7 +29,11 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
-import {makeDeadline, makeFirestoreTimestamp} from '../utils/datetime.helper'
+import {
+  makeDeadline,
+  makeFirestoreTimestamp,
+  makeFirestoreTimestampFromUTCString,
+} from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -293,7 +297,7 @@ export class AppoinmentService {
     const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
     const label = acuityAppointment.labels ? acuityAppointment.labels[0]?.name : null
     const deadlineDateTimeUTC: string = makeDeadline(utcDateTime, label)
-    const deadline = makeFirestoreTimestamp(deadlineDateTimeUTC)
+    const deadline = makeFirestoreTimestampFromUTCString(deadlineDateTimeUTC)
     const {
       barCodeNumber,
       organizationId,
@@ -501,7 +505,7 @@ export class AppoinmentService {
 
   async addAppointmentLabel(id: number, label: DeadlineLabel): Promise<AppointmentDBModel> {
     const appointment = await this.getAppointmentByAcuityId(id)
-    const deadline = makeFirestoreTimestamp(
+    const deadline = makeFirestoreTimestampFromUTCString(
       makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label),
     )
     await this.acuityRepository.addAppointmentLabelOnAcuity(id, label)
