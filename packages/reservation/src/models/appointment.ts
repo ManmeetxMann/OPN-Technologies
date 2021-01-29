@@ -272,7 +272,7 @@ export const appointmentUiDTOResponse = (
     dateTime: moment(appointment.dateTime).tz(timeZone).format(),
     dateOfBirth: appointment.dateOfBirth,
     transportRunId: appointment.transportRunId,
-    deadline: moment(appointment.deadline).tz(timeZone).format(),
+    deadline: moment(appointment.deadline.toDate()).tz(timeZone).format(),
     latestResult: appointment.latestResult,
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
