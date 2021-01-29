@@ -29,7 +29,8 @@ export const getDateFromDatetime = (transportDateTime: Date | string): string =>
 }
 
 export const makeFirestoreTimestamp = (date: Date | string): firestore.Timestamp => {
-  const tzDateTime = moment(date).hours(0).minutes(0).tz(timeZone)
+  console.log(`date: ${date}`) //TMP
+  const tzDateTime = moment(date).tz(timeZone).hours(0).minutes(0)
   console.log(`tzDateTimev1: ${tzDateTime}`) //TMP
 
   const tzEndOfDayTime = makeTimeEndOfTheDayMoment(tzDateTime)
