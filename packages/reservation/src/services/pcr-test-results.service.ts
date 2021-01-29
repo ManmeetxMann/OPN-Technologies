@@ -58,7 +58,7 @@ export class PCRTestResultsService {
   private emailService = new EmailService()
   private pdfService = new PdfService()
   private couponCode: string
-  private whiteListedResultsForNotification = [ResultTypes.Negative, ResultTypes.Positive]
+  private whiteListedResultsTypes = [ResultTypes.Negative, ResultTypes.Positive, ResultTypes.PresumptivePositive]
 
   async createReportForPCRResults(
     testResultData: PCRTestResultRequest,
@@ -230,7 +230,8 @@ export class PCRTestResultsService {
   }
 
   getFilteredResultForPublic(result: ResultTypes, notify: boolean): ResultTypes {
-    return notify !== true && result !== ResultTypes.Negative && result !== ResultTypes.Positive
+
+    return notify !== true && !this.whiteListedResultsTypes.includes(result)
       ? ResultTypes.Pending
       : result
   }
@@ -276,6 +277,7 @@ export class PCRTestResultsService {
         finalResult = ResultTypes.Negative
         break
       }
+      //TODO PresumptivePositive
       case PCRResultActions.MarkAsPositive: {
         console.log(`TestResultOverwrittten: ${barCode} is marked as Positive`)
         finalResult = ResultTypes.Positive
@@ -375,7 +377,7 @@ export class PCRTestResultsService {
     )
 
     if (
-      !this.whiteListedResultsForNotification.includes(finalResult) &&
+      !this.whiteListedResultsTypes.includes(finalResult) &&
       resultData.resultSpecs.action === PCRResultActions.SendThisResult
     ) {
       console.error(
@@ -599,7 +601,7 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        if (this.whiteListedResultsForNotification.includes(resultData.result)) {
+        if (this.whiteListedResultsTypes.includes(resultData.result)) {
           await this.sendTestResults(resultData)
           console.log(`SendNotification: Success: Sent Results for ${resultData.barCode}`)
         } else {

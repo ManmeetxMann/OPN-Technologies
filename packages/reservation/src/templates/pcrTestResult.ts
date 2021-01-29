@@ -28,6 +28,8 @@ const generate = (
   resultDate: string,
 ): {content: Content[]; tableLayouts: TableLayouts} => {
   const isPositive = params.result === ResultTypes.Positive
+  const isPresumptivePositive = params.result === ResultTypes.PresumptivePositive
+  //TODO PresumptivePositive
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
   return {

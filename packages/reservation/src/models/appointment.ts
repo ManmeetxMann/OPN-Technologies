@@ -24,6 +24,7 @@ export enum AppointmentReasons {
 }
 
 export enum ResultTypes {
+  PresumptivePositive = 'PresumptivePositive',
   Positive = 'Positive',
   Negative = 'Negative',
   Pending = 'Pending',
