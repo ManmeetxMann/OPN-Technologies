@@ -182,7 +182,7 @@ export const PCRTestResultHistoryResponse = (
 })
 
 export type PcrTestResultsListByDeadlineRequest = {
-  deadline: string
+  deadline?: string
   testRunId?: string
 }
 
