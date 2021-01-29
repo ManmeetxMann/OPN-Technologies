@@ -8,6 +8,7 @@ import {appointmentUiDTOResponse, DeadlineLabel} from '../../../models/appointme
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
+import { getIsLabUser } from '../../../../../common/src/utils/auth'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin/api/v2'
@@ -36,7 +37,7 @@ class AdminAppointmentController implements IControllerBase {
       if (appointmentIds.length > 50) {
         throw new BadRequestException('Maximum appointments to be part of request is 50')
       }
-
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
       const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
       const result = []
 
@@ -47,7 +48,7 @@ class AdminAppointmentController implements IControllerBase {
             label,
           )
 
-          result.push(appointmentUiDTOResponse(appointmentDb))
+          result.push(appointmentUiDTOResponse(appointmentDb,isLabUser))
         }),
       )
 

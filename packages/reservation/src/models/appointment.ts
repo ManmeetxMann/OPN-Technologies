@@ -5,6 +5,7 @@ import {firestore} from 'firebase-admin'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
+  Submitted = 'Submitted',
   InTransit = 'InTransit',
   Received = 'Received',
   InProgress = 'InProgress',
@@ -247,15 +248,25 @@ export enum DeadlineLabel {
   NextDay = 'NextDay',
 }
 
+const filteredAppointmentStatus = (status: AppointmentStatus, isLabUser:boolean): AppointmentStatus => {
+  if(!isLabUser && (status === AppointmentStatus.InTransit || status === AppointmentStatus.Received)){
+    return AppointmentStatus.Submitted
+  }
+  if(!isLabUser && status === AppointmentStatus.ReRunRequired){
+    return AppointmentStatus.InProgress
+  }
+  return status
+}
+
 export const appointmentUiDTOResponse = (
-  appointment: AppointmentDBModel & {canCancel?: boolean},
+  appointment: AppointmentDBModel & {canCancel?: boolean},isLabUser:boolean
 ): AppointmentUiDTO => {
   const timeZone = Config.get('DEFAULT_TIME_ZONE')
   return {
     id: appointment.id,
     firstName: appointment.firstName,
     lastName: appointment.lastName,
-    status: appointment.appointmentStatus,
+    status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser),
     barCode: appointment.barCode,
     location: appointment.location,
     dateTime: moment(appointment.dateTime).tz(timeZone).format(),
