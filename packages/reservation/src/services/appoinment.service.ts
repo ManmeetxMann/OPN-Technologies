@@ -292,7 +292,8 @@ export class AppoinmentService {
     const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
     const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
     const label = acuityAppointment.labels ? acuityAppointment.labels[0]?.name : null
-    const deadline = makeFirestoreTimestamp(makeDeadline(utcDateTime, label))
+    const deadlineDateTimeUTC:string = makeDeadline(utcDateTime, label)
+    const deadline = makeFirestoreTimestamp(deadlineDateTimeUTC)
     const {
       barCodeNumber,
       organizationId,
@@ -339,7 +340,6 @@ export class AppoinmentService {
       receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
       shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
       couponCode,
-      ...(latestResult ? {latestResult} : {}),
       userId,
     }
   }
