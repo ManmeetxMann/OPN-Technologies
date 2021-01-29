@@ -24,16 +24,23 @@ export const makeTimeEndOfTheDayMoment = (datetime: moment.Moment): moment.Momen
   return datetime.hours(23).minutes(59).seconds(0)
 }
 
-export const makeTimeEndOfTheDay = (datetime: moment.Moment): string => {
-  return makeTimeEndOfTheDayMoment(datetime).format()
-}
-
 export const getDateFromDatetime = (transportDateTime: Date | string): string => {
   return moment(transportDateTime).tz(timeZone).format('YYYY-MM-DD')
 }
 
 export const makeFirestoreTimestamp = (date: Date | string): firestore.Timestamp => {
-  return firestore.Timestamp.fromDate(
-    makeTimeEndOfTheDayMoment(moment(date).tz(timeZone)).milliseconds(0).utc().toDate(),
-  )
+  const tzDateTime = moment(date).tz(timeZone)
+  console.log(`tzDateTime: ${tzDateTime}`) //TMP
+
+  const tzEndOfDayTime = makeTimeEndOfTheDayMoment(tzDateTime)
+  console.log(`tzEndOfDayTime: ${tzEndOfDayTime}`) //TMP
+
+  const utcEndOfDay = tzEndOfDayTime.milliseconds(0).utc().toDate()
+  console.log(`utcEndOfDay: ${utcEndOfDay}`) //TMP
+
+  return firestore.Timestamp.fromDate(utcEndOfDay)
+}
+
+export const makeFirestoreTimestampFromUTCString = (utcDateStr: string): firestore.Timestamp => {
+  return firestore.Timestamp.fromDate(moment(utcDateStr).milliseconds(0).utc().toDate())
 }
