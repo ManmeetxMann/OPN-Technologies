@@ -82,6 +82,8 @@ class AdminAppointmentController implements IControllerBase {
         throw new BadRequestException('dateOfAppointment is invalid')
       }
 
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+
       const appointments = await this.appointmentService.getAppointmentsDB({
         appointmentStatus,
         barCode,
@@ -94,7 +96,7 @@ class AdminAppointmentController implements IControllerBase {
       res.json(
         actionSucceed(
           appointments.map((appointment: AppointmentDBModel) => ({
-            ...appointmentUiDTOResponse(appointment),
+            ...appointmentUiDTOResponse(appointment, isLabUser),
           })),
         ),
       )
@@ -118,7 +120,7 @@ class AdminAppointmentController implements IControllerBase {
 
       res.json(
         actionSucceed({
-          ...appointmentUiDTOResponse(appointment),
+          ...appointmentUiDTOResponse(appointment, isLabUser),
         }),
       )
     } catch (error) {

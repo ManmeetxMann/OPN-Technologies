@@ -158,6 +158,7 @@ class AppointmentWebhookController implements IControllerBase {
             organizationId,
             appointmentTypeID,
             calendarID,
+            latestResult: appointmentFromDb.latestResult,
           },
         )
         console.log(
