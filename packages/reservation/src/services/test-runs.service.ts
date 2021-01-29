@@ -29,13 +29,12 @@ export class TestRunsService {
     const testRunDate = getDateFromDatetime(testRunDateTime)
     const idDate = moment(testRunDate).format('YYMMDD')
 
-    const id = await (await this.getIdentifierRepository(testRunDate))
-      .getUniqueId('testRun')
-    return await this.testRunsRepository.save(({
+    const id = await (await this.getIdentifierRepository(testRunDate)).getUniqueId('testRun')
+    return await this.testRunsRepository.save({
       testRunId: `T${idDate}-${id}`,
       testRunDateTime: firestore.Timestamp.fromDate(testRunDateTime),
       testRunDate,
       name,
-    } as TestRunDBModel))
+    } as TestRunDBModel)
   }
 }
