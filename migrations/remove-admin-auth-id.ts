@@ -1,5 +1,5 @@
 /**
- * This script moves authUsserId from user.admin.authuserId to user.authUserId
+ * This script moves authUserId from user.admin.authuserId to user.authUserId
  * If users have two authUserId values, they will use their non-admin value
  * After this migration is run, admin.authUserId will not be defined anywhere
  */
@@ -77,29 +77,40 @@ async function moveAuthId(userSnapshot: firestore.QueryDocumentSnapshot<firestor
     return userSnapshot.ref.set(
       {
         authUserId: admin.authUserId,
-        // do not replace an email with no email
-        email: admin.email ?? user.email,
-        admin: {
-          authUserId: firestore.FieldValue.delete(),
-          email: firestore.FieldValue.delete(),
-        },
+        email: admin.email ?? null,
+        legacyEmail: user.email ?? null,
       },
       {
         merge: true,
       },
     )
   } else {
-    // we have two authUserIds, only delete
-    if (admin.authUserId !== authUserId) {
-      console.warn(`User ${userId} is losing admin.authUserId ${admin.authUserId} (${admin.email})`)
+    // we have two authUserIds, we need to choose
+    const sameId = admin.authUserId === authUserId
+    if (!sameId) {
+      console.warn(
+        `User ${userId} is losing authUserId ${user.authUserId} in favour of ${admin.authUserId}`,
+      )
+      return userSnapshot.ref.set(
+        {
+          authUserId: admin.authUserId,
+          email: admin.email,
+          oldAuthUserId: user.authUserId,
+          oldEmail: user.email ?? null,
+        },
+        {
+          merge: true,
+        },
+      )
     }
-    // no need to log if there is only one id
+
+    // same authUserId
+    if (user.email && user.email !== admin.email) {
+      console.warn(`${user.email} and ${admin.email} are bothh associated to ${authUserId}`)
+    }
     return userSnapshot.ref.set(
       {
-        admin: {
-          authUserId: firestore.FieldValue.delete(),
-          email: firestore.FieldValue.delete(),
-        },
+        email: admin.email,
       },
       {
         merge: true,
