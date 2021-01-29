@@ -265,6 +265,7 @@ export class AppoinmentService {
       appointmentTypeID: number
       calendarID: number
       appointmentStatus: AppointmentStatus
+      latestResult: ResultTypes
     },
   ): Promise<AppointmentDBModel> {
     const data = this.appointmentFromAcuity(acuityAppointment, additionalData)
@@ -279,7 +280,7 @@ export class AppoinmentService {
       appointmentTypeID: number
       calendarID: number
       appointmentStatus: AppointmentStatus
-      latestResult?: ResultTypes
+      latestResult: ResultTypes
       couponCode?: string
       userId?: string
     },
