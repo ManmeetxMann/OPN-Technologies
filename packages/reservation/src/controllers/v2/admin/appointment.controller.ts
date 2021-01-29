@@ -8,7 +8,7 @@ import {appointmentUiDTOResponse, DeadlineLabel} from '../../../models/appointme
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
-import { getIsLabUser } from '../../../../../common/src/utils/auth'
+import {getIsLabUser} from '../../../../../common/src/utils/auth'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin/api/v2'
@@ -48,7 +48,7 @@ class AdminAppointmentController implements IControllerBase {
             label,
           )
 
-          result.push(appointmentUiDTOResponse(appointmentDb,isLabUser))
+          result.push(appointmentUiDTOResponse(appointmentDb, isLabUser))
         }),
       )
 

@@ -248,18 +248,25 @@ export enum DeadlineLabel {
   NextDay = 'NextDay',
 }
 
-const filteredAppointmentStatus = (status: AppointmentStatus, isLabUser:boolean): AppointmentStatus => {
-  if(!isLabUser && (status === AppointmentStatus.InTransit || status === AppointmentStatus.Received)){
+const filteredAppointmentStatus = (
+  status: AppointmentStatus,
+  isLabUser: boolean,
+): AppointmentStatus => {
+  if (
+    !isLabUser &&
+    (status === AppointmentStatus.InTransit || status === AppointmentStatus.Received)
+  ) {
     return AppointmentStatus.Submitted
   }
-  if(!isLabUser && status === AppointmentStatus.ReRunRequired){
+  if (!isLabUser && status === AppointmentStatus.ReRunRequired) {
     return AppointmentStatus.InProgress
   }
   return status
 }
 
 export const appointmentUiDTOResponse = (
-  appointment: AppointmentDBModel & {canCancel?: boolean},isLabUser:boolean
+  appointment: AppointmentDBModel & {canCancel?: boolean},
+  isLabUser: boolean,
 ): AppointmentUiDTO => {
   const timeZone = Config.get('DEFAULT_TIME_ZONE')
   return {

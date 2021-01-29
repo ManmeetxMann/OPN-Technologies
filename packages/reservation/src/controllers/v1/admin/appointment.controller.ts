@@ -96,7 +96,7 @@ class AdminAppointmentController implements IControllerBase {
       res.json(
         actionSucceed(
           appointments.map((appointment: AppointmentDBModel) => ({
-            ...appointmentUiDTOResponse(appointment,isLabUser),
+            ...appointmentUiDTOResponse(appointment, isLabUser),
           })),
         ),
       )
@@ -120,7 +120,7 @@ class AdminAppointmentController implements IControllerBase {
 
       res.json(
         actionSucceed({
-          ...appointmentUiDTOResponse(appointment,isLabUser),
+          ...appointmentUiDTOResponse(appointment, isLabUser),
         }),
       )
     } catch (error) {

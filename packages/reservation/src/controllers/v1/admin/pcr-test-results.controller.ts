@@ -254,11 +254,14 @@ class PCRTestResultController implements IControllerBase {
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
-      const pcrResults = await this.pcrTestResultsService.getPCRResults({
-        organizationId,
-        deadline,
-        barCode,
-      },isLabUser)
+      const pcrResults = await this.pcrTestResultsService.getPCRResults(
+        {
+          organizationId,
+          deadline,
+          barCode,
+        },
+        isLabUser,
+      )
 
       res.json(actionSucceed(pcrResults))
     } catch (error) {
