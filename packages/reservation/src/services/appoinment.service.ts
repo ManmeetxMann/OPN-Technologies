@@ -32,7 +32,6 @@ import {Config} from '../../../common/src/utils/config'
 import {
   makeDeadline,
   makeFirestoreTimestamp,
-  makeFirestoreTimestampFromUTCString,
 } from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
