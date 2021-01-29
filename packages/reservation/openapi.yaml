@@ -2118,7 +2118,6 @@ paths:
       parameters:
         - in: query
           name: deadline
-          required: true
           schema:
             type: string
             format: date
