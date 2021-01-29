@@ -5,7 +5,7 @@ import {firestore} from 'firebase-admin'
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 import moment from 'moment-timezone'
 
-export const makeDeadline = (utcDateTime: moment.Moment, deadlineLabel?: DeadlineLabel): string => {
+export const makeDeadline = (utcDateTime: moment.Moment, deadlineLabel?: DeadlineLabel): firestore.Timestamp => {
   let deadline
   const tzDateTime = utcDateTime.clone().tz(timeZone)
   if (deadlineLabel === DeadlineLabel.NextDay) {
@@ -17,7 +17,7 @@ export const makeDeadline = (utcDateTime: moment.Moment, deadlineLabel?: Deadlin
   } else {
     deadline = makeTimeEndOfTheDayMoment(tzDateTime)
   }
-  return deadline.utc().format()
+  return firestore.Timestamp.fromDate(deadline.utc().milliseconds(0).toDate())
 }
 
 export const makeTimeEndOfTheDayMoment = (datetime: moment.Moment): moment.Moment => {
