@@ -8,7 +8,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {getAdminId} from '../../../../../common/src/utils/auth'
+import {getAdminId, getIsLabUser} from '../../../../../common/src/utils/auth'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
@@ -249,16 +249,16 @@ class PCRTestResultController implements IControllerBase {
   listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {deadline, organizationId, barCode} = req.query as PcrTestResultsListRequest
-
       if (!barCode && !deadline) {
         throw new BadRequestException('"deadline" is required if "barCode" is not specified')
       }
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       const pcrResults = await this.pcrTestResultsService.getPCRResults({
         organizationId,
         deadline,
         barCode,
-      })
+      },isLabUser)
 
       res.json(actionSucceed(pcrResults))
     } catch (error) {

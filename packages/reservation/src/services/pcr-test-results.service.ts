@@ -176,7 +176,7 @@ export class PCRTestResultsService {
     organizationId,
     deadline,
     barCode,
-  }: PcrTestResultsListRequest): Promise<PCRTestResultListDTO[]> {
+  }: PcrTestResultsListRequest, isLabUser: boolean): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
 
     if (organizationId) {
@@ -217,7 +217,7 @@ export class PCRTestResultsService {
       return {
         id: pcr.id,
         barCode: pcr.barCode,
-        result: pcr.result,
+        result: (isLabUser)?pcr.result:this.getFilteredResultForPublic(pcr.result, !!pcr.resultSpecs?.notify),
         dateTime: appointment?.dateTime,
         deadline: pcr.deadline.toDate().toISOString(),
         testRunId: pcr.testRunId,
@@ -226,6 +226,10 @@ export class PCRTestResultsService {
         testType: 'PCR',
       }
     })
+  }
+
+  getFilteredResultForPublic(result: ResultTypes, notify:boolean): ResultTypes {
+    return (notify!==true && result!==ResultTypes.Negative && result!==ResultTypes.Positive)?ResultTypes.Pending:result
   }
 
   async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel[]> {
