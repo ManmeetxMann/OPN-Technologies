@@ -42,6 +42,7 @@
 		"migration:trim-firstname-lastname-and-fix-last-name": "ts-node ./migrations/trim-firstname-lastname-and-fix-last-name",
 		"migration:migrate-attestation-questionaireid-field": "ts-node ./migrations/add-questionnaireid-to-attestation",
 		"migration:test-results-to-pcr": "ts-node ./migrations/test-results-to-pcr",
+		"migration:acuity-to-pcr-results": "ts-node ./migrations/acuity-to-pcr-results",
 		"migration:migration-acuity-to-appointments": "ts-node ./migrations/acuity-to-appointments"
 	},
 	"devDependencies": {
