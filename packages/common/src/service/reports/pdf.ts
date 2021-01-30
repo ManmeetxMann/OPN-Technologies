@@ -65,7 +65,7 @@ export class PdfService {
           color: '#000000',
         },
         footer: {
-          fontSize: 8,
+          fontSize: 7,
           lineHeight: 1.4,
           font: 'Helvetica',
           alignment: 'center',
@@ -74,6 +74,7 @@ export class PdfService {
       defaultStyle: {
         color: '#666666',
         font: 'Cambria',
+        fontSize: 11,
       },
       content,
     }
