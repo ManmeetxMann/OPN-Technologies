@@ -10,20 +10,21 @@ import {isValidDate} from '../../../../../common/src/utils/times'
 import {getAdminId, getIsLabUser} from '../../../../../common/src/utils/auth'
 
 import {
+  appointmentByBarcodeUiDTOResponse,
   AppointmentByOrganizationRequest,
   AppointmentDBModel,
   AppointmentsState,
   appointmentUiDTOResponse,
 } from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
+import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 import {TransportRunsService} from '../../../services/transport-runs.service'
-
-const isJustOneOf = (a: unknown, b: unknown) => !(a && b) || !(!a && !b)
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private appointmentService = new AppoinmentService()
+  private organizationService = new OrganizationService()
   private transportRunsService = new TransportRunsService()
 
   constructor() {
@@ -52,14 +53,14 @@ class AdminAppointmentController implements IControllerBase {
       this.addTransportRun,
     )
     innerRouter.get(
-      this.path + '/api/v1/appointments/barcode/:barCode',
+      this.path + '/api/v1/appointments/barcode/lookup',
       apptAuth,
       this.getAppointmentByBarcode,
     )
-    innerRouter.put(
-      this.path + '/api/v1/appointments/:barCode/receive',
-      receivingAuth,
-      this.updateTestVial,
+    innerRouter.get(
+      this.path + '/api/v1/appointments/barcode/get-new-code',
+      apptAuth,
+      this.getNextBarcode,
     )
     innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
 
@@ -69,47 +70,33 @@ class AdminAppointmentController implements IControllerBase {
   getListAppointments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {
+        appointmentStatus,
+        barCode,
+        dateOfAppointment,
         organizationId,
         searchQuery,
-        dateOfAppointment,
         transportRunId,
-        testRunId,
-        deadlineDate,
-        appointmentStatus,
       } = req.query as AppointmentByOrganizationRequest
-
-      if (testRunId && transportRunId) {
-        throw new BadRequestException(
-          'You cannot pass both "testRunId" and "transportRunId" parameters at the same time',
-        )
-      }
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
         throw new BadRequestException('dateOfAppointment is invalid')
       }
 
-      if (deadlineDate && !isValidDate(deadlineDate)) {
-        throw new BadRequestException('deadlineDate is invalid')
-      }
-
-      if (!isJustOneOf(deadlineDate, dateOfAppointment)) {
-        throw new BadRequestException('Required just deadlineDate or dateOfAppointment, not both')
-      }
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       const appointments = await this.appointmentService.getAppointmentsDB({
+        appointmentStatus,
+        barCode,
         organizationId,
         dateOfAppointment,
         searchQuery,
         transportRunId,
-        testRunId,
-        deadlineDate,
-        appointmentStatus,
       })
 
       res.json(
         actionSucceed(
           appointments.map((appointment: AppointmentDBModel) => ({
-            ...appointmentUiDTOResponse(appointment),
+            ...appointmentUiDTOResponse(appointment, isLabUser),
           })),
         ),
       )
@@ -133,7 +120,7 @@ class AdminAppointmentController implements IControllerBase {
 
       res.json(
         actionSucceed({
-          ...appointmentUiDTOResponse(appointment),
+          ...appointmentUiDTOResponse(appointment, isLabUser),
         }),
       )
     } catch (error) {
@@ -200,31 +187,26 @@ class AdminAppointmentController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {barCode} = req.params as {barCode: string}
+      const {barCode} = req.query as {barCode: string}
 
       const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
-
-      res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
+      let organizationName: string
+      if (appointment.organizationId) {
+        const organization = await this.organizationService.getByIdOrThrow(
+          appointment.organizationId,
+        )
+        organizationName = organization.name
+      }
+      res.json(actionSucceed({...appointmentByBarcodeUiDTOResponse(appointment, organizationName)}))
     } catch (error) {
       next(error)
     }
   }
 
-  updateTestVial = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getNextBarcode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
-
-      const {barCode} = req.params as {barCode: string}
-      const {location} = req.body as {location: string}
-      const blockDuplicate = true
-      const appointment = await this.appointmentService.getAppointmentByBarCode(
-        barCode,
-        blockDuplicate,
-      )
-
-      await this.appointmentService.makeReceived(appointment.id, location, adminId)
-
-      res.json(actionSucceed())
+      const barCode = await this.appointmentService.getNextBarCodeNumber()
+      res.json(actionSucceed({barCode}))
     } catch (error) {
       next(error)
     }

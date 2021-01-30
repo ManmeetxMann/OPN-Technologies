@@ -43,6 +43,28 @@ export class AcuityRepository extends AcuityScheduling {
     return couponCodeResponse.certificate
   }
 
+  async createAppointment(
+    datetime: string,
+    appointmentTypeID: number,
+    firstName: string,
+    lastName: string,
+    email: string,
+    phone: string,
+    certificate: string,
+    fields: Record<string, string | boolean>,
+  ): Promise<AppointmentAcuityResponse> {
+    return this.createAppointmentOnAcuityService(
+      datetime,
+      appointmentTypeID,
+      firstName,
+      lastName,
+      email,
+      phone,
+      certificate,
+      fields,
+    )
+  }
+
   getAppointmentTypeList(): Promise<AppointmentTypes[]> {
     return this.getAppointmentTypes()
   }

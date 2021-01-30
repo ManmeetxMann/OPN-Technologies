@@ -42,26 +42,52 @@ export const authorizationMiddleware = (
 
   const userService = new UserService()
   let connectedUser: User
-  const [regUser, adminUser] = await Promise.all([
+  // look up admin user for backwards compat
+  const [regUser, legacyAdminUser] = await Promise.all([
     userService.findOneByAuthUserId(validatedAuthUser.uid),
     userService.findOneByAdminAuthUserId(validatedAuthUser.uid),
   ])
+  let user: User | null = null
+  if (regUser) {
+    user = regUser
+    if (legacyAdminUser && legacyAdminUser.id !== user.id) {
+      console.warn(`Two users found for authUserId ${validatedAuthUser.uid}, using ${regUser.id}`)
+    }
+  } else if (legacyAdminUser) {
+    console.warn(`Using legacy admin.authUserId for authUserId ${validatedAuthUser.uid}`)
+    user = legacyAdminUser
+  }
+
+  if (!user) {
+    res
+      .status(403)
+      .json(
+        of(
+          null,
+          ResponseStatusCodes.AccessDenied,
+          `Cannot find user with authUserId [${validatedAuthUser.uid}]`,
+        ),
+      )
+    return
+  }
 
   const seekRegularAuth = listOfRequiredRoles.includes(RequiredUserPermission.RegUser)
   const seekAdminAuth = listOfRequiredRoles.some((role) => role !== RequiredUserPermission.RegUser)
 
-  if (seekRegularAuth && regUser) {
-    connectedUser = regUser
-  } else if (seekAdminAuth) {
-    if (adminUser) {
-      connectedUser = adminUser
-    } else if (regUser?.admin) {
-      console.warn(
-        `Admin user ${connectedUser.id} was allowed to authenticate using user.authUserId`,
-      )
-      connectedUser = regUser
+  let gotAdminAuth = false
+  if (seekAdminAuth) {
+    // try to authenticate the user as an admin
+    // TODO: org check
+    if (user.admin) {
+      connectedUser = user
+      gotAdminAuth = true
     }
   }
+
+  if (!connectedUser && seekRegularAuth) {
+    connectedUser = user
+  }
+
   if (!connectedUser) {
     // Forbidden
     res
@@ -96,7 +122,7 @@ export const authorizationMiddleware = (
           .json(of(null, ResponseStatusCodes.AccessDenied, `Organization ID not provided`))
         return
       }
-    } else if (admin && !seekRegularAuth) {
+    } else if (gotAdminAuth) {
       // user authenticated as an admin, needs to be valid
       if (!isAllowed(connectedUser, listOfRequiredRoles)) {
         console.warn(`${organizationId} is not accesible to ${connectedUser.id}`)
@@ -148,7 +174,7 @@ export const authorizationMiddleware = (
   }
 
   // this check is only required for admins
-  if (admin && !isAllowed(connectedUser, listOfRequiredRoles)) {
+  if (gotAdminAuth && !isAllowed(connectedUser, listOfRequiredRoles)) {
     console.warn(`Admin user ${connectedUser.id} is not allowed for ${listOfRequiredRoles}`)
     // Forbidden
     res

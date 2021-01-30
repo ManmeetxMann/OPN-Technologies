@@ -61,18 +61,22 @@ class AdminController implements IControllerBase {
   }
 
   authSignInProcess = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // attach an admin approval to a user
     try {
-      const {idToken, connectedId} = req.body as AuthLinkProcessRequest
+      const {idToken, connectedId: userId} = req.body as AuthLinkProcessRequest
 
       // Validate the token first and get the Auth user Id from it
       // FYI: AuthUserId is not a ConnectedUserId
       // (one is FB Auth User and other Firestore Custom User)
       const authService = new AuthService()
+      const userService = new UserService()
+
       const validatedAuthUser = await authService.verifyAuthToken(idToken)
       if (!validatedAuthUser?.email) {
         console.error('Invalid auth token provided')
         throw new UnauthorizedException('Unauthorized access')
       }
+      const authUserId = validatedAuthUser.uid
 
       // Get the admin approval so we can grab their permissions
       const adminApprovalService = new AdminApprovalService()
@@ -81,39 +85,43 @@ class AdminController implements IControllerBase {
         console.error(`Admin approval for ${validatedAuthUser.email} does not exist`)
         throw new UnauthorizedException('Unauthorized access')
       }
-
-      // Check if auth user is connected to someone else
-      const userService = new UserService()
-      let connectedUser = await userService.findOneByAdminAuthUserId(validatedAuthUser.uid)
-
-      // If so let's remove if off of them
-      if (!!connectedUser && connectedUser?.id !== connectedId) {
-        await userService.updateProperties(connectedUser.id, {
-          admin: FirebaseManager.getInstance().getFirestoreDeleteField(),
-        })
-        console.log(
-          `Admin Privledge removed from user id: ${connectedUser.id} and added to ${connectedId}`,
-        )
+      const userToConnect = await userService.findOneSilently(userId)
+      if (!userToConnect) {
+        console.error('Tried to connect to a non-existent user')
+        throw new UnauthorizedException(`user ${userId} does not exist`)
       }
-
-      // Get the proper connected user then
-      if (!connectedUser || connectedUser?.id !== connectedId) {
-        //New Admin
-        connectedUser = await userService.findOneSilently(connectedId)
+      if (userToConnect.email !== validatedAuthUser.email) {
         if (!validatedAuthUser?.email) {
-          console.error('ConnectedId is non-existent')
+          console.error('Connecting to a user with the wrong email')
           throw new UnauthorizedException('Unauthorized access')
         }
       }
 
-      // Set the connection
-      connectedUser.admin = approval.profile
-      connectedUser.admin.authUserId = validatedAuthUser.uid
-      await userService.update(connectedUser)
+      // Check if authUserId is in use
+      // Must do these queries before saving the updated user
+      const existingAdminUser = await userService.findOneByAdminAuthUserId(authUserId)
+      const existingUser = await userService.findOneByAuthUserId(authUserId)
+
+      userToConnect.admin = approval.profile
+      userToConnect.authUserId = authUserId
+      await userService.update(userToConnect)
+
+      // disconnect this authUserId from other accounts
+      if (existingUser && existingUser.id !== userId) {
+        existingUser.authUserId = FirebaseManager.getInstance().getFirestoreDeleteField()
+        await userService.update(existingUser)
+        console.log(`authUserId ${authUserId} moved from ${existingUser.id} to ${userId}`)
+      }
+      // even if it is the same account we can remove admin.authUserId
+      if (existingAdminUser) {
+        existingAdminUser.authUserId = FirebaseManager.getInstance().getFirestoreDeleteField()
+        await userService.update(existingAdminUser)
+        console.log(`admin.authUserId ${authUserId} removed from ${existingAdminUser.id}`)
+      }
 
       // Change the display name
-      const name = [connectedUser.firstName, connectedUser.lastName].join(' ')
-      authService.updateUser(validatedAuthUser.uid, {
+      const name = `${userToConnect.firstName} ${userToConnect.lastName}`
+      authService.updateUser(authUserId, {
         displayName: name,
       })
 
