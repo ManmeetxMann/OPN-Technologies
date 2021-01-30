@@ -45,7 +45,7 @@ import {
   AppointmentAcuityResponse,
 } from '../models/appointment'
 
-import testResultPDFTemplate from '../templates/pcrTestResult'
+import testResultPDFTemplate from '../templates/pcr-test-result-pdf-content'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {makeFirestoreTimestamp} from '../utils/datetime.helper'
 
