@@ -528,22 +528,22 @@ export class AppoinmentService {
     const barCodes = appointments.map(({barCode}) => barCode)
 
     if (union(barCodes).length != barCodes.length) {
-      const duplicatedBarCodes = []
+      const firstMatch = new Set()
+      const duplicatedBarCodes = new Set()
 
-      const sortedBarCodes = barCodes.sort()
-
-      for (let i = 0; i < sortedBarCodes.length; i++) {
-        if (sortedBarCodes[i + 1] === sortedBarCodes[i]) {
-          duplicatedBarCodes.push(sortedBarCodes[i])
+      barCodes.forEach((barcode) => {
+        if (!firstMatch.has(barcode)) {
+          return firstMatch.add(barcode)
         }
-      }
-
-      const appointmentIds = appointments
-        .filter(({barCode}) => duplicatedBarCodes.includes(barCode))
+        duplicatedBarCodes.add(barcode)
+      })
+      const duplicatedBarCodeArray = Array.from(duplicatedBarCodes.keys())
+      const duplicatedAppointmentIds = appointments
+        .filter(({barCode}) => duplicatedBarCodeArray.includes(barCode))
         .map(({id}) => id)
 
       throw new DuplicateDataException(
-        `Multiple Appointments [${appointmentIds}] with barcodes: ${duplicatedBarCodes}`,
+        `Multiple Appointments [${duplicatedAppointmentIds}] with barcodes: ${duplicatedBarCodeArray}`,
       )
     }
   }
