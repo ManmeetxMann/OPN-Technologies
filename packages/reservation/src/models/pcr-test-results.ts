@@ -10,6 +10,7 @@ export enum PCRResultActions {
   RequestReSample = 'RequestReSample',
   MarkAsPositive = 'MarkAsPositive',
   MarkAsNegative = 'MarkAsNegative',
+  MarkAsPresumptivePositive = 'MarkAsPresumptivePositive'
 }
 
 export enum PCRResultActionsAllowedResend {

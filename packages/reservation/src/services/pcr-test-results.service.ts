@@ -277,7 +277,11 @@ export class PCRTestResultsService {
         finalResult = ResultTypes.Negative
         break
       }
-      //TODO PresumptivePositive
+      case PCRResultActions.MarkAsPresumptivePositive: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as Positive`)
+        finalResult = ResultTypes.PresumptivePositive
+        break
+      }
       case PCRResultActions.MarkAsPositive: {
         console.log(`TestResultOverwrittten: ${barCode} is marked as Positive`)
         finalResult = ResultTypes.Positive
