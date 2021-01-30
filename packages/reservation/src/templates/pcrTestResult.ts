@@ -54,6 +54,8 @@ const pdfContent = (
       clientInformation().heading(),
       clientInformation().dataTable(params, resultDate),
       messageBody(params),
+      {text:'',pageBreak:'before'},
+      companyInfoHeader(),
       testAnalysisTable().heading(),
       testAnalysisTable().headerRow(),
       testAnalysisTable().dataRow(params),
@@ -117,7 +119,7 @@ const companyInfoHeader = ():Content => {
 const clientInformation = () => {
   const heading = ():Content => {
     return {
-      text: 'The following client completed a SARS-CoV-2 screening test at FH Health Screening Test Centre:',
+      text: 'The following client completed a SARS-CoV-2 screening test at FH Health:',
       margin: [0, 20, 0, 0],
       style: ['gray-text'],
       lineHeight: 1.2,
@@ -176,11 +178,16 @@ const documentFooter = ():Content => {
 
 const testAnalysisTable = () => {
   const heading = ():Content => {
-    return {
-      text: 'Detailed Test Analysis Data:',
-      margin: [0, 15, 0, 0],
-      lineHeight: 1.2,
-    }
+    return [
+      {
+        text:'\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.\n\n',
+      },
+      {
+        text: 'Detailed Test Analysis Data:',
+        margin: [0, 15, 0, 0],
+        lineHeight: 1.2,
+      }
+    ]
   }
 
   const headerRow = ():Content => {
@@ -306,9 +313,38 @@ const messageBody = (params: PCRTestResultEmailDTO):Content => {
       decoration: 'underline',
       lineHeight: 1,
     },
+  ]
+  
+  const messageForPresumptivePositiveTest = [
+    'The result of your test was ',
     {
-      text:
-        '\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.\n\n',
+      text: resultText(params.result),
+      bold: true,
+    },
+    {
+      text:' for the presence of SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness. '+ 
+        'A presumptive positive test indicates presence of the virus in the sample we collected. '+ 
+        'The probability of a false positive is low, however, all presumptive positives go through confirmatory testing at a Public Health affiliated Lab. '+ 
+        'Your confirmatory result will be posted on the OLIS website. '+
+        'You must use your OHIP number to access the results: ',
+    },
+    {
+      text:'https://covid19results.ehealthontario.ca:4443/agree',
+      link:'https://covid19results.ehealthontario.ca:4443/agree',
+      color: '#1155CC',
+      decoration: 'underline',
+      lineHeight: 1,
+    },
+    {
+      text:'\n\nThe result of this confirmatory test, along with your name and contact information have been forwarded to the Public Health Lab, and will be shared with them as required by law. '+ 
+      'While you wait for the results of the confirmatory testing, please follow the Public Health guidelines for "Have COVID-19", which can be found here: \n',
+    },
+    {
+      text:'https://www.toronto.ca/home/covid-19/covid-19-what-you-should-do/covid-19-have-symptoms-or-been-exposed/',
+      link:'https://www.toronto.ca/home/covid-19/covid-19-what-you-should-do/covid-19-have-symptoms-or-been-exposed/',
+      color: '#1155CC',
+      decoration: 'underline',
+      lineHeight: 1,
     },
   ]
 
@@ -319,23 +355,25 @@ const messageBody = (params: PCRTestResultEmailDTO):Content => {
       bold: true,
     },
     {
-      text:
-        ' Your results do not detect SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness.  A negative test means that the virus was not present in the sample we collected. Your results suggest you were negative at the time of testing. *\n\n* Although the possibility is low, a false negative result should be considered if you have had recent exposure to the virus along with symptoms consistent with COVID-19.\n\nIf you are the patron receiving the test and require further information, please visit the City of Toronto Public Health: https://www.toronto.ca/home/covid-19 \n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.',
+      text:' Your results do not detect SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness. '+  
+      'A negative test means that the virus was not present in the sample we collected. Your results suggest you were negative at the time of testing. '+
+      '*\n\n* Although the possibility is low, a false negative result should be considered if you have had recent exposure to the virus along with symptoms consistent with COVID-19.'+
+      '\n\nIf you are the patron receiving the test and require further information, please visit the City of Toronto Public Health: https://www.toronto.ca/home/covid-19 \n\n',
     },
   ]
 
   const messageBasedOnResultType = (result: ResultTypes) =>{
      if(result === ResultTypes.PresumptivePositive){
-      return messageForPositiveTest
+      return messageForPresumptivePositiveTest
      }else if(result === ResultTypes.Positive){
-       return messageForPositiveTest
+       return messageForPresumptivePositiveTest //TODO Change to messageForPositiveTest
      }else{
        return messageForNegativeTest
      }
   }
 
   return {
-    text: (params.result === ResultTypes.Positive) ? messageForPositiveTest : messageForNegativeTest,
+    text: messageBasedOnResultType(params.result),
     margin: [0, 20, 0, 0],
     lineHeight: 1.5,
   }
