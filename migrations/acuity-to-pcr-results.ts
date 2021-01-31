@@ -62,7 +62,6 @@ type Result = {
 
 const ACUITY_ENV_NON_PROD = true
 
-const timeZone = Config.get('DEFAULT_TIME_ZONE')
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
 const APIURL = Config.get('ACUITY_SCHEDULER_API_URL')
@@ -146,6 +145,72 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
   })
 }
 
+async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
+  const forms = findByIdForms(acuityAppointment.forms, acuityBarCodeFormId)
+  if (!forms) {
+    return
+  }
+  const barCode = findByFieldIdForms(
+    findByIdForms(acuityAppointment.forms, acuityBarCodeFormId).values,
+    acuityFormFieldIds.barCode,
+  ).value
+
+  const utcDateTime = moment(acuityAppointment.datetime).utc()
+
+  const dateOfAppointment = utcDateTime.format('MMMM DD, YYYY')
+
+  const appointmentInDb = await database
+    .collection('appointments')
+    .where('acuityAppointmentId', '==', acuityAppointment.id)
+    .get()
+
+  if (!appointmentInDb.docs.length) {
+    console.warn(`AppointmentID: ${acuityAppointment.id} Not found in firebase`)
+    return
+  }
+
+  const appointment = appointmentInDb.docs[0]
+
+  const pcrTestResultsInDb = await database
+    .collection('pcr-test-results')
+    .where('appointmentId', '==', appointment.id)
+    .get()
+
+  if (pcrTestResultsInDb.docs.length === 0) {
+    console.log('acuityAppointments ', acuityAppointment)
+
+    const convertedDeadline = appointment.data().deadline._seconds
+      ? appointment.data().deadline
+      : makeFirestoreTimestamp(moment(appointment.data().deadline).toDate())
+
+    const validatedData = await DBSchema.validateAsync({
+      appointmentId: appointment.id,
+      barCode: barCode,
+      adminId: 'MIGRATION',
+      dateOfAppointment: dateOfAppointment,
+      deadline: convertedDeadline,
+      displayForNonAdmins: true,
+      firstName: acuityAppointment.firstName,
+      lastName: acuityAppointment.lastName,
+      linkedBarCodes: [],
+      organizationId: '',
+      reSampleNumber: 1,
+      result: 'Pending',
+      runNumber: 1,
+      waitingResult: true,
+    })
+
+    await database.collection('pcr-test-results').add({
+      ...validatedData,
+      updatedAt: serverTimestamp(),
+    })
+  } else {
+    console.warn(
+      `AppointmentID: There are ${pcrTestResultsInDb.docs.length} PCRTestResults with appointment id ${acuityAppointment.id}`,
+    )
+  }
+}
+
 async function fetchAcuity(): Promise<Result[]> {
   const results: Result[] = []
 
@@ -162,69 +227,7 @@ async function fetchAcuity(): Promise<Result[]> {
     await Promise.all(
       acuityAppointments.map(async (acuityAppointment) => {
         const promises = []
-        // promises.push(createAppointment(acuityAppointment))
-        const forms = findByIdForms(acuityAppointment.forms, acuityBarCodeFormId)
-        if (!forms) {
-          return
-        }
-        const barCode = findByFieldIdForms(
-          findByIdForms(acuityAppointment.forms, acuityBarCodeFormId).values,
-          acuityFormFieldIds.barCode,
-        ).value
-
-        const utcDateTime = moment(acuityAppointment.datetime).utc()
-
-        const dateOfAppointment = utcDateTime.format('MMMM DD, YYYY')
-
-        const appointmentInDb = await database
-          .collection('appointments')
-          .where('acuityAppointmentId', '==', acuityAppointment.id)
-          .get()
-
-        if (!appointmentInDb.docs.length) {
-          console.warn(`AppointmentID: ${acuityAppointment.id} Not found in firebase`)
-          return
-        }
-
-        const appointment = appointmentInDb.docs[0]
-
-        const pcrTestResultsInDb = await database
-          .collection('pcr-test-results')
-          .where('appointmentId', '==', appointment.id)
-          .get()
-
-        if (pcrTestResultsInDb.docs.length === 0) {
-          console.log('acuityAppointments ', acuityAppointment)
-
-          const convertedDeadline = appointment.data().deadline._seconds
-            ? appointment.data().deadline
-            : makeFirestoreTimestamp(moment(appointment.data().deadline).toDate())
-
-          const validatedData = await DBSchema.validateAsync({
-            appointmentId: appointment.id,
-            barCode: barCode,
-            adminId: 'MIGRATION',
-            dateOfAppointment: dateOfAppointment,
-            deadline: convertedDeadline,
-            displayForNonAdmins: true,
-            firstName: acuityAppointment.firstName,
-            lastName: acuityAppointment.lastName,
-            linkedBarCodes: [],
-            organizationId: '',
-            reSampleNumber: 1,
-            result: 'Pending',
-            runNumber: 1,
-            waitingResult: true,
-          })
-
-          const pcrTestResult = await database.collection('pcr-test-results').add({
-            ...validatedData,
-            updatedAt: serverTimestamp(),
-          })
-
-          console.log(pcrTestResult)
-          console.warn(`AppointmentID: ${acuityAppointment.id} Not found in firebase`)
-        }
+        promises.push(createPcrResults(acuityAppointment))
 
         const result = await promiseAllSettled(promises)
         results.push(...result)
@@ -261,6 +264,7 @@ async function main() {
     if (failureCount > 0) {
       console.warn(`Failed updating ${failureCount} `)
     }
+    console.log(`Total Appointments Processed: ${totalCount} `)
   }
 }
 

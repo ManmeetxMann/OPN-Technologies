@@ -459,7 +459,7 @@ async function createAppointment(acuityAppointment) {
       },
     }
 
-    console.log(appointment.acuityAppointmentId);
+    console.log(appointment.acuityAppointmentId)
     const data = database.collection('appointments').add(appointment)
     console.info(`Appointment ID: ${appointment.acuityAppointmentId} successfully saved`)
     return data
