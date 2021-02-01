@@ -2262,11 +2262,17 @@ paths:
         - Appointment Management
       security:
         - bearerAuthJWT: []
-      parameters:
-        - in: query
-          name: appointmentId
-          schema:
-            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                appointmentId:
+                  type: string
+              required:
+                - appointmentId
       responses:
         '200':
           description: Successfully Return

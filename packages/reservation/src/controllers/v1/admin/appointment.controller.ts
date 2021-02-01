@@ -245,7 +245,7 @@ class AdminAppointmentController implements IControllerBase {
 
   regenerateBarCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {appointmentId} = req.query as {appointmentId: string}
+      const {appointmentId} = req.body as {appointmentId: string}
 
       const appointment = await this.appointmentService.regenerateBarCode(appointmentId)
 
