@@ -11,10 +11,10 @@ import {uniqueNamesGenerator, adjectives, names, colors} from 'unique-names-gene
 const ANONYMOUS_PI_DATA = true
 // const ACUITY_ENV_NON_PROD = false
 const ACUITY_ENV_NON_PROD = true
-// const START_DATE = '2020-10-24' //Starting from OCT 1st
-// const END_DATE = '2020-10-26' //new Date()
 const START_DATE = '2020-10-24' //Starting from OCT 1st
-const END_DATE = '2020-11-26' //new Date()
+const END_DATE = '2021-01-31' //new Date()
+// const START_DATE = '2020-10-24' //Starting from OCT 1st
+// const END_DATE = '2020-11-26' //new Date()
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')

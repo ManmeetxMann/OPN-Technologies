@@ -66,7 +66,7 @@ const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
 const APIURL = Config.get('ACUITY_SCHEDULER_API_URL')
 const START_DATE = '2020-10-24' //Starting from OCT 1st
-const END_DATE = '2020-11-26' //new Date()
+const END_DATE = '2021-01-31' //new Date()
 
 const acuityBarCodeFormId = ACUITY_ENV_NON_PROD ? 1564839 : 1559910 //TEST:1564839 PROD:1559910
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
@@ -203,6 +203,13 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     await database.collection('pcr-test-results').add({
       ...validatedData,
       updatedAt: serverTimestamp(),
+      timestamps: {
+        createdAt: appointment.data().timestamps.createdAt,
+        updatedAt: null,
+        migrations: {
+          acuityToAppointments: firestore.FieldValue.serverTimestamp(),
+        },
+      },
     })
   } else {
     console.warn(
