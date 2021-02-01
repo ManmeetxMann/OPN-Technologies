@@ -60,7 +60,7 @@ export type AppointmentDBModel = {
   addressUnit: string
   addressForTesting: string
   additionalAddressNotes: string
-  couponCode: string
+  couponCode?: string
   travelID?: string
   travelIDIssuingCountry?: string
   ohipCard?: string
