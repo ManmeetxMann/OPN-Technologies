@@ -24,23 +24,23 @@ const tableLayouts: TableLayouts = {
   },
 }
 
-const resultText = (result:ResultTypes): string => {
-  if(result === ResultTypes.PresumptivePositive){
+const resultText = (result: ResultTypes): string => {
+  if (result === ResultTypes.PresumptivePositive) {
     return 'Presumptive Positive'
-  }else if(result === ResultTypes.Positive){
+  } else if (result === ResultTypes.Positive) {
     return '2019-nCoV Detected'
   }
   return 'NEGATIVE'
-} 
+}
 
-const getFillColorForResultsCell = (result:ResultTypes): string => {
-  if(result === ResultTypes.PresumptivePositive){
+const getFillColorForResultsCell = (result: ResultTypes): string => {
+  if (result === ResultTypes.PresumptivePositive) {
     return '#FF0000'
-  }else if(result === ResultTypes.Positive){
+  } else if (result === ResultTypes.Positive) {
     return '#FF0000'
   }
   return '#6AA84F'
-} 
+}
 
 const pdfContent = (
   params: PCRTestResultEmailDTO,
@@ -50,11 +50,11 @@ const pdfContent = (
     tableLayouts,
     content: [
       companyInfoHeader(),
-      {text: resultDate,margin: [0, 30, 0, 0]},
+      {text: resultDate, margin: [0, 30, 0, 0]},
       clientInformation().heading(),
       clientInformation().dataTable(params, resultDate),
       messageBody(params),
-      {text:'',pageBreak:'before'},
+      {text: '', pageBreak: 'before'},
       companyInfoHeader(),
       testAnalysisTable().heading(),
       testAnalysisTable().headerRow(),
@@ -64,7 +64,7 @@ const pdfContent = (
   }
 }
 
-const companyInfoHeader = ():Content => {
+const companyInfoHeader = (): Content => {
   return {
     columns: [
       {
@@ -114,10 +114,10 @@ const companyInfoHeader = ():Content => {
       },
     ],
   }
-} 
+}
 
 const clientInformation = () => {
-  const heading = ():Content => {
+  const heading = (): Content => {
     return {
       text: 'The following client completed a SARS-CoV-2 screening test at FH Health:',
       margin: [0, 20, 0, 0],
@@ -126,7 +126,7 @@ const clientInformation = () => {
     }
   }
 
-  const dataTable = (params: PCRTestResultEmailDTO, resultDate:string):Content => {
+  const dataTable = (params: PCRTestResultEmailDTO, resultDate: string): Content => {
     const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
     return {
       layout: 'mainTable',
@@ -159,38 +159,39 @@ const clientInformation = () => {
       },
       margin: [0, 5, 0, 0],
     }
-
   }
 
   return Object.freeze({
     dataTable,
-    heading
+    heading,
   })
-} 
+}
 
-const documentFooter = ():Content => {
+const documentFooter = (): Content => {
   return {
-    text:'This document contains personal identifiable information that must be treated confidentially. Any unauthorized use or disclosure is prohibited.',
+    text:
+      'This document contains personal identifiable information that must be treated confidentially. Any unauthorized use or disclosure is prohibited.',
     style: ['footer'],
     margin: [0, 50, 0, 0],
   }
 }
 
 const testAnalysisTable = () => {
-  const heading = ():Content => {
+  const heading = (): Content => {
     return [
       {
-        text:'\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.\n\n',
+        text:
+          '\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.\n\n',
       },
       {
         text: 'Detailed Test Analysis Data:',
         margin: [0, 15, 0, 0],
         lineHeight: 1.2,
-      }
+      },
     ]
   }
 
-  const headerRow = ():Content => {
+  const headerRow = (): Content => {
     return {
       columns: [
         {
@@ -232,7 +233,7 @@ const testAnalysisTable = () => {
     }
   }
 
-  const dataRow = (params: PCRTestResultEmailDTO):Content => {
+  const dataRow = (params: PCRTestResultEmailDTO): Content => {
     return {
       layout: 'resultTable',
       table: {
@@ -282,18 +283,16 @@ const testAnalysisTable = () => {
       margin: [0, -1, 0, 0],
       fontSize: 10,
     }
-
   }
 
   return Object.freeze({
     dataRow,
     heading,
-    headerRow
+    headerRow,
   })
-} 
+}
 
-const messageBody = (params: PCRTestResultEmailDTO):Content => {
-  
+const messageBody = (params: PCRTestResultEmailDTO): Content => {
   const messageForPositiveTest = [
     'The result of your test was ',
     {
@@ -314,7 +313,7 @@ const messageBody = (params: PCRTestResultEmailDTO):Content => {
       lineHeight: 1,
     },
   ]
-  
+
   const messageForPresumptivePositiveTest = [
     'The result of your test was ',
     {
@@ -322,26 +321,30 @@ const messageBody = (params: PCRTestResultEmailDTO):Content => {
       bold: true,
     },
     {
-      text:' for the presence of SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness. '+ 
-        'A presumptive positive test indicates presence of the virus in the sample we collected. '+ 
-        'The probability of a false positive is low, however, all presumptive positives go through confirmatory testing at a Public Health affiliated Lab. '+ 
-        'Your confirmatory result will be posted on the OLIS website. '+
+      text:
+        ' for the presence of SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness. ' +
+        'A presumptive positive test indicates presence of the virus in the sample we collected. ' +
+        'The probability of a false positive is low, however, all presumptive positives go through confirmatory testing at a Public Health affiliated Lab. ' +
+        'Your confirmatory result will be posted on the OLIS website. ' +
         'You must use your OHIP number to access the results: ',
     },
     {
-      text:'https://covid19results.ehealthontario.ca:4443/agree',
-      link:'https://covid19results.ehealthontario.ca:4443/agree',
+      text: 'https://covid19results.ehealthontario.ca:4443/agree',
+      link: 'https://covid19results.ehealthontario.ca:4443/agree',
       color: '#1155CC',
       decoration: 'underline',
       lineHeight: 1,
     },
     {
-      text:'\n\nThe result of this confirmatory test, along with your name and contact information have been forwarded to the Public Health Lab, and will be shared with them as required by law. '+ 
-      'While you wait for the results of the confirmatory testing, please follow the Public Health guidelines for "Have COVID-19", which can be found here: \n',
+      text:
+        '\n\nThe result of this confirmatory test, along with your name and contact information have been forwarded to the Public Health Lab, and will be shared with them as required by law. ' +
+        'While you wait for the results of the confirmatory testing, please follow the Public Health guidelines for "Have COVID-19", which can be found here: \n',
     },
     {
-      text:'https://www.toronto.ca/home/covid-19/covid-19-what-you-should-do/covid-19-have-symptoms-or-been-exposed/',
-      link:'https://www.toronto.ca/home/covid-19/covid-19-what-you-should-do/covid-19-have-symptoms-or-been-exposed/',
+      text:
+        'https://www.toronto.ca/home/covid-19/covid-19-what-you-should-do/covid-19-have-symptoms-or-been-exposed/',
+      link:
+        'https://www.toronto.ca/home/covid-19/covid-19-what-you-should-do/covid-19-have-symptoms-or-been-exposed/',
       color: '#1155CC',
       decoration: 'underline',
       lineHeight: 1,
@@ -355,21 +358,22 @@ const messageBody = (params: PCRTestResultEmailDTO):Content => {
       bold: true,
     },
     {
-      text:' Your results do not detect SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness. '+  
-      'A negative test means that the virus was not present in the sample we collected. Your results suggest you were negative at the time of testing. '+
-      '*\n\n* Although the possibility is low, a false negative result should be considered if you have had recent exposure to the virus along with symptoms consistent with COVID-19.'+
-      '\n\nIf you are the patron receiving the test and require further information, please visit the City of Toronto Public Health: https://www.toronto.ca/home/covid-19 \n\n',
+      text:
+        ' Your results do not detect SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness. ' +
+        'A negative test means that the virus was not present in the sample we collected. Your results suggest you were negative at the time of testing. ' +
+        '*\n\n* Although the possibility is low, a false negative result should be considered if you have had recent exposure to the virus along with symptoms consistent with COVID-19.' +
+        '\n\nIf you are the patron receiving the test and require further information, please visit the City of Toronto Public Health: https://www.toronto.ca/home/covid-19 \n\n',
     },
   ]
 
-  const messageBasedOnResultType = (result: ResultTypes) =>{
-     if(result === ResultTypes.PresumptivePositive){
+  const messageBasedOnResultType = (result: ResultTypes) => {
+    if (result === ResultTypes.PresumptivePositive) {
       return messageForPresumptivePositiveTest
-     }else if(result === ResultTypes.Positive){
-       return messageForPresumptivePositiveTest //TODO Change to messageForPositiveTest
-     }else{
-       return messageForNegativeTest
-     }
+    } else if (result === ResultTypes.Positive) {
+      return messageForPositiveTest
+    } else {
+      return messageForNegativeTest
+    }
   }
 
   return {

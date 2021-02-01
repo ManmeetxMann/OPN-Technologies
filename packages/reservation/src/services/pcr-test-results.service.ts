@@ -58,7 +58,11 @@ export class PCRTestResultsService {
   private emailService = new EmailService()
   private pdfService = new PdfService()
   private couponCode: string
-  private whiteListedResultsTypes = [ResultTypes.Negative, ResultTypes.Positive, ResultTypes.PresumptivePositive]
+  private whiteListedResultsTypes = [
+    ResultTypes.Negative,
+    ResultTypes.Positive,
+    ResultTypes.PresumptivePositive,
+  ]
 
   async createReportForPCRResults(
     testResultData: PCRTestResultRequest,
@@ -230,7 +234,6 @@ export class PCRTestResultsService {
   }
 
   getFilteredResultForPublic(result: ResultTypes, notify: boolean): ResultTypes {
-
     return notify !== true && !this.whiteListedResultsTypes.includes(result)
       ? ResultTypes.Pending
       : result
