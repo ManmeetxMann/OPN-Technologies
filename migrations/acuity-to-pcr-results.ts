@@ -1,6 +1,3 @@
-/**
- * This script just overwrite Client Emails in user collections so that no notfication is sent by mistake
- */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
 import moment from 'moment'
