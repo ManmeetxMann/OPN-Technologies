@@ -428,6 +428,7 @@ components:
                 autoResult:
                   type: string
                   enum:
+                    - PresumptivePositive
                     - Positive
                     - Negative
                     - Invalid
@@ -485,6 +486,7 @@ components:
         autoResult:
           type: string
           enum:
+            - PresumptivePositive
             - Positive
             - Negative
             - Invalid
@@ -669,6 +671,7 @@ paths:
                         result:
                           type: string
                           enum:
+                            - PresumptivePositive
                             - Positive
                             - Negative
                             - Invalid
@@ -717,6 +720,7 @@ paths:
                 result:
                   type: string
                   enum:
+                    - PresumptivePositive
                     - Positive
                     - Negative
                     - Invalid
@@ -801,6 +805,7 @@ paths:
                 result:
                   type: string
                   enum:
+                    - PresumptivePositive
                     - Positive
                     - Negative
                     - Invalid
@@ -1459,6 +1464,7 @@ paths:
                           type: string
                           enum:
                             [
+                              PresumptivePositive,
                               Positive,
                               Negative,
                               Pending,

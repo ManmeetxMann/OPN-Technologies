@@ -45,7 +45,7 @@ import {
   AppointmentAcuityResponse,
 } from '../models/appointment'
 
-import testResultPDFTemplate from '../templates/pcrTestResult'
+import testResultPDFTemplate from '../templates/pcr-test-result-pdf-content'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {makeFirestoreTimestamp} from '../utils/datetime.helper'
 
@@ -58,7 +58,11 @@ export class PCRTestResultsService {
   private emailService = new EmailService()
   private pdfService = new PdfService()
   private couponCode: string
-  private whiteListedResultsForNotification = [ResultTypes.Negative, ResultTypes.Positive]
+  private whiteListedResultsTypes = [
+    ResultTypes.Negative,
+    ResultTypes.Positive,
+    ResultTypes.PresumptivePositive,
+  ]
 
   async createReportForPCRResults(
     testResultData: PCRTestResultRequest,
@@ -230,7 +234,7 @@ export class PCRTestResultsService {
   }
 
   getFilteredResultForPublic(result: ResultTypes, notify: boolean): ResultTypes {
-    return notify !== true && result !== ResultTypes.Negative && result !== ResultTypes.Positive
+    return notify !== true && !this.whiteListedResultsTypes.includes(result)
       ? ResultTypes.Pending
       : result
   }
@@ -274,6 +278,11 @@ export class PCRTestResultsService {
       case PCRResultActions.MarkAsNegative: {
         console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
         finalResult = ResultTypes.Negative
+        break
+      }
+      case PCRResultActions.MarkAsPresumptivePositive: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as Positive`)
+        finalResult = ResultTypes.PresumptivePositive
         break
       }
       case PCRResultActions.MarkAsPositive: {
@@ -375,7 +384,7 @@ export class PCRTestResultsService {
     )
 
     if (
-      !this.whiteListedResultsForNotification.includes(finalResult) &&
+      !this.whiteListedResultsTypes.includes(finalResult) &&
       resultData.resultSpecs.action === PCRResultActions.SendThisResult
     ) {
       console.error(
@@ -599,7 +608,7 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        if (this.whiteListedResultsForNotification.includes(resultData.result)) {
+        if (this.whiteListedResultsTypes.includes(resultData.result)) {
           await this.sendTestResults(resultData)
           console.log(`SendNotification: Success: Sent Results for ${resultData.barCode}`)
         } else {
