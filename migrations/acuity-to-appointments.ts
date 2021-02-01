@@ -9,9 +9,9 @@ import moment from 'moment-timezone'
 import {uniqueNamesGenerator, adjectives, names, colors} from 'unique-names-generator'
 
 const ANONYMOUS_PI_DATA = true
-const ACUITY_ENV_NON_PROD = false
-const START_DATE = '2020-10-24' //Starting from OCT 1st
-const END_DATE = '2020-10-26' //new Date()
+const ACUITY_ENV_NON_PROD = true
+const START_DATE = '2020-10-01' //Starting from OCT 1st
+const END_DATE = '2020-10-30' //new Date()
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -169,8 +169,8 @@ const makeTimeEndOfTheDay = (datetime: moment.Moment): string => {
 }
 
 const generateDeadline = (utcDateTime: moment.Moment, labels: AcuityLabel[]) => {
-  const sameDay = !!labels.find((label) => label.name === 'SAMEDAY')
-  const nextDay = !!labels.find((label) => label.name === 'NEXTDAY')
+  const sameDay = !!labels && !!labels.find((label) => label.name === 'SAMEDAY')
+  const nextDay = !!labels && !!labels.find((label) => label.name === 'NEXTDAY')
 
   let deadline: string
   if (nextDay) {
@@ -331,7 +331,7 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.homeAddress,
     ).value
   } catch (e) {
-    console.warn(`Invalid address: ${e.message}`)
+    console.warn(`AppointmentID: ${acuityAppointment.id} Invalid address: ${e.message}`)
   }
 
   try {
@@ -467,7 +467,7 @@ async function createAppointment(acuityAppointment) {
 
 async function main() {
   try {
-    console.log('Migration Starting')
+    console.log(`Migration Starting for AcuityNonProd: ${ACUITY_ENV_NON_PROD}`)
     const results = await fetchAcuity()
     results.forEach((result) => {
       totalCount += 1
@@ -476,6 +476,7 @@ async function main() {
           successCount += 1
         }
       } else {
+        console.log(result)
         failureCount += 1
       }
     })
