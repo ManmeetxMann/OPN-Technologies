@@ -15,36 +15,10 @@ const database = firestore()
 
 const acuityFormFieldIdsNonProd = {
   barCode: 8622334,
-  nurse: 8622344,
-  organizationId: 8842033,
-  agreement: 8981060,
-  birthDay: 8637043,
-  homeAddress: 9082854,
-  homeAddeessUnit: 9082855,
-  readTermsAndConditions: 9082890,
-  receiveResultsViaEmail: 9082891,
-  agreeToConductFHHealthAccessment: 9082892,
-  receiveNotificationsFromGov: 9082893,
-  shareTestResultWithEmployer: 9112802,
-  addressForTesting: 9112811,
-  additionalAddressNotes: 9112814,
 }
 
 const acuityFormFieldIdsProd = {
   barCode: 8594852,
-  nurse: 8595482,
-  organizationId: 8854779,
-  agreement: 8981060,
-  birthDay: 8561464,
-  homeAddress: 8738660,
-  homeAddeessUnit: 8738661,
-  readTermsAndConditions: 8562278,
-  receiveResultsViaEmail: 8595773,
-  agreeToConductFHHealthAccessment: 8946232,
-  receiveNotificationsFromGov: 8595854,
-  shareTestResultWithEmployer: 8691773,
-  addressForTesting: 8621731,
-  additionalAddressNotes: 8621732,
 }
 
 export enum ResultStatus {
@@ -190,7 +164,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
       firstName: acuityAppointment.firstName,
       lastName: acuityAppointment.lastName,
       linkedBarCodes: [],
-      organizationId: '',
+      organizationId: appointment.data().organizationId,
       reSampleNumber: 1,
       result: 'Pending',
       runNumber: 1,
