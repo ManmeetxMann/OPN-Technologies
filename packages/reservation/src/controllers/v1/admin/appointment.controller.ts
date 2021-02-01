@@ -36,6 +36,7 @@ class AdminAppointmentController implements IControllerBase {
     const apptAuth = authorizationMiddleware([RequiredUserPermission.LabAppointments])
     const apptAuthWithOrg = authorizationMiddleware([RequiredUserPermission.LabAppointments], true)
     const receivingAuth = authorizationMiddleware([RequiredUserPermission.LabReceiving])
+    const superAdminAuth = authorizationMiddleware([RequiredUserPermission.SuperAdmin])
     innerRouter.get(this.path + '/api/v1/appointments', apptAuthWithOrg, this.getListAppointments)
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
@@ -63,6 +64,11 @@ class AdminAppointmentController implements IControllerBase {
       this.getNextBarcode,
     )
     innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
+    innerRouter.put(
+      this.path + '/api/v1/appointments/barcode/regenerate',
+      superAdminAuth,
+      this.regenerateBarCode,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -232,6 +238,18 @@ class AdminAppointmentController implements IControllerBase {
       )
 
       res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  regenerateBarCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {appointmentId} = req.query as {appointmentId: string}
+
+      const appointment = await this.appointmentService.regenerateBarCode(appointmentId)
+
+      res.json(actionSucceed(appointmentUiDTOResponse(appointment, false)))
     } catch (error) {
       next(error)
     }

@@ -717,4 +717,30 @@ export class AppoinmentService {
 
     return appointments.map(userAppointmentDTOResponse)
   }
+
+  async regenerateBarCode(appointmentId: string): Promise<AppointmentDBModel> {
+    const appointment = await this.appointmentsRepository.get(appointmentId)
+
+    if (!appointment) {
+      throw new BadRequestException('Invalid appointmentId')
+    }
+    const newBarCode = await this.getNextBarCodeNumber()
+
+    const updatedAppoinment = await this.appointmentsRepository.updateBarCodeById(
+      appointmentId,
+      newBarCode,
+    )
+    const pcrTest = await this.pcrTestResultsRepository.findWhereEqual(
+      'appointmentId',
+      appointmentId,
+    )
+
+    if (pcrTest.length) {
+      await this.pcrTestResultsRepository.updateData(pcrTest[0].id, {barCode: newBarCode})
+    } else {
+      console.log(`Not found PCR-test-result with appointmentId: ${appointmentId}`)
+    }
+
+    return updatedAppoinment
+  }
 }

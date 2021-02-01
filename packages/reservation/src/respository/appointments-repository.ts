@@ -13,6 +13,10 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public async save(appointments: Omit<AppointmentDBModel, 'id'>): Promise<AppointmentDBModel> {
     return this.add(appointments)
   }
+
+  public updateBarCodeById(id: string, barCode: string): Promise<AppointmentDBModel> {
+    return this.updateProperty(id, 'barCode', barCode)
+  }
 }
 
 export class StatusHistoryRepository extends DataModel<AppointmentStatusHistoryDb> {
