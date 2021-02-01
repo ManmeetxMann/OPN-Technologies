@@ -725,6 +725,7 @@ export class AppoinmentService {
       throw new BadRequestException('Invalid appointmentId')
     }
     const newBarCode = await this.getNextBarCodeNumber()
+    console.log(`regenerateBarCode: AppointmentID: ${appointmentId} New BarCode: ${newBarCode}`)
 
     const updatedAppoinment = await this.appointmentsRepository.updateBarCodeById(
       appointmentId,
@@ -734,11 +735,14 @@ export class AppoinmentService {
       'appointmentId',
       appointmentId,
     )
-
+    
     if (pcrTest.length) {
-      await this.pcrTestResultsRepository.updateData(pcrTest[0].id, {barCode: newBarCode})
+      pcrTest.forEach(async (pcrTest) => {
+        await this.pcrTestResultsRepository.updateData(pcrTest.id, {barCode: newBarCode})
+        console.log(`regenerateBarCode: PCRTestID: ${pcrTest.id} New BarCode: ${newBarCode}`)
+      })
     } else {
-      console.log(`Not found PCR-test-result with appointmentId: ${appointmentId}`)
+      console.warn(`Not found PCR-test-result with appointmentId: ${appointmentId}`)
     }
 
     return updatedAppoinment
