@@ -735,7 +735,7 @@ export class AppoinmentService {
       'appointmentId',
       appointmentId,
     )
-    
+
     if (pcrTest.length) {
       pcrTest.forEach(async (pcrTest) => {
         await this.pcrTestResultsRepository.updateData(pcrTest.id, {barCode: newBarCode})
