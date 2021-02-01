@@ -1,5 +1,5 @@
 import moment from 'moment'
-import {flatten} from 'lodash'
+import {flatten, union} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 
@@ -693,6 +693,31 @@ export class AppoinmentService {
         appointmentStatus !== AppointmentStatus.Reported &&
         appointmentStatus !== AppointmentStatus.ReSampleRequired)
     )
+  }
+
+  async checkDuplicatedAppointments(appointmentIds: string[]): Promise<void> {
+    const appointments = await this.getAppointmentsDBByIds(appointmentIds)
+    const barCodes = appointments.map(({barCode}) => barCode)
+
+    if (union(barCodes).length != barCodes.length) {
+      const firstMatch = new Set()
+      const duplicatedBarCodes = new Set()
+
+      barCodes.forEach((barcode) => {
+        if (!firstMatch.has(barcode)) {
+          return firstMatch.add(barcode)
+        }
+        duplicatedBarCodes.add(barcode)
+      })
+      const duplicatedBarCodeArray = Array.from(duplicatedBarCodes.keys())
+      const duplicatedAppointmentIds = appointments
+        .filter(({barCode}) => duplicatedBarCodeArray.includes(barCode))
+        .map(({id}) => id)
+
+      throw new DuplicateDataException(
+        `Multiple Appointments [${duplicatedAppointmentIds}] with barcodes: ${duplicatedBarCodeArray}`,
+      )
+    }
   }
 
   async getAppointmentByUserId(userId: string): Promise<UserAppointment[]> {
