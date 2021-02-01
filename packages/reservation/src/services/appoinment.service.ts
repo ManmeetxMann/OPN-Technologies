@@ -332,7 +332,7 @@ export class AppoinmentService {
       addressUnit: acuityAppointment.addressUnit,
       travelID: acuityAppointment.travelID,
       travelIDIssuingCountry: acuityAppointment.travelIDIssuingCountry,
-      ohipCard: acuityAppointment.ohipCard,
+      ohipCard: acuityAppointment.ohipCard ?? '',
       swabMethod: acuityAppointment.swabMethod,
       readTermsAndConditions: acuityAppointment.readTermsAndConditions,
       receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
