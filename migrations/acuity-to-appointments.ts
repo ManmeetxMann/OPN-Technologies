@@ -264,7 +264,7 @@ async function createAppointment(acuityAppointment) {
   const timeOfAppointment = utcDateTime.format('h:mma')
 
   //Deadline is based on Eastern Time
-  const deadline = generateDeadline(moment(acuityAppointment.datetime), acuityAppointment.labels)
+  const deadline = generateDeadline(moment(acuityAppointment.datetime), acuityAppointment.labels || [])
   let barCode = ''
   let dateOfBirth = ''
   let organizationId = ''
@@ -432,7 +432,7 @@ async function createAppointment(acuityAppointment) {
       dateOfAppointment: dateOfAppointment,
       dateOfBirth: piDOB(dateOfBirth),
       dateTime: dateTime,
-      deadline: deadline,
+      deadline: firestore.Timestamp.fromDate(moment(deadline).toDate()),
       email: piEmail(acuityAppointment.email),
       firstName: piData(acuityAppointment.firstName),
       lastName: piData(acuityAppointment.lastName),
