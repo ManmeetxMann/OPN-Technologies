@@ -67,14 +67,16 @@ async function updateAllUsers(): Promise<Result[]> {
   return results
 }
 
-async function moveAuthAndEmailId(userSnapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
+async function moveAuthAndEmailId(
+  userSnapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
+) {
   const user = userSnapshot.data()
   const userId = userSnapshot.id
   const {admin, authUserId} = user
   const adminAuthUserId = admin.authUserId
 
   const handleAuthUserId = () => {
-    if(!adminAuthUserId){
+    if (!adminAuthUserId) {
       console.log(`NoAdminAuthUserId: UserID: ${userId}`)
       return authUserId
     }
@@ -82,8 +84,8 @@ async function moveAuthAndEmailId(userSnapshot: firestore.QueryDocumentSnapshot<
     if (!authUserId) {
       console.log(`MovingAdminAuthUserIdToRoot: UserID: ${userId}`)
       return adminAuthUserId
-    }else if(!!authUserId) {
-      if(authUserId !== adminAuthUserId ){
+    } else if (!!authUserId) {
+      if (authUserId !== adminAuthUserId) {
         console.warn(`ReplacingAuthUserId With AdminAuthUserID: UserID: ${userId}`)
         return adminAuthUserId
       }
@@ -99,11 +101,11 @@ async function moveAuthAndEmailId(userSnapshot: firestore.QueryDocumentSnapshot<
       return user.email
     }
 
-    if(!user.email){
+    if (!user.email) {
       console.log(`MovingAdminEmailToRoot: UserID: ${userId}`)
       return admin.email
-    }else if(user.email){
-      if(user.email !== admin.email ){
+    } else if (user.email) {
+      if (user.email !== admin.email) {
         console.warn(`ReplacingAdminEmailToRoot: UserID: ${userId}`)
         return admin.email
       }
@@ -114,10 +116,7 @@ async function moveAuthAndEmailId(userSnapshot: firestore.QueryDocumentSnapshot<
 
   const authUserIdToUpdate = handleAuthUserId()
   const email = handleEmail()
-  const userByEmail = await database
-    .collection('users')
-    .where('email', '==', email)
-    .get()
+  const userByEmail = await database.collection('users').where('email', '==', email).get()
 
   if (userByEmail.size > 0 && email !== user.email) {
     console.warn(`DuplicateUserEmail: ${email} already exists. UserID: ${userId} Ignored`)
@@ -135,24 +134,21 @@ async function moveAuthAndEmailId(userSnapshot: firestore.QueryDocumentSnapshot<
     },
   }
 
-  if(user.authUserId && authUserIdToUpdate !== user.authUserId){
+  if (user.authUserId && authUserIdToUpdate !== user.authUserId) {
     data['oldAuthUserId'] = user.authUserId ?? null
   }
 
-  if(user.email && email !== user.email){
+  if (user.email && email !== user.email) {
     data['oldEmail'] = user.email ?? null
   }
 
-  if(!DRY_RUN){
+  if (!DRY_RUN) {
     console.log(`UpdatingToDB: UserID: ${userId} Data: ${JSON.stringify(data)}`)
-    
-    return userSnapshot.ref.set(
-      data,
-      {
-        merge: true,
-      },
-    )
-  }else{
+
+    return userSnapshot.ref.set(data, {
+      merge: true,
+    })
+  } else {
     console.log(`WillBeUpdatedToDB: UserID: ${userId} Data: ${JSON.stringify(data)}`)
   }
   return Promise.resolve()
