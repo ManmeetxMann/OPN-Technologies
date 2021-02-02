@@ -42,25 +42,39 @@ class PCRTestResultController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    const sendResultsAuth = authorizationMiddleware([RequiredUserPermission.LabSendResults])
+    const sendBulkResultsAuth = authorizationMiddleware([RequiredUserPermission.LabSendBulkResults])
+    const sendSingleResultsAuth = authorizationMiddleware([
+      RequiredUserPermission.LabSendSingleResults,
+    ])
     const dueTodayAuth = authorizationMiddleware([RequiredUserPermission.LabDueToday])
-    const testResultsAuth = authorizationMiddleware([RequiredUserPermission.LabSendResults], true)
+    const listTestResultsAuth = authorizationMiddleware(
+      [RequiredUserPermission.LabPCRTestResults],
+      true,
+    )
 
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results-bulk',
-      sendResultsAuth,
+      sendBulkResultsAuth,
       this.createReportForPCRResults,
     )
-    innerRouter.post(this.path + '/api/v1/pcr-test-results', sendResultsAuth, this.createPCRResults)
+    innerRouter.post(
+      this.path + '/api/v1/pcr-test-results',
+      sendSingleResultsAuth,
+      this.createPCRResults,
+    )
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results/history',
-      sendResultsAuth,
+      sendBulkResultsAuth,
       this.listPCRResultsHistory,
     )
-    innerRouter.get(this.path + '/api/v1/pcr-test-results', testResultsAuth, this.listPCRResults)
+    innerRouter.get(
+      this.path + '/api/v1/pcr-test-results',
+      listTestResultsAuth,
+      this.listPCRResults,
+    )
     innerRouter.get(
       this.path + '/api/v1/pcr-test-results-bulk/report-status',
-      sendResultsAuth,
+      sendBulkResultsAuth,
       this.listPCRTestResultReportStatus,
     )
     innerRouter.put(
