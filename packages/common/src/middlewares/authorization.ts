@@ -224,8 +224,12 @@ const isAllowed = (
     RequiredUserPermission.LabAdminToolIDBarcode,
   )
   const seekOPNAdmin = listOfRequiredPermissions.includes(RequiredUserPermission.OPNAdmin)
-  const seekLabAdminRegenerateBarCode = listOfRequiredPermissions.includes(RequiredUserPermission.LabAdminRegenerateBarCode)
-  const seekLabAddTransportRunsToAppointments = listOfRequiredPermissions.includes(RequiredUserPermission.LabAddTransportRunsToAppointments)
+  const seekLabAdminRegenerateBarCode = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabAdminRegenerateBarCode,
+  )
+  const seekLabAddTransportRunsToAppointments = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabAddTransportRunsToAppointments,
+  )
   if (
     seekLabAppointmentAdmin &&
     !admin?.isLabAppointmentsAdmin &&

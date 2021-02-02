@@ -36,9 +36,15 @@ class AdminAppointmentController implements IControllerBase {
     const apptAuth = authorizationMiddleware([RequiredUserPermission.LabAppointments])
     const apptAuthWithOrg = authorizationMiddleware([RequiredUserPermission.LabAppointments], true)
     const receivingAuth = authorizationMiddleware([RequiredUserPermission.LabReceiving])
-    const idBarCodeToolAuth = authorizationMiddleware([RequiredUserPermission.LabAdminToolIDBarcode])
-    const addTransportRunToApptAuth = authorizationMiddleware([RequiredUserPermission.LabAddTransportRunsToAppointments])
-    const regenerateBarCodeAuth = authorizationMiddleware([RequiredUserPermission.LabAdminRegenerateBarCode])
+    const idBarCodeToolAuth = authorizationMiddleware([
+      RequiredUserPermission.LabAdminToolIDBarcode,
+    ])
+    const addTransportRunToApptAuth = authorizationMiddleware([
+      RequiredUserPermission.LabAddTransportRunsToAppointments,
+    ])
+    const regenerateBarCodeAuth = authorizationMiddleware([
+      RequiredUserPermission.LabAdminRegenerateBarCode,
+    ])
     innerRouter.get(this.path + '/api/v1/appointments', apptAuthWithOrg, this.getListAppointments)
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
