@@ -24,6 +24,7 @@ export enum AppointmentReasons {
 }
 
 export enum ResultTypes {
+  PresumptivePositive = 'PresumptivePositive',
   Positive = 'Positive',
   Negative = 'Negative',
   Pending = 'Pending',
@@ -60,7 +61,7 @@ export type AppointmentDBModel = {
   addressUnit: string
   addressForTesting: string
   additionalAddressNotes: string
-  couponCode: string
+  couponCode?: string
   travelID?: string
   travelIDIssuingCountry?: string
   ohipCard?: string
