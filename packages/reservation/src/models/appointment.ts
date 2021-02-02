@@ -323,3 +323,19 @@ export const appointmentByBarcodeUiDTOResponse = (
     organizationName: organizationName,
   }
 }
+
+export type ActivityTracking = {
+  action: AppointmentActivityAction
+  currentData: Partial<AppointmentDBModel>
+  newData: Partial<AppointmentDBModel>
+  actionBy: string
+}
+
+export enum AppointmentActivityAction {
+  RegenerateBarcode = 'regenerateBarcode',
+  UpdateFromAcuity = 'updateFromAcuity'
+}
+
+export type ActivityTrackingDb = ActivityTracking & {
+  id: string
+}
