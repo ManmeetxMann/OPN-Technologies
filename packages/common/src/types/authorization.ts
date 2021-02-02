@@ -7,7 +7,11 @@ export enum RequiredUserPermission {
   LabPCRTestResults = 'LabPCRTestResults',
   LabReceiving = 'LabReceiving',
   LabTransportRuns = 'LabTransportRuns',
+  LabAddTransportRunsToAppointments = 'LabAddTransportRunsToAppointments',
   LabTestRuns = 'LabTestRuns',
-  LabSendResults = 'LabSendResults',
+  LabSendBulkResults = 'LabSendBulkResults',
+  LabSendSingleResults = 'LabSendSingleResults',
   LabDueToday = 'LabDueToday',
+  LabAdminToolIDBarcode = 'LabAdminToolIDBarcode',
+  LabAdminRegenerateBarCode = 'LabAdminRegenerateBarCode',
 }
