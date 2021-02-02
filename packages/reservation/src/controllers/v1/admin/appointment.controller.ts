@@ -36,7 +36,15 @@ class AdminAppointmentController implements IControllerBase {
     const apptAuth = authorizationMiddleware([RequiredUserPermission.LabAppointments])
     const apptAuthWithOrg = authorizationMiddleware([RequiredUserPermission.LabAppointments], true)
     const receivingAuth = authorizationMiddleware([RequiredUserPermission.LabReceiving])
-    const superAdminAuth = authorizationMiddleware([RequiredUserPermission.SuperAdmin])
+    const idBarCodeToolAuth = authorizationMiddleware([
+      RequiredUserPermission.LabAdminToolIDBarcode,
+    ])
+    const addTransportRunToApptAuth = authorizationMiddleware([
+      RequiredUserPermission.LabAddTransportRunsToAppointments,
+    ])
+    const regenerateBarCodeAuth = authorizationMiddleware([
+      RequiredUserPermission.LabAdminRegenerateBarCode,
+    ])
     innerRouter.get(this.path + '/api/v1/appointments', apptAuthWithOrg, this.getListAppointments)
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
@@ -50,23 +58,23 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/add-transport-run',
-      apptAuth,
+      addTransportRunToApptAuth,
       this.addTransportRun,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/lookup',
-      apptAuth,
+      idBarCodeToolAuth,
       this.getAppointmentByBarcode,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/get-new-code',
-      apptAuth,
+      idBarCodeToolAuth,
       this.getNextBarcode,
     )
     innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
     innerRouter.put(
       this.path + '/api/v1/appointments/barcode/regenerate',
-      superAdminAuth,
+      regenerateBarCodeAuth,
       this.regenerateBarCode,
     )
 
