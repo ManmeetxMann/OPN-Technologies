@@ -490,6 +490,9 @@ export class PCRTestResultsService {
         dateTime: appointment.dateTime,
         timeOfAppointment: appointment.timeOfAppointment,
         registeredNursePractitioner: appointment.registeredNursePractitioner,
+        travelID: appointment.travelID,
+        travelIDIssuingCountry: appointment.travelIDIssuingCountry,
+        swabMethod: appointment.swabMethod,
       }
       await this.sendNotification(pcrResultDataForEmail)
     } else {
