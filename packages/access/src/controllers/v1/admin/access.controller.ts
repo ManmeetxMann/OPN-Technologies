@@ -36,8 +36,6 @@ const replyUnauthorizedEntry = (res: Response) =>
     .status(403)
     .json(of(null, ResponseStatusCodes.AccessDenied, 'Must have Proceed badge to enter/exit'))
 
-const timeZone = Config.get('DEFAULT_TIME_ZONE')
-
 class AdminController implements IRouteController {
   public router = express.Router()
   private passportService = new PassportService()
@@ -59,12 +57,17 @@ class AdminController implements IRouteController {
     const requireAdminWithOrg = authorizationMiddleware([RequiredUserPermission.OrgAdmin], true)
     const routes = express
       .Router()
-      .get('/stats', requireAdminWithOrg, this.stats)
+      // scan a token
+      .post('/scan-enter', requireAdminWithOrg, this.scanEnter)
+      .post('/scan-exit', requireAdminWithOrg, this.scanExit)
+      // manually check someone in or out
       .post('/enter', requireAdminWithOrg, this.enter)
       .post('/exit', requireAdminWithOrg, this.exit)
       .post('/enterorexit/tag', requireAdminWithOrg, this.enterOrExitUsingATag)
+      .get('/stats', requireAdminWithOrg, this.stats)
+      // TODO: move to non-admin?
       .get('/:organizationId/locations/accessible', this.getAccessibleLocations)
-    this.router.use('/admin', routes)
+    this.router.use('/access/admin', routes)
   }
 
   stats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -81,6 +84,81 @@ class AdminController implements IRouteController {
       const stats = await this.accessService.getTodayStatsForLocations(locationIds)
       const responseBody = _.omit(stats, ['id', 'createdAt'])
       // TODO: add asOfDateTime, checkInsPerHour?
+      res.json(actionSucceed(responseBody))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  scanEnter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
+    // used when an admin scans an access token
+    try {
+      const {accessToken} = req.body
+      const {organizationId} = res.locals
+      const access = await this.accessService.findOneByToken(accessToken)
+      const {userId, locationId} = access
+      const [passport, user, location] = await Promise.all([
+        this.passportService.findOneByToken(access.statusToken),
+        this.userService.findOne(userId),
+        this.organizationService.getLocation(organizationId, locationId),
+      ])
+
+      if (!location) {
+        throw new ForbiddenException(
+          `Location ${locationId} does not exist or does not belong to organization ${organizationId}`,
+        )
+      }
+      if (!location.allowAccess) {
+        throw new ForbiddenException('Location does not permit direct check-in')
+      }
+
+      const authenticatedUser = res.locals.connectedUser as User
+      const adminForLocations = (authenticatedUser.admin as AdminProfile).adminForLocationIds
+      const adminForOrganization = (authenticatedUser.admin as AdminProfile).adminForOrganizationId
+      if (adminForOrganization !== organizationId) {
+        throw new UnauthorizedException(`Not an admin for organization ${organizationId}`)
+      }
+      if (
+        !(
+          adminForLocations.includes(location.id) ||
+          (location.parentLocationId && adminForLocations.includes(location.parentLocationId))
+        )
+      ) {
+        throw new UnauthorizedException(`Not an admin for location ${location.id}`)
+      }
+      if (passport.status === PassportStatuses.Proceed && isPassed(passport.validUntil)) {
+        throw new UnauthorizedException(`Passport ${passport.id} has expired`)
+      }
+
+      const {dependants, ...newAccess} = await this.accessService.handleEnter(access)
+      const responseBody = {
+        access: newAccess,
+        passport,
+        user,
+        dependants,
+      }
+      return res.json(actionSucceed(responseBody))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  scanExit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {accessToken} = req.body
+      const access = await this.accessService.findOneByToken(accessToken)
+      const {userId} = access
+      const [passport, user] = await Promise.all([
+        this.passportService.findOneByToken(access.statusToken),
+        this.userService.findOne(userId),
+      ])
+      const {dependants, ...newAccess} = await this.accessService.handleExit(access)
+      const responseBody = {
+        passport,
+        dependants,
+        access: newAccess,
+        user,
+      }
       res.json(actionSucceed(responseBody))
     } catch (error) {
       next(error)
@@ -164,45 +242,12 @@ class AdminController implements IRouteController {
       next(error)
     }
   }
-
-  exit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  exit = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
+    // used when an admin scans an access token
     try {
-      const {accessToken, userId} = req.body
-      const access = await this.accessService.findOneByToken(accessToken)
-      const includesGuardian = access.includesGuardian
-      // if unspecified, all remaining dependents
-
-      const passport = await this.passportService.findOneByToken(access.statusToken)
-      const user = await this.userService.findOne(userId)
-      if (userId !== access.userId) {
-        throw new UnauthorizedException(`Access ${accessToken} does not belong to ${userId}`)
-      }
-      const newAccess = await this.accessService.handleExit(access)
-      const {dependants} = newAccess
-      const userIdToReturn = newAccess.userId
-      const userModelToReturn =
-        userIdToReturn === userId
-          ? user
-          : {
-              ...user,
-              id: userIdToReturn,
-              firstName: dependants.find(({id}) => id === userIdToReturn)?.firstName,
-              lastName: dependants.find(({id}) => id === userIdToReturn)?.lastName,
-            }
-      const responseBody = {
-        passport,
-        base64Photo: user.base64Photo,
-        dependants,
-        includesGuardian,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        access: {
-          ...newAccess,
-          status: passport.status,
-          user: userModelToReturn,
-        },
-      }
-      res.json(actionSucceed(responseBody))
+      const {accessToken} = req.body
+      const {organizationId} = res.locals
+      
     } catch (error) {
       next(error)
     }
