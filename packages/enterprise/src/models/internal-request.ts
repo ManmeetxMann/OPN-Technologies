@@ -21,4 +21,5 @@ export type InternalAdminApprovalCreateRequest = {
   isDueTodayAdmin: boolean
   isBulkUploadAdmin: boolean
   isIDBarCodesAdmin: boolean
+  isSingleResultSendAdmin: boolean
 }

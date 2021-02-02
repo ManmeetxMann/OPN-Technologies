@@ -520,6 +520,9 @@ components:
         isIDBarCodesAdmin:
           type: boolean
           default: false
+        isSingleResultSendAdmin:
+          type: boolean
+          default: false
       required:
         - email
         - showReporting
@@ -804,6 +807,10 @@ components:
         isDueTodayAdmin:
           type: boolean
         isBulkUploadAdmin:
+          type: boolean
+        isIDBarCodesAdmin:
+          type: boolean
+        isSingleResultSendAdmin:
           type: boolean
     User:
       type: object
