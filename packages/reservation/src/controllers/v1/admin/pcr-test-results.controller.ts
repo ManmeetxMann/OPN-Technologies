@@ -8,7 +8,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {getAdminId, getIsLabUser} from '../../../../../common/src/utils/auth'
+import {getUserId, getIsLabUser} from '../../../../../common/src/utils/auth'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
@@ -42,25 +42,39 @@ class PCRTestResultController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    const sendResultsAuth = authorizationMiddleware([RequiredUserPermission.LabSendResults])
+    const sendBulkResultsAuth = authorizationMiddleware([RequiredUserPermission.LabSendBulkResults])
+    const sendSingleResultsAuth = authorizationMiddleware([
+      RequiredUserPermission.LabSendSingleResults,
+    ])
     const dueTodayAuth = authorizationMiddleware([RequiredUserPermission.LabDueToday])
-    const testResultsAuth = authorizationMiddleware([RequiredUserPermission.LabSendResults], true)
+    const listTestResultsAuth = authorizationMiddleware(
+      [RequiredUserPermission.LabPCRTestResults],
+      true,
+    )
 
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results-bulk',
-      sendResultsAuth,
+      sendBulkResultsAuth,
       this.createReportForPCRResults,
     )
-    innerRouter.post(this.path + '/api/v1/pcr-test-results', sendResultsAuth, this.createPCRResults)
+    innerRouter.post(
+      this.path + '/api/v1/pcr-test-results',
+      sendSingleResultsAuth,
+      this.createPCRResults,
+    )
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results/history',
-      sendResultsAuth,
+      sendBulkResultsAuth,
       this.listPCRResultsHistory,
     )
-    innerRouter.get(this.path + '/api/v1/pcr-test-results', testResultsAuth, this.listPCRResults)
+    innerRouter.get(
+      this.path + '/api/v1/pcr-test-results',
+      listTestResultsAuth,
+      this.listPCRResults,
+    )
     innerRouter.get(
       this.path + '/api/v1/pcr-test-results-bulk/report-status',
-      sendResultsAuth,
+      sendBulkResultsAuth,
       this.listPCRTestResultReportStatus,
     )
     innerRouter.put(
@@ -83,7 +97,7 @@ class PCRTestResultController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
       const data = req.body as PCRTestResultRequest
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
@@ -111,7 +125,7 @@ class PCRTestResultController implements IControllerBase {
 
   createPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
       const {barCode, ...data} = req.body as PCRTestResultRequestData
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
@@ -288,7 +302,7 @@ class PCRTestResultController implements IControllerBase {
 
   addTestRunToPCR = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
 
       const {
         pcrTestResultIds,

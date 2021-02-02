@@ -7,7 +7,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
-import {getAdminId, getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
+import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
 
 import {
   appointmentByBarcodeUiDTOResponse,
@@ -36,7 +36,15 @@ class AdminAppointmentController implements IControllerBase {
     const apptAuth = authorizationMiddleware([RequiredUserPermission.LabAppointments])
     const apptAuthWithOrg = authorizationMiddleware([RequiredUserPermission.LabAppointments], true)
     const receivingAuth = authorizationMiddleware([RequiredUserPermission.LabReceiving])
-    const superAdminAuth = authorizationMiddleware([RequiredUserPermission.SuperAdmin])
+    const idBarCodeToolAuth = authorizationMiddleware([
+      RequiredUserPermission.LabAdminToolIDBarcode,
+    ])
+    const addTransportRunToApptAuth = authorizationMiddleware([
+      RequiredUserPermission.LabAddTransportRunsToAppointments,
+    ])
+    const regenerateBarCodeAuth = authorizationMiddleware([
+      RequiredUserPermission.LabAdminRegenerateBarCode,
+    ])
     innerRouter.get(this.path + '/api/v1/appointments', apptAuthWithOrg, this.getListAppointments)
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
@@ -50,23 +58,23 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/add-transport-run',
-      apptAuth,
+      addTransportRunToApptAuth,
       this.addTransportRun,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/lookup',
-      apptAuth,
+      idBarCodeToolAuth,
       this.getAppointmentByBarcode,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/get-new-code',
-      apptAuth,
+      idBarCodeToolAuth,
       this.getNextBarcode,
     )
     innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
     innerRouter.put(
       this.path + '/api/v1/appointments/barcode/regenerate',
-      superAdminAuth,
+      regenerateBarCodeAuth,
       this.regenerateBarCode,
     )
 
@@ -136,7 +144,7 @@ class AdminAppointmentController implements IControllerBase {
 
   cancelAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       const {appointmentId} = req.params as {appointmentId: string}
@@ -157,7 +165,7 @@ class AdminAppointmentController implements IControllerBase {
 
   addTransportRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
 
       const {appointmentIds, transportRunId} = req.body as {
         appointmentIds: string[]
@@ -220,7 +228,7 @@ class AdminAppointmentController implements IControllerBase {
 
   addVialLocation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
 
       const {appointmentIds, vialLocation} = req.body as {
         appointmentIds: string[]
