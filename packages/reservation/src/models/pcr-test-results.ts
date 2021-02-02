@@ -128,6 +128,9 @@ export type PCRTestResultEmailDTO = Omit<
   registeredNursePractitioner?: string
   timeOfAppointment: string
   dateTime: string
+  travelID?: string
+  travelIDIssuingCountry?: string
+  swabMethod?: string
 }
 
 export type ProcessPCRResultRequest = {

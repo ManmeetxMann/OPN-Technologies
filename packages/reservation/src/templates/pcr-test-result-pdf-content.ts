@@ -128,34 +128,56 @@ const clientInformation = () => {
 
   const dataTable = (params: PCRTestResultEmailDTO, resultDate: string): Content => {
     const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
+    const dataPersonal = [
+      [
+        'Patient Name ',
+        {
+          text: `${params.firstName} ${params.lastName}`,
+          bold: true,
+        },
+      ],
+      ['Date of Birth', params.dateOfBirth],
+      ['Mobile Number', params.phone],
+    ]
+    
+    if(params.travelID){
+      dataPersonal.push(['Travel ID', params.travelID])
+    }
+    
+    if(params.travelIDIssuingCountry){
+      dataPersonal.push(['TravelID Issuing Country', params.travelIDIssuingCountry])
+    }
+
+    const dataAppointment = [
+      [
+        'Date of Test (Sample Collection)',
+        `${params.dateOfAppointment} at ${params.timeOfAppointment}`,
+      ],
+      ['Date of Result', resultDate],
+      ['Ordering Physician', requisitionDoctor],
+      ['Nurse', params.registeredNursePractitioner]
+    ]
+
+    if(params.swabMethod){
+      dataAppointment.push(['Swab Method', params.swabMethod])
+    }
+    
+    const dataTestDetails = [
+      ['Test', 'RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
+      [
+        'Equipment approved by \n Health Canada',
+        'Allplex 2019-nCoV Assay manufactured by Seegene, Inc.',
+      ],
+    ]
+    
+    const data = dataPersonal.concat(dataAppointment, dataTestDetails)
+
     return {
       layout: 'mainTable',
       table: {
         headerRows: 1,
         widths: [183, 240],
-        body: [
-          [
-            'Patient Name ',
-            {
-              text: `${params.firstName} ${params.lastName}`,
-              bold: true,
-            },
-          ],
-          ['Date of Birth', params.dateOfBirth],
-          ['Mobile Number', params.phone],
-          [
-            'Date of Test (Sample Collection)',
-            `${params.dateOfAppointment} at ${params.timeOfAppointment}`,
-          ],
-          ['Date of Result', resultDate],
-          ['Ordering Physician', requisitionDoctor],
-          ['Nurse', params.registeredNursePractitioner],
-          ['Test', 'RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
-          [
-            'Equipment approved by \n Health Canada',
-            'Allplex 2019-nCoV Assay manufactured by Seegene, Inc.',
-          ],
-        ],
+        body: data,
       },
       margin: [0, 5, 0, 0],
     }
