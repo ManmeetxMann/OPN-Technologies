@@ -8,7 +8,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {getAdminId, getIsLabUser} from '../../../../../common/src/utils/auth'
+import {getUserId, getIsLabUser} from '../../../../../common/src/utils/auth'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
@@ -83,7 +83,7 @@ class PCRTestResultController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
       const data = req.body as PCRTestResultRequest
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
@@ -111,7 +111,7 @@ class PCRTestResultController implements IControllerBase {
 
   createPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
       const {barCode, ...data} = req.body as PCRTestResultRequestData
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
@@ -288,7 +288,7 @@ class PCRTestResultController implements IControllerBase {
 
   addTestRunToPCR = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
 
       const {
         pcrTestResultIds,
@@ -323,7 +323,9 @@ class PCRTestResultController implements IControllerBase {
   listDueDeadline = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {testRunId, deadline} = req.query as PcrTestResultsListByDeadlineRequest
-
+      if (!testRunId && !deadline) {
+        throw new BadRequestException('"testRunId" or "deadline" is not required')
+      }
       const pcrResults = await this.pcrTestResultsService.getDueDeadline({deadline, testRunId})
 
       res.json(actionSucceed(pcrResults))

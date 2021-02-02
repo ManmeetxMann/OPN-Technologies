@@ -7,7 +7,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
-import {getAdminId, getIsLabUser} from '../../../../../common/src/utils/auth'
+import {getUserId, getIsLabUser} from '../../../../../common/src/utils/auth'
 
 import {
   appointmentByBarcodeUiDTOResponse,
@@ -36,6 +36,7 @@ class AdminAppointmentController implements IControllerBase {
     const apptAuth = authorizationMiddleware([RequiredUserPermission.LabAppointments])
     const apptAuthWithOrg = authorizationMiddleware([RequiredUserPermission.LabAppointments], true)
     const receivingAuth = authorizationMiddleware([RequiredUserPermission.LabReceiving])
+    const superAdminAuth = authorizationMiddleware([RequiredUserPermission.SuperAdmin])
     innerRouter.get(this.path + '/api/v1/appointments', apptAuthWithOrg, this.getListAppointments)
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
@@ -63,6 +64,11 @@ class AdminAppointmentController implements IControllerBase {
       this.getNextBarcode,
     )
     innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
+    innerRouter.put(
+      this.path + '/api/v1/appointments/barcode/regenerate',
+      superAdminAuth,
+      this.regenerateBarCode,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -130,7 +136,7 @@ class AdminAppointmentController implements IControllerBase {
 
   cancelAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       const {appointmentId} = req.params as {appointmentId: string}
@@ -151,7 +157,7 @@ class AdminAppointmentController implements IControllerBase {
 
   addTransportRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
 
       const {appointmentIds, transportRunId} = req.body as {
         appointmentIds: string[]
@@ -214,7 +220,7 @@ class AdminAppointmentController implements IControllerBase {
 
   addVialLocation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
 
       const {appointmentIds, vialLocation} = req.body as {
         appointmentIds: string[]
@@ -225,6 +231,8 @@ class AdminAppointmentController implements IControllerBase {
         throw new BadRequestException('Allowed maximum 50 appointments in array')
       }
 
+      await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
+
       await Promise.all(
         appointmentIds.map((appointment) => {
           return this.appointmentService.makeReceived(appointment, vialLocation, adminId)
@@ -232,6 +240,18 @@ class AdminAppointmentController implements IControllerBase {
       )
 
       res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  regenerateBarCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {appointmentId} = req.body as {appointmentId: string}
+
+      const appointment = await this.appointmentService.regenerateBarCode(appointmentId)
+
+      res.json(actionSucceed(appointmentUiDTOResponse(appointment, false)))
     } catch (error) {
       next(error)
     }

@@ -17,27 +17,24 @@ export class TestRunsService {
     return testRuns[0]
   }
 
-  getTestRunsByDate(date: string): Promise<TestRunDBModel[]> {
+  async getTestRunsByDate(date: string): Promise<TestRunDBModel[]> {
     return this.testRunsRepository.findWhereEqual('testRunDate', date)
   }
 
-  getIdentifierRepository(testRunDate: string): DateTestRunsRepository {
+  async getIdentifierRepository(testRunDate: string): Promise<DateTestRunsRepository> {
     return new DateTestRunsRepository(this.dataStore, testRunDate)
   }
 
-  create(testRunDateTime: Date, name: string): Promise<TestRunDBModel> {
+  async create(testRunDateTime: Date, name: string): Promise<TestRunDBModel> {
     const testRunDate = getDateFromDatetime(testRunDateTime)
-    const idDate = moment(testRunDate).format('YYYYMM')
+    const idDate = moment(testRunDate).format('YYMMDD')
 
-    return this.getIdentifierRepository(testRunDate)
-      .getUniqueId('testRun')
-      .then((id) => {
-        return this.testRunsRepository.save({
-          testRunId: `T${idDate}-${id}`,
-          testRunDateTime: firestore.Timestamp.fromDate(testRunDateTime),
-          testRunDate,
-          name,
-        } as TestRunDBModel)
-      })
+    const id = await (await this.getIdentifierRepository(testRunDate)).getUniqueId('testRun')
+    return await this.testRunsRepository.save({
+      testRunId: `T${idDate}-${id}`,
+      testRunDateTime: firestore.Timestamp.fromDate(testRunDateTime),
+      testRunDate,
+      name,
+    } as TestRunDBModel)
   }
 }

@@ -1,3 +1,6 @@
+/**
+ * This script go through appointments for which results are not send and created blank pcr test result record
+ */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
 import moment from 'moment'
@@ -36,8 +39,8 @@ const ACUITY_ENV_NON_PROD = true
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
 const APIURL = Config.get('ACUITY_SCHEDULER_API_URL')
-const START_DATE = '2020-10-24' //Starting from OCT 1st
-const END_DATE = '2021-01-31' //new Date()
+const START_DATE = '2020-10-01' //Starting from OCT 1st
+const END_DATE = '2020-10-30' //new Date()
 
 const acuityBarCodeFormId = ACUITY_ENV_NON_PROD ? 1564839 : 1559910 //TEST:1564839 PROD:1559910
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
@@ -148,7 +151,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     .get()
 
   if (pcrTestResultsInDb.docs.length === 0) {
-    console.log('acuityAppointments ', acuityAppointment)
+    console.log('Create PCR Test result for acuityAppointment ID ', acuityAppointment.id)
 
     const convertedDeadline = appointment.data().deadline._seconds
       ? appointment.data().deadline
@@ -184,7 +187,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     })
   } else {
     console.warn(
-      `AppointmentID: There are ${pcrTestResultsInDb.docs.length} PCRTestResults with appointment id ${acuityAppointment.id}`,
+      `AppointmentID: PCRTestResults with appointment id ${acuityAppointment.id} already exists. Total PCR Results Associated: ${pcrTestResultsInDb.docs.length} `,
     )
   }
 }
@@ -235,13 +238,11 @@ async function main() {
       }
     })
 
-    console.log(`Succesfully updated ${successCount} `)
+    console.log(`Succesfully created: ${successCount} `)
   } catch (error) {
     console.error('Error running migration', error)
   } finally {
-    if (failureCount > 0) {
-      console.warn(`Failed updating ${failureCount} `)
-    }
+    console.warn(`Failed creating PCR Results: ${failureCount} `)
     console.log(`Total Appointments Processed: ${totalCount} `)
   }
 }

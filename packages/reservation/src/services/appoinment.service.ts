@@ -1,5 +1,5 @@
 import moment from 'moment'
-import {flatten} from 'lodash'
+import {flatten, union} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 
@@ -29,11 +29,7 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
-import {
-  makeDeadline,
-  makeFirestoreTimestamp,
-  makeFirestoreTimestampFromUTCString,
-} from '../utils/datetime.helper'
+import {makeDeadline, makeFirestoreTimestamp} from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -296,8 +292,7 @@ export class AppoinmentService {
     const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
     const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
     const label = acuityAppointment.labels ? acuityAppointment.labels[0]?.name : null
-    const deadlineDateTimeUTC: string = makeDeadline(utcDateTime, label)
-    const deadline = makeFirestoreTimestampFromUTCString(deadlineDateTimeUTC)
+    const deadline = makeDeadline(utcDateTime, label)
     const {
       barCodeNumber,
       organizationId,
@@ -337,7 +332,7 @@ export class AppoinmentService {
       addressUnit: acuityAppointment.addressUnit,
       travelID: acuityAppointment.travelID,
       travelIDIssuingCountry: acuityAppointment.travelIDIssuingCountry,
-      ohipCard: acuityAppointment.ohipCard,
+      ohipCard: acuityAppointment.ohipCard ?? '',
       swabMethod: acuityAppointment.swabMethod,
       readTermsAndConditions: acuityAppointment.readTermsAndConditions,
       receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
@@ -505,9 +500,7 @@ export class AppoinmentService {
 
   async addAppointmentLabel(id: number, label: DeadlineLabel): Promise<AppointmentDBModel> {
     const appointment = await this.getAppointmentByAcuityId(id)
-    const deadline = makeFirestoreTimestampFromUTCString(
-      makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label),
-    )
+    const deadline = makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label)
     await this.acuityRepository.addAppointmentLabelOnAcuity(id, label)
 
     return this.updateAppointmentDB(appointment.id, {deadline})
@@ -702,6 +695,31 @@ export class AppoinmentService {
     )
   }
 
+  async checkDuplicatedAppointments(appointmentIds: string[]): Promise<void> {
+    const appointments = await this.getAppointmentsDBByIds(appointmentIds)
+    const barCodes = appointments.map(({barCode}) => barCode)
+
+    if (union(barCodes).length != barCodes.length) {
+      const firstMatch = new Set()
+      const duplicatedBarCodes = new Set()
+
+      barCodes.forEach((barcode) => {
+        if (!firstMatch.has(barcode)) {
+          return firstMatch.add(barcode)
+        }
+        duplicatedBarCodes.add(barcode)
+      })
+      const duplicatedBarCodeArray = Array.from(duplicatedBarCodes.keys())
+      const duplicatedAppointmentIds = appointments
+        .filter(({barCode}) => duplicatedBarCodeArray.includes(barCode))
+        .map(({id}) => id)
+
+      throw new DuplicateDataException(
+        `Multiple Appointments [${duplicatedAppointmentIds}] with barcodes: ${duplicatedBarCodeArray}`,
+      )
+    }
+  }
+
   async getAppointmentByUserId(userId: string): Promise<UserAppointment[]> {
     const appointmentResultsQuery = [
       {
@@ -723,5 +741,35 @@ export class AppoinmentService {
     )
 
     return appointments.map(userAppointmentDTOResponse)
+  }
+
+  async regenerateBarCode(appointmentId: string): Promise<AppointmentDBModel> {
+    const appointment = await this.appointmentsRepository.get(appointmentId)
+
+    if (!appointment) {
+      throw new BadRequestException('Invalid appointmentId')
+    }
+    const newBarCode = await this.getNextBarCodeNumber()
+    console.log(`regenerateBarCode: AppointmentID: ${appointmentId} New BarCode: ${newBarCode}`)
+
+    const updatedAppoinment = await this.appointmentsRepository.updateBarCodeById(
+      appointmentId,
+      newBarCode,
+    )
+    const pcrTest = await this.pcrTestResultsRepository.findWhereEqual(
+      'appointmentId',
+      appointmentId,
+    )
+
+    if (pcrTest.length) {
+      pcrTest.forEach(async (pcrTest) => {
+        await this.pcrTestResultsRepository.updateData(pcrTest.id, {barCode: newBarCode})
+        console.log(`regenerateBarCode: PCRTestID: ${pcrTest.id} New BarCode: ${newBarCode}`)
+      })
+    } else {
+      console.warn(`Not found PCR-test-result with appointmentId: ${appointmentId}`)
+    }
+
+    return updatedAppoinment
   }
 }

@@ -10,6 +10,7 @@ export enum PCRResultActions {
   RequestReSample = 'RequestReSample',
   MarkAsPositive = 'MarkAsPositive',
   MarkAsNegative = 'MarkAsNegative',
+  MarkAsPresumptivePositive = 'MarkAsPresumptivePositive',
 }
 
 export enum PCRResultActionsAllowedResend {
@@ -127,6 +128,9 @@ export type PCRTestResultEmailDTO = Omit<
   registeredNursePractitioner?: string
   timeOfAppointment: string
   dateTime: string
+  travelID?: string
+  travelIDIssuingCountry?: string
+  swabMethod?: string
 }
 
 export type ProcessPCRResultRequest = {
@@ -182,7 +186,7 @@ export const PCRTestResultHistoryResponse = (
 })
 
 export type PcrTestResultsListByDeadlineRequest = {
-  deadline: string
+  deadline?: string
   testRunId?: string
 }
 

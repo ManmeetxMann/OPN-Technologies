@@ -1,6 +1,7 @@
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 import {AppointmentDBModel, AppointmentStatusHistoryDb} from '../models/appointment'
+import DBSchema from '../dbschemas/appointments.schema'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
@@ -11,7 +12,12 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   }
 
   public async save(appointments: Omit<AppointmentDBModel, 'id'>): Promise<AppointmentDBModel> {
-    return this.add(appointments)
+    const validatedData = await DBSchema.validateAsync(appointments)
+    return this.add(validatedData)
+  }
+
+  public updateBarCodeById(id: string, barCode: string): Promise<AppointmentDBModel> {
+    return this.updateProperty(id, 'barCode', barCode)
   }
 }
 
