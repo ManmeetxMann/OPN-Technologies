@@ -6,7 +6,7 @@
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
 
-const DRY_RUN = true
+const DRY_RUN = false
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 console.log(serviceAccount.project_id)
@@ -56,10 +56,9 @@ async function updateAllUsers(): Promise<Result[]> {
     //hasMore = false
     const promises = []
     for (const snapshot of usersSnapshot.docs) {
-      if (snapshot.data().admin?.authUserId) {
-        // we filter this outside of the query to avoid an extra index
-        // and we don't create promises for records that don't need to update
-        promises.push(moveAuthId(snapshot))
+      if (snapshot.data()?.admin) {
+        //User is admin
+        promises.push(moveAuthAndEmailId(snapshot))
       }
     }
     const result = await promiseAllSettled(promises)
@@ -68,74 +67,93 @@ async function updateAllUsers(): Promise<Result[]> {
   return results
 }
 
-async function moveAuthId(userSnapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
+async function moveAuthAndEmailId(userSnapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
   const user = userSnapshot.data()
   const userId = userSnapshot.id
   const {admin, authUserId} = user
-  if (!authUserId) {
-    //No User AuthUserId
+  const adminAuthUserId = admin.authUserId
+
+  const handleAuthUserId = () => {
+    if(!adminAuthUserId){
+      console.log(`NoAdminAuthUserId: UserID: ${userId}`)
+      return authUserId
+    }
+
+    if (!authUserId) {
+      console.log(`MovingAdminAuthUserIdToRoot: UserID: ${userId}`)
+      return adminAuthUserId
+    }else if(!!authUserId) {
+      if(authUserId !== adminAuthUserId ){
+        console.warn(`ReplacingAuthUserId With AdminAuthUserID: UserID: ${userId}`)
+        return adminAuthUserId
+      }
+      //Same AdminAUthUser and AuthUSerID
+      console.log(`NoImpactAuthUserUpdate: UserID: ${userId}`)
+      return adminAuthUserId
+    }
+  }
+
+  const handleEmail = () => {
     if (!admin.email) {
-      console.warn(`NoAdminEmail: UserID: ${userId}, admin (${admin.authUserId}) has no admin email`)
+      console.warn(`NoAdminEmailAddress: UserID: ${userId}`)
+      return user.email
     }
 
-    if (user.email && admin.email && user.email !== admin.email) {
-      console.warn(`UserWithTwoEmails: ${userId}, AdminEmail: ${admin.email} will replace UserEMail: ${user.email}`)
+    if(!user.email){
+      console.log(`MovingAdminEmailToRoot: UserID: ${userId}`)
+      return admin.email
+    }else if(user.email){
+      if(user.email !== admin.email ){
+        console.warn(`ReplacingAdminEmailToRoot: UserID: ${userId}`)
+        return admin.email
+      }
+      console.log(`NoImpactEmailUpdate: UserID: ${userId}`)
+      return admin.email
     }
+  }
 
-    console.info(`UserWithBlankAuthUserId: ${userId} updating with AdminAuthUserID: ${admin.authUserId} Email: ${admin.email}`)
-    if(!DRY_RUN){
-      return userSnapshot.ref.set(
-        {
-          authUserId: admin.authUserId,
-          email: admin.email ?? null,
-          legacyEmail: user.email ?? null,
-        },
-        {
-          merge: true,
-        },
-      )
-    }
+  const authUserIdToUpdate = handleAuthUserId()
+  const email = handleEmail()
+  const userByEmail = await database
+    .collection('users')
+    .where('email', '==', email)
+    .get()
+
+  if (userByEmail.size > 0 && email !== user.email) {
+    console.warn(`DuplicateUserEmail: ${email} already exists. UserID: ${userId} Ignored`)
+    return Promise.resolve()
+  }
+
+  const data = {
+    authUserId: authUserIdToUpdate,
+    email: email,
+    timestamps: {
+      updatedAt: firestore.FieldValue.serverTimestamp(),
+      migrations: {
+        adminAuthIdMigrations: firestore.FieldValue.serverTimestamp(),
+      },
+    },
+  }
+
+  if(user.authUserId && authUserIdToUpdate !== user.authUserId){
+    data['oldAuthUserId'] = user.authUserId ?? null
+  }
+
+  if(user.email && email !== user.email){
+    data['oldEmail'] = user.email ?? null
+  }
+
+  if(!DRY_RUN){
+    console.log(`UpdatingToDB: UserID: ${userId} Data: ${JSON.stringify(data)}`)
     
-  } else {
-    // we have two authUserIds, we need to choose
-    const sameId = admin.authUserId === authUserId
-    if (!sameId) {
-      console.warn(
-        `UserWithTwoAuthUserId: ${userId} is losing AuthUserId: ${user.authUserId} in favour of AdminAuthUserId: ${admin.authUserId}`,
-      )
-
-      if(!DRY_RUN){
-        return userSnapshot.ref.set(
-          {
-            authUserId: admin.authUserId,
-            email: admin.email,
-            oldAuthUserId: user.authUserId,
-            oldEmail: user.email ?? null,
-          },
-          {
-            merge: true,
-          },
-        )
-      }
-    }else{
-      // same authUserId
-      if (user.email && user.email !== admin.email) {
-        console.warn(`UserWithOneAuthUserId: ${userId} UserEMail: ${user.email} and AdminEmail: ${admin.email} are both associated to ${authUserId}. Overwritten with AdminEMail.`)
-      }else{
-        console.warn(`UserWithOneAuthUserId: ${userId} UserEMail: ${user.email} and AdminEmail: ${admin.email} are both Same`)
-      }
-
-      if(!DRY_RUN){
-        return userSnapshot.ref.set(
-          {
-            email: admin.email,
-          },
-          {
-            merge: true,
-          },
-        )
-      }
-    }
+    return userSnapshot.ref.set(
+      data,
+      {
+        merge: true,
+      },
+    )
+  }else{
+    console.log(`WillBeUpdatedToDB: UserID: ${userId} Data: ${JSON.stringify(data)}`)
   }
   return Promise.resolve()
 }
