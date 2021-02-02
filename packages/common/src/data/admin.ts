@@ -23,6 +23,7 @@ export type AdminProfile = {
   isTestRunsAdmin: boolean
   isDueTodayAdmin: boolean
   isBulkUploadAdmin: boolean
+  isIDBarCodesAdmin: boolean
 }
 
 export type AdminApproval = {

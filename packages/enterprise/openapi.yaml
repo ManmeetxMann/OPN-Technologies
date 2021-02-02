@@ -505,6 +505,8 @@ components:
           type: boolean
         isBulkUploadAdmin:
           type: boolean
+        isIDBarCodesAdmin:
+          type: boolean
       required:
         - email
         - showReporting
