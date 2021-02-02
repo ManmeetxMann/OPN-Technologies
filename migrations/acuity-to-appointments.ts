@@ -264,7 +264,10 @@ async function createAppointment(acuityAppointment) {
   const timeOfAppointment = utcDateTime.format('h:mma')
 
   //Deadline is based on Eastern Time
-  const deadline = generateDeadline(moment(acuityAppointment.datetime), acuityAppointment.labels || [])
+  const deadline = generateDeadline(
+    moment(acuityAppointment.datetime),
+    acuityAppointment.labels || [],
+  )
   let barCode = ''
   let dateOfBirth = ''
   let organizationId = ''
