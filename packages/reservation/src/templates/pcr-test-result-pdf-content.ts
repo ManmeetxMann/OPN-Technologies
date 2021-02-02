@@ -139,12 +139,12 @@ const clientInformation = () => {
       ['Date of Birth', params.dateOfBirth],
       ['Mobile Number', params.phone],
     ]
-    
-    if(params.travelID){
+
+    if (params.travelID) {
       dataPersonal.push(['Travel ID', params.travelID])
     }
-    
-    if(params.travelIDIssuingCountry){
+
+    if (params.travelIDIssuingCountry) {
       dataPersonal.push(['TravelID Issuing Country', params.travelIDIssuingCountry])
     }
 
@@ -155,13 +155,13 @@ const clientInformation = () => {
       ],
       ['Date of Result', resultDate],
       ['Ordering Physician', requisitionDoctor],
-      ['Nurse', params.registeredNursePractitioner]
+      ['Nurse', params.registeredNursePractitioner],
     ]
 
-    if(params.swabMethod){
+    if (params.swabMethod) {
       dataAppointment.push(['Swab Method', params.swabMethod])
     }
-    
+
     const dataTestDetails = [
       ['Test', 'RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
       [
@@ -169,7 +169,7 @@ const clientInformation = () => {
         'Allplex 2019-nCoV Assay manufactured by Seegene, Inc.',
       ],
     ]
-    
+
     const data = dataPersonal.concat(dataAppointment, dataTestDetails)
 
     return {
