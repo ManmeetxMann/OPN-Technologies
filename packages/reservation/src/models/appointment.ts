@@ -329,12 +329,19 @@ export type ActivityTracking = {
   action: AppointmentActivityAction
   currentData: Partial<AppointmentDBModel>
   newData: Partial<AppointmentDBModel>
-  actionBy: string
+  actionBy?: string // not required for action updateFromAcuity
 }
 
 export enum AppointmentActivityAction {
   RegenerateBarcode = 'regenerateBarcode',
-  UpdateFromAcuity = 'updateFromAcuity'
+  UpdateFromAcuity = 'updateFromAcuity',
+}
+
+export type UpdateAppointmentActionParams = {
+  id: string
+  updates: Partial<AppointmentDBModel>
+  action?: AppointmentActivityAction
+  actionBy?: string
 }
 
 export type ActivityTrackingDb = ActivityTracking & {

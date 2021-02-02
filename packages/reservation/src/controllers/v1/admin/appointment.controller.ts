@@ -7,7 +7,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
-import {getAdminId, getIsLabUser} from '../../../../../common/src/utils/auth'
+import {getAdminId, getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
 
 import {
   appointmentByBarcodeUiDTOResponse,
@@ -248,8 +248,8 @@ class AdminAppointmentController implements IControllerBase {
   regenerateBarCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {appointmentId} = req.body as {appointmentId: string}
-
-      const appointment = await this.appointmentService.regenerateBarCode(appointmentId)
+      const userId = getUserId(res.locals.authenticatedUser)
+      const appointment = await this.appointmentService.regenerateBarCode(appointmentId, userId)
 
       res.json(actionSucceed(appointmentUiDTOResponse(appointment, false)))
     } catch (error) {

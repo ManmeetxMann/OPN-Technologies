@@ -17,7 +17,6 @@ import {
   UserAppointment,
   userAppointmentDTOResponse,
   ResultTypes,
-  ActivityTrackingDb,
   AppointmentActivityAction,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
@@ -25,7 +24,6 @@ import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-s
 import {
   AppointmentsRepository,
   StatusHistoryRepository,
-  ActivityTrackingRepository,
 } from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
@@ -511,11 +509,10 @@ export class AppoinmentService {
 
   async updateAppointmentDB(
     id: string,
-    data: Partial<AppointmentDBModel>,
-    action?: AppointmentActivityAction
+    updates: Partial<AppointmentDBModel>,
+    action?: AppointmentActivityAction,
   ): Promise<AppointmentDBModel> {
-    this.addAppointmentActivityById({appointmentId: id, updates: data, action, actionBy: ''})
-    return this.appointmentsRepository.updateProperties(id, data)
+    return this.appointmentsRepository.updateAppointment({id, updates, action})
   }
 
   async changeStatusToReRunRequired(
@@ -748,40 +745,7 @@ export class AppoinmentService {
     return appointments.map(userAppointmentDTOResponse)
   }
 
-  private getAppointmentActivityRepository(appointmentId: string): ActivityTrackingRepository {
-    return new ActivityTrackingRepository(this.dataStore, appointmentId)
-  }
-
-  async addAppointmentActivityById({
-    action,
-    appointmentId,
-    updates,
-    actionBy,
-  }: {
-    action: AppointmentActivityAction,
-    appointmentId: string,
-    updates: Partial<AppointmentDBModel>,
-    actionBy: string,
-  }): Promise<ActivityTrackingDb> {
-    const appointment = await this.getAppointmentDBById(appointmentId)
-    const currentData = {}
-    const newData = {}
-
-    Object.keys(appointment).map(key => {
-      if (updates[key] !== appointment[key]) {
-        currentData[key] = newData[key] = appointment[key]
-      }
-    })
-
-    return this.getAppointmentActivityRepository(appointmentId).add({
-      action,
-      newData,
-      currentData,
-      actionBy,
-    })
-  }
-
-  async regenerateBarCode(appointmentId: string): Promise<AppointmentDBModel> {
+  async regenerateBarCode(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
     const appointment = await this.appointmentsRepository.get(appointmentId)
 
     if (!appointment) {
@@ -793,7 +757,9 @@ export class AppoinmentService {
     const updatedAppoinment = await this.appointmentsRepository.updateBarCodeById(
       appointmentId,
       newBarCode,
+      userId,
     )
+
     const pcrTest = await this.pcrTestResultsRepository.findWhereEqual(
       'appointmentId',
       appointmentId,
