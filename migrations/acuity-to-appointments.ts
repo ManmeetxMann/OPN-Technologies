@@ -173,16 +173,7 @@ const makeFirestoreTimestamp = (
   date: Date | string,
   labels: AcuityLabel[],
 ): firestore.Timestamp => {
-  console.log(`date: ${date}`) //TMP
-  const tzDateTime = moment(date).tz(timeZone).hours(0).minutes(0)
-  console.log(`tzDateTimev1: ${tzDateTime}`) //TMP
-
-  const tzEndOfDayTime = generateDeadline(tzDateTime, labels)
-  console.log(`tzEndOfDayTime: ${tzEndOfDayTime}`) //TMP
-
-  const utcEndOfDay = tzEndOfDayTime.milliseconds(0).utc().toDate()
-  console.log(`utcEndOfDay: ${utcEndOfDay}`) //TMP
-
+  const utcEndOfDay = generateDeadline(moment.tz(date, timeZone), labels).toDate()
   return firestore.Timestamp.fromDate(utcEndOfDay)
 }
 
