@@ -56,8 +56,8 @@ async function updateTestResults(): Promise<Result[]> {
       .get()
 
     offset += testResultSnapshot.docs.length
-    //hasMore = !testResultSnapshot.empty
-    hasMore = false
+    hasMore = !testResultSnapshot.empty
+    //hasMore = false
 
     for (const testResult of testResultSnapshot.docs) {
       const promises = []

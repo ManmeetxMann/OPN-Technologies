@@ -6,7 +6,10 @@
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
 
+const DRY_RUN = true
+
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
+console.log(serviceAccount.project_id)
 initializeApp({
   credential: credential.cert(serviceAccount),
 })
@@ -38,6 +41,7 @@ export async function promiseAllSettled(promises: Promise<unknown>[]): Promise<R
     ),
   )
 }
+
 async function updateAllUsers(): Promise<Result[]> {
   let offset = 0
   let hasMore = true
@@ -49,7 +53,7 @@ async function updateAllUsers(): Promise<Result[]> {
 
     offset += usersSnapshot.docs.length
     hasMore = !usersSnapshot.empty
-
+    //hasMore = false
     const promises = []
     for (const snapshot of usersSnapshot.docs) {
       if (snapshot.data().admin?.authUserId) {
@@ -69,61 +73,80 @@ async function moveAuthId(userSnapshot: firestore.QueryDocumentSnapshot<firestor
   const userId = userSnapshot.id
   const {admin, authUserId} = user
   if (!authUserId) {
-    if (user.email && admin.email && user.email !== admin.email) {
-      console.warn(`For user ${userId}, ${admin.email} will replace ${user.email}`)
-    } else if (!admin.email) {
-      console.warn(`For user ${userId}, admin (${admin.authUserId}) has no email`)
+    //No User AuthUserId
+    if (!admin.email) {
+      console.warn(`NoAdminEmail: UserID: ${userId}, admin (${admin.authUserId}) has no admin email`)
     }
-    return userSnapshot.ref.set(
-      {
-        authUserId: admin.authUserId,
-        email: admin.email ?? null,
-        legacyEmail: user.email ?? null,
-      },
-      {
-        merge: true,
-      },
-    )
-  } else {
-    // we have two authUserIds, we need to choose
-    const sameId = admin.authUserId === authUserId
-    if (!sameId) {
-      console.warn(
-        `User ${userId} is losing authUserId ${user.authUserId} in favour of ${admin.authUserId}`,
-      )
+
+    if (user.email && admin.email && user.email !== admin.email) {
+      console.warn(`UserWithTwoEmails: ${userId}, AdminEmail: ${admin.email} will replace UserEMail: ${user.email}`)
+    }
+
+    console.info(`UserWithBlankAuthUserId: ${userId} updating with AdminAuthUserID: ${admin.authUserId} Email: ${admin.email}`)
+    if(!DRY_RUN){
       return userSnapshot.ref.set(
         {
           authUserId: admin.authUserId,
-          email: admin.email,
-          oldAuthUserId: user.authUserId,
-          oldEmail: user.email ?? null,
+          email: admin.email ?? null,
+          legacyEmail: user.email ?? null,
         },
         {
           merge: true,
         },
       )
     }
+    
+  } else {
+    // we have two authUserIds, we need to choose
+    const sameId = admin.authUserId === authUserId
+    if (!sameId) {
+      console.warn(
+        `UserWithTwoAuthUserId: ${userId} is losing AuthUserId: ${user.authUserId} in favour of AdminAuthUserId: ${admin.authUserId}`,
+      )
 
-    // same authUserId
-    if (user.email && user.email !== admin.email) {
-      console.warn(`${user.email} and ${admin.email} are bothh associated to ${authUserId}`)
+      if(!DRY_RUN){
+        return userSnapshot.ref.set(
+          {
+            authUserId: admin.authUserId,
+            email: admin.email,
+            oldAuthUserId: user.authUserId,
+            oldEmail: user.email ?? null,
+          },
+          {
+            merge: true,
+          },
+        )
+      }
+    }else{
+      // same authUserId
+      if (user.email && user.email !== admin.email) {
+        console.warn(`UserWithOneAuthUserId: ${userId} UserEMail: ${user.email} and AdminEmail: ${admin.email} are both associated to ${authUserId}. Overwritten with AdminEMail.`)
+      }else{
+        console.warn(`UserWithOneAuthUserId: ${userId} UserEMail: ${user.email} and AdminEmail: ${admin.email} are both Same`)
+      }
+
+      if(!DRY_RUN){
+        return userSnapshot.ref.set(
+          {
+            email: admin.email,
+          },
+          {
+            merge: true,
+          },
+        )
+      }
     }
-    return userSnapshot.ref.set(
-      {
-        email: admin.email,
-      },
-      {
-        merge: true,
-      },
-    )
   }
+  return Promise.resolve()
 }
 
 async function main() {
   try {
-    console.log('Migration Starting')
+    console.log(`Migration Starting with DRY_RUN: ${DRY_RUN}`)
+
     const results = await updateAllUsers()
     results.forEach((result) => {
+      totalCount += 1
       if (result.status === ResultStatus.Fulfilled) {
         // @ts-ignore - We will always have a value if the status is fulfilled
         if (result.value) {
@@ -138,9 +161,8 @@ async function main() {
   } catch (error) {
     console.error('Error running migration', error)
   } finally {
-    if (failureCount > 0) {
-      console.warn(`Failed updating ${failureCount} `)
-    }
+    console.warn(`Failed updating ${failureCount} `)
+    console.log(`Total User Processed: ${totalCount} `)
   }
 }
 
@@ -148,4 +170,5 @@ async function main() {
 const limit = Number(Config.get('MIGRATION_DOCUMENTS_LIMIT')) || 500
 let successCount = 0
 let failureCount = 0
+let totalCount = 0
 main().then(() => console.log('Script Complete \n'))
