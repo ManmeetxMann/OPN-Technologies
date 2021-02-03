@@ -41,7 +41,7 @@ export type AppointmentDBModel = {
   canceled: boolean
   dateOfAppointment: string
   dateOfBirth: string
-  dateTime: string
+  dateTime: firestore.Timestamp
   deadline: firestore.Timestamp
   email: string
   firstName: string

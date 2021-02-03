@@ -18,7 +18,7 @@ export default Joi.object({
   canceled: Joi.boolean().required(),
   dateOfAppointment: Joi.string().required(),
   dateOfBirth: Joi.string().required(),
-  dateTime: Joi.string().required(),
+  dateTime: FirestoreTimestamp.isValid(),
   deadline: FirestoreTimestamp.isValid(),
   email: Joi.string().required(),
   firstName: Joi.string().required(),

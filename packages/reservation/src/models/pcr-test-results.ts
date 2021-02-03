@@ -127,7 +127,7 @@ export type PCRTestResultEmailDTO = Omit<
   dateOfBirth: string
   registeredNursePractitioner?: string
   timeOfAppointment: string
-  dateTime: string
+  dateTime: firestore.Timestamp
   travelID?: string
   travelIDIssuingCountry?: string
   swabMethod?: string
