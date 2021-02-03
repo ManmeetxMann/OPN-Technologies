@@ -214,18 +214,16 @@ const isAllowed = (
 ): boolean => {
   const admin = connectedUser.admin as AdminProfile | null
   const userId = connectedUser.id
-  if(admin?.isOpnSuperAdmin){
+  if (admin?.isOpnSuperAdmin) {
     //Super Admin has all permissions
     console.warn(`SuperAdmin Permissions used for userID: ${connectedUser.id}`)
     return true
   }
-  
+
   const seekLabOrOrgAppointment = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabOrOrgAppointments,
   )
-  const seekLabReceiving = listOfRequiredPermissions.includes(
-    RequiredUserPermission.LabReceiving,
-  )
+  const seekLabReceiving = listOfRequiredPermissions.includes(RequiredUserPermission.LabReceiving)
   const seekLabAdminToolIDBarcode = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabAdminToolIDBarcode,
   )
@@ -233,14 +231,28 @@ const isAllowed = (
     RequiredUserPermission.LabAppointments,
   )
   const seekOPNAdmin = listOfRequiredPermissions.includes(RequiredUserPermission.OPNAdmin)
-  const seekLabTransportRunsCreate= listOfRequiredPermissions.includes(RequiredUserPermission.LabTransportRunsCreate)
-  const seekLabTransportRunsList= listOfRequiredPermissions.includes(RequiredUserPermission.LabTransportRunsList)
-  const seekLabPCRTestResults= listOfRequiredPermissions.includes(RequiredUserPermission.LabPCRTestResults)
-  const seekLabSendBulkResults= listOfRequiredPermissions.includes(RequiredUserPermission.LabSendBulkResults)
-  const seekLabSendSingleResults= listOfRequiredPermissions.includes(RequiredUserPermission.LabSendSingleResults)
-  const seekLabDueToday= listOfRequiredPermissions.includes(RequiredUserPermission.LabDueToday)
-  const seekLabTestRunsCreate= listOfRequiredPermissions.includes(RequiredUserPermission.LabTestRunsCreate)
-  const seekLabTestRunsList= listOfRequiredPermissions.includes(RequiredUserPermission.LabTestRunsList)
+  const seekLabTransportRunsCreate = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabTransportRunsCreate,
+  )
+  const seekLabTransportRunsList = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabTransportRunsList,
+  )
+  const seekLabPCRTestResults = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabPCRTestResults,
+  )
+  const seekLabSendBulkResults = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabSendBulkResults,
+  )
+  const seekLabSendSingleResults = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabSendSingleResults,
+  )
+  const seekLabDueToday = listOfRequiredPermissions.includes(RequiredUserPermission.LabDueToday)
+  const seekLabTestRunsCreate = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabTestRunsCreate,
+  )
+  const seekLabTestRunsList = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabTestRunsList,
+  )
 
   if (
     seekLabOrOrgAppointment &&
@@ -258,7 +270,7 @@ const isAllowed = (
     console.warn(`Admin user ${userId} needs isTransportsRunsAdmin`)
     return false
   }
-  if (seekLabTransportRunsList && (!admin?.isTransportsRunsAdmin && !admin?.isLabAppointmentsAdmin)) {
+  if (seekLabTransportRunsList && !admin?.isTransportsRunsAdmin && !admin?.isLabAppointmentsAdmin) {
     console.warn(`Admin user ${userId} needs isTransportsRunsAdmin Or isLabAppointmentsAdmin`)
     return false
   }

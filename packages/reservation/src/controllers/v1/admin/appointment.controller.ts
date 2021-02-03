@@ -34,13 +34,22 @@ class AdminAppointmentController implements IControllerBase {
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
     const apptLabAuth = authorizationMiddleware([RequiredUserPermission.LabAppointments])
-    const apptLabOrOrgAdminAuth = authorizationMiddleware([RequiredUserPermission.LabOrOrgAppointments])
-    const apptLabOrOrgAdminAuthWithOrg = authorizationMiddleware([RequiredUserPermission.LabOrOrgAppointments], true)
+    const apptLabOrOrgAdminAuth = authorizationMiddleware([
+      RequiredUserPermission.LabOrOrgAppointments,
+    ])
+    const apptLabOrOrgAdminAuthWithOrg = authorizationMiddleware(
+      [RequiredUserPermission.LabOrOrgAppointments],
+      true,
+    )
     const receivingAuth = authorizationMiddleware([RequiredUserPermission.LabReceiving])
     const idBarCodeToolAuth = authorizationMiddleware([
       RequiredUserPermission.LabAdminToolIDBarcode,
     ])
-    innerRouter.get(this.path + '/api/v1/appointments', apptLabOrOrgAdminAuthWithOrg, this.getListAppointments)
+    innerRouter.get(
+      this.path + '/api/v1/appointments',
+      apptLabOrOrgAdminAuthWithOrg,
+      this.getListAppointments,
+    )
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
       apptLabOrOrgAdminAuth,
