@@ -4,6 +4,7 @@ import {uniq} from 'lodash'
 import {Certificate, BookingLocations} from '../models/packages'
 import {PackageRepository} from '../respository/package.repository'
 import {AcuityRepository} from '../respository/acuity.repository'
+import { encodeBookingLocationId } from '../utils/base64-converter'
 
 export class BookingLocationService {
   private acuityRepository = new AcuityRepository()
@@ -11,27 +12,25 @@ export class BookingLocationService {
 
   async getBookingLocations(organizationId: string): Promise<BookingLocations[]> {
     const packages = await this.getPackageListByOrganizationId(organizationId)
-    const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
+    const acuityAppointmentTypes = await this.acuityRepository.getAppointmentTypeList()
     const calendars = await this.acuityRepository.getCalendarList()
-    const packagesAppointmentTypes = uniq(
-      packages.map(({appointmentTypes}) => Object.keys(appointmentTypes)).flat(),
-    )
-
     const bookingLocations = []
 
-    packagesAppointmentTypes.map((appointmentTypeID) => {
-      const appointmentType = appointmentTypes.find(({id}) => id === Number(appointmentTypeID))
+    packages.map(({certificate, appointmentTypes}) => {
+      Object.keys(appointmentTypes).map((appointmentTypeId) => {
+        const appointmentType = acuityAppointmentTypes.find(({id}) => id === Number(appointmentTypeId))
 
-      if (appointmentType) {
         appointmentType.calendarIDs.forEach((calendarId) => {
           const calendar = calendars.find(({id}) => id === calendarId)
           const idBuf = {
             appointmentTypeId: appointmentType.id,
             calendarTimezone: calendar.timezone,
             calendarId: calendar.id,
+            organizationId,
+            packageCode: certificate,
           }
-          const id = Buffer.from(JSON.stringify(idBuf)).toString('base64')
-
+          const id = encodeBookingLocationId(idBuf)
+      
           bookingLocations.push({
             id,
             appointmentTypeName: appointmentType.name,
@@ -39,7 +38,7 @@ export class BookingLocationService {
             address: calendar.location,
           })
         })
-      }
+      })
     })
 
     return bookingLocations
