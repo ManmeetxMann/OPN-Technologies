@@ -1,6 +1,5 @@
 import moment from 'moment'
 import {flatten, union} from 'lodash'
-import * as _ from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 
