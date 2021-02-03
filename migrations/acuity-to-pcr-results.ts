@@ -153,9 +153,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
   if (pcrTestResultsInDb.docs.length === 0) {
     console.log('Create PCR Test result for acuityAppointment ID ', acuityAppointment.id)
 
-    const convertedDeadline = appointment.data().deadline._seconds
-      ? appointment.data().deadline
-      : makeFirestoreTimestamp(moment(appointment.data().deadline).toDate())
+    const convertedDeadline = appointment.data().deadline
 
     const validatedData = await DBSchema.validateAsync({
       appointmentId: appointment.id,
