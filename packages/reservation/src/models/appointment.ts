@@ -11,13 +11,13 @@ export enum AppointmentStatus {
   InProgress = 'InProgress',
   Reported = 'Reported',
   ReRunRequired = 'ReRunRequired',
-  ReSampleRequired = 'ReSampleRequired',
+  ReCollectRequired = 'ReCollectRequired',
   Canceled = 'Canceled',
 }
 
 export enum AppointmentReasons {
   AlreadyReported = 'Already Reported',
-  ReSampleAlreadyRequested = 'ReSample Already Requested',
+  ReCollectAlreadyRequested = 'ReCollect Already Requested',
   InProgress = 'In Progress',
   NoInProgress = 'No In Progress',
   NotFound = 'Test not found',
@@ -30,7 +30,7 @@ export enum ResultTypes {
   Pending = 'Pending',
   Invalid = 'Invalid',
   Inconclusive = 'Inconclusive',
-  ReSampleRequested = 'ReSampleRequested',
+  ReCollectRequested = 'ReCollectRequested',
 }
 
 export type AppointmentDBModel = {

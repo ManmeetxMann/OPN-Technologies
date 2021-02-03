@@ -12,7 +12,7 @@ export default Joi.object({
   lastName: Joi.string().required(),
   linkedBarCodes: Joi.array().required(),
   organizationId: Joi.string().allow('', null),
-  reSampleNumber: Joi.number().required(),
+  reCollectNumber: Joi.number().required(),
   result: Joi.string().required(), //TODO: ENUM
   resultSpecs: Joi.object({
     action: Joi.string().required(),

@@ -532,13 +532,13 @@ export class AppoinmentService {
     })
   }
 
-  async changeStatusToReSampleRequired(
+  async changeStatusToReCollectRequired(
     appointmentId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReSampleRequired, userId)
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReCollectRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.ReSampleRequired,
+      appointmentStatus: AppointmentStatus.ReCollectRequired,
     })
   }
 
@@ -690,7 +690,7 @@ export class AppoinmentService {
       (isLabUser &&
         appointmentStatus !== AppointmentStatus.Canceled &&
         appointmentStatus !== AppointmentStatus.Reported &&
-        appointmentStatus !== AppointmentStatus.ReSampleRequired)
+        appointmentStatus !== AppointmentStatus.ReCollectRequired)
     )
   }
 
