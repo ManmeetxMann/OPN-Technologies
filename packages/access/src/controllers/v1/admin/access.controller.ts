@@ -5,7 +5,7 @@ import {PassportService} from '../../../../../passport/src/services/passport-ser
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 import {AccessService} from '../../../service/access.service'
 import {actionFailed, actionSucceed, of} from '../../../../../common/src/utils/response-wrapper'
-import {PassportStatuses} from '../../../../../passport/src/models/passport'
+import {PassportStatuses, Passport} from '../../../../../passport/src/models/passport'
 import {isPassed} from '../../../../../common/src/utils/datetime-util'
 import {UserService} from '../../../../../common/src/service/user/user-service'
 import {User} from '../../../../../common/src/data/user'
@@ -166,7 +166,6 @@ class AdminController implements IRouteController {
   }
 
   enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
-    // used when an admin scans an access token
     try {
       const {accessToken} = req.body
       const {organizationId} = res.locals
@@ -242,12 +241,60 @@ class AdminController implements IRouteController {
       next(error)
     }
   }
-  exit = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
-    // used when an admin scans an access token
+  exit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // exit a user from their current location (wherever it is)
+    // optional - if locationId is provided, require the user's current location to be that location
     try {
-      const {accessToken} = req.body
-      const {organizationId} = res.locals
-      
+      const {userId, locationId} = req.body
+      const user = await this.userService.findOne(userId)
+      // backwards compat for multi-user access
+      const {delegates: delegateIds} = user
+      const latestAccess = await this.accessService.findLatestAnywhere(userId, delegateIds)
+      if (!latestAccess) {
+        throw new ForbiddenException('User is not in any location')
+      }
+      const isDirect = latestAccess.userId === userId
+      const timestampBearer = isDirect ? latestAccess : latestAccess.dependants[userId]
+      if (timestampBearer.exitAt) {
+        throw new ForbiddenException('User is not in any location')
+      }
+      if (locationId && latestAccess.locationId !== locationId) {
+        throw new ForbiddenException(`User is not in location ${locationId}`)
+      }
+      const exitUsingExisting =
+        // if direct, must include guardian
+        isDirect === latestAccess.includesGuardian &&
+        // must be no dependants other than this one
+        Object.keys(latestAccess.dependants).length === (isDirect ? 0 : 1)
+      let newAccess
+      let passport: Passport = null
+      if (exitUsingExisting) {
+        passport = await this.passportService.findOneByToken(latestAccess.statusToken)
+        newAccess = await this.accessService.handleExit(latestAccess)
+      } else {
+        // latestAccess contains other users
+        // we must create a new access
+        try {
+          passport = await this.passportService.findOneByToken(latestAccess.statusToken, true)
+        } catch (err) {
+          passport = await this.passportService.create(PassportStatuses.Pending, userId, [], true)
+        }
+        const soleAccess = await this.accessTokenService.createToken(
+          passport.statusToken,
+          locationId,
+          userId,
+          [],
+          true,
+        )
+        newAccess = await this.accessService.handleExit(soleAccess)
+      }
+      const {dependants, ...access} = newAccess
+      const responseBody = {
+        passport,
+        access,
+        user,
+      }
+      res.json(actionSucceed(responseBody))
     } catch (error) {
       next(error)
     }

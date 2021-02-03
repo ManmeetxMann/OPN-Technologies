@@ -423,6 +423,52 @@ export class AccessService {
     //   accesses.map(AccessService.mapAccessDates),
     // )
   }
+  async findLatestAnywhere(userId: string, delegateIds: string[]): Promise<AccessModel> {
+    // TODO: these queries can be greatly improved if we guarantee single-user accesses
+    // also, this 'forgets' accesses older than 48 hours, which would be fixable
+    const from = moment(now()).subtract(48, 'hours').toDate()
+    const directAccessQuery = this.accessRepository
+      .collection()
+      .where(`userId`, '==', userId)
+      //@ts-ignore
+      .where('timestamps.createdAt', '>=', from)
+      //@ts-ignore
+      .orderBy('timestamps.createdAt', 'desc')
+    const indirectAccessQueries = delegateIds.map((id) =>
+      this.accessRepository
+        .collection()
+        .where(`userId`, '==', id)
+        //@ts-ignore
+        .where('timestamps.createdAt', '>=', from)
+        //@ts-ignore
+        .orderBy('timestamps.createdAt', 'desc'),
+    )
+    const allAccesses: AccessModel[] = (_.flatten(
+      await Promise.all([directAccessQuery, ...indirectAccessQueries].map(({fetch}) => fetch())),
+    ) as AccessModel[])
+      .map((access) => {
+        const isDirect = access.userId === userId
+        if (isDirect && !access.includesGuardian) {
+          return null
+        }
+        const timestampBearer = isDirect ? access : access.dependants && access.dependants[userId]
+        if (!timestampBearer) {
+          return null
+        }
+        const activeTime = timestampBearer?.exitAt || timestampBearer?.enteredAt
+        if (!activeTime) {
+          return null
+        }
+        return {
+          ...access,
+          activeTime: safeTimestamp(activeTime),
+        }
+      })
+      .filter((notNull) => notNull)
+      .sort((a, b) => (a.activeTime < b.activeTime ? 1 : -1))
+      .map(({activeTime, ...access}) => access)
+    return allAccesses.length > 0 ? allAccesses[0] : null
+  }
 
   async getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
     return await this.getTodayStatsForLocations([locationId])
