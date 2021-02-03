@@ -3,6 +3,7 @@ import DataModel, {DataModelFieldMapOperatorType} from '../../../common/src/data
 import DataStore from '../../../common/src/data/datastore'
 import {PCRTestResultDBModel} from '../models/pcr-test-results'
 import DBSchema from '../dbschemas/pcr-test-results.schema'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
   public rootPath = 'pcr-test-results'
@@ -24,6 +25,24 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     pcrTestResults: Partial<PCRTestResultDBModel>,
   ): Promise<PCRTestResultDBModel> {
     return await this.updateProperties(id, {...pcrTestResults, updatedAt: serverTimestamp()})
+  }
+
+  async getTestResultByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
+    const testResults = await this.findWhereEqual('appointmentId', appointmentId)
+
+    if (!testResults || testResults.length === 0) {
+      throw new ResourceNotFoundException(
+        `PCRTestResult with appointment ${appointmentId} not found`,
+      )
+    }
+
+    if (testResults.length > 0) {
+      console.log(
+        `getTestResultByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
+      )
+    }
+
+    return testResults[0]
   }
 
   async getWaitingPCRResultsByAppointmentId(

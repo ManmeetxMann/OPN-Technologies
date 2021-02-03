@@ -165,9 +165,9 @@ class AppointmentWebhookController implements IControllerBase {
         console.log(
           `AppointmentWebhookController: UpdateAppointment: SuccessUpdateAppointment for AppointmentID: ${appointmentFromDb.id} AcuityID: ${id}`,
         )
-        const pcrTestResult = (
-          await this.pcrTestResultsService.getTestResultsByAppointmentId(appointmentFromDb.id)
-        )[0]
+        const pcrTestResult = await this.pcrTestResultsService.getTestResultByAppointmentId(
+          appointmentFromDb.id,
+        )
         //getWaitingPCRResultsByAppointmentId will throw exception if pcrTestResult doesn't exists
 
         if (
