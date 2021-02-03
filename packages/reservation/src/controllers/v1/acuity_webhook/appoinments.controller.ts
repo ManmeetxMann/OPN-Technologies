@@ -165,7 +165,7 @@ class AppointmentWebhookController implements IControllerBase {
         console.log(
           `AppointmentWebhookController: UpdateAppointment: SuccessUpdateAppointment for AppointmentID: ${appointmentFromDb.id} AcuityID: ${id}`,
         )
-        const pcrTestResult = await this.pcrTestResultsService.getTestResultByAppointmentId(
+        const pcrTestResult = await this.pcrTestResultsService.getWaitingPCRResultsByAppointmentId(
           appointmentFromDb.id,
         )
         //getWaitingPCRResultsByAppointmentId will throw exception if pcrTestResult doesn't exists
@@ -200,7 +200,7 @@ class AppointmentWebhookController implements IControllerBase {
 
           await this.pcrTestResultsService.updateDefaultTestResults(
             pcrTestResult.id,
-            _.pickBy(pcrResultDataForDb, _.identity),
+            pcrResultDataForDb,
           )
           console.log(
             `AppointmentWebhookController: UpdateAppointment: SuccessUpdatedPCRResults for PCRResultsID: ${pcrTestResult.id}`,

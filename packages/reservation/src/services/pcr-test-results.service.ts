@@ -239,10 +239,6 @@ export class PCRTestResultsService {
       : result
   }
 
-  async getTestResultByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
-    return this.pcrTestResultsRepository.getTestResultByAppointmentId(appointmentId)
-  }
-
   async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel[]> {
     const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
       'appointmentId',

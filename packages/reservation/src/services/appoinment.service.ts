@@ -269,7 +269,7 @@ export class AppoinmentService {
       latestResult: ResultTypes
     },
   ): Promise<AppointmentDBModel> {
-    const data = _.pickBy(this.appointmentFromAcuity(acuityAppointment, additionalData), _.identity)
+    const data = this.appointmentFromAcuity(acuityAppointment, additionalData)
     return this.updateAppointmentDB(id, data)
   }
 
