@@ -151,7 +151,6 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     .get()
 
   if (pcrTestResultsInDb.docs.length === 0) {
-    console.log('Create PCR Test result for acuityAppointment ID ', acuityAppointment.id)
 
     const convertedDeadline = appointment.data().deadline
 
@@ -172,7 +171,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
       waitingResult: true,
     })
 
-    await database.collection('pcr-test-results').add({
+    const data = await database.collection('pcr-test-results').add({
       ...validatedData,
       updatedAt: serverTimestamp(),
       timestamps: {
@@ -183,6 +182,8 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
         },
       },
     })
+    console.log('Create PCR Test result for acuityAppointment ID ', acuityAppointment.id)
+    return data
   } else {
     console.warn(
       `AppointmentID: PCRTestResults with appointment id ${acuityAppointment.id} already exists. Total PCR Results Associated: ${pcrTestResultsInDb.docs.length} `,
