@@ -17,6 +17,7 @@ import {
 } from '../../../models/appointment'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import * as _ from 'lodash'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -164,9 +165,9 @@ class AppointmentWebhookController implements IControllerBase {
         console.log(
           `AppointmentWebhookController: UpdateAppointment: SuccessUpdateAppointment for AppointmentID: ${appointmentFromDb.id} AcuityID: ${id}`,
         )
-        const pcrTestResult = await this.pcrTestResultsService.getWaitingPCRResultsByAppointmentId(
-          appointmentFromDb.id,
-        )
+        const pcrTestResult = (
+          await this.pcrTestResultsService.getTestResultsByAppointmentId(appointmentFromDb.id)
+        )[0]
         //getWaitingPCRResultsByAppointmentId will throw exception if pcrTestResult doesn't exists
 
         if (
@@ -199,7 +200,7 @@ class AppointmentWebhookController implements IControllerBase {
 
           await this.pcrTestResultsService.updateDefaultTestResults(
             pcrTestResult.id,
-            pcrResultDataForDb,
+            _.pickBy(pcrResultDataForDb, _.identity),
           )
           console.log(
             `AppointmentWebhookController: UpdateAppointment: SuccessUpdatedPCRResults for PCRResultsID: ${pcrTestResult.id}`,
