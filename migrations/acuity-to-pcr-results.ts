@@ -122,7 +122,8 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
 async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
   const forms = findByIdForms(acuityAppointment.forms, acuityBarCodeFormId)
   if (!forms) {
-    return
+    console.warn(`BarCode Form is missing`)
+    return Promise.reject()
   }
   const barCode = findByFieldIdForms(
     findByIdForms(acuityAppointment.forms, acuityBarCodeFormId).values,
@@ -140,9 +141,9 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
 
   if (!appointmentInDb.docs.length) {
     console.warn(`AppointmentID: ${acuityAppointment.id} Not found in firebase`)
-    return
+    return Promise.reject()
   }
-
+  
   const appointment = appointmentInDb.docs[0]
 
   const pcrTestResultsInDb = await database
