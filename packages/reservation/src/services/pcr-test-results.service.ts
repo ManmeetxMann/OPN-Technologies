@@ -47,7 +47,7 @@ import {
 
 import testResultPDFTemplate from '../templates/pcr-test-result-pdf-content'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
-import {makeFirestoreTimestamp} from '../utils/datetime.helper'
+import {makeDeadlineForFilter} from '../utils/datetime.helper'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -196,7 +196,7 @@ export class PCRTestResultsService {
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: makeFirestoreTimestamp(deadline),
+        value: makeDeadlineForFilter(deadline),
       })
     }
 
@@ -223,7 +223,7 @@ export class PCRTestResultsService {
         result: isLabUser
           ? pcr.result
           : this.getFilteredResultForPublic(pcr.result, !!pcr.resultSpecs?.notify),
-        dateTime: appointment?.dateTime,
+        dateTime: appointment.dateTime.toDate().toISOString(),
         deadline: pcr.deadline.toDate().toISOString(),
         testRunId: pcr.testRunId,
         firstName: pcr.firstName,
@@ -826,7 +826,7 @@ export class PCRTestResultsService {
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.LessOrEqual,
-        value: makeFirestoreTimestamp(deadline),
+        value: makeDeadlineForFilter(deadline),
       })
     }
 
