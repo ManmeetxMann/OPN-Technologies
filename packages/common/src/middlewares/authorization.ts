@@ -214,6 +214,10 @@ const isAllowed = (
 ): boolean => {
   const admin = connectedUser.admin as AdminProfile | null
   const userId = connectedUser.id
+  if(admin?.isOpnSuperAdmin){
+    //Super Admin has all permissions
+    return true
+  }
   const seekLabAppointmentAdmin = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabAppointments,
   )
