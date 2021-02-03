@@ -17,7 +17,6 @@ import {
 } from '../../../models/appointment'
 import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import * as _ from 'lodash'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
