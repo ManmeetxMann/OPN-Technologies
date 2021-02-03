@@ -22,14 +22,13 @@ class TransportRunsController implements IControllerBase {
     innerRouter.get(
       this.path + '/',
       authorizationMiddleware([
-        RequiredUserPermission.LabTransportRuns,
-        RequiredUserPermission.LabAppointments,
+        RequiredUserPermission.LabTransportRunsList,
       ]),
       this.listTransportRun,
     )
     innerRouter.post(
       this.path + '/',
-      authorizationMiddleware([RequiredUserPermission.LabTransportRuns]),
+      authorizationMiddleware([RequiredUserPermission.LabTransportRunsCreate]),
       this.createTransportRun,
     )
 

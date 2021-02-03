@@ -219,6 +219,7 @@ const isAllowed = (
     console.warn(`SuperAdmin Permissions used for userID: ${connectedUser.id}`)
     return true
   }
+  
   const seekLabOrOrgAppointment = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabOrOrgAppointments,
   )
@@ -232,8 +233,15 @@ const isAllowed = (
     RequiredUserPermission.LabAppointments,
   )
   const seekOPNAdmin = listOfRequiredPermissions.includes(RequiredUserPermission.OPNAdmin)
-  const seekLabTransportRuns = listOfRequiredPermissions.includes(RequiredUserPermission.LabTransportRuns)
- 
+  const seekLabTransportRunsCreate= listOfRequiredPermissions.includes(RequiredUserPermission.LabTransportRunsCreate)
+  const seekLabTransportRunsList= listOfRequiredPermissions.includes(RequiredUserPermission.LabTransportRunsList)
+  const seekLabPCRTestResults= listOfRequiredPermissions.includes(RequiredUserPermission.LabPCRTestResults)
+  const seekLabSendBulkResults= listOfRequiredPermissions.includes(RequiredUserPermission.LabSendBulkResults)
+  const seekLabSendSingleResults= listOfRequiredPermissions.includes(RequiredUserPermission.LabSendSingleResults)
+  const seekLabDueToday= listOfRequiredPermissions.includes(RequiredUserPermission.LabDueToday)
+  const seekLabTestRunsCreate= listOfRequiredPermissions.includes(RequiredUserPermission.LabTestRunsCreate)
+  const seekLabTestRunsList= listOfRequiredPermissions.includes(RequiredUserPermission.LabTestRunsList)
+
   if (
     seekLabOrOrgAppointment &&
     !admin?.isLabAppointmentsAdmin &&
@@ -246,8 +254,12 @@ const isAllowed = (
     console.warn(`Admin user ${userId} needs isLabAppointmentsAdmin`)
     return false
   }
-  if (seekLabTransportRuns && !admin?.isTransportsRunsAdmin) {
+  if (seekLabTransportRunsCreate && !admin?.isTransportsRunsAdmin) {
     console.warn(`Admin user ${userId} needs isTransportsRunsAdmin`)
+    return false
+  }
+  if (seekLabTransportRunsList && (!admin?.isTransportsRunsAdmin && !admin?.isLabAppointmentsAdmin)) {
+    console.warn(`Admin user ${userId} needs isTransportsRunsAdmin Or isLabAppointmentsAdmin`)
     return false
   }
   if (seekLabReceiving && !admin?.isReceivingAdmin) {
@@ -256,6 +268,31 @@ const isAllowed = (
   }
   if (seekLabAdminToolIDBarcode && !admin?.isIDBarCodesAdmin) {
     console.warn(`Admin user ${userId} needs isIDBarCodesAdmin`)
+    return false
+  }
+
+  if (seekLabPCRTestResults && !admin?.isLabResultsAdmin && !admin?.isTestReportsAdmin) {
+    console.warn(`Admin user ${userId} needs isLabResultsAdmin Or isTestReportsAdmin`)
+    return false
+  }
+  if (seekLabSendBulkResults && !admin?.isBulkUploadAdmin) {
+    console.warn(`Admin user ${userId} needs isBulkUploadAdmin`)
+    return false
+  }
+  if (seekLabSendSingleResults && !admin?.isSingleResultSendAdmin) {
+    console.warn(`Admin user ${userId} needs isSingleResultSendAdmin`)
+    return false
+  }
+  if (seekLabDueToday && !admin?.isDueTodayAdmin) {
+    console.warn(`Admin user ${userId} needs isDueTodayAdmin`)
+    return false
+  }
+  if (seekLabTestRunsList && !admin?.isTestRunsAdmin && !admin?.isDueTodayAdmin) {
+    console.warn(`Admin user ${userId} needs isTestRunsAdmin Or isDueTodayAdmin`)
+    return false
+  }
+  if (seekLabTestRunsCreate && !admin?.isTestRunsAdmin) {
+    console.warn(`Admin user ${userId} needs isTestRunsAdmin`)
     return false
   }
   if (seekOPNAdmin && !admin?.isOpnSuperAdmin) {

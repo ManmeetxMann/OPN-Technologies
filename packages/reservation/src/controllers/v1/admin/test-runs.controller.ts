@@ -24,14 +24,13 @@ class TestRunsController implements IControllerBase {
     innerRouter.get(
       this.path,
       authorizationMiddleware([
-        RequiredUserPermission.LabTestRuns,
-        RequiredUserPermission.LabDueToday,
+        RequiredUserPermission.LabTestRunsList,
       ]),
       this.getListTestRuns,
     )
     innerRouter.post(
       this.path,
-      authorizationMiddleware([RequiredUserPermission.LabTestRuns]),
+      authorizationMiddleware([RequiredUserPermission.LabTestRunsCreate]),
       this.createTestRun,
     )
 
