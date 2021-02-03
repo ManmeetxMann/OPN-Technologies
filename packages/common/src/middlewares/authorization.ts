@@ -219,37 +219,42 @@ const isAllowed = (
     console.warn(`SuperAdmin Permissions used for userID: ${connectedUser.id}`)
     return true
   }
-  const seekLabOrOrgAppointmentAdmin = listOfRequiredPermissions.includes(
+  const seekLabOrOrgAppointment = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabOrOrgAppointments,
   )
-  const seekLabReceivingAdmin = listOfRequiredPermissions.includes(
+  const seekLabReceiving = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabReceiving,
   )
-  const seekLabAdminToolIDBarcodeAdmin = listOfRequiredPermissions.includes(
+  const seekLabAdminToolIDBarcode = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabAdminToolIDBarcode,
   )
-  const seekLabAppointmentsAdmin = listOfRequiredPermissions.includes(
+  const seekLabAppointments = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabAppointments,
   )
   const seekOPNAdmin = listOfRequiredPermissions.includes(RequiredUserPermission.OPNAdmin)
+  const seekLabTransportRuns = listOfRequiredPermissions.includes(RequiredUserPermission.LabTransportRuns)
  
   if (
-    seekLabOrOrgAppointmentAdmin &&
+    seekLabOrOrgAppointment &&
     !admin?.isLabAppointmentsAdmin &&
     !admin?.isTestAppointmentsAdmin
   ) {
     console.warn(`Admin user ${userId} needs isLabAppointmentsAdmin or isTestAppointmentsAdmin`)
     return false
   }
-  if (seekLabAppointmentsAdmin && !admin?.isLabAppointmentsAdmin) {
+  if (seekLabAppointments && !admin?.isLabAppointmentsAdmin) {
     console.warn(`Admin user ${userId} needs isLabAppointmentsAdmin`)
     return false
   }
-  if (seekLabReceivingAdmin && !admin?.isReceivingAdmin) {
+  if (seekLabTransportRuns && !admin?.isTransportsRunsAdmin) {
+    console.warn(`Admin user ${userId} needs isTransportsRunsAdmin`)
+    return false
+  }
+  if (seekLabReceiving && !admin?.isReceivingAdmin) {
     console.warn(`Admin user ${userId} needs isReceivingAdmin`)
     return false
   }
-  if (seekLabAdminToolIDBarcodeAdmin && !admin?.isIDBarCodesAdmin) {
+  if (seekLabAdminToolIDBarcode && !admin?.isIDBarCodesAdmin) {
     console.warn(`Admin user ${userId} needs isIDBarCodesAdmin`)
     return false
   }
