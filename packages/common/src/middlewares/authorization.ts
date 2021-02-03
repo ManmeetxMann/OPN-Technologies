@@ -216,10 +216,11 @@ const isAllowed = (
   const userId = connectedUser.id
   if(admin?.isOpnSuperAdmin){
     //Super Admin has all permissions
+    console.warn(`SuperAdmin Permissions used for userID: ${connectedUser.id}`)
     return true
   }
-  const seekLabAppointmentAdmin = listOfRequiredPermissions.includes(
-    RequiredUserPermission.LabAppointments,
+  const seekLabOrOrgAppointmentAdmin = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabOrOrgAppointments,
   )
   const seekLabReceivingAdmin = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabReceiving,
@@ -227,26 +228,20 @@ const isAllowed = (
   const seekLabAdminToolIDBarcodeAdmin = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabAdminToolIDBarcode,
   )
+  const seekLabAppointmentsAdmin = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabAppointments,
+  )
   const seekOPNAdmin = listOfRequiredPermissions.includes(RequiredUserPermission.OPNAdmin)
-  const seekLabAdminRegenerateBarCode = listOfRequiredPermissions.includes(
-    RequiredUserPermission.LabAdminRegenerateBarCode,
-  )
-  const seekLabAddTransportRunsToAppointments = listOfRequiredPermissions.includes(
-    RequiredUserPermission.LabAddTransportRunsToAppointments,
-  )
+ 
   if (
-    seekLabAppointmentAdmin &&
+    seekLabOrOrgAppointmentAdmin &&
     !admin?.isLabAppointmentsAdmin &&
     !admin?.isTestAppointmentsAdmin
   ) {
     console.warn(`Admin user ${userId} needs isLabAppointmentsAdmin or isTestAppointmentsAdmin`)
     return false
   }
-  if (seekLabAdminRegenerateBarCode && !admin?.isLabAppointmentsAdmin) {
-    console.warn(`Admin user ${userId} needs isLabAppointmentsAdmin`)
-    return false
-  }
-  if (seekLabAddTransportRunsToAppointments && !admin?.isLabAppointmentsAdmin) {
+  if (seekLabAppointmentsAdmin && !admin?.isLabAppointmentsAdmin) {
     console.warn(`Admin user ${userId} needs isLabAppointmentsAdmin`)
     return false
   }

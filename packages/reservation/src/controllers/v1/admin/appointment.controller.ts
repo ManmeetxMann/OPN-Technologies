@@ -33,32 +33,28 @@ class AdminAppointmentController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    const apptAuth = authorizationMiddleware([RequiredUserPermission.LabAppointments])
-    const apptAuthWithOrg = authorizationMiddleware([RequiredUserPermission.LabAppointments], true)
+    const apptLabAuth = authorizationMiddleware([RequiredUserPermission.LabAppointments])
+    const apptLabOrOrgAdminAuth = authorizationMiddleware([RequiredUserPermission.LabOrOrgAppointments])
+    const apptLabOrOrgAdminAuthWithOrg = authorizationMiddleware([RequiredUserPermission.LabOrOrgAppointments], true)
     const receivingAuth = authorizationMiddleware([RequiredUserPermission.LabReceiving])
     const idBarCodeToolAuth = authorizationMiddleware([
       RequiredUserPermission.LabAdminToolIDBarcode,
     ])
-    const addTransportRunToApptAuth = authorizationMiddleware([
-      RequiredUserPermission.LabAddTransportRunsToAppointments,
-    ])
-    const regenerateBarCodeAuth = authorizationMiddleware([
-      RequiredUserPermission.LabAdminRegenerateBarCode,
-    ])
-    innerRouter.get(this.path + '/api/v1/appointments', apptAuthWithOrg, this.getListAppointments)
+    innerRouter.get(this.path + '/api/v1/appointments', apptLabOrOrgAdminAuthWithOrg, this.getListAppointments)
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
-      apptAuth,
+      apptLabOrOrgAdminAuth,
       this.getAppointmentById,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/cancel',
-      apptAuthWithOrg,
+      apptLabOrOrgAdminAuthWithOrg,
       this.cancelAppointment,
     )
+
     innerRouter.put(
       this.path + '/api/v1/appointments/add-transport-run',
-      addTransportRunToApptAuth,
+      apptLabAuth,
       this.addTransportRun,
     )
     innerRouter.get(
@@ -74,7 +70,7 @@ class AdminAppointmentController implements IControllerBase {
     innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
     innerRouter.put(
       this.path + '/api/v1/appointments/barcode/regenerate',
-      regenerateBarCodeAuth,
+      apptLabAuth,
       this.regenerateBarCode,
     )
 

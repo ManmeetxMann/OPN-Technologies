@@ -23,7 +23,7 @@ class TransportRunsController implements IControllerBase {
       this.path + '/',
       authorizationMiddleware([
         RequiredUserPermission.LabTransportRuns,
-        RequiredUserPermission.LabAddTransportRunsToAppointments,
+        RequiredUserPermission.LabAppointments,
       ]),
       this.listTransportRun,
     )
