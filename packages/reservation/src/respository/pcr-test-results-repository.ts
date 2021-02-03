@@ -36,7 +36,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       )
     }
 
-    if (testResults.length > 0) {
+    if (testResults.length > 1) {
       console.log(
         `getTestResultByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
       )
