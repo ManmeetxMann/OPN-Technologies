@@ -47,7 +47,7 @@ import {
 
 import testResultPDFTemplate from '../templates/pcr-test-result-pdf-content'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
-import {makeFirestoreTimestamp} from '../utils/datetime.helper'
+import {makeDeadlineForFilter} from '../utils/datetime.helper'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -196,7 +196,7 @@ export class PCRTestResultsService {
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: makeFirestoreTimestamp(deadline),
+        value: makeDeadlineForFilter(deadline),
       })
     }
 
@@ -223,7 +223,7 @@ export class PCRTestResultsService {
         result: isLabUser
           ? pcr.result
           : this.getFilteredResultForPublic(pcr.result, !!pcr.resultSpecs?.notify),
-        dateTime: appointment?.dateTime,
+        dateTime: appointment.dateTime.toDate().toISOString(),
         deadline: pcr.deadline.toDate().toISOString(),
         testRunId: pcr.testRunId,
         firstName: pcr.firstName,
@@ -270,9 +270,9 @@ export class PCRTestResultsService {
   getFinalResult(action: PCRResultActions, autoResult: ResultTypes, barCode: string): ResultTypes {
     let finalResult = autoResult
     switch (action) {
-      case PCRResultActions.RequestReSample: {
+      case PCRResultActions.RequestReCollect: {
         console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
-        finalResult = ResultTypes.ReSampleRequested
+        finalResult = ResultTypes.ReCollectRequested
         break
       }
       case PCRResultActions.MarkAsNegative: {
@@ -306,7 +306,7 @@ export class PCRTestResultsService {
     return pcrTestResults
   }
 
-  async getReSampledTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
+  async getReCollectedTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
     const pcrTestResultsQuery = [
       {
         map: '/',
@@ -318,7 +318,7 @@ export class PCRTestResultsService {
         map: '/',
         key: 'result',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: ResultTypes.ReSampleRequested,
+        value: ResultTypes.ReCollectRequested,
       },
     ]
     const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
@@ -327,7 +327,7 @@ export class PCRTestResultsService {
 
     if (!pcrTestResults || pcrTestResults.length === 0) {
       throw new ResourceNotFoundException(
-        `PCRTestResult with barCode ${barCodeNumber} and ReSample Requested not found`,
+        `PCRTestResult with barCode ${barCodeNumber} and ReCollect Requested not found`,
       )
     }
 
@@ -443,14 +443,14 @@ export class PCRTestResultsService {
 
     //Create New Waiting Result for Resend
     const runNumber = 0 //Not Relevant for Resend
-    const reSampleNumber = 0 //Not Relevant for Resend
+    const reCollectNumber = 0 //Not Relevant for Resend
     const testResult =
       isSingleResult && !waitingPCRTestResult
         ? await this.createNewWaitingResult(
             appointment,
             resultData.adminId,
             runNumber,
-            reSampleNumber,
+            reCollectNumber,
           )
         : waitingPCRTestResult
 
@@ -458,7 +458,7 @@ export class PCRTestResultsService {
       resultData,
       appointment,
       testResult.runNumber,
-      testResult.reSampleNumber,
+      testResult.reCollectNumber,
     )
 
     //Update PCR Test results
@@ -508,7 +508,7 @@ export class PCRTestResultsService {
     appointment: AppointmentDBModel,
     adminId: string,
     runNumber: number,
-    reSampleNumber: number,
+    reCollectNumber: number,
   ): Promise<PCRTestResultDBModel> {
     const pcrResultDataForDbCreate = {
       adminId: adminId,
@@ -524,7 +524,7 @@ export class PCRTestResultsService {
       result: ResultTypes.Pending,
       waitingResult: true,
       runNumber: runNumber,
-      reSampleNumber: reSampleNumber,
+      reCollectNumber: reCollectNumber,
     }
     return await this.saveDefaultTestResults(pcrResultDataForDbCreate)
   }
@@ -533,7 +533,7 @@ export class PCRTestResultsService {
     resultData: PCRTestResultData,
     appointment: AppointmentDBModel,
     runNumber: number,
-    reSampleNumber: number,
+    reCollectNumber: number,
   ): Promise<void> {
     const nextRunNumber = runNumber + 1
     switch (resultData.resultSpecs.action) {
@@ -548,7 +548,7 @@ export class PCRTestResultsService {
           updatedAppointment,
           resultData.adminId,
           nextRunNumber,
-          reSampleNumber,
+          reCollectNumber,
         )
         break
       }
@@ -563,20 +563,20 @@ export class PCRTestResultsService {
           updatedAppointment,
           resultData.adminId,
           nextRunNumber,
-          reSampleNumber,
+          reCollectNumber,
         )
         break
       }
-      case PCRResultActions.RequestReSample: {
-        console.log(`TestResultReSample: for ${resultData.barCode} is requested`)
-        await this.appointmentService.changeStatusToReSampleRequired(
+      case PCRResultActions.RequestReCollect: {
+        console.log(`TestResultReCollect: for ${resultData.barCode} is requested`)
+        await this.appointmentService.changeStatusToReCollectRequired(
           appointment.id,
           resultData.adminId,
         )
         if (!appointment.organizationId) {
           this.couponCode = await this.couponService.createCoupon(appointment.email)
           console.log(
-            `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
+            `TestResultReCollect: CouponCode ${this.couponCode} is created for ${appointment.email} ReCollectedBarCode: ${resultData.barCode}`,
           )
           await this.couponService.saveCoupon(
             this.couponCode,
@@ -605,9 +605,9 @@ export class PCRTestResultsService {
         console.log(`SendNotification: Success: ${resultData.barCode} ReRunTomorrow`)
         break
       }
-      case PCRResultActions.RequestReSample: {
-        await this.sendReSampleNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} RequestReSample`)
+      case PCRResultActions.RequestReCollect: {
+        await this.sendReCollectNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} RequestReCollect`)
         break
       }
       default: {
@@ -665,13 +665,13 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendReSampleNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+  async sendReCollectNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
     const owner = Config.get('ACUITY_SCHEDULER_USERNAME')
     const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${this.couponCode}`
     const templateId = resultData.organizationId
-      ? Config.getInt('TEST_RESULT_ORG_RESAMPLE_NOTIFICATION_TEMPLATE_ID') ?? 6
-      : Config.getInt('TEST_RESULT_NO_ORG_RESAMPLE_NOTIFICATION_TEMPLATE_ID') ?? 5
+      ? Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
+      : Config.getInt('TEST_RESULT_NO_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 5
 
     await this.emailService.send({
       templateId: templateId,
@@ -753,8 +753,8 @@ export class PCRTestResultsService {
     switch (appointment.appointmentStatus) {
       case AppointmentStatus.Reported:
         return AppointmentReasons.AlreadyReported
-      case AppointmentStatus.ReSampleRequired:
-        return AppointmentReasons.ReSampleAlreadyRequested
+      case AppointmentStatus.ReCollectRequired:
+        return AppointmentReasons.ReCollectAlreadyRequested
       default:
         return AppointmentReasons.NoInProgress
     }
@@ -769,7 +769,7 @@ export class PCRTestResultsService {
         linkedBarcodes.push(coupon.lastBarcode)
         try {
           //Get Linked Barcodes for LastBarCode
-          const pcrResult = await this.getReSampledTestResultByBarCode(coupon.lastBarcode)
+          const pcrResult = await this.getReCollectedTestResultByBarCode(coupon.lastBarcode)
           if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
             linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
           }
@@ -809,7 +809,7 @@ export class PCRTestResultsService {
       organizationId: appointment.organizationId,
       result: ResultTypes.Pending,
       runNumber: 1, //Start the Run
-      reSampleNumber: linkedBarcodes.length + 1,
+      reCollectNumber: linkedBarcodes.length + 1,
       waitingResult: true,
     }
     return this.saveDefaultTestResults(pcrResultDataForDb)
@@ -826,7 +826,7 @@ export class PCRTestResultsService {
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.LessOrEqual,
-        value: makeFirestoreTimestamp(deadline),
+        value: makeDeadlineForFilter(deadline),
       })
     }
 
@@ -861,7 +861,7 @@ export class PCRTestResultsService {
           testRunId: pcr.testRunId,
           vialLocation: appointment?.vialLocation,
           runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
-          reSampleNumber: pcr.reSampleNumber ? `S${pcr.reSampleNumber}` : null,
+          reCollectNumber: pcr.reCollectNumber ? `S${pcr.reCollectNumber}` : null,
           dateTime: appointment.dateTime,
         })
       }
@@ -878,8 +878,8 @@ export class PCRTestResultsService {
         status = ResultReportStatus.Skipped
         break
       }
-      case PCRResultActions.RequestReSample: {
-        status = ResultReportStatus.SentReSampleRequest
+      case PCRResultActions.RequestReCollect: {
+        status = ResultReportStatus.SentReCollectRequest
         break
       }
       case PCRResultActions.ReRunToday || PCRResultActions.ReRunTomorrow: {

@@ -1,3 +1,5 @@
+import {firestore} from 'firebase-admin'
+
 import {ResultTypes} from './appointment'
 
 export type TestResultsUiDTO = {
@@ -20,7 +22,7 @@ type ClientDetails = {
   appointmentId?: number
   timeOfAppointment?: string
   barCode?: string
-  dateTime: string
+  dateTime: firestore.Timestamp
 }
 
 export type TestResultsBase = {
@@ -80,5 +82,5 @@ export const testResultUiDTOResponse = (appointment: ClientDetails): TestResults
   lastName: appointment.lastName,
   testType: 'PCR',
   barCode: appointment.barCode,
-  dateTime: appointment.dateTime,
+  dateTime: appointment.dateTime.toDate().toISOString(),
 })

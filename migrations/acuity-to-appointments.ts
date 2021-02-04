@@ -7,11 +7,12 @@ import querystring, {ParsedUrlQueryInput} from 'querystring'
 import fetch from 'node-fetch'
 import moment from 'moment-timezone'
 import {uniqueNamesGenerator, adjectives, names, colors} from 'unique-names-generator'
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
-const ANONYMOUS_PI_DATA = true
+const ANONYMOUS_PI_DATA = false
 const ACUITY_ENV_NON_PROD = true
-const START_DATE = '2020-10-01' //Starting from OCT 1st
-const END_DATE = '2020-10-30' //new Date()
+const START_DATE = '2021-02-01' //Starting from OCT 1st
+const END_DATE = '2021-02-28' //new Date()
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -164,23 +165,31 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
   })
 }
 
-const makeTimeEndOfTheDay = (datetime: moment.Moment): string => {
-  return datetime.hours(11).minutes(59).format()
+const makeTimeEndOfTheDayMoment = (datetime: moment.Moment): moment.Moment => {
+  return datetime.hours(23).minutes(59).seconds(0)
 }
 
-const generateDeadline = (utcDateTime: moment.Moment, labels: AcuityLabel[]) => {
+const makeFirestoreTimestamp = (
+  date: Date | string,
+  labels: AcuityLabel[],
+): firestore.Timestamp => {
+  const utcEndOfDay = generateDeadline(moment.tz(date, timeZone), labels).toDate()
+  return firestore.Timestamp.fromDate(utcEndOfDay)
+}
+
+const generateDeadline = (utcDateTime: moment.Moment, labels: AcuityLabel[]): moment.Moment => {
   const sameDay = !!labels && !!labels.find((label) => label.name === 'SAMEDAY')
   const nextDay = !!labels && !!labels.find((label) => label.name === 'NEXTDAY')
 
-  let deadline: string
+  let deadline: moment.Moment
   if (nextDay) {
-    deadline = makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
+    deadline = makeTimeEndOfTheDayMoment(utcDateTime.add(1, 'd'))
   } else if (sameDay) {
-    deadline = makeTimeEndOfTheDay(utcDateTime)
+    deadline = makeTimeEndOfTheDayMoment(utcDateTime)
   } else if (utcDateTime.hours() > 12) {
-    deadline = makeTimeEndOfTheDay(utcDateTime.add(1, 'd'))
+    deadline = makeTimeEndOfTheDayMoment(utcDateTime.add(1, 'd'))
   } else {
-    deadline = makeTimeEndOfTheDay(utcDateTime)
+    deadline = makeTimeEndOfTheDayMoment(utcDateTime)
   }
   return deadline
 }
@@ -258,13 +267,16 @@ async function createAppointment(acuityAppointment) {
     return Promise.resolve()
   }
   const utcDateTime = moment(acuityAppointment.datetime).utc()
+  const firestoreTimeStamp = firestore.Timestamp.fromDate(utcDateTime.toDate())
 
-  const dateTime = utcDateTime.format()
   const dateOfAppointment = utcDateTime.format('MMMM DD, YYYY')
   const timeOfAppointment = utcDateTime.format('h:mma')
 
   //Deadline is based on Eastern Time
-  const deadline = generateDeadline(moment(acuityAppointment.datetime), acuityAppointment.labels)
+  const deadline = makeFirestoreTimestamp(
+    acuityAppointment.datetime,
+    acuityAppointment.labels || [],
+  )
   let barCode = ''
   let dateOfBirth = ''
   let organizationId = ''
@@ -431,8 +443,8 @@ async function createAppointment(acuityAppointment) {
       canceled: acuityAppointment.canceled,
       dateOfAppointment: dateOfAppointment,
       dateOfBirth: piDOB(dateOfBirth),
-      dateTime: dateTime,
-      deadline: deadline,
+      dateTime: firestoreTimeStamp,
+      deadline,
       email: piEmail(acuityAppointment.email),
       firstName: piData(acuityAppointment.firstName),
       lastName: piData(acuityAppointment.lastName),

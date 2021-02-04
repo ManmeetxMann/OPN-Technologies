@@ -14,9 +14,10 @@ import {
   AppointmentStatusHistoryDb,
   CreateAppointmentRequest,
   DeadlineLabel,
-  ResultTypes,
   UserAppointment,
   userAppointmentDTOResponse,
+  ResultTypes,
+  AppointmentActivityAction,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -29,7 +30,7 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
-import {makeDeadline, makeFirestoreTimestamp} from '../utils/datetime.helper'
+import {makeDeadline, makeDeadlineForFilter, makeFirestoreTimestamp} from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -269,7 +270,7 @@ export class AppoinmentService {
     },
   ): Promise<AppointmentDBModel> {
     const data = this.appointmentFromAcuity(acuityAppointment, additionalData)
-    return this.updateAppointmentDB(id, data)
+    return this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity)
   }
 
   private appointmentFromAcuity(
@@ -285,13 +286,12 @@ export class AppoinmentService {
       userId?: string
     },
   ): Omit<AppointmentDBModel, 'id'> {
-    const utcDateTime = moment(acuityAppointment.datetime).utc()
+    const dateTime = makeFirestoreTimestamp(acuityAppointment.datetime)
     const dateTimeTz = moment(acuityAppointment.datetime).tz(timeZone)
-
-    const dateTime = utcDateTime.format()
     const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
     const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
     const label = acuityAppointment.labels ? acuityAppointment.labels[0]?.name : null
+    const utcDateTime = moment(acuityAppointment.datetime).utc()
     const deadline = makeDeadline(utcDateTime, label)
     const {
       barCodeNumber,
@@ -538,9 +538,10 @@ export class AppoinmentService {
 
   async updateAppointmentDB(
     id: string,
-    data: Partial<AppointmentDBModel>,
+    updates: Partial<AppointmentDBModel>,
+    action?: AppointmentActivityAction,
   ): Promise<AppointmentDBModel> {
-    return this.appointmentsRepository.updateProperties(id, data)
+    return this.appointmentsRepository.updateAppointment({id, updates, action})
   }
 
   async changeStatusToReRunRequired(
@@ -563,13 +564,13 @@ export class AppoinmentService {
     })
   }
 
-  async changeStatusToReSampleRequired(
+  async changeStatusToReCollectRequired(
     appointmentId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReSampleRequired, userId)
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReCollectRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.ReSampleRequired,
+      appointmentStatus: AppointmentStatus.ReCollectRequired,
     })
   }
 
@@ -721,7 +722,7 @@ export class AppoinmentService {
       (isLabUser &&
         appointmentStatus !== AppointmentStatus.Canceled &&
         appointmentStatus !== AppointmentStatus.Reported &&
-        appointmentStatus !== AppointmentStatus.ReSampleRequired)
+        appointmentStatus !== AppointmentStatus.ReCollectRequired)
     )
   }
 
@@ -756,7 +757,7 @@ export class AppoinmentService {
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.GreatOrEqual,
-        value: makeFirestoreTimestamp(moment().toDate()),
+        value: makeDeadlineForFilter(moment().toDate()),
       },
       {
         map: '/',
@@ -773,7 +774,7 @@ export class AppoinmentService {
     return appointments.map(userAppointmentDTOResponse)
   }
 
-  async regenerateBarCode(appointmentId: string): Promise<AppointmentDBModel> {
+  async regenerateBarCode(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
     const appointment = await this.appointmentsRepository.get(appointmentId)
 
     if (!appointment) {
@@ -785,7 +786,9 @@ export class AppoinmentService {
     const updatedAppoinment = await this.appointmentsRepository.updateBarCodeById(
       appointmentId,
       newBarCode,
+      userId,
     )
+
     const pcrTest = await this.pcrTestResultsRepository.findWhereEqual(
       'appointmentId',
       appointmentId,

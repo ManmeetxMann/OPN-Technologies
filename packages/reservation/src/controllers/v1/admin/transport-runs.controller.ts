@@ -21,15 +21,12 @@ class TransportRunsController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     innerRouter.get(
       this.path + '/',
-      authorizationMiddleware([
-        RequiredUserPermission.LabTransportRuns,
-        RequiredUserPermission.LabAddTransportRunsToAppointments,
-      ]),
+      authorizationMiddleware([RequiredUserPermission.LabTransportRunsList]),
       this.listTransportRun,
     )
     innerRouter.post(
       this.path + '/',
-      authorizationMiddleware([RequiredUserPermission.LabTransportRuns]),
+      authorizationMiddleware([RequiredUserPermission.LabTransportRunsCreate]),
       this.createTransportRun,
     )
 
