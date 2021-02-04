@@ -1,29 +1,31 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
-import IRouteController from '../../../../../common/src/interfaces/IRouteController.interface'
+import * as _ from 'lodash'
+
 import {PassportService} from '../../../../../passport/src/services/passport-service'
-import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
-import {AccessService} from '../../../service/access.service'
-import {actionFailed, actionSucceed, of} from '../../../../../common/src/utils/response-wrapper'
 import {PassportStatuses, Passport} from '../../../../../passport/src/models/passport'
-import {isPassed} from '../../../../../common/src/utils/datetime-util'
-import {UserService} from '../../../../../common/src/service/user/user-service'
+
+import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
+
+import {AccessService} from '../../../service/access.service'
+import {AccessTokenService} from '../../../service/access-token.service'
+import {AccessModel} from '../../../repository/access.repository'
+import {AccessWithDependantNames} from '../../../models/access'
+
+import IRouteController from '../../../../../common/src/interfaces/IRouteController.interface'
+import {isPassed, safeTimestamp} from '../../../../../common/src/utils/datetime-util'
+import {actionSucceed, of} from '../../../../../common/src/utils/response-wrapper'
+import {now} from '../../../../../common/src/utils/times'
 import {User} from '../../../../../common/src/data/user'
 import {AdminProfile} from '../../../../../common/src/data/admin'
-import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {UnauthorizedException} from '../../../../../common/src/exceptions/unauthorized-exception'
-import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
-import {now} from '../../../../../common/src/utils/times'
-import moment from 'moment-timezone'
-import * as _ from 'lodash'
-import {Config} from '../../../../../common/src/utils/config'
-import {AccessTokenService} from '../../../service/access-token.service'
 import {ResponseStatusCodes} from '../../../../../common/src/types/response-status'
-import {AccessStats} from '../../../models/access'
-import {NfcTagService} from '../../../../../common/src/service/hardware/nfctag-service'
+import {UnauthorizedException} from '../../../../../common/src/exceptions/unauthorized-exception'
+import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {ForbiddenException} from '../../../../../common/src/exceptions/forbidden-exception'
+import {UserService} from '../../../../../common/src/service/user/user-service'
+import {NfcTagService} from '../../../../../common/src/service/hardware/nfctag-service'
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -166,77 +168,81 @@ class AdminController implements IRouteController {
   }
 
   enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
+    // enter a user into a location
+    // if forceExit is true, the user will be checked out of their current location
+    // otherwise, if they are checked in somewhere the request will fail
     try {
-      const {accessToken} = req.body
+      const {userId, locationId, autoExit} = req.body
       const {organizationId} = res.locals
-      const access = await this.accessService.findOneByToken(accessToken)
-      const {locationId} = access
-      const [passport, user] = await Promise.all([
-        this.passportService.findOneByToken(access.statusToken),
-        this.userService.findOne('userId'),
+      // TODO: need to check location info?
+      const [user, location] = await Promise.all([
+        this.userService.findOne(userId),
+        this.organizationService.getLocation(organizationId, locationId),
       ])
-
-      const location = await this.organizationService.getLocation(organizationId, locationId)
-
-      if (!location) {
-        throw new ForbiddenException(
-          `Location ${locationId} does not exist or does not belong to organization ${organizationId}`,
+      // backwards compat for multi-user access
+      const {delegates: delegateIds} = user
+      const potentialParentIds = [null, ...delegateIds]
+      const latestPassports = (
+        await Promise.all(
+          potentialParentIds.map((parent) =>
+            this.passportService.findLatestPassport(userId, parent),
+          ),
         )
+      ).filter((notNull) => notNull)
+      if (!latestPassports.length) {
+        throw new ForbiddenException('User has no valid passports')
       }
-      if (!location.allowAccess) {
-        throw new BadRequestException('Location does not permit direct check-in')
-      }
-
-      const authenticatedUser = res.locals.connectedUser as User
-      const adminForLocations = (authenticatedUser.admin as AdminProfile).adminForLocationIds
-      const adminForOrganization = (authenticatedUser.admin as AdminProfile).adminForOrganizationId
-      if (adminForOrganization !== organizationId) {
-        throw new UnauthorizedException(`Not an admin for organization ${organizationId}`)
-      }
-
+      // passport might be regenerated
+      let selectedPassport = latestPassports.reduce((selected, candidate) => {
+        if (
+          // @ts-ignore
+          safeTimestamp(selected.timestamps.createdAt) <
+          // @ts-ignore
+          safeTimestamp(candidate.timestamps.createdAt)
+        ) {
+          return candidate
+        }
+        return selected
+      })
       if (
         !(
-          adminForLocations.includes(location.id) ||
-          (location.parentLocationId && adminForLocations.includes(location.parentLocationId))
+          selectedPassport.status === PassportStatuses.Pending ||
+          (selectedPassport.status === PassportStatuses.Proceed &&
+            !isPassed(safeTimestamp(selectedPassport.validUntil)))
         )
       ) {
-        throw new UnauthorizedException(`Not an admin for location ${location.id}`)
+        // TODO: make a pending passport here?
+        throw new ForbiddenException('Current passport does not permit entry')
       }
 
-      const canEnter =
-        passport.status === PassportStatuses.Pending ||
-        (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
-
-      if (canEnter) {
-        const newAccess = await this.accessService.handleEnter(access)
-        const {dependants} = newAccess
-        const userIdToReturn = newAccess.userId
-        const userModelToReturn =
-          userIdToReturn === userId
-            ? user
-            : {
-                ...user,
-                id: userIdToReturn,
-                firstName: dependants.find(({id}) => id === userIdToReturn)?.firstName,
-                lastName: dependants.find(({id}) => id === userIdToReturn)?.lastName,
-              }
-        const responseBody = {
-          passport,
-          base64Photo: user.base64Photo,
-          dependants: [],
-          includesGuardian: access.includesGuardian,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          access: {
-            ...newAccess,
-            status: passport.status,
-            user: userModelToReturn,
-          },
+      // find current location
+      const latestAccess = await this.accessService.findLatestAnywhere(userId, delegateIds)
+      const currentLocation =
+        latestAccess?.enteredAt && !latestAccess.exitAt ? latestAccess.locationId : null
+      if (currentLocation) {
+        if (!autoExit) {
+          throw new ForbiddenException('User is still in a location')
+        } else {
+          const newData = await this.forceExit(latestAccess, userId)
+          selectedPassport = newData.passport
         }
-        return res.json(actionSucceed({...responseBody, dependants}))
       }
 
-      res.status(400).json(actionFailed('Access denied for access-token'))
+      const enteringAccess = await this.accessTokenService.createToken(
+        selectedPassport.statusToken,
+        locationId,
+        userId,
+        [],
+        true,
+      )
+      const newAccess = await this.accessService.handleEnter(enteringAccess)
+      const {dependants, ...access} = newAccess
+      const responseBody = {
+        passport: selectedPassport,
+        access,
+        user,
+      }
+      res.json(actionSucceed(responseBody))
     } catch (error) {
       next(error)
     }
@@ -261,36 +267,10 @@ class AdminController implements IRouteController {
       if (locationId && latestAccess.locationId !== locationId) {
         throw new ForbiddenException(`User is not in location ${locationId}`)
       }
-      const exitUsingExisting =
-        // if direct, must include guardian
-        isDirect === latestAccess.includesGuardian &&
-        // must be no dependants other than this one
-        Object.keys(latestAccess.dependants).length === (isDirect ? 0 : 1)
-      let newAccess
-      let passport: Passport = null
-      if (exitUsingExisting) {
-        passport = await this.passportService.findOneByToken(latestAccess.statusToken)
-        newAccess = await this.accessService.handleExit(latestAccess)
-      } else {
-        // latestAccess contains other users
-        // we must create a new access
-        try {
-          passport = await this.passportService.findOneByToken(latestAccess.statusToken, true)
-        } catch (err) {
-          passport = await this.passportService.create(PassportStatuses.Pending, userId, [], true)
-        }
-        const soleAccess = await this.accessTokenService.createToken(
-          passport.statusToken,
-          locationId,
-          userId,
-          [],
-          true,
-        )
-        newAccess = await this.accessService.handleExit(soleAccess)
-      }
-      const {dependants, ...access} = newAccess
+      const exitData = await this.forceExit(latestAccess, userId)
+      const {dependants, ...access} = exitData.access
       const responseBody = {
-        passport,
+        passport: exitData.passport,
         access,
         user,
       }
@@ -300,24 +280,68 @@ class AdminController implements IRouteController {
     }
   }
 
+  forceExit = async (
+    access: AccessModel,
+    userId: string,
+  ): Promise<{passport: Passport; access: AccessWithDependantNames}> => {
+    // make the user exit using the given access. If thiat would have side effects (i.e. other users exiting)
+    // create a new access instead. If needed, create a new passport
+    const isSoleUser =
+      (access.userId === userId &&
+        access.includesGuardian &&
+        !Object.keys(access.dependants).length) ||
+      (access.userId !== userId &&
+        !access.includesGuardian &&
+        Object.keys(access.dependants).length === 1 &&
+        access[userId])
+    let passport: Passport = null
+    let newAccess: AccessWithDependantNames = null
+    if (isSoleUser) {
+      passport = await this.passportService.findOneByToken(access.statusToken)
+      newAccess = await this.accessService.handleExit(access)
+    } else {
+      // latestAccess contains other users
+      // we must create a new access
+      try {
+        passport = await this.passportService.findOneByToken(access.statusToken, true)
+      } catch (err) {
+        passport = await this.passportService.create(PassportStatuses.Pending, userId, [], true)
+      }
+      const soleAccess = await this.accessTokenService.createToken(
+        passport.statusToken,
+        access.locationId,
+        userId,
+        [],
+        true,
+      )
+      newAccess = await this.accessService.handleExit(soleAccess)
+    }
+    return {
+      access: newAccess,
+      passport,
+    }
+  }
+
   enterOrExitUsingATag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Get request inputs
-      const {tagId, locationId} = req.body
+      const {tagId, locationId, legacyMode} = req.body
 
       // Get tag appropriately
-      // Fix: Ticket #1035
-      // Note: there's a bug that legacy mode is always passed through as true... so must try both
-      let tag = await this.tagService.getByLegacyId(tagId)
-      if (!tag) {
-        tag = await this.tagService.getById(tagId)
-      }
+      const tag = await (legacyMode
+        ? this.tagService.getByLegacyId(tagId)
+        : this.tagService.getById(tagId))
       if (!tag) {
         throw new ResourceNotFoundException(`NFC Tag not found`)
       }
 
       // Save org
       const organizationId = tag.organizationId
+      if (res.locals.organizationId !== organizationId) {
+        throw new UnauthorizedException(
+          `Tag does not belong to organization ${res.locals.organizationId}`,
+        )
+      }
 
       // Make sure the admin is allowed
       const authenticatedUser = res.locals.connectedUser as User
