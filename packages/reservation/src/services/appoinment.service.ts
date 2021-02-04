@@ -17,6 +17,7 @@ import {
   UserAppointment,
   userAppointmentDTOResponse,
   ResultTypes,
+  AppointmentActivityAction,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -269,7 +270,7 @@ export class AppoinmentService {
     },
   ): Promise<AppointmentDBModel> {
     const data = this.appointmentFromAcuity(acuityAppointment, additionalData)
-    return this.updateAppointmentDB(id, data)
+    return this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity)
   }
 
   private appointmentFromAcuity(
@@ -507,9 +508,10 @@ export class AppoinmentService {
 
   async updateAppointmentDB(
     id: string,
-    data: Partial<AppointmentDBModel>,
+    updates: Partial<AppointmentDBModel>,
+    action?: AppointmentActivityAction,
   ): Promise<AppointmentDBModel> {
-    return this.appointmentsRepository.updateProperties(id, data)
+    return this.appointmentsRepository.updateAppointment({id, updates, action})
   }
 
   async changeStatusToReRunRequired(
@@ -742,7 +744,7 @@ export class AppoinmentService {
     return appointments.map(userAppointmentDTOResponse)
   }
 
-  async regenerateBarCode(appointmentId: string): Promise<AppointmentDBModel> {
+  async regenerateBarCode(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
     const appointment = await this.appointmentsRepository.get(appointmentId)
 
     if (!appointment) {
@@ -754,7 +756,9 @@ export class AppoinmentService {
     const updatedAppoinment = await this.appointmentsRepository.updateBarCodeById(
       appointmentId,
       newBarCode,
+      userId,
     )
+
     const pcrTest = await this.pcrTestResultsRepository.findWhereEqual(
       'appointmentId',
       appointmentId,
