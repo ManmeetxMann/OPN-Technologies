@@ -1,4 +1,5 @@
 import moment from 'moment'
+import {sortBy} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -209,7 +210,10 @@ export class PCRTestResultsService {
       })
     }
 
-    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+      pcrTestResultsQuery,
+      {key: 'result', direction: 'asc'},
+    )
 
     const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
     const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
@@ -867,7 +871,7 @@ export class PCRTestResultsService {
       }
     })
 
-    return pcrFiltred
+    return sortBy(pcrFiltred, ['status'])
   }
 
   async getReportStatus(action: PCRResultActions): Promise<ResultReportStatus> {
