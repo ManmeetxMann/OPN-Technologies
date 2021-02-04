@@ -514,7 +514,7 @@ components:
           minLength: 1
         notify:
           type: boolean
-          default: false  
+          default: false
         quasar670NGene:
           type: string
           minLength: 1
@@ -984,7 +984,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentResponse'
+                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
 
   /webhook/acuity/schedule:
     post:
@@ -1499,7 +1499,7 @@ paths:
 
   /reservation/internal/api/v1/process-pcr-test-result:
     post:
-      description: Process PCR Results 
+      description: Process PCR Results
       requestBody:
         content:
           application/json:
@@ -1529,7 +1529,7 @@ paths:
               properties:
                 appointmentIds:
                   type: array
-                  items: 
+                  items:
                     type: string
                 label:
                   type: string
@@ -1541,65 +1541,11 @@ paths:
                 - label
       responses:
         '200':
-          description: Successfully Return
+          description: Succesfully add label
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: false
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      additionalProperties: false
-                      properties:
-                        id:
-                          type: number
-                        firstName:
-                          type: string
-                        lastName:
-                          type: string
-                        status:
-                          type: string
-                        barCode:
-                          type: string
-                        location:
-                          type: string
-                        dateTime:
-                          type: string
-                        dateOfBirth:
-                          type: string
-                        transportRunId:
-                          type: string
-                        deadline:
-                          type: string
-                      required:
-                        - id
-                        - firstName
-                        - lastName
-                        - barCode
-                  status:
-                    type: object
-                    additionalProperties: false
-                    properties:
-                      code:
-                        type: string
-                        enum:
-                          [
-                              succeed,
-                              failed,
-                              validation_error,
-                              internal_server_error,
-                              unauthorized,
-                              access_denied,
-                              resource_not_found,
-                          ]
-                      message:
-                        nullable: true
-                        type: string
-                  page: 
-                    type: number
+                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
 
   /reservation/admin/api/v1/pcr-test-results-bulk/report-status:
     get:
@@ -1827,11 +1773,11 @@ paths:
                 - vialLocation
       responses:
         '200':
-          description: Successfully Return
+          description: Succesfully add vialLocation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
 
   /reservation/api/v1/appointments:
     post:

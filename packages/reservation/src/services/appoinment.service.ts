@@ -6,7 +6,7 @@ import DataStore from '../../../common/src/data/datastore'
 import {
   AppoinmentBarCodeSequenceDBModel,
   AppointmentAcuityResponse,
-  AppointmentAttachTransportStatus,
+  AppointmentStatusChangeState,
   AppointmentByOrganizationRequest,
   AppointmentChangeToRerunRequest,
   AppointmentDBModel,
@@ -14,9 +14,9 @@ import {
   AppointmentStatusHistoryDb,
   CreateAppointmentRequest,
   DeadlineLabel,
+  ResultTypes,
   UserAppointment,
   userAppointmentDTOResponse,
-  ResultTypes,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -472,38 +472,59 @@ export class AppoinmentService {
     appointmentId: string,
     vialLocation: string,
     userId: string,
-  ): Promise<AppointmentDBModel> {
+  ): Promise<AppointmentStatusChangeState> {
+    if (await this.checkAppointmentStatus(appointmentId)) {
+      return AppointmentStatusChangeState.Failed
+    }
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.Received, userId)
-    return this.appointmentsRepository.updateProperties(appointmentId, {
+
+    await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Received,
       vialLocation,
     })
+    return AppointmentStatusChangeState.Succeed
   }
 
   async addTransportRun(
     appointmentId: string,
     transportRunId: string,
     userId: string,
-  ): Promise<AppointmentAttachTransportStatus> {
-    try {
-      await this.addStatusHistoryById(appointmentId, AppointmentStatus.InTransit, userId)
-
-      await this.appointmentsRepository.updateProperties(appointmentId, {
-        transportRunId: transportRunId,
-        appointmentStatus: AppointmentStatus.InTransit,
-      })
-      return AppointmentAttachTransportStatus.Succeed
-    } catch (e) {
-      return AppointmentAttachTransportStatus.Failed
+  ): Promise<AppointmentStatusChangeState> {
+    if (await this.checkAppointmentStatus(appointmentId)) {
+      return AppointmentStatusChangeState.Failed
     }
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.InTransit, userId)
+
+    await this.appointmentsRepository.updateProperties(appointmentId, {
+      transportRunId: transportRunId,
+      appointmentStatus: AppointmentStatus.InTransit,
+    })
+    return AppointmentStatusChangeState.Succeed
   }
 
-  async addAppointmentLabel(id: number, label: DeadlineLabel): Promise<AppointmentDBModel> {
-    const appointment = await this.getAppointmentByAcuityId(id)
-    const deadline = makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label)
-    await this.acuityRepository.addAppointmentLabelOnAcuity(id, label)
+  private async checkAppointmentStatus(appointmentId: string) {
+    const appointment = await this.getAppointmentDBById(appointmentId)
 
-    return this.updateAppointmentDB(appointment.id, {deadline})
+    return (
+      appointment &&
+      (appointment.appointmentStatus === AppointmentStatus.Canceled ||
+        appointment.appointmentStatus === AppointmentStatus.Reported)
+    )
+  }
+
+  async addAppointmentLabel(
+    appointmentId: string,
+    label: DeadlineLabel,
+  ): Promise<AppointmentStatusChangeState> {
+    if (await this.checkAppointmentStatus(appointmentId)) {
+      return AppointmentStatusChangeState.Failed
+    }
+    const appointment = await this.getAppointmentDBById(appointmentId)
+    const deadline = makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label)
+    await this.acuityRepository.addAppointmentLabelOnAcuity(appointment.acuityAppointmentId, label)
+
+    await this.updateAppointmentDB(appointment.id, {deadline})
+    return AppointmentStatusChangeState.Succeed
   }
 
   async updateAppointmentDB(
