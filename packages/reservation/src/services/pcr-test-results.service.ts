@@ -35,6 +35,7 @@ import {
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultByDeadlineListDTO,
   PCRTestResultConfirmRequest,
+  PCRResultActionsForConfirmation,
 } from '../models/pcr-test-results'
 
 import {
@@ -73,12 +74,25 @@ export class PCRTestResultsService {
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
-    const newPCRResult = await this.createNewWaitingResult(
+    let finalResult:ResultTypes = ResultTypes.Indeterminate
+    switch (data.action) {
+      case PCRResultActionsForConfirmation.MarkAsNegative: {
+        finalResult = ResultTypes.Negative
+        break
+      }
+      case PCRResultActionsForConfirmation.MarkAsPositive: {
+        finalResult = ResultTypes.Positive
+        break
+      }
+    }
+    const newPCRResult = await this.createNewTestResults({
       appointment,
       adminId,
       runNumber,
       reCollectNumber,
-    )
+      result: finalResult,
+      waitingResult: false
+    })
     return newPCRResult.id
   }
 
@@ -465,12 +479,12 @@ export class PCRTestResultsService {
     const reCollectNumber = 0 //Not Relevant for Resend
     const testResult =
       isSingleResult && !waitingPCRTestResult
-        ? await this.createNewWaitingResult(
-            appointment,
-            resultData.adminId,
-            runNumber,
-            reCollectNumber,
-          )
+        ? await this.createNewTestResults({
+          appointment,
+          adminId: resultData.adminId,
+          runNumber,
+          reCollectNumber,
+        })
         : waitingPCRTestResult
 
     await this.handleActions(
@@ -523,31 +537,6 @@ export class PCRTestResultsService {
     return pcrResultRecorded
   }
 
-  async createNewWaitingResult(
-    appointment: AppointmentDBModel,
-    adminId: string,
-    runNumber: number,
-    reCollectNumber: number,
-  ): Promise<PCRTestResultDBModel> {
-    const pcrResultDataForDbCreate = {
-      adminId: adminId,
-      appointmentId: appointment.id,
-      barCode: appointment.barCode,
-      dateOfAppointment: appointment.dateOfAppointment,
-      displayForNonAdmins: true,
-      deadline: appointment.deadline,
-      firstName: appointment.firstName,
-      lastName: appointment.lastName,
-      linkedBarCodes: [],
-      organizationId: appointment.organizationId,
-      result: ResultTypes.Pending,
-      waitingResult: true,
-      runNumber: runNumber,
-      reCollectNumber: reCollectNumber,
-    }
-    return await this.saveDefaultTestResults(pcrResultDataForDbCreate)
-  }
-
   async handleActions(
     resultData: PCRTestResultData,
     appointment: AppointmentDBModel,
@@ -563,12 +552,12 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.SameDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(
-          updatedAppointment,
-          resultData.adminId,
-          nextRunNumber,
+        await this.createNewTestResults({
+          appointment: updatedAppointment,
+          adminId: resultData.adminId,
+          runNumber: nextRunNumber,
           reCollectNumber,
-        )
+        })
         break
       }
       case PCRResultActions.ReRunTomorrow: {
@@ -578,12 +567,12 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.NextDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(
-          updatedAppointment,
-          resultData.adminId,
-          nextRunNumber,
+        await this.createNewTestResults({
+          appointment: updatedAppointment,
+          adminId: resultData.adminId,
+          runNumber: nextRunNumber,
           reCollectNumber,
-        )
+        })
         break
       }
       case PCRResultActions.RequestReCollect: {
@@ -713,11 +702,33 @@ export class PCRTestResultsService {
   ): Promise<void> {
     await this.pcrTestResultsRepository.updateData(id, defaultTestResults)
   }
-
-  async saveDefaultTestResults(
-    defaultTestResults: Omit<PCRTestResultDBModel, 'id' | 'updatedAt'>,
-  ): Promise<PCRTestResultDBModel> {
-    return await this.pcrTestResultsRepository.save(defaultTestResults)
+  
+  async createNewTestResults(data:{
+    appointment:AppointmentDBModel, 
+    adminId: string, 
+    linkedBarCodes?:string[],
+    reCollectNumber:number, 
+    runNumber: number,
+    result?:ResultTypes,
+    waitingResult?:boolean
+  }): Promise<PCRTestResultDBModel> {
+    const pcrResultDataForDb = {
+      adminId: data.adminId,
+      appointmentId: data.appointment.id,
+      barCode: data.appointment.barCode,
+      dateOfAppointment: data.appointment.dateOfAppointment,
+      displayForNonAdmins: true,
+      deadline: data.appointment.deadline,
+      firstName: data.appointment.firstName,
+      lastName: data.appointment.lastName,
+      linkedBarCodes: (data.linkedBarCodes)?? [],
+      organizationId: data.appointment.organizationId,
+      result: (data.result)??ResultTypes.Pending,
+      runNumber: data.runNumber, 
+      reCollectNumber: data.reCollectNumber,
+      waitingResult: (data.waitingResult)??true,
+    }
+    return await this.pcrTestResultsRepository.save(pcrResultDataForDb)
   }
 
   async getPCRTestsByBarcode(barCodes: string[]): Promise<PCRTestResultDBModel[]> {
@@ -809,29 +820,18 @@ export class PCRTestResultsService {
     return linkedBarcodes
   }
 
-  public async createLinkedPcrTests(
-    savedAppointment: AppointmentDBModel,
-    appointment: AppointmentAcuityResponse,
+  public async createNewPCRTestForWebhook(
+    appointment: AppointmentDBModel,
   ): Promise<PCRTestResultDBModel> {
-    const linkedBarcodes = await this.getlinkedBarcodes(appointment.certificate)
-    //Save Pending Test Results
-    const pcrResultDataForDb = {
+    const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
+    
+    return this.createNewTestResults({
+      appointment,
       adminId: 'WEBHOOK',
-      appointmentId: savedAppointment.id,
-      barCode: savedAppointment.barCode,
-      dateOfAppointment: savedAppointment.dateOfAppointment,
-      displayForNonAdmins: true,
-      deadline: savedAppointment.deadline,
-      firstName: appointment.firstName,
-      lastName: appointment.lastName,
-      linkedBarCodes: linkedBarcodes,
-      organizationId: appointment.organizationId,
-      result: ResultTypes.Pending,
-      runNumber: 1, //Start the Run
-      reCollectNumber: linkedBarcodes.length + 1,
-      waitingResult: true,
-    }
-    return this.saveDefaultTestResults(pcrResultDataForDb)
+      linkedBarCodes,
+      reCollectNumber: linkedBarCodes.length + 1,
+      runNumber: 1
+    })
   }
 
   async getDueDeadline({
