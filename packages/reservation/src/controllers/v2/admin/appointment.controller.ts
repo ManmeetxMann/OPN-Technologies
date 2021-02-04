@@ -4,15 +4,10 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 
-import {
-  AppointmentsState,
-  appointmentUiDTOResponse,
-  DeadlineLabel,
-} from '../../../models/appointment'
+import {AppointmentsState, DeadlineLabel} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
-import {getIsLabUser} from '../../../../../common/src/utils/auth'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin/api/v2'
