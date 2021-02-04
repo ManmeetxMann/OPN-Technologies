@@ -44,16 +44,22 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     action,
     actionBy,
   }: UpdateAppointmentActionParams): Promise<AppointmentDBModel> {
+    const promises = []
+    
+    promises.push(this.updateProperties(id, updates))
+    
     if (action) {
-      this.addAppointmentActivityById({
+      promises.push(this.addAppointmentActivityById({
         id,
         action,
         updates,
         actionBy,
-      })
+      }))
     }
 
-    return this.updateProperties(id, updates)
+    const [appointments] = await Promise.all(promises)
+
+    return appointments
   }
 
   private getAppointmentActivityRepository(appointmentId: string): ActivityTrackingRepository {
