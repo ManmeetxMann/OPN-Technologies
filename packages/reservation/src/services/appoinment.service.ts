@@ -35,7 +35,11 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 import {AvailableTimes} from '../models/available-times'
-import {decodeBookingLocationId, encodeBookingLocationId, decodeAvailableTimeId} from '../utils/base64-converter'
+import {
+  decodeBookingLocationId,
+  decodeAvailableTimeId,
+  encodeAvailableTimeId,
+} from '../utils/base64-converter'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -636,7 +640,13 @@ export class AppoinmentService {
   }
 
   async getAvailableSlots(id: string, date: string): Promise<AvailableTimes[]> {
-    const {appointmentTypeId, calendarTimezone, calendarId} = decodeBookingLocationId(id)
+    const {
+      appointmentTypeId,
+      calendarTimezone,
+      calendarId,
+      organizationId,
+      packageCode,
+    } = decodeBookingLocationId(id)
 
     const slotsList = await this.acuityRepository.getAvailableSlots(
       appointmentTypeId,
@@ -652,8 +662,10 @@ export class AppoinmentService {
         calendarId,
         date,
         time,
+        organizationId,
+        packageCode,
       }
-      const id = encodeBookingLocationId(idBuf)
+      const id = encodeAvailableTimeId(idBuf)
 
       return {
         id,
