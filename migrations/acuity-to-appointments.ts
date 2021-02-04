@@ -268,7 +268,7 @@ async function createAppointment(acuityAppointment) {
   }
   const utcDateTime = moment(acuityAppointment.datetime).utc()
   const firestoreTimeStamp = firestore.Timestamp.fromDate(utcDateTime.toDate())
-  
+
   const dateOfAppointment = utcDateTime.format('MMMM DD, YYYY')
   const timeOfAppointment = utcDateTime.format('h:mma')
 

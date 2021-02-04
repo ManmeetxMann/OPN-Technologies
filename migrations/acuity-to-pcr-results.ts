@@ -76,10 +76,6 @@ type AppointmentAcuityResponse = {
   datetime: string
 }
 
-const makeFirestoreTimestamp = (date: Date): firestore.Timestamp => {
-  return firestore.Timestamp.fromDate(date)
-}
-
 const findByFieldIdForms = (forms, fieldId) => forms.find((form) => form.fieldID === fieldId)
 const findByIdForms = (forms, id) => forms.find((form) => form.id === id)
 
@@ -143,7 +139,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     console.warn(`AppointmentID: ${acuityAppointment.id} Not found in firebase`)
     return Promise.reject()
   }
-  
+
   const appointment = appointmentInDb.docs[0]
 
   const pcrTestResultsInDb = await database
@@ -152,7 +148,6 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     .get()
 
   if (pcrTestResultsInDb.docs.length === 0) {
-
     const convertedDeadline = appointment.data().deadline
 
     const validatedData = await DBSchema.validateAsync({
