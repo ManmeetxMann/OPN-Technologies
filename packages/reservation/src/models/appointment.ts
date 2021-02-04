@@ -30,6 +30,7 @@ export enum ResultTypes {
   Pending = 'Pending',
   Invalid = 'Invalid',
   Inconclusive = 'Inconclusive',
+  Indeterminate = 'Indeterminate',
   ReCollectRequested = 'ReCollectRequested',
 }
 
