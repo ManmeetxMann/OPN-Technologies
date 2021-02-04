@@ -4,7 +4,11 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 
-import {appointmentUiDTOResponse, DeadlineLabel} from '../../../models/appointment'
+import {
+  AppointmentsState,
+  appointmentUiDTOResponse,
+  DeadlineLabel,
+} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
@@ -37,22 +41,15 @@ class AdminAppointmentController implements IControllerBase {
       if (appointmentIds.length > 50) {
         throw new BadRequestException('Maximum appointments to be part of request is 50')
       }
-      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
-      const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
-      const result = []
 
-      await Promise.all(
-        appointments.map(async (appointmentDb) => {
-          await this.appointmentService.addAppointmentLabel(
-            appointmentDb.acuityAppointmentId,
-            label,
-          )
-
-          result.push(appointmentUiDTOResponse(appointmentDb, isLabUser))
-        }),
+      const appointmentsState: AppointmentsState[] = await Promise.all(
+        appointmentIds.map(async (appointmentId) => ({
+          appointmentId,
+          state: await this.appointmentService.addAppointmentLabel(appointmentId, label),
+        })),
       )
 
-      res.json(actionSucceed(result))
+      res.json(actionSucceed(appointmentsState))
     } catch (error) {
       next(error)
     }
