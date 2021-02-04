@@ -3138,7 +3138,7 @@ paths:
   /enterprise/api/v3/users/self:
     get:
       summary: User details
-      description: Gets authenticated user details
+      description: Gets authenticated user details. Note that unlike other calls, isAdminEnabled will be true if there is an admin approval available to this user, whether or not it has been connected to the user
       security:
         - bearerAuthJWT: []
       tags:
