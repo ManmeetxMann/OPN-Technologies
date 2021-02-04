@@ -422,13 +422,15 @@ components:
                     - DoNothing
                     - ReRunToday
                     - ReRunTomorrow
-                    - RequestReSample
+                    - RequestReCollect
+                    - MarkAsPositive
                     - MarkAsPresumptivePositive
                     - MarkAsNegative
                 autoResult:
                   type: string
                   enum:
                     - PresumptivePositive
+                    - Positive
                     - Negative
                     - Invalid
                     - Inconclusive
@@ -479,7 +481,7 @@ components:
             - SendThisResult
             - ReRunToday
             - ReRunTomorrow
-            - RequestReSample
+            - RequestReCollect
             - MarkAsPositive
             - MarkAsPresumptivePositive
             - MarkAsNegative
@@ -1104,7 +1106,7 @@ paths:
                 - InProgress
                 - Reported
                 - ReRunRequired
-                - ReSampleRequired
+                - ReCollectRequired
                 - Canceled
       responses:
         '200':
@@ -1641,7 +1643,7 @@ paths:
                               Processing,
                               RequestReceived,
                               SentReRunRequest,
-                              SentReSampleRequest,
+                              SentReCollectRequest,
                               SentResult,
                               Skipped,
                             ]
@@ -1771,7 +1773,7 @@ paths:
                           enum:
                             [
                                 Already Reported,
-                                ReSample Already Requested,
+                                ReCollect Already Requested,
                                 In Progress,
                                 No In Progress,
                             ]
@@ -2162,7 +2164,7 @@ paths:
                               InProgress,
                               Reported,
                               ReRunRequired,
-                              ReSampleRequired,
+                              ReCollectRequired,
                             ]
                         testRunId:
                           type: string
@@ -2172,7 +2174,7 @@ paths:
                           type: string
                         runNumber:
                           type: string
-                        reSampleNumber:
+                        reCollectNumber:
                           type: string
                         dateTime:
                           type: string

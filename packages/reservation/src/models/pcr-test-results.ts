@@ -7,7 +7,7 @@ export enum PCRResultActions {
   DoNothing = 'DoNothing',
   ReRunToday = 'ReRunToday',
   ReRunTomorrow = 'ReRunTomorrow',
-  RequestReSample = 'RequestReSample',
+  RequestReCollect = 'RequestReCollect',
   MarkAsPositive = 'MarkAsPositive',
   MarkAsNegative = 'MarkAsNegative',
   MarkAsPresumptivePositive = 'MarkAsPresumptivePositive',
@@ -24,7 +24,7 @@ export enum ResultReportStatus {
   Processing = 'Processing',
   RequestReceived = 'RequestReceived',
   SentReRunRequest = 'SentReRunRequest',
-  SentReSampleRequest = 'SentReSampleRequest',
+  SentReCollectRequest = 'SentReCollectRequest',
   SentResult = 'SentResult',
   Skipped = 'Skipped',
 }
@@ -83,7 +83,7 @@ export type PCRTestResultDBModel = PCRTestResultData &
     deadline: firestore.Timestamp
     testRunId?: string
     runNumber: number
-    reSampleNumber: number
+    reCollectNumber: number
     updatedAt: firestore.Timestamp
   }
 
@@ -97,7 +97,7 @@ export type PCRTestResultHistoryDTO = {
   waitingResult: boolean
   results: PCRResults[]
   reason: AppointmentReasons
-  reSampleNumber: number | string
+  reCollectNumber: number | string
   runNumber: number | string
   dateOfAppointment: string
 }
@@ -112,7 +112,7 @@ export type PCRResults = {
   hexIC: string
   hexCt: string
   result: string
-  reSampleNumber: string
+  reCollectNumber: string
   runNumber: string
   dateOfAppointment: string
   barCode: string
@@ -120,14 +120,14 @@ export type PCRResults = {
 
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,
-  'id' | 'linkedBarCodes' | 'deadline' | 'runNumber' | 'reSampleNumber' | 'updatedAt'
+  'id' | 'linkedBarCodes' | 'deadline' | 'runNumber' | 'reCollectNumber' | 'updatedAt'
 > & {
   email: string
   phone: number
   dateOfBirth: string
   registeredNursePractitioner?: string
   timeOfAppointment: string
-  dateTime: string
+  dateTime: firestore.Timestamp
   travelID?: string
   travelIDIssuingCountry?: string
   swabMethod?: string
@@ -175,11 +175,11 @@ export const PCRTestResultHistoryResponse = (
     hexCt: result.hexCt,
     result: result.result,
     barCode: result.barCode,
-    reSampleNumber: result.reSampleNumber ? `S${result.reSampleNumber}` : '',
+    reCollectNumber: result.reCollectNumber ? `S${result.reCollectNumber}` : '',
     runNumber: result.runNumber ? `R${result.runNumber}` : '',
     dateOfAppointment: result.dateOfAppointment,
   })),
-  reSampleNumber: pcrTests.reSampleNumber ? `S${pcrTests.reSampleNumber}` : '',
+  reCollectNumber: pcrTests.reCollectNumber ? `S${pcrTests.reCollectNumber}` : '',
   runNumber: pcrTests.runNumber ? `R${pcrTests.runNumber}` : '',
   reason: pcrTests.reason,
   dateOfAppointment: pcrTests.dateOfAppointment,
@@ -219,7 +219,7 @@ export type PCRTestResultByDeadlineListDTO = {
   deadline: string
   testRunId: string
   runNumber: string
-  reSampleNumber: string
+  reCollectNumber: string
   dateTime: string
 }
 

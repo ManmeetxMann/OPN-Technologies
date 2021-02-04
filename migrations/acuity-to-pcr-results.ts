@@ -76,10 +76,6 @@ type AppointmentAcuityResponse = {
   datetime: string
 }
 
-const makeFirestoreTimestamp = (date: Date): firestore.Timestamp => {
-  return firestore.Timestamp.fromDate(date)
-}
-
 const findByFieldIdForms = (forms, fieldId) => forms.find((form) => form.fieldID === fieldId)
 const findByIdForms = (forms, id) => forms.find((form) => form.id === id)
 
@@ -122,7 +118,8 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
 async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
   const forms = findByIdForms(acuityAppointment.forms, acuityBarCodeFormId)
   if (!forms) {
-    return
+    console.warn(`BarCode Form is missing`)
+    return Promise.reject()
   }
   const barCode = findByFieldIdForms(
     findByIdForms(acuityAppointment.forms, acuityBarCodeFormId).values,
@@ -140,7 +137,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
 
   if (!appointmentInDb.docs.length) {
     console.warn(`AppointmentID: ${acuityAppointment.id} Not found in firebase`)
-    return
+    return Promise.reject()
   }
 
   const appointment = appointmentInDb.docs[0]
@@ -151,11 +148,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     .get()
 
   if (pcrTestResultsInDb.docs.length === 0) {
-    console.log('Create PCR Test result for acuityAppointment ID ', acuityAppointment.id)
-
-    const convertedDeadline = appointment.data().deadline._seconds
-      ? appointment.data().deadline
-      : makeFirestoreTimestamp(moment(appointment.data().deadline).toDate())
+    const convertedDeadline = appointment.data().deadline
 
     const validatedData = await DBSchema.validateAsync({
       appointmentId: appointment.id,
@@ -174,7 +167,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
       waitingResult: true,
     })
 
-    await database.collection('pcr-test-results').add({
+    const data = await database.collection('pcr-test-results').add({
       ...validatedData,
       updatedAt: serverTimestamp(),
       timestamps: {
@@ -185,6 +178,8 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
         },
       },
     })
+    console.log('Create PCR Test result for acuityAppointment ID ', acuityAppointment.id)
+    return data
   } else {
     console.warn(
       `AppointmentID: PCRTestResults with appointment id ${acuityAppointment.id} already exists. Total PCR Results Associated: ${pcrTestResultsInDb.docs.length} `,
