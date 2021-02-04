@@ -44,7 +44,6 @@ import {
   AppointmentStatus,
   DeadlineLabel,
   ResultTypes,
-  AppointmentAcuityResponse,
 } from '../models/appointment'
 
 import testResultPDFTemplate from '../templates/pcr-test-result-pdf-content'
@@ -74,7 +73,7 @@ export class PCRTestResultsService {
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
-    let finalResult:ResultTypes = ResultTypes.Indeterminate
+    let finalResult: ResultTypes = ResultTypes.Indeterminate
     switch (data.action) {
       case PCRResultActionsForConfirmation.MarkAsNegative: {
         finalResult = ResultTypes.Negative
@@ -91,7 +90,7 @@ export class PCRTestResultsService {
       runNumber,
       reCollectNumber,
       result: finalResult,
-      waitingResult: false
+      waitingResult: false,
     })
     return newPCRResult.id
   }
@@ -480,11 +479,11 @@ export class PCRTestResultsService {
     const testResult =
       isSingleResult && !waitingPCRTestResult
         ? await this.createNewTestResults({
-          appointment,
-          adminId: resultData.adminId,
-          runNumber,
-          reCollectNumber,
-        })
+            appointment,
+            adminId: resultData.adminId,
+            runNumber,
+            reCollectNumber,
+          })
         : waitingPCRTestResult
 
     await this.handleActions(
@@ -702,15 +701,15 @@ export class PCRTestResultsService {
   ): Promise<void> {
     await this.pcrTestResultsRepository.updateData(id, defaultTestResults)
   }
-  
-  async createNewTestResults(data:{
-    appointment:AppointmentDBModel, 
-    adminId: string, 
-    linkedBarCodes?:string[],
-    reCollectNumber:number, 
-    runNumber: number,
-    result?:ResultTypes,
-    waitingResult?:boolean
+
+  async createNewTestResults(data: {
+    appointment: AppointmentDBModel
+    adminId: string
+    linkedBarCodes?: string[]
+    reCollectNumber: number
+    runNumber: number
+    result?: ResultTypes
+    waitingResult?: boolean
   }): Promise<PCRTestResultDBModel> {
     const pcrResultDataForDb = {
       adminId: data.adminId,
@@ -721,12 +720,12 @@ export class PCRTestResultsService {
       deadline: data.appointment.deadline,
       firstName: data.appointment.firstName,
       lastName: data.appointment.lastName,
-      linkedBarCodes: (data.linkedBarCodes)?? [],
+      linkedBarCodes: data.linkedBarCodes ?? [],
       organizationId: data.appointment.organizationId,
-      result: (data.result)??ResultTypes.Pending,
-      runNumber: data.runNumber, 
+      result: data.result ?? ResultTypes.Pending,
+      runNumber: data.runNumber,
       reCollectNumber: data.reCollectNumber,
-      waitingResult: (data.waitingResult)??true,
+      waitingResult: data.waitingResult ?? true,
     }
     return await this.pcrTestResultsRepository.save(pcrResultDataForDb)
   }
@@ -824,13 +823,13 @@ export class PCRTestResultsService {
     appointment: AppointmentDBModel,
   ): Promise<PCRTestResultDBModel> {
     const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
-    
+
     return this.createNewTestResults({
       appointment,
       adminId: 'WEBHOOK',
       linkedBarCodes,
       reCollectNumber: linkedBarCodes.length + 1,
-      runNumber: 1
+      runNumber: 1,
     })
   }
 
