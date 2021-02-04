@@ -2,6 +2,7 @@ import {PageableRequestFilter} from '../../../common/src/types/request'
 import moment from 'moment-timezone'
 import {Config} from '../../../common/src/utils/config'
 import {firestore} from 'firebase-admin'
+import {makeDeadline} from '../utils/datetime.helper'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
@@ -288,6 +289,10 @@ export const appointmentUiDTOResponse = (
 }
 
 export type UserAppointment = {
+  id: string
+  QRCode: string
+  dateOfBirth: string
+  showQrCode: boolean
   dateOfAppointment: string
   firstName: string
   lastName: string
@@ -297,6 +302,10 @@ export type UserAppointment = {
 }
 
 export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): UserAppointment => ({
+  id: appointment.id,
+  QRCode: appointment.barCode,
+  dateOfBirth: appointment.dateOfBirth,
+  showQrCode: moment(makeDeadline(moment())).isBefore(appointment.deadline.toDate()),
   firstName: appointment.firstName,
   lastName: appointment.lastName,
   locationName: appointment.location,
