@@ -523,6 +523,15 @@ export class AppoinmentService {
     const deadline = makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label)
     await this.acuityRepository.addAppointmentLabelOnAcuity(appointment.acuityAppointmentId, label)
 
+    const pcrResult = await this.pcrTestResultsRepository.getTestResultByAppointmentId(
+      appointment.id,
+    )
+    // Throws en exception, in case of result not found
+
+    await this.pcrTestResultsRepository.updateData(pcrResult.id, {
+      deadline: deadline,
+    })
+
     await this.updateAppointmentDB(appointment.id, {deadline})
     return AppointmentStatusChangeState.Succeed
   }
