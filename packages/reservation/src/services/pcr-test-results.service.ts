@@ -34,6 +34,7 @@ import {
   PCRResultActionsAllowedResend,
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultByDeadlineListDTO,
+  PCRTestResultConfirmRequest,
 } from '../models/pcr-test-results'
 
 import {
@@ -63,6 +64,23 @@ export class PCRTestResultsService {
     ResultTypes.Positive,
     ResultTypes.PresumptivePositive,
   ]
+
+  async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
+    const pcrTestResults = await this.getPCRResultsByBarCode(data.barCode)
+    const appointment = await this.appointmentService.getAppointmentByBarCode(data.barCode)
+    const latestResult = pcrTestResults[0]
+    console.log(`Latest Result: ${latestResult.id}`)
+    //Create New Waiting Result
+    const runNumber = 0 //Not Relevant
+    const reCollectNumber = 0 //Not Relevant
+    const newPCRResult = await this.createNewWaitingResult(
+      appointment,
+      adminId,
+      runNumber,
+      reCollectNumber,
+    )
+    return newPCRResult.id
+  }
 
   async createReportForPCRResults(
     testResultData: PCRTestResultRequest,
@@ -294,7 +312,7 @@ export class PCRTestResultsService {
     return finalResult
   }
 
-  async getPCRResultsByByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel[]> {
+  async getPCRResultsByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel[]> {
     const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualWithMax(
       'barCode',
       barCodeNumber,
@@ -344,6 +362,7 @@ export class PCRTestResultsService {
       : undefined
   }
 
+  //TODO: Refactor this. Not needed in favor of getPCRResultsByBarCode
   async getLatestPCRTestResult(
     pcrTestResults: PCRTestResultDBModel[],
   ): Promise<PCRTestResultDBModel> {
@@ -372,7 +391,7 @@ export class PCRTestResultsService {
     }
 
     const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
-    const pcrTestResults = await this.getPCRResultsByByBarCode(resultData.barCode)
+    const pcrTestResults = await this.getPCRResultsByBarCode(resultData.barCode)
 
     const waitingPCRTestResult = await this.getWaitingPCRTestResult(pcrTestResults)
     const isAlreadyReported = appointment.appointmentStatus === AppointmentStatus.Reported

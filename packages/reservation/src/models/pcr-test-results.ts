@@ -13,6 +13,12 @@ export enum PCRResultActions {
   MarkAsPresumptivePositive = 'MarkAsPresumptivePositive',
 }
 
+export enum PCRResultActionsForConfirmation {
+  Indeterminate = 'Indeterminate',
+  MarkAsPositive = 'MarkAsPositive',
+  MarkAsNegative = 'MarkAsNegative',
+}
+
 export enum PCRResultActionsAllowedResend {
   SendThisResult = 'SendThisResult',
   MarkAsPositive = 'MarkAsPositive',
@@ -42,6 +48,11 @@ type PCRResultSpecs = {
   quasar670Ct: string
   quasar670NGene: string
   resultDate: Date
+}
+
+export type PCRTestResultConfirmRequest = {
+  barCode: string
+  action: PCRResultActionsForConfirmation
 }
 
 export type PCRTestResultRequestData = PCRResultSpecs & {

@@ -25,6 +25,7 @@ import {
   pcrTestResultsResponse,
   PcrTestResultsListRequest,
   PcrTestResultsListByDeadlineRequest,
+  PCRTestResultConfirmRequest,
 } from '../../../models/pcr-test-results'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {AppointmentDBModel, AppointmentReasons} from '../../../models/appointment'
@@ -61,6 +62,11 @@ class PCRTestResultController implements IControllerBase {
       this.path + '/api/v1/pcr-test-results',
       sendSingleResultsAuth,
       this.createPCRResults,
+    )
+    innerRouter.post(
+      this.path + '/api/v1/pcr-test-results/confirm',
+      sendSingleResultsAuth,
+      this.confirmPCRResults,
     )
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results/history',
@@ -156,6 +162,25 @@ class PCRTestResultController implements IControllerBase {
       )
       const successMessage = `For ${pcrResultRecorded.barCode}, a "${pcrResultRecorded.result}" has been  recorded and sent to the client`
       res.json(actionSuccess({id: pcrResultRecorded.id}, successMessage))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  confirmPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const adminId = getUserId(res.locals.authenticatedUser)
+      const {barCode, action} = req.body as PCRTestResultConfirmRequest
+
+      const pcrResultRecordedId = await this.pcrTestResultsService.confirmPCRResults(
+        {
+          barCode,
+          action,
+        },
+        adminId,
+      )
+      const successMessage = `For ${barCode}, action "${action}" has been recorded and sent to the client`
+      res.json(actionSuccess({id: pcrResultRecordedId}, successMessage))
     } catch (error) {
       next(error)
     }
