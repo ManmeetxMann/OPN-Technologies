@@ -36,7 +36,7 @@ components:
             message:
               nullable: true
               type: string
-              
+
     TestResult200:
       type: object
       deprecated: false
@@ -457,7 +457,7 @@ components:
                   minLength: 1
                 notify:
                   type: boolean
-                  default: false  
+                  default: false
                 quasar670NGene:
                   type: string
                   minLength: 1
@@ -550,7 +550,7 @@ components:
         resultId:
           type: string
           description: Stored Result ID
-        
+
       required:
         - reportTrackerId
         - resultId
@@ -1395,7 +1395,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PCRTestResultsResponse200'
-  
+
   /reservation/admin/api/v1/pcr-test-results:
     post:
       description: Send PCR Results
@@ -1502,6 +1502,7 @@ paths:
   /reservation/admin/api/v1/pcr-test-results/confirm:
     post:
       description: Confirm PCR Results
+
       tags:
         - PCR Results Management
       security:
@@ -1526,44 +1527,11 @@ paths:
                 - action
       responses:
         '200':
-          description: Successfully Return
+          description: Succesfully add label
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: false
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      additionalProperties: false
-                      properties:
-                        id:
-                          type: string
-                      required:
-                        - id
-                  status:
-                    type: object
-                    additionalProperties: false
-                    properties:
-                      code:
-                        type: string
-                        enum:
-                          [
-                              succeed,
-                              failed,
-                              validation_error,
-                              internal_server_error,
-                              unauthorized,
-                              access_denied,
-                              resource_not_found,
-                          ]
-                      message:
-                        nullable: true
-                        type: string
-                  page: 
-                    type: number
+                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
 
   /reservation/internal/api/v1/process-pcr-test-result:
     post:
@@ -2233,7 +2201,7 @@ paths:
                     items:
                       type: object
                       additionalProperties: false
-                      properties: 
+                      properties:
                         locationName:
                           type:	string
                         locationAddress:
@@ -2305,7 +2273,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AppointmentResponse200' 
+                      $ref: '#/components/schemas/AppointmentResponse200'
                   status:
                     type: object
                     additionalProperties: false

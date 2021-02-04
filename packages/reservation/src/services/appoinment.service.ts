@@ -14,9 +14,9 @@ import {
   AppointmentStatusHistoryDb,
   CreateAppointmentRequest,
   DeadlineLabel,
+  ResultTypes,
   UserAppointment,
   userAppointmentDTOResponse,
-  ResultTypes,
   AppointmentActivityAction,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
