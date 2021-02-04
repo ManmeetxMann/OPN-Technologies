@@ -5,8 +5,9 @@ import {authorizationMiddleware} from '../../../../common/src/middlewares/author
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import {CreateAppointmentRequest} from '../../models/appointment'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {getOrganizationId, getUserId} from '../../../../common/src/utils/auth'
+import {getUserId} from '../../../../common/src/utils/auth'
 import {AuthUser} from '../../../../common/src/data/user'
+import {decodeAvailableTimeId} from '../../utils/base64-converter'
 
 class AppointmentController implements IControllerBase {
   public path = '/reservation'
@@ -65,7 +66,7 @@ class AppointmentController implements IControllerBase {
         receiveNotificationsFromGov,
       } = req.body as CreateAppointmentRequest
       const authenticatedUser = res.locals.authenticatedUser as AuthUser
-      const organizationId = getOrganizationId(authenticatedUser)
+      const {organizationId} = decodeAvailableTimeId(slotId)
       const userId = getUserId(authenticatedUser)
       await this.appointmentService.createAcuityAppointment({
         organizationId,
