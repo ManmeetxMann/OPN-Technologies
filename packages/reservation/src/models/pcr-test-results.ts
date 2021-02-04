@@ -2,6 +2,13 @@ import {firestore} from 'firebase-admin'
 
 import {AppointmentReasons, AppointmentStatus, ResultTypes} from './appointment'
 
+export enum EmailNotficationTypes {
+  Indeterminate = 'Indeterminate',
+  MarkAsConfirmedPositive = 'MarkAsConfirmedPositive',
+  MarkAsConfirmedNegative = 'MarkAsConfirmedNegative',
+}
+
+//Actions when Results are sent from Single OR Bulk
 export enum PCRResultActions {
   SendThisResult = 'SendThisResult',
   DoNothing = 'DoNothing',
@@ -13,6 +20,7 @@ export enum PCRResultActions {
   MarkAsPresumptivePositive = 'MarkAsPresumptivePositive',
 }
 
+//Actions when Results are Confirmed
 export enum PCRResultActionsForConfirmation {
   Indeterminate = 'Indeterminate',
   MarkAsPositive = 'MarkAsPositive',
@@ -25,6 +33,7 @@ export enum PCRResultActionsAllowedResend {
   MarkAsNegative = 'MarkAsNegative',
 }
 
+//Possible report Status when Results are sent
 export enum ResultReportStatus {
   Failed = 'Failed',
   Processing = 'Processing',
@@ -33,6 +42,11 @@ export enum ResultReportStatus {
   SentReCollectRequest = 'SentReCollectRequest',
   SentResult = 'SentResult',
   Skipped = 'Skipped',
+}
+
+export type PCRTestResultConfirmRequest = {
+  barCode: string
+  action: PCRResultActionsForConfirmation
 }
 
 type PCRResultSpecs = {
@@ -48,11 +62,6 @@ type PCRResultSpecs = {
   quasar670Ct: string
   quasar670NGene: string
   resultDate: Date
-}
-
-export type PCRTestResultConfirmRequest = {
-  barCode: string
-  action: PCRResultActionsForConfirmation
 }
 
 export type PCRTestResultRequestData = PCRResultSpecs & {
@@ -141,6 +150,7 @@ export type PCRTestResultEmailDTO = Omit<
   dateTime: firestore.Timestamp
   travelID?: string
   travelIDIssuingCountry?: string
+  ohipCard?: string,
   swabMethod?: string
 }
 

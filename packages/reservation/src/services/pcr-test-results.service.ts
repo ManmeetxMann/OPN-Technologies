@@ -36,6 +36,7 @@ import {
   PCRTestResultByDeadlineListDTO,
   PCRTestResultConfirmRequest,
   PCRResultActionsForConfirmation,
+  EmailNotficationTypes,
 } from '../models/pcr-test-results'
 
 import {
@@ -46,6 +47,7 @@ import {
   ResultTypes,
 } from '../models/appointment'
 
+import confirmedNegativePCRResultsTemplate from '../templates/confirmed-negative-pcr-test-results'
 import testResultPDFTemplate from '../templates/pcr-test-result-pdf-content'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {makeDeadlineForFilter} from '../utils/datetime.helper'
@@ -74,13 +76,16 @@ export class PCRTestResultsService {
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
     let finalResult: ResultTypes = ResultTypes.Indeterminate
+    let notificationType = EmailNotficationTypes.Indeterminate
     switch (data.action) {
       case PCRResultActionsForConfirmation.MarkAsNegative: {
         finalResult = ResultTypes.Negative
+        notificationType = EmailNotficationTypes.MarkAsConfirmedNegative
         break
       }
       case PCRResultActionsForConfirmation.MarkAsPositive: {
         finalResult = ResultTypes.Positive
+        notificationType = EmailNotficationTypes.MarkAsConfirmedPositive
         break
       }
     }
@@ -92,6 +97,7 @@ export class PCRTestResultsService {
       result: finalResult,
       waitingResult: false,
     })
+    await this.sendNotification({...appointment, ...newPCRResult}, notificationType)
     return newPCRResult.id
   }
 
@@ -525,8 +531,9 @@ export class PCRTestResultsService {
         travelID: appointment.travelID,
         travelIDIssuingCountry: appointment.travelIDIssuingCountry,
         swabMethod: appointment.swabMethod,
+        ohipCard: appointment.ohipCard,
       }
-      await this.sendNotification(pcrResultDataForEmail)
+      await this.sendNotification(pcrResultDataForEmail, resultData.resultSpecs.action)
     } else {
       console.log(
         `handlePCRResultSaveAndSend: Not Notification is sent for ${resultData.barCode}. Notify is off.`,
@@ -600,8 +607,8 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
-    switch (resultData.resultSpecs.action) {
+  async sendNotification(resultData: PCRTestResultEmailDTO, notficationType: PCRResultActions | EmailNotficationTypes): Promise<void> {
+    switch (notficationType) {
       case PCRResultActions.ReRunToday: {
         await this.sendRerunNotification(resultData, 'TODAY')
         console.log(`SendNotification: Success: ${resultData.barCode} ReRunToday`)
@@ -617,6 +624,11 @@ export class PCRTestResultsService {
         console.log(`SendNotification: Success: ${resultData.barCode} RequestReCollect`)
         break
       }
+      case EmailNotficationTypes.MarkAsConfirmedNegative: {
+        await this.sendMarkAsConfirmedNegativeNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} MarkAsConfirmedNegative`)
+        break
+      }
       default: {
         if (this.whiteListedResultsTypes.includes(resultData.result)) {
           await this.sendTestResults(resultData)
@@ -629,6 +641,32 @@ export class PCRTestResultsService {
         }
       }
     }
+  }
+
+  async sendMarkAsConfirmedNegativeNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+    const resultDate = moment(resultData.dateTime.toDate()).format('LL')
+    const {content, tableLayouts} = confirmedNegativePCRResultsTemplate(resultData, resultDate)
+    const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
+
+    await this.emailService.send({
+      templateId: Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2,
+      to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
+      params: {
+        BARCODE: resultData.barCode,
+        DATE_OF_RESULT: resultDate,
+      },
+      attachment: [
+        {
+          content: pdfContent,
+          name: `FHHealth.ca Result - ${resultData.barCode} - ${resultDate}.pdf`,
+        },
+      ],
+      bcc: [
+        {
+          email: Config.get('TEST_RESULT_BCC_EMAIL'),
+        },
+      ],
+    })
   }
 
   async sendTestResults(resultData: PCRTestResultEmailDTO): Promise<void> {
