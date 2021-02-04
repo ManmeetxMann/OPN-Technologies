@@ -1415,6 +1415,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PCRTestResultsResponse200'
+  /reservation/admin/api/v1/pcr-test-results/confirm:
+    post:
+      description: Confirm PCR Results
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                barCode:
+                  type: string
+                action:
+                  type: string
+                  enum:
+                    - Indeterminate
+                    - MarkAsPositive
+                    - MarkAsNegative
+              required:
+                - barCode
+                - action
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: string
+                      required:
+                        - id
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          [
+                              succeed,
+                              failed,
+                              validation_error,
+                              internal_server_error,
+                              unauthorized,
+                              access_denied,
+                              resource_not_found,
+                          ]
+                      message:
+                        nullable: true
+                        type: string
+                  page: 
+                    type: number
+
     get:
       description: Retrieve list of PCR Results
       tags:
