@@ -5,6 +5,7 @@ import {RequiredUserPermission} from '../../../../common/src/types/authorization
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {assertHasAuthorityOnDependent} from '../../middleware/user-dependent-authority'
 import {AuthService} from '../../../../common/src/service/auth/auth-service'
+import {AdminApprovalService} from '../../../../common/src/service/user/admin-service'
 import {UserService} from '../../services/user-service'
 import {OrganizationService} from '../../services/organization-service'
 import {MagicLinkService} from '../../../../common/src/service/messaging/magiclink-service'
@@ -29,6 +30,7 @@ import {AuthShortCodeService} from '../../services/auth-short-code-service'
 import moment from 'moment'
 
 const authService = new AuthService()
+const adminApprovalService = new AdminApprovalService()
 const userService = new UserService()
 const organizationService = new OrganizationService()
 const magicLinkService = new MagicLinkService()
@@ -183,7 +185,15 @@ const validateShortCode: Handler = async (req, res, next): Promise<void> => {
 const get: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as AuthUser
-    res.json(actionSucceed(userDTOResponse(authenticatedUser)))
+    let hasApproval = false
+    if (authenticatedUser.email) {
+      // check if there's an adminApproval for this user
+      const approval = await adminApprovalService.findOneByEmail(authenticatedUser.email)
+      if (!!approval) {
+        hasApproval = true
+      }
+    }
+    res.json(actionSucceed(userDTOResponse(authenticatedUser, hasApproval)))
   } catch (error) {
     next(error)
   }
@@ -475,7 +485,7 @@ const getParents: Handler = async (req, res, next): Promise<void> => {
   try {
     const {id} = res.locals.authenticatedUser as AuthUser
     const parents = await userService.getParents(id)
-    res.json(actionSucceed(parents.map(userDTOResponse)))
+    res.json(actionSucceed(parents.map((dependant) => userDTOResponse(dependant))))
   } catch (error) {
     next(error)
   }
@@ -489,7 +499,7 @@ const getDependents: Handler = async (req, res, next): Promise<void> => {
   try {
     const {id} = res.locals.authenticatedUser as AuthUser
     const dependents = await userService.getDirectDependents(id)
-    res.json(actionSucceed(dependents.map(userDTOResponse)))
+    res.json(actionSucceed(dependents.map((dependant) => userDTOResponse(dependant))))
   } catch (error) {
     next(error)
   }
@@ -505,7 +515,7 @@ const addDependents: Handler = async (req, res, next): Promise<void> => {
     const {id} = res.locals.authenticatedUser as AuthUser
     const users = req.body as AuthUser[]
     const dependents = await userService.addDependents(users, id)
-    res.json(actionSucceed(dependents.map(userDTOResponse)))
+    res.json(actionSucceed(dependents.map((dependant) => userDTOResponse(dependant))))
   } catch (error) {
     next(error)
   }

@@ -23,7 +23,7 @@ export const makeDeadline = (
   return firestore.Timestamp.fromDate(deadline.utc().milliseconds(0).toDate())
 }
 
-export const makeTimeEndOfTheDayMoment = (datetime: moment.Moment): moment.Moment => {
+const makeTimeEndOfTheDayMoment = (datetime: moment.Moment): moment.Moment => {
   return datetime.hours(23).minutes(59).seconds(0)
 }
 
@@ -31,7 +31,11 @@ export const getDateFromDatetime = (transportDateTime: Date | string): string =>
   return moment(transportDateTime).tz(timeZone).format('YYYY-MM-DD')
 }
 
-export const makeFirestoreTimestamp = (date: Date | string): firestore.Timestamp => {
+export const makeDeadlineForFilter = (date: Date | string): firestore.Timestamp => {
   const utcEndOfDay = makeTimeEndOfTheDayMoment(moment.tz(date, timeZone)).toDate()
   return firestore.Timestamp.fromDate(utcEndOfDay)
+}
+
+export const makeFirestoreTimestamp = (localDate: Date | string): firestore.Timestamp => {
+  return firestore.Timestamp.fromDate(moment.tz(localDate, timeZone).toDate())
 }

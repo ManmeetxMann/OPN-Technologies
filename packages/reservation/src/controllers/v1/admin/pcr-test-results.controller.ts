@@ -192,7 +192,7 @@ class PCRTestResultController implements IControllerBase {
                     return {
                       ...linkedResult.resultSpecs,
                       result: linkedResult.result,
-                      reSampleNumber: linkedResult.reSampleNumber,
+                      reCollectNumber: linkedResult.reCollectNumber,
                       runNumber: linkedResult.runNumber,
                       dateOfAppointment: linkedAppointment
                         ? linkedAppointment.dateOfAppointment
@@ -205,7 +205,7 @@ class PCRTestResultController implements IControllerBase {
                   {
                     ...testSame.resultSpecs,
                     result: testSame.result,
-                    reSampleNumber: testSame.reSampleNumber,
+                    reCollectNumber: testSame.reCollectNumber,
                     runNumber: testSame.runNumber,
                     dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
                     barCode: testSame.barCode,
@@ -236,7 +236,7 @@ class PCRTestResultController implements IControllerBase {
               ...(!waitingResult && {
                 reason: await this.pcrTestResultsService.getReason(<AppointmentDBModel>appointment),
               }),
-              reSampleNumber: pcrTest.reSampleNumber,
+              reCollectNumber: pcrTest.reCollectNumber,
               runNumber: pcrTest.runNumber,
               dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
             }
@@ -247,7 +247,7 @@ class PCRTestResultController implements IControllerBase {
             results: [],
             waitingResult: false,
             reason: AppointmentReasons.NotFound,
-            reSampleNumber: '',
+            reCollectNumber: '',
             runNumber: '',
             dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
           }
