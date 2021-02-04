@@ -423,12 +423,14 @@ components:
                     - ReRunToday
                     - ReRunTomorrow
                     - RequestReCollect
+                    - MarkAsPositive
                     - MarkAsPresumptivePositive
                     - MarkAsNegative
                 autoResult:
                   type: string
                   enum:
                     - PresumptivePositive
+                    - Positive
                     - Negative
                     - Invalid
                     - Inconclusive
