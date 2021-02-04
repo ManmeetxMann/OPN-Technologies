@@ -206,7 +206,7 @@ export type AppointmentUiDTO = {
 
 export type AppointmentsState = {
   appointmentId: string
-  state: AppointmentAttachTransportStatus
+  state: AppointmentStatusChangeState
 }
 
 export type AppointmentStatusHistory = {
@@ -226,7 +226,7 @@ export type AppointmentStatusHistoryDb = AppointmentStatusHistory & {
   id: string
 }
 
-export enum AppointmentAttachTransportStatus {
+export enum AppointmentStatusChangeState {
   Succeed = 'succeed',
   Failed = 'failed',
 }

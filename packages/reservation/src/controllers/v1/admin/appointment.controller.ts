@@ -246,13 +246,14 @@ class AdminAppointmentController implements IControllerBase {
 
       await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
 
-      await Promise.all(
-        appointmentIds.map((appointment) => {
-          return this.appointmentService.makeReceived(appointment, vialLocation, adminId)
-        }),
+      const appointmentsState: AppointmentsState[] = await Promise.all(
+        appointmentIds.map(async (appointmentId) => ({
+          appointmentId,
+          state: await this.appointmentService.makeReceived(appointmentId, vialLocation, adminId),
+        })),
       )
 
-      res.json(actionSucceed())
+      res.json(actionSucceed(appointmentsState))
     } catch (error) {
       next(error)
     }
