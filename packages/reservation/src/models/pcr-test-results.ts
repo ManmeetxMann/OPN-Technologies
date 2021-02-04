@@ -150,7 +150,7 @@ export type PCRTestResultEmailDTO = Omit<
   dateTime: firestore.Timestamp
   travelID?: string
   travelIDIssuingCountry?: string
-  ohipCard?: string,
+  ohipCard?: string
   swabMethod?: string
 }
 

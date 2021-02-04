@@ -7,20 +7,20 @@ import {PCRTestResultEmailDTO} from '../models/pcr-test-results'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
-    hLineWidth: () => 1,
-    vLineWidth: () => 1,
-    hLineColor: () => '#CCCCCC',
-    vLineColor: () => '#CCCCCC',
-    paddingTop: () => 5,
-    paddingBottom: () => 5,
+    hLineWidth: (): number => 1,
+    vLineWidth: (): number => 1,
+    hLineColor: (): string => '#CCCCCC',
+    vLineColor: (): string => '#CCCCCC',
+    paddingTop: (): number => 5,
+    paddingBottom: (): number => 5,
   },
   resultTable: {
-    hLineWidth: () => 1,
-    vLineWidth: () => 1,
-    hLineColor: () => '#B7B7B7',
-    vLineColor: () => '#B7B7B7',
-    paddingTop: () => 5,
-    paddingBottom: () => 5,
+    hLineWidth: (): number => 1,
+    vLineWidth: (): number => 1,
+    hLineColor: (): string => '#B7B7B7',
+    vLineColor: (): string => '#B7B7B7',
+    paddingTop: (): number => 5,
+    paddingBottom: (): number => 5,
   },
 }
 
@@ -94,7 +94,7 @@ const companyInfoHeader = (): Content => {
   }
 }
 
-const clientInformation = () => {
+const clientInformation = (): unknown => {
   const heading = (): Content => {
     return {
       text: 'The following client completed a SARS-CoV-2 screening test at FH Health:',
@@ -173,7 +173,8 @@ const clientInformation = () => {
 
 const conactDetailsForQuestions = (): Content => {
   return {
-    text:'\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.\n\n',
+    text:
+      '\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.\n\n',
     style: ['gray-text'],
   }
 }
@@ -186,62 +187,54 @@ const documentFooter = (): Content => {
     margin: [0, 50, 0, 0],
   }
 }
-
-const testAnalysisTable = () => {
-  const heading = (): Content => {
+const testAnalysisTable = (): unknown => {
+  const headerRow = (): Content => {
     return [
-      {
-        text:
-          '\n\nIf you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.\n\n',
-      },
       {
         text: 'Detailed Test Analysis Data:',
         margin: [0, 15, 0, 0],
         lineHeight: 1.2,
       },
-    ]
-  }
-
-  const headerRow = (): Content => {
-    return {
-      columns: [
-        {
-          layout: 'resultTable',
-          width: 58,
-          table: {
-            widths: [52],
-            heights: [46],
-            body: [['Result']],
+      {
+        columns: [
+          {
+            layout: 'resultTable',
+            width: 58,
+            table: {
+              widths: [52],
+              heights: [46],
+              body: [['Result']],
+            },
           },
-        },
-        {
-          stack: [
-            {
-              layout: 'resultTable',
-              width: 350,
-              table: {
-                widths: [88, 88, 88, 88],
-                body: [['FAM', 'Cal Red 61', 'Quasar 670', 'HEX']],
+          {
+            stack: [
+              {
+                layout: 'resultTable',
+                width: 350,
+                table: {
+                  widths: [88, 88, 88, 88],
+                  body: [['FAM', 'Cal Red 61', 'Quasar 670', 'HEX']],
+                },
+                margin: [3, 0, 0, 0],
+                alignment: 'center',
               },
-              margin: [3, 0, 0, 0],
-              alignment: 'center',
-            },
-            {
-              layout: 'resultTable',
-              width: 350,
-              table: {
-                widths: [40, 39, 40, 39, 40, 39, 40, 39],
-                body: [['E gene', 'C(t)', 'RdRP gene', 'C(t)', 'N gene', 'C(t)', 'IC', 'C(t)']],
+              {
+                layout: 'resultTable',
+                width: 350,
+                table: {
+                  widths: [40, 39, 40, 39, 40, 39, 40, 39],
+                  body: [['E gene', 'C(t)', 'RdRP gene', 'C(t)', 'N gene', 'C(t)', 'IC', 'C(t)']],
+                },
+                margin: [3, -1, 0, 0],
+                alignment: 'center',
               },
-              margin: [3, -1, 0, 0],
-              alignment: 'center',
-            },
-          ],
-        },
-      ],
-      margin: [0, 15, 0, 0],
-      fontSize: 10,
-    }
+            ],
+          },
+        ],
+        margin: [0, 15, 0, 0],
+        fontSize: 10,
+      },
+    ]
   }
 
   const dataRow = (params: PCRTestResultEmailDTO): Content => {
@@ -298,9 +291,15 @@ const testAnalysisTable = () => {
 
   return Object.freeze({
     dataRow,
-    heading,
     headerRow,
   })
 }
 
-export default {companyInfoHeader, clientInformation, documentFooter, tableLayouts, conactDetailsForQuestions}
+export default {
+  companyInfoHeader,
+  clientInformation,
+  documentFooter,
+  tableLayouts,
+  conactDetailsForQuestions,
+  testAnalysisTable,
+}

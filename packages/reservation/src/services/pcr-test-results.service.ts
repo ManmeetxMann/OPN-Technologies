@@ -607,7 +607,10 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendNotification(resultData: PCRTestResultEmailDTO, notficationType: PCRResultActions | EmailNotficationTypes): Promise<void> {
+  async sendNotification(
+    resultData: PCRTestResultEmailDTO,
+    notficationType: PCRResultActions | EmailNotficationTypes,
+  ): Promise<void> {
     switch (notficationType) {
       case PCRResultActions.ReRunToday: {
         await this.sendRerunNotification(resultData, 'TODAY')

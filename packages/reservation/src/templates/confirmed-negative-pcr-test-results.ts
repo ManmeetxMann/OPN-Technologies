@@ -7,7 +7,7 @@ const pdfContent = (
   resultDate: string,
 ): {content: Content[]; tableLayouts: TableLayouts} => {
   return {
-    tableLayouts:commonPDFContent.tableLayouts,
+    tableLayouts: commonPDFContent.tableLayouts,
     content: [
       commonPDFContent.companyInfoHeader(),
       {text: resultDate, margin: [0, 30, 0, 0]},
@@ -21,24 +21,29 @@ const pdfContent = (
 }
 
 const messageBody = (): Content => {
-  const textInfo:Content = [
+  const textInfo: Content = [
     'The result of your Public Health Lab confirmatory testing was ',
     {
-      text: "NEGATIVE. ",
+      text: 'NEGATIVE. ',
       bold: true,
     },
-    {text: [
-      "This means that a Public Health Lab did not detect SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness.\n\n",
-      "This means that you may now legally revert to following the recommended Public Health guidelines for COVID-19 negative individuals.\n\n",
-      "However, it is possible that our Presumptive Positive was detecting very early disease, ",
-      "and this could account for the difference in results due to the variability in testing platforms used both within and outside of the healthcare system.\n\n",
-      "Out of an abundance of caution, we are recommending and offering you a complimentary follow-up repeat test. ",
-      "Again, if our Presumptive Positive was detecting early disease, ",
-      "then the re-collected sample will have further increased in viral load, ",
-      "allowing for broader detection that should be confirmed by Public Health. ",
-      "If there is no change with subsequent testing, your status will remain NEGATIVE by the Public Health Lab’s determination.\n\n"
-    ]},
-    {text: "If you are the patron receiving the test and require further information, please visit the City of Toronto Public Health: "},
+    {
+      text: [
+        'This means that a Public Health Lab did not detect SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness.\n\n',
+        'This means that you may now legally revert to following the recommended Public Health guidelines for COVID-19 negative individuals.\n\n',
+        'However, it is possible that our Presumptive Positive was detecting very early disease, ',
+        'and this could account for the difference in results due to the variability in testing platforms used both within and outside of the healthcare system.\n\n',
+        'Out of an abundance of caution, we are recommending and offering you a complimentary follow-up repeat test. ',
+        'Again, if our Presumptive Positive was detecting early disease, ',
+        'then the re-collected sample will have further increased in viral load, ',
+        'allowing for broader detection that should be confirmed by Public Health. ',
+        'If there is no change with subsequent testing, your status will remain NEGATIVE by the Public Health Lab’s determination.\n\n',
+      ],
+    },
+    {
+      text:
+        'If you are the patron receiving the test and require further information, please visit the City of Toronto Public Health: ',
+    },
     {
       text: 'https://www.toronto.ca/home/covid-19',
       link: 'https://www.toronto.ca/home/covid-19',
@@ -47,7 +52,6 @@ const messageBody = (): Content => {
       lineHeight: 1,
     },
   ]
-
 
   return {
     text: textInfo,
