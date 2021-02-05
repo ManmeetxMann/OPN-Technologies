@@ -247,20 +247,14 @@ export class PCRTestResultsService {
     }
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
-
-    const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
-    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
-
     return pcrResults.map((pcr) => {
-      const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
-
       return {
         id: pcr.id,
         barCode: pcr.barCode,
         result: isLabUser
           ? pcr.result
           : this.getFilteredResultForPublic(pcr.result, !!pcr.resultSpecs?.notify),
-        dateTime: formatDateRFC822Local(appointment.dateTime),
+        dateTime: formatDateRFC822Local(pcr.dateTime),
         deadline: formatDateRFC822Local(pcr.deadline),
         testRunId: pcr.testRunId,
         firstName: pcr.firstName,
@@ -503,7 +497,7 @@ export class PCRTestResultsService {
       lastName: appointment.lastName,
       appointmentId: appointment.id,
       organizationId: appointment.organizationId,
-      dateOfAppointment: appointment.dateOfAppointment,
+      dateTime: appointment.dateTime,
       waitingResult: false,
       displayForNonAdmins: true, //TODO
       recollected: resultData.resultSpecs.action === PCRResultActions.RequestReCollect,
@@ -740,7 +734,7 @@ export class PCRTestResultsService {
       appointmentId: data.appointment.id,
       barCode: data.appointment.barCode,
       confirmed: data.confirmed ?? false,
-      dateOfAppointment: data.appointment.dateOfAppointment,
+      dateTime: data.appointment.dateTime,
       displayForNonAdmins: true,
       deadline: data.appointment.deadline,
       firstName: data.appointment.firstName,
