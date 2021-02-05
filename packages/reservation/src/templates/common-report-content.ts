@@ -116,7 +116,10 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
     dataPersonal.push(['Address Unit', params.addressUnit])
   }
 
-  if (params.ohipCard && (params.result === ResultTypes.Positive || params.result === ResultTypes.PresumptivePositive)) {
+  if (
+    params.ohipCard &&
+    (params.result === ResultTypes.Positive || params.result === ResultTypes.PresumptivePositive)
+  ) {
     dataPersonal.push(['OHIP Card', params.ohipCard])
   }
 

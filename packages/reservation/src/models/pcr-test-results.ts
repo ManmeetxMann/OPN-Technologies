@@ -151,7 +151,8 @@ export type PCRResults = {
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,
   'id' | 'linkedBarCodes' | 'deadline' | 'runNumber' | 'reCollectNumber' | 'updatedAt'
-> & AppointmentDBModel
+> &
+  AppointmentDBModel
 
 export type ProcessPCRResultRequest = {
   reportTrackerId: string
