@@ -8,6 +8,7 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {toDateFormat} from '../../../common/src/utils/times'
+import {formatDateRFC822Local} from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 
 import {AppoinmentService} from './appoinment.service'
@@ -259,8 +260,8 @@ export class PCRTestResultsService {
         result: isLabUser
           ? pcr.result
           : this.getFilteredResultForPublic(pcr.result, !!pcr.resultSpecs?.notify),
-        dateTime: appointment.dateTime.toDate().toISOString(),
-        deadline: pcr.deadline.toDate().toISOString(),
+        dateTime: formatDateRFC822Local(appointment.dateTime),
+        deadline: formatDateRFC822Local(pcr.deadline),
         testRunId: pcr.testRunId,
         firstName: pcr.firstName,
         lastName: pcr.lastName,
@@ -899,13 +900,13 @@ export class PCRTestResultsService {
         pcrFiltred.push({
           id: pcr.id,
           barCode: pcr.barCode,
-          deadline: pcr.deadline.toDate(),
+          deadline: formatDateRFC822Local(pcr.deadline),
           status: appointment?.appointmentStatus,
           testRunId: pcr.testRunId,
           vialLocation: appointment?.vialLocation,
           runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
           reCollectNumber: pcr.reCollectNumber ? `S${pcr.reCollectNumber}` : null,
-          dateTime: appointment.dateTime.toDate(),
+          dateTime: formatDateRFC822Local(appointment.dateTime),
         })
       }
     })

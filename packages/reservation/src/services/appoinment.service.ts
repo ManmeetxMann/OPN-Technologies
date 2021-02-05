@@ -30,7 +30,12 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
-import {makeDeadline, makeDeadlineForFilter, makeFirestoreTimestamp} from '../utils/datetime.helper'
+import {
+  firestoreTimeStampToUTC,
+  makeDeadline,
+  makeDeadlineForFilter,
+  makeFirestoreTimestamp,
+} from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -521,7 +526,7 @@ export class AppoinmentService {
       return AppointmentStatusChangeState.Failed
     }
     const appointment = await this.getAppointmentDBById(appointmentId)
-    const deadline = makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label)
+    const deadline = makeDeadline(moment(appointment.dateTime.toDate()).utc(), label)
     await this.acuityRepository.addAppointmentLabelOnAcuity(appointment.acuityAppointmentId, label)
 
     const pcrResult = await this.pcrTestResultsRepository.getTestResultByAppointmentId(
@@ -548,7 +553,7 @@ export class AppoinmentService {
   async changeStatusToReRunRequired(
     data: AppointmentChangeToRerunRequest,
   ): Promise<AppointmentDBModel> {
-    const utcDateTime = moment(data.appointment.dateTime).utc()
+    const utcDateTime = firestoreTimeStampToUTC(data.appointment.dateTime)
     const deadline = makeDeadline(utcDateTime, data.deadlineLabel)
     await this.addStatusHistoryById(
       data.appointment.id,

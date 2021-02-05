@@ -1,7 +1,7 @@
-import {PageableRequestFilter} from '../../../common/src/types/request'
-import moment from 'moment-timezone'
-import {Config} from '../../../common/src/utils/config'
 import {firestore} from 'firebase-admin'
+
+import {PageableRequestFilter} from '../../../common/src/types/request'
+import {formatDateRFC822Local} from '../utils/datetime.helper'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
@@ -271,7 +271,6 @@ export const appointmentUiDTOResponse = (
   appointment: AppointmentDBModel & {canCancel?: boolean},
   isLabUser: boolean,
 ): AppointmentUiDTO => {
-  const timeZone = Config.get('DEFAULT_TIME_ZONE')
   return {
     id: appointment.id,
     firstName: appointment.firstName,
@@ -279,10 +278,10 @@ export const appointmentUiDTOResponse = (
     status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser),
     barCode: appointment.barCode,
     location: appointment.location,
-    dateTime: moment(appointment.dateTime).tz(timeZone).format(),
+    dateTime: formatDateRFC822Local(appointment.dateTime),
     dateOfBirth: appointment.dateOfBirth,
     transportRunId: appointment.transportRunId,
-    deadline: moment(appointment.deadline.toDate()).tz(timeZone).format(),
+    deadline: formatDateRFC822Local(appointment.deadline),
     latestResult: appointment.latestResult,
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
@@ -311,7 +310,6 @@ export const appointmentByBarcodeUiDTOResponse = (
   appointment: AppointmentDBModel,
   organizationName?: string,
 ): AppointmentUiDTO & {organizationName?: string} => {
-  const timeZone = Config.get('DEFAULT_TIME_ZONE')
   return {
     id: appointment.id,
     firstName: appointment.firstName,
@@ -319,9 +317,9 @@ export const appointmentByBarcodeUiDTOResponse = (
     status: appointment.appointmentStatus,
     barCode: appointment.barCode,
     location: appointment.location,
-    dateTime: moment(appointment.dateTime).tz(timeZone).format(),
+    dateTime: formatDateRFC822Local(appointment.dateTime),
     dateOfBirth: appointment.dateOfBirth,
-    deadline: moment(appointment.deadline).tz(timeZone).format(),
+    deadline: formatDateRFC822Local(appointment.deadline),
     registeredNursePractitioner: appointment.registeredNursePractitioner,
     organizationName: organizationName,
   }
