@@ -373,7 +373,10 @@ abstract class AcuityScheduling {
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_RECEIVE_NOTIFICATIONS_FROM_GOV'))) {
             appointment.receiveNotificationsFromGov = field.value === 'yes'
           }
-          if (field.fieldID == Number(Config.get('ACUITY_FIELD_AGREE_TO_CONDUCT_FH_HEALTH_ACCESSMENT'))) {
+          if (
+            field.fieldID ==
+            Number(Config.get('ACUITY_FIELD_AGREE_TO_CONDUCT_FH_HEALTH_ACCESSMENT'))
+          ) {
             appointment.agreeToConductFHHealthAssessment = field.value === 'yes'
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_TRAVEL_ID'))) {
