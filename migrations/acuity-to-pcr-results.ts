@@ -8,6 +8,7 @@ import querystring, {ParsedUrlQueryInput} from 'querystring'
 import fetch from 'node-fetch'
 import DBSchema from '../packages/reservation/src/dbschemas/pcr-test-results.schema'
 import {serverTimestamp} from '../packages/common/src/utils/times'
+import { PCRTestResultDBModel } from '../packages/reservation/src/models/pcr-test-results'
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -40,7 +41,7 @@ const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
 const APIURL = Config.get('ACUITY_SCHEDULER_API_URL')
 const START_DATE = '2020-10-01' //Starting from OCT 1st
-const END_DATE = '2020-10-30' //new Date()
+const END_DATE = '2020-11-30' //new Date()
 
 const acuityBarCodeFormId = ACUITY_ENV_NON_PROD ? 1564839 : 1559910 //TEST:1564839 PROD:1559910
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
@@ -150,7 +151,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
   if (pcrTestResultsInDb.docs.length === 0) {
     const convertedDeadline = appointment.data().deadline
 
-    const validatedData = await DBSchema.validateAsync({
+    const validatedData:PCRTestResultDBModel = await DBSchema.validateAsync({
       appointmentId: appointment.id,
       barCode: barCode,
       adminId: 'MIGRATION',
@@ -161,7 +162,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
       lastName: acuityAppointment.lastName,
       linkedBarCodes: [],
       organizationId: appointment.data().organizationId,
-      reSampleNumber: 1,
+      reCollectNumber: 1,
       result: 'Pending',
       runNumber: 1,
       waitingResult: true,
@@ -229,6 +230,7 @@ async function main() {
           successCount += 1
         }
       } else {
+        console.error(result)
         failureCount += 1
       }
     })
