@@ -179,58 +179,53 @@ const documentFooter = (): Content => {
     margin: [0, 50, 0, 0],
   }
 }
-const testAnalysisTable = (): unknown => {
-  const headerRow = (): Content => {
-    return [
-      {
-        text: 'Detailed Test Analysis Data:',
-        margin: [0, 15, 0, 0],
-        lineHeight: 1.2,
-      },
-      {
-        columns: [
-          {
-            layout: 'resultTable',
-            width: 58,
-            table: {
-              widths: [52],
-              heights: [46],
-              body: [['Result']],
+const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
+  return [
+    {
+      text: 'Detailed Test Analysis Data:',
+      margin: [0, 15, 0, 0],
+      lineHeight: 1.2,
+    },
+    {
+      columns: [
+        {
+          layout: 'resultTable',
+          width: 58,
+          table: {
+            widths: [52],
+            heights: [46],
+            body: [['Result']],
+          },
+        },
+        {
+          stack: [
+            {
+              layout: 'resultTable',
+              width: 350,
+              table: {
+                widths: [88, 88, 88, 88],
+                body: [['FAM', 'Cal Red 61', 'Quasar 670', 'HEX']],
+              },
+              margin: [3, 0, 0, 0],
+              alignment: 'center',
             },
-          },
-          {
-            stack: [
-              {
-                layout: 'resultTable',
-                width: 350,
-                table: {
-                  widths: [88, 88, 88, 88],
-                  body: [['FAM', 'Cal Red 61', 'Quasar 670', 'HEX']],
-                },
-                margin: [3, 0, 0, 0],
-                alignment: 'center',
+            {
+              layout: 'resultTable',
+              width: 350,
+              table: {
+                widths: [40, 39, 40, 39, 40, 39, 40, 39],
+                body: [['E gene', 'C(t)', 'RdRP gene', 'C(t)', 'N gene', 'C(t)', 'IC', 'C(t)']],
               },
-              {
-                layout: 'resultTable',
-                width: 350,
-                table: {
-                  widths: [40, 39, 40, 39, 40, 39, 40, 39],
-                  body: [['E gene', 'C(t)', 'RdRP gene', 'C(t)', 'N gene', 'C(t)', 'IC', 'C(t)']],
-                },
-                margin: [3, -1, 0, 0],
-                alignment: 'center',
-              },
-            ],
-          },
-        ],
-        margin: [0, 15, 0, 0],
-        fontSize: 10,
-      },
-    ]
-  }
-
-  const dataRow = (params: PCRTestResultEmailDTO): Content => {
-    return {
+              margin: [3, -1, 0, 0],
+              alignment: 'center',
+            },
+          ],
+        },
+      ],
+      margin: [0, 15, 0, 0],
+      fontSize: 10,
+    },
+    {
       layout: 'resultTable',
       table: {
         widths: [52, 40, 39, 40, 39, 40, 39, 40, 39],
@@ -278,13 +273,8 @@ const testAnalysisTable = (): unknown => {
       },
       margin: [0, -1, 0, 0],
       fontSize: 10,
-    }
-  }
-
-  return Object.freeze({
-    dataRow,
-    headerRow,
-  })
+    },
+  ]
 }
 
 export default {

@@ -8,6 +8,14 @@ export enum EmailNotficationTypes {
   MarkAsConfirmedNegative = 'MarkAsConfirmedNegative',
 }
 
+export enum PCRResultPDFType {
+  ConfirmedPositive = 'ConfirmedPositive',
+  ConfirmedNegative = 'ConfirmedNegative',
+  Negative = 'Negative',
+  Positive = 'Positive',
+  PresumptivePositive = 'PresumptivePositive',
+}
+
 //Actions when Results are sent from Single OR Bulk
 export enum PCRResultActions {
   SendThisResult = 'SendThisResult',
