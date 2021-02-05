@@ -37,6 +37,7 @@ import {
   PCRTestResultConfirmRequest,
   PCRResultActionsForConfirmation,
   EmailNotficationTypes,
+  PCRResultPDFType,
 } from '../models/pcr-test-results'
 
 import {
@@ -46,10 +47,7 @@ import {
   DeadlineLabel,
   ResultTypes,
 } from '../models/appointment'
-
-import confirmedNegativePCRResultsTemplate from '../templates/confirmed-negative-pcr-test-results'
-import confirmedPositivePCRResultsTemplate from '../templates/confirmed-positive-pcr-test-results'
-import testResultPDFTemplate from '../templates/pcr-test-result-pdf-content'
+import {PCRResultPDFContent} from '../templates'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {makeDeadlineForFilter} from '../utils/datetime.helper'
 
@@ -629,19 +627,25 @@ export class PCRTestResultsService {
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedNegative: {
-        await this.sendMarkAsConfirmedNotification(resultData, notficationType)
+        await this.sendTestResults(resultData, PCRResultPDFType.ConfirmedPositive)
         console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedPositive: {
-        await this.sendMarkAsConfirmedNotification(resultData, notficationType)
+        await this.sendTestResults(resultData, PCRResultPDFType.ConfirmedPositive)
         console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
         break
       }
       default: {
-        if (this.whiteListedResultsTypes.includes(resultData.result)) {
-          await this.sendTestResults(resultData)
-          console.log(`SendNotification: Success: Sent Results for ${resultData.barCode}`)
+        if(resultData.result === ResultTypes.Negative){
+          await this.sendTestResults(resultData, PCRResultPDFType.Negative)
+          console.log(`SendNotification: Success: Sent Results for ${resultData.barCode} Result: ${resultData.result}`)
+        }else if(resultData.result === ResultTypes.Positive){
+          await this.sendTestResults(resultData, PCRResultPDFType.Positive)
+          console.log(`SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`)
+        }else if(resultData.result === ResultTypes.PresumptivePositive){
+          await this.sendTestResults(resultData, PCRResultPDFType.PresumptivePositive)
+          console.log(`SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`)
         } else {
           //WARNING
           console.log(
@@ -652,43 +656,9 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendMarkAsConfirmedNotification(
-    resultData: PCRTestResultEmailDTO,
-    notificationType: EmailNotficationTypes,
-  ): Promise<void> {
+  async sendTestResults(resultData: PCRTestResultEmailDTO, pcrResultPDFType: PCRResultPDFType): Promise<void> {
+    const pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
     const resultDate = moment(resultData.dateTime.toDate()).format('LL')
-
-    const {content, tableLayouts} =
-      notificationType === EmailNotficationTypes.MarkAsConfirmedPositive
-        ? confirmedPositivePCRResultsTemplate(resultData, resultDate)
-        : confirmedNegativePCRResultsTemplate(resultData, resultDate)
-    const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
-
-    await this.emailService.send({
-      templateId: Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2,
-      to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
-      params: {
-        BARCODE: resultData.barCode,
-        DATE_OF_RESULT: resultDate,
-      },
-      attachment: [
-        {
-          content: pdfContent,
-          name: `FHHealth.ca Result - ${resultData.barCode} - ${resultDate}.pdf`,
-        },
-      ],
-      bcc: [
-        {
-          email: Config.get('TEST_RESULT_BCC_EMAIL'),
-        },
-      ],
-    })
-  }
-
-  async sendTestResults(resultData: PCRTestResultEmailDTO): Promise<void> {
-    const resultDate = moment(resultData.resultSpecs.resultDate).format('LL')
-    const {content, tableLayouts} = testResultPDFTemplate(resultData, resultDate)
-    const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
     await this.emailService.send({
       templateId: Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2,
