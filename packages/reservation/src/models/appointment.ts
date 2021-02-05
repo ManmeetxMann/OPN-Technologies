@@ -31,7 +31,6 @@ export enum ResultTypes {
   Invalid = 'Invalid',
   Inconclusive = 'Inconclusive',
   Indeterminate = 'Indeterminate',
-  ReCollectRequested = 'ReCollectRequested',
 }
 
 export type AppointmentDBModel = {

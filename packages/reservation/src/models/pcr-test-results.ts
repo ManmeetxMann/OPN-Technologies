@@ -1,6 +1,6 @@
 import {firestore} from 'firebase-admin'
 
-import {AppointmentReasons, AppointmentStatus, ResultTypes} from './appointment'
+import {AppointmentDBModel, AppointmentReasons, AppointmentStatus, ResultTypes} from './appointment'
 
 export enum EmailNotficationTypes {
   Indeterminate = 'Indeterminate',
@@ -107,6 +107,8 @@ export type PCRTestResultDBModel = PCRTestResultData &
     linkedBarCodes: string[]
     result: ResultTypes
     waitingResult: boolean
+    confirmed: boolean
+    recollected: boolean
     displayForNonAdmins: boolean
     deadline: firestore.Timestamp
     testRunId?: string
@@ -149,18 +151,8 @@ export type PCRResults = {
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,
   'id' | 'linkedBarCodes' | 'deadline' | 'runNumber' | 'reCollectNumber' | 'updatedAt'
-> & {
-  email: string
-  phone: number
-  dateOfBirth: string
-  registeredNursePractitioner?: string
-  timeOfAppointment: string
-  dateTime: firestore.Timestamp
-  travelID?: string
-  travelIDIssuingCountry?: string
-  ohipCard?: string
-  swabMethod?: string
-}
+> &
+  AppointmentDBModel
 
 export type ProcessPCRResultRequest = {
   reportTrackerId: string

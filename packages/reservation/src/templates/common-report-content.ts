@@ -108,7 +108,18 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
     ['Mobile Number', params.phone],
   ]
 
-  if (params.ohipCard) {
+  if (params.address) {
+    dataPersonal.push(['Address', params.address])
+  }
+
+  if (params.addressUnit) {
+    dataPersonal.push(['Address Unit', params.addressUnit])
+  }
+
+  if (
+    params.ohipCard &&
+    (params.result === ResultTypes.Positive || params.result === ResultTypes.PresumptivePositive)
+  ) {
     dataPersonal.push(['OHIP Card', params.ohipCard])
   }
 

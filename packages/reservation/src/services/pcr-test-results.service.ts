@@ -67,10 +67,9 @@ export class PCRTestResultsService {
   ]
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
-    const pcrTestResults = await this.getPCRResultsByBarCode(data.barCode)
+    //Validate Result Exists for barCode
+    await this.getPCRResultsByBarCode(data.barCode)
     const appointment = await this.appointmentService.getAppointmentByBarCode(data.barCode)
-    const latestResult = pcrTestResults[0]
-    console.log(`Latest Result: ${latestResult.id}`)
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
@@ -95,6 +94,7 @@ export class PCRTestResultsService {
       reCollectNumber,
       result: finalResult,
       waitingResult: false,
+      confirmed: true,
     })
     await this.sendNotification({...appointment, ...newPCRResult}, notificationType)
     return newPCRResult.id
@@ -306,11 +306,6 @@ export class PCRTestResultsService {
   getFinalResult(action: PCRResultActions, autoResult: ResultTypes, barCode: string): ResultTypes {
     let finalResult = autoResult
     switch (action) {
-      case PCRResultActions.RequestReCollect: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
-        finalResult = ResultTypes.ReCollectRequested
-        break
-      }
       case PCRResultActions.MarkAsNegative: {
         console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
         finalResult = ResultTypes.Negative
@@ -352,9 +347,9 @@ export class PCRTestResultsService {
       },
       {
         map: '/',
-        key: 'result',
+        key: 'recollected',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: ResultTypes.ReCollectRequested,
+        value: true,
       },
     ]
     const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
@@ -510,6 +505,8 @@ export class PCRTestResultsService {
       dateOfAppointment: appointment.dateOfAppointment,
       waitingResult: false,
       displayForNonAdmins: true, //TODO
+      recollected: resultData.resultSpecs.action === PCRResultActions.RequestReCollect,
+      confirmed: false,
     }
 
     const pcrResultRecorded = await this.pcrTestResultsRepository.updateData(
@@ -521,16 +518,7 @@ export class PCRTestResultsService {
     if (resultData.resultSpecs.notify) {
       const pcrResultDataForEmail = {
         ...pcrResultDataForDbUpdate,
-        email: appointment.email,
-        phone: appointment.phone,
-        dateOfBirth: appointment.dateOfBirth,
-        dateTime: appointment.dateTime,
-        timeOfAppointment: appointment.timeOfAppointment,
-        registeredNursePractitioner: appointment.registeredNursePractitioner,
-        travelID: appointment.travelID,
-        travelIDIssuingCountry: appointment.travelIDIssuingCountry,
-        swabMethod: appointment.swabMethod,
-        ohipCard: appointment.ohipCard,
+        ...appointment,
       }
       await this.sendNotification(pcrResultDataForEmail, resultData.resultSpecs.action)
     } else {
@@ -586,6 +574,7 @@ export class PCRTestResultsService {
           appointment.id,
           resultData.adminId,
         )
+
         if (!appointment.organizationId) {
           this.couponCode = await this.couponService.createCoupon(appointment.email)
           console.log(
@@ -627,7 +616,7 @@ export class PCRTestResultsService {
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedNegative: {
-        await this.sendTestResults(resultData, PCRResultPDFType.ConfirmedPositive)
+        await this.sendTestResults(resultData, PCRResultPDFType.ConfirmedNegative)
         console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
         break
       }
@@ -743,11 +732,13 @@ export class PCRTestResultsService {
     runNumber: number
     result?: ResultTypes
     waitingResult?: boolean
+    confirmed?: boolean
   }): Promise<PCRTestResultDBModel> {
     const pcrResultDataForDb = {
       adminId: data.adminId,
       appointmentId: data.appointment.id,
       barCode: data.appointment.barCode,
+      confirmed: data.confirmed ?? false,
       dateOfAppointment: data.appointment.dateOfAppointment,
       displayForNonAdmins: true,
       deadline: data.appointment.deadline,
@@ -759,6 +750,7 @@ export class PCRTestResultsService {
       runNumber: data.runNumber,
       reCollectNumber: data.reCollectNumber,
       waitingResult: data.waitingResult ?? true,
+      recollected: false,
     }
     return await this.pcrTestResultsRepository.save(pcrResultDataForDb)
   }
