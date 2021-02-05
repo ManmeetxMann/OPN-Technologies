@@ -338,6 +338,7 @@ export class AppoinmentService {
       receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
       receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
       shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
+      agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
       userId,
     }

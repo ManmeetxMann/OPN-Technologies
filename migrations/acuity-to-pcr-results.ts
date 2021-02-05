@@ -6,8 +6,12 @@ import {Config} from '../packages/common/src/utils/config'
 import moment from 'moment'
 import querystring, {ParsedUrlQueryInput} from 'querystring'
 import fetch from 'node-fetch'
-import DBSchema from '../packages/reservation/src/dbschemas/pcr-test-results.schema'
 import {serverTimestamp} from '../packages/common/src/utils/times'
+import DBSchema from '../packages/reservation/src/dbschemas/pcr-test-results.schema'
+import {PCRTestResultDBModel} from '../packages/reservation/src/models/pcr-test-results'
+
+const START_DATE = '2020-10-01' //Starting from OCT 1st
+const END_DATE = '2021-03-30' //new Date()
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -39,8 +43,6 @@ const ACUITY_ENV_NON_PROD = true
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
 const APIURL = Config.get('ACUITY_SCHEDULER_API_URL')
-const START_DATE = '2020-10-01' //Starting from OCT 1st
-const END_DATE = '2020-10-30' //new Date()
 
 const acuityBarCodeFormId = ACUITY_ENV_NON_PROD ? 1564839 : 1559910 //TEST:1564839 PROD:1559910
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
@@ -118,8 +120,7 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
 async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
   const forms = findByIdForms(acuityAppointment.forms, acuityBarCodeFormId)
   if (!forms) {
-    console.warn(`BarCode Form is missing`)
-    return Promise.reject()
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} BarCodeIsMissing`)
   }
   const barCode = findByFieldIdForms(
     findByIdForms(acuityAppointment.forms, acuityBarCodeFormId).values,
@@ -136,8 +137,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     .get()
 
   if (!appointmentInDb.docs.length) {
-    console.warn(`AppointmentID: ${acuityAppointment.id} Not found in firebase`)
-    return Promise.reject()
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} Not found in firebase`)
   }
 
   const appointment = appointmentInDb.docs[0]
@@ -150,10 +150,11 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
   if (pcrTestResultsInDb.docs.length === 0) {
     const convertedDeadline = appointment.data().deadline
 
-    const validatedData = await DBSchema.validateAsync({
+    const validatedData: PCRTestResultDBModel = await DBSchema.validateAsync({
+      adminId: 'MIGRATION',
       appointmentId: appointment.id,
       barCode: barCode,
-      adminId: 'MIGRATION',
+      confirmed: false,
       dateOfAppointment: dateOfAppointment,
       deadline: convertedDeadline,
       displayForNonAdmins: true,
@@ -161,8 +162,9 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
       lastName: acuityAppointment.lastName,
       linkedBarCodes: [],
       organizationId: appointment.data().organizationId,
-      reSampleNumber: 1,
+      reCollectNumber: 1,
       result: 'Pending',
+      recollected: false,
       runNumber: 1,
       waitingResult: true,
     })
@@ -229,6 +231,7 @@ async function main() {
           successCount += 1
         }
       } else {
+        console.error(result.value)
         failureCount += 1
       }
     })
