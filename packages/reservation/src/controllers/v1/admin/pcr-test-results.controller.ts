@@ -223,6 +223,8 @@ class PCRTestResultController implements IControllerBase {
                         ? linkedAppointment.dateOfAppointment
                         : '',
                       barCode: linkedResult.barCode,
+                      updatedAt: linkedResult.updatedAt,
+                      waitingResult: linkedResult.waitingResult,
                     }
                   }),
                 )
@@ -234,6 +236,8 @@ class PCRTestResultController implements IControllerBase {
                     runNumber: testSame.runNumber,
                     dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
                     barCode: testSame.barCode,
+                    updatedAt: testSame.updatedAt,
+                    waitingResult: testSame.waitingResult,
                   },
                   ...linkedSameTests,
                 ]
@@ -244,8 +248,6 @@ class PCRTestResultController implements IControllerBase {
           // const waitingResult = !!pcrTests.find(
           //   (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
           // )
-          const pcrTest = pcrTests.find((pcrTest) => pcrTest.barCode === code)
-          const waitingResult = pcrTest && pcrTest.waitingResult
 
           const appointment = await this.appointmentService.getAppointmentByBarCodeNullable(code)
 
@@ -253,10 +255,20 @@ class PCRTestResultController implements IControllerBase {
             if (testSameBarcode.length > 1) {
               console.log(`Warning tests with same barcode are more than one. Barcode: ${code}.`)
             }
+            const pcrTest = pcrTests.find((pcrTest) => pcrTest.barCode === code)
+            const waitingResult = pcrTest && pcrTest.waitingResult
+            const filteredResults = results
+              .sort((a, b) => (a.updatedAt._seconds > b.updatedAt._seconds ? 1 : -1))
+              .filter((result) => {
+                return !result.waitingResult
+              })
+            if (filteredResults.length === results.length) {
+              filteredResults.pop()
+            }
             return {
               id: testSameBarcode[0].id,
               barCode: code,
-              results: waitingResult ? [] : results,
+              results: filteredResults,
               waitingResult,
               ...(!waitingResult && {
                 reason: await this.pcrTestResultsService.getReason(<AppointmentDBModel>appointment),
