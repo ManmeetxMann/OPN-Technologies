@@ -29,7 +29,7 @@ import {
 } from '../../../models/pcr-test-results'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {AppointmentDBModel, AppointmentReasons} from '../../../models/appointment'
-import { formatDateRFC822Local } from '../../../utils/datetime.helper'
+import {formatDateRFC822Local} from '../../../utils/datetime.helper'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
@@ -220,9 +220,7 @@ class PCRTestResultController implements IControllerBase {
                       result: linkedResult.result,
                       reCollectNumber: linkedResult.reCollectNumber,
                       runNumber: linkedResult.runNumber,
-                      dateTime: linkedAppointment
-                        ? linkedAppointment.dateTime
-                        : '',
+                      dateTime: linkedAppointment ? linkedAppointment.dateTime : '',
                       barCode: linkedResult.barCode,
                       updatedAt: linkedResult.updatedAt,
                       waitingResult: linkedResult.waitingResult,
