@@ -645,9 +645,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfAccess'
 
-  /access/api/v1/acess/entryToken:
+  /access/api/v1/access/entryToken:
     post:
       description: Create a token which an admin could scan
+      security:
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:
@@ -655,7 +657,7 @@ paths:
               $ref: '#/components/schemas/V1EntryOrExitRequest'
       responses:
         '200':
-          description: Successfully exchanged
+          description: Successfully created
           content:
             application/json:
               schema:
@@ -664,6 +666,8 @@ paths:
   /access/api/v1/access/entry:
     post:
       description: Enter the specified location
+      security:
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:
@@ -680,6 +684,8 @@ paths:
   /access/api/v1/access/exit:
     post:
       description: Exit the location the specified token was used to enter
+      security:
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:
