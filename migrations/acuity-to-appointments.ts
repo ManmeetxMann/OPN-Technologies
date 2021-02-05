@@ -13,8 +13,8 @@ const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 const ANONYMOUS_PI_DATA = false
 const ACUITY_ENV_NON_PROD = true
-const START_DATE = '2020-11-01' //Starting from OCT 1st
-const END_DATE = '2020-11-28' //new Date()
+const START_DATE = '2020-10-01' //Starting from OCT 1st
+const END_DATE = '2021-03-31' //new Date()
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -293,17 +293,18 @@ async function createAppointment(acuityAppointment) {
   let shareTestResultWithEmployer = ''
 
   let registeredNursePractitioner = ''
+
   try {
     barCode = findByFieldIdForms(
       findByIdForms(acuityAppointment.forms, acuityBarCodeFormId).values,
       acuityFormFieldIds.barCode,
     ).value
     if (barCode === '') {
-      throw 'Empty Barcode'
+      throw new Error('EmptyBarcode')
     }
   } catch (e) {
     console.warn(`AppointmentID: ${acuityAppointment.id} InvalidBarCode: ${e.message}`)
-    throw e
+    return Promise.reject('InvalidBarCode')
   }
 
   try {
@@ -312,10 +313,11 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.birthDay,
     ).value
     if (dateOfBirth === '') {
-      throw 'Empty dateOfBirth'
+      throw new Error('Empty dateOfBirth')
     }
   } catch (e) {
     console.warn(`AppointmentID: ${acuityAppointment.id} InvalidDateofBirth: ${e.message}`)
+    return Promise.reject('InvalidDateofBirth')
   }
 
   try {
@@ -350,6 +352,7 @@ async function createAppointment(acuityAppointment) {
       findByIdForms(acuityAppointment.forms, acuityHomeAddressFormId).values,
       acuityFormFieldIds.homeAddress,
     ).value
+    address = address === '' ? 'N/A' : address
   } catch (e) {
     console.info(`AppointmentID: ${acuityAppointment.id} Invalid address: ${e.message}`)
   }
@@ -502,7 +505,7 @@ async function main() {
           successCount += 1
         }
       } else {
-        console.log(result.value)
+        console.warn(result.value)
         failureCount += 1
       }
     })

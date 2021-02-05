@@ -10,6 +10,9 @@ import {serverTimestamp} from '../packages/common/src/utils/times'
 import DBSchema from '../packages/reservation/src/dbschemas/pcr-test-results.schema'
 import {PCRTestResultDBModel} from '../packages/reservation/src/models/pcr-test-results'
 
+const START_DATE = '2020-10-01' //Starting from OCT 1st
+const END_DATE = '2021-03-30' //new Date()
+
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
   credential: credential.cert(serviceAccount),
@@ -40,8 +43,6 @@ const ACUITY_ENV_NON_PROD = true
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
 const APIURL = Config.get('ACUITY_SCHEDULER_API_URL')
-const START_DATE = '2020-10-01' //Starting from OCT 1st
-const END_DATE = '2020-11-30' //new Date()
 
 const acuityBarCodeFormId = ACUITY_ENV_NON_PROD ? 1564839 : 1559910 //TEST:1564839 PROD:1559910
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
@@ -119,8 +120,7 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
 async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
   const forms = findByIdForms(acuityAppointment.forms, acuityBarCodeFormId)
   if (!forms) {
-    console.warn(`BarCode Form is missing`)
-    return Promise.reject()
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} BarCodeIsMissing`)
   }
   const barCode = findByFieldIdForms(
     findByIdForms(acuityAppointment.forms, acuityBarCodeFormId).values,
@@ -137,8 +137,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     .get()
 
   if (!appointmentInDb.docs.length) {
-    console.warn(`AppointmentID: ${acuityAppointment.id} Not found in firebase`)
-    return Promise.reject()
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} Not found in firebase`)
   }
 
   const appointment = appointmentInDb.docs[0]
@@ -232,7 +231,7 @@ async function main() {
           successCount += 1
         }
       } else {
-        console.error(result)
+        console.error(result.value)
         failureCount += 1
       }
     })
