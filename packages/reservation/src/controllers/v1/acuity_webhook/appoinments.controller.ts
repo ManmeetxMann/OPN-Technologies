@@ -83,7 +83,7 @@ class AppointmentWebhookController implements IControllerBase {
         )
         if (savedAppointment) {
           const pcrTestResult = await this.pcrTestResultsService.createNewPCRTestForWebhook(
-            savedAppointment
+            savedAppointment,
           )
           console.log(
             `AppointmentWebhookController: CreateAppointment: SuccessCreatePCRResults for AppointmentID: ${savedAppointment.id} PCR Results ID: ${pcrTestResult.id}`,
