@@ -37,6 +37,7 @@ export type AppointmentDBModel = {
   id: string
   acuityAppointmentId: number
   appointmentStatus: AppointmentStatus
+  agreeToConductFHHealthAssessment: boolean
   barCode: string
   canceled: boolean
   dateOfAppointment: string
@@ -96,6 +97,7 @@ export type AppointmentAcuityResponse = {
   address: string
   addressForTesting: string
   addressUnit: string
+  agreeToConductFHHealthAssessment: boolean
   barCode: string
   canceled: boolean
   canClientCancel: boolean

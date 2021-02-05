@@ -51,6 +51,7 @@ export default Joi.object({
   travelIDIssuingCountry: Joi.string().allow(''),
   ohipCard: Joi.string().allow(''),
   swabMethod: Joi.string().allow(''),
+  agreeToConductFHHealthAssessment: Joi.boolean().required(),
   shareTestResultWithEmployer: Joi.boolean().required(),
   readTermsAndConditions: Joi.boolean().required(),
   receiveResultsViaEmail: Joi.boolean().required(),
