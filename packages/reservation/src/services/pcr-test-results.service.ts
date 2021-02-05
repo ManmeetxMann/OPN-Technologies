@@ -67,7 +67,8 @@ export class PCRTestResultsService {
   ]
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
-    const pcrTestResults = await this.getPCRResultsByBarCode(data.barCode)
+    //Validate Result Exists for barCode
+    await this.getPCRResultsByBarCode(data.barCode)
     const appointment = await this.appointmentService.getAppointmentByBarCode(data.barCode)
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
@@ -93,7 +94,7 @@ export class PCRTestResultsService {
       reCollectNumber,
       result: finalResult,
       waitingResult: false,
-      confirmed: true
+      confirmed: true,
     })
     await this.sendNotification({...appointment, ...newPCRResult}, notificationType)
     return newPCRResult.id
@@ -504,8 +505,8 @@ export class PCRTestResultsService {
       dateOfAppointment: appointment.dateOfAppointment,
       waitingResult: false,
       displayForNonAdmins: true, //TODO
-      recollected: (resultData.resultSpecs.action===PCRResultActions.RequestReCollect),
-      confirmed: false
+      recollected: resultData.resultSpecs.action === PCRResultActions.RequestReCollect,
+      confirmed: false,
     }
 
     const pcrResultRecorded = await this.pcrTestResultsRepository.updateData(
@@ -758,7 +759,7 @@ export class PCRTestResultsService {
       runNumber: data.runNumber,
       reCollectNumber: data.reCollectNumber,
       waitingResult: data.waitingResult ?? true,
-      recollected: false
+      recollected: false,
     }
     return await this.pcrTestResultsRepository.save(pcrResultDataForDb)
   }
