@@ -521,7 +521,7 @@ export class AppoinmentService {
       return AppointmentStatusChangeState.Failed
     }
     const appointment = await this.getAppointmentDBById(appointmentId)
-    const deadline = makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label)
+    const deadline = makeDeadline(moment(appointment.dateTime.toDate()).utc(), label)
     await this.acuityRepository.addAppointmentLabelOnAcuity(appointment.acuityAppointmentId, label)
 
     const pcrResult = await this.pcrTestResultsRepository.getTestResultByAppointmentId(
@@ -548,7 +548,7 @@ export class AppoinmentService {
   async changeStatusToReRunRequired(
     data: AppointmentChangeToRerunRequest,
   ): Promise<AppointmentDBModel> {
-    const utcDateTime = moment(data.appointment.dateTime).utc()
+    const utcDateTime = moment(data.appointment.dateTime.toDate()).utc()
     const deadline = makeDeadline(utcDateTime, data.deadlineLabel)
     await this.addStatusHistoryById(
       data.appointment.id,
