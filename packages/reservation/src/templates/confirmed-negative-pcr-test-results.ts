@@ -11,8 +11,7 @@ const pdfContent = (
     content: [
       commonPDFContent.companyInfoHeader(),
       {text: resultDate, margin: [0, 30, 0, 0]},
-      commonPDFContent.clientInformation().heading(),
-      commonPDFContent.clientInformation().dataTable(params, resultDate),
+      commonPDFContent.clientInformation(params, resultDate),
       messageBody(),
       commonPDFContent.conactDetailsForQuestions(),
       commonPDFContent.documentFooter(),

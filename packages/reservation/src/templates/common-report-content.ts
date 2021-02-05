@@ -94,67 +94,64 @@ const companyInfoHeader = (): Content => {
   }
 }
 
-const clientInformation = (): unknown => {
-  const heading = (): Content => {
-    return {
+const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): Content => {
+  const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
+  const dataPersonal = [
+    [
+      'Patient Name ',
+      {
+        text: `${params.firstName} ${params.lastName}`,
+        bold: true,
+      },
+    ],
+    ['Date of Birth', params.dateOfBirth],
+    ['Mobile Number', params.phone],
+  ]
+
+  if (params.ohipCard) {
+    dataPersonal.push(['OHIP Card', params.ohipCard])
+  }
+
+  if (params.travelID) {
+    dataPersonal.push(['Travel ID', params.travelID])
+  }
+
+  if (params.travelIDIssuingCountry) {
+    dataPersonal.push(['TravelID Issuing Country', params.travelIDIssuingCountry])
+  }
+
+  const dataAppointment = [
+    [
+      'Date of Test (Sample Collection)',
+      `${params.dateOfAppointment} at ${params.timeOfAppointment}`,
+    ],
+    ['Date of Result', resultDate],
+    ['Ordering Physician', requisitionDoctor],
+    ['Nurse', params.registeredNursePractitioner],
+  ]
+
+  if (params.swabMethod) {
+    dataAppointment.push(['Swab Method', params.swabMethod])
+  }
+
+  const dataTestDetails = [
+    ['Test', 'RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
+    [
+      'Equipment approved by \n Health Canada',
+      'Allplex 2019-nCoV Assay manufactured by Seegene, Inc.',
+    ],
+  ]
+
+  const data = dataPersonal.concat(dataAppointment, dataTestDetails)
+
+  return [
+    {
       text: 'The following client completed a SARS-CoV-2 screening test at FH Health:',
       margin: [0, 20, 0, 0],
       style: ['gray-text'],
       lineHeight: 1.2,
-    }
-  }
-
-  const dataTable = (params: PCRTestResultEmailDTO, resultDate: string): Content => {
-    const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
-    const dataPersonal = [
-      [
-        'Patient Name ',
-        {
-          text: `${params.firstName} ${params.lastName}`,
-          bold: true,
-        },
-      ],
-      ['Date of Birth', params.dateOfBirth],
-      ['Mobile Number', params.phone],
-    ]
-
-    if (params.ohipCard) {
-      dataPersonal.push(['OHIP Card', params.ohipCard])
-    }
-
-    if (params.travelID) {
-      dataPersonal.push(['Travel ID', params.travelID])
-    }
-
-    if (params.travelIDIssuingCountry) {
-      dataPersonal.push(['TravelID Issuing Country', params.travelIDIssuingCountry])
-    }
-
-    const dataAppointment = [
-      [
-        'Date of Test (Sample Collection)',
-        `${params.dateOfAppointment} at ${params.timeOfAppointment}`,
-      ],
-      ['Date of Result', resultDate],
-      ['Ordering Physician', requisitionDoctor],
-      ['Nurse', params.registeredNursePractitioner],
-    ]
-
-    if (params.swabMethod) {
-      dataAppointment.push(['Swab Method', params.swabMethod])
-    }
-
-    const dataTestDetails = [
-      ['Test', 'RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
-      [
-        'Equipment approved by \n Health Canada',
-        'Allplex 2019-nCoV Assay manufactured by Seegene, Inc.',
-      ],
-    ]
-
-    const data = dataPersonal.concat(dataAppointment, dataTestDetails)
-
-    return {
+    },
+    {
       layout: 'mainTable',
       table: {
         headerRows: 1,
@@ -162,13 +159,8 @@ const clientInformation = (): unknown => {
         body: data,
       },
       margin: [0, 5, 0, 0],
-    }
-  }
-
-  return Object.freeze({
-    dataTable,
-    heading,
-  })
+    },
+  ]
 }
 
 const conactDetailsForQuestions = (): Content => {
