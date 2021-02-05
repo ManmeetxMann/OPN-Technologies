@@ -26,7 +26,7 @@ export default Joi.object({
   location: Joi.string().allow(''),
   organizationId: Joi.string().allow(null),
   packageCode: Joi.string().allow(null),
-  phone: Joi.number().required(),
+  phone: Joi.string().required(),
   registeredNursePractitioner: Joi.string().allow(''),
   // latestResult: ResultTypes
   latestResult: Joi.string().valid(
