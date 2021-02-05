@@ -155,6 +155,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
       appointmentId: appointment.id,
       barCode: barCode,
       adminId: 'MIGRATION',
+      confirmed: false,
       dateOfAppointment: dateOfAppointment,
       deadline: convertedDeadline,
       displayForNonAdmins: true,
@@ -164,6 +165,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
       organizationId: appointment.data().organizationId,
       reCollectNumber: 1,
       result: 'Pending',
+      recollected: false,
       runNumber: 1,
       waitingResult: true,
     })
