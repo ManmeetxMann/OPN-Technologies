@@ -10,7 +10,7 @@ import {OrganizationService} from '../../../../../enterprise/src/services/organi
 import {AccessService} from '../../../service/access.service'
 import {AccessTokenService} from '../../../service/access-token.service'
 import {AccessModel} from '../../../repository/access.repository'
-import {accessDTOResponseV1} from '../../models/access'
+import {accessDTOResponseV1} from '../../../models/access'
 
 import IRouteController from '../../../../../common/src/interfaces/IRouteController.interface'
 import {isPassed, safeTimestamp} from '../../../../../common/src/utils/datetime-util'
