@@ -35,7 +35,7 @@ export default Joi.object({
     'Pending',
     'Invalid',
     'Inconclusive',
-    'ReCollectRequested',
+    'Indeterminate',
   ),
   timeOfAppointment: Joi.string().required(),
   transportRunId: Joi.string().allow(''),

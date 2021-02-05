@@ -35,6 +35,9 @@ import {
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultByDeadlineListDTO,
   PCRTestResultConfirmRequest,
+  PCRResultActionsForConfirmation,
+  EmailNotficationTypes,
+  PCRResultPDFType,
 } from '../models/pcr-test-results'
 
 import {
@@ -43,10 +46,8 @@ import {
   AppointmentStatus,
   DeadlineLabel,
   ResultTypes,
-  AppointmentAcuityResponse,
 } from '../models/appointment'
-
-import testResultPDFTemplate from '../templates/pcr-test-result-pdf-content'
+import {PCRResultPDFContent} from '../templates'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {makeDeadlineForFilter} from '../utils/datetime.helper'
 
@@ -66,19 +67,36 @@ export class PCRTestResultsService {
   ]
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
-    const pcrTestResults = await this.getPCRResultsByBarCode(data.barCode)
+    //Validate Result Exists for barCode
+    await this.getPCRResultsByBarCode(data.barCode)
     const appointment = await this.appointmentService.getAppointmentByBarCode(data.barCode)
-    const latestResult = pcrTestResults[0]
-    console.log(`Latest Result: ${latestResult.id}`)
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
-    const newPCRResult = await this.createNewWaitingResult(
+    let finalResult: ResultTypes = ResultTypes.Indeterminate
+    let notificationType = EmailNotficationTypes.Indeterminate
+    switch (data.action) {
+      case PCRResultActionsForConfirmation.MarkAsNegative: {
+        finalResult = ResultTypes.Negative
+        notificationType = EmailNotficationTypes.MarkAsConfirmedNegative
+        break
+      }
+      case PCRResultActionsForConfirmation.MarkAsPositive: {
+        finalResult = ResultTypes.Positive
+        notificationType = EmailNotficationTypes.MarkAsConfirmedPositive
+        break
+      }
+    }
+    const newPCRResult = await this.createNewTestResults({
       appointment,
       adminId,
       runNumber,
       reCollectNumber,
-    )
+      result: finalResult,
+      waitingResult: false,
+      confirmed: true,
+    })
+    await this.sendNotification({...appointment, ...newPCRResult}, notificationType)
     return newPCRResult.id
   }
 
@@ -288,11 +306,6 @@ export class PCRTestResultsService {
   getFinalResult(action: PCRResultActions, autoResult: ResultTypes, barCode: string): ResultTypes {
     let finalResult = autoResult
     switch (action) {
-      case PCRResultActions.RequestReCollect: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
-        finalResult = ResultTypes.ReCollectRequested
-        break
-      }
       case PCRResultActions.MarkAsNegative: {
         console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
         finalResult = ResultTypes.Negative
@@ -334,9 +347,9 @@ export class PCRTestResultsService {
       },
       {
         map: '/',
-        key: 'result',
+        key: 'recollected',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: ResultTypes.ReCollectRequested,
+        value: true,
       },
     ]
     const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
@@ -465,12 +478,12 @@ export class PCRTestResultsService {
     const reCollectNumber = 0 //Not Relevant for Resend
     const testResult =
       isSingleResult && !waitingPCRTestResult
-        ? await this.createNewWaitingResult(
+        ? await this.createNewTestResults({
             appointment,
-            resultData.adminId,
+            adminId: resultData.adminId,
             runNumber,
             reCollectNumber,
-          )
+          })
         : waitingPCRTestResult
 
     await this.handleActions(
@@ -492,6 +505,8 @@ export class PCRTestResultsService {
       dateOfAppointment: appointment.dateOfAppointment,
       waitingResult: false,
       displayForNonAdmins: true, //TODO
+      recollected: resultData.resultSpecs.action === PCRResultActions.RequestReCollect,
+      confirmed: false,
     }
 
     const pcrResultRecorded = await this.pcrTestResultsRepository.updateData(
@@ -503,17 +518,9 @@ export class PCRTestResultsService {
     if (resultData.resultSpecs.notify) {
       const pcrResultDataForEmail = {
         ...pcrResultDataForDbUpdate,
-        email: appointment.email,
-        phone: appointment.phone,
-        dateOfBirth: appointment.dateOfBirth,
-        dateTime: appointment.dateTime,
-        timeOfAppointment: appointment.timeOfAppointment,
-        registeredNursePractitioner: appointment.registeredNursePractitioner,
-        travelID: appointment.travelID,
-        travelIDIssuingCountry: appointment.travelIDIssuingCountry,
-        swabMethod: appointment.swabMethod,
+        ...appointment,
       }
-      await this.sendNotification(pcrResultDataForEmail)
+      await this.sendNotification(pcrResultDataForEmail, resultData.resultSpecs.action)
     } else {
       console.log(
         `handlePCRResultSaveAndSend: Not Notification is sent for ${resultData.barCode}. Notify is off.`,
@@ -521,31 +528,6 @@ export class PCRTestResultsService {
     }
 
     return pcrResultRecorded
-  }
-
-  async createNewWaitingResult(
-    appointment: AppointmentDBModel,
-    adminId: string,
-    runNumber: number,
-    reCollectNumber: number,
-  ): Promise<PCRTestResultDBModel> {
-    const pcrResultDataForDbCreate = {
-      adminId: adminId,
-      appointmentId: appointment.id,
-      barCode: appointment.barCode,
-      dateOfAppointment: appointment.dateOfAppointment,
-      displayForNonAdmins: true,
-      deadline: appointment.deadline,
-      firstName: appointment.firstName,
-      lastName: appointment.lastName,
-      linkedBarCodes: [],
-      organizationId: appointment.organizationId,
-      result: ResultTypes.Pending,
-      waitingResult: true,
-      runNumber: runNumber,
-      reCollectNumber: reCollectNumber,
-    }
-    return await this.saveDefaultTestResults(pcrResultDataForDbCreate)
   }
 
   async handleActions(
@@ -563,12 +545,12 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.SameDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(
-          updatedAppointment,
-          resultData.adminId,
-          nextRunNumber,
+        await this.createNewTestResults({
+          appointment: updatedAppointment,
+          adminId: resultData.adminId,
+          runNumber: nextRunNumber,
           reCollectNumber,
-        )
+        })
         break
       }
       case PCRResultActions.ReRunTomorrow: {
@@ -578,12 +560,12 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.NextDay,
           userId: resultData.adminId,
         })
-        await this.createNewWaitingResult(
-          updatedAppointment,
-          resultData.adminId,
-          nextRunNumber,
+        await this.createNewTestResults({
+          appointment: updatedAppointment,
+          adminId: resultData.adminId,
+          runNumber: nextRunNumber,
           reCollectNumber,
-        )
+        })
         break
       }
       case PCRResultActions.RequestReCollect: {
@@ -592,6 +574,7 @@ export class PCRTestResultsService {
           appointment.id,
           resultData.adminId,
         )
+
         if (!appointment.organizationId) {
           this.couponCode = await this.couponService.createCoupon(appointment.email)
           console.log(
@@ -612,8 +595,11 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
-    switch (resultData.resultSpecs.action) {
+  async sendNotification(
+    resultData: PCRTestResultEmailDTO,
+    notficationType: PCRResultActions | EmailNotficationTypes,
+  ): Promise<void> {
+    switch (notficationType) {
       case PCRResultActions.ReRunToday: {
         await this.sendRerunNotification(resultData, 'TODAY')
         console.log(`SendNotification: Success: ${resultData.barCode} ReRunToday`)
@@ -629,10 +615,32 @@ export class PCRTestResultsService {
         console.log(`SendNotification: Success: ${resultData.barCode} RequestReCollect`)
         break
       }
+      case EmailNotficationTypes.MarkAsConfirmedNegative: {
+        await this.sendTestResults(resultData, PCRResultPDFType.ConfirmedNegative)
+        console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
+        break
+      }
+      case EmailNotficationTypes.MarkAsConfirmedPositive: {
+        await this.sendTestResults(resultData, PCRResultPDFType.ConfirmedPositive)
+        console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
+        break
+      }
       default: {
-        if (this.whiteListedResultsTypes.includes(resultData.result)) {
-          await this.sendTestResults(resultData)
-          console.log(`SendNotification: Success: Sent Results for ${resultData.barCode}`)
+        if (resultData.result === ResultTypes.Negative) {
+          await this.sendTestResults(resultData, PCRResultPDFType.Negative)
+          console.log(
+            `SendNotification: Success: Sent Results for ${resultData.barCode} Result: ${resultData.result}`,
+          )
+        } else if (resultData.result === ResultTypes.Positive) {
+          await this.sendTestResults(resultData, PCRResultPDFType.Positive)
+          console.log(
+            `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
+          )
+        } else if (resultData.result === ResultTypes.PresumptivePositive) {
+          await this.sendTestResults(resultData, PCRResultPDFType.PresumptivePositive)
+          console.log(
+            `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
+          )
         } else {
           //WARNING
           console.log(
@@ -643,10 +651,12 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendTestResults(resultData: PCRTestResultEmailDTO): Promise<void> {
-    const resultDate = moment(resultData.resultSpecs.resultDate).format('LL')
-    const {content, tableLayouts} = testResultPDFTemplate(resultData, resultDate)
-    const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
+  async sendTestResults(
+    resultData: PCRTestResultEmailDTO,
+    pcrResultPDFType: PCRResultPDFType,
+  ): Promise<void> {
+    const pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
+    const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
     await this.emailService.send({
       templateId: Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2,
@@ -714,10 +724,35 @@ export class PCRTestResultsService {
     await this.pcrTestResultsRepository.updateData(id, defaultTestResults)
   }
 
-  async saveDefaultTestResults(
-    defaultTestResults: Omit<PCRTestResultDBModel, 'id' | 'updatedAt'>,
-  ): Promise<PCRTestResultDBModel> {
-    return await this.pcrTestResultsRepository.save(defaultTestResults)
+  async createNewTestResults(data: {
+    appointment: AppointmentDBModel
+    adminId: string
+    linkedBarCodes?: string[]
+    reCollectNumber: number
+    runNumber: number
+    result?: ResultTypes
+    waitingResult?: boolean
+    confirmed?: boolean
+  }): Promise<PCRTestResultDBModel> {
+    const pcrResultDataForDb = {
+      adminId: data.adminId,
+      appointmentId: data.appointment.id,
+      barCode: data.appointment.barCode,
+      confirmed: data.confirmed ?? false,
+      dateOfAppointment: data.appointment.dateOfAppointment,
+      displayForNonAdmins: true,
+      deadline: data.appointment.deadline,
+      firstName: data.appointment.firstName,
+      lastName: data.appointment.lastName,
+      linkedBarCodes: data.linkedBarCodes ?? [],
+      organizationId: data.appointment.organizationId,
+      result: data.result ?? ResultTypes.Pending,
+      runNumber: data.runNumber,
+      reCollectNumber: data.reCollectNumber,
+      waitingResult: data.waitingResult ?? true,
+      recollected: false,
+    }
+    return await this.pcrTestResultsRepository.save(pcrResultDataForDb)
   }
 
   async getPCRTestsByBarcode(barCodes: string[]): Promise<PCRTestResultDBModel[]> {
@@ -809,29 +844,18 @@ export class PCRTestResultsService {
     return linkedBarcodes
   }
 
-  public async createLinkedPcrTests(
-    savedAppointment: AppointmentDBModel,
-    appointment: AppointmentAcuityResponse,
+  public async createNewPCRTestForWebhook(
+    appointment: AppointmentDBModel,
   ): Promise<PCRTestResultDBModel> {
-    const linkedBarcodes = await this.getlinkedBarcodes(appointment.certificate)
-    //Save Pending Test Results
-    const pcrResultDataForDb = {
+    const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
+
+    return this.createNewTestResults({
+      appointment,
       adminId: 'WEBHOOK',
-      appointmentId: savedAppointment.id,
-      barCode: savedAppointment.barCode,
-      dateOfAppointment: savedAppointment.dateOfAppointment,
-      displayForNonAdmins: true,
-      deadline: savedAppointment.deadline,
-      firstName: appointment.firstName,
-      lastName: appointment.lastName,
-      linkedBarCodes: linkedBarcodes,
-      organizationId: appointment.organizationId,
-      result: ResultTypes.Pending,
-      runNumber: 1, //Start the Run
-      reCollectNumber: linkedBarcodes.length + 1,
-      waitingResult: true,
-    }
-    return this.saveDefaultTestResults(pcrResultDataForDb)
+      linkedBarCodes,
+      reCollectNumber: linkedBarCodes.length + 1,
+      runNumber: 1,
+    })
   }
 
   async getDueDeadline({

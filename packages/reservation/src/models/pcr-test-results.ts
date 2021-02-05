@@ -1,7 +1,22 @@
 import {firestore} from 'firebase-admin'
 
-import {AppointmentReasons, AppointmentStatus, ResultTypes} from './appointment'
+import {AppointmentDBModel, AppointmentReasons, AppointmentStatus, ResultTypes} from './appointment'
 
+export enum EmailNotficationTypes {
+  Indeterminate = 'Indeterminate',
+  MarkAsConfirmedPositive = 'MarkAsConfirmedPositive',
+  MarkAsConfirmedNegative = 'MarkAsConfirmedNegative',
+}
+
+export enum PCRResultPDFType {
+  ConfirmedPositive = 'ConfirmedPositive',
+  ConfirmedNegative = 'ConfirmedNegative',
+  Negative = 'Negative',
+  Positive = 'Positive',
+  PresumptivePositive = 'PresumptivePositive',
+}
+
+//Actions when Results are sent from Single OR Bulk
 export enum PCRResultActions {
   SendThisResult = 'SendThisResult',
   DoNothing = 'DoNothing',
@@ -13,6 +28,7 @@ export enum PCRResultActions {
   MarkAsPresumptivePositive = 'MarkAsPresumptivePositive',
 }
 
+//Actions when Results are Confirmed
 export enum PCRResultActionsForConfirmation {
   Indeterminate = 'Indeterminate',
   MarkAsPositive = 'MarkAsPositive',
@@ -25,6 +41,7 @@ export enum PCRResultActionsAllowedResend {
   MarkAsNegative = 'MarkAsNegative',
 }
 
+//Possible report Status when Results are sent
 export enum ResultReportStatus {
   Failed = 'Failed',
   Processing = 'Processing',
@@ -33,6 +50,11 @@ export enum ResultReportStatus {
   SentReCollectRequest = 'SentReCollectRequest',
   SentResult = 'SentResult',
   Skipped = 'Skipped',
+}
+
+export type PCRTestResultConfirmRequest = {
+  barCode: string
+  action: PCRResultActionsForConfirmation
 }
 
 type PCRResultSpecs = {
@@ -48,11 +70,6 @@ type PCRResultSpecs = {
   quasar670Ct: string
   quasar670NGene: string
   resultDate: Date
-}
-
-export type PCRTestResultConfirmRequest = {
-  barCode: string
-  action: PCRResultActionsForConfirmation
 }
 
 export type PCRTestResultRequestData = PCRResultSpecs & {
@@ -90,6 +107,8 @@ export type PCRTestResultDBModel = PCRTestResultData &
     linkedBarCodes: string[]
     result: ResultTypes
     waitingResult: boolean
+    confirmed: boolean
+    recollected: boolean
     displayForNonAdmins: boolean
     deadline: firestore.Timestamp
     testRunId?: string
@@ -132,17 +151,8 @@ export type PCRResults = {
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,
   'id' | 'linkedBarCodes' | 'deadline' | 'runNumber' | 'reCollectNumber' | 'updatedAt'
-> & {
-  email: string
-  phone: number
-  dateOfBirth: string
-  registeredNursePractitioner?: string
-  timeOfAppointment: string
-  dateTime: firestore.Timestamp
-  travelID?: string
-  travelIDIssuingCountry?: string
-  swabMethod?: string
-}
+> &
+  AppointmentDBModel
 
 export type ProcessPCRResultRequest = {
   reportTrackerId: string

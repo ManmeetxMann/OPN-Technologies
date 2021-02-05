@@ -5,6 +5,7 @@ export default Joi.object({
   adminId: Joi.string().required(),
   appointmentId: Joi.string().required(),
   barCode: Joi.string().required(),
+  confirmed: Joi.boolean().default(false),
   dateOfAppointment: Joi.string().required(),
   deadline: FirestoreTimestamp.isValid().required(),
   displayForNonAdmins: Joi.boolean().required(),
@@ -14,6 +15,7 @@ export default Joi.object({
   organizationId: Joi.string().allow('', null),
   reCollectNumber: Joi.number().required(),
   result: Joi.string().required(), //TODO: ENUM
+  recollected: Joi.boolean().default(false),
   resultSpecs: Joi.object({
     action: Joi.string().required(),
     autoResult: Joi.string().required(),
