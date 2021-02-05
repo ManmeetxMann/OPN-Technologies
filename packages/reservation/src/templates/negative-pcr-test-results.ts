@@ -37,15 +37,13 @@ const messageBody = (): Content => {
         '\n\nIf you are the patron receiving the test and require further information, please visit the City of Toronto Public Health: ',
     },
     {
-      text:
-        'https://www.toronto.ca/home/covid-19',
-      link:
-        'https://www.toronto.ca/home/covid-19',
+      text: 'https://www.toronto.ca/home/covid-19',
+      link: 'https://www.toronto.ca/home/covid-19',
       color: '#1155CC',
       decoration: 'underline',
       lineHeight: 1,
     },
-    '\n\n'
+    '\n\n',
   ]
 
   return {

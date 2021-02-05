@@ -637,15 +637,21 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        if(resultData.result === ResultTypes.Negative){
+        if (resultData.result === ResultTypes.Negative) {
           await this.sendTestResults(resultData, PCRResultPDFType.Negative)
-          console.log(`SendNotification: Success: Sent Results for ${resultData.barCode} Result: ${resultData.result}`)
-        }else if(resultData.result === ResultTypes.Positive){
+          console.log(
+            `SendNotification: Success: Sent Results for ${resultData.barCode} Result: ${resultData.result}`,
+          )
+        } else if (resultData.result === ResultTypes.Positive) {
           await this.sendTestResults(resultData, PCRResultPDFType.Positive)
-          console.log(`SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`)
-        }else if(resultData.result === ResultTypes.PresumptivePositive){
+          console.log(
+            `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
+          )
+        } else if (resultData.result === ResultTypes.PresumptivePositive) {
           await this.sendTestResults(resultData, PCRResultPDFType.PresumptivePositive)
-          console.log(`SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`)
+          console.log(
+            `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
+          )
         } else {
           //WARNING
           console.log(
@@ -656,7 +662,10 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendTestResults(resultData: PCRTestResultEmailDTO, pcrResultPDFType: PCRResultPDFType): Promise<void> {
+  async sendTestResults(
+    resultData: PCRTestResultEmailDTO,
+    pcrResultPDFType: PCRResultPDFType,
+  ): Promise<void> {
     const pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
     const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 

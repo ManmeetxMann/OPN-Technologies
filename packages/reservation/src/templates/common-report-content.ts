@@ -273,7 +273,7 @@ const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
       },
       margin: [0, -1, 0, 0],
       fontSize: 10,
-    }
+    },
   ]
 }
 

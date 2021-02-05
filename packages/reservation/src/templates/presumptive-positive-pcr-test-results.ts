@@ -55,9 +55,9 @@ const messageBody = (): Content => {
 
 const messageBody2Page = (): Content => {
   const textInfo: Content = [
-    'The probability of a false positive is low. ', 
+    'The probability of a false positive is low. ',
     'However, due to the variability in testing platforms used both within and outside the public healthcare system, ',
-    'the ‘Presumptive Positive’ results you have received from FH Health may not (<5% chance) produce a positive result ', 
+    'the ‘Presumptive Positive’ results you have received from FH Health may not (<5% chance) produce a positive result ',
     'with the Public Health reference laboratory. ',
     'In this case, Public Health will receive a "SARS-Cov-2 Not Detected" report from the reference laboratory, ',
     'and we will similarly notify you of any such change in your status. \n\n',
@@ -71,10 +71,8 @@ const messageBody2Page = (): Content => {
     },
     'Your confirmatory result, whether negative or positive, will also be posted on the OLIS website. You must use your OHIP number to access the results:\n',
     {
-      text:
-        'https://covid19results.ehealthontario.ca:4443/agree',
-      link:
-        'https://covid19results.ehealthontario.ca:4443/agree',
+      text: 'https://covid19results.ehealthontario.ca:4443/agree',
+      link: 'https://covid19results.ehealthontario.ca:4443/agree',
       color: '#1155CC',
       decoration: 'underline',
       lineHeight: 1,
