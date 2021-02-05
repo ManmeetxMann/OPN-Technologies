@@ -94,9 +94,7 @@ async function createPcrTestResult(
   const pcrResult =
     legacyTestResult.result === '2019-nCoV Detected' ? 'Positive' : legacyTestResult.result
   try {
-    const convertedDeadline = appointment.data().deadline._seconds
-      ? appointment.data().deadline
-      : makeFirestoreTimestamp(moment(appointment.data().deadline).toDate())
+
     const pcrTestResult = await database.collection('pcr-test-results').add({
       appointmentId: appointment.id,
       barCode: legacyTestResult.barCode,
@@ -107,7 +105,7 @@ async function createPcrTestResult(
       organizationId: legacyTestResult.organizationId,
       result: pcrResult,
       linkedBarCodes: [],
-      deadline: convertedDeadline,
+      deadline: appointment.data().deadline,
       resultSpecs: {
         action: 'SendThisResult',
         autoResult: pcrResult,
