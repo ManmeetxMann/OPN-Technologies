@@ -518,16 +518,7 @@ export class PCRTestResultsService {
     if (resultData.resultSpecs.notify) {
       const pcrResultDataForEmail = {
         ...pcrResultDataForDbUpdate,
-        email: appointment.email,
-        phone: appointment.phone,
-        dateOfBirth: appointment.dateOfBirth,
-        dateTime: appointment.dateTime,
-        timeOfAppointment: appointment.timeOfAppointment,
-        registeredNursePractitioner: appointment.registeredNursePractitioner,
-        travelID: appointment.travelID,
-        travelIDIssuingCountry: appointment.travelIDIssuingCountry,
-        swabMethod: appointment.swabMethod,
-        ohipCard: appointment.ohipCard,
+        ...appointment
       }
       await this.sendNotification(pcrResultDataForEmail, resultData.resultSpecs.action)
     } else {
