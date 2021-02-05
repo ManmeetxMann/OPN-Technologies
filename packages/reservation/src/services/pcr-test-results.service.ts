@@ -8,7 +8,7 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {toDateFormat} from '../../../common/src/utils/times'
-import { formatDateRFC822Local } from '../utils/datetime.helper'
+import {formatDateRFC822Local} from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 
 import {AppoinmentService} from './appoinment.service'

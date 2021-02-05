@@ -1,7 +1,7 @@
-import {PageableRequestFilter} from '../../../common/src/types/request'
-import {Config} from '../../../common/src/utils/config'
 import {firestore} from 'firebase-admin'
-import { formatDateRFC822Local } from '../utils/datetime.helper'
+
+import {PageableRequestFilter} from '../../../common/src/types/request'
+import {formatDateRFC822Local} from '../utils/datetime.helper'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
@@ -271,7 +271,6 @@ export const appointmentUiDTOResponse = (
   appointment: AppointmentDBModel & {canCancel?: boolean},
   isLabUser: boolean,
 ): AppointmentUiDTO => {
-  const timeZone = Config.get('DEFAULT_TIME_ZONE')
   return {
     id: appointment.id,
     firstName: appointment.firstName,
@@ -311,7 +310,6 @@ export const appointmentByBarcodeUiDTOResponse = (
   appointment: AppointmentDBModel,
   organizationName?: string,
 ): AppointmentUiDTO & {organizationName?: string} => {
-  const timeZone = Config.get('DEFAULT_TIME_ZONE')
   return {
     id: appointment.id,
     firstName: appointment.firstName,

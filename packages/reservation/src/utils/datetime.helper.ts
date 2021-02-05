@@ -9,7 +9,7 @@ export const makeDeadline = (
   utcDateTime: moment.Moment,
   deadlineLabel?: DeadlineLabel,
 ): firestore.Timestamp => {
-  let deadline:moment.Moment
+  let deadline: moment.Moment
   const tzDateTime = utcDateTime.clone().tz(timeZone)
   if (deadlineLabel === DeadlineLabel.NextDay) {
     deadline = makeTimeEndOfTheDayMoment(tzDateTime.add(1, 'd'))
@@ -40,6 +40,6 @@ export const makeFirestoreTimestamp = (localDate: Date | string): firestore.Time
   return firestore.Timestamp.fromDate(moment.tz(localDate, timeZone).toDate())
 }
 
-export const formatDateRFC822Local = (timestamp: firestore.Timestamp): string =>{
+export const formatDateRFC822Local = (timestamp: firestore.Timestamp): string => {
   return moment(timestamp.toDate()).tz(timeZone).format()
 }
