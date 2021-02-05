@@ -78,6 +78,10 @@ components:
       properties:
         token:
           type: string
+        statusToken:
+          type: string
+        userId:
+          type: string
         locationId:
           type: string
         enteredAt:
@@ -100,6 +104,7 @@ components:
                 type: string
               exitAt:
                 type: string
+
     Passport:
       type: object
       additionalProperties: false

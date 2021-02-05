@@ -10,6 +10,7 @@ import {OrganizationService} from '../../../../../enterprise/src/services/organi
 import {AccessService} from '../../../service/access.service'
 import {AccessTokenService} from '../../../service/access-token.service'
 import {AccessModel} from '../../../repository/access.repository'
+import {accessDTOResponseV1} from '../../models/access'
 
 import IRouteController from '../../../../../common/src/interfaces/IRouteController.interface'
 import {isPassed, safeTimestamp} from '../../../../../common/src/utils/datetime-util'
@@ -131,7 +132,7 @@ class AdminController implements IRouteController {
 
       const newAccess = await this.accessService.handleEnterV2(access)
       const responseBody = {
-        access: newAccess,
+        access: accessDTOResponseV1(newAccess),
         passport,
         user,
         dependants: dependants.filter(({id}) => newAccess.dependants[id]),
@@ -155,7 +156,7 @@ class AdminController implements IRouteController {
       const responseBody = {
         passport,
         dependants: dependants.filter(({id}) => newAccess.dependants[id]),
-        access: newAccess,
+        access: accessDTOResponseV1(newAccess),
         user,
       }
       res.json(actionSucceed(responseBody))
@@ -244,7 +245,7 @@ class AdminController implements IRouteController {
       const access = await this.accessService.handleEnterV2(enteringAccess)
       const responseBody = {
         passport: selectedPassport,
-        access,
+        access: accessDTOResponseV1(access),
         user,
       }
       res.json(actionSucceed(responseBody))
@@ -275,7 +276,7 @@ class AdminController implements IRouteController {
       const {access, passport} = await this.forceExit(latestAccess, userId)
       const responseBody = {
         passport,
-        access,
+        access: accessDTOResponseV1(access),
         user,
       }
       res.json(actionSucceed(responseBody))
@@ -424,7 +425,7 @@ class AdminController implements IRouteController {
 
         res.json(
           actionSucceed({
-            access: accessForEnteringOrExiting,
+            access: accessDTOResponseV1(accessForEnteringOrExiting),
             user,
             passport: latestPassport,
           }),

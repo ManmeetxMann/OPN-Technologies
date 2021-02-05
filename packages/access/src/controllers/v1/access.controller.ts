@@ -20,6 +20,7 @@ import {OrganizationLocation} from '../../../../enterprise/src/models/organizati
 import {AccessService} from '../../service/access.service'
 import {AccessTokenService} from '../../service/access-token.service'
 import {AccessModel} from '../../repository/access.repository'
+import {accessDTOResponseV1} from '../../models/access'
 
 class UserController implements IRouteController {
   public router = express.Router()
@@ -95,7 +96,7 @@ class UserController implements IRouteController {
       )
 
       const response = access
-        ? actionSucceed(access)
+        ? actionSucceed(accessDTOResponseV1(access))
         : actionFailed('Access denied: Cannot grant access for the given status-token')
 
       res.status(access ? 200 : 403).json(response)
@@ -170,7 +171,7 @@ class UserController implements IRouteController {
       const newAccess = await this.accessService.handleEnterV2(access)
       return res.json(
         actionSucceed({
-          access: newAccess,
+          access: accessDTOResponseV1(newAccess),
         }),
       )
     }
@@ -208,7 +209,7 @@ class UserController implements IRouteController {
 
     return res.json(
       actionSucceed({
-        access: newAccess,
+        access: accessDTOResponseV1(newAccess),
       }),
     )
   }
