@@ -10,7 +10,7 @@ import loggerMiddleware from '../../common/src/middlewares/logger'
 
 import AdminController from './controllers/admin.controller'
 import PortalController from './controllers/portal.controller'
-import PCRTestResultController from './controllers/v1/admin/pcr-test-results.controller'
+import PCRTestResultAdminController from './controllers/v1/admin/pcr-test-results.controller'
 import ProcessPCRResultController from './controllers/v1/internal/process-pcr-test-result.controller'
 import WebhookController from './controllers/webhook.controller'
 import TestResultController from './controllers/v1/admin/test-results.controller.ts'
@@ -23,6 +23,7 @@ import AppointmentWebhookController from './controllers/v1/acuity_webhook/appoin
 import BookingLocationController from './controllers/v1/booking-locations.controller'
 import AppointmentAvailabilityController from './controllers/v1/appointment-availability.controller'
 import AppointmentController from './controllers/v1/appointment.controller'
+import PCRTestResultController from './controllers/v1/test-results.controller'
 
 //import * as debugClient from '@google-cloud/debug-agent'
 //debugClient.start({allowExpressions: true})
@@ -44,12 +45,13 @@ const app = new App({
     new AppointmentWebhookController(),
     new TestRunsController(),
     new ProcessPCRResultController(),
-    new PCRTestResultController(),
+    new PCRTestResultAdminController(),
     new AppointmentControllerV2(),
     new AppointmentController(),
     new BookingLocationController(),
     new AppointmentAvailabilityController(),
     new AppointmentController(),
+    new PCRTestResultController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],

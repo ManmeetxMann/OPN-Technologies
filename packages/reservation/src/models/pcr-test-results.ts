@@ -57,6 +57,18 @@ export type PCRTestResultConfirmRequest = {
   action: PCRResultActionsForConfirmation
 }
 
+export enum PCRTestResultStyle {
+  Postive = 'RED',
+  Negative = 'GREEN',
+  Invalid = 'YELLOW',
+  Inconclusive = 'BLUE',
+  AnyOther = 'GREY',
+}
+
+export enum PCRTestResultType {
+  PCR = 'PCR',
+}
+
 type PCRResultSpecs = {
   action: PCRResultActions
   autoResult: ResultTypes
@@ -115,6 +127,7 @@ export type PCRTestResultDBModel = PCRTestResultData &
     runNumber: number
     reCollectNumber: number
     updatedAt: firestore.Timestamp
+    userId?: string
   }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -267,3 +280,16 @@ export const pcrTestResultsResponse = (
   status: pcrTestResult.status,
   details: pcrTestResult.details,
 })
+
+export const resultToStyle = (result: ResultTypes): PCRTestResultStyle => {
+  return PCRTestResultStyle[result] ? PCRTestResultStyle[result] : PCRTestResultStyle.AnyOther
+}
+
+export type TestResutsDTO = {
+  id: string
+  type: PCRTestResultType
+  name: string
+  testDateTime: Date
+  style: PCRTestResultStyle
+  result: ResultTypes
+}
