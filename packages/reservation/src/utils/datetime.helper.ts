@@ -4,7 +4,6 @@ import {firestore} from 'firebase-admin'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 import moment from 'moment-timezone'
-import {timeStamp} from 'console'
 
 export const makeDeadline = (
   utcDateTime: moment.Moment,
