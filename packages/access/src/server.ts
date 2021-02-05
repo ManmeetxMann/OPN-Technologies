@@ -5,6 +5,7 @@ import loggerMiddleware from '../../common/src/middlewares/logger'
 import AdminController from './controllers/admin.controller'
 import UserController from './controllers/user.controller'
 import AccessController from './controllers/v1/access.controller'
+import AccessAdminController from './controllers/v1/admin/access.controller'
 import RootController from './controllers/root.controller'
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
@@ -19,6 +20,7 @@ const app = new App({
     new RootController(),
     new UserController(),
     new AdminController(),
+    new AccessAdminController(),
     new AccessController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
