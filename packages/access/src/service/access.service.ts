@@ -177,6 +177,50 @@ export class AccessService {
     )
   }
 
+  // In this version, we don't decorate the dependants
+  async handleEnterV2(rawAccess: AccessModel): Promise<AccessModel> {
+    // createdAt could be a string, and we don't want to rewrite it
+    const access: AccessModel = _.omit(rawAccess, ['createdAt'])
+
+    if (!!access.enteredAt || !!access.exitAt) {
+      throw new BadRequestException('Token already used to enter or exit')
+    }
+    // all dependants named in the access enter, no need to filter here
+    for (const id in access.dependants) {
+      if (!!access.dependants[id].enteredAt || !!access.dependants[id].exitAt) {
+        throw new BadRequestException('Token already used to enter or exit')
+      }
+    }
+    const dependants = {}
+    for (const id in access.dependants) {
+      dependants[id] = {
+        ...access.dependants[id],
+        enteredAt: serverTimestamp(),
+      }
+    }
+    const newAccess = access.includesGuardian
+      ? {
+          ...access,
+          enteredAt: serverTimestamp(),
+          dependants,
+        }
+      : {
+          ...access,
+          dependants,
+        }
+    const count = Object.keys(dependants).length + (access.includesGuardian ? 1 : 0)
+
+    console.log(`Processed a V2 ENTER for Access id: ${access.id}`)
+    const savedAccess = await this.accessRepository.update(newAccess)
+    this.incrementPeopleOnPremises(access.locationId, count).catch((e) =>
+      console.error(`Failed to increment people for access ${access.id}: [${e}]`),
+    )
+    this.accessListener
+      .addEntry(savedAccess)
+      .catch((e) => console.error(`Failed to add entry for access ${access.id}: [${e}]`))
+    return savedAccess
+  }
+
   handleExit(rawAccess: AccessModel): Promise<AccessWithDependantNames> {
     // createdAt could be a string, and we don't want to rewrite it
     const access: AccessModel = _.omit(rawAccess, ['createdAt'])
@@ -266,6 +310,57 @@ export class AccessService {
           }
         }),
     )
+  }
+
+  // this function does not decorate dependants
+  async handleExitV2(rawAccess: AccessModel): Promise<AccessModel> {
+    // createdAt could be a string, and we don't want to rewrite it
+    const access: AccessModel = _.omit(rawAccess, ['createdAt'])
+
+    const {includesGuardian} = access
+    const dependantIds = Object.keys(access.dependants)
+    if (!includesGuardian && !dependantIds.length) {
+      throw new BadRequestException('Must specify at least one user')
+    }
+    if (!!access.exitAt) {
+      throw new BadRequestException('Token already used to exit')
+    }
+    if (dependantIds.some((id) => !!access.dependants[id].exitAt)) {
+      throw new BadRequestException('Token already used to exit')
+    }
+
+    const newDependants = dependantIds.reduce(
+      (byId, id) => ({
+        ...byId,
+        [id]: {
+          ...access.dependants[id],
+          exitAt: serverTimestamp(),
+        },
+      }),
+      {},
+    )
+
+    const newAccess = includesGuardian
+      ? {
+          ...access,
+          dependants: newDependants,
+          exitAt: serverTimestamp(),
+        }
+      : {
+          ...access,
+          dependants: newDependants,
+        }
+    const count = dependantIds.length + (includesGuardian ? 1 : 0)
+
+    console.log(`Processed a V2 EXIT for Access id: ${access.id}`)
+    const savedAccess = await this.accessRepository.update(newAccess)
+    this.decreasePeopleOnPremises(access.locationId, count).catch((e) =>
+      console.error(`Failed to decrement people for access ${access.id}: [${e}]`),
+    )
+    this.accessListener
+      .addExit(savedAccess, includesGuardian, dependantIds)
+      .catch((e) => console.error(`Failed to add exit for access ${access.id}: [${e}]`))
+    return savedAccess
   }
 
   findOneByToken(token: string): Promise<AccessModel> {

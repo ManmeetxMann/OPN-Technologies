@@ -10,7 +10,6 @@ import {OrganizationService} from '../../../../../enterprise/src/services/organi
 import {AccessService} from '../../../service/access.service'
 import {AccessTokenService} from '../../../service/access-token.service'
 import {AccessModel} from '../../../repository/access.repository'
-import {AccessWithDependantNames} from '../../../models/access'
 
 import IRouteController from '../../../../../common/src/interfaces/IRouteController.interface'
 import {isPassed, safeTimestamp} from '../../../../../common/src/utils/datetime-util'
@@ -65,11 +64,9 @@ class AdminController implements IRouteController {
       // manually check someone in or out
       .post('/enter', requireAdminWithOrg, this.enter)
       .post('/exit', requireAdminWithOrg, this.exit)
-      .post('/enterorexit/tag', requireAdminWithOrg, this.enterOrExitUsingATag)
+      .post('/enter-or-exit/tag', requireAdminWithOrg, this.enterOrExitUsingATag)
       .get('/stats', requireAdminWithOrg, this.stats)
-      // TODO: move to non-admin?
-      .get('/:organizationId/locations/accessible', this.getAccessibleLocations)
-    this.router.use('/access/admin', routes)
+    this.router.use('/access/api/v1/admin/access', routes)
   }
 
   stats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -99,9 +96,9 @@ class AdminController implements IRouteController {
       const {organizationId} = res.locals
       const access = await this.accessService.findOneByToken(accessToken)
       const {userId, locationId} = access
-      const [passport, user, location] = await Promise.all([
+      const [passport, {guardian: user, dependants}, location] = await Promise.all([
         this.passportService.findOneByToken(access.statusToken),
-        this.userService.findOne(userId),
+        this.userService.getUserAndDependants(userId),
         this.organizationService.getLocation(organizationId, locationId),
       ])
 
@@ -132,12 +129,12 @@ class AdminController implements IRouteController {
         throw new UnauthorizedException(`Passport ${passport.id} has expired`)
       }
 
-      const {dependants, ...newAccess} = await this.accessService.handleEnter(access)
+      const newAccess = await this.accessService.handleEnterV2(access)
       const responseBody = {
         access: newAccess,
         passport,
         user,
-        dependants,
+        dependants: dependants.filter(({id}) => newAccess.dependants[id]),
       }
       return res.json(actionSucceed(responseBody))
     } catch (error) {
@@ -150,14 +147,14 @@ class AdminController implements IRouteController {
       const {accessToken} = req.body
       const access = await this.accessService.findOneByToken(accessToken)
       const {userId} = access
-      const [passport, user] = await Promise.all([
+      const [passport, {guardian: user, dependants}] = await Promise.all([
         this.passportService.findOneByToken(access.statusToken),
-        this.userService.findOne(userId),
+        this.userService.getUserAndDependants(userId),
       ])
-      const {dependants, ...newAccess} = await this.accessService.handleExit(access)
+      const newAccess = await this.accessService.handleExitV2(access)
       const responseBody = {
         passport,
-        dependants,
+        dependants: dependants.filter(({id}) => newAccess.dependants[id]),
         access: newAccess,
         user,
       }
@@ -167,14 +164,13 @@ class AdminController implements IRouteController {
     }
   }
 
-  enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
+  enter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // enter a user into a location
-    // if forceExit is true, the user will be checked out of their current location
+    // if autoExit is true, the user will be checked out of their current location
     // otherwise, if they are checked in somewhere the request will fail
     try {
       const {userId, locationId, autoExit} = req.body
       const {organizationId} = res.locals
-      // TODO: need to check location info?
       const [user, location] = await Promise.all([
         this.userService.findOne(userId),
         this.organizationService.getLocation(organizationId, locationId),
@@ -182,6 +178,16 @@ class AdminController implements IRouteController {
       // backwards compat for multi-user access
       const {delegates: delegateIds} = user
       const potentialParentIds = [null, ...delegateIds]
+
+      if (!location) {
+        throw new ForbiddenException(
+          `Location ${locationId} does not exist or does not belong to organization ${organizationId}`,
+        )
+      }
+      if (!location.allowAccess) {
+        throw new ForbiddenException('Location does not permit direct check-in')
+      }
+
       const latestPassports = (
         await Promise.all(
           potentialParentIds.map((parent) =>
@@ -235,8 +241,7 @@ class AdminController implements IRouteController {
         [],
         true,
       )
-      const newAccess = await this.accessService.handleEnter(enteringAccess)
-      const {dependants, ...access} = newAccess
+      const access = await this.accessService.handleEnterV2(enteringAccess)
       const responseBody = {
         passport: selectedPassport,
         access,
@@ -267,10 +272,9 @@ class AdminController implements IRouteController {
       if (locationId && latestAccess.locationId !== locationId) {
         throw new ForbiddenException(`User is not in location ${locationId}`)
       }
-      const exitData = await this.forceExit(latestAccess, userId)
-      const {dependants, ...access} = exitData.access
+      const {access, passport} = await this.forceExit(latestAccess, userId)
       const responseBody = {
-        passport: exitData.passport,
+        passport,
         access,
         user,
       }
@@ -283,9 +287,10 @@ class AdminController implements IRouteController {
   forceExit = async (
     access: AccessModel,
     userId: string,
-  ): Promise<{passport: Passport; access: AccessWithDependantNames}> => {
-    // make the user exit using the given access. If thiat would have side effects (i.e. other users exiting)
-    // create a new access instead. If needed, create a new passport
+  ): Promise<{passport: Passport; access: AccessModel}> => {
+    // utility method.
+    // make the user exit using the given access. If that would have side effects (i.e. other users exiting)
+    // create a new access instead. If needed, create a new (pending) passport
     const isSoleUser =
       (access.userId === userId &&
         access.includesGuardian &&
@@ -295,10 +300,10 @@ class AdminController implements IRouteController {
         Object.keys(access.dependants).length === 1 &&
         access[userId])
     let passport: Passport = null
-    let newAccess: AccessWithDependantNames = null
+    let newAccess: AccessModel = null
     if (isSoleUser) {
       passport = await this.passportService.findOneByToken(access.statusToken)
-      newAccess = await this.accessService.handleExit(access)
+      newAccess = await this.accessService.handleExitV2(access)
     } else {
       // latestAccess contains other users
       // we must create a new access
@@ -314,7 +319,7 @@ class AdminController implements IRouteController {
         [],
         true,
       )
-      newAccess = await this.accessService.handleExit(soleAccess)
+      newAccess = await this.accessService.handleExitV2(soleAccess)
     }
     return {
       access: newAccess,
@@ -394,7 +399,7 @@ class AdminController implements IRouteController {
           authenticatedUserId,
         )
 
-        const accessForEntering = await this.accessService.handleEnter(accessToken)
+        const accessForEntering = await this.accessService.handleEnterV2(accessToken)
         res.json(actionSucceed(accessForEntering))
       } else {
         // Get Latest Passport (as they need a valid access)
@@ -414,31 +419,17 @@ class AdminController implements IRouteController {
         const shouldExit =
           access && (isADependant ? access.dependants[tag.userId] : access)?.enteredAt
         const accessForEnteringOrExiting = shouldExit
-          ? await this.accessService.handleExit(access)
-          : await this.accessService.handleEnter(access)
+          ? await this.accessService.handleExitV2(access)
+          : await this.accessService.handleEnterV2(access)
 
-        res.json(actionSucceed(accessForEnteringOrExiting))
+        res.json(
+          actionSucceed({
+            access: accessForEnteringOrExiting,
+            user,
+            passport: latestPassport,
+          }),
+        )
       }
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  getAccessibleLocations = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      const {organizationId} = req.body
-      const {userId} = req.query
-
-      // TODO: Get locations that have the same questionaire id as the location id in the status token
-
-      // Get all status tokens
-      // const statusTokens = await this.passportService.findByValidity(userId as string | null)
-
-      res.json(actionSucceed({organizationId, userId}))
     } catch (error) {
       next(error)
     }
