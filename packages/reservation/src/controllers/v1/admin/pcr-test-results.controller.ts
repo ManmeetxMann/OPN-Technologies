@@ -1,5 +1,6 @@
 import {NextFunction, Request, Response, Router} from 'express'
 import moment from 'moment'
+import {flatten} from 'lodash'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
@@ -13,7 +14,6 @@ import {ResourceNotFoundException} from '../../../../../common/src/exceptions/re
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {TestRunsService} from '../../../services/test-runs.service'
-import {flatten} from 'lodash'
 
 import {
   PCRListQueryRequest,
@@ -29,6 +29,7 @@ import {
 } from '../../../models/pcr-test-results'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {AppointmentDBModel, AppointmentReasons} from '../../../models/appointment'
+import { formatDateRFC822Local } from '../../../utils/datetime.helper'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
@@ -219,8 +220,8 @@ class PCRTestResultController implements IControllerBase {
                       result: linkedResult.result,
                       reCollectNumber: linkedResult.reCollectNumber,
                       runNumber: linkedResult.runNumber,
-                      dateOfAppointment: linkedAppointment
-                        ? linkedAppointment.dateOfAppointment
+                      dateTime: linkedAppointment
+                        ? linkedAppointment.dateTime
                         : '',
                       barCode: linkedResult.barCode,
                       updatedAt: linkedResult.updatedAt,
@@ -234,7 +235,7 @@ class PCRTestResultController implements IControllerBase {
                     result: testSame.result,
                     reCollectNumber: testSame.reCollectNumber,
                     runNumber: testSame.runNumber,
-                    dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
+                    dateTime: appointment ? appointment.dateTime : '',
                     barCode: testSame.barCode,
                     updatedAt: testSame.updatedAt,
                     waitingResult: testSame.waitingResult,
@@ -275,7 +276,7 @@ class PCRTestResultController implements IControllerBase {
               }),
               reCollectNumber: pcrTest.reCollectNumber,
               runNumber: pcrTest.runNumber,
-              dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
+              dateTime: appointment ? formatDateRFC822Local(appointment.dateTime) : '',
             }
           }
           return {
@@ -286,7 +287,7 @@ class PCRTestResultController implements IControllerBase {
             reason: AppointmentReasons.NotFound,
             reCollectNumber: '',
             runNumber: '',
-            dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
+            dateTime: appointment ? formatDateRFC822Local(appointment.dateTime) : '',
           }
         }),
       )

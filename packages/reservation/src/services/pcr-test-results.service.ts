@@ -503,7 +503,7 @@ export class PCRTestResultsService {
       lastName: appointment.lastName,
       appointmentId: appointment.id,
       organizationId: appointment.organizationId,
-      dateOfAppointment: appointment.dateOfAppointment,
+      dateTime: appointment.dateTime,
       waitingResult: false,
       displayForNonAdmins: true, //TODO
       recollected: resultData.resultSpecs.action === PCRResultActions.RequestReCollect,
@@ -740,7 +740,7 @@ export class PCRTestResultsService {
       appointmentId: data.appointment.id,
       barCode: data.appointment.barCode,
       confirmed: data.confirmed ?? false,
-      dateOfAppointment: data.appointment.dateOfAppointment,
+      dateTime: data.appointment.dateTime,
       displayForNonAdmins: true,
       deadline: data.appointment.deadline,
       firstName: data.appointment.firstName,

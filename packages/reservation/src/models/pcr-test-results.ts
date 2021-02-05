@@ -98,7 +98,7 @@ type AppointmentDataForPCRResult = {
   lastName: string
   appointmentId: string
   organizationId?: string
-  dateOfAppointment: string
+  dateTime: firestore.Timestamp
 }
 
 export type PCRTestResultDBModel = PCRTestResultData &
@@ -129,7 +129,7 @@ export type PCRTestResultHistoryDTO = {
   reason: AppointmentReasons
   reCollectNumber: number | string
   runNumber: number | string
-  dateOfAppointment: string
+  dateTime: string
 }
 
 export type PCRResults = {
@@ -144,7 +144,7 @@ export type PCRResults = {
   result: string
   reCollectNumber: string
   runNumber: string
-  dateOfAppointment: string
+  dateTime: string
   barCode: string
 }
 
@@ -198,12 +198,12 @@ export const PCRTestResultHistoryResponse = (
     barCode: result.barCode,
     reCollectNumber: result.reCollectNumber ? `S${result.reCollectNumber}` : '',
     runNumber: result.runNumber ? `R${result.runNumber}` : '',
-    dateOfAppointment: result.dateOfAppointment,
+    dateTime: result.dateTime,
   })),
   reCollectNumber: pcrTests.reCollectNumber ? `S${pcrTests.reCollectNumber}` : '',
   runNumber: pcrTests.runNumber ? `R${pcrTests.runNumber}` : '',
   reason: pcrTests.reason,
-  dateOfAppointment: pcrTests.dateOfAppointment,
+  dateTime: pcrTests.dateTime,
 })
 
 export type PcrTestResultsListByDeadlineRequest = {
@@ -222,7 +222,6 @@ export type PCRTestResultListDTO = {
   firstName: string
   lastName: string
   testType: string
-  dateOfAppointment?: string
   barCode: string
   result: ResultTypes
   vialLocation?: string
@@ -243,16 +242,6 @@ export type PCRTestResultByDeadlineListDTO = {
   reCollectNumber: string
   dateTime: string
 }
-
-export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResultListDTO => ({
-  id: pcrResult.id,
-  firstName: pcrResult.firstName,
-  lastName: pcrResult.lastName,
-  testType: 'PCR',
-  dateOfAppointment: pcrResult.dateOfAppointment,
-  barCode: pcrResult.barCode,
-  result: pcrResult.result,
-})
 
 export type pcrTestResultsDTO = {
   barCode: string
