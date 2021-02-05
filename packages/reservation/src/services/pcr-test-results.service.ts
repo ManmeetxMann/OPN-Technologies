@@ -504,7 +504,8 @@ export class PCRTestResultsService {
       dateOfAppointment: appointment.dateOfAppointment,
       waitingResult: false,
       displayForNonAdmins: true, //TODO
-      recollected: (resultData.resultSpecs.action===PCRResultActions.RequestReCollect)
+      recollected: (resultData.resultSpecs.action===PCRResultActions.RequestReCollect),
+      confirmed: false
     }
 
     const pcrResultRecorded = await this.pcrTestResultsRepository.updateData(

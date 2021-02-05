@@ -5,6 +5,7 @@ export default Joi.object({
   adminId: Joi.string().required(),
   appointmentId: Joi.string().required(),
   barCode: Joi.string().required(),
+  confirmed: Joi.boolean().default(false),
   dateOfAppointment: Joi.string().required(),
   deadline: FirestoreTimestamp.isValid().required(),
   displayForNonAdmins: Joi.boolean().required(),

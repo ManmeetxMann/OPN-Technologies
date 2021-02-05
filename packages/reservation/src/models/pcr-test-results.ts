@@ -107,6 +107,7 @@ export type PCRTestResultDBModel = PCRTestResultData &
     linkedBarCodes: string[]
     result: ResultTypes
     waitingResult: boolean
+    confirmed: boolean
     recollected: boolean
     displayForNonAdmins: boolean
     deadline: firestore.Timestamp
