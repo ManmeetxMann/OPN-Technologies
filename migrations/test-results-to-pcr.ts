@@ -3,7 +3,8 @@
  */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
-import moment from 'moment-timezone'
+import DBSchema from '../packages/reservation/src/dbschemas/pcr-test-results.schema'
+import { PCRTestResultDBModel } from '../packages/reservation/src/models/pcr-test-results'
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -23,10 +24,6 @@ type Result = {
   value: unknown
 }
 
-export const makeFirestoreTimestamp = (date: Date): firestore.Timestamp => {
-  return firestore.Timestamp.fromDate(date)
-}
-
 export async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]> {
   return Promise.all(
     promises.map((promise) =>
@@ -42,6 +39,7 @@ export async function promiseAllSettled(promises: Promise<unknown>[]): Promise<R
     ),
   )
 }
+
 async function updateTestResults(): Promise<Result[]> {
   let offset = 0
   let hasMore = true
@@ -57,7 +55,7 @@ async function updateTestResults(): Promise<Result[]> {
 
     offset += testResultSnapshot.docs.length
     hasMore = !testResultSnapshot.empty
-    //hasMore = false
+    hasMore = false
 
     for (const testResult of testResultSnapshot.docs) {
       const promises = []
@@ -94,18 +92,20 @@ async function createPcrTestResult(
   const pcrResult =
     legacyTestResult.result === '2019-nCoV Detected' ? 'Positive' : legacyTestResult.result
   try {
-
-    const pcrTestResult = await database.collection('pcr-test-results').add({
+    const validatedData = await DBSchema.validateAsync({
+      adminId: 'MIGRATION',
       appointmentId: appointment.id,
       barCode: legacyTestResult.barCode,
+      confirmed: false,
       dateOfAppointment: legacyTestResult.dateOfAppointment,
+      deadline: appointment.data().deadline,
       displayForNonAdmins: true,
       firstName: legacyTestResult.firstName,
       lastName: legacyTestResult.lastName,
-      organizationId: legacyTestResult.organizationId,
+      organizationId: legacyTestResult.organizationId??null,
       result: pcrResult,
       linkedBarCodes: [],
-      deadline: appointment.data().deadline,
+      reCollectNumber: 1,
       resultSpecs: {
         action: 'SendThisResult',
         autoResult: pcrResult,
@@ -118,8 +118,15 @@ async function createPcrTestResult(
         notify: true,
         quasar670Ct: legacyTestResult.quasar670Ct,
         quasar670NGene: legacyTestResult.quasar670NGene,
-        resultDate: legacyTestResult.resultDate,
+        resultDate: legacyTestResult.resultDate??legacyTestResult.dateOfAppointment,
       },
+      recollected: false,
+      runNumber: 1,
+      waitingResult: false,
+    })
+
+    const pcrResultData:PCRTestResultDBModel={
+      ...validatedData,
       timestamps: {
         createdAt: legacyTestResult.timestamps.createdAt,
         updatedAt: legacyTestResult.timestamps.updatedAt,
@@ -127,11 +134,13 @@ async function createPcrTestResult(
           testResultsToPCRResults: firestore.FieldValue.serverTimestamp(),
         },
       },
-      updatedAt: legacyTestResult.timestamps.updatedAt | legacyTestResult.timestamps.createdAt,
-      waitingResult: false,
-    })
+      updatedAt: (legacyTestResult.timestamps.updatedAt)?? legacyTestResult.timestamps.createdAt,
+    }
+    const pcrTestResult = await database.collection('pcr-test-results').add(pcrResultData)
+
     //Update Appointments
     updateAppointment(appointment, pcrResult)
+
     if (pcrTestResult.id) {
       console.info(`Successfully Copied results for ${legacyTestResultId} to ${pcrTestResult.id}`)
       return Promise.resolve()
