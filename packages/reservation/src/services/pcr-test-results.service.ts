@@ -48,6 +48,7 @@ import {
 } from '../models/appointment'
 
 import confirmedNegativePCRResultsTemplate from '../templates/confirmed-negative-pcr-test-results'
+import confirmedPositivePCRResultsTemplate from '../templates/confirmed-positive-pcr-test-results'
 import testResultPDFTemplate from '../templates/pcr-test-result-pdf-content'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {makeDeadlineForFilter} from '../utils/datetime.helper'
@@ -628,8 +629,13 @@ export class PCRTestResultsService {
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedNegative: {
-        await this.sendMarkAsConfirmedNegativeNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} MarkAsConfirmedNegative`)
+        await this.sendMarkAsConfirmedNotification(resultData, notficationType)
+        console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
+        break
+      }
+      case EmailNotficationTypes.MarkAsConfirmedPositive: {
+        await this.sendMarkAsConfirmedNotification(resultData, notficationType)
+        console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
         break
       }
       default: {
@@ -646,9 +652,16 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendMarkAsConfirmedNegativeNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+  async sendMarkAsConfirmedNotification(
+    resultData: PCRTestResultEmailDTO,
+    notificationType: EmailNotficationTypes,
+  ): Promise<void> {
     const resultDate = moment(resultData.dateTime.toDate()).format('LL')
-    const {content, tableLayouts} = confirmedNegativePCRResultsTemplate(resultData, resultDate)
+
+    const {content, tableLayouts} =
+      notificationType === EmailNotficationTypes.MarkAsConfirmedPositive
+        ? confirmedPositivePCRResultsTemplate(resultData, resultDate)
+        : confirmedNegativePCRResultsTemplate(resultData, resultDate)
     const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
     await this.emailService.send({
