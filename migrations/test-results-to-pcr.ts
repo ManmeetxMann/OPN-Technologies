@@ -4,7 +4,7 @@
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
 import DBSchema from '../packages/reservation/src/dbschemas/pcr-test-results.schema'
-import { PCRTestResultDBModel } from '../packages/reservation/src/models/pcr-test-results'
+import {PCRTestResultDBModel} from '../packages/reservation/src/models/pcr-test-results'
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -102,7 +102,7 @@ async function createPcrTestResult(
       displayForNonAdmins: true,
       firstName: legacyTestResult.firstName,
       lastName: legacyTestResult.lastName,
-      organizationId: legacyTestResult.organizationId??null,
+      organizationId: legacyTestResult.organizationId ?? null,
       result: pcrResult,
       linkedBarCodes: [],
       reCollectNumber: 1,
@@ -118,14 +118,14 @@ async function createPcrTestResult(
         notify: true,
         quasar670Ct: legacyTestResult.quasar670Ct,
         quasar670NGene: legacyTestResult.quasar670NGene,
-        resultDate: legacyTestResult.resultDate??legacyTestResult.dateOfAppointment,
+        resultDate: legacyTestResult.resultDate ?? legacyTestResult.dateOfAppointment,
       },
       recollected: false,
       runNumber: 1,
       waitingResult: false,
     })
 
-    const pcrResultData:PCRTestResultDBModel = {
+    const pcrResultData: PCRTestResultDBModel = {
       ...validatedData,
       timestamps: {
         createdAt: legacyTestResult.timestamps.createdAt,
@@ -134,7 +134,7 @@ async function createPcrTestResult(
           testResultsToPCRResults: firestore.FieldValue.serverTimestamp(),
         },
       },
-      updatedAt: (legacyTestResult.timestamps.updatedAt)?? legacyTestResult.timestamps.createdAt,
+      updatedAt: legacyTestResult.timestamps.updatedAt ?? legacyTestResult.timestamps.createdAt,
     }
     const pcrTestResult = await database.collection('pcr-test-results').add(pcrResultData)
 

@@ -8,7 +8,7 @@ import querystring, {ParsedUrlQueryInput} from 'querystring'
 import fetch from 'node-fetch'
 import {serverTimestamp} from '../packages/common/src/utils/times'
 import DBSchema from '../packages/reservation/src/dbschemas/pcr-test-results.schema'
-import { PCRTestResultDBModel } from '../packages/reservation/src/models/pcr-test-results'
+import {PCRTestResultDBModel} from '../packages/reservation/src/models/pcr-test-results'
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -151,7 +151,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
   if (pcrTestResultsInDb.docs.length === 0) {
     const convertedDeadline = appointment.data().deadline
 
-    const validatedData:PCRTestResultDBModel = await DBSchema.validateAsync({
+    const validatedData: PCRTestResultDBModel = await DBSchema.validateAsync({
       adminId: 'MIGRATION',
       appointmentId: appointment.id,
       barCode: barCode,
