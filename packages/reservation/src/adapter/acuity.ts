@@ -380,13 +380,7 @@ abstract class AcuityScheduling {
             appointment.travelIDIssuingCountry = field.value
           }
           if (
-            field.fieldID == Number(Config.get('ACUITY_FIELD_HEALTH_CARD_FOR_ORGS')) &&
-            field.value
-          ) {
-            appointment.ohipCard = field.value
-          }
-          if (
-            field.fieldID == Number(Config.get('ACUITY_FIELD_HEALTH_CARD_FOR_NON_ORGS')) &&
+            field.fieldID == Number(Config.get('ACUITY_FIELD_OHIP_CARD')) &&
             field.value
           ) {
             appointment.ohipCard = field.value
