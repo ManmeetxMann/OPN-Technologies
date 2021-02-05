@@ -125,7 +125,7 @@ async function createPcrTestResult(
       waitingResult: false,
     })
 
-    const pcrResultData:PCRTestResultDBModel={
+    const pcrResultData:PCRTestResultDBModel = {
       ...validatedData,
       timestamps: {
         createdAt: legacyTestResult.timestamps.createdAt,
