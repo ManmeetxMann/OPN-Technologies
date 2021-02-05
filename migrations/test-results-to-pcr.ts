@@ -97,7 +97,7 @@ async function createPcrTestResult(
       appointmentId: appointment.id,
       barCode: legacyTestResult.barCode,
       confirmed: false,
-      dateOfAppointment: legacyTestResult.dateOfAppointment,
+      dateTime: appointment.data().dateTime,
       deadline: appointment.data().deadline,
       displayForNonAdmins: true,
       firstName: legacyTestResult.firstName,
