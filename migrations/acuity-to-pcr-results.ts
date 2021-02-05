@@ -126,10 +126,8 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     findByIdForms(acuityAppointment.forms, acuityBarCodeFormId).values,
     acuityFormFieldIds.barCode,
   ).value
-
   const utcDateTime = moment(acuityAppointment.datetime).utc()
-
-  const dateOfAppointment = utcDateTime.format('MMMM DD, YYYY')
+  const firestoreTimeStamp = firestore.Timestamp.fromDate(utcDateTime.toDate())
 
   const appointmentInDb = await database
     .collection('appointments')
@@ -155,7 +153,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
       appointmentId: appointment.id,
       barCode: barCode,
       confirmed: false,
-      dateOfAppointment: dateOfAppointment,
+      dateTime: firestoreTimeStamp,
       deadline: convertedDeadline,
       displayForNonAdmins: true,
       firstName: acuityAppointment.firstName,
