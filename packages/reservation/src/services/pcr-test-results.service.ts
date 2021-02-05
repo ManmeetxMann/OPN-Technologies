@@ -625,7 +625,7 @@ export class PCRTestResultsService {
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedNegative: {
-        await this.sendTestResults(resultData, PCRResultPDFType.ConfirmedPositive)
+        await this.sendTestResults(resultData, PCRResultPDFType.ConfirmedNegative)
         console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
         break
       }
