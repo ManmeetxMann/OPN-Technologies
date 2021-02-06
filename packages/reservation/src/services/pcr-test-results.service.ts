@@ -761,12 +761,22 @@ export class PCRTestResultsService {
   }
 
   async getPCRTestsByBarcodeWithLinked(barCodes: string[]): Promise<PCRTestResultHistory[]> {
-    const testResults = await this.getPCRTestsByBarcode(barCodes)
     const waitingResults: Record<string, PCRTestResultLinkedDBModel> = {}
     const historicalResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
     const linkedResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
+    const appointmentsByBarCode: Record<string, AppointmentDBModel[]> = {}
     let linkedBarcodes: string[] = []
-    testResults.forEach((testResult) => {
+
+    const pcrResults = await this.getPCRTestsByBarcode(barCodes)
+
+    const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
+    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+    appointments.forEach((appointment) => {
+      appointmentsByBarCode[appointment.barCode] = appointmentsByBarCode[appointment.barCode] ?? []
+      appointmentsByBarCode[appointment.barCode].push(appointment)
+    })
+
+    pcrResults.forEach((testResult) => {
       historicalResults[testResult.barCode] = historicalResults[testResult.barCode] ?? []
 
       if (testResult.waitingResult) {
