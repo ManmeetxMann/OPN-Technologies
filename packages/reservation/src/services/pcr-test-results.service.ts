@@ -763,7 +763,7 @@ export class PCRTestResultsService {
   async getPCRTestsByBarcodeWithLinked(barCodes: string[]): Promise<PCRTestResultHistory[]> {
     const waitingResults: Record<string, PCRTestResultLinkedDBModel> = {}
     const historicalResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
-    const linkedResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
+    const linkedResults: Record<string, PCRTestResultLinkedDBModel> = {}
     const appointmentsByBarCode: Record<string, AppointmentDBModel> = {}
     let linkedBarcodes: string[] = []
 
@@ -793,18 +793,26 @@ export class PCRTestResultsService {
       ...new Set(linkedBarcodes),
     ])
     testResultsForLinkedBarCodes.forEach((testResult) => {
-      linkedResults[testResult.barCode] = linkedResults[testResult.barCode] ?? []
-      linkedResults[testResult.barCode].push(testResult)
+      linkedResults[testResult.barCode] = testResult
     })
     const testResultsWithHistory: PCRTestResultHistory[] = []
     //Loop through base Results
     for (const [barCode, pcrTestResults] of Object.entries(historicalResults)) {
+      //If Appointment doesn't exist then don't add result
       if(!appointmentsByBarCode[barCode]){
         return
       }
 
       if (waitingResults[barCode]) {
-        const sortedPCRTestResults = pcrTestResults.sort((a, b) =>
+        //Add Linked Results for Waiting Record
+        const linkedBarCodes = waitingResults[barCode].linkedBarCodes
+        let linkedBarCodeResults:PCRTestResultLinkedDBModel[] = []
+        linkedBarCodes.forEach((barCode)=>{
+          linkedBarCodeResults.push(linkedResults[barCode])
+        })
+
+        const pcrTestResultsPlusLinked = pcrTestResults.concat(linkedBarCodeResults)
+        const sortedPCRTestResults = pcrTestResultsPlusLinked.sort((a, b) =>
           a.updatedAt.seconds < b.updatedAt.seconds ? 1 : -1,
         )
         
