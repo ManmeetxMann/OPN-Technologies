@@ -787,7 +787,8 @@ export class PCRTestResultsService {
     //Loop through base Results
     for (const [barCode, pcrTestResults] of Object.entries(historicalResults)) {
       if(waitingResults[barCode]){
-        testResultsWithHistory.push({...waitingResults[barCode], results:pcrTestResults, reason: AppointmentReasons.NoInProgress})
+        const sortedPCRTestResults = pcrTestResults.sort((a, b) => (a.updatedAt.seconds < b.updatedAt.seconds) ? 1 : -1)
+        testResultsWithHistory.push({...waitingResults[barCode], results:sortedPCRTestResults, reason: AppointmentReasons.NoInProgress})
       }else{
         const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
         testResultsWithHistory.push({...latestPCRTestResult, results:[], reason: AppointmentReasons.NoInProgress})
