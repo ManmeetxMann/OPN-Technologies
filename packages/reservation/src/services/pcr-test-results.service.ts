@@ -866,6 +866,12 @@ export class PCRTestResultsService {
         operator: DataModelFieldMapOperatorType.LessOrEqual,
         value: makeDeadlineForFilter(deadline),
       })
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'waitingResult',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      })
     }
 
     if (testRunId) {
