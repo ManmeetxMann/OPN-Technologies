@@ -761,12 +761,21 @@ export class PCRTestResultsService {
   }
 
   async getPCRTestsByBarcodeWithLinked(barCodes: string[]): Promise<PCRTestResultHistory[]> {
-    const testResults = await this.getPCRTestsByBarcode(barCodes)
     const waitingResults: Record<string, PCRTestResultLinkedDBModel> = {}
     const historicalResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
-    const linkedResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
+    const linkedResults: Record<string, PCRTestResultLinkedDBModel> = {}
+    const appointmentsByBarCode: Record<string, AppointmentDBModel> = {}
     let linkedBarcodes: string[] = []
-    testResults.forEach((testResult) => {
+
+    const pcrResults = await this.getPCRTestsByBarcode(barCodes)
+
+    const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
+    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+    appointments.forEach((appointment) => {
+      appointmentsByBarCode[appointment.barCode] = appointment
+    })
+
+    pcrResults.forEach((testResult) => {
       historicalResults[testResult.barCode] = historicalResults[testResult.barCode] ?? []
 
       if (testResult.waitingResult) {
@@ -784,25 +793,40 @@ export class PCRTestResultsService {
       ...new Set(linkedBarcodes),
     ])
     testResultsForLinkedBarCodes.forEach((testResult) => {
-      linkedResults[testResult.barCode] = linkedResults[testResult.barCode] ?? []
-      linkedResults[testResult.barCode].push(testResult)
+      linkedResults[testResult.barCode] = testResult
     })
     const testResultsWithHistory: PCRTestResultHistory[] = []
     //Loop through base Results
     for (const [barCode, pcrTestResults] of Object.entries(historicalResults)) {
+      //If Appointment doesn't exist then don't add result
+      if (!appointmentsByBarCode[barCode]) {
+        return
+      }
+
       if (waitingResults[barCode]) {
-        const sortedPCRTestResults = pcrTestResults.sort((a, b) =>
+        //Add Linked Results for Waiting Record
+        const linkedBarCodes = waitingResults[barCode].linkedBarCodes
+        const linkedBarCodeResults: PCRTestResultLinkedDBModel[] = []
+        linkedBarCodes.forEach((barCode) => {
+          linkedBarCodeResults.push(linkedResults[barCode])
+        })
+
+        const pcrTestResultsPlusLinked = pcrTestResults.concat(linkedBarCodeResults)
+        const sortedPCRTestResults = pcrTestResultsPlusLinked.sort((a, b) =>
           a.updatedAt.seconds < b.updatedAt.seconds ? 1 : -1,
         )
+
         testResultsWithHistory.push({
           ...waitingResults[barCode],
           results: sortedPCRTestResults,
+          reason: await this.getReason(appointmentsByBarCode[barCode].appointmentStatus),
         })
       } else {
         const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
         testResultsWithHistory.push({
           ...latestPCRTestResult,
           results: [],
+          reason: await this.getReason(appointmentsByBarCode[barCode].appointmentStatus),
         })
       }
     }
@@ -842,6 +866,8 @@ export class PCRTestResultsService {
         return AppointmentReasons.AlreadyReported
       case AppointmentStatus.ReCollectRequired:
         return AppointmentReasons.ReCollectAlreadyRequested
+      case AppointmentStatus.InProgress:
+        return null
       default:
         return AppointmentReasons.NoInProgress
     }
