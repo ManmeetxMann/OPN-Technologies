@@ -220,7 +220,9 @@ class PCRTestResultController implements IControllerBase {
                       result: linkedResult.result,
                       reCollectNumber: linkedResult.reCollectNumber,
                       runNumber: linkedResult.runNumber,
-                      dateTime: linkedAppointment ? linkedAppointment.dateTime : '',
+                      dateTime: linkedAppointment
+                        ? formatDateRFC822Local(linkedAppointment.dateTime)
+                        : '',
                       barCode: linkedResult.barCode,
                       updatedAt: linkedResult.updatedAt,
                       waitingResult: linkedResult.waitingResult,
@@ -233,7 +235,7 @@ class PCRTestResultController implements IControllerBase {
                     result: testSame.result,
                     reCollectNumber: testSame.reCollectNumber,
                     runNumber: testSame.runNumber,
-                    dateTime: appointment ? appointment.dateTime : '',
+                    dateTime: appointment ? formatDateRFC822Local(appointment.dateTime) : '',
                     barCode: testSame.barCode,
                     updatedAt: testSame.updatedAt,
                     waitingResult: testSame.waitingResult,
