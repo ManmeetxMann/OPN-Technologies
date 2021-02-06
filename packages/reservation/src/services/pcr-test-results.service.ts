@@ -799,15 +799,15 @@ export class PCRTestResultsService {
     //Loop through base Results
     for (const [barCode, pcrTestResults] of Object.entries(historicalResults)) {
       //If Appointment doesn't exist then don't add result
-      if(!appointmentsByBarCode[barCode]){
+      if (!appointmentsByBarCode[barCode]) {
         return
       }
 
       if (waitingResults[barCode]) {
         //Add Linked Results for Waiting Record
         const linkedBarCodes = waitingResults[barCode].linkedBarCodes
-        let linkedBarCodeResults:PCRTestResultLinkedDBModel[] = []
-        linkedBarCodes.forEach((barCode)=>{
+        const linkedBarCodeResults: PCRTestResultLinkedDBModel[] = []
+        linkedBarCodes.forEach((barCode) => {
           linkedBarCodeResults.push(linkedResults[barCode])
         })
 
@@ -815,18 +815,18 @@ export class PCRTestResultsService {
         const sortedPCRTestResults = pcrTestResultsPlusLinked.sort((a, b) =>
           a.updatedAt.seconds < b.updatedAt.seconds ? 1 : -1,
         )
-        
+
         testResultsWithHistory.push({
           ...waitingResults[barCode],
           results: sortedPCRTestResults,
-          reason: await this.getReason(appointmentsByBarCode[barCode].appointmentStatus)
+          reason: await this.getReason(appointmentsByBarCode[barCode].appointmentStatus),
         })
       } else {
         const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
         testResultsWithHistory.push({
           ...latestPCRTestResult,
           results: [],
-          reason: await this.getReason(appointmentsByBarCode[barCode].appointmentStatus)
+          reason: await this.getReason(appointmentsByBarCode[barCode].appointmentStatus),
         })
       }
     }
