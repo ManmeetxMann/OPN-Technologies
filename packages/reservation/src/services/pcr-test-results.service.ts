@@ -802,9 +802,8 @@ export class PCRTestResultsService {
         return
       }
 
-      const reason =
-        (await this.getReason(appointmentsByBarCode[barCode].appointmentStatus)) ??
-        AppointmentReasons.NotWaitingButInProgress
+      let reason = await this.getReason(appointmentsByBarCode[barCode].appointmentStatus)
+
       if (waitingResults[barCode]) {
         //Add Linked Results for Waiting Record
         const linkedBarCodes = waitingResults[barCode].linkedBarCodes
@@ -825,6 +824,10 @@ export class PCRTestResultsService {
           reason,
         })
       } else {
+        if (!reason) {
+          reason = AppointmentReasons.NotWaitingButInProgress
+          console.log(`SomethingWentWrong. ${barCode} inProgress but not waiting!`)
+        }
         const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
         testResultsWithHistory.push({
           ...latestPCRTestResult,
@@ -836,8 +839,6 @@ export class PCRTestResultsService {
 
     return testResultsWithHistory
   }
-
-  findLatestResult
 
   async updateOrganizationIdByAppointmentId(
     appointmentId: string,
@@ -859,7 +860,10 @@ export class PCRTestResultsService {
     if (!pcrTestResults) {
       throw new ResourceNotFoundException(`PCR Result with id ${pcrTestResultId} not found`)
     }
-    await this.pcrTestResultsRepository.updateProperty(pcrTestResultId, 'testRunId', testRunId)
+    await this.pcrTestResultsRepository.updateData(pcrTestResultId, {
+      testRunId: testRunId,
+      waitingResult: true,
+    })
     await this.appointmentService.makeInProgress(pcrTestResults.appointmentId, testRunId, adminId)
   }
 
