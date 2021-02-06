@@ -764,7 +764,7 @@ export class PCRTestResultsService {
     const waitingResults: Record<string, PCRTestResultLinkedDBModel> = {}
     const historicalResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
     const linkedResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
-    const appointmentsByBarCode: Record<string, AppointmentDBModel[]> = {}
+    const appointmentsByBarCode: Record<string, AppointmentDBModel> = {}
     let linkedBarcodes: string[] = []
 
     const pcrResults = await this.getPCRTestsByBarcode(barCodes)
@@ -772,8 +772,7 @@ export class PCRTestResultsService {
     const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
     const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
     appointments.forEach((appointment) => {
-      appointmentsByBarCode[appointment.barCode] = appointmentsByBarCode[appointment.barCode] ?? []
-      appointmentsByBarCode[appointment.barCode].push(appointment)
+      appointmentsByBarCode[appointment.barCode] = appointment
     })
 
     pcrResults.forEach((testResult) => {
@@ -800,19 +799,26 @@ export class PCRTestResultsService {
     const testResultsWithHistory: PCRTestResultHistory[] = []
     //Loop through base Results
     for (const [barCode, pcrTestResults] of Object.entries(historicalResults)) {
+      if(!appointmentsByBarCode[barCode]){
+        return
+      }
+
       if (waitingResults[barCode]) {
         const sortedPCRTestResults = pcrTestResults.sort((a, b) =>
           a.updatedAt.seconds < b.updatedAt.seconds ? 1 : -1,
         )
+        
         testResultsWithHistory.push({
           ...waitingResults[barCode],
           results: sortedPCRTestResults,
+          reason: await this.getReason(appointmentsByBarCode[barCode].appointmentStatus)
         })
       } else {
         const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
         testResultsWithHistory.push({
           ...latestPCRTestResult,
           results: [],
+          reason: await this.getReason(appointmentsByBarCode[barCode].appointmentStatus)
         })
       }
     }
