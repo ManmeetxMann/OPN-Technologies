@@ -1,5 +1,4 @@
 import {firestore} from 'firebase-admin'
-import { type } from 'os'
 
 import {formatDateRFC822Local} from '../utils/datetime.helper'
 
@@ -60,7 +59,7 @@ export type PCRTestResultConfirmRequest = {
   action: PCRResultActionsForConfirmation
 }
 
-type PCRResultSpecs = {  
+type PCRResultSpecs = {
   calRed61Ct: string
   calRed61RdRpGene: string
   famCt: string
@@ -108,23 +107,23 @@ export type PCRTestResultData = {
 }
 
 export type PCRTestResultDBModel = PCRTestResultData & {
-    appointmentId: string
-    confirmed: boolean
-    dateTime: firestore.Timestamp
-    deadline: firestore.Timestamp
-    displayForNonAdmins: boolean
-    firstName: string
-    id: string
-    lastName: string
-    linkedBarCodes: string[]
-    organizationId?: string
-    recollected: boolean
-    reCollectNumber: number
-    result: ResultTypes
-    runNumber: number
-    testRunId?: string
-    updatedAt: firestore.Timestamp
-    waitingResult: boolean
+  appointmentId: string
+  confirmed: boolean
+  dateTime: firestore.Timestamp
+  deadline: firestore.Timestamp
+  displayForNonAdmins: boolean
+  firstName: string
+  id: string
+  lastName: string
+  linkedBarCodes: string[]
+  organizationId?: string
+  recollected: boolean
+  reCollectNumber: number
+  result: ResultTypes
+  runNumber: number
+  testRunId?: string
+  updatedAt: firestore.Timestamp
+  waitingResult: boolean
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -151,7 +150,6 @@ export type PCRTestResultHistoryResponseDTO = {
   runNumber: string
   dateTime: string
 }
-
 
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,

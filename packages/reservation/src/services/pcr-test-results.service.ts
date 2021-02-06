@@ -376,7 +376,9 @@ export class PCRTestResultsService {
     pcrTestResults: PCRTestResultDBModel[],
   ): Promise<PCRTestResultDBModel> {
     return pcrTestResults.reduce(function (lastPCRResult, pcrResult) {
-      return lastPCRResult.updatedAt.seconds > pcrResult.updatedAt.seconds ? lastPCRResult : pcrResult
+      return lastPCRResult.updatedAt.seconds > pcrResult.updatedAt.seconds
+        ? lastPCRResult
+        : pcrResult
     }, pcrTestResults[0])
   }
 
@@ -765,36 +767,48 @@ export class PCRTestResultsService {
     const linkedResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
     let linkedBarcodes: string[] = []
     testResults.forEach((testResult) => {
-      historicalResults[testResult.barCode] = (historicalResults[testResult.barCode])??[]
+      historicalResults[testResult.barCode] = historicalResults[testResult.barCode] ?? []
 
-      if(testResult.waitingResult){
+      if (testResult.waitingResult) {
         waitingResults[testResult.barCode] = testResult
-      }else{
+      } else {
         historicalResults[testResult.barCode].push(testResult)
       }
 
-      if(testResult.waitingResult && testResult?.linkedBarCodes?.length) {
+      if (testResult.waitingResult && testResult?.linkedBarCodes?.length) {
         linkedBarcodes = linkedBarcodes.concat(testResult.linkedBarCodes)
       }
     })
-    
-    const testResultsForLinkedBarCodes = await this.getPCRTestsByBarcode([...new Set(linkedBarcodes)])
+
+    const testResultsForLinkedBarCodes = await this.getPCRTestsByBarcode([
+      ...new Set(linkedBarcodes),
+    ])
     testResultsForLinkedBarCodes.forEach((testResult) => {
-      linkedResults[testResult.barCode] = (linkedResults[testResult.barCode])??[]
+      linkedResults[testResult.barCode] = linkedResults[testResult.barCode] ?? []
       linkedResults[testResult.barCode].push(testResult)
     })
-    let testResultsWithHistory:PCRTestResultHistory[] = []
+    const testResultsWithHistory: PCRTestResultHistory[] = []
     //Loop through base Results
     for (const [barCode, pcrTestResults] of Object.entries(historicalResults)) {
-      if(waitingResults[barCode]){
-        const sortedPCRTestResults = pcrTestResults.sort((a, b) => (a.updatedAt.seconds < b.updatedAt.seconds) ? 1 : -1)
-        testResultsWithHistory.push({...waitingResults[barCode], results:sortedPCRTestResults, reason: AppointmentReasons.NoInProgress})
-      }else{
+      if (waitingResults[barCode]) {
+        const sortedPCRTestResults = pcrTestResults.sort((a, b) =>
+          a.updatedAt.seconds < b.updatedAt.seconds ? 1 : -1,
+        )
+        testResultsWithHistory.push({
+          ...waitingResults[barCode],
+          results: sortedPCRTestResults,
+          reason: AppointmentReasons.NoInProgress,
+        })
+      } else {
         const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
-        testResultsWithHistory.push({...latestPCRTestResult, results:[], reason: AppointmentReasons.NoInProgress})
+        testResultsWithHistory.push({
+          ...latestPCRTestResult,
+          results: [],
+          reason: AppointmentReasons.NoInProgress,
+        })
       }
     }
-    
+
     return testResultsWithHistory
   }
 

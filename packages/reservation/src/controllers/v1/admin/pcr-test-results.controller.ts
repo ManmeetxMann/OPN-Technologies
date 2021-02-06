@@ -194,7 +194,7 @@ class PCRTestResultController implements IControllerBase {
       }
 
       const pcrTests = await this.pcrTestResultsService.getPCRTestsByBarcodeWithLinked(barcode)
-      
+
       res.json(actionSucceed(pcrTests.map(PCRTestResultHistoryResponse)))
     } catch (error) {
       next(error)
