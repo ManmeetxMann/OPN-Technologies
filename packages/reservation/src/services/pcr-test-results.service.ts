@@ -219,7 +219,7 @@ export class PCRTestResultsService {
     isLabUser: boolean,
   ): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
-
+    //TODO: Allow BarCode with ORG
     if (organizationId) {
       pcrTestResultsQuery.push({
         map: '/',
