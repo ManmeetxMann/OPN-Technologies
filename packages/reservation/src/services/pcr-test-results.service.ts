@@ -763,7 +763,7 @@ export class PCRTestResultsService {
   async getPCRTestsByBarcodeWithLinked(barCodes: string[]): Promise<PCRTestResultHistory[]> {
     const waitingResults: Record<string, PCRTestResultLinkedDBModel> = {}
     const historicalResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
-    const linkedResults: Record<string, PCRTestResultLinkedDBModel> = {}
+    const linkedResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
     const appointmentsByBarCode: Record<string, AppointmentDBModel> = {}
     let linkedBarcodes: string[] = []
 
@@ -789,11 +789,10 @@ export class PCRTestResultsService {
       }
     })
 
-    const testResultsForLinkedBarCodes = await this.getPCRTestsByBarcode([
-      ...new Set(linkedBarcodes),
-    ])
+    const testResultsForLinkedBarCodes = await this.getPCRTestsByBarcode(linkedBarcodes)
     testResultsForLinkedBarCodes.forEach((testResult) => {
-      linkedResults[testResult.barCode] = testResult
+      linkedResults[testResult.barCode] = linkedResults[testResult.barCode] ?? []
+      linkedResults[testResult.barCode].push(testResult)
     })
     const testResultsWithHistory: PCRTestResultHistory[] = []
     //Loop through base Results
@@ -806,9 +805,9 @@ export class PCRTestResultsService {
       if (waitingResults[barCode]) {
         //Add Linked Results for Waiting Record
         const linkedBarCodes = waitingResults[barCode].linkedBarCodes
-        const linkedBarCodeResults: PCRTestResultLinkedDBModel[] = []
+        let linkedBarCodeResults: PCRTestResultLinkedDBModel[] = []
         linkedBarCodes.forEach((barCode) => {
-          linkedBarCodeResults.push(linkedResults[barCode])
+          linkedBarCodeResults = linkedBarCodeResults.concat(linkedResults[barCode])
         })
 
         const pcrTestResultsPlusLinked = pcrTestResults.concat(linkedBarCodeResults)
