@@ -39,6 +39,7 @@ import {
   PCRResultActionsForConfirmation,
   EmailNotficationTypes,
   PCRResultPDFType,
+  PCRTestResultHistory,
 } from '../models/pcr-test-results'
 
 import {
@@ -375,7 +376,9 @@ export class PCRTestResultsService {
     pcrTestResults: PCRTestResultDBModel[],
   ): Promise<PCRTestResultDBModel> {
     return pcrTestResults.reduce(function (lastPCRResult, pcrResult) {
-      return lastPCRResult.updatedAt < pcrResult.updatedAt ? lastPCRResult : pcrResult
+      return lastPCRResult.updatedAt.seconds > pcrResult.updatedAt.seconds
+        ? lastPCRResult
+        : pcrResult
     }, pcrTestResults[0])
   }
 
@@ -757,25 +760,59 @@ export class PCRTestResultsService {
     return this.pcrTestResultsRepository.findWhereIn('barCode', barCodes)
   }
 
-  async getPCRTestsByBarcodeWithLinked(barCodes: string[]): Promise<PCRTestResultLinkedDBModel[]> {
+  async getPCRTestsByBarcodeWithLinked(barCodes: string[]): Promise<PCRTestResultHistory[]> {
     const testResults = await this.getPCRTestsByBarcode(barCodes)
-    let testResultsLinked: PCRTestResultLinkedDBModel[] = []
-    testResultsLinked = await Promise.all(
-      testResults.map(async (testResult) => {
-        if (testResult?.linkedBarCodes?.length) {
-          return {
-            ...testResult,
-            linkedResults: await this.getPCRTestsByBarcode([...testResult?.linkedBarCodes]),
-          }
-        }
-        return {
-          ...testResult,
-          linkedResults: [],
-        }
-      }),
-    )
-    return testResultsLinked
+    const waitingResults: Record<string, PCRTestResultLinkedDBModel> = {}
+    const historicalResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
+    const linkedResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
+    let linkedBarcodes: string[] = []
+    testResults.forEach((testResult) => {
+      historicalResults[testResult.barCode] = historicalResults[testResult.barCode] ?? []
+
+      if (testResult.waitingResult) {
+        waitingResults[testResult.barCode] = testResult
+      } else {
+        historicalResults[testResult.barCode].push(testResult)
+      }
+
+      if (testResult.waitingResult && testResult?.linkedBarCodes?.length) {
+        linkedBarcodes = linkedBarcodes.concat(testResult.linkedBarCodes)
+      }
+    })
+
+    const testResultsForLinkedBarCodes = await this.getPCRTestsByBarcode([
+      ...new Set(linkedBarcodes),
+    ])
+    testResultsForLinkedBarCodes.forEach((testResult) => {
+      linkedResults[testResult.barCode] = linkedResults[testResult.barCode] ?? []
+      linkedResults[testResult.barCode].push(testResult)
+    })
+    const testResultsWithHistory: PCRTestResultHistory[] = []
+    //Loop through base Results
+    for (const [barCode, pcrTestResults] of Object.entries(historicalResults)) {
+      if (waitingResults[barCode]) {
+        const sortedPCRTestResults = pcrTestResults.sort((a, b) =>
+          a.updatedAt.seconds < b.updatedAt.seconds ? 1 : -1,
+        )
+        testResultsWithHistory.push({
+          ...waitingResults[barCode],
+          results: sortedPCRTestResults,
+          reason: AppointmentReasons.NoInProgress,
+        })
+      } else {
+        const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
+        testResultsWithHistory.push({
+          ...latestPCRTestResult,
+          results: [],
+          reason: AppointmentReasons.NoInProgress,
+        })
+      }
+    }
+
+    return testResultsWithHistory
   }
+
+  findLatestResult
 
   async updateOrganizationIdByAppointmentId(
     appointmentId: string,
@@ -801,8 +838,8 @@ export class PCRTestResultsService {
     await this.appointmentService.makeInProgress(pcrTestResults.appointmentId, testRunId, adminId)
   }
 
-  async getReason(appointment: AppointmentDBModel): Promise<AppointmentReasons> {
-    switch (appointment.appointmentStatus) {
+  async getReason(appointmentStatus: AppointmentStatus): Promise<AppointmentReasons> {
+    switch (appointmentStatus) {
       case AppointmentStatus.Reported:
         return AppointmentReasons.AlreadyReported
       case AppointmentStatus.ReCollectRequired:
