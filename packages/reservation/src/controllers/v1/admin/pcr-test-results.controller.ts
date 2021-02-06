@@ -1,6 +1,5 @@
 import {NextFunction, Request, Response, Router} from 'express'
 import moment from 'moment'
-import {flatten} from 'lodash'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
@@ -17,7 +16,6 @@ import {TestRunsService} from '../../../services/test-runs.service'
 
 import {
   PCRListQueryRequest,
-  PCRTestResultHistoryDTO,
   PCRTestResultHistoryResponse,
   ListPCRResultRequest,
   PCRTestResultRequest,
@@ -27,16 +25,12 @@ import {
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
 } from '../../../models/pcr-test-results'
-import {AppoinmentService} from '../../../services/appoinment.service'
-import {AppointmentDBModel, AppointmentReasons} from '../../../models/appointment'
-import {formatDateRFC822Local} from '../../../utils/datetime.helper'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
-  private appointmentService = new AppoinmentService()
 
   constructor() {
     this.initRoutes()
@@ -200,99 +194,8 @@ class PCRTestResultController implements IControllerBase {
       }
 
       const pcrTests = await this.pcrTestResultsService.getPCRTestsByBarcodeWithLinked(barcode)
-
-      const formedPcrTests: PCRTestResultHistoryDTO[] = await Promise.all(
-        barcode.map(async (code) => {
-          const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
-          const results = flatten(
-            await Promise.all(
-              testSameBarcode.map(async (testSame) => {
-                const appointment = await this.appointmentService.getAppointmentByBarCodeNullable(
-                  testSame.barCode,
-                )
-                const linkedSameTests = await Promise.all(
-                  testSame.linkedResults.map(async (linkedResult) => {
-                    const linkedAppointment = await this.appointmentService.getAppointmentByBarCodeNullable(
-                      linkedResult.barCode,
-                    )
-                    return {
-                      ...linkedResult.resultSpecs,
-                      result: linkedResult.result,
-                      reCollectNumber: linkedResult.reCollectNumber,
-                      runNumber: linkedResult.runNumber,
-                      dateTime: linkedAppointment
-                        ? formatDateRFC822Local(linkedAppointment.dateTime)
-                        : '',
-                      barCode: linkedResult.barCode,
-                      updatedAt: linkedResult.updatedAt,
-                      waitingResult: linkedResult.waitingResult,
-                    }
-                  }),
-                )
-                return [
-                  {
-                    ...testSame.resultSpecs,
-                    result: testSame.result,
-                    reCollectNumber: testSame.reCollectNumber,
-                    runNumber: testSame.runNumber,
-                    dateTime: appointment ? formatDateRFC822Local(appointment.dateTime) : '',
-                    barCode: testSame.barCode,
-                    updatedAt: testSame.updatedAt,
-                    waitingResult: testSame.waitingResult,
-                  },
-                  ...linkedSameTests,
-                ]
-              }),
-            ),
-          )
-
-          // const waitingResult = !!pcrTests.find(
-          //   (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
-          // )
-
-          const appointment = await this.appointmentService.getAppointmentByBarCodeNullable(code)
-
-          if (testSameBarcode.length) {
-            if (testSameBarcode.length > 1) {
-              console.log(`Warning tests with same barcode are more than one. Barcode: ${code}.`)
-            }
-            const pcrTest = pcrTests.find((pcrTest) => pcrTest.barCode === code)
-            const waitingResult = pcrTest && pcrTest.waitingResult
-            const filteredResults = results
-              .sort((a, b) => (a.updatedAt._seconds > b.updatedAt._seconds ? 1 : -1))
-              .filter((result) => {
-                return !result.waitingResult
-              })
-            if (filteredResults.length === results.length) {
-              filteredResults.pop()
-            }
-            return {
-              id: testSameBarcode[0].id,
-              barCode: code,
-              results: filteredResults,
-              waitingResult,
-              ...(!waitingResult && {
-                reason: await this.pcrTestResultsService.getReason(<AppointmentDBModel>appointment),
-              }),
-              reCollectNumber: pcrTest.reCollectNumber,
-              runNumber: pcrTest.runNumber,
-              dateTime: appointment ? formatDateRFC822Local(appointment.dateTime) : '',
-            }
-          }
-          return {
-            id: code,
-            barCode: code,
-            results: [],
-            waitingResult: false,
-            reason: AppointmentReasons.NotFound,
-            reCollectNumber: '',
-            runNumber: '',
-            dateTime: appointment ? formatDateRFC822Local(appointment.dateTime) : '',
-          }
-        }),
-      )
-
-      res.json(actionSucceed(formedPcrTests.map(PCRTestResultHistoryResponse)))
+      
+      res.json(actionSucceed(pcrTests.map(PCRTestResultHistoryResponse)))
     } catch (error) {
       next(error)
     }
