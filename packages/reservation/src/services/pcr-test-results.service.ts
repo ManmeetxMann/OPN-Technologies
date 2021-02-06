@@ -797,14 +797,12 @@ export class PCRTestResultsService {
         testResultsWithHistory.push({
           ...waitingResults[barCode],
           results: sortedPCRTestResults,
-          reason: AppointmentReasons.NoInProgress,
         })
       } else {
         const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
         testResultsWithHistory.push({
           ...latestPCRTestResult,
           results: [],
-          reason: AppointmentReasons.NoInProgress,
         })
       }
     }

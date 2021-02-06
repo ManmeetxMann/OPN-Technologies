@@ -10,8 +10,8 @@ import {serverTimestamp} from '../packages/common/src/utils/times'
 import DBSchema from '../packages/reservation/src/dbschemas/pcr-test-results.schema'
 import {PCRTestResultDBModel} from '../packages/reservation/src/models/pcr-test-results'
 
-const START_DATE = '2020-10-01' //Starting from OCT 1st
-const END_DATE = '2021-03-30' //new Date()
+const START_DATE = '2021-02-09' //Starting from OCT 1st
+const END_DATE = '2021-03-15' //new Date()
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -102,7 +102,7 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
   const userPassBase64 = userPassBuf.toString('base64')
   const apiUrl =
     APIURL +
-    '/api/v1/appointments?max=1500&' +
+    '/api/v1/appointments?showall=true&max=1500&' +
     querystring.stringify(filters as ParsedUrlQueryInput)
 
   return fetch(apiUrl, {
@@ -139,6 +139,11 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
   }
 
   const appointment = appointmentInDb.docs[0]
+  if (appointment.data().appointmentStatus === 'Canceled') {
+    return Promise.reject(
+      `AppointmentID: ${acuityAppointment.id} Canceled appointment hence result not created`,
+    )
+  }
 
   const pcrTestResultsInDb = await database
     .collection('pcr-test-results')
