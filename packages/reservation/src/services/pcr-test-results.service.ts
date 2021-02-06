@@ -659,6 +659,7 @@ export class PCRTestResultsService {
       params: {
         BARCODE: resultData.barCode,
         DATE_OF_RESULT: resultDate,
+        FIRSTNAME: resultData.firstName,
       },
       attachment: [
         {
@@ -680,6 +681,7 @@ export class PCRTestResultsService {
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
         DAY: day,
+        FIRSTNAME: resultData.firstName,
       },
       bcc: [
         {
@@ -703,6 +705,7 @@ export class PCRTestResultsService {
       params: {
         COUPON_CODE: this.couponCode,
         BOOKING_LINK: appointmentBookingLink,
+        FIRSTNAME: resultData.firstName,
       },
       bcc: [
         {
