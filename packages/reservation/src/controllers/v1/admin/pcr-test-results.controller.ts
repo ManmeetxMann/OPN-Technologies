@@ -220,7 +220,9 @@ class PCRTestResultController implements IControllerBase {
                       result: linkedResult.result,
                       reCollectNumber: linkedResult.reCollectNumber,
                       runNumber: linkedResult.runNumber,
-                      dateTime: linkedAppointment ? formatDateRFC822Local(linkedAppointment.dateTime) : '',
+                      dateTime: linkedAppointment
+                        ? formatDateRFC822Local(linkedAppointment.dateTime)
+                        : '',
                       barCode: linkedResult.barCode,
                       updatedAt: linkedResult.updatedAt,
                       waitingResult: linkedResult.waitingResult,
