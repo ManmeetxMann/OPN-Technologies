@@ -21,6 +21,7 @@ import {
 } from '../respository/test-results-reporting-tracker-repository'
 
 import {
+  AppointmentReasons,
   CreateReportForPCRResultsResponse,
   PCRResultActions,
   PCRTestResultData,
@@ -44,7 +45,6 @@ import {
 
 import {
   AppointmentDBModel,
-  AppointmentReasons,
   AppointmentStatus,
   DeadlineLabel,
   ResultTypes,
@@ -802,6 +802,9 @@ export class PCRTestResultsService {
         return
       }
 
+      const reason =
+        (await this.getReason(appointmentsByBarCode[barCode].appointmentStatus)) ??
+        AppointmentReasons.NotWaitingButInProgress
       if (waitingResults[barCode]) {
         //Add Linked Results for Waiting Record
         const linkedBarCodes = waitingResults[barCode].linkedBarCodes
@@ -814,18 +817,19 @@ export class PCRTestResultsService {
         const sortedPCRTestResults = pcrTestResultsPlusLinked.sort((a, b) =>
           a.updatedAt.seconds < b.updatedAt.seconds ? 1 : -1,
         )
-
+        const waitingResult = reason ? false : waitingResults[barCode].waitingResult
         testResultsWithHistory.push({
           ...waitingResults[barCode],
-          results: sortedPCRTestResults,
-          reason: await this.getReason(appointmentsByBarCode[barCode].appointmentStatus),
+          waitingResult,
+          results: reason ? [] : sortedPCRTestResults,
+          reason,
         })
       } else {
         const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
         testResultsWithHistory.push({
           ...latestPCRTestResult,
           results: [],
-          reason: await this.getReason(appointmentsByBarCode[barCode].appointmentStatus),
+          reason,
         })
       }
     }

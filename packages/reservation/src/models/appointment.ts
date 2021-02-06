@@ -15,14 +15,6 @@ export enum AppointmentStatus {
   Canceled = 'Canceled',
 }
 
-export enum AppointmentReasons {
-  AlreadyReported = 'Already Reported',
-  ReCollectAlreadyRequested = 'ReCollect Already Requested',
-  InProgress = 'In Progress',
-  NoInProgress = 'No In Progress',
-  NotFound = 'Test not found',
-}
-
 export enum ResultTypes {
   PresumptivePositive = 'PresumptivePositive',
   Positive = 'Positive',

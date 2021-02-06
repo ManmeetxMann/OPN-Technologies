@@ -2,7 +2,16 @@ import {firestore} from 'firebase-admin'
 
 import {formatDateRFC822Local} from '../utils/datetime.helper'
 
-import {AppointmentDBModel, AppointmentReasons, AppointmentStatus, ResultTypes} from './appointment'
+import {AppointmentDBModel, AppointmentStatus, ResultTypes} from './appointment'
+
+export enum AppointmentReasons {
+  AlreadyReported = 'Already Reported',
+  ReCollectAlreadyRequested = 'ReCollect Already Requested',
+  InProgress = 'In Progress',
+  NoInProgress = 'No In Progress',
+  NotFound = 'Test not found',
+  NotWaitingButInProgress = 'Something went Wrong',
+}
 
 export enum EmailNotficationTypes {
   Indeterminate = 'Indeterminate',
