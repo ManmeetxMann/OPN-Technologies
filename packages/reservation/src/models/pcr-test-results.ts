@@ -145,7 +145,7 @@ export type PCRTestResultHistoryResponseDTO = {
   barCode: string
   waitingResult: boolean
   results: PCRResultsForHistory[]
-  reason: AppointmentReasons
+  reason?: AppointmentReasons
   reCollectNumber: string
   runNumber: string
   dateTime: string
