@@ -139,8 +139,10 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
   }
 
   const appointment = appointmentInDb.docs[0]
-  if (appointment.data().appointmentStatus==='Canceled') {
-    return Promise.reject(`AppointmentID: ${acuityAppointment.id} Canceled appointment hence result not created`)
+  if (appointment.data().appointmentStatus === 'Canceled') {
+    return Promise.reject(
+      `AppointmentID: ${acuityAppointment.id} Canceled appointment hence result not created`,
+    )
   }
 
   const pcrTestResultsInDb = await database
