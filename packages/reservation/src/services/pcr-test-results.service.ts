@@ -866,6 +866,8 @@ export class PCRTestResultsService {
         return AppointmentReasons.AlreadyReported
       case AppointmentStatus.ReCollectRequired:
         return AppointmentReasons.ReCollectAlreadyRequested
+      case AppointmentStatus.InProgress:
+        return null
       default:
         return AppointmentReasons.NoInProgress
     }
