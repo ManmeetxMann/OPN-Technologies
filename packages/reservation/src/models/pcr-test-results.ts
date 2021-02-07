@@ -221,6 +221,7 @@ export const PCRTestResultHistoryResponse = (
 export type PcrTestResultsListByDeadlineRequest = {
   deadline?: string
   testRunId?: string
+  barCode?: string
 }
 
 export type PcrTestResultsListRequest = {
