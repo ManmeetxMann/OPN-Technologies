@@ -46,7 +46,7 @@ const acuityFormFieldIdsNonProd = {
   additionalAddressNotes: 9112814,
   travelId: 9158228,
   travelIdIssueingCountry: 9158231,
-  healthCardForOrgs: 9158793,
+  healthCardForOrgs: 9158796,
   healthCardForNonOrgs: 9158796,
   swabMethod: 9158271,
 }
@@ -66,11 +66,11 @@ const acuityFormFieldIdsProd = {
   shareTestResultWithEmployer: 8691773,
   addressForTesting: 8621731,
   additionalAddressNotes: 8621732,
-  travelId: 'XXX',
-  travelIdIssueingCountry: 'XXX',
-  healthCardForOrgs: 'XXX',
-  healthCardForNonOrgs: 'XXX',
-  swabMethod: 'XXX',
+  travelId: 9224756,
+  travelIdIssueingCountry: 9224757,
+  healthCardForOrgs: 9224746,
+  healthCardForNonOrgs: 9224746,
+  swabMethod: 9224750,
 }
 
 const acuityHomeAddressFormId = ACUITY_ENV_NON_PROD ? 1644637 : 1585198 //TEST:1644637 PROD:1585198

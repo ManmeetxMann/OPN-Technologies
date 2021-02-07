@@ -13,7 +13,7 @@ on:
       - infra-dev-apidocs-*
       - preprod-apidocs-*
       - preprod-all-*
-      - prod-reservation-*
+      - prod-apidocs-*
 
 jobs:
   build:

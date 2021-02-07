@@ -13,7 +13,7 @@ on:
       - infra-dev-passport-*
       - preprod-passport-*
       - preprod-all-*
-      - prod-reservation-*
+      - prod-passport-*
 
 jobs:
   build:
