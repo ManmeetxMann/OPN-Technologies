@@ -78,7 +78,6 @@ const acuityBarCodeFormId = ACUITY_ENV_NON_PROD ? 1564839 : 1559910 //TEST:15648
 const acuityBirthDayFormId = ACUITY_ENV_NON_PROD ? 1567398 : 1554251 //TEST:1567398 PROD:1554251
 const acuityTermsAndConditionFormId = ACUITY_ENV_NON_PROD ? 1644640 : 1554370 //TEST:1644640 PROD:1554370
 const acuityShareTestResultWithEmployerFormId = ACUITY_ENV_NON_PROD ? 1649724 : 1576924 //TEST:XX PROD:1576924
-const acuityMobileUnitFormId = ACUITY_ENV_NON_PROD ? 1649727 : 1564716 //TEST:XX PROD:1564716
 //const acuityTravelDetailsFormId = ACUITY_ENV_NON_PROD ? 1657461 : 1657461
 
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
@@ -265,7 +264,7 @@ async function createAppointment(acuityAppointment) {
     .get()
 
   if (appointmentInDb.size > 0) {
-    console.warn(`AppointmentID: ${acuityAppointment.id} already exists`)
+    //console.warn(`AppointmentID: ${acuityAppointment.id} already exists`)
     return Promise.resolve()
   }
   const utcDateTime = moment(acuityAppointment.datetime).utc()
@@ -284,15 +283,20 @@ async function createAppointment(acuityAppointment) {
   let organizationId = null
   let address = 'N/A'
   let addressUnit = ''
-  let addressForTesting = ''
-  let additionalAddressNotes = ''
   let readTermsAndConditions = ''
   let receiveResultsViaEmail = ''
   let receiveNotificationsFromGov = ''
   let agreeToConductFHHealthAssessment = ''
   let shareTestResultWithEmployer = ''
-
   let registeredNursePractitioner = ''
+
+  if (!acuityAppointment.email || acuityAppointment.email === '') {
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} MissingEmail`)
+  }
+
+  if (!acuityAppointment.phone || acuityAppointment.phone === '') {
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} MissingPhone`)
+  }
 
   try {
     barCode = findByFieldIdForms(
@@ -303,8 +307,8 @@ async function createAppointment(acuityAppointment) {
       throw new Error('EmptyBarcode')
     }
   } catch (e) {
-    console.warn(`AppointmentID: ${acuityAppointment.id} InvalidBarCode: ${e.message}`)
-    return Promise.reject('InvalidBarCode')
+    //console.warn(`AppointmentID: ${acuityAppointment.id} InvalidBarCode: ${e.message}`)
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} InvalidBarCode: ${e.message}`)
   }
 
   try {
@@ -316,8 +320,8 @@ async function createAppointment(acuityAppointment) {
       throw new Error('Empty dateOfBirth')
     }
   } catch (e) {
-    console.warn(`AppointmentID: ${acuityAppointment.id} InvalidDateofBirth: ${e.message}`)
-    return Promise.reject('InvalidDateofBirth')
+    //console.warn(`AppointmentID: ${acuityAppointment.id} InvalidDateofBirth: ${e.message}`)
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} InvalidDateofBirth: ${e.message}`)
   }
 
   try {
@@ -422,33 +426,11 @@ async function createAppointment(acuityAppointment) {
   }
 
   try {
-    addressForTesting = findByFieldIdForms(
-      findByIdForms(acuityAppointment.forms, acuityMobileUnitFormId).values,
-      acuityFormFieldIds.addressForTesting,
-    ).value
-  } catch (e) {
-    //console.warn(`AppointmentID: ${acuityAppointment.id} Invalid addressForTesting: ${e.message}`)
-  }
-
-  try {
-    additionalAddressNotes = findByFieldIdForms(
-      findByIdForms(acuityAppointment.forms, acuityMobileUnitFormId).values,
-      acuityFormFieldIds.additionalAddressNotes,
-    ).value
-  } catch (e) {
-    /*console.warn(
-      `AppointmentID: ${acuityAppointment.id} Invalid additionalAddressNotes: ${e.message}`,
-    )*/
-  }
-
-  try {
     const validatedData = await DBSchema.validateAsync({
       acuityAppointmentId: acuityAppointment.id,
       //adminId: 'MIGRATION',
       address: address,
       addressUnit: addressUnit,
-      addressForTesting: addressForTesting,
-      additionalAddressNotes: additionalAddressNotes,
       agreeToConductFHHealthAssessment: handleBoolean(agreeToConductFHHealthAssessment),
       appointmentStatus: acuityAppointment.canceled ? 'Canceled' : 'Pending', //TODO
       appointmentTypeID: acuityAppointment.appointmentTypeID,

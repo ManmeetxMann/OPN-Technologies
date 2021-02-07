@@ -25,6 +25,7 @@ export type AdminProfile = {
   isBulkUploadAdmin: boolean
   isIDBarCodesAdmin: boolean
   isSingleResultSendAdmin: boolean
+  isConfirmResultAdmin: boolean
 }
 
 export type AdminApproval = {
