@@ -253,6 +253,9 @@ const isAllowed = (
   const seekLabTestRunsList = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabTestRunsList,
   )
+  const seekLabConfirmResults = listOfRequiredPermissions.includes(
+    RequiredUserPermission.LabConfirmResults,
+  )
 
   if (
     seekLabOrOrgAppointment &&
@@ -305,6 +308,10 @@ const isAllowed = (
   }
   if (seekLabTestRunsCreate && !admin?.isTestRunsAdmin) {
     console.warn(`Admin user ${userId} needs isTestRunsAdmin`)
+    return false
+  }
+  if (seekLabConfirmResults && !admin?.isConfirmResultAdmin) {
+    console.warn(`Admin user ${userId} needs isConfirmResultAdmin`)
     return false
   }
   if (seekOPNAdmin && !admin?.isOpnSuperAdmin) {

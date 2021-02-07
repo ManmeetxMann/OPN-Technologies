@@ -781,7 +781,18 @@ export class AppoinmentService {
       throw new BadRequestException('Invalid appointmentId')
     }
     const newBarCode = await this.getNextBarCodeNumber()
-    console.log(`regenerateBarCode: AppointmentID: ${appointmentId} New BarCode: ${newBarCode}`)
+    console.log(
+      `regenerateBarCode: AppointmentID: ${appointmentId} OldBarCode: ${appointment.barCode} NewBarCode: ${newBarCode}`,
+    )
+
+    const appointmentDataAcuity = await this.updateAppointment(appointment.acuityAppointmentId, {
+      barCodeNumber: newBarCode,
+    })
+    if (appointmentDataAcuity.barCode === newBarCode) {
+      console.log(
+        `regenerateBarCode: AppointmentID: ${appointmentId} AcuityID: ${appointment.acuityAppointmentId} successfully updated`,
+      )
+    }
 
     const updatedAppoinment = await this.appointmentsRepository.updateBarCodeById(
       appointmentId,
