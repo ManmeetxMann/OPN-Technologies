@@ -695,12 +695,21 @@ export class PCRTestResultsService {
   }
 
   async sendReCollectNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+    const getTemplateId = (): number => {
+      if (resultData.result === ResultTypes.Inconclusive) {
+        return (
+          Config.getInt('TEST_RESULT_NO_ORG_INCONCLUSIVE_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 8
+        )
+      } else if (!!resultData.organizationId) {
+        return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
+      } else {
+        return Config.getInt('TEST_RESULT_NO_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 5
+      }
+    }
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
     const owner = Config.get('ACUITY_SCHEDULER_USERNAME')
     const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${this.couponCode}`
-    const templateId = resultData.organizationId
-      ? Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
-      : Config.getInt('TEST_RESULT_NO_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 5
+    const templateId = getTemplateId()
 
     await this.emailService.send({
       templateId: templateId,
