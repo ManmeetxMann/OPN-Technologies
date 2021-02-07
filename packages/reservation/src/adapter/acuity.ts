@@ -396,7 +396,7 @@ abstract class AcuityScheduling {
             appointment.ohipCard = field.value
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_SWAB_METHOD'))) {
-            if(!!field.value){
+            if (!!field.value) {
               appointment.swabMethod = field.value
             }
           }
