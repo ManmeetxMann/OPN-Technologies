@@ -47,6 +47,7 @@ class PCRTestResultController implements IControllerBase {
       [RequiredUserPermission.LabPCRTestResults],
       true,
     )
+    const confirmResultsAuth = authorizationMiddleware([RequiredUserPermission.LabConfirmResults])
 
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results-bulk',
@@ -60,7 +61,7 @@ class PCRTestResultController implements IControllerBase {
     )
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results/confirm',
-      sendSingleResultsAuth,
+      confirmResultsAuth,
       this.confirmPCRResults,
     )
     innerRouter.post(
