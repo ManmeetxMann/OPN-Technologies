@@ -52,8 +52,6 @@ export type AppointmentDBModel = {
   vialLocation?: string
   address: string
   addressUnit: string
-  addressForTesting: string
-  additionalAddressNotes: string
   couponCode?: string
   travelID?: string
   travelIDIssuingCountry?: string
@@ -85,9 +83,7 @@ type AppointmentAcuityForm = {
 
 //Response From Acuity
 export type AppointmentAcuityResponse = {
-  additionalAddressNotes: string
   address: string
-  addressForTesting: string
   addressUnit: string
   agreeToConductFHHealthAssessment: boolean
   barCode: string
@@ -152,8 +148,6 @@ export type CreateAppointmentRequest = {
   dateOfBirth: string
   address: string
   addressUnit: string
-  addressForTesting: string
-  additionalAddressNotes: string
   couponCode: string
   shareTestResultWithEmployer: boolean
   readTermsAndConditions: boolean
