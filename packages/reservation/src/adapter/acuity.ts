@@ -25,8 +25,6 @@ abstract class AcuityScheduling {
     organizationId: Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
     address: Config.get('ACUITY_FIELD_ADDRESS'),
     addressUnit: Config.get('ACUITY_FIELD_ADDRESS_UNIT'),
-    addressForTesting: Config.get('ACUITY_FIELD_ADDRESS_FOR_TESTING'),
-    additionalAddressNotes: Config.get('ACUITY_FIELD_ADDITIONAL_ADDRESS_NOTES'),
     shareTestResultWithEmployer: Config.get('ACUITY_FIELD_SHARE_TEST_RESULT_WITH_EMPLOYER'),
     readTermsAndConditions: Config.get('ACUITY_FIELD_READ_TERMS_AND_CONDITIONS'),
     receiveResultsViaEmail: Config.get('ACUITY_FIELD_RECEIVE_RESULTS_VIA_EMAIL'),
@@ -334,6 +332,21 @@ abstract class AcuityScheduling {
   private customFieldsToAppoinment(
     appointment: AppointmentAcuityResponse,
   ): AppointmentAcuityResponse {
+    //appointment.dateOfBirth = ''//Required
+    appointment.organizationId = null
+    appointment.registeredNursePractitioner = ''
+    appointment.address = ''
+    appointment.addressUnit = ''
+    appointment.agreeToConductFHHealthAssessment = false
+    appointment.readTermsAndConditions = false
+    appointment.receiveResultsViaEmail = false
+    appointment.shareTestResultWithEmployer = false
+    appointment.receiveNotificationsFromGov = false
+    appointment.swabMethod = ''
+    appointment.ohipCard = ''
+    appointment.travelIDIssuingCountry = ''
+    appointment.travelID = ''
+
     if (Array.isArray(appointment.forms)) {
       appointment.forms.forEach((form) => {
         form.values.some((field) => {
@@ -354,12 +367,6 @@ abstract class AcuityScheduling {
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS_UNIT'))) {
             appointment.addressUnit = field.value
-          }
-          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS_FOR_TESTING'))) {
-            appointment.addressForTesting = field.value
-          }
-          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDITIONAL_ADDRESS_NOTES'))) {
-            appointment.additionalAddressNotes = field.value
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_SHARE_TEST_RESULT_WITH_EMPLOYER'))) {
             appointment.shareTestResultWithEmployer = field.value === 'yes'

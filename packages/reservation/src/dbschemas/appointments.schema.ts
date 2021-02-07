@@ -44,8 +44,6 @@ export default Joi.object({
   vialLocation: Joi.string().allow(''),
   address: Joi.string().required(),
   addressUnit: Joi.string().allow(''),
-  addressForTesting: Joi.string().allow(''),
-  additionalAddressNotes: Joi.string().allow(''),
   couponCode: Joi.string().allow(''),
   travelID: Joi.string().allow(''),
   travelIDIssuingCountry: Joi.string().allow(''),
