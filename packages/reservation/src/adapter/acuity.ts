@@ -342,7 +342,7 @@ abstract class AcuityScheduling {
     appointment.receiveResultsViaEmail = false
     appointment.shareTestResultWithEmployer = false
     appointment.receiveNotificationsFromGov = false
-    appointment.swabMethod = ''
+    appointment.swabMethod = 'Deep Nasal'
     appointment.ohipCard = ''
     appointment.travelIDIssuingCountry = ''
     appointment.travelID = ''
@@ -396,7 +396,9 @@ abstract class AcuityScheduling {
             appointment.ohipCard = field.value
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_SWAB_METHOD'))) {
-            appointment.swabMethod = field.value
+            if(!!field.value){
+              appointment.swabMethod = field.value
+            }
           }
         })
       })
