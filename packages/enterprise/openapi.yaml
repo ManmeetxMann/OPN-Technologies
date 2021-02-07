@@ -480,40 +480,30 @@ components:
         isOpnSuperAdmin:
           type: boolean
           description: OPN Super Admin
-          default: false
         isManagementDashboardAdmin:
           type: boolean
           description: Is Management Dashboard Admin
-          default: false
         isTestReportsAdmin:
           type: boolean
           description: Can see Test Reports
-          default: false
         isTestAppointmentsAdmin:
           type: boolean
           description: Can see Test Appoinments
-          default: false
         isLabUser:
           type: boolean
-          default: false
+          description: This should be true for all lab users
         isLabAppointmentsAdmin:
           type: boolean
-          default: false
         isLabResultsAdmin:
           type: boolean
-          default: false
         isTransportsRunsAdmin:
           type: boolean
-          default: false
         isReceivingAdmin:
           type: boolean
-          default: false
         isTestRunsAdmin:
           type: boolean
-          default: false
         isDueTodayAdmin:
           type: boolean
-          default: false
         isBulkUploadAdmin:
           type: boolean
           default: false
@@ -525,11 +515,25 @@ components:
           default: false
         isConfirmResultAdmin:
           type: boolean
-          default: false
       required:
         - email
-        - showReporting
+        - isBulkUploadAdmin
+        - isConfirmResultAdmin
+        - isDueTodayAdmin
+        - isIDBarCodesAdmin
+        - isLabAppointmentsAdmin
+        - isLabResultsAdmin
+        - isLabUser
+        - isManagementDashboardAdmin
+        - isOpnSuperAdmin
+        - isReceivingAdmin
+        - isSingleResultSendAdmin
+        - isTestAppointmentsAdmin
+        - isTestReportsAdmin
+        - isTestRunsAdmin
+        - isTransportsRunsAdmin
         - organizationId
+        - showReporting
         - superAdminForOrganizationIds
 
     InternalAdminListRequest:
