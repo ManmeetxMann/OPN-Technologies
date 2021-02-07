@@ -53,6 +53,24 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "access",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "locationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "timestamps.createdAt",
           "order": "DESCENDING"
         }
@@ -82,6 +100,20 @@
         },
         {
           "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "appointments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deadline",
           "order": "ASCENDING"
         }
       ]
@@ -161,6 +193,38 @@
       ]
     },
     {
+      "collectionGroup": "packages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "packageCode",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "passports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "validFrom",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "passports",
       "queryScope": "COLLECTION",
       "fields": [
@@ -199,6 +263,92 @@
         {
           "fieldPath": "validUntil",
           "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "barCode",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "result",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "testRunId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "barCode",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "waitingResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "result",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "result",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "testRunId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "`timestamps.createdAt`",
+          "order": "ASCENDING"
         }
       ]
     },
