@@ -523,6 +523,9 @@ components:
         isSingleResultSendAdmin:
           type: boolean
           default: false
+        isConfirmResultAdmin:
+          type: boolean
+          default: false
       required:
         - email
         - showReporting
@@ -811,6 +814,8 @@ components:
         isIDBarCodesAdmin:
           type: boolean
         isSingleResultSendAdmin:
+          type: boolean
+        isConfirmResultAdmin:
           type: boolean
     User:
       type: object
