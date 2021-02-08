@@ -736,7 +736,7 @@ paths:
 
   /access/api/v1/admin/access/enter:
     post:
-      description: Manually check a user in to a location
+      description: Manually check a user in to a location. If autoExit is true, the user will automatically exit their current location. If it is false or missing, if they are still checked in somewhere the request will fail.
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -754,7 +754,7 @@ paths:
 
   /access/api/v1/admin/access/exit:
     post:
-      description: Manually check a user out of their current location
+      description: Manually check a user out of their current location. If locationId is provided, the request wwill fail if it does not match the user's current location
       security:
         - bearerAuthJWT: []
       requestBody:
