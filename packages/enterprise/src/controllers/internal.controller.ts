@@ -145,6 +145,7 @@ class InternalController implements IControllerBase {
         isBulkUploadAdmin,
         isIDBarCodesAdmin,
         isSingleResultSendAdmin,
+        isConfirmResultAdmin,
       } = req.body as InternalAdminApprovalCreateRequest
 
       // Make sure it does not exist
@@ -179,6 +180,7 @@ class InternalController implements IControllerBase {
         isBulkUploadAdmin: isBulkUploadAdmin ?? false,
         isIDBarCodesAdmin: isIDBarCodesAdmin ?? false,
         isSingleResultSendAdmin: isSingleResultSendAdmin ?? false,
+        isConfirmResultAdmin: isConfirmResultAdmin ?? false,
       })
       res.json(actionSucceed())
     } catch (error) {

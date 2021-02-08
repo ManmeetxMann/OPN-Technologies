@@ -66,7 +66,7 @@ runs:
         echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
       elif [[ "$GITHUB_REF" == *"$PROD_TAG_REF"* ]]; then
         echo "Deploy to PROD"
-        echo "PROJECT_ID=opn-platform-prod" > $GITHUB_ENV
+        echo "PROJECT_ID=opn-platform-ca-prod" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=prod_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--no-promote" >> $GITHUB_ENV
       elif [[ $GITHUB_REF == 'refs/heads/master' ]]; then

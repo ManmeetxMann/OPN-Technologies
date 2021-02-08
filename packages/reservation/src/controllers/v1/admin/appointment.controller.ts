@@ -7,7 +7,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
-import {getUserId, getIsLabUser} from '../../../../../common/src/utils/auth'
+import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
 
 import {
   appointmentByBarcodeUiDTOResponse,
@@ -57,7 +57,7 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/cancel',
-      apptLabOrOrgAdminAuthWithOrg,
+      apptLabOrOrgAdminAuth,
       this.cancelAppointment,
     )
 
@@ -246,13 +246,14 @@ class AdminAppointmentController implements IControllerBase {
 
       await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
 
-      await Promise.all(
-        appointmentIds.map((appointment) => {
-          return this.appointmentService.makeReceived(appointment, vialLocation, adminId)
-        }),
+      const appointmentsState: AppointmentsState[] = await Promise.all(
+        appointmentIds.map(async (appointmentId) => ({
+          appointmentId,
+          state: await this.appointmentService.makeReceived(appointmentId, vialLocation, adminId),
+        })),
       )
 
-      res.json(actionSucceed())
+      res.json(actionSucceed(appointmentsState))
     } catch (error) {
       next(error)
     }
@@ -261,8 +262,8 @@ class AdminAppointmentController implements IControllerBase {
   regenerateBarCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {appointmentId} = req.body as {appointmentId: string}
-
-      const appointment = await this.appointmentService.regenerateBarCode(appointmentId)
+      const userId = getUserId(res.locals.authenticatedUser)
+      const appointment = await this.appointmentService.regenerateBarCode(appointmentId, userId)
 
       res.json(actionSucceed(appointmentUiDTOResponse(appointment, false)))
     } catch (error) {

@@ -36,7 +36,7 @@ components:
             message:
               nullable: true
               type: string
-              
+
     TestResult200:
       type: object
       deprecated: false
@@ -457,7 +457,7 @@ components:
                   minLength: 1
                 notify:
                   type: boolean
-                  default: false  
+                  default: false
                 quasar670NGene:
                   type: string
                   minLength: 1
@@ -516,7 +516,7 @@ components:
           minLength: 1
         notify:
           type: boolean
-          default: false  
+          default: false
         quasar670NGene:
           type: string
           minLength: 1
@@ -550,7 +550,7 @@ components:
         resultId:
           type: string
           description: Stored Result ID
-        
+
       required:
         - reportTrackerId
         - resultId
@@ -986,7 +986,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentResponse'
+                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
 
   /webhook/acuity/schedule:
     post:
@@ -1395,7 +1395,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PCRTestResultsResponse200'
-  
+
   /reservation/admin/api/v1/pcr-test-results:
     post:
       description: Send PCR Results
@@ -1499,9 +1499,43 @@ paths:
                   page:
                     type: number
 
+  /reservation/admin/api/v1/pcr-test-results/confirm:
+    post:
+      description: Confirm PCR Results
+
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                barCode:
+                  type: string
+                action:
+                  type: string
+                  enum:
+                    - Indeterminate
+                    - MarkAsPositive
+                    - MarkAsNegative
+              required:
+                - barCode
+                - action
+      responses:
+        '200':
+          description: Succesfully add label
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
+
   /reservation/internal/api/v1/process-pcr-test-result:
     post:
-      description: Process PCR Results 
+      description: Process PCR Results
       requestBody:
         content:
           application/json:
@@ -1531,7 +1565,7 @@ paths:
               properties:
                 appointmentIds:
                   type: array
-                  items: 
+                  items:
                     type: string
                 label:
                   type: string
@@ -1543,65 +1577,11 @@ paths:
                 - label
       responses:
         '200':
-          description: Successfully Return
+          description: Succesfully add label
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: false
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      additionalProperties: false
-                      properties:
-                        id:
-                          type: number
-                        firstName:
-                          type: string
-                        lastName:
-                          type: string
-                        status:
-                          type: string
-                        barCode:
-                          type: string
-                        location:
-                          type: string
-                        dateTime:
-                          type: string
-                        dateOfBirth:
-                          type: string
-                        transportRunId:
-                          type: string
-                        deadline:
-                          type: string
-                      required:
-                        - id
-                        - firstName
-                        - lastName
-                        - barCode
-                  status:
-                    type: object
-                    additionalProperties: false
-                    properties:
-                      code:
-                        type: string
-                        enum:
-                          [
-                              succeed,
-                              failed,
-                              validation_error,
-                              internal_server_error,
-                              unauthorized,
-                              access_denied,
-                              resource_not_found,
-                          ]
-                      message:
-                        nullable: true
-                        type: string
-                  page: 
-                    type: number
+                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
 
   /reservation/admin/api/v1/pcr-test-results-bulk/report-status:
     get:
@@ -1829,11 +1809,11 @@ paths:
                 - vialLocation
       responses:
         '200':
-          description: Successfully Return
+          description: Succesfully add vialLocation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
 
   /reservation/api/v1/appointments:
     post:
@@ -1872,10 +1852,6 @@ paths:
                   type: string
                 addressUnit:
                   type: string
-                addressForTesting:
-                  type: string
-                additionalAddressNotes:
-                  type: string
                 couponCode:
                   type: string
                 shareTestResultWithEmployer:
@@ -1896,8 +1872,6 @@ paths:
                 - dateOfBirth
                 - address
                 - addressUnit
-                - addressForTesting
-                - additionalAddressNotes
                 - couponCode
                 - shareTestResultWithEmployer
                 - readTermsAndConditions
@@ -2133,6 +2107,10 @@ paths:
           name: testRunId
           schema:
             type: string
+        - in: query
+          name: barCode
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully Return
@@ -2221,7 +2199,7 @@ paths:
                     items:
                       type: object
                       additionalProperties: false
-                      properties: 
+                      properties:
                         locationName:
                           type:	string
                         locationAddress:
@@ -2293,7 +2271,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AppointmentResponse200' 
+                      $ref: '#/components/schemas/AppointmentResponse200'
                   status:
                     type: object
                     additionalProperties: false
