@@ -1852,10 +1852,6 @@ paths:
                   type: string
                 addressUnit:
                   type: string
-                addressForTesting:
-                  type: string
-                additionalAddressNotes:
-                  type: string
                 couponCode:
                   type: string
                 shareTestResultWithEmployer:
@@ -1876,8 +1872,6 @@ paths:
                 - dateOfBirth
                 - address
                 - addressUnit
-                - addressForTesting
-                - additionalAddressNotes
                 - couponCode
                 - shareTestResultWithEmployer
                 - readTermsAndConditions
@@ -2111,6 +2105,10 @@ paths:
             format: date
         - in: query
           name: testRunId
+          schema:
+            type: string
+        - in: query
+          name: barCode
           schema:
             type: string
       responses:

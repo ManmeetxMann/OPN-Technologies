@@ -109,26 +109,26 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
   ]
 
   if (params.address) {
-    dataPersonal.push(['Address', params.address])
+    dataPersonal.push(['Home Address', params.address])
   }
 
   if (params.addressUnit) {
-    dataPersonal.push(['Address Unit', params.addressUnit])
+    dataPersonal.push(['Home Address (unit number, etc)', params.addressUnit])
   }
 
   if (
     params.ohipCard &&
     (params.result === ResultTypes.Positive || params.result === ResultTypes.PresumptivePositive)
   ) {
-    dataPersonal.push(['OHIP Card', params.ohipCard])
+    dataPersonal.push(['Health / OHIP Card', params.ohipCard])
   }
 
   if (params.travelID) {
-    dataPersonal.push(['Travel ID', params.travelID])
+    dataPersonal.push(['Passport / Travel ID', params.travelID])
   }
 
   if (params.travelIDIssuingCountry) {
-    dataPersonal.push(['TravelID Issuing Country', params.travelIDIssuingCountry])
+    dataPersonal.push(['Passport Travel ID Issuing Country', params.travelIDIssuingCountry])
   }
 
   const dataAppointment = [

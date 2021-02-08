@@ -1,6 +1,17 @@
 import {firestore} from 'firebase-admin'
 
-import {AppointmentDBModel, AppointmentReasons, AppointmentStatus, ResultTypes} from './appointment'
+import {formatDateRFC822Local} from '../utils/datetime.helper'
+
+import {AppointmentDBModel, AppointmentStatus, ResultTypes} from './appointment'
+
+export enum AppointmentReasons {
+  AlreadyReported = 'Already Reported',
+  ReCollectAlreadyRequested = 'ReCollect Already Requested',
+  InProgress = 'In Progress',
+  NoInProgress = 'No In Progress',
+  NotFound = 'Test not found',
+  NotWaitingButInProgress = 'Something went Wrong',
+}
 
 export enum EmailNotficationTypes {
   Indeterminate = 'Indeterminate',
@@ -70,21 +81,32 @@ export enum PCRTestResultType {
 }
 
 type PCRResultSpecs = {
-  action: PCRResultActions
-  autoResult: ResultTypes
   calRed61Ct: string
   calRed61RdRpGene: string
   famCt: string
   famEGene: string
   hexCt: string
   hexIC: string
-  notify: boolean
   quasar670Ct: string
   quasar670NGene: string
+}
+
+type PCRResultSpecsForSending = PCRResultSpecs & {
+  action: PCRResultActions
+  autoResult: ResultTypes
+  notify: boolean
   resultDate: Date
 }
 
-export type PCRTestResultRequestData = PCRResultSpecs & {
+type PCRResultsForHistory = PCRResultSpecs & {
+  barCode: string
+  dateTime: firestore.Timestamp | string
+  reCollectNumber: string
+  result: string
+  runNumber: string
+}
+
+export type PCRTestResultRequestData = PCRResultSpecsForSending & {
   barCode: string
   sendUpdatedResults?: boolean
 }
@@ -102,63 +124,52 @@ export type PCRTestResultRequest = {
 export type PCRTestResultData = {
   barCode: string
   adminId: string
-  resultSpecs?: PCRResultSpecs
+  resultSpecs?: PCRResultSpecsForSending
 }
 
-type AppointmentDataForPCRResult = {
-  firstName: string
-  lastName: string
+export type PCRTestResultDBModel = PCRTestResultData & {
   appointmentId: string
+  confirmed: boolean
+  dateTime: firestore.Timestamp
+  deadline: firestore.Timestamp
+  displayForNonAdmins: boolean
+  firstName: string
+  id: string
+  lastName: string
+  linkedBarCodes: string[]
   organizationId?: string
-  dateOfAppointment: string
+  recollected: boolean
+  reCollectNumber: number
+  result: ResultTypes
+  runNumber: number
+  testRunId?: string
+  updatedAt: firestore.Timestamp
+  waitingResult: boolean
 }
-
-export type PCRTestResultDBModel = PCRTestResultData &
-  AppointmentDataForPCRResult & {
-    id: string
-    linkedBarCodes: string[]
-    result: ResultTypes
-    waitingResult: boolean
-    confirmed: boolean
-    recollected: boolean
-    displayForNonAdmins: boolean
-    deadline: firestore.Timestamp
-    testRunId?: string
-    runNumber: number
-    reCollectNumber: number
-    updatedAt: firestore.Timestamp
-    userId?: string
-  }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
   linkedResults?: PCRTestResultDBModel[]
 }
-
-export type PCRTestResultHistoryDTO = {
+export type PCRTestResultHistory = {
   id: string
   barCode: string
   waitingResult: boolean
-  results: PCRResults[]
-  reason: AppointmentReasons
-  reCollectNumber: number | string
-  runNumber: number | string
-  dateOfAppointment: string
+  results: PCRTestResultLinkedDBModel[]
+  reason?: AppointmentReasons
+  reCollectNumber: number
+  runNumber: number
+  dateTime: firestore.Timestamp
 }
 
-export type PCRResults = {
-  famEGene: string
-  famCt: string
-  calRed61RdRpGene: string
-  calRed61Ct: string
-  quasar670NGene: string
-  quasar670Ct: string
-  hexIC: string
-  hexCt: string
-  result: string
+export type PCRTestResultHistoryResponseDTO = {
+  id: string
+  barCode: string
+  waitingResult: boolean
+  results: PCRResultsForHistory[]
+  reason?: AppointmentReasons
   reCollectNumber: string
   runNumber: string
-  dateOfAppointment: string
-  barCode: string
+  dateTime: string
 }
 
 export type PCRTestResultEmailDTO = Omit<
@@ -193,35 +204,36 @@ export type CreateReportForPCRResultsResponse = {
 }
 
 export const PCRTestResultHistoryResponse = (
-  pcrTests: PCRTestResultHistoryDTO,
-): PCRTestResultHistoryDTO => ({
+  pcrTests: PCRTestResultHistory,
+): PCRTestResultHistoryResponseDTO => ({
   id: pcrTests.id,
   barCode: pcrTests.barCode,
   waitingResult: pcrTests.waitingResult,
   results: pcrTests.results.map((result) => ({
-    famEGene: result.famEGene,
-    famCt: result.famCt,
-    calRed61RdRpGene: result.calRed61RdRpGene,
-    calRed61Ct: result.calRed61Ct,
-    quasar670NGene: result.quasar670NGene,
-    quasar670Ct: result.quasar670Ct,
-    hexIC: result.hexIC,
-    hexCt: result.hexCt,
+    famEGene: result.resultSpecs.famEGene,
+    famCt: result.resultSpecs.famCt,
+    calRed61RdRpGene: result.resultSpecs.calRed61RdRpGene,
+    calRed61Ct: result.resultSpecs.calRed61Ct,
+    quasar670NGene: result.resultSpecs.quasar670NGene,
+    quasar670Ct: result.resultSpecs.quasar670Ct,
+    hexIC: result.resultSpecs.hexIC,
+    hexCt: result.resultSpecs.hexCt,
     result: result.result,
     barCode: result.barCode,
     reCollectNumber: result.reCollectNumber ? `S${result.reCollectNumber}` : '',
     runNumber: result.runNumber ? `R${result.runNumber}` : '',
-    dateOfAppointment: result.dateOfAppointment,
+    dateTime: formatDateRFC822Local(result.dateTime as firestore.Timestamp),
   })),
   reCollectNumber: pcrTests.reCollectNumber ? `S${pcrTests.reCollectNumber}` : '',
   runNumber: pcrTests.runNumber ? `R${pcrTests.runNumber}` : '',
   reason: pcrTests.reason,
-  dateOfAppointment: pcrTests.dateOfAppointment,
+  dateTime: formatDateRFC822Local(pcrTests.dateTime as firestore.Timestamp),
 })
 
 export type PcrTestResultsListByDeadlineRequest = {
   deadline?: string
   testRunId?: string
+  barCode?: string
 }
 
 export type PcrTestResultsListRequest = {
@@ -235,7 +247,6 @@ export type PCRTestResultListDTO = {
   firstName: string
   lastName: string
   testType: string
-  dateOfAppointment?: string
   barCode: string
   result: ResultTypes
   vialLocation?: string
@@ -256,16 +267,6 @@ export type PCRTestResultByDeadlineListDTO = {
   reCollectNumber: string
   dateTime: string
 }
-
-export const pcrResultsResponse = (pcrResult: PCRTestResultDBModel): PCRTestResultListDTO => ({
-  id: pcrResult.id,
-  firstName: pcrResult.firstName,
-  lastName: pcrResult.lastName,
-  testType: 'PCR',
-  dateOfAppointment: pcrResult.dateOfAppointment,
-  barCode: pcrResult.barCode,
-  result: pcrResult.result,
-})
 
 export type pcrTestResultsDTO = {
   barCode: string

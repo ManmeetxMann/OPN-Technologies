@@ -105,20 +105,6 @@
       ]
     },
     {
-      "collectionGroup": "appointments",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "userId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "deadline",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "attestations",
       "queryScope": "COLLECTION",
       "fields": [
@@ -303,20 +289,6 @@
         {
           "fieldPath": "updatedAt",
           "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "pcr-test-results",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "waitingResult",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "deadline",
-          "order": "ASCENDING"
         }
       ]
     },
