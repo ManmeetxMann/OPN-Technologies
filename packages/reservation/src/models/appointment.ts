@@ -3,6 +3,7 @@ import {makeDeadline} from '../utils/datetime.helper'
 
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
+import moment from 'moment-timezone'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
