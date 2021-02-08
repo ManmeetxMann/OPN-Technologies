@@ -23,6 +23,7 @@ import AppointmentWebhookController from './controllers/v1/acuity_webhook/appoin
 import BookingLocationController from './controllers/v1/booking-locations.controller'
 import AppointmentAvailabilityController from './controllers/v1/appointment-availability.controller'
 import AppointmentController from './controllers/v1/appointment.controller'
+import TemperatureV1Controller from './controllers/v1/admin/temperature.controller'
 
 //import * as debugClient from '@google-cloud/debug-agent'
 //debugClient.start({allowExpressions: true})
@@ -50,6 +51,7 @@ const app = new App({
     new BookingLocationController(),
     new AppointmentAvailabilityController(),
     new AppointmentController(),
+    new TemperatureV1Controller(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],

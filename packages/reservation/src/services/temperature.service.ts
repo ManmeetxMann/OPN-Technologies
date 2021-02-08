@@ -1,6 +1,6 @@
 import DataStore from '../../../common/src/data/datastore'
 import {Temperature, TemperatureDBModel} from '../models/temperature'
-import {TemperatureRepository} from '../repository/temperature.repository'
+import {TemperatureRepository} from '../respository/temperature.repository'
 
 export class TemperatureService {
   private dataStore = new DataStore()
