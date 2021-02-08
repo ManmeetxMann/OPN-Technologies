@@ -55,7 +55,7 @@ export class AccessTokenService {
         (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
       )
     ) {
-      fail('Access denied: this passport does not permit entry')
+      fail(`Access denied: passport ${passport.id} does not permit entry`)
     }
 
     const enteringDependantIds = dependantIds.filter((depId) =>
@@ -63,16 +63,16 @@ export class AccessTokenService {
     )
     if (permissiveMode) {
       if (!enteringDependantIds.length && !includeGuardian) {
-        fail('Access denied: this passport does not apply to any specified users')
+        fail(`Access denied: passport ${passport.id} does not apply to any specified users`)
       } else if (enteringDependantIds.length < dependantIds.length) {
         console.warn(
           `Allowing 'partial credit' entry (requested: ${dependantIds.join()} - entering: ${enteringDependantIds.join()})`,
         )
       }
     } else if (enteringDependantIds.length < dependantIds.length) {
-      fail('Access denied: this passport does not apply to all dependants')
+      fail(`Access denied: passport ${passport.id} does not apply to all dependants`)
     } else if (includeGuardian && !passport.includesGuardian) {
-      fail('Access denied: this passport does not apply to the guardian')
+      fail(`Access denied: passport ${passport.id} does not apply to the guardian`)
     }
 
     if (!delegateAdminUserId) delegateAdminUserId = null
