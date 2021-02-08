@@ -14,6 +14,7 @@ import AdminUserV4Controller from './controllers/admin/v4/user.controller'
 import RootController from './controllers/root.controller'
 import OrganizationController from './controllers/organization.controller'
 import AdminOrganizationController from './controllers/admin/v1/organization.controller'
+import UserWebhookController from './controllers/webhook/user.controller'
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
 
@@ -35,6 +36,7 @@ const app = new App({
     new OrganizationController(),
     new GroupV3Controller(),
     new AdminOrganizationController(),
+    new UserWebhookController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],

@@ -36,6 +36,7 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 import {AvailableTimes} from '../models/available-times'
+import {Enterprise} from '../adapter/enterprise'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -45,6 +46,7 @@ export class AppoinmentService {
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(this.dataStore)
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
+  private enterpriseAdapter = new Enterprise()
 
   async getAppointmentByBarCode(
     barCodeNumber: string,
@@ -240,7 +242,7 @@ export class AppoinmentService {
     return appointments[0]
   }
 
-  createAppointmentFromAcuity(
+  async createAppointmentFromAcuity(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
@@ -253,11 +255,11 @@ export class AppoinmentService {
       userId?: string
     },
   ): Promise<AppointmentDBModel> {
-    const data = this.appointmentFromAcuity(acuityAppointment, additionalData)
+    const data = await this.appointmentFromAcuity(acuityAppointment, additionalData)
     return this.appointmentsRepository.save(data)
   }
 
-  updateAppointmentFromAcuity(
+  async updateAppointmentFromAcuity(
     id: string,
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
@@ -269,11 +271,11 @@ export class AppoinmentService {
       latestResult: ResultTypes
     },
   ): Promise<AppointmentDBModel> {
-    const data = this.appointmentFromAcuity(acuityAppointment, additionalData)
+    const data = await this.appointmentFromAcuity(acuityAppointment, additionalData)
     return this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity)
   }
 
-  private appointmentFromAcuity(
+  private async appointmentFromAcuity(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
@@ -285,7 +287,7 @@ export class AppoinmentService {
       couponCode?: string
       userId?: string
     },
-  ): Omit<AppointmentDBModel, 'id'> {
+  ): Promise<Omit<AppointmentDBModel, 'id'>> {
     const dateTime = makeFirestoreTimestamp(acuityAppointment.datetime)
     const dateTimeTz = moment(acuityAppointment.datetime).tz(timeZone)
     const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
@@ -301,9 +303,20 @@ export class AppoinmentService {
       appointmentStatus,
       latestResult,
       couponCode = '',
-      userId = '',
+      userId,
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
+
+    const currentUserId = userId
+      ? userId
+      : (
+          await this.enterpriseAdapter.findOrCreateUser({
+            email: acuityAppointment.email,
+            firstName: acuityAppointment.firstName,
+            lastName: acuityAppointment.lastName,
+            organizationId: acuityAppointment.organizationId || '',
+          })
+        ).id
 
     return {
       acuityAppointmentId: acuityAppointment.id,
@@ -339,7 +352,7 @@ export class AppoinmentService {
       receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
       shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
       couponCode,
-      userId,
+      userId: currentUserId,
     }
   }
 
