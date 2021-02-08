@@ -578,16 +578,9 @@ export class AppoinmentService {
     receiveNotificationsFromGov,
     organizationId,
     userId,
+    packageCode,
   }: CreateAppointmentRequest): Promise<void> {
-    let slotData
-
-    try {
-      slotData = JSON.parse(Buffer.from(slotId, 'base64').toString())
-    } catch (error) {
-      throw new BadRequestException('Invalid Id')
-    }
-
-    const {time, appointmentTypeId, calendarId} = decodeAvailableTimeId(slotData)
+    const {time, appointmentTypeId, calendarId} = decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
 
     const dateTime = utcDateTime.format()
@@ -598,7 +591,7 @@ export class AppoinmentService {
       lastName,
       email,
       `${phone.code}${phone.number}`,
-      '',
+      packageCode,
       {
         dateOfBirth,
         address,
@@ -610,6 +603,7 @@ export class AppoinmentService {
         agreeToConductFHHealthAssessment,
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
+        barCodeNumber: packageCode,
       },
     )
     await this.createAppointmentFromAcuity(data, {

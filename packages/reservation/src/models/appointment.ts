@@ -168,6 +168,7 @@ export type CreateAppointmentRequest = {
   receiveNotificationsFromGov: boolean
   organizationId: string
   userId: string
+  packageCode: string
 }
 
 export type AppointmentByOrganizationRequest = PageableRequestFilter & {
