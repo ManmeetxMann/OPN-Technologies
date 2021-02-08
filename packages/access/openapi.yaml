@@ -102,8 +102,10 @@ components:
                 type: string
               enteredAt:
                 type: string
+                nullable: true
               exitAt:
                 type: string
+                nullable: true
 
     Passport:
       type: object
@@ -226,8 +228,6 @@ components:
       type: object
       additionalProperties: false
       properties:
-        statusToken:
-          type: string
         locationId:
           type: string
         userId:
@@ -241,7 +241,6 @@ components:
           items:
             type: string
       required:
-        - statusToken
         - locationId
         - userId
         - organizationId

@@ -71,6 +71,8 @@ class UserController implements IRouteController {
       })
     }
     const parentUserId = dependantIds.length ? userId : null
+    // if there are dependants, we just pick one arbitrarily
+    // all dependants will still be required on the passport
     const primaryUserId = dependantIds.length ? dependantIds[0] : userId
     const passport = await this.passportService.findLatestPassport(primaryUserId, parentUserId)
     if (!passport) {
