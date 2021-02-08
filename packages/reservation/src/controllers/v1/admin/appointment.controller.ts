@@ -57,7 +57,7 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/cancel',
-      apptLabOrOrgAdminAuthWithOrg,
+      apptLabOrOrgAdminAuth,
       this.cancelAppointment,
     )
 

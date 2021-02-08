@@ -13,11 +13,9 @@ import {ResourceNotFoundException} from '../../../../../common/src/exceptions/re
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {TestRunsService} from '../../../services/test-runs.service'
-import {flatten} from 'lodash'
 
 import {
   PCRListQueryRequest,
-  PCRTestResultHistoryDTO,
   PCRTestResultHistoryResponse,
   ListPCRResultRequest,
   PCRTestResultRequest,
@@ -27,15 +25,12 @@ import {
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
 } from '../../../models/pcr-test-results'
-import {AppoinmentService} from '../../../services/appoinment.service'
-import {AppointmentDBModel, AppointmentReasons} from '../../../models/appointment'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
-  private appointmentService = new AppoinmentService()
 
   constructor() {
     this.initRoutes()
@@ -52,6 +47,7 @@ class PCRTestResultController implements IControllerBase {
       [RequiredUserPermission.LabPCRTestResults],
       true,
     )
+    const confirmResultsAuth = authorizationMiddleware([RequiredUserPermission.LabConfirmResults])
 
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results-bulk',
@@ -65,7 +61,7 @@ class PCRTestResultController implements IControllerBase {
     )
     innerRouter.post(
       this.path + '/api/v1/pcr-test-results/confirm',
-      sendSingleResultsAuth,
+      confirmResultsAuth,
       this.confirmPCRResults,
     )
     innerRouter.post(
@@ -200,86 +196,7 @@ class PCRTestResultController implements IControllerBase {
 
       const pcrTests = await this.pcrTestResultsService.getPCRTestsByBarcodeWithLinked(barcode)
 
-      const formedPcrTests: PCRTestResultHistoryDTO[] = await Promise.all(
-        barcode.map(async (code) => {
-          const testSameBarcode = pcrTests.filter((pcrTest) => pcrTest.barCode === code)
-          const results = flatten(
-            await Promise.all(
-              testSameBarcode.map(async (testSame) => {
-                const appointment = await this.appointmentService.getAppointmentByBarCodeNullable(
-                  testSame.barCode,
-                )
-                const linkedSameTests = await Promise.all(
-                  testSame.linkedResults.map(async (linkedResult) => {
-                    const linkedAppointment = await this.appointmentService.getAppointmentByBarCodeNullable(
-                      linkedResult.barCode,
-                    )
-                    return {
-                      ...linkedResult.resultSpecs,
-                      result: linkedResult.result,
-                      reCollectNumber: linkedResult.reCollectNumber,
-                      runNumber: linkedResult.runNumber,
-                      dateOfAppointment: linkedAppointment
-                        ? linkedAppointment.dateOfAppointment
-                        : '',
-                      barCode: linkedResult.barCode,
-                    }
-                  }),
-                )
-                return [
-                  {
-                    ...testSame.resultSpecs,
-                    result: testSame.result,
-                    reCollectNumber: testSame.reCollectNumber,
-                    runNumber: testSame.runNumber,
-                    dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
-                    barCode: testSame.barCode,
-                  },
-                  ...linkedSameTests,
-                ]
-              }),
-            ),
-          )
-
-          // const waitingResult = !!pcrTests.find(
-          //   (pcrTest) => pcrTest.barCode === code && !!pcrTest.waitingResult,
-          // )
-          const pcrTest = pcrTests.find((pcrTest) => pcrTest.barCode === code)
-          const waitingResult = pcrTest && pcrTest.waitingResult
-
-          const appointment = await this.appointmentService.getAppointmentByBarCodeNullable(code)
-
-          if (testSameBarcode.length) {
-            if (testSameBarcode.length > 1) {
-              console.log(`Warning tests with same barcode are more than one. Barcode: ${code}.`)
-            }
-            return {
-              id: testSameBarcode[0].id,
-              barCode: code,
-              results: waitingResult ? [] : results,
-              waitingResult,
-              ...(!waitingResult && {
-                reason: await this.pcrTestResultsService.getReason(<AppointmentDBModel>appointment),
-              }),
-              reCollectNumber: pcrTest.reCollectNumber,
-              runNumber: pcrTest.runNumber,
-              dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
-            }
-          }
-          return {
-            id: code,
-            barCode: code,
-            results: [],
-            waitingResult: false,
-            reason: AppointmentReasons.NotFound,
-            reCollectNumber: '',
-            runNumber: '',
-            dateOfAppointment: appointment ? appointment.dateOfAppointment : '',
-          }
-        }),
-      )
-
-      res.json(actionSucceed(formedPcrTests.map(PCRTestResultHistoryResponse)))
+      res.json(actionSucceed(pcrTests.map(PCRTestResultHistoryResponse)))
     } catch (error) {
       next(error)
     }
@@ -361,11 +278,15 @@ class PCRTestResultController implements IControllerBase {
 
   listDueDeadline = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunId, deadline} = req.query as PcrTestResultsListByDeadlineRequest
-      if (!testRunId && !deadline) {
-        throw new BadRequestException('"testRunId" or "deadline" is not required')
+      const {testRunId, deadline, barCode} = req.query as PcrTestResultsListByDeadlineRequest
+      if (!testRunId && !deadline && !barCode) {
+        throw new BadRequestException('"testRunId" or "deadline" or "barCode" is not required')
       }
-      const pcrResults = await this.pcrTestResultsService.getDueDeadline({deadline, testRunId})
+      const pcrResults = await this.pcrTestResultsService.getDueDeadline({
+        deadline,
+        testRunId,
+        barCode,
+      })
 
       res.json(actionSucceed(pcrResults))
     } catch (error) {

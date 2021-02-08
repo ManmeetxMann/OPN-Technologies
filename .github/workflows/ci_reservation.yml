@@ -13,6 +13,7 @@ on:
       - infra-dev-reservation-*
       - preprod-reservation-*
       - preprod-all-*
+      - prod-reservation-*
 
 jobs:
   build:

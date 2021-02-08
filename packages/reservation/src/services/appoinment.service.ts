@@ -30,7 +30,12 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
-import {makeDeadline, makeDeadlineForFilter, makeFirestoreTimestamp} from '../utils/datetime.helper'
+import {
+  firestoreTimeStampToUTC,
+  makeDeadline,
+  makeDeadlineForFilter,
+  makeFirestoreTimestamp,
+} from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -326,9 +331,7 @@ export class AppoinmentService {
       registeredNursePractitioner: acuityAppointment.registeredNursePractitioner,
       latestResult,
       timeOfAppointment,
-      additionalAddressNotes: acuityAppointment.additionalAddressNotes,
       address: acuityAppointment.address,
-      addressForTesting: acuityAppointment.addressForTesting,
       addressUnit: acuityAppointment.addressUnit,
       travelID: acuityAppointment.travelID,
       travelIDIssuingCountry: acuityAppointment.travelIDIssuingCountry,
@@ -338,6 +341,7 @@ export class AppoinmentService {
       receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
       receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
       shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
+      agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
       userId,
     }
@@ -520,7 +524,7 @@ export class AppoinmentService {
       return AppointmentStatusChangeState.Failed
     }
     const appointment = await this.getAppointmentDBById(appointmentId)
-    const deadline = makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label)
+    const deadline = makeDeadline(moment(appointment.dateTime.toDate()).utc(), label)
     await this.acuityRepository.addAppointmentLabelOnAcuity(appointment.acuityAppointmentId, label)
 
     const pcrResult = await this.pcrTestResultsRepository.getTestResultByAppointmentId(
@@ -547,7 +551,7 @@ export class AppoinmentService {
   async changeStatusToReRunRequired(
     data: AppointmentChangeToRerunRequest,
   ): Promise<AppointmentDBModel> {
-    const utcDateTime = moment(data.appointment.dateTime).utc()
+    const utcDateTime = firestoreTimeStampToUTC(data.appointment.dateTime)
     const deadline = makeDeadline(utcDateTime, data.deadlineLabel)
     await this.addStatusHistoryById(
       data.appointment.id,
@@ -594,8 +598,6 @@ export class AppoinmentService {
     dateOfBirth,
     address,
     addressUnit,
-    addressForTesting,
-    additionalAddressNotes,
     couponCode,
     shareTestResultWithEmployer,
     readTermsAndConditions,
@@ -629,8 +631,6 @@ export class AppoinmentService {
         dateOfBirth,
         address,
         addressUnit,
-        addressForTesting,
-        additionalAddressNotes,
         shareTestResultWithEmployer,
         readTermsAndConditions,
         agreeToConductFHHealthAssessment,
@@ -781,7 +781,18 @@ export class AppoinmentService {
       throw new BadRequestException('Invalid appointmentId')
     }
     const newBarCode = await this.getNextBarCodeNumber()
-    console.log(`regenerateBarCode: AppointmentID: ${appointmentId} New BarCode: ${newBarCode}`)
+    console.log(
+      `regenerateBarCode: AppointmentID: ${appointmentId} OldBarCode: ${appointment.barCode} NewBarCode: ${newBarCode}`,
+    )
+
+    const appointmentDataAcuity = await this.updateAppointment(appointment.acuityAppointmentId, {
+      barCodeNumber: newBarCode,
+    })
+    if (appointmentDataAcuity.barCode === newBarCode) {
+      console.log(
+        `regenerateBarCode: AppointmentID: ${appointmentId} AcuityID: ${appointment.acuityAppointmentId} successfully updated`,
+      )
+    }
 
     const updatedAppoinment = await this.appointmentsRepository.updateBarCodeById(
       appointmentId,

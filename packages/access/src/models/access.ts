@@ -32,6 +32,21 @@ export type AccessWithDependantNames = Omit<Access, 'dependants'> & {
   dependants: UserDependant[]
 }
 
+export type AccessDTOV1 = {
+  id: string
+  token: string
+  locationId: string
+  enteredAt: string | null
+  exitAt: string | null
+  userId: string
+  includesGuardian: boolean
+  dependants: {
+    id: string
+    enteredAt: string | null
+    exitAt: string | null
+  }[]
+}
+
 export type AccessDTO = {
   token: string
   locationId: string
@@ -79,5 +94,23 @@ export const accessDTOResponse = (access: AccessWithDependantNames): AccessDTO =
     id: dep.id,
     firstName: dep.firstName,
     lastName: dep.lastName,
+  })),
+})
+
+export const accessDTOResponseV1 = (access: Access & {id: string}): AccessDTOV1 => ({
+  id: access.id,
+  userId: access.userId,
+  token: access.token,
+  locationId: access.locationId,
+  enteredAt: access.enteredAt,
+  exitAt: access.exitAt,
+  includesGuardian: access.includesGuardian,
+  dependants: (access.dependants
+    ? Object.keys(access.dependants).map((id) => access.dependants[id])
+    : []
+  ).map((dep) => ({
+    id: dep.id,
+    enteredAt: (dep.enteredAt as string) ?? null,
+    exitAt: (dep.exitAt as string) ?? null,
   })),
 })
