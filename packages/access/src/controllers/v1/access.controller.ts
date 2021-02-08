@@ -50,7 +50,6 @@ class UserController implements IRouteController {
   }
 
   private async createAccess(
-    statusToken: string,
     locationId: string,
     userId: string,
     includeGuardian: boolean,
@@ -71,8 +70,14 @@ class UserController implements IRouteController {
         }
       })
     }
+    const parentUserId = dependantIds.length ? userId : null
+    const primaryUserId = dependantIds.length ? dependantIds[0] : userId
+    const passport = await this.passportService.findLatestPassport(primaryUserId, parentUserId)
+    if (!passport) {
+      throw new BadRequestException('No passport found')
+    }
     return this.accessTokenService.createToken(
-      statusToken,
+      passport.statusToken,
       locationId,
       userId,
       dependantIds,
@@ -82,12 +87,11 @@ class UserController implements IRouteController {
 
   createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {statusToken, locationId, userId, includeGuardian, organizationId} = req.body
+      const {locationId, userId, includeGuardian, organizationId} = req.body
       const dependantIds: string[] = req.body.dependantIds ?? []
       // errors if no location is found
       await this.lookupLocation(organizationId, locationId)
       const access = await this.createAccess(
-        statusToken,
         locationId,
         userId,
         includeGuardian,
@@ -108,7 +112,7 @@ class UserController implements IRouteController {
   enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
     // TODO: this should probably fail if the user is checked in somewhere else
     try {
-      const {statusToken, locationId, userId, includeGuardian, organizationId} = req.body
+      const {locationId, userId, includeGuardian, organizationId} = req.body
       const dependantIds: string[] = req.body.dependantIds ?? []
       // errors if no location is found
       const location = await this.lookupLocation(organizationId, locationId)
@@ -119,7 +123,6 @@ class UserController implements IRouteController {
         throw new BadRequestException("Location can't be directly checked in to")
 
       const access = await this.createAccess(
-        statusToken,
         locationId,
         userId,
         includeGuardian,
