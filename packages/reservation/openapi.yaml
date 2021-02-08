@@ -555,6 +555,43 @@ components:
         - reportTrackerId
         - resultId
 
+    ResponseOfTemperature:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            status:
+              type: string
+              enum: [proceed,stop]
+            userId:
+              type: string
+            validFrom:
+              type: string
+            validUntil:
+              type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
 paths:
   /admin/page/next-bar-code:
     get:
@@ -2293,3 +2330,35 @@ paths:
                         type: string
                   page:
                     type: number
+
+  /reservation/admin/api/v1/temperature:
+    post:
+      description: Create record temperature and update user passport
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Temperature Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                organizationId:
+                  type: string
+                temperature:
+                  type: number
+                userId:
+                  type: string
+              required:
+                - organizationId
+                - temperature
+                - userId
+              additionalProperties: false
+
+      responses:
+        '200':
+          description: Temperature record created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfTemperature'
