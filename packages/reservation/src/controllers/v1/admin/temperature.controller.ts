@@ -8,20 +8,20 @@ import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 
-import {AlertService} from '../../../services/alert-service'
-import {AttestationService} from '../../../services/attestation-service'
+import {AlertService} from '../../../../../passport/src/services/alert-service'
+import {AttestationService} from '../../../../../passport/src/services/attestation-service'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
-import {PassportService} from '../../../services/passport-service'
-import {TemperatureService} from '../../../services/temperature-service'
+import {PassportService} from '../../../../../passport/src/services/passport-service'
+import {TemperatureService} from '../../../services/temperature.service'
 
-import {PassportStatuses} from '../../../models/passport'
+import {PassportStatuses} from '../../../../../passport/src/models/passport'
 import {TemperatureSaveRequest, TemperatureStatuses} from '../../../models/temperature'
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
 
 class TemperatureAdminController implements IControllerBase {
   public router = express.Router()
-  public path = '/passport/admin/api/v1'
+  public path = '/reservation/admin/api/v1'
   public temperatureService = new TemperatureService()
   public passportService = new PassportService()
   private alertService = new AlertService()

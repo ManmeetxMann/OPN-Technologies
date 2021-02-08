@@ -6,8 +6,12 @@ import {Config} from '../packages/common/src/utils/config'
 import moment from 'moment'
 import querystring, {ParsedUrlQueryInput} from 'querystring'
 import fetch from 'node-fetch'
-import DBSchema from '../packages/reservation/src/dbschemas/pcr-test-results.schema'
 import {serverTimestamp} from '../packages/common/src/utils/times'
+import DBSchema from '../packages/reservation/src/dbschemas/pcr-test-results.schema'
+import {PCRTestResultDBModel} from '../packages/reservation/src/models/pcr-test-results'
+
+const START_DATE = '2021-02-09' //Starting from OCT 1st
+const END_DATE = '2021-03-15' //new Date()
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -39,8 +43,6 @@ const ACUITY_ENV_NON_PROD = true
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
 const APIURL = Config.get('ACUITY_SCHEDULER_API_URL')
-const START_DATE = '2020-10-01' //Starting from OCT 1st
-const END_DATE = '2020-10-30' //new Date()
 
 const acuityBarCodeFormId = ACUITY_ENV_NON_PROD ? 1564839 : 1559910 //TEST:1564839 PROD:1559910
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
@@ -76,10 +78,6 @@ type AppointmentAcuityResponse = {
   datetime: string
 }
 
-const makeFirestoreTimestamp = (date: Date): firestore.Timestamp => {
-  return firestore.Timestamp.fromDate(date)
-}
-
 const findByFieldIdForms = (forms, fieldId) => forms.find((form) => form.fieldID === fieldId)
 const findByIdForms = (forms, id) => forms.find((form) => form.id === id)
 
@@ -104,7 +102,7 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
   const userPassBase64 = userPassBuf.toString('base64')
   const apiUrl =
     APIURL +
-    '/api/v1/appointments?max=1500&' +
+    '/api/v1/appointments?showall=true&max=1500&' +
     querystring.stringify(filters as ParsedUrlQueryInput)
 
   return fetch(apiUrl, {
@@ -122,16 +120,14 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
 async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
   const forms = findByIdForms(acuityAppointment.forms, acuityBarCodeFormId)
   if (!forms) {
-    return
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} BarCodeIsMissing`)
   }
   const barCode = findByFieldIdForms(
     findByIdForms(acuityAppointment.forms, acuityBarCodeFormId).values,
     acuityFormFieldIds.barCode,
   ).value
-
   const utcDateTime = moment(acuityAppointment.datetime).utc()
-
-  const dateOfAppointment = utcDateTime.format('MMMM DD, YYYY')
+  const firestoreTimeStamp = firestore.Timestamp.fromDate(utcDateTime.toDate())
 
   const appointmentInDb = await database
     .collection('appointments')
@@ -139,11 +135,15 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     .get()
 
   if (!appointmentInDb.docs.length) {
-    console.warn(`AppointmentID: ${acuityAppointment.id} Not found in firebase`)
-    return
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} Not found in firebase`)
   }
 
   const appointment = appointmentInDb.docs[0]
+  if (appointment.data().appointmentStatus === 'Canceled') {
+    return Promise.reject(
+      `AppointmentID: ${acuityAppointment.id} Canceled appointment hence result not created`,
+    )
+  }
 
   const pcrTestResultsInDb = await database
     .collection('pcr-test-results')
@@ -151,30 +151,28 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     .get()
 
   if (pcrTestResultsInDb.docs.length === 0) {
-    console.log('Create PCR Test result for acuityAppointment ID ', acuityAppointment.id)
+    const convertedDeadline = appointment.data().deadline
 
-    const convertedDeadline = appointment.data().deadline._seconds
-      ? appointment.data().deadline
-      : makeFirestoreTimestamp(moment(appointment.data().deadline).toDate())
-
-    const validatedData = await DBSchema.validateAsync({
+    const validatedData: PCRTestResultDBModel = await DBSchema.validateAsync({
+      adminId: 'MIGRATION',
       appointmentId: appointment.id,
       barCode: barCode,
-      adminId: 'MIGRATION',
-      dateOfAppointment: dateOfAppointment,
+      confirmed: false,
+      dateTime: firestoreTimeStamp,
       deadline: convertedDeadline,
       displayForNonAdmins: true,
       firstName: acuityAppointment.firstName,
       lastName: acuityAppointment.lastName,
       linkedBarCodes: [],
       organizationId: appointment.data().organizationId,
-      reSampleNumber: 1,
+      reCollectNumber: 1,
       result: 'Pending',
+      recollected: false,
       runNumber: 1,
       waitingResult: true,
     })
 
-    await database.collection('pcr-test-results').add({
+    const data = await database.collection('pcr-test-results').add({
       ...validatedData,
       updatedAt: serverTimestamp(),
       timestamps: {
@@ -185,6 +183,8 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
         },
       },
     })
+    console.log('Create PCR Test result for acuityAppointment ID ', acuityAppointment.id)
+    return data
   } else {
     console.warn(
       `AppointmentID: PCRTestResults with appointment id ${acuityAppointment.id} already exists. Total PCR Results Associated: ${pcrTestResultsInDb.docs.length} `,
@@ -234,6 +234,7 @@ async function main() {
           successCount += 1
         }
       } else {
+        console.error(result.value)
         failureCount += 1
       }
     })

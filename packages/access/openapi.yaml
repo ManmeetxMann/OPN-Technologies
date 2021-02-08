@@ -78,6 +78,10 @@ components:
       properties:
         token:
           type: string
+        statusToken:
+          type: string
+        userId:
+          type: string
         locationId:
           type: string
         enteredAt:
@@ -96,10 +100,11 @@ components:
             properties:
               id:
                 type: string
-              firstName:
+              enteredAt:
                 type: string
-              lastName:
+              exitAt:
                 type: string
+
     Passport:
       type: object
       additionalProperties: false
@@ -115,6 +120,31 @@ components:
           type: string
         validUntil:
           type: string
+
+    User:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+        lastName:
+          type: string
+        base64Photo:
+          type: string
+        organizationIds:
+          type: array
+          nullable: true
+          items:
+            type: string
+        delegateIds:
+          type: array
+          items:
+            type: string
 
     EntryOrExitRequest:
       type: object
@@ -132,16 +162,13 @@ components:
       type: object
       additionalProperties: false
       properties:
-        accessToken:
-          type: string
-        organizationId:
+        userId:
           type: string
         locationId:
           type: string
+          description: If provided, the user must be checked into the given location for the request to take effect
       required:
-        - accessToken
-        - organizationId
-        - locationId
+        - userId
 
     SelfEntryOrExitRequest:
       type: object
@@ -218,7 +245,30 @@ components:
         - locationId
         - userId
         - organizationId
-        - includeGuardian
+    
+    V1ScanRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        accessToken:
+          type: string
+      required:
+        - accessToken
+    
+    V1EnterRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        locationId:
+          type: string
+        autoExit:
+          type: boolean
+          description: if true, user will automatically exit their curtrent location. If false or not provided, the request fails if the user is currently checked in anywhere
+      required:
+        - userId
+        - locationId
 
     Statistics:
       type: object
@@ -291,6 +341,146 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/V1Access'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    V1ResponseOfScan:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties: 
+            access:
+              $ref: '#/components/schemas/V1Access'
+            passport:
+              $ref: '#/components/schemas/Passport'
+            user:
+              $ref: '#/components/schemas/User'
+            dependants:
+              type: array
+              items:
+                $ref: '#/components/schemas/User'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    V1ResponseOfEnter:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties: 
+            access:
+              $ref: '#/components/schemas/V1Access'
+            passport:
+              $ref: '#/components/schemas/Passport'
+            user:
+              $ref: '#/components/schemas/User'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    V1ResponseOfExit:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties: 
+            access:
+              $ref: '#/components/schemas/V1Access'
+            passport:
+              $ref: '#/components/schemas/Passport'
+            user:
+              $ref: '#/components/schemas/User'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    V1ResponseOfTag:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties: 
+            access:
+              $ref: '#/components/schemas/V1Access'
+            passport:
+              $ref: '#/components/schemas/Passport'
+            user:
+              $ref: '#/components/schemas/User'
         status:
           type: object
           additionalProperties: false
@@ -455,9 +645,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfAccess'
 
-  /access/api/v1/acess/entryToken:
+  /access/api/v1/access/entryToken:
     post:
       description: Create a token which an admin could scan
+      security:
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:
@@ -465,7 +657,7 @@ paths:
               $ref: '#/components/schemas/V1EntryOrExitRequest'
       responses:
         '200':
-          description: Successfully exchanged
+          description: Successfully created
           content:
             application/json:
               schema:
@@ -474,6 +666,8 @@ paths:
   /access/api/v1/access/entry:
     post:
       description: Enter the specified location
+      security:
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:
@@ -490,6 +684,8 @@ paths:
   /access/api/v1/access/exit:
     post:
       description: Exit the location the specified token was used to enter
+      security:
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:
@@ -503,7 +699,114 @@ paths:
               schema:
                 $ref: '#/components/schemas/V1ResponseOfAccess'
   
+  /access/api/v1/admin/access/scan-enter:
+    post:
+      description: Scan a token - all users and dependants it applies to will enter
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V1ScanRequest'
+      responses:
+        '200':
+          description: Successfully entered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfScan'
+  
+  /access/api/v1/admin/access/scan-exit:
+    post:
+      description: Scan a token - all users and dependants it applies to will exit
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V1ScanRequest'
+      responses:
+        '200':
+          description: Successfully exited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfScan'
 
+  /access/api/v1/admin/access/enter:
+    post:
+      description: Manually check a user in to a location
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V1EnterRequest'
+      responses:
+        '200':
+          description: Successfully exited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfEnter'
+
+  /access/api/v1/admin/access/exit:
+    post:
+      description: Manually check a user out of their current location
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V1ExitRequest'
+      responses:
+        '200':
+          description: Successfully exited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfExit'
+  
+  /access/api/v1/admin/access/enter-or-exit/tag:
+    post:
+      description: Enter or exit using a tag
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryOrExitUsingTagRequest'
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfTag'
+
+  /access/api/v1/admin/access/stats:
+    get:
+      description: Daily and live stats for a location
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: locationId
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfStatistics'
 
   /admin/createToken:
     post:

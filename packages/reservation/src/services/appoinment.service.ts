@@ -6,7 +6,7 @@ import DataStore from '../../../common/src/data/datastore'
 import {
   AppoinmentBarCodeSequenceDBModel,
   AppointmentAcuityResponse,
-  AppointmentAttachTransportStatus,
+  AppointmentStatusChangeState,
   AppointmentByOrganizationRequest,
   AppointmentChangeToRerunRequest,
   AppointmentDBModel,
@@ -14,9 +14,10 @@ import {
   AppointmentStatusHistoryDb,
   CreateAppointmentRequest,
   DeadlineLabel,
+  ResultTypes,
   UserAppointment,
   userAppointmentDTOResponse,
-  ResultTypes,
+  AppointmentActivityAction,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -29,7 +30,12 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
-import {makeDeadline, makeFirestoreTimestamp} from '../utils/datetime.helper'
+import {
+  firestoreTimeStampToUTC,
+  makeDeadline,
+  makeDeadlineForFilter,
+  makeFirestoreTimestamp,
+} from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
@@ -274,7 +280,7 @@ export class AppoinmentService {
     },
   ): Promise<AppointmentDBModel> {
     const data = this.appointmentFromAcuity(acuityAppointment, additionalData)
-    return this.updateAppointmentDB(id, data)
+    return this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity)
   }
 
   private appointmentFromAcuity(
@@ -290,13 +296,12 @@ export class AppoinmentService {
       userId?: string
     },
   ): Omit<AppointmentDBModel, 'id'> {
-    const utcDateTime = moment(acuityAppointment.datetime).utc()
+    const dateTime = makeFirestoreTimestamp(acuityAppointment.datetime)
     const dateTimeTz = moment(acuityAppointment.datetime).tz(timeZone)
-
-    const dateTime = utcDateTime.format()
     const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
     const timeOfAppointment = dateTimeTz.format(timeFormats.standard12h)
     const label = acuityAppointment.labels ? acuityAppointment.labels[0]?.name : null
+    const utcDateTime = moment(acuityAppointment.datetime).utc()
     const deadline = makeDeadline(utcDateTime, label)
     const {
       barCodeNumber,
@@ -331,9 +336,7 @@ export class AppoinmentService {
       registeredNursePractitioner: acuityAppointment.registeredNursePractitioner,
       latestResult,
       timeOfAppointment,
-      additionalAddressNotes: acuityAppointment.additionalAddressNotes,
       address: acuityAppointment.address,
-      addressForTesting: acuityAppointment.addressForTesting,
       addressUnit: acuityAppointment.addressUnit,
       travelID: acuityAppointment.travelID,
       travelIDIssuingCountry: acuityAppointment.travelIDIssuingCountry,
@@ -343,6 +346,7 @@ export class AppoinmentService {
       receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
       receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
       shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
+      agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
       userId,
     }
@@ -477,51 +481,82 @@ export class AppoinmentService {
     appointmentId: string,
     vialLocation: string,
     userId: string,
-  ): Promise<AppointmentDBModel> {
+  ): Promise<AppointmentStatusChangeState> {
+    if (await this.checkAppointmentStatus(appointmentId)) {
+      return AppointmentStatusChangeState.Failed
+    }
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.Received, userId)
-    return this.appointmentsRepository.updateProperties(appointmentId, {
+
+    await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Received,
       vialLocation,
     })
+    return AppointmentStatusChangeState.Succeed
   }
 
   async addTransportRun(
     appointmentId: string,
     transportRunId: string,
     userId: string,
-  ): Promise<AppointmentAttachTransportStatus> {
-    try {
-      await this.addStatusHistoryById(appointmentId, AppointmentStatus.InTransit, userId)
-
-      await this.appointmentsRepository.updateProperties(appointmentId, {
-        transportRunId: transportRunId,
-        appointmentStatus: AppointmentStatus.InTransit,
-      })
-      return AppointmentAttachTransportStatus.Succeed
-    } catch (e) {
-      return AppointmentAttachTransportStatus.Failed
+  ): Promise<AppointmentStatusChangeState> {
+    if (await this.checkAppointmentStatus(appointmentId)) {
+      return AppointmentStatusChangeState.Failed
     }
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.InTransit, userId)
+
+    await this.appointmentsRepository.updateProperties(appointmentId, {
+      transportRunId: transportRunId,
+      appointmentStatus: AppointmentStatus.InTransit,
+    })
+    return AppointmentStatusChangeState.Succeed
   }
 
-  async addAppointmentLabel(id: number, label: DeadlineLabel): Promise<AppointmentDBModel> {
-    const appointment = await this.getAppointmentByAcuityId(id)
-    const deadline = makeDeadline(moment(appointment.dateTime).tz(timeZone).utc(), label)
-    await this.acuityRepository.addAppointmentLabelOnAcuity(id, label)
+  private async checkAppointmentStatus(appointmentId: string) {
+    const appointment = await this.getAppointmentDBById(appointmentId)
 
-    return this.updateAppointmentDB(appointment.id, {deadline})
+    return (
+      appointment &&
+      (appointment.appointmentStatus === AppointmentStatus.Canceled ||
+        appointment.appointmentStatus === AppointmentStatus.Reported)
+    )
+  }
+
+  async addAppointmentLabel(
+    appointmentId: string,
+    label: DeadlineLabel,
+  ): Promise<AppointmentStatusChangeState> {
+    if (await this.checkAppointmentStatus(appointmentId)) {
+      return AppointmentStatusChangeState.Failed
+    }
+    const appointment = await this.getAppointmentDBById(appointmentId)
+    const deadline = makeDeadline(moment(appointment.dateTime.toDate()).utc(), label)
+    await this.acuityRepository.addAppointmentLabelOnAcuity(appointment.acuityAppointmentId, label)
+
+    const pcrResult = await this.pcrTestResultsRepository.getTestResultByAppointmentId(
+      appointment.id,
+    )
+    // Throws en exception, in case of result not found
+
+    await this.pcrTestResultsRepository.updateData(pcrResult.id, {
+      deadline: deadline,
+    })
+
+    await this.updateAppointmentDB(appointment.id, {deadline})
+    return AppointmentStatusChangeState.Succeed
   }
 
   async updateAppointmentDB(
     id: string,
-    data: Partial<AppointmentDBModel>,
+    updates: Partial<AppointmentDBModel>,
+    action?: AppointmentActivityAction,
   ): Promise<AppointmentDBModel> {
-    return this.appointmentsRepository.updateProperties(id, data)
+    return this.appointmentsRepository.updateAppointment({id, updates, action})
   }
 
   async changeStatusToReRunRequired(
     data: AppointmentChangeToRerunRequest,
   ): Promise<AppointmentDBModel> {
-    const utcDateTime = moment(data.appointment.dateTime).utc()
+    const utcDateTime = firestoreTimeStampToUTC(data.appointment.dateTime)
     const deadline = makeDeadline(utcDateTime, data.deadlineLabel)
     await this.addStatusHistoryById(
       data.appointment.id,
@@ -538,13 +573,13 @@ export class AppoinmentService {
     })
   }
 
-  async changeStatusToReSampleRequired(
+  async changeStatusToReCollectRequired(
     appointmentId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReSampleRequired, userId)
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReCollectRequired, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.ReSampleRequired,
+      appointmentStatus: AppointmentStatus.ReCollectRequired,
     })
   }
 
@@ -568,8 +603,6 @@ export class AppoinmentService {
     dateOfBirth,
     address,
     addressUnit,
-    addressForTesting,
-    additionalAddressNotes,
     couponCode,
     shareTestResultWithEmployer,
     readTermsAndConditions,
@@ -596,8 +629,6 @@ export class AppoinmentService {
         dateOfBirth,
         address,
         addressUnit,
-        addressForTesting,
-        additionalAddressNotes,
         shareTestResultWithEmployer,
         readTermsAndConditions,
         agreeToConductFHHealthAssessment,
@@ -675,7 +706,7 @@ export class AppoinmentService {
       (isLabUser &&
         appointmentStatus !== AppointmentStatus.Canceled &&
         appointmentStatus !== AppointmentStatus.Reported &&
-        appointmentStatus !== AppointmentStatus.ReSampleRequired)
+        appointmentStatus !== AppointmentStatus.ReCollectRequired)
     )
   }
 
@@ -710,7 +741,7 @@ export class AppoinmentService {
         map: '/',
         key: 'deadline',
         operator: DataModelFieldMapOperatorType.GreatOrEqual,
-        value: makeFirestoreTimestamp(moment().toDate()),
+        value: makeDeadlineForFilter(moment().toDate()),
       },
       {
         map: '/',
@@ -727,19 +758,32 @@ export class AppoinmentService {
     return appointments.map(userAppointmentDTOResponse)
   }
 
-  async regenerateBarCode(appointmentId: string): Promise<AppointmentDBModel> {
+  async regenerateBarCode(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
     const appointment = await this.appointmentsRepository.get(appointmentId)
 
     if (!appointment) {
       throw new BadRequestException('Invalid appointmentId')
     }
     const newBarCode = await this.getNextBarCodeNumber()
-    console.log(`regenerateBarCode: AppointmentID: ${appointmentId} New BarCode: ${newBarCode}`)
+    console.log(
+      `regenerateBarCode: AppointmentID: ${appointmentId} OldBarCode: ${appointment.barCode} NewBarCode: ${newBarCode}`,
+    )
+
+    const appointmentDataAcuity = await this.updateAppointment(appointment.acuityAppointmentId, {
+      barCodeNumber: newBarCode,
+    })
+    if (appointmentDataAcuity.barCode === newBarCode) {
+      console.log(
+        `regenerateBarCode: AppointmentID: ${appointmentId} AcuityID: ${appointment.acuityAppointmentId} successfully updated`,
+      )
+    }
 
     const updatedAppoinment = await this.appointmentsRepository.updateBarCodeById(
       appointmentId,
       newBarCode,
+      userId,
     )
+
     const pcrTest = await this.pcrTestResultsRepository.findWhereEqual(
       'appointmentId',
       appointmentId,

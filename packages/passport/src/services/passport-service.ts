@@ -9,7 +9,7 @@ import {firestore} from 'firebase-admin'
 import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
 import {isPassed} from '../../../common/src/utils/datetime-util'
-import {TemperatureStatuses} from '../models/temperature'
+import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
   ...passport,

@@ -177,6 +177,50 @@ export class AccessService {
     )
   }
 
+  // In this version, we don't decorate the dependants
+  async handleEnterV2(rawAccess: AccessModel): Promise<AccessModel> {
+    // createdAt could be a string, and we don't want to rewrite it
+    const access: AccessModel = _.omit(rawAccess, ['createdAt'])
+
+    if (!!access.enteredAt || !!access.exitAt) {
+      throw new BadRequestException('Token already used to enter or exit')
+    }
+    // all dependants named in the access enter, no need to filter here
+    for (const id in access.dependants) {
+      if (!!access.dependants[id].enteredAt || !!access.dependants[id].exitAt) {
+        throw new BadRequestException('Token already used to enter or exit')
+      }
+    }
+    const dependants = {}
+    for (const id in access.dependants) {
+      dependants[id] = {
+        ...access.dependants[id],
+        enteredAt: serverTimestamp(),
+      }
+    }
+    const newAccess = access.includesGuardian
+      ? {
+          ...access,
+          enteredAt: serverTimestamp(),
+          dependants,
+        }
+      : {
+          ...access,
+          dependants,
+        }
+    const count = Object.keys(dependants).length + (access.includesGuardian ? 1 : 0)
+
+    console.log(`Processed a V2 ENTER for Access id: ${access.id}`)
+    const savedAccess = await this.accessRepository.update(newAccess)
+    this.incrementPeopleOnPremises(access.locationId, count).catch((e) =>
+      console.error(`Failed to increment people for access ${access.id}: [${e}]`),
+    )
+    this.accessListener
+      .addEntry(savedAccess)
+      .catch((e) => console.error(`Failed to add entry for access ${access.id}: [${e}]`))
+    return savedAccess
+  }
+
   handleExit(rawAccess: AccessModel): Promise<AccessWithDependantNames> {
     // createdAt could be a string, and we don't want to rewrite it
     const access: AccessModel = _.omit(rawAccess, ['createdAt'])
@@ -266,6 +310,57 @@ export class AccessService {
           }
         }),
     )
+  }
+
+  // this function does not decorate dependants
+  async handleExitV2(rawAccess: AccessModel): Promise<AccessModel> {
+    // createdAt could be a string, and we don't want to rewrite it
+    const access: AccessModel = _.omit(rawAccess, ['createdAt'])
+
+    const {includesGuardian} = access
+    const dependantIds = Object.keys(access.dependants)
+    if (!includesGuardian && !dependantIds.length) {
+      throw new BadRequestException('Must specify at least one user')
+    }
+    if (!!access.exitAt) {
+      throw new BadRequestException('Token already used to exit')
+    }
+    if (dependantIds.some((id) => !!access.dependants[id].exitAt)) {
+      throw new BadRequestException('Token already used to exit')
+    }
+
+    const newDependants = dependantIds.reduce(
+      (byId, id) => ({
+        ...byId,
+        [id]: {
+          ...access.dependants[id],
+          exitAt: serverTimestamp(),
+        },
+      }),
+      {},
+    )
+
+    const newAccess = includesGuardian
+      ? {
+          ...access,
+          dependants: newDependants,
+          exitAt: serverTimestamp(),
+        }
+      : {
+          ...access,
+          dependants: newDependants,
+        }
+    const count = dependantIds.length + (includesGuardian ? 1 : 0)
+
+    console.log(`Processed a V2 EXIT for Access id: ${access.id}`)
+    const savedAccess = await this.accessRepository.update(newAccess)
+    this.decreasePeopleOnPremises(access.locationId, count).catch((e) =>
+      console.error(`Failed to decrement people for access ${access.id}: [${e}]`),
+    )
+    this.accessListener
+      .addExit(savedAccess, includesGuardian, dependantIds)
+      .catch((e) => console.error(`Failed to add exit for access ${access.id}: [${e}]`))
+    return savedAccess
   }
 
   findOneByToken(token: string): Promise<AccessModel> {
@@ -422,6 +517,52 @@ export class AccessService {
     // .then((accesses) =>
     //   accesses.map(AccessService.mapAccessDates),
     // )
+  }
+  async findLatestAnywhere(userId: string, delegateIds: string[]): Promise<AccessModel> {
+    // TODO: these queries can be greatly improved if we guarantee single-user accesses
+    // also, this 'forgets' accesses older than 48 hours, which would be fixable
+    const from = moment(now()).subtract(48, 'hours').toDate()
+    const directAccessQuery = this.accessRepository
+      .collection()
+      .where(`userId`, '==', userId)
+      //@ts-ignore
+      .where('timestamps.createdAt', '>=', from)
+      //@ts-ignore
+      .orderBy('timestamps.createdAt', 'desc')
+    const indirectAccessQueries = delegateIds.map((id) =>
+      this.accessRepository
+        .collection()
+        .where(`userId`, '==', id)
+        //@ts-ignore
+        .where('timestamps.createdAt', '>=', from)
+        //@ts-ignore
+        .orderBy('timestamps.createdAt', 'desc'),
+    )
+    const allAccesses: AccessModel[] = (_.flatten(
+      await Promise.all([directAccessQuery, ...indirectAccessQueries].map(({fetch}) => fetch())),
+    ) as AccessModel[])
+      .map((access) => {
+        const isDirect = access.userId === userId
+        if (isDirect && !access.includesGuardian) {
+          return null
+        }
+        const timestampBearer = isDirect ? access : access.dependants && access.dependants[userId]
+        if (!timestampBearer) {
+          return null
+        }
+        const activeTime = timestampBearer?.exitAt || timestampBearer?.enteredAt
+        if (!activeTime) {
+          return null
+        }
+        return {
+          ...access,
+          activeTime: safeTimestamp(activeTime),
+        }
+      })
+      .filter((notNull) => notNull)
+      .sort((a, b) => (a.activeTime < b.activeTime ? 1 : -1))
+      .map(({activeTime, ...access}) => access)
+    return allAccesses.length > 0 ? allAccesses[0] : null
   }
 
   async getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {

@@ -36,12 +36,15 @@ export type UserGroup = Auditable & {
   groupId: string
 }
 
-export const userDTOResponse = (user: AuthUser | LegacyUser): UserDTO => ({
+export const userDTOResponse = (
+  user: AuthUser | LegacyUser,
+  forceAdminEnabled?: boolean,
+): UserDTO => ({
   id: user.id,
   firstName: user.firstName,
   lastName: user.lastName,
   email: user.email,
   photo: (user as AuthUser).photo ?? (user as LegacyUser).base64Photo,
   organizationIds: (user as LegacyUser).organizationIds,
-  isAdminEnabled: !!(user as LegacyUser).admin,
+  isAdminEnabled: !!(user as LegacyUser).admin || forceAdminEnabled,
 })

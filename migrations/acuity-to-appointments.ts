@@ -7,12 +7,14 @@ import querystring, {ParsedUrlQueryInput} from 'querystring'
 import fetch from 'node-fetch'
 import moment from 'moment-timezone'
 import {uniqueNamesGenerator, adjectives, names, colors} from 'unique-names-generator'
+import DBSchema from '../packages/reservation/src/dbschemas/appointments.schema'
+import {AppointmentDBModel} from '../packages/reservation/src/models/appointment'
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
-const ANONYMOUS_PI_DATA = true
+const ANONYMOUS_PI_DATA = false
 const ACUITY_ENV_NON_PROD = true
 const START_DATE = '2020-10-01' //Starting from OCT 1st
-const END_DATE = '2020-10-30' //new Date()
+const END_DATE = '2021-03-31' //new Date()
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -37,14 +39,14 @@ const acuityFormFieldIdsNonProd = {
   homeAddeessUnit: 9082855,
   readTermsAndConditions: 9082890,
   receiveResultsViaEmail: 9082891,
-  agreeToConductFHHealthAccessment: 9082892,
+  agreeToConductFHHealthAssessment: 9082892,
   receiveNotificationsFromGov: 9082893,
   shareTestResultWithEmployer: 9112802,
   addressForTesting: 9112811,
   additionalAddressNotes: 9112814,
   travelId: 9158228,
   travelIdIssueingCountry: 9158231,
-  healthCardForOrgs: 9158793,
+  healthCardForOrgs: 9158796,
   healthCardForNonOrgs: 9158796,
   swabMethod: 9158271,
 }
@@ -59,16 +61,16 @@ const acuityFormFieldIdsProd = {
   homeAddeessUnit: 8738661,
   readTermsAndConditions: 8562278,
   receiveResultsViaEmail: 8595773,
-  agreeToConductFHHealthAccessment: 8946232,
+  agreeToConductFHHealthAssessment: 8946232,
   receiveNotificationsFromGov: 8595854,
   shareTestResultWithEmployer: 8691773,
   addressForTesting: 8621731,
   additionalAddressNotes: 8621732,
-  travelId: 'XXX',
-  travelIdIssueingCountry: 'XXX',
-  healthCardForOrgs: 'XXX',
-  healthCardForNonOrgs: 'XXX',
-  swabMethod: 'XXX',
+  travelId: 9224756,
+  travelIdIssueingCountry: 9224757,
+  healthCardForOrgs: 9224746,
+  healthCardForNonOrgs: 9224746,
+  swabMethod: 9224750,
 }
 
 const acuityHomeAddressFormId = ACUITY_ENV_NON_PROD ? 1644637 : 1585198 //TEST:1644637 PROD:1585198
@@ -76,7 +78,6 @@ const acuityBarCodeFormId = ACUITY_ENV_NON_PROD ? 1564839 : 1559910 //TEST:15648
 const acuityBirthDayFormId = ACUITY_ENV_NON_PROD ? 1567398 : 1554251 //TEST:1567398 PROD:1554251
 const acuityTermsAndConditionFormId = ACUITY_ENV_NON_PROD ? 1644640 : 1554370 //TEST:1644640 PROD:1554370
 const acuityShareTestResultWithEmployerFormId = ACUITY_ENV_NON_PROD ? 1649724 : 1576924 //TEST:XX PROD:1576924
-const acuityMobileUnitFormId = ACUITY_ENV_NON_PROD ? 1649727 : 1564716 //TEST:XX PROD:1564716
 //const acuityTravelDetailsFormId = ACUITY_ENV_NON_PROD ? 1657461 : 1657461
 
 const acuityFormFieldIds = ACUITY_ENV_NON_PROD ? acuityFormFieldIdsNonProd : acuityFormFieldIdsProd
@@ -150,7 +151,7 @@ const getAppointments = async (filters: unknown): Promise<AppointmentAcuityRespo
   const userPassBase64 = userPassBuf.toString('base64')
   const apiUrl =
     APIURL +
-    '/api/v1/appointments?max=1500&' +
+    '/api/v1/appointments?showall=true&max=1500&' +
     querystring.stringify(filters as ParsedUrlQueryInput)
 
   return fetch(apiUrl, {
@@ -263,12 +264,12 @@ async function createAppointment(acuityAppointment) {
     .get()
 
   if (appointmentInDb.size > 0) {
-    console.warn(`AppointmentID: ${acuityAppointment.id} already exists`)
+    //console.warn(`AppointmentID: ${acuityAppointment.id} already exists`)
     return Promise.resolve()
   }
   const utcDateTime = moment(acuityAppointment.datetime).utc()
+  const firestoreTimeStamp = firestore.Timestamp.fromDate(utcDateTime.toDate())
 
-  const dateTime = utcDateTime.format()
   const dateOfAppointment = utcDateTime.format('MMMM DD, YYYY')
   const timeOfAppointment = utcDateTime.format('h:mma')
 
@@ -279,26 +280,35 @@ async function createAppointment(acuityAppointment) {
   )
   let barCode = ''
   let dateOfBirth = ''
-  let organizationId = ''
-  let address = ''
+  let organizationId = null
+  let address = 'N/A'
   let addressUnit = ''
-  let addressForTesting = ''
-  let additionalAddressNotes = ''
   let readTermsAndConditions = ''
   let receiveResultsViaEmail = ''
   let receiveNotificationsFromGov = ''
-  let agreeToConductFHHealthAccessment = ''
+  let agreeToConductFHHealthAssessment = ''
   let shareTestResultWithEmployer = ''
-
   let registeredNursePractitioner = ''
+
+  if (!acuityAppointment.email || acuityAppointment.email === '') {
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} MissingEmail`)
+  }
+
+  if (!acuityAppointment.phone || acuityAppointment.phone === '') {
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} MissingPhone`)
+  }
+
   try {
     barCode = findByFieldIdForms(
       findByIdForms(acuityAppointment.forms, acuityBarCodeFormId).values,
       acuityFormFieldIds.barCode,
     ).value
+    if (barCode === '') {
+      throw new Error('EmptyBarcode')
+    }
   } catch (e) {
-    console.warn(`AppointmentID: ${acuityAppointment.id} Invalid BarCode: ${e.message}`)
-    throw e
+    //console.warn(`AppointmentID: ${acuityAppointment.id} InvalidBarCode: ${e.message}`)
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} InvalidBarCode: ${e.message}`)
   }
 
   try {
@@ -306,8 +316,12 @@ async function createAppointment(acuityAppointment) {
       findByIdForms(acuityAppointment.forms, acuityBirthDayFormId).values,
       acuityFormFieldIds.birthDay,
     ).value
+    if (dateOfBirth === '') {
+      throw new Error('Empty dateOfBirth')
+    }
   } catch (e) {
-    console.warn(`AppointmentID: ${acuityAppointment.id} Invalid Date of Birth: ${e.message}`)
+    //console.warn(`AppointmentID: ${acuityAppointment.id} InvalidDateofBirth: ${e.message}`)
+    return Promise.reject(`AppointmentID: ${acuityAppointment.id} InvalidDateofBirth: ${e.message}`)
   }
 
   try {
@@ -320,8 +334,8 @@ async function createAppointment(acuityAppointment) {
       organizationId = organizationIdField.value
     }
   } catch (e) {
-    console.warn(
-      `AppointmentID: ${acuityAppointment.id} Invalid ORG for ${acuityAppointment.id}: ${e.message}`,
+    console.info(
+      `AppointmentID: ${acuityAppointment.id} InvalidORGfor ${acuityAppointment.id}: ${e.message}`,
     )
     //return Promise.resolve()
   }
@@ -332,7 +346,7 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.nurse,
     ).value
   } catch (e) {
-    console.warn(
+    console.info(
       `AppointmentID: ${acuityAppointment.id} Invalid registeredNursePractitioner: ${e.message}`,
     )
   }
@@ -342,8 +356,9 @@ async function createAppointment(acuityAppointment) {
       findByIdForms(acuityAppointment.forms, acuityHomeAddressFormId).values,
       acuityFormFieldIds.homeAddress,
     ).value
+    address = address === '' ? 'N/A' : address
   } catch (e) {
-    console.warn(`AppointmentID: ${acuityAppointment.id} Invalid address: ${e.message}`)
+    console.info(`AppointmentID: ${acuityAppointment.id} Invalid address: ${e.message}`)
   }
 
   try {
@@ -352,7 +367,7 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.homeAddeessUnit,
     ).value
   } catch (e) {
-    console.warn(`AppointmentID: ${acuityAppointment.id} Invalid addressUnit: ${e.message}`)
+    console.info(`AppointmentID: ${acuityAppointment.id} Invalid addressUnit: ${e.message}`)
   }
 
   try {
@@ -361,7 +376,7 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.readTermsAndConditions,
     ).value
   } catch (e) {
-    console.warn(
+    console.info(
       `AppointmentID: ${acuityAppointment.id} Invalid readTermsAndConditions: ${e.message}`,
     )
   }
@@ -372,7 +387,7 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.receiveResultsViaEmail,
     ).value
   } catch (e) {
-    console.warn(
+    console.info(
       `AppointmentID: ${acuityAppointment.id} Invalid receiveResultsViaEmail: ${e.message}`,
     )
   }
@@ -383,19 +398,19 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.receiveNotificationsFromGov,
     ).value
   } catch (e) {
-    console.warn(
+    console.info(
       `AppointmentID: ${acuityAppointment.id} Invalid receiveNotificationsFromGov: ${e.message}`,
     )
   }
 
   try {
-    agreeToConductFHHealthAccessment = findByFieldIdForms(
+    agreeToConductFHHealthAssessment = findByFieldIdForms(
       findByIdForms(acuityAppointment.forms, acuityTermsAndConditionFormId).values,
-      acuityFormFieldIds.agreeToConductFHHealthAccessment,
+      acuityFormFieldIds.agreeToConductFHHealthAssessment,
     ).value
   } catch (e) {
-    console.warn(
-      `AppointmentID: ${acuityAppointment.id} Invalid agreeToConductFHHealthAccessment: ${e.message}`,
+    console.info(
+      `AppointmentID: ${acuityAppointment.id} Invalid agreeToConductFHHealthAssessment: ${e.message}`,
     )
   }
 
@@ -405,52 +420,33 @@ async function createAppointment(acuityAppointment) {
       acuityFormFieldIds.shareTestResultWithEmployer,
     ).value
   } catch (e) {
-    console.warn(
+    console.info(
       `AppointmentID: ${acuityAppointment.id} Invalid shareTestResultWithEmployer: ${e.message}`,
     )
   }
 
   try {
-    addressForTesting = findByFieldIdForms(
-      findByIdForms(acuityAppointment.forms, acuityMobileUnitFormId).values,
-      acuityFormFieldIds.addressForTesting,
-    ).value
-  } catch (e) {
-    console.warn(`AppointmentID: ${acuityAppointment.id} Invalid addressForTesting: ${e.message}`)
-  }
-
-  try {
-    additionalAddressNotes = findByFieldIdForms(
-      findByIdForms(acuityAppointment.forms, acuityMobileUnitFormId).values,
-      acuityFormFieldIds.additionalAddressNotes,
-    ).value
-  } catch (e) {
-    console.warn(
-      `AppointmentID: ${acuityAppointment.id} Invalid additionalAddressNotes: ${e.message}`,
-    )
-  }
-
-  try {
-    const appointment = {
+    const validatedData = await DBSchema.validateAsync({
       acuityAppointmentId: acuityAppointment.id,
+      //adminId: 'MIGRATION',
       address: address,
       addressUnit: addressUnit,
-      addressForTesting: addressForTesting,
-      additionalAddressNotes: additionalAddressNotes,
-      agreeToConductFHHealthAccessment: handleBoolean(agreeToConductFHHealthAccessment),
+      agreeToConductFHHealthAssessment: handleBoolean(agreeToConductFHHealthAssessment),
       appointmentStatus: acuityAppointment.canceled ? 'Canceled' : 'Pending', //TODO
+      appointmentTypeID: acuityAppointment.appointmentTypeID,
       barCode: barCode,
+      calendarID: acuityAppointment.calendarID,
       canceled: acuityAppointment.canceled,
       dateOfAppointment: dateOfAppointment,
       dateOfBirth: piDOB(dateOfBirth),
-      dateTime: dateTime,
+      dateTime: firestoreTimeStamp,
       deadline,
       email: piEmail(acuityAppointment.email),
       firstName: piData(acuityAppointment.firstName),
       lastName: piData(acuityAppointment.lastName),
       latestResult: 'Pending', //TODO
       location: acuityAppointment.location,
-      organizationId: organizationId,
+      organizationId: organizationId === '' ? null : organizationId,
       packageCode: acuityAppointment.certificate,
       phone: acuityAppointment.phone,
       readTermsAndConditions: handleBoolean(readTermsAndConditions),
@@ -459,6 +455,10 @@ async function createAppointment(acuityAppointment) {
       registeredNursePractitioner: registeredNursePractitioner,
       shareTestResultWithEmployer: handleBoolean(shareTestResultWithEmployer),
       timeOfAppointment: timeOfAppointment,
+    })
+
+    const appointment: AppointmentDBModel = {
+      ...validatedData,
       timestamps: {
         createdAt: firestore.FieldValue.serverTimestamp(),
         updatedAt: null,
@@ -467,7 +467,6 @@ async function createAppointment(acuityAppointment) {
         },
       },
     }
-
     const data = database.collection('appointments').add(appointment)
     console.info(`Appointment ID: ${appointment.acuityAppointmentId} successfully saved`)
     return data
@@ -488,7 +487,7 @@ async function main() {
           successCount += 1
         }
       } else {
-        console.log(result)
+        console.warn(result.value)
         failureCount += 1
       }
     })

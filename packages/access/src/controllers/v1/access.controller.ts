@@ -20,7 +20,7 @@ import {OrganizationLocation} from '../../../../enterprise/src/models/organizati
 import {AccessService} from '../../service/access.service'
 import {AccessTokenService} from '../../service/access-token.service'
 import {AccessModel} from '../../repository/access.repository'
-import {accessDTOResponse} from '../../models/access'
+import {accessDTOResponseV1} from '../../models/access'
 
 class UserController implements IRouteController {
   public router = express.Router()
@@ -96,7 +96,7 @@ class UserController implements IRouteController {
       )
 
       const response = access
-        ? actionSucceed(access)
+        ? actionSucceed(accessDTOResponseV1(access))
         : actionFailed('Access denied: Cannot grant access for the given status-token')
 
       res.status(access ? 200 : 403).json(response)
@@ -150,9 +150,13 @@ class UserController implements IRouteController {
       if (location.id != access.locationId)
         throw new BadRequestException('Access-location mismatch with the entering location')
 
-      const newAccess = await this.accessService.handleExit(access)
+      const newAccess = await this.accessService.handleExitV2(access)
 
-      res.json(actionSucceed(accessDTOResponse(newAccess)))
+      res.json(
+        actionSucceed({
+          access: newAccess,
+        }),
+      )
     } catch (error) {
       next(error)
     }
@@ -164,8 +168,12 @@ class UserController implements IRouteController {
     const canEnter = passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil)
 
     if (canEnter) {
-      const newAccess = await this.accessService.handleEnter(access)
-      return res.json(actionSucceed(accessDTOResponse(newAccess)))
+      const newAccess = await this.accessService.handleEnterV2(access)
+      return res.json(
+        actionSucceed({
+          access: accessDTOResponseV1(newAccess),
+        }),
+      )
     }
 
     return res.status(400).json(actionFailed('Access denied for access-token'))
@@ -197,9 +205,13 @@ class UserController implements IRouteController {
     if (allStatuses.includes('caution')) {
       throw new BadRequestException(`current status is caution`)
     }
-    const newAccess = await this.accessService.handleEnter(access)
+    const newAccess = await this.accessService.handleEnterV2(access)
 
-    return res.json(actionSucceed(accessDTOResponse(newAccess)))
+    return res.json(
+      actionSucceed({
+        access: accessDTOResponseV1(newAccess),
+      }),
+    )
   }
 }
 
