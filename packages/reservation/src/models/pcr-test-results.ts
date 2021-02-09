@@ -123,7 +123,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   confirmed: boolean
   dateTime: firestore.Timestamp
   deadline: firestore.Timestamp
-  displayForNonAdmins: boolean
+  displayInResult: boolean
   firstName: string
   id: string
   lastName: string
