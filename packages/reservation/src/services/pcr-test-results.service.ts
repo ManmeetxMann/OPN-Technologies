@@ -522,7 +522,7 @@ export class PCRTestResultsService {
       organizationId: appointment.organizationId,
       dateTime: appointment.dateTime,
       waitingResult: false,
-      displayForNonAdmins: true, //TODO
+      displayInResult: true, 
       recollected: actionsForRecollection.includes(resultData.resultSpecs.action),
       confirmed: false,
     }
@@ -812,13 +812,20 @@ export class PCRTestResultsService {
     waitingResult?: boolean
     confirmed?: boolean
   }): Promise<PCRTestResultDBModel> {
+
+    //Reset Display for all OLD results
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(data.appointment.id, {
+      displayInResult: false
+    })
+    console.log(`createNewTestResults: UpdatedAllResults for AppointmentId: ${data.appointment.id} to displayInResult: false`)
+
     const pcrResultDataForDb = {
       adminId: data.adminId,
       appointmentId: data.appointment.id,
       barCode: data.appointment.barCode,
       confirmed: data.confirmed ?? false,
       dateTime: data.appointment.dateTime,
-      displayForNonAdmins: true,
+      displayInResult: true,
       deadline: data.appointment.deadline,
       firstName: data.appointment.firstName,
       lastName: data.appointment.lastName,
