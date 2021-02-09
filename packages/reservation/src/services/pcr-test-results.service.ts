@@ -522,7 +522,7 @@ export class PCRTestResultsService {
       organizationId: appointment.organizationId,
       dateTime: appointment.dateTime,
       waitingResult: false,
-      displayInResult: true, 
+      displayInResult: true,
       recollected: actionsForRecollection.includes(resultData.resultSpecs.action),
       confirmed: false,
     }
@@ -812,12 +812,13 @@ export class PCRTestResultsService {
     waitingResult?: boolean
     confirmed?: boolean
   }): Promise<PCRTestResultDBModel> {
-
     //Reset Display for all OLD results
     await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(data.appointment.id, {
-      displayInResult: false
+      displayInResult: false,
     })
-    console.log(`createNewTestResults: UpdatedAllResults for AppointmentId: ${data.appointment.id} to displayInResult: false`)
+    console.log(
+      `createNewTestResults: UpdatedAllResults for AppointmentId: ${data.appointment.id} to displayInResult: false`,
+    )
 
     const pcrResultDataForDb = {
       adminId: data.adminId,
@@ -1015,7 +1016,6 @@ export class PCRTestResultsService {
   }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrTestResultsQuery = []
 
-
     if (barCode) {
       pcrTestResultsQuery.push({
         map: '/',
@@ -1029,14 +1029,14 @@ export class PCRTestResultsService {
         operator: DataModelFieldMapOperatorType.Equals,
         value: true,
       })
-    }else if (testRunId) {
+    } else if (testRunId) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'testRunId',
         operator: DataModelFieldMapOperatorType.Equals,
         value: testRunId,
       })
-    }else if (deadline) {
+    } else if (deadline) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'deadline',
