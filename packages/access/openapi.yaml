@@ -662,7 +662,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/V1ResponseOfAccess'
   
-  /access/api/v1/access/entry:
+  /access/api/v1/access/enter:
     post:
       description: Enter the specified location
       security:
