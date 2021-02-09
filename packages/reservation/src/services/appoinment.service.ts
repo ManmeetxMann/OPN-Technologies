@@ -635,7 +635,6 @@ export class AppoinmentService {
         agreeToConductFHHealthAssessment,
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
-        barCodeNumber: packageCode,
       },
     )
     await this.createAppointmentFromAcuity(data, {
