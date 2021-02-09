@@ -6,7 +6,7 @@ import {WebhookUserCreateRequest} from '../../models/user'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 
 class UserController implements IControllerBase {
-  public path = '/webhook/user'
+  public path = '/enterprise/internal/api/v1/user'
   public router = express.Router()
   private userService = new UserService()
 
@@ -15,7 +15,7 @@ class UserController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.post(this.path + '/create', this.findOrCreateUser)
+    this.router.post(this.path + '/', this.findOrCreateUser)
   }
 
   findOrCreateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

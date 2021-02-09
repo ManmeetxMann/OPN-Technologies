@@ -11,7 +11,7 @@ export class Enterprise {
     lastName: string
     organizationId: string
   }): Promise<LocalUser> {
-    const apiUrl = `${APIURL}webhook/user/create`
+    const apiUrl = `${APIURL}enterprise/internal/api/v1/user`
     const body = JSON.stringify({
       email: userData.email,
       firstName: userData.firstName,

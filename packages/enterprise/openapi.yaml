@@ -3578,7 +3578,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
-  /webhook/user/create:
+  /enterprise/internal/api/v1/user:
     post:
       summary: Webhook
       description: Find or create user
