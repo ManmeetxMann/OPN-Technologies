@@ -541,6 +541,23 @@ export class PCRTestResultsService {
   ): Promise<void> {
     const nextRunNumber = runNumber + 1
     switch (resultData.resultSpecs.action) {
+      case PCRResultActions.SendPreliminaryPositive: {
+        console.log(
+          `TestResultSendPreliminaryPositive: for ${resultData.barCode} is added to queue for today`,
+        )
+        const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
+          appointment: appointment,
+          deadlineLabel: DeadlineLabel.NextDay,
+          userId: resultData.adminId,
+        })
+        await this.createNewTestResults({
+          appointment: updatedAppointment,
+          adminId: resultData.adminId,
+          runNumber: nextRunNumber,
+          reCollectNumber,
+        })
+        break
+      }
       case PCRResultActions.ReRunToday: {
         console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for today`)
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
@@ -603,13 +620,18 @@ export class PCRTestResultsService {
     notficationType: PCRResultActions | EmailNotficationTypes,
   ): Promise<void> {
     switch (notficationType) {
+      case PCRResultActions.SendPreliminaryPositive: {
+        await this.sendEmailNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} SendPreliminaryPositive`)
+        break
+      }
       case PCRResultActions.ReRunToday: {
-        await this.sendRerunNotification(resultData, 'TODAY')
+        await this.sendEmailNotification(resultData)
         console.log(`SendNotification: Success: ${resultData.barCode} ReRunToday`)
         break
       }
       case PCRResultActions.ReRunTomorrow: {
-        await this.sendRerunNotification(resultData, 'Tomorrow')
+        await this.sendEmailNotification(resultData)
         console.log(`SendNotification: Success: ${resultData.barCode} ReRunTomorrow`)
         break
       }
@@ -619,28 +641,28 @@ export class PCRTestResultsService {
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedNegative: {
-        await this.sendTestResults(resultData, PCRResultPDFType.ConfirmedNegative)
+        await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.ConfirmedNegative)
         console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedPositive: {
-        await this.sendTestResults(resultData, PCRResultPDFType.ConfirmedPositive)
+        await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.ConfirmedPositive)
         console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
         break
       }
       default: {
         if (resultData.result === ResultTypes.Negative) {
-          await this.sendTestResults(resultData, PCRResultPDFType.Negative)
+          await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Negative)
           console.log(
             `SendNotification: Success: Sent Results for ${resultData.barCode} Result: ${resultData.result}`,
           )
         } else if (resultData.result === ResultTypes.Positive) {
-          await this.sendTestResults(resultData, PCRResultPDFType.Positive)
+          await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
           console.log(
             `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
           )
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
-          await this.sendTestResults(resultData, PCRResultPDFType.PresumptivePositive)
+          await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
           console.log(
             `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
           )
@@ -654,7 +676,7 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendTestResults(
+  async sendTestResultsWithAttachment(
     resultData: PCRTestResultEmailDTO,
     pcrResultPDFType: PCRResultPDFType,
   ): Promise<void> {
@@ -683,12 +705,15 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendRerunNotification(resultData: PCRTestResultEmailDTO, day: string): Promise<void> {
+  async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+    const templateId =
+      resultData.resultSpecs.action === PCRResultActions.SendPreliminaryPositive
+        ? Config.getInt('TEST_RESULT_PRELIMNARY_RESULTS_TEMPLATE_ID')
+        : Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID')
     await this.emailService.send({
-      templateId: Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 4,
+      templateId: templateId,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
-        DAY: day,
         FIRSTNAME: resultData.firstName,
       },
       bcc: [

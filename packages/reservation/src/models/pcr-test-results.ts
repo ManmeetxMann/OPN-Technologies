@@ -37,6 +37,7 @@ export enum PCRResultActions {
   MarkAsPositive = 'MarkAsPositive',
   MarkAsNegative = 'MarkAsNegative',
   MarkAsPresumptivePositive = 'MarkAsPresumptivePositive',
+  SendPreliminaryPositive = 'SendPreliminaryPositive',
 }
 
 //Actions when Results are Confirmed
