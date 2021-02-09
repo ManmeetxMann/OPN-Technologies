@@ -624,15 +624,15 @@ export class PCRTestResultsService {
       }
       case PCRResultActions.RequestReCollect: {
         //TODO: Remove this after FE updates
-        handledReCollect()
+        await handledReCollect()
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
-        handledReCollect()
+        await handledReCollect()
         break
       }
       case PCRResultActions.RecollectAsInconclusive: {
-        handledReCollect()
+        await handledReCollect()
         break
       }
       default: {
