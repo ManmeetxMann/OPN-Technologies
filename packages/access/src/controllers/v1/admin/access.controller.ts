@@ -261,7 +261,7 @@ class AdminController implements IRouteController {
       const user = await this.userService.findOne(userId)
       // backwards compat for multi-user access
       const {delegates: delegateIds} = user
-      const latestAccess = await this.accessService.findLatestAnywhere(userId, delegateIds)
+      const latestAccess = await this.accessService.findLatestAnywhere(userId, delegateIds ?? [])
       if (!latestAccess) {
         throw new ForbiddenException('User is not in any location')
       }

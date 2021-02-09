@@ -233,8 +233,6 @@ components:
       properties:
         locationId:
           type: string
-        userId:
-          type: string
         includeGuardian:
           type: boolean
         organizationId:
@@ -245,7 +243,6 @@ components:
             type: string
       required:
         - locationId
-        - userId
         - organizationId
     
     V1UserExitRequest:
