@@ -988,7 +988,7 @@ export class PCRTestResultsService {
       ]
 
       if (
-        appointment && 
+        appointment &&
         (allowedAppointmentStatus.includes(appointment.appointmentStatus) || testRunId)
       ) {
         pcrFiltred.push({
