@@ -423,6 +423,8 @@ components:
                     - ReRunToday
                     - ReRunTomorrow
                     - RequestReCollect
+                    - RecollectAsInvalid
+                    - RecollectAsInconclusive
                     - MarkAsPositive
                     - MarkAsPresumptivePositive
                     - MarkAsNegative
@@ -483,6 +485,8 @@ components:
             - ReRunToday
             - ReRunTomorrow
             - RequestReCollect
+            - RecollectAsInvalid
+            - RecollectAsInconclusive
             - MarkAsPositive
             - MarkAsPresumptivePositive
             - MarkAsNegative

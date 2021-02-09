@@ -322,6 +322,16 @@ export class PCRTestResultsService {
         finalResult = ResultTypes.Positive
         break
       }
+      case PCRResultActions.RecollectAsInvalid: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as Invalid`)
+        finalResult = ResultTypes.Invalid
+        break
+      }
+      case PCRResultActions.RecollectAsInconclusive: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as RecollectAsInconclusive`)
+        finalResult = ResultTypes.Inconclusive
+        break
+      }
     }
     return finalResult
   }
@@ -496,6 +506,11 @@ export class PCRTestResultsService {
       testResult.reCollectNumber,
     )
 
+    const actionsForRecollection = [
+      PCRResultActions.RequestReCollect,
+      PCRResultActions.RecollectAsInvalid,
+      PCRResultActions.RecollectAsInconclusive,
+    ]
     //Update PCR Test results
     const pcrResultDataForDbUpdate = {
       ...resultData,
@@ -508,7 +523,7 @@ export class PCRTestResultsService {
       dateTime: appointment.dateTime,
       waitingResult: false,
       displayForNonAdmins: true, //TODO
-      recollected: resultData.resultSpecs.action === PCRResultActions.RequestReCollect,
+      recollected: actionsForRecollection.includes(resultData.resultSpecs.action),
       confirmed: false,
     }
 
@@ -540,6 +555,25 @@ export class PCRTestResultsService {
     reCollectNumber: number,
   ): Promise<void> {
     const nextRunNumber = runNumber + 1
+    const handledReCollect = async () => {
+      console.log(`TestResultReCollect: for ${resultData.barCode} is requested`)
+      await this.appointmentService.changeStatusToReCollectRequired(
+        appointment.id,
+        resultData.adminId,
+      )
+
+      if (!appointment.organizationId) {
+        this.couponCode = await this.couponService.createCoupon(appointment.email)
+        console.log(
+          `TestResultReCollect: CouponCode ${this.couponCode} is created for ${appointment.email} ReCollectedBarCode: ${resultData.barCode}`,
+        )
+        await this.couponService.saveCoupon(
+          this.couponCode,
+          appointment.organizationId,
+          resultData.barCode,
+        )
+      }
+    }
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.SendPreliminaryPositive: {
         console.log(
@@ -589,23 +623,16 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.RequestReCollect: {
-        console.log(`TestResultReCollect: for ${resultData.barCode} is requested`)
-        await this.appointmentService.changeStatusToReCollectRequired(
-          appointment.id,
-          resultData.adminId,
-        )
-
-        if (!appointment.organizationId) {
-          this.couponCode = await this.couponService.createCoupon(appointment.email)
-          console.log(
-            `TestResultReCollect: CouponCode ${this.couponCode} is created for ${appointment.email} ReCollectedBarCode: ${resultData.barCode}`,
-          )
-          await this.couponService.saveCoupon(
-            this.couponCode,
-            appointment.organizationId,
-            resultData.barCode,
-          )
-        }
+        //TODO: Remove this after FE updates
+        handledReCollect()
+        break
+      }
+      case PCRResultActions.RecollectAsInvalid: {
+        handledReCollect()
+        break
+      }
+      case PCRResultActions.RecollectAsInconclusive: {
+        handledReCollect()
         break
       }
       default: {
@@ -636,8 +663,19 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.RequestReCollect: {
+        //TODO Remove This
         await this.sendReCollectNotification(resultData)
         console.log(`SendNotification: Success: ${resultData.barCode} RequestReCollect`)
+        break
+      }
+      case PCRResultActions.RecollectAsInconclusive: {
+        await this.sendReCollectNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} RecollectAsInconclusive`)
+        break
+      }
+      case PCRResultActions.RecollectAsInvalid: {
+        await this.sendReCollectNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} RecollectAsInvalid`)
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedNegative: {
@@ -1043,6 +1081,14 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.RequestReCollect: {
+        status = ResultReportStatus.SentReCollectRequest
+        break
+      }
+      case PCRResultActions.RecollectAsInconclusive: {
+        status = ResultReportStatus.SentReCollectRequest
+        break
+      }
+      case PCRResultActions.RecollectAsInvalid: {
         status = ResultReportStatus.SentReCollectRequest
         break
       }
