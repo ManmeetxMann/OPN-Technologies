@@ -24,7 +24,7 @@ export class BookingLocationService {
         const appointmentTypesWithPackage = appointmentTypesWithPackages.get(appointmentTypeId)
 
         if (
-          !appointmentTypesWithPackage ||
+          (!appointmentTypesWithPackage && remainingCounts[appointmentTypeId]) ||
           (remainingCounts[appointmentTypeId] &&
             appointmentTypesWithPackage.count > remainingCounts[appointmentTypeId])
         ) {

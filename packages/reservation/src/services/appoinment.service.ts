@@ -625,6 +625,7 @@ export class AppoinmentService {
       email,
       `${phone.code}${phone.number}`,
       packageCode,
+      calendarId,
       {
         dateOfBirth,
         address,

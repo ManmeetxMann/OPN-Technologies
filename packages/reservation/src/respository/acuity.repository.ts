@@ -51,6 +51,7 @@ export class AcuityRepository extends AcuityScheduling {
     email: string,
     phone: string,
     certificate: string,
+    calendarId: number,
     fields: Record<string, string | boolean>,
   ): Promise<AppointmentAcuityResponse> {
     return this.createAppointmentOnAcuityService(
@@ -61,6 +62,7 @@ export class AcuityRepository extends AcuityScheduling {
       email,
       phone,
       certificate,
+      calendarId,
       fields,
     )
   }
