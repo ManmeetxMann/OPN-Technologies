@@ -290,7 +290,8 @@ export type TestResutsDTO = {
   id: string
   type: PCRTestResultType
   name: string
-  testDateTime: Date
+  testDateTime: string
   style: PCRTestResultStyle
   result: ResultTypes
+  detailsAvailable: boolean
 }

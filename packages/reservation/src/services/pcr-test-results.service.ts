@@ -1065,9 +1065,10 @@ export class PCRTestResultsService {
         id: pcr.id,
         type: PCRTestResultType.PCR,
         name: 'PCR Tests',
-        testDateTime: pcr.deadline.toDate(),
+        testDateTime: formatDateRFC822Local(pcr.deadline),
         style: resultToStyle(result),
         result,
+        detailsAvailable: result !== ResultTypes.Pending
       }
     })
   }

@@ -30,7 +30,6 @@ class TestResultController implements IControllerBase {
     try {
       const {organizationid} = req.headers as {organizationid: string}
       const userId = getUserId(res.locals.authenticatedUser)
-      console.log(organizationid, userId, req.headers)
       const pcrResults = await this.pcrTestResultsService.getTestResultsByUserId(
         userId,
         organizationid,
