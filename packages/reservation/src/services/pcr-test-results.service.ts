@@ -1008,7 +1008,28 @@ export class PCRTestResultsService {
   }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrTestResultsQuery = []
 
-    if (deadline) {
+
+    if (barCode) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: barCode,
+      })
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'waitingResult',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      })
+    }else if (testRunId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testRunId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: testRunId,
+      })
+    }else if (deadline) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'deadline',
@@ -1020,24 +1041,6 @@ export class PCRTestResultsService {
         key: 'waitingResult',
         operator: DataModelFieldMapOperatorType.Equals,
         value: true,
-      })
-    }
-
-    if (barCode) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'barCode',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: barCode,
-      })
-    }
-
-    if (testRunId) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'testRunId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: testRunId,
       })
     }
 
