@@ -1054,7 +1054,11 @@ export class PCRTestResultsService {
         AppointmentStatus.ReRunRequired,
         AppointmentStatus.Received,
       ]
-      if (appointment && allowedAppointmentStatus.includes(appointment.appointmentStatus)) {
+
+      if (
+        appointment &&
+        (allowedAppointmentStatus.includes(appointment.appointmentStatus) || testRunId)
+      ) {
         pcrFiltred.push({
           id: pcr.id,
           barCode: pcr.barCode,
