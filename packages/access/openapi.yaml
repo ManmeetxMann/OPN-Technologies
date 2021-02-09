@@ -823,6 +823,11 @@ paths:
           schema:
             type: string
           required: false
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
       responses:
         '200':
           description: Successfully handled
