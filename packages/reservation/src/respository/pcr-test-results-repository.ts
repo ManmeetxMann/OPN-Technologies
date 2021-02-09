@@ -78,6 +78,6 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     appointmentId: string,
     pcrTestResults: Partial<PCRTestResultDBModel>,
   ): Promise<void> {
-    this.updateAllFromCollectionWhereEqual('appointmentId', appointmentId, pcrTestResults)
+    await this.updateAllFromCollectionWhereEqual('appointmentId', appointmentId, pcrTestResults)
   }
 }
