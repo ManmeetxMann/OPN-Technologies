@@ -1,4 +1,5 @@
 import moment from 'moment'
+import {sortBy} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -250,7 +251,11 @@ export class PCRTestResultsService {
       })
     }
 
-    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+      pcrTestResultsQuery,
+      {key: 'result', direction: 'asc'},
+    )
+
     return pcrResults.map((pcr) => {
       return {
         id: pcr.id,
@@ -318,6 +323,16 @@ export class PCRTestResultsService {
       case PCRResultActions.MarkAsPositive: {
         console.log(`TestResultOverwrittten: ${barCode} is marked as Positive`)
         finalResult = ResultTypes.Positive
+        break
+      }
+      case PCRResultActions.RecollectAsInvalid: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as Invalid`)
+        finalResult = ResultTypes.Invalid
+        break
+      }
+      case PCRResultActions.RecollectAsInconclusive: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as RecollectAsInconclusive`)
+        finalResult = ResultTypes.Inconclusive
         break
       }
     }
@@ -494,6 +509,11 @@ export class PCRTestResultsService {
       testResult.reCollectNumber,
     )
 
+    const actionsForRecollection = [
+      PCRResultActions.RequestReCollect,
+      PCRResultActions.RecollectAsInvalid,
+      PCRResultActions.RecollectAsInconclusive,
+    ]
     //Update PCR Test results
     const pcrResultDataForDbUpdate = {
       ...resultData,
@@ -506,7 +526,7 @@ export class PCRTestResultsService {
       dateTime: appointment.dateTime,
       waitingResult: false,
       displayForNonAdmins: true, //TODO
-      recollected: resultData.resultSpecs.action === PCRResultActions.RequestReCollect,
+      recollected: actionsForRecollection.includes(resultData.resultSpecs.action),
       confirmed: false,
     }
 
@@ -538,7 +558,43 @@ export class PCRTestResultsService {
     reCollectNumber: number,
   ): Promise<void> {
     const nextRunNumber = runNumber + 1
+    const handledReCollect = async () => {
+      console.log(`TestResultReCollect: for ${resultData.barCode} is requested`)
+      await this.appointmentService.changeStatusToReCollectRequired(
+        appointment.id,
+        resultData.adminId,
+      )
+
+      if (!appointment.organizationId) {
+        this.couponCode = await this.couponService.createCoupon(appointment.email)
+        console.log(
+          `TestResultReCollect: CouponCode ${this.couponCode} is created for ${appointment.email} ReCollectedBarCode: ${resultData.barCode}`,
+        )
+        await this.couponService.saveCoupon(
+          this.couponCode,
+          appointment.organizationId,
+          resultData.barCode,
+        )
+      }
+    }
     switch (resultData.resultSpecs.action) {
+      case PCRResultActions.SendPreliminaryPositive: {
+        console.log(
+          `TestResultSendPreliminaryPositive: for ${resultData.barCode} is added to queue for today`,
+        )
+        const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
+          appointment: appointment,
+          deadlineLabel: DeadlineLabel.NextDay,
+          userId: resultData.adminId,
+        })
+        await this.createNewTestResults({
+          appointment: updatedAppointment,
+          adminId: resultData.adminId,
+          runNumber: nextRunNumber,
+          reCollectNumber,
+        })
+        break
+      }
       case PCRResultActions.ReRunToday: {
         console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for today`)
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
@@ -570,23 +626,16 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.RequestReCollect: {
-        console.log(`TestResultReCollect: for ${resultData.barCode} is requested`)
-        await this.appointmentService.changeStatusToReCollectRequired(
-          appointment.id,
-          resultData.adminId,
-        )
-
-        if (!appointment.organizationId) {
-          this.couponCode = await this.couponService.createCoupon(appointment.email)
-          console.log(
-            `TestResultReCollect: CouponCode ${this.couponCode} is created for ${appointment.email} ReCollectedBarCode: ${resultData.barCode}`,
-          )
-          await this.couponService.saveCoupon(
-            this.couponCode,
-            appointment.organizationId,
-            resultData.barCode,
-          )
-        }
+        //TODO: Remove this after FE updates
+        handledReCollect()
+        break
+      }
+      case PCRResultActions.RecollectAsInvalid: {
+        handledReCollect()
+        break
+      }
+      case PCRResultActions.RecollectAsInconclusive: {
+        handledReCollect()
         break
       }
       default: {
@@ -601,44 +650,60 @@ export class PCRTestResultsService {
     notficationType: PCRResultActions | EmailNotficationTypes,
   ): Promise<void> {
     switch (notficationType) {
+      case PCRResultActions.SendPreliminaryPositive: {
+        await this.sendEmailNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} SendPreliminaryPositive`)
+        break
+      }
       case PCRResultActions.ReRunToday: {
-        await this.sendRerunNotification(resultData, 'TODAY')
+        await this.sendEmailNotification(resultData)
         console.log(`SendNotification: Success: ${resultData.barCode} ReRunToday`)
         break
       }
       case PCRResultActions.ReRunTomorrow: {
-        await this.sendRerunNotification(resultData, 'Tomorrow')
+        await this.sendEmailNotification(resultData)
         console.log(`SendNotification: Success: ${resultData.barCode} ReRunTomorrow`)
         break
       }
       case PCRResultActions.RequestReCollect: {
+        //TODO Remove This
         await this.sendReCollectNotification(resultData)
         console.log(`SendNotification: Success: ${resultData.barCode} RequestReCollect`)
         break
       }
+      case PCRResultActions.RecollectAsInconclusive: {
+        await this.sendReCollectNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} RecollectAsInconclusive`)
+        break
+      }
+      case PCRResultActions.RecollectAsInvalid: {
+        await this.sendReCollectNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} RecollectAsInvalid`)
+        break
+      }
       case EmailNotficationTypes.MarkAsConfirmedNegative: {
-        await this.sendTestResults(resultData, PCRResultPDFType.ConfirmedNegative)
+        await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.ConfirmedNegative)
         console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedPositive: {
-        await this.sendTestResults(resultData, PCRResultPDFType.ConfirmedPositive)
+        await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.ConfirmedPositive)
         console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
         break
       }
       default: {
         if (resultData.result === ResultTypes.Negative) {
-          await this.sendTestResults(resultData, PCRResultPDFType.Negative)
+          await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Negative)
           console.log(
             `SendNotification: Success: Sent Results for ${resultData.barCode} Result: ${resultData.result}`,
           )
         } else if (resultData.result === ResultTypes.Positive) {
-          await this.sendTestResults(resultData, PCRResultPDFType.Positive)
+          await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
           console.log(
             `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
           )
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
-          await this.sendTestResults(resultData, PCRResultPDFType.PresumptivePositive)
+          await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
           console.log(
             `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
           )
@@ -652,7 +717,7 @@ export class PCRTestResultsService {
     }
   }
 
-  async sendTestResults(
+  async sendTestResultsWithAttachment(
     resultData: PCRTestResultEmailDTO,
     pcrResultPDFType: PCRResultPDFType,
   ): Promise<void> {
@@ -681,12 +746,15 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendRerunNotification(resultData: PCRTestResultEmailDTO, day: string): Promise<void> {
+  async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+    const templateId =
+      resultData.resultSpecs.action === PCRResultActions.SendPreliminaryPositive
+        ? Config.getInt('TEST_RESULT_PRELIMNARY_RESULTS_TEMPLATE_ID')
+        : Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID')
     await this.emailService.send({
-      templateId: Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 4,
+      templateId: templateId,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
-        DAY: day,
         FIRSTNAME: resultData.firstName,
       },
       bcc: [
@@ -989,7 +1057,11 @@ export class PCRTestResultsService {
         AppointmentStatus.ReRunRequired,
         AppointmentStatus.Received,
       ]
-      if (appointment && allowedAppointmentStatus.includes(appointment.appointmentStatus)) {
+
+      if (
+        appointment &&
+        (allowedAppointmentStatus.includes(appointment.appointmentStatus) || testRunId)
+      ) {
         pcrFiltred.push({
           id: pcr.id,
           barCode: pcr.barCode,
@@ -1004,7 +1076,7 @@ export class PCRTestResultsService {
       }
     })
 
-    return pcrFiltred
+    return sortBy(pcrFiltred, ['status'])
   }
 
   async getReportStatus(action: PCRResultActions): Promise<ResultReportStatus> {
@@ -1016,6 +1088,14 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.RequestReCollect: {
+        status = ResultReportStatus.SentReCollectRequest
+        break
+      }
+      case PCRResultActions.RecollectAsInconclusive: {
+        status = ResultReportStatus.SentReCollectRequest
+        break
+      }
+      case PCRResultActions.RecollectAsInvalid: {
         status = ResultReportStatus.SentReCollectRequest
         break
       }

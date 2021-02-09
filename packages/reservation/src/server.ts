@@ -24,6 +24,7 @@ import BookingLocationController from './controllers/v1/booking-locations.contro
 import AppointmentAvailabilityController from './controllers/v1/appointment-availability.controller'
 import AppointmentController from './controllers/v1/appointment.controller'
 import PCRTestResultController from './controllers/v1/test-results.controller'
+import TemperatureV1Controller from './controllers/v1/admin/temperature.controller'
 
 //import * as debugClient from '@google-cloud/debug-agent'
 //debugClient.start({allowExpressions: true})
@@ -52,6 +53,7 @@ const app = new App({
     new AppointmentAvailabilityController(),
     new AppointmentController(),
     new PCRTestResultController(),
+    new TemperatureV1Controller(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],
