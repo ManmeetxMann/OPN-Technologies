@@ -174,11 +174,7 @@ class UserController implements IRouteController {
 
     if (canEnter) {
       const newAccess = await this.accessService.handleEnterV2(access)
-      return res.json(
-        actionSucceed({
-          access: accessDTOResponseV1(newAccess),
-        }),
-      )
+      return res.json(actionSucceed(accessDTOResponseV1(newAccess)))
     }
 
     return res.status(400).json(actionFailed('Access denied for access-token'))
@@ -212,11 +208,7 @@ class UserController implements IRouteController {
     }
     const newAccess = await this.accessService.handleEnterV2(access)
 
-    return res.json(
-      actionSucceed({
-        access: accessDTOResponseV1(newAccess),
-      }),
-    )
+    return res.json(actionSucceed(accessDTOResponseV1(newAccess)))
   }
 }
 

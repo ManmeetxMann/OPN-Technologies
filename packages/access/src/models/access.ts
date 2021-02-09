@@ -35,6 +35,7 @@ export type AccessWithDependantNames = Omit<Access, 'dependants'> & {
 export type AccessDTOV1 = {
   id: string
   token: string
+  statusToken: string
   locationId: string
   enteredAt: string | null
   exitAt: string | null
@@ -101,6 +102,7 @@ export const accessDTOResponseV1 = (access: Access & {id: string}): AccessDTOV1 
   id: access.id,
   userId: access.userId,
   token: access.token,
+  statusToken: access.statusToken,
   locationId: access.locationId,
   enteredAt: access.enteredAt,
   exitAt: access.exitAt,

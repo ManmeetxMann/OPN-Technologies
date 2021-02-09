@@ -169,8 +169,11 @@ components:
         locationId:
           type: string
           description: If provided, the user must be checked into the given location for the request to take effect
+        organizationId:
+          type: string
       required:
         - userId
+        - organizationId
 
     SelfEntryOrExitRequest:
       type: object
@@ -251,14 +254,19 @@ components:
       properties:
         accessToken:
           type: string
+        organizationId:
+          type: string
       required:
         - accessToken
+        - organizationId
     
     V1EnterRequest:
       type: object
       additionalProperties: false
       properties:
         userId:
+          type: string
+        organizationId:
           type: string
         locationId:
           type: string
@@ -267,6 +275,7 @@ components:
           description: if true, user will automatically exit their curtrent location. If false or not provided, the request fails if the user is currently checked in anywhere
       required:
         - userId
+        - organizationId
         - locationId
 
     Statistics:
