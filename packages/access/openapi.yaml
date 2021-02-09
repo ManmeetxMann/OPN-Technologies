@@ -102,8 +102,10 @@ components:
                 type: string
               enteredAt:
                 type: string
+                nullable: true
               exitAt:
                 type: string
+                nullable: true
 
     Passport:
       type: object
@@ -167,8 +169,11 @@ components:
         locationId:
           type: string
           description: If provided, the user must be checked into the given location for the request to take effect
+        organizationId:
+          type: string
       required:
         - userId
+        - organizationId
 
     SelfEntryOrExitRequest:
       type: object
@@ -226,8 +231,6 @@ components:
       type: object
       additionalProperties: false
       properties:
-        statusToken:
-          type: string
         locationId:
           type: string
         userId:
@@ -241,7 +244,6 @@ components:
           items:
             type: string
       required:
-        - statusToken
         - locationId
         - userId
         - organizationId
@@ -252,14 +254,19 @@ components:
       properties:
         accessToken:
           type: string
+        organizationId:
+          type: string
       required:
         - accessToken
+        - organizationId
     
     V1EnterRequest:
       type: object
       additionalProperties: false
       properties:
         userId:
+          type: string
+        organizationId:
           type: string
         locationId:
           type: string
@@ -268,6 +275,7 @@ components:
           description: if true, user will automatically exit their curtrent location. If false or not provided, the request fails if the user is currently checked in anywhere
       required:
         - userId
+        - organizationId
         - locationId
 
     Statistics:
@@ -737,7 +745,7 @@ paths:
 
   /access/api/v1/admin/access/enter:
     post:
-      description: Manually check a user in to a location
+      description: Manually check a user in to a location. If autoExit is true, the user will automatically exit their current location. If it is false or missing, if they are still checked in somewhere the request will fail.
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -755,7 +763,7 @@ paths:
 
   /access/api/v1/admin/access/exit:
     post:
-      description: Manually check a user out of their current location
+      description: Manually check a user out of their current location. If locationId is provided, the request wwill fail if it does not match the user's current location
       security:
         - bearerAuthJWT: []
       requestBody:
