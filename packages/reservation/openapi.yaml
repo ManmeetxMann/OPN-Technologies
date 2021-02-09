@@ -423,9 +423,12 @@ components:
                     - ReRunToday
                     - ReRunTomorrow
                     - RequestReCollect
+                    - RecollectAsInvalid
+                    - RecollectAsInconclusive
                     - MarkAsPositive
                     - MarkAsPresumptivePositive
                     - MarkAsNegative
+                    - SendPreliminaryPositive
                 autoResult:
                   type: string
                   enum:
@@ -482,9 +485,12 @@ components:
             - ReRunToday
             - ReRunTomorrow
             - RequestReCollect
+            - RecollectAsInvalid
+            - RecollectAsInconclusive
             - MarkAsPositive
             - MarkAsPresumptivePositive
             - MarkAsNegative
+            - SendPreliminaryPositive
         autoResult:
           type: string
           enum:
