@@ -178,7 +178,7 @@ class AdminController implements IRouteController {
       ])
       // backwards compat for multi-user access
       const {delegates: delegateIds} = user
-      const potentialParentIds = [null, ...delegateIds]
+      const potentialParentIds = [null, ...(delegateIds ?? [])]
 
       if (!location) {
         throw new ForbiddenException(
@@ -223,7 +223,7 @@ class AdminController implements IRouteController {
       }
 
       // find current location
-      const latestAccess = await this.accessService.findLatestAnywhere(userId, delegateIds)
+      const latestAccess = await this.accessService.findLatestAnywhere(userId, delegateIds ?? [])
       const currentLocation =
         latestAccess?.enteredAt && !latestAccess.exitAt ? latestAccess.locationId : null
       if (currentLocation) {
