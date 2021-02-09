@@ -9,7 +9,7 @@ import {isEmpty} from 'lodash'
 import {AcuityUpdateDTO} from '../models/appointment'
 
 class WebhookController implements IControllerBase {
-  public path = '/webhook'
+  public path = '/internal'
   public router = Router()
   private appoinmentService = new AppoinmentService()
   private packageService = new PackageService()

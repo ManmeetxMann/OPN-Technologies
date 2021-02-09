@@ -1,9 +1,9 @@
-import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
+import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import * as express from 'express'
-import {UserService} from '../../../../common/src/service/user/user-service'
+import {UserService} from '../../../../../common/src/service/user/user-service'
 import {NextFunction, Request, Response} from 'express'
-import {WebhookUserCreateRequest} from '../../models/user'
-import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
+import {WebhookUserCreateRequest} from '../../../models/user'
+import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 
 class UserController implements IControllerBase {
   public path = '/enterprise/internal/api/v1/user'
