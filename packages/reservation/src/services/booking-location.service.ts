@@ -1,9 +1,10 @@
 import DataStore from '../../../common/src/data/datastore'
-import {uniq} from 'lodash'
 
 import {Certificate, BookingLocations} from '../models/packages'
 import {PackageRepository} from '../respository/package.repository'
 import {AcuityRepository} from '../respository/acuity.repository'
+import {encodeBookingLocationId} from '../utils/base64-converter'
+import {AppointmentTypes} from '../models/appointment-types'
 
 export class BookingLocationService {
   private acuityRepository = new AcuityRepository()
@@ -13,33 +14,55 @@ export class BookingLocationService {
     const packages = await this.getPackageListByOrganizationId(organizationId)
     const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
     const calendars = await this.acuityRepository.getCalendarList()
-    const packagesAppointmentTypes = uniq(
-      packages.map(({appointmentTypes}) => Object.keys(appointmentTypes)).flat(),
-    )
+    const appointmentTypesWithPackages = new Map<
+      string,
+      {certificate: string; count: number; appointmentType: AppointmentTypes}
+    >()
+
+    packages.map(({certificate, remainingCounts}) => {
+      Object.keys(remainingCounts).map((appointmentTypeId) => {
+        const appointmentTypesWithPackage = appointmentTypesWithPackages.get(appointmentTypeId)
+
+        if (
+          (!appointmentTypesWithPackage && remainingCounts[appointmentTypeId]) ||
+          (remainingCounts[appointmentTypeId] &&
+            appointmentTypesWithPackage.count > remainingCounts[appointmentTypeId])
+        ) {
+          const appointmentType = appointmentTypes.find(({id}) => id === Number(appointmentTypeId))
+
+          if (appointmentType) {
+            appointmentTypesWithPackages.set(appointmentTypeId, {
+              appointmentType,
+              count: remainingCounts[appointmentTypeId],
+              certificate,
+            })
+          }
+        }
+      })
+    })
 
     const bookingLocations = []
+    Array.from(appointmentTypesWithPackages.values()).map((appointmentTypesWithPackage) => {
+      const {appointmentType, certificate} = appointmentTypesWithPackage
+      appointmentType.calendarIDs.forEach((calendarId) => {
+        const calendar = calendars.find(({id}) => id === calendarId)
+        const idBuf = {
+          appointmentTypeId: appointmentType.id,
+          calendarTimezone: calendar.timezone,
+          calendarId: calendar.id,
+          organizationId,
+          packageCode: certificate,
+        }
 
-    packagesAppointmentTypes.map((appointmentTypeID) => {
-      const appointmentType = appointmentTypes.find(({id}) => id === Number(appointmentTypeID))
+        const id = encodeBookingLocationId(idBuf)
 
-      if (appointmentType) {
-        appointmentType.calendarIDs.forEach((calendarId) => {
-          const calendar = calendars.find(({id}) => id === calendarId)
-          const idBuf = {
-            appointmentTypeId: appointmentType.id,
-            calendarTimezone: calendar.timezone,
-            calendarId: calendar.id,
-          }
-          const id = Buffer.from(JSON.stringify(idBuf)).toString('base64')
-
-          bookingLocations.push({
-            id,
-            appointmentTypeName: appointmentType.name,
-            name: calendar.name,
-            address: calendar.location,
-          })
+        bookingLocations.push({
+          id,
+          appointmentTypeName: appointmentType.name,
+          name: calendar.name,
+          address: calendar.location,
         })
-      }
+      })
     })
 
     return bookingLocations

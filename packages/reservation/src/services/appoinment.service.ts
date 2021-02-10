@@ -41,6 +41,11 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 import {AvailableTimes} from '../models/available-times'
+import {
+  decodeBookingLocationId,
+  decodeAvailableTimeId,
+  encodeAvailableTimeId,
+} from '../utils/base64-converter'
 import {Enterprise} from '../adapter/enterprise'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
@@ -619,16 +624,9 @@ export class AppoinmentService {
     receiveNotificationsFromGov,
     organizationId,
     userId,
+    packageCode,
   }: CreateAppointmentRequest): Promise<void> {
-    let slotData
-
-    try {
-      slotData = JSON.parse(Buffer.from(slotId, 'base64').toString())
-    } catch (error) {
-      throw new BadRequestException('Invalid Id')
-    }
-
-    const {time, appointmentTypeId, calendarId} = slotData
+    const {time, appointmentTypeId, calendarId} = decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
 
     const dateTime = utcDateTime.format()
@@ -639,7 +637,8 @@ export class AppoinmentService {
       lastName,
       email,
       `${phone.code}${phone.number}`,
-      '',
+      packageCode,
+      calendarId,
       {
         dateOfBirth,
         address,
@@ -668,19 +667,7 @@ export class AppoinmentService {
     year: number,
     month: number,
   ): Promise<{date: string}[]> {
-    let serializedId
-
-    try {
-      serializedId = JSON.parse(Buffer.from(id, 'base64').toString())
-    } catch (error) {
-      throw new BadRequestException('Invalid Id')
-    }
-
-    const {appointmentTypeId, calendarTimezone, calendarId} = serializedId
-
-    if (!appointmentTypeId || !calendarTimezone || !calendarId) {
-      throw new BadRequestException('Invalid Id ')
-    }
+    const {appointmentTypeId, calendarTimezone, calendarId} = decodeBookingLocationId(id)
 
     return this.acuityRepository.getAvailabilityDates(
       appointmentTypeId,
@@ -691,18 +678,13 @@ export class AppoinmentService {
   }
 
   async getAvailableSlots(id: string, date: string): Promise<AvailableTimes[]> {
-    let serializedId
-
-    try {
-      serializedId = JSON.parse(Buffer.from(id, 'base64').toString())
-    } catch (error) {
-      throw new BadRequestException('Invalid Id')
-    }
-    const {appointmentTypeId, calendarTimezone, calendarId} = serializedId
-
-    if (!appointmentTypeId || !calendarTimezone || !calendarId) {
-      throw new BadRequestException('Invalid Id')
-    }
+    const {
+      appointmentTypeId,
+      calendarTimezone,
+      calendarId,
+      organizationId,
+      packageCode,
+    } = decodeBookingLocationId(id)
 
     const slotsList = await this.acuityRepository.getAvailableSlots(
       appointmentTypeId,
@@ -718,8 +700,10 @@ export class AppoinmentService {
         calendarId,
         date,
         time,
+        organizationId,
+        packageCode,
       }
-      const id = Buffer.from(JSON.stringify(idBuf)).toString('base64')
+      const id = encodeAvailableTimeId(idBuf)
 
       return {
         id,
