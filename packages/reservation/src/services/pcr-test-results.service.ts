@@ -99,7 +99,7 @@ export class PCRTestResultsService {
       result: finalResult,
       waitingResult: false,
       confirmed: true,
-      previousResult:latestPCRResult.result,
+      previousResult: latestPCRResult.result,
     })
     await this.sendNotification({...appointment, ...newPCRResult}, notificationType)
     return newPCRResult.id
@@ -265,17 +265,21 @@ export class PCRTestResultsService {
       {key: 'result', direction: 'desc'},
     )
 
-    const getResultValue = (result: ResultTypes, previousResult: ResultTypes, notify: boolean): ResultTypes =>{
-      if(!!previousResult && result === ResultTypes.Pending){
+    const getResultValue = (
+      result: ResultTypes,
+      previousResult: ResultTypes,
+      notify: boolean,
+    ): ResultTypes => {
+      if (!!previousResult && result === ResultTypes.Pending) {
         return previousResult
       }
 
-      if(isLabUser){
+      if (isLabUser) {
         //NoOverwrite For LabUser
         return result
       }
 
-      if(notify !== true && !this.whiteListedResultsTypes.includes(result)){
+      if (notify !== true && !this.whiteListedResultsTypes.includes(result)) {
         return ResultTypes.Pending
       }
       return result
@@ -295,7 +299,6 @@ export class PCRTestResultsService {
       }
     })
   }
-
 
   async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel[]> {
     const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
@@ -522,18 +525,17 @@ export class PCRTestResultsService {
             adminId: resultData.adminId,
             runNumber,
             reCollectNumber,
-            previousResult: latestPCRTestResult.result
+            previousResult: latestPCRTestResult.result,
           })
         : waitingPCRTestResult
 
     await this.handleActions({
-        resultData,
-        appointment,
-        runNumber:testResult.runNumber,
-        reCollectNumber:testResult.reCollectNumber,
-        result: finalResult
-      }
-    )
+      resultData,
+      appointment,
+      runNumber: testResult.runNumber,
+      reCollectNumber: testResult.reCollectNumber,
+      result: finalResult,
+    })
 
     const actionsForRecollection = [
       PCRResultActions.RequestReCollect,
@@ -582,12 +584,12 @@ export class PCRTestResultsService {
     appointment,
     runNumber,
     reCollectNumber,
-    result
-  }:
-  {resultData: PCRTestResultData,
-    appointment: AppointmentDBModel,
-    runNumber: number,
-    reCollectNumber: number,
+    result,
+  }: {
+    resultData: PCRTestResultData
+    appointment: AppointmentDBModel
+    runNumber: number
+    reCollectNumber: number
     result: ResultTypes
   }): Promise<void> {
     const nextRunNumber = runNumber + 1
@@ -625,7 +627,7 @@ export class PCRTestResultsService {
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
           reCollectNumber,
-          previousResult: result
+          previousResult: result,
         })
         break
       }
@@ -641,7 +643,7 @@ export class PCRTestResultsService {
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
           reCollectNumber,
-          previousResult: result
+          previousResult: result,
         })
         break
       }
@@ -657,7 +659,7 @@ export class PCRTestResultsService {
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
           reCollectNumber,
-          previousResult: result
+          previousResult: result,
         })
         break
       }
@@ -849,7 +851,7 @@ export class PCRTestResultsService {
     runNumber: number
     result?: ResultTypes
     waitingResult?: boolean
-    confirmed?: boolean,
+    confirmed?: boolean
     previousResult: ResultTypes
   }): Promise<PCRTestResultDBModel> {
     //Reset Display for all OLD results
@@ -1047,7 +1049,7 @@ export class PCRTestResultsService {
       linkedBarCodes,
       reCollectNumber: linkedBarCodes.length + 1,
       runNumber: 1,
-      previousResult: null
+      previousResult: null,
     })
   }
 

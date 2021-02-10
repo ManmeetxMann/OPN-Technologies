@@ -166,7 +166,13 @@ export type PCRTestResultHistoryResponseDTO = {
 
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,
-  'id' | 'linkedBarCodes' | 'deadline' | 'previousResult' | 'runNumber' | 'reCollectNumber' | 'updatedAt'
+  | 'id'
+  | 'linkedBarCodes'
+  | 'deadline'
+  | 'previousResult'
+  | 'runNumber'
+  | 'reCollectNumber'
+  | 'updatedAt'
 > &
   AppointmentDBModel
 
