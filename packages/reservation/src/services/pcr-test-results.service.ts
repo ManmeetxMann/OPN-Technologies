@@ -529,6 +529,31 @@ export class PCRTestResultsService {
           })
         : waitingPCRTestResult
 
+    const actionsForRecollection = [
+      PCRResultActions.RequestReCollect,
+      PCRResultActions.RecollectAsInvalid,
+      PCRResultActions.RecollectAsInconclusive,
+    ]
+    //Add Test Results to Waiting Result
+    const pcrResultDataForDbUpdate = {
+      ...resultData,
+      deadline: appointment.deadline, //TODO: Remove
+      result: finalResult,
+      firstName: appointment.firstName, //TODO: Remove
+      lastName: appointment.lastName, //TODO: Remove
+      appointmentId: appointment.id, //TODO: Remove
+      organizationId: appointment.organizationId, //TODO: Remove
+      dateTime: appointment.dateTime, //TODO: Remove
+      waitingResult: false,
+      displayInResult: true,
+      recollected: actionsForRecollection.includes(resultData.resultSpecs.action),
+      confirmed: false,
+    }
+    const pcrResultRecorded = await this.pcrTestResultsRepository.updateData(
+      testResult.id,
+      pcrResultDataForDbUpdate,
+    )
+
     await this.handleActions({
       resultData,
       appointment,
@@ -536,32 +561,6 @@ export class PCRTestResultsService {
       reCollectNumber: testResult.reCollectNumber,
       result: finalResult,
     })
-
-    const actionsForRecollection = [
-      PCRResultActions.RequestReCollect,
-      PCRResultActions.RecollectAsInvalid,
-      PCRResultActions.RecollectAsInconclusive,
-    ]
-    //Update PCR Test results
-    const pcrResultDataForDbUpdate = {
-      ...resultData,
-      deadline: appointment.deadline,
-      result: finalResult,
-      firstName: appointment.firstName,
-      lastName: appointment.lastName,
-      appointmentId: appointment.id,
-      organizationId: appointment.organizationId,
-      dateTime: appointment.dateTime,
-      waitingResult: false,
-      displayInResult: true,
-      recollected: actionsForRecollection.includes(resultData.resultSpecs.action),
-      confirmed: false,
-    }
-
-    const pcrResultRecorded = await this.pcrTestResultsRepository.updateData(
-      testResult.id,
-      pcrResultDataForDbUpdate,
-    )
 
     //Send Notification
     if (resultData.resultSpecs.notify) {
@@ -601,6 +600,7 @@ export class PCRTestResultsService {
       )
 
       if (!appointment.organizationId) {
+        //TODO: Move this to Email Function
         this.couponCode = await this.couponService.createCoupon(appointment.email)
         console.log(
           `TestResultReCollect: CouponCode ${this.couponCode} is created for ${appointment.email} ReCollectedBarCode: ${resultData.barCode}`,
