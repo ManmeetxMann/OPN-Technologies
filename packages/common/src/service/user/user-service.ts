@@ -8,12 +8,16 @@ export class UserService {
   private dataStore = new DataStore()
   private userRepository = new UserModel(this.dataStore)
 
-  create(user: User): Promise<User> {
+  create(user: Omit<User, 'id'>): Promise<User> {
     return this.userRepository.add(this.cleanUserData(user))
   }
 
   async update(user: User): Promise<void> {
-    await this.userRepository.update(this.cleanUserData(user))
+    const {id, ...cleanableUser} = user
+    await this.userRepository.update({
+      id,
+      ...this.cleanUserData(cleanableUser),
+    })
   }
 
   async updateProperty(id: string, fieldName: string, fieldValue: unknown): Promise<void> {
@@ -32,7 +36,7 @@ export class UserService {
     await this.userRepository.updateProperties(id, fields)
   }
 
-  private cleanUserData(user: User): User {
+  private cleanUserData(user: Omit<User, 'id'>): Omit<User, 'id'> {
     const cleanUser = user
     cleanUser.firstName = cleanStringField(user.firstName)
     cleanUser.lastName = cleanStringField(user.lastName)
@@ -49,6 +53,14 @@ export class UserService {
       if (!!user) return user
       throw new ResourceNotFoundException(`Cannot find user with id [${id}]`)
     })
+  }
+
+  async findOneByEmail(email: string): Promise<User> {
+    const results = await this.userRepository.findWhereEqual('email', email)
+    if (results.length > 1) {
+      console.warn(`${results.length} users found with email ${email}`)
+    }
+    return results.length > 0 ? results.shift() : null
   }
 
   findOneSilently(id: string): Promise<User | undefined> {
@@ -137,7 +149,6 @@ export class UserService {
       base64Photo: '',
       organizationIds: [organizationId],
     }))
-    // @ts-ignore no id needed
     return Promise.all(dependantsToAdd.map((dependant) => this.create(dependant)))
   }
 

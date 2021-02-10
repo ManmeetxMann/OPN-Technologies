@@ -74,7 +74,7 @@ class UserController implements IControllerBase {
 
       // Create user
       // registrationId might be undefined, since this could be the old version
-      const user = await this.userService.create(({
+      const user = await this.userService.create({
         email: authUser?.email ?? null,
         authUserId: authUser?.uid ?? null,
         registrationId: registrationId ?? null,
@@ -82,7 +82,7 @@ class UserController implements IControllerBase {
         lastName,
         base64Photo,
         organizationIds: [organization.id],
-      } as unknown) as User)
+      } as Omit<User, 'id'>)
 
       // Add user to group
       await this.organizationService.addUserToGroup(organization.id, group.id, user.id)

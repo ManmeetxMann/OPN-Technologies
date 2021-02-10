@@ -48,3 +48,17 @@ export const userDTOResponse = (
   organizationIds: (user as LegacyUser).organizationIds,
   isAdminEnabled: !!(user as LegacyUser).admin || forceAdminEnabled,
 })
+
+export type WebhookUserCreateRequest = {
+  email: string
+  firstName: string
+  lastName: string
+  organizationId: string
+}
+
+export type UserCreateMessage = {
+  data: {
+    action: string
+    data: {email: string}
+  }
+}
