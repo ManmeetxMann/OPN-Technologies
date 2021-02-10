@@ -14,6 +14,7 @@ import {
   AppointmentByOrganizationRequest,
   AppointmentDBModel,
   AppointmentsState,
+  appointmentStatsUiDTOResponse,
   appointmentUiDTOResponse,
 } from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
@@ -76,6 +77,11 @@ class AdminAppointmentController implements IControllerBase {
       idBarCodeToolAuth,
       this.getNextBarcode,
     )
+    innerRouter.get(
+      this.path + '/api/v1/appointments/list/stats',
+      apptLabAuth,
+      this.appointmentsStats,
+    )
     innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
     innerRouter.put(
       this.path + '/api/v1/appointments/barcode/regenerate',
@@ -118,6 +124,72 @@ class AdminAppointmentController implements IControllerBase {
             ...appointmentUiDTOResponse(appointment, isLabUser),
           })),
         ),
+      )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  appointmentsStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {
+        appointmentStatus,
+        barCode,
+        dateOfAppointment,
+        organizationId,
+        searchQuery,
+        transportRunId,
+      } = req.query as AppointmentByOrganizationRequest
+
+      if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
+        throw new BadRequestException('dateOfAppointment is invalid')
+      }
+
+      const appointments = await this.appointmentService.getAppointmentsDB({
+        appointmentStatus,
+        barCode,
+        organizationId,
+        dateOfAppointment,
+        searchQuery,
+        transportRunId,
+      })
+      const appointmentStatsByTypes: Record<string, number> = {}
+      const appointmentStatsByOrganization: Record<string, number> = {}
+
+      appointments.forEach((appointment) => {
+        if (appointmentStatsByTypes[appointment.appointmentStatus]) {
+          ++appointmentStatsByTypes[appointment.appointmentStatus]
+          ++appointmentStatsByOrganization[appointment.organizationId]
+        } else {
+          appointmentStatsByTypes[appointment.appointmentStatus] = 1
+          appointmentStatsByOrganization[appointment.organizationId] = 1
+        }
+      })
+      const organizations = await this.organizationService.getAllByIds(
+        Object.keys(appointmentStatsByOrganization),
+      )
+      const appointmentStatsByTypesArr = Object.entries(appointmentStatsByTypes).map(
+        ([name, count]) => ({
+          id: name,
+          name,
+          count,
+        }),
+      )
+      const appointmentStatsByOrgIdArr = Object.entries(appointmentStatsByOrganization).map(
+        ([orgId, count]) => ({
+          id: orgId,
+          name: organizations.find(({id}) => id === orgId)?.name ?? 'None',
+          count,
+        }),
+      )
+      res.json(
+        actionSucceed({
+          ...appointmentStatsUiDTOResponse(
+            appointmentStatsByTypesArr,
+            appointmentStatsByOrgIdArr,
+            appointments.length,
+          ),
+        }),
       )
     } catch (error) {
       next(error)
