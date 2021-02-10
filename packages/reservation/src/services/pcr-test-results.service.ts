@@ -237,6 +237,12 @@ export class PCRTestResultsService {
         operator: DataModelFieldMapOperatorType.Equals,
         value: barCode,
       })
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'displayInResult',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      })
     }else if (deadline) {
       pcrTestResultsQuery.push({
         map: '/',
