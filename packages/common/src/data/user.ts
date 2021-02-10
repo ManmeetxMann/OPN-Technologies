@@ -77,3 +77,26 @@ export type AuthUser = Auditable & {
   registrationId?: string
   memberId?: string
 }
+
+// TODO: this duplicates the user in the enterprise service
+export type UserDTO = {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  photo: string // photo url
+  organizationIds: string[]
+  isAdminEnabled: boolean
+  delegates: string[]
+}
+
+export const userDTO = (user: AuthUser | User, forceAdminEnabled?: boolean): UserDTO => ({
+  id: user.id,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  email: user.email,
+  photo: (user as AuthUser).photo ?? (user as User).base64Photo,
+  organizationIds: (user as User).organizationIds,
+  isAdminEnabled: !!(user as User).admin || forceAdminEnabled,
+  delegates: (user as User).delegates ?? [],
+})

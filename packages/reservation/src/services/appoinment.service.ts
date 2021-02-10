@@ -43,6 +43,12 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 import {AvailableTimes} from '../models/available-times'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {
+  decodeBookingLocationId,
+  decodeAvailableTimeId,
+  encodeAvailableTimeId,
+} from '../utils/base64-converter'
+import {Enterprise} from '../adapter/enterprise'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -53,6 +59,7 @@ export class AppoinmentService {
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private organizationService = new OrganizationService()
+  private enterpriseAdapter = new Enterprise()
 
   async getAppointmentByBarCode(
     barCodeNumber: string,
@@ -248,7 +255,7 @@ export class AppoinmentService {
     return appointments[0]
   }
 
-  createAppointmentFromAcuity(
+  async createAppointmentFromAcuity(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
@@ -261,11 +268,11 @@ export class AppoinmentService {
       userId?: string
     },
   ): Promise<AppointmentDBModel> {
-    const data = this.appointmentFromAcuity(acuityAppointment, additionalData)
+    const data = await this.appointmentFromAcuity(acuityAppointment, additionalData)
     return this.appointmentsRepository.save(data)
   }
 
-  updateAppointmentFromAcuity(
+  async updateAppointmentFromAcuity(
     id: string,
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
@@ -277,11 +284,11 @@ export class AppoinmentService {
       latestResult: ResultTypes
     },
   ): Promise<AppointmentDBModel> {
-    const data = this.appointmentFromAcuity(acuityAppointment, additionalData)
+    const data = await this.appointmentFromAcuity(acuityAppointment, additionalData)
     return this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity)
   }
 
-  private appointmentFromAcuity(
+  private async appointmentFromAcuity(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
@@ -293,7 +300,7 @@ export class AppoinmentService {
       couponCode?: string
       userId?: string
     },
-  ): Omit<AppointmentDBModel, 'id'> {
+  ): Promise<Omit<AppointmentDBModel, 'id'>> {
     const dateTime = makeFirestoreTimestamp(acuityAppointment.datetime)
     const dateTimeTz = moment(acuityAppointment.datetime).tz(timeZone)
     const dateOfAppointment = dateTimeTz.format(dateFormats.longMonth)
@@ -309,9 +316,20 @@ export class AppoinmentService {
       appointmentStatus,
       latestResult,
       couponCode = '',
-      userId = '',
+      userId,
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
+
+    const currentUserId = userId
+      ? userId
+      : (
+          await this.enterpriseAdapter.findOrCreateUser({
+            email: acuityAppointment.email,
+            firstName: acuityAppointment.firstName,
+            lastName: acuityAppointment.lastName,
+            organizationId: acuityAppointment.organizationId || '',
+          })
+        ).id
 
     return {
       acuityAppointmentId: acuityAppointment.id,
@@ -346,7 +364,7 @@ export class AppoinmentService {
       shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
       agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
-      userId,
+      userId: currentUserId,
     }
   }
 
@@ -609,16 +627,9 @@ export class AppoinmentService {
     receiveNotificationsFromGov,
     organizationId,
     userId,
+    packageCode,
   }: CreateAppointmentRequest): Promise<void> {
-    let slotData
-
-    try {
-      slotData = JSON.parse(Buffer.from(slotId, 'base64').toString())
-    } catch (error) {
-      throw new BadRequestException('Invalid Id')
-    }
-
-    const {time, appointmentTypeId, calendarId} = slotData
+    const {time, appointmentTypeId, calendarId} = decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
 
     const dateTime = utcDateTime.format()
@@ -629,7 +640,8 @@ export class AppoinmentService {
       lastName,
       email,
       `${phone.code}${phone.number}`,
-      '',
+      packageCode,
+      calendarId,
       {
         dateOfBirth,
         address,
@@ -658,19 +670,7 @@ export class AppoinmentService {
     year: number,
     month: number,
   ): Promise<{date: string}[]> {
-    let serializedId
-
-    try {
-      serializedId = JSON.parse(Buffer.from(id, 'base64').toString())
-    } catch (error) {
-      throw new BadRequestException('Invalid Id')
-    }
-
-    const {appointmentTypeId, calendarTimezone, calendarId} = serializedId
-
-    if (!appointmentTypeId || !calendarTimezone || !calendarId) {
-      throw new BadRequestException('Invalid Id ')
-    }
+    const {appointmentTypeId, calendarTimezone, calendarId} = decodeBookingLocationId(id)
 
     return this.acuityRepository.getAvailabilityDates(
       appointmentTypeId,
@@ -681,18 +681,13 @@ export class AppoinmentService {
   }
 
   async getAvailableSlots(id: string, date: string): Promise<AvailableTimes[]> {
-    let serializedId
-
-    try {
-      serializedId = JSON.parse(Buffer.from(id, 'base64').toString())
-    } catch (error) {
-      throw new BadRequestException('Invalid Id')
-    }
-    const {appointmentTypeId, calendarTimezone, calendarId} = serializedId
-
-    if (!appointmentTypeId || !calendarTimezone || !calendarId) {
-      throw new BadRequestException('Invalid Id')
-    }
+    const {
+      appointmentTypeId,
+      calendarTimezone,
+      calendarId,
+      organizationId,
+      packageCode,
+    } = decodeBookingLocationId(id)
 
     const slotsList = await this.acuityRepository.getAvailableSlots(
       appointmentTypeId,
@@ -708,8 +703,10 @@ export class AppoinmentService {
         calendarId,
         date,
         time,
+        organizationId,
+        packageCode,
       }
-      const id = Buffer.from(JSON.stringify(idBuf)).toString('base64')
+      const id = encodeAvailableTimeId(idBuf)
 
       return {
         id,

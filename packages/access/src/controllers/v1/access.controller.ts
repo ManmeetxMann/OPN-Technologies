@@ -89,7 +89,8 @@ class UserController implements IRouteController {
 
   createToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {locationId, userId, includeGuardian, organizationId} = req.body
+      const {locationId, includeGuardian, organizationId} = req.body
+      const userId = res.locals.connectedUser.id as string
       const dependantIds: string[] = req.body.dependantIds ?? []
       // errors if no location is found
       await this.lookupLocation(organizationId, locationId)
@@ -114,7 +115,8 @@ class UserController implements IRouteController {
   enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
     // TODO: this should probably fail if the user is checked in somewhere else
     try {
-      const {locationId, userId, includeGuardian, organizationId} = req.body
+      const {locationId, includeGuardian, organizationId} = req.body
+      const userId = res.locals.connectedUser.id as string
       const dependantIds: string[] = req.body.dependantIds ?? []
       // errors if no location is found
       const location = await this.lookupLocation(organizationId, locationId)
@@ -157,11 +159,7 @@ class UserController implements IRouteController {
 
       const newAccess = await this.accessService.handleExitV2(access)
 
-      res.json(
-        actionSucceed({
-          access: newAccess,
-        }),
-      )
+      res.json(actionSucceed(newAccess))
     } catch (error) {
       next(error)
     }

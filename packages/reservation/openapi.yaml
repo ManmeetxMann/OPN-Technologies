@@ -2503,6 +2503,75 @@ paths:
                   page:
                     type: number
 
+  /reservation/api/v1/test-results:
+    get:
+      description: Get user test result list
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationid
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type:	string
+                        type:
+                          type: string
+                          enum: [PCR]
+                        name:
+                          type: string
+                        testDateTime:
+                          type: string
+                        style:
+                          type: string
+                          enum:
+                            [
+                              RED,
+                              GREEN,
+                              YELLOW,
+                              BLUE,
+                              GREY,
+                            ]
+                        result:
+                          type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          [
+                            succeed,
+                            failed,
+                            validation_error,
+                            internal_server_error,
+                            unauthorized,
+                            access_denied,
+                            resource_not_found,
+                          ]
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
+
   /reservation/admin/api/v1/temperature:
     post:
       description: Create record temperature and update user passport

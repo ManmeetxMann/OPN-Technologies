@@ -8,7 +8,7 @@ export default Joi.object({
   confirmed: Joi.boolean().default(false),
   dateTime: FirestoreTimestamp.isValid().required(),
   deadline: FirestoreTimestamp.isValid().required(),
-  displayForNonAdmins: Joi.boolean().required(),
+  displayInResult: Joi.boolean().required(),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
   linkedBarCodes: Joi.array().required(),

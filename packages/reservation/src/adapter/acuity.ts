@@ -238,6 +238,7 @@ abstract class AcuityScheduling {
     email: string,
     phone: string,
     certificate: string,
+    calendarID: number,
     fields: Record<string, string | boolean>,
   ): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
@@ -254,7 +255,7 @@ abstract class AcuityScheduling {
       body: JSON.stringify({
         datetime,
         appointmentTypeID,
-        calendarID: 4571103,
+        calendarID,
         firstName,
         lastName,
         email,

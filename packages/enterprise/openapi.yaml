@@ -37,6 +37,32 @@ components:
               nullable: true
               type: string
 
+    UserResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
     OrganizationReminderSchedule:
       type: object
       properties:
@@ -3556,6 +3582,38 @@ paths:
       responses:
         '200':
           description: Successfull unlinked/removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /enterprise/internal/api/v1/user:
+    post:
+      summary: Webhook
+      description: Find or create user
+      tags:
+        - User Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                email:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                organizationId:
+                  type: string
+              required:
+                - email
+                - firstName
+                - lastName
+                - organizationId
+      responses:
+        '200':
+          description: Successfull linked
           content:
             application/json:
               schema:
