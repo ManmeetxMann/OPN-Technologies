@@ -24,11 +24,9 @@ import {
   ListPCRResultRequest,
   PCRTestResultRequest,
   PCRTestResultRequestData,
-  pcrTestResultsResponse,
   PcrTestResultsListRequest,
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
-  ResultReportStatus,
 } from '../../../models/pcr-test-results'
 
 class PCRTestResultController implements IControllerBase {
@@ -237,28 +235,15 @@ class PCRTestResultController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {reportTrackerId} = req.query as ListPCRResultRequest
-      const pcrTestResults = await this.pcrTestResultsService.listPCRTestResultReportStatus(
-        reportTrackerId,
-      )
-
-      let inProgress = false
-      const statusesForInProgressCondition = [
-        ResultReportStatus.RequestReceived,
-        ResultReportStatus.Processing,
-      ]
-
-      const result = pcrTestResults.map((pcrTestResult) => {
-        if (statusesForInProgressCondition.includes(pcrTestResult.status)) {
-          inProgress = true
-        }
-
-        return pcrTestResultsResponse(pcrTestResult)
-      })
+      const {
+        inProgress,
+        pcrTestResults,
+      } = await this.pcrTestResultsService.listPCRTestResultReportStatus(reportTrackerId)
 
       if (inProgress) {
-        res.json(actionInProgress(result))
+        res.json(actionInProgress(pcrTestResults))
       } else {
-        res.json(actionSucceed(result))
+        res.json(actionSucceed(pcrTestResults))
       }
     } catch (error) {
       console.log(error)
