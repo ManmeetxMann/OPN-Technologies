@@ -116,7 +116,7 @@ components:
       required:
         - barCode
 
-    AppointmentStatsResponse200:
+    StatsResponse200:
       type: object
       additionalProperties: false
       properties:
@@ -2358,6 +2358,34 @@ paths:
                         type: string
                   page:
                     type: number
+  /reservation/admin/api/v1/pcr-test-results/due-deadline/stats:
+    get:
+      description: Retrieve list of PCR Results
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: query
+          name: deadline
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: testRunId
+          schema:
+            type: string
+        - in: query
+          name: barCode
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Succesfully return stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse200'
 
   /reservation/api/v1/appointments/self:
     get:

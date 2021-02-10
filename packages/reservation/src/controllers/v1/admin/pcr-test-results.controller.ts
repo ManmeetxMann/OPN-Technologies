@@ -25,6 +25,7 @@ import {
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
 } from '../../../models/pcr-test-results'
+import {statsUiDTOResponse} from '../../../models/appointment'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin'
@@ -88,6 +89,11 @@ class PCRTestResultController implements IControllerBase {
       this.path + '/api/v1/pcr-test-results/due-deadline',
       dueTodayAuth,
       this.listDueDeadline,
+    )
+    innerRouter.get(
+      this.path + '/api/v1/pcr-test-results/due-deadline/stats',
+      dueTodayAuth,
+      this.dueDeadlineStats,
     )
 
     this.router.use('/', innerRouter)
@@ -289,6 +295,32 @@ class PCRTestResultController implements IControllerBase {
       })
 
       res.json(actionSucceed(pcrResults))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  dueDeadlineStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {testRunId, deadline, barCode} = req.query as PcrTestResultsListByDeadlineRequest
+      if (!testRunId && !deadline && !barCode) {
+        throw new BadRequestException('"testRunId" or "deadline" or "barCode" is not required')
+      }
+      const {
+        pcrResultStatsByResultArr,
+        pcrResultStatsByOrgIdArr,
+        total,
+      } = await this.pcrTestResultsService.getDueDeadlineStats({
+        deadline,
+        testRunId,
+        barCode,
+      })
+
+      res.json(
+        actionSucceed(
+          statsUiDTOResponse(pcrResultStatsByResultArr, pcrResultStatsByOrgIdArr, total),
+        ),
+      )
     } catch (error) {
       next(error)
     }

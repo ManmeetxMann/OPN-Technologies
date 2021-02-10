@@ -14,7 +14,7 @@ import {
   AppointmentByOrganizationRequest,
   AppointmentDBModel,
   AppointmentsState,
-  appointmentStatsUiDTOResponse,
+  statsUiDTOResponse,
   appointmentUiDTOResponse,
 } from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
@@ -183,13 +183,13 @@ class AdminAppointmentController implements IControllerBase {
         }),
       )
       res.json(
-        actionSucceed({
-          ...appointmentStatsUiDTOResponse(
+        actionSucceed(
+          statsUiDTOResponse(
             appointmentStatsByTypesArr,
             appointmentStatsByOrgIdArr,
             appointments.length,
           ),
-        }),
+        ),
       )
     } catch (error) {
       next(error)

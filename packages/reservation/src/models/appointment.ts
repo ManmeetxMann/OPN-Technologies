@@ -282,7 +282,7 @@ export type appointmentStatsUiDTO = {
   filterGroup: FilterGroup[]
 }
 
-export const appointmentStatsUiDTOResponse = (
+export const statsUiDTOResponse = (
   appointmentStatus: Filter[],
   orgIdArray: Filter[],
   total: number,
