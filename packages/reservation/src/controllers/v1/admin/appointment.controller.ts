@@ -176,6 +176,9 @@ class AdminAppointmentController implements IControllerBase {
         appointmentIds: string[]
         transportRunId: string
       }
+
+      await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
+
       const transportRuns = await this.transportRunsService.getByTransportRunId(transportRunId)
       if (transportRuns.length > 1) {
         console.log(`More than 1 result for the transportRunId ${transportRunId}`)
