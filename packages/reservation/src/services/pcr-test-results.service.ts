@@ -70,8 +70,9 @@ export class PCRTestResultsService {
   ]
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
-    //Validate Result Exists for barCode
-    await this.getPCRResultsByBarCode(data.barCode)
+    //Validate Result Exists for barCode and throws exception
+    const pcrResultHistory = await this.getPCRResultsByBarCode(data.barCode)
+    const latestPCRResult = pcrResultHistory[0]
     const appointment = await this.appointmentService.getAppointmentByBarCode(data.barCode)
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
@@ -98,6 +99,7 @@ export class PCRTestResultsService {
       result: finalResult,
       waitingResult: false,
       confirmed: true,
+      previousResult:latestPCRResult.result,
     })
     await this.sendNotification({...appointment, ...newPCRResult}, notificationType)
     return newPCRResult.id
@@ -478,8 +480,8 @@ export class PCRTestResultsService {
       )
     }
 
+    const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
     if (!waitingPCRTestResult && isSingleResult && isAlreadyReported && !sendUpdatedResults) {
-      const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
       console.info(
         `handlePCRResultSaveAndSend: SendUpdatedResult Flag Requested PCR Result ID ${latestPCRTestResult.id} Already Exists`,
       )
@@ -511,14 +513,17 @@ export class PCRTestResultsService {
             adminId: resultData.adminId,
             runNumber,
             reCollectNumber,
+            previousResult: latestPCRTestResult.result
           })
         : waitingPCRTestResult
 
-    await this.handleActions(
-      resultData,
-      appointment,
-      testResult.runNumber,
-      testResult.reCollectNumber,
+    await this.handleActions({
+        resultData,
+        appointment,
+        runNumber:testResult.runNumber,
+        reCollectNumber:testResult.reCollectNumber,
+        result: finalResult
+      }
     )
 
     const actionsForRecollection = [
@@ -563,12 +568,19 @@ export class PCRTestResultsService {
     return pcrResultRecorded
   }
 
-  async handleActions(
-    resultData: PCRTestResultData,
+  async handleActions({
+    resultData,
+    appointment,
+    runNumber,
+    reCollectNumber,
+    result
+  }:
+  {resultData: PCRTestResultData,
     appointment: AppointmentDBModel,
     runNumber: number,
     reCollectNumber: number,
-  ): Promise<void> {
+    result: ResultTypes
+  }): Promise<void> {
     const nextRunNumber = runNumber + 1
     const handledReCollect = async () => {
       console.log(`TestResultReCollect: for ${resultData.barCode} is requested`)
@@ -604,6 +616,7 @@ export class PCRTestResultsService {
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
           reCollectNumber,
+          previousResult: result
         })
         break
       }
@@ -619,6 +632,7 @@ export class PCRTestResultsService {
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
           reCollectNumber,
+          previousResult: result
         })
         break
       }
@@ -634,6 +648,7 @@ export class PCRTestResultsService {
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
           reCollectNumber,
+          previousResult: result
         })
         break
       }
@@ -825,7 +840,8 @@ export class PCRTestResultsService {
     runNumber: number
     result?: ResultTypes
     waitingResult?: boolean
-    confirmed?: boolean
+    confirmed?: boolean,
+    previousResult: ResultTypes
   }): Promise<PCRTestResultDBModel> {
     //Reset Display for all OLD results
     await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(data.appointment.id, {
@@ -847,6 +863,7 @@ export class PCRTestResultsService {
       lastName: data.appointment.lastName,
       linkedBarCodes: data.linkedBarCodes ?? [],
       organizationId: data.appointment.organizationId,
+      previousResult: data.previousResult,
       result: data.result ?? ResultTypes.Pending,
       runNumber: data.runNumber,
       reCollectNumber: data.reCollectNumber,
@@ -1021,6 +1038,7 @@ export class PCRTestResultsService {
       linkedBarCodes,
       reCollectNumber: linkedBarCodes.length + 1,
       runNumber: 1,
+      previousResult: null
     })
   }
 
