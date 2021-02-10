@@ -34,9 +34,12 @@ export enum PCRResultActions {
   ReRunToday = 'ReRunToday',
   ReRunTomorrow = 'ReRunTomorrow',
   RequestReCollect = 'RequestReCollect',
+  RecollectAsInvalid = 'RecollectAsInvalid',
+  RecollectAsInconclusive = 'RecollectAsInconclusive',
   MarkAsPositive = 'MarkAsPositive',
   MarkAsNegative = 'MarkAsNegative',
   MarkAsPresumptivePositive = 'MarkAsPresumptivePositive',
+  SendPreliminaryPositive = 'SendPreliminaryPositive',
 }
 
 //Actions when Results are Confirmed
@@ -66,6 +69,18 @@ export enum ResultReportStatus {
 export type PCRTestResultConfirmRequest = {
   barCode: string
   action: PCRResultActionsForConfirmation
+}
+
+export enum PCRTestResultStyle {
+  Postive = 'RED',
+  Negative = 'GREEN',
+  Invalid = 'YELLOW',
+  Inconclusive = 'BLUE',
+  AnyOther = 'GREY',
+}
+
+export enum PCRTestResultType {
+  PCR = 'PCR',
 }
 
 type PCRResultSpecs = {
@@ -120,7 +135,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   confirmed: boolean
   dateTime: firestore.Timestamp
   deadline: firestore.Timestamp
-  displayForNonAdmins: boolean
+  displayInResult: boolean
   firstName: string
   id: string
   lastName: string
@@ -269,3 +284,17 @@ export const pcrTestResultsResponse = (
   status: pcrTestResult.status,
   details: pcrTestResult.details,
 })
+
+export const resultToStyle = (result: ResultTypes): PCRTestResultStyle => {
+  return PCRTestResultStyle[result] ? PCRTestResultStyle[result] : PCRTestResultStyle.AnyOther
+}
+
+export type TestResutsDTO = {
+  id: string
+  type: PCRTestResultType
+  name: string
+  testDateTime: string
+  style: PCRTestResultStyle
+  result: ResultTypes
+  detailsAvailable: boolean
+}
