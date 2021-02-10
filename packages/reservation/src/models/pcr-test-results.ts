@@ -129,6 +129,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   lastName: string
   linkedBarCodes: string[]
   organizationId?: string
+  previousResult: ResultTypes
   recollected: boolean
   reCollectNumber: number
   result: ResultTypes
@@ -165,7 +166,7 @@ export type PCRTestResultHistoryResponseDTO = {
 
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,
-  'id' | 'linkedBarCodes' | 'deadline' | 'runNumber' | 'reCollectNumber' | 'updatedAt'
+  'id' | 'linkedBarCodes' | 'deadline' | 'previousResult' | 'runNumber' | 'reCollectNumber' | 'updatedAt'
 > &
   AppointmentDBModel
 
