@@ -244,9 +244,13 @@ export class PCRTestResultsService {
         operator: DataModelFieldMapOperatorType.Equals,
         value: makeDeadlineForFilter(deadline),
       })
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'displayInResult',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      })
     }
-
-
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
       pcrTestResultsQuery,
