@@ -91,6 +91,20 @@
       ]
     },
     {
+      "collectionGroup": "access",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamps.createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "access-stats",
       "queryScope": "COLLECTION",
       "fields": [
