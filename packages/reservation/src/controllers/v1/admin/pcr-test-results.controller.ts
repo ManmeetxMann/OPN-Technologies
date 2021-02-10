@@ -242,7 +242,10 @@ class PCRTestResultController implements IControllerBase {
       )
 
       let inProgress = false
-      const statusesForInProgressCondition = [ResultReportStatus.RequestReceived, ResultReportStatus.Processing]
+      const statusesForInProgressCondition = [
+        ResultReportStatus.RequestReceived,
+        ResultReportStatus.Processing,
+      ]
 
       const result = pcrTestResults.map((pcrTestResult) => {
         if (statusesForInProgressCondition.includes(pcrTestResult.status)) {
