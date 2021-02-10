@@ -49,6 +49,7 @@ async function updateTestResults(): Promise<Result[]> {
   while (hasMore) {
     const testResultSnapshot = await database
       .collection('test-results')
+      .where('barCode', '==', 'A1000035343')
       .offset(offset)
       .limit(limit)
       .get()
@@ -87,6 +88,17 @@ async function createPcrTestResult(
     return Promise.reject()
   }
 
+  const pcrResultSnapshot = await database
+    .collection('pcr-test-results')
+    .where('barCode', '==', legacyTestResult.barCode)
+    .limit(limit)
+    .get()
+
+  if (pcrResultSnapshot.docs.length > 0) {
+    console.warn(`PCR Result: ${legacyTestResult.barCode} already exists`)
+    return Promise.reject()
+  }
+
   //Only Single Appointment
   const appointment = appointmentInDb.docs[0]
   const pcrResult =
@@ -99,7 +111,7 @@ async function createPcrTestResult(
       confirmed: false,
       dateTime: appointment.data().dateTime,
       deadline: appointment.data().deadline,
-      displayForNonAdmins: true,
+      displayInResult: true,
       firstName: legacyTestResult.firstName,
       lastName: legacyTestResult.lastName,
       organizationId: legacyTestResult.organizationId ?? null,
@@ -136,6 +148,7 @@ async function createPcrTestResult(
       },
       updatedAt: legacyTestResult.timestamps.updatedAt ?? legacyTestResult.timestamps.createdAt,
     }
+    console.log(pcrResultData)
     const pcrTestResult = await database.collection('pcr-test-results').add(pcrResultData)
 
     //Update Appointments
