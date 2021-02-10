@@ -42,6 +42,7 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 import {AvailableTimes} from '../models/available-times'
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -51,6 +52,7 @@ export class AppoinmentService {
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(this.dataStore)
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
+  private organizationService = new OrganizationService()
 
   async getAppointmentByBarCode(
     barCodeNumber: string,
@@ -868,7 +870,7 @@ export class AppoinmentService {
       }),
     )
     return {
-      appointmentStatus: appointmentStatsByTypesArr,
+      appointmentStatusArray: appointmentStatsByTypesArr,
       orgIdArray: appointmentStatsByOrgIdArr,
       total: appointments.length,
     }
