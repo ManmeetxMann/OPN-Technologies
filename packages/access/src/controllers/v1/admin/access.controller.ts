@@ -3,7 +3,7 @@ import {NextFunction, Request, Response} from 'express'
 import * as _ from 'lodash'
 
 import {PassportService} from '../../../../../passport/src/services/passport-service'
-import {PassportStatuses, Passport} from '../../../../../passport/src/models/passport'
+import {PassportStatuses, Passport, passportDTO} from '../../../../../passport/src/models/passport'
 
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 
@@ -16,7 +16,7 @@ import IRouteController from '../../../../../common/src/interfaces/IRouteControl
 import {isPassed, safeTimestamp} from '../../../../../common/src/utils/datetime-util'
 import {actionSucceed, of} from '../../../../../common/src/utils/response-wrapper'
 import {now} from '../../../../../common/src/utils/times'
-import {User} from '../../../../../common/src/data/user'
+import {User, userDTO} from '../../../../../common/src/data/user'
 import {AdminProfile} from '../../../../../common/src/data/admin'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
@@ -133,9 +133,11 @@ class AdminController implements IRouteController {
       const newAccess = await this.accessService.handleEnterV2(access)
       const responseBody = {
         access: accessDTOResponseV1(newAccess),
-        passport,
-        user,
-        dependants: dependants.filter(({id}) => newAccess.dependants[id]),
+        passport: passportDTO(passport),
+        user: userDTO(user),
+        dependants: dependants
+          .filter(({id}) => newAccess.dependants[id])
+          .map((user) => userDTO(user)),
       }
       return res.json(actionSucceed(responseBody))
     } catch (error) {
@@ -154,10 +156,12 @@ class AdminController implements IRouteController {
       ])
       const newAccess = await this.accessService.handleExitV2(access)
       const responseBody = {
-        passport,
-        dependants: dependants.filter(({id}) => newAccess.dependants[id]),
         access: accessDTOResponseV1(newAccess),
-        user,
+        passport: passportDTO(passport),
+        user: userDTO(user),
+        dependants: dependants
+          .filter(({id}) => newAccess.dependants[id])
+          .map((user) => userDTO(user)),
       }
       res.json(actionSucceed(responseBody))
     } catch (error) {
@@ -244,9 +248,9 @@ class AdminController implements IRouteController {
       )
       const access = await this.accessService.handleEnterV2(enteringAccess)
       const responseBody = {
-        passport: selectedPassport,
         access: accessDTOResponseV1(access),
-        user,
+        passport: passportDTO(selectedPassport),
+        user: userDTO(user),
       }
       res.json(actionSucceed(responseBody))
     } catch (error) {
@@ -275,9 +279,9 @@ class AdminController implements IRouteController {
       }
       const {access, passport} = await this.forceExit(latestAccess, userId)
       const responseBody = {
-        passport,
         access: accessDTOResponseV1(access),
-        user,
+        passport: passportDTO(passport),
+        user: userDTO(user),
       }
       res.json(actionSucceed(responseBody))
     } catch (error) {
@@ -426,8 +430,8 @@ class AdminController implements IRouteController {
         res.json(
           actionSucceed({
             access: accessDTOResponseV1(accessForEnteringOrExiting),
-            user,
-            passport: latestPassport,
+            passport: passportDTO(latestPassport),
+            user: userDTO(user),
           }),
         )
       }
