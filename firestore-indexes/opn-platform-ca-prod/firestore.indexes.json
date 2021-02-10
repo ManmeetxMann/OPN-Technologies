@@ -303,32 +303,6 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "organizationId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "result",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "testRunId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "deadline",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "pcr-test-results",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "barCode",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "updatedAt",
           "order": "DESCENDING"
         }
@@ -343,40 +317,8 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "result",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "pcr-test-results",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "deadline",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "organizationId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "result",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "pcr-test-results",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
           "fieldPath": "waitingResult",
           "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "deadline",
-          "order": "ASCENDING"
         }
       ]
     },
@@ -385,30 +327,16 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "result",
+          "fieldPath": "barCode",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "deadline",
+          "fieldPath": "displayInResult",
           "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "pcr-test-results",
-      "queryScope": "COLLECTION",
-      "fields": [
+        },
         {
           "fieldPath": "result",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "testRunId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "`timestamps.createdAt`",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },
@@ -422,6 +350,28 @@
         },
         {
           "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "result",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "organizationId",
           "order": "ASCENDING"
         },
         {

@@ -243,7 +243,7 @@ export class PCRTestResultsService {
         operator: DataModelFieldMapOperatorType.Equals,
         value: true,
       })
-    }else if (deadline) {
+    } else if (deadline) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'deadline',

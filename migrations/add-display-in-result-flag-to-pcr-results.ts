@@ -4,8 +4,6 @@
  */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
-import DBSchema from '../packages/reservation/src/dbschemas/pcr-test-results.schema'
-import {PCRTestResultDBModel} from '../packages/reservation/src/models/pcr-test-results'
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -72,7 +70,7 @@ async function addDisplayInResultFlag(
   snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
 ) {
   const resultId = snapshot.id
-  const legacyTestResult = snapshot.data()
+  //const legacyTestResult = snapshot.data()
   const pcrResultInDb = await database
     .collection('pcr-test-results')
     .where('appointmentId', '==', resultId)
@@ -90,8 +88,8 @@ async function addDisplayInResultFlag(
           ? lastPCRResult
           : pcrResult
       }, pcrResultInDb.docs[0])
-      
-      pcrResultInDb.docs.forEach((pcrResult)=>{
+
+      pcrResultInDb.docs.forEach((pcrResult) => {
         pcrResult.ref.set(
           {
             displayInResult: false,
@@ -103,7 +101,8 @@ async function addDisplayInResultFlag(
           },
           {
             merge: true,
-          })
+          },
+        )
       })
 
       latestResult.ref.set(
@@ -117,8 +116,9 @@ async function addDisplayInResultFlag(
         },
         {
           merge: true,
-        })
-    }else{
+        },
+      )
+    } else {
       console.info(`AcuityAppointmentId: ${resultId} Only One result`)
 
       const pcrResult = pcrResultInDb.docs[0]
@@ -133,35 +133,12 @@ async function addDisplayInResultFlag(
         },
         {
           merge: true,
-        })
+        },
+      )
     }
     return Promise.resolve()
   } catch (error) {
     console.warn(error)
-    throw error
-  }
-}
-
-async function updateAppointment(
-  snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
-  latestResult: string,
-) {
-  try {
-    return await snapshot.ref.set(
-      {
-        latestResult: latestResult,
-        appointmentStatus: 'Reported',
-        timestamps: {
-          migrations: {
-            testResultsToPCRResults: firestore.FieldValue.serverTimestamp(),
-          },
-        },
-      },
-      {
-        merge: true,
-      },
-    )
-  } catch (error) {
     throw error
   }
 }
