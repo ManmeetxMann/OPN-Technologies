@@ -338,8 +338,13 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.RecollectAsInconclusive: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as RecollectAsInconclusive`)
+        console.log(`TestResultOverwrittten: ${barCode} is marked as Inconclusive`)
         finalResult = ResultTypes.Inconclusive
+        break
+      }
+      case PCRResultActions.SendPreliminaryPositive: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as PreliminaryPositive`)
+        finalResult = ResultTypes.PreliminaryPositive
         break
       }
     }
@@ -489,7 +494,7 @@ export class PCRTestResultsService {
 
     if (waitingPCRTestResult && !inProgress) {
       console.error(
-        `handlePCRResultSaveAndSend: Failed PCRResultID ${waitingPCRTestResult.id} Barcode: ${resultData.barCode} is not inProgress`,
+        `handlePCRResultSaveAndSend: Failed PCRResultID ${waitingPCRTestResult.id} Barcode: ${resultData.barCode} is not InProgress`,
       )
       throw new BadRequestException(
         `PCR Test Result with barCode ${resultData.barCode} is not InProgress`,
