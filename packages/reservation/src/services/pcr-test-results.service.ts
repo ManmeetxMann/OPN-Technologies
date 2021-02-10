@@ -265,13 +265,27 @@ export class PCRTestResultsService {
       {key: 'result', direction: 'desc'},
     )
 
+    const getResultValue = (result: ResultTypes, previousResult: ResultTypes, notify: boolean): ResultTypes =>{
+      if(!!previousResult && result === ResultTypes.Pending){
+        return previousResult
+      }
+
+      if(isLabUser){
+        //NoOverwrite For LabUser
+        return result
+      }
+
+      if(notify !== true && !this.whiteListedResultsTypes.includes(result)){
+        return ResultTypes.Pending
+      }
+      return result
+    }
+
     return pcrResults.map((pcr) => {
       return {
         id: pcr.id,
         barCode: pcr.barCode,
-        result: isLabUser
-          ? pcr.result
-          : this.getFilteredResultForPublic(pcr.result, !!pcr.resultSpecs?.notify),
+        result: getResultValue(pcr.result, pcr.previousResult, !!pcr.resultSpecs?.notify),
         dateTime: formatDateRFC822Local(pcr.dateTime),
         deadline: formatDateRFC822Local(pcr.deadline),
         testRunId: pcr.testRunId,
@@ -282,11 +296,6 @@ export class PCRTestResultsService {
     })
   }
 
-  getFilteredResultForPublic(result: ResultTypes, notify: boolean): ResultTypes {
-    return notify !== true && !this.whiteListedResultsTypes.includes(result)
-      ? ResultTypes.Pending
-      : result
-  }
 
   async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel[]> {
     const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
