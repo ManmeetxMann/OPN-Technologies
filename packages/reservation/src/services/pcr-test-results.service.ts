@@ -230,7 +230,14 @@ export class PCRTestResultsService {
       })
     }
 
-    if (deadline) {
+    if (barCode) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: barCode,
+      })
+    }else if (deadline) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'deadline',
@@ -239,18 +246,11 @@ export class PCRTestResultsService {
       })
     }
 
-    if (barCode) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'barCode',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: barCode,
-      })
-    }
+
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
       pcrTestResultsQuery,
-      {key: 'result', direction: 'asc'},
+      {key: 'result', direction: 'desc'},
     )
 
     return pcrResults.map((pcr) => {
