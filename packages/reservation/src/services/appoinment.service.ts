@@ -18,6 +18,7 @@ import {
   UserAppointment,
   userAppointmentDTOResponse,
   AppointmentActivityAction,
+  Filter,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -815,5 +816,61 @@ export class AppoinmentService {
     }
 
     return updatedAppoinment
+  }
+
+  async getAppointmentsStats(
+    appointmentStatus: AppointmentStatus[],
+    barCode: string,
+    organizationId: string,
+    dateOfAppointment: string,
+    searchQuery: string,
+    transportRunId: string,
+  ): Promise<{
+    appointmentStatusArray: Filter[]
+    orgIdArray: Filter[]
+    total: number
+  }> {
+    const appointments = await this.getAppointmentsDB({
+      appointmentStatus,
+      barCode,
+      organizationId,
+      dateOfAppointment,
+      searchQuery,
+      transportRunId,
+    })
+    const appointmentStatsByTypes: Record<string, number> = {}
+    const appointmentStatsByOrganization: Record<string, number> = {}
+
+    appointments.forEach((appointment) => {
+      if (appointmentStatsByTypes[appointment.appointmentStatus]) {
+        ++appointmentStatsByTypes[appointment.appointmentStatus]
+        ++appointmentStatsByOrganization[appointment.organizationId]
+      } else {
+        appointmentStatsByTypes[appointment.appointmentStatus] = 1
+        appointmentStatsByOrganization[appointment.organizationId] = 1
+      }
+    })
+    const organizations = await this.organizationService.getAllByIds(
+      Object.keys(appointmentStatsByOrganization),
+    )
+    const appointmentStatsByTypesArr = Object.entries(appointmentStatsByTypes).map(
+      ([name, count]) => ({
+        id: name,
+        name,
+        count,
+      }),
+    )
+    const appointmentStatsByOrgIdArr = Object.entries(appointmentStatsByOrganization).map(
+      ([orgId, count]) => ({
+        id: orgId,
+        name: organizations.find(({id}) => id === orgId)?.name ?? 'None',
+        count,
+      }),
+    )
+    return {
+      appointmentStatus: appointmentStatsByTypesArr,
+      orgIdArray: appointmentStatsByOrgIdArr,
+      total: appointments.length,
+    }
   }
 }

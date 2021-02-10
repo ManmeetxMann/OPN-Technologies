@@ -145,52 +145,20 @@ class AdminAppointmentController implements IControllerBase {
         throw new BadRequestException('dateOfAppointment is invalid')
       }
 
-      const appointments = await this.appointmentService.getAppointmentsDB({
+      const {
+        appointmentStatusArray,
+        orgIdArray,
+        total,
+      } = await this.appointmentService.getAppointmentsStats(
         appointmentStatus,
         barCode,
         organizationId,
         dateOfAppointment,
         searchQuery,
         transportRunId,
-      })
-      const appointmentStatsByTypes: Record<string, number> = {}
-      const appointmentStatsByOrganization: Record<string, number> = {}
+      )
 
-      appointments.forEach((appointment) => {
-        if (appointmentStatsByTypes[appointment.appointmentStatus]) {
-          ++appointmentStatsByTypes[appointment.appointmentStatus]
-          ++appointmentStatsByOrganization[appointment.organizationId]
-        } else {
-          appointmentStatsByTypes[appointment.appointmentStatus] = 1
-          appointmentStatsByOrganization[appointment.organizationId] = 1
-        }
-      })
-      const organizations = await this.organizationService.getAllByIds(
-        Object.keys(appointmentStatsByOrganization),
-      )
-      const appointmentStatsByTypesArr = Object.entries(appointmentStatsByTypes).map(
-        ([name, count]) => ({
-          id: name,
-          name,
-          count,
-        }),
-      )
-      const appointmentStatsByOrgIdArr = Object.entries(appointmentStatsByOrganization).map(
-        ([orgId, count]) => ({
-          id: orgId,
-          name: organizations.find(({id}) => id === orgId)?.name ?? 'None',
-          count,
-        }),
-      )
-      res.json(
-        actionSucceed(
-          statsUiDTOResponse(
-            appointmentStatsByTypesArr,
-            appointmentStatsByOrgIdArr,
-            appointments.length,
-          ),
-        ),
-      )
+      res.json(actionSucceed(statsUiDTOResponse(appointmentStatusArray, orgIdArray, total)))
     } catch (error) {
       next(error)
     }
