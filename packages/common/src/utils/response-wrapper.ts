@@ -25,3 +25,6 @@ export const actionFailed = <T>(message?: string, data: T = null): ResponseWrapp
 
 export const actionReplyInsufficientPermission = <T>(data: T = null): ResponseWrapper<T> =>
   of(data, ResponseStatusCodes.Failed, 'Insufficient permissions to fulfil the request')
+
+export const actionInProgress = <T>(data: T = null): ResponseWrapper<T> =>
+  of(data, ResponseStatusCodes.InProgress, null)

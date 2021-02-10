@@ -2,7 +2,11 @@ import {NextFunction, Request, Response, Router} from 'express'
 import moment from 'moment'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
+import {
+  actionSucceed,
+  actionSuccess,
+  actionInProgress,
+} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {now} from '../../../../../common/src/utils/times'
@@ -24,6 +28,7 @@ import {
   PcrTestResultsListRequest,
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
+  ResultReportStatus,
 } from '../../../models/pcr-test-results'
 
 class PCRTestResultController implements IControllerBase {
@@ -235,7 +240,23 @@ class PCRTestResultController implements IControllerBase {
       const pcrTestResults = await this.pcrTestResultsService.listPCRTestResultReportStatus(
         reportTrackerId,
       )
-      res.json(actionSucceed(pcrTestResults.map(pcrTestResultsResponse)))
+
+      let inProgress = false
+      const statusesForInProgressCondition = [ResultReportStatus.RequestReceived, ResultReportStatus.Processing]
+
+      const result = pcrTestResults.map((pcrTestResult) => {
+        if (statusesForInProgressCondition.includes(pcrTestResult.status)) {
+          inProgress = true
+        }
+
+        return pcrTestResultsResponse(pcrTestResult)
+      })
+
+      if (inProgress) {
+        res.json(actionInProgress(result))
+      } else {
+        res.json(actionSucceed(result))
+      }
     } catch (error) {
       console.log(error)
       next(error)
