@@ -1,57 +1,69 @@
+import {firestore} from 'firebase-admin'
+import {makeDeadline} from '../utils/datetime.helper'
+
 import {PageableRequestFilter} from '../../../common/src/types/request'
+import {formatDateRFC822Local} from '../utils/datetime.helper'
 import moment from 'moment-timezone'
-import {Config} from '../../../common/src/utils/config'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
+  Submitted = 'Submitted',
   InTransit = 'InTransit',
   Received = 'Received',
   InProgress = 'InProgress',
   Reported = 'Reported',
   ReRunRequired = 'ReRunRequired',
-  ReSampleRequired = 'ReSampleRequired',
+  ReCollectRequired = 'ReCollectRequired',
+  Canceled = 'Canceled',
 }
 
 export enum ResultTypes {
+  PresumptivePositive = 'PresumptivePositive',
   Positive = 'Positive',
   Negative = 'Negative',
   Pending = 'Pending',
-  Detected2019nCoV = '2019-nCoV Detected',
   Invalid = 'Invalid',
   Inconclusive = 'Inconclusive',
-  ReSampleRequested = 'ReSampleRequested',
+  Indeterminate = 'Indeterminate',
 }
 
-export type AppointmentModelBase = {
+export type AppointmentDBModel = {
+  id: string
   acuityAppointmentId: number
   appointmentStatus: AppointmentStatus
+  agreeToConductFHHealthAssessment: boolean
   barCode: string
   canceled: boolean
   dateOfAppointment: string
   dateOfBirth: string
-  dateTime: string
-  deadline: string
+  dateTime: firestore.Timestamp
+  deadline: firestore.Timestamp
   email: string
   firstName: string
-  inProgressAt?: Date
   lastName: string
   location?: string
   organizationId?: string
   packageCode?: string
   phone: number
-  receivedAt?: Date
   registeredNursePractitioner?: string
   latestResult: ResultTypes
-  testRunId?: string
   timeOfAppointment: string
   transportRunId?: string
   appointmentTypeID: number
   calendarID: number
-  vialLocaton?: string
-}
-
-export type AppointmentDBModel = AppointmentModelBase & {
-  id: string
+  vialLocation?: string
+  address: string
+  addressUnit: string
+  couponCode?: string
+  travelID?: string
+  travelIDIssuingCountry?: string
+  ohipCard?: string
+  swabMethod?: string
+  shareTestResultWithEmployer: boolean
+  readTermsAndConditions: boolean
+  receiveResultsViaEmail: boolean
+  receiveNotificationsFromGov: boolean
+  userId?: string
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -73,28 +85,40 @@ type AppointmentAcuityForm = {
 
 //Response From Acuity
 export type AppointmentAcuityResponse = {
-  id: number
-  date: string
-  time: string
-  forms: Array<AppointmentAcuityForm>
-  certificate: string
-  location: string
-  organizationId: string
-  datetime: string
-  labels: LabelsAcuityResponse[]
-  firstName: string
-  lastName: string
-  email: string
-  phone: number
-  dateOfBirth: string
-  registeredNursePractitioner: string
+  address: string
+  addressUnit: string
+  agreeToConductFHHealthAssessment: boolean
   barCode: string
   canceled: boolean
+  canClientCancel: boolean
+  certificate: string
+  date: string
+  dateOfBirth: string
+  datetime: string
+  email: string
+  firstName: string
+  forms: Array<AppointmentAcuityForm>
+  id: number
+  labels: LabelsAcuityResponse[]
+  lastName: string
+  location: string
+  ohipCard?: string
+  organizationId?: string
+  phone: number
+  readTermsAndConditions: boolean
+  receiveNotificationsFromGov: boolean
+  receiveResultsViaEmail: boolean
+  registeredNursePractitioner?: string
+  shareTestResultWithEmployer: boolean
+  swabMethod?: string
+  time: string
+  travelID?: string
+  travelIDIssuingCountry?: string
 }
 
 export type LabelsAcuityResponse = {
   id: number
-  name: Label
+  name: DeadlineLabel
   color: string
 }
 
@@ -114,13 +138,36 @@ export type CheckAppointmentRequest = {
   barCodes: string[]
 }
 
+export type CreateAppointmentRequest = {
+  slotId: string
+  firstName: string
+  lastName: string
+  email: string
+  phone: {
+    code: number
+    number: number
+  }
+  dateOfBirth: string
+  address: string
+  addressUnit: string
+  couponCode: string
+  shareTestResultWithEmployer: boolean
+  readTermsAndConditions: boolean
+  agreeToConductFHHealthAssessment: boolean
+  receiveResultsViaEmail: boolean
+  receiveNotificationsFromGov: boolean
+  organizationId: string
+  userId: string
+  packageCode: string
+}
+
 export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   organizationId?: string
   searchQuery?: string
   dateOfAppointment?: string
   transportRunId?: string
-  testRunId?: string
-  deadlineDate?: string
+  barCode?: string
+  appointmentStatus?: AppointmentStatus[]
 }
 
 //Update to Acuity Service
@@ -142,13 +189,15 @@ export type AppointmentUiDTO = {
   transportRunId?: string
   deadline?: string
   latestResult?: string
-  vialLocaton?: string
-  testRunId?: string
+  vialLocation?: string
+  appointment?: boolean
+  canCancel?: boolean
+  registeredNursePractitioner?: string
 }
 
 export type AppointmentsState = {
   appointmentId: string
-  state: AppointmentAttachTransportStatus
+  state: AppointmentStatusChangeState
 }
 
 export type AppointmentStatusHistory = {
@@ -158,16 +207,22 @@ export type AppointmentStatusHistory = {
   createdBy: string
 }
 
+export type AppointmentChangeToRerunRequest = {
+  appointment: AppointmentDBModel
+  deadlineLabel: DeadlineLabel
+  userId: string
+}
+
 export type AppointmentStatusHistoryDb = AppointmentStatusHistory & {
   id: string
 }
 
-export enum AppointmentAttachTransportStatus {
+export enum AppointmentStatusChangeState {
   Succeed = 'succeed',
   Failed = 'failed',
 }
 
-export enum AppointmentWebhookActions {
+export enum AcuityWebhookActions {
   Scheduled = 'scheduled',
   Rescheduled = 'rescheduled',
   Canceled = 'canceled',
@@ -175,13 +230,83 @@ export enum AppointmentWebhookActions {
   OrderCompleted = 'order.completed',
 }
 
-export enum Label {
+export enum WebhookEndpoints {
+  Create = 'Create',
+  Update = 'Update',
+}
+
+export enum DeadlineLabel {
   SameDay = 'SameDay',
   NextDay = 'NextDay',
 }
 
-export const appointmentUiDTOResponse = (appointment: AppointmentDBModel): AppointmentUiDTO => {
-  const timeZone = Config.get('DEFAULT_TIME_ZONE')
+const filteredAppointmentStatus = (
+  status: AppointmentStatus,
+  isLabUser: boolean,
+): AppointmentStatus => {
+  if (
+    !isLabUser &&
+    (status === AppointmentStatus.InTransit || status === AppointmentStatus.Received)
+  ) {
+    return AppointmentStatus.Submitted
+  }
+  if (!isLabUser && status === AppointmentStatus.ReRunRequired) {
+    return AppointmentStatus.InProgress
+  }
+  return status
+}
+
+export const appointmentUiDTOResponse = (
+  appointment: AppointmentDBModel & {canCancel?: boolean},
+  isLabUser: boolean,
+): AppointmentUiDTO => {
+  return {
+    id: appointment.id,
+    firstName: appointment.firstName,
+    lastName: appointment.lastName,
+    status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser),
+    barCode: appointment.barCode,
+    location: appointment.location,
+    dateTime: formatDateRFC822Local(appointment.dateTime),
+    dateOfBirth: appointment.dateOfBirth,
+    transportRunId: appointment.transportRunId,
+    deadline: formatDateRFC822Local(appointment.deadline),
+    latestResult: appointment.latestResult,
+    vialLocation: appointment.vialLocation,
+    canCancel: appointment.canCancel,
+  }
+}
+
+export type UserAppointment = {
+  id: string
+  QRCode: string
+  dateOfBirth: string
+  showQrCode: boolean
+  dateOfAppointment: string
+  firstName: string
+  lastName: string
+  locationName: string
+  locationAddress: string
+  timeOfAppointment: string
+}
+
+export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): UserAppointment => ({
+  id: appointment.id,
+  QRCode: appointment.barCode,
+  dateOfBirth: appointment.dateOfBirth,
+  showQrCode: moment(makeDeadline(moment())).isBefore(appointment.deadline.toDate()),
+  firstName: appointment.firstName,
+  lastName: appointment.lastName,
+  locationName: appointment.location,
+  locationAddress: appointment.address,
+  dateOfAppointment: appointment.dateOfAppointment,
+  timeOfAppointment: appointment.timeOfAppointment,
+})
+
+export const appointmentByBarcodeUiDTOResponse = (
+  appointment: AppointmentDBModel,
+  organizationName?: string,
+): AppointmentUiDTO & {organizationName?: string} => {
   return {
     id: appointment.id,
     firstName: appointment.firstName,
@@ -189,12 +314,33 @@ export const appointmentUiDTOResponse = (appointment: AppointmentDBModel): Appoi
     status: appointment.appointmentStatus,
     barCode: appointment.barCode,
     location: appointment.location,
-    dateTime: moment(appointment.dateTime).tz(timeZone).format(),
+    dateTime: formatDateRFC822Local(appointment.dateTime),
     dateOfBirth: appointment.dateOfBirth,
-    transportRunId: appointment.transportRunId,
-    deadline: moment(appointment.deadline).tz(timeZone).format(),
-    latestResult: appointment.latestResult,
-    vialLocaton: appointment.vialLocaton,
-    testRunId: appointment.testRunId,
+    deadline: formatDateRFC822Local(appointment.deadline),
+    registeredNursePractitioner: appointment.registeredNursePractitioner,
+    organizationName: organizationName,
   }
+}
+
+export type ActivityTracking = {
+  action: AppointmentActivityAction
+  currentData: Partial<AppointmentDBModel>
+  newData: Partial<AppointmentDBModel>
+  actionBy?: string // not required for action updateFromAcuity
+}
+
+export enum AppointmentActivityAction {
+  RegenerateBarcode = 'regenerateBarcode',
+  UpdateFromAcuity = 'updateFromAcuity',
+}
+
+export type UpdateAppointmentActionParams = {
+  id: string
+  updates: Partial<AppointmentDBModel>
+  action?: AppointmentActivityAction
+  actionBy?: string
+}
+
+export type ActivityTrackingDb = ActivityTracking & {
+  id: string
 }

@@ -1,6 +1,9 @@
 import AcuityScheduling from '../adapter/acuity'
-import {AppointmentAcuityResponse} from '../models/appointment'
+import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
 import {Certificate} from '../models/packages'
+import {AppointmentTypes} from '../models/appointment-types'
+import {Calendar} from '../models/calendar'
+import {AcuityAvailableSlots} from '../models/acuity'
 
 export class AcuityRepository extends AcuityScheduling {
   constructor() {
@@ -12,8 +15,11 @@ export class AcuityRepository extends AcuityScheduling {
     return this.updateAppointmentOnAcuityService(id, data)
   }
 
-  async addAppointmentLabelOnAcuity(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
-    return this.updateAppointmentLabel(id, data)
+  async addAppointmentLabelOnAcuity(
+    id: number,
+    label: DeadlineLabel,
+  ): Promise<AppointmentAcuityResponse> {
+    return this.updateAppointmentLabelOnAcuityService(id, label)
   }
 
   //Used by Webhooks
@@ -22,11 +28,11 @@ export class AcuityRepository extends AcuityScheduling {
   }
 
   async cancelAppointmentByIdOnAcuity(id: number): Promise<AppointmentAcuityResponse> {
-    return this.cancelAppointmentOnAcuity(id)
+    return this.cancelAppointmentOnAcuityService(id)
   }
 
   async getPackagesList(): Promise<Certificate[]> {
-    return this.getPackages()
+    return this.getPackagesFromAcuityService()
   }
 
   async createCouponCode(couponID: number, emailToLockCoupon: string): Promise<string> {
@@ -35,5 +41,55 @@ export class AcuityRepository extends AcuityScheduling {
       emailToLockCoupon,
     )
     return couponCodeResponse.certificate
+  }
+
+  async createAppointment(
+    datetime: string,
+    appointmentTypeID: number,
+    firstName: string,
+    lastName: string,
+    email: string,
+    phone: string,
+    certificate: string,
+    calendarId: number,
+    fields: Record<string, string | boolean>,
+  ): Promise<AppointmentAcuityResponse> {
+    return this.createAppointmentOnAcuityService(
+      datetime,
+      appointmentTypeID,
+      firstName,
+      lastName,
+      email,
+      phone,
+      certificate,
+      calendarId,
+      fields,
+    )
+  }
+
+  getAppointmentTypeList(): Promise<AppointmentTypes[]> {
+    return this.getAppointmentTypes()
+  }
+
+  getCalendarList(): Promise<Calendar[]> {
+    return this.getCalendars()
+  }
+
+  getAvailableSlots(
+    appointmentTypeId: number,
+    date: string,
+    calendarId: number,
+    calendarTimezone: string,
+  ): Promise<AcuityAvailableSlots[]> {
+    return this.getAvailableSlotsList(appointmentTypeId, date, calendarId, calendarTimezone)
+  }
+
+  async getAvailabilityDates(
+    appointmentTypeID: number,
+    month: string,
+    calendarID: number,
+    timezone: string,
+  ): Promise<{date: string}[]> {
+    return this.getAvailabilityDatesList(appointmentTypeID, month, calendarID, timezone)
   }
 }

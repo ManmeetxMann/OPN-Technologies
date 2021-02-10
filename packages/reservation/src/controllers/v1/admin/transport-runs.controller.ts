@@ -1,7 +1,11 @@
-import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {Handler, Router} from 'express'
-import {TransportRunsService} from '../../../services/transport-runs.service'
+import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
+
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
+
+import {TransportRunsService} from '../../../services/transport-runs.service'
 import {TransportRunsDTOResponse} from '../../../models/transport-runs'
 
 class TransportRunsController implements IControllerBase {
@@ -15,8 +19,16 @@ class TransportRunsController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.get(this.path + '/', this.listTransportRun)
-    innerRouter.post(this.path + '/', this.createTransportRun)
+    innerRouter.get(
+      this.path + '/',
+      authorizationMiddleware([RequiredUserPermission.LabTransportRunsList]),
+      this.listTransportRun,
+    )
+    innerRouter.post(
+      this.path + '/',
+      authorizationMiddleware([RequiredUserPermission.LabTransportRunsCreate]),
+      this.createTransportRun,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -42,6 +54,7 @@ class TransportRunsController implements IControllerBase {
       next(error)
     }
   }
+
   listTransportRun: Handler = async (req, res, next): Promise<void> => {
     try {
       const {transportDate} = req.query as {transportDate: string}

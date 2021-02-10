@@ -2,28 +2,29 @@ import {NextFunction, Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
-
-import {
-  AppointmentByOrganizationRequest,
-  appointmentUiDTOResponse,
-  Label,
-  AppointmentsState,
-  AppointmentDBModel,
-} from '../../../models/appointment'
-import {AppoinmentService} from '../../../services/appoinment.service'
+import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
-import {TransportRunsService} from '../../../services/transport-runs.service'
-import {getAdminId} from '../../../../../common/src/utils/auth'
+import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
 
-const isJustOneOf = (a: unknown, b: unknown) => !(a && b) || !(!a && !b)
+import {
+  appointmentByBarcodeUiDTOResponse,
+  AppointmentByOrganizationRequest,
+  AppointmentDBModel,
+  AppointmentsState,
+  appointmentUiDTOResponse,
+} from '../../../models/appointment'
+import {AppoinmentService} from '../../../services/appoinment.service'
+import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
+import {TransportRunsService} from '../../../services/transport-runs.service'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private appointmentService = new AppoinmentService()
+  private organizationService = new OrganizationService()
   private transportRunsService = new TransportRunsService()
 
   constructor() {
@@ -32,45 +33,54 @@ class AdminAppointmentController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
+    const apptLabAuth = authorizationMiddleware([RequiredUserPermission.LabAppointments])
+    const apptLabOrOrgAdminAuth = authorizationMiddleware([
+      RequiredUserPermission.LabOrOrgAppointments,
+    ])
+    const apptLabOrOrgAdminAuthWithOrg = authorizationMiddleware(
+      [RequiredUserPermission.LabOrOrgAppointments],
+      true,
+    )
+    const receivingAuth = authorizationMiddleware([RequiredUserPermission.LabReceiving])
+    const idBarCodeToolAuth = authorizationMiddleware([
+      RequiredUserPermission.LabAdminToolIDBarcode,
+    ])
     innerRouter.get(
       this.path + '/api/v1/appointments',
-      adminAuthMiddleware,
+      apptLabOrOrgAdminAuthWithOrg,
       this.getListAppointments,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId',
-      adminAuthMiddleware,
+      apptLabOrOrgAdminAuth,
       this.getAppointmentById,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/cancel',
-      adminAuthMiddleware,
+      apptLabOrOrgAdminAuth,
       this.cancelAppointment,
     )
+
     innerRouter.put(
       this.path + '/api/v1/appointments/add-transport-run',
-      adminAuthMiddleware,
+      apptLabAuth,
       this.addTransportRun,
     )
-    innerRouter.put(
-      this.path + '/api/v1/appointments/add_labels',
-      adminAuthMiddleware,
-      this.addLabels,
-    )
     innerRouter.get(
-      this.path + '/api/v1/appointments/barcode/:barCode',
-      adminAuthMiddleware,
+      this.path + '/api/v1/appointments/barcode/lookup',
+      idBarCodeToolAuth,
       this.getAppointmentByBarcode,
     )
-    innerRouter.put(
-      this.path + '/api/v1/appointments/:barCode/receive',
-      adminAuthMiddleware,
-      this.updateTestVial,
+    innerRouter.get(
+      this.path + '/api/v1/appointments/barcode/get-new-code',
+      idBarCodeToolAuth,
+      this.getNextBarcode,
     )
+    innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
     innerRouter.put(
-      this.path + '/api/v1/appointments/add-test-run',
-      adminAuthMiddleware,
-      this.addTestRunToAppointments,
+      this.path + '/api/v1/appointments/barcode/regenerate',
+      apptLabAuth,
+      this.regenerateBarCode,
     )
 
     this.router.use('/', innerRouter)
@@ -79,45 +89,33 @@ class AdminAppointmentController implements IControllerBase {
   getListAppointments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {
+        appointmentStatus,
+        barCode,
+        dateOfAppointment,
         organizationId,
         searchQuery,
-        dateOfAppointment,
         transportRunId,
-        testRunId,
-        deadlineDate,
       } = req.query as AppointmentByOrganizationRequest
-
-      if (testRunId && transportRunId) {
-        throw new BadRequestException(
-          'You cannot pass both "testRunId" and "transportRunId" parameters at the same time',
-        )
-      }
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
         throw new BadRequestException('dateOfAppointment is invalid')
       }
 
-      if (deadlineDate && !isValidDate(deadlineDate)) {
-        throw new BadRequestException('deadlineDate is invalid')
-      }
-
-      if (!isJustOneOf(deadlineDate, dateOfAppointment)) {
-        throw new BadRequestException('Required just deadlineDate or dateOfAppointment, not both')
-      }
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       const appointments = await this.appointmentService.getAppointmentsDB({
+        appointmentStatus,
+        barCode,
         organizationId,
         dateOfAppointment,
         searchQuery,
         transportRunId,
-        testRunId,
-        deadlineDate,
       })
 
       res.json(
         actionSucceed(
           appointments.map((appointment: AppointmentDBModel) => ({
-            ...appointmentUiDTOResponse(appointment),
+            ...appointmentUiDTOResponse(appointment, isLabUser),
           })),
         ),
       )
@@ -129,13 +127,21 @@ class AdminAppointmentController implements IControllerBase {
   getAppointmentById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {appointmentId} = req.params as {appointmentId: string}
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
-      const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
+      const appointment = await this.appointmentService.getAppointmentDBByIdWithCancel(
+        appointmentId,
+        isLabUser,
+      )
       if (!appointment) {
         throw new ResourceNotFoundException(`Appointment "${appointmentId}" not found`)
       }
 
-      res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
+      res.json(
+        actionSucceed({
+          ...appointmentUiDTOResponse(appointment, isLabUser),
+        }),
+      )
     } catch (error) {
       next(error)
     }
@@ -143,22 +149,18 @@ class AdminAppointmentController implements IControllerBase {
 
   cancelAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const adminId = getUserId(res.locals.authenticatedUser)
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId} = req.query as {organizationId: string}
 
-      const appointment = await this.appointmentService.getAppointmentByAcuityId(appointmentId)
-
-      if (!appointment) {
-        throw new ResourceNotFoundException(`Appointment "${appointmentId}" not found`)
-      }
-
-      if (organizationId && appointment.organizationId !== organizationId) {
-        throw new BadRequestException(
-          `OrganizationId "${organizationId}" does not match appointment "${appointmentId}"`,
-        )
-      }
-
-      await this.appointmentService.cancelAppointmentById(Number(appointmentId))
+      await this.appointmentService.cancelAppointment(
+        appointmentId,
+        adminId,
+        isLabUser,
+        organizationId,
+      )
 
       res.json(actionSucceed())
     } catch (error) {
@@ -168,7 +170,7 @@ class AdminAppointmentController implements IControllerBase {
 
   addTransportRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
 
       const {appointmentIds, transportRunId} = req.body as {
         appointmentIds: string[]
@@ -198,90 +200,72 @@ class AdminAppointmentController implements IControllerBase {
     }
   }
 
-  addLabels = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const dataToUpdate = req.body as {appointmentId: number; label: Label}[]
-
-      if (dataToUpdate.length > 50) {
-        throw new BadRequestException('Maximum appointments to be part of request is 50')
-      }
-
-      const result = await Promise.all(
-        dataToUpdate.map(async ({appointmentId, label}) => {
-          await this.appointmentService.addAppointmentLabel(Number(appointmentId), {[label]: label})
-
-          const appointmentDb = await this.appointmentService.getAppointmentByAcuityId(
-            appointmentId,
-          )
-
-          return appointmentDb ? appointmentUiDTOResponse(appointmentDb) : null
-        }),
-      )
-
-      res.json(actionSucceed(result))
-    } catch (error) {
-      next(error)
-    }
-  }
-
   getAppointmentByBarcode = async (
     req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {barCode} = req.params as {barCode: string}
+      const {barCode} = req.query as {barCode: string}
 
       const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
-
-      res.json(actionSucceed({...appointmentUiDTOResponse(appointment)}))
+      let organizationName: string
+      if (appointment.organizationId) {
+        const organization = await this.organizationService.getByIdOrThrow(
+          appointment.organizationId,
+        )
+        organizationName = organization.name
+      }
+      res.json(actionSucceed({...appointmentByBarcodeUiDTOResponse(appointment, organizationName)}))
     } catch (error) {
       next(error)
     }
   }
 
-  updateTestVial = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getNextBarcode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
-
-      const {barCode} = req.params as {barCode: string}
-      const {location} = req.body as {location: string}
-      const blockDuplicate = true
-      const appointment = await this.appointmentService.getAppointmentByBarCode(
-        barCode,
-        blockDuplicate,
-      )
-
-      await this.appointmentService.makeReceived(appointment.id, location, adminId)
-
-      res.json(actionSucceed())
+      const barCode = await this.appointmentService.getNextBarCodeNumber()
+      res.json(actionSucceed({barCode}))
     } catch (error) {
       next(error)
     }
   }
 
-  addTestRunToAppointments = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  addVialLocation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const adminId = getAdminId(res.locals.authenticatedUser)
+      const adminId = getUserId(res.locals.authenticatedUser)
 
-      const {appointmentIds, testRunId} = req.body as {
+      const {appointmentIds, vialLocation} = req.body as {
         appointmentIds: string[]
-        testRunId: string
+        vialLocation: string
       }
 
       if (appointmentIds.length > 50) {
-        throw new BadRequestException('Maximum appointments to be part of request is 50')
+        throw new BadRequestException('Allowed maximum 50 appointments in array')
       }
 
-      await Promise.all(
-        appointmentIds.map((id) => this.appointmentService.makeInProgress(id, testRunId, adminId)),
+      await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
+
+      const appointmentsState: AppointmentsState[] = await Promise.all(
+        appointmentIds.map(async (appointmentId) => ({
+          appointmentId,
+          state: await this.appointmentService.makeReceived(appointmentId, vialLocation, adminId),
+        })),
       )
 
-      res.json(actionSucceed())
+      res.json(actionSucceed(appointmentsState))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  regenerateBarCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {appointmentId} = req.body as {appointmentId: string}
+      const userId = getUserId(res.locals.authenticatedUser)
+      const appointment = await this.appointmentService.regenerateBarCode(appointmentId, userId)
+
+      res.json(actionSucceed(appointmentUiDTOResponse(appointment, false)))
     } catch (error) {
       next(error)
     }

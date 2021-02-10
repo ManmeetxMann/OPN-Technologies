@@ -1,9 +1,11 @@
 import {NextFunction, Request, Response, Router} from 'express'
 import {flatten} from 'lodash'
+
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 
-import {adminAuthMiddleware} from '../../../../../common/src/middlewares/admin.auth'
 import {TestResultsService} from '../../../services/test-results.service'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {
@@ -25,7 +27,11 @@ class AdminController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.get(this.path + '/api/v1/test-results', adminAuthMiddleware, this.getListResult)
+    innerRouter.get(
+      this.path + '/api/v1/test-results',
+      authorizationMiddleware([RequiredUserPermission.LabPCRTestResults], true),
+      this.getListResult,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -33,8 +39,6 @@ class AdminController implements IControllerBase {
   getListResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId, dateOfAppointment} = req.query as AppointmentByOrganizationRequest
-
-      //const showCancelled = res.locals.authenticatedUser.admin?.isOpnSuperAdmin ?? false
 
       const appointments = await this.appointmentService.getAppointmentsDB({
         organizationId,

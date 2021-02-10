@@ -3,7 +3,6 @@ import DataModel from '../../../common/src/data/datamodel.base'
 export type AdminProfile = {
   email: string
   enabled: boolean
-  authUserId?: string
   adminForGroupIds: string[]
   adminForLocationIds: string[]
   adminForOrganizationId: string
@@ -16,7 +15,7 @@ export type AdminProfile = {
   isManagementDashboardAdmin: boolean
   isTestReportsAdmin: boolean
   isTestAppointmentsAdmin: boolean
-  isLabAdmin: boolean
+  isLabUser: boolean
   isLabAppointmentsAdmin: boolean
   isLabResultsAdmin: boolean
   isTransportsRunsAdmin: boolean
@@ -24,6 +23,9 @@ export type AdminProfile = {
   isTestRunsAdmin: boolean
   isDueTodayAdmin: boolean
   isBulkUploadAdmin: boolean
+  isIDBarCodesAdmin: boolean
+  isSingleResultSendAdmin: boolean
+  isConfirmResultAdmin: boolean
 }
 
 export type AdminApproval = {

@@ -1,37 +1,61 @@
 import moment from 'moment'
-import DataStore from '../../../common/src/data/datastore'
+import {sortBy} from 'lodash'
 
+import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
+import {EmailService} from '../../../common/src/service/messaging/email-service'
+import {PdfService} from '../../../common/src/service/reports/pdf'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
+import {toDateFormat} from '../../../common/src/utils/times'
+import {formatDateRFC822Local} from '../utils/datetime.helper'
+import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
+
 import {AppoinmentService} from './appoinment.service'
 import {CouponService} from './coupon.service'
 
-import {EmailService} from '../../../common/src/service/messaging/email-service'
-import {PdfService} from '../../../common/src/service/reports/pdf'
-
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
-
 import {
   TestResultsReportingTrackerPCRResultsRepository,
   TestResultsReportingTrackerRepository,
 } from '../respository/test-results-reporting-tracker-repository'
 
 import {
+  AppointmentReasons,
   CreateReportForPCRResultsResponse,
   PCRResultActions,
   PCRTestResultData,
   PCRTestResultDBModel,
   PCRTestResultEmailDTO,
+  PCRTestResultLinkedDBModel,
+  PCRTestResultListDTO,
   PCRTestResultRequest,
+  PcrTestResultsListRequest,
   ResultReportStatus,
   TestResultsReportingTrackerPCRResultsDBModel,
+  PCRResultActionsAllowedResend,
+  PcrTestResultsListByDeadlineRequest,
+  PCRTestResultByDeadlineListDTO,
+  PCRTestResultConfirmRequest,
+  PCRResultActionsForConfirmation,
+  EmailNotficationTypes,
+  PCRResultPDFType,
+  PCRTestResultType,
+  resultToStyle,
+  TestResutsDTO,
+  PCRTestResultHistory,
 } from '../models/pcr-test-results'
-import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
-import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
-import testResultPDFTemplate from '../templates/pcrTestResult'
-import {AppointmentDBModel, ResultTypes} from '../models/appointment'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
-import {dateFormats} from '../../../common/src/utils/times'
+
+import {
+  AppointmentDBModel,
+  AppointmentStatus,
+  DeadlineLabel,
+  ResultTypes,
+} from '../models/appointment'
+import {PCRResultPDFContent} from '../templates'
+import {ResultAlreadySentException} from '../exceptions/result_already_sent'
+import {makeDeadlineForFilter} from '../utils/datetime.helper'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -42,6 +66,45 @@ export class PCRTestResultsService {
   private emailService = new EmailService()
   private pdfService = new PdfService()
   private couponCode: string
+  private whiteListedResultsTypes = [
+    ResultTypes.Negative,
+    ResultTypes.Positive,
+    ResultTypes.PresumptivePositive,
+  ]
+
+  async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
+    //Validate Result Exists for barCode
+    await this.getPCRResultsByBarCode(data.barCode)
+    const appointment = await this.appointmentService.getAppointmentByBarCode(data.barCode)
+    //Create New Waiting Result
+    const runNumber = 0 //Not Relevant
+    const reCollectNumber = 0 //Not Relevant
+    let finalResult: ResultTypes = ResultTypes.Indeterminate
+    let notificationType = EmailNotficationTypes.Indeterminate
+    switch (data.action) {
+      case PCRResultActionsForConfirmation.MarkAsNegative: {
+        finalResult = ResultTypes.Negative
+        notificationType = EmailNotficationTypes.MarkAsConfirmedNegative
+        break
+      }
+      case PCRResultActionsForConfirmation.MarkAsPositive: {
+        finalResult = ResultTypes.Positive
+        notificationType = EmailNotficationTypes.MarkAsConfirmedPositive
+        break
+      }
+    }
+    const newPCRResult = await this.createNewTestResults({
+      appointment,
+      adminId,
+      runNumber,
+      reCollectNumber,
+      result: finalResult,
+      waitingResult: false,
+      confirmed: true,
+    })
+    await this.sendNotification({...appointment, ...newPCRResult}, notificationType)
+    return newPCRResult.id
+  }
 
   async createReportForPCRResults(
     testResultData: PCRTestResultRequest,
@@ -109,7 +172,9 @@ export class PCRTestResultsService {
     }
 
     if (pcrResults.status !== ResultReportStatus.RequestReceived) {
-      //throw new BadRequestException(`ProcessPCRTestResultFailed: ID: ${resultId} BarCode: ${pcrResults.data.barCode} has status ${pcrResults.status}`)
+      throw new BadRequestException(
+        `ProcessPCRTestResultFailed: ID: ${resultId} BarCode: ${pcrResults.data.barCode} has status ${pcrResults.status}`,
+      )
     }
 
     await testResultsReportingTrackerPCRResult.updateProperty(
@@ -117,11 +182,29 @@ export class PCRTestResultsService {
       'status',
       ResultReportStatus.Processing,
     )
-    await this.handlePCRResultSaveAndSend({
-      barCode: pcrResults.data.barCode,
-      resultSpecs: pcrResults.data,
-      adminId: pcrResults.adminId,
-    })
+    try {
+      await this.handlePCRResultSaveAndSend(
+        {
+          barCode: pcrResults.data.barCode,
+          resultSpecs: pcrResults.data,
+          adminId: pcrResults.adminId,
+        },
+        false,
+        false,
+      )
+
+      await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
+        status: await this.getReportStatus(pcrResults.data.action),
+        details: 'Action Completed',
+      })
+    } catch (error) {
+      //CRITICAL
+      console.error(`processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `)
+      await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
+        status: ResultReportStatus.Failed,
+        details: error.toString(),
+      })
+    }
   }
 
   async listPCRTestResultReportStatus(
@@ -135,21 +218,12 @@ export class PCRTestResultsService {
     return testResultsReportingTrackerPCRResult.fetchAll()
   }
 
-  async getPCRResults({
-    organizationId,
-    dateOfAppointment,
-  }: {
-    organizationId: string
-    dateOfAppointment: string
-  }): Promise<PCRTestResultDBModel[]> {
-    const pcrTestResultsQuery = [
-      {
-        map: '/',
-        key: 'dateOfAppointment',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: moment(dateOfAppointment).format(dateFormats.longMonth),
-      },
-    ]
+  async getPCRResults(
+    {organizationId, deadline, barCode}: PcrTestResultsListRequest,
+    isLabUser: boolean,
+  ): Promise<PCRTestResultListDTO[]> {
+    const pcrTestResultsQuery = []
+    //TODO: Allow BarCode with ORG
     if (organizationId) {
       pcrTestResultsQuery.push({
         map: '/',
@@ -158,11 +232,51 @@ export class PCRTestResultsService {
         value: organizationId,
       })
     }
-    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+
+    if (deadline) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'deadline',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: makeDeadlineForFilter(deadline),
+      })
+    }
+
+    if (barCode) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: barCode,
+      })
+    }
+
+    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+      pcrTestResultsQuery,
+      {key: 'result', direction: 'asc'},
+    )
+
+    return pcrResults.map((pcr) => {
+      return {
+        id: pcr.id,
+        barCode: pcr.barCode,
+        result: isLabUser
+          ? pcr.result
+          : this.getFilteredResultForPublic(pcr.result, !!pcr.resultSpecs?.notify),
+        dateTime: formatDateRFC822Local(pcr.dateTime),
+        deadline: formatDateRFC822Local(pcr.deadline),
+        testRunId: pcr.testRunId,
+        firstName: pcr.firstName,
+        lastName: pcr.lastName,
+        testType: 'PCR',
+      }
+    })
   }
 
-  async getPCRResultsByDeadline(deadline: string): Promise<PCRTestResultDBModel[]> {
-    return this.pcrTestResultsRepository.findWhereEqual('deadline', deadline)
+  getFilteredResultForPublic(result: ResultTypes, notify: boolean): ResultTypes {
+    return notify !== true && !this.whiteListedResultsTypes.includes(result)
+      ? ResultTypes.Pending
+      : result
   }
 
   async getTestResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel[]> {
@@ -171,7 +285,7 @@ export class PCRTestResultsService {
       appointmentId,
     )
 
-    if (!pcrTestResults || pcrTestResults.length == 0) {
+    if (!pcrTestResults || pcrTestResults.length === 0) {
       throw new ResourceNotFoundException(
         `PCRTestResult with appointment ${appointmentId} not found`,
       )
@@ -181,51 +295,29 @@ export class PCRTestResultsService {
   }
 
   async getWaitingPCRResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
-    const pcrTestResultsQuery = [
-      {
-        map: '/',
-        key: 'appointmentId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: appointmentId,
-      },
-      {
-        map: '/',
-        key: 'waitingResult',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: true,
-      },
-    ]
-    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
-      pcrTestResultsQuery,
+    const pcrTestResults = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
+      appointmentId,
     )
 
-    if (!pcrTestResults || pcrTestResults.length == 0) {
+    if (!pcrTestResults || pcrTestResults.length === 0) {
       throw new ResourceNotFoundException(
         `PCRTestResult with appointment ${appointmentId} not found`,
       )
     }
-
-    if (pcrTestResults.length > 1) {
-      //CRITICAL
-      console.log(
-        `getWaitingPCRResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
-      )
-    }
-
     return pcrTestResults[0]
   }
 
   getFinalResult(action: PCRResultActions, autoResult: ResultTypes, barCode: string): ResultTypes {
     let finalResult = autoResult
     switch (action) {
-      case PCRResultActions.RequestReSample: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
-        finalResult = ResultTypes.ReSampleRequested
-        break
-      }
       case PCRResultActions.MarkAsNegative: {
         console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
         finalResult = ResultTypes.Negative
+        break
+      }
+      case PCRResultActions.MarkAsPresumptivePositive: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as Positive`)
+        finalResult = ResultTypes.PresumptivePositive
         break
       }
       case PCRResultActions.MarkAsPositive: {
@@ -233,28 +325,33 @@ export class PCRTestResultsService {
         finalResult = ResultTypes.Positive
         break
       }
+      case PCRResultActions.RecollectAsInvalid: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as Invalid`)
+        finalResult = ResultTypes.Invalid
+        break
+      }
+      case PCRResultActions.RecollectAsInconclusive: {
+        console.log(`TestResultOverwrittten: ${barCode} is marked as RecollectAsInconclusive`)
+        finalResult = ResultTypes.Inconclusive
+        break
+      }
     }
     return finalResult
   }
 
-  async getTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
-    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqual(
+  async getPCRResultsByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel[]> {
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualWithMax(
       'barCode',
       barCodeNumber,
+      'updatedAt',
     )
-
-    if (!pcrTestResults || pcrTestResults.length == 0) {
+    if (!pcrTestResults || pcrTestResults.length === 0) {
       throw new ResourceNotFoundException(`PCRTestResult with barCode ${barCodeNumber} not found`)
     }
-    const pcrTestResult = pcrTestResults.filter((result) => result.waitingResult)
-    if (!pcrTestResult || pcrTestResult.length == 0) {
-      throw new ResourceNotFoundException(`No Results are waiting for barcode: ${barCodeNumber}`)
-    }
-    //Only one Result should be waiting
-    return pcrTestResult[0]
+    return pcrTestResults
   }
 
-  async getReSampledTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
+  async getReCollectedTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
     const pcrTestResultsQuery = [
       {
         map: '/',
@@ -264,18 +361,18 @@ export class PCRTestResultsService {
       },
       {
         map: '/',
-        key: 'result',
+        key: 'recollected',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: ResultTypes.ReSampleRequested,
+        value: true,
       },
     ]
     const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
       pcrTestResultsQuery,
     )
 
-    if (!pcrTestResults || pcrTestResults.length == 0) {
+    if (!pcrTestResults || pcrTestResults.length === 0) {
       throw new ResourceNotFoundException(
-        `PCRTestResult with barCode ${barCodeNumber} and ReSample Requested not found`,
+        `PCRTestResult with barCode ${barCodeNumber} and ReCollect Requested not found`,
       )
     }
 
@@ -283,134 +380,349 @@ export class PCRTestResultsService {
     return pcrTestResults[0]
   }
 
-  async handlePCRResultSaveAndSend(resultData: PCRTestResultData): Promise<void> {
+  async getWaitingPCRTestResult(
+    pcrTestResults: PCRTestResultDBModel[],
+  ): Promise<PCRTestResultDBModel> {
+    const pcrWaitingTestResult = pcrTestResults.filter((result) => result.waitingResult)
+    return pcrWaitingTestResult && pcrWaitingTestResult.length !== 0
+      ? pcrWaitingTestResult[0]
+      : undefined
+  }
+
+  //TODO: Refactor this. Not needed in favor of getPCRResultsByBarCode
+  async getLatestPCRTestResult(
+    pcrTestResults: PCRTestResultDBModel[],
+  ): Promise<PCRTestResultDBModel> {
+    return pcrTestResults.reduce(function (lastPCRResult, pcrResult) {
+      return lastPCRResult.updatedAt.seconds > pcrResult.updatedAt.seconds
+        ? lastPCRResult
+        : pcrResult
+    }, pcrTestResults[0])
+  }
+
+  allowedForResend(action: PCRResultActions): boolean {
+    if (action in PCRResultActionsAllowedResend) {
+      return true
+    }
+    return false
+  }
+
+  async handlePCRResultSaveAndSend(
+    resultData: PCRTestResultData,
+    isSingleResult: boolean,
+    sendUpdatedResults: boolean,
+  ): Promise<PCRTestResultDBModel> {
+    if (resultData.resultSpecs.action === PCRResultActions.DoNothing) {
+      console.log(
+        `handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}. It is Ignored`,
+      )
+      return
+    }
+
+    const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
+    const pcrTestResults = await this.getPCRResultsByBarCode(resultData.barCode)
+
+    const waitingPCRTestResult = await this.getWaitingPCRTestResult(pcrTestResults)
+    const isAlreadyReported = appointment.appointmentStatus === AppointmentStatus.Reported
+    const inProgress = appointment.appointmentStatus === AppointmentStatus.InProgress
     const finalResult = this.getFinalResult(
       resultData.resultSpecs.action,
       resultData.resultSpecs.autoResult,
       resultData.barCode,
     )
-    const appointment = await this.appointmentService.getAppointmentByBarCode(resultData.barCode)
-    const testResult = await this.getTestResultByBarCode(resultData.barCode)
 
-    await this.handleActions(resultData, appointment.id)
+    if (
+      !this.whiteListedResultsTypes.includes(finalResult) &&
+      resultData.resultSpecs.action === PCRResultActions.SendThisResult
+    ) {
+      console.error(
+        `handlePCRResultSaveAndSend: Failed Barcode: ${resultData.barCode} SendThisResult action is not allowed for result ${finalResult} is not allowed`,
+      )
+      throw new BadRequestException(
+        `Barcode: ${resultData.barCode} not allowed use action SendThisResult for ${finalResult} Results`,
+      )
+    }
 
-    //Save PCR Test results
+    if (!waitingPCRTestResult && (!isSingleResult || !isAlreadyReported)) {
+      console.error(
+        `handlePCRResultSaveAndSend: FailedToSend NotWaitingForResults SingleResult: ${isSingleResult} Current Appointment Status: ${appointment.appointmentStatus}`,
+      )
+      throw new ResourceNotFoundException(
+        `PCR Test Result with barCode ${resultData.barCode} is not waiting for results.`,
+      )
+    }
+
+    if (
+      !waitingPCRTestResult &&
+      isSingleResult &&
+      isAlreadyReported &&
+      !this.allowedForResend(resultData.resultSpecs.action)
+    ) {
+      console.error(
+        `handlePCRResultSaveAndSend: FailedToSend Already Reported not allowed to do Action: ${resultData.resultSpecs.action}`,
+      )
+      throw new BadRequestException(
+        `PCR Test Result with barCode ${resultData.barCode} is already Reported. It is not allowed to do ${resultData.resultSpecs.action} `,
+      )
+    }
+
+    if (!waitingPCRTestResult && isSingleResult && isAlreadyReported && !sendUpdatedResults) {
+      const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
+      console.info(
+        `handlePCRResultSaveAndSend: SendUpdatedResult Flag Requested PCR Result ID ${latestPCRTestResult.id} Already Exists`,
+      )
+      throw new ResultAlreadySentException(
+        `For ${latestPCRTestResult.barCode}, a "${
+          latestPCRTestResult.result
+        }" result has already been sent on ${toDateFormat(
+          latestPCRTestResult.updatedAt,
+        )}. Do you wish to save updated results and send again to client?`,
+      )
+    }
+
+    if (waitingPCRTestResult && !inProgress) {
+      console.error(
+        `handlePCRResultSaveAndSend: Failed PCRResultID ${waitingPCRTestResult.id} Barcode: ${resultData.barCode} is not inProgress`,
+      )
+      throw new BadRequestException(
+        `PCR Test Result with barCode ${resultData.barCode} is not InProgress`,
+      )
+    }
+
+    //Create New Waiting Result for Resend
+    const runNumber = 0 //Not Relevant for Resend
+    const reCollectNumber = 0 //Not Relevant for Resend
+    const testResult =
+      isSingleResult && !waitingPCRTestResult
+        ? await this.createNewTestResults({
+            appointment,
+            adminId: resultData.adminId,
+            runNumber,
+            reCollectNumber,
+          })
+        : waitingPCRTestResult
+
+    await this.handleActions(
+      resultData,
+      appointment,
+      testResult.runNumber,
+      testResult.reCollectNumber,
+    )
+
+    const actionsForRecollection = [
+      PCRResultActions.RequestReCollect,
+      PCRResultActions.RecollectAsInvalid,
+      PCRResultActions.RecollectAsInconclusive,
+    ]
+    //Update PCR Test results
     const pcrResultDataForDbUpdate = {
       ...resultData,
+      deadline: appointment.deadline,
       result: finalResult,
       firstName: appointment.firstName,
       lastName: appointment.lastName,
       appointmentId: appointment.id,
       organizationId: appointment.organizationId,
-      dateOfAppointment: appointment.dateOfAppointment,
+      dateTime: appointment.dateTime,
       waitingResult: false,
-      displayForNonAdmins: true,
+      displayInResult: true,
+      recollected: actionsForRecollection.includes(resultData.resultSpecs.action),
+      confirmed: false,
     }
 
-    await this.pcrTestResultsRepository.updateProperties(testResult.id, pcrResultDataForDbUpdate)
+    const pcrResultRecorded = await this.pcrTestResultsRepository.updateData(
+      testResult.id,
+      pcrResultDataForDbUpdate,
+    )
 
     //Send Notification
     if (resultData.resultSpecs.notify) {
       const pcrResultDataForEmail = {
         ...pcrResultDataForDbUpdate,
-        email: appointment.email,
-        phone: appointment.phone,
-        dateOfBirth: appointment.dateOfBirth,
-        dateTime: appointment.dateTime,
-        timeOfAppointment: appointment.timeOfAppointment,
-        registeredNursePractitioner: appointment.registeredNursePractitioner,
+        ...appointment,
       }
-      await this.sendNotification(pcrResultDataForEmail)
+      await this.sendNotification(pcrResultDataForEmail, resultData.resultSpecs.action)
+    } else {
+      console.log(
+        `handlePCRResultSaveAndSend: Not Notification is sent for ${resultData.barCode}. Notify is off.`,
+      )
     }
+
+    return pcrResultRecorded
   }
 
-  async createNewWaitingResult(appointment: AppointmentDBModel, adminId: string): Promise<void> {
-    const pcrResultDataForDbCreate = {
-      adminId: adminId,
-      appointmentId: appointment.id,
-      barCode: appointment.barCode,
-      dateOfAppointment: appointment.dateOfAppointment,
-      displayForNonAdmins: true,
-      deadline: appointment.deadline,
-      firstName: appointment.firstName,
-      lastName: appointment.lastName,
-      linkedBarCodes: [],
-      organizationId: appointment.organizationId,
-      result: ResultTypes.Pending,
-      waitingResult: true,
-    }
-    await this.saveDefaultTestResults(pcrResultDataForDbCreate)
-  }
+  async handleActions(
+    resultData: PCRTestResultData,
+    appointment: AppointmentDBModel,
+    runNumber: number,
+    reCollectNumber: number,
+  ): Promise<void> {
+    const nextRunNumber = runNumber + 1
+    const handledReCollect = async () => {
+      console.log(`TestResultReCollect: for ${resultData.barCode} is requested`)
+      await this.appointmentService.changeStatusToReCollectRequired(
+        appointment.id,
+        resultData.adminId,
+      )
 
-  async handleActions(resultData: PCRTestResultData, appointmentId: string): Promise<void> {
-    switch (resultData.resultSpecs.action) {
-      case PCRResultActions.ReRunToday: {
-        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for today`)
-        const appointment = await this.appointmentService.changeStatusToReRunRequired(
-          appointmentId,
-          true,
-          resultData.adminId,
-        )
-        await this.createNewWaitingResult(appointment, resultData.adminId)
-        break
-      }
-      case PCRResultActions.ReRunTomorrow: {
-        console.log(`TestResultReRun: ${resultData.barCode} is added to queue for tomorrow`)
-        const appointment = await this.appointmentService.changeStatusToReRunRequired(
-          appointmentId,
-          false,
-          resultData.adminId,
-        )
-        await this.createNewWaitingResult(appointment, resultData.adminId)
-        break
-      }
-      case PCRResultActions.RequestReSample: {
-        console.log(`TestResultReSample: ${resultData.barCode} is requested`)
-        const appointment = await this.appointmentService.changeStatusToReSampleRequired(
-          appointmentId,
-          resultData.adminId,
-        )
+      if (!appointment.organizationId) {
         this.couponCode = await this.couponService.createCoupon(appointment.email)
         console.log(
-          `TestResultReSample: CouponCode ${this.couponCode} is created for ${appointment.email} ResampledBarCode: ${resultData.barCode}`,
+          `TestResultReCollect: CouponCode ${this.couponCode} is created for ${appointment.email} ReCollectedBarCode: ${resultData.barCode}`,
         )
         await this.couponService.saveCoupon(
           this.couponCode,
           appointment.organizationId,
           resultData.barCode,
         )
-        break
       }
     }
-  }
-
-  async sendNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
     switch (resultData.resultSpecs.action) {
+      case PCRResultActions.SendPreliminaryPositive: {
+        console.log(
+          `TestResultSendPreliminaryPositive: for ${resultData.barCode} is added to queue for today`,
+        )
+        const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
+          appointment: appointment,
+          deadlineLabel: DeadlineLabel.NextDay,
+          userId: resultData.adminId,
+        })
+        await this.createNewTestResults({
+          appointment: updatedAppointment,
+          adminId: resultData.adminId,
+          runNumber: nextRunNumber,
+          reCollectNumber,
+        })
+        break
+      }
       case PCRResultActions.ReRunToday: {
-        console.log(`SendNotification: ${resultData.barCode} ReRunToday`)
-        await this.sendRerunNotification(resultData, 'TODAY')
+        console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for today`)
+        const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
+          appointment: appointment,
+          deadlineLabel: DeadlineLabel.SameDay,
+          userId: resultData.adminId,
+        })
+        await this.createNewTestResults({
+          appointment: updatedAppointment,
+          adminId: resultData.adminId,
+          runNumber: nextRunNumber,
+          reCollectNumber,
+        })
         break
       }
       case PCRResultActions.ReRunTomorrow: {
-        console.log(`SendNotification: ${resultData.barCode} ReRunTomorrow`)
-        await this.sendRerunNotification(resultData, 'Tomorrow')
+        console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for tomorrow`)
+        const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
+          appointment: appointment,
+          deadlineLabel: DeadlineLabel.NextDay,
+          userId: resultData.adminId,
+        })
+        await this.createNewTestResults({
+          appointment: updatedAppointment,
+          adminId: resultData.adminId,
+          runNumber: nextRunNumber,
+          reCollectNumber,
+        })
         break
       }
-      case PCRResultActions.RequestReSample: {
-        console.log(`SendNotification: ${resultData.barCode} RequestReSample`)
-        await this.sendReSampleNotification(resultData)
+      case PCRResultActions.RequestReCollect: {
+        //TODO: Remove this after FE updates
+        await handledReCollect()
+        break
+      }
+      case PCRResultActions.RecollectAsInvalid: {
+        await handledReCollect()
+        break
+      }
+      case PCRResultActions.RecollectAsInconclusive: {
+        await handledReCollect()
         break
       }
       default: {
-        await this.sendTestResults(resultData)
+        console.log(`${resultData.resultSpecs.action}: for ${resultData.barCode} is requested`)
+        await this.appointmentService.changeStatusToReported(appointment.id, resultData.adminId)
       }
     }
   }
 
-  async sendTestResults(resultData: PCRTestResultEmailDTO): Promise<void> {
-    const resultDate = moment(resultData.resultSpecs.resultDate).format('LL')
-    const {content, tableLayouts} = testResultPDFTemplate(resultData, resultDate)
-    const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
+  async sendNotification(
+    resultData: PCRTestResultEmailDTO,
+    notficationType: PCRResultActions | EmailNotficationTypes,
+  ): Promise<void> {
+    switch (notficationType) {
+      case PCRResultActions.SendPreliminaryPositive: {
+        await this.sendEmailNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} SendPreliminaryPositive`)
+        break
+      }
+      case PCRResultActions.ReRunToday: {
+        await this.sendEmailNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} ReRunToday`)
+        break
+      }
+      case PCRResultActions.ReRunTomorrow: {
+        await this.sendEmailNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} ReRunTomorrow`)
+        break
+      }
+      case PCRResultActions.RequestReCollect: {
+        //TODO Remove This
+        await this.sendReCollectNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} RequestReCollect`)
+        break
+      }
+      case PCRResultActions.RecollectAsInconclusive: {
+        await this.sendReCollectNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} RecollectAsInconclusive`)
+        break
+      }
+      case PCRResultActions.RecollectAsInvalid: {
+        await this.sendReCollectNotification(resultData)
+        console.log(`SendNotification: Success: ${resultData.barCode} RecollectAsInvalid`)
+        break
+      }
+      case EmailNotficationTypes.MarkAsConfirmedNegative: {
+        await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.ConfirmedNegative)
+        console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
+        break
+      }
+      case EmailNotficationTypes.MarkAsConfirmedPositive: {
+        await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.ConfirmedPositive)
+        console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
+        break
+      }
+      default: {
+        if (resultData.result === ResultTypes.Negative) {
+          await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Negative)
+          console.log(
+            `SendNotification: Success: Sent Results for ${resultData.barCode} Result: ${resultData.result}`,
+          )
+        } else if (resultData.result === ResultTypes.Positive) {
+          await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
+          console.log(
+            `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
+          )
+        } else if (resultData.result === ResultTypes.PresumptivePositive) {
+          await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
+          console.log(
+            `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
+          )
+        } else {
+          //WARNING
+          console.log(
+            `SendNotification: Failed:  Blocked by system. ${resultData.barCode} with result ${resultData.result} requested to send notification.`,
+          )
+        }
+      }
+    }
+  }
+
+  async sendTestResultsWithAttachment(
+    resultData: PCRTestResultEmailDTO,
+    pcrResultPDFType: PCRResultPDFType,
+  ): Promise<void> {
+    const pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
+    const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
     await this.emailService.send({
       templateId: Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ?? 2,
@@ -418,6 +730,7 @@ export class PCRTestResultsService {
       params: {
         BARCODE: resultData.barCode,
         DATE_OF_RESULT: resultDate,
+        FIRSTNAME: resultData.firstName,
       },
       attachment: [
         {
@@ -433,12 +746,16 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendRerunNotification(resultData: PCRTestResultEmailDTO, day: string): Promise<void> {
+  async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+    const templateId =
+      resultData.resultSpecs.action === PCRResultActions.SendPreliminaryPositive
+        ? Config.getInt('TEST_RESULT_PRELIMNARY_RESULTS_TEMPLATE_ID')
+        : Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID')
     await this.emailService.send({
-      templateId: Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID') ?? 4,
+      templateId: templateId,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
-        DAY: day,
+        FIRSTNAME: resultData.firstName,
       },
       bcc: [
         {
@@ -448,13 +765,22 @@ export class PCRTestResultsService {
     })
   }
 
-  async sendReSampleNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+  async sendReCollectNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
+    const getTemplateId = (): number => {
+      if (resultData.result === ResultTypes.Inconclusive) {
+        return (
+          Config.getInt('TEST_RESULT_NO_ORG_INCONCLUSIVE_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 8
+        )
+      } else if (!!resultData.organizationId) {
+        return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
+      } else {
+        return Config.getInt('TEST_RESULT_NO_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 5
+      }
+    }
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
     const owner = Config.get('ACUITY_SCHEDULER_USERNAME')
     const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${this.couponCode}`
-    const templateId = resultData.organizationId
-      ? Config.getInt('TEST_RESULT_ORG_RESAMPLE_NOTIFICATION_TEMPLATE_ID') ?? 6
-      : Config.getInt('TEST_RESULT_NO_ORG_RESAMPLE_NOTIFICATION_TEMPLATE_ID') ?? 5
+    const templateId = getTemplateId()
 
     await this.emailService.send({
       templateId: templateId,
@@ -462,6 +788,7 @@ export class PCRTestResultsService {
       params: {
         COUPON_CODE: this.couponCode,
         BOOKING_LINK: appointmentBookingLink,
+        FIRSTNAME: resultData.firstName,
       },
       bcc: [
         {
@@ -475,17 +802,130 @@ export class PCRTestResultsService {
     id: string,
     defaultTestResults: Partial<PCRTestResultDBModel>,
   ): Promise<void> {
-    await this.pcrTestResultsRepository.updateProperties(id, defaultTestResults)
+    await this.pcrTestResultsRepository.updateData(id, defaultTestResults)
   }
 
-  async saveDefaultTestResults(
-    defaultTestResults: Omit<PCRTestResultDBModel, 'id'>,
-  ): Promise<void> {
-    await this.pcrTestResultsRepository.save(defaultTestResults)
+  async createNewTestResults(data: {
+    appointment: AppointmentDBModel
+    adminId: string
+    linkedBarCodes?: string[]
+    reCollectNumber: number
+    runNumber: number
+    result?: ResultTypes
+    waitingResult?: boolean
+    confirmed?: boolean
+  }): Promise<PCRTestResultDBModel> {
+    //Reset Display for all OLD results
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(data.appointment.id, {
+      displayInResult: false,
+    })
+    console.log(
+      `createNewTestResults: UpdatedAllResults for AppointmentId: ${data.appointment.id} to displayInResult: false`,
+    )
+
+    const pcrResultDataForDb = {
+      adminId: data.adminId,
+      appointmentId: data.appointment.id,
+      barCode: data.appointment.barCode,
+      confirmed: data.confirmed ?? false,
+      dateTime: data.appointment.dateTime,
+      displayInResult: true,
+      deadline: data.appointment.deadline,
+      firstName: data.appointment.firstName,
+      lastName: data.appointment.lastName,
+      linkedBarCodes: data.linkedBarCodes ?? [],
+      organizationId: data.appointment.organizationId,
+      result: data.result ?? ResultTypes.Pending,
+      runNumber: data.runNumber,
+      reCollectNumber: data.reCollectNumber,
+      waitingResult: data.waitingResult ?? true,
+      recollected: false,
+    }
+    return await this.pcrTestResultsRepository.save(pcrResultDataForDb)
   }
 
   async getPCRTestsByBarcode(barCodes: string[]): Promise<PCRTestResultDBModel[]> {
     return this.pcrTestResultsRepository.findWhereIn('barCode', barCodes)
+  }
+
+  async getPCRTestsByBarcodeWithLinked(barCodes: string[]): Promise<PCRTestResultHistory[]> {
+    const waitingResults: Record<string, PCRTestResultLinkedDBModel> = {}
+    const historicalResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
+    const linkedResults: Record<string, PCRTestResultLinkedDBModel[]> = {}
+    const appointmentsByBarCode: Record<string, AppointmentDBModel> = {}
+    let linkedBarcodes: string[] = []
+
+    const pcrResults = await this.getPCRTestsByBarcode(barCodes)
+
+    const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
+    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+    appointments.forEach((appointment) => {
+      appointmentsByBarCode[appointment.barCode] = appointment
+    })
+
+    pcrResults.forEach((testResult) => {
+      historicalResults[testResult.barCode] = historicalResults[testResult.barCode] ?? []
+
+      if (testResult.waitingResult) {
+        waitingResults[testResult.barCode] = testResult
+      } else {
+        historicalResults[testResult.barCode].push(testResult)
+      }
+
+      if (testResult.waitingResult && testResult?.linkedBarCodes?.length) {
+        linkedBarcodes = linkedBarcodes.concat(testResult.linkedBarCodes)
+      }
+    })
+
+    const testResultsForLinkedBarCodes = await this.getPCRTestsByBarcode(linkedBarcodes)
+    testResultsForLinkedBarCodes.forEach((testResult) => {
+      linkedResults[testResult.barCode] = linkedResults[testResult.barCode] ?? []
+      linkedResults[testResult.barCode].push(testResult)
+    })
+    const testResultsWithHistory: PCRTestResultHistory[] = []
+    //Loop through base Results
+    for (const [barCode, pcrTestResults] of Object.entries(historicalResults)) {
+      //If Appointment doesn't exist then don't add result
+      if (!appointmentsByBarCode[barCode]) {
+        return
+      }
+
+      let reason = await this.getReason(appointmentsByBarCode[barCode].appointmentStatus)
+
+      if (waitingResults[barCode]) {
+        //Add Linked Results for Waiting Record
+        const linkedBarCodes = waitingResults[barCode].linkedBarCodes
+        let linkedBarCodeResults: PCRTestResultLinkedDBModel[] = []
+        linkedBarCodes.forEach((barCode) => {
+          linkedBarCodeResults = linkedBarCodeResults.concat(linkedResults[barCode])
+        })
+
+        const pcrTestResultsPlusLinked = pcrTestResults.concat(linkedBarCodeResults)
+        const sortedPCRTestResults = pcrTestResultsPlusLinked.sort((a, b) =>
+          a.updatedAt.seconds < b.updatedAt.seconds ? 1 : -1,
+        )
+        const waitingResult = reason ? false : waitingResults[barCode].waitingResult
+        testResultsWithHistory.push({
+          ...waitingResults[barCode],
+          waitingResult,
+          results: reason ? [] : sortedPCRTestResults,
+          reason,
+        })
+      } else {
+        if (!reason) {
+          reason = AppointmentReasons.NotWaitingButInProgress
+          console.log(`SomethingWentWrong. ${barCode} inProgress but not waiting!`)
+        }
+        const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
+        testResultsWithHistory.push({
+          ...latestPCRTestResult,
+          results: [],
+          reason,
+        })
+      }
+    }
+
+    return testResultsWithHistory
   }
 
   async updateOrganizationIdByAppointmentId(
@@ -495,7 +935,231 @@ export class PCRTestResultsService {
     const pcrTestResults = await this.getTestResultsByAppointmentId(appointmentId)
     pcrTestResults.map(
       async (pcrTestResult) =>
-        await this.pcrTestResultsRepository.updateProperties(pcrTestResult.id, {organizationId}),
+        await this.pcrTestResultsRepository.updateData(pcrTestResult.id, {organizationId}),
     )
+  }
+
+  async addTestRunToPCR(
+    testRunId: string,
+    pcrTestResultId: string,
+    adminId: string,
+  ): Promise<void> {
+    const pcrTestResults = await this.pcrTestResultsRepository.get(pcrTestResultId)
+    if (!pcrTestResults) {
+      throw new ResourceNotFoundException(`PCR Result with id ${pcrTestResultId} not found`)
+    }
+    await this.pcrTestResultsRepository.updateData(pcrTestResultId, {
+      testRunId: testRunId,
+      waitingResult: true,
+    })
+    await this.appointmentService.makeInProgress(pcrTestResults.appointmentId, testRunId, adminId)
+  }
+
+  async getReason(appointmentStatus: AppointmentStatus): Promise<AppointmentReasons> {
+    switch (appointmentStatus) {
+      case AppointmentStatus.Reported:
+        return AppointmentReasons.AlreadyReported
+      case AppointmentStatus.ReCollectRequired:
+        return AppointmentReasons.ReCollectAlreadyRequested
+      case AppointmentStatus.InProgress:
+        return null
+      default:
+        return AppointmentReasons.NoInProgress
+    }
+  }
+
+  public getlinkedBarcodes = async (couponCode: string): Promise<string[]> => {
+    let linkedBarcodes = []
+    if (couponCode) {
+      //Get Coupon
+      const coupon = await this.couponService.getByCouponCode(couponCode)
+      if (coupon) {
+        linkedBarcodes.push(coupon.lastBarcode)
+        try {
+          //Get Linked Barcodes for LastBarCode
+          const pcrResult = await this.getReCollectedTestResultByBarCode(coupon.lastBarcode)
+          if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
+            linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
+          }
+        } catch (error) {
+          console.error(
+            `PCRTestResultsService: Coupon Code: ${couponCode} Last BarCode: ${
+              coupon.lastBarcode
+            }. No Test Results to Link. ${error.toString()}`,
+          )
+        }
+        console.log(
+          `PCRTestResultsService: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`,
+        )
+      } else {
+        console.log(`PCRTestResultsService: ${couponCode} is not coupon.`)
+      }
+    }
+    return linkedBarcodes
+  }
+
+  public async createNewPCRTestForWebhook(
+    appointment: AppointmentDBModel,
+  ): Promise<PCRTestResultDBModel> {
+    const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
+
+    return this.createNewTestResults({
+      appointment,
+      adminId: 'WEBHOOK',
+      linkedBarCodes,
+      reCollectNumber: linkedBarCodes.length + 1,
+      runNumber: 1,
+    })
+  }
+
+  async getDueDeadline({
+    deadline,
+    testRunId,
+    barCode,
+  }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
+    const pcrTestResultsQuery = []
+
+    if (barCode) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: barCode,
+      })
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'waitingResult',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      })
+    } else if (testRunId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testRunId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: testRunId,
+      })
+    } else if (deadline) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'deadline',
+        operator: DataModelFieldMapOperatorType.LessOrEqual,
+        value: makeDeadlineForFilter(deadline),
+      })
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'waitingResult',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      })
+    }
+
+    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
+    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+
+    const pcrFiltred = []
+
+    pcrResults.map((pcr) => {
+      const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
+      const allowedAppointmentStatus = [
+        AppointmentStatus.InProgress,
+        AppointmentStatus.ReRunRequired,
+        AppointmentStatus.Received,
+      ]
+
+      if (
+        appointment &&
+        (allowedAppointmentStatus.includes(appointment.appointmentStatus) || testRunId)
+      ) {
+        pcrFiltred.push({
+          id: pcr.id,
+          barCode: pcr.barCode,
+          deadline: formatDateRFC822Local(pcr.deadline),
+          status: appointment?.appointmentStatus,
+          testRunId: pcr.testRunId,
+          vialLocation: appointment?.vialLocation,
+          runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
+          reCollectNumber: pcr.reCollectNumber ? `S${pcr.reCollectNumber}` : null,
+          dateTime: formatDateRFC822Local(appointment.dateTime),
+        })
+      }
+    })
+
+    return sortBy(pcrFiltred, ['status'])
+  }
+
+  async getReportStatus(action: PCRResultActions): Promise<ResultReportStatus> {
+    let status: ResultReportStatus
+
+    switch (action) {
+      case PCRResultActions.DoNothing: {
+        status = ResultReportStatus.Skipped
+        break
+      }
+      case PCRResultActions.RequestReCollect: {
+        status = ResultReportStatus.SentReCollectRequest
+        break
+      }
+      case PCRResultActions.RecollectAsInconclusive: {
+        status = ResultReportStatus.SentReCollectRequest
+        break
+      }
+      case PCRResultActions.RecollectAsInvalid: {
+        status = ResultReportStatus.SentReCollectRequest
+        break
+      }
+      case PCRResultActions.ReRunToday || PCRResultActions.ReRunTomorrow: {
+        status = ResultReportStatus.SentReRunRequest
+        break
+      }
+      default: {
+        status = ResultReportStatus.SentResult
+      }
+    }
+    return status
+  }
+
+  async getTestResultsByUserId(userId: string, organizationId: string): Promise<TestResutsDTO[]> {
+    const pcrTestResultsQuery = [
+      {
+        map: '/',
+        key: 'userId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: userId,
+      },
+      {
+        map: '/',
+        key: 'organizationId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: organizationId,
+      },
+    ]
+
+    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const appoinmentIds = pcrResults
+      .filter(({result}) => result === ResultTypes.Pending)
+      .map(({appointmentId}) => appointmentId)
+    const appoinments = await this.appointmentService.getAppointmentsDBByIds(appoinmentIds)
+
+    return pcrResults.map((pcr) => {
+      let result = pcr.result
+
+      if (result === ResultTypes.Pending) {
+        const appoinment = appoinments.find(({id}) => id === pcr.appointmentId)
+
+        result = ResultTypes[appoinment.appointmentStatus]
+      }
+
+      return {
+        id: pcr.id,
+        type: PCRTestResultType.PCR,
+        name: 'PCR Tests',
+        testDateTime: formatDateRFC822Local(pcr.deadline),
+        style: resultToStyle(result),
+        result,
+        detailsAvailable: result !== ResultTypes.Pending,
+      }
+    })
   }
 }

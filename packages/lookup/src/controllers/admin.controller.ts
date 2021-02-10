@@ -1,8 +1,6 @@
 import * as express from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 
-// import Validation from '../../../common/src/utils/validation'
-
 class AdminController implements IControllerBase {
   public path = '/admin'
   public router = express.Router()

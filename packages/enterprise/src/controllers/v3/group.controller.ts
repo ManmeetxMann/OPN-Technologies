@@ -1,14 +1,16 @@
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import * as express from 'express'
 import {Handler, Router} from 'express'
-import {authMiddleware} from '../../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import {OrganizationService} from '../../services/organization-service'
 import {UserService} from '../../services/user-service'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {organizationGroupDTOResponse} from '../../models/organization'
-import {User, userDTOResponse} from '../../models/user'
+import {userDTOResponse} from '../../models/user'
 import {CursoredRequestFilter} from '../../../../common/src/types/request'
 import {dataConversionAndSortGroups} from '../../utils/transform'
+import {AuthUser} from '../../../../common/src/data/user'
 
 const organizationService = new OrganizationService()
 const userService = new UserService()
@@ -33,7 +35,7 @@ const getUsersByGroupId: Handler = async (req, res, next): Promise<void> => {
     const users = await userService.getAllByIds(userIds.map((user) => user.userId))
     res.json(
       actionSucceed({
-        users: users.map((user: User) => {
+        users: users.map((user: AuthUser) => {
           return {
             ...userDTOResponse(user),
             createdAt:
@@ -96,7 +98,7 @@ class GroupController implements IControllerBase {
 
     const groupRouter = innerRouter().use(
       '/',
-      authMiddleware,
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin], true),
       innerRouter()
         .get('/:groupId/users', getUsersByGroupId)
         .put('/:groupId', updateGroup)

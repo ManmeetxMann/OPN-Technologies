@@ -1,10 +1,12 @@
 import fetch from 'node-fetch'
 import {Config} from '../../../common/src/utils/config'
-import querystring from 'querystring'
-import {AppointmentAcuityResponse} from '../models/appointment'
+import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {Certificate} from '../models/packages'
 import {AcuityCouponCodeResponse} from '../models/coupons'
+import {AppointmentTypes} from '../models/appointment-types'
+import {Calendar} from '../models/calendar'
+import {AcuityAvailableSlots} from '../models/acuity'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -16,18 +18,20 @@ type AcuityFilter = {
 }
 
 abstract class AcuityScheduling {
-  private fieldMapping = {
-    barCodeNumber: 'field:' + Config.get('ACUITY_FIELD_BARCODE'),
-    dateOfBirth: 'field:' + Config.get('ACUITY_FIELD_DATE_OF_BIRTH'),
-    registeredNursePractitioner: 'field:' + Config.get('ACUITY_FIELD_NURSE_NAME'),
-    organizationId: 'field:' + Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
-  }
-
   private fieldIdMapping = {
     barCodeNumber: Config.get('ACUITY_FIELD_BARCODE'),
     dateOfBirth: Config.get('ACUITY_FIELD_DATE_OF_BIRTH'),
     registeredNursePractitioner: Config.get('ACUITY_FIELD_NURSE_NAME'),
     organizationId: Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
+    address: Config.get('ACUITY_FIELD_ADDRESS'),
+    addressUnit: Config.get('ACUITY_FIELD_ADDRESS_UNIT'),
+    shareTestResultWithEmployer: Config.get('ACUITY_FIELD_SHARE_TEST_RESULT_WITH_EMPLOYER'),
+    readTermsAndConditions: Config.get('ACUITY_FIELD_READ_TERMS_AND_CONDITIONS'),
+    receiveResultsViaEmail: Config.get('ACUITY_FIELD_RECEIVE_RESULTS_VIA_EMAIL'),
+    agreeToConductFHHealthAssessment: Config.get(
+      'ACUITY_FIELD_AGREE_TO_CONDUCT_FH_HEALTH_ACCESSMENT',
+    ),
+    receiveNotificationsFromGov: Config.get('ACUITY_FIELD_RECEIVE_NOTIFICATIONS_FROM_GOV'),
   }
 
   private labelsIdMapping = {
@@ -35,11 +39,11 @@ abstract class AcuityScheduling {
     NextDay: Config.get('ACUITY_FIELD_NEXT_DAY'),
   }
 
-  protected async cancelAppointmentOnAcuity(id: number): Promise<AppointmentAcuityResponse> {
+  protected async cancelAppointmentOnAcuityService(id: number): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
-    const apiUrl = APIURL + `/api/v1/appointments/${id}/cancel`
-    console.log(apiUrl) //To know request path for dependency
+    const apiUrl = APIURL + `/api/v1/appointments/${id}/cancel?admin=true`
+    console.log('[ACUITY: Cancel Appointment] ', apiUrl)
 
     const res = await fetch(apiUrl, {
       method: 'put',
@@ -53,6 +57,7 @@ abstract class AcuityScheduling {
     if (result.status_code) {
       throw new BadRequestException(result.message)
     }
+    console.log(`AcuityAdapter: cancelAppointmentOnAcuityService Success: AppointmentId: ${id}`)
     return this.customFieldsToAppoinment(result)
   }
 
@@ -76,13 +81,13 @@ abstract class AcuityScheduling {
       }),
     })
     const appointment = await res.json()
-
+    console.log(`AcuityAdapter: updateAppointmentOnAcuityServiceSuccess AppointmentId: ${id}`)
     return this.customFieldsToAppoinment(appointment)
   }
 
-  protected async updateAppointmentLabel(
+  protected async updateAppointmentLabelOnAcuityService(
     id: number,
-    fields: unknown,
+    label: DeadlineLabel,
   ): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
@@ -96,33 +101,17 @@ abstract class AcuityScheduling {
         accept: 'application/json',
       },
       body: JSON.stringify({
-        labels: this.renameLabelKeysToId(fields),
+        labels: this.getPayloadForLabels(label),
       }),
     })
     const result = await res.json()
     if (result.status_code) {
       throw new BadRequestException(result.message)
     }
+    console.log(
+      `AcuityAdapter: updateAppointmentLabelOnAcuityService ${label} for AppointmentId: ${id}`,
+    )
     return this.customFieldsToAppoinment(result)
-  }
-
-  protected async getAppointments(filters: unknown): Promise<AppointmentAcuityResponse[]> {
-    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
-    const userPassBase64 = userPassBuf.toString('base64')
-    const apiUrl =
-      APIURL + '/api/v1/appointments?max=1000&' + querystring.stringify(this.renameKeys(filters))
-    console.log(apiUrl) //To know request path for dependency
-
-    const res = await fetch(apiUrl, {
-      method: 'get',
-      headers: {
-        Authorization: 'Basic ' + userPassBase64,
-        'Content-Type': 'application/json',
-        accept: 'application/json',
-      },
-    })
-    const appointments = await res.json()
-    return this.mapCustomFieldsToAppoinment(appointments)
   }
 
   protected async getAppointmentByIdFromAcuityService(
@@ -148,11 +137,53 @@ abstract class AcuityScheduling {
     return this.customFieldsToAppoinment(result)
   }
 
-  protected async getPackages(): Promise<Certificate[]> {
+  protected async getPackagesFromAcuityService(): Promise<Certificate[]> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = APIURL + `/api/v1/certificates`
     console.log(apiUrl) //To know request path for dependency
+
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return result
+  }
+
+  protected async getAppointmentTypes(): Promise<AppointmentTypes[]> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = APIURL + `/api/v1/appointment-types`
+    console.log('[ACUITY: Get appointment types] ', apiUrl) //To know request path for dependency
+
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return result
+  }
+
+  protected async getCalendars(): Promise<Calendar[]> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = encodeURI(APIURL + `/api/v1/calendars`)
+    console.log('[ACUITY: Get calendars] ', apiUrl) //To know request path for dependency
 
     const res = await fetch(apiUrl, {
       method: 'get',
@@ -193,18 +224,130 @@ abstract class AcuityScheduling {
     if (result.status_code) {
       throw new BadRequestException(result.message)
     }
+    console.log(
+      `AcuityAdapter: createCouponCodeOnAcuityService Success: For COUPON GROUP ID: ${couponID}`,
+    )
     return result
   }
 
-  private async mapCustomFieldsToAppoinment(
-    appoinments: AppointmentAcuityResponse[],
-  ): Promise<AppointmentAcuityResponse[]> {
-    return appoinments.map(this.customFieldsToAppoinment)
+  protected async createAppointmentOnAcuityService(
+    datetime: string,
+    appointmentTypeID: number,
+    firstName: string,
+    lastName: string,
+    email: string,
+    phone: string,
+    certificate: string,
+    calendarID: number,
+    fields: Record<string, string | boolean>,
+  ): Promise<AppointmentAcuityResponse> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = `${APIURL}/api/v1/appointments`
+
+    const res = await fetch(apiUrl, {
+      method: 'post',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        datetime,
+        appointmentTypeID,
+        calendarID,
+        firstName,
+        lastName,
+        email,
+        phone,
+        certificate,
+        fields: this.handleBooleans(this.renameKeysToId(fields)), // [{id: 1, value: 'Party time!'}]
+      }),
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    console.log(`AcuityAdapter: createCouponCodeOnAcuityService Success: For email: ${email}`)
+    return this.customFieldsToAppoinment(result)
+  }
+
+  protected async getAvailabilityDatesList(
+    appointmentTypeID: number,
+    month: string,
+    calendarID: number,
+    timezone: string,
+  ): Promise<{date: string}[]> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = encodeURI(
+      APIURL +
+        `/api/v1/availability/dates?appointmentTypeID=${appointmentTypeID}&month=${month}&calendarID=${calendarID}&timezone=${timezone}`,
+    )
+    console.log('[ACUITY: Get availability dates list] ', apiUrl) //To know request path for dependency
+
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return result
+  }
+
+  protected async getAvailableSlotsList(
+    appointmentTypeID: number,
+    date: string,
+    calendarID: number,
+    timezone: string,
+  ): Promise<AcuityAvailableSlots[]> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = encodeURI(
+      APIURL +
+        `/api/v1/availability/times?appointmentTypeID=${appointmentTypeID}&date=${date}&calendarID=${calendarID}&timezone=${timezone}`,
+    )
+    console.log('[ACUITY: Get availability slots for date] ', apiUrl) //To know request path for dependency
+
+    const res = await fetch(apiUrl, {
+      method: 'get',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    })
+    const result = await res.json()
+    if (result.status_code) {
+      throw new BadRequestException(result.message)
+    }
+    return result
   }
 
   private customFieldsToAppoinment(
     appointment: AppointmentAcuityResponse,
   ): AppointmentAcuityResponse {
+    //appointment.dateOfBirth = ''//Required
+    appointment.organizationId = null
+    appointment.registeredNursePractitioner = ''
+    appointment.address = ''
+    appointment.addressUnit = ''
+    appointment.agreeToConductFHHealthAssessment = false
+    appointment.readTermsAndConditions = false
+    appointment.receiveResultsViaEmail = false
+    appointment.shareTestResultWithEmployer = false
+    appointment.receiveNotificationsFromGov = false
+    appointment.swabMethod = 'Deep Nasal'
+    appointment.ohipCard = ''
+    appointment.travelIDIssuingCountry = ''
+    appointment.travelID = ''
+
     if (Array.isArray(appointment.forms)) {
       appointment.forms.forEach((form) => {
         form.values.some((field) => {
@@ -220,21 +363,60 @@ abstract class AcuityScheduling {
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_ORGANIZATION_ID'))) {
             appointment.organizationId = field.value
           }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS'))) {
+            appointment.address = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_ADDRESS_UNIT'))) {
+            appointment.addressUnit = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_SHARE_TEST_RESULT_WITH_EMPLOYER'))) {
+            appointment.shareTestResultWithEmployer = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_READ_TERMS_AND_CONDITIONS'))) {
+            appointment.readTermsAndConditions = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_RECEIVE_RESULTS_VIA_EMAIL'))) {
+            appointment.receiveResultsViaEmail = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_RECEIVE_NOTIFICATIONS_FROM_GOV'))) {
+            appointment.receiveNotificationsFromGov = field.value === 'yes'
+          }
+          if (
+            field.fieldID ==
+            Number(Config.get('ACUITY_FIELD_AGREE_TO_CONDUCT_FH_HEALTH_ACCESSMENT'))
+          ) {
+            appointment.agreeToConductFHHealthAssessment = field.value === 'yes'
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_TRAVEL_ID'))) {
+            appointment.travelID = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_TRAVEL_ID_ISSUEING_COUNTRY'))) {
+            appointment.travelIDIssuingCountry = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_OHIP_CARD')) && field.value) {
+            appointment.ohipCard = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_SWAB_METHOD'))) {
+            if (!!field.value) {
+              appointment.swabMethod = field.value
+            }
+          }
         })
       })
     }
     return appointment
   }
 
-  private renameKeys(filters) {
-    const acuityFilters = {}
-    const keys = Object.keys(filters)
-    keys.forEach((key) => {
-      const newKey = this.fieldMapping[key] ? this.fieldMapping[key] : key
-      acuityFilters[newKey] = filters[key]
+  private handleBooleans(filters: AcuityFilter[]): AcuityFilter[] {
+    return filters.map((filter) => {
+      if (typeof filter.value === 'boolean') {
+        return {
+          ...filter,
+          value: filter.value ? 'yes' : 'no',
+        }
+      }
+      return filter
     })
-
-    return acuityFilters
   }
 
   private renameKeysToId(filters): AcuityFilter[] {
@@ -251,16 +433,11 @@ abstract class AcuityScheduling {
     return acuityFilters
   }
 
-  private renameLabelKeysToId(filters): AcuityFilter[] {
+  private getPayloadForLabels(label: DeadlineLabel): AcuityFilter[] {
     const acuityFilters = []
-    const keys = Object.keys(filters)
-    keys.forEach((key) => {
-      const newKey = this.labelsIdMapping[key] ? this.labelsIdMapping[key] : key
-      acuityFilters.push({
-        id: newKey,
-      })
+    acuityFilters.push({
+      id: this.labelsIdMapping[label] ? this.labelsIdMapping[label] : label,
     })
-
     return acuityFilters
   }
 }

@@ -39,3 +39,10 @@ export type PackageListItem = {
   remainingCounts: number
   organization: string
 }
+
+export type BookingLocations = {
+  appointmentTypeName: string
+  id: string
+  name: string
+  address: string
+}

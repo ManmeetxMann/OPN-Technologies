@@ -6,7 +6,7 @@
 		"lint-all": "eslint 'packages/**/**/*.ts' 'migrations/**/*.ts' --ignore-path .gitignore --max-warnings=0",
 		"lint-fix-all": "eslint 'packages/**/**/*.ts' 'migrations/**/*.ts' --ignore-path .gitignore --max-warnings=0 --fix",
 		"test-all": "lerna run test --stream",
-		"test:coverage-all": "lerna run coverage --stream",
+		"test:coverage-all": "lerna run test:coverage --stream",
 		"install-all": "lerna bootstrap --hoist",
 		"initialize-all": "lerna run initialize --stream",
 		"dev-all": "lerna run dev --stream",
@@ -39,9 +39,13 @@
 		"migration:update-user-emails": "ts-node ./migrations/update-user-emails",
 		"migration:attestation-org-id": "ts-node ./migrations/add-orgId-to-attestations",
 		"migration:relocate-auth-id": "ts-node ./migrations/relocate-auth-id",
+		"migration:remove-admin-auth-id": "ts-node ./migrations/remove-admin-auth-id",
 		"migration:update-organizationids-for-users": "ts-node ./migrations/update-organizationids-for-users",
 		"migration:trim-firstname-lastname-and-fix-last-name": "ts-node ./migrations/trim-firstname-lastname-and-fix-last-name",
-		"migration:migrate-attestation-questionaireid-field": "ts-node ./migrations/add-questionnaireid-to-attestation"
+		"migration:migrate-attestation-questionaireid-field": "ts-node ./migrations/add-questionnaireid-to-attestation",
+		"migration:test-results-to-pcr": "ts-node ./migrations/test-results-to-pcr",
+		"migration:migration-acuity-to-appointments": "ts-node ./migrations/acuity-to-appointments",
+		"migration:acuity-to-pcr-results": "ts-node ./migrations/acuity-to-pcr-results"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
@@ -61,7 +65,8 @@
 		"ts-node": "^8.10.2",
 		"typescript": "^3.9.5",
 		"node-fetch": "^2.6.0",
-		"firebase-tools": "^8.7.0"
+		"firebase-tools": "^8.7.0",
+		"unique-names-generator": "4.3.1"
 	},
 	"dependencies": {}
 }

@@ -1,24 +1,27 @@
 import * as express from 'express'
 import {Request, Response, NextFunction} from 'express'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
-import {authMiddleware} from '../../../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {now} from '../../../../../common/src/utils/times'
-import {TemperatureSaveRequest, TemperatureStatuses} from '../../../models/temperature'
-import {PassportService} from '../../../services/passport-service'
-import {TemperatureService} from '../../../services/temperature-service'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {AlertService} from '../../../services/alert-service'
-import {AttestationService} from '../../../services/attestation-service'
+
+import {AlertService} from '../../../../../passport/src/services/alert-service'
+import {AttestationService} from '../../../../../passport/src/services/attestation-service'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
-import {PassportStatuses} from '../../../models/passport'
+import {PassportService} from '../../../../../passport/src/services/passport-service'
+import {TemperatureService} from '../../../services/temperature.service'
+
+import {PassportStatuses} from '../../../../../passport/src/models/passport'
+import {TemperatureSaveRequest, TemperatureStatuses} from '../../../models/temperature'
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
 
 class TemperatureAdminController implements IControllerBase {
   public router = express.Router()
-  public path = '/passport/admin/api/v1'
+  public path = '/reservation/admin/api/v1'
   public temperatureService = new TemperatureService()
   public passportService = new PassportService()
   private alertService = new AlertService()
@@ -30,7 +33,11 @@ class TemperatureAdminController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.post(this.path + '/temperature', authMiddleware, this.saveTemperature)
+    this.router.post(
+      this.path + '/temperature',
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin], true),
+      this.saveTemperature,
+    )
   }
 
   saveTemperature = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
