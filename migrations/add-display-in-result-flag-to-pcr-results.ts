@@ -93,6 +93,7 @@ async function addDisplayInResultFlag(
         pcrResult.ref.set(
           {
             displayInResult: false,
+            previousResult:null,
             timestamps: {
               migrations: {
                 addFlagForDisplayInResult: firestore.FieldValue.serverTimestamp(),
@@ -125,6 +126,7 @@ async function addDisplayInResultFlag(
       pcrResult.ref.set(
         {
           displayInResult: true,
+          previousResult:null,
           timestamps: {
             migrations: {
               addFlagForDisplayInResult: firestore.FieldValue.serverTimestamp(),
