@@ -625,7 +625,7 @@ export class AppoinmentService {
     organizationId,
     userId,
     packageCode,
-  }: CreateAppointmentRequest): Promise<void> {
+  }: CreateAppointmentRequest): Promise<AppointmentDBModel> {
     const {time, appointmentTypeId, calendarId} = decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
 
@@ -650,7 +650,7 @@ export class AppoinmentService {
         receiveNotificationsFromGov,
       },
     )
-    await this.createAppointmentFromAcuity(data, {
+    return this.createAppointmentFromAcuity(data, {
       barCodeNumber: await this.getNextBarCodeNumber(),
       appointmentTypeID: appointmentTypeId,
       calendarID: calendarId,
