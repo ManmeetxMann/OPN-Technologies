@@ -76,70 +76,79 @@ class UserController implements IControllerBase {
     // TODO: deprecate
     this.router.post(this.path + '/status/update', this.update)
     this.router.post(this.path + '/testNotify', this.testNotify)
-    this.router.post('api/v1/status/get', this.check)
-    this.router.post('api/v1/status/update', this.update)
+    this.router.get('passport/api/v1/passport/status', this.check)
+    this.router.post('passport/api/v1/passport/status', this.update)
   }
 
-  check = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  checkV1 = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // Fetch passport status token
-      // or create a pending one if any
-      // TODO: frontends never send organizationId
       const {statusToken, userId, includeGuardian, organizationId} = req.body
       const dependantIds: string[] = req.body.dependantIds ?? []
-      if (!includeGuardian && dependantIds.length === 0) {
-        throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
-      }
-      let orgId = organizationId
-      const existingPassport = statusToken
-        ? await this.passportService.findOneByToken(statusToken)
-        : null
-      if (existingPassport?.organizationId) {
-        if (orgId && orgId !== existingPassport.organizationId) {
-          console.warn('MISMATCH: specified organization id does not match the passport')
-        }
-        orgId = existingPassport.organizationId
-      }
-      const mustReset = ({status, validUntil}: Passport): boolean =>
-        status === PassportStatuses.Pending ||
-        (isPassed(validUntil) && status === PassportStatuses.Proceed)
-
-      if (!existingPassport || mustReset(existingPassport)) {
-        if (!orgId) {
-          // need to determine based on the user
-          const user = await this.userService.findOne(userId)
-          const {organizationIds} = user
-          if (!organizationIds?.length) {
-            throw new BadRequestException('User has no organizations')
-          }
-          if (organizationIds.length > 1) {
-            console.warn(
-              `${userId} has many organizations and did not specify which one, using ${organizationIds[0]}`,
-            )
-          }
-          orgId = organizationIds[0]
-        }
-        const newPassport = await this.passportService.create(
-          PassportStatuses.Pending,
-          userId,
-          dependantIds,
-          includeGuardian,
-          orgId,
-        )
-        res.json(actionSucceed(newPassport))
-        return
-      }
-
-      // Handle old passports that doesn't have `includesGuardian` flag
-      res.json(
-        actionSucceed({
-          ...existingPassport,
-          includesGuardian: existingPassport.includesGuardian ?? true,
-        }),
-      )
+      this.check(res, statusToken, userId, includeGuardian, organizationId, dependantIds)
     } catch (error) {
       next(error)
     }
+  }
+  private check = async (
+    res: Response,
+    statusToken: string,
+    userId: string,
+    includeGuardian: boolean,
+    organizationId: string,
+    dependantIds: string[],
+    noReset = false,
+  ): Promise<void> => {
+    if (!includeGuardian && dependantIds.length === 0) {
+      throw new BadRequestException('Must specify at least one user (guardian and/or dependant)')
+    }
+    let orgId = organizationId
+    const existingPassport = statusToken
+      ? await this.passportService.findOneByToken(statusToken)
+      : null
+    if (existingPassport?.organizationId) {
+      if (orgId && orgId !== existingPassport.organizationId) {
+        console.warn('MISMATCH: specified organization id does not match the passport')
+      }
+      orgId = existingPassport.organizationId
+    }
+    const mustReset = ({status, validUntil}: Passport): boolean =>
+      noReset
+        ? false
+        : status === PassportStatuses.Pending ||
+          (isPassed(validUntil) && status === PassportStatuses.Proceed)
+    if (!existingPassport || mustReset(existingPassport)) {
+      if (!orgId) {
+        // need to determine based on the user
+        const user = await this.userService.findOne(userId)
+        const {organizationIds} = user
+        if (!organizationIds?.length) {
+          throw new BadRequestException('User has no organizations')
+        }
+        if (organizationIds.length > 1) {
+          console.warn(
+            `${userId} has many organizations and did not specify which one, using ${organizationIds[0]}`,
+          )
+        }
+        orgId = organizationIds[0]
+      }
+      const newPassport = await this.passportService.create(
+        PassportStatuses.Pending,
+        userId,
+        dependantIds,
+        includeGuardian,
+        orgId,
+      )
+      res.json(actionSucceed(newPassport))
+      return
+    }
+
+    // Handle old passports that doesn't have `includesGuardian` flag
+    res.json(
+      actionSucceed({
+        ...existingPassport,
+        includesGuardian: existingPassport.includesGuardian ?? true,
+      }),
+    )
   }
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
