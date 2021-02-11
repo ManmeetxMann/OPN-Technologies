@@ -1052,10 +1052,9 @@ export class PCRTestResultsService {
     const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
     const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
 
-    const appointmentStatsByTypes: Record<string, number> = {}
+    const appointmentStatsByTypes: Record<ResultTypes, number> | {} = {}
     const appointmentStatsByOrganization: Record<string, number> = {}
 
-    console.log(pcrResults)
     appointments.forEach((appointment) => {
       const pcrTest = pcrResults?.find(({appointmentId}) => appointmentId === appointment.id)
       if (appointmentStatsByTypes[pcrTest.result]) {
@@ -1076,7 +1075,7 @@ export class PCRTestResultsService {
       ([name, count]) => ({
         id: name,
         name,
-        count,
+        count: count as number,
       }),
     )
     const pcrResultStatsByOrgIdArr = Object.entries(appointmentStatsByOrganization).map(
