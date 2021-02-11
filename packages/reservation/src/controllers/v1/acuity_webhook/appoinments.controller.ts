@@ -186,6 +186,7 @@ class AppointmentWebhookController implements IControllerBase {
             barCode: barCode,
             dateOfAppointment: updatedAppointment.dateOfAppointment,
             displayInResult: true,
+            dateTime: updatedAppointment.dateTime,
             deadline: updatedAppointment.deadline,
             firstName: appointment.firstName,
             lastName: appointment.lastName,
