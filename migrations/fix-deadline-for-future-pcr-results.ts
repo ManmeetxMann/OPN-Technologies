@@ -47,14 +47,14 @@ async function updateTestResults(): Promise<Result[]> {
   while (hasMore) {
     const testResultSnapshot = await database
       .collection('appointments')
-      .where('dateTime','>',firestore.Timestamp.now())
+      .where('dateTime','>=',firestore.Timestamp.now())
       .offset(offset)
       .limit(limit)
       .get()
 
     offset += testResultSnapshot.docs.length
     hasMore = !testResultSnapshot.empty
-    hasMore = false
+    //hasMore = false
 
     for (const testResult of testResultSnapshot.docs) {
       const promises = []
@@ -81,14 +81,14 @@ async function fixDeadline(
   }
 
   try {
-    console.info(`AcuityAppointmentId: ${appointmentId} total results: ${pcrResultInDb.docs.length}`)
+    //console.info(`AcuityAppointmentId: ${appointmentId} total results: ${pcrResultInDb.docs.length}`)
 
     pcrResultInDb.docs.forEach(async (pcrResult) => {
-      if(appointmentData.dateTime!==pcrResult.data().dateTime){
-        console.log(`PCRResultId: ${pcrResult.id} has different dateTime than appointment `)
+      if(appointmentData.dateTime.seconds!==pcrResult.data().dateTime.seconds){
+        console.log(`PCRResultId: ${pcrResult.id} ${pcrResult.data().barCode}  has different dateTime than appointment ${appointmentData.dateTime.toDate()} ${pcrResult.data().dateTime.toDate()}`)
       }
-      if(appointmentData.deadline!==pcrResult.data().deadline){
-        console.log(`PCRResultId: ${pcrResult.id} has different deadline than appointment `)
+      if(appointmentData.deadline.seconds!==pcrResult.data().deadline.seconds){
+        console.log(`PCRResultId: ${pcrResult.id} ${pcrResult.data().barCode} has different deadline than appointment ${appointmentData.dateTime.toDate()} ${pcrResult.data().dateTime.toDate()} `)
       }
       /*await pcrResult.ref.set(
         {
@@ -116,7 +116,7 @@ async function fixDeadline(
 
 async function main() {
   try {
-    console.log(`Migration Starting Time: ${Date.now()}`)
+    console.log(`Migration Starting Time: ${new Date()}`)
     const results = await updateTestResults()
     results.forEach((result) => {
       totalCount += 1
