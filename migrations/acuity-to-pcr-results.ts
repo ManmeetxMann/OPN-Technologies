@@ -126,8 +126,6 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     findByIdForms(acuityAppointment.forms, acuityBarCodeFormId).values,
     acuityFormFieldIds.barCode,
   ).value
-  const utcDateTime = moment(acuityAppointment.datetime).utc()
-  const firestoreTimeStamp = firestore.Timestamp.fromDate(utcDateTime.toDate())
 
   const appointmentInDb = await database
     .collection('appointments')
@@ -151,15 +149,14 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     .get()
 
   if (pcrTestResultsInDb.docs.length === 0) {
-    const convertedDeadline = appointment.data().deadline
 
     const validatedData: PCRTestResultDBModel = await DBSchema.validateAsync({
       adminId: 'MIGRATION',
       appointmentId: appointment.id,
       barCode: barCode,
       confirmed: false,
-      dateTime: firestoreTimeStamp,
-      deadline: convertedDeadline,
+      dateTime: appointment.data().dateTime,
+      deadline: appointment.data().deadline,
       displayForNonAdmins: true,
       firstName: acuityAppointment.firstName,
       lastName: acuityAppointment.lastName,
