@@ -328,6 +328,9 @@ export class AppoinmentService {
           })
         ).data.id
 
+    const calendars = await this.acuityRepository.getCalendarList()
+    const appoinmentCalendar = calendars.find(({id}) => id === acuityAppointment.calendarID)
+
     return {
       acuityAppointmentId: acuityAppointment.id,
       appointmentStatus,
@@ -362,6 +365,8 @@ export class AppoinmentService {
       agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
       userId: currentUserId,
+      locationName: appoinmentCalendar?.name,
+      locationAddress: appoinmentCalendar?.location,
     }
   }
 
