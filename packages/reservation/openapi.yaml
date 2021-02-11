@@ -1515,11 +1515,24 @@ paths:
                               Pending,
                               Invalid,
                               Inconclusive,
+                              PreliminaryPositive
                             ]
                         dateTime:
                           type: string
                         deadline:
                           type: string
+                        previousResult:
+                          type: string
+                          enum:
+                            [
+                              PresumptivePositive,
+                              Positive,
+                              Negative,
+                              Pending,
+                              Invalid,
+                              Inconclusive,
+                              PreliminaryPositive,
+                            ]
                   status:
                     type: object
                     additionalProperties: false
