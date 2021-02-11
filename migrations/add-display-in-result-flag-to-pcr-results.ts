@@ -102,7 +102,7 @@ async function addDisplayInResultFlag(
           },
           {
             merge: true,
-          }
+          },
         )
         console.log(`Successfully updated PCRResult: ${pcrResult.id} displayInResult: false`)
       })
