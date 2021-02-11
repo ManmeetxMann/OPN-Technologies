@@ -227,13 +227,11 @@ components:
         - userId
         - includeGuardian
     
-    V1EntryOrExitRequest:
+    V1UserEnterRequest:
       type: object
       additionalProperties: false
       properties:
         locationId:
-          type: string
-        userId:
           type: string
         includeGuardian:
           type: boolean
@@ -245,8 +243,22 @@ components:
             type: string
       required:
         - locationId
-        - userId
         - organizationId
+    
+    V1UserExitRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        locationId:
+          type: string
+        organizationId:
+          type: string
+        accessToken:
+          type: string
+      required:
+        - locationId
+        - organizationId
+        - accessToken
     
     V1ScanRequest:
       type: object
@@ -662,7 +674,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/V1EntryOrExitRequest'
+              $ref: '#/components/schemas/V1UserEnterRequest'
       responses:
         '200':
           description: Successfully created
@@ -680,7 +692,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/V1EntryOrExitRequest'
+              $ref: '#/components/schemas/V1UserEnterRequest'
       responses:
         '200':
           description: Successfully entered
@@ -698,7 +710,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/V1EntryOrExitRequest'
+              $ref: '#/components/schemas/V1UserExitRequest'
       responses:
         '200':
           description: Successfully exited
@@ -808,6 +820,11 @@ paths:
           schema:
             type: string
           required: false
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
       responses:
         '200':
           description: Successfully handled

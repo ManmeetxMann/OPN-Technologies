@@ -41,6 +41,9 @@ import {
   PCRResultActionsForConfirmation,
   EmailNotficationTypes,
   PCRResultPDFType,
+  PCRTestResultType,
+  resultToStyle,
+  TestResutsDTO,
   PCRTestResultHistory,
 } from '../models/pcr-test-results'
 
@@ -525,7 +528,7 @@ export class PCRTestResultsService {
       organizationId: appointment.organizationId,
       dateTime: appointment.dateTime,
       waitingResult: false,
-      displayForNonAdmins: true, //TODO
+      displayInResult: true,
       recollected: actionsForRecollection.includes(resultData.resultSpecs.action),
       confirmed: false,
     }
@@ -627,15 +630,15 @@ export class PCRTestResultsService {
       }
       case PCRResultActions.RequestReCollect: {
         //TODO: Remove this after FE updates
-        handledReCollect()
+        await handledReCollect()
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
-        handledReCollect()
+        await handledReCollect()
         break
       }
       case PCRResultActions.RecollectAsInconclusive: {
-        handledReCollect()
+        await handledReCollect()
         break
       }
       default: {
@@ -815,13 +818,21 @@ export class PCRTestResultsService {
     waitingResult?: boolean
     confirmed?: boolean
   }): Promise<PCRTestResultDBModel> {
+    //Reset Display for all OLD results
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(data.appointment.id, {
+      displayInResult: false,
+    })
+    console.log(
+      `createNewTestResults: UpdatedAllResults for AppointmentId: ${data.appointment.id} to displayInResult: false`,
+    )
+
     const pcrResultDataForDb = {
       adminId: data.adminId,
       appointmentId: data.appointment.id,
       barCode: data.appointment.barCode,
       confirmed: data.confirmed ?? false,
       dateTime: data.appointment.dateTime,
-      displayForNonAdmins: true,
+      displayInResult: true,
       deadline: data.appointment.deadline,
       firstName: data.appointment.firstName,
       lastName: data.appointment.lastName,
@@ -1100,7 +1111,27 @@ export class PCRTestResultsService {
   }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrTestResultsQuery = []
 
-    if (deadline) {
+    if (barCode) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: barCode,
+      })
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'waitingResult',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      })
+    } else if (testRunId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testRunId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: testRunId,
+      })
+    } else if (deadline) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'deadline',
@@ -1112,24 +1143,6 @@ export class PCRTestResultsService {
         key: 'waitingResult',
         operator: DataModelFieldMapOperatorType.Equals,
         value: true,
-      })
-    }
-
-    if (barCode) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'barCode',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: barCode,
-      })
-    }
-
-    if (testRunId) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'testRunId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: testRunId,
       })
     }
 
@@ -1197,5 +1210,48 @@ export class PCRTestResultsService {
       }
     }
     return status
+  }
+
+  async getTestResultsByUserId(userId: string, organizationId: string): Promise<TestResutsDTO[]> {
+    const pcrTestResultsQuery = [
+      {
+        map: '/',
+        key: 'userId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: userId,
+      },
+      {
+        map: '/',
+        key: 'organizationId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: organizationId,
+      },
+    ]
+
+    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const appoinmentIds = pcrResults
+      .filter(({result}) => result === ResultTypes.Pending)
+      .map(({appointmentId}) => appointmentId)
+    const appoinments = await this.appointmentService.getAppointmentsDBByIds(appoinmentIds)
+
+    return pcrResults.map((pcr) => {
+      let result = pcr.result
+
+      if (result === ResultTypes.Pending) {
+        const appoinment = appoinments.find(({id}) => id === pcr.appointmentId)
+
+        result = ResultTypes[appoinment.appointmentStatus]
+      }
+
+      return {
+        id: pcr.id,
+        type: PCRTestResultType.PCR,
+        name: 'PCR Tests',
+        testDateTime: formatDateRFC822Local(pcr.deadline),
+        style: resultToStyle(result),
+        result,
+        detailsAvailable: result !== ResultTypes.Pending,
+      }
+    })
   }
 }
