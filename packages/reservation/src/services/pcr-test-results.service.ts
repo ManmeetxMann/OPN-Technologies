@@ -941,18 +941,38 @@ export class PCRTestResultsService {
 
   async addTestRunToPCR(
     testRunId: string,
-    pcrTestResultId: string,
     adminId: string,
+    pcrTestResultIds: string[],
   ): Promise<void> {
-    const pcrTestResults = await this.pcrTestResultsRepository.get(pcrTestResultId)
-    if (!pcrTestResults) {
-      throw new ResourceNotFoundException(`PCR Result with id ${pcrTestResultId} not found`)
+    const pcrTestResults = await this.pcrTestResultsRepository.findWhereIdIn(pcrTestResultIds)
+
+    if (pcrTestResults.length !== pcrTestResultIds.length) {
+      const pcrDbIds = pcrTestResults.map(({id}) => id)
+      const invalidId = pcrTestResultIds.filter((id) => !pcrDbIds.includes(id))
+
+      throw new ResourceNotFoundException(`PCR Result with ids ${invalidId} not found`)
     }
-    await this.pcrTestResultsRepository.updateData(pcrTestResultId, {
-      testRunId: testRunId,
-      waitingResult: true,
-    })
-    await this.appointmentService.makeInProgress(pcrTestResults.appointmentId, testRunId, adminId)
+
+    const appoinmentIds = pcrTestResults.map(({appointmentId}) => appointmentId)
+    const appointments = await this.appointmentService.getAppointmentsDBByIds(appoinmentIds)
+
+    await Promise.all(
+      pcrTestResults.map(async (pcr) => {
+        const appointment = appointments.find(({id}) => id === pcr.appointmentId)
+
+        if (
+          appointment?.appointmentStatus === AppointmentStatus.Received ||
+          appointment?.appointmentStatus === AppointmentStatus.ReRunRequired
+        ) {
+          await this.pcrTestResultsRepository.updateData(pcr.id, {
+            testRunId: testRunId,
+            waitingResult: true,
+          })
+
+          await this.appointmentService.makeInProgress(pcr.appointmentId, testRunId, adminId)
+        }
+      }),
+    )
   }
 
   async getReason(appointmentStatus: AppointmentStatus): Promise<AppointmentReasons> {
