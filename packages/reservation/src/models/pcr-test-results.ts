@@ -259,6 +259,7 @@ export type PCRTestResultListDTO = {
   testType: string
   barCode: string
   result: ResultTypes
+  previousResult: ResultTypes | string
   vialLocation?: string
   status?: AppointmentStatus
   dateTime?: string

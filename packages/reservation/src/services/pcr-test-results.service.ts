@@ -270,13 +270,8 @@ export class PCRTestResultsService {
 
     const getResultValue = (
       result: ResultTypes,
-      previousResult: ResultTypes,
       notify: boolean,
     ): ResultTypes => {
-      if (!!previousResult && result === ResultTypes.Pending) {
-        return previousResult
-      }
-
       if (isLabUser) {
         //NoOverwrite For LabUser
         return result
@@ -292,7 +287,8 @@ export class PCRTestResultsService {
       return {
         id: pcr.id,
         barCode: pcr.barCode,
-        result: getResultValue(pcr.result, pcr.previousResult, !!pcr.resultSpecs?.notify),
+        result: getResultValue(pcr.result, !!pcr.resultSpecs?.notify),
+        previousResult: (pcr.previousResult)??"-",
         dateTime: formatDateRFC822Local(pcr.dateTime),
         deadline: formatDateRFC822Local(pcr.deadline),
         testRunId: pcr.testRunId,
