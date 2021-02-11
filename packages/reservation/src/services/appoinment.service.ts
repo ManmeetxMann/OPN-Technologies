@@ -326,7 +326,7 @@ export class AppoinmentService {
             lastName: acuityAppointment.lastName,
             organizationId: acuityAppointment.organizationId || '',
           })
-        ).id
+        ).data.id
 
     return {
       acuityAppointmentId: acuityAppointment.id,
