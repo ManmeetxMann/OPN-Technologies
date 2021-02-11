@@ -54,7 +54,7 @@ async function updateTestResults(): Promise<Result[]> {
 
     offset += testResultSnapshot.docs.length
     hasMore = !testResultSnapshot.empty
-    hasMore = false
+    //hasMore = false
 
     for (const testResult of testResultSnapshot.docs) {
       const promises = []
@@ -104,6 +104,7 @@ async function addDisplayInResultFlag(
             merge: true,
           },
         )
+        console.log(`Successfully updated PCRResult: ${pcrResult.id} displayInResult: false`)
       })
 
       latestResult.ref.set(
@@ -119,8 +120,9 @@ async function addDisplayInResultFlag(
           merge: true,
         },
       )
+      console.log(`Successfully updated PCRResult: ${latestResult.id} displayInResult: true`)
     } else {
-      console.info(`AcuityAppointmentId: ${resultId} Only One result`)
+      console.info(`AcuityAppointmentId: ${resultId} has Only One result`)
 
       const pcrResult = pcrResultInDb.docs[0]
       pcrResult.ref.set(
@@ -137,6 +139,7 @@ async function addDisplayInResultFlag(
           merge: true,
         },
       )
+      console.log(`Successfully updated PCRResult: ${pcrResult.id} displayInResult: true`)
     }
     return Promise.resolve()
   } catch (error) {
@@ -176,3 +179,5 @@ let totalCount = 0
 const limit = 50
 
 main().then(() => console.log('Script Complete \n'))
+
+// npm run migration:add-display-in-result-flag-to-pcr-results > add-display-in-result-flag-to-pcr-results-info-dev.log 2> add-display-in-result-flag-to-pcr-results-error-dev.log
