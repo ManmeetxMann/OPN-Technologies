@@ -89,8 +89,8 @@ async function addDisplayInResultFlag(
           : pcrResult
       }, pcrResultInDb.docs[0])
 
-      pcrResultInDb.docs.forEach((pcrResult) => {
-        pcrResult.ref.set(
+      pcrResultInDb.docs.forEach(async (pcrResult) => {
+        await pcrResult.ref.set(
           {
             displayInResult: false,
             previousResult: null,
@@ -107,7 +107,7 @@ async function addDisplayInResultFlag(
         console.log(`Successfully updated PCRResult: ${pcrResult.id} displayInResult: false`)
       })
 
-      latestResult.ref.set(
+      await latestResult.ref.set(
         {
           displayInResult: true,
           timestamps: {
@@ -125,7 +125,7 @@ async function addDisplayInResultFlag(
       console.info(`AcuityAppointmentId: ${resultId} has Only One result`)
 
       const pcrResult = pcrResultInDb.docs[0]
-      pcrResult.ref.set(
+      await pcrResult.ref.set(
         {
           displayInResult: true,
           previousResult: null,
@@ -141,6 +141,17 @@ async function addDisplayInResultFlag(
       )
       console.log(`Successfully updated PCRResult: ${pcrResult.id} displayInResult: true`)
     }
+
+    const doubleCheckUpdate = await database
+      .collection('pcr-test-results')
+      .where('appointmentId', '==', resultId)
+      .where('displayInResult', '==', true)
+      .get()
+
+    if (doubleCheckUpdate.docs.length !== 1) {
+      console.warn(`Failed AppointmentID: ${resultId} TOTAL: ${doubleCheckUpdate.docs.length}`)
+    }
+
     return Promise.resolve()
   } catch (error) {
     console.warn(error)
