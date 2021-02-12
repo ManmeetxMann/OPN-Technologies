@@ -80,7 +80,7 @@ class AdminAppointmentController implements IControllerBase {
     innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/check-in',
-      receivingAuth,
+      allowCheckIn,
       this.makeCheckIn,
     )
     innerRouter.put(
