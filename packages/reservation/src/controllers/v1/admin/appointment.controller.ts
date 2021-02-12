@@ -268,14 +268,15 @@ class AdminAppointmentController implements IControllerBase {
   makeCheckIn = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       const {appointmentId} = req.params as {
         appointmentId: string
       }
 
-      await this.appointmentService.makeCheckIn(appointmentId, adminId)
+      const updatedAppointment = await this.appointmentService.makeCheckIn(appointmentId, adminId)
 
-      res.json(actionSucceed())
+      res.json(actionSucceed(appointmentUiDTOResponse(updatedAppointment, isLabUser)))
     } catch (error) {
       next(error)
     }

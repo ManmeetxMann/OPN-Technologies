@@ -524,6 +524,15 @@ export class AppoinmentService {
     return AppointmentStatusChangeState.Succeed
   }
 
+  private async checkAppointmentStatusOnly(
+    appointmentId: string,
+    appointmentStatus: AppointmentStatus,
+  ) {
+    const appointment = await this.getAppointmentDBById(appointmentId)
+
+    return appointment && appointment.appointmentStatus === appointmentStatus
+  }
+
   private async checkAppointmentStatus(appointmentId: string) {
     const appointment = await this.getAppointmentDBById(appointmentId)
 
@@ -814,14 +823,15 @@ export class AppoinmentService {
     return updatedAppoinment
   }
 
-  async makeCheckIn(appointmentId: string, userId: string): Promise<void> {
-    if (await this.checkAppointmentStatus(appointmentId)) {
-      throw new BadRequestException('Appointment status should not be Canceled or Reported')
+  async makeCheckIn(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
+    if (!(await this.checkAppointmentStatusOnly(appointmentId, AppointmentStatus.Pending))) {
+      throw new BadRequestException('Appointment status should be on Pending state')
     }
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.CheckedIn, userId)
 
-    await this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.CheckedIn,
-    })
+    return this.appointmentsRepository.changeAppointmentStatus(
+      appointmentId,
+      AppointmentStatus.CheckedIn,
+    )
   }
 }

@@ -3,12 +3,13 @@ import DataStore from '../../../common/src/data/datastore'
 import {
   ActivityTrackingDb,
   AppointmentActivityAction,
-  AppointmentDBModel,
+  AppointmentDBModel, AppointmentStatus,
   AppointmentStatusHistoryDb,
   UpdateAppointmentActionParams,
 } from '../models/appointment'
 import DBSchema from '../dbschemas/appointments.schema'
 import {isEqual} from 'lodash'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
@@ -21,6 +22,15 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public async save(appointments: Omit<AppointmentDBModel, 'id'>): Promise<AppointmentDBModel> {
     const validatedData = await DBSchema.validateAsync(appointments)
     return this.add(validatedData)
+  }
+
+  public changeAppointmentStatus(
+    appointmentId: string,
+    appointmentStatus: AppointmentStatus,
+  ): Promise<AppointmentDBModel> {
+    return this.updateProperties(appointmentId, {
+      appointmentStatus,
+    })
   }
 
   public async updateBarCodeById(
