@@ -204,6 +204,9 @@ class UserController implements IRouteController {
     if (allStatuses.includes('caution')) {
       throw new BadRequestException(`current status is caution`)
     }
+    if (allStatuses.includes('temperature_check_required')) {
+      throw new BadRequestException(`current status is temperature_check_required`)
+    }
     const newAccess = await this.accessService.handleEnterV2(access)
 
     return res.json(actionSucceed(accessDTOResponseV1(newAccess)))
