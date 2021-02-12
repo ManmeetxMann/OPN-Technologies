@@ -3,13 +3,13 @@ import DataStore from '../../../common/src/data/datastore'
 import {
   ActivityTrackingDb,
   AppointmentActivityAction,
-  AppointmentDBModel, AppointmentStatus,
+  AppointmentDBModel,
+  AppointmentStatus,
   AppointmentStatusHistoryDb,
   UpdateAppointmentActionParams,
 } from '../models/appointment'
 import DBSchema from '../dbschemas/appointments.schema'
 import {isEqual} from 'lodash'
-import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
