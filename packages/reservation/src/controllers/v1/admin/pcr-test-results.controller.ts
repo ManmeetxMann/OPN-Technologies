@@ -2,7 +2,11 @@ import {NextFunction, Request, Response, Router} from 'express'
 import moment from 'moment'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
+import {
+  actionSucceed,
+  actionSuccess,
+  actionInProgress,
+} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {now} from '../../../../../common/src/utils/times'
@@ -20,7 +24,6 @@ import {
   ListPCRResultRequest,
   PCRTestResultRequest,
   PCRTestResultRequestData,
-  pcrTestResultsResponse,
   PcrTestResultsListRequest,
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
@@ -230,10 +233,16 @@ class PCRTestResultController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {reportTrackerId} = req.query as ListPCRResultRequest
-      const pcrTestResults = await this.pcrTestResultsService.listPCRTestResultReportStatus(
-        reportTrackerId,
-      )
-      res.json(actionSucceed(pcrTestResults.map(pcrTestResultsResponse)))
+      const {
+        inProgress,
+        pcrTestResults,
+      } = await this.pcrTestResultsService.listPCRTestResultReportStatus(reportTrackerId)
+
+      if (inProgress) {
+        res.json(actionInProgress(pcrTestResults))
+      } else {
+        res.json(actionSucceed(pcrTestResults))
+      }
     } catch (error) {
       console.log(error)
       next(error)

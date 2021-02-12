@@ -1,5 +1,5 @@
 import {firestore} from 'firebase-admin'
-import {makeDeadline} from '../utils/datetime.helper'
+import {formatStringDateRFC822Local, makeDeadline} from '../utils/datetime.helper'
 
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
@@ -10,6 +10,7 @@ export enum AppointmentStatus {
   Submitted = 'Submitted',
   InTransit = 'InTransit',
   Received = 'Received',
+  CheckedIn = 'CheckedIn',
   InProgress = 'InProgress',
   Reported = 'Reported',
   ReRunRequired = 'ReRunRequired',
@@ -19,6 +20,7 @@ export enum AppointmentStatus {
 
 export enum ResultTypes {
   PresumptivePositive = 'PresumptivePositive',
+  PreliminaryPositive = 'PreliminaryPositive',
   Positive = 'Positive',
   Negative = 'Negative',
   Pending = 'Pending',
@@ -64,6 +66,8 @@ export type AppointmentDBModel = {
   receiveResultsViaEmail: boolean
   receiveNotificationsFromGov: boolean
   userId?: string
+  locationName?: string
+  locationAddress?: string
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -89,6 +93,7 @@ export type AppointmentAcuityResponse = {
   addressUnit: string
   agreeToConductFHHealthAssessment: boolean
   barCode: string
+  calendarID: number
   canceled: boolean
   canClientCancel: boolean
   certificate: string
@@ -340,13 +345,13 @@ export type UserAppointment = {
 export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): UserAppointment => ({
   id: appointment.id,
   QRCode: appointment.barCode,
-  dateOfBirth: appointment.dateOfBirth,
+  dateOfBirth: formatStringDateRFC822Local(appointment.dateOfBirth),
   showQrCode: moment(makeDeadline(moment())).isBefore(appointment.deadline.toDate()),
   firstName: appointment.firstName,
   lastName: appointment.lastName,
-  locationName: appointment.location,
-  locationAddress: appointment.address,
-  dateOfAppointment: appointment.dateOfAppointment,
+  locationName: appointment.locationName,
+  locationAddress: appointment.locationAddress,
+  dateOfAppointment: formatStringDateRFC822Local(appointment.dateOfAppointment),
   timeOfAppointment: appointment.timeOfAppointment,
 })
 

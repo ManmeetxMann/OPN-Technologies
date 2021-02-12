@@ -44,6 +44,10 @@ export const formatDateRFC822Local = (timestamp: firestore.Timestamp): string =>
   return moment(timestamp.toDate()).tz(timeZone).format()
 }
 
+export const formatStringDateRFC822Local = (date: Date | string): string => {
+  return moment(date).tz(timeZone).format()
+}
+
 export const firestoreTimeStampToUTC = (timestamp: firestore.Timestamp): moment.Moment => {
   return moment(timestamp.toDate()).utc()
 }

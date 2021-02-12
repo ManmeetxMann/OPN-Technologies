@@ -319,17 +319,25 @@ export class AppoinmentService {
       userId,
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
+    const promises = []
 
-    const currentUserId = userId
-      ? userId
-      : (
-          await this.enterpriseAdapter.findOrCreateUser({
-            email: acuityAppointment.email,
-            firstName: acuityAppointment.firstName,
-            lastName: acuityAppointment.lastName,
-            organizationId: acuityAppointment.organizationId || '',
-          })
-        ).id
+    promises.push(this.acuityRepository.getCalendarList())
+
+    if (!userId) {
+      promises.push(
+        this.enterpriseAdapter.findOrCreateUser({
+          email: acuityAppointment.email,
+          firstName: acuityAppointment.firstName,
+          lastName: acuityAppointment.lastName,
+          organizationId: acuityAppointment.organizationId || '',
+        }),
+      )
+    }
+
+    const [calendars, userIdFromDb] = await Promise.all(promises)
+
+    const appoinmentCalendar = calendars.find(({id}) => id === acuityAppointment.calendarID)
+    const currentUserId = userId ? userId : userIdFromDb.data.id
 
     return {
       acuityAppointmentId: acuityAppointment.id,
@@ -365,6 +373,8 @@ export class AppoinmentService {
       agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
       userId: currentUserId,
+      locationName: appoinmentCalendar?.name,
+      locationAddress: appoinmentCalendar?.location,
     }
   }
 
@@ -527,6 +537,15 @@ export class AppoinmentService {
     return AppointmentStatusChangeState.Succeed
   }
 
+  private async checkAppointmentStatusOnly(
+    appointmentId: string,
+    appointmentStatus: AppointmentStatus,
+  ) {
+    const appointment = await this.getAppointmentDBById(appointmentId)
+
+    return appointment && appointment.appointmentStatus === appointmentStatus
+  }
+
   private async checkAppointmentStatus(appointmentId: string) {
     const appointment = await this.getAppointmentDBById(appointmentId)
 
@@ -628,7 +647,7 @@ export class AppoinmentService {
     organizationId,
     userId,
     packageCode,
-  }: CreateAppointmentRequest): Promise<void> {
+  }: CreateAppointmentRequest): Promise<AppointmentDBModel> {
     const {time, appointmentTypeId, calendarId} = decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
 
@@ -653,7 +672,7 @@ export class AppoinmentService {
         receiveNotificationsFromGov,
       },
     )
-    await this.createAppointmentFromAcuity(data, {
+    return this.createAppointmentFromAcuity(data, {
       barCodeNumber: await this.getNextBarCodeNumber(),
       appointmentTypeID: appointmentTypeId,
       calendarID: calendarId,
@@ -874,5 +893,17 @@ export class AppoinmentService {
       orgIdArray: appointmentStatsByOrgIdArr,
       total: appointments.length,
     }
+  }
+
+  async makeCheckIn(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
+    if (!(await this.checkAppointmentStatusOnly(appointmentId, AppointmentStatus.Pending))) {
+      throw new BadRequestException('Appointment status should be on Pending state')
+    }
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.CheckedIn, userId)
+
+    return this.appointmentsRepository.changeAppointmentStatus(
+      appointmentId,
+      AppointmentStatus.CheckedIn,
+    )
   }
 }

@@ -44,7 +44,9 @@
 		"migration:migrate-attestation-questionaireid-field": "ts-node ./migrations/add-questionnaireid-to-attestation",
 		"migration:test-results-to-pcr": "ts-node ./migrations/test-results-to-pcr",
 		"migration:migration-acuity-to-appointments": "ts-node ./migrations/acuity-to-appointments",
-		"migration:acuity-to-pcr-results": "ts-node ./migrations/acuity-to-pcr-results"
+		"migration:acuity-to-pcr-results": "ts-node ./migrations/acuity-to-pcr-results",
+		"migration:add-display-in-result-flag-to-pcr-results": "ts-node ./migrations/add-display-in-result-flag-to-pcr-results",
+		"migration:fix-deadline-for-future-pcr-results": "ts-node ./migrations/fix-deadline-for-future-pcr-results"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",

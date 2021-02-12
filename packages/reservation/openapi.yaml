@@ -324,8 +324,8 @@ components:
               transportRunId:
                 type: string
               transportDateTime:
-                  type: string
-                  format: date-time
+                type: string
+                format: date-time
               driverName:
                 type: string
         status:
@@ -549,6 +549,8 @@ components:
                 quasar670Ct:
                   type: string
                   minLength: 1
+                comment:
+                  type: string
       required:
         - results
         - resultDate
@@ -1653,11 +1655,24 @@ paths:
                               Pending,
                               Invalid,
                               Inconclusive,
+                              PreliminaryPositive
                             ]
                         dateTime:
                           type: string
                         deadline:
                           type: string
+                        previousResult:
+                          type: string
+                          enum:
+                            [
+                              PresumptivePositive,
+                              Positive,
+                              Negative,
+                              Pending,
+                              Invalid,
+                              Inconclusive,
+                              PreliminaryPositive,
+                            ]
                   status:
                     type: object
                     additionalProperties: false
@@ -1964,6 +1979,27 @@ paths:
                         type: string
                   page:
                     type: number
+
+  /reservation/admin/api/v1/appointments/{appointmentId}/check-in:
+    put:
+      description: Make Appointment checked in
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse200'
 
   /reservation/admin/api/v1/appointments/receive:
     put:
@@ -2409,6 +2445,8 @@ paths:
                       type: object
                       additionalProperties: false
                       properties:
+                        id:
+                          type: string
                         locationName:
                           type:	string
                         locationAddress:
@@ -2421,13 +2459,23 @@ paths:
                           type:	string
                         timeOfAppointment:
                           type: string
+                        QRCode:
+                          type: string
+                        dateOfBirth:
+                          type: string
+                        showQrCode:
+                          type: boolean
                       required:
+                        - id
                         - locationName
                         - locationAddress
                         - firstName
                         - lastName
                         - dateOfAppointment
                         - timeOfAppointment
+                        - QRCode
+                        - dateOfBirth
+                        - showQrCode
                   status:
                     type: object
                     additionalProperties: false

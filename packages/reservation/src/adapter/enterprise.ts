@@ -10,7 +10,7 @@ export class Enterprise {
     firstName: string
     lastName: string
     organizationId: string
-  }): Promise<LocalUser> {
+  }): Promise<{data: LocalUser}> {
     const apiUrl = `${APIURL}enterprise/internal/api/v1/user`
     const body = JSON.stringify({
       email: userData.email,
