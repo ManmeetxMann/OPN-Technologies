@@ -1,6 +1,7 @@
 /**
  * This script to go through all future appointments and fix deadline for results 
  */
+import {isEmpty} from 'lodash'
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
 
@@ -69,6 +70,37 @@ async function updateTestResults(): Promise<Result[]> {
 async function fixDeadline(
   snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
 ) {
+  const updatePCRResult = async (pcrResult, resolve)=>{
+    let updateData = {}
+    if (appointmentData.dateTime.seconds !== pcrResult.data().dateTime.seconds) {
+      console.log(`PCRResultId: ${pcrResult.id} ${pcrResult.data().barCode}  has different dateTime than appointment ${appointmentData.dateTime.toDate()} ${pcrResult.data().dateTime.toDate()}`)
+      updateData['dateTime'] = appointmentData.dateTime
+    }
+    if (appointmentData.deadline.seconds !== pcrResult.data().deadline.seconds) {
+      console.log(`PCRResultId: ${pcrResult.id} ${pcrResult.data().barCode} has different deadline than appointment ${appointmentData.deadline.toDate()} ${pcrResult.data().deadline.toDate()} `)
+      updateData['deadline'] = appointmentData.deadline
+    }
+
+    if (!isEmpty(updateData)) {
+      await pcrResult.ref.set(
+        {
+          ...updateData,
+          timestamps: {
+            migrations: {
+              copyDeadlineAndDateTimeFromAppointment: firestore.FieldValue.serverTimestamp(),
+            },
+          },
+        },
+        {
+          merge: true,
+        }
+      )
+      console.log(`Successfully updated PCRResult: ${pcrResult.id}`)
+      return resolve('updated')
+    }
+    return resolve()
+  }
+
   const appointmentId = snapshot.id
   const appointmentData = snapshot.data()
   const pcrResultInDb = await database
@@ -82,32 +114,16 @@ async function fixDeadline(
 
   try {
     //console.info(`AcuityAppointmentId: ${appointmentId} total results: ${pcrResultInDb.docs.length}`)
-
-    pcrResultInDb.docs.forEach(async (pcrResult) => {
-      if(appointmentData.dateTime.seconds!==pcrResult.data().dateTime.seconds){
-        console.log(`PCRResultId: ${pcrResult.id} ${pcrResult.data().barCode}  has different dateTime than appointment ${appointmentData.dateTime.toDate()} ${pcrResult.data().dateTime.toDate()}`)
-      }
-      if(appointmentData.deadline.seconds!==pcrResult.data().deadline.seconds){
-        console.log(`PCRResultId: ${pcrResult.id} ${pcrResult.data().barCode} has different deadline than appointment ${appointmentData.dateTime.toDate()} ${pcrResult.data().dateTime.toDate()} `)
-      }
-      /*await pcrResult.ref.set(
-        {
-          displayInResult: false,
-          previousResult: null,
-          timestamps: {
-            migrations: {
-              addFlagForDisplayInResult: firestore.FieldValue.serverTimestamp(),
-            },
-          },
-        },
-        {
-          merge: true,
-        },
-      )*/
-      //console.log(`Successfully updated PCRResult: ${pcrResult.id} displayInResult: false`)
+    let requests = pcrResultInDb.docs.map((pcrResult) => {
+        return new Promise((resolve) => {
+          updatePCRResult(pcrResult, resolve);
+        });
     })
-
-    return Promise.resolve()
+    
+    const promiseResult = Promise.all(requests).then((value)=>{
+      return value
+    });
+    return (await promiseResult).includes('updated')
   } catch (error) {
     console.warn(error)
     throw error
