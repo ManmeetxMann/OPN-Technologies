@@ -92,6 +92,7 @@ type PCRResultSpecs = {
   hexIC: string
   quasar670Ct: string
   quasar670NGene: string
+  comment?: string
 }
 
 type PCRResultSpecsForSending = PCRResultSpecs & {
