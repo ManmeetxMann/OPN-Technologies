@@ -10,6 +10,7 @@ export enum AppointmentStatus {
   Submitted = 'Submitted',
   InTransit = 'InTransit',
   Received = 'Received',
+  CheckedIn = 'CheckedIn',
   InProgress = 'InProgress',
   Reported = 'Reported',
   ReRunRequired = 'ReRunRequired',

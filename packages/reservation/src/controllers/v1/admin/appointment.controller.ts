@@ -42,6 +42,7 @@ class AdminAppointmentController implements IControllerBase {
       true,
     )
     const receivingAuth = authorizationMiddleware([RequiredUserPermission.LabReceiving])
+    const allowCheckIn = authorizationMiddleware([RequiredUserPermission.AllowCheckIn])
     const idBarCodeToolAuth = authorizationMiddleware([
       RequiredUserPermission.LabAdminToolIDBarcode,
     ])
@@ -77,6 +78,11 @@ class AdminAppointmentController implements IControllerBase {
       this.getNextBarcode,
     )
     innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
+    innerRouter.put(
+      this.path + '/api/v1/appointments/:appointmentId/check-in',
+      receivingAuth,
+      this.makeCheckIn,
+    )
     innerRouter.put(
       this.path + '/api/v1/appointments/barcode/regenerate',
       apptLabAuth,
@@ -254,6 +260,22 @@ class AdminAppointmentController implements IControllerBase {
       )
 
       res.json(actionSucceed(appointmentsState))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  makeCheckIn = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const adminId = getUserId(res.locals.authenticatedUser)
+
+      const {appointmentId} = req.params as {
+        appointmentId: string
+      }
+
+      await this.appointmentService.makeCheckIn(appointmentId, adminId)
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }

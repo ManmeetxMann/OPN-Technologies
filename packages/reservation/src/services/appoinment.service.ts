@@ -813,4 +813,15 @@ export class AppoinmentService {
 
     return updatedAppoinment
   }
+
+  async makeCheckIn(appointmentId: string, userId: string): Promise<void> {
+    if (await this.checkAppointmentStatus(appointmentId)) {
+      throw new BadRequestException('Appointment status should not be Canceled or Reported')
+    }
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.CheckedIn, userId)
+
+    await this.appointmentsRepository.updateProperties(appointmentId, {
+      appointmentStatus: AppointmentStatus.CheckedIn,
+    })
+  }
 }

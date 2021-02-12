@@ -242,8 +242,8 @@ components:
               transportRunId:
                 type: string
               transportDateTime:
-                  type: string
-                  format: date-time
+                type: string
+                format: date-time
               driverName:
                 type: string
         status:
@@ -1839,6 +1839,27 @@ paths:
                         type: string
                   page:
                     type: number
+
+  /reservation/admin/api/v1/appointments/{appointmentId}/check-in:
+    put:
+      description: Make Appointment checked in
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Succesfully changed status of appointment to checked in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
 
   /reservation/admin/api/v1/appointments/receive:
     put:
