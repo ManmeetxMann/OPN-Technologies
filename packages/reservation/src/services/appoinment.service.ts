@@ -457,6 +457,7 @@ export class AppoinmentService {
     createdBy: string,
   ): Promise<AppointmentStatusHistoryDb> {
     const appointment = await this.getAppointmentDBById(appointmentId)
+    console.log(appointmentId)
     return this.getStatusHistoryRepository(appointmentId).add({
       newStatus: newStatus,
       previousStatus: appointment.appointmentStatus,
@@ -739,26 +740,33 @@ export class AppoinmentService {
     )
   }
 
-  async checkDuplicatedAppointments(appointmentIds: string[]): Promise<any> {
+  async checkDuplicatedAppointments(appointmentIds: string[]): Promise<{
+    duplicatedAppointmentIds: string [],
+    duplicatedBarCodeArray: string[],
+    filtredAppointmentIds: string[]
+  }> {
     const appointments = await this.getAppointmentsDBByIds(appointmentIds)
-    const barCodes = appointments.map(({barCode, id}) => ({barCode, id}))
-
+    const barCodes = appointments.map(({barCode}) => barCode)
+    const appointmentsByBarCodes = await this.appointmentsRepository.findWhereIn('barCode', barCodes)
+    const allBarCodes = appointmentsByBarCodes.map(({barCode}) => barCode)
+    console.log(barCodes, allBarCodes)
     let duplicatedAppointmentIds
     let duplicatedBarCodeArray: string []
+    
     const firstBarCodeMatch = new Map()
-    const hasDuplicates = union(barCodes).length != barCodes.length
+    const hasDuplicates = union(allBarCodes).length != allBarCodes.length
 
     if (hasDuplicates) {
       const duplicatedBarCodes = new Set<string>()
 
-      barCodes.forEach(({barCode, id}) => {
+      appointmentsByBarCodes.forEach(({barCode, id}) => {
         if (!firstBarCodeMatch.has({barCode})) {
           return firstBarCodeMatch.set(barCode, {barCode, id})
         }
         duplicatedBarCodes.add(barCode)
       })
 
-      duplicatedBarCodeArray = Array.from(duplicatedBarCodes.keys())
+      duplicatedBarCodeArray = Array.from(duplicatedBarCodes.values())
       duplicatedAppointmentIds = appointments
         .filter(({barCode}) => duplicatedBarCodeArray.includes(barCode))
         .map(({id}) => id)
@@ -768,6 +776,8 @@ export class AppoinmentService {
       ? Array.from(firstBarCodeMatch.values()).map(({id}) => id)
       : appointmentIds
 
+    console.log(duplicatedAppointmentIds,duplicatedBarCodeArray,filtredAppointmentIds)
+    
     return {
       duplicatedAppointmentIds,
       duplicatedBarCodeArray,

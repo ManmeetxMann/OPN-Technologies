@@ -14,6 +14,7 @@ import {
   AppointmentByOrganizationRequest,
   AppointmentDBModel,
   AppointmentsState,
+  AppointmentStatusChangeState,
   appointmentUiDTOResponse,
 } from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
@@ -191,14 +192,23 @@ class AdminAppointmentController implements IControllerBase {
       }
 
       const appointmentsState: AppointmentsState[] = await Promise.all(
-        filtredAppointmentIds.map(async (appointmentId) => ({
-          appointmentId,
-          state: await this.appointmentService.addTransportRun(
-            appointmentId,
-            transportRunId,
-            adminId,
-          ),
-        })),
+        filtredAppointmentIds.map(async (appointmentId) => {
+          try {
+            return {
+              appointmentId,
+              state: await this.appointmentService.addTransportRun(
+                appointmentId,
+                transportRunId,
+                adminId,
+              ),
+            }
+          } catch(error) {
+            return {
+              appointmentId,
+              state: AppointmentStatusChangeState.Failed
+            }
+          }
+        }),
       )
 
       const duplicatesMessage = duplicatedBarCodeArray 
