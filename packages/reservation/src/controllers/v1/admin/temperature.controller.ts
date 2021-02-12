@@ -90,6 +90,8 @@ class TemperatureAdminController implements IControllerBase {
         validUntil: this.passportService.shortestTime(status, now()),
       }
 
+      // NOTE - as soon as the QR token scanning flow does not require an access to be created, this needs
+      // to be restored to simply creating a new passport
       let passport
       if (activePassport.status === PassportStatuses.TemperatureCheckRequired) {
         passport = await this.passportService.reviseStatus(
