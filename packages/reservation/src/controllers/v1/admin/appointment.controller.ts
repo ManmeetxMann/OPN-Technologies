@@ -1,7 +1,7 @@
 import {NextFunction, Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
@@ -177,7 +177,11 @@ class AdminAppointmentController implements IControllerBase {
         transportRunId: string
       }
 
-      await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
+      const {
+        duplicatedAppointmentIds,
+        duplicatedBarCodeArray,
+        filtredAppointmentIds
+      } = await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
 
       const transportRuns = await this.transportRunsService.getByTransportRunId(transportRunId)
       if (transportRuns.length > 1) {
@@ -187,7 +191,7 @@ class AdminAppointmentController implements IControllerBase {
       }
 
       const appointmentsState: AppointmentsState[] = await Promise.all(
-        appointmentIds.map(async (appointmentId) => ({
+        filtredAppointmentIds.map(async (appointmentId) => ({
           appointmentId,
           state: await this.appointmentService.addTransportRun(
             appointmentId,
@@ -197,7 +201,11 @@ class AdminAppointmentController implements IControllerBase {
         })),
       )
 
-      res.json(actionSucceed(appointmentsState))
+      const duplicatesMessage = duplicatedBarCodeArray 
+        ? `Multiple Appointments [${duplicatedAppointmentIds}] with barcodes: ${duplicatedBarCodeArray}`
+        : ''
+
+      res.json(actionSuccess(appointmentsState, duplicatesMessage))
     } catch (error) {
       next(error)
     }
@@ -247,16 +255,24 @@ class AdminAppointmentController implements IControllerBase {
         throw new BadRequestException('Allowed maximum 50 appointments in array')
       }
 
-      await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
+      const {
+        duplicatedAppointmentIds,
+        duplicatedBarCodeArray,
+        filtredAppointmentIds
+      } = await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
 
       const appointmentsState: AppointmentsState[] = await Promise.all(
-        appointmentIds.map(async (appointmentId) => ({
+        filtredAppointmentIds.map(async (appointmentId) => ({
           appointmentId,
           state: await this.appointmentService.makeReceived(appointmentId, vialLocation, adminId),
         })),
       )
 
-      res.json(actionSucceed(appointmentsState))
+      const duplicatesMessage = duplicatedBarCodeArray 
+        ? `Multiple Appointments [${duplicatedAppointmentIds}] with barcodes: ${duplicatedBarCodeArray}`
+        : ''
+
+      res.json(actionSuccess(appointmentsState, duplicatesMessage))
     } catch (error) {
       next(error)
     }
