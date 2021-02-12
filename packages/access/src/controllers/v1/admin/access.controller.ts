@@ -126,6 +126,10 @@ class AdminController implements IRouteController {
       ) {
         throw new UnauthorizedException(`Not an admin for location ${location.id}`)
       }
+      if (passport.status === PassportStatuses.Stop) {
+        // happens when a bad temperature reading occurs
+        throw new UnauthorizedException(`Passport ${passport.id} is stop`)
+      }
       if (passport.status === PassportStatuses.TemperatureCheckRequired) {
         throw new UnauthorizedException(`Passport ${passport.id} requires a temp check`)
       }
