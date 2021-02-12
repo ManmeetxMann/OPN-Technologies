@@ -149,7 +149,6 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
     .get()
 
   if (pcrTestResultsInDb.docs.length === 0) {
-
     const validatedData: PCRTestResultDBModel = await DBSchema.validateAsync({
       adminId: 'MIGRATION',
       appointmentId: appointment.id,

@@ -1,5 +1,5 @@
 /**
- * This script to go through all future appointments and fix deadline for results 
+ * This script to go through all future appointments and fix deadline for results
  */
 import {isEmpty} from 'lodash'
 import {initializeApp, credential, firestore} from 'firebase-admin'
@@ -48,7 +48,7 @@ async function updateTestResults(): Promise<Result[]> {
   while (hasMore) {
     const testResultSnapshot = await database
       .collection('appointments')
-      .where('dateTime','>=',firestore.Timestamp.now())
+      .where('dateTime', '>=', firestore.Timestamp.now())
       .offset(offset)
       .limit(limit)
       .get()
@@ -67,17 +67,27 @@ async function updateTestResults(): Promise<Result[]> {
   return results
 }
 
-async function fixDeadline(
-  snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
-) {
-  const updatePCRResult = async (pcrResult, resolve)=>{
-    let updateData = {}
+async function fixDeadline(snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
+  const updatePCRResult = async (pcrResult, resolve) => {
+    const updateData = {}
     if (appointmentData.dateTime.seconds !== pcrResult.data().dateTime.seconds) {
-      console.log(`PCRResultId: ${pcrResult.id} ${pcrResult.data().barCode}  has different dateTime than appointment ${appointmentData.dateTime.toDate()} ${pcrResult.data().dateTime.toDate()}`)
+      console.log(
+        `PCRResultId: ${pcrResult.id} ${
+          pcrResult.data().barCode
+        }  has different dateTime than appointment ${appointmentData.dateTime.toDate()} ${pcrResult
+          .data()
+          .dateTime.toDate()}`,
+      )
       updateData['dateTime'] = appointmentData.dateTime
     }
     if (appointmentData.deadline.seconds !== pcrResult.data().deadline.seconds) {
-      console.log(`PCRResultId: ${pcrResult.id} ${pcrResult.data().barCode} has different deadline than appointment ${appointmentData.deadline.toDate()} ${pcrResult.data().deadline.toDate()} `)
+      console.log(
+        `PCRResultId: ${pcrResult.id} ${
+          pcrResult.data().barCode
+        } has different deadline than appointment ${appointmentData.deadline.toDate()} ${pcrResult
+          .data()
+          .deadline.toDate()} `,
+      )
       updateData['deadline'] = appointmentData.deadline
     }
 
@@ -93,7 +103,7 @@ async function fixDeadline(
         },
         {
           merge: true,
-        }
+        },
       )
       console.log(`Successfully updated PCRResult: ${pcrResult.id}`)
       return resolve('updated')
@@ -114,15 +124,15 @@ async function fixDeadline(
 
   try {
     //console.info(`AcuityAppointmentId: ${appointmentId} total results: ${pcrResultInDb.docs.length}`)
-    let requests = pcrResultInDb.docs.map((pcrResult) => {
-        return new Promise((resolve) => {
-          updatePCRResult(pcrResult, resolve);
-        });
+    const requests = pcrResultInDb.docs.map((pcrResult) => {
+      return new Promise((resolve) => {
+        updatePCRResult(pcrResult, resolve)
+      })
     })
-    
-    const promiseResult = Promise.all(requests).then((value)=>{
+
+    const promiseResult = Promise.all(requests).then((value) => {
       return value
-    });
+    })
     return (await promiseResult).includes('updated')
   } catch (error) {
     console.warn(error)
