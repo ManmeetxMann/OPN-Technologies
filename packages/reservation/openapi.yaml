@@ -2256,6 +2256,8 @@ paths:
                       type: object
                       additionalProperties: false
                       properties:
+                        id:
+                          type: string
                         locationName:
                           type:	string
                         locationAddress:
@@ -2268,13 +2270,23 @@ paths:
                           type:	string
                         timeOfAppointment:
                           type: string
+                        QRCode:
+                          type: string
+                        dateOfBirth:
+                          type: string
+                        showQrCode:
+                          type: boolean
                       required:
+                        - id
                         - locationName
                         - locationAddress
                         - firstName
                         - lastName
                         - dateOfAppointment
                         - timeOfAppointment
+                        - QRCode
+                        - dateOfBirth
+                        - showQrCode
                   status:
                     type: object
                     additionalProperties: false

@@ -316,17 +316,25 @@ export class AppoinmentService {
       userId,
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
+    const promises = []
 
-    const currentUserId = userId
-      ? userId
-      : (
-          await this.enterpriseAdapter.findOrCreateUser({
-            email: acuityAppointment.email,
-            firstName: acuityAppointment.firstName,
-            lastName: acuityAppointment.lastName,
-            organizationId: acuityAppointment.organizationId || '',
-          })
-        ).data.id
+    promises.push(this.acuityRepository.getCalendarList())
+
+    if (!userId) {
+      promises.push(
+        this.enterpriseAdapter.findOrCreateUser({
+          email: acuityAppointment.email,
+          firstName: acuityAppointment.firstName,
+          lastName: acuityAppointment.lastName,
+          organizationId: acuityAppointment.organizationId || '',
+        }),
+      )
+    }
+
+    const [calendars, userIdFromDb] = await Promise.all(promises)
+
+    const appoinmentCalendar = calendars.find(({id}) => id === acuityAppointment.calendarID)
+    const currentUserId = userId ? userId : userIdFromDb.data.id
 
     return {
       acuityAppointmentId: acuityAppointment.id,
@@ -362,6 +370,8 @@ export class AppoinmentService {
       agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
       userId: currentUserId,
+      locationName: appoinmentCalendar?.name,
+      locationAddress: appoinmentCalendar?.location,
     }
   }
 
