@@ -1063,7 +1063,7 @@ export class PCRTestResultsService {
     const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
     const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
 
-    const appointmentStatsByTypes: Record<ResultTypes, number> | {} = {}
+    const appointmentStatsByTypes: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
     const appointmentStatsByOrganization: Record<string, number> = {}
 
     appointments.forEach((appointment) => {
@@ -1086,7 +1086,7 @@ export class PCRTestResultsService {
       ([name, count]) => ({
         id: name,
         name,
-        count: count as number,
+        count,
       }),
     )
     const pcrResultStatsByOrgIdArr = Object.entries(appointmentStatsByOrganization).map(

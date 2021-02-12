@@ -837,7 +837,10 @@ export class AppoinmentService {
       searchQuery,
       transportRunId,
     })
-    const appointmentStatsByTypes: Record<AppointmentStatus, number> | {} = {}
+    const appointmentStatsByTypes: Record<AppointmentStatus, number> = {} as Record<
+      AppointmentStatus,
+      number
+    >
     const appointmentStatsByOrganization: Record<string, number> = {}
 
     appointments.forEach((appointment) => {
@@ -856,7 +859,7 @@ export class AppoinmentService {
       ([name, count]) => ({
         id: name,
         name,
-        count: count as number,
+        count,
       }),
     )
     const appointmentStatsByOrgIdArr = Object.entries(appointmentStatsByOrganization).map(
