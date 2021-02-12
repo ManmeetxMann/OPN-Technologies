@@ -4,6 +4,7 @@ import {
   ActivityTrackingDb,
   AppointmentActivityAction,
   AppointmentDBModel,
+  AppointmentStatus,
   AppointmentStatusHistoryDb,
   UpdateAppointmentActionParams,
 } from '../models/appointment'
@@ -21,6 +22,15 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public async save(appointments: Omit<AppointmentDBModel, 'id'>): Promise<AppointmentDBModel> {
     const validatedData = await DBSchema.validateAsync(appointments)
     return this.add(validatedData)
+  }
+
+  public changeAppointmentStatus(
+    appointmentId: string,
+    appointmentStatus: AppointmentStatus,
+  ): Promise<AppointmentDBModel> {
+    return this.updateProperties(appointmentId, {
+      appointmentStatus,
+    })
   }
 
   public async updateBarCodeById(
