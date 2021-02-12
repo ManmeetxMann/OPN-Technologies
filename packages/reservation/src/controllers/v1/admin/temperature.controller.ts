@@ -60,7 +60,10 @@ class TemperatureAdminController implements IControllerBase {
         temperature > temperatureThreshold ? TemperatureStatuses.Stop : TemperatureStatuses.Proceed
       const validFrom = now()
 
-      const atestation = await this.attestationService.lastAttestationByUserId(userId)
+      const [atestation, activePassport] = await Promise.all([
+        this.attestationService.lastAttestationByUserId(userId),
+        this.passportService.findLatestPassport(userId),
+      ])
 
       if (!atestation) {
         throw new BadRequestException('No attestation found for user')
@@ -87,7 +90,16 @@ class TemperatureAdminController implements IControllerBase {
         validUntil: this.passportService.shortestTime(status, now()),
       }
 
-      const passport = await this.passportService.create(status, data.userId, [], false)
+      let passport
+      if (activePassport.status === PassportStatuses.TemperatureCheckRequired) {
+        passport = await this.passportService.reviseStatus(
+          activePassport.statusToken,
+          status === TemperatureStatuses.Stop ? PassportStatuses.Stop : PassportStatuses.Proceed,
+        )
+      } else {
+        console.warn("Couldn't find the right passport to update")
+        passport = await this.passportService.create(status, data.userId, [], false)
+      }
 
       if (status === TemperatureStatuses.Stop) {
         await this.alertService.sendAlert(

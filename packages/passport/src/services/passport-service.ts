@@ -1,6 +1,7 @@
 import {Passport, PassportModel, PassportStatus, PassportStatuses} from '../models/passport'
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {ForbiddenException} from '../../../common/src/exceptions/forbidden-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {now, serverTimestamp} from '../../../common/src/utils/times'
@@ -203,5 +204,22 @@ export class PassportService {
     const shorter = byMax.isBefore(byDuration) ? byMax : byDuration
 
     return shorter.toDate()
+  }
+
+  /**
+   * Hacky and should be disabled ASAP
+   */
+  async reviseStatus(token: string, status: PassportStatuses): Promise<Passport> {
+    if (![PassportStatuses.Proceed, PassportStatuses.Stop].includes(status)) {
+      throw new ForbiddenException('Must revise to stop or proceed status')
+    }
+    const passport = await this.findOneByToken(token)
+    if (passport.status !== PassportStatuses.TemperatureCheckRequired) {
+      throw new ForbiddenException(
+        `Passport ${passport.id} must have status temperature_check_required to update`,
+      )
+    }
+    passport.status = status
+    return this.passportRepository.update(passport)
   }
 }

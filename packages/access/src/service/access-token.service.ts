@@ -8,6 +8,7 @@ import {AccessService} from './access.service'
 import {AccessModel} from '../repository/access.repository'
 
 const permissiveMode = Config.get('FEATURE_CREATE_TOKEN_PERMISSIVE_MODE') === 'enabled'
+const allowTempCheck = Config.get('FEATURE_CREATE_TOKEN_TEMPERATURE_CHECK_ALLOWED') === 'enabled'
 
 export class AccessTokenService {
   private organizationService: OrganizationService
@@ -52,6 +53,7 @@ export class AccessTokenService {
     if (
       !(
         passport.status === PassportStatuses.Pending ||
+        (allowTempCheck && passport.status === PassportStatuses.TemperatureCheckRequired) ||
         (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
       )
     ) {
