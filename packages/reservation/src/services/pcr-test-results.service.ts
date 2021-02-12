@@ -33,7 +33,6 @@ import {
   PCRTestResultRequest,
   PcrTestResultsListRequest,
   ResultReportStatus,
-  TestResultsReportingTrackerPCRResultsDBModel,
   PCRResultActionsAllowedResend,
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultByDeadlineListDTO,
@@ -45,6 +44,8 @@ import {
   resultToStyle,
   TestResutsDTO,
   PCRTestResultHistory,
+  pcrTestResultsResponse,
+  pcrTestResultsDTO,
 } from '../models/pcr-test-results'
 
 import {
@@ -211,13 +212,31 @@ export class PCRTestResultsService {
 
   async listPCRTestResultReportStatus(
     reportTrackerId: string,
-  ): Promise<TestResultsReportingTrackerPCRResultsDBModel[]> {
+  ): Promise<{inProgress: boolean; pcrTestResults: pcrTestResultsDTO[]}> {
     const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
       this.datastore,
       reportTrackerId,
     )
 
-    return testResultsReportingTrackerPCRResult.fetchAll()
+    let inProgress = false
+    const testResultsReporting = await testResultsReportingTrackerPCRResult.fetchAll()
+    const statusesForInProgressCondition = [
+      ResultReportStatus.RequestReceived,
+      ResultReportStatus.Processing,
+    ]
+
+    const pcrTestResults = testResultsReporting.map((pcrTestResult) => {
+      if (statusesForInProgressCondition.includes(pcrTestResult.status)) {
+        inProgress = true
+      }
+
+      return pcrTestResultsResponse(pcrTestResult)
+    })
+
+    return {
+      inProgress,
+      pcrTestResults,
+    }
   }
 
   async getPCRResults(
