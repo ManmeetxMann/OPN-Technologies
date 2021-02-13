@@ -380,7 +380,7 @@ export class AppoinmentService {
         `cancelAppointment: Failed for appointmentId ${appointmentId} isLabUser: ${isLabUser} appointmentStatus: ${appointmentFromDB.appointmentStatus}`,
       )
       throw new BadRequestException(
-        `Appointment can't be cancelled. It is already in ${appointmentFromDB.appointmentStatus} state`,
+        `Appointment can't be canceled. It is already in ${appointmentFromDB.appointmentStatus} state`,
       )
     }
 
@@ -407,10 +407,10 @@ export class AppoinmentService {
     )
     if (appointmentStatus.canceled) {
       console.log(
-        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" is successfully cancelled`,
+        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" is successfully canceled`,
       )
-      //Update Appointment DB to be Cancelled
-      await this.makeCancelled(appointmentId, userId)
+      //Update Appointment DB to be Canceled
+      await this.makeCanceled(appointmentId, userId)
       try {
         const pcrTestResult = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
           appointmentFromDB.id,
@@ -452,11 +452,11 @@ export class AppoinmentService {
     })
   }
 
-  async makeCancelled(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
+  async makeCanceled(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.InProgress, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Canceled,
-      cancelled: true,
+      canceled: true,
     })
   }
 
