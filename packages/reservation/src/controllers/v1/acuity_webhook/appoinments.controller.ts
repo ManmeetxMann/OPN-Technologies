@@ -208,7 +208,7 @@ class AppointmentWebhookController implements IControllerBase {
       } catch (e) {
         if (appointment.canceled) {
           console.log(
-            `AppointmentWebhookController: UpdateAppointment: Cancelled AppoinmentID: ${id}. Hence No PCR Results Updates.`,
+            `AppointmentWebhookController: UpdateAppointment: Cancelled AppoinmentID: ${id}. Hence No PCR Results Updates. Error: ${e.toString()}`,
           )
         } else {
           console.error(
