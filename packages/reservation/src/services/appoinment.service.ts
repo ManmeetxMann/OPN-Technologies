@@ -740,19 +740,29 @@ export class AppoinmentService {
     )
   }
 
-  async checkDuplicatedAppointments(appointmentIds: string[]): Promise<{
-    duplicatedAppointmentIds: string [],
-    duplicatedBarCodeArray: string[],
+  async checkDuplicatedAppointments(
+    appointmentIds: string[],
+  ): Promise<{
+    duplicatedAppointmentIds: string[]
+    duplicatedBarCodeArray: string[]
     filtredAppointmentIds: string[]
   }> {
     const appointments = await this.getAppointmentsDBByIds(appointmentIds)
-    const barCodes = appointments.map(({barCode}) => barCode)
-    const appointmentsByBarCodes = await this.appointmentsRepository.findWhereIn('barCode', barCodes)
+    const appointmentIdsFromDb = []
+    const barCodes = appointments.map(({barCode, id}) => {
+      appointmentIdsFromDb.push(id)
+
+      return barCode
+    })
+    const appointmentsByBarCodes = await this.appointmentsRepository.findWhereIn(
+      'barCode',
+      barCodes,
+    )
     const allBarCodes = appointmentsByBarCodes.map(({barCode}) => barCode)
-    console.log(barCodes, allBarCodes)
-    let duplicatedAppointmentIds
-    let duplicatedBarCodeArray: string []
-    
+    const missedAppointmentIds = appointmentIds.filter((id) => !appointmentIdsFromDb.includes(id))
+    let duplicatedAppointmentIds: string[]
+    let duplicatedBarCodeArray: string[]
+
     const firstBarCodeMatch = new Map()
     const hasDuplicates = union(allBarCodes).length != allBarCodes.length
 
@@ -760,7 +770,7 @@ export class AppoinmentService {
       const duplicatedBarCodes = new Set<string>()
 
       appointmentsByBarCodes.forEach(({barCode, id}) => {
-        if (!firstBarCodeMatch.has({barCode})) {
+        if (!firstBarCodeMatch.has(barCode)) {
           return firstBarCodeMatch.set(barCode, {barCode, id})
         }
         duplicatedBarCodes.add(barCode)
@@ -772,16 +782,14 @@ export class AppoinmentService {
         .map(({id}) => id)
     }
 
-    const filtredAppointmentIds: string[] = hasDuplicates 
-      ? Array.from(firstBarCodeMatch.values()).map(({id}) => id)
+    const filtredAppointmentIds: string[] = hasDuplicates
+      ? [...Array.from(firstBarCodeMatch.values()).map(({id}) => id), ...missedAppointmentIds]
       : appointmentIds
 
-    console.log(duplicatedAppointmentIds,duplicatedBarCodeArray,filtredAppointmentIds)
-    
     return {
       duplicatedAppointmentIds,
       duplicatedBarCodeArray,
-      filtredAppointmentIds
+      filtredAppointmentIds,
     }
   }
 

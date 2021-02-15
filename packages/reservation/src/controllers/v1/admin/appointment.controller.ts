@@ -181,7 +181,7 @@ class AdminAppointmentController implements IControllerBase {
       const {
         duplicatedAppointmentIds,
         duplicatedBarCodeArray,
-        filtredAppointmentIds
+        filtredAppointmentIds,
       } = await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
 
       const transportRuns = await this.transportRunsService.getByTransportRunId(transportRunId)
@@ -202,18 +202,18 @@ class AdminAppointmentController implements IControllerBase {
                 adminId,
               ),
             }
-          } catch(error) {
+          } catch (error) {
             return {
               appointmentId,
-              state: AppointmentStatusChangeState.Failed
+              state: AppointmentStatusChangeState.Failed,
             }
           }
         }),
       )
 
-      const duplicatesMessage = duplicatedBarCodeArray 
+      const duplicatesMessage = duplicatedBarCodeArray.length
         ? `Multiple Appointments [${duplicatedAppointmentIds}] with barcodes: ${duplicatedBarCodeArray}`
-        : ''
+        : null
 
       res.json(actionSuccess(appointmentsState, duplicatesMessage))
     } catch (error) {
@@ -268,17 +268,30 @@ class AdminAppointmentController implements IControllerBase {
       const {
         duplicatedAppointmentIds,
         duplicatedBarCodeArray,
-        filtredAppointmentIds
+        filtredAppointmentIds,
       } = await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
 
       const appointmentsState: AppointmentsState[] = await Promise.all(
-        filtredAppointmentIds.map(async (appointmentId) => ({
-          appointmentId,
-          state: await this.appointmentService.makeReceived(appointmentId, vialLocation, adminId),
-        })),
+        filtredAppointmentIds.map(async (appointmentId) => {
+          try {
+            return {
+              appointmentId,
+              state: await this.appointmentService.makeReceived(
+                appointmentId,
+                vialLocation,
+                adminId,
+              ),
+            }
+          } catch (error) {
+            return {
+              appointmentId,
+              state: AppointmentStatusChangeState.Failed,
+            }
+          }
+        }),
       )
 
-      const duplicatesMessage = duplicatedBarCodeArray 
+      const duplicatesMessage = duplicatedBarCodeArray
         ? `Multiple Appointments [${duplicatedAppointmentIds}] with barcodes: ${duplicatedBarCodeArray}`
         : ''
 
