@@ -1,7 +1,6 @@
 /**
- * This script to go through all future appointments and fix deadline for results
+ * This script to go through all future canceled appointments and delete results
  */
-import {isEmpty} from 'lodash'
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
 
@@ -46,73 +45,31 @@ async function updateTestResults(): Promise<Result[]> {
   const results: Result[] = []
 
   while (hasMore) {
-    const testResultSnapshot = await database
+    const appointmentsSnapshot = await database
       .collection('appointments')
       .where('dateTime', '>=', firestore.Timestamp.fromDate(new Date('2021-02-01T00:00:00')))
+      .where('canceled', '==', true)
       .offset(offset)
       .limit(limit)
       .get()
 
-    offset += testResultSnapshot.docs.length
-    hasMore = !testResultSnapshot.empty
+    offset += appointmentsSnapshot.docs.length
+    hasMore = !appointmentsSnapshot.empty
     //hasMore = false
 
-    for (const testResult of testResultSnapshot.docs) {
-      const promises = []
-      promises.push(fixDeadline(testResult))
-      const result = await promiseAllSettled(promises)
-      results.push(...result)
+    const promises = []
+    for (const appointment of appointmentsSnapshot.docs) {
+      promises.push(deleteResult(appointment))
     }
+    const result = await promiseAllSettled(promises)
+    results.push(...result)
   }
   return results
 }
 
-async function fixDeadline(snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
-  const updatePCRResult = async (pcrResult, resolve) => {
-    const updateData = {}
-    if (appointmentData.dateTime.seconds !== pcrResult.data().dateTime.seconds) {
-      console.log(
-        `PCRResultId: ${pcrResult.id} ${
-          pcrResult.data().barCode
-        }  has different dateTime than appointment ${appointmentData.dateTime.toDate()} ${pcrResult
-          .data()
-          .dateTime.toDate()}`,
-      )
-      updateData['dateTime'] = appointmentData.dateTime
-    }
-    if (appointmentData.deadline.seconds !== pcrResult.data().deadline.seconds) {
-      console.log(
-        `PCRResultId: ${pcrResult.id} ${
-          pcrResult.data().barCode
-        } has different deadline than appointment ${appointmentData.deadline.toDate()} ${pcrResult
-          .data()
-          .deadline.toDate()} `,
-      )
-      updateData['deadline'] = appointmentData.deadline
-    }
-
-    if (!isEmpty(updateData)) {
-      await pcrResult.ref.set(
-        {
-          ...updateData,
-          timestamps: {
-            migrations: {
-              copyDeadlineAndDateTimeFromAppointment: firestore.FieldValue.serverTimestamp(),
-            },
-          },
-        },
-        {
-          merge: true,
-        },
-      )
-      console.log(`Successfully updated PCRResult: ${pcrResult.id}`)
-      return resolve('updated')
-    }
-    return resolve()
-  }
-
+async function deleteResult(snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
   const appointmentId = snapshot.id
-  const appointmentData = snapshot.data()
+  //const appointmentData = snapshot.data()
   const pcrResultInDb = await database
     .collection('pcr-test-results')
     .where('appointmentId', '==', appointmentId)
@@ -122,22 +79,13 @@ async function fixDeadline(snapshot: firestore.QueryDocumentSnapshot<firestore.D
     return Promise.reject(`appointmentId: ${appointmentId} doesn't have any results`)
   }
 
-  try {
-    //console.info(`AcuityAppointmentId: ${appointmentId} total results: ${pcrResultInDb.docs.length}`)
-    const requests = pcrResultInDb.docs.map((pcrResult) => {
-      return new Promise((resolve) => {
-        updatePCRResult(pcrResult, resolve)
-      })
-    })
-
-    const promiseResult = Promise.all(requests).then((value) => {
-      return value
-    })
-    return (await promiseResult).includes('updated')
-  } catch (error) {
-    console.warn(error)
-    throw error
+  if (!pcrResultInDb || pcrResultInDb.docs.length > 1) {
+    return Promise.reject(`appointmentId: ${appointmentId} have more than 1 results`)
   }
+  console.log(
+    `appointmentId: ${appointmentId} PCRResultID: ${pcrResultInDb.docs[0].id} will be deleted`,
+  )
+  return Promise.resolve('Deleted')
 }
 
 async function main() {
