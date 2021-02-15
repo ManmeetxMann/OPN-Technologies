@@ -142,6 +142,8 @@ components:
               type: string
             transportRunId:
               type: string
+            transportRunLabel:
+              type: string
             deadline:
               type: string
             latestResult:
@@ -245,6 +247,8 @@ components:
                 type: string
                 format: date-time
               driverName:
+                type: string
+              label:
                 type: string
         status:
           type: object
@@ -991,9 +995,12 @@ paths:
                   format: date-time
                 driverName:
                   type: string
+                label:
+                  type: string
               required:
                 - transportDateTime
                 - driverName
+                - label
       responses:
         '200':
           description: Succesfully create transport

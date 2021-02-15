@@ -9,7 +9,11 @@ export class TransportRunsService {
   private transportRunsRepository = new TransportRunsRepository(new DataStore())
   private identifier = new IdentifiersModel(new DataStore())
 
-  create(transportDateTime: Date, driverName: string): Promise<TransportRunsIdentifier> {
+  create(
+    transportDateTime: Date,
+    driverName: string,
+    label: string,
+  ): Promise<TransportRunsIdentifier> {
     const transportDate = getDateFromDatetime(transportDateTime)
 
     return this.identifier
@@ -18,8 +22,9 @@ export class TransportRunsService {
         return this.transportRunsRepository.add({
           transportRunId: `R${transportRunId}`,
           transportDateTime: firestore.Timestamp.fromDate(transportDateTime),
-          transportDate: transportDate,
-          driverName: driverName,
+          transportDate,
+          driverName,
+          label,
         })
       })
       .then((transportRun: TransportRunsDbModel) => {
@@ -31,5 +36,9 @@ export class TransportRunsService {
   }
   getByTransportRunId(transportRunId: string): Promise<TransportRunsDbModel[]> {
     return this.transportRunsRepository.findWhereEqual('transportRunId', transportRunId)
+  }
+  getByTransportRunIdBulk(transportRunIds: string[]): Promise<TransportRunsDbModel[]> {
+    console.log('transportRunIds', transportRunIds)
+    return this.transportRunsRepository.findWhereIn('transportRunId', transportRunIds)
   }
 }

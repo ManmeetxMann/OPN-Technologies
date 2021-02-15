@@ -118,10 +118,24 @@ class AdminAppointmentController implements IControllerBase {
         transportRunId,
       })
 
+      const transportRuns = Object.fromEntries(
+        (
+          await this.transportRunsService.getByTransportRunIdBulk(
+            appointments
+              .map((appointment) => appointment.transportRunId)
+              .filter((appointment) => !!appointment),
+          )
+        ).map((transportRun) => [transportRun.transportRunId, transportRun.label]),
+      )
+
       res.json(
         actionSucceed(
           appointments.map((appointment: AppointmentDBModel) => ({
-            ...appointmentUiDTOResponse(appointment, isLabUser),
+            ...appointmentUiDTOResponse(
+              appointment,
+              isLabUser,
+              transportRuns[appointment.transportRunId],
+            ),
           })),
         ),
       )
