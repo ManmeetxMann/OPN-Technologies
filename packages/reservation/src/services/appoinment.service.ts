@@ -471,6 +471,7 @@ export class AppoinmentService {
     createdBy: string,
   ): Promise<AppointmentStatusHistoryDb> {
     const appointment = await this.getAppointmentDBById(appointmentId)
+    console.log(appointmentId)
     return this.getStatusHistoryRepository(appointmentId).add({
       newStatus: newStatus,
       previousStatus: appointment.appointmentStatus,
@@ -741,28 +742,56 @@ export class AppoinmentService {
     )
   }
 
-  async checkDuplicatedAppointments(appointmentIds: string[]): Promise<void> {
+  async checkDuplicatedAppointments(
+    appointmentIds: string[],
+  ): Promise<{
+    duplicatedAppointmentIds: string[]
+    duplicatedBarCodeArray: string[]
+    filtredAppointmentIds: string[]
+  }> {
     const appointments = await this.getAppointmentsDBByIds(appointmentIds)
-    const barCodes = appointments.map(({barCode}) => barCode)
+    const appointmentIdsFromDb = []
+    const barCodes = appointments.map(({barCode, id}) => {
+      appointmentIdsFromDb.push(id)
 
-    if (union(barCodes).length != barCodes.length) {
-      const firstMatch = new Set()
-      const duplicatedBarCodes = new Set()
+      return barCode
+    })
+    const appointmentsByBarCodes = await this.appointmentsRepository.findWhereIn(
+      'barCode',
+      barCodes,
+    )
+    const allBarCodes = appointmentsByBarCodes.map(({barCode}) => barCode)
+    const missedAppointmentIds = appointmentIds.filter((id) => !appointmentIdsFromDb.includes(id))
+    let duplicatedAppointmentIds: string[]
+    let duplicatedBarCodeArray: string[]
 
-      barCodes.forEach((barcode) => {
-        if (!firstMatch.has(barcode)) {
-          return firstMatch.add(barcode)
+    const firstBarCodeMatch = new Map()
+    const hasDuplicates = union(allBarCodes).length != allBarCodes.length
+
+    if (hasDuplicates) {
+      const duplicatedBarCodes = new Set<string>()
+
+      appointmentsByBarCodes.forEach(({barCode, id}) => {
+        if (!firstBarCodeMatch.has(barCode)) {
+          return firstBarCodeMatch.set(barCode, {barCode, id})
         }
-        duplicatedBarCodes.add(barcode)
+        duplicatedBarCodes.add(barCode)
       })
-      const duplicatedBarCodeArray = Array.from(duplicatedBarCodes.keys())
-      const duplicatedAppointmentIds = appointments
+
+      duplicatedBarCodeArray = Array.from(duplicatedBarCodes.values())
+      duplicatedAppointmentIds = appointments
         .filter(({barCode}) => duplicatedBarCodeArray.includes(barCode))
         .map(({id}) => id)
+    }
 
-      throw new DuplicateDataException(
-        `Multiple Appointments [${duplicatedAppointmentIds}] with barcodes: ${duplicatedBarCodeArray}`,
-      )
+    const filtredAppointmentIds: string[] = hasDuplicates
+      ? [...Array.from(firstBarCodeMatch.values()).map(({id}) => id), ...missedAppointmentIds]
+      : appointmentIds
+
+    return {
+      duplicatedAppointmentIds,
+      duplicatedBarCodeArray,
+      filtredAppointmentIds,
     }
   }
 
