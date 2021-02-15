@@ -796,6 +796,16 @@ export class AppoinmentService {
     if (!appointment) {
       throw new BadRequestException('Invalid appointmentId')
     }
+
+    if (
+      appointment.appointmentStatus === AppointmentStatus.Canceled ||
+      appointment.appointmentStatus === AppointmentStatus.Reported
+    ) {
+      throw new BadRequestException(
+        'Forbidden to regenerate barCode for apointment with status "Canceled" or "Reported"',
+      )
+    }
+
     const newBarCode = await this.getNextBarCodeNumber()
     console.log(
       `regenerateBarCode: AppointmentID: ${appointmentId} OldBarCode: ${appointment.barCode} NewBarCode: ${newBarCode}`,
