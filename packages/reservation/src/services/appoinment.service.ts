@@ -33,7 +33,6 @@ import {Config} from '../../../common/src/utils/config'
 import {
   firestoreTimeStampToUTC,
   makeDeadline,
-  makeDeadlineForFilter,
   makeFirestoreTimestamp,
 } from '../utils/datetime.helper'
 
@@ -768,24 +767,7 @@ export class AppoinmentService {
   }
 
   async getAppointmentByUserId(userId: string): Promise<UserAppointment[]> {
-    const appointmentResultsQuery = [
-      {
-        map: '/',
-        key: 'deadline',
-        operator: DataModelFieldMapOperatorType.GreatOrEqual,
-        value: makeDeadlineForFilter(moment().toDate()),
-      },
-      {
-        map: '/',
-        key: 'userId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: userId,
-      },
-    ]
-
-    const appointments = await this.appointmentsRepository.findWhereEqualInMap(
-      appointmentResultsQuery,
-    )
+    const appointments = await this.appointmentsRepository.findWhereEqual('userId', userId)
 
     return appointments.map(userAppointmentDTOResponse)
   }
