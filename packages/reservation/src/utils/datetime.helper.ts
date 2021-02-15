@@ -41,11 +41,11 @@ export const makeFirestoreTimestamp = (localDate: Date | string): firestore.Time
 }
 
 export const formatDateRFC822Local = (timestamp: firestore.Timestamp): string => {
-  return moment(timestamp.toDate()).tz(timeZone).format()
+  return moment(timestamp.toDate()).tz(timeZone).toISOString()
 }
 
 export const formatStringDateRFC822Local = (date: Date | string): string => {
-  return moment(date).tz(timeZone).format()
+  return moment(date).tz(timeZone).toISOString()
 }
 
 export const firestoreTimeStampToUTC = (timestamp: firestore.Timestamp): moment.Moment => {
