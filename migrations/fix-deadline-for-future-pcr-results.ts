@@ -48,7 +48,7 @@ async function updateTestResults(): Promise<Result[]> {
   while (hasMore) {
     const testResultSnapshot = await database
       .collection('appointments')
-      .where('dateTime', '>=', firestore.Timestamp.now())
+      .where('dateTime', '>=', firestore.Timestamp.fromDate(new Date('2021-02-01T00:00:00')))
       .offset(offset)
       .limit(limit)
       .get()

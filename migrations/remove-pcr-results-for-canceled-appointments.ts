@@ -48,7 +48,7 @@ async function updateTestResults(): Promise<Result[]> {
     const appointmentsSnapshot = await database
       .collection('appointments')
       .where('dateTime', '>=', firestore.Timestamp.fromDate(new Date('2021-02-01T00:00:00')))
-      .where('canceled','==',true)
+      .where('canceled', '==', true)
       .offset(offset)
       .limit(limit)
       .get()
@@ -82,7 +82,9 @@ async function deleteResult(snapshot: firestore.QueryDocumentSnapshot<firestore.
   if (!pcrResultInDb || pcrResultInDb.docs.length > 1) {
     return Promise.reject(`appointmentId: ${appointmentId} have more than 1 results`)
   }
-  console.log(`appointmentId: ${appointmentId} PCRResultID: ${pcrResultInDb.docs[0].id} will be deleted`)
+  console.log(
+    `appointmentId: ${appointmentId} PCRResultID: ${pcrResultInDb.docs[0].id} will be deleted`,
+  )
   return Promise.resolve('Deleted')
 }
 
