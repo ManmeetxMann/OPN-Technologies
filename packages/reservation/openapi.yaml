@@ -2373,6 +2373,8 @@ paths:
                           type: string
                         dateTime:
                           type: string
+                        testRunLabel:
+                          type: string
                   status:
                     type: object
                     additionalProperties: false
