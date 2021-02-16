@@ -62,7 +62,11 @@ class TemperatureAdminController implements IControllerBase {
 
       const [atestation, activePassport] = await Promise.all([
         this.attestationService.lastAttestationByUserId(userId),
-        this.passportService.findLatestPassport(userId),
+        this.passportService.findLatestPassport(
+          userId,
+          null,
+          PassportStatuses.TemperatureCheckRequired,
+        ),
       ])
 
       if (!atestation) {
