@@ -52,17 +52,20 @@ import {
   AppointmentDBModel,
   AppointmentStatus,
   DeadlineLabel,
+  Filter,
   ResultTypes,
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {makeDeadlineForFilter} from '../utils/datetime.helper'
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.datastore)
   private appointmentService = new AppoinmentService()
+  private organizationService = new OrganizationService()
   private couponService = new CouponService()
   private emailService = new EmailService()
   private pdfService = new PdfService()
@@ -1066,6 +1069,95 @@ export class PCRTestResultsService {
       runNumber: 1,
       previousResult: null,
     })
+  }
+
+  async getDueDeadlineStats({
+    deadline,
+    testRunId,
+    barCode,
+  }: PcrTestResultsListByDeadlineRequest): Promise<{
+    pcrResultStatsByResultArr: Filter[]
+    pcrResultStatsByOrgIdArr: Filter[]
+    total: number
+  }> {
+    const pcrTestResultsQuery = []
+
+    if (deadline) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'deadline',
+        operator: DataModelFieldMapOperatorType.LessOrEqual,
+        value: makeDeadlineForFilter(deadline),
+      })
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'waitingResult',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      })
+    }
+
+    if (barCode) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: barCode,
+      })
+    }
+
+    if (testRunId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testRunId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: testRunId,
+      })
+    }
+
+    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
+    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+
+    const appointmentStatsByTypes: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
+    const appointmentStatsByOrganization: Record<string, number> = {}
+
+    appointments.forEach((appointment) => {
+      const pcrTest = pcrResults?.find(({appointmentId}) => appointmentId === appointment.id)
+      if (appointmentStatsByTypes[pcrTest.result]) {
+        ++appointmentStatsByTypes[pcrTest.result]
+      } else {
+        appointmentStatsByTypes[pcrTest.result] = 1
+      }
+      if (appointmentStatsByOrganization[pcrTest.result]) {
+        ++appointmentStatsByOrganization[appointment.organizationId]
+      } else {
+        appointmentStatsByOrganization[appointment.organizationId] = 1
+      }
+    })
+    const organizations = await this.organizationService.getAllByIds(
+      Object.keys(appointmentStatsByOrganization),
+    )
+    const pcrResultStatsByResultArr = Object.entries(appointmentStatsByTypes).map(
+      ([name, count]) => ({
+        id: name,
+        name,
+        count,
+      }),
+    )
+    const pcrResultStatsByOrgIdArr = Object.entries(appointmentStatsByOrganization).map(
+      ([orgId, count]) => ({
+        id: orgId,
+        name: organizations.find(({id}) => id === orgId)?.name ?? 'None',
+        count,
+      }),
+    )
+
+    return {
+      pcrResultStatsByResultArr,
+      pcrResultStatsByOrgIdArr,
+      total: appointments.length,
+    }
   }
 
   async getDueDeadline({
