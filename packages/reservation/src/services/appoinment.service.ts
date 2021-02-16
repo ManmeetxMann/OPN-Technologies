@@ -230,8 +230,13 @@ export class AppoinmentService {
     return this.acuityRepository.getAppointmentByIdFromAcuity(id)
   }
 
-  async getAppointmentDBById(id: string): Promise<AppointmentDBModel> {
-    return this.appointmentsRepository.get(id)
+  async getAppointmentDBById(id: string): Promise<AppointmentDBModel & {organizationName: string}> {
+    const appointment = await this.appointmentsRepository.get(id)
+    const organization = await this.organizationService.findOneById(appointment.organizationId)
+    return {
+      ...appointment,
+      organizationName: organization && organization.name,
+    }
   }
 
   async getAppointmentDBByIdWithCancel(
