@@ -59,6 +59,7 @@ import {PCRResultPDFContent} from '../templates'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {makeDeadlineForFilter} from '../utils/datetime.helper'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {TestRunsService} from '../services/test-runs.service'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -75,6 +76,7 @@ export class PCRTestResultsService {
     ResultTypes.Positive,
     ResultTypes.PresumptivePositive,
   ]
+  private testRunsService = new TestRunsService()
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
     //Validate Result Exists for barCode and throws exception
@@ -1203,10 +1205,19 @@ export class PCRTestResultsService {
     }
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
-    const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
-    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
-
+    const appointmentIds = []
+    const testRunIds = []
     const pcrFiltred = []
+
+    pcrResults.forEach(({appointmentId, testRunId}) => {
+      appointmentIds.push(appointmentId)
+      if (testRunId) testRunIds.push(testRunId)
+    })
+
+    const [appointments, testRuns] = await Promise.all([
+      this.appointmentService.getAppointmentsDBByIds(appointmentIds),
+      this.testRunsService.getTestRunByTestRunIds(testRunIds),
+    ])
 
     pcrResults.map((pcr) => {
       const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
@@ -1220,6 +1231,8 @@ export class PCRTestResultsService {
         appointment &&
         (allowedAppointmentStatus.includes(appointment.appointmentStatus) || testRunId)
       ) {
+        const testRun = testRuns?.find(({testRunId}) => pcr.testRunId === testRunId)
+
         pcrFiltred.push({
           id: pcr.id,
           barCode: pcr.barCode,
@@ -1230,6 +1243,7 @@ export class PCRTestResultsService {
           runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
           reCollectNumber: pcr.reCollectNumber ? `S${pcr.reCollectNumber}` : null,
           dateTime: formatDateRFC822Local(appointment.dateTime),
+          testRunLabel: testRun?.name,
         })
       }
     })
