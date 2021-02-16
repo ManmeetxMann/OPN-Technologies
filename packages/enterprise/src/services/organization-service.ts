@@ -30,7 +30,7 @@ const HANDLE_LEGACY_LOCATIONS =
 export class OrganizationService {
   private dataStore = new DataStore()
   private organizationRepository = new OrganizationModel(this.dataStore)
-  private allLocationsRepo = new AllLocationsModel(this.dataStore)
+  private allLocationsRqepo = new AllLocationsModel(this.dataStore)
   private organizationKeySequenceRepository = new OrganizationKeySequenceModel(this.dataStore)
 
   create(organization: Organization): Promise<Organization> {

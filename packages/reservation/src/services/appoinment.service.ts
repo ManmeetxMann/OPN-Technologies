@@ -90,6 +90,7 @@ export class AppoinmentService {
     queryParams: AppointmentByOrganizationRequest,
   ): Promise<AppointmentDBModel[]> {
     const conditions = []
+    let appointments = []
     if (queryParams.organizationId) {
       conditions.push({
         map: '/',
@@ -203,12 +204,14 @@ export class AppoinmentService {
       const foundAppointments = await Promise.all(searchPromises).then((appointmentsArray) =>
         flatten(appointmentsArray),
       )
-      return [
+      appointments = [
         ...new Map(flatten(foundAppointments).map((item) => [item.id, item])).values(),
       ] as AppointmentDBModel[]
     } else {
-      return this.appointmentsRepository.findWhereEqualInMap(conditions)
+      appointments = await this.appointmentsRepository.findWhereEqualInMap(conditions)
     }
+    this.organizationId
+    return appointments
   }
 
   async getAppointmentByIdFromAcuity(id: number): Promise<AppointmentAcuityResponse> {
