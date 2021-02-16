@@ -28,6 +28,12 @@ import TemperatureV1Controller from './controllers/v1/admin/temperature.controll
 
 //import * as debugClient from '@google-cloud/debug-agent'
 //debugClient.start({allowExpressions: true})
+import * as traceClient from '@google-cloud/trace-agent'
+traceClient.start({
+  samplingRate: 5, // sample 5 traces per second, or at most 1 every 200 milliseconds.
+  ignoreUrls: [/^\/ignore-me/],
+  ignoreMethods: ['options'], // ignore requests with OPTIONS method (case-insensitive).
+})
 
 const PORT = Number(process.env.PORT) || 5008
 
