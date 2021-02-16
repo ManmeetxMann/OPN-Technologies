@@ -13,7 +13,7 @@ const loggerMiddleware = (req: Request, resp: Response, next: NextFunction): voi
   console.log(process.env.NODE_ENV)
   if (process.env.NODE_ENV === 'production') {
     logStreams.push(loggingBunyan.stream('info'))
-  }else{
+  } else {
     logStreams.push({stream: process.stdout, level: 'info'})
   }
 
