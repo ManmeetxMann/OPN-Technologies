@@ -1,5 +1,5 @@
 import moment from 'moment'
-import {flatten, union} from 'lodash'
+import {flatten, union, fromPairs} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 
@@ -46,7 +46,7 @@ import {
   encodeAvailableTimeId,
 } from '../utils/base64-converter'
 import {Enterprise} from '../adapter/enterprise'
-import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+// import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -212,7 +212,7 @@ export class AppoinmentService {
     } else {
       appointments = await this.appointmentsRepository.findWhereEqualInMap(conditions)
     }
-    const organizations = Object.fromEntries(
+    const organizations = fromPairs(
       (
         await this.organizationService.getAllByIds(
           appointments.map((appointment: AppointmentDBModel) => appointment.organizationId),
