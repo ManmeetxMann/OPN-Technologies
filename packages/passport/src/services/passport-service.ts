@@ -9,7 +9,7 @@ import moment from 'moment'
 import {firestore} from 'firebase-admin'
 import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
-import {isPassed} from '../../../common/src/utils/datetime-util'
+import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
@@ -136,6 +136,7 @@ export class PassportService {
   async findLatestPassport(
     userId: string,
     parentUserId: string | null = null,
+    requiredStatus: PassportStatus = null,
     nowDate: Date = now(),
   ): Promise<Passport> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
@@ -156,25 +157,29 @@ export class PassportService {
         ).filter((ppt) => ppt.dependantIds?.includes(userId))
       : []
 
-    const passports = [...directPassports, ...indirectPassports].filter(
-      (ppt) => ppt.status !== PassportStatuses.Pending,
+    const passports = [...directPassports, ...indirectPassports].filter((ppt) =>
+      requiredStatus ? ppt.status === requiredStatus : ppt.status !== PassportStatuses.Pending,
     )
     // Deal with the bad
     if (!passports || passports.length == 0) {
       return null
     }
 
-    // Get the Latest validForm Passport
+    // Get the Latest validFrom Passport
     const momentDate = moment(nowDate)
     let selectedPassport: Passport = null
     for (const passport of passports) {
+      if (!momentDate.isSameOrAfter(safeTimestamp(passport.validFrom))) {
+        continue
+      }
+      if (!selectedPassport) {
+        selectedPassport = passport
+        continue
+      }
       if (
-        // @ts-ignore
-        momentDate.isSameOrAfter(passport.validFrom.toDate()) &&
-        // @ts-ignore
-        (!selectedPassport ||
-          // @ts-ignore
-          moment(passport.validFrom.toDate()).isSameOrAfter(selectedPassport.validFrom.toDate()))
+        moment(safeTimestamp(passport.validFrom)).isSameOrAfter(
+          safeTimestamp(selectedPassport.validFrom),
+        )
       ) {
         selectedPassport = passport
       }
