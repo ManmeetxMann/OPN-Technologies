@@ -88,21 +88,24 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     const currentData = {}
     const newData = {}
     const skip = ['id', 'timestamps', 'appointmentStatus']
+    try {
+      Object.keys(updates).map((key) => {
+        // isEqual used for timestamps, !== used to avoid fouls for the same values in different formats (strings and numbers)
+        if (
+          !skip.includes(key) &&
+          (!isEqual(updates[key], appointment[key]) || updates[key] !== appointment[key])
+        ) {
+          currentData[key] = appointment[key] ?? null
+          newData[key] = updates[key] ?? null
+        }
+      })
 
-    Object.keys(updates).map((key) => {
-      // isEqual used for timestamps, !== used to avoid fouls for the same values in different formats (strings and numbers)
-      if (
-        !skip.includes(key) &&
-        (!isEqual(updates[key], appointment[key]) || updates[key] !== appointment[key])
-      ) {
-        currentData[key] = appointment[key]
-        newData[key] = updates[key]
+      if (!Object.keys(newData).length) {
+        console.warn(`No one field has been updated for appointmen ${id}`)
+        return
       }
-    })
-
-    if (!Object.keys(newData).length) {
-      console.warn(`No one field has been updated for appointmen ${id}`)
-      return
+    } catch (err) {
+      console.warn(`Failed to create Object Difference for activity Tracking ${err}`)
     }
 
     return this.getAppointmentActivityRepository(id).add({
