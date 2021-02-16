@@ -46,12 +46,14 @@ import {
   encodeAvailableTimeId,
 } from '../utils/base64-converter'
 import {Enterprise} from '../adapter/enterprise'
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 export class AppoinmentService {
   private dataStore = new DataStore()
   private acuityRepository = new AcuityRepository()
+  private organizationService = new OrganizationService()
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(this.dataStore)
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
@@ -88,7 +90,7 @@ export class AppoinmentService {
 
   async getAppointmentsDB(
     queryParams: AppointmentByOrganizationRequest,
-  ): Promise<AppointmentDBModel[]> {
+  ): Promise<(AppointmentDBModel & {organizationName: string})[]> {
     const conditions = []
     let appointments = []
     if (queryParams.organizationId) {
@@ -210,8 +212,18 @@ export class AppoinmentService {
     } else {
       appointments = await this.appointmentsRepository.findWhereEqualInMap(conditions)
     }
-    this.organizationId
-    return appointments
+    const organizations = Object.fromEntries(
+      (
+        await this.organizationService.getAllByIds(
+          appointments.map((appointment: AppointmentDBModel) => appointment.organizationId),
+        )
+      ).map((organization) => [organization.id, organization.name]),
+    )
+
+    return appointments.map((appointment) => ({
+      ...appointment,
+      organizationName: organizations[appointment.organizationId],
+    }))
   }
 
   async getAppointmentByIdFromAcuity(id: number): Promise<AppointmentAcuityResponse> {
