@@ -46,7 +46,7 @@ import {
   encodeAvailableTimeId,
 } from '../utils/base64-converter'
 import {Enterprise} from '../adapter/enterprise'
-// import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
