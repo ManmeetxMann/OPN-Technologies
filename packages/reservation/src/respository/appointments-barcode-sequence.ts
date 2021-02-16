@@ -1,7 +1,7 @@
 import {AppoinmentBarCodeSequenceDBModel} from '../models/appointment'
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
-import { Config } from '../../../common/src/utils/config'
+import {Config} from '../../../common/src/utils/config'
 
 export class AppointmentsBarCodeSequence extends DataModel<AppoinmentBarCodeSequenceDBModel> {
   public rootPath = 'appointment-barcode-sequence'
