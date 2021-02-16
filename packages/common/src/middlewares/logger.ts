@@ -9,14 +9,17 @@ const loggingBunyan = new LoggingBunyan()
 
 const loggerMiddleware = (req: Request, resp: Response, next: NextFunction): void => {
   const {headers, params, query, body} = req
+  const logStreams = []
+  console.log(process.env.NODE_ENV)
+  if (process.env.NODE_ENV === 'production') {
+    logStreams.push(loggingBunyan.stream('info'))
+  }else{
+    logStreams.push({stream: process.stdout, level: 'info'})
+  }
+
   const logger = bunyan.createLogger({
-    name: 'my-service',
-    streams: [
-      // Log to the console at 'info' and above
-      //{stream: process.stdout, level: 'info'},
-      // And log to Cloud Logging, logging at 'info' and above
-      loggingBunyan.stream('info'),
-    ],
+    name: headers.host,
+    streams: logStreams,
   })
 
   logger.info({
