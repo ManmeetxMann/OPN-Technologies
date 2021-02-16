@@ -55,7 +55,7 @@ class App {
     // this.template()
   }
 
-  private setupAppEngine(){
+  private setupAppEngine() {
     //import * as debugClient from '@google-cloud/debug-agent'
     //debugClient.start({allowExpressions: true})
     if (NodeEnV() === 'production') {
