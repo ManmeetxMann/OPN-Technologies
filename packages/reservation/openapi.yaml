@@ -224,6 +224,8 @@ components:
               type: string
             transportRunId:
               type: string
+            transportRunLabel:
+              type: string
             deadline:
               type: string
             latestResult:
@@ -327,6 +329,8 @@ components:
                 type: string
                 format: date-time
               driverName:
+                type: string
+              label:
                 type: string
         status:
           type: object
@@ -1073,9 +1077,12 @@ paths:
                   format: date-time
                 driverName:
                   type: string
+                label:
+                  type: string
               required:
                 - transportDateTime
                 - driverName
+                - label
       responses:
         '200':
           description: Succesfully create transport
@@ -1673,6 +1680,8 @@ paths:
                               Inconclusive,
                               PreliminaryPositive,
                             ]
+                        organizationName:
+                          type: string
                   status:
                     type: object
                     additionalProperties: false
@@ -2052,8 +2061,6 @@ paths:
                   type: string
                 lastName:
                   type: string
-                email:
-                  type: string
                 phone:
                   type: object
                   additionalProperties: false
@@ -2085,7 +2092,6 @@ paths:
                 - slotId
                 - firstName
                 - lastName
-                - email
                 - dateOfBirth
                 - address
                 - addressUnit
@@ -2307,6 +2313,110 @@ paths:
                   page:
                     type: number
 
+  /reservation/admin/api/v1/pcr-test-results/{pcrTestResultId}:
+    get:
+      description: Retrieve list of PCR Results
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: pcrTestResultId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      email:
+                        type: string
+                      phone:
+                        type: string
+                      ohipCard:
+                        type: string
+                      dateOfBirth:
+                        type: string
+                      address:
+                        type: string
+                      addressUnit:
+                        type: string
+                      barCode:
+                        type: string
+                      appointmentStatus:
+                        type: string
+                      result:
+                        type: string
+                      dateTime:
+                        type: string
+                      registeredNursePractitioner:
+                        type: string
+                      physician:
+                        type: string
+                      locationName:
+                        type: string
+                      swabMethod:
+                        type: string
+                      deadline:
+                        type: string
+                      labName:
+                        type: string
+                      testType:
+                        type: string
+                      equipment:
+                        type: string
+                      manufacturer:
+                        type: string
+                      resultSpecs:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          calRed61Ct:
+                            type: string
+                          calRed61RdRpGene:
+                            type: string
+                          famCt:
+                            type: string
+                          famEGene:
+                            type: string
+                          hexCt:
+                            type: string
+                          hexIC:
+                            type: string
+                          quasar670Ct:
+                            type: string
+                          quasar670NGene:
+                            type: string
+                          comment:
+                            type: string
+                          autoResult:
+                            type: string
+                    required:
+                      - email
+                      - phone
+                      - dateOfBirth
+                      - address
+                      - barCode
+                      - appointmentStatus
+                      - result
+                      - dateTime
+                      - swabMethod
+                      - deadline
+                      - labName
+                      - testType
+                      - equipment
+                      - manufacturer
+
   /reservation/admin/api/v1/pcr-test-results/due-deadline:
     get:
       description: Retrieve list of PCR Results
@@ -2372,6 +2482,8 @@ paths:
                         reCollectNumber:
                           type: string
                         dateTime:
+                          type: string
+                        testRunLabel:
                           type: string
                   status:
                     type: object

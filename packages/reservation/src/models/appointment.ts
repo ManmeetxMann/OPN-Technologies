@@ -147,7 +147,6 @@ export type CreateAppointmentRequest = {
   slotId: string
   firstName: string
   lastName: string
-  email: string
   phone: {
     code: number
     number: number
@@ -200,6 +199,8 @@ export type AppointmentUiDTO = {
   appointment?: boolean
   canCancel?: boolean
   registeredNursePractitioner?: string
+  organizationName?: string
+  transportRunLabel?: string
 }
 
 export type AppointmentsState = {
@@ -311,8 +312,9 @@ export const statsUiDTOResponse = (
 })
 
 export const appointmentUiDTOResponse = (
-  appointment: AppointmentDBModel & {canCancel?: boolean},
+  appointment: AppointmentDBModel & {canCancel?: boolean; organizationName?: string},
   isLabUser: boolean,
+  transportRunLabel?: string,
 ): AppointmentUiDTO => {
   return {
     id: appointment.id,
@@ -328,6 +330,8 @@ export const appointmentUiDTOResponse = (
     latestResult: appointment.latestResult,
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
+    organizationName: appointment.organizationName,
+    transportRunLabel,
   }
 }
 
