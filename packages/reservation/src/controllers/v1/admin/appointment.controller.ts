@@ -8,6 +8,7 @@ import {BadRequestException} from '../../../../../common/src/exceptions/bad-requ
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
 import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
+import {fromPairs} from 'lodash'
 
 import {
   appointmentByBarcodeUiDTOResponse,
@@ -125,7 +126,7 @@ class AdminAppointmentController implements IControllerBase {
         transportRunId,
       })
 
-      const transportRuns = Object.fromEntries(
+      const transportRuns = fromPairs(
         (
           await this.transportRunsService.getByTransportRunIdBulk(
             appointments
