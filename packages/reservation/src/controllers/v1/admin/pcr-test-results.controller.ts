@@ -264,9 +264,13 @@ class PCRTestResultController implements IControllerBase {
         throw new ResourceNotFoundException(`Test Run with id ${testRunId} not found`)
       }
 
-      await this.pcrTestResultsService.addTestRunToPCR(testRunId, adminId, pcrTestResultIds)
+      const result = await this.pcrTestResultsService.addTestRunToPCR(
+        testRunId,
+        adminId,
+        pcrTestResultIds,
+      )
 
-      res.json(actionSuccess())
+      res.json(actionSuccess(result))
     } catch (error) {
       next(error)
     }

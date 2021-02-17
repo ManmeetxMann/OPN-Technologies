@@ -56,6 +56,7 @@ import {
 import {PCRResultPDFContent} from '../templates'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {makeDeadlineForFilter} from '../utils/datetime.helper'
+import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -943,14 +944,21 @@ export class PCRTestResultsService {
     testRunId: string,
     adminId: string,
     pcrTestResultIds: string[],
-  ): Promise<void> {
+  ): Promise<BulkOperationResponse[]> {
     const pcrTestResults = await this.pcrTestResultsRepository.findWhereIdIn(pcrTestResultIds)
+    const results: BulkOperationResponse[] = []
 
     if (pcrTestResults.length !== pcrTestResultIds.length) {
       const pcrDbIds = pcrTestResults.map(({id}) => id)
-      const invalidId = pcrTestResultIds.filter((id) => !pcrDbIds.includes(id))
 
-      throw new ResourceNotFoundException(`PCR Result with ids ${invalidId} not found`)
+      pcrTestResultIds.map((id) => {
+        if (!pcrDbIds.includes(id)) {
+          results.push({
+            id,
+            status: BulkOperationStatus.NotFound,
+          })
+        }
+      })
     }
 
     const appoinmentIds = pcrTestResults.map(({appointmentId}) => appointmentId)
@@ -958,21 +966,41 @@ export class PCRTestResultsService {
 
     await Promise.all(
       pcrTestResults.map(async (pcr) => {
-        const appointment = appointments.find(({id}) => id === pcr.appointmentId)
+        try {
+          const appointment = appointments.find(({id}) => id === pcr.appointmentId)
 
-        if (
-          appointment?.appointmentStatus === AppointmentStatus.Received ||
-          appointment?.appointmentStatus === AppointmentStatus.ReRunRequired
-        ) {
-          await this.pcrTestResultsRepository.updateData(pcr.id, {
-            testRunId: testRunId,
-            waitingResult: true,
+          if (
+            appointment?.appointmentStatus === AppointmentStatus.Received ||
+            appointment?.appointmentStatus === AppointmentStatus.ReRunRequired
+          ) {
+            await this.pcrTestResultsRepository.updateData(pcr.id, {
+              testRunId: testRunId,
+              waitingResult: true,
+            })
+
+            await this.appointmentService.makeInProgress(pcr.appointmentId, testRunId, adminId)
+
+            results.push({
+              id: pcr.id,
+              status: BulkOperationStatus.Success,
+            })
+          } else {
+            results.push({
+              id: pcr.id,
+              status: BulkOperationStatus.NotAppropriate,
+              message: `Don't allowed to add testRunId if appointment status is not ${AppointmentStatus.Received} or ${AppointmentStatus.ReRunRequired}`,
+            })
+          }
+        } catch (error) {
+          results.push({
+            id: pcr.id,
+            status: BulkOperationStatus.InternalError,
           })
-
-          await this.appointmentService.makeInProgress(pcr.appointmentId, testRunId, adminId)
         }
       }),
     )
+
+    return results
   }
 
   async getReason(appointmentStatus: AppointmentStatus): Promise<AppointmentReasons> {
