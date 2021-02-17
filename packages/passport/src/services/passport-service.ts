@@ -187,7 +187,7 @@ export class PassportService {
     const passports = await this.passportRepository
       .collection()
       .where('userId', '==', userId)
-      .where('validFrom', '>', moment(nowDate).tz(timeZone).toDate())
+      .where('validFrom', '<', moment(nowDate).tz(timeZone).toDate())
       .orderBy('validFrom', 'desc')
       .limit(1)
       .fetch()

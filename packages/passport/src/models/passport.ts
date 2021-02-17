@@ -52,7 +52,7 @@ export const passportDTO = (passport: Passport): PassportDTO => ({
   userId: passport.userId,
   statusToken: passport.statusToken,
   // show passports as expired (pending) if they have expired
-  status: safeTimestamp(passport.validUntil) > now() ? PassportStatuses.Pending : passport.status,
+  status: safeTimestamp(passport.validUntil) < now() ? PassportStatuses.Pending : passport.status,
   validFrom: safeTimestamp(passport.validFrom).toISOString(),
   validUntil: safeTimestamp(passport.validUntil).toISOString(),
   dependantIds: passport.dependantIds ?? [],

@@ -47,6 +47,34 @@ components:
       maxItems: 2
       description: The first item in the array MUST be a boolean and the second item, if provided, MUST be a string.
 
+    User:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          nullable: true
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+        organizationIds:
+          type: array
+          items:
+            type: string
+        isAdminEnabled:
+          type: boolean
+        delegates:
+          type: array
+          items:
+            type: string
+
     Passport:
       type: object
       additionalProperties: false
@@ -77,6 +105,39 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Passport'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    V1ResponseOfPassport:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              user:
+                $ref: '#/components/schemas/User'
+              passport:
+                $ref: '#/components/schemas/Passport'
         status:
           type: object
           additionalProperties: false
@@ -244,3 +305,22 @@ paths:
       responses:
         '200':
           description: Passports updated
+  /passport/api/v1/passport:
+    get:
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      description: Get all active passports for the authenticated user and their dependants
+
+      responses:
+        '200':
+          description: Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfPassport'

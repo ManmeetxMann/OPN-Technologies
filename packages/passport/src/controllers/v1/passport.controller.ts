@@ -35,7 +35,7 @@ class PassportController implements IControllerBase {
 
   public initRoutes(): void {
     const auth = authorizationMiddleware([RequiredUserPermission.RegUser], true)
-    this.router.get(this.path + '/status', this.check)
+    this.router.get(this.path + '/passport', auth, this.check)
     this.router.post(this.path + '/attestation', auth, this.update)
   }
 
