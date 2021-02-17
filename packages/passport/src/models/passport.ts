@@ -1,6 +1,7 @@
 import DataModel from '../../../common/src/data/datamodel.base'
 
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
+import {now} from '../../../common/src/utils/times'
 
 export type Passport = {
   id: string
@@ -50,7 +51,8 @@ export const passportDTO = (passport: Passport): PassportDTO => ({
   id: passport.id,
   userId: passport.userId,
   statusToken: passport.statusToken,
-  status: passport.status,
+  // show passports as expired (pending) if they have expired
+  status: safeTimestamp(passport.validUntil) > now() ? PassportStatuses.Pending : passport.status,
   validFrom: safeTimestamp(passport.validFrom).toISOString(),
   validUntil: safeTimestamp(passport.validUntil).toISOString(),
   dependantIds: passport.dependantIds ?? [],
