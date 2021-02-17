@@ -347,9 +347,7 @@ export type UserAppointment = {
 export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): UserAppointment => ({
   id: appointment.id,
   QRCode: appointment.barCode,
-  showQrCode: moment(formatStringDateRFC822Local(moment().toDate())).isBefore(
-    formatStringDateRFC822Local(appointment.dateOfAppointment),
-  ),
+  showQrCode: moment(new Date()).isBefore(formatStringDateRFC822Local(appointment.dateOfAppointment)),
   firstName: appointment.firstName,
   lastName: appointment.lastName,
   locationName: appointment.locationName,
