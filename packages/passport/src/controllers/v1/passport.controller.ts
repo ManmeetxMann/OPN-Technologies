@@ -18,7 +18,6 @@ import {Attestation, AttestationAnswers, AttestationAnswersV1} from '../../model
 import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
 
 import {QuestionnaireService} from '../../../../lookup/src/services/questionnaire-service'
-import {EvaluationCriteria} from '../../../../lookup/src/models/questionnaire'
 
 class PassportController implements IControllerBase {
   public path = '/passport/api/v1'
