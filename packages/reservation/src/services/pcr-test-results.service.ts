@@ -1139,7 +1139,17 @@ export class PCRTestResultsService {
     const appointmentStatsByOrganization: Record<string, number> = {}
 
     appointments.forEach((appointment) => {
+      const allowedAppointmentStatus = [
+        AppointmentStatus.InProgress,
+        AppointmentStatus.ReRunRequired,
+        AppointmentStatus.Received,
+      ]
+
+      if (!(allowedAppointmentStatus.includes(appointment.appointmentStatus) || testRunId)) {
+        return
+      }
       const pcrTest = pcrResults?.find(({appointmentId}) => appointmentId === appointment.id)
+
       if (appointmentStatsByTypes[pcrTest.result]) {
         ++appointmentStatsByTypes[pcrTest.result]
       } else {
