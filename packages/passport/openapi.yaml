@@ -216,7 +216,7 @@ paths:
         '404':
           description: No Registrations with pushToken !== null exist for that user.
 
-  /passport/api/v1/passport/status:
+  /passport/api/v1/attestation:
     post:
       security:
         - bearerAuthJWT: []

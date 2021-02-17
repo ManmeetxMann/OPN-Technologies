@@ -21,7 +21,7 @@ import {QuestionnaireService} from '../../../../lookup/src/services/questionnair
 import {EvaluationCriteria} from '../../../../lookup/src/models/questionnaire'
 
 class PassportController implements IControllerBase {
-  public path = '/passport/api/v1/passport'
+  public path = '/passport/api/v1/'
   public router = express.Router()
   private passportService = new PassportService()
   private attestationService = new AttestationService()
@@ -62,7 +62,7 @@ class PassportController implements IControllerBase {
   public initRoutes(): void {
     const auth = authorizationMiddleware([RequiredUserPermission.RegUser], true)
     // this.router.get(this.path + '/status', this.check)
-    this.router.post(this.path + '/status', auth, this.update)
+    this.router.post(this.path + '/attestation', auth, this.update)
   }
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
