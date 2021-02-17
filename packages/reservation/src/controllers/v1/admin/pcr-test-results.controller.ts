@@ -244,7 +244,6 @@ class PCRTestResultController implements IControllerBase {
         res.json(actionSucceed(pcrTestResults))
       }
     } catch (error) {
-      console.log(error)
       next(error)
     }
   }
