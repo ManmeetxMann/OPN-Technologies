@@ -2,8 +2,11 @@ import DataStore from '../../../common/src/data/datastore'
 import {DateTestRunsRepository, TestRunsRepository} from '../respository/test-runs.repository'
 import {TestRunDBModel} from '../models/test-runs'
 import {firestore} from 'firebase-admin'
-import {getDateFromDatetime} from '../utils/datetime.helper'
-import moment from 'moment'
+import {
+  getDateFromDatetime,
+  getDayFromDatetime,
+  getMonthFromDatetime,
+} from '../utils/datetime.helper'
 
 export class TestRunsService {
   private dataStore = new DataStore()
@@ -27,11 +30,12 @@ export class TestRunsService {
 
   async create(testRunDateTime: Date, name: string): Promise<TestRunDBModel> {
     const testRunDate = getDateFromDatetime(testRunDateTime)
-    const idDate = moment(testRunDate).format('YYMMDD')
+    const transportDay = getDayFromDatetime(testRunDateTime)
+    const transportMonth = getMonthFromDatetime(testRunDateTime)
 
     const id = await (await this.getIdentifierRepository(testRunDate)).getUniqueId('testRun')
     return await this.testRunsRepository.save({
-      testRunId: `T${idDate}-${id}`,
+      testRunId: `RUN${id}-${transportDay}${transportMonth}`,
       testRunDateTime: firestore.Timestamp.fromDate(testRunDateTime),
       testRunDate,
       name,
