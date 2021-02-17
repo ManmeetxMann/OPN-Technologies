@@ -4,5 +4,4 @@ import {AuthUser} from '../data/user'
 
 export const getIsLabUser = (user: User): boolean => (user.admin as AdminProfile).isLabUser
 
-export const getOrganizationId = (user: AuthUser): string => user.organizationIds[0]
 export const getUserId = (user: AuthUser): string => user.id
