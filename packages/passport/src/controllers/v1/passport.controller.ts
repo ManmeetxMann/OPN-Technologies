@@ -3,18 +3,21 @@ import {NextFunction, Request, Response} from 'express'
 //import {isValidISODateString} from 'iso-datestring-validator'
 
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {PassportService} from '../../services/passport-service'
-import {PassportStatuses} from '../../models/passport'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {Attestation, AttestationAnswers, AttestationAnswersV1} from '../../models/attestation'
-import {AttestationService} from '../../services/attestation-service'
-import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
 import {UserService} from '../../../../common/src/service/user/user-service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
+import {User} from '../../../../common/src/data/user'
+
+import {PassportService} from '../../services/passport-service'
+import {AttestationService} from '../../services/attestation-service'
+import {AlertService} from '../../services/alert-service'
+import {PassportStatuses} from '../../models/passport'
+import {Attestation, AttestationAnswers, AttestationAnswersV1} from '../../models/attestation'
+
+import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
+
 import {QuestionnaireService} from '../../../../lookup/src/services/questionnaire-service'
 import {EvaluationCriteria} from '../../../../lookup/src/models/questionnaire'
-import {AlertService} from '../../services/alert-service'
-import {User} from 'packages/common/src/data/user'
 
 class UserController implements IControllerBase {
   public path = '/passport/api/v1/passport'
@@ -24,7 +27,6 @@ class UserController implements IControllerBase {
   private organizationService = new OrganizationService()
   private userService = new UserService()
   private questionnaireService = new QuestionnaireService()
-  // private topic: Topic
   private alertService = new AlertService()
 
   constructor() {
@@ -63,17 +65,6 @@ class UserController implements IControllerBase {
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      /*
-      //This is TEMP to allow backward compatibilty
-      for (const value of Object.values(req.body.answers)) {
-        if (
-          (value[2] && !isValidISODateString(value[2])) ||
-          (value['02'] && !isValidISODateString(value['02']))
-        ) {
-          throw new BadRequestException('Date string must be ISO string')
-        }
-      }
-      */
       const user = res.locals.authenticatedUser as User
       const {organizationId, userIds} = req.body as {
         organizationId: string
@@ -135,6 +126,7 @@ class UserController implements IControllerBase {
         userIds.map((userId) => this.passportService.create(passportStatus, userId, [], true)),
       )
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
+        // TODO: we should only send one alert for all of the passports
         allPassports.forEach((passport) =>
           this.alertService.sendAlert(passport, saved, organizationId, null),
         )
