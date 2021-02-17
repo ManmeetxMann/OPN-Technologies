@@ -1680,6 +1680,8 @@ paths:
                               Inconclusive,
                               PreliminaryPositive,
                             ]
+                        organizationName:
+                          type: string
                   status:
                     type: object
                     additionalProperties: false

@@ -302,7 +302,17 @@ export class PCRTestResultsService {
       return result
     }
 
+    const orgIds = []
+
+    pcrResults.forEach(({organizationId}) => {
+      if (organizationId) orgIds.push(organizationId)
+    })
+
+    const organizations = await this.organizationService.getAllByIds(orgIds)
+
     return pcrResults.map((pcr) => {
+      const organization = organizations.find(({id}) => id === pcr.organizationId)
+
       return {
         id: pcr.id,
         barCode: pcr.barCode,
@@ -314,6 +324,7 @@ export class PCRTestResultsService {
         firstName: pcr.firstName,
         lastName: pcr.lastName,
         testType: 'PCR',
+        organizationName: organization?.name,
       }
     })
   }
