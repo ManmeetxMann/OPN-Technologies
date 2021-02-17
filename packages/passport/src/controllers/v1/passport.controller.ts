@@ -1,6 +1,5 @@
 import * as express from 'express'
 import {NextFunction, Request, Response} from 'express'
-//import {isValidISODateString} from 'iso-datestring-validator'
 
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
@@ -19,7 +18,7 @@ import {OrganizationService} from '../../../../enterprise/src/services/organizat
 import {QuestionnaireService} from '../../../../lookup/src/services/questionnaire-service'
 import {EvaluationCriteria} from '../../../../lookup/src/models/questionnaire'
 
-class UserController implements IControllerBase {
+class PassportController implements IControllerBase {
   public path = '/passport/api/v1/passport'
   public router = express.Router()
   private passportService = new PassportService()
@@ -139,4 +138,4 @@ class UserController implements IControllerBase {
   }
 }
 
-export default UserController
+export default PassportController
