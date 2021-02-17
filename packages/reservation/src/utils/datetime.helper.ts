@@ -27,6 +27,14 @@ const makeTimeEndOfTheDayMoment = (datetime: moment.Moment): moment.Moment => {
   return datetime.hours(23).minutes(59).seconds(0)
 }
 
+export const getDayFromDatetime = (transportDateTime: Date | string): string => {
+  return moment(transportDateTime).tz(timeZone).format('DD')
+}
+
+export const getMonthFromDatetime = (transportDateTime: Date | string): string => {
+  return moment(transportDateTime).tz(timeZone).format('MMM')
+}
+
 export const getDateFromDatetime = (transportDateTime: Date | string): string => {
   return moment(transportDateTime).tz(timeZone).format('YYYY-MM-DD')
 }
@@ -41,7 +49,11 @@ export const makeFirestoreTimestamp = (localDate: Date | string): firestore.Time
 }
 
 export const formatDateRFC822Local = (timestamp: firestore.Timestamp): string => {
-  return moment(timestamp.toDate()).tz(timeZone).format()
+  return moment(timestamp.toDate()).tz(timeZone).toISOString()
+}
+
+export const formatStringDateRFC822Local = (date: Date | string): string => {
+  return moment(date).tz(timeZone).toISOString()
 }
 
 export const firestoreTimeStampToUTC = (timestamp: firestore.Timestamp): moment.Moment => {
