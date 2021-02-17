@@ -20,6 +20,10 @@ export class TestRunsService {
     return testRuns[0]
   }
 
+  async getTestRunByTestRunIds(testRunIds: string[]): Promise<TestRunDBModel[]> {
+    return this.testRunsRepository.findWhereIn('testRunId', testRunIds)
+  }
+
   async getTestRunsByDate(date: string): Promise<TestRunDBModel[]> {
     return this.testRunsRepository.findWhereEqual('testRunDate', date)
   }
