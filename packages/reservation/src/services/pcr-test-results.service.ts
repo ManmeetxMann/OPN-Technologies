@@ -244,7 +244,7 @@ export class PCRTestResultsService {
   }
 
   async getPCRResults(
-    {organizationId, deadline, barCode}: PcrTestResultsListRequest,
+    {organizationId, deadline, barCode, result}: PcrTestResultsListRequest,
     isLabUser: boolean,
   ): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
@@ -286,9 +286,18 @@ export class PCRTestResultsService {
       })
     }
 
+    if (result) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'result',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: result,
+      })
+    }
+
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
       pcrTestResultsQuery,
-      {key: 'result', direction: 'desc'},
+      result ? null : {key: 'result', direction: 'desc'},
     )
 
     const getResultValue = (result: ResultTypes, notify: boolean): ResultTypes => {

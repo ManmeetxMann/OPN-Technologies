@@ -258,6 +258,7 @@ export type PcrTestResultsListRequest = {
   organizationId?: string
   deadline?: string
   barCode?: string
+  result?: ResultTypes
 }
 
 export type PCRTestResultListDTO = {

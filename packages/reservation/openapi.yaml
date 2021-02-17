@@ -1625,6 +1625,21 @@ paths:
           name: barCode
           schema:
             type: string
+        - in: query
+          name: result
+          schema:
+            type: string
+            enum:
+              [
+                  PresumptivePositive,
+                  PreliminaryPositive,
+                  Positive,
+                  Negative,
+                  Pending,
+                  Invalid,
+                  Inconclusive,
+                  Indeterminate,
+              ]
       responses:
         '200':
           description: Successfully Return
