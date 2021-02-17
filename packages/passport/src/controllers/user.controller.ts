@@ -72,11 +72,11 @@ class UserController implements IControllerBase {
 
   public initRoutes(): void {
     // TODO: deprecate
-    this.router.post(this.path + '/status/get', this.check)
+    this.router.post(this.path + '/status/get', this.checkV1)
     // TODO: deprecate
     this.router.post(this.path + '/status/update', this.update)
     this.router.post(this.path + '/testNotify', this.testNotify)
-    this.router.get('passport/api/v1/passport/status', this.check)
+    this.router.get('passport/api/v1/passport/status', this.checkV1)
     this.router.post('passport/api/v1/passport/status', this.update)
   }
 
