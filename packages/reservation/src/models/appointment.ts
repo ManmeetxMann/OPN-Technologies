@@ -199,6 +199,7 @@ export type AppointmentUiDTO = {
   canCancel?: boolean
   registeredNursePractitioner?: string
   organizationName?: string
+  transportRunLabel?: string
 }
 
 export type AppointmentsState = {
@@ -262,9 +263,57 @@ const filteredAppointmentStatus = (
   return status
 }
 
+export type Filter = {
+  id: string
+  name: string
+  count: number
+}
+
+enum FilterGroupKey {
+  organizationId = 'organizationId',
+  appointmentStatus = 'appointmentStatus',
+}
+
+enum FilterName {
+  FilterByStatusType = 'Filter By Status Type',
+  FilterByCorporation = 'Filter By Corporation',
+}
+
+type FilterGroup = {
+  name: string
+  key: FilterGroupKey
+  filters: Filter[]
+}
+
+export type appointmentStatsUiDTO = {
+  total: number
+  filterGroup: FilterGroup[]
+}
+
+export const statsUiDTOResponse = (
+  appointmentStatus: Filter[],
+  orgIdArray: Filter[],
+  total: number,
+): appointmentStatsUiDTO => ({
+  total,
+  filterGroup: [
+    {
+      name: FilterName.FilterByStatusType,
+      key: FilterGroupKey.appointmentStatus,
+      filters: appointmentStatus,
+    },
+    {
+      name: FilterName.FilterByCorporation,
+      key: FilterGroupKey.organizationId,
+      filters: orgIdArray,
+    },
+  ],
+})
+
 export const appointmentUiDTOResponse = (
   appointment: AppointmentDBModel & {canCancel?: boolean; organizationName?: string},
   isLabUser: boolean,
+  transportRunLabel?: string,
 ): AppointmentUiDTO => {
   return {
     id: appointment.id,
@@ -281,6 +330,7 @@ export const appointmentUiDTOResponse = (
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
     organizationName: appointment.organizationName,
+    transportRunLabel,
   }
 }
 

@@ -52,17 +52,21 @@ import {
   AppointmentDBModel,
   AppointmentStatus,
   DeadlineLabel,
+  Filter,
   ResultTypes,
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {makeDeadlineForFilter} from '../utils/datetime.helper'
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {TestRunsService} from '../services/test-runs.service'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.datastore)
   private appointmentService = new AppoinmentService()
+  private organizationService = new OrganizationService()
   private couponService = new CouponService()
   private emailService = new EmailService()
   private pdfService = new PdfService()
@@ -72,6 +76,7 @@ export class PCRTestResultsService {
     ResultTypes.Positive,
     ResultTypes.PresumptivePositive,
   ]
+  private testRunsService = new TestRunsService()
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
     //Validate Result Exists for barCode and throws exception
@@ -299,7 +304,17 @@ export class PCRTestResultsService {
       return result
     }
 
+    const orgIds = []
+
+    pcrResults.forEach(({organizationId}) => {
+      if (organizationId) orgIds.push(organizationId)
+    })
+
+    const organizations = await this.organizationService.getAllByIds(orgIds)
+
     return pcrResults.map((pcr) => {
+      const organization = organizations.find(({id}) => id === pcr.organizationId)
+
       return {
         id: pcr.id,
         barCode: pcr.barCode,
@@ -311,6 +326,7 @@ export class PCRTestResultsService {
         firstName: pcr.firstName,
         lastName: pcr.lastName,
         testType: 'PCR',
+        organizationName: organization?.name,
       }
     })
   }
@@ -1068,6 +1084,95 @@ export class PCRTestResultsService {
     })
   }
 
+  async getDueDeadlineStats({
+    deadline,
+    testRunId,
+    barCode,
+  }: PcrTestResultsListByDeadlineRequest): Promise<{
+    pcrResultStatsByResultArr: Filter[]
+    pcrResultStatsByOrgIdArr: Filter[]
+    total: number
+  }> {
+    const pcrTestResultsQuery = []
+
+    if (deadline) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'deadline',
+        operator: DataModelFieldMapOperatorType.LessOrEqual,
+        value: makeDeadlineForFilter(deadline),
+      })
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'waitingResult',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      })
+    }
+
+    if (barCode) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: barCode,
+      })
+    }
+
+    if (testRunId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testRunId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: testRunId,
+      })
+    }
+
+    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
+    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+
+    const appointmentStatsByTypes: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
+    const appointmentStatsByOrganization: Record<string, number> = {}
+
+    appointments.forEach((appointment) => {
+      const pcrTest = pcrResults?.find(({appointmentId}) => appointmentId === appointment.id)
+      if (appointmentStatsByTypes[pcrTest.result]) {
+        ++appointmentStatsByTypes[pcrTest.result]
+      } else {
+        appointmentStatsByTypes[pcrTest.result] = 1
+      }
+      if (appointmentStatsByOrganization[pcrTest.result]) {
+        ++appointmentStatsByOrganization[appointment.organizationId]
+      } else {
+        appointmentStatsByOrganization[appointment.organizationId] = 1
+      }
+    })
+    const organizations = await this.organizationService.getAllByIds(
+      Object.keys(appointmentStatsByOrganization),
+    )
+    const pcrResultStatsByResultArr = Object.entries(appointmentStatsByTypes).map(
+      ([name, count]) => ({
+        id: name,
+        name,
+        count,
+      }),
+    )
+    const pcrResultStatsByOrgIdArr = Object.entries(appointmentStatsByOrganization).map(
+      ([orgId, count]) => ({
+        id: orgId,
+        name: organizations.find(({id}) => id === orgId)?.name ?? 'None',
+        count,
+      }),
+    )
+
+    return {
+      pcrResultStatsByResultArr,
+      pcrResultStatsByOrgIdArr,
+      total: appointments.length,
+    }
+  }
+
   async getDueDeadline({
     deadline,
     testRunId,
@@ -1111,10 +1216,19 @@ export class PCRTestResultsService {
     }
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
-    const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
-    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
-
+    const appointmentIds = []
+    const testRunIds = []
     const pcrFiltred = []
+
+    pcrResults.forEach(({appointmentId, testRunId}) => {
+      appointmentIds.push(appointmentId)
+      if (testRunId) testRunIds.push(testRunId)
+    })
+
+    const [appointments, testRuns] = await Promise.all([
+      this.appointmentService.getAppointmentsDBByIds(appointmentIds),
+      this.testRunsService.getTestRunByTestRunIds(testRunIds),
+    ])
 
     pcrResults.map((pcr) => {
       const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
@@ -1128,6 +1242,8 @@ export class PCRTestResultsService {
         appointment &&
         (allowedAppointmentStatus.includes(appointment.appointmentStatus) || testRunId)
       ) {
+        const testRun = testRuns?.find(({testRunId}) => pcr.testRunId === testRunId)
+
         pcrFiltred.push({
           id: pcr.id,
           barCode: pcr.barCode,
@@ -1138,6 +1254,7 @@ export class PCRTestResultsService {
           runNumber: pcr.runNumber ? `R${pcr.runNumber}` : null,
           reCollectNumber: pcr.reCollectNumber ? `S${pcr.reCollectNumber}` : null,
           dateTime: formatDateRFC822Local(appointment.dateTime),
+          testRunLabel: testRun?.name,
         })
       }
     })

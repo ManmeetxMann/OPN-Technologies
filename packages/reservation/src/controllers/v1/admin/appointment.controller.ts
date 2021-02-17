@@ -14,6 +14,7 @@ import {
   AppointmentByOrganizationRequest,
   AppointmentDBModel,
   AppointmentsState,
+  statsUiDTOResponse,
   AppointmentStatusChangeState,
   appointmentUiDTOResponse,
 } from '../../../models/appointment'
@@ -78,6 +79,11 @@ class AdminAppointmentController implements IControllerBase {
       idBarCodeToolAuth,
       this.getNextBarcode,
     )
+    innerRouter.get(
+      this.path + '/api/v1/appointments/list/stats',
+      apptLabAuth,
+      this.appointmentsStats,
+    )
     innerRouter.put(this.path + '/api/v1/appointments/receive', receivingAuth, this.addVialLocation)
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/check-in',
@@ -119,13 +125,61 @@ class AdminAppointmentController implements IControllerBase {
         transportRunId,
       })
 
+      const transportRuns = Object.fromEntries(
+        (
+          await this.transportRunsService.getByTransportRunIdBulk(
+            appointments
+              .map((appointment) => appointment.transportRunId)
+              .filter((appointment) => !!appointment),
+          )
+        ).map((transportRun) => [transportRun.transportRunId, transportRun.label]),
+      )
+
       res.json(
         actionSucceed(
           appointments.map((appointment: AppointmentDBModel) => ({
-            ...appointmentUiDTOResponse(appointment, isLabUser),
+            ...appointmentUiDTOResponse(
+              appointment,
+              isLabUser,
+              transportRuns[appointment.transportRunId],
+            ),
           })),
         ),
       )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  appointmentsStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {
+        appointmentStatus,
+        barCode,
+        dateOfAppointment,
+        organizationId,
+        searchQuery,
+        transportRunId,
+      } = req.query as AppointmentByOrganizationRequest
+
+      if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
+        throw new BadRequestException('dateOfAppointment is invalid')
+      }
+
+      const {
+        appointmentStatusArray,
+        orgIdArray,
+        total,
+      } = await this.appointmentService.getAppointmentsStats(
+        appointmentStatus,
+        barCode,
+        organizationId,
+        dateOfAppointment,
+        searchQuery,
+        transportRunId,
+      )
+
+      res.json(actionSucceed(statsUiDTOResponse(appointmentStatusArray, orgIdArray, total)))
     } catch (error) {
       next(error)
     }
