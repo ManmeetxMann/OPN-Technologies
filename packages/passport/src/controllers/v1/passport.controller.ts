@@ -4,13 +4,11 @@ import {NextFunction, Request, Response} from 'express'
 
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {PassportService} from '../../services/passport-service'
-import {Passport, PassportStatuses} from '../../models/passport'
+import {PassportStatuses} from '../../models/passport'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {Attestation, AttestationAnswers, AttestationAnswersV1} from '../../models/attestation'
 import {AttestationService} from '../../services/attestation-service'
-import {AccessService} from '../../../../access/src/service/access.service'
 import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
-import {RegistrationService} from '../../../../common/src/service/registry/registration-service'
 import {UserService} from '../../../../common/src/service/user/user-service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {QuestionnaireService} from '../../../../lookup/src/services/questionnaire-service'
@@ -123,7 +121,6 @@ class UserController implements IControllerBase {
       if (isTemperatureCheckEnabled && passportStatus === PassportStatuses.Proceed) {
         passportStatus = PassportStatuses.TemperatureCheckRequired
       }
-
 
       const saved = await this.attestationService.save({
         answers: answers as AttestationAnswers,
