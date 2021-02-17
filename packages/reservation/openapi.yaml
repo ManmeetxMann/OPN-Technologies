@@ -2061,8 +2061,6 @@ paths:
                   type: string
                 lastName:
                   type: string
-                email:
-                  type: string
                 phone:
                   type: object
                   additionalProperties: false
@@ -2094,7 +2092,6 @@ paths:
                 - slotId
                 - firstName
                 - lastName
-                - email
                 - dateOfBirth
                 - address
                 - addressUnit
