@@ -12,7 +12,6 @@ import {OrganizationService} from '../../../../enterprise/src/services/organizat
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {AlertService} from '../../services/alert-service'
 
-
 class UserController implements IControllerBase {
   public path = '/passport/api/v1/passport'
   public router = express.Router()
