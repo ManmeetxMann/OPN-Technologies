@@ -216,7 +216,9 @@ export class AppoinmentService {
     const organizations = fromPairs(
       (
         await this.organizationService.getAllByIds(
-          appointments.map((appointment: AppointmentDBModel) => appointment.organizationId).filter((orgId) => !!orgId),
+          appointments
+            .map((appointment: AppointmentDBModel) => appointment.organizationId)
+            .filter((orgId) => !!orgId),
         )
       ).map((organization) => [organization.id, organization.name]),
     )
