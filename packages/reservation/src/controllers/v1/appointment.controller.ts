@@ -8,11 +8,13 @@ import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {getUserId} from '../../../../common/src/utils/auth'
 import {AuthUser} from '../../../../common/src/data/user'
 import {decodeAvailableTimeId} from '../../utils/base64-converter'
+import {PCRTestResultsService} from '../../services/pcr-test-results.service'
 
 class AppointmentController implements IControllerBase {
   public path = '/reservation'
   public router = Router()
   private appointmentService = new AppoinmentService()
+  private pcrTestResultsService = new PCRTestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -51,7 +53,6 @@ class AppointmentController implements IControllerBase {
         slotId,
         firstName,
         lastName,
-        email,
         phone,
         dateOfBirth,
         address,
@@ -66,12 +67,12 @@ class AppointmentController implements IControllerBase {
       const authenticatedUser = res.locals.authenticatedUser as AuthUser
       const {organizationId, packageCode} = decodeAvailableTimeId(slotId)
       const userId = getUserId(authenticatedUser)
-      await this.appointmentService.createAcuityAppointment({
+      const savedAppointment = await this.appointmentService.createAcuityAppointment({
         organizationId,
         slotId,
         firstName,
         lastName,
-        email,
+        email: authenticatedUser.email,
         phone,
         dateOfBirth,
         address,
@@ -85,6 +86,15 @@ class AppointmentController implements IControllerBase {
         userId,
         packageCode,
       })
+
+      if (savedAppointment) {
+        const pcrTestResult = await this.pcrTestResultsService.createNewPCRTestForWebhook(
+          savedAppointment,
+        )
+        console.log(
+          `AppointmentWebhookController: CreateAppointment: SuccessCreatePCRResults for AppointmentID: ${savedAppointment.id} PCR Results ID: ${pcrTestResult.id}`,
+        )
+      }
 
       res.json(actionSucceed())
     } catch (error) {

@@ -378,10 +378,14 @@ class AdminController implements IRouteController {
       const parentUserId = user.delegates?.length ? user.delegates[0] : null
       const isADependant = !!parentUserId
       const latestPassport = await this.passportService.findLatestPassport(tag.userId, parentUserId)
+      const authorizedUserIds = new Set(latestPassport.dependantIds ?? [])
+      if (latestPassport.includesGuardian) {
+        authorizedUserIds.add(latestPassport.userId)
+      }
       // Make sure it's valid
       if (
         !latestPassport ||
-        ![parentUserId, tag.userId].includes(latestPassport.userId) ||
+        !authorizedUserIds.has(tag.userId) ||
         latestPassport.status !== 'proceed'
       ) {
         replyUnauthorizedEntry(res)
@@ -417,11 +421,14 @@ class AdminController implements IRouteController {
       } else {
         // Get Latest Passport (as they need a valid access)
         const specificPassport = await this.passportService.findOneByToken(access.statusToken)
-
+        const specificAuthorizedUserIds = new Set(specificPassport.dependantIds ?? [])
+        if (specificPassport.includesGuardian) {
+          specificAuthorizedUserIds.add(specificPassport.userId)
+        }
         // Make sure it's valid
         if (
           !specificPassport ||
-          ![parentUserId, tag.userId].includes(latestPassport.userId) ||
+          !specificAuthorizedUserIds.has(tag.userId) ||
           specificPassport.status !== 'proceed'
         ) {
           replyUnauthorizedEntry(res)

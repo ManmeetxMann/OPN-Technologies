@@ -141,7 +141,7 @@ class AppointmentWebhookController implements IControllerBase {
           appointmentFromDb.appointmentStatus != AppointmentStatus.Canceled
         ) {
           console.log(
-            `AppointmentWebhookController: UpdateAppointment:  Appointment Status will be updated to Cancelled`,
+            `AppointmentWebhookController: UpdateAppointment:  Appointment Status will be updated to Canceled`,
           )
           appointmentStatus = AppointmentStatus.Canceled
         }
@@ -174,7 +174,7 @@ class AppointmentWebhookController implements IControllerBase {
         ) {
           await this.pcrTestResultsService.deleteTestResults(pcrTestResult.id)
           console.log(
-            `AppointmentWebhookController: UpdateAppointment: AppointmentCancelled ID: ${appointmentFromDb.id} Removed PCR Results ID: ${pcrTestResult.id}`,
+            `AppointmentWebhookController: UpdateAppointment: AppointmentCanceled ID: ${appointmentFromDb.id} Removed PCR Results ID: ${pcrTestResult.id}`,
           )
         } else {
           const linkedBarcodes = await this.pcrTestResultsService.getlinkedBarcodes(
@@ -186,6 +186,7 @@ class AppointmentWebhookController implements IControllerBase {
             barCode: barCode,
             dateOfAppointment: updatedAppointment.dateOfAppointment,
             displayInResult: true,
+            dateTime: updatedAppointment.dateTime,
             deadline: updatedAppointment.deadline,
             firstName: appointment.firstName,
             lastName: appointment.lastName,
@@ -207,7 +208,7 @@ class AppointmentWebhookController implements IControllerBase {
       } catch (e) {
         if (appointment.canceled) {
           console.log(
-            `AppointmentWebhookController: UpdateAppointment: Cancelled AppoinmentID: ${id}. Hence No PCR Results Updates.`,
+            `AppointmentWebhookController: UpdateAppointment: Canceled AppoinmentID: ${id}. Hence No PCR Results Updates. Error: ${e.toString()}`,
           )
         } else {
           console.error(

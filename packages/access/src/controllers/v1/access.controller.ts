@@ -159,7 +159,7 @@ class UserController implements IRouteController {
 
       const newAccess = await this.accessService.handleExitV2(access)
 
-      res.json(actionSucceed(newAccess))
+      res.json(actionSucceed(accessDTOResponseV1(newAccess)))
     } catch (error) {
       next(error)
     }

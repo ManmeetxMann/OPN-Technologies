@@ -85,7 +85,35 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "timestamps.createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "access",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "access",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamps.createdAt",
           "order": "ASCENDING"
         }
       ]
@@ -275,32 +303,6 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "organizationId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "result",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "testRunId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "deadline",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "pcr-test-results",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "barCode",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "updatedAt",
           "order": "DESCENDING"
         }
@@ -315,7 +317,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "result",
+          "fieldPath": "waitingResult",
           "order": "ASCENDING"
         }
       ]
@@ -325,7 +327,47 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "barCode",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "result",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "deadline",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "result",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "displayInResult",
           "order": "ASCENDING"
         },
         {
@@ -334,53 +376,7 @@
         },
         {
           "fieldPath": "result",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "pcr-test-results",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "waitingResult",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "deadline",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "pcr-test-results",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "result",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "deadline",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "pcr-test-results",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "result",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "testRunId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "`timestamps.createdAt`",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },

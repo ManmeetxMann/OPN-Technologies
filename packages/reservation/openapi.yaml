@@ -116,6 +116,88 @@ components:
       required:
         - barCode
 
+    StatsResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            count:
+              type: number
+            filterGroup:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  key:
+                    type: string
+                    enum:
+                      [
+                          organizationId,
+                          appointmentStatus,
+                      ]
+                  filters:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        count:
+                          type: number
+            lastName:
+              type: string
+            status:
+              type: string
+            barCode:
+              type: string
+            location:
+              type: string
+            dateTime:
+              type: string
+            dateOfBirth:
+              type: string
+            transportRunId:
+              type: string
+            deadline:
+              type: string
+            latestResult:
+              type: string
+            vialLocation:
+              type: string
+            testRunId:
+              type: string
+          required:
+            - id
+            - firstName
+            - lastName
+            - barCode
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
     AppointmentResponse200:
       type: object
       additionalProperties: false
@@ -141,6 +223,8 @@ components:
             dateOfBirth:
               type: string
             transportRunId:
+              type: string
+            transportRunLabel:
               type: string
             deadline:
               type: string
@@ -242,9 +326,11 @@ components:
               transportRunId:
                 type: string
               transportDateTime:
-                  type: string
-                  format: date-time
+                type: string
+                format: date-time
               driverName:
+                type: string
+              label:
                 type: string
         status:
           type: object
@@ -467,6 +553,8 @@ components:
                 quasar670Ct:
                   type: string
                   minLength: 1
+                comment:
+                  type: string
       required:
         - results
         - resultDate
@@ -989,9 +1077,12 @@ paths:
                   format: date-time
                 driverName:
                   type: string
+                label:
+                  type: string
               required:
                 - transportDateTime
                 - driverName
+                - label
       responses:
         '200':
           description: Succesfully create transport
@@ -1419,6 +1510,62 @@ paths:
               schema:
                 $ref: '#/components/schemas/GenerateNextBarCodeResponse'
 
+  /reservation/admin/api/v1/appointments/list/stats:
+    get:
+      description: Get appointment list
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+        - in: query
+          name: barCode
+          schema:
+            type: string
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
+        - in: query
+          name: dateOfAppointment
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: transportRunId
+          schema:
+            type: string
+        - in: query
+          name: appointmentStatus
+          explode: true
+          style: form
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - Pending
+                - InTransit
+                - Received
+                - InProgress
+                - Reported
+                - ReRunRequired
+                - ReCollectRequired
+                - Canceled
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentResponse200'
+
   /reservation/admin/api/v1/pcr-test-results-bulk:
     post:
       description: Send Multiple PCR Results
@@ -1478,6 +1625,21 @@ paths:
           name: barCode
           schema:
             type: string
+        - in: query
+          name: result
+          schema:
+            type: string
+            enum:
+              [
+                  PresumptivePositive,
+                  PreliminaryPositive,
+                  Positive,
+                  Negative,
+                  Pending,
+                  Invalid,
+                  Inconclusive,
+                  Indeterminate,
+              ]
       responses:
         '200':
           description: Successfully Return
@@ -1515,10 +1677,25 @@ paths:
                               Pending,
                               Invalid,
                               Inconclusive,
+                              PreliminaryPositive
                             ]
                         dateTime:
                           type: string
                         deadline:
+                          type: string
+                        previousResult:
+                          type: string
+                          enum:
+                            [
+                              PresumptivePositive,
+                              Positive,
+                              Negative,
+                              Pending,
+                              Invalid,
+                              Inconclusive,
+                              PreliminaryPositive,
+                            ]
+                        organizationName:
                           type: string
                   status:
                     type: object
@@ -1827,6 +2004,27 @@ paths:
                   page:
                     type: number
 
+  /reservation/admin/api/v1/appointments/{appointmentId}/check-in:
+    put:
+      description: Make Appointment checked in
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse200'
+
   /reservation/admin/api/v1/appointments/receive:
     put:
       description: Update Appointment vialLocation
@@ -1878,8 +2076,6 @@ paths:
                   type: string
                 lastName:
                   type: string
-                email:
-                  type: string
                 phone:
                   type: object
                   additionalProperties: false
@@ -1911,7 +2107,6 @@ paths:
                 - slotId
                 - firstName
                 - lastName
-                - email
                 - dateOfBirth
                 - address
                 - addressUnit
@@ -2133,6 +2328,110 @@ paths:
                   page:
                     type: number
 
+  /reservation/admin/api/v1/pcr-test-results/{pcrTestResultId}:
+    get:
+      description: Retrieve list of PCR Results
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: pcrTestResultId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      email:
+                        type: string
+                      phone:
+                        type: string
+                      ohipCard:
+                        type: string
+                      dateOfBirth:
+                        type: string
+                      address:
+                        type: string
+                      addressUnit:
+                        type: string
+                      barCode:
+                        type: string
+                      appointmentStatus:
+                        type: string
+                      result:
+                        type: string
+                      dateTime:
+                        type: string
+                      registeredNursePractitioner:
+                        type: string
+                      physician:
+                        type: string
+                      locationName:
+                        type: string
+                      swabMethod:
+                        type: string
+                      deadline:
+                        type: string
+                      labName:
+                        type: string
+                      testType:
+                        type: string
+                      equipment:
+                        type: string
+                      manufacturer:
+                        type: string
+                      resultSpecs:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          calRed61Ct:
+                            type: string
+                          calRed61RdRpGene:
+                            type: string
+                          famCt:
+                            type: string
+                          famEGene:
+                            type: string
+                          hexCt:
+                            type: string
+                          hexIC:
+                            type: string
+                          quasar670Ct:
+                            type: string
+                          quasar670NGene:
+                            type: string
+                          comment:
+                            type: string
+                          autoResult:
+                            type: string
+                    required:
+                      - email
+                      - phone
+                      - dateOfBirth
+                      - address
+                      - barCode
+                      - appointmentStatus
+                      - result
+                      - dateTime
+                      - swabMethod
+                      - deadline
+                      - labName
+                      - testType
+                      - equipment
+                      - manufacturer
+
   /reservation/admin/api/v1/pcr-test-results/due-deadline:
     get:
       description: Retrieve list of PCR Results
@@ -2199,6 +2498,8 @@ paths:
                           type: string
                         dateTime:
                           type: string
+                        testRunLabel:
+                          type: string
                   status:
                     type: object
                     additionalProperties: false
@@ -2220,6 +2521,34 @@ paths:
                         type: string
                   page:
                     type: number
+  /reservation/admin/api/v1/pcr-test-results/due-deadline/stats:
+    get:
+      description: Retrieve list of PCR Results
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: query
+          name: deadline
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: testRunId
+          schema:
+            type: string
+        - in: query
+          name: barCode
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Succesfully return stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse200'
 
   /reservation/api/v1/appointments/self:
     get:
@@ -2243,6 +2572,8 @@ paths:
                       type: object
                       additionalProperties: false
                       properties:
+                        id:
+                          type: string
                         locationName:
                           type:	string
                         locationAddress:
@@ -2255,13 +2586,23 @@ paths:
                           type:	string
                         timeOfAppointment:
                           type: string
+                        QRCode:
+                          type: string
+                        dateOfBirth:
+                          type: string
+                        showQrCode:
+                          type: boolean
                       required:
+                        - id
                         - locationName
                         - locationAddress
                         - firstName
                         - lastName
                         - dateOfAppointment
                         - timeOfAppointment
+                        - QRCode
+                        - dateOfBirth
+                        - showQrCode
                   status:
                     type: object
                     additionalProperties: false

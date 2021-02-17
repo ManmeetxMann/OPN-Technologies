@@ -15,6 +15,7 @@ export default Joi.object({
   organizationId: Joi.string().allow('', null),
   reCollectNumber: Joi.number().required(),
   result: Joi.string().required(), //TODO: ENUM
+  previousResult: Joi.string().required().allow(null), //TODO: ENUM
   recollected: Joi.boolean().default(false),
   resultSpecs: Joi.object({
     action: Joi.string().required(),
