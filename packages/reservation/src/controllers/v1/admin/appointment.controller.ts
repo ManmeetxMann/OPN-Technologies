@@ -8,6 +8,7 @@ import {BadRequestException} from '../../../../../common/src/exceptions/bad-requ
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
 import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
+import {fromPairs} from 'lodash'
 
 import {
   appointmentByBarcodeUiDTOResponse,
@@ -125,10 +126,24 @@ class AdminAppointmentController implements IControllerBase {
         transportRunId,
       })
 
+      const transportRuns = fromPairs(
+        (
+          await this.transportRunsService.getByTransportRunIdBulk(
+            appointments
+              .map((appointment) => appointment.transportRunId)
+              .filter((appointment) => !!appointment),
+          )
+        ).map((transportRun) => [transportRun.transportRunId, transportRun.label]),
+      )
+
       res.json(
         actionSucceed(
           appointments.map((appointment: AppointmentDBModel) => ({
-            ...appointmentUiDTOResponse(appointment, isLabUser),
+            ...appointmentUiDTOResponse(
+              appointment,
+              isLabUser,
+              transportRuns[appointment.transportRunId],
+            ),
           })),
         ),
       )
@@ -257,7 +272,7 @@ class AdminAppointmentController implements IControllerBase {
         }),
       )
 
-      const duplicatesMessage = duplicatedBarCodeArray.length
+      const duplicatesMessage = duplicatedBarCodeArray?.length
         ? `Multiple Appointments [${duplicatedAppointmentIds}] with barcodes: ${duplicatedBarCodeArray}`
         : null
 
