@@ -6,6 +6,8 @@ import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {UserService} from '../../../../common/src/service/user/user-service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {User} from '../../../../common/src/data/user'
+import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 
 import {PassportService} from '../../services/passport-service'
 import {AttestationService} from '../../services/attestation-service'
@@ -58,8 +60,9 @@ class PassportController implements IControllerBase {
   }
 
   public initRoutes(): void {
+    const auth = authorizationMiddleware([RequiredUserPermission.RegUser], true)
     // this.router.get(this.path + '/status', this.check)
-    this.router.post(this.path + '/status', this.update)
+    this.router.post(this.path + '/status', auth, this.update)
   }
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
