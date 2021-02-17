@@ -323,6 +323,8 @@ export const appointmentUiDTOResponse = (
     status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser),
     barCode: appointment.barCode,
     location: appointment.location,
+    email: appointment.email,
+    phone: appointment.phone,
     dateTime: formatDateRFC822Local(appointment.dateTime),
     dateOfBirth: appointment.dateOfBirth,
     transportRunId: appointment.transportRunId,
