@@ -9,7 +9,7 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {toDateFormat} from '../../../common/src/utils/times'
-import {formatDateRFC822Local} from '../utils/datetime.helper'
+import {formatDateRFC822Local, makeDeadlineForFilter} from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 
 import {AppoinmentService} from './appoinment.service'
@@ -24,28 +24,28 @@ import {
 import {
   AppointmentReasons,
   CreateReportForPCRResultsResponse,
+  EmailNotficationTypes,
   PCRResultActions,
+  PCRResultActionsAllowedResend,
+  PCRResultActionsForConfirmation,
+  PCRResultPDFType,
+  PCRTestResultByDeadlineListDTO,
+  PCRTestResultConfirmRequest,
   PCRTestResultData,
   PCRTestResultDBModel,
   PCRTestResultEmailDTO,
+  PCRTestResultHistory,
   PCRTestResultLinkedDBModel,
   PCRTestResultListDTO,
   PCRTestResultRequest,
-  PcrTestResultsListRequest,
-  ResultReportStatus,
-  PCRResultActionsAllowedResend,
+  pcrTestResultsDTO,
   PcrTestResultsListByDeadlineRequest,
-  PCRTestResultByDeadlineListDTO,
-  PCRTestResultConfirmRequest,
-  PCRResultActionsForConfirmation,
-  EmailNotficationTypes,
-  PCRResultPDFType,
+  PcrTestResultsListRequest,
+  pcrTestResultsResponse,
   PCRTestResultType,
+  ResultReportStatus,
   resultToStyle,
   TestResutsDTO,
-  PCRTestResultHistory,
-  pcrTestResultsResponse,
-  pcrTestResultsDTO,
 } from '../models/pcr-test-results'
 
 import {
@@ -57,7 +57,6 @@ import {
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
-import {makeDeadlineForFilter} from '../utils/datetime.helper'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 export class PCRTestResultsService {
@@ -393,6 +392,10 @@ export class PCRTestResultsService {
       throw new ResourceNotFoundException(`PCRTestResult with barCode ${barCodeNumber} not found`)
     }
     return pcrTestResults
+  }
+
+  getPCRResultsById(id: string): Promise<PCRTestResultDBModel> {
+    return this.pcrTestResultsRepository.findOneById(id)
   }
 
   async getReCollectedTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
