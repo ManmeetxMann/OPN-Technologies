@@ -647,7 +647,7 @@ export class AppoinmentService {
     organizationId,
     userId,
     packageCode,
-  }: CreateAppointmentRequest): Promise<AppointmentDBModel> {
+  }: CreateAppointmentRequest & {email: string}): Promise<AppointmentDBModel> {
     const {time, appointmentTypeId, calendarId} = decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
 

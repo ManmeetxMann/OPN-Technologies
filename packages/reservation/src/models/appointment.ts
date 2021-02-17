@@ -147,7 +147,6 @@ export type CreateAppointmentRequest = {
   slotId: string
   firstName: string
   lastName: string
-  email: string
   phone: {
     code: number
     number: number
