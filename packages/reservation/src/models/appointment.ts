@@ -198,6 +198,7 @@ export type AppointmentUiDTO = {
   appointment?: boolean
   canCancel?: boolean
   registeredNursePractitioner?: string
+  organizationName?: string
   transportRunLabel?: string
 }
 
@@ -310,7 +311,7 @@ export const statsUiDTOResponse = (
 })
 
 export const appointmentUiDTOResponse = (
-  appointment: AppointmentDBModel & {canCancel?: boolean},
+  appointment: AppointmentDBModel & {canCancel?: boolean; organizationName?: string},
   isLabUser: boolean,
   transportRunLabel?: string,
 ): AppointmentUiDTO => {
@@ -328,6 +329,7 @@ export const appointmentUiDTOResponse = (
     latestResult: appointment.latestResult,
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
+    organizationName: appointment.organizationName,
     transportRunLabel,
   }
 }

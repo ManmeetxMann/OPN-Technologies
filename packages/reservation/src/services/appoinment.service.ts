@@ -1,5 +1,5 @@
 import moment from 'moment'
-import {flatten, union} from 'lodash'
+import {flatten, union, fromPairs} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 
@@ -41,13 +41,13 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
 import {AvailableTimes} from '../models/available-times'
-import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {
   decodeBookingLocationId,
   decodeAvailableTimeId,
   encodeAvailableTimeId,
 } from '../utils/base64-converter'
 import {Enterprise} from '../adapter/enterprise'
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -91,8 +91,9 @@ export class AppoinmentService {
 
   async getAppointmentsDB(
     queryParams: AppointmentByOrganizationRequest,
-  ): Promise<AppointmentDBModel[]> {
+  ): Promise<(AppointmentDBModel & {organizationName: string})[]> {
     const conditions = []
+    let appointments = []
     if (queryParams.organizationId) {
       conditions.push({
         map: '/',
@@ -206,20 +207,37 @@ export class AppoinmentService {
       const foundAppointments = await Promise.all(searchPromises).then((appointmentsArray) =>
         flatten(appointmentsArray),
       )
-      return [
+      appointments = [
         ...new Map(flatten(foundAppointments).map((item) => [item.id, item])).values(),
       ] as AppointmentDBModel[]
     } else {
-      return this.appointmentsRepository.findWhereEqualInMap(conditions)
+      appointments = await this.appointmentsRepository.findWhereEqualInMap(conditions)
     }
+    const organizations = fromPairs(
+      (
+        await this.organizationService.getAllByIds(
+          appointments.map((appointment: AppointmentDBModel) => appointment.organizationId),
+        )
+      ).map((organization) => [organization.id, organization.name]),
+    )
+
+    return appointments.map((appointment) => ({
+      ...appointment,
+      organizationName: organizations[appointment.organizationId],
+    }))
   }
 
   async getAppointmentByIdFromAcuity(id: number): Promise<AppointmentAcuityResponse> {
     return this.acuityRepository.getAppointmentByIdFromAcuity(id)
   }
 
-  async getAppointmentDBById(id: string): Promise<AppointmentDBModel> {
-    return this.appointmentsRepository.get(id)
+  async getAppointmentDBById(id: string): Promise<AppointmentDBModel & {organizationName: string}> {
+    const appointment = await this.appointmentsRepository.get(id)
+    const organization = await this.organizationService.findOneById(appointment.organizationId)
+    return {
+      ...appointment,
+      organizationName: organization && organization.name,
+    }
   }
 
   async getAppointmentDBByIdWithCancel(
