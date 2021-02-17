@@ -272,7 +272,7 @@ class AdminAppointmentController implements IControllerBase {
         }),
       )
 
-      const duplicatesMessage = duplicatedBarCodeArray.length
+      const duplicatesMessage = duplicatedBarCodeArray?.length
         ? `Multiple Appointments [${duplicatedAppointmentIds}] with barcodes: ${duplicatedBarCodeArray}`
         : null
 
