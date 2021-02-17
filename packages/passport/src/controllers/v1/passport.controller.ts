@@ -21,7 +21,7 @@ import {QuestionnaireService} from '../../../../lookup/src/services/questionnair
 import {EvaluationCriteria} from '../../../../lookup/src/models/questionnaire'
 
 class PassportController implements IControllerBase {
-  public path = '/passport/api/v1/'
+  public path = '/passport/api/v1'
   public router = express.Router()
   private passportService = new PassportService()
   private attestationService = new AttestationService()
