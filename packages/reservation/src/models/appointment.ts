@@ -191,6 +191,8 @@ export type AppointmentUiDTO = {
   dateOfBirth: string
   location?: string
   transportRunId?: string
+  email: string
+  phone: number
   deadline?: string
   latestResult?: string
   vialLocation?: string
@@ -321,6 +323,8 @@ export const appointmentUiDTOResponse = (
     status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser),
     barCode: appointment.barCode,
     location: appointment.location,
+    email: appointment.email,
+    phone: appointment.phone,
     dateTime: formatDateRFC822Local(appointment.dateTime),
     dateOfBirth: appointment.dateOfBirth,
     transportRunId: appointment.transportRunId,
@@ -370,6 +374,8 @@ export const appointmentByBarcodeUiDTOResponse = (
     status: appointment.appointmentStatus,
     barCode: appointment.barCode,
     location: appointment.location,
+    email: appointment.email,
+    phone: appointment.phone,
     dateTime: formatDateRFC822Local(appointment.dateTime),
     dateOfBirth: appointment.dateOfBirth,
     deadline: formatDateRFC822Local(appointment.deadline),
