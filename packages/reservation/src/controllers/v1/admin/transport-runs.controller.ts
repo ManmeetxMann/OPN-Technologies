@@ -35,14 +35,16 @@ class TransportRunsController implements IControllerBase {
 
   createTransportRun: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {transportDateTime, driverName} = req.body as {
+      const {transportDateTime, driverName, label} = req.body as {
         transportDateTime: string
         driverName: string
+        label: string
       }
 
       const transportRun = await this.transportRunsService.create(
         new Date(transportDateTime),
         driverName,
+        label,
       )
 
       res.json(
