@@ -100,12 +100,18 @@ class PassportController implements IControllerBase {
           throw new BadRequestException('No questionnaire id found')
         }
         if (allQuestionnaires.size > 1) {
+          console.warn(allQuestionnaires)
           throw new BadRequestException(`Org ${organizationId} has several questionnaire ids`)
         }
-        questionnaireId = allQuestionnaires.keys()[0]
+        questionnaireId = [...allQuestionnaires][0]
       }
       const answers: AttestationAnswersV1 = req.body.answers
-      let passportStatus = await this.evaluateAnswers(questionnaireId, answers)
+      let passportStatus
+      try {
+        passportStatus = await this.evaluateAnswers(questionnaireId, answers)
+      } catch {
+        throw new BadRequestException("Couldn't evaluate answers")
+      }
 
       const isTemperatureCheckEnabled = await this.organizationService.isTemperatureCheckEnabled(
         organizationId,
@@ -116,7 +122,10 @@ class PassportController implements IControllerBase {
       }
 
       const saved = await this.attestationService.save({
-        answers: answers as AttestationAnswers,
+        answers: answers.map((answer) => ({
+          [0]: answer[0],
+          [1]: answer[1] ?? null,
+        })) as AttestationAnswers,
         locationId: orgLocations[0].id, // to be removed
         userId: user.id,
         appliesTo: userIds,

@@ -40,7 +40,7 @@ components:
     Answer:
       type: array
       items:
-        oneOf:
+        anyOf:
           - type: boolean
           - type: string
       minItems: 1
