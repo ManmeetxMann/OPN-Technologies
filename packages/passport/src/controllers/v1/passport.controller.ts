@@ -34,31 +34,6 @@ class PassportController implements IControllerBase {
     this.initRoutes()
   }
 
-  private async evaluateAnswers(
-    questionnaireId: string,
-    answers: AttestationAnswersV1,
-  ): Promise<PassportStatuses> {
-    const {
-      values,
-      caution,
-      stop,
-    }: EvaluationCriteria = await this.questionnaireService.getAnswerLogic(questionnaireId)
-
-    const score = values
-      .map((value: number, index: number) => (answers[index][0] ? value : 0))
-      .reduce((total, current) => total + current)
-
-    if (score >= stop) {
-      return PassportStatuses.Stop
-    }
-
-    if (score >= caution) {
-      return PassportStatuses.Caution
-    }
-
-    return PassportStatuses.Proceed
-  }
-
   public initRoutes(): void {
     const auth = authorizationMiddleware([RequiredUserPermission.RegUser], true)
     // this.router.get(this.path + '/status', this.check)
@@ -108,7 +83,7 @@ class PassportController implements IControllerBase {
       const answers: AttestationAnswersV1 = req.body.answers
       let passportStatus
       try {
-        passportStatus = await this.evaluateAnswers(questionnaireId, answers)
+        passportStatus = await this.questionnaireService.evaluateAnswers(questionnaireId, answers)
       } catch {
         throw new BadRequestException("Couldn't evaluate answers")
       }
