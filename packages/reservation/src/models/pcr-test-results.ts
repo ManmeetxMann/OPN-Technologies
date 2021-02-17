@@ -1,8 +1,11 @@
 import {firestore} from 'firebase-admin'
 
-import {formatDateRFC822Local} from '../utils/datetime.helper'
+import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datetime.helper'
 
 import {AppointmentDBModel, AppointmentStatus, ResultTypes} from './appointment'
+import {Config} from '../../../common/src/utils/config'
+
+const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
 export enum AppointmentReasons {
   AlreadyReported = 'Already Reported',
@@ -247,6 +250,10 @@ export type PcrTestResultsListByDeadlineRequest = {
   barCode?: string
 }
 
+export type SinglePcrTestResultsRequest = {
+  pcrTestResultId?: string
+}
+
 export type PcrTestResultsListRequest = {
   organizationId?: string
   deadline?: string
@@ -307,3 +314,81 @@ export type TestResutsDTO = {
   result: ResultTypes
   detailsAvailable: boolean
 }
+
+export type SinglePcrTestResultUi = {
+  email: string
+  phone: string
+  ohipCard?: string
+  dateOfBirth: string
+  address: string
+  addressUnit?: string
+  barCode: string
+  appointmentStatus: string
+  result: string
+  dateTime: string
+  registeredNursePractitioner?: string
+  physician?: string
+  locationName?: string
+  swabMethod: string
+  deadline: string
+  labName: string
+  testType: string
+  equipment: string
+  manufacturer: string
+  resultSpecs: {
+    calRed61Ct: string
+    calRed61RdRpGene: string
+    famCt: string
+    famEGene: string
+    hexCt: string
+    hexIC: string
+    quasar670Ct: string
+    quasar670NGene: string
+    comment?: string
+    autoResult: ResultTypes
+  }
+}
+
+enum LabData {
+  labName = 'FH Health',
+  testType = 'PCR',
+  equipment = 'Allplex 2019-nCoV Assay',
+  manufacturer = 'Seegeene Inc.',
+}
+
+export const singlePcrTestResultDTO = (
+  pcrTestResult: PCRTestResultDBModel,
+  appointment: AppointmentDBModel,
+): SinglePcrTestResultUi => ({
+  email: appointment.email,
+  phone: `${appointment.phone}`,
+  ohipCard: appointment.ohipCard,
+  dateOfBirth: appointment.dateOfBirth,
+  address: appointment.address,
+  addressUnit: appointment.addressUnit,
+  barCode: pcrTestResult.barCode,
+  appointmentStatus: appointment.appointmentStatus,
+  result: pcrTestResult.result,
+  dateTime: formatStringDateRFC822Local(pcrTestResult.dateTime.toDate()),
+  registeredNursePractitioner: appointment.registeredNursePractitioner,
+  physician: requisitionDoctor,
+  locationName: appointment.locationName,
+  swabMethod: appointment.swabMethod,
+  deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
+  labName: LabData.labName,
+  testType: LabData.testType,
+  equipment: LabData.equipment,
+  manufacturer: LabData.manufacturer,
+  resultSpecs: {
+    calRed61Ct: pcrTestResult.resultSpecs.calRed61Ct,
+    calRed61RdRpGene: pcrTestResult.resultSpecs.calRed61RdRpGene,
+    famCt: pcrTestResult.resultSpecs.famCt,
+    famEGene: pcrTestResult.resultSpecs.famEGene,
+    hexCt: pcrTestResult.resultSpecs.hexCt,
+    hexIC: pcrTestResult.resultSpecs.hexIC,
+    quasar670Ct: pcrTestResult.resultSpecs.quasar670Ct,
+    quasar670NGene: pcrTestResult.resultSpecs.quasar670NGene,
+    comment: pcrTestResult.resultSpecs.comment,
+    autoResult: pcrTestResult.resultSpecs.autoResult,
+  },
+})
