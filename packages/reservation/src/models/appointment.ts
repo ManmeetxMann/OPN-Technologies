@@ -191,8 +191,8 @@ export type AppointmentUiDTO = {
   dateOfBirth: string
   location?: string
   transportRunId?: string
-  email?: string,
-  phone?: number,
+  email: string,
+  phone: number,
   deadline?: string
   latestResult?: string
   vialLocation?: string
