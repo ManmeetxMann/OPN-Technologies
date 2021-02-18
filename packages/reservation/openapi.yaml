@@ -687,43 +687,6 @@ components:
               type: string
 
 paths:
-  /admin/page/next-bar-code:
-    get:
-      description: Show Next Bar Code
-      parameters:
-        - in: query
-          name: newcode
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Successfully Return
-          content:
-            text/html:
-              schema:
-                type: string
-
-  /admin/page/send-single-results:
-    get:
-      description: Form to Send Single Results
-      responses:
-        '200':
-          description: Successfully Return
-          content:
-            text/html:
-              schema:
-                type: string
-
-  /admin/page/send-bulk-results:
-    get:
-      description: Form to Send Bulk Results
-      responses:
-        '200':
-          description: Successfully Return
-          content:
-            text/html:
-              schema:
-                type: string
 
   /admin/page/send-fax-for-positive:
     get:
@@ -1121,34 +1084,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentTransportRunResponse200'
-
-  /webhook/acuity/schedule:
-    post:
-      description: Webhook for adding barcode to acuity
-      tags:
-        - Acuity Webhooks
-      requestBody:
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              additionalProperties: true
-              properties:
-                calendarID:
-                  type: string
-                appointmentTypeID:
-                  type: string
-                action:
-                  type: string
-                id:
-                  type: string
-      responses:
-        '200':
-          description: Successfully handled
-          content:
-            text/html:
-              schema:
-                type: string
 
   /admin/js/print-label.js:
     get:
