@@ -7,6 +7,7 @@ import {isPassed} from '../../../../common/src/utils/datetime-util'
 import {actionFailed, actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
+import {ForbiddenException} from '../../../../common/src/exceptions/forbidden-exception'
 import {UserService} from '../../../../common/src/service/user/user-service'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 
@@ -112,33 +113,42 @@ class UserController implements IRouteController {
     }
   }
 
-  enter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
-    // TODO: this should probably fail if the user is checked in somewhere else
+  enter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {locationId, includeGuardian, organizationId} = req.body
+      const {locationId, userIds, organizationId} = req.body as {
+        locationId: string
+        userIds: string[]
+        organizationId: string
+      }
       const userId = res.locals.connectedUser.id as string
-      const dependantIds: string[] = req.body.dependantIds ?? []
-      // errors if no location is found
+      const allDependants = (await this.userService.getAllDependants(userId, true)).filter((dep) =>
+        dep.organizationIds?.includes(organizationId),
+      )
+      const allDependantIds = new Set(allDependants.map(({id}) => id))
+      if (userIds.some((id) => id !== userId && !allDependantIds.has(id))) {
+        throw new BadRequestException('Not allowed to check in all user ids')
+      }
       const location = await this.lookupLocation(organizationId, locationId)
       if (!location.allowsSelfCheckInOut)
         throw new BadRequestException("Location doesn't allow self-check-in")
 
       if (!location.allowAccess)
         throw new BadRequestException("Location can't be directly checked in to")
-
-      const access = await this.createAccess(
-        locationId,
-        userId,
-        includeGuardian,
-        organizationId,
-        dependantIds,
+      const allPassports = await Promise.all(
+        userIds.map((id) => this.passportService.findLatestDirectPassport(id, organizationId)),
       )
-      if (!access) {
-        throw new BadRequestException("Couldn't create access")
-      }
-      return location.attestationRequired
-        ? await this.enterWithAttestation(res, access)
-        : await this.enterWithoutAttestation(res, access, organizationId)
+      allPassports.forEach((passport) => {
+        if (!this.passportService.passportAllowsEntry(passport, location.attestationRequired)) {
+          throw new ForbiddenException('Passport not found or does not allow entry')
+        }
+      })
+      const accesses = await Promise.all(
+        userIds.map((id, index) =>
+          this.accessService.createV2(id, locationId, allPassports[index]?.statusToken ?? null),
+        ),
+      )
+
+      res.json(actionSucceed(accesses.map(accessDTOResponseV1)))
     } catch (error) {
       next(error)
     }

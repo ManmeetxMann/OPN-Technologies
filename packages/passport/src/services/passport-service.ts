@@ -8,7 +8,7 @@ import moment from 'moment'
 import {firestore} from 'firebase-admin'
 import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
-import {isPassed} from '../../../common/src/utils/datetime-util'
+import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
@@ -205,6 +205,42 @@ export class PassportService {
       return null
     }
     return passports[0]
+  }
+
+  // utility to determine if a passport can be used
+  passportAllowsEntry(passport: Passport | null, attestationRequired = true): boolean {
+    if (attestationRequired) {
+      // must have a passport
+      if (!passport) {
+        return false
+      }
+      // must be proceed
+      if (passport.status !== PassportStatuses.Proceed) {
+        return false
+      }
+      // must not be expired
+      if (moment(now()).isAfter(safeTimestamp(passport.validUntil))) {
+        return false
+      }
+      return true
+    } else {
+      // no passport is allowed
+      if (!passport) {
+        return true
+      }
+      // expired passports are allowed
+      if (moment(now()).isAfter(safeTimestamp(passport.validUntil))) {
+        return true
+      }
+      // valid passports must not be red
+      if (passport.status == PassportStatuses.Stop) {
+        return false
+      }
+      if (passport.status == PassportStatuses.Caution) {
+        return false
+      }
+      return true
+    }
   }
 
   /**
