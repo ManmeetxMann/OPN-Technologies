@@ -8,6 +8,7 @@ export type Temperature = {
 
 export type TemperatureDBModel = Temperature & {
   id: string
+  timestamps?: any
 }
 
 export enum TemperatureStatuses {

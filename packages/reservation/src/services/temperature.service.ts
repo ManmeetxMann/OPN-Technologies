@@ -9,4 +9,31 @@ export class TemperatureService {
   save(temperature: Temperature): Promise<TemperatureDBModel> {
     return this.temperatureRepository.add(temperature)
   }
+
+  getAll(): Promise<TemperatureDBModel[]>{
+    return this.temperatureRepository.fetchAll();
+  }
+
+  get(id:string): Promise<TemperatureDBModel>{
+    return this.temperatureRepository.get(id);
+  }
+
+  getByUserIdAndOrganizationId(userId:string, organizationId:string): Promise<TemperatureDBModel[]>{
+    let fields=[];
+    if(userId){
+      fields.push({
+        property: 'userId',
+        value: userId,
+      });
+    }
+
+    if(organizationId){
+      fields.push({
+        property: 'organizationId',
+        value: organizationId,
+      });
+    }
+    
+    return this.temperatureRepository.findWhereFieldsAreEqual(fields);
+  }
 }
