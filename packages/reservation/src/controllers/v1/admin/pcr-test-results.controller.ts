@@ -214,7 +214,7 @@ class PCRTestResultController implements IControllerBase {
 
   listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {deadline, organizationId, barCode} = req.query as PcrTestResultsListRequest
+      const {deadline, organizationId, barCode, result} = req.query as PcrTestResultsListRequest
       if (!barCode && !deadline) {
         throw new BadRequestException('"deadline" is required if "barCode" is not specified')
       }
@@ -225,6 +225,7 @@ class PCRTestResultController implements IControllerBase {
           organizationId,
           deadline,
           barCode,
+          result,
         },
         isLabUser,
       )
@@ -253,7 +254,6 @@ class PCRTestResultController implements IControllerBase {
         res.json(actionSucceed(pcrTestResults))
       }
     } catch (error) {
-      console.log(error)
       next(error)
     }
   }
