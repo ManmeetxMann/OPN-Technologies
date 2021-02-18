@@ -201,6 +201,7 @@ export type AppointmentUiDTO = {
   registeredNursePractitioner?: string
   organizationName?: string
   transportRunLabel?: string
+  testType?: string
 }
 
 export type AppointmentsState = {
@@ -333,6 +334,7 @@ export const appointmentUiDTOResponse = (
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
     organizationName: appointment.organizationName,
+    testType: 'PCR',
     transportRunLabel,
   }
 }

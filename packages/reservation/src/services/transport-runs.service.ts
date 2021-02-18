@@ -44,7 +44,6 @@ export class TransportRunsService {
     return this.transportRunsRepository.findWhereEqual('transportRunId', transportRunId)
   }
   getByTransportRunIdBulk(transportRunIds: string[]): Promise<TransportRunsDbModel[]> {
-    console.log('transportRunIds', transportRunIds)
     return this.transportRunsRepository.findWhereIn('transportRunId', transportRunIds)
   }
 }
