@@ -906,14 +906,17 @@ export class AppoinmentService {
     appointments.forEach((appointment) => {
       if (appointmentStatsByTypes[appointment.appointmentStatus]) {
         ++appointmentStatsByTypes[appointment.appointmentStatus]
-        ++appointmentStatsByOrganization[appointment.organizationId]
       } else {
         appointmentStatsByTypes[appointment.appointmentStatus] = 1
+      }
+      if (appointmentStatsByOrganization[appointment.organizationId]) {
+        appointmentStatsByOrganization[appointment.organizationId]++
+      } else {
         appointmentStatsByOrganization[appointment.organizationId] = 1
       }
     })
     const organizations = await this.organizationService.getAllByIds(
-      Object.keys(appointmentStatsByOrganization),
+      [...Object.keys(appointmentStatsByOrganization)].filter((appointment) => !!appointment),
     )
     const appointmentStatsByTypesArr = Object.entries(appointmentStatsByTypes).map(
       ([name, count]) => ({

@@ -1171,7 +1171,7 @@ export class PCRTestResultsService {
       }
     })
     const organizations = await this.organizationService.getAllByIds(
-      Object.keys(appointmentStatsByOrganization),
+      Object.keys(appointmentStatsByOrganization).filter((appointment) => !!appointment),
     )
     const pcrResultStatsByResultArr = Object.entries(appointmentStatsByTypes).map(
       ([name, count]) => ({
