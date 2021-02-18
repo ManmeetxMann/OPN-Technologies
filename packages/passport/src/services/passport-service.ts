@@ -192,6 +192,27 @@ export class PassportService {
     return selectedPassport
   }
 
+  // find a user's active status  at a moment in time (default now)
+  async findLatestDirectPassport(
+    userId: string,
+    organizationId: string,
+    nowDate: Date = now(),
+  ): Promise<Passport | null> {
+    const timeZone = Config.get('DEFAULT_TIME_ZONE')
+    const passports = await this.passportRepository
+      .collection()
+      .where('userId', '==', userId)
+      .where('organizationId', '==', organizationId)
+      .where('validFrom', '<', moment(nowDate).tz(timeZone).toDate())
+      .orderBy('validFrom', 'desc')
+      .limit(1)
+      .fetch()
+    if (!passports.length) {
+      return null
+    }
+    return passports[0]
+  }
+
   /**
    * shortestTime
    * Calculates the shortest time to an end of day or elapsed time.

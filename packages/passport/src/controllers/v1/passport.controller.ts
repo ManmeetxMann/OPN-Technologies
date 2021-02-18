@@ -5,14 +5,14 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {UserService} from '../../../../common/src/service/user/user-service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
-import {User} from '../../../../common/src/data/user'
+import {User, userDTO} from '../../../../common/src/data/user'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 
 import {PassportService} from '../../services/passport-service'
 import {AttestationService} from '../../services/attestation-service'
 import {AlertService} from '../../services/alert-service'
-import {PassportStatuses} from '../../models/passport'
+import {PassportStatuses, passportDTO} from '../../models/passport'
 import {Attestation, AttestationAnswers, AttestationAnswersV1} from '../../models/attestation'
 
 import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
@@ -35,8 +35,34 @@ class PassportController implements IControllerBase {
 
   public initRoutes(): void {
     const auth = authorizationMiddleware([RequiredUserPermission.RegUser], true)
-    // this.router.get(this.path + '/status', this.check)
+    this.router.get(this.path + '/passport', auth, this.check)
     this.router.post(this.path + '/attestation', auth, this.update)
+  }
+
+  check = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const user = res.locals.authenticatedUser as User
+      const {organizationId} = req.query as {
+        organizationId: string
+      }
+      const allDependants = (await this.userService.getAllDependants(user.id, true)).filter((dep) =>
+        dep.organizationIds?.includes(organizationId),
+      )
+      const response = (
+        await Promise.all(
+          [user, ...allDependants].map(async (user) => ({
+            user,
+            passport: await this.passportService.findLatestDirectPassport(user.id, organizationId),
+          })),
+        )
+      ).map((body) => ({
+        user: userDTO(body.user),
+        passport: body.passport ? passportDTO(body.passport) : null,
+      }))
+      res.json(actionSucceed(response))
+    } catch (error) {
+      next(error)
+    }
   }
 
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
