@@ -48,8 +48,9 @@
 		"migration:acuity-to-pcr-results": "ts-node ./migrations/acuity-to-pcr-results",
 		"migration:add-display-in-result-flag-to-pcr-results": "ts-node ./migrations/add-display-in-result-flag-to-pcr-results",
 		"migration:fix-deadline-for-future-pcr-results": "ts-node ./migrations/fix-deadline-for-future-pcr-results",
-		"migration:remove-pcr-results-for-canceled-appointments": "ts-node ./migrations/remove-pcr-results-for-canceled-appointments"
-	},
+		"migration:remove-pcr-results-for-canceled-appointments": "ts-node ./migrations/remove-pcr-results-for-canceled-appointments",
+    "migration:update-organization-legacy": "ts-node ./migrations/update-organization-legacy"
+  },
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
 		"@types/node": "^14.0.14",
