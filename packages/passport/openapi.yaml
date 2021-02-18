@@ -37,6 +37,16 @@ components:
               nullable: true
               type: string
 
+    Answer:
+      type: array
+      items:
+        anyOf:
+          - type: boolean
+          - type: string
+      minItems: 1
+      maxItems: 2
+      description: The first item in the array MUST be a boolean and the second item, if provided, MUST be a string.
+
     Passport:
       type: object
       additionalProperties: false
@@ -283,3 +293,32 @@ paths:
           description: Message sent to at least one token.
         '404':
           description: No Registrations with pushToken !== null exist for that user.
+
+  /passport/api/v1/attestation:
+    post:
+      security:
+        - bearerAuthJWT: []
+      description: Update a list of users' statuses based on an attestation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                organizationId:
+                  type: string
+                answers:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Answer'
+                userIds:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - organizationId
+                - answers
+                - userIds
+
+      responses:
+        '200':
+          description: Passports updated
