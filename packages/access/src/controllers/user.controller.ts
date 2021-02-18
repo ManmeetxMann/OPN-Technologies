@@ -194,6 +194,9 @@ class UserController implements IRouteController {
     if (allStatuses.includes('caution')) {
       throw new BadRequestException(`current status is caution`)
     }
+    if (allStatuses.includes('temperature_check_required')) {
+      throw new BadRequestException(`current status is temperature_check_required`)
+    }
     const status = allStatuses.includes('pending') ? 'pending' : 'proceed'
 
     const user = await this.userService.findOne(userId)

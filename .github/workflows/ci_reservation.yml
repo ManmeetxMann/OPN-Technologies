@@ -8,7 +8,7 @@ on:
       - ".github/actions/**"
     branches: 
       - master
-      - ci_cd
+      - cleanup
     tags:
       - infra-dev-reservation-*
       - preprod-reservation-*
