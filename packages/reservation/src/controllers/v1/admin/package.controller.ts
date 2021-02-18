@@ -8,7 +8,6 @@ import {BadRequestException} from '../../../../../common/src/exceptions/bad-requ
 
 import {PackageService} from '../../../services/package.service'
 
-import packageValidations from '../../../validations/package.validations'
 import {SavePackageAndOrganizationRequest} from '../../../models/packages'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
@@ -29,7 +28,6 @@ class AdminController implements IControllerBase {
     innerRouter.post(
       this.path + '/api/v1/packages',
       authorizationMiddleware([RequiredUserPermission.OPNAdmin]),
-      packageValidations.packageValidation(),
       this.addPackageCode,
     )
     innerRouter.get(
