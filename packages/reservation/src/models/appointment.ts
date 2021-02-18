@@ -1,5 +1,5 @@
 import {firestore} from 'firebase-admin'
-import {formatStringDateRFC822Local, makeDeadline} from '../utils/datetime.helper'
+import {formatStringDateRFC822Local} from '../utils/datetime.helper'
 
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
@@ -147,7 +147,6 @@ export type CreateAppointmentRequest = {
   slotId: string
   firstName: string
   lastName: string
-  email: string
   phone: {
     code: number
     number: number
@@ -192,12 +191,16 @@ export type AppointmentUiDTO = {
   dateOfBirth: string
   location?: string
   transportRunId?: string
+  email: string
+  phone: number
   deadline?: string
   latestResult?: string
   vialLocation?: string
   appointment?: boolean
   canCancel?: boolean
   registeredNursePractitioner?: string
+  organizationName?: string
+  transportRunLabel?: string
 }
 
 export type AppointmentsState = {
@@ -309,8 +312,9 @@ export const statsUiDTOResponse = (
 })
 
 export const appointmentUiDTOResponse = (
-  appointment: AppointmentDBModel & {canCancel?: boolean},
+  appointment: AppointmentDBModel & {canCancel?: boolean; organizationName?: string},
   isLabUser: boolean,
+  transportRunLabel?: string,
 ): AppointmentUiDTO => {
   return {
     id: appointment.id,
@@ -319,6 +323,8 @@ export const appointmentUiDTOResponse = (
     status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser),
     barCode: appointment.barCode,
     location: appointment.location,
+    email: appointment.email,
+    phone: appointment.phone,
     dateTime: formatDateRFC822Local(appointment.dateTime),
     dateOfBirth: appointment.dateOfBirth,
     transportRunId: appointment.transportRunId,
@@ -326,33 +332,33 @@ export const appointmentUiDTOResponse = (
     latestResult: appointment.latestResult,
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
+    organizationName: appointment.organizationName,
+    transportRunLabel,
   }
 }
 
 export type UserAppointment = {
   id: string
   QRCode: string
-  dateOfBirth: string
   showQrCode: boolean
-  dateOfAppointment: string
   firstName: string
   lastName: string
   locationName: string
   locationAddress: string
-  timeOfAppointment: string
+  dateTime: string
 }
 
 export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): UserAppointment => ({
   id: appointment.id,
   QRCode: appointment.barCode,
-  dateOfBirth: formatStringDateRFC822Local(appointment.dateOfBirth),
-  showQrCode: moment(makeDeadline(moment())).isBefore(appointment.deadline.toDate()),
+  showQrCode: moment(new Date()).isBefore(
+    formatStringDateRFC822Local(appointment.dateOfAppointment),
+  ),
   firstName: appointment.firstName,
   lastName: appointment.lastName,
   locationName: appointment.locationName,
   locationAddress: appointment.locationAddress,
-  dateOfAppointment: formatStringDateRFC822Local(appointment.dateOfAppointment),
-  timeOfAppointment: appointment.timeOfAppointment,
+  dateTime: formatDateRFC822Local(appointment.dateTime),
 })
 
 export const appointmentByBarcodeUiDTOResponse = (
@@ -366,6 +372,8 @@ export const appointmentByBarcodeUiDTOResponse = (
     status: appointment.appointmentStatus,
     barCode: appointment.barCode,
     location: appointment.location,
+    email: appointment.email,
+    phone: appointment.phone,
     dateTime: formatDateRFC822Local(appointment.dateTime),
     dateOfBirth: appointment.dateOfBirth,
     deadline: formatDateRFC822Local(appointment.deadline),

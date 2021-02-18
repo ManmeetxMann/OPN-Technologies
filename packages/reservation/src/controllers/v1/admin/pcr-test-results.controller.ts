@@ -27,14 +27,18 @@ import {
   PcrTestResultsListRequest,
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
+  SinglePcrTestResultsRequest,
+  singlePcrTestResultDTO,
 } from '../../../models/pcr-test-results'
 import {statsUiDTOResponse} from '../../../models/appointment'
+import {AppoinmentService} from '../../../services/appoinment.service'
 
 class PCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
+  private appoinmentService = new AppoinmentService()
 
   constructor() {
     this.initRoutes()
@@ -89,6 +93,11 @@ class PCRTestResultController implements IControllerBase {
       this.path + '/pcr-test-results/due-deadline/stats',
       dueTodayAuth,
       this.dueDeadlineStats,
+    )
+    innerRouter.get(
+      this.path + '/pcr-test-results/:pcrTestResultId',
+      dueTodayAuth,
+      this.onePcrTestResult,
     )
 
     this.router.use('/', innerRouter)
@@ -205,7 +214,7 @@ class PCRTestResultController implements IControllerBase {
 
   listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {deadline, organizationId, barCode} = req.query as PcrTestResultsListRequest
+      const {deadline, organizationId, barCode, result} = req.query as PcrTestResultsListRequest
       if (!barCode && !deadline) {
         throw new BadRequestException('"deadline" is required if "barCode" is not specified')
       }
@@ -216,6 +225,7 @@ class PCRTestResultController implements IControllerBase {
           organizationId,
           deadline,
           barCode,
+          result,
         },
         isLabUser,
       )
@@ -322,6 +332,32 @@ class PCRTestResultController implements IControllerBase {
           statsUiDTOResponse(pcrResultStatsByResultArr, pcrResultStatsByOrgIdArr, total),
         ),
       )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  onePcrTestResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {pcrTestResultId} = req.params as SinglePcrTestResultsRequest
+
+      const pcrTestResult = await this.pcrTestResultsService.getPCRResultsById(pcrTestResultId)
+
+      if (!pcrTestResult) {
+        throw new ResourceNotFoundException(`PCRTestResult with id ${pcrTestResultId} not found`)
+      }
+
+      const appointment = await this.appoinmentService.getAppointmentDBById(
+        pcrTestResult.appointmentId,
+      )
+
+      if (!appointment) {
+        throw new ResourceNotFoundException(
+          `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${pcrTestResultId}`,
+        )
+      }
+
+      res.json(actionSucceed(singlePcrTestResultDTO(pcrTestResult, appointment)))
     } catch (error) {
       next(error)
     }
