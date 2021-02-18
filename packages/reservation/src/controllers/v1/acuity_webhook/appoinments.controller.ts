@@ -1,5 +1,6 @@
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {NextFunction, Request, Response, Router} from 'express'
+import {LogInfo} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
@@ -140,9 +141,10 @@ class AppointmentWebhookController implements IControllerBase {
           appointment.canceled &&
           appointmentFromDb.appointmentStatus != AppointmentStatus.Canceled
         ) {
-          console.log(
-            `AppointmentWebhookController: UpdateAppointment:  Appointment Status will be updated to Canceled`,
-          )
+          LogInfo('UpdateAppointmentFromWebhook', 'AppointmentStatusUpdatedToCancel', {
+            appoinmentID: appointmentFromDb.id,
+            acuityID: id,
+          })
           appointmentStatus = AppointmentStatus.Canceled
         }
 
@@ -160,9 +162,11 @@ class AppointmentWebhookController implements IControllerBase {
             latestResult: appointmentFromDb.latestResult,
           },
         )
-        console.log(
-          `AppointmentWebhookController: UpdateAppointment: SuccessUpdateAppointment for AppointmentID: ${appointmentFromDb.id} AcuityID: ${id}`,
-        )
+        LogInfo('UpdateAppointmentFromWebhook', 'AppointmentSuccessfullyUpdated', {
+          appoinmentID: appointmentFromDb.id,
+          acuityID: id,
+          barCode: barCode,
+        })
         const pcrTestResult = await this.pcrTestResultsService.getWaitingPCRResultsByAppointmentId(
           appointmentFromDb.id,
         )
@@ -173,9 +177,10 @@ class AppointmentWebhookController implements IControllerBase {
           appointmentStatus === AppointmentStatus.Canceled
         ) {
           await this.pcrTestResultsService.deleteTestResults(pcrTestResult.id)
-          console.log(
-            `AppointmentWebhookController: UpdateAppointment: AppointmentCanceled ID: ${appointmentFromDb.id} Removed PCR Results ID: ${pcrTestResult.id}`,
-          )
+          LogInfo('UpdateAppointmentFromWebhook', 'RemovedResults', {
+            appoinmentID: appointmentFromDb.id,
+            pcrResultID: pcrTestResult.id,
+          })
         } else {
           const linkedBarcodes = await this.pcrTestResultsService.getlinkedBarcodes(
             appointment.certificate,
@@ -201,15 +206,18 @@ class AppointmentWebhookController implements IControllerBase {
             pcrTestResult.id,
             pcrResultDataForDb,
           )
-          console.log(
-            `AppointmentWebhookController: UpdateAppointment: SuccessUpdatedPCRResults for PCRResultsID: ${pcrTestResult.id}`,
-          )
+          LogInfo('UpdateAppointmentFromWebhook', 'UpdatedPCRResultsSuccessfully', {
+            appoinmentID: appointmentFromDb.id,
+            pcrResultID: pcrTestResult.id,
+          })
         }
       } catch (e) {
         if (appointment.canceled) {
-          console.log(
-            `AppointmentWebhookController: UpdateAppointment: Canceled AppoinmentID: ${id}. Hence No PCR Results Updates. Error: ${e.toString()}`,
-          )
+          LogInfo('UpdateAppointmentFromWebhook', 'AlreadyCanceledAppoinment', {
+            appoinmentID: appointmentFromDb.id,
+            acuityID: id,
+            error: e.toString(),
+          })
         } else {
           console.error(
             `AppointmentWebhookController: UpdateAppointment: FailedToUpdateAppointment for AppoinmentID: ${id} ${e.toString()}`,
@@ -253,9 +261,11 @@ class AppointmentWebhookController implements IControllerBase {
         } barCodeNumber: ${JSON.stringify(dataForUpdate)}`,
       )
     } else {
-      console.log(
-        `AppointmentWebhookController: ${endpoint}Appointment NoUpdateToAcuity AppoinmentID: ${id} barCodeNumber: ${appointment.barCode}  organizationId: ${appointment.organizationId}`,
-      )
+      LogInfo(`${endpoint}AppointmentWebhookFromWebhook`, 'NoUpdateToAcuity', {
+        appoinmentID: id,
+        barCode: appointment.barCode,
+        organizationId: appointment.organizationId,
+      })
     }
     return dataForUpdate
   }
