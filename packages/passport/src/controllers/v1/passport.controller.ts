@@ -52,7 +52,7 @@ class PassportController implements IControllerBase {
         await Promise.all(
           [user, ...allDependants].map(async (user) => ({
             user,
-            passport: await this.passportService.findLatestDirectPassport(user.id),
+            passport: await this.passportService.findLatestDirectPassport(user.id, organizationId),
           })),
         )
       ).map((body) => ({

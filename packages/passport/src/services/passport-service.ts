@@ -187,11 +187,16 @@ export class PassportService {
   }
 
   // find a user's active status  at a moment in time (default now)
-  async findLatestDirectPassport(userId: string, nowDate: Date = now()): Promise<Passport | null> {
+  async findLatestDirectPassport(
+    userId: string,
+    organizationId: string,
+    nowDate: Date = now(),
+  ): Promise<Passport | null> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
     const passports = await this.passportRepository
       .collection()
       .where('userId', '==', userId)
+      .where('organizationId', '==', organizationId)
       .where('validFrom', '<', moment(nowDate).tz(timeZone).toDate())
       .orderBy('validFrom', 'desc')
       .limit(1)
