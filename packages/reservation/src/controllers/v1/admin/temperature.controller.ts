@@ -5,7 +5,7 @@ import {authorizationMiddleware} from '../../../../../common/src/middlewares/aut
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {now, toDateTimeFormat} from '../../../../../common/src/utils/times'
-import {convertCelsiusToFahrenheit, convertFahrenheitToCelsius} from '../../../../../common/src/utils/temperature'
+import {convertCelsiusToFahrenheit} from '../../../../../common/src/utils/temperature'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 
@@ -110,30 +110,33 @@ class TemperatureAdminController implements IControllerBase {
     }
   }
 
-  getTemperatureCheck= async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const {id} = req.params;
-    const {organizationId} = req.query;
-    try{
+  getTemperatureCheck = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const {id} = req.params
+    const {organizationId} = req.query
+    try {
       //console.log('getTemperatureCheck(): id:', id, 'organizationId: ',organizationId);
-      const result=await this.temperatureService.getByUserIdAndOrganizationId(id, organizationId);
+      const result = await this.temperatureService.getByUserIdAndOrganizationId(
+        id,
+        organizationId?.toString() || '',
+      )
       //const result=[await this.temperatureService.get(id)];
-      res.json(actionSucceed(
-        result.map(
-          (item)=>{
-            if(item){
-              const {status, timestamps, temperature}= item;
+      res.json(
+        actionSucceed(
+          result.map((item) => {
+            if (item) {
+              const {status, timestamps, temperature} = item
               return {
                 temperatureInCelsius: temperature,
                 temperatureInFahrenheit: convertCelsiusToFahrenheit(temperature),
-                createdAt: toDateTimeFormat(timestamps?.createdAt?._seconds | 0) ,
+                createdAt: toDateTimeFormat(timestamps?.createdAt?._seconds | 0),
                 status: status,
-              };
+              }
             }
-          }
-        )
-      ))
-    }catch(error){
-      next(error);
+          }),
+        ),
+      )
+    } catch (error) {
+      next(error)
     }
   }
 }

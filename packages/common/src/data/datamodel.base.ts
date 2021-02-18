@@ -546,7 +546,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
     return this.collection(subPath).where(fieldPath, '==', value).fetch()
   }
-  
+
   public getQueryFindWhereEqualWithMax(
     property: string,
     value: unknown,
