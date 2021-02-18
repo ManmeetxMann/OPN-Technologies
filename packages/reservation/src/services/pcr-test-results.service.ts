@@ -1252,6 +1252,7 @@ export class PCRTestResultsService {
     deadline,
     testRunId,
     barCode,
+    appointmentStatus,
   }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrTestResultsQuery = []
 
@@ -1315,7 +1316,9 @@ export class PCRTestResultsService {
 
       if (
         appointment &&
-        (allowedAppointmentStatus.includes(appointment.appointmentStatus) || testRunId)
+        ((!appointmentStatus && allowedAppointmentStatus.includes(appointment.appointmentStatus)) ||
+          appointmentStatus === appointment.appointmentStatus ||
+          testRunId)
       ) {
         const testRun = testRuns?.find(({testRunId}) => pcr.testRunId === testRunId)
 

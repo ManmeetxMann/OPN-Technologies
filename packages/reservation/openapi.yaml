@@ -2123,6 +2123,16 @@ paths:
           name: barCode
           schema:
             type: string
+        - in: query
+          name: appointmentStatus
+          schema:
+            type: string
+            enum:
+              [
+                Received,
+                InProgress,
+                ReRunRequired,
+              ]
       responses:
         '200':
           description: Successfully Return
