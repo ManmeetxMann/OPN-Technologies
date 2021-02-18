@@ -1054,6 +1054,8 @@ paths:
       description: Get list of Test Runs by date
       security:
         - bearerAuthJWT: []
+      tags:
+        - Test Runs
       parameters:
       - in: query
         name: testRunDate
@@ -1071,7 +1073,9 @@ paths:
     post:
       description: Add Test Run
       security:
-        - bearerAuthJWT: [ ]
+        - bearerAuthJWT: []
+      tags:
+        - Test Runs
       requestBody:
         content:
           application/json:
