@@ -546,21 +546,7 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
     const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(property)
     return this.collection(subPath).where(fieldPath, '==', value).fetch()
   }
-
-  public async findWhereFieldsAreEqual(
-    fields: {property: string, value: unknown}[],
-    subPath = '',
-  ): Promise<T[]> {
-    if(fields.length == 0) return this.fetchAll();
-    let query = this.collection(subPath);
-    fields.forEach((field: {property: string, value: unknown}) => {
-      const fieldPath = new this.datastore.firestoreAdmin.firestore.FieldPath(field.property)
-      query = query.where(fieldPath, '==', field.value)
-    })
-    console.log('findWhereFieldsAreEqual: ', query)
-    return query.fetch()
-  }
-
+  
   public getQueryFindWhereEqualWithMax(
     property: string,
     value: unknown,

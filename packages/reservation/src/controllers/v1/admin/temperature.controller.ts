@@ -115,8 +115,8 @@ class TemperatureAdminController implements IControllerBase {
     const {organizationId} = req.query;
     try{
       //console.log('getTemperatureCheck(): id:', id, 'organizationId: ',organizationId);
-      //const result=await this.temperatureService.getByUserIdAndOrganizationId(id, organizationId+'');
-      const result=[await this.temperatureService.get(id)];
+      const result=await this.temperatureService.getByUserIdAndOrganizationId(id, organizationId);
+      //const result=[await this.temperatureService.get(id)];
       res.json(actionSucceed(
         result.map(
           (item)=>{

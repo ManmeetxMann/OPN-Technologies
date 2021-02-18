@@ -1,3 +1,4 @@
+import { DataModelFieldMapOperatorType } from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 import {Temperature, TemperatureDBModel} from '../models/temperature'
 import {TemperatureRepository} from '../respository/temperature.repository'
@@ -18,22 +19,25 @@ export class TemperatureService {
     return this.temperatureRepository.get(id);
   }
 
-  getByUserIdAndOrganizationId(userId:string, organizationId:string): Promise<TemperatureDBModel[]>{
-    let fields=[];
+  getByUserIdAndOrganizationId(userId, organizationId): Promise<TemperatureDBModel[]>{
+    let query=[];
     if(userId){
-      fields.push({
-        property: 'userId',
-        value: userId,
+      query.push({
+          map: '/',
+          key: 'userId',
+          operator: DataModelFieldMapOperatorType.Equals,
+          value: userId,
       });
     }
 
     if(organizationId){
-      fields.push({
-        property: 'organizationId',
-        value: organizationId,
+      query.push({
+          map: '/',
+          key: 'organizationId',
+          operator: DataModelFieldMapOperatorType.Equals,
+          value: organizationId,
       });
     }
-    
-    return this.temperatureRepository.findWhereFieldsAreEqual(fields);
+    return this.temperatureRepository.findWhereEqualInMap(query);
   }
 }
