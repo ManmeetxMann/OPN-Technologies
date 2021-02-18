@@ -25,6 +25,7 @@ import AppointmentAvailabilityController from './controllers/v1/appointment-avai
 import AppointmentController from './controllers/v1/appointment.controller'
 import PCRTestResultController from './controllers/v1/test-results.controller'
 import TemperatureV1Controller from './controllers/v1/admin/temperature.controller'
+import TemperatureController from './controllers/v1/temperature.controller'
 
 //import * as debugClient from '@google-cloud/debug-agent'
 //debugClient.start({allowExpressions: true})
@@ -54,6 +55,7 @@ const app = new App({
     new AppointmentController(),
     new PCRTestResultController(),
     new TemperatureV1Controller(),
+    new TemperatureController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],
