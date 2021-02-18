@@ -3,7 +3,7 @@ import {NextFunction, Request, Response} from 'express'
 
 import IRouteController from '../../../../common/src/interfaces/IRouteController.interface'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
-import {isPassed} from '../../../../common/src/utils/datetime-util'
+import {isPassed, safeTimestamp} from '../../../../common/src/utils/datetime-util'
 import {actionFailed, actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
@@ -12,8 +12,6 @@ import {UserService} from '../../../../common/src/service/user/user-service'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 
 import {PassportService} from '../../../../passport/src/services/passport-service'
-import {AttestationService} from '../../../../passport/src/services/attestation-service'
-import {PassportStatuses} from '../../../../passport/src/models/passport'
 
 import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
 import {OrganizationLocation} from '../../../../enterprise/src/models/organization'
@@ -27,7 +25,6 @@ class UserController implements IRouteController {
   public router = express.Router()
   private organizationService = new OrganizationService()
   private passportService = new PassportService()
-  private attestationService = new AttestationService()
   private accessService = new AccessService()
   private accessTokenService = new AccessTokenService(
     this.organizationService,
@@ -157,35 +154,33 @@ class UserController implements IRouteController {
   exit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // TODO: this should simply remove the user from their current location, wherever it is
     try {
-      const {organizationId, locationId, accessToken} = req.body
-      const location = await this.organizationService.getLocation(organizationId, locationId)
-      if (!location.allowsSelfCheckInOut)
-        throw new BadRequestException("Location doesn't allow self-check-out")
-
-      const access = await this.accessService.findOneByToken(accessToken)
-
-      if (location.id != access.locationId)
-        throw new BadRequestException('Access-location mismatch with the entering location')
-
-      const newAccess = await this.accessService.handleExitV2(access)
-
-      res.json(actionSucceed(accessDTOResponseV1(newAccess)))
+      const {userIds, organizationId} = req.body as {
+        userIds: string[]
+        organizationId: string
+      }
+      const userId = res.locals.connectedUser.id as string
+      const allDependants = (await this.userService.getAllDependants(userId, true)).filter((dep) =>
+        dep.organizationIds?.includes(organizationId),
+      )
+      const allDependantIds = new Set(allDependants.map(({id}) => id))
+      if (userIds.some((id) => id !== userId && !allDependantIds.has(id))) {
+        throw new BadRequestException('Not allowed to check out all user ids')
+      }
+      const accesses = await Promise.all(
+        userIds.map((id) =>
+          this.accessService.findLatestAnywhere(id).then((acc) => {
+            if (!acc || isPassed(safeTimestamp(acc.exitAt))) {
+              throw new BadRequestException(`${id} is not checked in anywhere`)
+            }
+            return acc
+          }),
+        ),
+      )
+      const newAccesses = await Promise.all(accesses.map(this.accessService.handleExitV2))
+      res.json(actionSucceed(newAccesses.map(accessDTOResponseV1)))
     } catch (error) {
       next(error)
     }
-  }
-
-  private async enterWithAttestation(res: Response, access: AccessModel): Promise<unknown> {
-    const passport = await this.passportService.findOneByToken(access.statusToken)
-
-    const canEnter = passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil)
-
-    if (canEnter) {
-      const newAccess = await this.accessService.handleEnterV2(access)
-      return res.json(actionSucceed(accessDTOResponseV1(newAccess)))
-    }
-
-    return res.status(400).json(actionFailed('Access denied for access-token'))
   }
 
   private async lookupLocation(
@@ -197,30 +192,6 @@ class UserController implements IRouteController {
       throw new ResourceNotFoundException(`location ${organizationId}/${locationId} does not exist`)
     }
     return location
-  }
-
-  private async enterWithoutAttestation(
-    res: Response,
-    access: AccessModel,
-    organizationId: string,
-  ): Promise<unknown> {
-    const {userId} = access
-    const allIds = Object.keys(access.dependants)
-    if (access.includesGuardian) {
-      allIds.push(userId)
-    }
-    const allStatuses = await Promise.all(
-      allIds.map((id) => this.attestationService.latestStatus(id, organizationId)),
-    )
-    if (allStatuses.includes('stop')) {
-      throw new BadRequestException(`current status is stop`)
-    }
-    if (allStatuses.includes('caution')) {
-      throw new BadRequestException(`current status is caution`)
-    }
-    const newAccess = await this.accessService.handleEnterV2(access)
-
-    return res.json(actionSucceed(accessDTOResponseV1(newAccess)))
   }
 }
 
