@@ -6,6 +6,7 @@ import {now} from '../../../common/src/utils/times'
 export type Passport = {
   id: string
   userId: string
+  organizationId: string
   statusToken: string
   status: PassportStatus
   validFrom: string

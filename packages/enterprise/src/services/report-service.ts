@@ -449,7 +449,9 @@ export class ReportService {
       Promise.all(
         [...userIds].map(
           (id): Promise<{id: string; status: PassportStatus}> =>
-            this.attestationService.latestStatus(id).then((status) => ({id, status})),
+            this.attestationService
+              .latestStatus(id, organizationId)
+              .then((status) => ({id, status})),
         ),
       ),
     ])

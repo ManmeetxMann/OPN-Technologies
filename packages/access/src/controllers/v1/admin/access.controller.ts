@@ -234,7 +234,7 @@ class AdminController implements IRouteController {
         if (!autoExit) {
           throw new ForbiddenException('User is still in a location')
         } else {
-          const newData = await this.forceExit(latestAccess, userId)
+          const newData = await this.forceExit(latestAccess, userId, organizationId)
           selectedPassport = newData.passport
         }
       }
@@ -262,6 +262,7 @@ class AdminController implements IRouteController {
     // optional - if locationId is provided, require the user's current location to be that location
     try {
       const {userId, locationId} = req.body
+      const {organizationId} = res.locals
       const user = await this.userService.findOne(userId)
       // backwards compat for multi-user access
       const {delegates: delegateIds} = user
@@ -277,7 +278,7 @@ class AdminController implements IRouteController {
       if (locationId && latestAccess.locationId !== locationId) {
         throw new ForbiddenException(`User is not in location ${locationId}`)
       }
-      const {access, passport} = await this.forceExit(latestAccess, userId)
+      const {access, passport} = await this.forceExit(latestAccess, userId, organizationId)
       const responseBody = {
         access: accessDTOResponseV1(access),
         passport: passportDTO(passport),
@@ -292,6 +293,7 @@ class AdminController implements IRouteController {
   forceExit = async (
     access: AccessModel,
     userId: string,
+    organizationId: string,
   ): Promise<{passport: Passport; access: AccessModel}> => {
     // utility method.
     // make the user exit using the given access. If that would have side effects (i.e. other users exiting)
@@ -315,7 +317,13 @@ class AdminController implements IRouteController {
       try {
         passport = await this.passportService.findOneByToken(access.statusToken, true)
       } catch (err) {
-        passport = await this.passportService.create(PassportStatuses.Pending, userId, [], true)
+        passport = await this.passportService.create(
+          PassportStatuses.Pending,
+          userId,
+          [],
+          true,
+          organizationId,
+        )
       }
       const soleAccess = await this.accessTokenService.createToken(
         passport.statusToken,

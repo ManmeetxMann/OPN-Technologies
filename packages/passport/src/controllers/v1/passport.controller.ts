@@ -134,7 +134,9 @@ class PassportController implements IControllerBase {
       } as Attestation)
 
       const allPassports = await Promise.all(
-        userIds.map((userId) => this.passportService.create(passportStatus, userId, [], true)),
+        userIds.map((userId) =>
+          this.passportService.create(passportStatus, userId, [], true, organizationId),
+        ),
       )
       if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
         // TODO: we should only send one alert for all of the passports
