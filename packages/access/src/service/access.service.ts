@@ -19,7 +19,7 @@ import {OrganizationUsersGroupModel} from '../../../enterprise/src/repository/or
 import {AccessStatsFilter} from '../models/access-stats'
 import {Config} from '../../../common/src/utils/config'
 import {AccessFilterWithDependent} from '../types'
-import {safeTimestamp} from '../../../common/src/utils/datetime-util'
+import {safeTimestamp, isPassed} from '../../../common/src/utils/datetime-util'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -59,10 +59,7 @@ export class AccessService {
     delegateAdminUserId: string | null = null,
   ): Promise<AccessModel> {
     const activeAccess = await this.findLatestAnywhere(userId)
-    if (
-      activeAccess &&
-      (!activeAccess.exitAt || moment(now()).isSameOrAfter(activeAccess.exitAt))
-    ) {
+    if (activeAccess && (!activeAccess.exitAt || !isPassed(safeTimestamp(activeAccess.exitAt)))) {
       await this.handleExitV2(activeAccess)
     }
 

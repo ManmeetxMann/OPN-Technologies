@@ -176,7 +176,9 @@ class UserController implements IRouteController {
           }),
         ),
       )
-      const newAccesses = await Promise.all(accesses.map(this.accessService.handleExitV2))
+      const newAccesses = await Promise.all(
+        accesses.map((access) => this.accessService.handleExitV2(access)),
+      )
       res.json(actionSucceed(newAccesses.map(accessDTOResponseV1)))
     } catch (error) {
       next(error)
