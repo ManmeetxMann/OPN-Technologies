@@ -99,7 +99,7 @@ export class AppoinmentService {
         map: '/',
         key: 'organizationId',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: queryParams.organizationId,
+        value: queryParams.organizationId === 'null' ? null : queryParams.organizationId,
       })
     }
 
