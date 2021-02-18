@@ -1,11 +1,6 @@
-import * as express from 'express'
-import exphbs from 'express-handlebars'
-import path from 'path'
 import * as bodyParser from 'body-parser'
 
 import App from '../../common/src/express/app'
-import {IdentifiersModel} from '../../common/src/data/identifiers'
-import DataStore from '../../common/src/data/datastore'
 import loggerMiddleware from '../../common/src/middlewares/logger'
 
 import AdminController from './controllers/admin.controller'
@@ -54,4 +49,3 @@ export const app = new App({
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })
-
