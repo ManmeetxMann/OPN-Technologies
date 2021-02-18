@@ -280,13 +280,13 @@ class PCRTestResultController implements IControllerBase {
         throw new ResourceNotFoundException(`Test Run with id ${testRunId} not found`)
       }
 
-      await Promise.all(
-        pcrTestResultIds.map((pcrTestResultId) =>
-          this.pcrTestResultsService.addTestRunToPCR(testRunId, pcrTestResultId, adminId),
-        ),
+      const result = await this.pcrTestResultsService.addTestRunToPCR(
+        testRunId,
+        adminId,
+        pcrTestResultIds,
       )
 
-      res.json(actionSucceed())
+      res.json(actionSuccess(result))
     } catch (error) {
       next(error)
     }
