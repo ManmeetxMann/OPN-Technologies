@@ -233,11 +233,9 @@ components:
       properties:
         locationId:
           type: string
-        includeGuardian:
-          type: boolean
         organizationId:
           type: string
-        dependantIds:
+        userIds:
           type: array
           items:
             type: string
@@ -249,16 +247,15 @@ components:
       type: object
       additionalProperties: false
       properties:
-        locationId:
-          type: string
         organizationId:
           type: string
-        accessToken:
-          type: string
+        userIds:
+          type: array
+          items:
+            type: string
       required:
-        - locationId
         - organizationId
-        - accessToken
+        - userIds
     
     V1ScanRequest:
       type: object
@@ -360,7 +357,9 @@ components:
       additionalProperties: false
       properties:
         data:
-          $ref: '#/components/schemas/V1Access'
+          type: array
+          items:
+            $ref: '#/components/schemas/V1Access'
         status:
           type: object
           additionalProperties: false
