@@ -173,7 +173,7 @@ class AdminController implements IRouteController {
         userIds: string[]
         organizationId: string
       }
-      const userId = res.locals.user.id
+      const userId = res.locals.connectedUser.id as string
       const allUsers = await Promise.all(userIds.map((id) => this.userService.findOne(id)))
 
       allUsers.forEach((user) => {
