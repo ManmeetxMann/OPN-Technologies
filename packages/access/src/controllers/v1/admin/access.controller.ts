@@ -15,7 +15,6 @@ import {accessDTOResponseV1} from '../../../models/access'
 import IRouteController from '../../../../../common/src/interfaces/IRouteController.interface'
 import {isPassed, safeTimestamp} from '../../../../../common/src/utils/datetime-util'
 import {actionSucceed, of} from '../../../../../common/src/utils/response-wrapper'
-import {now} from '../../../../../common/src/utils/times'
 import {User, userDTO} from '../../../../../common/src/data/user'
 import {AdminProfile} from '../../../../../common/src/data/admin'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
@@ -23,6 +22,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {ResponseStatusCodes} from '../../../../../common/src/types/response-status'
 import {UnauthorizedException} from '../../../../../common/src/exceptions/unauthorized-exception'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {ForbiddenException} from '../../../../../common/src/exceptions/forbidden-exception'
 import {UserService} from '../../../../../common/src/service/user/user-service'
 import {NfcTagService} from '../../../../../common/src/service/hardware/nfctag-service'
@@ -33,10 +33,6 @@ const replyInsufficientPermission = (res: Response) =>
     .json(
       of(null, ResponseStatusCodes.AccessDenied, 'Insufficient permissions to fulfil the request'),
     )
-const replyUnauthorizedEntry = (res: Response) =>
-  res
-    .status(403)
-    .json(of(null, ResponseStatusCodes.AccessDenied, 'Must have Proceed badge to enter/exit'))
 
 class AdminController implements IRouteController {
   public router = express.Router()
@@ -170,88 +166,54 @@ class AdminController implements IRouteController {
   }
 
   enter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // enter a user into a location
-    // if autoExit is true, the user will be checked out of their current location
-    // otherwise, if they are checked in somewhere the request will fail
+    // enter some users into a location
     try {
-      const {userId, locationId, autoExit} = req.body
-      const {organizationId} = res.locals
-      const [user, location] = await Promise.all([
-        this.userService.findOne(userId),
-        this.organizationService.getLocation(organizationId, locationId),
-      ])
-      // backwards compat for multi-user access
-      const {delegates: delegateIds} = user
-      const potentialParentIds = [null, ...(delegateIds ?? [])]
+      const {locationId, userIds, organizationId} = req.body as {
+        locationId: string
+        userIds: string[]
+        organizationId: string
+      }
+      const userId = res.locals.user.id
+      const allUsers = await Promise.all(userIds.map((id) => this.userService.findOne(id)))
 
-      if (!location) {
-        throw new ForbiddenException(
-          `Location ${locationId} does not exist or does not belong to organization ${organizationId}`,
-        )
-      }
-      if (!location.allowAccess) {
-        throw new ForbiddenException('Location does not permit direct check-in')
-      }
-
-      const latestPassports = (
-        await Promise.all(
-          potentialParentIds.map((parent) =>
-            this.passportService.findLatestPassport(userId, parent),
-          ),
-        )
-      ).filter((notNull) => notNull)
-      if (!latestPassports.length) {
-        throw new ForbiddenException('User has no valid passports')
-      }
-      // passport might be regenerated
-      let selectedPassport = latestPassports.reduce((selected, candidate) => {
-        if (
-          // @ts-ignore
-          safeTimestamp(selected.timestamps.createdAt) <
-          // @ts-ignore
-          safeTimestamp(candidate.timestamps.createdAt)
-        ) {
-          return candidate
+      allUsers.forEach((user) => {
+        if (!user.organizationIds?.includes(organizationId)) {
+          throw new ForbiddenException(`User ${user.id} is not a part of ${organizationId}`)
         }
-        return selected
       })
-      if (
-        !(
-          selectedPassport.status === PassportStatuses.Pending ||
-          (selectedPassport.status === PassportStatuses.Proceed &&
-            !isPassed(safeTimestamp(selectedPassport.validUntil)))
-        )
-      ) {
-        // TODO: make a pending passport here?
-        throw new ForbiddenException('Current passport does not permit entry')
-      }
+      const location = await this.organizationService.getLocation(organizationId, locationId)
+      if (!location) throw new ResourceNotFoundException('Location not found')
+      if (!location.allowsSelfCheckInOut)
+        throw new ForbiddenException("Location doesn't allow self-check-in")
 
-      // find current location
-      const latestAccess = await this.accessService.findLatestAnywhere(userId, delegateIds ?? [])
-      const currentLocation =
-        latestAccess?.enteredAt && !latestAccess.exitAt ? latestAccess.locationId : null
-      if (currentLocation) {
-        if (!autoExit) {
-          throw new ForbiddenException('User is still in a location')
-        } else {
-          const newData = await this.forceExit(latestAccess, userId, organizationId)
-          selectedPassport = newData.passport
-        }
-      }
+      if (!location.allowAccess)
+        throw new ForbiddenException("Location can't be directly checked in to")
 
-      const enteringAccess = await this.accessTokenService.createToken(
-        selectedPassport.statusToken,
-        locationId,
-        userId,
-        [],
-        true,
+      const allPassports = await Promise.all(
+        userIds.map((id) => this.passportService.findLatestDirectPassport(id, organizationId)),
       )
-      const access = await this.accessService.handleEnterV2(enteringAccess)
-      const responseBody = {
-        access: accessDTOResponseV1(access),
-        passport: passportDTO(selectedPassport),
+      allPassports.forEach((passport) => {
+        if (!this.passportService.passportAllowsEntry(passport, location.attestationRequired)) {
+          throw new ForbiddenException('Passport not found or does not allow entry')
+        }
+      })
+      const accesses = await Promise.all(
+        userIds.map((id, index) =>
+          this.accessService.createV2(
+            id,
+            locationId,
+            allPassports[index]?.statusToken ?? null,
+            userId,
+          ),
+        ),
+      )
+
+      const responseBody = allUsers.map((user, index) => ({
         user: userDTO(user),
-      }
+        passport: allPassports[index] ? passportDTO(allPassports[index]) : null,
+        access: accessDTOResponseV1(accesses[index]),
+      }))
+
       res.json(actionSucceed(responseBody))
     } catch (error) {
       next(error)
@@ -261,29 +223,35 @@ class AdminController implements IRouteController {
     // exit a user from their current location (wherever it is)
     // optional - if locationId is provided, require the user's current location to be that location
     try {
-      const {userId, locationId} = req.body
-      const {organizationId} = res.locals
-      const user = await this.userService.findOne(userId)
-      // backwards compat for multi-user access
-      const {delegates: delegateIds} = user
-      const latestAccess = await this.accessService.findLatestAnywhere(userId, delegateIds ?? [])
-      if (!latestAccess) {
-        throw new ForbiddenException('User is not in any location')
+      const {userIds, organizationId} = req.body as {
+        userIds: string[]
+        organizationId: string
       }
-      const isDirect = latestAccess.userId === userId
-      const timestampBearer = isDirect ? latestAccess : latestAccess.dependants[userId]
-      if (timestampBearer.exitAt) {
-        throw new ForbiddenException('User is not in any location')
-      }
-      if (locationId && latestAccess.locationId !== locationId) {
-        throw new ForbiddenException(`User is not in location ${locationId}`)
-      }
-      const {access, passport} = await this.forceExit(latestAccess, userId, organizationId)
-      const responseBody = {
-        access: accessDTOResponseV1(access),
-        passport: passportDTO(passport),
+      const allUsers = await Promise.all(userIds.map((id) => this.userService.findOne(id)))
+
+      allUsers.forEach((user) => {
+        if (!user.organizationIds?.includes(organizationId)) {
+          throw new ForbiddenException(`User ${user.id} is not a part of ${organizationId}`)
+        }
+      })
+      const accesses = await Promise.all(
+        userIds.map((id) => this.accessService.findLatestAnywhere(id)),
+      )
+      accesses.forEach((acc) => {
+        if (acc.exitAt && isPassed(safeTimestamp(acc.exitAt))) {
+          throw new BadRequestException('Already exited')
+        }
+      })
+
+      const newAccesses = await Promise.all(
+        accesses.map((access) => this.accessService.handleExitV2(access)),
+      )
+
+      const responseBody = allUsers.map((user, index) => ({
         user: userDTO(user),
-      }
+        access: accessDTOResponseV1(newAccesses[index]),
+      }))
+
       res.json(actionSucceed(responseBody))
     } catch (error) {
       next(error)
@@ -374,82 +342,46 @@ class AdminController implements IRouteController {
         replyInsufficientPermission(res)
         return
       }
-      const user = await this.userService.findOne(tag.userId)
-      const parentUserId = user.delegates?.length ? user.delegates[0] : null
-      const isADependant = !!parentUserId
-      const latestPassport = await this.passportService.findLatestPassport(tag.userId, parentUserId)
-      const authorizedUserIds = new Set(latestPassport.dependantIds ?? [])
-      if (latestPassport.includesGuardian) {
-        authorizedUserIds.add(latestPassport.userId)
-      }
-      // Make sure it's valid
-      if (
-        !latestPassport ||
-        !authorizedUserIds.has(tag.userId) ||
-        latestPassport.status !== 'proceed'
-      ) {
-        replyUnauthorizedEntry(res)
-        return
-      }
+      const latestAccess = await this.accessService.findLatestAnywhere(tag.userId)
 
-      // Let's get the access assuming that user is already Proceed
-      // Note we are only looking for ones that authenticated by this admin account
-      const access = await this.accessService.findLatest(
-        tag.userId,
-        parentUserId,
-        locationId,
-        now(),
-        authenticatedUserId,
-      )
+      const shouldEnter =
+        // never entered anywhere
+        !latestAccess ||
+        // not at this location
+        latestAccess.locationId !== locationId ||
+        // last at this location but already exited
+        (latestAccess.exitAt && isPassed(safeTimestamp(latestAccess.exitAt)))
 
-      // Check if access does not exist or if they've exited
-      // Note we are not checking for entered at as assuming that the enteredAt is there :-)
-      const shouldEnter = !access || (isADependant ? access.dependants[tag.userId] : access)?.exitAt
+      // only need to look up if we're entering
+      const latestPassport = shouldEnter
+        ? await this.passportService.findLatestDirectPassport(tag.userId, organizationId)
+        : null
+      const location = await this.organizationService.getLocation(organizationId, locationId)
+      let access
       if (shouldEnter) {
-        // Create new Access
-        const accessToken = await this.accessTokenService.createToken(
-          latestPassport.statusToken,
-          locationId,
-          isADependant ? parentUserId : tag.userId,
-          isADependant ? [tag.userId] : [],
-          !isADependant,
-          authenticatedUserId,
-        )
-
-        const accessForEntering = await this.accessService.handleEnterV2(accessToken)
-        res.json(actionSucceed(accessForEntering))
-      } else {
-        // Get Latest Passport (as they need a valid access)
-        const specificPassport = await this.passportService.findOneByToken(access.statusToken)
-        const specificAuthorizedUserIds = new Set(specificPassport.dependantIds ?? [])
-        if (specificPassport.includesGuardian) {
-          specificAuthorizedUserIds.add(specificPassport.userId)
-        }
-        // Make sure it's valid
         if (
-          !specificPassport ||
-          !specificAuthorizedUserIds.has(tag.userId) ||
-          specificPassport.status !== 'proceed'
+          this.passportService.passportAllowsEntry(latestPassport, location.attestationRequired)
         ) {
-          replyUnauthorizedEntry(res)
-          return
+          // Let's get the access assuming that user is already Proceed
+          // Note we are only looking for ones that authenticated by this admin account
+          access = await this.accessService.createV2(
+            tag.userId,
+            locationId,
+            location.attestationRequired ? latestPassport.statusToken : null,
+            authenticatedUserId,
+          )
+        } else {
+          throw new ForbiddenException('Passport does not allow entry')
         }
-
-        // Decide
-        const shouldExit =
-          access && (isADependant ? access.dependants[tag.userId] : access)?.enteredAt
-        const accessForEnteringOrExiting = shouldExit
-          ? await this.accessService.handleExitV2(access)
-          : await this.accessService.handleEnterV2(access)
-
-        res.json(
-          actionSucceed({
-            access: accessDTOResponseV1(accessForEnteringOrExiting),
-            passport: passportDTO(latestPassport),
-            user: userDTO(user),
-          }),
-        )
+      } else {
+        access = this.accessService.handleExitV2(latestAccess)
       }
+      res.json(
+        actionSucceed({
+          access: accessDTOResponseV1(access),
+          passport: passportDTO(latestPassport),
+        }),
+      )
     } catch (error) {
       next(error)
     }
