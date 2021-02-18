@@ -19,7 +19,6 @@
         "initialize": "ts-node -e \"require('./src/server.ts').init()\""
     },
     "dependencies": {
-        "express-handlebars": "5.1.0",
         "express-validator": "^6.6.1",
         "@google-cloud/debug-agent":"5.1.3"
     },
