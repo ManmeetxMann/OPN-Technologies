@@ -1,5 +1,5 @@
 import {firestore} from 'firebase-admin'
-import {makeDeadline} from '../utils/datetime.helper'
+import {formatStringDateRFC822Local} from '../utils/datetime.helper'
 
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
@@ -10,6 +10,7 @@ export enum AppointmentStatus {
   Submitted = 'Submitted',
   InTransit = 'InTransit',
   Received = 'Received',
+  CheckedIn = 'CheckedIn',
   InProgress = 'InProgress',
   Reported = 'Reported',
   ReRunRequired = 'ReRunRequired',
@@ -65,6 +66,8 @@ export type AppointmentDBModel = {
   receiveResultsViaEmail: boolean
   receiveNotificationsFromGov: boolean
   userId?: string
+  locationName?: string
+  locationAddress?: string
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -90,6 +93,7 @@ export type AppointmentAcuityResponse = {
   addressUnit: string
   agreeToConductFHHealthAssessment: boolean
   barCode: string
+  calendarID: number
   canceled: boolean
   canClientCancel: boolean
   certificate: string
@@ -143,7 +147,6 @@ export type CreateAppointmentRequest = {
   slotId: string
   firstName: string
   lastName: string
-  email: string
   phone: {
     code: number
     number: number
@@ -188,12 +191,17 @@ export type AppointmentUiDTO = {
   dateOfBirth: string
   location?: string
   transportRunId?: string
+  email: string
+  phone: number
   deadline?: string
   latestResult?: string
   vialLocation?: string
   appointment?: boolean
   canCancel?: boolean
   registeredNursePractitioner?: string
+  organizationName?: string
+  transportRunLabel?: string
+  testType?: string
 }
 
 export type AppointmentsState = {
@@ -257,9 +265,57 @@ const filteredAppointmentStatus = (
   return status
 }
 
+export type Filter = {
+  id: string
+  name: string
+  count: number
+}
+
+enum FilterGroupKey {
+  organizationId = 'organizationId',
+  appointmentStatus = 'appointmentStatus',
+}
+
+enum FilterName {
+  FilterByStatusType = 'Filter By Status Type',
+  FilterByCorporation = 'Filter By Corporation',
+}
+
+type FilterGroup = {
+  name: string
+  key: FilterGroupKey
+  filters: Filter[]
+}
+
+export type appointmentStatsUiDTO = {
+  total: number
+  filterGroup: FilterGroup[]
+}
+
+export const statsUiDTOResponse = (
+  appointmentStatus: Filter[],
+  orgIdArray: Filter[],
+  total: number,
+): appointmentStatsUiDTO => ({
+  total,
+  filterGroup: [
+    {
+      name: FilterName.FilterByStatusType,
+      key: FilterGroupKey.appointmentStatus,
+      filters: appointmentStatus,
+    },
+    {
+      name: FilterName.FilterByCorporation,
+      key: FilterGroupKey.organizationId,
+      filters: orgIdArray,
+    },
+  ],
+})
+
 export const appointmentUiDTOResponse = (
-  appointment: AppointmentDBModel & {canCancel?: boolean},
+  appointment: AppointmentDBModel & {canCancel?: boolean; organizationName?: string},
   isLabUser: boolean,
+  transportRunLabel?: string,
 ): AppointmentUiDTO => {
   return {
     id: appointment.id,
@@ -268,6 +324,8 @@ export const appointmentUiDTOResponse = (
     status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser),
     barCode: appointment.barCode,
     location: appointment.location,
+    email: appointment.email,
+    phone: appointment.phone,
     dateTime: formatDateRFC822Local(appointment.dateTime),
     dateOfBirth: appointment.dateOfBirth,
     transportRunId: appointment.transportRunId,
@@ -275,33 +333,34 @@ export const appointmentUiDTOResponse = (
     latestResult: appointment.latestResult,
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
+    organizationName: appointment.organizationName,
+    testType: 'PCR',
+    transportRunLabel,
   }
 }
 
 export type UserAppointment = {
   id: string
   QRCode: string
-  dateOfBirth: string
   showQrCode: boolean
-  dateOfAppointment: string
   firstName: string
   lastName: string
   locationName: string
   locationAddress: string
-  timeOfAppointment: string
+  dateTime: string
 }
 
 export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): UserAppointment => ({
   id: appointment.id,
   QRCode: appointment.barCode,
-  dateOfBirth: appointment.dateOfBirth,
-  showQrCode: moment(makeDeadline(moment())).isBefore(appointment.deadline.toDate()),
+  showQrCode: moment(new Date()).isBefore(
+    formatStringDateRFC822Local(appointment.dateOfAppointment),
+  ),
   firstName: appointment.firstName,
   lastName: appointment.lastName,
-  locationName: appointment.location,
-  locationAddress: appointment.address,
-  dateOfAppointment: appointment.dateOfAppointment,
-  timeOfAppointment: appointment.timeOfAppointment,
+  locationName: appointment.locationName,
+  locationAddress: appointment.locationAddress,
+  dateTime: formatDateRFC822Local(appointment.dateTime),
 })
 
 export const appointmentByBarcodeUiDTOResponse = (
@@ -315,6 +374,8 @@ export const appointmentByBarcodeUiDTOResponse = (
     status: appointment.appointmentStatus,
     barCode: appointment.barCode,
     location: appointment.location,
+    email: appointment.email,
+    phone: appointment.phone,
     dateTime: formatDateRFC822Local(appointment.dateTime),
     dateOfBirth: appointment.dateOfBirth,
     deadline: formatDateRFC822Local(appointment.deadline),

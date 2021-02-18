@@ -78,6 +78,7 @@ export class PassportService {
     userId: string,
     dependantIds: string[],
     includesGuardian: boolean,
+    organizationId: string,
   ): Promise<Passport> {
     if (dependantIds.length) {
       const allDependants = (await this.userService.getAllDependants(userId)).map(({id}) => id)
@@ -93,6 +94,7 @@ export class PassportService {
           status,
           statusToken,
           userId,
+          organizationId,
           dependantIds,
           validFrom: serverTimestamp(),
           validUntil: null,
@@ -137,12 +139,14 @@ export class PassportService {
     userId: string,
     parentUserId: string | null = null,
     requiredStatus: PassportStatus = null,
+    organizationId: string | null = null,
     nowDate: Date = now(),
   ): Promise<Passport> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
     const directPassports = await this.passportRepository
       .collection()
       .where('userId', '==', userId)
+      .where('organizationId', '==', organizationId)
       .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
       .orderBy('validUntil', 'desc')
       .fetch()
@@ -151,6 +155,7 @@ export class PassportService {
           await this.passportRepository
             .collection()
             .where('userId', '==', parentUserId)
+            .where('organizationId', '==', organizationId)
             .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
             .orderBy('validUntil', 'desc')
             .fetch()

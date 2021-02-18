@@ -5,6 +5,7 @@ import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 export type Passport = {
   id: string
   userId: string
+  organizationId: string
   statusToken: string
   status: PassportStatus
   validFrom: string

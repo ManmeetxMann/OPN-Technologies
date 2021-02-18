@@ -10,6 +10,7 @@ export type Attestation = {
   // userIds and dependantIds, easier to query this way
   appliesTo: string[]
   locationId: string
+  organizationId: string
   questionnaireId: string
   attestationTime: string
   status: PassportStatus

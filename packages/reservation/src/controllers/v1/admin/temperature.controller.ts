@@ -61,11 +61,12 @@ class TemperatureAdminController implements IControllerBase {
       const validFrom = now()
 
       const [atestation, activePassport] = await Promise.all([
-        this.attestationService.lastAttestationByUserId(userId),
+        this.attestationService.lastAttestationByUserId(userId, organizationId),
         this.passportService.findLatestPassport(
           userId,
           null,
           PassportStatuses.TemperatureCheckRequired,
+          organizationId,
         ),
       ])
 
@@ -104,7 +105,7 @@ class TemperatureAdminController implements IControllerBase {
         )
       } else {
         console.warn("Couldn't find the right passport to update")
-        passport = await this.passportService.create(status, data.userId, [], false)
+        passport = await this.passportService.create(status, data.userId, [], false, organizationId)
       }
 
       if (status === TemperatureStatuses.Stop) {

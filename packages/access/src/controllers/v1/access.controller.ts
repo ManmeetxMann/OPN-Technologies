@@ -138,7 +138,7 @@ class UserController implements IRouteController {
       }
       return location.attestationRequired
         ? await this.enterWithAttestation(res, access)
-        : await this.enterWithoutAttestation(res, access)
+        : await this.enterWithoutAttestation(res, access, organizationId)
     } catch (error) {
       next(error)
     }
@@ -189,14 +189,18 @@ class UserController implements IRouteController {
     return location
   }
 
-  private async enterWithoutAttestation(res: Response, access: AccessModel): Promise<unknown> {
+  private async enterWithoutAttestation(
+    res: Response,
+    access: AccessModel,
+    organizationId: string,
+  ): Promise<unknown> {
     const {userId} = access
     const allIds = Object.keys(access.dependants)
     if (access.includesGuardian) {
       allIds.push(userId)
     }
     const allStatuses = await Promise.all(
-      allIds.map((id) => this.attestationService.latestStatus(id)),
+      allIds.map((id) => this.attestationService.latestStatus(id, organizationId)),
     )
     if (allStatuses.includes('stop')) {
       throw new BadRequestException(`current status is stop`)

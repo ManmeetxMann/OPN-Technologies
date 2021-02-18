@@ -37,6 +37,7 @@
 		"migration:migrate-dependants": "ts-node ./migrations/migrate-dependants",
 		"migration:update-admin-approval-emails": "ts-node ./migrations/update-admin-approval-emails",
 		"migration:update-user-emails": "ts-node ./migrations/update-user-emails",
+		"migration:attestation-org-id": "ts-node ./migrations/add-orgId-to-attestations",
 		"migration:relocate-auth-id": "ts-node ./migrations/relocate-auth-id",
 		"migration:remove-admin-auth-id": "ts-node ./migrations/remove-admin-auth-id",
 		"migration:update-organizationids-for-users": "ts-node ./migrations/update-organizationids-for-users",
@@ -45,11 +46,14 @@
 		"migration:test-results-to-pcr": "ts-node ./migrations/test-results-to-pcr",
 		"migration:migration-acuity-to-appointments": "ts-node ./migrations/acuity-to-appointments",
 		"migration:acuity-to-pcr-results": "ts-node ./migrations/acuity-to-pcr-results",
-		"migration:add-display-in-result-flag-to-pcr-results": "ts-node ./migrations/add-display-in-result-flag-to-pcr-results"
+		"migration:add-display-in-result-flag-to-pcr-results": "ts-node ./migrations/add-display-in-result-flag-to-pcr-results",
+		"migration:fix-deadline-for-future-pcr-results": "ts-node ./migrations/fix-deadline-for-future-pcr-results",
+		"migration:remove-pcr-results-for-canceled-appointments": "ts-node ./migrations/remove-pcr-results-for-canceled-appointments"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
 		"@types/node": "^14.0.14",
+		"@types/supertest": "^2.0.10",
 		"@typescript-eslint/eslint-plugin": "^3.4.0",
 		"@typescript-eslint/parser": "^3.4.0",
 		"babel-cli": "^6.26.0",

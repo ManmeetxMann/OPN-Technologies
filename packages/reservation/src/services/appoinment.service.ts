@@ -1,5 +1,5 @@
 import moment from 'moment'
-import {flatten, union} from 'lodash'
+import {flatten, union, fromPairs} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 
@@ -18,6 +18,7 @@ import {
   UserAppointment,
   userAppointmentDTOResponse,
   AppointmentActivityAction,
+  Filter,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -33,7 +34,6 @@ import {Config} from '../../../common/src/utils/config'
 import {
   firestoreTimeStampToUTC,
   makeDeadline,
-  makeDeadlineForFilter,
   makeFirestoreTimestamp,
 } from '../utils/datetime.helper'
 
@@ -47,6 +47,7 @@ import {
   encodeAvailableTimeId,
 } from '../utils/base64-converter'
 import {Enterprise} from '../adapter/enterprise'
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -56,6 +57,7 @@ export class AppoinmentService {
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(this.dataStore)
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
+  private organizationService = new OrganizationService()
   private enterpriseAdapter = new Enterprise()
 
   async getAppointmentByBarCode(
@@ -89,8 +91,9 @@ export class AppoinmentService {
 
   async getAppointmentsDB(
     queryParams: AppointmentByOrganizationRequest,
-  ): Promise<AppointmentDBModel[]> {
+  ): Promise<(AppointmentDBModel & {organizationName: string})[]> {
     const conditions = []
+    let appointments = []
     if (queryParams.organizationId) {
       conditions.push({
         map: '/',
@@ -204,20 +207,39 @@ export class AppoinmentService {
       const foundAppointments = await Promise.all(searchPromises).then((appointmentsArray) =>
         flatten(appointmentsArray),
       )
-      return [
+      appointments = [
         ...new Map(flatten(foundAppointments).map((item) => [item.id, item])).values(),
       ] as AppointmentDBModel[]
     } else {
-      return this.appointmentsRepository.findWhereEqualInMap(conditions)
+      appointments = await this.appointmentsRepository.findWhereEqualInMap(conditions)
     }
+    const organizations = fromPairs(
+      (
+        await this.organizationService.getAllByIds(
+          appointments
+            .map((appointment: AppointmentDBModel) => appointment.organizationId)
+            .filter((orgId) => !!orgId),
+        )
+      ).map((organization) => [organization.id, organization.name]),
+    )
+
+    return appointments.map((appointment) => ({
+      ...appointment,
+      organizationName: organizations[appointment.organizationId],
+    }))
   }
 
   async getAppointmentByIdFromAcuity(id: number): Promise<AppointmentAcuityResponse> {
     return this.acuityRepository.getAppointmentByIdFromAcuity(id)
   }
 
-  async getAppointmentDBById(id: string): Promise<AppointmentDBModel> {
-    return this.appointmentsRepository.get(id)
+  async getAppointmentDBById(id: string): Promise<AppointmentDBModel & {organizationName: string}> {
+    const appointment = await this.appointmentsRepository.get(id)
+    const organization = await this.organizationService.findOneById(appointment.organizationId)
+    return {
+      ...appointment,
+      organizationName: organization && organization.name,
+    }
   }
 
   async getAppointmentDBByIdWithCancel(
@@ -316,17 +338,25 @@ export class AppoinmentService {
       userId,
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
+    const promises = []
 
-    const currentUserId = userId
-      ? userId
-      : (
-          await this.enterpriseAdapter.findOrCreateUser({
-            email: acuityAppointment.email,
-            firstName: acuityAppointment.firstName,
-            lastName: acuityAppointment.lastName,
-            organizationId: acuityAppointment.organizationId || '',
-          })
-        ).data.id
+    promises.push(this.acuityRepository.getCalendarList())
+
+    if (!userId) {
+      promises.push(
+        this.enterpriseAdapter.findOrCreateUser({
+          email: acuityAppointment.email,
+          firstName: acuityAppointment.firstName,
+          lastName: acuityAppointment.lastName,
+          organizationId: acuityAppointment.organizationId || '',
+        }),
+      )
+    }
+
+    const [calendars, userIdFromDb] = await Promise.all(promises)
+
+    const appoinmentCalendar = calendars.find(({id}) => id === acuityAppointment.calendarID)
+    const currentUserId = userId ? userId : userIdFromDb.data.id
 
     return {
       acuityAppointmentId: acuityAppointment.id,
@@ -362,6 +392,8 @@ export class AppoinmentService {
       agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
       userId: currentUserId,
+      locationName: appoinmentCalendar?.name,
+      locationAddress: appoinmentCalendar?.location,
     }
   }
 
@@ -398,7 +430,7 @@ export class AppoinmentService {
         `cancelAppointment: Failed for appointmentId ${appointmentId} isLabUser: ${isLabUser} appointmentStatus: ${appointmentFromDB.appointmentStatus}`,
       )
       throw new BadRequestException(
-        `Appointment can't be cancelled. It is already in ${appointmentFromDB.appointmentStatus} state`,
+        `Appointment can't be canceled. It is already in ${appointmentFromDB.appointmentStatus} state`,
       )
     }
 
@@ -425,10 +457,10 @@ export class AppoinmentService {
     )
     if (appointmentStatus.canceled) {
       console.log(
-        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" is successfully cancelled`,
+        `AppoinmentService: cancelAppointment AppointmentIDFromAcuity: "${appointmentFromDB.acuityAppointmentId}" is successfully canceled`,
       )
-      //Update Appointment DB to be Cancelled
-      await this.makeCancelled(appointmentId, userId)
+      //Update Appointment DB to be Canceled
+      await this.makeCanceled(appointmentId, userId)
       try {
         const pcrTestResult = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
           appointmentFromDB.id,
@@ -462,6 +494,7 @@ export class AppoinmentService {
     createdBy: string,
   ): Promise<AppointmentStatusHistoryDb> {
     const appointment = await this.getAppointmentDBById(appointmentId)
+    console.log(appointmentId)
     return this.getStatusHistoryRepository(appointmentId).add({
       newStatus: newStatus,
       previousStatus: appointment.appointmentStatus,
@@ -470,11 +503,11 @@ export class AppoinmentService {
     })
   }
 
-  async makeCancelled(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
+  async makeCanceled(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.InProgress, userId)
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Canceled,
-      cancelled: true,
+      canceled: true,
     })
   }
 
@@ -522,6 +555,15 @@ export class AppoinmentService {
       appointmentStatus: AppointmentStatus.InTransit,
     })
     return AppointmentStatusChangeState.Succeed
+  }
+
+  private async checkAppointmentStatusOnly(
+    appointmentId: string,
+    appointmentStatus: AppointmentStatus,
+  ) {
+    const appointment = await this.getAppointmentDBById(appointmentId)
+
+    return appointment && appointment.appointmentStatus === appointmentStatus
   }
 
   private async checkAppointmentStatus(appointmentId: string) {
@@ -625,7 +667,7 @@ export class AppoinmentService {
     organizationId,
     userId,
     packageCode,
-  }: CreateAppointmentRequest): Promise<AppointmentDBModel> {
+  }: CreateAppointmentRequest & {email: string}): Promise<AppointmentDBModel> {
     const {time, appointmentTypeId, calendarId} = decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
 
@@ -723,50 +765,61 @@ export class AppoinmentService {
     )
   }
 
-  async checkDuplicatedAppointments(appointmentIds: string[]): Promise<void> {
+  async checkDuplicatedAppointments(
+    appointmentIds: string[],
+  ): Promise<{
+    duplicatedAppointmentIds: string[]
+    duplicatedBarCodeArray: string[]
+    filtredAppointmentIds: string[]
+  }> {
     const appointments = await this.getAppointmentsDBByIds(appointmentIds)
-    const barCodes = appointments.map(({barCode}) => barCode)
+    const appointmentIdsFromDb = []
+    const barCodes = appointments.map(({barCode, id}) => {
+      appointmentIdsFromDb.push(id)
 
-    if (union(barCodes).length != barCodes.length) {
-      const firstMatch = new Set()
-      const duplicatedBarCodes = new Set()
+      return barCode
+    })
+    const appointmentsByBarCodes = await this.appointmentsRepository.findWhereIn(
+      'barCode',
+      barCodes,
+    )
+    const allBarCodes = appointmentsByBarCodes.map(({barCode}) => barCode)
+    const missedAppointmentIds = appointmentIds.filter((id) => !appointmentIdsFromDb.includes(id))
+    let duplicatedAppointmentIds: string[]
+    let duplicatedBarCodeArray: string[]
 
-      barCodes.forEach((barcode) => {
-        if (!firstMatch.has(barcode)) {
-          return firstMatch.add(barcode)
+    const firstBarCodeMatch = new Map()
+    const hasDuplicates = union(allBarCodes).length != allBarCodes.length
+
+    if (hasDuplicates) {
+      const duplicatedBarCodes = new Set<string>()
+
+      appointmentsByBarCodes.forEach(({barCode, id}) => {
+        if (!firstBarCodeMatch.has(barCode)) {
+          return firstBarCodeMatch.set(barCode, {barCode, id})
         }
-        duplicatedBarCodes.add(barcode)
+        duplicatedBarCodes.add(barCode)
       })
-      const duplicatedBarCodeArray = Array.from(duplicatedBarCodes.keys())
-      const duplicatedAppointmentIds = appointments
+
+      duplicatedBarCodeArray = Array.from(duplicatedBarCodes.values())
+      duplicatedAppointmentIds = appointments
         .filter(({barCode}) => duplicatedBarCodeArray.includes(barCode))
         .map(({id}) => id)
+    }
 
-      throw new DuplicateDataException(
-        `Multiple Appointments [${duplicatedAppointmentIds}] with barcodes: ${duplicatedBarCodeArray}`,
-      )
+    const filtredAppointmentIds: string[] = hasDuplicates
+      ? [...Array.from(firstBarCodeMatch.values()).map(({id}) => id), ...missedAppointmentIds]
+      : appointmentIds
+
+    return {
+      duplicatedAppointmentIds,
+      duplicatedBarCodeArray,
+      filtredAppointmentIds,
     }
   }
 
   async getAppointmentByUserId(userId: string): Promise<UserAppointment[]> {
-    const appointmentResultsQuery = [
-      {
-        map: '/',
-        key: 'deadline',
-        operator: DataModelFieldMapOperatorType.GreatOrEqual,
-        value: makeDeadlineForFilter(moment().toDate()),
-      },
-      {
-        map: '/',
-        key: 'userId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: userId,
-      },
-    ]
-
-    const appointments = await this.appointmentsRepository.findWhereEqualInMap(
-      appointmentResultsQuery,
-    )
+    const appointments = await this.appointmentsRepository.findWhereEqual('userId', userId)
 
     return appointments.map(userAppointmentDTOResponse)
   }
@@ -777,6 +830,16 @@ export class AppoinmentService {
     if (!appointment) {
       throw new BadRequestException('Invalid appointmentId')
     }
+
+    if (
+      appointment.appointmentStatus === AppointmentStatus.Canceled ||
+      appointment.appointmentStatus === AppointmentStatus.Reported
+    ) {
+      throw new BadRequestException(
+        'Forbidden to regenerate barCode for apointment with status "Canceled" or "Reported"',
+      )
+    }
+
     const newBarCode = await this.getNextBarCodeNumber()
     console.log(
       `regenerateBarCode: AppointmentID: ${appointmentId} OldBarCode: ${appointment.barCode} NewBarCode: ${newBarCode}`,
@@ -812,5 +875,76 @@ export class AppoinmentService {
     }
 
     return updatedAppoinment
+  }
+
+  async getAppointmentsStats(
+    appointmentStatus: AppointmentStatus[],
+    barCode: string,
+    organizationId: string,
+    dateOfAppointment: string,
+    searchQuery: string,
+    transportRunId: string,
+  ): Promise<{
+    appointmentStatusArray: Filter[]
+    orgIdArray: Filter[]
+    total: number
+  }> {
+    const appointments = await this.getAppointmentsDB({
+      appointmentStatus,
+      barCode,
+      organizationId,
+      dateOfAppointment,
+      searchQuery,
+      transportRunId,
+    })
+    const appointmentStatsByTypes: Record<AppointmentStatus, number> = {} as Record<
+      AppointmentStatus,
+      number
+    >
+    const appointmentStatsByOrganization: Record<string, number> = {}
+
+    appointments.forEach((appointment) => {
+      if (appointmentStatsByTypes[appointment.appointmentStatus]) {
+        ++appointmentStatsByTypes[appointment.appointmentStatus]
+        ++appointmentStatsByOrganization[appointment.organizationId]
+      } else {
+        appointmentStatsByTypes[appointment.appointmentStatus] = 1
+        appointmentStatsByOrganization[appointment.organizationId] = 1
+      }
+    })
+    const organizations = await this.organizationService.getAllByIds(
+      Object.keys(appointmentStatsByOrganization),
+    )
+    const appointmentStatsByTypesArr = Object.entries(appointmentStatsByTypes).map(
+      ([name, count]) => ({
+        id: name,
+        name,
+        count,
+      }),
+    )
+    const appointmentStatsByOrgIdArr = Object.entries(appointmentStatsByOrganization).map(
+      ([orgId, count]) => ({
+        id: orgId,
+        name: organizations.find(({id}) => id === orgId)?.name ?? 'None',
+        count,
+      }),
+    )
+    return {
+      appointmentStatusArray: appointmentStatsByTypesArr,
+      orgIdArray: appointmentStatsByOrgIdArr,
+      total: appointments.length,
+    }
+  }
+
+  async makeCheckIn(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
+    if (!(await this.checkAppointmentStatusOnly(appointmentId, AppointmentStatus.Pending))) {
+      throw new BadRequestException('Appointment status should be on Pending state')
+    }
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.CheckedIn, userId)
+
+    return this.appointmentsRepository.changeAppointmentStatus(
+      appointmentId,
+      AppointmentStatus.CheckedIn,
+    )
   }
 }

@@ -2,7 +2,6 @@
 import {Config} from '../utils/config'
 Config.load()
 
-// Continue...
 import express, {Application, RequestHandler} from 'express'
 import {OpenApiValidator} from 'express-openapi-validator'
 import cors from 'cors'
@@ -66,9 +65,6 @@ class App {
   }
 
   public initialize(): void {
-    console.log(this)
-    // console.log(this.initializers)
-    // console.log(this.port)
     console.log('running init', this.initializers)
     this.initializers.forEach((initializer) => initializer.initialize())
   }

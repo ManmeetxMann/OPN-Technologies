@@ -2,7 +2,11 @@ import {NextFunction, Request, Response, Router} from 'express'
 import moment from 'moment'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
+import {
+  actionSucceed,
+  actionSuccess,
+  actionInProgress,
+} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {now} from '../../../../../common/src/utils/times'
@@ -20,17 +24,21 @@ import {
   ListPCRResultRequest,
   PCRTestResultRequest,
   PCRTestResultRequestData,
-  pcrTestResultsResponse,
   PcrTestResultsListRequest,
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
+  SinglePcrTestResultsRequest,
+  singlePcrTestResultDTO,
 } from '../../../models/pcr-test-results'
+import {statsUiDTOResponse} from '../../../models/appointment'
+import {AppoinmentService} from '../../../services/appoinment.service'
 
 class PCRTestResultController implements IControllerBase {
-  public path = '/reservation/admin'
+  public path = '/reservation/admin/api/v1'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
+  private appoinmentService = new AppoinmentService()
 
   constructor() {
     this.initRoutes()
@@ -50,44 +58,46 @@ class PCRTestResultController implements IControllerBase {
     const confirmResultsAuth = authorizationMiddleware([RequiredUserPermission.LabConfirmResults])
 
     innerRouter.post(
-      this.path + '/api/v1/pcr-test-results-bulk',
+      this.path + '/pcr-test-results-bulk',
       sendBulkResultsAuth,
       this.createReportForPCRResults,
     )
+    innerRouter.post(this.path + '/pcr-test-results', sendSingleResultsAuth, this.createPCRResults)
     innerRouter.post(
-      this.path + '/api/v1/pcr-test-results',
-      sendSingleResultsAuth,
-      this.createPCRResults,
-    )
-    innerRouter.post(
-      this.path + '/api/v1/pcr-test-results/confirm',
+      this.path + '/pcr-test-results/confirm',
       confirmResultsAuth,
       this.confirmPCRResults,
     )
     innerRouter.post(
-      this.path + '/api/v1/pcr-test-results/history',
+      this.path + '/pcr-test-results/history',
       sendBulkResultsAuth,
       this.listPCRResultsHistory,
     )
+    innerRouter.get(this.path + '/pcr-test-results', listTestResultsAuth, this.listPCRResults)
     innerRouter.get(
-      this.path + '/api/v1/pcr-test-results',
-      listTestResultsAuth,
-      this.listPCRResults,
-    )
-    innerRouter.get(
-      this.path + '/api/v1/pcr-test-results-bulk/report-status',
+      this.path + '/pcr-test-results-bulk/report-status',
       sendBulkResultsAuth,
       this.listPCRTestResultReportStatus,
     )
     innerRouter.put(
-      this.path + '/api/v1/pcr-test-results/add-test-run',
+      this.path + '/pcr-test-results/add-test-run',
       dueTodayAuth,
       this.addTestRunToPCR,
     )
     innerRouter.get(
-      this.path + '/api/v1/pcr-test-results/due-deadline',
+      this.path + '/pcr-test-results/due-deadline',
       dueTodayAuth,
       this.listDueDeadline,
+    )
+    innerRouter.get(
+      this.path + '/pcr-test-results/due-deadline/stats',
+      dueTodayAuth,
+      this.dueDeadlineStats,
+    )
+    innerRouter.get(
+      this.path + '/pcr-test-results/:pcrTestResultId',
+      dueTodayAuth,
+      this.onePcrTestResult,
     )
 
     this.router.use('/', innerRouter)
@@ -204,7 +214,7 @@ class PCRTestResultController implements IControllerBase {
 
   listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {deadline, organizationId, barCode} = req.query as PcrTestResultsListRequest
+      const {deadline, organizationId, barCode, result} = req.query as PcrTestResultsListRequest
       if (!barCode && !deadline) {
         throw new BadRequestException('"deadline" is required if "barCode" is not specified')
       }
@@ -215,6 +225,7 @@ class PCRTestResultController implements IControllerBase {
           organizationId,
           deadline,
           barCode,
+          result,
         },
         isLabUser,
       )
@@ -232,12 +243,17 @@ class PCRTestResultController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {reportTrackerId} = req.query as ListPCRResultRequest
-      const pcrTestResults = await this.pcrTestResultsService.listPCRTestResultReportStatus(
-        reportTrackerId,
-      )
-      res.json(actionSucceed(pcrTestResults.map(pcrTestResultsResponse)))
+      const {
+        inProgress,
+        pcrTestResults,
+      } = await this.pcrTestResultsService.listPCRTestResultReportStatus(reportTrackerId)
+
+      if (inProgress) {
+        res.json(actionInProgress(pcrTestResults))
+      } else {
+        res.json(actionSucceed(pcrTestResults))
+      }
     } catch (error) {
-      console.log(error)
       next(error)
     }
   }
@@ -280,7 +296,7 @@ class PCRTestResultController implements IControllerBase {
     try {
       const {testRunId, deadline, barCode} = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
-        throw new BadRequestException('"testRunId" or "deadline" or "barCode" is not required')
+        throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
       }
       const pcrResults = await this.pcrTestResultsService.getDueDeadline({
         deadline,
@@ -289,6 +305,58 @@ class PCRTestResultController implements IControllerBase {
       })
 
       res.json(actionSucceed(pcrResults))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  dueDeadlineStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {testRunId, deadline, barCode} = req.query as PcrTestResultsListByDeadlineRequest
+      if (!testRunId && !deadline && !barCode) {
+        throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
+      }
+      const {
+        pcrResultStatsByResultArr,
+        pcrResultStatsByOrgIdArr,
+        total,
+      } = await this.pcrTestResultsService.getDueDeadlineStats({
+        deadline,
+        testRunId,
+        barCode,
+      })
+
+      res.json(
+        actionSucceed(
+          statsUiDTOResponse(pcrResultStatsByResultArr, pcrResultStatsByOrgIdArr, total),
+        ),
+      )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  onePcrTestResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {pcrTestResultId} = req.params as SinglePcrTestResultsRequest
+
+      const pcrTestResult = await this.pcrTestResultsService.getPCRResultsById(pcrTestResultId)
+
+      if (!pcrTestResult) {
+        throw new ResourceNotFoundException(`PCRTestResult with id ${pcrTestResultId} not found`)
+      }
+
+      const appointment = await this.appoinmentService.getAppointmentDBById(
+        pcrTestResult.appointmentId,
+      )
+
+      if (!appointment) {
+        throw new ResourceNotFoundException(
+          `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${pcrTestResultId}`,
+        )
+      }
+
+      res.json(actionSucceed(singlePcrTestResultDTO(pcrTestResult, appointment)))
     } catch (error) {
       next(error)
     }
