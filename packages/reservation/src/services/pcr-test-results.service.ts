@@ -1029,7 +1029,8 @@ export class PCRTestResultsService {
         if (!pcrDbIds.includes(id)) {
           results.push({
             id,
-            status: BulkOperationStatus.NotFound,
+            status: BulkOperationStatus.Failed,
+            reason: "Doesn't exist in DB",
           })
         }
       })
@@ -1056,19 +1057,23 @@ export class PCRTestResultsService {
 
             results.push({
               id: pcr.id,
+              barCode: pcr.barCode,
               status: BulkOperationStatus.Success,
             })
           } else {
             results.push({
               id: pcr.id,
-              status: BulkOperationStatus.NotAppropriate,
-              message: `Don't allowed to add testRunId if appointment status is not ${AppointmentStatus.Received} or ${AppointmentStatus.ReRunRequired}`,
+              barCode: pcr.barCode,
+              status: BulkOperationStatus.Failed,
+              reason: `Don't allowed to add testRunId if appointment status is not ${AppointmentStatus.Received} or ${AppointmentStatus.ReRunRequired}`,
             })
           }
         } catch (error) {
           results.push({
             id: pcr.id,
-            status: BulkOperationStatus.InternalError,
+            barCode: pcr.barCode,
+            status: BulkOperationStatus.Failed,
+            reason: 'Internal server error',
           })
         }
       }),

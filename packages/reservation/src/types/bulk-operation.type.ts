@@ -1,12 +1,11 @@
 export enum BulkOperationStatus {
-  Success = 'success',
-  NotFound = 'not found',
-  NotAppropriate = 'not appropriate',
-  InternalError = 'internal error',
+  Success = 'Success',
+  Failed = 'Failed',
 }
 
 export type BulkOperationResponse = {
   id: string
+  barCode?: string
   status: BulkOperationStatus
-  message?: string
+  reason?: string
 }
