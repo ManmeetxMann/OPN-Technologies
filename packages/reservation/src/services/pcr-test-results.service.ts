@@ -1246,10 +1246,17 @@ export class PCRTestResultsService {
 
     pcrResults.map((pcr) => {
       const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
+      const allowedAppointmentStatus = [
+        AppointmentStatus.InProgress,
+        AppointmentStatus.ReRunRequired,
+        AppointmentStatus.Received,
+      ]
 
       if (
         appointment &&
-        (!appointmentStatus || appointmentStatus === appointment.appointmentStatus || testRunId)
+        ((!appointmentStatus && allowedAppointmentStatus.includes(appointment.appointmentStatus)) ||
+          appointmentStatus === appointment.appointmentStatus ||
+          testRunId)
       ) {
         const testRun = testRuns?.find(({testRunId}) => pcr.testRunId === testRunId)
 
