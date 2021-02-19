@@ -11,6 +11,7 @@ import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.
 import {toDateFormat} from '../../../common/src/utils/times'
 import {formatDateRFC822Local, makeDeadlineForFilter} from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
+import { LogError, LogWarning } from '../../../common/src/utils/logging-setup'
 
 import {AppoinmentService} from './appoinment.service'
 import {CouponService} from './coupon.service'
@@ -176,13 +177,21 @@ export class PCRTestResultsService {
 
     const pcrResults = await testResultsReportingTrackerPCRResult.get(resultId)
     if (!pcrResults) {
-      throw new BadRequestException(`ProcessPCRTestResultFailed: ID: ${resultId} does not exists`)
+      LogError('processPCRTestResult','InvalidResultIdInReport',{
+        reportTrackerId,
+        resultId
+      })
+      return
     }
 
     if (pcrResults.status !== ResultReportStatus.RequestReceived) {
-      throw new BadRequestException(
-        `ProcessPCRTestResultFailed: ID: ${resultId} BarCode: ${pcrResults.data.barCode} has status ${pcrResults.status}`,
-      )
+      LogError('processPCRTestResult','AlreadyProcessed',{
+        reportTrackerId,
+        resultId,
+        currentStatus: pcrResults.status,
+        barCode: pcrResults.data.barCode
+      })
+      //return
     }
 
     await testResultsReportingTrackerPCRResult.updateProperty(
@@ -206,11 +215,15 @@ export class PCRTestResultsService {
         details: 'Action Completed',
       })
     } catch (error) {
-      //CRITICAL
-      console.error(`processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `)
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
         status: ResultReportStatus.Failed,
         details: error.toString(),
+      })
+      LogWarning('processPCRTestResult','handlePCRResultSaveAndSendFailed',{
+        reportTrackerId,
+        resultId,
+        error: error.toString(),
+        barCode: pcrResults.data.barCode
       })
     }
   }
