@@ -676,7 +676,7 @@ export class PCRTestResultsService {
           barCode: resultData.barCode,
           organizationId: appointment.organizationId,
           appointmentId: appointment.id,
-          appointmentEmail: appointment.email
+          appointmentEmail: appointment.email,
         })
       }
     }
@@ -747,7 +747,7 @@ export class PCRTestResultsService {
     LogInfo('handleActions', 'Success', {
       barCode: resultData.barCode,
       action: resultData.resultSpecs.action,
-      appointmentId: appointment.id
+      appointmentId: appointment.id,
     })
   }
 
@@ -802,17 +802,17 @@ export class PCRTestResultsService {
           LogWarning('sendNotification', 'FailedEmailSent BlockedBySystem', {
             barCode: resultData.barCode,
             notficationType,
-            resultSent: resultData.result
+            resultSent: resultData.result,
           })
         }
       }
     }
 
-    if(addSuccessLog){
+    if (addSuccessLog) {
       LogInfo('sendNotification', 'SuccessfullEmailSent', {
         barCode: resultData.barCode,
         notficationType,
-        resultSent: resultData.result
+        resultSent: resultData.result,
       })
     }
   }

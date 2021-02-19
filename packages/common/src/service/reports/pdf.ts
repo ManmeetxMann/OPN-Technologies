@@ -4,7 +4,7 @@ import path from 'path'
 import {Content, TDocumentDefinitions, TableLayouts} from './pdf-types'
 
 import {Stream} from 'stream'
-import { LogInfo } from '../../utils/logging-setup'
+import {LogInfo} from '../../utils/logging-setup'
 
 const getFontSettings = () => ({
   Cambria: {
