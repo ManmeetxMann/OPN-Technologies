@@ -191,7 +191,7 @@ export class PCRTestResultsService {
       ResultReportStatus.Processing,
     )
     try {
-      await this.handlePCRResultSaveAndSend(
+      const pcrTestResult = await this.handlePCRResultSaveAndSend(
         {
           barCode: pcrResults.data.barCode,
           resultSpecs: pcrResults.data,
@@ -202,7 +202,7 @@ export class PCRTestResultsService {
       )
 
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
-        status: await this.getReportStatus(pcrResults.data.action),
+        status: await this.getReportStatus(pcrResults.data.action, pcrTestResult.result),
         details: 'Action Completed',
       })
     } catch (error) {
@@ -1340,8 +1340,11 @@ export class PCRTestResultsService {
     return sortBy(pcrFiltred, ['status'])
   }
 
-  async getReportStatus(action: PCRResultActions): Promise<ResultReportStatus> {
-    let status: ResultReportStatus
+  async getReportStatus(
+    action: PCRResultActions,
+    result: ResultTypes,
+  ): Promise<ResultReportStatus | ResultTypes> {
+    let status: ResultReportStatus | ResultTypes
 
     switch (action) {
       case PCRResultActions.DoNothing: {
@@ -1365,7 +1368,7 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        status = ResultReportStatus.SentResult
+        status = result
       }
     }
     return status

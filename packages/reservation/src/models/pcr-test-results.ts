@@ -208,7 +208,7 @@ export type TestResultsReportingTrackerDBModel = {
 export type TestResultsReportingTrackerPCRResultsDBModel = {
   id: string
   adminId: string
-  status: ResultReportStatus
+  status: ResultReportStatus | ResultTypes
   data: PCRTestResultRequestData
   details?: string
 }
