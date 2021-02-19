@@ -272,7 +272,12 @@ class AdminController implements IRouteController {
       const user = await this.userService.findOne(tag.userId)
       const parentUserId = user.delegates?.length ? user.delegates[0] : null
       const isADependant = !!parentUserId
-      const latestPassport = await this.passportService.findLatestPassport(tag.userId, parentUserId)
+      const latestPassport = await this.passportService.findLatestPassport(
+        tag.userId,
+        parentUserId,
+        null,
+        organizationId,
+      )
       const authorizedUserIds = new Set(latestPassport?.dependantIds ?? [])
       if (latestPassport?.includesGuardian) {
         authorizedUserIds.add(latestPassport.userId)

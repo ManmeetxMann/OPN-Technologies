@@ -1,7 +1,11 @@
 import DataStore from '../../../common/src/data/datastore'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+
 import {QuestionnaireModel} from '../repository/questionnaire.repository'
 import {EvaluationCriteria, Questionnaire} from '../models/questionnaire'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+
+import {PassportStatuses} from '../../../passport/src/models/passport'
+import {AttestationAnswersV1} from '../../../passport/src/models/attestation'
 
 export class QuestionnaireService {
   private dataStore = new DataStore()
@@ -45,6 +49,27 @@ export class QuestionnaireService {
     }
 
     return answerLogic
+  }
+
+  async evaluateAnswers(
+    questionnaireId: string,
+    answers: AttestationAnswersV1,
+  ): Promise<PassportStatuses> {
+    const {values, caution, stop}: EvaluationCriteria = await this.getAnswerLogic(questionnaireId)
+
+    const score = values
+      .map((value: number, index: number) => (answers[index][0] ? value : 0))
+      .reduce((total, current) => total + current)
+
+    if (score >= stop) {
+      return PassportStatuses.Stop
+    }
+
+    if (score >= caution) {
+      return PassportStatuses.Caution
+    }
+
+    return PassportStatuses.Proceed
   }
 
   async getAllQuestionnaires(): Promise<Questionnaire[]> {

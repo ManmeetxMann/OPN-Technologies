@@ -184,8 +184,9 @@ class UserController implements IRouteController {
     if (access.includesGuardian) {
       allIds.push(userId)
     }
+    const {organizationId} = await this.organizationService.getLocationById(access.locationId)
     const allStatuses = await Promise.all(
-      allIds.map((id) => this.attestationService.latestStatus(id)),
+      allIds.map((id) => this.attestationService.latestStatus(id, organizationId)),
     )
     if (allStatuses.includes('stop')) {
       throw new BadRequestException(`current status is stop`)
@@ -193,11 +194,20 @@ class UserController implements IRouteController {
     if (allStatuses.includes('caution')) {
       throw new BadRequestException(`current status is caution`)
     }
+    if (allStatuses.includes('temperature_check_required')) {
+      throw new BadRequestException(`current status is temperature_check_required`)
+    }
     const status = allStatuses.includes('pending') ? 'pending' : 'proceed'
 
     const user = await this.userService.findOne(userId)
     const {base64Photo} = user
-    const passport = await this.passportService.create(PassportStatuses.Pending, userId, [], true)
+    const passport = await this.passportService.create(
+      PassportStatuses.Pending,
+      userId,
+      [],
+      true,
+      organizationId,
+    )
     const newAccess = await this.accessService.handleEnter(access)
 
     return res.json(

@@ -37,6 +37,44 @@ components:
               nullable: true
               type: string
 
+    Answer:
+      type: array
+      items:
+        anyOf:
+          - type: boolean
+          - type: string
+      minItems: 1
+      maxItems: 2
+      description: The first item in the array MUST be a boolean and the second item, if provided, MUST be a string.
+
+    User:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          nullable: true
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+        organizationIds:
+          type: array
+          items:
+            type: string
+        isAdminEnabled:
+          type: boolean
+        delegates:
+          type: array
+          items:
+            type: string
+
     Passport:
       type: object
       additionalProperties: false
@@ -86,6 +124,39 @@ components:
             message:
               nullable: true
               type: string
+    V1ResponseOfPassport:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              user:
+                $ref: '#/components/schemas/User'
+              passport:
+                $ref: '#/components/schemas/Passport'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
 
   responses:
     Response:
@@ -112,7 +183,8 @@ paths:
 
   /user/status/get:
     post:
-      description: Get user's passport by statusToken or create a pending one if any. Not including userId is deprecated and will be removed
+      deprecated: true
+      description: Get user's passport for the organization by statusToken or create a pending one if any. Not including userId is deprecated and will be removed
       requestBody:
         content:
           application/json:
@@ -122,6 +194,8 @@ paths:
                   type: string
                   nullable: true
                 userId:
+                  type: string
+                organizationId:
                   type: string
                 dependantIds:
                   type: array
@@ -141,8 +215,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfPassport'
+
   /user/status/update:
     post:
+      deprecated: true
       description: Solve badge status based on user's questionnaire answers. Not including userId is deprecated and will be removed
       requestBody:
         content:
@@ -178,6 +254,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfPassport'
+
   /user/testNotify:
     post:
       description: Send a notification to the user with the given userId. Used to check connectivity
@@ -205,3 +282,52 @@ paths:
           description: Message sent to at least one token.
         '404':
           description: No Registrations with pushToken !== null exist for that user.
+
+  /passport/api/v1/attestation:
+    post:
+      security:
+        - bearerAuthJWT: []
+      description: Update a list of users' statuses based on an attestation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                organizationId:
+                  type: string
+                answers:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Answer'
+                userIds:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - organizationId
+                - answers
+                - userIds
+
+      responses:
+        '200':
+          description: Passports updated
+
+  /passport/api/v1/passport:
+    get:
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      description: Get all active passports for the authenticated user and their dependants
+
+      responses:
+        '200':
+          description: Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfPassport'

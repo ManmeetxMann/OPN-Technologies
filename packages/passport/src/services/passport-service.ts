@@ -1,6 +1,7 @@
 import {Passport, PassportModel, PassportStatus, PassportStatuses} from '../models/passport'
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {ForbiddenException} from '../../../common/src/exceptions/forbidden-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {now, serverTimestamp} from '../../../common/src/utils/times'
@@ -8,7 +9,7 @@ import moment from 'moment'
 import {firestore} from 'firebase-admin'
 import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
-import {isPassed} from '../../../common/src/utils/datetime-util'
+import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
@@ -77,6 +78,7 @@ export class PassportService {
     userId: string,
     dependantIds: string[],
     includesGuardian: boolean,
+    organizationId: string,
   ): Promise<Passport> {
     if (dependantIds.length) {
       const allDependants = (await this.userService.getAllDependants(userId)).map(({id}) => id)
@@ -92,6 +94,7 @@ export class PassportService {
           status,
           statusToken,
           userId,
+          organizationId,
           dependantIds,
           validFrom: serverTimestamp(),
           validUntil: null,
@@ -135,12 +138,15 @@ export class PassportService {
   async findLatestPassport(
     userId: string,
     parentUserId: string | null = null,
+    requiredStatus: PassportStatus = null,
+    organizationId: string | null = null,
     nowDate: Date = now(),
   ): Promise<Passport> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
     const directPassports = await this.passportRepository
       .collection()
       .where('userId', '==', userId)
+      .where('organizationId', '==', organizationId)
       .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
       .orderBy('validUntil', 'desc')
       .fetch()
@@ -149,36 +155,98 @@ export class PassportService {
           await this.passportRepository
             .collection()
             .where('userId', '==', parentUserId)
+            .where('organizationId', '==', organizationId)
             .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
             .orderBy('validUntil', 'desc')
             .fetch()
         ).filter((ppt) => ppt.dependantIds?.includes(userId))
       : []
 
-    const passports = [...directPassports, ...indirectPassports].filter(
-      (ppt) => ppt.status !== PassportStatuses.Pending,
+    const passports = [...directPassports, ...indirectPassports].filter((ppt) =>
+      requiredStatus ? ppt.status === requiredStatus : ppt.status !== PassportStatuses.Pending,
     )
     // Deal with the bad
     if (!passports || passports.length == 0) {
       return null
     }
 
-    // Get the Latest validForm Passport
+    // Get the Latest validFrom Passport
     const momentDate = moment(nowDate)
     let selectedPassport: Passport = null
     for (const passport of passports) {
+      if (!momentDate.isSameOrAfter(safeTimestamp(passport.validFrom))) {
+        continue
+      }
+      if (!selectedPassport) {
+        selectedPassport = passport
+        continue
+      }
       if (
-        // @ts-ignore
-        momentDate.isSameOrAfter(passport.validFrom.toDate()) &&
-        // @ts-ignore
-        (!selectedPassport ||
-          // @ts-ignore
-          moment(passport.validFrom.toDate()).isSameOrAfter(selectedPassport.validFrom.toDate()))
+        moment(safeTimestamp(passport.validFrom)).isSameOrAfter(
+          safeTimestamp(selectedPassport.validFrom),
+        )
       ) {
         selectedPassport = passport
       }
     }
     return selectedPassport
+  }
+
+  // find a user's active status  at a moment in time (default now)
+  async findLatestDirectPassport(
+    userId: string,
+    organizationId: string,
+    nowDate: Date = now(),
+  ): Promise<Passport | null> {
+    const timeZone = Config.get('DEFAULT_TIME_ZONE')
+    const passports = await this.passportRepository
+      .collection()
+      .where('userId', '==', userId)
+      .where('organizationId', '==', organizationId)
+      .where('validFrom', '<', moment(nowDate).tz(timeZone).toDate())
+      .orderBy('validFrom', 'desc')
+      .limit(1)
+      .fetch()
+    if (!passports.length) {
+      return null
+    }
+    return passports[0]
+  }
+
+  // utility to determine if a passport can be used
+  passportAllowsEntry(passport: Passport | null, attestationRequired = true): boolean {
+    if (attestationRequired) {
+      // must have a passport
+      if (!passport) {
+        return false
+      }
+      // must be proceed
+      if (passport.status !== PassportStatuses.Proceed) {
+        return false
+      }
+      // must not be expired
+      if (moment(now()).isAfter(safeTimestamp(passport.validUntil))) {
+        return false
+      }
+      return true
+    } else {
+      // no passport is allowed
+      if (!passport) {
+        return true
+      }
+      // expired passports are allowed
+      if (moment(now()).isAfter(safeTimestamp(passport.validUntil))) {
+        return true
+      }
+      // valid passports must not be red
+      if (passport.status == PassportStatuses.Stop) {
+        return false
+      }
+      if (passport.status == PassportStatuses.Caution) {
+        return false
+      }
+      return true
+    }
   }
 
   /**
@@ -203,5 +271,22 @@ export class PassportService {
     const shorter = byMax.isBefore(byDuration) ? byMax : byDuration
 
     return shorter.toDate()
+  }
+
+  /**
+   * Hacky and should be disabled ASAP
+   */
+  async reviseStatus(token: string, status: PassportStatuses): Promise<Passport> {
+    if (![PassportStatuses.Proceed, PassportStatuses.Stop].includes(status)) {
+      throw new ForbiddenException('Must revise to stop or proceed status')
+    }
+    const passport = await this.findOneByToken(token)
+    if (passport.status !== PassportStatuses.TemperatureCheckRequired) {
+      throw new ForbiddenException(
+        `Passport ${passport.id} must have status temperature_check_required to update`,
+      )
+    }
+    passport.status = status
+    return this.passportRepository.update(passport)
   }
 }
