@@ -3,13 +3,12 @@ import {NextFunction, Request, Response} from 'express'
 import * as _ from 'lodash'
 
 import {PassportService} from '../../../../../passport/src/services/passport-service'
-import {PassportStatuses, Passport, passportDTO} from '../../../../../passport/src/models/passport'
+import {passportDTO} from '../../../../../passport/src/models/passport'
 
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 
 import {AccessService} from '../../../service/access.service'
 import {AccessTokenService} from '../../../service/access-token.service'
-import {AccessModel} from '../../../repository/access.repository'
 import {accessDTOResponseV1} from '../../../models/access'
 
 import IRouteController from '../../../../../common/src/interfaces/IRouteController.interface'
@@ -55,9 +54,6 @@ class AdminController implements IRouteController {
     const requireAdminWithOrg = authorizationMiddleware([RequiredUserPermission.OrgAdmin], true)
     const routes = express
       .Router()
-      // scan a token
-      .post('/scan-enter', requireAdminWithOrg, this.scanEnter)
-      .post('/scan-exit', requireAdminWithOrg, this.scanExit)
       // manually check someone in or out
       .post('/enter', requireAdminWithOrg, this.enter)
       .post('/exit', requireAdminWithOrg, this.exit)
@@ -80,92 +76,6 @@ class AdminController implements IRouteController {
       const stats = await this.accessService.getTodayStatsForLocations(locationIds)
       const responseBody = _.omit(stats, ['id', 'createdAt'])
       // TODO: add asOfDateTime, checkInsPerHour?
-      res.json(actionSucceed(responseBody))
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  scanEnter = async (req: Request, res: Response, next: NextFunction): Promise<unknown> => {
-    // used when an admin scans an access token
-    try {
-      const {accessToken} = req.body
-      const {organizationId} = res.locals
-      const access = await this.accessService.findOneByToken(accessToken)
-      const {userId, locationId} = access
-      const [passport, {guardian: user, dependants}, location] = await Promise.all([
-        this.passportService.findOneByToken(access.statusToken),
-        this.userService.getUserAndDependants(userId),
-        this.organizationService.getLocation(organizationId, locationId),
-      ])
-
-      if (!location) {
-        throw new ForbiddenException(
-          `Location ${locationId} does not exist or does not belong to organization ${organizationId}`,
-        )
-      }
-      if (!location.allowAccess) {
-        throw new ForbiddenException('Location does not permit direct check-in')
-      }
-
-      const authenticatedUser = res.locals.connectedUser as User
-      const adminForLocations = (authenticatedUser.admin as AdminProfile).adminForLocationIds
-      const adminForOrganization = (authenticatedUser.admin as AdminProfile).adminForOrganizationId
-      if (adminForOrganization !== organizationId) {
-        throw new UnauthorizedException(`Not an admin for organization ${organizationId}`)
-      }
-      if (
-        !(
-          adminForLocations.includes(location.id) ||
-          (location.parentLocationId && adminForLocations.includes(location.parentLocationId))
-        )
-      ) {
-        throw new UnauthorizedException(`Not an admin for location ${location.id}`)
-      }
-      if (passport.status === PassportStatuses.Stop) {
-        // happens when a bad temperature reading occurs
-        throw new UnauthorizedException(`Passport ${passport.id} is stop`)
-      }
-      if (passport.status === PassportStatuses.TemperatureCheckRequired) {
-        throw new UnauthorizedException(`Passport ${passport.id} requires a temp check`)
-      }
-      if (passport.status === PassportStatuses.Proceed && isPassed(passport.validUntil)) {
-        throw new UnauthorizedException(`Passport ${passport.id} has expired`)
-      }
-
-      const newAccess = await this.accessService.handleEnterV2(access)
-      const responseBody = {
-        access: accessDTOResponseV1(newAccess),
-        passport: passportDTO(passport),
-        user: userDTO(user),
-        dependants: dependants
-          .filter(({id}) => newAccess.dependants[id])
-          .map((user) => userDTO(user)),
-      }
-      return res.json(actionSucceed(responseBody))
-    } catch (error) {
-      next(error)
-    }
-  }
-
-  scanExit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const {accessToken} = req.body
-      const access = await this.accessService.findOneByToken(accessToken)
-      const {userId} = access
-      const [passport, {guardian: user, dependants}] = await Promise.all([
-        this.passportService.findOneByToken(access.statusToken),
-        this.userService.getUserAndDependants(userId),
-      ])
-      const newAccess = await this.accessService.handleExitV2(access)
-      const responseBody = {
-        access: accessDTOResponseV1(newAccess),
-        passport: passportDTO(passport),
-        user: userDTO(user),
-        dependants: dependants
-          .filter(({id}) => newAccess.dependants[id])
-          .map((user) => userDTO(user)),
-      }
       res.json(actionSucceed(responseBody))
     } catch (error) {
       next(error)
@@ -262,56 +172,6 @@ class AdminController implements IRouteController {
       res.json(actionSucceed(responseBody))
     } catch (error) {
       next(error)
-    }
-  }
-
-  forceExit = async (
-    access: AccessModel,
-    userId: string,
-    organizationId: string,
-  ): Promise<{passport: Passport; access: AccessModel}> => {
-    // utility method.
-    // make the user exit using the given access. If that would have side effects (i.e. other users exiting)
-    // create a new access instead. If needed, create a new (pending) passport
-    const isSoleUser =
-      (access.userId === userId &&
-        access.includesGuardian &&
-        !Object.keys(access.dependants).length) ||
-      (access.userId !== userId &&
-        !access.includesGuardian &&
-        Object.keys(access.dependants).length === 1 &&
-        access[userId])
-    let passport: Passport = null
-    let newAccess: AccessModel = null
-    if (isSoleUser) {
-      passport = await this.passportService.findOneByToken(access.statusToken)
-      newAccess = await this.accessService.handleExitV2(access)
-    } else {
-      // latestAccess contains other users
-      // we must create a new access
-      try {
-        passport = await this.passportService.findOneByToken(access.statusToken, true)
-      } catch (err) {
-        passport = await this.passportService.create(
-          PassportStatuses.Pending,
-          userId,
-          [],
-          true,
-          organizationId,
-        )
-      }
-      const soleAccess = await this.accessTokenService.createToken(
-        passport.statusToken,
-        access.locationId,
-        userId,
-        [],
-        true,
-      )
-      newAccess = await this.accessService.handleExitV2(soleAccess)
-    }
-    return {
-      access: newAccess,
-      passport,
     }
   }
 
