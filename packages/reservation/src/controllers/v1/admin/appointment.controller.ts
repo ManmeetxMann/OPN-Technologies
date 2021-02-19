@@ -14,14 +14,13 @@ import {
   appointmentByBarcodeUiDTOResponse,
   AppointmentByOrganizationRequest,
   AppointmentDBModel,
-  AppointmentsState,
   statsUiDTOResponse,
-  AppointmentStatusChangeState,
   appointmentUiDTOResponse,
 } from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 import {TransportRunsService} from '../../../services/transport-runs.service'
+import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
@@ -240,10 +239,9 @@ class AdminAppointmentController implements IControllerBase {
       }
 
       const {
-        duplicatedAppointmentIds,
-        duplicatedBarCodeArray,
+        failed,
         filtredAppointmentIds,
-      } = await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
+      } = await this.appointmentService.checkDuplicatedAndMissedAppointments(appointmentIds)
 
       const transportRuns = await this.transportRunsService.getByTransportRunId(transportRunId)
       if (transportRuns.length > 1) {
@@ -252,31 +250,20 @@ class AdminAppointmentController implements IControllerBase {
         throw new ResourceNotFoundException(`Transport Run for the id ${transportRunId} Not found`)
       }
 
-      const appointmentsState: AppointmentsState[] = await Promise.all(
+      const appointmentsState: BulkOperationResponse[] = await Promise.all(
         filtredAppointmentIds.map(async (appointmentId) => {
-          try {
-            return {
-              appointmentId,
-              state: await this.appointmentService.addTransportRun(
-                appointmentId,
-                transportRunId,
-                adminId,
-              ),
-            }
-          } catch (error) {
-            return {
-              appointmentId,
-              state: AppointmentStatusChangeState.Failed,
-            }
-          }
+          return this.appointmentService.makeBulkAction(
+            appointmentId,
+            {
+              transportRunId,
+              userId: adminId,
+            },
+            AppointmentBulkAction.AddTransportRun,
+          )
         }),
       )
 
-      const duplicatesMessage = duplicatedBarCodeArray?.length
-        ? `Multiple Appointments [${duplicatedAppointmentIds}] with barcodes: ${duplicatedBarCodeArray}`
-        : null
-
-      res.json(actionSuccess(appointmentsState, duplicatesMessage))
+      res.json(actionSuccess([...appointmentsState, ...failed]))
     } catch (error) {
       next(error)
     }
@@ -327,36 +314,24 @@ class AdminAppointmentController implements IControllerBase {
       }
 
       const {
-        duplicatedAppointmentIds,
-        duplicatedBarCodeArray,
+        failed,
         filtredAppointmentIds,
-      } = await this.appointmentService.checkDuplicatedAppointments(appointmentIds)
+      } = await this.appointmentService.checkDuplicatedAndMissedAppointments(appointmentIds)
 
-      const appointmentsState: AppointmentsState[] = await Promise.all(
+      const appointmentsState: BulkOperationResponse[] = await Promise.all(
         filtredAppointmentIds.map(async (appointmentId) => {
-          try {
-            return {
-              appointmentId,
-              state: await this.appointmentService.makeReceived(
-                appointmentId,
-                vialLocation,
-                adminId,
-              ),
-            }
-          } catch (error) {
-            return {
-              appointmentId,
-              state: AppointmentStatusChangeState.Failed,
-            }
-          }
+          return this.appointmentService.makeBulkAction(
+            appointmentId,
+            {
+              vialLocation,
+              userId: adminId,
+            },
+            AppointmentBulkAction.MakeRecived,
+          )
         }),
       )
 
-      const duplicatesMessage = duplicatedBarCodeArray
-        ? `Multiple Appointments [${duplicatedAppointmentIds}] with barcodes: ${duplicatedBarCodeArray}`
-        : ''
-
-      res.json(actionSuccess(appointmentsState, duplicatesMessage))
+      res.json(actionSuccess([...appointmentsState, ...failed]))
     } catch (error) {
       next(error)
     }

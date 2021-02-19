@@ -686,6 +686,54 @@ components:
               nullable: true
               type: string
 
+    BulkOperationResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties: 
+              id: 
+                type: string
+              status: 
+                type: string
+                enum:
+                  [
+                    'Success',
+                    'Failed',
+                  ]
+              reason:
+                type: string
+              barCode:
+                type: string
+            required:
+              - id 
+              - status
+              - reason
+              - barCode
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
 paths:
 
   /admin/api/v1/send-fax-for-positive:
@@ -791,7 +839,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
+                $ref: '#/components/schemas/BulkOperationResponse'
 
   /reservation/admin/api/v1/test-results:
     get:
@@ -1426,7 +1474,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
+                $ref: '#/components/schemas/BulkOperationResponse'
 
   /reservation/admin/api/v1/pcr-test-results-bulk/report-status:
     get:
@@ -1724,7 +1772,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
+                $ref: '#/components/schemas/BulkOperationResponse'
 
   /reservation/api/v1/appointments:
     post:
