@@ -248,6 +248,10 @@ export type PcrTestResultsListByDeadlineRequest = {
   deadline?: string
   testRunId?: string
   barCode?: string
+  appointmentStatus?:
+    | AppointmentStatus.InProgress
+    | AppointmentStatus.Received
+    | AppointmentStatus.ReRunRequired
 }
 
 export type SinglePcrTestResultsRequest = {

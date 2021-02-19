@@ -280,13 +280,13 @@ class PCRTestResultController implements IControllerBase {
         throw new ResourceNotFoundException(`Test Run with id ${testRunId} not found`)
       }
 
-      await Promise.all(
-        pcrTestResultIds.map((pcrTestResultId) =>
-          this.pcrTestResultsService.addTestRunToPCR(testRunId, pcrTestResultId, adminId),
-        ),
+      const result = await this.pcrTestResultsService.addTestRunToPCR(
+        testRunId,
+        adminId,
+        pcrTestResultIds,
       )
 
-      res.json(actionSucceed())
+      res.json(actionSuccess(result))
     } catch (error) {
       next(error)
     }
@@ -294,7 +294,12 @@ class PCRTestResultController implements IControllerBase {
 
   listDueDeadline = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunId, deadline, barCode} = req.query as PcrTestResultsListByDeadlineRequest
+      const {
+        testRunId,
+        deadline,
+        barCode,
+        appointmentStatus,
+      } = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
       }
@@ -302,6 +307,7 @@ class PCRTestResultController implements IControllerBase {
         deadline,
         testRunId,
         barCode,
+        appointmentStatus,
       })
 
       res.json(actionSucceed(pcrResults))
