@@ -35,3 +35,20 @@ export const LogInfo = (
 ): void => {
   Logger.info({functionName, eventName, ...data})
 }
+
+export const LogWarning = (
+  functionName: string,
+  eventName: string,
+  data: Record<string, unknown>,
+): void => {
+  Logger.warn({functionName, eventName, ...data})
+}
+
+export const LogError = (
+  functionName: string,
+  eventName: string,
+  data: Record<string, unknown>,
+): void => {
+  Logger.error({functionName, eventName, ...data})
+}
+//fatal
