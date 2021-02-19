@@ -225,7 +225,7 @@ export class PCRTestResultsService {
 
     let inProgress = false
     const testResultsReporting = await testResultsReportingTrackerPCRResult.fetchAll()
-    const statusesForInProgressCondition = [
+    const statusesForInProgressCondition: (ResultTypes | ResultReportStatus)[] = [
       ResultReportStatus.RequestReceived,
       ResultReportStatus.Processing,
     ]

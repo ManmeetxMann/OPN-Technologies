@@ -294,7 +294,7 @@ export type PCRTestResultByDeadlineListDTO = {
 
 export type pcrTestResultsDTO = {
   barCode: string
-  status: ResultReportStatus
+  status: ResultReportStatus | ResultTypes
   details?: string
 }
 
