@@ -659,7 +659,6 @@ export class PCRTestResultsService {
   }): Promise<void> {
     const nextRunNumber = runNumber + 1
     const handledReCollect = async () => {
-      console.log(`TestResultReCollect: for ${resultData.barCode} is requested`)
       await this.appointmentService.changeStatusToReCollectRequired(
         appointment.id,
         resultData.adminId,
@@ -668,21 +667,21 @@ export class PCRTestResultsService {
       if (!appointment.organizationId) {
         //TODO: Move this to Email Function
         this.couponCode = await this.couponService.createCoupon(appointment.email)
-        console.log(
-          `TestResultReCollect: CouponCode ${this.couponCode} is created for ${appointment.email} ReCollectedBarCode: ${resultData.barCode}`,
-        )
         await this.couponService.saveCoupon(
           this.couponCode,
           appointment.organizationId,
           resultData.barCode,
         )
+        LogInfo('handleActions->handledReCollect', 'CouponCodeCreated', {
+          barCode: resultData.barCode,
+          organizationId: appointment.organizationId,
+          appointmentId: appointment.id,
+          appointmentEmail: appointment.email
+        })
       }
     }
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.SendPreliminaryPositive: {
-        console.log(
-          `TestResultSendPreliminaryPositive: for ${resultData.barCode} is added to queue for today`,
-        )
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
           appointment: appointment,
           deadlineLabel: DeadlineLabel.NextDay,
@@ -698,7 +697,6 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.ReRunToday: {
-        console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for today`)
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
           appointment: appointment,
           deadlineLabel: DeadlineLabel.SameDay,
@@ -714,7 +712,6 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.ReRunTomorrow: {
-        console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for tomorrow`)
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
           appointment: appointment,
           deadlineLabel: DeadlineLabel.NextDay,
@@ -743,12 +740,16 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        console.log(`${resultData.resultSpecs.action}: for ${resultData.barCode} is requested`)
         await this.appointmentService.changeStatusToReported(appointment.id, resultData.adminId)
+        break
       }
     }
+    LogInfo('handleActions', 'Success', {
+      barCode: resultData.barCode,
+      action: resultData.resultSpecs.action,
+      appointmentId: appointment.id
+    })
   }
-
 
   async sendNotification(
     resultData: PCRTestResultEmailDTO,
