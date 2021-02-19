@@ -749,75 +749,70 @@ export class PCRTestResultsService {
     }
   }
 
+
   async sendNotification(
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
   ): Promise<void> {
+    let addSuccessLog = true
     switch (notficationType) {
       case PCRResultActions.SendPreliminaryPositive: {
         await this.sendEmailNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} SendPreliminaryPositive`)
         break
       }
       case PCRResultActions.ReRunToday: {
         await this.sendEmailNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} ReRunToday`)
         break
       }
       case PCRResultActions.ReRunTomorrow: {
         await this.sendEmailNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} ReRunTomorrow`)
         break
       }
       case PCRResultActions.RequestReCollect: {
         //TODO Remove This
         await this.sendReCollectNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} RequestReCollect`)
         break
       }
       case PCRResultActions.RecollectAsInconclusive: {
         await this.sendReCollectNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} RecollectAsInconclusive`)
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
         await this.sendReCollectNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} RecollectAsInvalid`)
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedNegative: {
         await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.ConfirmedNegative)
-        console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedPositive: {
         await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.ConfirmedPositive)
-        console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
         break
       }
       default: {
         if (resultData.result === ResultTypes.Negative) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Negative)
-          console.log(
-            `SendNotification: Success: Sent Results for ${resultData.barCode} Result: ${resultData.result}`,
-          )
         } else if (resultData.result === ResultTypes.Positive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
-          console.log(
-            `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
-          )
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
-          console.log(
-            `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
-          )
         } else {
-          //WARNING
-          console.log(
-            `SendNotification: Failed:  Blocked by system. ${resultData.barCode} with result ${resultData.result} requested to send notification.`,
-          )
+          addSuccessLog = false
+          LogWarning('sendNotification', 'FailedEmailSent BlockedBySystem', {
+            barCode: resultData.barCode,
+            notficationType,
+            resultSent: resultData.result
+          })
         }
       }
+    }
+
+    if(addSuccessLog){
+      LogInfo('sendNotification', 'SuccessfullEmailSent', {
+        barCode: resultData.barCode,
+        notficationType,
+        resultSent: resultData.result
+      })
     }
   }
 
