@@ -1290,15 +1290,15 @@ export class PCRTestResultsService {
         operator: DataModelFieldMapOperatorType.Equals,
         value: true,
       })
-    }
 
-    if (organizationId) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'organizationId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: organizationId,
-      })
+      if (organizationId) {
+        pcrTestResultsQuery.push({
+          map: '/',
+          key: 'organizationId',
+          operator: DataModelFieldMapOperatorType.Equals,
+          value: organizationId,
+        })
+      }
     }
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
