@@ -1253,6 +1253,7 @@ export class PCRTestResultsService {
     testRunId,
     barCode,
     appointmentStatus,
+    organizationId,
   }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrTestResultsQuery = []
 
@@ -1288,6 +1289,15 @@ export class PCRTestResultsService {
         key: 'waitingResult',
         operator: DataModelFieldMapOperatorType.Equals,
         value: true,
+      })
+    }
+
+    if (organizationId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'organizationId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: organizationId,
       })
     }
 

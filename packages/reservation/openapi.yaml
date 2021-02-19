@@ -2133,6 +2133,10 @@ paths:
                 InProgress,
                 ReRunRequired,
               ]
+        - in: query
+          name: organizationId
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully Return
