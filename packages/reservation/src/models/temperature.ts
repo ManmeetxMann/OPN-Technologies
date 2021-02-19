@@ -1,3 +1,5 @@
+import {Timestamp} from '../../../common/src/types/timestamp'
+
 export type Temperature = {
   temperature: number
   organizationId: string
@@ -11,12 +13,12 @@ export type TemperatureDBModel = Temperature & {
   timestamps?: Timestamp
 }
 
-export type Timestamp = {
+/*export type Timestamp = {
   createdAt: {
     _seconds: number
     _nanoseconds: number
   }
-}
+}*/
 
 export enum TemperatureStatuses {
   Proceed = 'proceed',

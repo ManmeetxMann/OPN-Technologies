@@ -21,7 +21,7 @@ export class TemperatureService {
 
   getByUserIdAndOrganizationId(
     userId: string,
-    organizationId: string,
+    organizationId: unknown,
   ): Promise<TemperatureDBModel[]> {
     const query = []
     if (userId) {

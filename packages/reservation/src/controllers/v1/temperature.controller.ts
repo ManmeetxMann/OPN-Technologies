@@ -27,10 +27,7 @@ class TemperatureController implements IControllerBase {
     const {id} = req.params
     const {organizationId} = req.query
     try {
-      const result = await this.temperatureService.getByUserIdAndOrganizationId(
-        id,
-        organizationId?.toString() || '',
-      )
+      const result = await this.temperatureService.getByUserIdAndOrganizationId(id, organizationId)
       res.json(
         actionSucceed(
           result.map((item) => {
@@ -39,7 +36,7 @@ class TemperatureController implements IControllerBase {
               return {
                 temperatureInCelsius: temperature,
                 temperatureInFahrenheit: convertCelsiusToFahrenheit(temperature),
-                createdAt: toDateTimeFormat(timestamps?.createdAt?._seconds | 0),
+                createdAt: toDateTimeFormat(timestamps?.createdAt?.seconds | 0),
                 status: status,
               }
             }
