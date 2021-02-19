@@ -4,6 +4,7 @@ import path from 'path'
 import {Content, TDocumentDefinitions, TableLayouts} from './pdf-types'
 
 import {Stream} from 'stream'
+import {LogInfo} from '../../utils/logging-setup'
 
 const getFontSettings = () => ({
   Cambria: {
@@ -29,11 +30,11 @@ export class PdfService {
     const pdfDoc = this.printer.createPdfKitDocument(generatedParams, {tableLayouts})
     pdfDoc.on('data', (chunk) => stream.push(chunk))
     pdfDoc.on('end', () => {
-      console.log('ending stream')
       stream.end()
+      LogInfo('generatePDFStream', 'PDFSuccessfullyGenerated', {})
     })
     pdfDoc.on('error', (err) => {
-      console.error('error creating pdf', err)
+      LogInfo('generatePDFStream', 'FailToGeneratePDF', {err})
       stream.end()
     })
     pdfDoc.end()

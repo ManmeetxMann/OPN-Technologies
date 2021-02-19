@@ -11,6 +11,7 @@ import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.
 import {toDateFormat} from '../../../common/src/utils/times'
 import {formatDateRFC822Local, makeDeadlineForFilter} from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
+import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 
 import {AppoinmentService} from './appoinment.service'
 import {CouponService} from './coupon.service'
@@ -176,13 +177,21 @@ export class PCRTestResultsService {
 
     const pcrResults = await testResultsReportingTrackerPCRResult.get(resultId)
     if (!pcrResults) {
-      throw new BadRequestException(`ProcessPCRTestResultFailed: ID: ${resultId} does not exists`)
+      LogError('processPCRTestResult', 'InvalidResultIdInReport', {
+        reportTrackerId,
+        resultId,
+      })
+      return
     }
 
     if (pcrResults.status !== ResultReportStatus.RequestReceived) {
-      throw new BadRequestException(
-        `ProcessPCRTestResultFailed: ID: ${resultId} BarCode: ${pcrResults.data.barCode} has status ${pcrResults.status}`,
-      )
+      LogError('processPCRTestResult', 'AlreadyProcessed', {
+        reportTrackerId,
+        resultId,
+        currentStatus: pcrResults.status,
+        barCode: pcrResults.data.barCode,
+      })
+      return
     }
 
     await testResultsReportingTrackerPCRResult.updateProperty(
@@ -205,12 +214,20 @@ export class PCRTestResultsService {
         status: await this.getReportStatus(pcrResults.data.action),
         details: 'Action Completed',
       })
+      LogInfo('processPCRTestResult', 'SuccessfullyProcessed', {
+        reportTrackerId,
+        resultId,
+      })
     } catch (error) {
-      //CRITICAL
-      console.error(`processPCRTestResult: handlePCRResultSaveAndSend Failed ${error} `)
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
         status: ResultReportStatus.Failed,
         details: error.toString(),
+      })
+      LogWarning('processPCRTestResult', 'handlePCRResultSaveAndSendFailed', {
+        reportTrackerId,
+        resultId,
+        error: error.toString(),
+        barCode: pcrResults.data.barCode,
       })
     }
   }
@@ -372,36 +389,39 @@ export class PCRTestResultsService {
     let finalResult = autoResult
     switch (action) {
       case PCRResultActions.MarkAsNegative: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
         finalResult = ResultTypes.Negative
         break
       }
       case PCRResultActions.MarkAsPresumptivePositive: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as Positive`)
         finalResult = ResultTypes.PresumptivePositive
         break
       }
       case PCRResultActions.MarkAsPositive: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as Positive`)
         finalResult = ResultTypes.Positive
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as Invalid`)
         finalResult = ResultTypes.Invalid
         break
       }
       case PCRResultActions.RecollectAsInconclusive: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as Inconclusive`)
         finalResult = ResultTypes.Inconclusive
         break
       }
       case PCRResultActions.SendPreliminaryPositive: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as PreliminaryPositive`)
         finalResult = ResultTypes.PreliminaryPositive
         break
       }
     }
+
+    if (finalResult !== autoResult) {
+      LogInfo('getFinalResult', 'TestResultOverwrittten', {
+        barCode,
+        autoResult,
+        finalResult,
+      })
+    }
+
     return finalResult
   }
 
@@ -483,9 +503,9 @@ export class PCRTestResultsService {
     sendUpdatedResults: boolean,
   ): Promise<PCRTestResultDBModel> {
     if (resultData.resultSpecs.action === PCRResultActions.DoNothing) {
-      console.log(
-        `handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}. It is Ignored`,
-      )
+      LogInfo('handlePCRResultSaveAndSend', 'DoNothingSelected HenceIgnored', {
+        barCode: resultData.barCode,
+      })
       return
     }
 
@@ -505,9 +525,11 @@ export class PCRTestResultsService {
       !this.whiteListedResultsTypes.includes(finalResult) &&
       resultData.resultSpecs.action === PCRResultActions.SendThisResult
     ) {
-      console.error(
-        `handlePCRResultSaveAndSend: Failed Barcode: ${resultData.barCode} SendThisResult action is not allowed for result ${finalResult} is not allowed`,
-      )
+      LogInfo('handlePCRResultSaveAndSend', 'NoAllowedActionRequested', {
+        barCode: resultData.barCode,
+        finalResult: finalResult,
+        action: resultData.resultSpecs.action,
+      })
       throw new BadRequestException(
         `Barcode: ${resultData.barCode} not allowed use action SendThisResult for ${finalResult} Results`,
       )
@@ -637,7 +659,6 @@ export class PCRTestResultsService {
   }): Promise<void> {
     const nextRunNumber = runNumber + 1
     const handledReCollect = async () => {
-      console.log(`TestResultReCollect: for ${resultData.barCode} is requested`)
       await this.appointmentService.changeStatusToReCollectRequired(
         appointment.id,
         resultData.adminId,
@@ -646,21 +667,21 @@ export class PCRTestResultsService {
       if (!appointment.organizationId) {
         //TODO: Move this to Email Function
         this.couponCode = await this.couponService.createCoupon(appointment.email)
-        console.log(
-          `TestResultReCollect: CouponCode ${this.couponCode} is created for ${appointment.email} ReCollectedBarCode: ${resultData.barCode}`,
-        )
         await this.couponService.saveCoupon(
           this.couponCode,
           appointment.organizationId,
           resultData.barCode,
         )
+        LogInfo('handleActions->handledReCollect', 'CouponCodeCreated', {
+          barCode: resultData.barCode,
+          organizationId: appointment.organizationId,
+          appointmentId: appointment.id,
+          appointmentEmail: appointment.email,
+        })
       }
     }
     switch (resultData.resultSpecs.action) {
       case PCRResultActions.SendPreliminaryPositive: {
-        console.log(
-          `TestResultSendPreliminaryPositive: for ${resultData.barCode} is added to queue for today`,
-        )
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
           appointment: appointment,
           deadlineLabel: DeadlineLabel.NextDay,
@@ -676,7 +697,6 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.ReRunToday: {
-        console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for today`)
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
           appointment: appointment,
           deadlineLabel: DeadlineLabel.SameDay,
@@ -692,7 +712,6 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.ReRunTomorrow: {
-        console.log(`TestResultReRun: for ${resultData.barCode} is added to queue for tomorrow`)
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
           appointment: appointment,
           deadlineLabel: DeadlineLabel.NextDay,
@@ -721,81 +740,80 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        console.log(`${resultData.resultSpecs.action}: for ${resultData.barCode} is requested`)
         await this.appointmentService.changeStatusToReported(appointment.id, resultData.adminId)
+        break
       }
     }
+    LogInfo('handleActions', 'Success', {
+      barCode: resultData.barCode,
+      action: resultData.resultSpecs.action,
+      appointmentId: appointment.id,
+    })
   }
 
   async sendNotification(
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
   ): Promise<void> {
+    let addSuccessLog = true
     switch (notficationType) {
       case PCRResultActions.SendPreliminaryPositive: {
         await this.sendEmailNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} SendPreliminaryPositive`)
         break
       }
       case PCRResultActions.ReRunToday: {
         await this.sendEmailNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} ReRunToday`)
         break
       }
       case PCRResultActions.ReRunTomorrow: {
         await this.sendEmailNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} ReRunTomorrow`)
         break
       }
       case PCRResultActions.RequestReCollect: {
         //TODO Remove This
         await this.sendReCollectNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} RequestReCollect`)
         break
       }
       case PCRResultActions.RecollectAsInconclusive: {
         await this.sendReCollectNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} RecollectAsInconclusive`)
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
         await this.sendReCollectNotification(resultData)
-        console.log(`SendNotification: Success: ${resultData.barCode} RecollectAsInvalid`)
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedNegative: {
         await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.ConfirmedNegative)
-        console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
         break
       }
       case EmailNotficationTypes.MarkAsConfirmedPositive: {
         await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.ConfirmedPositive)
-        console.log(`SendNotification: Success: ${resultData.barCode} ${notficationType}`)
         break
       }
       default: {
         if (resultData.result === ResultTypes.Negative) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Negative)
-          console.log(
-            `SendNotification: Success: Sent Results for ${resultData.barCode} Result: ${resultData.result}`,
-          )
         } else if (resultData.result === ResultTypes.Positive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
-          console.log(
-            `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
-          )
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
-          console.log(
-            `SendNotification: Success: Sent Results for ${resultData.barCode}  Result: ${resultData.result}`,
-          )
         } else {
-          //WARNING
-          console.log(
-            `SendNotification: Failed:  Blocked by system. ${resultData.barCode} with result ${resultData.result} requested to send notification.`,
-          )
+          addSuccessLog = false
+          LogWarning('sendNotification', 'FailedEmailSent BlockedBySystem', {
+            barCode: resultData.barCode,
+            notficationType,
+            resultSent: resultData.result,
+          })
         }
       }
+    }
+
+    if (addSuccessLog) {
+      LogInfo('sendNotification', 'SuccessfullEmailSent', {
+        barCode: resultData.barCode,
+        notficationType,
+        resultSent: resultData.result,
+      })
     }
   }
 
