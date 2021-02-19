@@ -1,5 +1,5 @@
 import moment from 'moment'
-import {sortBy} from 'lodash'
+import {sortBy, union, fromPairs} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -1305,16 +1305,23 @@ export class PCRTestResultsService {
     const appointmentIds = []
     const testRunIds = []
     const pcrFiltred = []
+    const organizationIds = []
 
-    pcrResults.forEach(({appointmentId, testRunId}) => {
+    pcrResults.forEach(({appointmentId, testRunId, organizationId}) => {
       appointmentIds.push(appointmentId)
       if (testRunId) testRunIds.push(testRunId)
+      if (organizationId) organizationIds.push(organizationId)
     })
 
-    const [appointments, testRuns] = await Promise.all([
+    const [appointments, testRuns, organizations] = await Promise.all([
       this.appointmentService.getAppointmentsDBByIds(appointmentIds),
-      this.testRunsService.getTestRunByTestRunIds(testRunIds),
+      this.testRunsService.getTestRunByTestRunIds(union(testRunIds)),
+      this.organizationService.getAllByIds(union(organizationIds)),
     ])
+
+    const finalOrganization = fromPairs(
+      organizations.map((organization) => [organization.id, organization.name]),
+    )
 
     pcrResults.map((pcr) => {
       const appointment = appointments?.find(({id}) => pcr.appointmentId === id)
@@ -1343,6 +1350,7 @@ export class PCRTestResultsService {
           reCollectNumber: pcr.reCollectNumber ? `S${pcr.reCollectNumber}` : null,
           dateTime: formatDateRFC822Local(appointment.dateTime),
           testRunLabel: testRun?.name,
+          organizationName: pcr.organizationId ? finalOrganization[pcr.organizationId] : 'None',
         })
       }
     })
