@@ -1,3 +1,6 @@
+import {firestore} from 'firebase-admin'
+import {ResultTypes} from './appointment'
+
 export type Temperature = {
   temperature: number
   organizationId: string
@@ -8,6 +11,9 @@ export type Temperature = {
 
 export type TemperatureDBModel = Temperature & {
   id: string
+  timestamps?: {
+    createdAt: firestore.Timestamp
+  }
 }
 
 export enum TemperatureStatuses {
@@ -19,4 +25,13 @@ export type TemperatureSaveRequest = {
   temperature: number
   organizationId: string
   userId: string
+}
+
+export const mapTemperatureStatusToResultTypes = (status: TemperatureStatuses): ResultTypes => {
+  const mapper = {
+    [TemperatureStatuses.Proceed]: ResultTypes.Negative,
+    [TemperatureStatuses.Stop]: ResultTypes.Positive,
+  }
+
+  return mapper[status]
 }

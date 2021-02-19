@@ -75,15 +75,17 @@ export type PCRTestResultConfirmRequest = {
 }
 
 export enum PCRTestResultStyle {
-  Postive = 'RED',
+  Positive = 'RED',
   Negative = 'GREEN',
   Invalid = 'YELLOW',
   Inconclusive = 'BLUE',
   AnyOther = 'GREY',
 }
 
-export enum PCRTestResultType {
+export enum TestResultType {
   PCR = 'PCR',
+  TemperatureCheck = 'temperature_check',
+  Attestation = 'self_attestation',
 }
 
 type PCRResultSpecs = {
@@ -312,7 +314,7 @@ export const resultToStyle = (result: ResultTypes): PCRTestResultStyle => {
 
 export type TestResutsDTO = {
   id: string
-  type: PCRTestResultType
+  type: TestResultType
   name: string
   testDateTime: string
   style: PCRTestResultStyle
