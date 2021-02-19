@@ -252,6 +252,7 @@ export type PcrTestResultsListByDeadlineRequest = {
     | AppointmentStatus.InProgress
     | AppointmentStatus.Received
     | AppointmentStatus.ReRunRequired
+  organizationId?: string
 }
 
 export type SinglePcrTestResultsRequest = {

@@ -1253,6 +1253,7 @@ export class PCRTestResultsService {
     testRunId,
     barCode,
     appointmentStatus,
+    organizationId,
   }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrTestResultsQuery = []
 
@@ -1289,6 +1290,15 @@ export class PCRTestResultsService {
         operator: DataModelFieldMapOperatorType.Equals,
         value: true,
       })
+
+      if (organizationId) {
+        pcrTestResultsQuery.push({
+          map: '/',
+          key: 'organizationId',
+          operator: DataModelFieldMapOperatorType.Equals,
+          value: organizationId,
+        })
+      }
     }
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
