@@ -11,7 +11,7 @@ import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.
 import {toDateFormat} from '../../../common/src/utils/times'
 import {formatDateRFC822Local, makeDeadlineForFilter} from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
-import { LogError, LogInfo, LogWarning } from '../../../common/src/utils/logging-setup'
+import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 
 import {AppoinmentService} from './appoinment.service'
 import {CouponService} from './coupon.service'
@@ -177,19 +177,19 @@ export class PCRTestResultsService {
 
     const pcrResults = await testResultsReportingTrackerPCRResult.get(resultId)
     if (!pcrResults) {
-      LogError('processPCRTestResult','InvalidResultIdInReport',{
+      LogError('processPCRTestResult', 'InvalidResultIdInReport', {
         reportTrackerId,
-        resultId
+        resultId,
       })
       return
     }
 
     if (pcrResults.status !== ResultReportStatus.RequestReceived) {
-      LogError('processPCRTestResult','AlreadyProcessed',{
+      LogError('processPCRTestResult', 'AlreadyProcessed', {
         reportTrackerId,
         resultId,
         currentStatus: pcrResults.status,
-        barCode: pcrResults.data.barCode
+        barCode: pcrResults.data.barCode,
       })
       return
     }
@@ -214,20 +214,20 @@ export class PCRTestResultsService {
         status: await this.getReportStatus(pcrResults.data.action),
         details: 'Action Completed',
       })
-      LogInfo('processPCRTestResult','SuccessfullyProcessed',{
+      LogInfo('processPCRTestResult', 'SuccessfullyProcessed', {
         reportTrackerId,
-        resultId
+        resultId,
       })
     } catch (error) {
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
         status: ResultReportStatus.Failed,
         details: error.toString(),
       })
-      LogWarning('processPCRTestResult','handlePCRResultSaveAndSendFailed',{
+      LogWarning('processPCRTestResult', 'handlePCRResultSaveAndSendFailed', {
         reportTrackerId,
         resultId,
         error: error.toString(),
-        barCode: pcrResults.data.barCode
+        barCode: pcrResults.data.barCode,
       })
     }
   }
@@ -413,12 +413,12 @@ export class PCRTestResultsService {
         break
       }
     }
-    
-    if(finalResult!==autoResult){
-      LogInfo('getFinalResult','TestResultOverwrittten',{
+
+    if (finalResult !== autoResult) {
+      LogInfo('getFinalResult', 'TestResultOverwrittten', {
         barCode,
         autoResult,
-        finalResult
+        finalResult,
       })
     }
 
@@ -503,9 +503,9 @@ export class PCRTestResultsService {
     sendUpdatedResults: boolean,
   ): Promise<PCRTestResultDBModel> {
     if (resultData.resultSpecs.action === PCRResultActions.DoNothing) {
-      console.log(
-        `handlePCRResultSaveAndSend: DoNothing is selected for ${resultData.barCode}. It is Ignored`,
-      )
+      LogInfo('handlePCRResultSaveAndSend', 'DoNothingSelected HenceIgnored', {
+        barCode: resultData.barCode,
+      })
       return
     }
 
@@ -525,9 +525,11 @@ export class PCRTestResultsService {
       !this.whiteListedResultsTypes.includes(finalResult) &&
       resultData.resultSpecs.action === PCRResultActions.SendThisResult
     ) {
-      console.error(
-        `handlePCRResultSaveAndSend: Failed Barcode: ${resultData.barCode} SendThisResult action is not allowed for result ${finalResult} is not allowed`,
-      )
+      LogInfo('handlePCRResultSaveAndSend', 'NoAllowedActionRequested', {
+        barCode: resultData.barCode,
+        finalResult: finalResult,
+        action: resultData.resultSpecs.action,
+      })
       throw new BadRequestException(
         `Barcode: ${resultData.barCode} not allowed use action SendThisResult for ${finalResult} Results`,
       )
