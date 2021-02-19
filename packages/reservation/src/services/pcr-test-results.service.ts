@@ -1210,14 +1210,13 @@ export class PCRTestResultsService {
       if (!(allowedAppointmentStatus.includes(appointment.appointmentStatus) || testRunId)) {
         return
       }
-      const pcrTest = pcrResults?.find(({appointmentId}) => appointmentId === appointment.id)
 
-      if (appointmentStatsByTypes[pcrTest.result]) {
-        ++appointmentStatsByTypes[pcrTest.result]
+      if (appointmentStatsByTypes[appointment.appointmentStatus]) {
+        ++appointmentStatsByTypes[appointment.appointmentStatus]
       } else {
-        appointmentStatsByTypes[pcrTest.result] = 1
+        appointmentStatsByTypes[appointment.appointmentStatus] = 1
       }
-      if (appointmentStatsByOrganization[pcrTest.result]) {
+      if (appointmentStatsByOrganization[appointment.organizationId]) {
         ++appointmentStatsByOrganization[appointment.organizationId]
       } else {
         appointmentStatsByOrganization[appointment.organizationId] = 1
