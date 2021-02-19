@@ -1070,11 +1070,8 @@ export class PCRTestResultsService {
       pcrTestResults.map(async (pcr) => {
         try {
           const appointment = appointments.find(({id}) => id === pcr.appointmentId)
-
-          if (
-            appointment?.appointmentStatus === AppointmentStatus.Received ||
-            appointment?.appointmentStatus === AppointmentStatus.ReRunRequired
-          ) {
+          const allowedStatusToBeMarkedAsInProgress = [AppointmentStatus.Received, AppointmentStatus.ReRunRequired, AppointmentStatus.InProgress]
+          if (allowedStatusToBeMarkedAsInProgress.includes(appointment.appointmentStatus)) {
             await this.pcrTestResultsRepository.updateData(pcr.id, {
               testRunId: testRunId,
               waitingResult: true,
