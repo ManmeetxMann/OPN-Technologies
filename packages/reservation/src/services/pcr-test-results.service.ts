@@ -11,7 +11,7 @@ import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.
 import {toDateFormat} from '../../../common/src/utils/times'
 import {formatDateRFC822Local, makeDeadlineForFilter} from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
-import { LogError, LogWarning } from '../../../common/src/utils/logging-setup'
+import { LogError, LogInfo, LogWarning } from '../../../common/src/utils/logging-setup'
 
 import {AppoinmentService} from './appoinment.service'
 import {CouponService} from './coupon.service'
@@ -191,7 +191,7 @@ export class PCRTestResultsService {
         currentStatus: pcrResults.status,
         barCode: pcrResults.data.barCode
       })
-      //return
+      return
     }
 
     await testResultsReportingTrackerPCRResult.updateProperty(
@@ -213,6 +213,10 @@ export class PCRTestResultsService {
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
         status: await this.getReportStatus(pcrResults.data.action),
         details: 'Action Completed',
+      })
+      LogInfo('processPCRTestResult','SuccessfullyProcessed',{
+        reportTrackerId,
+        resultId
       })
     } catch (error) {
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
@@ -385,36 +389,39 @@ export class PCRTestResultsService {
     let finalResult = autoResult
     switch (action) {
       case PCRResultActions.MarkAsNegative: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as Negative`)
         finalResult = ResultTypes.Negative
         break
       }
       case PCRResultActions.MarkAsPresumptivePositive: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as Positive`)
         finalResult = ResultTypes.PresumptivePositive
         break
       }
       case PCRResultActions.MarkAsPositive: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as Positive`)
         finalResult = ResultTypes.Positive
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as Invalid`)
         finalResult = ResultTypes.Invalid
         break
       }
       case PCRResultActions.RecollectAsInconclusive: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as Inconclusive`)
         finalResult = ResultTypes.Inconclusive
         break
       }
       case PCRResultActions.SendPreliminaryPositive: {
-        console.log(`TestResultOverwrittten: ${barCode} is marked as PreliminaryPositive`)
         finalResult = ResultTypes.PreliminaryPositive
         break
       }
     }
+    
+    if(finalResult!==autoResult){
+      LogInfo('getFinalResult','TestResultOverwrittten',{
+        barCode,
+        autoResult,
+        finalResult
+      })
+    }
+
     return finalResult
   }
 
