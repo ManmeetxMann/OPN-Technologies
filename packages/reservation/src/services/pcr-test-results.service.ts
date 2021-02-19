@@ -1070,8 +1070,13 @@ export class PCRTestResultsService {
       pcrTestResults.map(async (pcr) => {
         try {
           const appointment = appointments.find(({id}) => id === pcr.appointmentId)
-          const allowedStatusToBeMarkedAsInProgress = [AppointmentStatus.Received, AppointmentStatus.ReRunRequired, AppointmentStatus.InProgress]
+          const allowedStatusToBeMarkedAsInProgress = [
+            AppointmentStatus.Received,
+            AppointmentStatus.ReRunRequired,
+            AppointmentStatus.InProgress,
+          ]
           if (allowedStatusToBeMarkedAsInProgress.includes(appointment.appointmentStatus)) {
+            //Add TestRunID and Mark Waiting As True
             await this.pcrTestResultsRepository.updateData(pcr.id, {
               testRunId: testRunId,
               waitingResult: true,
@@ -1089,7 +1094,12 @@ export class PCRTestResultsService {
               id: pcr.id,
               barCode: pcr.barCode,
               status: BulkOperationStatus.Failed,
-              reason: `Don't allowed to add testRunId if appointment status is not ${AppointmentStatus.Received} or ${AppointmentStatus.ReRunRequired}`,
+              reason: `Don't allowed to add testRunId if appointment status is not ${AppointmentStatus.Received} or ${AppointmentStatus.ReRunRequired} or ${AppointmentStatus.InProgress}`,
+            })
+            LogWarning('addTestRunToPCR', 'AppointmentWithNotAllowedStatusBlocked', {
+              appointmentStatus: appointment.appointmentStatus,
+              appointmentId: pcr.appointmentId,
+              testRunId,
             })
           }
         } catch (error) {
@@ -1098,6 +1108,11 @@ export class PCRTestResultsService {
             barCode: pcr.barCode,
             status: BulkOperationStatus.Failed,
             reason: 'Internal server error',
+          })
+          LogError('addTestRunToPCR', 'InternalServerError', {
+            appointmentId: pcr.appointmentId,
+            testRunId,
+            error: error,
           })
         }
       }),
