@@ -26,6 +26,10 @@ export type AdminProfile = {
   isIDBarCodesAdmin: boolean
   isSingleResultSendAdmin: boolean
   isConfirmResultAdmin: boolean
+  isPackageAdmin: boolean
+  isCheckInAdmin: boolean
+  isGenerateAdmin: boolean
+  isLookupAdmin: boolean
 }
 
 export type AdminApproval = {
