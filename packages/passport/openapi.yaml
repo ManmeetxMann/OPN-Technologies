@@ -255,78 +255,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfPassport'
 
-  /api/v1/status/get:
-    post:
-      description: Get user's passport for the organization by statusToken or create a pending one if any.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                statusToken:
-                  type: string
-                  nullable: true
-                userId:
-                  type: string
-                organizationId:
-                  type: string
-                dependantIds:
-                  type: array
-                  nullable: true
-                  items:
-                    type: string
-                includeGuardian:
-                  type: boolean
-              required:
-                - userId
-                - organizationId
-                - includeGuardian
-
-      responses:
-        '200':
-          description: Found or successfully created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfPassport'
-
-  /api/v1/status/update:
-    post:
-      description: Solve badge status based on user's questionnaire answers. Not including userId is deprecated and will be removed
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                locationId:
-                  type: string
-                answers:
-                  type: object
-                  additionalProperties: true
-                userId:
-                  type: string
-                questionnaireId:
-                  type: string
-                dependantIds:
-                  type: array
-                  items:
-                    type: string
-                includeGuardian:
-                  type: boolean
-              required:
-                - locationId
-                - answers
-                - userId
-                - includeGuardian
-              example: {locationId: "location-id", answers: { "1":{"1": false},"2":{"1": false},"3":{"1": false},"4":{"1": false, "2": "2020-06-10T05:05:32.217Z"}}, userId: "parentId", dependantIds: ["childOne", "childTwo"]}
-
-      responses:
-        '200':
-          description: Found or successfully created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfPassport'
   /user/testNotify:
     post:
       description: Send a notification to the user with the given userId. Used to check connectivity
@@ -383,6 +311,7 @@ paths:
       responses:
         '200':
           description: Passports updated
+
   /passport/api/v1/passport:
     get:
       security:

@@ -160,21 +160,6 @@ components:
         - accessToken
         - userId
 
-    V1ExitRequest:
-      type: object
-      additionalProperties: false
-      properties:
-        userId:
-          type: string
-        locationId:
-          type: string
-          description: If provided, the user must be checked into the given location for the request to take effect
-        organizationId:
-          type: string
-      required:
-        - userId
-        - organizationId
-
     SelfEntryOrExitRequest:
       type: object
       additionalProperties: false
@@ -233,11 +218,9 @@ components:
       properties:
         locationId:
           type: string
-        includeGuardian:
-          type: boolean
         organizationId:
           type: string
-        dependantIds:
+        userIds:
           type: array
           items:
             type: string
@@ -249,16 +232,15 @@ components:
       type: object
       additionalProperties: false
       properties:
-        locationId:
-          type: string
         organizationId:
           type: string
-        accessToken:
-          type: string
+        userIds:
+          type: array
+          items:
+            type: string
       required:
-        - locationId
         - organizationId
-        - accessToken
+        - userIds
     
     V1ScanRequest:
       type: object
@@ -276,19 +258,32 @@ components:
       type: object
       additionalProperties: false
       properties:
-        userId:
-          type: string
+        userIds:
+          type: array
+          items:
+            type: string
         organizationId:
           type: string
         locationId:
           type: string
-        autoExit:
-          type: boolean
-          description: if true, user will automatically exit their curtrent location. If false or not provided, the request fails if the user is currently checked in anywhere
       required:
-        - userId
+        - userIds
         - organizationId
         - locationId
+
+    V1ExitRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        userIds:
+          type: array
+          items:
+            type: string
+        organizationId:
+          type: string
+      required:
+        - userIds
+        - organizationId
 
     Statistics:
       type: object
@@ -360,7 +355,9 @@ components:
       additionalProperties: false
       properties:
         data:
-          $ref: '#/components/schemas/V1Access'
+          type: array
+          items:
+            $ref: '#/components/schemas/V1Access'
         status:
           type: object
           additionalProperties: false
@@ -380,45 +377,7 @@ components:
             message:
               nullable: true
               type: string
-    
-    V1ResponseOfScan:
-      type: object
-      additionalProperties: false
-      properties:
-        data:
-          type: object
-          additionalProperties: false
-          properties: 
-            access:
-              $ref: '#/components/schemas/V1Access'
-            passport:
-              $ref: '#/components/schemas/Passport'
-            user:
-              $ref: '#/components/schemas/User'
-            dependants:
-              type: array
-              items:
-                $ref: '#/components/schemas/User'
-        status:
-          type: object
-          additionalProperties: false
-          properties:
-            code:
-              type: string
-              enum:
-                [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
-                ]
-            message:
-              nullable: true
-              type: string
-    
+   
     V1ResponseOfEnter:
       type: object
       additionalProperties: false
@@ -463,8 +422,6 @@ components:
           properties: 
             access:
               $ref: '#/components/schemas/V1Access'
-            passport:
-              $ref: '#/components/schemas/Passport'
             user:
               $ref: '#/components/schemas/User'
         status:
@@ -520,33 +477,6 @@ components:
             message:
               nullable: true
               type: string
-
-    ResponseOfPassport:
-      type: object
-      additionalProperties: false
-      properties:
-        data:
-          $ref: '#/components/schemas/Passport'
-        status:
-          type: object
-          additionalProperties: false
-          properties:
-            code:
-              type: string
-              enum:
-                [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
-                ]
-            message:
-              nullable: true
-              type: string
-
 
     ResponseOfStatistics:
       type: object
@@ -664,24 +594,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfAccess'
-
-  /access/api/v1/access/entry-token:
-    post:
-      description: Create a token which an admin could scan
-      security:
-        - bearerAuthJWT: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/V1UserEnterRequest'
-      responses:
-        '200':
-          description: Successfully created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/V1ResponseOfAccess'
   
   /access/api/v1/access/enter:
     post:
@@ -703,7 +615,7 @@ paths:
   
   /access/api/v1/access/exit:
     post:
-      description: Exit the location the specified token was used to enter
+      description: Exit the given users from wherever they are
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -718,46 +630,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/V1ResponseOfAccess'
-  
-  /access/api/v1/admin/access/scan-enter:
-    post:
-      description: Scan a token - all users and dependants it applies to will enter
-      security:
-        - bearerAuthJWT: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/V1ScanRequest'
-      responses:
-        '200':
-          description: Successfully entered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/V1ResponseOfScan'
-  
-  /access/api/v1/admin/access/scan-exit:
-    post:
-      description: Scan a token - all users and dependants it applies to will exit
-      security:
-        - bearerAuthJWT: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/V1ScanRequest'
-      responses:
-        '200':
-          description: Successfully exited
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/V1ResponseOfScan'
 
   /access/api/v1/admin/access/enter:
     post:
-      description: Manually check a user in to a location. If autoExit is true, the user will automatically exit their current location. If it is false or missing, if they are still checked in somewhere the request will fail.
+      description: Manually check a group of users into a location. The users will automatically exit their current locations.
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -775,7 +651,7 @@ paths:
 
   /access/api/v1/admin/access/exit:
     post:
-      description: Manually check a user out of their current location. If locationId is provided, the request wwill fail if it does not match the user's current location
+      description: Manually check a group of users out of their current locations.
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -874,6 +750,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Response'
+
   /admin/enter:
     post:
       description: Handle user's entrance with access-token
