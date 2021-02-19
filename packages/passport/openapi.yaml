@@ -99,6 +99,41 @@ components:
           items:
             type: string
 
+    Access:
+      type: object
+      additionalProperties: false
+      properties:
+        token:
+          type: string
+        statusToken:
+          type: string
+        userId:
+          type: string
+        locationId:
+          type: string
+        enteredAt:
+          type: string
+          nullable: true
+        exitAt:
+          type: string
+          nullable: true
+        includesGuardian:
+          type: boolean
+        dependants:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+              enteredAt:
+                type: string
+                nullable: true
+              exitAt:
+                type: string
+                nullable: true
+
     ResponseOfPassport:
       type: object
       additionalProperties: false
@@ -124,6 +159,7 @@ components:
             message:
               nullable: true
               type: string
+    
     V1ResponseOfPassport:
       type: object
       additionalProperties: false
@@ -138,6 +174,42 @@ components:
                 $ref: '#/components/schemas/User'
               passport:
                 $ref: '#/components/schemas/Passport'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    V1ResponseOfAdminPassport:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              user:
+                $ref: '#/components/schemas/User'
+              passport:
+                $ref: '#/components/schemas/Passport'
+              access:
+                $ref: '#/components/schemas/Access'
         status:
           type: object
           additionalProperties: false
@@ -323,6 +395,31 @@ paths:
             type: string
           required: true
       description: Get all active passports for the authenticated user and their dependants
+
+      responses:
+        '200':
+          description: Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfPassport'
+
+  /passport/api/v1/admin/passport:
+    get:
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: userIdId
+          schema:
+            type: string
+          required: true
+      description: Get active passport and access for the specified user, as well as info about that user
 
       responses:
         '200':

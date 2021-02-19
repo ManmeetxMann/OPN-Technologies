@@ -6,6 +6,7 @@ import loggerMiddleware from '../../common/src/middlewares/logger'
 import AdminController from './controllers/admin.controller'
 import UserController from './controllers/user.controller'
 import PassportController from './controllers/v1/passport.controller'
+import AdminPassportController from './controllers/v1/admin/passport.controller'
 import RootController from './controllers/root.controller'
 
 import {IdentifiersModel} from '../../common/src/data/identifiers'
@@ -22,6 +23,7 @@ const app = new App({
     new UserController(),
     new AdminController(),
     new PassportController(),
+    new AdminPassportController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],
