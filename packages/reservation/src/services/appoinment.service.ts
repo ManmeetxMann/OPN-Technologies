@@ -630,15 +630,8 @@ export class AppoinmentService {
     const deadline = makeDeadline(moment(appointment.dateTime.toDate()).utc(), label)
     await this.acuityRepository.addAppointmentLabelOnAcuity(appointment.acuityAppointmentId, label)
 
-    const pcrResult = await this.pcrTestResultsRepository.getTestResultByAppointmentId(
-      appointment.id,
-    )
-    // Throws en exception, in case of result not found
-
     await Promise.all([
-      this.pcrTestResultsRepository.updateData(pcrResult.id, {
-        deadline: deadline,
-      }),
+      this.pcrTestResultsRepository.updateAllResultsForAppointmentId(appointment.id, {deadline}),
       this.updateAppointmentDB(appointment.id, {deadline}),
     ])
   }
@@ -665,6 +658,10 @@ export class AppoinmentService {
       data.appointment.acuityAppointmentId,
       data.deadlineLabel,
     )
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(data.appointment.id, {
+      deadline,
+    })
+
     return this.appointmentsRepository.updateProperties(data.appointment.id, {
       appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
