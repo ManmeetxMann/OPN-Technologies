@@ -196,7 +196,7 @@ class AppointmentWebhookController implements IControllerBase {
             firstName: appointment.firstName,
             lastName: appointment.lastName,
             linkedBarCodes: linkedBarcodes,
-            organizationId: appointment.organizationId,
+            organizationId: updatedAppointment.organizationId,
             //result: ResultTypes.Pending,
             //runNumber: 1 ,//Start the Run
             //waitingResult: true,
