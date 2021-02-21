@@ -72,6 +72,13 @@ describe('AdminAppointmentController', () => {
       expect(result.body.data.length).toBe(2)
       done()
     })
+    test('get appointments by no organizationId filter successfully.', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments?organizationId=null&dateOfAppointment=${dateForAppointments}`
+      const result = await request(server.app).get(url).set('authorization', 'bearer 10000')
+      expect(result.status).toBe(200)
+      expect(result.body.data.length).toBe(3)
+      done()
+    })
     test('get appointments by organizationId should fail for missing dateOfAppointment', async (done) => {
       const url = `/reservation/admin/api/v1/appointments?organizationId=${organizationId}`
       const result = await request(server.app).get(url).set('authorization', 'bearer 10000')
