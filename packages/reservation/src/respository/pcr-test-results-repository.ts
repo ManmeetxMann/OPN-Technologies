@@ -27,24 +27,6 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     return await this.updateProperties(id, {...pcrTestResults, updatedAt: serverTimestamp()})
   }
 
-  async getTestResultByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
-    const testResults = await this.findWhereEqual('appointmentId', appointmentId)
-
-    if (!testResults || testResults.length === 0) {
-      throw new ResourceNotFoundException(
-        `PCRTestResult with appointment ${appointmentId} not found`,
-      )
-    }
-
-    if (testResults.length > 1) {
-      console.log(
-        `getTestResultByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,
-      )
-    }
-
-    return testResults[0]
-  }
-
   async getWaitingPCRResultsByAppointmentId(
     appointmentId: string,
   ): Promise<PCRTestResultDBModel[]> {
