@@ -3,7 +3,6 @@ import DataModel, {DataModelFieldMapOperatorType} from '../../../common/src/data
 import DataStore from '../../../common/src/data/datastore'
 import {PCRTestResultDBModel} from '../models/pcr-test-results'
 import DBSchema from '../dbschemas/pcr-test-results.schema'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
   public rootPath = 'pcr-test-results'

@@ -658,7 +658,9 @@ export class AppoinmentService {
       data.appointment.acuityAppointmentId,
       data.deadlineLabel,
     )
-    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(data.appointment.id, {deadline})
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(data.appointment.id, {
+      deadline,
+    })
 
     return this.appointmentsRepository.updateProperties(data.appointment.id, {
       appointmentStatus: AppointmentStatus.ReRunRequired,

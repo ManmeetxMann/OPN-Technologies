@@ -6,30 +6,30 @@ jest.mock('../../../../../common/src/middlewares/authorization')
 
 const dateForAppointments = '2020-02-05'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
-const organizationId = "TEST1"
+const organizationId = 'TEST1'
 
 describe('AdminAppointmentController', () => {
   beforeAll(async () => {
     await createAppointment({
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
-      appointmentStatus: 'InTransit'
+      appointmentStatus: 'InTransit',
     })
     await createAppointment({
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
-      appointmentStatus: 'InProgress'
+      appointmentStatus: 'InProgress',
     })
     await createAppointment({
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
-      organizationId:organizationId,
-      appointmentStatus: 'InProgress'
+      organizationId: organizationId,
+      appointmentStatus: 'InProgress',
     })
     await createAppointment({
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
-      organizationId:organizationId
+      organizationId: organizationId,
     })
     await createAppointment({
       dateTime: dateTimeForAppointment1,
@@ -46,7 +46,7 @@ describe('AdminAppointmentController', () => {
     await createAppointment({
       dateTime: `2020-02-01T08:00:00`,
       dateOfAppointment: 'February 01, 2020',
-      appointmentStatus: 'InProgress'
+      appointmentStatus: 'InProgress',
     })
   })
 

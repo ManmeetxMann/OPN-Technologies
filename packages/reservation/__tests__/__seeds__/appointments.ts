@@ -37,8 +37,8 @@ export const createAppointment = async (dataOverwrite: {
     shareTestResultWithEmployer: true,
     timeOfAppointment: '8:00am',
   }
-  data.organizationId = (dataOverwrite.organizationId) ?? null
-  data.appointmentStatus = (dataOverwrite.appointmentStatus) ?? 'Pending'
+  data.organizationId = dataOverwrite.organizationId ?? null
+  data.appointmentStatus = dataOverwrite.appointmentStatus ?? 'Pending'
   await database.collection('appointments').add(data)
   //console.log(`savedData.id: ${savedData.id}`)
 }
