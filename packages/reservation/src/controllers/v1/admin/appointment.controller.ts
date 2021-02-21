@@ -113,6 +113,9 @@ class AdminAppointmentController implements IControllerBase {
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
         throw new BadRequestException('dateOfAppointment is invalid')
       }
+      if(organizationId && !dateOfAppointment){
+        throw new BadRequestException('dateOfAppointment is required')
+      }
 
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
