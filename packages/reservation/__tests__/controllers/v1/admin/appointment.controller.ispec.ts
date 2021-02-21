@@ -32,6 +32,10 @@ describe('AdminAppointmentController', () => {
       organizationId:organizationId
     })
     await createAppointment({
+      dateTime: dateTimeForAppointment1,
+      dateOfAppointment: 'February 05, 2020',
+    })
+    await createAppointment({
       dateTime: `2020-02-01T07:00:00`,
       dateOfAppointment: 'February 01, 2020',
     })
@@ -51,7 +55,7 @@ describe('AdminAppointmentController', () => {
       const url = `/reservation/admin/api/v1/appointments?dateOfAppointment=${dateForAppointments}`
       const result = await request(server.app).get(url).set('authorization', 'bearer 10000')
       expect(result.status).toBe(200)
-      expect(result.body.data.length).toBe(3)
+      expect(result.body.data.length).toBe(5)
       done()
     })
     test('get InTransit appointments by dateOfAppointment successfully.', async (done) => {
@@ -70,6 +74,12 @@ describe('AdminAppointmentController', () => {
     })
     test('get appointments by organizationId should fail for missing dateOfAppointment', async (done) => {
       const url = `/reservation/admin/api/v1/appointments?organizationId=${organizationId}`
+      const result = await request(server.app).get(url).set('authorization', 'bearer 10000')
+      expect(result.status).toBe(400)
+      done()
+    })
+    test('get appointments by appointmentStatus should fail for missing dateOfAppointment', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments?appointmentStatus=InTransit`
       const result = await request(server.app).get(url).set('authorization', 'bearer 10000')
       expect(result.status).toBe(400)
       done()
