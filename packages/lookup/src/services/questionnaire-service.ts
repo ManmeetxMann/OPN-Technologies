@@ -5,7 +5,7 @@ import {QuestionnaireModel} from '../repository/questionnaire.repository'
 import {EvaluationCriteria, Questionnaire} from '../models/questionnaire'
 
 import {PassportStatuses} from '../../../passport/src/models/passport'
-import {AttestationAnswersV1} from '../../../passport/src/models/attestation'
+import {AttestationAnswersV1, AnswerV1} from '../../../passport/src/models/attestation'
 
 export class QuestionnaireService {
   private dataStore = new DataStore()
@@ -55,10 +55,19 @@ export class QuestionnaireService {
     questionnaireId: string,
     answers: AttestationAnswersV1,
   ): Promise<PassportStatuses> {
-    const {values, caution, stop}: EvaluationCriteria = await this.getAnswerLogic(questionnaireId)
+    const {
+      questions,
+      answerLogic: {values, caution, stop},
+    }: Questionnaire = await this.getQuestionnaire(questionnaireId)
 
-    const score = values
-      .map((value: number, index: number) => (answers[index][0] ? value : 0))
+    const keys = Object.keys(questions)
+    keys.sort((a, b) => parseInt(a) - parseInt(b))
+
+    const answersById: Record<string, AnswerV1> = {}
+    answers.forEach((ans) => (answersById[ans.questionId] = ans))
+
+    const score = keys
+      .map((key, index) => (answersById[key].answer ? values[index] : 0))
       .reduce((total, current) => total + current)
 
     if (score >= stop) {
