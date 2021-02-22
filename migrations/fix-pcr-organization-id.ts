@@ -110,7 +110,7 @@ async function main() {
     console.error('Error running migration', error)
   } finally {
     console.warn(`Failed updating ${failureCount} `)
-    console.log(`Total Appointments Processed: ${totalCount} `)
+    console.log(`Total PCR Test Results Processed: ${totalCount} `)
   }
 }
 
