@@ -733,7 +733,14 @@ components:
             message:
               nullable: true
               type: string
-
+    
+    LabRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          nullable: true
+          type: string
 paths:
 
   /admin/api/v1/send-fax-for-positive:
@@ -2514,3 +2521,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfTemperature'
+  /reservation/admin/api/v1/labs:
+    post:
+      description: Create a new Lab
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Labs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
