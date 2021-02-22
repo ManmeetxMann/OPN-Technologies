@@ -165,6 +165,24 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "appliesTo",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "attestationTime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "attestations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "locationId",
           "order": "ASCENDING"
         },
