@@ -1,7 +1,9 @@
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {NextFunction, Request, Response, Router} from 'express'
-import {LogError, LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
+import {LogError, LogInfo} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
@@ -41,18 +43,12 @@ class AppointmentWebhookController implements IControllerBase {
       const {id, action, calendarID, appointmentTypeID} = req.body as ScheduleWebhookRequest
 
       if (action !== AcuityWebhookActions.Scheduled) {
-        LogWarning(`AppointmentWebhookController`, 'OnlyScheduledActionIsAllowed', {
-          acuityID: id,
-        })
-        return
+        throw new BadRequestException(`OnlyScheduledActionIsAllowed for ${id}`)
       }
 
       const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
       if (!appointment) {
-        LogError(`AppointmentWebhookController`, 'AppointmentNotFound', {
-          acuityID: id,
-        })
-        return
+        throw new ResourceNotFoundException(`AppointmentNotFound on Acuity AcuityID: ${id}`)
       }
       const dataForUpdate = await this.updateInformationOnAcuity(
         id,
@@ -66,7 +62,7 @@ class AppointmentWebhookController implements IControllerBase {
           acuityID: id,
           appoinmentID: appointmentFromDb.id,
         })
-        return
+        throw new BadRequestException(`AppointmentAlreadyCreated for ${id}`)
       }
 
       try {
@@ -123,18 +119,12 @@ class AppointmentWebhookController implements IControllerBase {
       const {id, action, calendarID, appointmentTypeID} = req.body as ScheduleWebhookRequest
 
       if (action === AcuityWebhookActions.Scheduled) {
-        LogWarning(`UpdateAppointmentFromWebhook`, 'ScheduledActionIsNotAllowed', {
-          acuityID: id,
-        })
-        return
+        throw new BadRequestException(`ScheduledActionIsNotAllowed for ${id}`)
       }
 
       const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
       if (!appointment) {
-        LogError(`UpdateAppointmentFromWebhook`, 'AppointmentMissingInAcuity', {
-          acuityID: id,
-        })
-        return
+        throw new ResourceNotFoundException(`AppointmentNotFound on Acuity AcuityID: ${id}`)
       }
       const dataForUpdate = await this.updateInformationOnAcuity(
         id,
@@ -144,10 +134,7 @@ class AppointmentWebhookController implements IControllerBase {
 
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
       if (!appointmentFromDb) {
-        LogError(`UpdateAppointmentFromWebhook`, 'AppointmentMissingInDB', {
-          acuityID: id,
-        })
-        return
+        throw new ResourceNotFoundException(`AppointmentNotFound in DB AcuityID: ${id}`)
       }
 
       try {
