@@ -119,6 +119,7 @@ export type AppointmentAcuityResponse = {
   time: string
   travelID?: string
   travelIDIssuingCountry?: string
+  calendar: string
 }
 
 export type LabelsAcuityResponse = {
