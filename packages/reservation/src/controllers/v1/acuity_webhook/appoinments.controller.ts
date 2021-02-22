@@ -1,6 +1,6 @@
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {NextFunction, Request, Response, Router} from 'express'
-import {LogError, LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
+import {LogError, LogInfo} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'

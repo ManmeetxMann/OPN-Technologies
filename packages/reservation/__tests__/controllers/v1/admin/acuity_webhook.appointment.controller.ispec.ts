@@ -6,7 +6,7 @@ import {app as server} from '../../../../src/app'
 jest.mock('../../../../../common/src/middlewares/authorization')
 
 describe('AppointmentWebhookController', () => {
-  beforeAll(async () => {})
+  //beforeAll(async () => {})
 
   describe('get appointment list', () => {
     test('get appointments by dateOfAppointment successfully.', async (done) => {
@@ -26,5 +26,5 @@ describe('AppointmentWebhookController', () => {
     })
   })
 
-  afterAll(async () => {})
+  //afterAll(async () => {})
 })
