@@ -331,6 +331,24 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "waitingResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "deadline",
           "order": "ASCENDING"
         },
