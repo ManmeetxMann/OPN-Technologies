@@ -64,7 +64,7 @@ class AppointmentWebhookController implements IControllerBase {
       if (appointmentFromDb) {
         LogError(`AppointmentWebhookController`, 'AppointmentAlreadyCreated', {
           acuityID: id,
-          appoinmentID: appointmentFromDb.id
+          appoinmentID: appointmentFromDb.id,
         })
         return
       }
@@ -95,7 +95,7 @@ class AppointmentWebhookController implements IControllerBase {
           LogInfo('CreateAppointmentFromWebhook', 'SuccessCreatePCRResults', {
             acuityID: id,
             appointmentID: savedAppointment.id,
-            pcrTestResultID: pcrTestResult.id
+            pcrTestResultID: pcrTestResult.id,
           })
         }
       } catch (e) {
@@ -108,7 +108,7 @@ class AppointmentWebhookController implements IControllerBase {
       res.json(actionSucceed(''))
     } catch (error) {
       LogError(`CreateAppointmentFromWebhook`, 'FailedToProcessRequest', {
-        error: error.toString()
+        error: error.toString(),
       })
       next(error)
     }
@@ -132,7 +132,7 @@ class AppointmentWebhookController implements IControllerBase {
       const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
       if (!appointment) {
         LogError(`UpdateAppointmentFromWebhook`, 'AppointmentMissingInAcuity', {
-          acuityID: id
+          acuityID: id,
         })
         return
       }
@@ -145,7 +145,7 @@ class AppointmentWebhookController implements IControllerBase {
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
       if (!appointmentFromDb) {
         LogError(`UpdateAppointmentFromWebhook`, 'AppointmentMissingInDB', {
-          acuityID: id
+          acuityID: id,
         })
         return
       }
@@ -244,7 +244,7 @@ class AppointmentWebhookController implements IControllerBase {
       res.json(actionSucceed(''))
     } catch (error) {
       LogError(`UpdateAppointmentFromWebhook`, 'FailedToProcessRequest', {
-        error: error.toString()
+        error: error.toString(),
       })
       next(error)
     }
@@ -277,7 +277,7 @@ class AppointmentWebhookController implements IControllerBase {
       const savedOnAcuity = await this.appoinmentService.updateAppointment(id, dataForUpdate)
       LogInfo(`${endpoint}AppointmentWebhook`, `SaveToAcuitySuccessfully`, {
         ...dataForUpdate,
-        acuityID: savedOnAcuity.id
+        acuityID: savedOnAcuity.id,
       })
     } else {
       LogInfo(`${endpoint}AppointmentWebhook`, 'NoUpdateToAcuity', {
