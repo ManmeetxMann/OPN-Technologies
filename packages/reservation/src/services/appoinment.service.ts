@@ -364,12 +364,12 @@ export class AppoinmentService {
     const currentUserId = userId ? userId : userIdFromDb.data.id
 
     return {
-      acuityAppointmentId: acuityAppointment.id,
+      acuityAppointmentId: Number(acuityAppointment.id),
       appointmentStatus,
-      appointmentTypeID,
+      appointmentTypeID: Number(appointmentTypeID),
       barCode: barCode,
       canceled: acuityAppointment.canceled,
-      calendarID,
+      calendarID: Number(calendarID),
       dateOfAppointment,
       dateOfBirth: acuityAppointment.dateOfBirth,
       dateTime,
