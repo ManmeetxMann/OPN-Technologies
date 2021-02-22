@@ -989,7 +989,7 @@ export class PCRTestResultsService {
     for (const [barCode, pcrTestResults] of Object.entries(historicalResults)) {
       //If Appointment doesn't exist then don't add result
       if (!appointmentsByBarCode[barCode]) {
-        return
+        continue
       }
 
       let reason = await this.getReason(appointmentsByBarCode[barCode].appointmentStatus)
