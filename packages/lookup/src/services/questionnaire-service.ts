@@ -63,11 +63,11 @@ export class QuestionnaireService {
     const keys = Object.keys(questions)
     keys.sort((a, b) => parseInt(a) - parseInt(b))
 
-    const answersById: Record<string, AnswerV1> = {}
+    const answersById: Record<number, AnswerV1> = {}
     answers.forEach((ans) => (answersById[ans.questionId] = ans))
 
     const score = keys
-      .map((key, index) => (answersById[key].answer ? values[index] : 0))
+      .map((key, index) => (answersById[parseInt(key)].answer ? values[index] : 0))
       .reduce((total, current) => total + current)
 
     if (score >= stop) {

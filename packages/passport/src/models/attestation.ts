@@ -3,7 +3,7 @@ import DataModel from '../../../common/src/data/datamodel.base'
 
 export type AttestationAnswers = Record<number, Record<number, boolean | string>>
 export type AnswerV1 = {
-  questionId: string
+  questionId: number
   answer: boolean
   additionalValue: string
 }
