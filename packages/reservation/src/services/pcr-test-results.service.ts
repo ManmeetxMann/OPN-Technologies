@@ -1242,7 +1242,7 @@ export class PCRTestResultsService {
       } else {
         appointmentStatsByOrganization[pcrTest.organizationId] = 1
       }
-      ++total;
+      ++total
     })
     const organizations = await this.organizationService.getAllByIds(
       Object.keys(appointmentStatsByOrganization).filter((appointment) => !!appointment),

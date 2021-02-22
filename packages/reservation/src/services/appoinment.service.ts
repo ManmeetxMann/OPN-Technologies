@@ -859,7 +859,7 @@ export class AppoinmentService {
       hasDuplicates || hasMissed
         ? Array.from(firstBarCodeMatch.values())
             .map(({id}) => id)
-            .filter((filteredId) => failed.find(({id}) => id === filteredId))
+            .filter((filteredId) => !failed.find(({id}) => id === filteredId))
         : appointmentIds
 
     return {
