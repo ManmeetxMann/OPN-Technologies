@@ -712,6 +712,7 @@ export class AppoinmentService {
     const utcDateTime = moment(time).utc()
 
     const dateTime = utcDateTime.format()
+    const barCodeNumber = await this.getNextBarCodeNumber()
     const data = await this.acuityRepository.createAppointment(
       dateTime,
       appointmentTypeId,
@@ -730,10 +731,11 @@ export class AppoinmentService {
         agreeToConductFHHealthAssessment,
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
+        barCodeNumber,
       },
     )
     return this.createAppointmentFromAcuity(data, {
-      barCodeNumber: await this.getNextBarCodeNumber(),
+      barCodeNumber,
       appointmentTypeID: appointmentTypeId,
       calendarID: calendarId,
       appointmentStatus: AppointmentStatus.Pending,
@@ -856,7 +858,7 @@ export class AppoinmentService {
       hasDuplicates || hasMissed
         ? Array.from(firstBarCodeMatch.values())
             .map(({id}) => id)
-            .filter((filteredId) => failed.find(({id}) => id === filteredId))
+            .filter((filteredId) => !failed.find(({id}) => id === filteredId))
         : appointmentIds
 
     return {

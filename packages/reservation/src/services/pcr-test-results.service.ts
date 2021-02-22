@@ -1229,6 +1229,7 @@ export class PCRTestResultsService {
 
     const appointmentStatsByTypes: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
     const appointmentStatsByOrganization: Record<string, number> = {}
+    let total = 0
 
     appointments.forEach((appointment) => {
       const allowedAppointmentStatus = [
@@ -1241,16 +1242,19 @@ export class PCRTestResultsService {
         return
       }
 
+      const pcrTest = pcrResults?.find(({appointmentId}) => appointmentId === appointment.id)
+
       if (appointmentStatsByTypes[appointment.appointmentStatus]) {
         ++appointmentStatsByTypes[appointment.appointmentStatus]
       } else {
         appointmentStatsByTypes[appointment.appointmentStatus] = 1
       }
-      if (appointmentStatsByOrganization[appointment.organizationId]) {
-        ++appointmentStatsByOrganization[appointment.organizationId]
+      if (appointmentStatsByOrganization[pcrTest.organizationId]) {
+        ++appointmentStatsByOrganization[pcrTest.organizationId]
       } else {
-        appointmentStatsByOrganization[appointment.organizationId] = 1
+        appointmentStatsByOrganization[pcrTest.organizationId] = 1
       }
+      ++total
     })
     const organizations = await this.organizationService.getAllByIds(
       Object.keys(appointmentStatsByOrganization).filter((appointment) => !!appointment),
@@ -1273,7 +1277,7 @@ export class PCRTestResultsService {
     return {
       pcrResultStatsByResultArr,
       pcrResultStatsByOrgIdArr,
-      total: appointments.length,
+      total,
     }
   }
 
@@ -1325,7 +1329,7 @@ export class PCRTestResultsService {
           map: '/',
           key: 'organizationId',
           operator: DataModelFieldMapOperatorType.Equals,
-          value: organizationId,
+          value: organizationId === 'null' ? null : organizationId,
         })
       }
     }
