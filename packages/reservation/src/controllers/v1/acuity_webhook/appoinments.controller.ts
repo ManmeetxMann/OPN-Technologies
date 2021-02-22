@@ -1,12 +1,11 @@
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {NextFunction, Request, Response, Router} from 'express'
-import {LogInfo} from '../../../../../common/src/utils/logging-setup'
+import {LogError, LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {ScheduleWebhookRequest} from '../../../models/webhook'
-import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isEmpty} from 'lodash'
 import {
   AppointmentStatus,
@@ -16,8 +15,6 @@ import {
   WebhookEndpoints,
   ResultTypes,
 } from '../../../models/appointment'
-import {DuplicateDataException} from '../../../../../common/src/exceptions/duplicate-data-exception'
-import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -44,12 +41,18 @@ class AppointmentWebhookController implements IControllerBase {
       const {id, action, calendarID, appointmentTypeID} = req.body as ScheduleWebhookRequest
 
       if (action !== AcuityWebhookActions.Scheduled) {
-        throw new BadRequestException('Only scheduled Action is allowed')
+        LogWarning(`AppointmentWebhookController`, 'OnlyScheduledActionIsAllowed', {
+          acuityID: id,
+        })
+        return
       }
 
       const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
       if (!appointment) {
-        throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
+        LogError(`AppointmentWebhookController`, 'AppointmentNotFound', {
+          acuityID: id,
+        })
+        return
       }
       const dataForUpdate = await this.updateInformationOnAcuity(
         id,
@@ -59,10 +62,11 @@ class AppointmentWebhookController implements IControllerBase {
 
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
       if (appointmentFromDb) {
-        console.error(
-          `AppointmentWebhookController: CreateAppointment AlreadyAdded AcuityID: ${id} FirebaseID: ${appointmentFromDb.id}`,
-        )
-        throw new DuplicateDataException(`AcuityID: ${id} already added`)
+        LogError(`AppointmentWebhookController`, 'AppointmentAlreadyCreated', {
+          acuityID: id,
+          appoinmentID: appointmentFromDb.id,
+        })
+        return
       }
 
       try {
@@ -79,25 +83,33 @@ class AppointmentWebhookController implements IControllerBase {
             latestResult: ResultTypes.Pending,
           },
         )
-        console.log(
-          `AppointmentWebhookController: CreateAppointment: SuccessCreateAppointment for AppointmentID: ${savedAppointment.id} AcuityID: ${id}`,
-        )
+        LogInfo('CreateAppointmentFromWebhook', 'SuccessCreateAppointment', {
+          acuityID: id,
+          appointmentID: savedAppointment.id,
+        })
+
         if (savedAppointment) {
           const pcrTestResult = await this.pcrTestResultsService.createNewPCRTestForWebhook(
             savedAppointment,
           )
-          console.log(
-            `AppointmentWebhookController: CreateAppointment: SuccessCreatePCRResults for AppointmentID: ${savedAppointment.id} PCR Results ID: ${pcrTestResult.id}`,
-          )
+          LogInfo('CreateAppointmentFromWebhook', 'SuccessCreatePCRResults', {
+            acuityID: id,
+            appointmentID: savedAppointment.id,
+            pcrTestResultID: pcrTestResult.id,
+          })
         }
       } catch (e) {
-        console.error(
-          `AppointmentWebhookController: SaveToTestResults Failed AppoinmentID: ${id}  ${e.toString()}`,
-        )
+        LogError('CreateAppointmentFromWebhook', 'FailedToCreateAppointment', {
+          acuityID: id,
+          error: e.toString(),
+        })
       }
 
       res.json(actionSucceed(''))
     } catch (error) {
+      LogError(`CreateAppointmentFromWebhook`, 'FailedToProcessRequest', {
+        error: error.toString(),
+      })
       next(error)
     }
   }
@@ -111,15 +123,18 @@ class AppointmentWebhookController implements IControllerBase {
       const {id, action, calendarID, appointmentTypeID} = req.body as ScheduleWebhookRequest
 
       if (action === AcuityWebhookActions.Scheduled) {
-        throw new BadRequestException('Scheduled Action is not allowed')
+        LogWarning(`UpdateAppointmentFromWebhook`, 'ScheduledActionIsNotAllowed', {
+          acuityID: id,
+        })
+        return
       }
 
       const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
       if (!appointment) {
-        console.error(
-          `AppointmentWebhookController: UpdateAppointment: AppointmentNotExist for AcuityID On Acuity: ${id}`,
-        )
-        throw new ResourceNotFoundException(`Appointment with ${id} id not found`)
+        LogError(`UpdateAppointmentFromWebhook`, 'AppointmentMissingInAcuity', {
+          acuityID: id,
+        })
+        return
       }
       const dataForUpdate = await this.updateInformationOnAcuity(
         id,
@@ -129,10 +144,10 @@ class AppointmentWebhookController implements IControllerBase {
 
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
       if (!appointmentFromDb) {
-        console.error(
-          `AppointmentWebhookController: UpdateAppointment: Failed AppointmentNotExist for AcuityID: ${id} in DB`,
-        )
-        throw new ResourceNotFoundException(`AcuityID: ${id} not found`)
+        LogError(`UpdateAppointmentFromWebhook`, 'AppointmentMissingInDB', {
+          acuityID: id,
+        })
+        return
       }
 
       try {
@@ -219,14 +234,18 @@ class AppointmentWebhookController implements IControllerBase {
             error: e.toString(),
           })
         } else {
-          console.error(
-            `AppointmentWebhookController: UpdateAppointment: FailedToUpdateAppointment for AppoinmentID: ${id} ${e.toString()}`,
-          )
+          LogError('UpdateAppointmentFromWebhook', 'FailedToUpdateAppointment', {
+            acuityID: id,
+            error: e.toString(),
+          })
         }
       }
 
       res.json(actionSucceed(''))
     } catch (error) {
+      LogError(`UpdateAppointmentFromWebhook`, 'FailedToProcessRequest', {
+        error: error.toString(),
+      })
       next(error)
     }
   }
@@ -247,24 +266,22 @@ class AppointmentWebhookController implements IControllerBase {
       if (packageResult) {
         dataForUpdate['organizationId'] = packageResult.organizationId
       } else {
-        console.log(
-          `AppointmentWebhookController: ${endpoint}Appointment NoPackageToORGAssoc AppoinmentID: ${id} -  PackageCode: ${appointment.certificate}`,
-        )
+        LogError('UpdateInformationOnAcuity', 'NoPackageToORGAssoc', {
+          acuityID: id,
+          packageCode: appointment.certificate,
+        })
       }
     }
 
     if (!isEmpty(dataForUpdate)) {
       const savedOnAcuity = await this.appoinmentService.updateAppointment(id, dataForUpdate)
-      console.log(
-        `AppointmentWebhookController: ${endpoint}Appointment SaveToAcuity AppoinmentID: ${
-          savedOnAcuity.id
-        } barCodeNumber: ${JSON.stringify(dataForUpdate)}`,
-      )
+      LogInfo(`${endpoint}AppointmentWebhook`, `SaveToAcuitySuccessfully`, {
+        ...dataForUpdate,
+        acuityID: savedOnAcuity.id,
+      })
     } else {
-      LogInfo(`${endpoint}AppointmentWebhookFromWebhook`, 'NoUpdateToAcuity', {
+      LogInfo(`${endpoint}AppointmentWebhook`, 'NoUpdateToAcuity', {
         appoinmentID: id,
-        barCode: appointment.barCode,
-        organizationId: appointment.organizationId,
       })
     }
     return dataForUpdate
