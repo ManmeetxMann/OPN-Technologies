@@ -57,11 +57,13 @@ class AdminController implements IRouteController {
   public initRoutes(): void {
     // TODO: all of these should specify the organizationId
     const requireAdmin = authorizationMiddleware([RequiredUserPermission.OrgAdmin], false)
-    const requireAdminWithOrg = authorizationMiddleware([RequiredUserPermission.OrgAdmin], true)
+    // const requireAdminWithOrg = authorizationMiddleware([RequiredUserPermission.OrgAdmin], true)
     const routes = express
       .Router()
       .post('/stats', requireAdmin, this.stats)
-      .post('/stats/v2', requireAdminWithOrg, this.statsV2)
+      // TODO: should be adminWithOrg, but frontend does not always send org.
+      // We will do the check locally instead for now
+      .post('/stats/v2', requireAdmin, this.statsV2)
       .post('/enter', requireAdmin, this.enter)
       .post('/exit', requireAdmin, this.exit)
       .post('/createToken', requireAdmin, this.createToken)
@@ -91,6 +93,17 @@ class AdminController implements IRouteController {
       if (!organizationId && !locationId) {
         throw new BadRequestException('either organization or location id must be provided')
       }
+
+      if (!organizationId) {
+        // need to determine org based on location
+        // to confirm permissions
+        const orgId = (await this.organizationService.getLocationById(locationId)).organizationId
+        const user = res.locals.connectedUser.admin as AdminProfile
+        if (!user.adminForOrganizationId?.includes(orgId)) {
+          throw new UnauthorizedException(`Not an admin for organization ${orgId}`)
+        }
+      }
+
       const responseBody = await this.statsHelper(organizationId, locationId)
 
       res.json(actionSucceed(responseBody))
