@@ -5,8 +5,7 @@ export const authorizationMiddleware = () => async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-
-  let data = {
+  const data = {
     id: 'USER1',
     firstName: 'UNITEST_FNAME',
     lastName: 'UNITEST_LNAME',

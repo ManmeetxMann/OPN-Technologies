@@ -1,7 +1,10 @@
 import request from 'supertest'
 
 import {app as server} from '../../../../src/app'
-import {createPCRTestResult, deletePCRTestResultByDateTime} from '../../../__seeds__/pcr-test-results'
+import {
+  createPCRTestResult,
+  deletePCRTestResultByDateTime,
+} from '../../../__seeds__/pcr-test-results'
 jest.mock('../../../../../common/src/middlewares/authorization')
 
 const dateForAppointments = '2020-02-05'
@@ -14,12 +17,12 @@ describe('PCRTestResultController', () => {
   beforeAll(async () => {
     await createPCRTestResult({
       dateTime: dateTimeForAppointment7AM,
-      deadline: deadlineSameDay
+      deadline: deadlineSameDay,
     })
     await createPCRTestResult({
       dateTime: dateTimeForAppointment7AM,
       organizationId: organizationId,
-      deadline: deadlineSameDay
+      deadline: deadlineSameDay,
     })
   })
 
@@ -34,7 +37,9 @@ describe('PCRTestResultController', () => {
 
     test('get results for non lab successfully.', async (done) => {
       const url = `/reservation/admin/api/v1/pcr-test-results?deadline=${dateForAppointments}&organizationId=${organizationId}`
-      const result = await request(server.app).get(url).set('authorization', 'Bearer CorporateUserForTEST1')
+      const result = await request(server.app)
+        .get(url)
+        .set('authorization', 'Bearer CorporateUserForTEST1')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(1)
       done()
