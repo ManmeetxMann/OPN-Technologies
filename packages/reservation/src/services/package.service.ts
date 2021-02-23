@@ -31,11 +31,13 @@ export class PackageService {
     return result[0]
   }
 
-  async savePackage(packageCode: string, organizationId: string = null): Promise<void> {
-    await this.packageRepository.add({
+  async savePackage(packageCode: string, organizationId: string = null): Promise<PackageBase> {
+    const result = await this.packageRepository.add({
       packageCode: packageCode,
       organizationId,
     })
+
+    return result
   }
 
   async isExist(packageCode: string): Promise<boolean> {
