@@ -292,7 +292,7 @@ export class PCRTestResultsService {
     } else if (deadline) {
       pcrTestResultsQuery.push({
         map: '/',
-        key: (isLabUser)?'deadline':'dateTime',
+        key: 'deadline',
         operator: DataModelFieldMapOperatorType.Equals,
         value: makeDeadlineForFilter(deadline),
       })
