@@ -741,6 +741,41 @@ components:
         name:
           nullable: true
           type: string
+
+    LabResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          nullable: true
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
 paths:
 
   /admin/api/v1/send-fax-for-positive:
@@ -2540,3 +2575,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+    get:
+      description: Get all a Labs
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Labs
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabResponse'

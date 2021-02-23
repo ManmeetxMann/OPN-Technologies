@@ -17,11 +17,20 @@ class LabController implements IControllerBase {
   }
 
   initRoutes(): void {
-    this.router.post(
+    const innerRouter = Router({mergeParams: true})
+    innerRouter.post(
       this.path + '/api/v1/labs',
       authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
       this.addLab,
     )
+
+    innerRouter.get(
+      this.path + '/api/v1/labs',
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin]),
+      this.getLabs,
+    )
+
+    this.router.use('/', innerRouter)
   }
 
   addLab = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -32,6 +41,15 @@ class LabController implements IControllerBase {
       }
       const result = await this.labService.save({name})
       res.json(actionSucceed(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getLabs = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const labs = await this.labService.getAll()
+      res.json(actionSucceed(labs))
     } catch (error) {
       next(error)
     }
