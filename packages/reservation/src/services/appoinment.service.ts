@@ -849,7 +849,9 @@ export class AppoinmentService {
     const filtredAppointmentIds: string[] =
       hasDuplicates || hasMissed
         ? Array.from(firstBarCodeMatch.values())
-            .filter(({barCode}) => !failed.find(({barCode: failedBarCode}) => barCode === failedBarCode))
+            .filter(
+              ({barCode}) => !failed.find(({barCode: failedBarCode}) => barCode === failedBarCode),
+            )
             .map(({id}) => id)
         : appointmentIds
 
