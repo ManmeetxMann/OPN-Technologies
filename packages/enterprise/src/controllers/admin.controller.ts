@@ -146,7 +146,7 @@ class AdminController implements IControllerBase {
       connectedUser: {admin},
     } = res.locals
 
-    if (admin.adminForLabIds.length > 0) {
+    if (admin.adminForLabIds && admin.adminForLabIds.length > 0) {
       const labs = await this.labService.getAllByIds(admin.adminForLabIds)
       admin = {...admin, adminForLabIds: labs}
     }
