@@ -400,6 +400,14 @@ export class PCRTestResultsService {
         finalResult = ResultTypes.Positive
         break
       }
+      case PCRResultActions.ReRunToday: {
+        finalResult = ResultTypes.Invalid
+        break
+      }
+      case PCRResultActions.ReRunTomorrow: {
+        finalResult = ResultTypes.Invalid
+        break
+      }
       case PCRResultActions.RecollectAsInvalid: {
         finalResult = ResultTypes.Invalid
         break
