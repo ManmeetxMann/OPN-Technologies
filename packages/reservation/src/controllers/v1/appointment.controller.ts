@@ -45,7 +45,7 @@ class AppointmentController implements IControllerBase {
     } catch (error) {
       next(error)
     }
-  }
+  } 
 
   createAppointments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {

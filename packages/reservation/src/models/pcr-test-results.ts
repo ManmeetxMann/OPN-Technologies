@@ -399,3 +399,26 @@ export const singlePcrTestResultDTO = (
     autoResult: pcrTestResult.resultSpecs.autoResult,
   },
 })
+
+export type ActivityTracking = {
+  action: PcrResultTestActivityAction
+  currentData: Partial<AppointmentDBModel>
+  newData: Partial<AppointmentDBModel>
+  actionBy?: string // not required for action updateFromAcuity
+}
+
+export enum PcrResultTestActivityAction {
+  RegenerateBarcode = 'regenerateBarcode',
+  UpdateFromAcuity = 'updateFromAcuity',
+}
+
+export type UpdatePcrTestResultActionParams = {
+  id: string
+  updates: Partial<AppointmentDBModel>
+  action?: PcrResultTestActivityAction
+  actionBy?: string
+}
+
+export type ActivityTrackingDb = ActivityTracking & {
+  id: string
+}
