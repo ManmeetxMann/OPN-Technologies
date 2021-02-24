@@ -686,6 +686,54 @@ components:
               nullable: true
               type: string
 
+    BulkOperationResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+              status:
+                type: string
+                enum:
+                  [
+                    'Success',
+                    'Failed',
+                  ]
+              reason:
+                type: string
+              barCode:
+                type: string
+            required:
+              - id
+              - status
+              - reason
+              - barCode
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
 paths:
 
   /admin/api/v1/send-fax-for-positive:
@@ -791,7 +839,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
+                $ref: '#/components/schemas/BulkOperationResponse'
 
   /reservation/admin/api/v1/test-results:
     get:
@@ -856,8 +904,10 @@ paths:
               type: string
               enum:
                 - Pending
+                - Submitted
                 - InTransit
                 - Received
+                - CheckedIn
                 - InProgress
                 - Reported
                 - ReRunRequired
@@ -1426,7 +1476,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
+                $ref: '#/components/schemas/BulkOperationResponse'
 
   /reservation/admin/api/v1/pcr-test-results-bulk/report-status:
     get:
@@ -1724,7 +1774,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentTransportRunResponse200'
+                $ref: '#/components/schemas/BulkOperationResponse'
 
   /reservation/api/v1/appointments:
     post:
@@ -2133,6 +2183,10 @@ paths:
                 InProgress,
                 ReRunRequired,
               ]
+        - in: query
+          name: organizationId
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully Return
@@ -2179,6 +2233,8 @@ paths:
                         dateTime:
                           type: string
                         testRunLabel:
+                          type: string
+                        organizationName:
                           type: string
                   status:
                     type: object
@@ -2458,3 +2514,71 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfTemperature'
+  /reservation/api/v1/temperature/{id}:
+    get:
+      description: Get temperature by user ID and organization ID
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Temperature Management
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        temperatureInCelsius:
+                          type: number
+                        temperatureInFahrenheit:
+                          type: number
+                        createdAt:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            [
+                              proceed,
+                              stop
+                            ]
+                        result:
+                          type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          [
+                            succeed,
+                            failed,
+                            validation_error,
+                            internal_server_error,
+                            unauthorized,
+                            access_denied,
+                            resource_not_found,
+                          ]
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number

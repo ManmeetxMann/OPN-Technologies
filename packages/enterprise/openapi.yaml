@@ -541,6 +541,14 @@ components:
           default: false
         isConfirmResultAdmin:
           type: boolean
+        isPackageAdmin:
+          type: boolean
+        isCheckInAdmin:
+          type: boolean
+        isGenerateAdmin:
+          type: boolean
+        isLookupAdmin:
+          type: boolean
       required:
         - email
         - isBulkUploadAdmin
@@ -558,6 +566,10 @@ components:
         - isTestReportsAdmin
         - isTestRunsAdmin
         - isTransportsRunsAdmin
+        - isPackageAdmin
+        - isCheckInAdmin
+        - isGenerateAdmin
+        - isLookupAdmin
         - organizationId
         - showReporting
         - superAdminForOrganizationIds
@@ -846,6 +858,14 @@ components:
         isSingleResultSendAdmin:
           type: boolean
         isConfirmResultAdmin:
+          type: boolean
+        isPackageAdmin:
+          type: boolean
+        isCheckInAdmin:
+          type: boolean
+        isGenerateAdmin:
+          type: boolean
+        isLookupAdmin:
           type: boolean
     User:
       type: object

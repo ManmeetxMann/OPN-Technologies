@@ -166,7 +166,11 @@ class PCRTestResultController implements IControllerBase {
         true,
         data.sendUpdatedResults,
       )
-      const successMessage = `For ${pcrResultRecorded.barCode}, a "${pcrResultRecorded.result}" has been  recorded and sent to the client`
+      const status = await this.pcrTestResultsService.getReportStatus(
+        pcrResultRecorded.resultSpecs.action,
+        pcrResultRecorded.result,
+      )
+      const successMessage = `${status} for ${pcrResultRecorded.barCode}`
       res.json(actionSuccess({id: pcrResultRecorded.id}, successMessage))
     } catch (error) {
       next(error)
@@ -299,6 +303,7 @@ class PCRTestResultController implements IControllerBase {
         deadline,
         barCode,
         appointmentStatus,
+        organizationId,
       } = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
@@ -308,6 +313,7 @@ class PCRTestResultController implements IControllerBase {
         testRunId,
         barCode,
         appointmentStatus,
+        organizationId,
       })
 
       res.json(actionSucceed(pcrResults))

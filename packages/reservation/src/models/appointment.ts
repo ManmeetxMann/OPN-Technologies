@@ -119,6 +119,7 @@ export type AppointmentAcuityResponse = {
   time: string
   travelID?: string
   travelIDIssuingCountry?: string
+  calendar: string
 }
 
 export type LabelsAcuityResponse = {
@@ -353,9 +354,9 @@ export type UserAppointment = {
 export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): UserAppointment => ({
   id: appointment.id,
   QRCode: appointment.barCode,
-  showQrCode: moment(new Date()).isBefore(
-    formatStringDateRFC822Local(appointment.dateOfAppointment),
-  ),
+  showQrCode:
+    moment(new Date()).isBefore(formatStringDateRFC822Local(appointment.dateOfAppointment)) &&
+    appointment.appointmentStatus !== AppointmentStatus.Canceled,
   firstName: appointment.firstName,
   lastName: appointment.lastName,
   locationName: appointment.locationName,

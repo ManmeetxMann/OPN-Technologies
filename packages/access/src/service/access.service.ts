@@ -1,25 +1,27 @@
-import {IdentifiersModel} from '../../../common/src/data/identifiers'
-import {UserDependant, LegacyDependant} from '../../../common/src/data/user'
-import {UserService} from '../../../common/src/service/user/user-service'
-import DataStore from '../../../common/src/data/datastore'
+import {firestore} from 'firebase-admin'
+import moment from 'moment-timezone'
+import * as _ from 'lodash'
+
 import {AccessModel, AccessRepository} from '../repository/access.repository'
 import {Access, AccessFilter, AccessWithDependantNames} from '../models/access'
-import {firestore} from 'firebase-admin'
-import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {AccessStatsModel, AccessStatsRepository} from '../repository/access-stats.repository'
 import AccessListener from '../effects/addToAttendance'
-import moment from 'moment-timezone'
+import {AccessStatsFilter} from '../models/access-stats'
+import {AccessFilterWithDependent} from '../types'
+
+import {IdentifiersModel} from '../../../common/src/data/identifiers'
+import {UserDependant, LegacyDependant} from '../../../common/src/data/user'
+import DataStore from '../../../common/src/data/datastore'
+import {UserService} from '../../../common/src/service/user/user-service'
+import {Config} from '../../../common/src/utils/config'
+import {safeTimestamp, isPassed} from '../../../common/src/utils/datetime-util'
 import {serverTimestamp, now} from '../../../common/src/utils/times'
-import * as _ from 'lodash'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+
 import {PassportStatus} from '../../../passport/src/models/passport'
 
 import {OrganizationUsersGroupModel} from '../../../enterprise/src/repository/organization.repository'
-
-import {AccessStatsFilter} from '../models/access-stats'
-import {Config} from '../../../common/src/utils/config'
-import {AccessFilterWithDependent} from '../types'
-import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -50,6 +52,40 @@ export class AccessService {
       }))
       .reduce((byId, entry) => ({...byId, [entry.id]: entry}), {}),
   })
+
+  // create an access that has automatically entered
+  async createV2(
+    userId: string,
+    locationId: string,
+    statusToken: string | null,
+    delegateAdminUserId: string | null = null,
+  ): Promise<AccessModel> {
+    const activeAccess = await this.findLatestAnywhere(userId)
+    if (activeAccess && (!activeAccess.exitAt || !isPassed(safeTimestamp(activeAccess.exitAt)))) {
+      await this.handleExitV2(activeAccess)
+    }
+
+    // we want to avoid adding an organizationService here, so controllers are responsible
+    // for confirming that the location is valid, and that if a passport is not provided
+    // that the location does not require one
+    const token = await this.identifier.getUniqueValue('access')
+    const access = await this.accessRepository.add({
+      token,
+      locationId,
+      statusToken,
+      userId,
+      createdAt: serverTimestamp(),
+      enteredAt: serverTimestamp(),
+      // @ts-ignore timestamp expected
+      exitAt: moment(now()).tz(timeZone).endOf('day').toDate(),
+      delegateAdminUserId,
+      includesGuardian: true,
+      dependants: {},
+    })
+    this.incrementPeopleOnPremises(access.locationId, 1)
+    this.accessListener.addEntry(access)
+    return access
+  }
 
   create(
     statusToken: string,
@@ -177,50 +213,6 @@ export class AccessService {
     )
   }
 
-  // In this version, we don't decorate the dependants
-  async handleEnterV2(rawAccess: AccessModel): Promise<AccessModel> {
-    // createdAt could be a string, and we don't want to rewrite it
-    const access: AccessModel = _.omit(rawAccess, ['createdAt'])
-
-    if (!!access.enteredAt || !!access.exitAt) {
-      throw new BadRequestException('Token already used to enter or exit')
-    }
-    // all dependants named in the access enter, no need to filter here
-    for (const id in access.dependants) {
-      if (!!access.dependants[id].enteredAt || !!access.dependants[id].exitAt) {
-        throw new BadRequestException('Token already used to enter or exit')
-      }
-    }
-    const dependants = {}
-    for (const id in access.dependants) {
-      dependants[id] = {
-        ...access.dependants[id],
-        enteredAt: serverTimestamp(),
-      }
-    }
-    const newAccess = access.includesGuardian
-      ? {
-          ...access,
-          enteredAt: serverTimestamp(),
-          dependants,
-        }
-      : {
-          ...access,
-          dependants,
-        }
-    const count = Object.keys(dependants).length + (access.includesGuardian ? 1 : 0)
-
-    console.log(`Processed a V2 ENTER for Access id: ${access.id}`)
-    const savedAccess = await this.accessRepository.update(newAccess)
-    this.incrementPeopleOnPremises(access.locationId, count).catch((e) =>
-      console.error(`Failed to increment people for access ${access.id}: [${e}]`),
-    )
-    this.accessListener
-      .addEntry(savedAccess)
-      .catch((e) => console.error(`Failed to add entry for access ${access.id}: [${e}]`))
-    return savedAccess
-  }
-
   handleExit(rawAccess: AccessModel): Promise<AccessWithDependantNames> {
     // createdAt could be a string, and we don't want to rewrite it
     const access: AccessModel = _.omit(rawAccess, ['createdAt'])
@@ -312,53 +304,25 @@ export class AccessService {
     )
   }
 
-  // this function does not decorate dependants
   async handleExitV2(rawAccess: AccessModel): Promise<AccessModel> {
     // createdAt could be a string, and we don't want to rewrite it
     const access: AccessModel = _.omit(rawAccess, ['createdAt'])
 
-    const {includesGuardian} = access
-    const dependantIds = Object.keys(access.dependants)
-    if (!includesGuardian && !dependantIds.length) {
-      throw new BadRequestException('Must specify at least one user')
-    }
-    if (!!access.exitAt) {
-      throw new BadRequestException('Token already used to exit')
-    }
-    if (dependantIds.some((id) => !!access.dependants[id].exitAt)) {
-      throw new BadRequestException('Token already used to exit')
+    if (moment(now()).isSameOrAfter(safeTimestamp(rawAccess.exitAt))) {
+      throw new BadRequestException('Already exited')
     }
 
-    const newDependants = dependantIds.reduce(
-      (byId, id) => ({
-        ...byId,
-        [id]: {
-          ...access.dependants[id],
-          exitAt: serverTimestamp(),
-        },
-      }),
-      {},
-    )
-
-    const newAccess = includesGuardian
-      ? {
-          ...access,
-          dependants: newDependants,
-          exitAt: serverTimestamp(),
-        }
-      : {
-          ...access,
-          dependants: newDependants,
-        }
-    const count = dependantIds.length + (includesGuardian ? 1 : 0)
-
+    const newAccess = {
+      ...access,
+      exitAt: serverTimestamp(),
+    }
     console.log(`Processed a V2 EXIT for Access id: ${access.id}`)
     const savedAccess = await this.accessRepository.update(newAccess)
-    this.decreasePeopleOnPremises(access.locationId, count).catch((e) =>
+    this.decreasePeopleOnPremises(access.locationId, 1).catch((e) =>
       console.error(`Failed to decrement people for access ${access.id}: [${e}]`),
     )
     this.accessListener
-      .addExit(savedAccess, includesGuardian, dependantIds)
+      .addExit(savedAccess, true, [])
       .catch((e) => console.error(`Failed to add exit for access ${access.id}: [${e}]`))
     return savedAccess
   }
@@ -518,46 +482,14 @@ export class AccessService {
     //   accesses.map(AccessService.mapAccessDates),
     // )
   }
-  async findLatestAnywhere(userId: string, delegateIds: string[]): Promise<AccessModel> {
-    // TODO: these queries can be greatly improved if we guarantee single-user accesses
-    // also, this 'forgets' accesses older than 48 hours, which would be fixable
-    const from = moment(now()).subtract(48, 'hours').toDate()
-    const byUserId = (id: string) =>
-      this.accessRepository
-        .collection()
-        .where(`userId`, '==', id)
-        //@ts-ignore
-        .where('timestamps.createdAt', '>=', from)
-        //@ts-ignore
-        .orderBy('timestamps.createdAt', 'desc')
-    const directAccessQuery = byUserId(userId)
-    const indirectAccessQueries = delegateIds.map(byUserId)
-    const allAccesses: AccessModel[] = (_.flatten(
-      await Promise.all(
-        [directAccessQuery, ...indirectAccessQueries].map((query) => query.fetch()),
-      ),
-    ) as AccessModel[])
-      .map((access) => {
-        const isDirect = access.userId === userId
-        if (isDirect && !access.includesGuardian) {
-          return null
-        }
-        const timestampBearer = isDirect ? access : access.dependants && access.dependants[userId]
-        if (!timestampBearer) {
-          return null
-        }
-        const activeTime = timestampBearer?.exitAt || timestampBearer?.enteredAt
-        if (!activeTime) {
-          return null
-        }
-        return {
-          ...access,
-          activeTime: safeTimestamp(activeTime),
-        }
-      })
-      .filter((notNull) => notNull)
-      .sort((a, b) => (a.activeTime < b.activeTime ? 1 : -1))
-      .map(({activeTime, ...access}) => access)
+
+  async findLatestAnywhere(userId: string, _delegateIds: string[] = []): Promise<AccessModel> {
+    const query = this.accessRepository
+      .collection()
+      .where(`userId`, '==', userId)
+      .orderBy('exitAt', 'desc')
+      .limit(1)
+    const allAccesses = await query.fetch()
     return allAccesses.length > 0 ? allAccesses[0] : null
   }
 
@@ -659,6 +591,7 @@ export class AccessService {
     )
   }
 
+  // TODO: move to passport service
   incrementTodayPassportStatusCount(
     locationId: string,
     status: PassportStatus,

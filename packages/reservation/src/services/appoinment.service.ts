@@ -6,7 +6,6 @@ import DataStore from '../../../common/src/data/datastore'
 import {
   AppoinmentBarCodeSequenceDBModel,
   AppointmentAcuityResponse,
-  AppointmentStatusChangeState,
   AppointmentByOrganizationRequest,
   AppointmentChangeToRerunRequest,
   AppointmentDBModel,
@@ -48,6 +47,12 @@ import {
 } from '../utils/base64-converter'
 import {Enterprise} from '../adapter/enterprise'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {
+  AppointmentBulkAction,
+  BulkData,
+  BulkOperationResponse,
+  BulkOperationStatus,
+} from '../types/bulk-operation.type'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -338,25 +343,17 @@ export class AppoinmentService {
       userId,
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
-    const promises = []
+    const currentUserId = userId ? userId : null
 
-    promises.push(this.acuityRepository.getCalendarList())
-
-    if (!userId) {
-      promises.push(
-        this.enterpriseAdapter.findOrCreateUser({
-          email: acuityAppointment.email,
-          firstName: acuityAppointment.firstName,
-          lastName: acuityAppointment.lastName,
-          organizationId: acuityAppointment.organizationId || '',
-        }),
-      )
-    }
-
-    const [calendars, userIdFromDb] = await Promise.all(promises)
-
-    const appoinmentCalendar = calendars.find(({id}) => id === acuityAppointment.calendarID)
-    const currentUserId = userId ? userId : userIdFromDb.data.id
+    // @TODO Uncomment this code after deploy
+    // (
+    //   await this.enterpriseAdapter.findOrCreateUser({
+    //     email: acuityAppointment.email,
+    //     firstName: acuityAppointment.firstName,
+    //     lastName: acuityAppointment.lastName,
+    //     organizationId: acuityAppointment.organizationId || '',
+    //   })
+    // ).data.id
 
     return {
       acuityAppointmentId: acuityAppointment.id,
@@ -392,8 +389,8 @@ export class AppoinmentService {
       agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
       userId: currentUserId,
-      locationName: appoinmentCalendar?.name,
-      locationAddress: appoinmentCalendar?.location,
+      locationName: acuityAppointment.calendar,
+      locationAddress: acuityAppointment.location,
     }
   }
 
@@ -494,7 +491,6 @@ export class AppoinmentService {
     createdBy: string,
   ): Promise<AppointmentStatusHistoryDb> {
     const appointment = await this.getAppointmentDBById(appointmentId)
-    console.log(appointmentId)
     return this.getStatusHistoryRepository(appointmentId).add({
       newStatus: newStatus,
       previousStatus: appointment.appointmentStatus,
@@ -523,38 +519,71 @@ export class AppoinmentService {
     })
   }
 
-  async makeReceived(
+  async makeBulkAction(
     appointmentId: string,
-    vialLocation: string,
-    userId: string,
-  ): Promise<AppointmentStatusChangeState> {
-    if (await this.checkAppointmentStatus(appointmentId)) {
-      return AppointmentStatusChangeState.Failed
+    data: BulkData,
+    actionType: AppointmentBulkAction,
+  ): Promise<BulkOperationResponse> {
+    try {
+      const appointment = await this.appointmentsRepository.findOneById(appointmentId)
+      const result = this.checkAppointmentStatus(appointmentId, appointment)
+
+      if (result) {
+        return result
+      }
+
+      switch (actionType) {
+        case AppointmentBulkAction.MakeRecived:
+          await this.makeReceived(appointmentId, data.vialLocation, data.userId)
+          break
+
+        case AppointmentBulkAction.AddTransportRun:
+          await this.addTransportRun(appointmentId, data.transportRunId, data.userId)
+          break
+
+        case AppointmentBulkAction.AddAppointmentLabel:
+          await this.addAppointmentLabel(appointment, data.label)
+          break
+
+        default:
+          console.warn('Wrong bulk action type')
+      }
+
+      return {
+        id: appointmentId,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Success,
+      }
+    } catch (error) {
+      console.warn(`[${actionType} bulk update error]: ${error.message}`)
+      return {
+        id: appointmentId,
+        status: BulkOperationStatus.Failed,
+        reason: 'Internal server error',
+      }
     }
+  }
+
+  async makeReceived(appointmentId: string, vialLocation: string, userId: string): Promise<void> {
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.Received, userId)
 
     await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Received,
       vialLocation,
     })
-    return AppointmentStatusChangeState.Succeed
   }
 
   async addTransportRun(
     appointmentId: string,
     transportRunId: string,
     userId: string,
-  ): Promise<AppointmentStatusChangeState> {
-    if (await this.checkAppointmentStatus(appointmentId)) {
-      return AppointmentStatusChangeState.Failed
-    }
+  ): Promise<void> {
     await this.addStatusHistoryById(appointmentId, AppointmentStatus.InTransit, userId)
 
     await this.appointmentsRepository.updateProperties(appointmentId, {
       transportRunId: transportRunId,
       appointmentStatus: AppointmentStatus.InTransit,
     })
-    return AppointmentStatusChangeState.Succeed
   }
 
   private async checkAppointmentStatusOnly(
@@ -566,38 +595,37 @@ export class AppoinmentService {
     return appointment && appointment.appointmentStatus === appointmentStatus
   }
 
-  private async checkAppointmentStatus(appointmentId: string) {
-    const appointment = await this.getAppointmentDBById(appointmentId)
-
-    return (
-      appointment &&
-      (appointment.appointmentStatus === AppointmentStatus.Canceled ||
-        appointment.appointmentStatus === AppointmentStatus.Reported)
-    )
+  private checkAppointmentStatus(
+    id: string,
+    appointment: AppointmentDBModel,
+  ): BulkOperationResponse {
+    if (!appointment) {
+      return {
+        id,
+        status: BulkOperationStatus.Failed,
+        reason: "Doesn't exist in DB",
+      }
+    } else if (
+      appointment.appointmentStatus === AppointmentStatus.Canceled ||
+      appointment.appointmentStatus === AppointmentStatus.Reported
+    ) {
+      return {
+        id,
+        status: BulkOperationStatus.Failed,
+        barCode: appointment.barCode,
+        reason: 'This action not allowed for apointments with Canceled or Reported status',
+      }
+    }
   }
 
-  async addAppointmentLabel(
-    appointmentId: string,
-    label: DeadlineLabel,
-  ): Promise<AppointmentStatusChangeState> {
-    if (await this.checkAppointmentStatus(appointmentId)) {
-      return AppointmentStatusChangeState.Failed
-    }
-    const appointment = await this.getAppointmentDBById(appointmentId)
+  async addAppointmentLabel(appointment: AppointmentDBModel, label: DeadlineLabel): Promise<void> {
     const deadline = makeDeadline(moment(appointment.dateTime.toDate()).utc(), label)
     await this.acuityRepository.addAppointmentLabelOnAcuity(appointment.acuityAppointmentId, label)
 
-    const pcrResult = await this.pcrTestResultsRepository.getTestResultByAppointmentId(
-      appointment.id,
-    )
-    // Throws en exception, in case of result not found
-
-    await this.pcrTestResultsRepository.updateData(pcrResult.id, {
-      deadline: deadline,
-    })
-
-    await this.updateAppointmentDB(appointment.id, {deadline})
-    return AppointmentStatusChangeState.Succeed
+    await Promise.all([
+      this.pcrTestResultsRepository.updateAllResultsForAppointmentId(appointment.id, {deadline}),
+      this.updateAppointmentDB(appointment.id, {deadline}),
+    ])
   }
 
   async updateAppointmentDB(
@@ -622,6 +650,10 @@ export class AppoinmentService {
       data.appointment.acuityAppointmentId,
       data.deadlineLabel,
     )
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(data.appointment.id, {
+      deadline,
+    })
+
     return this.appointmentsRepository.updateProperties(data.appointment.id, {
       appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
@@ -672,6 +704,7 @@ export class AppoinmentService {
     const utcDateTime = moment(time).utc()
 
     const dateTime = utcDateTime.format()
+    const barCodeNumber = await this.getNextBarCodeNumber()
     const data = await this.acuityRepository.createAppointment(
       dateTime,
       appointmentTypeId,
@@ -690,10 +723,11 @@ export class AppoinmentService {
         agreeToConductFHHealthAssessment,
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
+        barCodeNumber,
       },
     )
     return this.createAppointmentFromAcuity(data, {
-      barCodeNumber: await this.getNextBarCodeNumber(),
+      barCodeNumber,
       appointmentTypeID: appointmentTypeId,
       calendarID: calendarId,
       appointmentStatus: AppointmentStatus.Pending,
@@ -765,11 +799,10 @@ export class AppoinmentService {
     )
   }
 
-  async checkDuplicatedAppointments(
+  async checkDuplicatedAndMissedAppointments(
     appointmentIds: string[],
   ): Promise<{
-    duplicatedAppointmentIds: string[]
-    duplicatedBarCodeArray: string[]
+    failed: BulkOperationResponse[]
     filtredAppointmentIds: string[]
   }> {
     const appointments = await this.getAppointmentsDBByIds(appointmentIds)
@@ -784,43 +817,52 @@ export class AppoinmentService {
       barCodes,
     )
     const allBarCodes = appointmentsByBarCodes.map(({barCode}) => barCode)
-    const missedAppointmentIds = appointmentIds.filter((id) => !appointmentIdsFromDb.includes(id))
-    let duplicatedAppointmentIds: string[]
-    let duplicatedBarCodeArray: string[]
+    const failed: BulkOperationResponse[] = []
+
+    appointmentIds.filter((id) => {
+      if (!appointmentIdsFromDb.includes(id)) {
+        failed.push({
+          id,
+          status: BulkOperationStatus.Failed,
+          reason: "Doesn't exist in DB",
+        })
+      }
+    })
 
     const firstBarCodeMatch = new Map()
     const hasDuplicates = union(allBarCodes).length != allBarCodes.length
-
-    if (hasDuplicates) {
-      const duplicatedBarCodes = new Set<string>()
-
+    const hasMissed = appointmentIds.length !== appointmentIdsFromDb.length
+    if (hasDuplicates || hasMissed) {
       appointmentsByBarCodes.forEach(({barCode, id}) => {
         if (!firstBarCodeMatch.has(barCode)) {
           return firstBarCodeMatch.set(barCode, {barCode, id})
         }
-        duplicatedBarCodes.add(barCode)
+        failed.push({
+          id,
+          barCode,
+          status: BulkOperationStatus.Failed,
+          reason: 'Duplicate barcodes',
+        })
       })
-
-      duplicatedBarCodeArray = Array.from(duplicatedBarCodes.values())
-      duplicatedAppointmentIds = appointments
-        .filter(({barCode}) => duplicatedBarCodeArray.includes(barCode))
-        .map(({id}) => id)
     }
 
-    const filtredAppointmentIds: string[] = hasDuplicates
-      ? [...Array.from(firstBarCodeMatch.values()).map(({id}) => id), ...missedAppointmentIds]
-      : appointmentIds
+    const filtredAppointmentIds: string[] =
+      hasDuplicates || hasMissed
+        ? Array.from(firstBarCodeMatch.values())
+            .filter(
+              ({barCode}) => !failed.find(({barCode: failedBarCode}) => barCode === failedBarCode),
+            )
+            .map(({id}) => id)
+        : appointmentIds
 
     return {
-      duplicatedAppointmentIds,
-      duplicatedBarCodeArray,
+      failed,
       filtredAppointmentIds,
     }
   }
 
   async getAppointmentByUserId(userId: string): Promise<UserAppointment[]> {
     const appointments = await this.appointmentsRepository.findWhereEqual('userId', userId)
-
     return appointments.map(userAppointmentDTOResponse)
   }
 

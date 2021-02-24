@@ -63,9 +63,11 @@ export enum ResultReportStatus {
   Failed = 'Failed',
   Processing = 'Processing',
   RequestReceived = 'RequestReceived',
-  SentReRunRequest = 'SentReRunRequest',
-  SentReCollectRequest = 'SentReCollectRequest',
-  SentResult = 'SentResult',
+  SentReRunRequest = 'Sent "Re-Run Request"',
+  SentReCollectRequestAsInvalid = 'Sent "Re-Collect Request As Invalid"',
+  SentReCollectRequestAsInconclusive = 'Sent "Re-Collect Request As Inconclusive"',
+  SentPreliminaryPositive = 'Sent "Preliminary Positive"',
+  SentPresumptivePositive = 'Sent "Presumptive Positive"',
   Skipped = 'Skipped',
 }
 
@@ -208,7 +210,7 @@ export type TestResultsReportingTrackerDBModel = {
 export type TestResultsReportingTrackerPCRResultsDBModel = {
   id: string
   adminId: string
-  status: ResultReportStatus
+  status: ResultReportStatus | ResultTypes
   data: PCRTestResultRequestData
   details?: string
 }
@@ -252,6 +254,7 @@ export type PcrTestResultsListByDeadlineRequest = {
     | AppointmentStatus.InProgress
     | AppointmentStatus.Received
     | AppointmentStatus.ReRunRequired
+  organizationId?: string
 }
 
 export type SinglePcrTestResultsRequest = {
@@ -290,11 +293,12 @@ export type PCRTestResultByDeadlineListDTO = {
   runNumber: string
   reCollectNumber: string
   dateTime: string
+  organizationName: string
 }
 
 export type pcrTestResultsDTO = {
   barCode: string
-  status: ResultReportStatus
+  status: ResultReportStatus | ResultTypes
   details?: string
 }
 
