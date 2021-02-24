@@ -5,7 +5,6 @@ import {authorizationMiddleware} from '../../../../../common/src/middlewares/aut
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {LabService} from '../../../services/lab.service'
-import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 
 class LabController implements IControllerBase {
   public path = '/reservation/admin'
@@ -36,9 +35,6 @@ class LabController implements IControllerBase {
   addLab = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {name} = req.body as Lab
-      if (!name) {
-        throw new BadRequestException('Param "name" not found')
-      }
       const result = await this.labService.save({name})
       res.json(actionSucceed(result))
     } catch (error) {

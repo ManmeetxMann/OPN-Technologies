@@ -10,7 +10,7 @@ export class LabRepository extends DataModel<LabDBModel> {
     super(dataStore)
   }
 
-  public async save(lab: Omit<Lab, 'id'>): Promise<void> {
+  public async save(lab: Lab): Promise<void> {
     await this.add(lab)
   }
 }

@@ -739,7 +739,6 @@ components:
       additionalProperties: false
       properties:
         name:
-          nullable: true
           type: string
 
     LabResponse:
