@@ -1,16 +1,16 @@
 import DataStore from '../../../common/src/data/datastore'
-import {Lab, LabDBModel} from '../models/lab'
+import {Lab} from '../models/lab'
 import {LabRepository} from '../respository/lab.repository'
 
 export class LabService {
   private dataStore = new DataStore()
   private labRepository = new LabRepository(this.dataStore)
 
-  getAll(): Promise<LabDBModel[]> {
+  getAll(): Promise<Lab[]> {
     return this.labRepository.fetchAll()
   }
 
-  save(lab: Lab): Promise<LabDBModel> {
+  save(lab: Omit<Lab, 'id'>): Promise<Lab> {
     return this.labRepository.add(lab)
   }
 }

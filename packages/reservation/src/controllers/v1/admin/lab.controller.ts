@@ -1,5 +1,4 @@
 import {NextFunction, Request, Response, Router} from 'express'
-import {Lab} from '../../../models/lab'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
@@ -34,7 +33,7 @@ class LabController implements IControllerBase {
 
   addLab = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {name} = req.body as Lab
+      const {name} = req.body as {name: string}
       const result = await this.labService.save({name})
       res.json(actionSucceed(result))
     } catch (error) {

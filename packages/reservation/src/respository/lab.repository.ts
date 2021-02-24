@@ -1,8 +1,8 @@
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
-import {Lab, LabDBModel} from '../models/lab'
+import {Lab} from '../models/lab'
 
-export class LabRepository extends DataModel<LabDBModel> {
+export class LabRepository extends DataModel<Lab> {
   public rootPath = 'labs'
   readonly zeroSet = []
 
