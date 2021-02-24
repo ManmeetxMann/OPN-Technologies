@@ -269,7 +269,12 @@ class PCRTestResultController implements IControllerBase {
 
       res.json(
         actionSucceed(
-          statsUiDTOResponse(pcrResultStatsByResultArr, pcrResultStatsByOrgIdArr, total),
+          statsUiDTOResponse(
+            pcrResultStatsByResultArr,
+            pcrResultStatsByOrgIdArr,
+            total,
+            !organizationId,
+          ),
         ),
       )
     } catch (error) {
