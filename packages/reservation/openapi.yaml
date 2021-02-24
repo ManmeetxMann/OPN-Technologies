@@ -2514,7 +2514,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfTemperature'
-  /reservation/api/v1/temperature/{userId}:
+  /reservation/api/v1/temperature/{id}:
     get:
       description: Get temperature by user ID and organization ID
       security:
@@ -2523,11 +2523,11 @@ paths:
         - Temperature Management
       parameters:
         - in: path
-          name: userId
+          name: id
           schema:
             type: string
           required: true
-        - in: header
+        - in: query
           name: organizationId
           schema:
             type: string
