@@ -993,4 +993,8 @@ export class AppoinmentService {
       AppointmentStatus.CheckedIn,
     )
   }
+
+  async rescheduleAppointment(appointmentId: string, date: string, time: string): Promise<AppointmentDBModel> {
+    return this.appointmentsRepository.updateProperties(appointmentId, {dateOfAppointment: date, timeOfAppointment: time});
+  }
 }
