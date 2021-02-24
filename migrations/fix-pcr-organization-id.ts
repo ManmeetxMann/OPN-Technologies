@@ -85,6 +85,7 @@ async function updatePcrTestResult(
     )
 
     console.info(`Successfully Changed organization to null for ${snapshot.id}`)
+    return Promise.resolve(`Successfully Changed organization to null for ${snapshot.id}`)
   } catch (error) {
     console.warn(error)
     throw error
@@ -93,7 +94,7 @@ async function updatePcrTestResult(
 
 async function main() {
   try {
-    console.log('Migration Starting')
+    console.log(`Migration Starting Time: ${new Date()}`)
     const results = await updateTestResults()
     results.forEach((result) => {
       totalCount += 1
@@ -102,6 +103,7 @@ async function main() {
           successCount += 1
         }
       } else {
+        console.error(result.value)
         failureCount += 1
       }
     })
@@ -118,6 +120,6 @@ async function main() {
 let successCount = 0
 let failureCount = 0
 let totalCount = 0
-const limit = Number(Config.get('MIGRATION_DOCUMENTS_LIMIT')) || 500
+const limit = 100
 
 main().then(() => console.log('Script Complete \n'))
