@@ -6,6 +6,8 @@ import {RequiredUserPermission} from '../../../../common/src/types/authorization
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {convertCelsiusToFahrenheit} from '../../../../common/src/utils/temperature'
 import {toDateTimeFormat} from '../../../../common/src/utils/times'
+import { getUserId } from '../../../../common/src/utils/auth'
+import { formatDateRFC822Local } from '../../utils/datetime.helper'
 
 class TemperatureController implements IControllerBase {
   public router = Router()
@@ -26,22 +28,18 @@ class TemperatureController implements IControllerBase {
   getTemperatureCheck = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const {id} = req.params
     const {organizationId} = req.query
+    const userId = getUserId(res.locals.authenticatedUser)
     try {
-      const result = await this.temperatureService.getByUserIdAndOrganizationId(id, organizationId)
+      const result = await this.temperatureService.getTemperatureDetails(id, userId,  organizationId)
+      const {status, timestamps, temperature} = result
+
       res.json(
-        actionSucceed(
-          result.map((item) => {
-            if (item) {
-              const {status, timestamps, temperature} = item
-              return {
-                temperatureInCelsius: temperature,
-                temperatureInFahrenheit: convertCelsiusToFahrenheit(temperature),
-                createdAt: toDateTimeFormat(timestamps?.createdAt?.seconds | 0),
-                status: status,
-              }
-            }
-          }),
-        ),
+        actionSucceed({
+          temperatureInCelsius: temperature,
+          temperatureInFahrenheit: convertCelsiusToFahrenheit(temperature),
+          createdAt: formatDateRFC822Local(timestamps.createdAt),
+          status: status,
+        }),
       )
     } catch (error) {
       next(error)

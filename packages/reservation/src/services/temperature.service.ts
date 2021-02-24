@@ -1,5 +1,7 @@
-import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
+import { BadRequestException } from '../../../common/src/exceptions/bad-request-exception'
+import { LogInfo } from '../../../common/src/utils/logging-setup'
 import DataStore from '../../../common/src/data/datastore'
+
 import {Temperature, TemperatureDBModel} from '../models/temperature'
 import {TemperatureRepository} from '../respository/temperature.repository'
 
@@ -19,28 +21,31 @@ export class TemperatureService {
     return this.temperatureRepository.get(id)
   }
 
-  getByUserIdAndOrganizationId(
+  async getTemperatureDetails(
+    id: string,
     userId: string,
     organizationId: unknown,
-  ): Promise<TemperatureDBModel[]> {
-    const query = []
-    if (userId) {
-      query.push({
-        map: '/',
-        key: 'userId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: userId,
+  ): Promise<TemperatureDBModel> {
+    const temperature = await this.temperatureRepository.get(id)
+    if(!temperature){
+      LogInfo('getByUserIdAndOrganizationId', 'NotDataAvaiable', {
+        temperatureId: id
       })
+      throw new BadRequestException(
+        `Invalid Request`,
+      )
     }
 
-    if (organizationId) {
-      query.push({
-        map: '/',
-        key: 'organizationId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: organizationId,
+    if(temperature.organizationId!==organizationId || temperature.userId!==userId){
+      LogInfo('getByUserIdAndOrganizationId', 'NotAuthorized', {
+        temperatureId: id,
+        organizationId,
+        userId,
       })
+      throw new BadRequestException(
+        `Not Authorized to view details`,
+      )
     }
-    return this.temperatureRepository.findWhereEqualInMap(query)
+    return temperature
   }
 }
