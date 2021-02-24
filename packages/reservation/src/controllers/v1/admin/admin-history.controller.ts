@@ -5,11 +5,6 @@ import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
-import {PCRTestResultRequest} from '../../../models/pcr-test-results'
-import {Config} from '../../../../../common/src/utils/config'
-import moment from 'moment'
-import {now} from '../../../../../common/src/utils/times'
-import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {appointmentUiDTOResponse, GetAdminScanHistoryRequest} from '../../../models/appointment'
 
@@ -26,9 +21,7 @@ class AdminHistoryController implements IControllerBase {
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
 
-    const adminWithAppointments = authorizationMiddleware([
-      RequiredUserPermission.AdminWithAppointments,
-    ])
+    const adminWithAppointments = authorizationMiddleware([RequiredUserPermission.AdminScanHistory])
 
     innerRouter.post(this.path + '/admin-scan-history', adminWithAppointments, this.getByBarcode)
 

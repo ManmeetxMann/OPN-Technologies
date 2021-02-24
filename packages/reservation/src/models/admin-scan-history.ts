@@ -1,11 +1,8 @@
 import {TestTypes} from './appointment'
 
-export type AdminScanHistoryBase = {
+export type AdminScanHistory = {
+  id: string
   createdBy: string
   type: TestTypes
   appointmentId: string
-}
-
-export type AdminScanHistory = AdminScanHistoryBase & {
-  id: string
 }

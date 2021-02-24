@@ -33,7 +33,8 @@ import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.
 import {Config} from '../../../common/src/utils/config'
 import {
   firestoreTimeStampToUTC,
-  makeDeadline, makeDeadlineDate,
+  makeDeadline,
+  makeDeadlineDate,
   makeFirestoreTimestamp,
 } from '../utils/datetime.helper'
 

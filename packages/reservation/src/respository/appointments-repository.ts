@@ -10,7 +10,7 @@ import {
 } from '../models/appointment'
 import DBSchema from '../dbschemas/appointments.schema'
 import {isEqual} from 'lodash'
-import {makeDeadlineDate, makeFirestoreTimestamp} from '../utils/datetime.helper'
+import {makeFirestoreTimestamp} from '../utils/datetime.helper'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
@@ -54,7 +54,7 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     deadlineDate: moment.Moment,
   ): Promise<AppointmentDBModel> {
     return this.updateProperties(appointmentId, {
-      deadlineDate: makeFirestoreTimestamp(deadlineDate.toISOString()),
+      deadline: makeFirestoreTimestamp(deadlineDate.toISOString()),
     })
   }
 
