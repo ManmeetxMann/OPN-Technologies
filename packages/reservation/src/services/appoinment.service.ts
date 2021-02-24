@@ -343,25 +343,17 @@ export class AppoinmentService {
       userId,
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
-    const promises = []
+    const currentUserId = userId ? userId : null
 
-    promises.push(this.acuityRepository.getCalendarList())
-
-    if (!userId) {
-      promises.push(
-        this.enterpriseAdapter.findOrCreateUser({
-          email: acuityAppointment.email,
-          firstName: acuityAppointment.firstName,
-          lastName: acuityAppointment.lastName,
-          organizationId: acuityAppointment.organizationId || '',
-        }),
-      )
-    }
-
-    const [calendars, userIdFromDb] = await Promise.all(promises)
-
-    const appoinmentCalendar = calendars.find(({id}) => id === acuityAppointment.calendarID)
-    const currentUserId = userId ? userId : userIdFromDb.data.id
+    // @TODO Uncomment this code after deploy
+    // (
+    //   await this.enterpriseAdapter.findOrCreateUser({
+    //     email: acuityAppointment.email,
+    //     firstName: acuityAppointment.firstName,
+    //     lastName: acuityAppointment.lastName,
+    //     organizationId: acuityAppointment.organizationId || '',
+    //   })
+    // ).data.id
 
     return {
       acuityAppointmentId: acuityAppointment.id,
@@ -397,8 +389,8 @@ export class AppoinmentService {
       agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
       userId: currentUserId,
-      locationName: appoinmentCalendar?.name,
-      locationAddress: appoinmentCalendar?.location,
+      locationName: acuityAppointment.calendar,
+      locationAddress: acuityAppointment.location,
     }
   }
 
@@ -857,8 +849,10 @@ export class AppoinmentService {
     const filtredAppointmentIds: string[] =
       hasDuplicates || hasMissed
         ? Array.from(firstBarCodeMatch.values())
+            .filter(
+              ({barCode}) => !failed.find(({barCode: failedBarCode}) => barCode === failedBarCode),
+            )
             .map(({id}) => id)
-            .filter((filteredId) => !failed.find(({id}) => id === filteredId))
         : appointmentIds
 
     return {
@@ -869,7 +863,6 @@ export class AppoinmentService {
 
   async getAppointmentByUserId(userId: string): Promise<UserAppointment[]> {
     const appointments = await this.appointmentsRepository.findWhereEqual('userId', userId)
-
     return appointments.map(userAppointmentDTOResponse)
   }
 

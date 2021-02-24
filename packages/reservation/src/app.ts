@@ -18,6 +18,7 @@ import AppointmentController from './controllers/v1/appointment.controller'
 import PCRTestResultController from './controllers/v1/test-results.controller'
 import TemperatureV1Controller from './controllers/v1/admin/temperature.controller'
 import LabController from './controllers/v1/admin/lab.controller'
+import TemperatureController from './controllers/v1/temperature.controller'
 
 const PORT = Number(process.env.PORT) || 5008
 
@@ -42,6 +43,7 @@ export const app = new App({
     new PCRTestResultController(),
     new TemperatureV1Controller(),
     new LabController(),
+    new TemperatureController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })

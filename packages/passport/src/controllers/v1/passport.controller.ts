@@ -123,8 +123,8 @@ class PassportController implements IControllerBase {
 
       const saved = await this.attestationService.save({
         answers: answers.map((answer) => ({
-          [0]: answer[0],
-          [1]: answer[1] ?? null,
+          [0]: answer.answer,
+          [1]: answer.additionalValue ?? null,
         })) as AttestationAnswers,
         locationId: orgLocations[0].id, // to be removed
         userId: user.id,
