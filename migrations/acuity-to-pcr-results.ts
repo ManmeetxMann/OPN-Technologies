@@ -160,7 +160,7 @@ async function createPcrResults(acuityAppointment: AppointmentAcuityResponse) {
       firstName: acuityAppointment.firstName,
       lastName: acuityAppointment.lastName,
       linkedBarCodes: [],
-      organizationId: appointment.data().organizationId??null,
+      organizationId: appointment.data().organizationId ?? null,
       reCollectNumber: 1,
       result: 'Pending',
       recollected: false,
