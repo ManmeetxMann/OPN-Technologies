@@ -291,6 +291,7 @@ export type PCRTestResultByDeadlineListDTO = {
   runNumber: string
   reCollectNumber: string
   dateTime: string
+  organizationName: string
 }
 
 export type pcrTestResultsDTO = {

@@ -695,10 +695,10 @@ components:
           items:
             type: object
             additionalProperties: false
-            properties: 
-              id: 
+            properties:
+              id:
                 type: string
-              status: 
+              status:
                 type: string
                 enum:
                   [
@@ -710,7 +710,7 @@ components:
               barCode:
                 type: string
             required:
-              - id 
+              - id
               - status
               - reason
               - barCode
@@ -904,8 +904,10 @@ paths:
               type: string
               enum:
                 - Pending
+                - Submitted
                 - InTransit
                 - Received
+                - CheckedIn
                 - InProgress
                 - Reported
                 - ReRunRequired
@@ -2231,6 +2233,8 @@ paths:
                         dateTime:
                           type: string
                         testRunLabel:
+                          type: string
+                        organizationName:
                           type: string
                   status:
                     type: object

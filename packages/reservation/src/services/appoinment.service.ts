@@ -343,25 +343,17 @@ export class AppoinmentService {
       userId,
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
-    const promises = []
+    const currentUserId = userId ? userId : null
 
-    promises.push(this.acuityRepository.getCalendarList())
-
-    if (!userId) {
-      promises.push(
-        this.enterpriseAdapter.findOrCreateUser({
-          email: acuityAppointment.email,
-          firstName: acuityAppointment.firstName,
-          lastName: acuityAppointment.lastName,
-          organizationId: acuityAppointment.organizationId || '',
-        }),
-      )
-    }
-
-    const [calendars, userIdFromDb] = await Promise.all(promises)
-
-    const appoinmentCalendar = calendars.find(({id}) => id === acuityAppointment.calendarID)
-    const currentUserId = userId ? userId : userIdFromDb.data.id
+    // @TODO Uncomment this code after deploy
+    // (
+    //   await this.enterpriseAdapter.findOrCreateUser({
+    //     email: acuityAppointment.email,
+    //     firstName: acuityAppointment.firstName,
+    //     lastName: acuityAppointment.lastName,
+    //     organizationId: acuityAppointment.organizationId || '',
+    //   })
+    // ).data.id
 
     return {
       acuityAppointmentId: acuityAppointment.id,
@@ -397,8 +389,8 @@ export class AppoinmentService {
       agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
       userId: currentUserId,
-      locationName: appoinmentCalendar?.name,
-      locationAddress: appoinmentCalendar?.location,
+      locationName: acuityAppointment.calendar,
+      locationAddress: acuityAppointment.location,
     }
   }
 
@@ -499,7 +491,6 @@ export class AppoinmentService {
     createdBy: string,
   ): Promise<AppointmentStatusHistoryDb> {
     const appointment = await this.getAppointmentDBById(appointmentId)
-    console.log(appointmentId)
     return this.getStatusHistoryRepository(appointmentId).add({
       newStatus: newStatus,
       previousStatus: appointment.appointmentStatus,
@@ -631,15 +622,8 @@ export class AppoinmentService {
     const deadline = makeDeadline(moment(appointment.dateTime.toDate()).utc(), label)
     await this.acuityRepository.addAppointmentLabelOnAcuity(appointment.acuityAppointmentId, label)
 
-    const pcrResult = await this.pcrTestResultsRepository.getTestResultByAppointmentId(
-      appointment.id,
-    )
-    // Throws en exception, in case of result not found
-
     await Promise.all([
-      this.pcrTestResultsRepository.updateData(pcrResult.id, {
-        deadline: deadline,
-      }),
+      this.pcrTestResultsRepository.updateAllResultsForAppointmentId(appointment.id, {deadline}),
       this.updateAppointmentDB(appointment.id, {deadline}),
     ])
   }
@@ -666,6 +650,10 @@ export class AppoinmentService {
       data.appointment.acuityAppointmentId,
       data.deadlineLabel,
     )
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(data.appointment.id, {
+      deadline,
+    })
+
     return this.appointmentsRepository.updateProperties(data.appointment.id, {
       appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
@@ -716,6 +704,7 @@ export class AppoinmentService {
     const utcDateTime = moment(time).utc()
 
     const dateTime = utcDateTime.format()
+    const barCodeNumber = await this.getNextBarCodeNumber()
     const data = await this.acuityRepository.createAppointment(
       dateTime,
       appointmentTypeId,
@@ -734,10 +723,11 @@ export class AppoinmentService {
         agreeToConductFHHealthAssessment,
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
+        barCodeNumber,
       },
     )
     return this.createAppointmentFromAcuity(data, {
-      barCodeNumber: await this.getNextBarCodeNumber(),
+      barCodeNumber,
       appointmentTypeID: appointmentTypeId,
       calendarID: calendarId,
       appointmentStatus: AppointmentStatus.Pending,
@@ -858,7 +848,11 @@ export class AppoinmentService {
 
     const filtredAppointmentIds: string[] =
       hasDuplicates || hasMissed
-        ? Array.from(firstBarCodeMatch.values()).map(({id}) => id)
+        ? Array.from(firstBarCodeMatch.values())
+            .filter(
+              ({barCode}) => !failed.find(({barCode: failedBarCode}) => barCode === failedBarCode),
+            )
+            .map(({id}) => id)
         : appointmentIds
 
     return {

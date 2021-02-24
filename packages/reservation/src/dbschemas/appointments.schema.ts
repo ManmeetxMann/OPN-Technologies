@@ -54,7 +54,7 @@ export default Joi.object({
   readTermsAndConditions: Joi.boolean().required(),
   receiveResultsViaEmail: Joi.boolean().required(),
   receiveNotificationsFromGov: Joi.boolean().required(),
-  userId: Joi.string().allow(''),
+  userId: Joi.string().allow(null),
   locationName: Joi.string().allow(''),
   locationAddress: Joi.string().allow(''),
 })

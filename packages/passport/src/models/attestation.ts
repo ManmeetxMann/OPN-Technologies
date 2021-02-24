@@ -2,7 +2,12 @@ import {PassportStatus} from './passport'
 import DataModel from '../../../common/src/data/datamodel.base'
 
 export type AttestationAnswers = Record<number, Record<number, boolean | string>>
-type AnswerV1 = [boolean] | [boolean, string]
+export type AnswerV1 = {
+  questionId: number
+  answer: boolean
+  additionalValue: string
+}
+
 export type AttestationAnswersV1 = AnswerV1[]
 
 export type Attestation = {
