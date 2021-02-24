@@ -1343,32 +1343,35 @@ export class PCRTestResultsService {
   async getReportStatus(
     action: PCRResultActions,
     result: ResultTypes,
-  ): Promise<ResultReportStatus | ResultTypes> {
-    let status: ResultReportStatus | ResultTypes
-
+  ): Promise<string> {
+    let status: string
     switch (action) {
       case PCRResultActions.DoNothing: {
         status = ResultReportStatus.Skipped
         break
       }
-      case PCRResultActions.RequestReCollect: {
-        status = ResultReportStatus.SentReCollectRequest
-        break
-      }
       case PCRResultActions.RecollectAsInconclusive: {
-        status = ResultReportStatus.SentReCollectRequest
+        status = ResultReportStatus.SentReCollectRequestAsInconclusive
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
-        status = ResultReportStatus.SentReCollectRequest
+        status = ResultReportStatus.SentReCollectRequestAsInvalid
         break
       }
       case PCRResultActions.ReRunToday || PCRResultActions.ReRunTomorrow: {
         status = ResultReportStatus.SentReRunRequest
         break
       }
+      case PCRResultActions.MarkAsPresumptivePositive: {
+        status = ResultReportStatus.SentPresumptivePositive
+        break
+      }
+      case PCRResultActions.SendPreliminaryPositive: {
+        status = ResultReportStatus.SentPreliminaryPositive
+        break
+      }
       default: {
-        status = result
+        status = `Sent "${result}"`
       }
     }
     return status

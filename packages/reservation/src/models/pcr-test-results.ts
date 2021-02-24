@@ -63,9 +63,11 @@ export enum ResultReportStatus {
   Failed = 'Failed',
   Processing = 'Processing',
   RequestReceived = 'RequestReceived',
-  SentReRunRequest = 'SentReRunRequest',
-  SentReCollectRequest = 'SentReCollectRequest',
-  SentResult = 'SentResult',
+  SentReRunRequest = 'Sent "Re-Run Request"',
+  SentReCollectRequestAsInvalid = 'Sent "Re-Collect Request As Invalid"',
+  SentReCollectRequestAsInconclusive = 'Sent "Re-Collect Request As Inconclusive"',
+  SentPreliminaryPositive = 'Sent "Preliminary Positive"',
+  SentPresumptivePositive = 'Sent "Presumptive Positive"',
   Skipped = 'Skipped',
 }
 
