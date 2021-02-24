@@ -166,7 +166,11 @@ class PCRTestResultController implements IControllerBase {
         true,
         data.sendUpdatedResults,
       )
-      const successMessage = `For ${pcrResultRecorded.barCode}, a "${pcrResultRecorded.result}" has been  recorded and sent to the client`
+      const status = await this.pcrTestResultsService.getReportStatus(
+        pcrResultRecorded.resultSpecs.action,
+        pcrResultRecorded.result,
+      )
+      const successMessage = `${status} for ${pcrResultRecorded.barCode}`
       res.json(actionSuccess({id: pcrResultRecorded.id}, successMessage))
     } catch (error) {
       next(error)

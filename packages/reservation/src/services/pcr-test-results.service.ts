@@ -1340,10 +1340,7 @@ export class PCRTestResultsService {
     return sortBy(pcrFiltred, ['status'])
   }
 
-  async getReportStatus(
-    action: PCRResultActions,
-    result: ResultTypes,
-  ): Promise<string> {
+  async getReportStatus(action: PCRResultActions, result: ResultTypes): Promise<string> {
     let status: string
     switch (action) {
       case PCRResultActions.DoNothing: {
