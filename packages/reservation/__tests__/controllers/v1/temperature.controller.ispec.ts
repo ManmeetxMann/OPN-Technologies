@@ -17,21 +17,20 @@ describe('AdminAppointmentController', () => {
       id: temperatureID1,
       createdAt: dateTimeForCreation1,
       organizationID: organizationID,
-      userID: "USER1"
+      userID: 'USER1',
     })
     await createTemperature({
       id: temperatureID2,
       createdAt: dateTimeForCreation1,
       organizationID: organizationID,
-      userID: "USER2"
+      userID: 'USER2',
     })
   })
 
   describe('get appointment list', () => {
     test('get temperature by ID successfully', async (done) => {
       const url = `/reservation/api/v1/temperature/${temperatureID1}?organizationId=${organizationID}`
-      const result = await request(server.app).get(url)
-                            .set('authorization', 'bearer 10000')
+      const result = await request(server.app).get(url).set('authorization', 'bearer 10000')
       expect(result.status).toBe(200)
       expect(result.body.data.temperatureInCelsius).toBe(37.1)
       done()
@@ -39,20 +38,17 @@ describe('AdminAppointmentController', () => {
 
     test('get temperature by ID failed for wrong ORG', async (done) => {
       const url = `/reservation/api/v1/temperature/${temperatureID1}?organizationId=BAD_ORG`
-      const result = await request(server.app).get(url)
-                            .set('authorization', 'bearer 10000')
+      const result = await request(server.app).get(url).set('authorization', 'bearer 10000')
       expect(result.status).toBe(400)
       done()
     })
 
     test('get temperature by ID failed for wrong ORG', async (done) => {
       const url = `/reservation/api/v1/temperature/${temperatureID2}?organizationId=${organizationID}`
-      const result = await request(server.app).get(url)
-                            .set('authorization', 'bearer 10000')
+      const result = await request(server.app).get(url).set('authorization', 'bearer 10000')
       expect(result.status).toBe(400)
       done()
     })
-
   })
 
   afterAll(async () => {

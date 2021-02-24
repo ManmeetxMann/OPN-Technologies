@@ -1,22 +1,22 @@
 import {firestore} from 'firebase-admin'
 
 const database = firestore()
-const collectionName = "temperature"
+const collectionName = 'temperature'
 export const createTemperature = async (dataOverwrite: {
-  id: string,
-  createdAt: string,
-  organizationID: string,
+  id: string
+  createdAt: string
+  organizationID: string
   userID: string
 }): Promise<void> => {
   const data = {
     organizationId: dataOverwrite.organizationID,
-    status: "proceed",
-    temperature: 37.1, 
-    timestamps:{
+    status: 'proceed',
+    temperature: 37.1,
+    timestamps: {
       createdAt: firestore.Timestamp.fromDate(new Date(dataOverwrite.createdAt)),
-      updatedAt: null
+      updatedAt: null,
     },
-    userId: dataOverwrite.userID
+    userId: dataOverwrite.userID,
   }
 
   await database.collection(collectionName).doc(dataOverwrite.id).set(data)

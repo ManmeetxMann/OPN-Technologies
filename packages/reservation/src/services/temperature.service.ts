@@ -1,5 +1,5 @@
-import { BadRequestException } from '../../../common/src/exceptions/bad-request-exception'
-import { LogInfo } from '../../../common/src/utils/logging-setup'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {LogInfo} from '../../../common/src/utils/logging-setup'
 import DataStore from '../../../common/src/data/datastore'
 
 import {Temperature, TemperatureDBModel} from '../models/temperature'
@@ -27,24 +27,20 @@ export class TemperatureService {
     organizationId: unknown,
   ): Promise<TemperatureDBModel> {
     const temperature = await this.temperatureRepository.get(id)
-    if(!temperature){
+    if (!temperature) {
       LogInfo('getByUserIdAndOrganizationId', 'NotDataAvaiable', {
-        temperatureId: id
+        temperatureId: id,
       })
-      throw new BadRequestException(
-        `Invalid Request`,
-      )
+      throw new BadRequestException(`Invalid Request`)
     }
 
-    if(temperature.organizationId!==organizationId || temperature.userId!==userId){
+    if (temperature.organizationId !== organizationId || temperature.userId !== userId) {
       LogInfo('getByUserIdAndOrganizationId', 'NotAuthorized', {
         temperatureId: id,
         organizationId,
         userId,
       })
-      throw new BadRequestException(
-        `Not Authorized to view details`,
-      )
+      throw new BadRequestException(`Not Authorized to view details`)
     }
     return temperature
   }

@@ -5,9 +5,8 @@ import {authorizationMiddleware} from '../../../../common/src/middlewares/author
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {convertCelsiusToFahrenheit} from '../../../../common/src/utils/temperature'
-import {toDateTimeFormat} from '../../../../common/src/utils/times'
-import { getUserId } from '../../../../common/src/utils/auth'
-import { formatDateRFC822Local } from '../../utils/datetime.helper'
+import {getUserId} from '../../../../common/src/utils/auth'
+import {formatDateRFC822Local} from '../../utils/datetime.helper'
 
 class TemperatureController implements IControllerBase {
   public router = Router()
@@ -30,7 +29,7 @@ class TemperatureController implements IControllerBase {
     const {organizationId} = req.query
     const userId = getUserId(res.locals.authenticatedUser)
     try {
-      const result = await this.temperatureService.getTemperatureDetails(id, userId,  organizationId)
+      const result = await this.temperatureService.getTemperatureDetails(id, userId, organizationId)
       const {status, timestamps, temperature} = result
 
       res.json(
