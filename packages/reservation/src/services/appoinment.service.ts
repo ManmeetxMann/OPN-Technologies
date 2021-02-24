@@ -863,7 +863,6 @@ export class AppoinmentService {
 
   async getAppointmentByUserId(userId: string): Promise<UserAppointment[]> {
     const appointments = await this.appointmentsRepository.findWhereEqual('userId', userId)
-
     return appointments.map(userAppointmentDTOResponse)
   }
 
