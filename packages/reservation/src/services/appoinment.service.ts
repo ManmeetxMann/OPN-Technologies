@@ -994,7 +994,14 @@ export class AppoinmentService {
     )
   }
 
-  async rescheduleAppointment(appointmentId: string, date: string, time: string): Promise<AppointmentDBModel> {
-    return this.appointmentsRepository.updateProperties(appointmentId, {dateOfAppointment: date, timeOfAppointment: time});
+  async rescheduleAppointment(
+    appointmentId: string,
+    date: string,
+    time: string,
+  ): Promise<AppointmentDBModel> {
+    return this.appointmentsRepository.updateProperties(appointmentId, {
+      dateOfAppointment: date,
+      timeOfAppointment: time,
+    })
   }
 }

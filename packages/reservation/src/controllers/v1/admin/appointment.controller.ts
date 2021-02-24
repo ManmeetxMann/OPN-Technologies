@@ -97,7 +97,7 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/reschedule',
-      apptLabOrOrgAdminAuth,
+      apptLabAuth,
       this.rescheduleAppointment,
     )
 
@@ -377,13 +377,21 @@ class AdminAppointmentController implements IControllerBase {
     }
   }
 
-  rescheduleAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  rescheduleAppointment = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
-      const {appointmentId} = req.params;
-      const {date, time} = req.body as {date:string , time:string}
-      const appointment = await this.appointmentService.rescheduleAppointment(appointmentId, date, time)
+      const {appointmentId} = req.params
+      const {date, time} = req.body as {date: string; time: string}
+      const appointment = await this.appointmentService.rescheduleAppointment(
+        appointmentId,
+        date,
+        time,
+      )
       res.json(actionSucceed(appointmentUiDTOResponse(appointment, false)))
-    }catch(error){
+    } catch (error) {
       next(error)
     }
   }
