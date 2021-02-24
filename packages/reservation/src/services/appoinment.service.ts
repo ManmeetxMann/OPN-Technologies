@@ -18,6 +18,7 @@ import {
   userAppointmentDTOResponse,
   AppointmentActivityAction,
   Filter,
+  TestTypes,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -32,7 +33,7 @@ import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.
 import {Config} from '../../../common/src/utils/config'
 import {
   firestoreTimeStampToUTC,
-  makeDeadline,
+  makeDeadline, makeDeadlineDate,
   makeFirestoreTimestamp,
 } from '../utils/datetime.helper'
 
@@ -53,6 +54,8 @@ import {
   BulkOperationResponse,
   BulkOperationStatus,
 } from '../types/bulk-operation.type'
+import {AdminScanHistoryRepository} from '../respository/admin-scan-history'
+import {AdminScanHistory} from '../models/admin-scan-history'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -62,8 +65,25 @@ export class AppoinmentService {
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(this.dataStore)
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
+  private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
   private organizationService = new OrganizationService()
   private enterpriseAdapter = new Enterprise()
+
+  makeDeadline15Minutes(appointment: AppointmentDBModel): Promise<AppointmentDBModel> {
+    return this.appointmentsRepository.setDeadlineDate(appointment.id, makeDeadlineDate())
+  }
+
+  addAdminScanHistory(
+    userId: string,
+    appointmentId: string,
+    type: TestTypes,
+  ): Promise<AdminScanHistory> {
+    return this.adminScanHistoryRepository.save({
+      createdBy: userId,
+      type,
+      appointmentId: appointmentId,
+    })
+  }
 
   async getAppointmentByBarCode(
     barCodeNumber: string,
