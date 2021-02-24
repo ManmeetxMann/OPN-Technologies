@@ -26,6 +26,8 @@ export type Organization = {
   notificationIconCaution?: string
   notificationIconStop?: string
   enableTemperatureCheck?: boolean
+  legacyMode?: boolean
+  enablePCRTest?: boolean
 }
 
 export type OrganizationListDTO = {

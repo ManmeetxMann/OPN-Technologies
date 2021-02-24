@@ -75,6 +75,8 @@ async function setOrganizationLegacyValue(
     return await snapshot.ref.set(
       {
         legacyMode: organization.allowDependants,
+        enablePCRTest: false,
+        enableTemperatureCheck: false,
         timestamps: {
           migrations: {
             updateOrganizationLegacy: firestore.FieldValue.serverTimestamp(),
