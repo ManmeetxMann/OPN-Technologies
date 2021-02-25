@@ -150,6 +150,8 @@ class InternalController implements IControllerBase {
         isCheckInAdmin,
         isGenerateAdmin,
         isLookupAdmin,
+        adminForLabIds,
+        isClinicUser,
       } = req.body as InternalAdminApprovalCreateRequest
 
       // Make sure it does not exist
@@ -189,6 +191,8 @@ class InternalController implements IControllerBase {
         isCheckInAdmin: isCheckInAdmin ?? false,
         isGenerateAdmin: isGenerateAdmin ?? false,
         isLookupAdmin: isLookupAdmin ?? false,
+        isClinicUser: isClinicUser ?? false,
+        adminForLabIds: adminForLabIds ?? [],
       })
       res.json(actionSucceed())
     } catch (error) {
