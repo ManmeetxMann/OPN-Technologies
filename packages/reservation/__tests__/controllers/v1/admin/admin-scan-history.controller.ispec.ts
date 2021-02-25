@@ -4,8 +4,8 @@ import {app as server} from '../../../../src/app'
 import {create, deleteAppointmentByDateTime} from '../../../__seeds__/appointments'
 import {deleteAll} from '../../../__seeds__/admin-scan-history'
 
-//jest.spyOn(global.console, 'error').mockImplementation()
-//jest.spyOn(global.console, 'info').mockImplementation()
+jest.spyOn(global.console, 'error').mockImplementation()
+jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
 jest.mock('../../../../../common/src/utils/logging-setup')
 
@@ -82,6 +82,21 @@ describe('AdminScanHistoryController', () => {
     })
   })
 
+  describe('get scan history record', () => {
+    test('get new scan history record successfully', async (done) => {
+      const url = `/reservation/admin/api/v1/admin-scan-history?type=RapidAntigen`
+      const result = await request(server.app)
+        .get(url)
+        .set('authorization', 'bearer 10000')
+        .set('Content-Type', 'application/json')
+
+      expect(result.status).toBe(200)
+      expect(result.body.data).toEqual(
+        expect.arrayContaining([expect.objectContaining({id: aptID1})]),
+      )
+      done()
+    })
+  })
 
   afterAll(async () => {
     await deleteAppointmentByDateTime(`${dateForAppointments}T23:59:59`) //End of Day
