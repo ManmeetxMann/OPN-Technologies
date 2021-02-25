@@ -739,7 +739,10 @@ components:
       additionalProperties: false
       properties:
         name:
+          minLength: 1
           type: string
+      required:
+        - name
 
     LabResponse:
       type: object
