@@ -107,6 +107,25 @@ export class AppoinmentService {
     })
   }
 
+  async getAppointmentByHistory(adminId: string, type: TestTypes): Promise<AppointmentDBModel[]> {
+    const scanHistory = await this.adminScanHistoryRepository.findWhereEqualInMap([
+      {
+        map: '/',
+        operator: DataModelFieldMapOperatorType.Equals,
+        key: 'createdBy',
+        value: adminId,
+      },
+      {
+        map: '/',
+        operator: DataModelFieldMapOperatorType.Equals,
+        key: 'type',
+        value: type,
+      },
+    ])
+    const scannedIds = scanHistory.map(({appointmentId}) => appointmentId)
+    return scannedIds ? this.getAppointmentsDBByIds(scannedIds) : []
+  }
+
   async getAppointmentByBarCode(
     barCodeNumber: string,
     blockDuplicate?: boolean,

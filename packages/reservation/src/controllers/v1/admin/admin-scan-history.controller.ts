@@ -5,7 +5,11 @@ import {authorizationMiddleware} from '../../../../../common/src/middlewares/aut
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-import {appointmentUiDTOResponse, GetAdminScanHistoryRequest} from '../../../models/appointment'
+import {
+  appointmentUiDTOResponse,
+  GetAdminScanHistoryRequest,
+  PostAdminScanHistoryRequest,
+} from '../../../models/appointment'
 
 class AdminScanHistoryController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -21,6 +25,7 @@ class AdminScanHistoryController implements IControllerBase {
 
     const adminWithAppointments = authorizationMiddleware([RequiredUserPermission.AdminScanHistory])
 
+    innerRouter.get(this.path + '/admin-scan-history', adminWithAppointments, this.getByHistory)
     innerRouter.post(
       this.path + '/admin-scan-history',
       adminWithAppointments,
@@ -32,7 +37,7 @@ class AdminScanHistoryController implements IControllerBase {
 
   createScanHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {barCode, type} = req.body as GetAdminScanHistoryRequest
+      const {barCode, type} = req.body as PostAdminScanHistoryRequest
       const adminId = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
@@ -50,6 +55,26 @@ class AdminScanHistoryController implements IControllerBase {
         actionSucceed({
           ...appointmentUiDTOResponse(updatedAppointment, isLabUser),
         }),
+      )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getByHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {type} = req.query as GetAdminScanHistoryRequest
+      const adminId = getUserId(res.locals.authenticatedUser)
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+
+      const appointments = await this.appointmentService.getAppointmentByHistory(adminId, type)
+
+      res.json(
+        actionSucceed(
+          appointments.map((appointment) => ({
+            ...appointmentUiDTOResponse(appointment, isLabUser),
+          })),
+        ),
       )
     } catch (error) {
       next(error)

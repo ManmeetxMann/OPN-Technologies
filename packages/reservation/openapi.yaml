@@ -989,6 +989,29 @@ paths:
                 $ref: '#/components/schemas/AppointmentResponse200'
 
   /reservation/admin/api/v1/admin-scan-history:
+    get:
+      description: Get scanned appointments history for user
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+      tags:
+        - Appointment Management
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentResponse200'
     post:
       description: Get appointment by barcode and add to DB
       security:
