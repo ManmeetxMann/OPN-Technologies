@@ -144,6 +144,16 @@ export type CheckAppointmentRequest = {
   barCodes: string[]
 }
 
+export enum TestTypes {
+  PCR = 'PCR',
+  RapidAntigen = 'RapidAntigen',
+}
+
+export type GetAdminScanHistoryRequest = {
+  type: TestTypes
+  barCode: string
+}
+
 export type CreateAppointmentRequest = {
   slotId: string
   firstName: string

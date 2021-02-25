@@ -10,6 +10,7 @@ import {
 } from '../models/appointment'
 import DBSchema from '../dbschemas/appointments.schema'
 import {isEqual} from 'lodash'
+import {makeFirestoreTimestamp} from '../utils/datetime.helper'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
@@ -46,6 +47,15 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     })
 
     return this.updateProperty(id, 'barCode', barCode)
+  }
+
+  public setDeadlineDate(
+    appointmentId: string,
+    deadlineDate: moment.Moment,
+  ): Promise<AppointmentDBModel> {
+    return this.updateProperties(appointmentId, {
+      deadline: makeFirestoreTimestamp(deadlineDate.toISOString()),
+    })
   }
 
   public async updateAppointment({

@@ -19,6 +19,7 @@ import TestResultsController from './controllers/v1/test-results.controller'
 import AdminTemperatureV1Controller from './controllers/v1/admin/temperature.controller'
 import AdminLabController from './controllers/v1/admin/lab.controller'
 import TemperatureController from './controllers/v1/temperature.controller'
+import AdminHistoryController from './controllers/v1/admin/admin-scan-history.controller'
 
 const PORT = Number(process.env.PORT) || 5008
 
@@ -44,6 +45,7 @@ export const app = new App({
     new AdminTemperatureV1Controller(),
     new AdminLabController(),
     new TemperatureController(),
+    new AdminHistoryController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })

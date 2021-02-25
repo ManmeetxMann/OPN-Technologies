@@ -18,6 +18,7 @@ import {
   userAppointmentDTOResponse,
   AppointmentActivityAction,
   Filter,
+  TestTypes,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
@@ -33,6 +34,7 @@ import {Config} from '../../../common/src/utils/config'
 import {
   firestoreTimeStampToUTC,
   makeDeadline,
+  makeDeadlineDate,
   makeFirestoreTimestamp,
 } from '../utils/datetime.helper'
 
@@ -53,6 +55,8 @@ import {
   BulkOperationResponse,
   BulkOperationStatus,
 } from '../types/bulk-operation.type'
+import {AdminScanHistoryRepository} from '../respository/admin-scan-history'
+import {AdminScanHistory} from '../models/admin-scan-history'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -62,8 +66,46 @@ export class AppoinmentService {
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(this.dataStore)
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
+  private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
   private organizationService = new OrganizationService()
   private enterpriseAdapter = new Enterprise()
+
+  makeDeadline15Minutes(appointment: AppointmentDBModel): Promise<AppointmentDBModel> {
+    return this.appointmentsRepository.setDeadlineDate(appointment.id, makeDeadlineDate())
+  }
+
+  async checkDuplicatedScanHistory(adminId: string, appointmentId: string): Promise<void> {
+    const history = await this.adminScanHistoryRepository.findWhereEqualInMap([
+      {
+        map: '/',
+        key: 'createdBy',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: adminId,
+      },
+      {
+        map: '/',
+        key: 'appointmentId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: appointmentId,
+      },
+    ])
+    if (history?.length > 0) {
+      throw new DuplicateDataException('BarCode already scanned')
+    }
+  }
+
+  async addAdminScanHistory(
+    userId: string,
+    appointmentId: string,
+    type: TestTypes,
+  ): Promise<AdminScanHistory> {
+    await this.checkDuplicatedScanHistory(userId, appointmentId)
+    return this.adminScanHistoryRepository.save({
+      createdBy: userId,
+      type,
+      appointmentId: appointmentId,
+    })
+  }
 
   async getAppointmentByBarCode(
     barCodeNumber: string,

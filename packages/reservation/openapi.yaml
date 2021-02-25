@@ -988,6 +988,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
 
+  /reservation/admin/api/v1/admin-scan-history:
+    post:
+      description: Get appointment by barcode and add to DB
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Appointment Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - PCR
+                    - RapidAntigen
+                barCode:
+                  type: string
+              required:
+                - type
+                - barCode
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse200'
+
   /reservation/acuity_webhook/api/v1/appointment/update:
     post:
       description: Webhook for updating appointment in firestore
