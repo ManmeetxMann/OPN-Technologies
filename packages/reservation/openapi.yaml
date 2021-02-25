@@ -727,25 +727,25 @@ components:
               nullable: true
               type: string
     RapidAntigenRequest:
-      type: object
-      additionalProperties: false
-      properties:
-        appointmentIDs:
-          type: array
-          items:
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        properties:
+          appointmentID:
             type: string
-          minItems: 1
-          maxItems: 50
-        results:
-          type: string
-          enum:
-              - DoNothing
-              - Inconclusive
-              - Negative
-              - Positive
-      required:
-        - appointmentIDs 
-        - results           
+            minItems: 1
+            maxItems: 50
+          action:
+            type: string
+            enum:
+                - DoNothing
+                - SendInconclusive
+                - SendNegative
+                - SendPositive
+        required:
+          - appointmentID 
+          - action           
 paths:
   /admin/api/v1/send-fax-for-positive:
     post:
@@ -2662,4 +2662,4 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/BulkOperationResponse'

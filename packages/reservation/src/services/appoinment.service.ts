@@ -10,7 +10,6 @@ import {
   AppointmentChangeToRerunRequest,
   AppointmentDBModel,
   AppointmentStatus,
-  AppointmentStatusHistoryDb,
   CreateAppointmentRequest,
   DeadlineLabel,
   ResultTypes,
@@ -22,13 +21,10 @@ import {
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
-import {
-  AppointmentsRepository,
-  StatusHistoryRepository,
-} from '../respository/appointments-repository'
+import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
-import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
+import {dateFormats, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
 import {
@@ -123,7 +119,7 @@ export class AppoinmentService {
       },
     ])
     const scannedIds = scanHistory.map(({appointmentId}) => appointmentId)
-    return scannedIds ? this.getAppointmentsDBByIds(scannedIds) : []
+    return scannedIds ? this.appointmentsRepository.getAppointmentsDBByIds(scannedIds) : []
   }
 
   async getAppointmentByBarCode(
@@ -317,10 +313,6 @@ export class AppoinmentService {
       ...appointment,
       canCancel: this.getCanCancel(isLabUser, appointment.appointmentStatus),
     }
-  }
-
-  async getAppointmentsDBByIds(appointmentsIds: string[]): Promise<AppointmentDBModel[]> {
-    return this.appointmentsRepository.findWhereIdIn(appointmentsIds)
   }
 
   async getAppointmentByAcuityId(id: number | string): Promise<AppointmentDBModel> {
@@ -542,26 +534,12 @@ export class AppoinmentService {
     }
   }
 
-  private getStatusHistoryRepository(appointmentId: string) {
-    return new StatusHistoryRepository(this.dataStore, appointmentId)
-  }
-
-  async addStatusHistoryById(
-    appointmentId: string,
-    newStatus: AppointmentStatus,
-    createdBy: string,
-  ): Promise<AppointmentStatusHistoryDb> {
-    const appointment = await this.getAppointmentDBById(appointmentId)
-    return this.getStatusHistoryRepository(appointmentId).add({
-      newStatus: newStatus,
-      previousStatus: appointment.appointmentStatus,
-      createdOn: now(),
-      createdBy,
-    })
-  }
-
   async makeCanceled(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.InProgress, userId)
+    await this.appointmentsRepository.addStatusHistoryById(
+      appointmentId,
+      AppointmentStatus.InProgress,
+      userId,
+    )
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Canceled,
       canceled: true,
@@ -573,7 +551,11 @@ export class AppoinmentService {
     testRunId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.InProgress, userId)
+    await this.appointmentsRepository.addStatusHistoryById(
+      appointmentId,
+      AppointmentStatus.InProgress,
+      userId,
+    )
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.InProgress,
       testRunId,
@@ -626,7 +608,11 @@ export class AppoinmentService {
   }
 
   async makeReceived(appointmentId: string, vialLocation: string, userId: string): Promise<void> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.Received, userId)
+    await this.appointmentsRepository.addStatusHistoryById(
+      appointmentId,
+      AppointmentStatus.Received,
+      userId,
+    )
 
     await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Received,
@@ -639,7 +625,11 @@ export class AppoinmentService {
     transportRunId: string,
     userId: string,
   ): Promise<void> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.InTransit, userId)
+    await this.appointmentsRepository.addStatusHistoryById(
+      appointmentId,
+      AppointmentStatus.InTransit,
+      userId,
+    )
 
     await this.appointmentsRepository.updateProperties(appointmentId, {
       transportRunId: transportRunId,
@@ -702,7 +692,7 @@ export class AppoinmentService {
   ): Promise<AppointmentDBModel> {
     const utcDateTime = firestoreTimeStampToUTC(data.appointment.dateTime)
     const deadline = makeDeadline(utcDateTime, data.deadlineLabel)
-    await this.addStatusHistoryById(
+    await this.appointmentsRepository.addStatusHistoryById(
       data.appointment.id,
       AppointmentStatus.ReRunRequired,
       data.userId,
@@ -725,16 +715,13 @@ export class AppoinmentService {
     appointmentId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReCollectRequired, userId)
+    await this.appointmentsRepository.addStatusHistoryById(
+      appointmentId,
+      AppointmentStatus.ReCollectRequired,
+      userId,
+    )
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.ReCollectRequired,
-    })
-  }
-
-  async changeStatusToReported(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.Reported, userId)
-    return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.Reported,
     })
   }
 
@@ -866,7 +853,7 @@ export class AppoinmentService {
     failed: BulkOperationResponse[]
     filtredAppointmentIds: string[]
   }> {
-    const appointments = await this.getAppointmentsDBByIds(appointmentIds)
+    const appointments = await this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds)
     const appointmentIdsFromDb = []
     const barCodes = appointments.map(({barCode, id}) => {
       appointmentIdsFromDb.push(id)
@@ -1046,7 +1033,11 @@ export class AppoinmentService {
     if (!(await this.checkAppointmentStatusOnly(appointmentId, AppointmentStatus.Pending))) {
       throw new BadRequestException('Appointment status should be on Pending state')
     }
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.CheckedIn, userId)
+    await this.appointmentsRepository.addStatusHistoryById(
+      appointmentId,
+      AppointmentStatus.CheckedIn,
+      userId,
+    )
 
     return this.appointmentsRepository.changeAppointmentStatus(
       appointmentId,

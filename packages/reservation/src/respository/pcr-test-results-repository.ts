@@ -23,7 +23,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     id: string,
     pcrTestResults: Partial<PCRTestResultDBModel>,
   ): Promise<PCRTestResultDBModel> {
-    return await this.updateProperties(id, {...pcrTestResults, updatedAt: serverTimestamp()})
+    return this.updateProperties(id, {...pcrTestResults, updatedAt: serverTimestamp()})
   }
 
   async getWaitingPCRResultsByAppointmentId(
@@ -46,6 +46,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     const pcrTestResults = await this.findWhereEqualInMap(pcrTestResultsQuery)
 
     if (pcrTestResults.length > 1) {
+      //TODO
       //CRITICAL
       console.log(
         `getWaitingPCRResultsByAppointmentId: Multiple test results found with Appointment Id: ${appointmentId} `,

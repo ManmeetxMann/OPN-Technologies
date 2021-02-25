@@ -5,7 +5,6 @@ import loggerMiddleware from '../../common/src/middlewares/logger'
 
 import AdminPCRTestResultController from './controllers/v1/admin/pcr-test-results.controller'
 import ProcessPCRResultController from './controllers/v1/internal/process-pcr-test-result.controller'
-import AdminTestResultController from './controllers/v1/admin/test-results.controller.ts'
 import AdminPackageController from './controllers/v1/admin/package.controller'
 import AdminAppointmentControllerV1 from './controllers/v1/admin/appointment.controller'
 import AdminTestRunsController from './controllers/v1/admin/test-runs.controller'
@@ -29,7 +28,6 @@ export const app = new App({
   validation: true,
   corsOptions: '*',
   controllers: [
-    new AdminTestResultController(),
     new AdminPackageController(),
     new AdminAppointmentControllerV1(),
     new AdminTransportRunsController(),

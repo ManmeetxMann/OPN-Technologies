@@ -4,7 +4,6 @@ import {sortBy, union, fromPairs} from 'lodash'
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
 import {EmailService} from '../../../common/src/service/messaging/email-service'
-import {PdfService} from '../../../common/src/service/reports/pdf'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
@@ -13,10 +12,14 @@ import {formatDateRFC822Local, makeDeadlineForFilter} from '../utils/datetime.he
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 
+//service
 import {AppoinmentService} from './appoinment.service'
 import {CouponService} from './coupon.service'
 
+//repository
+import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
+
 import {
   TestResultsReportingTrackerPCRResultsRepository,
   TestResultsReportingTrackerRepository,
@@ -66,11 +69,12 @@ export class PCRTestResultsService {
   private datastore = new DataStore()
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.datastore)
+  private appointmentsRepository = new AppointmentsRepository(this.datastore)
+
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
   private couponService = new CouponService()
   private emailService = new EmailService()
-  private pdfService = new PdfService()
   private couponCode: string
   private whiteListedResultsTypes = [
     ResultTypes.Negative,
@@ -373,7 +377,7 @@ export class PCRTestResultsService {
     return pcrTestResults
   }
 
-  async getWaitingPCRResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
+  async getWaitingPCRResultByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
     const pcrTestResults = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
       appointmentId,
     )
@@ -749,7 +753,7 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        await this.appointmentService.changeStatusToReported(appointment.id, resultData.adminId)
+        await this.appointmentsRepository.changeStatusToReported(appointment.id, resultData.adminId)
         break
       }
     }
@@ -969,7 +973,7 @@ export class PCRTestResultsService {
     const pcrResults = await this.getPCRTestsByBarcode(barCodes)
 
     const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
-    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+    const appointments = await this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds)
     appointments.forEach((appointment) => {
       appointmentsByBarCode[appointment.barCode] = appointment
     })
@@ -1128,7 +1132,7 @@ export class PCRTestResultsService {
     }
 
     const appoinmentIds = pcrTestResults.map(({appointmentId}) => appointmentId)
-    const appointments = await this.appointmentService.getAppointmentsDBByIds(appoinmentIds)
+    const appointments = await this.appointmentsRepository.getAppointmentsDBByIds(appoinmentIds)
 
     await Promise.all(
       pcrTestResults.map(async (pcr) => {
@@ -1289,7 +1293,7 @@ export class PCRTestResultsService {
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
     const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
-    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+    const appointments = await this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds)
 
     const appointmentStatsByTypes: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
     const appointmentStatsByOrganization: Record<string, number> = {}
@@ -1411,7 +1415,7 @@ export class PCRTestResultsService {
     })
 
     const [appointments, testRuns, organizations] = await Promise.all([
-      this.appointmentService.getAppointmentsDBByIds(appointmentIds),
+      this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds),
       this.testRunsService.getTestRunByTestRunIds(union(testRunIds)),
       this.organizationService.getAllByIds(union(organizationIds)),
     ])
@@ -1509,7 +1513,7 @@ export class PCRTestResultsService {
     const appoinmentIds = pcrResults
       .filter(({result}) => result === ResultTypes.Pending)
       .map(({appointmentId}) => appointmentId)
-    const appoinments = await this.appointmentService.getAppointmentsDBByIds(appoinmentIds)
+    const appoinments = await this.appointmentsRepository.getAppointmentsDBByIds(appoinmentIds)
 
     return pcrResults.map((pcr) => {
       let result = pcr.result
