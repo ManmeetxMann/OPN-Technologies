@@ -1,18 +1,16 @@
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {NextFunction, Request, Response, Router} from 'express'
 import {AppoinmentService} from '../../../services/appoinment.service'
-import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {appointmentUiDTOResponse, GetAdminScanHistoryRequest} from '../../../models/appointment'
 
-class AdminHistoryController implements IControllerBase {
+class AdminScanHistoryController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
   public router = Router()
   private appointmentService = new AppoinmentService()
-  private pcrTestResultsService = new PCRTestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -23,12 +21,12 @@ class AdminHistoryController implements IControllerBase {
 
     const adminWithAppointments = authorizationMiddleware([RequiredUserPermission.AdminScanHistory])
 
-    innerRouter.post(this.path + '/admin-scan-history', adminWithAppointments, this.getByBarcode)
+    innerRouter.post(this.path + '/admin-scan-history', adminWithAppointments, this.createScanHistory)
 
     this.router.use('/', innerRouter)
   }
 
-  getByBarcode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  createScanHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {barCode, type} = req.body as GetAdminScanHistoryRequest
       const adminId = getUserId(res.locals.authenticatedUser)
@@ -51,4 +49,4 @@ class AdminHistoryController implements IControllerBase {
   }
 }
 
-export default AdminHistoryController
+export default AdminScanHistoryController
