@@ -12,7 +12,7 @@ import {SavePackageAndOrganizationRequest} from '../../../models/packages'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 
-class AdminController implements IControllerBase {
+class AdminPackageController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private packageService = new PackageService()
@@ -82,4 +82,4 @@ class AdminController implements IControllerBase {
   }
 }
 
-export default AdminController
+export default AdminPackageController
