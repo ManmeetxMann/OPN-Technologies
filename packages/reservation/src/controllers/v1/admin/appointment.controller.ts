@@ -95,6 +95,11 @@ class AdminAppointmentController implements IControllerBase {
       apptLabAuth,
       this.regenerateBarCode,
     )
+    innerRouter.post(
+      this.path + '/api/v1/appointments/{refAppointmentId}/create-new',
+      apptLabAuth,
+      this.scheduleNewAppointmentFromAnotherOne,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -367,6 +372,20 @@ class AdminAppointmentController implements IControllerBase {
       const appointment = await this.appointmentService.regenerateBarCode(appointmentId, userId)
 
       res.json(actionSucceed(appointmentUiDTOResponse(appointment, false)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  scheduleNewAppointmentFromAnotherOne = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {refAppointmentId} = req.params as {refAppointmentId: string}
+      const {date, time} = req.body as {date:string , time:string}
+      const refAppointment = await this.appointmentService.getAppointmentDBById(refAppointmentId);
+      refAppointment.dateOfAppointment= date;
+      refAppointment.timeOfAppointment= time;
+      //const savedAppointment = await this.appointmentService.createAcuityAppointment(refAppointment);
+      //res.json(actionSucceed(appointmentUiDTOResponse(savedAppointment, false)))
     } catch (error) {
       next(error)
     }
