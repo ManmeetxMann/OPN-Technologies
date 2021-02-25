@@ -4,6 +4,12 @@ info:
   version: 1.0.0
 
 components:
+  securitySchemes:
+    bearerAuthJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
   schemas:
     Error:
       type: object
@@ -138,6 +144,8 @@ paths:
       description: Return Copy for Results Screen
       tags:
         - Content Result
+      security:
+        - bearerAuthJWT: []
       parameters:
         - in: query
           name: lang

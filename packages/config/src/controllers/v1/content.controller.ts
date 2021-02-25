@@ -41,7 +41,7 @@ class ContentController implements IControllerBase {
         })
 
         result = {
-          legalNotice: '',
+          legalNotice: 'TEST',
           doctorName: professional.name,
           doctorSignature: professional.signatureUrl,
           resultInfo,
