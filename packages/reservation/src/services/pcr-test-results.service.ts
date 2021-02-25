@@ -352,6 +352,7 @@ export class PCRTestResultsService {
         firstName: pcr.firstName,
         lastName: pcr.lastName,
         testType: 'PCR',
+        organizationId: organization?.id,
         organizationName: organization?.name,
       }
     })
@@ -1036,6 +1037,61 @@ export class PCRTestResultsService {
     }
 
     return testResultsWithHistory
+  }
+
+  async getPCRResultsStats(
+    {organizationId, deadline, barCode, result}: PcrTestResultsListRequest,
+    isLabUser: boolean,
+  ): Promise<{
+    total: number
+    pcrResultStatsByOrgIdArr: Filter[]
+    pcrResultStatsByResultArr: Filter[]
+  }> {
+    const pcrTestResults = await this.getPCRResults(
+      {organizationId, deadline, barCode, result},
+      isLabUser,
+    )
+
+    const pcrResultStatsByResult: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
+    const pcrResultStatsByOrgId: Record<string, number> = {}
+    const organizations = {}
+    let total = 0
+
+    pcrTestResults.forEach((pcrTest) => {
+      if (pcrResultStatsByResult[pcrTest.result]) {
+        ++pcrResultStatsByResult[pcrTest.result]
+      } else {
+        pcrResultStatsByResult[pcrTest.result] = 1
+      }
+      if (pcrResultStatsByOrgId[pcrTest.organizationId]) {
+        ++pcrResultStatsByOrgId[pcrTest.organizationId]
+      } else {
+        pcrResultStatsByOrgId[pcrTest.organizationId] = 1
+        organizations[pcrTest.organizationId] = pcrTest.organizationName
+      }
+      ++total
+    })
+
+    const pcrResultStatsByResultArr = Object.entries(pcrResultStatsByResult).map(
+      ([name, count]) => ({
+        id: name,
+        name,
+        count,
+      }),
+    )
+    const pcrResultStatsByOrgIdArr = Object.entries(pcrResultStatsByOrgId).map(
+      ([orgId, count]) => ({
+        id: orgId === 'undefined' ? null : orgId,
+        name: orgId === 'undefined' ? 'None' : organizations[orgId],
+        count,
+      }),
+    )
+
+    return {
+      pcrResultStatsByResultArr,
+      pcrResultStatsByOrgIdArr,
+      total,
+    }
   }
 
   async updateOrganizationIdByAppointmentId(

@@ -281,6 +281,8 @@ export type PCRTestResultListDTO = {
   dateTime?: string
   deadline?: string
   testRunId?: string
+  organizationId: string
+  organizationName: string
 }
 
 export type PCRTestResultByDeadlineListDTO = {

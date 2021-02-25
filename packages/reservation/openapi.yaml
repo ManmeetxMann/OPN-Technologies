@@ -1360,6 +1360,50 @@ paths:
               schema:
                 $ref: '#/components/schemas/PCRTestResultsResponse200'
 
+  /reservation/admin/api/v1/pcr-test-results/stats:
+    get:
+      description: Retrieve list of PCR Results
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+        - in: query
+          name: deadline
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: barCode
+          schema:
+            type: string
+        - in: query
+          name: result
+          schema:
+            type: string
+            enum:
+              [
+                  PresumptivePositive,
+                  PreliminaryPositive,
+                  Positive,
+                  Negative,
+                  Pending,
+                  Invalid,
+                  Inconclusive,
+                  Indeterminate,
+              ]
+      responses:
+        '200':
+          description: Succesfully return stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse200'
+
   /reservation/admin/api/v1/pcr-test-results:
     post:
       description: Send PCR Results

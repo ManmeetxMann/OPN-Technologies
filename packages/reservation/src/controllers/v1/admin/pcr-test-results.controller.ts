@@ -95,6 +95,11 @@ class AdminPCRTestResultController implements IControllerBase {
       this.dueDeadlineStats,
     )
     innerRouter.get(
+      this.path + '/pcr-test-results/stats',
+      dueTodayAuth,
+      this.getPCRResultsHistoryStats,
+    )
+    innerRouter.get(
       this.path + '/pcr-test-results/:pcrTestResultId',
       dueTodayAuth,
       this.onePcrTestResult,
@@ -235,6 +240,47 @@ class AdminPCRTestResultController implements IControllerBase {
       )
 
       res.json(actionSucceed(pcrResults))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getPCRResultsHistoryStats = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {deadline, organizationId, barCode, result} = req.query as PcrTestResultsListRequest
+      if (!barCode && !deadline) {
+        throw new BadRequestException('"deadline" is required if "barCode" is not specified')
+      }
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+
+      const {
+        pcrResultStatsByResultArr,
+        pcrResultStatsByOrgIdArr,
+        total,
+      } = await this.pcrTestResultsService.getPCRResultsStats(
+        {
+          organizationId,
+          deadline,
+          barCode,
+          result,
+        },
+        isLabUser,
+      )
+
+      res.json(
+        actionSucceed(
+          statsUiDTOResponse(
+            pcrResultStatsByResultArr,
+            pcrResultStatsByOrgIdArr,
+            total,
+            !organizationId,
+          ),
+        ),
+      )
     } catch (error) {
       next(error)
     }

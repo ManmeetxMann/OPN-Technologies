@@ -311,21 +311,27 @@ export const statsUiDTOResponse = (
   appointmentStatus: Filter[],
   orgIdArray: Filter[],
   total: number,
-): appointmentStatsUiDTO => ({
-  total,
-  filterGroup: [
+  showOrgFilter = true,
+): appointmentStatsUiDTO => {
+  const filterGroup = [
     {
       name: FilterName.FilterByStatusType,
       key: FilterGroupKey.appointmentStatus,
       filters: appointmentStatus,
     },
-    {
+  ]
+  if (showOrgFilter) {
+    filterGroup.push({
       name: FilterName.FilterByCorporation,
       key: FilterGroupKey.organizationId,
       filters: orgIdArray,
-    },
-  ],
-})
+    })
+  }
+  return {
+    total,
+    filterGroup,
+  }
+}
 
 export const appointmentUiDTOResponse = (
   appointment: AppointmentDBModel & {canCancel?: boolean; organizationName?: string},
