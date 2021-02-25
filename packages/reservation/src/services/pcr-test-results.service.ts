@@ -200,7 +200,7 @@ export class PCRTestResultsService {
       ResultReportStatus.Processing,
     )
     try {
-      await this.handlePCRResultSaveAndSend(
+      const pcrTestResult = await this.handlePCRResultSaveAndSend(
         {
           barCode: pcrResults.data.barCode,
           resultSpecs: pcrResults.data,
@@ -211,7 +211,7 @@ export class PCRTestResultsService {
       )
 
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
-        status: await this.getReportStatus(pcrResults.data.action),
+        status: await this.getReportStatus(pcrResults.data.action, pcrTestResult.result),
         details: 'Action Completed',
       })
       LogInfo('processPCRTestResult', 'SuccessfullyProcessed', {
@@ -242,7 +242,7 @@ export class PCRTestResultsService {
 
     let inProgress = false
     const testResultsReporting = await testResultsReportingTrackerPCRResult.fetchAll()
-    const statusesForInProgressCondition = [
+    const statusesForInProgressCondition: (ResultTypes | ResultReportStatus)[] = [
       ResultReportStatus.RequestReceived,
       ResultReportStatus.Processing,
     ]
@@ -352,6 +352,7 @@ export class PCRTestResultsService {
         firstName: pcr.firstName,
         lastName: pcr.lastName,
         testType: 'PCR',
+        organizationId: organization?.id,
         organizationName: organization?.name,
       }
     })
@@ -1038,6 +1039,61 @@ export class PCRTestResultsService {
     return testResultsWithHistory
   }
 
+  async getPCRResultsStats(
+    {organizationId, deadline, barCode, result}: PcrTestResultsListRequest,
+    isLabUser: boolean,
+  ): Promise<{
+    total: number
+    pcrResultStatsByOrgIdArr: Filter[]
+    pcrResultStatsByResultArr: Filter[]
+  }> {
+    const pcrTestResults = await this.getPCRResults(
+      {organizationId, deadline, barCode, result},
+      isLabUser,
+    )
+
+    const pcrResultStatsByResult: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
+    const pcrResultStatsByOrgId: Record<string, number> = {}
+    const organizations = {}
+    let total = 0
+
+    pcrTestResults.forEach((pcrTest) => {
+      if (pcrResultStatsByResult[pcrTest.result]) {
+        ++pcrResultStatsByResult[pcrTest.result]
+      } else {
+        pcrResultStatsByResult[pcrTest.result] = 1
+      }
+      if (pcrResultStatsByOrgId[pcrTest.organizationId]) {
+        ++pcrResultStatsByOrgId[pcrTest.organizationId]
+      } else {
+        pcrResultStatsByOrgId[pcrTest.organizationId] = 1
+        organizations[pcrTest.organizationId] = pcrTest.organizationName
+      }
+      ++total
+    })
+
+    const pcrResultStatsByResultArr = Object.entries(pcrResultStatsByResult).map(
+      ([name, count]) => ({
+        id: name,
+        name,
+        count,
+      }),
+    )
+    const pcrResultStatsByOrgIdArr = Object.entries(pcrResultStatsByOrgId).map(
+      ([orgId, count]) => ({
+        id: orgId === 'undefined' ? null : orgId,
+        name: orgId === 'undefined' ? 'None' : organizations[orgId],
+        count,
+      }),
+    )
+
+    return {
+      pcrResultStatsByResultArr,
+      pcrResultStatsByOrgIdArr,
+      total,
+    }
+  }
+
   async updateOrganizationIdByAppointmentId(
     appointmentId: string,
     organizationId: string,
@@ -1399,32 +1455,35 @@ export class PCRTestResultsService {
     return sortBy(pcrFiltred, ['status'])
   }
 
-  async getReportStatus(action: PCRResultActions): Promise<ResultReportStatus> {
-    let status: ResultReportStatus
-
+  async getReportStatus(action: PCRResultActions, result: ResultTypes): Promise<string> {
+    let status: string
     switch (action) {
       case PCRResultActions.DoNothing: {
         status = ResultReportStatus.Skipped
         break
       }
-      case PCRResultActions.RequestReCollect: {
-        status = ResultReportStatus.SentReCollectRequest
-        break
-      }
       case PCRResultActions.RecollectAsInconclusive: {
-        status = ResultReportStatus.SentReCollectRequest
+        status = ResultReportStatus.SentReCollectRequestAsInconclusive
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
-        status = ResultReportStatus.SentReCollectRequest
+        status = ResultReportStatus.SentReCollectRequestAsInvalid
         break
       }
       case PCRResultActions.ReRunToday || PCRResultActions.ReRunTomorrow: {
         status = ResultReportStatus.SentReRunRequest
         break
       }
+      case PCRResultActions.MarkAsPresumptivePositive: {
+        status = ResultReportStatus.SentPresumptivePositive
+        break
+      }
+      case PCRResultActions.SendPreliminaryPositive: {
+        status = ResultReportStatus.SentPreliminaryPositive
+        break
+      }
       default: {
-        status = ResultReportStatus.SentResult
+        status = `Sent "${result}"`
       }
     }
     return status

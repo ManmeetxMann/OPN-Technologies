@@ -15,7 +15,7 @@ import {
 } from '../../../models/appointment'
 import {testResultUiDTOResponse} from '../../../models/test-result'
 
-class AdminController implements IControllerBase {
+class AdminTestResultController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private testResultsService = new TestResultsService()
@@ -73,4 +73,4 @@ class AdminController implements IControllerBase {
   }
 }
 
-export default AdminController
+export default AdminTestResultController
