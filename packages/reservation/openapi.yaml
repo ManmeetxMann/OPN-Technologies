@@ -736,13 +736,13 @@ components:
             type: string
           minItems: 1
           maxItems: 50
-        results:
+        action:
           type: string
           enum:
               - DoNothing
-              - Inconclusive
-              - Negative
-              - Positive
+              - SendInconclusive
+              - SendNegative
+              - SendPositive
       required:
         - appointmentIDs 
         - results           
