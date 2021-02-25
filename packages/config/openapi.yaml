@@ -22,6 +22,38 @@ components:
             - message
       required:
         - error
+
+    ResultContentResponse: 
+      type: object
+      deprecated: false
+      additionalProperties: false
+      properties:
+        legalNotice:
+          type: string
+        doctorName:
+          type: string
+        doctorSignature:
+          type: string
+        resultInfo:
+          type: array
+          items: 
+            type: object
+            properties:
+              details:
+                type: string
+              resultType: 
+                type: string
+                enum:
+                  [
+                    PresumptivePositive,
+                    PreliminaryPositive,
+                    Positive,
+                    Negative,
+                    Pending,
+                    Invalid,
+                    Inconclusive,
+                    Indeterminate,
+                  ]
   responses:
     error:
       description: Default error response with error object
@@ -101,3 +133,31 @@ paths:
                           additionalProperties: false
         default:
           $ref: "#/components/responses/error"
+  /config/api/v1/content/result:
+    get:
+      description: Return Copy for Results Screen
+      tags:
+        - Content Result
+      parameters:
+        - in: query
+          name: lang
+          schema:
+            type: string
+            enum: 
+              [
+                en,
+                fr
+              ]
+          required: true
+        - in: query
+          name: doctor
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Succesfully retrieve transport run list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultContentResponse'
