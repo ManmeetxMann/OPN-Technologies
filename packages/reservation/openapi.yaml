@@ -744,8 +744,8 @@ components:
               - Negative
               - Positive
       required:
-        - appointmentID   
-        - type           
+        - appointmentIDs 
+        - results           
 paths:
   /admin/api/v1/send-fax-for-positive:
     post:
