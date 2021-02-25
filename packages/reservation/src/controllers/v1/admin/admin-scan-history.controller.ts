@@ -21,7 +21,11 @@ class AdminScanHistoryController implements IControllerBase {
 
     const adminWithAppointments = authorizationMiddleware([RequiredUserPermission.AdminScanHistory])
 
-    innerRouter.post(this.path + '/admin-scan-history', adminWithAppointments, this.createScanHistory)
+    innerRouter.post(
+      this.path + '/admin-scan-history',
+      adminWithAppointments,
+      this.createScanHistory,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -36,7 +40,11 @@ class AdminScanHistoryController implements IControllerBase {
 
       await this.appointmentService.makeDeadline15Minutes(appointment)
       await this.appointmentService.addAdminScanHistory(adminId, appointment.id, type)
-      const updatedAppointment = await this.appointmentService.makeInProgress(appointment.id, null, adminId)
+      const updatedAppointment = await this.appointmentService.makeInProgress(
+        appointment.id,
+        null,
+        adminId,
+      )
 
       res.json(
         actionSucceed({
