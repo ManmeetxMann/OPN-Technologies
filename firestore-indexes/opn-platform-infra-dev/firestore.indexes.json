@@ -85,7 +85,35 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "timestamps.createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "access",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "access",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamps.createdAt",
           "order": "ASCENDING"
         }
       ]
@@ -105,12 +133,44 @@
       ]
     },
     {
+      "collectionGroup": "appointments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "attestations",
       "queryScope": "COLLECTION",
       "fields": [
         {
           "fieldPath": "appliesTo",
           "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "attestationTime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "attestations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "appliesTo",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
         },
         {
           "fieldPath": "attestationTime",
@@ -261,19 +321,39 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "organizationId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "result",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "testRunId",
+          "fieldPath": "waitingResult",
           "order": "ASCENDING"
         },
         {
           "fieldPath": "deadline",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "waitingResult",
           "order": "ASCENDING"
         }
       ]
@@ -287,7 +367,11 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "updatedAt",
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "result",
           "order": "DESCENDING"
         }
       ]
@@ -297,12 +381,16 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "result",
+          "fieldPath": "deadline",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "deadline",
+          "fieldPath": "displayInResult",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "result",
+          "order": "DESCENDING"
         }
       ]
     },
@@ -311,16 +399,20 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "deadline",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "result",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "testRunId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "`timestamps.createdAt`",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     },
