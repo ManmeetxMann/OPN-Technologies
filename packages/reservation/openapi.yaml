@@ -733,7 +733,51 @@ components:
             message:
               nullable: true
               type: string
+    
+    LabRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          minLength: 1
+          type: string
+      required:
+        - name
 
+    LabResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          nullable: true
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
 paths:
 
   /admin/api/v1/send-fax-for-positive:
@@ -936,6 +980,61 @@ paths:
           schema:
             type: string
           required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse200'
+
+  /reservation/admin/api/v1/admin-scan-history:
+    get:
+      description: Get scanned appointments history for user
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+      tags:
+        - Appointment Management
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentResponse200'
+    post:
+      description: Get appointment by barcode and add to DB
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Appointment Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - PCR
+                    - RapidAntigen
+                barCode:
+                  type: string
+              required:
+                - type
+                - barCode
       responses:
         '200':
           description: Successfully Return
@@ -2558,3 +2657,103 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfTemperature'
+  /reservation/api/v1/temperature/{id}:
+    get:
+      description: Get temperature by user ID and organization ID
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Temperature Management
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        temperatureInCelsius:
+                          type: number
+                        temperatureInFahrenheit:
+                          type: number
+                        createdAt:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            [
+                              proceed,
+                              stop
+                            ]
+                        result:
+                          type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          [
+                            succeed,
+                            failed,
+                            validation_error,
+                            internal_server_error,
+                            unauthorized,
+                            access_denied,
+                            resource_not_found,
+                          ]
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
+  /reservation/admin/api/v1/labs:
+    post:
+      description: Create a new Lab
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Labs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+    get:
+      description: Get all a Labs
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Labs
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabResponse'

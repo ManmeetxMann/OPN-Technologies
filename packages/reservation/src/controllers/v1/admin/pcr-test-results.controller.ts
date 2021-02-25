@@ -33,7 +33,7 @@ import {
 import {statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 
-class PCRTestResultController implements IControllerBase {
+class AdminPCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
@@ -171,7 +171,11 @@ class PCRTestResultController implements IControllerBase {
         true,
         data.sendUpdatedResults,
       )
-      const successMessage = `For ${pcrResultRecorded.barCode}, a "${pcrResultRecorded.result}" has been  recorded and sent to the client`
+      const status = await this.pcrTestResultsService.getReportStatus(
+        pcrResultRecorded.resultSpecs.action,
+        pcrResultRecorded.result,
+      )
+      const successMessage = `${status} for ${pcrResultRecorded.barCode}`
       res.json(actionSuccess({id: pcrResultRecorded.id}, successMessage))
     } catch (error) {
       next(error)
@@ -417,4 +421,4 @@ class PCRTestResultController implements IControllerBase {
   }
 }
 
-export default PCRTestResultController
+export default AdminPCRTestResultController
