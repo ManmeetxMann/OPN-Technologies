@@ -36,11 +36,11 @@ class AdminScanHistoryController implements IControllerBase {
 
       await this.appointmentService.makeDeadline15Minutes(appointment)
       await this.appointmentService.addAdminScanHistory(adminId, appointment.id, type)
-      await this.appointmentService.makeInProgress(appointment.id, null, adminId)
+      const updatedAppointment = await this.appointmentService.makeInProgress(appointment.id, null, adminId)
 
       res.json(
         actionSucceed({
-          ...appointmentUiDTOResponse(appointment, isLabUser),
+          ...appointmentUiDTOResponse(updatedAppointment, isLabUser),
         }),
       )
     } catch (error) {
