@@ -149,9 +149,13 @@ export enum TestTypes {
   RapidAntigen = 'RapidAntigen',
 }
 
-export type GetAdminScanHistoryRequest = {
+export type PostAdminScanHistoryRequest = {
   type: TestTypes
   barCode: string
+}
+
+export type GetAdminScanHistoryRequest = {
+  type: TestTypes
 }
 
 export type CreateAppointmentRequest = {
