@@ -74,11 +74,32 @@ export class AppoinmentService {
     return this.appointmentsRepository.setDeadlineDate(appointment.id, makeDeadlineDate())
   }
 
-  addAdminScanHistory(
+  async checkDuplicatedScanHistory(adminId: string, appointmentId: string): Promise<void> {
+    const history = await this.adminScanHistoryRepository.findWhereEqualInMap([
+      {
+        map: '/',
+        key: 'createdBy',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: adminId,
+      },
+      {
+        map: '/',
+        key: 'appointmentId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: appointmentId,
+      },
+    ])
+    if (history?.length > 0) {
+      throw new DuplicateDataException('BarCode already scanned')
+    }
+  }
+
+  async addAdminScanHistory(
     userId: string,
     appointmentId: string,
     type: TestTypes,
   ): Promise<AdminScanHistory> {
+    await this.checkDuplicatedScanHistory(userId, appointmentId)
     return this.adminScanHistoryRepository.save({
       createdBy: userId,
       type,
