@@ -1,3 +1,6 @@
+import {isEqual} from 'lodash'
+import {makeFirestoreTimestamp} from '../utils/datetime.helper'
+import {now} from '../../../common/src/utils/times'
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 import {
@@ -9,8 +12,6 @@ import {
   UpdateAppointmentActionParams,
 } from '../models/appointment'
 import DBSchema from '../dbschemas/appointments.schema'
-import {isEqual} from 'lodash'
-import {makeFirestoreTimestamp} from '../utils/datetime.helper'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
@@ -18,6 +19,10 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
 
   constructor(dataStore: DataStore) {
     super(dataStore)
+  }
+
+  async getAppointmentById(appointmentId: string): Promise<AppointmentDBModel> {
+    return this.get(appointmentId)
   }
 
   async getAppointmentsDBByIds(appointmentsIds: string[]): Promise<AppointmentDBModel[]> {
@@ -35,6 +40,28 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   ): Promise<AppointmentDBModel> {
     return this.updateProperties(appointmentId, {
       appointmentStatus,
+    })
+  }
+
+  async addStatusHistoryById(
+    appointmentId: string,
+    newStatus: AppointmentStatus,
+    createdBy: string,
+  ): Promise<AppointmentStatusHistoryDb> {
+    const appointment = await this.getAppointmentById(appointmentId)
+    const appointmentStatusHistory = new StatusHistoryRepository(this.datastore, appointmentId)
+    return appointmentStatusHistory.add({
+      newStatus: newStatus,
+      previousStatus: appointment.appointmentStatus,
+      createdOn: now(),
+      createdBy,
+    })
+  }
+
+  async changeStatusToReported(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.Reported, userId)
+    return this.updateProperties(appointmentId, {
+      appointmentStatus: AppointmentStatus.Reported,
     })
   }
 

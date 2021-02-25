@@ -9,7 +9,6 @@ export class TestResultsService {
   private pdfService = new PdfService()
   private faxService = new FaxService()
 
-
   async sendFax(testResults: TestResultsDTOForEmail, faxNumber: string): Promise<string> {
     const resultDateRaw = testResults.resultDate
     const date = new Date()
@@ -21,5 +20,4 @@ export class TestResultsService {
 
     return this.faxService.send(faxNumber, name, pdfContent)
   }
-
 }

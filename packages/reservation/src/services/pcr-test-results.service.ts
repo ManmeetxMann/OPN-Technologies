@@ -17,7 +17,7 @@ import {AppoinmentService} from './appoinment.service'
 import {CouponService} from './coupon.service'
 
 //repository
-import { AppointmentsRepository } from '../respository/appointments-repository'
+import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
 import {
@@ -65,13 +65,12 @@ import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operatio
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {TestRunsService} from '../services/test-runs.service'
 
-
 export class PCRTestResultsService {
   private datastore = new DataStore()
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.datastore)
   private appointmentsRepository = new AppointmentsRepository(this.datastore)
-  
+
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
   private couponService = new CouponService()
@@ -378,7 +377,7 @@ export class PCRTestResultsService {
     return pcrTestResults
   }
 
-  async getWaitingPCRResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
+  async getWaitingPCRResultByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
     const pcrTestResults = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
       appointmentId,
     )
@@ -754,7 +753,7 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        await this.appointmentService.changeStatusToReported(appointment.id, resultData.adminId)
+        await this.appointmentsRepository.changeStatusToReported(appointment.id, resultData.adminId)
         break
       }
     }

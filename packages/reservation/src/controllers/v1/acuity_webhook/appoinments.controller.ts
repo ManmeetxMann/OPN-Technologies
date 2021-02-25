@@ -169,10 +169,10 @@ class AppointmentWebhookController implements IControllerBase {
           acuityID: id,
           barCode: barCode,
         })
-        const pcrTestResult = await this.pcrTestResultsService.getWaitingPCRResultsByAppointmentId(
+        const pcrTestResult = await this.pcrTestResultsService.getWaitingPCRResultByAppointmentId(
           appointmentFromDb.id,
         )
-        //getWaitingPCRResultsByAppointmentId will throw exception if pcrTestResult doesn't exists
+        //getWaitingPCRResultByAppointmentId will throw exception if pcrTestResult doesn't exists
 
         if (
           action === AcuityWebhookActions.Canceled ||
