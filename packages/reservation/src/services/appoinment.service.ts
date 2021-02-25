@@ -123,7 +123,7 @@ export class AppoinmentService {
       },
     ])
     const scannedIds = scanHistory.map(({appointmentId}) => appointmentId)
-    return scannedIds ? this.getAppointmentsDBByIds(scannedIds) : []
+    return scannedIds ? this.appointmentsRepository.getAppointmentsDBByIds(scannedIds) : []
   }
 
   async getAppointmentByBarCode(
@@ -317,10 +317,6 @@ export class AppoinmentService {
       ...appointment,
       canCancel: this.getCanCancel(isLabUser, appointment.appointmentStatus),
     }
-  }
-
-  async getAppointmentsDBByIds(appointmentsIds: string[]): Promise<AppointmentDBModel[]> {
-    return this.appointmentsRepository.findWhereIdIn(appointmentsIds)
   }
 
   async getAppointmentByAcuityId(id: number | string): Promise<AppointmentDBModel> {
@@ -866,7 +862,7 @@ export class AppoinmentService {
     failed: BulkOperationResponse[]
     filtredAppointmentIds: string[]
   }> {
-    const appointments = await this.getAppointmentsDBByIds(appointmentIds)
+    const appointments = await this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds)
     const appointmentIdsFromDb = []
     const barCodes = appointments.map(({barCode, id}) => {
       appointmentIdsFromDb.push(id)

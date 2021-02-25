@@ -20,6 +20,10 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     super(dataStore)
   }
 
+  async getAppointmentsDBByIds(appointmentsIds: string[]): Promise<AppointmentDBModel[]> {
+    return this.findWhereIdIn(appointmentsIds)
+  }
+
   public async save(appointments: Omit<AppointmentDBModel, 'id'>): Promise<AppointmentDBModel> {
     const validatedData = await DBSchema.validateAsync(appointments)
     return this.add(validatedData)
