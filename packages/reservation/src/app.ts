@@ -20,6 +20,7 @@ import AdminTemperatureV1Controller from './controllers/v1/admin/temperature.con
 import AdminLabController from './controllers/v1/admin/lab.controller'
 import TemperatureController from './controllers/v1/temperature.controller'
 import AdminHistoryController from './controllers/v1/admin/admin-scan-history.controller'
+import AdminRapidAntigenTestTesultsController from './controllers/v1/admin/rapid-antigen-test-results.controller'
 
 const PORT = Number(process.env.PORT) || 5008
 
@@ -40,12 +41,13 @@ export const app = new App({
     new AppointmentController(),
     new BookingLocationController(),
     new AppointmentAvailabilityController(),
-    new AppointmentController(),
-    new TestResultsController(),
     new AdminTemperatureV1Controller(),
     new AdminLabController(),
-    new TemperatureController(),
     new AdminHistoryController(),
+    new AdminRapidAntigenTestTesultsController(),
+    new AppointmentController(),
+    new TestResultsController(),
+    new TemperatureController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })

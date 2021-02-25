@@ -8,7 +8,6 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
     Response:
       type: object
@@ -24,19 +23,16 @@ components:
             code:
               type: string
               enum:
-                [
-                    succeed,
-                    failed,
-                    validation_error,
-                    internal_server_error,
-                    unauthorized,
-                    access_denied,
-                    resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
             message:
               nullable: true
               type: string
-
     TestResult200:
       type: object
       deprecated: false
@@ -54,7 +50,6 @@ components:
           type: string
         result:
           type: string
-
     TestRunsResponse200:
       type: object
       additionalProperties: false
@@ -72,22 +67,19 @@ components:
             code:
               type: string
               enum:
-                [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
         message:
           nullable: true
           type: string
       required:
         - testRunId
         - testRunDateTime
-
     GenerateNextBarCodeResponse:
       type: object
       additionalProperties: false
@@ -101,21 +93,18 @@ components:
             code:
               type: string
               enum:
-                [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
         message:
           nullable: true
           type: string
       required:
         - barCode
-
     StatsResponse200:
       type: object
       additionalProperties: false
@@ -136,10 +125,8 @@ components:
                   key:
                     type: string
                     enum:
-                      [
-                          organizationId,
-                          appointmentStatus,
-                      ]
+                      - organizationId
+                      - appointmentStatus
                   filters:
                     type: array
                     items:
@@ -185,19 +172,16 @@ components:
             code:
               type: string
               enum:
-                [
-                    succeed,
-                    failed,
-                    validation_error,
-                    internal_server_error,
-                    unauthorized,
-                    access_denied,
-                    resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
             message:
               nullable: true
               type: string
-
     AppointmentResponse200:
       type: object
       additionalProperties: false
@@ -246,19 +230,16 @@ components:
             code:
               type: string
               enum:
-                [
-                    succeed,
-                    failed,
-                    validation_error,
-                    internal_server_error,
-                    unauthorized,
-                    access_denied,
-                    resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
             message:
               nullable: true
               type: string
-
     AppointmentBarCodeLookupResponse200:
       type: object
       additionalProperties: false
@@ -301,19 +282,16 @@ components:
             code:
               type: string
               enum:
-                [
-                    succeed,
-                    failed,
-                    validation_error,
-                    internal_server_error,
-                    unauthorized,
-                    access_denied,
-                    resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
             message:
               nullable: true
               type: string
-
     TransportRunListResponse200:
       type: object
       additionalProperties: false
@@ -339,19 +317,16 @@ components:
             code:
               type: string
               enum:
-                [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
             message:
               nullable: true
               type: string
-
     AppointmentTransportRunResponse200:
       type: object
       additionalProperties: false
@@ -367,10 +342,8 @@ components:
               state:
                 type: string
                 enum:
-                  [
-                    succeed,
-                    failed
-                  ]
+                  - succeed
+                  - failed
         status:
           type: object
           additionalProperties: false
@@ -378,19 +351,16 @@ components:
             code:
               type: string
               enum:
-                [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
             message:
               nullable: true
               type: string
-
     TransportRunResponse200:
       type: object
       additionalProperties: false
@@ -408,19 +378,16 @@ components:
             code:
               type: string
               enum:
-                [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
             message:
               nullable: true
               type: string
-
     PCRTestResultsResponse200:
       type: object
       additionalProperties: false
@@ -435,19 +402,16 @@ components:
             code:
               type: string
               enum:
-                [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
             message:
               nullable: true
               type: string
-
     AppointmentResponse:
       type: object
       additionalProperties: false
@@ -462,19 +426,16 @@ components:
             code:
               type: string
               enum:
-                [
-                    succeed,
-                    failed,
-                    validation_error,
-                    internal_server_error,
-                    unauthorized,
-                    access_denied,
-                    resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
             message:
               nullable: true
               type: string
-
     PCRTestResultsRequestBulk:
       type: object
       additionalProperties: false
@@ -486,79 +447,78 @@ components:
         results:
           type: array
           items:
-              type: object
-              required:
-                - action
-                - autoResult
-                - barCode
-                - calRed61Ct
-                - calRed61RdRpGene
-                - famCt
-                - famEGene
-                - hexCt
-                - hexIC
-                - quasar670Ct
-                - quasar670NGene
-              properties:
-                action:
-                  type: string
-                  default: SendThisResult
-                  enum:
-                    - SendThisResult
-                    - DoNothing
-                    - ReRunToday
-                    - ReRunTomorrow
-                    - RequestReCollect
-                    - RecollectAsInvalid
-                    - RecollectAsInconclusive
-                    - MarkAsPositive
-                    - MarkAsPresumptivePositive
-                    - MarkAsNegative
-                    - SendPreliminaryPositive
-                autoResult:
-                  type: string
-                  enum:
-                    - PresumptivePositive
-                    - Positive
-                    - Negative
-                    - Invalid
-                    - Inconclusive
-                barCode:
-                  type: string
-                  minLength: 1
-                calRed61RdRpGene:
-                  type: string
-                  minLength: 1
-                calRed61Ct:
-                  type: string
-                  minLength: 1
-                famEGene:
-                  type: string
-                  minLength: 1
-                famCt:
-                  type: string
-                  minLength: 1
-                hexIC:
-                  type: string
-                  minLength: 1
-                hexCt:
-                  type: string
-                  minLength: 1
-                notify:
-                  type: boolean
-                  default: false
-                quasar670NGene:
-                  type: string
-                  minLength: 1
-                quasar670Ct:
-                  type: string
-                  minLength: 1
-                comment:
-                  type: string
+            type: object
+            required:
+              - action
+              - autoResult
+              - barCode
+              - calRed61Ct
+              - calRed61RdRpGene
+              - famCt
+              - famEGene
+              - hexCt
+              - hexIC
+              - quasar670Ct
+              - quasar670NGene
+            properties:
+              action:
+                type: string
+                default: SendThisResult
+                enum:
+                  - SendThisResult
+                  - DoNothing
+                  - ReRunToday
+                  - ReRunTomorrow
+                  - RequestReCollect
+                  - RecollectAsInvalid
+                  - RecollectAsInconclusive
+                  - MarkAsPositive
+                  - MarkAsPresumptivePositive
+                  - MarkAsNegative
+                  - SendPreliminaryPositive
+              autoResult:
+                type: string
+                enum:
+                  - PresumptivePositive
+                  - Positive
+                  - Negative
+                  - Invalid
+                  - Inconclusive
+              barCode:
+                type: string
+                minLength: 1
+              calRed61RdRpGene:
+                type: string
+                minLength: 1
+              calRed61Ct:
+                type: string
+                minLength: 1
+              famEGene:
+                type: string
+                minLength: 1
+              famCt:
+                type: string
+                minLength: 1
+              hexIC:
+                type: string
+                minLength: 1
+              hexCt:
+                type: string
+                minLength: 1
+              notify:
+                type: boolean
+                default: false
+              quasar670NGene:
+                type: string
+                minLength: 1
+              quasar670Ct:
+                type: string
+                minLength: 1
+              comment:
+                type: string
       required:
         - results
         - resultDate
-
     PCRTestResultsRequest:
       type: object
       additionalProperties: false
@@ -633,7 +593,6 @@ components:
         - hexIC
         - quasar670Ct
         - quasar670NGene
-
     ProcessPCRResultsRequest:
       type: object
       additionalProperties: false
@@ -644,11 +603,9 @@ components:
         resultId:
           type: string
           description: Stored Result ID
-
       required:
         - reportTrackerId
         - resultId
-
     ResponseOfTemperature:
       type: object
       additionalProperties: false
@@ -659,7 +616,9 @@ components:
           properties:
             status:
               type: string
-              enum: [proceed,stop]
+              enum:
+                - proceed
+                - stop
             userId:
               type: string
             validFrom:
@@ -673,19 +632,16 @@ components:
             code:
               type: string
               enum:
-                [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
             message:
               nullable: true
               type: string
-
     BulkOperationResponse:
       type: object
       additionalProperties: false
@@ -701,10 +657,8 @@ components:
               status:
                 type: string
                 enum:
-                  [
-                    'Success',
-                    'Failed',
-                  ]
+                  - Success
+                  - Failed
               reason:
                 type: string
               barCode:
@@ -721,19 +675,16 @@ components:
             code:
               type: string
               enum:
-                [
-                  succeed,
-                  failed,
-                  validation_error,
-                  internal_server_error,
-                  unauthorized,
-                  access_denied,
-                  resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
             message:
               nullable: true
               type: string
-    
     LabRequest:
       type: object
       additionalProperties: false
@@ -743,7 +694,6 @@ components:
           type: string
       required:
         - name
-
     LabResponse:
       type: object
       additionalProperties: false
@@ -766,20 +716,37 @@ components:
             code:
               type: string
               enum:
-                [
-                    succeed,
-                    failed,
-                    validation_error,
-                    internal_server_error,
-                    unauthorized,
-                    access_denied,
-                    resource_not_found,
-                ]
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
             message:
               nullable: true
               type: string
+    RapidAntigenRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        appointmentIDs:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 50
+        results:
+          type: string
+          enum:
+              - DoNothing
+              - Inconclusive
+              - Negative
+              - Positive
+      required:
+        - appointmentIDs 
+        - results           
 paths:
-
   /admin/api/v1/send-fax-for-positive:
     post:
       description: Send Fax for positive result
@@ -804,7 +771,6 @@ paths:
             text/html:
               schema:
                 type: string
-
   /reservation/admin/api/v1/transport-runs:
     get:
       description: Retrieve transport run list
@@ -853,7 +819,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse'
-
   /reservation/admin/api/v1/appointments/add-transport-run:
     put:
       description: Add transport run to appointment
@@ -884,7 +849,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
-
   /reservation/admin/api/v1/test-results:
     get:
       description: Get Test results
@@ -908,7 +872,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TestResult200'
-
   /reservation/admin/api/v1/appointments:
     get:
       description: Get appointment list
@@ -966,8 +929,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AppointmentResponse200'
-
-  /reservation/admin/api/v1/appointments/{appointmentId}:
+  '/reservation/admin/api/v1/appointments/{appointmentId}':
     get:
       description: Get appointment by appointment ID
       security:
@@ -987,10 +949,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
-
   /reservation/admin/api/v1/admin-scan-history:
     get:
       description: Get scanned appointments history for user
+      tags:
+        - Appointment Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -1001,8 +964,6 @@ paths:
             enum:
               - PCR
               - RapidAntigen
-      tags:
-        - Appointment Management
       responses:
         '200':
           description: Successfully Return
@@ -1042,7 +1003,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
-
   /reservation/acuity_webhook/api/v1/appointment/update:
     post:
       description: Webhook for updating appointment in firestore
@@ -1075,7 +1035,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse'
-
   /reservation/acuity_webhook/api/v1/appointment/create:
     post:
       description: Webhook for adding barcode to acuity and cloning to firestore
@@ -1108,7 +1067,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse'
-
   /reservation/admin/api/v1/packages:
     post:
       description: Add Package Codes for Orgs
@@ -1172,8 +1130,7 @@ paths:
                     - packageCode
                     - name
                     - remainingCounts
-
-  /reservation/admin/api/v1/appointments/{appointmentId}/cancel:
+  '/reservation/admin/api/v1/appointments/{appointmentId}/cancel':
     put:
       description: Cancel appointment by appointment ID
       tags:
@@ -1197,7 +1154,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse'
-
   /reservation/admin/api/v1/test-runs:
     get:
       description: Get list of Test Runs by date
@@ -1206,11 +1162,11 @@ paths:
       tags:
         - Test Runs
       parameters:
-      - in: query
-        name: testRunDate
-        schema:
-          type: string
-        required: true
+        - in: query
+          name: testRunDate
+          schema:
+            type: string
+          required: true
       responses:
         '200':
           description: Successfully Return
@@ -1218,7 +1174,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestRunsResponse200'
-
     post:
       description: Add Test Run
       security:
@@ -1247,7 +1202,6 @@ paths:
             text/html:
               schema:
                 $ref: '#/components/schemas/TestRunsResponse200'
-
   /reservation/admin/api/v1/appointments/barcode/lookup:
     get:
       description: Get appointment by barCode
@@ -1268,7 +1222,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentBarCodeLookupResponse200'
-
   /reservation/admin/api/v1/appointments/barcode/get-new-code:
     get:
       description: Genrerate New BarCode
@@ -1283,7 +1236,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenerateNextBarCodeResponse'
-
   /reservation/admin/api/v1/appointments/list/stats:
     get:
       description: Get appointment list
@@ -1339,7 +1291,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AppointmentResponse200'
-
   /reservation/admin/api/v1/pcr-test-results-bulk:
     post:
       description: Send Multiple PCR Results
@@ -1359,14 +1310,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PCRTestResultsResponse200'
-
   /reservation/admin/api/v1/pcr-test-results/stats:
     get:
       description: Retrieve list of PCR Results
       tags:
         - PCR Results Management
       security:
-        - bearerAuthJWT: [ ]
+        - bearerAuthJWT: []
       parameters:
         - in: query
           name: organizationId
@@ -1386,16 +1336,14 @@ paths:
           schema:
             type: string
             enum:
-              [
-                  PresumptivePositive,
-                  PreliminaryPositive,
-                  Positive,
-                  Negative,
-                  Pending,
-                  Invalid,
-                  Inconclusive,
-                  Indeterminate,
-              ]
+              - PresumptivePositive
+              - PreliminaryPositive
+              - Positive
+              - Negative
+              - Pending
+              - Invalid
+              - Inconclusive
+              - Indeterminate
       responses:
         '200':
           description: Succesfully return stats
@@ -1403,7 +1351,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatsResponse200'
-
   /reservation/admin/api/v1/pcr-test-results:
     post:
       description: Send PCR Results
@@ -1448,16 +1395,14 @@ paths:
           schema:
             type: string
             enum:
-              [
-                  PresumptivePositive,
-                  PreliminaryPositive,
-                  Positive,
-                  Negative,
-                  Pending,
-                  Invalid,
-                  Inconclusive,
-                  Indeterminate,
-              ]
+              - PresumptivePositive
+              - PreliminaryPositive
+              - Positive
+              - Negative
+              - Pending
+              - Invalid
+              - Inconclusive
+              - Indeterminate
       responses:
         '200':
           description: Successfully Return
@@ -1488,15 +1433,13 @@ paths:
                         result:
                           type: string
                           enum:
-                            [
-                              PresumptivePositive,
-                              Positive,
-                              Negative,
-                              Pending,
-                              Invalid,
-                              Inconclusive,
-                              PreliminaryPositive
-                            ]
+                            - PresumptivePositive
+                            - Positive
+                            - Negative
+                            - Pending
+                            - Invalid
+                            - Inconclusive
+                            - PreliminaryPositive
                         dateTime:
                           type: string
                         deadline:
@@ -1504,15 +1447,13 @@ paths:
                         previousResult:
                           type: string
                           enum:
-                            [
-                              PresumptivePositive,
-                              Positive,
-                              Negative,
-                              Pending,
-                              Invalid,
-                              Inconclusive,
-                              PreliminaryPositive,
-                            ]
+                            - PresumptivePositive
+                            - Positive
+                            - Negative
+                            - Pending
+                            - Invalid
+                            - Inconclusive
+                            - PreliminaryPositive
                         organizationName:
                           type: string
                   status:
@@ -1522,25 +1463,21 @@ paths:
                       code:
                         type: string
                         enum:
-                          [
-                            succeed,
-                            failed,
-                            validation_error,
-                            internal_server_error,
-                            unauthorized,
-                            access_denied,
-                            resource_not_found,
-                          ]
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
                       message:
                         nullable: true
                         type: string
                   page:
                     type: number
-
   /reservation/admin/api/v1/pcr-test-results/confirm:
     post:
       description: Confirm PCR Results
-
       tags:
         - PCR Results Management
       security:
@@ -1570,10 +1507,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentTransportRunResponse200'
-
   /reservation/internal/api/v1/process-pcr-test-result:
     post:
       description: Process PCR Results
+      tags:
+        - PCR Results Management
       requestBody:
         content:
           application/json:
@@ -1586,7 +1524,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-
   /reservation/admin/api/v2/appointments/add-labels:
     put:
       description: Add SameDay/NextDay Labesl to Appointments
@@ -1620,7 +1557,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
-
   /reservation/admin/api/v1/pcr-test-results-bulk/report-status:
     get:
       description: Get appointment by barCode
@@ -1656,15 +1592,13 @@ paths:
                         status:
                           type: string
                           enum:
-                            [
-                              Failed,
-                              Processing,
-                              RequestReceived,
-                              SentReRunRequest,
-                              SentReCollectRequest,
-                              SentResult,
-                              Skipped,
-                            ]
+                            - Failed
+                            - Processing
+                            - RequestReceived
+                            - SentReRunRequest
+                            - SentReCollectRequest
+                            - SentResult
+                            - Skipped
                       required:
                         - barCode
                         - status
@@ -1675,28 +1609,25 @@ paths:
                       code:
                         type: string
                         enum:
-                          [
-                            succeed,
-                            failed,
-                            validation_error,
-                            internal_server_error,
-                            unauthorized,
-                            access_denied,
-                            resource_not_found,
-                          ]
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
                       message:
                         nullable: true
                         type: string
                   page:
                     type: number
-
   /reservation/admin/api/v1/pcr-test-results/add-test-run:
     put:
       description: Add transport run to appointment
       tags:
         - Transport Runs
       security:
-        - bearerAuthJWT: [ ]
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:
@@ -1737,10 +1668,8 @@ paths:
                         status:
                           type: string
                           enum:
-                            [
-                              Success,
-                              Failed,
-                            ]
+                            - Success
+                            - Failed
                       required:
                         - id
                         - status
@@ -1751,21 +1680,18 @@ paths:
                       code:
                         type: string
                         enum:
-                          [
-                            succeed,
-                            failed,
-                            validation_error,
-                            internal_server_error,
-                            unauthorized,
-                            access_denied,
-                            resource_not_found,
-                          ]
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
                       message:
                         nullable: true
                         type: string
                   page:
                     type: number
-
   /reservation/admin/api/v1/pcr-test-results/history:
     post:
       description: Get PCR Test Results by Barcode
@@ -1834,12 +1760,10 @@ paths:
                         reason:
                           type: string
                           enum:
-                            [
-                                Already Reported,
-                                ReCollect Already Requested,
-                                In Progress,
-                                No In Progress,
-                            ]
+                            - Already Reported
+                            - ReCollect Already Requested
+                            - In Progress
+                            - No In Progress
                       required:
                         - id
                         - firstName
@@ -1852,22 +1776,19 @@ paths:
                       code:
                         type: string
                         enum:
-                          [
-                            succeed,
-                            failed,
-                            validation_error,
-                            internal_server_error,
-                            unauthorized,
-                            access_denied,
-                            resource_not_found,
-                          ]
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
                       message:
                         nullable: true
                         type: string
                   page:
                     type: number
-
-  /reservation/admin/api/v1/appointments/{appointmentId}/check-in:
+  '/reservation/admin/api/v1/appointments/{appointmentId}/check-in':
     put:
       description: Make Appointment checked in
       tags:
@@ -1887,7 +1808,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
-
   /reservation/admin/api/v1/appointments/receive:
     put:
       description: Update Appointment vialLocation
@@ -1918,14 +1838,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
-
   /reservation/api/v1/appointments:
     post:
       description: Create Appointment
       tags:
         - Appointment Management
       security:
-        - bearerAuthJWT: [ ]
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:
@@ -1986,7 +1905,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-
   /reservation/api/v1/availability/times:
     get:
       description: Get Appointment Available Times
@@ -2044,21 +1962,18 @@ paths:
                       code:
                         type: string
                         enum:
-                          [
-                            succeed,
-                            failed,
-                            validation_error,
-                            internal_server_error,
-                            unauthorized,
-                            access_denied,
-                            resource_not_found,
-                          ]
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
                       message:
                         nullable: true
                         type: string
                   page:
                     type: number
-
   /reservation/api/v1/availability/dates:
     get:
       description: Get availability date list
@@ -2113,21 +2028,18 @@ paths:
                       code:
                         type: string
                         enum:
-                          [
-                            succeed,
-                            failed,
-                            validation_error,
-                            internal_server_error,
-                            unauthorized,
-                            access_denied,
-                            resource_not_found,
-                          ]
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
                       message:
                         nullable: true
                         type: string
                   page:
                     type: number
-
   /reservation/api/v1/booking-locations:
     get:
       description: Get list Booking Locations
@@ -2176,22 +2088,19 @@ paths:
                       code:
                         type: string
                         enum:
-                          [
-                            succeed,
-                            failed,
-                            validation_error,
-                            internal_server_error,
-                            unauthorized,
-                            access_denied,
-                            resource_not_found,
-                          ]
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
                       message:
                         nullable: true
                         type: string
                   page:
                     type: number
-
-  /reservation/admin/api/v1/pcr-test-results/{pcrTestResultId}:
+  '/reservation/admin/api/v1/pcr-test-results/{pcrTestResultId}':
     get:
       description: Retrieve list of PCR Results
       tags:
@@ -2294,7 +2203,6 @@ paths:
                       - testType
                       - equipment
                       - manufacturer
-
   /reservation/admin/api/v1/pcr-test-results/due-deadline:
     get:
       description: Retrieve list of PCR Results
@@ -2321,11 +2229,9 @@ paths:
           schema:
             type: string
             enum:
-              [
-                Received,
-                InProgress,
-                ReRunRequired,
-              ]
+              - Received
+              - InProgress
+              - ReRunRequired
         - in: query
           name: organizationId
           schema:
@@ -2354,15 +2260,13 @@ paths:
                         status:
                           type: string
                           enum:
-                            [
-                              Pending,
-                              InTransit,
-                              Received,
-                              InProgress,
-                              Reported,
-                              ReRunRequired,
-                              ReCollectRequired,
-                            ]
+                            - Pending
+                            - InTransit
+                            - Received
+                            - InProgress
+                            - Reported
+                            - ReRunRequired
+                            - ReCollectRequired
                         testRunId:
                           type: string
                         dateOfAppointment:
@@ -2386,15 +2290,13 @@ paths:
                       code:
                         type: string
                         enum:
-                          [
-                            succeed,
-                            failed,
-                            validation_error,
-                            internal_server_error,
-                            unauthorized,
-                            access_denied,
-                            resource_not_found,
-                          ]
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
                       message:
                         nullable: true
                         type: string
@@ -2406,7 +2308,7 @@ paths:
       tags:
         - PCR Results Management
       security:
-        - bearerAuthJWT: [ ]
+        - bearerAuthJWT: []
       parameters:
         - in: query
           name: deadline
@@ -2428,7 +2330,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatsResponse200'
-
   /reservation/api/v1/appointments/self:
     get:
       description: Get user appointment list
@@ -2454,15 +2355,15 @@ paths:
                         id:
                           type: string
                         locationName:
-                          type:	string
+                          type: string
                         locationAddress:
                           type: string
                         firstName:
-                          type:	string
+                          type: string
                         lastName:
-                          type:	string
+                          type: string
                         dateOfAppointment:
-                          type:	string
+                          type: string
                         timeOfAppointment:
                           type: string
                         QRCode:
@@ -2489,21 +2390,18 @@ paths:
                       code:
                         type: string
                         enum:
-                          [
-                            succeed,
-                            failed,
-                            validation_error,
-                            internal_server_error,
-                            unauthorized,
-                            access_denied,
-                            resource_not_found,
-                          ]
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
                       message:
                         nullable: true
                         type: string
                   page:
                     type: number
-
   /reservation/admin/api/v1/appointments/barcode/regenerate:
     put:
       description: Get user appointment list
@@ -2542,21 +2440,18 @@ paths:
                       code:
                         type: string
                         enum:
-                          [
-                            succeed,
-                            failed,
-                            validation_error,
-                            internal_server_error,
-                            unauthorized,
-                            access_denied,
-                            resource_not_found,
-                          ]
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
                       message:
                         nullable: true
                         type: string
                   page:
                     type: number
-
   /reservation/api/v1/test-results:
     get:
       description: Get user test result list
@@ -2584,10 +2479,11 @@ paths:
                       type: object
                       properties:
                         id:
-                          type:	string
+                          type: string
                         type:
                           type: string
-                          enum: [PCR]
+                          enum:
+                            - PCR
                         name:
                           type: string
                         testDateTime:
@@ -2595,13 +2491,11 @@ paths:
                         style:
                           type: string
                           enum:
-                            [
-                              RED,
-                              GREEN,
-                              YELLOW,
-                              BLUE,
-                              GREY,
-                            ]
+                            - RED
+                            - GREEN
+                            - YELLOW
+                            - BLUE
+                            - GREY
                         result:
                           type: string
                   status:
@@ -2611,21 +2505,18 @@ paths:
                       code:
                         type: string
                         enum:
-                          [
-                            succeed,
-                            failed,
-                            validation_error,
-                            internal_server_error,
-                            unauthorized,
-                            access_denied,
-                            resource_not_found,
-                          ]
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
                       message:
                         nullable: true
                         type: string
                   page:
                     type: number
-
   /reservation/admin/api/v1/temperature:
     post:
       description: Create record temperature and update user passport
@@ -2649,7 +2540,6 @@ paths:
                 - temperature
                 - userId
               additionalProperties: false
-
       responses:
         '200':
           description: Temperature record created successfully.
@@ -2657,7 +2547,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfTemperature'
-  /reservation/api/v1/temperature/{id}:
+  '/reservation/api/v1/temperature/{id}':
     get:
       description: Get temperature by user ID and organization ID
       security:
@@ -2698,10 +2588,8 @@ paths:
                         status:
                           type: string
                           enum:
-                            [
-                              proceed,
-                              stop
-                            ]
+                            - proceed
+                            - stop
                         result:
                           type: string
                   status:
@@ -2711,15 +2599,13 @@ paths:
                       code:
                         type: string
                         enum:
-                          [
-                            succeed,
-                            failed,
-                            validation_error,
-                            internal_server_error,
-                            unauthorized,
-                            access_denied,
-                            resource_not_found,
-                          ]
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
                       message:
                         nullable: true
                         type: string
@@ -2757,3 +2643,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LabResponse'
+  /reservation/admin/api/v1/rapid-antigen-test-results:
+    summary: Rapid Antigen Test Results
+    post:
+      description: 'Save Rapid Antigen Test'
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Rapid Antigen Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RapidAntigenRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
