@@ -8,7 +8,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {TransportRunsService} from '../../../services/transport-runs.service'
 import {TransportRunsDTOResponse} from '../../../models/transport-runs'
 
-class TransportRunsController implements IControllerBase {
+class AdminTransportRunsController implements IControllerBase {
   public path = '/reservation/admin/api/v1/transport-runs'
   public router = Router()
   private transportRunsService = new TransportRunsService()
@@ -70,4 +70,4 @@ class TransportRunsController implements IControllerBase {
   }
 }
 
-export default TransportRunsController
+export default AdminTransportRunsController
