@@ -33,7 +33,7 @@ import {
 import {statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 
-class PCRTestResultController implements IControllerBase {
+class AdminPCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
@@ -375,4 +375,4 @@ class PCRTestResultController implements IControllerBase {
   }
 }
 
-export default PCRTestResultController
+export default AdminPCRTestResultController

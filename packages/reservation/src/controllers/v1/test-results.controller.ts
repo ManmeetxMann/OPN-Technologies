@@ -8,7 +8,7 @@ import {getUserId} from '../../../../common/src/utils/auth'
 
 import {PCRTestResultsService} from '../../services/pcr-test-results.service'
 
-class TestResultController implements IControllerBase {
+class TestResultsController implements IControllerBase {
   public path = '/reservation/api/v1'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
@@ -42,4 +42,4 @@ class TestResultController implements IControllerBase {
   }
 }
 
-export default TestResultController
+export default TestResultsController

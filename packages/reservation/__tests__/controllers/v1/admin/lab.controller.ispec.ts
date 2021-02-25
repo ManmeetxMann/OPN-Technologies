@@ -34,37 +34,37 @@ describe('AdminLabController', () => {
     test('create new lab successfully', async (done) => {
       const labName = 'UNIT_TEST_LAB'
       const url = `/reservation/admin/api/v1/labs`
-      await request(server.app).post(url)
-      .set('authorization', 'bearer 10000')
-      .set('Content-Type', 'application/json')
-      .send({
-        name: labName
-      })
-      .then(async function(){
-        const url = `/reservation/admin/api/v1/labs`
-        const result = await request(server.app).get(url).set('authorization', 'bearer 10000')
-        expect(result.status).toBe(200)
-        expect(result.body.data).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({name: labName})
-          ])
-        )
-        done()
-      })
-      .catch(()=>{
-        done()
-      })
+      await request(server.app)
+        .post(url)
+        .set('authorization', 'bearer 10000')
+        .set('Content-Type', 'application/json')
+        .send({
+          name: labName,
+        })
+        .then(async function () {
+          const url = `/reservation/admin/api/v1/labs`
+          const result = await request(server.app).get(url).set('authorization', 'bearer 10000')
+          expect(result.status).toBe(200)
+          expect(result.body.data).toEqual(
+            expect.arrayContaining([expect.objectContaining({name: labName})]),
+          )
+          done()
+        })
+        .catch(() => {
+          done()
+        })
     })
 
     test('should fail to creating label with empty name', async (done) => {
       const labName = ''
       const url = `/reservation/admin/api/v1/labs`
-      const result = await request(server.app).post(url)
-      .set('authorization', 'bearer 10000')
-      .set('Content-Type', 'application/json')
-      .send({
-        name: labName
-      })
+      const result = await request(server.app)
+        .post(url)
+        .set('authorization', 'bearer 10000')
+        .set('Content-Type', 'application/json')
+        .send({
+          name: labName,
+        })
       expect(result.status).toBe(400)
       done()
     })

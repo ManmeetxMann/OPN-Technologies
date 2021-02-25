@@ -5,7 +5,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {LabService} from '../../../services/lab.service'
 
-class LabController implements IControllerBase {
+class AdminLabController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   public labService = new LabService()
@@ -51,4 +51,4 @@ class LabController implements IControllerBase {
   }
 }
 
-export default LabController
+export default AdminLabController
