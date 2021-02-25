@@ -733,7 +733,51 @@ components:
             message:
               nullable: true
               type: string
+    
+    LabRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          minLength: 1
+          type: string
+      required:
+        - name
 
+    LabResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          nullable: true
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
 paths:
 
   /admin/api/v1/send-fax-for-positive:
@@ -2582,3 +2626,35 @@ paths:
                         type: string
                   page:
                     type: number
+  /reservation/admin/api/v1/labs:
+    post:
+      description: Create a new Lab
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Labs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+    get:
+      description: Get all a Labs
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Labs
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabResponse'
