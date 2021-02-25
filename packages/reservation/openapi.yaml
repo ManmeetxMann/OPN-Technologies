@@ -744,8 +744,8 @@ components:
               - Negative
               - Positive
       required:
-        - appointmentIDs 
-        - results           
+        - appointmentIDs
+        - results
 paths:
   /admin/api/v1/send-fax-for-positive:
     post:
@@ -1003,6 +1003,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
+    delete:
+      description: Delete appointments for user
+      security:
+          - bearerAuthJWT: [ ]
+      parameters:
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+      tags:
+        - Appointment Management
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse200'
+
   /reservation/acuity_webhook/api/v1/appointment/update:
     post:
       description: Webhook for updating appointment in firestore

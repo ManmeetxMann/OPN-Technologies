@@ -31,6 +31,11 @@ class AdminScanHistoryController implements IControllerBase {
       adminWithAppointments,
       this.createScanHistory,
     )
+    innerRouter.delete(
+      this.path + '/admin-scan-history',
+      adminWithAppointments,
+      this.deleteScanHistory,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -56,6 +61,19 @@ class AdminScanHistoryController implements IControllerBase {
           ...appointmentUiDTOResponse(updatedAppointment, isLabUser),
         }),
       )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  deleteScanHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {type} = req.query as GetAdminScanHistoryRequest
+      const adminId = getUserId(res.locals.authenticatedUser)
+
+      await this.appointmentService.deleteScanHistory(adminId, type)
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
