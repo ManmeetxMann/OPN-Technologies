@@ -21,6 +21,7 @@ import {
 } from '../models/rapid-antigen-test-results'
 
 import {RapidAntigenPDFContent} from '../templates/rapid-antigen'
+import {PCRTestResultDBModel} from '../models/pcr-test-results'
 
 export class RapidAntigenTestResultsService {
   private dataStore = new DataStore()
@@ -29,92 +30,128 @@ export class RapidAntigenTestResultsService {
   private emailService = new EmailService()
   private pubSub = new OPNPubSub('rapid-alergen-test-result-topic')
 
-  async saveRapidAntigenTestTesults(
-    requestData: RapidAntigenTestResultRequest[],
-    reqeustedBy: string,
-  ): Promise<BulkOperationResponse[]> {
-    const getResult = (action: RapidAntigenResultTypes) => {
-      switch (action) {
-        case RapidAntigenResultTypes.SendNegative: {
-          return ResultTypes.Negative
-        }
-        case RapidAntigenResultTypes.SendPositive: {
-          return ResultTypes.Positive
-        }
-        case RapidAntigenResultTypes.SendInvalid: {
-          return ResultTypes.Invalid
-        }
+  private getResultBasedOnAction = (action: RapidAntigenResultTypes) => {
+    switch (action) {
+      case RapidAntigenResultTypes.SendNegative: {
+        return ResultTypes.Negative
+      }
+      case RapidAntigenResultTypes.SendPositive: {
+        return ResultTypes.Positive
+      }
+      case RapidAntigenResultTypes.SendInvalid: {
+        return ResultTypes.Invalid
       }
     }
+  }
 
-    const processAppointment = async (
-      appointmentRequest: RapidAntigenTestResultRequest,
-    ): Promise<BulkOperationResponse> => {
-      const {appointmentID, action} = appointmentRequest
-      const appointmentData = await this.appointmentsRepository.getAppointmentById(appointmentID)
-      if (action === RapidAntigenResultTypes.DoNothing) {
-        LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'Skipped', appointmentData)
-        return Promise.resolve({
-          id: appointmentID,
-          barCode: appointmentData.barCode,
-          status: BulkOperationStatus.Success,
-          reason: 'Successfully Skipped',
-        })
-      }
-      const waitingResults = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
-        appointmentData.id,
-      )
+  private saveResult = async (
+    testResult: PCRTestResultDBModel,
+    action: RapidAntigenResultTypes,
+    reqeustedBy: string,
+  ): Promise<BulkOperationResponse> => {
+    const {id, result, appointmentId, barCode} = testResult
+    //Update Test Results
+    await this.pcrTestResultsRepository.updateData(id, {
+      displayInResult: true,
+      previousResult: result !== ResultTypes.Pending ? result : null,
+      result: this.getResultBasedOnAction(action),
+      waitingResult: false,
+    })
 
-      if (waitingResults && waitingResults.length > 0) {
-        const waitingResult = waitingResults[0] //Only One results is expected
-        //Update Test Results
-        await this.pcrTestResultsRepository.updateData(waitingResult.id, {
-          displayInResult: true,
-          previousResult:
-            waitingResult.result !== ResultTypes.Pending ? waitingResult.result : null,
-          result: getResult(action),
-          waitingResult: false,
-        })
+    //Update Appointments
+    await this.appointmentsRepository.changeStatusToReported(appointmentId, reqeustedBy)
 
-        //Update Appointments
-        await this.appointmentsRepository.changeStatusToReported(appointmentID, reqeustedBy)
+    //Send Push Notification
+    this.pubSub.publish({
+      appointmentID: appointmentId,
+    })
 
-        //Send Push Notification
-        this.pubSub.publish({
-          appointmentID: appointmentID,
-        })
+    LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'Success', {
+      appointmentId,
+      resultId: id,
+    })
+    return Promise.resolve({
+      id: appointmentId,
+      barCode: barCode,
+      status: BulkOperationStatus.Success,
+      reason: 'Successfully Reported',
+    })
+  }
 
-        LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'Success', appointmentData)
-        return Promise.resolve({
-          id: appointmentID,
-          barCode: appointmentData.barCode,
-          status: BulkOperationStatus.Success,
-          reason: 'Successfully Reported',
+  private processAppointment = async (
+    appointmentRequest: RapidAntigenTestResultRequest,
+    reqeustedBy: string,
+  ): Promise<BulkOperationResponse> => {
+    const {appointmentID, action, sendAgain} = appointmentRequest
+
+    const appointment = await this.appointmentsRepository.getAppointmentById(appointmentID)
+    if (!appointment) {
+      LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'InvalidAppointmentId', {
+        appointmentID,
+      })
+      return Promise.resolve({
+        id: appointmentID,
+        status: BulkOperationStatus.Failed,
+        reason: 'Bad Request',
+      })
+    }
+
+    if (action === RapidAntigenResultTypes.DoNothing) {
+      LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'Skipped', {appointmentID})
+      return Promise.resolve({
+        id: appointmentID,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Success,
+        reason: 'Successfully Skipped',
+      })
+    }
+
+    const waitingResults = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
+      appointment.id,
+    )
+
+    if (waitingResults && waitingResults.length > 0) {
+      const waitingResult = waitingResults[0] //Only One results is expected
+      return this.saveResult(waitingResult, action, reqeustedBy)
+    } else {
+      if (sendAgain) {
+        await this.pcrTestResultsRepository.createNewTestResults({
+          appointment,
+          adminId: reqeustedBy,
+          runNumber: 0,
+          reCollectNumber: 0,
+          previousResult: ResultTypes.Pending,
         })
       } else {
         //LOG Critical and Fail
         LogError(
           'saveAndSendRapidAntigenTestTesults.processAppointment',
           'Failed:NoWaitingResults',
-          appointmentData,
+          appointment,
         )
         return Promise.resolve({
           id: appointmentID,
-          barCode: appointmentData.barCode,
+          barCode: appointment.barCode,
           status: BulkOperationStatus.Failed,
           reason: 'No Results Available',
         })
       }
     }
+  }
 
+  async saveRapidAntigenTestTesults(
+    requestData: RapidAntigenTestResultRequest[],
+    reqeustedBy: string,
+  ): Promise<BulkOperationResponse[]> {
     const results = await Promise.all(
-      requestData.map(async (appointmentRequest) => processAppointment(appointmentRequest)),
+      requestData.map(async (appointmentRequest) =>
+        this.processAppointment(appointmentRequest, reqeustedBy),
+      ),
     )
     return results
   }
 
   async sendTestResultEmail(appointmentID: string): Promise<void> {
-    console.log(`Processed: ${appointmentID}`)
     const appointment = await this.appointmentsRepository.getAppointmentById(appointmentID)
     const pdfContent = await RapidAntigenPDFContent(appointment, RapidAlergenResultPDFType.Negative)
     const resultDate = moment(appointment.dateTime.toDate()).format('LL')

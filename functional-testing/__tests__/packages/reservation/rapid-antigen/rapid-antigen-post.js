@@ -28,7 +28,7 @@ describe('rapid-antigen-create', () => {
           })
           .post(url, [
             {
-              appointmentID: 'PcCFDchvWyBCVnXMyGNk',
+              appointmentID: 'BAD_ID',
               action: 'DoNothing',
               sendAgain: true
             },
