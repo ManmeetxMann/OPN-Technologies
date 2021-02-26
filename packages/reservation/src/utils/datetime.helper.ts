@@ -84,6 +84,7 @@ export const dateToDateTime = (date: string): firestore.Timestamp => {
   const day = Number(date.split('-')[2])
   return firestore.Timestamp.fromDate(
     moment()
+      .utc(true)
       .set({
         year,
         month,

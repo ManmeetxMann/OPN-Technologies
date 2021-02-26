@@ -241,7 +241,7 @@ class AdminPCRTestResultController implements IControllerBase {
           deadline,
           barCode,
           result,
-          date
+          date,
         },
         isLabUser,
       )
