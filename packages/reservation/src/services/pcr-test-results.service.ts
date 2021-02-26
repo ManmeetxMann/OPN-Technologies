@@ -9,6 +9,7 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {toDateFormat} from '../../../common/src/utils/times'
 import {
+  dateToDateTime,
   formatDateRFC822Local,
   getFirestoreTimeStampDate,
   makeDeadlineForFilter,
@@ -270,7 +271,7 @@ export class PCRTestResultsService {
   }
 
   async getPCRResults(
-    {organizationId, deadline, barCode, result}: PcrTestResultsListRequest,
+    {organizationId, deadline, barCode, result, date}: PcrTestResultsListRequest,
     isLabUser: boolean,
   ): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
@@ -284,7 +285,23 @@ export class PCRTestResultsService {
       })
     }
 
-    if (barCode) {
+    if (date) {
+      if (isLabUser) {
+        pcrTestResultsQuery.push({
+          map: '/',
+          key: 'deadlineDate',
+          operator: DataModelFieldMapOperatorType.Equals,
+          value: dateToDateTime(date),
+        })
+      } else {
+        pcrTestResultsQuery.push({
+          map: '/',
+          key: 'dateOfAppointment',
+          operator: DataModelFieldMapOperatorType.Equals,
+          value: dateToDateTime(date),
+        })
+      }
+    } else if (barCode) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'barCode',

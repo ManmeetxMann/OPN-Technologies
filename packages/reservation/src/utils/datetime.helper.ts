@@ -66,5 +66,33 @@ export const firestoreTimeStampToUTC = (timestamp: firestore.Timestamp): moment.
 
 export const getFirestoreTimeStampDate = (datetime: firestore.Timestamp): firestore.Timestamp =>
   firestore.Timestamp.fromDate(
-    moment(datetime.toDate()).tz(timeZone).hour(0).minute(0).second(0).utc(true).toDate(),
+    moment(datetime.toDate())
+      .tz(timeZone)
+      .set({
+        hour: 0,
+        minute: 0,
+        second: 0,
+        millisecond: 0,
+      })
+      .utc(true)
+      .toDate(),
   )
+
+export const dateToDateTime = (date: string): firestore.Timestamp => {
+  const year = Number(date.split('-')[0])
+  const month = Number(date.split('-')[1]) - 1
+  const day = Number(date.split('-')[2])
+  return firestore.Timestamp.fromDate(
+    moment()
+      .set({
+        year,
+        month,
+        date: day,
+        hour: 0,
+        minute: 0,
+        second: 0,
+        millisecond: 0,
+      })
+      .toDate(),
+  )
+}

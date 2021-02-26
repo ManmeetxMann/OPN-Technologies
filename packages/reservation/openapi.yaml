@@ -744,8 +744,8 @@ components:
                 - SendNegative
                 - SendPositive
         required:
-          - appointmentID 
-          - action           
+          - appointmentID
+          - action
 paths:
   /admin/api/v1/send-fax-for-positive:
     post:
@@ -1383,6 +1383,11 @@ paths:
             type: string
         - in: query
           name: deadline
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: date
           schema:
             type: string
             format: date

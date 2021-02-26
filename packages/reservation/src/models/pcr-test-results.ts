@@ -270,6 +270,7 @@ export type PcrTestResultsListRequest = {
   deadline?: string
   barCode?: string
   result?: ResultTypes
+  date?: string
 }
 
 export type PCRTestResultListDTO = {
