@@ -396,17 +396,19 @@ export class AppoinmentService {
       userId,
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
-    const currentUserId = userId ? userId : null
-
-    // @TODO Uncomment this code after deploy
-    // (
-    //   await this.enterpriseAdapter.findOrCreateUser({
-    //     email: acuityAppointment.email,
-    //     firstName: acuityAppointment.firstName,
-    //     lastName: acuityAppointment.lastName,
-    //     organizationId: acuityAppointment.organizationId || '',
-    //   })
-    // ).data.id
+    const getNewUserId = async (): Promise<string | null> => {
+      return Config.getInt('FEATURE_CREATE_USER_ON_ENTERPRISE')
+        ? (
+            await this.enterpriseAdapter.findOrCreateUser({
+              email: acuityAppointment.email,
+              firstName: acuityAppointment.firstName,
+              lastName: acuityAppointment.lastName,
+              organizationId: acuityAppointment.organizationId || '',
+            })
+          ).data.id
+        : null
+    }
+    const currentUserId = userId ? userId : await getNewUserId()
 
     return {
       acuityAppointmentId: acuityAppointment.id,
