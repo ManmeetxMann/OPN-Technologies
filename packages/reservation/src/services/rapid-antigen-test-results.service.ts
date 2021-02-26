@@ -124,6 +124,27 @@ export class RapidAntigenTestResultsService {
       appointmentID,
     )
     const pdfContent = await RapidAntigenPDFContent(appointment, RapidAlergenResultPDFType.Negative)
+    const resultDate = moment(appointment.dateTime.toDate()).format('LL')
 
+    await this.emailService.send({
+      templateId: Config.getInt('TEST_RESULT_RAPID_ANTIGEN_TEMPLATE_ID'),
+      to: [{email: appointment.email, name: `${appointment.firstName} ${appointment.lastName}`}],
+      params: {
+        BARCODE: appointment.barCode,
+        DATE_OF_RESULT: resultDate,
+        FIRSTNAME: appointment.firstName,
+      },
+      attachment: [
+        {
+          content: pdfContent,
+          name: `FHHealth.ca Result - ${appointment.barCode} - ${resultDate}.pdf`,
+        },
+      ],
+      bcc: [
+        {
+          email: Config.get('TEST_RESULT_BCC_EMAIL'),
+        },
+      ],
+    })
   }
 }
