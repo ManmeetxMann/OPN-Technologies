@@ -16,7 +16,6 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 12.x
-    - run: cd functional-testing & npm install & npm run lint-test-scripts
     - run: |
         cd functional-testing
         pwd
