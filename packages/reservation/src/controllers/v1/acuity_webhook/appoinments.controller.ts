@@ -17,6 +17,7 @@ import {
   WebhookEndpoints,
   ResultTypes,
 } from '../../../models/appointment'
+import {getFirestoreTimeStampDate} from '../../../utils/datetime.helper'
 
 class AppointmentWebhookController implements IControllerBase {
   public path = '/reservation/acuity_webhook/api/v1/appointment'
@@ -191,7 +192,6 @@ class AppointmentWebhookController implements IControllerBase {
             adminId: 'WEBHOOK',
             appointmentId: appointmentFromDb.id,
             barCode: barCode,
-            dateOfAppointment: updatedAppointment.dateOfAppointment,
             displayInResult: true,
             dateTime: updatedAppointment.dateTime,
             deadline: updatedAppointment.deadline,
@@ -199,6 +199,8 @@ class AppointmentWebhookController implements IControllerBase {
             lastName: appointment.lastName,
             linkedBarCodes: linkedBarcodes,
             organizationId: updatedAppointment.organizationId,
+            deadlineDate: getFirestoreTimeStampDate(updatedAppointment.deadline),
+            dateOfAppointment: getFirestoreTimeStampDate(updatedAppointment.dateTime),
             //result: ResultTypes.Pending,
             //runNumber: 1 ,//Start the Run
             //waitingResult: true,

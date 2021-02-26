@@ -155,6 +155,8 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   testRunId?: string
   updatedAt: firestore.Timestamp
   waitingResult: boolean
+  deadlineDate: firestore.Timestamp
+  dateOfAppointment: firestore.Timestamp
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -191,6 +193,8 @@ export type PCRTestResultEmailDTO = Omit<
   | 'runNumber'
   | 'reCollectNumber'
   | 'updatedAt'
+  | 'deadlineDate'
+  | 'dateOfAppointment'
 > &
   AppointmentDBModel
 

@@ -8,7 +8,11 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {toDateFormat} from '../../../common/src/utils/times'
-import {formatDateRFC822Local, makeDeadlineForFilter} from '../utils/datetime.helper'
+import {
+  formatDateRFC822Local,
+  getFirestoreTimeStampDate,
+  makeDeadlineForFilter,
+} from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 
@@ -115,7 +119,7 @@ export class PCRTestResultsService {
       confirmed: true,
       previousResult: latestPCRResult.result,
     })
-    await this.sendNotification({...appointment, ...newPCRResult}, notificationType)
+    await this.sendNotification({...newPCRResult, ...appointment}, notificationType)
     return newPCRResult.id
   }
 
@@ -955,6 +959,8 @@ export class PCRTestResultsService {
       reCollectNumber: data.reCollectNumber,
       waitingResult: data.waitingResult ?? true,
       recollected: false,
+      deadlineDate: getFirestoreTimeStampDate(data.appointment.deadline),
+      dateOfAppointment: getFirestoreTimeStampDate(data.appointment.dateTime),
     }
     return await this.pcrTestResultsRepository.save(pcrResultDataForDb)
   }
