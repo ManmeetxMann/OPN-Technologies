@@ -24,7 +24,7 @@ class ProcessPCRResultController implements IControllerBase {
   processPCRTestResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {reportTrackerId, resultId} = req.body as ProcessPCRResultRequest
-      await this.pcrTestResultsService.processPCRTestResult(reportTrackerId, resultId)
+      await this.pcrTestResultsService.processPCRTestResult(reportTrackerId, resultId, 'INTERNAL')
       res.json(actionSucceed())
     } catch (error) {
       next(error)

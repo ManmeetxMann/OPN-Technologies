@@ -165,6 +165,7 @@ class PCRTestResultController implements IControllerBase {
         },
         true,
         data.sendUpdatedResults,
+        adminId,
       )
       const successMessage = `For ${pcrResultRecorded.barCode}, a "${pcrResultRecorded.result}" has been  recorded and sent to the client`
       res.json(actionSuccess({id: pcrResultRecorded.id}, successMessage))

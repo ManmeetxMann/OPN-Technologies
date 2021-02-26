@@ -53,6 +53,7 @@ import {
   BulkOperationResponse,
   BulkOperationStatus,
 } from '../types/bulk-operation.type'
+import {PcrResultTestActivityAction} from '../models/pcr-test-results'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -523,6 +524,7 @@ export class AppoinmentService {
     appointmentId: string,
     data: BulkData,
     actionType: AppointmentBulkAction,
+    userId?: string,
   ): Promise<BulkOperationResponse> {
     try {
       const appointment = await this.appointmentsRepository.findOneById(appointmentId)
@@ -542,7 +544,7 @@ export class AppoinmentService {
           break
 
         case AppointmentBulkAction.AddAppointmentLabel:
-          await this.addAppointmentLabel(appointment, data.label)
+          await this.addAppointmentLabel(appointment, data.label, userId)
           break
 
         default:
@@ -618,12 +620,21 @@ export class AppoinmentService {
     }
   }
 
-  async addAppointmentLabel(appointment: AppointmentDBModel, label: DeadlineLabel): Promise<void> {
+  async addAppointmentLabel(
+    appointment: AppointmentDBModel,
+    label: DeadlineLabel,
+    userId: string,
+  ): Promise<void> {
     const deadline = makeDeadline(moment(appointment.dateTime.toDate()).utc(), label)
     await this.acuityRepository.addAppointmentLabelOnAcuity(appointment.acuityAppointmentId, label)
 
     await Promise.all([
-      this.pcrTestResultsRepository.updateAllResultsForAppointmentId(appointment.id, {deadline}),
+      this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+        appointment.id,
+        {deadline},
+        PcrResultTestActivityAction.UpdateFromAppointment,
+        userId,
+      ),
       this.updateAppointmentDB(appointment.id, {deadline}),
     ])
   }
@@ -650,9 +661,12 @@ export class AppoinmentService {
       data.appointment.acuityAppointmentId,
       data.deadlineLabel,
     )
-    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(data.appointment.id, {
-      deadline,
-    })
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+      data.appointment.id,
+      {deadline},
+      PcrResultTestActivityAction.UpdateFromAppointment,
+      data.actionBy,
+    )
 
     return this.appointmentsRepository.updateProperties(data.appointment.id, {
       appointmentStatus: AppointmentStatus.ReRunRequired,
@@ -910,7 +924,12 @@ export class AppoinmentService {
 
     if (pcrTest.length) {
       pcrTest.forEach(async (pcrTest) => {
-        await this.pcrTestResultsRepository.updateData(pcrTest.id, {barCode: newBarCode})
+        await this.pcrTestResultsRepository.updateData({
+          id: pcrTest.id,
+          updates: {barCode: newBarCode},
+          actionBy: userId,
+          action: PcrResultTestActivityAction.RegenerateBarcode,
+        })
         console.log(`regenerateBarCode: PCRTestID: ${pcrTest.id} New BarCode: ${newBarCode}`)
       })
     } else {

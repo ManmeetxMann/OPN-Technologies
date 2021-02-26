@@ -221,6 +221,7 @@ export type AppointmentChangeToRerunRequest = {
   appointment: AppointmentDBModel
   deadlineLabel: DeadlineLabel
   userId: string
+  actionBy: string
 }
 
 export type AppointmentStatusHistoryDb = AppointmentStatusHistory & {

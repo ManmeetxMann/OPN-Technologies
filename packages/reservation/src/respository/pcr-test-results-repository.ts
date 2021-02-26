@@ -1,8 +1,14 @@
 import {serverTimestamp} from '../../../common/src/utils/times'
 import DataModel, {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
-import {PCRTestResultDBModel, ActivityTrackingDb, UpdatePcrTestResultActionParams, PcrResultTestActivityAction} from '../models/pcr-test-results'
+import {
+  PCRTestResultDBModel,
+  ActivityTrackingDb,
+  UpdatePcrTestResultActionParams,
+  PcrResultTestActivityAction,
+} from '../models/pcr-test-results'
 import DBSchema from '../dbschemas/pcr-test-results.schema'
+import {isEqual} from 'lodash'
 
 export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
   public rootPath = 'pcr-test-results'
@@ -19,11 +25,22 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     return this.add({...validatedData, updatedAt: serverTimestamp()})
   }
 
-  async updateData(
-    id: string,
-    pcrTestResults: Partial<PCRTestResultDBModel>,
-  ): Promise<PCRTestResultDBModel> {
-    return await this.updateProperties(id, {...pcrTestResults, updatedAt: serverTimestamp()})
+  async updateData({
+    id,
+    updates,
+    action,
+    actionBy,
+  }: UpdatePcrTestResultActionParams): Promise<PCRTestResultDBModel> {
+    if (action) {
+      await this.addPcrTestResultActivityById({
+        id,
+        action,
+        updates,
+        actionBy,
+      })
+    }
+
+    return await this.updateProperties(id, {...updates, updatedAt: serverTimestamp()})
   }
 
   async getWaitingPCRResultsByAppointmentId(
@@ -59,13 +76,19 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     appointmentId: string,
     pcrTestResults: Partial<PCRTestResultDBModel>,
     action: PcrResultTestActivityAction,
+    actionBy: string,
   ): Promise<void> {
     if (action) {
-      await this.addPcrTestResultActivityById({
-        id: pcrTestResults.id,
-        action,
-        updates: pcrTestResults
-      })
+      const [pcrTestResult] = await this.findWhereEqual('appointmentId', appointmentId)
+
+      if (pcrTestResult?.id) {
+        await this.addPcrTestResultActivityById({
+          id: pcrTestResult.id,
+          action,
+          updates: pcrTestResults,
+          actionBy,
+        })
+      }
     }
     await this.updateAllFromCollectionWhereEqual('appointmentId', appointmentId, pcrTestResults)
   }
@@ -84,7 +107,13 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       const pcrTestResults = await this.get(id)
       const currentData = {}
       const newData = {}
-      const skip = ['id', 'timestamps', 'appointmentStatus']
+      const skip = ['id', 'timestamps']
+
+      if (!pcrTestResults) {
+        console.warn(`[PCR-Test-Result repository]: Pcr-test-result ${id} not found`)
+
+        return
+      }
 
       Object.keys(updates).map((key) => {
         // isEqual used for timestamps, != used to avoid fouls for the same values in different formats (boolean, strings and numbers)
@@ -101,7 +130,9 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       })
 
       if (!Object.keys(newData).length) {
-        console.warn(`No one field has been updated for appointmen ${id}`)
+        console.warn(
+          `[PCR-Test-Result repository]: No one field has been updated for pcr-test-result ${id}`,
+        )
         return
       }
 
@@ -112,11 +143,12 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
         actionBy,
       })
     } catch (err) {
-      console.warn(`Failed to create Object Difference for activity Tracking ${err}`)
+      console.warn(
+        `[PCR-Test-Result repository]: Failed to create Object Difference for activity Tracking ${err}`,
+      )
     }
   }
 }
-
 
 export class ActivityTrackingRepository extends DataModel<ActivityTrackingDb> {
   public rootPath

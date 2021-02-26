@@ -410,11 +410,16 @@ export type ActivityTracking = {
 export enum PcrResultTestActivityAction {
   RegenerateBarcode = 'regenerateBarcode',
   UpdateFromAcuity = 'updateFromAcuity',
+  Create = 'create',
+  ConfirmResult = 'confirmResult',
+  UpdateFromPackage = 'updateFromPackage',
+  AddTestRun = 'addTestRun',
+  UpdateFromAppointment = 'updateFromAppointment',
 }
 
 export type UpdatePcrTestResultActionParams = {
   id: string
-  updates: Partial<AppointmentDBModel>
+  updates: Partial<PCRTestResultDBModel>
   action?: PcrResultTestActivityAction
   actionBy?: string
 }
