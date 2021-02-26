@@ -766,7 +766,6 @@ export class AppoinmentService {
   }: CreateAppointmentRequest & {email: string}): Promise<AppointmentDBModel> {
     const {time, appointmentTypeId, calendarId} = decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
-    console.log('Email =============== ', email)
     const dateTime = utcDateTime.format()
     const barCodeNumber = await this.getNextBarCodeNumber()
     const data = await this.acuityRepository.createAppointment(

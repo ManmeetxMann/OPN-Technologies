@@ -67,7 +67,6 @@ class AppointmentController implements IControllerBase {
       const authenticatedUser = res.locals.authenticatedUser as AuthUser
       const {organizationId, packageCode} = decodeAvailableTimeId(slotId)
       const userId = getUserId(authenticatedUser)
-      console.log('-----------------', res.locals.authenticatedUser)
       const savedAppointment = await this.appointmentService.createAcuityAppointment({
         organizationId,
         slotId,
