@@ -18,7 +18,10 @@ class InternalRapidAntigenResultEmailSendController implements IControllerBase {
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
     //TODO: Add PubSUb Validate
-    innerRouter.post(this.path + '/api/v1/rapid-alergen-send-result-email', this.sendTestResultEmail)
+    innerRouter.post(
+      this.path + '/api/v1/rapid-alergen-send-result-email',
+      this.sendTestResultEmail,
+    )
 
     this.router.use('/', innerRouter)
   }

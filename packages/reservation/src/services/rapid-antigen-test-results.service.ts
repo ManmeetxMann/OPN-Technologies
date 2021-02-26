@@ -20,7 +20,7 @@ export class RapidAntigenTestResultsService {
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pubSub = new OPNPubSub('rapid-alergen-test-result-topic')
-  
+
   async saveRapidAntigenTestTesults(
     requestData: RapidAntigenTestResultRequest[],
     reqeustedBy: string,
@@ -77,7 +77,7 @@ export class RapidAntigenTestResultsService {
 
         //Send Push Notification
         this.pubSub.publish({
-          appointmentID:appointment.appointmentID
+          appointmentID: appointment.appointmentID,
         })
 
         LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'Success', appointmentData)
@@ -109,9 +109,7 @@ export class RapidAntigenTestResultsService {
     return results
   }
 
-  async sendTestResultEmail(
-    appointmentID: string,
-  ): Promise<void> {
+  async sendTestResultEmail(appointmentID: string): Promise<void> {
     console.log(`Processed: ${appointmentID}`)
   }
 }
