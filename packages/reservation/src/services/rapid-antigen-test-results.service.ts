@@ -22,6 +22,7 @@ import {
 
 import {RapidAntigenPDFContent} from '../templates/rapid-antigen'
 import {PCRTestResultDBModel} from '../models/pcr-test-results'
+import { notify } from 'superagent'
 
 export class RapidAntigenTestResultsService {
   private dataStore = new DataStore()
@@ -45,9 +46,10 @@ export class RapidAntigenTestResultsService {
   }
 
   private saveResult = async (
-    testResult: PCRTestResultDBModel,
     action: RapidAntigenResultTypes,
+    notify: boolean,
     reqeustedBy: string,
+    testResult: PCRTestResultDBModel,
   ): Promise<BulkOperationResponse> => {
     const {id, result, appointmentId, barCode} = testResult
     //Update Test Results
@@ -62,10 +64,12 @@ export class RapidAntigenTestResultsService {
     await this.appointmentsRepository.changeStatusToReported(appointmentId, reqeustedBy)
 
     //Send Push Notification
-    this.pubSub.publish({
-      appointmentID: appointmentId,
-    })
-
+    if(notify){
+      this.pubSub.publish({
+        appointmentID: appointmentId,
+      })
+    }
+    
     LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'Success', {
       appointmentId,
       resultId: id,
@@ -82,7 +86,7 @@ export class RapidAntigenTestResultsService {
     appointmentRequest: RapidAntigenTestResultRequest,
     reqeustedBy: string,
   ): Promise<BulkOperationResponse> => {
-    const {appointmentID, action, sendAgain} = appointmentRequest
+    const {appointmentID, action, sendAgain, notify} = appointmentRequest
 
     const appointment = await this.appointmentsRepository.getAppointmentById(appointmentID)
     if (!appointment) {
@@ -112,7 +116,7 @@ export class RapidAntigenTestResultsService {
 
     if (waitingResults && waitingResults.length > 0) {
       const waitingResult = waitingResults[0] //Only One results is expected
-      return this.saveResult(waitingResult, action, reqeustedBy)
+      return this.saveResult(action, notify, reqeustedBy, waitingResult)
     } else {
       if (sendAgain) {
         const newResult = await this.pcrTestResultsRepository.createNewTestResults({
@@ -122,7 +126,7 @@ export class RapidAntigenTestResultsService {
           reCollectNumber: 0,
           previousResult: ResultTypes.Pending,
         })
-        return this.saveResult(newResult, action, reqeustedBy)
+        return this.saveResult(action, notify, reqeustedBy, newResult)
       } else {
         //LOG Critical and Fail
         LogError(
