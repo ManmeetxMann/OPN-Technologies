@@ -467,8 +467,11 @@ export class AppoinmentService {
     return this.acuityRepository.updateAppointmentOnAcuity(id, data)
   }
 
-  async rescheduleAppointmentOnAcuity(appointmentId: number, datetime:string){
-      return this.acuityRepository.rescheduleAppoinment(appointmentId, datetime);
+  async rescheduleAppointmentOnAcuity(
+    appointmentId: number,
+    datetime: string,
+  ): Promise<AppointmentAcuityResponse> {
+    return this.acuityRepository.rescheduleAppoinment(appointmentId, datetime)
   }
 
   async cancelAppointment(

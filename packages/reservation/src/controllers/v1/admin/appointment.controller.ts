@@ -386,26 +386,34 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {appointmentId} = req.params
       const {date, time} = req.body as {date: string; time: string}
-      const appointmentFromDB:AppointmentDBModel=  await this.appointmentService.getAppointmentDBById(appointmentId);
-      const acuityAppointmentId= appointmentFromDB.acuityAppointmentId;
+      const appointmentFromDB: AppointmentDBModel = await this.appointmentService.getAppointmentDBById(
+        appointmentId,
+      )
+      const acuityAppointmentId = appointmentFromDB.acuityAppointmentId
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
-      const canCancel = this.appointmentService.getCanCancel(isLabUser, appointmentFromDB.appointmentStatus)
-      let result;
-      console.log('Before can Cancel: ', canCancel);
+      const canCancel = this.appointmentService.getCanCancel(
+        isLabUser,
+        appointmentFromDB.appointmentStatus,
+      )
+      let result
+      console.log('Before can Cancel: ', canCancel)
 
-      if(canCancel){
+      if (canCancel) {
         //reschedule appointment for acuity
-        const parsedTime= time.replace('am',' AM').replace('pm',' PM')
-        const appointmentAcuityResponse :AppointmentAcuityResponse= await this.appointmentService.rescheduleAppointmentOnAcuity(acuityAppointmentId, (new Date(date+' '+parsedTime)).toISOString() )
-        //reschedule appointment for acuity
-        result = await this.appointmentService.rescheduleAppointment(
-          appointmentId,
-          date,
-          time,
+        const parsedTime = time.replace('am', ' AM').replace('pm', ' PM')
+        const appointmentAcuityResponse: AppointmentAcuityResponse = await this.appointmentService.rescheduleAppointmentOnAcuity(
+          acuityAppointmentId,
+          new Date(date + ' ' + parsedTime).toISOString(),
         )
-        console.log('appointmentAcuityResponse: ', appointmentAcuityResponse, 'data changed. Parsed time');
+        //reschedule appointment for acuity
+        result = await this.appointmentService.rescheduleAppointment(appointmentId, date, time)
+        console.log(
+          'appointmentAcuityResponse: ',
+          appointmentAcuityResponse,
+          'data changed. Parsed time',
+        )
       }
-      
+
       res.json(actionSucceed(appointmentUiDTOResponse(result, false)))
     } catch (error) {
       next(error)

@@ -358,7 +358,10 @@ abstract class AcuityScheduling {
     return result
   }
 
-  protected async rescheduleAppoinmentService(id: number, datetime:string): Promise<AppointmentAcuityResponse>{
+  protected async rescheduleAppoinmentService(
+    id: number,
+    datetime: string,
+  ): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = `${APIURL}/api/v1/appointments/${id}/reschedule`
@@ -371,7 +374,7 @@ abstract class AcuityScheduling {
         accept: 'application/json',
       },
       body: JSON.stringify({
-        datetime
+        datetime,
       }),
     })
     const appointment = await res.json()
