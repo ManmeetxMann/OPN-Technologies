@@ -2666,3 +2666,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
+  /reservation/internal/api/v1/rapid-alergen-send-result-email:
+    summary: Rapid Antigen Test Results Email Notification
+    post:
+      description: 'Send Email Notification for Rapid Antigen Test Results'
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Rapid Antigen Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                appointmentID:
+                  type: string
+              required:
+                - appointmentID
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'      
