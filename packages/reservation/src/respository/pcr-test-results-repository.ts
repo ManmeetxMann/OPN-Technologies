@@ -8,6 +8,7 @@ import {PCRTestResultDBModel} from '../models/pcr-test-results'
 import {AppointmentDBModel, ResultTypes} from '../models/appointment'
 //Schema
 import DBSchema from '../dbschemas/pcr-test-results.schema'
+import {getFirestoreTimeStampDate} from '../utils/datetime.helper'
 
 export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
   public rootPath = 'pcr-test-results'
@@ -54,6 +55,8 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       reCollectNumber: data.reCollectNumber,
       waitingResult: data.waitingResult ?? true,
       recollected: false,
+      deadlineDate: getFirestoreTimeStampDate(data.appointment.deadline),
+      dateOfAppointment: getFirestoreTimeStampDate(data.appointment.dateTime),
     }
     return await this.save(pcrResultDataForDb)
   }
