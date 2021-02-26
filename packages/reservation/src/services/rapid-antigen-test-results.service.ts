@@ -115,13 +115,14 @@ export class RapidAntigenTestResultsService {
       return this.saveResult(waitingResult, action, reqeustedBy)
     } else {
       if (sendAgain) {
-        await this.pcrTestResultsRepository.createNewTestResults({
+        const newResult = await this.pcrTestResultsRepository.createNewTestResults({
           appointment,
           adminId: reqeustedBy,
           runNumber: 0,
           reCollectNumber: 0,
           previousResult: ResultTypes.Pending,
         })
+        return this.saveResult(newResult, action, reqeustedBy)
       } else {
         //LOG Critical and Fail
         LogError(
