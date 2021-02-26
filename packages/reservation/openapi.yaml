@@ -735,7 +735,7 @@ components:
           appointmentID:
             type: string
             minItems: 1
-            maxItems: 50
+            maxItems: 20
           action:
             type: string
             enum:
