@@ -16,6 +16,7 @@ import {
   AppointmentDBModel,
   statsUiDTOResponse,
   appointmentUiDTOResponse,
+  AppointmentAcuityResponse,
 } from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
@@ -385,12 +386,27 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {appointmentId} = req.params
       const {date, time} = req.body as {date: string; time: string}
-      const appointment = await this.appointmentService.rescheduleAppointment(
-        appointmentId,
-        date,
-        time,
-      )
-      res.json(actionSucceed(appointmentUiDTOResponse(appointment, false)))
+      const appointmentFromDB:AppointmentDBModel=  await this.appointmentService.getAppointmentDBById(appointmentId);
+      const acuityAppointmentId= appointmentFromDB.acuityAppointmentId;
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const canCancel = this.appointmentService.getCanCancel(isLabUser, appointmentFromDB.appointmentStatus)
+      let result;
+      console.log('Before can Cancel: ', canCancel);
+
+      if(canCancel){
+        //reschedule appointment for acuity
+        const parsedTime= time.replace('am',' AM').replace('pm',' PM')
+        const appointmentAcuityResponse :AppointmentAcuityResponse= await this.appointmentService.rescheduleAppointmentOnAcuity(acuityAppointmentId, (new Date(date+' '+parsedTime)).toISOString() )
+        //reschedule appointment for acuity
+        result = await this.appointmentService.rescheduleAppointment(
+          appointmentId,
+          date,
+          time,
+        )
+        console.log('appointmentAcuityResponse: ', appointmentAcuityResponse, 'data changed. Parsed time');
+      }
+      
+      res.json(actionSucceed(appointmentUiDTOResponse(result, false)))
     } catch (error) {
       next(error)
     }

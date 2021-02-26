@@ -10,6 +10,10 @@ export class AcuityRepository extends AcuityScheduling {
     super()
   }
 
+  async rescheduleAppoinment(id: number, datetime:string): Promise<AppointmentAcuityResponse>{
+    return  this.rescheduleAppoinmentService(id, datetime);
+  }
+
   //Used by Webhooks
   async updateAppointmentOnAcuity(id: number, data: unknown): Promise<AppointmentAcuityResponse> {
     return this.updateAppointmentOnAcuityService(id, data)
