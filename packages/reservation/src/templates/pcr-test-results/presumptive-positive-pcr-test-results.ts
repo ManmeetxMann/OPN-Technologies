@@ -1,5 +1,5 @@
-import {TableLayouts, Content} from '../../../common/src/service/reports/pdf-types'
-import {PCRTestResultEmailDTO} from '../models/pcr-test-results'
+import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
+import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 import commonPDFContent from './common-report-content'
 
 const pdfContent = (

@@ -59,7 +59,7 @@ import {
   Filter,
   ResultTypes,
 } from '../models/appointment'
-import {PCRResultPDFContent} from '../templates'
+import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
