@@ -1031,6 +1031,27 @@ export class AppoinmentService {
     }
   }
 
+  async deleteScanHistory(adminId: string, type: TestTypes): Promise<void> {
+    const scanHistory = await this.adminScanHistoryRepository.findWhereEqualInMap([
+      {
+        map: '/',
+        operator: DataModelFieldMapOperatorType.Equals,
+        key: 'createdBy',
+        value: adminId,
+      },
+      {
+        map: '/',
+        operator: DataModelFieldMapOperatorType.Equals,
+        key: 'type',
+        value: type,
+      },
+    ])
+    if (scanHistory.length) {
+      return await this.adminScanHistoryRepository.deleteBulk(scanHistory.map(({id}) => id))
+    }
+    throw new ResourceNotFoundException('History for this admin is empty')
+  }
+
   async makeCheckIn(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
     if (!(await this.checkAppointmentStatusOnly(appointmentId, AppointmentStatus.Pending))) {
       throw new BadRequestException('Appointment status should be on Pending state')
