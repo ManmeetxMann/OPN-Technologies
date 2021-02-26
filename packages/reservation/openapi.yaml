@@ -746,6 +746,9 @@ components:
           sendAgain:
             type: boolean
             default: false
+          notify:
+            type: boolean
+            default: true
         required:
           - appointmentID 
           - action           

@@ -11,6 +11,7 @@ export type RapidAntigenTestResultRequest = {
   appointmentID: string
   action: RapidAntigenResultTypes
   sendAgain: boolean
+  notify: boolean
 }
 
 export enum RapidAlergenResultPDFType {
