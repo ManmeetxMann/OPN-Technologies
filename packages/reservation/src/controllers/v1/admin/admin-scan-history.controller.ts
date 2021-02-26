@@ -44,8 +44,6 @@ class AdminScanHistoryController implements IControllerBase {
 
       const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
 
-      console.log('EQUAL', appointment.organizationId, organizationId)
-
       if (appointment.organizationId !== organizationId) {
         throw new ForbiddenException('Appointment does not belong to your organization')
       }
