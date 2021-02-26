@@ -1,9 +1,9 @@
 import path from 'path'
 
-import {TableLayouts, Content} from '../../../common/src/service/reports/pdf-types'
-import {Config} from '../../../common/src/utils/config'
-import {ResultTypes} from '../models/appointment'
-import {PCRTestResultEmailDTO} from '../models/pcr-test-results'
+import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
+import {Config} from '../../../../common/src/utils/config'
+import {ResultTypes} from '../../models/appointment'
+import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
