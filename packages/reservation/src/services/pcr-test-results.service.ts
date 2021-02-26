@@ -11,7 +11,6 @@ import {toDateFormat} from '../../../common/src/utils/times'
 import {
   dateToDateTime,
   formatDateRFC822Local,
-  getFirestoreTimeStampDate,
   makeDeadlineForFilter,
 } from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
