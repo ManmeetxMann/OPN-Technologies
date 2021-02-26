@@ -105,7 +105,7 @@ export class PCRTestResultsService {
         break
       }
     }
-    const newPCRResult = await this.createNewTestResults({
+    const newPCRResult = await this.pcrTestResultsRepository.createNewTestResults({
       appointment,
       adminId,
       runNumber,
@@ -599,7 +599,7 @@ export class PCRTestResultsService {
     const reCollectNumber = 0 //Not Relevant for Resend
     const testResult =
       isSingleResult && !waitingPCRTestResult
-        ? await this.createNewTestResults({
+        ? await this.pcrTestResultsRepository.createNewTestResults({
             appointment,
             adminId: resultData.adminId,
             runNumber,
@@ -700,7 +700,7 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.NextDay,
           userId: resultData.adminId,
         })
-        await this.createNewTestResults({
+        await this.pcrTestResultsRepository.createNewTestResults({
           appointment: updatedAppointment,
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
@@ -715,7 +715,7 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.SameDay,
           userId: resultData.adminId,
         })
-        await this.createNewTestResults({
+        await this.pcrTestResultsRepository.createNewTestResults({
           appointment: updatedAppointment,
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
@@ -730,7 +730,7 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.NextDay,
           userId: resultData.adminId,
         })
-        await this.createNewTestResults({
+        await this.pcrTestResultsRepository.createNewTestResults({
           appointment: updatedAppointment,
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
@@ -916,47 +916,6 @@ export class PCRTestResultsService {
     defaultTestResults: Partial<PCRTestResultDBModel>,
   ): Promise<void> {
     await this.pcrTestResultsRepository.updateData(id, defaultTestResults)
-  }
-
-  async createNewTestResults(data: {
-    appointment: AppointmentDBModel
-    adminId: string
-    linkedBarCodes?: string[]
-    reCollectNumber: number
-    runNumber: number
-    result?: ResultTypes
-    waitingResult?: boolean
-    confirmed?: boolean
-    previousResult: ResultTypes
-  }): Promise<PCRTestResultDBModel> {
-    //Reset Display for all OLD results
-    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(data.appointment.id, {
-      displayInResult: false,
-    })
-    console.log(
-      `createNewTestResults: UpdatedAllResults for AppointmentId: ${data.appointment.id} to displayInResult: false`,
-    )
-
-    const pcrResultDataForDb = {
-      adminId: data.adminId,
-      appointmentId: data.appointment.id,
-      barCode: data.appointment.barCode,
-      confirmed: data.confirmed ?? false,
-      dateTime: data.appointment.dateTime,
-      displayInResult: true,
-      deadline: data.appointment.deadline,
-      firstName: data.appointment.firstName,
-      lastName: data.appointment.lastName,
-      linkedBarCodes: data.linkedBarCodes ?? [],
-      organizationId: data.appointment.organizationId,
-      previousResult: data.previousResult,
-      result: data.result ?? ResultTypes.Pending,
-      runNumber: data.runNumber,
-      reCollectNumber: data.reCollectNumber,
-      waitingResult: data.waitingResult ?? true,
-      recollected: false,
-    }
-    return await this.pcrTestResultsRepository.save(pcrResultDataForDb)
   }
 
   async getPCRTestsByBarcode(barCodes: string[]): Promise<PCRTestResultDBModel[]> {
@@ -1237,7 +1196,7 @@ export class PCRTestResultsService {
   ): Promise<PCRTestResultDBModel> {
     const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
 
-    return this.createNewTestResults({
+    return this.pcrTestResultsRepository.createNewTestResults({
       appointment,
       adminId: 'WEBHOOK',
       linkedBarCodes,
