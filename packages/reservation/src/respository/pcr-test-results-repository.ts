@@ -5,7 +5,7 @@ import DataStore from '../../../common/src/data/datastore'
 
 //Models
 import {PCRTestResultDBModel} from '../models/pcr-test-results'
-import { AppointmentDBModel, ResultTypes } from '../models/appointment'
+import {AppointmentDBModel, ResultTypes} from '../models/appointment'
 //Schema
 import DBSchema from '../dbschemas/pcr-test-results.schema'
 
@@ -57,7 +57,6 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     }
     return await this.save(pcrResultDataForDb)
   }
-
 
   public async save(
     data: Omit<PCRTestResultDBModel, 'id' | 'updatedAt'>,

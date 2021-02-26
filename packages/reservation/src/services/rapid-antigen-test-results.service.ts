@@ -21,7 +21,7 @@ import {
 } from '../models/rapid-antigen-test-results'
 
 import {RapidAntigenPDFContent} from '../templates/rapid-antigen'
-import { PCRTestResultDBModel } from '../models/pcr-test-results'
+import {PCRTestResultDBModel} from '../models/pcr-test-results'
 
 export class RapidAntigenTestResultsService {
   private dataStore = new DataStore()
@@ -47,13 +47,13 @@ export class RapidAntigenTestResultsService {
   private saveResult = async (
     testResult: PCRTestResultDBModel,
     action: RapidAntigenResultTypes,
-    reqeustedBy: string
+    reqeustedBy: string,
   ): Promise<BulkOperationResponse> => {
     const {id, result, appointmentId, barCode} = testResult
     //Update Test Results
     await this.pcrTestResultsRepository.updateData(id, {
       displayInResult: true,
-      previousResult: (result !== ResultTypes.Pending) ? result : null,
+      previousResult: result !== ResultTypes.Pending ? result : null,
       result: this.getResultBasedOnAction(action),
       waitingResult: false,
     })
@@ -66,7 +66,10 @@ export class RapidAntigenTestResultsService {
       appointmentID: appointmentId,
     })
 
-    LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'Success', {appointmentId, resultId: id})
+    LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'Success', {
+      appointmentId,
+      resultId: id,
+    })
     return Promise.resolve({
       id: appointmentId,
       barCode: barCode,
@@ -77,13 +80,15 @@ export class RapidAntigenTestResultsService {
 
   private processAppointment = async (
     appointmentRequest: RapidAntigenTestResultRequest,
-    reqeustedBy: string
+    reqeustedBy: string,
   ): Promise<BulkOperationResponse> => {
     const {appointmentID, action, sendAgain} = appointmentRequest
-    
+
     const appointment = await this.appointmentsRepository.getAppointmentById(appointmentID)
-    if(!appointment){
-      LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'InvalidAppointmentId', {appointmentID})
+    if (!appointment) {
+      LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'InvalidAppointmentId', {
+        appointmentID,
+      })
       return Promise.resolve({
         id: appointmentID,
         status: BulkOperationStatus.Failed,
@@ -109,15 +114,15 @@ export class RapidAntigenTestResultsService {
       const waitingResult = waitingResults[0] //Only One results is expected
       return this.saveResult(waitingResult, action, reqeustedBy)
     } else {
-      if(sendAgain){
+      if (sendAgain) {
         await this.pcrTestResultsRepository.createNewTestResults({
           appointment,
           adminId: reqeustedBy,
-          runNumber:0,
-          reCollectNumber:0,
+          runNumber: 0,
+          reCollectNumber: 0,
           previousResult: ResultTypes.Pending,
         })
-      }else{
+      } else {
         //LOG Critical and Fail
         LogError(
           'saveAndSendRapidAntigenTestTesults.processAppointment',
@@ -139,7 +144,9 @@ export class RapidAntigenTestResultsService {
     reqeustedBy: string,
   ): Promise<BulkOperationResponse[]> {
     const results = await Promise.all(
-      requestData.map(async (appointmentRequest) => this.processAppointment(appointmentRequest, reqeustedBy)),
+      requestData.map(async (appointmentRequest) =>
+        this.processAppointment(appointmentRequest, reqeustedBy),
+      ),
     )
     return results
   }
