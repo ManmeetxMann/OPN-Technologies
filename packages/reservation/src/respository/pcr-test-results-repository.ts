@@ -1,7 +1,12 @@
+//Common
 import {serverTimestamp} from '../../../common/src/utils/times'
 import DataModel, {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
+
+//Models
 import {PCRTestResultDBModel} from '../models/pcr-test-results'
+import {AppointmentDBModel, ResultTypes} from '../models/appointment'
+//Schema
 import DBSchema from '../dbschemas/pcr-test-results.schema'
 
 export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
@@ -10,6 +15,47 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
 
   constructor(dataStore: DataStore) {
     super(dataStore)
+  }
+
+  async createNewTestResults(data: {
+    appointment: AppointmentDBModel
+    adminId: string
+    linkedBarCodes?: string[]
+    reCollectNumber: number
+    runNumber: number
+    result?: ResultTypes
+    waitingResult?: boolean
+    confirmed?: boolean
+    previousResult: ResultTypes
+  }): Promise<PCRTestResultDBModel> {
+    //Reset Display for all OLD results
+    await this.updateAllResultsForAppointmentId(data.appointment.id, {
+      displayInResult: false,
+    })
+    console.log(
+      `createNewTestResults: UpdatedAllResults for AppointmentId: ${data.appointment.id} to displayInResult: false`,
+    )
+
+    const pcrResultDataForDb = {
+      adminId: data.adminId,
+      appointmentId: data.appointment.id,
+      barCode: data.appointment.barCode,
+      confirmed: data.confirmed ?? false,
+      dateTime: data.appointment.dateTime,
+      displayInResult: true,
+      deadline: data.appointment.deadline,
+      firstName: data.appointment.firstName,
+      lastName: data.appointment.lastName,
+      linkedBarCodes: data.linkedBarCodes ?? [],
+      organizationId: data.appointment.organizationId,
+      previousResult: data.previousResult,
+      result: data.result ?? ResultTypes.Pending,
+      runNumber: data.runNumber,
+      reCollectNumber: data.reCollectNumber,
+      waitingResult: data.waitingResult ?? true,
+      recollected: false,
+    }
+    return await this.save(pcrResultDataForDb)
   }
 
   public async save(

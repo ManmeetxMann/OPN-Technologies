@@ -7,7 +7,6 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {getUserId} from '../../../../../common/src/utils/auth'
 
 //Services
-import {AppoinmentService} from '../../../services/appoinment.service'
 import {RapidAntigenTestResultsService} from '../../../services/rapid-antigen-test-results.service'
 
 //Models
@@ -16,7 +15,6 @@ import {RapidAntigenTestResultRequest} from '../../../models/rapid-antigen-test-
 class AdminRapidAntigenTestTesultsController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
   public router = Router()
-  private appointmentService = new AppoinmentService()
   private rapidAntigenTestResultsService = new RapidAntigenTestResultsService()
 
   constructor() {
@@ -44,7 +42,7 @@ class AdminRapidAntigenTestTesultsController implements IControllerBase {
       const reqeustedBy = getUserId(res.locals.authenticatedUser)
       const data = req.body as RapidAntigenTestResultRequest[]
 
-      const response = await this.rapidAntigenTestResultsService.saveAndSendRapidAntigenTestTesults(
+      const response = await this.rapidAntigenTestResultsService.saveRapidAntigenTestTesults(
         data,
         reqeustedBy,
       )

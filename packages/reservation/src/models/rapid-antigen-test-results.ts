@@ -1,6 +1,8 @@
+import {AppointmentDBModel} from './appointment'
+
 export enum RapidAntigenResultTypes {
   DoNothing = 'DoNothing',
-  SendInconclusive = 'SendInconclusive',
+  SendInvalid = 'SendInvalid',
   SendNegative = 'SendNegative',
   SendPositive = 'SendPositive',
 }
@@ -8,4 +10,13 @@ export enum RapidAntigenResultTypes {
 export type RapidAntigenTestResultRequest = {
   appointmentID: string
   action: RapidAntigenResultTypes
+  sendAgain: boolean
+  notify: boolean
 }
+
+export enum RapidAlergenResultPDFType {
+  Positive = 'Positive',
+  Negative = 'Negative',
+}
+
+export type RapidAntigenEmailResultDTO = AppointmentDBModel
