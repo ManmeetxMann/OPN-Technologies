@@ -727,25 +727,31 @@ components:
               nullable: true
               type: string
     RapidAntigenRequest:
-      type: object
-      additionalProperties: false
-      properties:
-        appointmentIDs:
-          type: array
-          items:
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        properties:
+          appointmentID:
             type: string
-          minItems: 1
-          maxItems: 50
-        results:
-          type: string
-          enum:
-              - DoNothing
-              - Inconclusive
-              - Negative
-              - Positive
-      required:
-        - appointmentIDs
-        - results
+            minItems: 1
+            maxItems: 20
+          action:
+            type: string
+            enum:
+                - DoNothing
+                - SendInvalid
+                - SendNegative
+                - SendPositive
+          sendAgain:
+            type: boolean
+            default: false
+          notify:
+            type: boolean
+            default: true
+        required:
+          - appointmentID
+          - action
 paths:
   /admin/api/v1/send-fax-for-positive:
     post:
@@ -1405,6 +1411,11 @@ paths:
             type: string
         - in: query
           name: deadline
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: date
           schema:
             type: string
             format: date
@@ -2678,6 +2689,50 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RapidAntigenRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperationResponse'
+  /reservation/internal/api/v1/rapid-alergen-send-result-email:
+    summary: Rapid Antigen Test Results Email Notification
+    post:
+      description: 'Send Email Notification for Rapid Antigen Test Results'
+      tags:
+        - Rapid Antigen Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                subscription:
+                  type: string
+                  description: subscription of the message.
+                message:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    data:
+                      type: string
+                      description: The base64 encoding of the payload
+                    messageId:
+                      type: string
+                      description: id of the message. Provided by GCP
+                    message_id:
+                      type: string
+                      description: id of the message, again. Provided by GCP
+                    publishTime:
+                      type: string
+                      description: ISO datetime for when the message was published. Provided by GCP
+                    publish_time:
+                      type: string
+                      description: ISO datetime for when the message was published, again. Provided by GCP
+                  required:
+                    - data
       responses:
         '200':
           description: Successfully added
