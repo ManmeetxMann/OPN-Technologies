@@ -7,7 +7,7 @@
     "npm": ">=6.0.0"
   },
   "scripts": {
-    "lint": "eslint --no-eslintrc --config  ./.eslintrc.js  --fix __tests__",
+    "lint-test-scripts": "eslint --no-eslintrc --config  ./.eslintrc.js  --fix __tests__",
     "create_test_data": "FIRESTORE_EMULATOR_HOST=localhost:8080 node tools/create_test_data.js",
     "test": "jest"
   },
