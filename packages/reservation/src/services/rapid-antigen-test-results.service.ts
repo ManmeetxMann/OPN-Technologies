@@ -1,7 +1,11 @@
+import moment from 'moment'
+
 //Common
 import DataStore from '../../../common/src/data/datastore'
 import {LogError, LogInfo} from '../../../common/src/utils/logging-setup'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
+import {EmailService} from '../../../common/src/service/messaging/email-service'
+import { Config } from '../../../common/src/utils/config'
 
 //Repository
 import {AppointmentsRepository} from '../respository/appointments-repository'
@@ -13,6 +17,7 @@ import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operatio
 import {
   RapidAntigenResultTypes,
   RapidAntigenTestResultRequest,
+  RapidAlergenResultPDFType
 } from '../models/rapid-antigen-test-results'
 
 import {RapidAntigenPDFContent} from '../templates/rapid-antigen'
@@ -21,6 +26,7 @@ export class RapidAntigenTestResultsService {
   private dataStore = new DataStore()
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
+  private emailService = new EmailService()
   private pubSub = new OPNPubSub('rapid-alergen-test-result-topic')
 
   async saveRapidAntigenTestTesults(
@@ -117,6 +123,7 @@ export class RapidAntigenTestResultsService {
     const appointment = await this.appointmentsRepository.getAppointmentById(
       appointmentID,
     )
+    const pdfContent = await RapidAntigenPDFContent(appointment, RapidAlergenResultPDFType.Negative)
 
   }
 }

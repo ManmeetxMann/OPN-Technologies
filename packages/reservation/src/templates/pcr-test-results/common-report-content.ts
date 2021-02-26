@@ -48,7 +48,7 @@ const companyInfoHeader = (): Content => {
       {
         stack: [
           {
-            image: path.join(__dirname, '../static/images/fh-logo.png'),
+            image: path.join(__dirname, '../../static/images/fh-logo.png'),
             width: 96,
             height: 88,
             style: 'logo',

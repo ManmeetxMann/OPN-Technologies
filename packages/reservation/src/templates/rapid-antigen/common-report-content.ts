@@ -3,7 +3,7 @@ import path from 'path'
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {Config} from '../../../../common/src/utils/config'
 import {ResultTypes} from '../../models/appointment'
-import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
+import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
@@ -24,31 +24,13 @@ const tableLayouts: TableLayouts = {
   },
 }
 
-const resultText = (result: ResultTypes): string => {
-  if (result === ResultTypes.PresumptivePositive) {
-    return 'Presumptive Positive'
-  } else if (result === ResultTypes.Positive) {
-    return '2019-nCoV Detected'
-  }
-  return 'NEGATIVE'
-}
-
-const getFillColorForResultsCell = (result: ResultTypes): string => {
-  if (result === ResultTypes.PresumptivePositive) {
-    return '#FF0000'
-  } else if (result === ResultTypes.Positive) {
-    return '#FF0000'
-  }
-  return '#6AA84F'
-}
-
 const companyInfoHeader = (): Content => {
   return {
     columns: [
       {
         stack: [
           {
-            image: path.join(__dirname, '../static/images/fh-logo.png'),
+            image: path.join(__dirname, '../../static/images/fh-logo.png'),
             width: 96,
             height: 88,
             style: 'logo',
@@ -94,7 +76,7 @@ const companyInfoHeader = (): Content => {
   }
 }
 
-const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): Content => {
+const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: string): Content => {
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
   const dataPersonal = [
     [
@@ -114,13 +96,6 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
 
   if (params.addressUnit) {
     dataPersonal.push(['Home Address (unit number, etc)', params.addressUnit])
-  }
-
-  if (
-    params.ohipCard &&
-    (params.result === ResultTypes.Positive || params.result === ResultTypes.PresumptivePositive)
-  ) {
-    dataPersonal.push(['Health / OHIP Card', params.ohipCard])
   }
 
   if (params.travelID) {
@@ -190,103 +165,7 @@ const documentFooter = (): Content => {
     margin: [0, 50, 0, 0],
   }
 }
-const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
-  return [
-    {
-      text: 'Detailed Test Analysis Data:',
-      margin: [0, 15, 0, 0],
-      lineHeight: 1.2,
-    },
-    {
-      columns: [
-        {
-          layout: 'resultTable',
-          width: 58,
-          table: {
-            widths: [52],
-            heights: [46],
-            body: [['Result']],
-          },
-        },
-        {
-          stack: [
-            {
-              layout: 'resultTable',
-              width: 350,
-              table: {
-                widths: [88, 88, 88, 88],
-                body: [['FAM', 'Cal Red 61', 'Quasar 670', 'HEX']],
-              },
-              margin: [3, 0, 0, 0],
-              alignment: 'center',
-            },
-            {
-              layout: 'resultTable',
-              width: 350,
-              table: {
-                widths: [40, 39, 40, 39, 40, 39, 40, 39],
-                body: [['E gene', 'C(t)', 'RdRP gene', 'C(t)', 'N gene', 'C(t)', 'IC', 'C(t)']],
-              },
-              margin: [3, -1, 0, 0],
-              alignment: 'center',
-            },
-          ],
-        },
-      ],
-      margin: [0, 15, 0, 0],
-      fontSize: 10,
-    },
-    {
-      layout: 'resultTable',
-      table: {
-        widths: [52, 40, 39, 40, 39, 40, 39, 40, 39],
-        body: [
-          [
-            {
-              text: resultText(params.result),
-              fillColor: getFillColorForResultsCell(params.result),
-              color: '#FFFFFF',
-            },
-            {
-              text: params.resultSpecs.famEGene,
-              alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.famCt,
-              alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.calRed61RdRpGene,
-              alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.calRed61Ct,
-              alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.quasar670NGene,
-              alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.quasar670Ct,
-              alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.hexIC,
-              alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.hexCt,
-              alignment: 'center',
-            },
-          ],
-        ],
-      },
-      margin: [0, -1, 0, 0],
-      fontSize: 10,
-    },
-  ]
-}
+
 
 export default {
   companyInfoHeader,
@@ -294,5 +173,4 @@ export default {
   documentFooter,
   tableLayouts,
   conactDetailsForQuestions,
-  testAnalysisTable,
 }

@@ -1,24 +1,24 @@
 import moment from 'moment'
 import {Content, TableLayouts} from '../../../../common/src/service/reports/pdf-types'
 import {PdfService} from '../../../../common/src/service/reports/pdf'
-import {PCRResultPDFType, PCRTestResultEmailDTO} from '../../models/pcr-test-results'
+import {RapidAlergenResultPDFType, RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
 
 import positivePCRResultTemplate from './positive'
 import negativePCRResultTemplate from './negative'
 
 export const RapidAntigenPDFContent = async (
-  resultData: PCRTestResultEmailDTO,
-  pdfType: PCRResultPDFType,
+  resultData: RapidAntigenEmailResultDTO,
+  pdfType: RapidAlergenResultPDFType,
 ): Promise<string> => {
   const pdfService = new PdfService()
   const resultDate = moment(resultData.dateTime.toDate()).format('LL')
   let data: {content: Content; tableLayouts: TableLayouts}
   switch (pdfType) {
-    case PCRResultPDFType.Positive: {
+    case RapidAlergenResultPDFType.Positive: {
       data = positivePCRResultTemplate(resultData, resultDate)
       break
     }
-    case PCRResultPDFType.Negative: {
+    case RapidAlergenResultPDFType.Negative: {
       data = negativePCRResultTemplate(resultData, resultDate)
       break
     }
