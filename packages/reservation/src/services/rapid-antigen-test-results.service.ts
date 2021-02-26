@@ -31,8 +31,8 @@ export class RapidAntigenTestResultsService {
         case RapidAntigenResultTypes.SendPositive: {
           return ResultTypes.Positive
         }
-        case RapidAntigenResultTypes.SendInconclusive: {
-          return ResultTypes.Inconclusive
+        case RapidAntigenResultTypes.SendInvalid: {
+          return ResultTypes.Invalid
         }
       }
     }

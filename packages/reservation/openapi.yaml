@@ -740,7 +740,7 @@ components:
             type: string
             enum:
                 - DoNothing
-                - SendInconclusive
+                - SendInvalid
                 - SendNegative
                 - SendPositive
           sendAgain:
