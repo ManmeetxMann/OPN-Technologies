@@ -10,6 +10,7 @@ import {
   GetAdminScanHistoryRequest,
   PostAdminScanHistoryRequest,
 } from '../../../models/appointment'
+import {ForbiddenException} from '../../../../../common/src/exceptions/forbidden-exception'
 
 class AdminScanHistoryController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -42,11 +43,15 @@ class AdminScanHistoryController implements IControllerBase {
 
   createScanHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {barCode, type} = req.body as PostAdminScanHistoryRequest
+      const {barCode, type, organizationId} = req.body as PostAdminScanHistoryRequest
       const adminId = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
+
+      if (appointment.organizationId !== organizationId) {
+        throw new ForbiddenException('Appointment does not belong to your organization')
+      }
 
       await this.appointmentService.makeDeadline15Minutes(appointment)
       await this.appointmentService.addAdminScanHistory(adminId, appointment.id, type)
