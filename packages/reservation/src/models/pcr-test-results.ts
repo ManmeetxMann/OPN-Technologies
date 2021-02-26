@@ -63,9 +63,11 @@ export enum ResultReportStatus {
   Failed = 'Failed',
   Processing = 'Processing',
   RequestReceived = 'RequestReceived',
-  SentReRunRequest = 'SentReRunRequest',
-  SentReCollectRequest = 'SentReCollectRequest',
-  SentResult = 'SentResult',
+  SentReRunRequest = 'Sent "Re-Run Request"',
+  SentReCollectRequestAsInvalid = 'Sent "Re-Collect Request As Invalid"',
+  SentReCollectRequestAsInconclusive = 'Sent "Re-Collect Request As Inconclusive"',
+  SentPreliminaryPositive = 'Sent "Preliminary Positive"',
+  SentPresumptivePositive = 'Sent "Presumptive Positive"',
   Skipped = 'Skipped',
 }
 
@@ -153,6 +155,8 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   testRunId?: string
   updatedAt: firestore.Timestamp
   waitingResult: boolean
+  deadlineDate: firestore.Timestamp
+  dateOfAppointment: firestore.Timestamp
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -189,6 +193,8 @@ export type PCRTestResultEmailDTO = Omit<
   | 'runNumber'
   | 'reCollectNumber'
   | 'updatedAt'
+  | 'deadlineDate'
+  | 'dateOfAppointment'
 > &
   AppointmentDBModel
 
@@ -208,7 +214,7 @@ export type TestResultsReportingTrackerDBModel = {
 export type TestResultsReportingTrackerPCRResultsDBModel = {
   id: string
   adminId: string
-  status: ResultReportStatus
+  status: ResultReportStatus | ResultTypes
   data: PCRTestResultRequestData
   details?: string
 }
@@ -264,6 +270,7 @@ export type PcrTestResultsListRequest = {
   deadline?: string
   barCode?: string
   result?: ResultTypes
+  date?: string
 }
 
 export type PCRTestResultListDTO = {
@@ -279,6 +286,8 @@ export type PCRTestResultListDTO = {
   dateTime?: string
   deadline?: string
   testRunId?: string
+  organizationId: string
+  organizationName: string
 }
 
 export type PCRTestResultByDeadlineListDTO = {
@@ -296,7 +305,7 @@ export type PCRTestResultByDeadlineListDTO = {
 
 export type pcrTestResultsDTO = {
   barCode: string
-  status: ResultReportStatus
+  status: ResultReportStatus | ResultTypes
   details?: string
 }
 
@@ -415,6 +424,8 @@ export enum PcrResultTestActivityAction {
   UpdateFromPackage = 'updateFromPackage',
   AddTestRun = 'addTestRun',
   UpdateFromAppointment = 'updateFromAppointment',
+  ResetOldResults = 'resetOldResults',
+  UpdateFromRapidAntigen = 'updateFromRapidAntigen',
 }
 
 export type UpdatePcrTestResultActionParams = {

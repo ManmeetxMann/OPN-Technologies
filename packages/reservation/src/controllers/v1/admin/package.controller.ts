@@ -1,7 +1,7 @@
 import {NextFunction, Request, Response, Router} from 'express'
 
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
@@ -14,7 +14,7 @@ import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {PcrResultTestActivityAction} from '../../../../../reservation/src/models/pcr-test-results'
 import {getUserId} from '../../../../../common/src/utils/auth'
 
-class AdminController implements IControllerBase {
+class AdminPackageController implements IControllerBase {
   public path = '/reservation/admin'
   public router = Router()
   private packageService = new PackageService()
@@ -52,7 +52,7 @@ class AdminController implements IControllerBase {
         throw new BadRequestException(`Package code ${packageCode} already exist`)
       }
 
-      await this.packageService.savePackage(packageCode, organizationId)
+      const resultPackage = await this.packageService.savePackage(packageCode, organizationId)
 
       const appointments = await this.appointmentService.getAppointmentDBByPackageCode(packageCode)
 
@@ -68,7 +68,7 @@ class AdminController implements IControllerBase {
         }),
       )
 
-      res.json(actionSucceed())
+      res.json(actionSuccess(resultPackage, 'Package is added successfully'))
     } catch (error) {
       next(error)
     }
@@ -87,4 +87,4 @@ class AdminController implements IControllerBase {
   }
 }
 
-export default AdminController
+export default AdminPackageController

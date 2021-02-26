@@ -12,7 +12,7 @@
 
 ![OPN Enterprise Service CD Action](https://github.com/OPN-Technologies/services/workflows/OPN%20Enterprise%20Service%20CD%20Action/badge.svg?branch=development)
 
-![OPN Access Service CD Action](https://github.com/OPN-Technologies/services/workflows/OPN%20Access%20Service%20CD%20Action/badge.svg?branch=development)
+![Deploy Access Service](https://github.com/OPN-Technologies/services/workflows/OPN%20Access%20Service%20CD%20Action/badge.svg?branch=master)
 
 ![OPN Lookup Service CD Action](https://github.com/OPN-Technologies/services/workflows/OPN%20Lookup%20Service%20CD%20Action/badge.svg?branch=development)
 
@@ -87,6 +87,24 @@ OPN Services use the following technologies:
 
 ### DevOps Usage
 
+# Setup
+NodeJS: 12
+npm install: On ROOT
+npm run install-all: On ROOT
+npm run dev:debug-all
+
+Make sure .env file is located in packages/common/.env
+
+
+
+#### Run in Debug Mode Locally
+```
+npm run dev:debug-all
+```
+OR a specific project
+```
+lerna run --scope @opn/registry dev:debug --stream
+```
 
 #### Clean Projects
 
@@ -99,28 +117,6 @@ OR a specific project
 ```
 lerna run --scope @opn/registry clean --stream
 ```
-
-
-#### Install Dependecies
-```
-npm run install-all
-```
-OR a specific project
-```
-cd packages/registry
-npm install
-```
-
-
-#### Run in Debug Mode Locally
-```
-npm run dev:debug-all
-```
-OR a specific project
-```
-lerna run --scope @opn/registry dev:debug --stream
-```
-
 
 #### Build Distro: Transpile Typescript to pure Javascript
 ```
@@ -136,17 +132,4 @@ lerna run --scope @opn/registry build --stream
 ```
 cd packages/registry/dist
 npm start
-```
-
-
-#### Deploy to GCP
-
-** Requires proper services accounts to deploy
-
-```
-npm run deploy-all
-```
-OR a specific project
-```
-lerna run --scope @opn/registry deploy --stream
 ```

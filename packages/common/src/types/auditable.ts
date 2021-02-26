@@ -1,11 +1,6 @@
-import {firestore} from 'firebase-admin'
+import {Timestamp} from './timestamp'
 
 export type Auditable = {
-  timestamps: {
-    // TODO to be flatten
-    createdAt: firestore.Timestamp
-    updatedAt: firestore.Timestamp
-    migrations?: Record<string, firestore.Timestamp>
-  }
+  timestamps: Timestamp
   updatedBy: string //TODO: handle with authenticated userId
 }

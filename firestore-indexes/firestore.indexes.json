@@ -313,6 +313,24 @@
       ]
     },
     {
+      "collectionGroup": "passports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "validUntil",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "pcr-test-results",
       "queryScope": "COLLECTION",
       "fields": [
@@ -363,6 +381,70 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "deadlineDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "result",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "deadlineDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "result",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dateOfAppointment",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "result",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dateOfAppointment",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "result",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "barCode",
           "order": "ASCENDING"
         },
@@ -400,6 +482,28 @@
       "fields": [
         {
           "fieldPath": "deadline",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "result",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dateTime",
           "order": "ASCENDING"
         },
         {

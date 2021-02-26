@@ -144,6 +144,21 @@ export type CheckAppointmentRequest = {
   barCodes: string[]
 }
 
+export enum TestTypes {
+  PCR = 'PCR',
+  RapidAntigen = 'RapidAntigen',
+}
+
+export type PostAdminScanHistoryRequest = {
+  type: TestTypes
+  barCode: string
+  organizationId: string
+}
+
+export type GetAdminScanHistoryRequest = {
+  type: TestTypes
+}
+
 export type CreateAppointmentRequest = {
   slotId: string
   firstName: string
@@ -298,21 +313,27 @@ export const statsUiDTOResponse = (
   appointmentStatus: Filter[],
   orgIdArray: Filter[],
   total: number,
-): appointmentStatsUiDTO => ({
-  total,
-  filterGroup: [
+  showOrgFilter = true,
+): appointmentStatsUiDTO => {
+  const filterGroup = [
     {
       name: FilterName.FilterByStatusType,
       key: FilterGroupKey.appointmentStatus,
       filters: appointmentStatus,
     },
-    {
+  ]
+  if (showOrgFilter) {
+    filterGroup.push({
       name: FilterName.FilterByCorporation,
       key: FilterGroupKey.organizationId,
       filters: orgIdArray,
-    },
-  ],
-})
+    })
+  }
+  return {
+    total,
+    filterGroup,
+  }
+}
 
 export const appointmentUiDTOResponse = (
   appointment: AppointmentDBModel & {canCancel?: boolean; organizationName?: string},
@@ -355,9 +376,9 @@ export type UserAppointment = {
 export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): UserAppointment => ({
   id: appointment.id,
   QRCode: appointment.barCode,
-  showQrCode: moment(new Date()).isBefore(
-    formatStringDateRFC822Local(appointment.dateOfAppointment),
-  ),
+  showQrCode:
+    moment(new Date()).isBefore(formatStringDateRFC822Local(appointment.dateOfAppointment)) &&
+    appointment.appointmentStatus !== AppointmentStatus.Canceled,
   firstName: appointment.firstName,
   lastName: appointment.lastName,
   locationName: appointment.locationName,
