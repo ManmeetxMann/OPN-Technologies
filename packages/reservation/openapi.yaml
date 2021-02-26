@@ -743,6 +743,9 @@ components:
                 - SendInconclusive
                 - SendNegative
                 - SendPositive
+          sendAgain:
+            type: boolean
+            default: false
         required:
           - appointmentID 
           - action           

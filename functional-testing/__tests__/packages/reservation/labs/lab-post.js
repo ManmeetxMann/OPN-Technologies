@@ -17,7 +17,7 @@ const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 describe('post:temperature', () => {
   test('should be successfull to create lab', () => {
     const url = `${reservationServiceUrl}/reservation/admin/api/v1/labs`;
-    return helpers_common.runAuthenticatedTest(frisby).then(function(token) {
+    return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
       return frisby
           .setup({
             request: {
@@ -35,7 +35,7 @@ describe('post:temperature', () => {
 
   test('should fail to create lab: empty name', () => {
     const url = `${reservationServiceUrl}/reservation/admin/api/v1/labs`;
-    return helpers_common.runAuthenticatedTest(frisby).then(function(token) {
+    return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
       return frisby
           .setup({
             request: {
@@ -53,7 +53,7 @@ describe('post:temperature', () => {
 
   test('should fail to create lab: missing name', () => {
     const url = `${reservationServiceUrl}/reservation/admin/api/v1/labs`;
-    return helpers_common.runAuthenticatedTest(frisby).then(function(token) {
+    return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
       return frisby
           .setup({
             request: {

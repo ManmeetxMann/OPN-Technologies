@@ -8,4 +8,5 @@ export enum RapidAntigenResultTypes {
 export type RapidAntigenTestResultRequest = {
   appointmentID: string
   action: RapidAntigenResultTypes
+  sendAgain: boolean
 }
