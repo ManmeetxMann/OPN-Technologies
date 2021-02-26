@@ -53,7 +53,7 @@ export class RapidAntigenTestResultsService {
     const {id, result, appointmentId, barCode} = testResult
     //Update Test Results
     await this.pcrTestResultsRepository.updateData({
-      id, 
+      id,
       updates: {
         displayInResult: true,
         previousResult: result !== ResultTypes.Pending ? result : null,
@@ -61,7 +61,7 @@ export class RapidAntigenTestResultsService {
         waitingResult: false,
       },
       actionBy: reqeustedBy,
-      action: PcrResultTestActivityAction.UpdateFromRapidAntigen
+      action: PcrResultTestActivityAction.UpdateFromRapidAntigen,
     })
 
     //Update Appointments
