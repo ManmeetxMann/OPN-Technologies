@@ -746,6 +746,9 @@ components:
           sendAgain:
             type: boolean
             default: false
+          notify:
+            type: boolean
+            default: true
         required:
           - appointmentID 
           - action           
@@ -2670,8 +2673,6 @@ paths:
     summary: Rapid Antigen Test Results Email Notification
     post:
       description: 'Send Email Notification for Rapid Antigen Test Results'
-      security:
-        - bearerAuthJWT: []
       tags:
         - Rapid Antigen Management
       requestBody:
@@ -2681,10 +2682,30 @@ paths:
               type: object
               additionalProperties: false
               properties:
-                appointmentID:
+                subscription:
                   type: string
-              required:
-                - appointmentID
+                  description: subscription of the message.
+                message:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    data:
+                      type: string
+                      description: The base64 encoding of the payload
+                    messageId:
+                      type: string
+                      description: id of the message. Provided by GCP
+                    message_id:
+                      type: string
+                      description: id of the message, again. Provided by GCP
+                    publishTime:
+                      type: string
+                      description: ISO datetime for when the message was published. Provided by GCP
+                    publish_time:
+                      type: string
+                      description: ISO datetime for when the message was published, again. Provided by GCP
+                  required:
+                    - data
       responses:
         '200':
           description: Successfully added

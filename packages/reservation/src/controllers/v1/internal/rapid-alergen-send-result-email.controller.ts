@@ -2,6 +2,7 @@ import {NextFunction, Request, Response, Router} from 'express'
 //Common
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 
 //Services
 import {RapidAntigenTestResultsService} from '../../../services/rapid-antigen-test-results.service'
@@ -28,8 +29,11 @@ class InternalRapidAntigenResultEmailSendController implements IControllerBase {
 
   sendTestResultEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {appointmentID} = req.body
-      await this.rapidAntigenTestResultsService.sendTestResultEmail(appointmentID)
+      const {message} = req.body
+      if (!message || !message.data) {
+        throw new BadRequestException(`data is missing from pub sub post`)
+      }
+      await this.rapidAntigenTestResultsService.sendTestResultEmail(message.data)
       res.json(actionSucceed())
     } catch (error) {
       next(error)

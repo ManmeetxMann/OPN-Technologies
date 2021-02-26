@@ -45,9 +45,10 @@ export class RapidAntigenTestResultsService {
   }
 
   private saveResult = async (
-    testResult: PCRTestResultDBModel,
     action: RapidAntigenResultTypes,
+    notify: boolean,
     reqeustedBy: string,
+    testResult: PCRTestResultDBModel,
   ): Promise<BulkOperationResponse> => {
     const {id, result, appointmentId, barCode} = testResult
     //Update Test Results
@@ -62,9 +63,11 @@ export class RapidAntigenTestResultsService {
     await this.appointmentsRepository.changeStatusToReported(appointmentId, reqeustedBy)
 
     //Send Push Notification
-    this.pubSub.publish({
-      appointmentID: appointmentId,
-    })
+    if (notify) {
+      this.pubSub.publish({
+        appointmentID: appointmentId,
+      })
+    }
 
     LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'Success', {
       appointmentId,
@@ -82,11 +85,11 @@ export class RapidAntigenTestResultsService {
     appointmentRequest: RapidAntigenTestResultRequest,
     reqeustedBy: string,
   ): Promise<BulkOperationResponse> => {
-    const {appointmentID, action, sendAgain} = appointmentRequest
+    const {appointmentID, action, sendAgain, notify} = appointmentRequest
 
     const appointment = await this.appointmentsRepository.getAppointmentById(appointmentID)
     if (!appointment) {
-      LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'InvalidAppointmentId', {
+      LogInfo('RapidAntigenTestResultsService:processAppointment', 'InvalidAppointmentId', {
         appointmentID,
       })
       return Promise.resolve({
@@ -97,7 +100,7 @@ export class RapidAntigenTestResultsService {
     }
 
     if (action === RapidAntigenResultTypes.DoNothing) {
-      LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'Skipped', {appointmentID})
+      LogInfo('RapidAntigenTestResultsService:processAppointment', 'Skipped', {appointmentID})
       return Promise.resolve({
         id: appointmentID,
         barCode: appointment.barCode,
@@ -112,7 +115,7 @@ export class RapidAntigenTestResultsService {
 
     if (waitingResults && waitingResults.length > 0) {
       const waitingResult = waitingResults[0] //Only One results is expected
-      return this.saveResult(waitingResult, action, reqeustedBy)
+      return this.saveResult(action, notify, reqeustedBy, waitingResult)
     } else {
       if (sendAgain) {
         const newResult = await this.pcrTestResultsRepository.createNewTestResults({
@@ -122,11 +125,11 @@ export class RapidAntigenTestResultsService {
           reCollectNumber: 0,
           previousResult: ResultTypes.Pending,
         })
-        return this.saveResult(newResult, action, reqeustedBy)
+        return this.saveResult(action, notify, reqeustedBy, newResult)
       } else {
         //LOG Critical and Fail
         LogError(
-          'saveAndSendRapidAntigenTestTesults.processAppointment',
+          'RapidAntigenTestResultsService:processAppointment',
           'Failed:NoWaitingResults',
           appointment,
         )
@@ -152,8 +155,15 @@ export class RapidAntigenTestResultsService {
     return results
   }
 
-  async sendTestResultEmail(appointmentID: string): Promise<void> {
+  async sendTestResultEmail(data: string): Promise<void> {
+    const {appointmentID} = (await this.pubSub.getPublishedData(data)) as {appointmentID: string}
     const appointment = await this.appointmentsRepository.getAppointmentById(appointmentID)
+    if (!appointment) {
+      LogInfo('RapidAntigenTestResultsService: sendTestResultEmail', 'InvalidAppointmentId', {
+        appointmentID,
+      })
+      return
+    }
     const pdfContent = await RapidAntigenPDFContent(appointment, RapidAlergenResultPDFType.Negative)
     const resultDate = moment(appointment.dateTime.toDate()).format('LL')
 
