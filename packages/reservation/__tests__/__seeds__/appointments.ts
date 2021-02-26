@@ -23,7 +23,7 @@ export const create = async (dataOverwrite: {
     dateOfBirth: 'February 3, 2021',
     dateTime: firestore.Timestamp.fromDate(new Date(dataOverwrite.dateTime)),
     deadline: firestore.Timestamp.fromDate(new Date('2020-01-01T23:59:00')),
-    email: 'tester@gmail.com',
+    email: 'harpreet@stayopn.com',
     firstName: 'TestFNAME',
     lastName: 'TestLNAME',
     latestResult: 'Pending',

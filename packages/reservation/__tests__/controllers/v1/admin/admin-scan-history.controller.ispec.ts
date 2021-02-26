@@ -23,17 +23,6 @@ describe('AdminScanHistoryController', () => {
       organizationId
     })
   })
-  /*
-  describe('get lab list', () => {
-    test('get lab list successfully', async (done) => {
-      const url = `/reservation/admin/api/v1/labs`
-      const result = await request(server.app).get(url).set('authorization', 'bearer 10000')
-      expect(result.status).toBe(200)
-      expect(result.body.data.length).toBeGreaterThanOrEqual(1)
-      done()
-    })
-  })
-  */
 
   describe('create scan history record', () => {
     test('create new scan history record successfully', async (done) => {
@@ -103,7 +92,7 @@ describe('AdminScanHistoryController', () => {
   })
 
   afterAll(async () => {
-    await deleteAppointmentByDateTime(`${dateForAppointments}T23:59:59`) //End of Day
-    deleteAll()
+    //await deleteAppointmentByDateTime(`${dateForAppointments}T23:59:59`) //End of Day
+    //deleteAll()
   })
 })
