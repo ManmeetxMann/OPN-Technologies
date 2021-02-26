@@ -1,5 +1,5 @@
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
-import { RapidAntigenEmailResultDTO } from '../../models/rapid-antigen-test-results'
+import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
 import commonPDFContent from './common-report-content'
 
 const pdfContent = (

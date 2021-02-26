@@ -1,5 +1,4 @@
-import { type } from "os"
-import { AppointmentDBModel } from "./appointment"
+import {AppointmentDBModel} from './appointment'
 
 export enum RapidAntigenResultTypes {
   DoNothing = 'DoNothing',
@@ -14,7 +13,7 @@ export type RapidAntigenTestResultRequest = {
   sendAgain: boolean
 }
 
-export enum RapidAlergenResultPDFType  {
+export enum RapidAlergenResultPDFType {
   Positive = 'Positive',
   Negative = 'Negative',
 }

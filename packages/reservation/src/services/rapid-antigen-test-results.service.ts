@@ -5,7 +5,7 @@ import DataStore from '../../../common/src/data/datastore'
 import {LogError, LogInfo} from '../../../common/src/utils/logging-setup'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {EmailService} from '../../../common/src/service/messaging/email-service'
-import { Config } from '../../../common/src/utils/config'
+import {Config} from '../../../common/src/utils/config'
 
 //Repository
 import {AppointmentsRepository} from '../respository/appointments-repository'
@@ -17,7 +17,7 @@ import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operatio
 import {
   RapidAntigenResultTypes,
   RapidAntigenTestResultRequest,
-  RapidAlergenResultPDFType
+  RapidAlergenResultPDFType,
 } from '../models/rapid-antigen-test-results'
 
 import {RapidAntigenPDFContent} from '../templates/rapid-antigen'
@@ -51,9 +51,7 @@ export class RapidAntigenTestResultsService {
       appointmentRequest: RapidAntigenTestResultRequest,
     ): Promise<BulkOperationResponse> => {
       const {appointmentID, action} = appointmentRequest
-      const appointmentData = await this.appointmentsRepository.getAppointmentById(
-        appointmentID,
-      )
+      const appointmentData = await this.appointmentsRepository.getAppointmentById(appointmentID)
       if (action === RapidAntigenResultTypes.DoNothing) {
         LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'Skipped', appointmentData)
         return Promise.resolve({
@@ -79,10 +77,7 @@ export class RapidAntigenTestResultsService {
         })
 
         //Update Appointments
-        await this.appointmentsRepository.changeStatusToReported(
-          appointmentID,
-          reqeustedBy,
-        )
+        await this.appointmentsRepository.changeStatusToReported(appointmentID, reqeustedBy)
 
         //Send Push Notification
         this.pubSub.publish({
@@ -120,9 +115,7 @@ export class RapidAntigenTestResultsService {
 
   async sendTestResultEmail(appointmentID: string): Promise<void> {
     console.log(`Processed: ${appointmentID}`)
-    const appointment = await this.appointmentsRepository.getAppointmentById(
-      appointmentID,
-    )
+    const appointment = await this.appointmentsRepository.getAppointmentById(appointmentID)
     const pdfContent = await RapidAntigenPDFContent(appointment, RapidAlergenResultPDFType.Negative)
     const resultDate = moment(appointment.dateTime.toDate()).format('LL')
 

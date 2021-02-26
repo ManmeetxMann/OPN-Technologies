@@ -2,7 +2,6 @@ import path from 'path'
 
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {Config} from '../../../../common/src/utils/config'
-import {ResultTypes} from '../../models/appointment'
 import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
 
 const tableLayouts: TableLayouts = {
@@ -165,7 +164,6 @@ const documentFooter = (): Content => {
     margin: [0, 50, 0, 0],
   }
 }
-
 
 export default {
   companyInfoHeader,

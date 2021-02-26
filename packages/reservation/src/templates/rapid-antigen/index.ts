@@ -1,7 +1,10 @@
 import moment from 'moment'
 import {Content, TableLayouts} from '../../../../common/src/service/reports/pdf-types'
 import {PdfService} from '../../../../common/src/service/reports/pdf'
-import {RapidAlergenResultPDFType, RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
+import {
+  RapidAlergenResultPDFType,
+  RapidAntigenEmailResultDTO,
+} from '../../models/rapid-antigen-test-results'
 
 import positivePCRResultTemplate from './positive'
 import negativePCRResultTemplate from './negative'
