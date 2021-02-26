@@ -1,6 +1,6 @@
 export enum RapidAntigenResultTypes {
   DoNothing = 'DoNothing',
-  SendInconclusive = 'SendInconclusive',
+  SendInvalid = 'SendInvalid',
   SendNegative = 'SendNegative',
   SendPositive = 'SendPositive',
 }

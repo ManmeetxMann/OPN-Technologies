@@ -1,6 +1,7 @@
 //Common
 import DataStore from '../../../common/src/data/datastore'
 import {LogError, LogInfo} from '../../../common/src/utils/logging-setup'
+import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 
 //Repository
 import {AppointmentsRepository} from '../respository/appointments-repository'
@@ -18,8 +19,9 @@ export class RapidAntigenTestResultsService {
   private dataStore = new DataStore()
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
+  private pubSub = new OPNPubSub('rapid-alergen-test-result-topic')
 
-  async saveAndSendRapidAntigenTestTesults(
+  async saveRapidAntigenTestTesults(
     requestData: RapidAntigenTestResultRequest[],
     reqeustedBy: string,
   ): Promise<BulkOperationResponse[]> {
@@ -31,8 +33,8 @@ export class RapidAntigenTestResultsService {
         case RapidAntigenResultTypes.SendPositive: {
           return ResultTypes.Positive
         }
-        case RapidAntigenResultTypes.SendInconclusive: {
-          return ResultTypes.Inconclusive
+        case RapidAntigenResultTypes.SendInvalid: {
+          return ResultTypes.Invalid
         }
       }
     }
@@ -66,10 +68,18 @@ export class RapidAntigenTestResultsService {
           result: getResult(appointment.action),
           waitingResult: false,
         })
+
+        //Update Appointments
         await this.appointmentsRepository.changeStatusToReported(
           appointment.appointmentID,
           reqeustedBy,
         )
+
+        //Send Push Notification
+        this.pubSub.publish({
+          appointmentID: appointment.appointmentID,
+        })
+
         LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'Success', appointmentData)
         return Promise.resolve({
           id: appointment.appointmentID,
@@ -97,5 +107,9 @@ export class RapidAntigenTestResultsService {
       requestData.map(async (appointment) => processAppointment(appointment)),
     )
     return results
+  }
+
+  async sendTestResultEmail(appointmentID: string): Promise<void> {
+    console.log(`Processed: ${appointmentID}`)
   }
 }
