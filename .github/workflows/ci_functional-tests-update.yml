@@ -16,7 +16,5 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 12.x
-    - run: cd functional-testing
-    - run: npm install
-    - run: npm run lint
+    - run: cd functional-testing & npm install & npm run lint
     
