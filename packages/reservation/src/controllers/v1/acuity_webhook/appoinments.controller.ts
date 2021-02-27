@@ -1,20 +1,26 @@
-import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
+import {isEmpty} from 'lodash'
 import {NextFunction, Request, Response, Router} from 'express'
+
+//Common
+import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
+import { Config } from '../../../../../common/src/utils/config'
 import {LogError, LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+//Services
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
+//Models
 import {ScheduleWebhookRequest} from '../../../models/webhook'
-import {isEmpty} from 'lodash'
 import {
   AppointmentStatus,
   AcuityUpdateDTO,
   AppointmentAcuityResponse,
-  WebhookEndpoints,
   ResultTypes,
   AppointmentDBModel,
+  TestTypes,
 } from '../../../models/appointment'
+//UTILS
 import {getFirestoreTimeStampDate} from '../../../utils/datetime.helper'
 
 class AppointmentWebhookController implements IControllerBase {
@@ -69,11 +75,13 @@ class AppointmentWebhookController implements IControllerBase {
         res.json(actionSucceed(returnData ? {state: 'InvalidAcuityIDPosted'} : {}))
         return
       }
+      const testType = await this.getTestType(acuityAppointment.appointmentTypeID)
+
       const dataForUpdate = await this.updateInformationOnAcuity(
         id,
         acuityAppointment,
-        WebhookEndpoints.Create,
       )
+
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
       if (appointmentFromDb) {
         const noUpdatesAllowedStatus = [
@@ -92,10 +100,10 @@ class AppointmentWebhookController implements IControllerBase {
             acuityID: id,
             appoinmentID: appointmentFromDb.id,
           })
-          this.handleUpdateAppointment(acuityAppointment, dataForUpdate, appointmentFromDb)
+          this.handleUpdateAppointment(acuityAppointment, dataForUpdate, appointmentFromDb, testType)
         }
       } else {
-        this.handleCreateAppointment(acuityAppointment, dataForUpdate)
+        this.handleCreateAppointment(acuityAppointment, dataForUpdate, testType)
       }
 
       res.json(actionSucceed(''))
@@ -107,18 +115,23 @@ class AppointmentWebhookController implements IControllerBase {
     }
   }
 
+  getTestType = async (appointmentTypeID:number):Promise<TestTypes> => {
+    return (appointmentTypeID === Config.getInt('ACUITY_APPOINTMENT_TYPE_ID'))?TestTypes.RapidAntigen:TestTypes.PCR
+  }
+
   handleCreateAppointment = async (
     acuityAppointment: AppointmentAcuityResponse,
     dataForUpdate: AcuityUpdateDTO,
+    testType: TestTypes
   ): Promise<void> => {
     try {
       const {barCodeNumber, organizationId} = dataForUpdate
 
       const savedAppointment = await this.appoinmentService.createAppointment(acuityAppointment, {
-        barCodeNumber,
-        organizationId,
         appointmentStatus: AppointmentStatus.Pending,
+        barCodeNumber,
         latestResult: ResultTypes.Pending,
+        organizationId,
       })
       LogInfo('CreateAppointmentFromWebhook', 'SuccessCreateAppointment', {
         acuityID: acuityAppointment.id,
@@ -147,6 +160,7 @@ class AppointmentWebhookController implements IControllerBase {
     acuityAppointment: AppointmentAcuityResponse,
     dataForUpdate: AcuityUpdateDTO,
     appointmentFromDb: AppointmentDBModel,
+    testType: TestTypes
   ): Promise<void> => {
     try {
       let appointmentStatus = appointmentFromDb.appointmentStatus
@@ -167,10 +181,10 @@ class AppointmentWebhookController implements IControllerBase {
         appointmentFromDb.id,
         acuityAppointment,
         {
-          barCodeNumber: barCode,
           appointmentStatus,
-          organizationId,
+          barCodeNumber: barCode,
           latestResult: appointmentFromDb.latestResult,
+          organizationId,
         },
       )
       LogInfo('UpdateAppointmentFromWebhook', 'AppointmentSuccessfullyUpdated', {
@@ -211,7 +225,7 @@ class AppointmentWebhookController implements IControllerBase {
           //waitingResult: true,
         }
 
-        await this.pcrTestResultsService.updateDefaultTestResults(
+        await this.pcrTestResultsService.updateTestResults(
           pcrTestResult.id,
           pcrResultDataForDb,
         )
@@ -239,7 +253,6 @@ class AppointmentWebhookController implements IControllerBase {
   private updateInformationOnAcuity = async (
     id: number,
     appointment: AppointmentAcuityResponse,
-    endpoint: WebhookEndpoints,
   ): Promise<AcuityUpdateDTO> => {
     const dataForUpdate: AcuityUpdateDTO = {}
     if (!appointment.barCode) {
@@ -261,12 +274,12 @@ class AppointmentWebhookController implements IControllerBase {
 
     if (!isEmpty(dataForUpdate)) {
       const savedOnAcuity = await this.appoinmentService.updateAppointment(id, dataForUpdate)
-      LogInfo(`${endpoint}AppointmentWebhook`, `SaveToAcuitySuccessfully`, {
+      LogInfo(`AppointmentWebhookController:updateInformationOnAcuity`, `SaveToAcuitySuccessfully`, {
         ...dataForUpdate,
         acuityID: savedOnAcuity.id,
       })
     } else {
-      LogInfo(`${endpoint}AppointmentWebhook`, 'NoUpdateToAcuity', {
+      LogInfo(`AppointmentWebhookController:updateInformationOnAcuity`, 'NoUpdateToAcuity', {
         appoinmentID: id,
       })
     }

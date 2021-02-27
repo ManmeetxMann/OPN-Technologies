@@ -361,6 +361,10 @@ export class AppoinmentService {
     return this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity)
   }
 
+  private getTestType = async (appointmentTypeID:number):Promise<TestTypes> => {
+    return (appointmentTypeID === Config.getInt('ACUITY_APPOINTMENT_TYPE_ID'))?TestTypes.RapidAntigen:TestTypes.PCR
+  }
+
   private async appointmentFromAcuity(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
@@ -438,6 +442,7 @@ export class AppoinmentService {
       userId: currentUserId,
       locationName: acuityAppointment.calendar,
       locationAddress: acuityAppointment.location,
+      testType: await this.getTestType(acuityAppointment.appointmentTypeID)
     }
   }
 

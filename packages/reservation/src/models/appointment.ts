@@ -68,6 +68,7 @@ export type AppointmentDBModel = {
   userId?: string
   locationName?: string
   locationAddress?: string
+  testType: TestTypes
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -357,7 +358,7 @@ export const appointmentUiDTOResponse = (
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
     organizationName: appointment.organizationName,
-    testType: 'PCR',
+    testType: (appointment.testType)??'PCR',
     transportRunLabel,
   }
 }
@@ -404,7 +405,7 @@ export const appointmentByBarcodeUiDTOResponse = (
     deadline: formatDateRFC822Local(appointment.deadline),
     registeredNursePractitioner: appointment.registeredNursePractitioner,
     organizationName: organizationName,
-    testType: 'PCR',
+    testType: (appointment.testType)??'PCR',
   }
 }
 
