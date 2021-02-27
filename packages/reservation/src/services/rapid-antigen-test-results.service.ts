@@ -64,6 +64,12 @@ export class RapidAntigenTestResultsService {
     //Update Appointments
     await this.appointmentsRepository.changeStatusToReported(appointmentId, reqeustedBy)
 
+    //Remove Sent Result from Scan List
+    await this.adminScanHistoryRepository.deleteScanRecord(
+      reqeustedBy,
+      appointmentId,
+      TestTypes.RapidAntigen,
+    )
 
     //Send Push Notification
     if (notify) {
