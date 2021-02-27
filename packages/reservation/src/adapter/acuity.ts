@@ -1,7 +1,7 @@
 import fetch from 'node-fetch'
 
 import {Config} from '../../../common/src/utils/config'
-import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
+import {LogError, LogInfo} from '../../../common/src/utils/logging-setup'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
@@ -146,11 +146,15 @@ abstract class AcuityAdapter {
     })
     const result = await res.json()
     if (result.status_code) {
-      LogError(`AppointmentWebhookController:syncAppointmentFromAcuityToDB`, 'InvalidAcuityIDPosted', {
-        acuityID: id,
-        status_code: result.status_code,
-        message: result.message
-      })
+      LogError(
+        `AppointmentWebhookController:syncAppointmentFromAcuityToDB`,
+        'InvalidAcuityIDPosted',
+        {
+          acuityID: id,
+          status_code: result.status_code,
+          message: result.message,
+        },
+      )
       throw new BadRequestException(result.message)
     }
     return this.customFieldsToAppoinment(result)

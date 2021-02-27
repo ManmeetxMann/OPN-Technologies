@@ -32,31 +32,41 @@ class AppointmentWebhookController implements IControllerBase {
     this.router.post(this.path + '/sync', this.syncAppointmentFromAcuityToDB)
   }
 
-  syncAppointmentFromAcuityToDB =  async (
+  syncAppointmentFromAcuityToDB = async (
     req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {id, action, calendarID, appointmentTypeID, returnData} = req.body as ScheduleWebhookRequest
+      const {
+        id,
+        action,
+        calendarID,
+        appointmentTypeID,
+        returnData,
+      } = req.body as ScheduleWebhookRequest
       LogInfo('AppointmentWebhookController:syncAppointmentFromAcuityToDB', 'SyncRequested', {
         acuityID: id,
         calendarID,
         appointmentTypeID,
-        action
+        action,
       })
 
-      let acuityAppointment:AppointmentAcuityResponse = null
-      try{
+      let acuityAppointment: AppointmentAcuityResponse = null
+      try {
         acuityAppointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
-      }catch(error){}
-      
+      } catch (error) {}
+
       if (!acuityAppointment) {
-        LogWarning(`AppointmentWebhookController:syncAppointmentFromAcuityToDB`, 'InvalidAcuityIDPosted', {
-          acuityID: id,
-          action
-        })
-        res.json(actionSucceed((returnData)?{state:'InvalidAcuityIDPosted'}:{}))
+        LogWarning(
+          `AppointmentWebhookController:syncAppointmentFromAcuityToDB`,
+          'InvalidAcuityIDPosted',
+          {
+            acuityID: id,
+            action,
+          },
+        )
+        res.json(actionSucceed(returnData ? {state: 'InvalidAcuityIDPosted'} : {}))
         return
       }
       const dataForUpdate = await this.updateInformationOnAcuity(
@@ -66,21 +76,25 @@ class AppointmentWebhookController implements IControllerBase {
       )
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
       if (appointmentFromDb) {
-        const noUpdatesAllowedStatus = [AppointmentStatus.Reported, AppointmentStatus.Canceled, AppointmentStatus.ReCollectRequired]
-        if(noUpdatesAllowedStatus.includes(appointmentFromDb.appointmentStatus)){
+        const noUpdatesAllowedStatus = [
+          AppointmentStatus.Reported,
+          AppointmentStatus.Canceled,
+          AppointmentStatus.ReCollectRequired,
+        ]
+        if (noUpdatesAllowedStatus.includes(appointmentFromDb.appointmentStatus)) {
           LogWarning(`AppointmentWebhookController`, 'AppointmentUpdateNotAllowed', {
             acuityID: id,
             appoinmentID: appointmentFromDb.id,
-            appointmentStatus: appointmentFromDb.appointmentStatus
+            appointmentStatus: appointmentFromDb.appointmentStatus,
           })
-        }else{
+        } else {
           LogInfo(`AppointmentWebhookController`, 'AlreadyCreatedUpdatingNow', {
             acuityID: id,
             appoinmentID: appointmentFromDb.id,
           })
           this.handleUpdateAppointment(acuityAppointment, dataForUpdate, appointmentFromDb)
         }
-      }else{
+      } else {
         this.handleCreateAppointment(acuityAppointment, dataForUpdate)
       }
 
@@ -91,21 +105,21 @@ class AppointmentWebhookController implements IControllerBase {
       })
       next(error)
     }
-  } 
+  }
 
-  handleCreateAppointment = async (acuityAppointment:AppointmentAcuityResponse,dataForUpdate): Promise<void> => {
+  handleCreateAppointment = async (
+    acuityAppointment: AppointmentAcuityResponse,
+    dataForUpdate: AcuityUpdateDTO,
+  ): Promise<void> => {
     try {
       const {barCodeNumber, organizationId} = dataForUpdate
 
-      const savedAppointment = await this.appoinmentService.createAppointment(
-        acuityAppointment,
-        {
-          barCodeNumber,
-          organizationId,
-          appointmentStatus: AppointmentStatus.Pending,
-          latestResult: ResultTypes.Pending,
-        },
-      )
+      const savedAppointment = await this.appoinmentService.createAppointment(acuityAppointment, {
+        barCodeNumber,
+        organizationId,
+        appointmentStatus: AppointmentStatus.Pending,
+        latestResult: ResultTypes.Pending,
+      })
       LogInfo('CreateAppointmentFromWebhook', 'SuccessCreateAppointment', {
         acuityID: acuityAppointment.id,
         appointmentID: savedAppointment.id,
@@ -129,7 +143,11 @@ class AppointmentWebhookController implements IControllerBase {
     }
   }
 
-  handleUpdateAppointment = async (acuityAppointment:AppointmentAcuityResponse, dataForUpdate, appointmentFromDb: AppointmentDBModel): Promise<void> => {
+  handleUpdateAppointment = async (
+    acuityAppointment: AppointmentAcuityResponse,
+    dataForUpdate: AcuityUpdateDTO,
+    appointmentFromDb: AppointmentDBModel,
+  ): Promise<void> => {
     try {
       let appointmentStatus = appointmentFromDb.appointmentStatus
       if (
@@ -165,9 +183,7 @@ class AppointmentWebhookController implements IControllerBase {
       )
       //getWaitingPCRResultByAppointmentId will throw exception if pcrTestResult doesn't exists
 
-      if (
-        appointmentStatus === AppointmentStatus.Canceled
-      ) {
+      if (appointmentStatus === AppointmentStatus.Canceled) {
         await this.pcrTestResultsService.deleteTestResults(pcrTestResult.id)
         LogInfo('UpdateAppointmentFromWebhook', 'RemovedResults', {
           appoinmentID: appointmentFromDb.id,

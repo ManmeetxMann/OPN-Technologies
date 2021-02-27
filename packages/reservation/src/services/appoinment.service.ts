@@ -405,10 +405,10 @@ export class AppoinmentService {
     return {
       acuityAppointmentId: acuityAppointment.id,
       appointmentStatus,
-      appointmentTypeID:acuityAppointment.appointmentTypeID,
+      appointmentTypeID: acuityAppointment.appointmentTypeID,
       barCode: barCode,
       canceled: acuityAppointment.canceled,
-      calendarID:acuityAppointment.calendarID,
+      calendarID: acuityAppointment.calendarID,
       dateOfAppointment,
       dateOfBirth: acuityAppointment.dateOfBirth,
       dateTime,

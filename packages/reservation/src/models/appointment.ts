@@ -218,7 +218,7 @@ export type AppointmentUiDTO = {
   registeredNursePractitioner?: string
   organizationName?: string
   transportRunLabel?: string
-  testType?: string
+  testType: string
 }
 
 export type AppointmentsState = {
@@ -404,6 +404,7 @@ export const appointmentByBarcodeUiDTOResponse = (
     deadline: formatDateRFC822Local(appointment.deadline),
     registeredNursePractitioner: appointment.registeredNursePractitioner,
     organizationName: organizationName,
+    testType: 'PCR',
   }
 }
 
