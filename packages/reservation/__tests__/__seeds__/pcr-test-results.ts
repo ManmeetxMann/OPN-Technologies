@@ -4,6 +4,7 @@ const database = firestore()
 const collectionName = 'pcr-test-results'
 
 export const createPCRTestResult = async (dataOverwrite: {
+  appointmentId?: string
   dateTime: string
   deadline: string
   organizationId?: string
@@ -12,8 +13,8 @@ export const createPCRTestResult = async (dataOverwrite: {
   //console.log(new Date(dataOverwrite.dateTime))
   const data = {
     adminId: 'TEST',
-    appointmentId: '1',
-    barCode: 'TESTCODE1',
+    appointmentId: 'A1',
+    barCode: 'BAR1',
     confirmed: false,
     dateTime: firestore.Timestamp.fromDate(new Date(dataOverwrite.dateTime)),
     deadline: firestore.Timestamp.fromDate(new Date(dataOverwrite.deadline)),
@@ -30,6 +31,7 @@ export const createPCRTestResult = async (dataOverwrite: {
     recollected: false,
   }
   data.organizationId = dataOverwrite.organizationId ?? null
+  data.appointmentId = dataOverwrite.appointmentId ?? 'A1'
   data.result = dataOverwrite.result ?? 'Pending'
   //console.log(data)
   await database.collection(collectionName).add(data)

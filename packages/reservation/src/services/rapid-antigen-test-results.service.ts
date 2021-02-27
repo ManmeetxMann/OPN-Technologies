@@ -8,25 +8,27 @@ import {EmailService} from '../../../common/src/service/messaging/email-service'
 import {Config} from '../../../common/src/utils/config'
 
 //Repository
+import {AdminScanHistoryRepository} from '../respository/admin-scan-history'
 import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
 //Models
-import {ResultTypes} from '../models/appointment'
+import {AppointmentStatus, ResultTypes, TestTypes} from '../models/appointment'
 import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
 import {
   RapidAntigenResultTypes,
   RapidAntigenTestResultRequest,
   RapidAlergenResultPDFType,
 } from '../models/rapid-antigen-test-results'
+import {PCRTestResultDBModel} from '../models/pcr-test-results'
 
 import {RapidAntigenPDFContent} from '../templates/rapid-antigen'
-import {PCRTestResultDBModel} from '../models/pcr-test-results'
 
 export class RapidAntigenTestResultsService {
   private dataStore = new DataStore()
-  private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
+  private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
+  private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private emailService = new EmailService()
   private pubSub = new OPNPubSub('rapid-alergen-test-result-topic')
 
@@ -61,6 +63,13 @@ export class RapidAntigenTestResultsService {
 
     //Update Appointments
     await this.appointmentsRepository.changeStatusToReported(appointmentId, reqeustedBy)
+
+    //Remove Sent Result from Scan List
+    await this.adminScanHistoryRepository.deleteScanRecord(
+      reqeustedBy,
+      appointmentId,
+      TestTypes.RapidAntigen,
+    )
 
     //Send Push Notification
     if (notify) {
@@ -109,6 +118,33 @@ export class RapidAntigenTestResultsService {
       })
     }
 
+    if (sendAgain && appointment.appointmentStatus !== AppointmentStatus.Reported) {
+      return Promise.resolve({
+        id: appointmentID,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'Send Again Not Allowed',
+      })
+    }
+
+    if (!sendAgain && appointment.appointmentStatus === AppointmentStatus.Reported) {
+      return Promise.resolve({
+        id: appointmentID,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'Already Reported',
+      })
+    }
+
+    if (!sendAgain && appointment.appointmentStatus !== AppointmentStatus.InProgress) {
+      return Promise.resolve({
+        id: appointmentID,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'Not In Progress',
+      })
+    }
+
     const waitingResults = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
       appointment.id,
     )
@@ -116,30 +152,28 @@ export class RapidAntigenTestResultsService {
     if (waitingResults && waitingResults.length > 0) {
       const waitingResult = waitingResults[0] //Only One results is expected
       return this.saveResult(action, notify, reqeustedBy, waitingResult)
+    } else if (sendAgain) {
+      const newResult = await this.pcrTestResultsRepository.createNewTestResults({
+        appointment,
+        adminId: reqeustedBy,
+        runNumber: 0,
+        reCollectNumber: 0,
+        previousResult: ResultTypes.Pending,
+      })
+      return this.saveResult(action, notify, reqeustedBy, newResult)
     } else {
-      if (sendAgain) {
-        const newResult = await this.pcrTestResultsRepository.createNewTestResults({
-          appointment,
-          adminId: reqeustedBy,
-          runNumber: 0,
-          reCollectNumber: 0,
-          previousResult: ResultTypes.Pending,
-        })
-        return this.saveResult(action, notify, reqeustedBy, newResult)
-      } else {
-        //LOG Critical and Fail
-        LogError(
-          'RapidAntigenTestResultsService:processAppointment',
-          'Failed:NoWaitingResults',
-          appointment,
-        )
-        return Promise.resolve({
-          id: appointmentID,
-          barCode: appointment.barCode,
-          status: BulkOperationStatus.Failed,
-          reason: 'No Results Available',
-        })
-      }
+      //LOG Critical and Fail
+      LogError(
+        'RapidAntigenTestResultsService:processAppointment',
+        'Failed:NoWaitingResults',
+        appointment,
+      )
+      return Promise.resolve({
+        id: appointmentID,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'No Results Available',
+      })
     }
   }
 

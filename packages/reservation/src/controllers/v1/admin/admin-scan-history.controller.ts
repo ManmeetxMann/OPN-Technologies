@@ -6,6 +6,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {
+  AppointmentStatus,
   appointmentUiDTOResponse,
   GetAdminScanHistoryRequest,
   PostAdminScanHistoryRequest,
@@ -47,23 +48,21 @@ class AdminScanHistoryController implements IControllerBase {
       const adminId = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
-      const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
+      let appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
 
       if (appointment.organizationId !== organizationId) {
         throw new ForbiddenException('Appointment does not belong to your organization')
       }
 
-      await this.appointmentService.makeDeadline15Minutes(appointment)
       await this.appointmentService.addAdminScanHistory(adminId, appointment.id, type)
-      const updatedAppointment = await this.appointmentService.makeInProgress(
-        appointment.id,
-        null,
-        adminId,
-      )
+      if (appointment.appointmentStatus !== AppointmentStatus.Reported) {
+        await this.appointmentService.makeDeadline15Minutes(appointment)
+        appointment = await this.appointmentService.makeInProgress(appointment.id, null, adminId)
+      }
 
       res.json(
         actionSucceed({
-          ...appointmentUiDTOResponse(updatedAppointment, isLabUser),
+          ...appointmentUiDTOResponse(appointment, isLabUser),
         }),
       )
     } catch (error) {

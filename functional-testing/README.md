@@ -1,4 +1,6 @@
 # Functional Testing for OPN Platform
+These tests are to cover different states we present to clients based on different inputs. 
+This can be used for Testing E2E for APIs. For more low level integrations test please use supertest based tests in each package.
 
 ## Stack
 1. FrisbyJS

@@ -12,6 +12,7 @@ jest.mock('../../../../../common/src/utils/logging-setup')
 const dateForAppointments = '2020-02-05'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
 const aptID1 = 'APT1'
+const organizationId = 'TEST1'
 describe('AdminScanHistoryController', () => {
   beforeAll(async () => {
     await create({
@@ -19,19 +20,9 @@ describe('AdminScanHistoryController', () => {
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
       appointmentStatus: 'InTransit',
+      organizationId,
     })
   })
-  /*
-  describe('get lab list', () => {
-    test('get lab list successfully', async (done) => {
-      const url = `/reservation/admin/api/v1/labs`
-      const result = await request(server.app).get(url).set('authorization', 'bearer 10000')
-      expect(result.status).toBe(200)
-      expect(result.body.data.length).toBeGreaterThanOrEqual(1)
-      done()
-    })
-  })
-  */
 
   describe('create scan history record', () => {
     test('create new scan history record successfully', async (done) => {
@@ -43,6 +34,7 @@ describe('AdminScanHistoryController', () => {
         .send({
           barCode: 'BAR1',
           type: 'RapidAntigen',
+          organizationId,
         })
 
       expect(result.status).toBe(200)
@@ -60,6 +52,7 @@ describe('AdminScanHistoryController', () => {
         .send({
           barCode: 'BAD_BAR1',
           type: 'RapidAntigen',
+          organizationId,
         })
 
       expect(result.status).toBe(404)
