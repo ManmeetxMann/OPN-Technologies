@@ -30,12 +30,11 @@ describe('rapid-antigen-create', () => {
             {
               appointmentID: 'BAD_ID',
               action: 'DoNothing',
-              sendAgain: true,
             },
             {
-              appointmentID: 'QYJK38yaC9GgRUeWEGEr',
-              action: 'SendNegative', // DoNothing, SendInconclusive, SendNegative, SendPositive
-              sendAgain: true,
+              appointmentID: 'EzzTdp4YUfvOFrGV3gAr',
+              action: 'SendPositive', // DoNothing, SendInconclusive, SendNegative, SendPositive
+              sendAgain: true
             },
           ])
           .inspectBody()
