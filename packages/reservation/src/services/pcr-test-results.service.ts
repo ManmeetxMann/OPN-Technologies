@@ -4,19 +4,26 @@ import {sortBy, union, fromPairs} from 'lodash'
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
 import {EmailService} from '../../../common/src/service/messaging/email-service'
-import {PdfService} from '../../../common/src/service/reports/pdf'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {toDateFormat} from '../../../common/src/utils/times'
-import {formatDateRFC822Local, makeDeadlineForFilter} from '../utils/datetime.helper'
+import {
+  dateToDateTime,
+  formatDateRFC822Local,
+  makeDeadlineForFilter,
+} from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 
+//service
 import {AppoinmentService} from './appoinment.service'
 import {CouponService} from './coupon.service'
 
+//repository
+import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
+
 import {
   TestResultsReportingTrackerPCRResultsRepository,
   TestResultsReportingTrackerRepository,
@@ -56,7 +63,7 @@ import {
   Filter,
   ResultTypes,
 } from '../models/appointment'
-import {PCRResultPDFContent} from '../templates'
+import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
@@ -66,11 +73,12 @@ export class PCRTestResultsService {
   private datastore = new DataStore()
   private testResultsReportingTracker = new TestResultsReportingTrackerRepository(this.datastore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.datastore)
+  private appointmentsRepository = new AppointmentsRepository(this.datastore)
+
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
   private couponService = new CouponService()
   private emailService = new EmailService()
-  private pdfService = new PdfService()
   private couponCode: string
   private whiteListedResultsTypes = [
     ResultTypes.Negative,
@@ -101,7 +109,7 @@ export class PCRTestResultsService {
         break
       }
     }
-    const newPCRResult = await this.createNewTestResults({
+    const newPCRResult = await this.pcrTestResultsRepository.createNewTestResults({
       appointment,
       adminId,
       runNumber,
@@ -111,7 +119,7 @@ export class PCRTestResultsService {
       confirmed: true,
       previousResult: latestPCRResult.result,
     })
-    await this.sendNotification({...appointment, ...newPCRResult}, notificationType)
+    await this.sendNotification({...newPCRResult, ...appointment}, notificationType)
     return newPCRResult.id
   }
 
@@ -262,7 +270,7 @@ export class PCRTestResultsService {
   }
 
   async getPCRResults(
-    {organizationId, deadline, barCode, result}: PcrTestResultsListRequest,
+    {organizationId, deadline, barCode, result, date}: PcrTestResultsListRequest,
     isLabUser: boolean,
   ): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
@@ -276,7 +284,23 @@ export class PCRTestResultsService {
       })
     }
 
-    if (barCode) {
+    if (date) {
+      if (isLabUser) {
+        pcrTestResultsQuery.push({
+          map: '/',
+          key: 'deadlineDate',
+          operator: DataModelFieldMapOperatorType.Equals,
+          value: dateToDateTime(date),
+        })
+      } else {
+        pcrTestResultsQuery.push({
+          map: '/',
+          key: 'dateOfAppointment',
+          operator: DataModelFieldMapOperatorType.Equals,
+          value: dateToDateTime(date),
+        })
+      }
+    } else if (barCode) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'barCode',
@@ -373,7 +397,7 @@ export class PCRTestResultsService {
     return pcrTestResults
   }
 
-  async getWaitingPCRResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
+  async getWaitingPCRResultByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel> {
     const pcrTestResults = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
       appointmentId,
     )
@@ -595,7 +619,7 @@ export class PCRTestResultsService {
     const reCollectNumber = 0 //Not Relevant for Resend
     const testResult =
       isSingleResult && !waitingPCRTestResult
-        ? await this.createNewTestResults({
+        ? await this.pcrTestResultsRepository.createNewTestResults({
             appointment,
             adminId: resultData.adminId,
             runNumber,
@@ -696,7 +720,7 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.NextDay,
           userId: resultData.adminId,
         })
-        await this.createNewTestResults({
+        await this.pcrTestResultsRepository.createNewTestResults({
           appointment: updatedAppointment,
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
@@ -711,7 +735,7 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.SameDay,
           userId: resultData.adminId,
         })
-        await this.createNewTestResults({
+        await this.pcrTestResultsRepository.createNewTestResults({
           appointment: updatedAppointment,
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
@@ -726,7 +750,7 @@ export class PCRTestResultsService {
           deadlineLabel: DeadlineLabel.NextDay,
           userId: resultData.adminId,
         })
-        await this.createNewTestResults({
+        await this.pcrTestResultsRepository.createNewTestResults({
           appointment: updatedAppointment,
           adminId: resultData.adminId,
           runNumber: nextRunNumber,
@@ -749,7 +773,7 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        await this.appointmentService.changeStatusToReported(appointment.id, resultData.adminId)
+        await this.appointmentsRepository.changeStatusToReported(appointment.id, resultData.adminId)
         break
       }
     }
@@ -981,7 +1005,7 @@ export class PCRTestResultsService {
     const pcrResults = await this.getPCRTestsByBarcode(barCodes)
 
     const appointmentIds = pcrResults.map(({appointmentId}) => appointmentId)
-    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+    const appointments = await this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds)
     appointments.forEach((appointment) => {
       appointmentsByBarCode[appointment.barCode] = appointment
     })
@@ -1140,7 +1164,7 @@ export class PCRTestResultsService {
     }
 
     const appoinmentIds = pcrTestResults.map(({appointmentId}) => appointmentId)
-    const appointments = await this.appointmentService.getAppointmentsDBByIds(appoinmentIds)
+    const appointments = await this.appointmentsRepository.getAppointmentsDBByIds(appoinmentIds)
 
     await Promise.all(
       pcrTestResults.map(async (pcr) => {
@@ -1245,7 +1269,7 @@ export class PCRTestResultsService {
   ): Promise<PCRTestResultDBModel> {
     const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
 
-    return this.createNewTestResults({
+    return this.pcrTestResultsRepository.createNewTestResults({
       appointment,
       adminId: 'WEBHOOK',
       linkedBarCodes,
@@ -1301,7 +1325,7 @@ export class PCRTestResultsService {
 
     const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
     const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
-    const appointments = await this.appointmentService.getAppointmentsDBByIds(appointmentIds)
+    const appointments = await this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds)
 
     const appointmentStatsByTypes: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
     const appointmentStatsByOrganization: Record<string, number> = {}
@@ -1423,7 +1447,7 @@ export class PCRTestResultsService {
     })
 
     const [appointments, testRuns, organizations] = await Promise.all([
-      this.appointmentService.getAppointmentsDBByIds(appointmentIds),
+      this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds),
       this.testRunsService.getTestRunByTestRunIds(union(testRunIds)),
       this.organizationService.getAllByIds(union(organizationIds)),
     ])
@@ -1521,7 +1545,7 @@ export class PCRTestResultsService {
     const appoinmentIds = pcrResults
       .filter(({result}) => result === ResultTypes.Pending)
       .map(({appointmentId}) => appointmentId)
-    const appoinments = await this.appointmentService.getAppointmentsDBByIds(appoinmentIds)
+    const appoinments = await this.appointmentsRepository.getAppointmentsDBByIds(appoinmentIds)
 
     return pcrResults.map((pcr) => {
       let result = pcr.result

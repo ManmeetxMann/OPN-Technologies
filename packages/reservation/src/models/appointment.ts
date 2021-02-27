@@ -153,6 +153,7 @@ export enum TestTypes {
 export type PostAdminScanHistoryRequest = {
   type: TestTypes
   barCode: string
+  organizationId: string
 }
 
 export type GetAdminScanHistoryRequest = {

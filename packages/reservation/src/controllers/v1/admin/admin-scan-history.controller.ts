@@ -10,6 +10,7 @@ import {
   GetAdminScanHistoryRequest,
   PostAdminScanHistoryRequest,
 } from '../../../models/appointment'
+import {ForbiddenException} from '../../../../../common/src/exceptions/forbidden-exception'
 
 class AdminScanHistoryController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -31,17 +32,26 @@ class AdminScanHistoryController implements IControllerBase {
       adminWithAppointments,
       this.createScanHistory,
     )
+    innerRouter.delete(
+      this.path + '/admin-scan-history',
+      adminWithAppointments,
+      this.deleteScanHistory,
+    )
 
     this.router.use('/', innerRouter)
   }
 
   createScanHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {barCode, type} = req.body as PostAdminScanHistoryRequest
+      const {barCode, type, organizationId} = req.body as PostAdminScanHistoryRequest
       const adminId = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
+
+      if (appointment.organizationId !== organizationId) {
+        throw new ForbiddenException('Appointment does not belong to your organization')
+      }
 
       await this.appointmentService.makeDeadline15Minutes(appointment)
       await this.appointmentService.addAdminScanHistory(adminId, appointment.id, type)
@@ -56,6 +66,19 @@ class AdminScanHistoryController implements IControllerBase {
           ...appointmentUiDTOResponse(updatedAppointment, isLabUser),
         }),
       )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  deleteScanHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {type} = req.query as GetAdminScanHistoryRequest
+      const adminId = getUserId(res.locals.authenticatedUser)
+
+      await this.appointmentService.deleteScanHistory(adminId, type)
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
