@@ -32,6 +32,7 @@ export const RapidAntigenPDFContent = async (
       LogInfo('RapidAntigenPDFContent', 'InavldiRapidAlergenResultPDFType', {
         pdfType,
       })
+      return
     }
   }
   return await pdfService.generatePDFBase64(data.content, data.tableLayouts)

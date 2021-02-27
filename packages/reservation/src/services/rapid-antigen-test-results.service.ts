@@ -4,7 +4,7 @@ import moment from 'moment'
 import DataStore from '../../../common/src/data/datastore'
 import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
-import {EmailService} from '../../../common/src/service/messaging/email-service'
+import {EmailService,EmailMessage} from '../../../common/src/service/messaging/email-service'
 import {Config} from '../../../common/src/utils/config'
 
 //Repository
@@ -13,7 +13,7 @@ import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
 //Models
-import {AppointmentStatus, ResultTypes, TestTypes} from '../models/appointment'
+import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from '../models/appointment'
 import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
 import {
   RapidAntigenResultTypes,
@@ -216,37 +216,62 @@ export class RapidAntigenTestResultsService {
       return
     }
 
-    const resultDate = moment(appointment.dateTime.toDate()).format('LL')
+    const emailSendStatus = await this.emailService.send(await this.getEmailData(appointment))
 
-    let pdfResultType: RapidAlergenResultPDFType = null
-    if (appointment.latestResult === ResultTypes.Negative) {
-      pdfResultType = RapidAlergenResultPDFType.Negative
-    } else if (appointment.latestResult === ResultTypes.Positive) {
-      pdfResultType = RapidAlergenResultPDFType.Positive
-    }
-
-    const pdfContent = await RapidAntigenPDFContent(appointment, pdfResultType)
-    const attachment = [
+    LogInfo(
+      'RapidAntigenTestResultsService: sendTestResultEmail',
+      'EmailSendSuccess',
       {
-        content: pdfContent,
-        name: `FHHealth.ca Result - ${appointment.barCode} - ${resultDate}.pdf`,
+        emailSendStatus
       },
-    ]
+    )
+  }
 
-    await this.emailService.send({
-      templateId: Config.getInt('TEST_RESULT_RAPID_ANTIGEN_TEMPLATE_ID'),
+  async getEmailData(appointment:AppointmentDBModel): Promise<EmailMessage> {
+    const resultDate = moment(appointment.dateTime.toDate()).format('LL')
+    const templateId = (appointment.latestResult === ResultTypes.Invalid)?Config.getInt('TEST_RESULT_INVALID_RAPID_ANTIGEN_TEMPLATE_ID'):Config.getInt('TEST_RESULT_RAPID_ANTIGEN_TEMPLATE_ID')
+    const emailData = {
+      templateId,
       to: [{email: appointment.email, name: `${appointment.firstName} ${appointment.lastName}`}],
       params: {
         BARCODE: appointment.barCode,
         DATE_OF_RESULT: resultDate,
         FIRSTNAME: appointment.firstName,
       },
-      attachment,
       bcc: [
         {
           email: Config.get('TEST_RESULT_BCC_EMAIL'),
         },
       ],
-    })
+    }
+
+    if (appointment.latestResult !== ResultTypes.Invalid){
+      const pdfContent = await RapidAntigenPDFContent(appointment, await this.getPDFType(appointment.id, appointment.latestResult))
+      const attachment = [
+        {
+          content: pdfContent,
+          name: `FHHealth.ca Result - ${appointment.barCode}.pdf`,
+        },
+      ]
+      return {...emailData, attachment} 
+    }
+    return emailData
+  }
+
+  private async getPDFType(appointmentID:string,latestResult:ResultTypes): Promise<RapidAlergenResultPDFType> {
+    if (latestResult === ResultTypes.Negative) {
+      return RapidAlergenResultPDFType.Negative
+    } else if (latestResult === ResultTypes.Positive) {
+      return RapidAlergenResultPDFType.Positive
+    }else{
+      LogError(
+        'RapidAntigenTestResultsService: getPDFType',
+        'Bad Result Type',
+        {
+          appointmentID,
+          result: latestResult,
+        },
+      )
+    }
   }
 }
