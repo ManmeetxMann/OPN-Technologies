@@ -199,21 +199,29 @@ export class RapidAntigenTestResultsService {
       return
     }
 
-    const rapidAlergenAllowedResults = [ResultTypes.Negative, ResultTypes.Positive, ResultTypes.Invalid]
-    if(!rapidAlergenAllowedResults.includes(appointment.latestResult)){
-      LogWarning('RapidAntigenTestResultsService: sendTestResultEmail', 'InvalidResultSendRequested', {
-        appointmentID,
-        result: appointment.latestResult
-      })
+    const rapidAlergenAllowedResults = [
+      ResultTypes.Negative,
+      ResultTypes.Positive,
+      ResultTypes.Invalid,
+    ]
+    if (!rapidAlergenAllowedResults.includes(appointment.latestResult)) {
+      LogWarning(
+        'RapidAntigenTestResultsService: sendTestResultEmail',
+        'InvalidResultSendRequested',
+        {
+          appointmentID,
+          result: appointment.latestResult,
+        },
+      )
       return
     }
-    
+
     const resultDate = moment(appointment.dateTime.toDate()).format('LL')
 
-    let pdfResultType:RapidAlergenResultPDFType = null
-    if(appointment.latestResult === ResultTypes.Negative){
+    let pdfResultType: RapidAlergenResultPDFType = null
+    if (appointment.latestResult === ResultTypes.Negative) {
       pdfResultType = RapidAlergenResultPDFType.Negative
-    }else if(appointment.latestResult === ResultTypes.Positive){
+    } else if (appointment.latestResult === ResultTypes.Positive) {
       pdfResultType = RapidAlergenResultPDFType.Positive
     }
 
@@ -225,7 +233,6 @@ export class RapidAntigenTestResultsService {
       },
     ]
 
-    
     await this.emailService.send({
       templateId: Config.getInt('TEST_RESULT_RAPID_ANTIGEN_TEMPLATE_ID'),
       to: [{email: appointment.email, name: `${appointment.firstName} ${appointment.lastName}`}],

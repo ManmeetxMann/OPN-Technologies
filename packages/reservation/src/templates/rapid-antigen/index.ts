@@ -1,7 +1,7 @@
 import moment from 'moment'
 import {Content, TableLayouts} from '../../../../common/src/service/reports/pdf-types'
 import {PdfService} from '../../../../common/src/service/reports/pdf'
-import { LogInfo } from '../../../../common/src/utils/logging-setup'
+import {LogInfo} from '../../../../common/src/utils/logging-setup'
 
 //Models
 import {
@@ -29,8 +29,8 @@ export const RapidAntigenPDFContent = async (
       break
     }
     default: {
-      LogInfo('RapidAntigenPDFContent','InavldiRapidAlergenResultPDFType',{
-        pdfType
+      LogInfo('RapidAntigenPDFContent', 'InavldiRapidAlergenResultPDFType', {
+        pdfType,
       })
     }
   }
