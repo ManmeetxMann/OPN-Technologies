@@ -17,14 +17,22 @@ const pdfContent = (
       commonPDFContent.companyInfoHeader(),
       {
         text:
-          '\n\nThis type of test is considered a screening tool only, and not ‘confirmatory’, or diagnostic.' +
-          ' If you wish to undergo confirmatory testing, FH Health uses only Health Canada approved RT-PRC testing.' +
+          'This type of test is considered a screening tool only, and not ‘confirmatory’, or diagnostic.' +
+          ' \n\nIf you wish to undergo confirmatory testing, FH Health uses only Health Canada approved RT-PRC testing.' +
           ' Our test is the gold standard RT-PCR test performed on the Allplex Seegene platform,' +
           ' considered one of the best in the industry, and the same platform used by many Public Health labs.' +
-          ' Meanwhile, even with the diagnosis as a ‘presumptive negative’ you should continue to follow' +
-          ' the prevailing Public Health guidelines for COVID-19.',
+          '\n\nMeanwhile, even with the diagnosis as a ‘presumptive negative’ you should continue to follow' +
+          ' the prevailing Public Health guidelines for COVID-19.'+
+          '\n\nIf you require further information, please visit the City of Toronto Public Health: ',
         style: ['gray-text'],
         lineHeight: 1.5,
+      },
+      {
+        text: 'https://www.toronto.ca/home/covid-19',
+        link: 'https://www.toronto.ca/home/covid-19',
+        color: '#1155CC',
+        decoration: 'underline',
+        lineHeight: 1,
       },
       commonPDFContent.conactDetailsForQuestions(),
       commonPDFContent.documentFooter(),
@@ -38,6 +46,7 @@ const messageBody = (): Content => {
     {
       text: `NEGATIVE`,
       bold: true,
+      color: '#6AA84F',
     },
     {
       text:
