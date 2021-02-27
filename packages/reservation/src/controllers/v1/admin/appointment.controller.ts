@@ -1,7 +1,7 @@
 import {NextFunction, Request, Response, Router} from 'express'
 import moment from 'moment'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
-import {actionFailed, actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
+import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
@@ -22,9 +22,12 @@ import {AppoinmentService} from '../../../services/appoinment.service'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 import {TransportRunsService} from '../../../services/transport-runs.service'
 import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
-import { PCRTestResultsService } from '../../../services/pcr-test-results.service'
-import { PCRTestResultDBModel } from '../../../../../reservation/src/models/pcr-test-results'
-import { makeFirestoreTimestamp, makeDeadline } from '../../../../../reservation/src/utils/datetime.helper'
+import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
+import {PCRTestResultDBModel} from '../../../../../reservation/src/models/pcr-test-results'
+import {
+  makeFirestoreTimestamp,
+  makeDeadline,
+} from '../../../../../reservation/src/utils/datetime.helper'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
@@ -33,7 +36,7 @@ class AdminAppointmentController implements IControllerBase {
   private organizationService = new OrganizationService()
   private transportRunsService = new TransportRunsService()
   private pcrTestResultsService = new PCRTestResultsService()
-  
+
   constructor() {
     this.initRoutes()
   }
@@ -388,7 +391,7 @@ class AdminAppointmentController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      let result;
+      let result
       const {appointmentId} = req.params
       const {date, time} = req.body as {date: string; time: string}
       const appointmentFromDB: AppointmentDBModel = await this.appointmentService.getAppointmentDBById(
@@ -396,27 +399,27 @@ class AdminAppointmentController implements IControllerBase {
       )
       const acuityAppointmentId = appointmentFromDB.acuityAppointmentId
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
-      const parsedTime = time//.replace('am', ' AM').replace('pm', ' PM')
-      const dateTime= new Date(date + ' ' + parsedTime)
-      const timestamp=  makeFirestoreTimestamp(dateTime)
-      const isosDate=dateTime.toISOString();
-      let deadline;
-      let deadlineLabel;
-      
-      
+      const parsedTime = time //.replace('am', ' AM').replace('pm', ' PM')
+      const dateTime = new Date(date + ' ' + parsedTime)
+      const timestamp = makeFirestoreTimestamp(dateTime)
+      const isosDate = dateTime.toISOString()
+      let deadlineLabel
+
       const canCancel = this.appointmentService.getCanCancel(
         isLabUser,
         appointmentFromDB.appointmentStatus,
       )
-      const acuityAppointment= await this.appointmentService.getAppointmentByIdFromAcuity(acuityAppointmentId);
+      const acuityAppointment = await this.appointmentService.getAppointmentByIdFromAcuity(
+        acuityAppointmentId,
+      )
       console.log('Before can Cancel: ', canCancel)
 
-      if(acuityAppointment?.labels?.length>0){
-        deadlineLabel=acuityAppointment.labels[0].name
+      if (acuityAppointment?.labels?.length > 0) {
+        deadlineLabel = acuityAppointment.labels[0].name
       }
-      deadline= makeDeadline(moment(dateTime).utc(), deadlineLabel);
-      
-      console.log('before acuityAppointment: ', acuityAppointment);
+      const deadline = makeDeadline(moment(dateTime).utc(), deadlineLabel)
+
+      console.log('before acuityAppointment: ', acuityAppointment)
 
       if (canCancel && acuityAppointment.canClientCancel && acuityAppointment.canClientReschedule) {
         //reschedule appointment for acuity
@@ -425,42 +428,34 @@ class AdminAppointmentController implements IControllerBase {
           isosDate,
         )
 
-        //reschedule test result 
-        const testResultDBModel:Partial<PCRTestResultDBModel>=
-        {
+        //reschedule test result
+        const testResultDBModel: Partial<PCRTestResultDBModel> = {
           dateTime: timestamp,
-          deadline
-        };
-        
-        const pcrResponse=await this.pcrTestResultsService.updateTestResultByAppointmentId(
+          deadline,
+        }
+
+        const pcrResponse = await this.pcrTestResultsService.updateTestResultByAppointmentId(
           appointmentFromDB.id,
-          testResultDBModel
+          testResultDBModel,
         )
 
         //reschedule appointment
         result = await this.appointmentService.rescheduleAppointment(
-          appointmentId, 
-          date, 
-          time, 
-          timestamp, 
-          deadline)
-
-
-        console.log(
-          'after appointmentAcuityResponse: ',
-          appointmentAcuityResponse
+          appointmentId,
+          date,
+          time,
+          timestamp,
+          deadline,
         )
 
-        console.log(
-          'Test Result changed ID:',
-          pcrResponse.id
-        )
-          
+        console.log('after appointmentAcuityResponse: ', appointmentAcuityResponse)
+
+        console.log('Test Result changed ID:', pcrResponse.id)
+
         res.json(actionSucceed(appointmentUiDTOResponse(result, false)))
-      }else{
-        throw new BadRequestException("Clients are not allowed to reschedule this appointment")
+      } else {
+        throw new BadRequestException('Clients are not allowed to reschedule this appointment')
       }
-      
     } catch (error) {
       next(error)
     }
