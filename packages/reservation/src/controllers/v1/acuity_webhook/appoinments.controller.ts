@@ -2,8 +2,6 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {NextFunction, Request, Response, Router} from 'express'
 import {LogError, LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
@@ -12,7 +10,6 @@ import {isEmpty} from 'lodash'
 import {
   AppointmentStatus,
   AcuityUpdateDTO,
-  AcuityWebhookActions,
   AppointmentAcuityResponse,
   WebhookEndpoints,
   ResultTypes,

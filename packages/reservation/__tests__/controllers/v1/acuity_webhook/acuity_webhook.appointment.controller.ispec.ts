@@ -1,9 +1,12 @@
 import request from 'supertest'
-jest.spyOn(global.console, 'error').mockImplementation()
-jest.spyOn(global.console, 'info').mockImplementation()
-
 import {app as server} from '../../../../src/app'
+
+//jest.spyOn(global.console, 'error').mockImplementation()
+//jest.spyOn(global.console, 'info').mockImplementation()
+jest.mock('../../../../src/adapter/acuity.ts')
+jest.mock('../../../../src/services/pcr-test-results.service')
 jest.mock('../../../../../common/src/middlewares/authorization')
+//jest.mock('../../../../../common/src/utils/logging-setup')
 
 describe('AppointmentWebhookController', () => {
   //beforeAll(async () => {})
@@ -24,6 +27,7 @@ describe('AppointmentWebhookController', () => {
         })
         //Safely Ignored
       expect(result.status).toBe(200)
+      expect(result.body.data.state).toBe('InvalidAcuityIDPosted')
       done()
     })
   })
