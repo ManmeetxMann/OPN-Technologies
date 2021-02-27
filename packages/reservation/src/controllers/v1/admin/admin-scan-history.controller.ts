@@ -12,11 +12,13 @@ import {
   PostAdminScanHistoryRequest,
 } from '../../../models/appointment'
 import {ForbiddenException} from '../../../../../common/src/exceptions/forbidden-exception'
+import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 
 class AdminScanHistoryController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
   public router = Router()
   private appointmentService = new AppoinmentService()
+  private pcrTestResultsService = new PCRTestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -49,10 +51,16 @@ class AdminScanHistoryController implements IControllerBase {
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       let appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
+      const pcrTest = await this.pcrTestResultsService.getWaitingPCRResultByAppointmentId(
+        appointment.id,
+      )
 
       if (appointment.organizationId !== organizationId) {
+        console.log(appointment.id, appointment.organizationId, organizationId)
         throw new ForbiddenException('Appointment does not belong to your organization')
       }
+
+      await this.appointmentService.makeDeadline15Minutes(appointment, pcrTest.id)
 
       await this.appointmentService.addAdminScanHistory(adminId, appointment.id, type)
       if (appointment.appointmentStatus !== AppointmentStatus.Reported) {

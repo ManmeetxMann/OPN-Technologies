@@ -30,7 +30,7 @@ import {Config} from '../../../common/src/utils/config'
 import {
   firestoreTimeStampToUTC,
   makeDeadline,
-  makeDeadlineDate,
+  makeRapidDeadline,
   makeFirestoreTimestamp,
 } from '../utils/datetime.helper'
 
@@ -66,8 +66,20 @@ export class AppoinmentService {
   private organizationService = new OrganizationService()
   private enterpriseAdapter = new Enterprise()
 
-  makeDeadline15Minutes(appointment: AppointmentDBModel): Promise<AppointmentDBModel> {
-    return this.appointmentsRepository.setDeadlineDate(appointment.id, makeDeadlineDate())
+  async makeDeadline15Minutes(
+    appointment: AppointmentDBModel,
+    pcrTestResultId: string,
+  ): Promise<AppointmentDBModel> {
+    const updatedAppointment = await this.appointmentsRepository.setDeadlineDate(
+      appointment.id,
+      makeRapidDeadline(),
+    )
+    await this.pcrTestResultsRepository.updateProperty(
+      pcrTestResultId,
+      'deadline',
+      updatedAppointment.deadline,
+    )
+    return updatedAppointment
   }
 
   async checkDuplicatedScanHistory(adminId: string, appointmentId: string): Promise<void> {
