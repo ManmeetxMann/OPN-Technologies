@@ -11,13 +11,13 @@ const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
 /**
  * @group reservation-service
- * @group /reservation/internal/api/v1/rapid-alergen-send-result-email
- * @group rapid-antigen-send-email
+ * @group /reservation/admin/api/v1/admin-scan-history
+ * @group admin-scan-history-create
  */
-describe('rapid-antigen-send-email', () => {
-  test('able to successfully send Rapid Antigen Results via Email', () => {
+describe('admin-scan-history-create', () => {
+  test('able to successfully create scan history', () => {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/internal/api/v1/rapid-alergen-send-result-email`;
+      const url = `${reservationServiceUrl}/reservation/admin/api/v1/admin-scan-history`;
       return frisby
           .setup({
             request: {
@@ -27,7 +27,9 @@ describe('rapid-antigen-send-email', () => {
             },
           })
           .post(url, {
-            appointmentID: 'PcCFDchvWyBCVnXMyGNk',
+            barCode: 'A709',
+            type: 'RapidAntigen',
+            organizationId: 'TEST1',
           })
           .inspectBody()
           .expect('status', 200);
