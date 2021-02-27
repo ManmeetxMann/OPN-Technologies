@@ -2,7 +2,7 @@ import moment from 'moment'
 
 //Common
 import DataStore from '../../../common/src/data/datastore'
-import {LogError, LogInfo} from '../../../common/src/utils/logging-setup'
+import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {EmailService} from '../../../common/src/service/messaging/email-service'
 import {Config} from '../../../common/src/utils/config'
@@ -198,9 +198,34 @@ export class RapidAntigenTestResultsService {
       })
       return
     }
-    const pdfContent = await RapidAntigenPDFContent(appointment, RapidAlergenResultPDFType.Negative)
+
+    const rapidAlergenAllowedResults = [ResultTypes.Negative, ResultTypes.Positive, ResultTypes.Invalid]
+    if(!rapidAlergenAllowedResults.includes(appointment.latestResult)){
+      LogWarning('RapidAntigenTestResultsService: sendTestResultEmail', 'InvalidResultSendRequested', {
+        appointmentID,
+        result: appointment.latestResult
+      })
+      return
+    }
+    
     const resultDate = moment(appointment.dateTime.toDate()).format('LL')
 
+    let pdfResultType:RapidAlergenResultPDFType = null
+    if(appointment.latestResult === ResultTypes.Negative){
+      pdfResultType = RapidAlergenResultPDFType.Negative
+    }else if(appointment.latestResult === ResultTypes.Positive){
+      pdfResultType = RapidAlergenResultPDFType.Positive
+    }
+
+    const pdfContent = await RapidAntigenPDFContent(appointment, pdfResultType)
+    const attachment = [
+      {
+        content: pdfContent,
+        name: `FHHealth.ca Result - ${appointment.barCode} - ${resultDate}.pdf`,
+      },
+    ]
+
+    
     await this.emailService.send({
       templateId: Config.getInt('TEST_RESULT_RAPID_ANTIGEN_TEMPLATE_ID'),
       to: [{email: appointment.email, name: `${appointment.firstName} ${appointment.lastName}`}],
@@ -209,12 +234,7 @@ export class RapidAntigenTestResultsService {
         DATE_OF_RESULT: resultDate,
         FIRSTNAME: appointment.firstName,
       },
-      attachment: [
-        {
-          content: pdfContent,
-          name: `FHHealth.ca Result - ${appointment.barCode} - ${resultDate}.pdf`,
-        },
-      ],
+      attachment,
       bcc: [
         {
           email: Config.get('TEST_RESULT_BCC_EMAIL'),
