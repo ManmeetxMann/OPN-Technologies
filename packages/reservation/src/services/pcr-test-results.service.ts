@@ -1211,7 +1211,7 @@ export class PCRTestResultsService {
     return linkedBarcodes
   }
 
-  public async createNewPCRTestForWebhook(
+  public async createNewTestResult(
     appointment: AppointmentDBModel,
   ): Promise<PCRTestResultDBModel> {
     const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)

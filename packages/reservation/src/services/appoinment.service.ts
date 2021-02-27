@@ -343,7 +343,7 @@ export class AppoinmentService {
       userId?: string
     },
   ): Promise<AppointmentDBModel> {
-    const data = await this.appointmentFromAcuity(acuityAppointment, additionalData)
+    const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
     return this.appointmentsRepository.save(data)
   }
 
@@ -357,7 +357,7 @@ export class AppoinmentService {
       latestResult: ResultTypes
     },
   ): Promise<AppointmentDBModel> {
-    const data = await this.appointmentFromAcuity(acuityAppointment, additionalData)
+    const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
     return this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity)
   }
 
@@ -365,7 +365,7 @@ export class AppoinmentService {
     return (appointmentTypeID === Config.getInt('ACUITY_APPOINTMENT_TYPE_ID'))?TestTypes.RapidAntigen:TestTypes.PCR
   }
 
-  private async appointmentFromAcuity(
+  private async mapAcuityAppointmentToDBModel(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
