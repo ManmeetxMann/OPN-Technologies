@@ -2,7 +2,7 @@ import moment from 'moment'
 import {flatten, union, fromPairs} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
-
+import {firestore} from 'firebase-admin'
 import {
   AppoinmentBarCodeSequenceDBModel,
   AppointmentAcuityResponse,
@@ -1063,12 +1063,17 @@ export class AppoinmentService {
 
   async rescheduleAppointment(
     appointmentId: string,
-    date: string,
-    time: string,
+    dateOfAppointment: string,
+    timeOfAppointment: string,
+    dateTime: firestore.Timestamp,
+    deadline: firestore.Timestamp
   ): Promise<AppointmentDBModel> {
+    console.log(' timeOfAppointment is :', timeOfAppointment);
     return this.appointmentsRepository.updateProperties(appointmentId, {
-      dateOfAppointment: date,
-      timeOfAppointment: time,
+      dateOfAppointment,
+      timeOfAppointment,
+      dateTime,
+      deadline
     })
   }
 }

@@ -96,6 +96,7 @@ export type AppointmentAcuityResponse = {
   calendarID: number
   canceled: boolean
   canClientCancel: boolean
+  canClientReschedule: boolean
   certificate: string
   date: string
   dateOfBirth: string

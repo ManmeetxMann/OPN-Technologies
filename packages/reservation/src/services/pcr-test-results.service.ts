@@ -914,6 +914,16 @@ export class PCRTestResultsService {
     await this.pcrTestResultsRepository.updateData(id, defaultTestResults)
   }
 
+  async updateTestResultByAppointmentId(appointmentId: string, testResult: Partial<PCRTestResultDBModel>,) : Promise<PCRTestResultDBModel>{
+    const  result = await this.getTestResultsByAppointmentId(appointmentId);
+    if(result.length){
+      const pcrTestResult= result [0];
+      return await this.pcrTestResultsRepository.updateData(pcrTestResult.id, testResult)
+    }
+    return null;
+  }
+
+
   async createNewTestResults(data: {
     appointment: AppointmentDBModel
     adminId: string
