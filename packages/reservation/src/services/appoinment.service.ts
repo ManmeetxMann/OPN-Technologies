@@ -332,20 +332,18 @@ export class AppoinmentService {
     return appointments[0]
   }
 
-  async createAppointmentFromAcuity(
+  async createAppointment(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
       organizationId: string
-      appointmentTypeID: number
-      calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult: ResultTypes
       couponCode?: string
       userId?: string
     },
   ): Promise<AppointmentDBModel> {
-    const data = await this.appointmentFromAcuity(acuityAppointment, additionalData)
+    const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
     return this.appointmentsRepository.save(data)
   }
 
@@ -355,23 +353,25 @@ export class AppoinmentService {
     additionalData: {
       barCodeNumber: string
       organizationId: string
-      appointmentTypeID: number
-      calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult: ResultTypes
     },
   ): Promise<AppointmentDBModel> {
-    const data = await this.appointmentFromAcuity(acuityAppointment, additionalData)
+    const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
     return this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity)
   }
 
-  private async appointmentFromAcuity(
+  private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
+    return appointmentTypeID === Config.getInt('ACUITY_APPOINTMENT_TYPE_ID')
+      ? TestTypes.RapidAntigen
+      : TestTypes.PCR
+  }
+
+  private async mapAcuityAppointmentToDBModel(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
       organizationId: string
-      appointmentTypeID: number
-      calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult: ResultTypes
       couponCode?: string
@@ -388,8 +388,6 @@ export class AppoinmentService {
     const {
       barCodeNumber,
       organizationId,
-      appointmentTypeID,
-      calendarID,
       appointmentStatus,
       latestResult,
       couponCode = '',
@@ -413,10 +411,10 @@ export class AppoinmentService {
     return {
       acuityAppointmentId: acuityAppointment.id,
       appointmentStatus,
-      appointmentTypeID,
+      appointmentTypeID: acuityAppointment.appointmentTypeID,
       barCode: barCode,
       canceled: acuityAppointment.canceled,
-      calendarID,
+      calendarID: acuityAppointment.calendarID,
       dateOfAppointment,
       dateOfBirth: acuityAppointment.dateOfBirth,
       dateTime,
@@ -446,6 +444,7 @@ export class AppoinmentService {
       userId: currentUserId,
       locationName: acuityAppointment.calendar,
       locationAddress: acuityAppointment.location,
+      testType: await this.getTestType(acuityAppointment.appointmentTypeID),
     }
   }
 
@@ -755,7 +754,7 @@ export class AppoinmentService {
 
     const dateTime = utcDateTime.format()
     const barCodeNumber = await this.getNextBarCodeNumber()
-    const data = await this.acuityRepository.createAppointment(
+    const acuityAppointment = await this.acuityRepository.createAppointment(
       dateTime,
       appointmentTypeId,
       firstName,
@@ -776,10 +775,8 @@ export class AppoinmentService {
         barCodeNumber,
       },
     )
-    return this.createAppointmentFromAcuity(data, {
+    return this.createAppointment(acuityAppointment, {
       barCodeNumber,
-      appointmentTypeID: appointmentTypeId,
-      calendarID: calendarId,
       appointmentStatus: AppointmentStatus.Pending,
       latestResult: ResultTypes.Pending,
       organizationId,

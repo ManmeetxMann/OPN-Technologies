@@ -28,14 +28,14 @@ describe('rapid-antigen-send-email', () => {
           })
           .post(url, {
             message: {
-              publishTime: "2021-02-26T18:48:03.418Z",
-              message_id: "1992863589247666",
-              messageId: "1992863589247666",
-              data: "eyJhcHBvaW50bWVudElEIjoiY0pYUTZKRktudE1FdUYzM0Y3b0cifQ==",
-              publish_time: "2021-02-26T18:48:03.418Z",
+              publishTime: '2021-02-26T18:48:03.418Z',
+              message_id: '1992863589247666',
+              messageId: '1992863589247666',
+              data: 'eyJhcHBvaW50bWVudElEIjoiY0pYUTZKRktudE1FdUYzM0Y3b0cifQ==',
+              publish_time: '2021-02-26T18:48:03.418Z',
             },
-            subscription: "projects/opn-platform-dev/subscriptions/rapid-alergen-test-result-subscription",
-            })
+            subscription: 'projects/opn-platform-dev/subscriptions/rapid-alergen-test-result-subscription',
+          })
           .inspectBody()
           .expect('status', 200);
     });

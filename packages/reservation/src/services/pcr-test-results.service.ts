@@ -50,7 +50,6 @@ import {
   PcrTestResultsListByDeadlineRequest,
   PcrTestResultsListRequest,
   pcrTestResultsResponse,
-  PCRTestResultType,
   ResultReportStatus,
   resultToStyle,
   TestResutsDTO,
@@ -62,6 +61,7 @@ import {
   DeadlineLabel,
   Filter,
   ResultTypes,
+  TestTypes,
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
@@ -375,7 +375,7 @@ export class PCRTestResultsService {
         testRunId: pcr.testRunId,
         firstName: pcr.firstName,
         lastName: pcr.lastName,
-        testType: 'PCR',
+        testType: pcr.testType ?? 'PCR',
         organizationId: organization?.id,
         organizationName: organization?.name,
       }
@@ -931,7 +931,7 @@ export class PCRTestResultsService {
     })
   }
 
-  async updateDefaultTestResults(
+  async updateTestResults(
     id: string,
     defaultTestResults: Partial<PCRTestResultDBModel>,
   ): Promise<void> {
@@ -1211,9 +1211,7 @@ export class PCRTestResultsService {
     return linkedBarcodes
   }
 
-  public async createNewPCRTestForWebhook(
-    appointment: AppointmentDBModel,
-  ): Promise<PCRTestResultDBModel> {
+  public async createNewTestResult(appointment: AppointmentDBModel): Promise<PCRTestResultDBModel> {
     const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
 
     return this.pcrTestResultsRepository.createNewTestResults({
@@ -1505,8 +1503,8 @@ export class PCRTestResultsService {
 
       return {
         id: pcr.id,
-        type: PCRTestResultType.PCR,
-        name: 'PCR Tests',
+        type: pcr.testType ?? TestTypes.PCR,
+        name: pcr.testType ?? TestTypes.PCR,
         testDateTime: formatDateRFC822Local(pcr.deadline),
         style: resultToStyle(result),
         result,
