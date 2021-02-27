@@ -17,10 +17,10 @@ const pdfContent = (
       commonPDFContent.companyInfoHeader(),
       {
         text:
-          '\n\nMeanwhile, even with the diagnosis as a ‘presumptive positive’'+
+          '\n\nMeanwhile, even with the diagnosis as a ‘presumptive positive’' +
           ' you should follow the Public Health guidelines for ‘Have COVID-19’, which can be found here:\n',
-          style: ['gray-text'],
-          lineHeight: 1.5,
+        style: ['gray-text'],
+        lineHeight: 1.5,
       },
       {
         text:
@@ -47,10 +47,10 @@ const messageBody = (): Content => {
     },
     {
       text:
-        ' for the direct and qualitative detection of SARS-CoV-2 viral nucleoprotein antigens'+ 
-        ' known to cause coronavirus disease (also called COVID-19), a respiratory illness.'+ 
-        ' Antigen from nasal secretions of infected individuals is generally detectable within 6 days of symptom onset,'+ 
-        ' during the acute phase of the infection. A positive result indicates the presence of viral antigens,'+ 
+        ' for the direct and qualitative detection of SARS-CoV-2 viral nucleoprotein antigens' +
+        ' known to cause coronavirus disease (also called COVID-19), a respiratory illness.' +
+        ' Antigen from nasal secretions of infected individuals is generally detectable within 6 days of symptom onset,' +
+        ' during the acute phase of the infection. A positive result indicates the presence of viral antigens,' +
         ' but clinical correlation with your history and confirmatory diagnostic PCR testing is necessary to determine infection status.',
     },
     {
@@ -70,17 +70,17 @@ const messageBody = (): Content => {
     },
     {
       text:
-        'Yes. It is currently the recommendation by Toronto Public Health officials'+
-        ' that all point-of-care (POC) ‘rapid tests’ are considered as providing a ‘presumptive’ status.'+
-        ' This type of test is considered a screening tool only, and not ‘confirmatory’, or diagnostic.'+
+        'Yes. It is currently the recommendation by Toronto Public Health officials' +
+        ' that all point-of-care (POC) ‘rapid tests’ are considered as providing a ‘presumptive’ status.' +
+        ' This type of test is considered a screening tool only, and not ‘confirmatory’, or diagnostic.' +
         ' As such all POC testing is subject to confirmatory molecular assay (PCR) testing.',
     },
     {
       text:
-        '\n\nIf you wish to undergo confirmatory testing, FH Health uses only Health Canada approved RT-PRC testing.'+
-        ' Our test is the gold standard RT-PCR test performed on the Allplex Seegene platform,'+
-        ' considered one of the best in the industry, and the same platform used by many Public Health labs.'
-    }
+        '\n\nIf you wish to undergo confirmatory testing, FH Health uses only Health Canada approved RT-PRC testing.' +
+        ' Our test is the gold standard RT-PCR test performed on the Allplex Seegene platform,' +
+        ' considered one of the best in the industry, and the same platform used by many Public Health labs.',
+    },
   ]
 
   return {

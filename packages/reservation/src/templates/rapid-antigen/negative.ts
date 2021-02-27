@@ -22,7 +22,7 @@ const pdfContent = (
           ' Our test is the gold standard RT-PCR test performed on the Allplex Seegene platform,' +
           ' considered one of the best in the industry, and the same platform used by many Public Health labs.' +
           '\n\nMeanwhile, even with the diagnosis as a ‘presumptive negative’ you should continue to follow' +
-          ' the prevailing Public Health guidelines for COVID-19.'+
+          ' the prevailing Public Health guidelines for COVID-19.' +
           '\n\nIf you require further information, please visit the City of Toronto Public Health: ',
         style: ['gray-text'],
         lineHeight: 1.5,

@@ -4,7 +4,7 @@ import moment from 'moment'
 import DataStore from '../../../common/src/data/datastore'
 import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
-import {EmailService,EmailMessage} from '../../../common/src/service/messaging/email-service'
+import {EmailService, EmailMessage} from '../../../common/src/service/messaging/email-service'
 import {Config} from '../../../common/src/utils/config'
 
 //Repository
@@ -218,18 +218,17 @@ export class RapidAntigenTestResultsService {
 
     const emailSendStatus = await this.emailService.send(await this.getEmailData(appointment))
 
-    LogInfo(
-      'RapidAntigenTestResultsService: sendTestResultEmail',
-      'EmailSendSuccess',
-      {
-        emailSendStatus
-      },
-    )
+    LogInfo('RapidAntigenTestResultsService: sendTestResultEmail', 'EmailSendSuccess', {
+      emailSendStatus,
+    })
   }
 
-  async getEmailData(appointment:AppointmentDBModel): Promise<EmailMessage> {
+  async getEmailData(appointment: AppointmentDBModel): Promise<EmailMessage> {
     const resultDate = moment(appointment.dateTime.toDate()).format('LL')
-    const templateId = (appointment.latestResult === ResultTypes.Invalid)?Config.getInt('TEST_RESULT_INVALID_RAPID_ANTIGEN_TEMPLATE_ID'):Config.getInt('TEST_RESULT_RAPID_ANTIGEN_TEMPLATE_ID')
+    const templateId =
+      appointment.latestResult === ResultTypes.Invalid
+        ? Config.getInt('TEST_RESULT_INVALID_RAPID_ANTIGEN_TEMPLATE_ID')
+        : Config.getInt('TEST_RESULT_RAPID_ANTIGEN_TEMPLATE_ID')
     const emailData = {
       templateId,
       to: [{email: appointment.email, name: `${appointment.firstName} ${appointment.lastName}`}],
@@ -245,33 +244,35 @@ export class RapidAntigenTestResultsService {
       ],
     }
 
-    if (appointment.latestResult !== ResultTypes.Invalid){
-      const pdfContent = await RapidAntigenPDFContent(appointment, await this.getPDFType(appointment.id, appointment.latestResult))
+    if (appointment.latestResult !== ResultTypes.Invalid) {
+      const pdfContent = await RapidAntigenPDFContent(
+        appointment,
+        await this.getPDFType(appointment.id, appointment.latestResult),
+      )
       const attachment = [
         {
           content: pdfContent,
           name: `FHHealth.ca Result - ${appointment.barCode}.pdf`,
         },
       ]
-      return {...emailData, attachment} 
+      return {...emailData, attachment}
     }
     return emailData
   }
 
-  private async getPDFType(appointmentID:string,latestResult:ResultTypes): Promise<RapidAlergenResultPDFType> {
+  private async getPDFType(
+    appointmentID: string,
+    latestResult: ResultTypes,
+  ): Promise<RapidAlergenResultPDFType> {
     if (latestResult === ResultTypes.Negative) {
       return RapidAlergenResultPDFType.Negative
     } else if (latestResult === ResultTypes.Positive) {
       return RapidAlergenResultPDFType.Positive
-    }else{
-      LogError(
-        'RapidAntigenTestResultsService: getPDFType',
-        'Bad Result Type',
-        {
-          appointmentID,
-          result: latestResult,
-        },
-      )
+    } else {
+      LogError('RapidAntigenTestResultsService: getPDFType', 'Bad Result Type', {
+        appointmentID,
+        result: latestResult,
+      })
     }
   }
 }
