@@ -13,7 +13,7 @@ import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
 //Models
-import {ResultTypes, TestTypes} from '../models/appointment'
+import {AppointmentStatus, ResultTypes, TestTypes} from '../models/appointment'
 import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
 import {
   RapidAntigenResultTypes,
@@ -64,8 +64,6 @@ export class RapidAntigenTestResultsService {
     //Update Appointments
     await this.appointmentsRepository.changeStatusToReported(appointmentId, reqeustedBy)
 
-    //Remove Sent Result from Scan List
-    await this.adminScanHistoryRepository.deleteScanRecord(reqeustedBy, appointmentId, TestTypes.RapidAntigen)
 
     //Send Push Notification
     if (notify) {
@@ -114,6 +112,33 @@ export class RapidAntigenTestResultsService {
       })
     }
 
+    if (sendAgain && appointment.appointmentStatus !== AppointmentStatus.Reported) {
+      return Promise.resolve({
+        id: appointmentID,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'Send Again Not Allowed',
+      })
+    }
+
+    if (!sendAgain && appointment.appointmentStatus === AppointmentStatus.Reported) {
+      return Promise.resolve({
+        id: appointmentID,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'Already Reported',
+      })
+    }
+
+    if (!sendAgain && appointment.appointmentStatus !== AppointmentStatus.InProgress) {
+      return Promise.resolve({
+        id: appointmentID,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'Not In Progress',
+      })
+    }
+
     const waitingResults = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
       appointment.id,
     )
@@ -121,30 +146,28 @@ export class RapidAntigenTestResultsService {
     if (waitingResults && waitingResults.length > 0) {
       const waitingResult = waitingResults[0] //Only One results is expected
       return this.saveResult(action, notify, reqeustedBy, waitingResult)
+    } else if (sendAgain) {
+      const newResult = await this.pcrTestResultsRepository.createNewTestResults({
+        appointment,
+        adminId: reqeustedBy,
+        runNumber: 0,
+        reCollectNumber: 0,
+        previousResult: ResultTypes.Pending,
+      })
+      return this.saveResult(action, notify, reqeustedBy, newResult)
     } else {
-      if (sendAgain) {
-        const newResult = await this.pcrTestResultsRepository.createNewTestResults({
-          appointment,
-          adminId: reqeustedBy,
-          runNumber: 0,
-          reCollectNumber: 0,
-          previousResult: ResultTypes.Pending,
-        })
-        return this.saveResult(action, notify, reqeustedBy, newResult)
-      } else {
-        //LOG Critical and Fail
-        LogError(
-          'RapidAntigenTestResultsService:processAppointment',
-          'Failed:NoWaitingResults',
-          appointment,
-        )
-        return Promise.resolve({
-          id: appointmentID,
-          barCode: appointment.barCode,
-          status: BulkOperationStatus.Failed,
-          reason: 'No Results Available',
-        })
-      }
+      //LOG Critical and Fail
+      LogError(
+        'RapidAntigenTestResultsService:processAppointment',
+        'Failed:NoWaitingResults',
+        appointment,
+      )
+      return Promise.resolve({
+        id: appointmentID,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'No Results Available',
+      })
     }
   }
 
