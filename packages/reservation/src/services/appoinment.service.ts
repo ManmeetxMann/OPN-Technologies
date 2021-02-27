@@ -332,13 +332,11 @@ export class AppoinmentService {
     return appointments[0]
   }
 
-  async createAppointmentFromAcuity(
+  async createAppointment(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
       organizationId: string
-      appointmentTypeID: number
-      calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult: ResultTypes
       couponCode?: string
@@ -355,8 +353,6 @@ export class AppoinmentService {
     additionalData: {
       barCodeNumber: string
       organizationId: string
-      appointmentTypeID: number
-      calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult: ResultTypes
     },
@@ -370,8 +366,6 @@ export class AppoinmentService {
     additionalData: {
       barCodeNumber: string
       organizationId: string
-      appointmentTypeID: number
-      calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult: ResultTypes
       couponCode?: string
@@ -388,8 +382,6 @@ export class AppoinmentService {
     const {
       barCodeNumber,
       organizationId,
-      appointmentTypeID,
-      calendarID,
       appointmentStatus,
       latestResult,
       couponCode = '',
@@ -413,10 +405,10 @@ export class AppoinmentService {
     return {
       acuityAppointmentId: acuityAppointment.id,
       appointmentStatus,
-      appointmentTypeID,
+      appointmentTypeID:acuityAppointment.appointmentTypeID,
       barCode: barCode,
       canceled: acuityAppointment.canceled,
-      calendarID,
+      calendarID:acuityAppointment.calendarID,
       dateOfAppointment,
       dateOfBirth: acuityAppointment.dateOfBirth,
       dateTime,
@@ -755,7 +747,7 @@ export class AppoinmentService {
 
     const dateTime = utcDateTime.format()
     const barCodeNumber = await this.getNextBarCodeNumber()
-    const data = await this.acuityRepository.createAppointment(
+    const acuityAppointment = await this.acuityRepository.createAppointment(
       dateTime,
       appointmentTypeId,
       firstName,
@@ -776,10 +768,8 @@ export class AppoinmentService {
         barCodeNumber,
       },
     )
-    return this.createAppointmentFromAcuity(data, {
+    return this.createAppointment(acuityAppointment, {
       barCodeNumber,
-      appointmentTypeID: appointmentTypeId,
-      calendarID: calendarId,
       appointmentStatus: AppointmentStatus.Pending,
       latestResult: ResultTypes.Pending,
       organizationId,

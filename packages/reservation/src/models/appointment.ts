@@ -92,7 +92,9 @@ export type AppointmentAcuityResponse = {
   address: string
   addressUnit: string
   agreeToConductFHHealthAssessment: boolean
+  appointmentTypeID: number
   barCode: string
+  calendar: string
   calendarID: number
   canceled: boolean
   canClientCancel: boolean
@@ -119,7 +121,6 @@ export type AppointmentAcuityResponse = {
   time: string
   travelID?: string
   travelIDIssuingCountry?: string
-  calendar: string
 }
 
 export type LabelsAcuityResponse = {

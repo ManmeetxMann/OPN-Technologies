@@ -1,6 +1,6 @@
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {NextFunction, Request, Response, Router} from 'express'
-import {LogError, LogInfo} from '../../../../../common/src/utils/logging-setup'
+import {LogError, LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
@@ -16,6 +16,7 @@ import {
   AppointmentAcuityResponse,
   WebhookEndpoints,
   ResultTypes,
+  AppointmentDBModel,
 } from '../../../models/appointment'
 import {getFirestoreTimeStampDate} from '../../../utils/datetime.helper'
 
@@ -31,203 +32,59 @@ class AppointmentWebhookController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.post(this.path + '/create', this.handleCreateAppointment)
-    this.router.post(this.path + '/update', this.handleUpdateAppointment)
+    this.router.post(this.path + '/sync', this.syncAppointmentFromAcuityToDB)
   }
 
-  handleCreateAppointment = async (
+  syncAppointmentFromAcuityToDB =  async (
     req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {id, action, calendarID, appointmentTypeID} = req.body as ScheduleWebhookRequest
+      const {id, action, calendarID, appointmentTypeID, returnData} = req.body as ScheduleWebhookRequest
+      LogInfo('AppointmentWebhookController:syncAppointmentFromAcuityToDB', 'SyncRequested', {
+        acuityID: id,
+        calendarID,
+        appointmentTypeID,
+        action
+      })
 
-      if (action !== AcuityWebhookActions.Scheduled) {
-        throw new BadRequestException(`OnlyScheduledActionIsAllowed for ${id}`)
-      }
-
-      const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
-      if (!appointment) {
-        throw new ResourceNotFoundException(`AppointmentNotFound on Acuity AcuityID: ${id}`)
+      let acuityAppointment:AppointmentAcuityResponse = null
+      try{
+        acuityAppointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
+      }catch(error){}
+      
+      if (!acuityAppointment) {
+        LogWarning(`AppointmentWebhookController:syncAppointmentFromAcuityToDB`, 'InvalidAcuityIDPosted', {
+          acuityID: id,
+          action
+        })
+        res.json(actionSucceed((returnData)?{state:'InvalidAcuityIDPosted'}:{}))
+        return
       }
       const dataForUpdate = await this.updateInformationOnAcuity(
         id,
-        appointment,
+        acuityAppointment,
         WebhookEndpoints.Create,
       )
-
       const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
       if (appointmentFromDb) {
-        LogError(`AppointmentWebhookController`, 'AppointmentAlreadyCreated', {
-          acuityID: id,
-          appoinmentID: appointmentFromDb.id,
-        })
-        throw new BadRequestException(`AppointmentAlreadyCreated for ${id}`)
-      }
-
-      try {
-        const {barCodeNumber, organizationId} = dataForUpdate
-
-        const savedAppointment = await this.appoinmentService.createAppointmentFromAcuity(
-          appointment,
-          {
-            barCodeNumber,
-            organizationId,
-            appointmentTypeID,
-            calendarID,
-            appointmentStatus: AppointmentStatus.Pending,
-            latestResult: ResultTypes.Pending,
-          },
-        )
-        LogInfo('CreateAppointmentFromWebhook', 'SuccessCreateAppointment', {
-          acuityID: id,
-          appointmentID: savedAppointment.id,
-        })
-
-        if (savedAppointment) {
-          const pcrTestResult = await this.pcrTestResultsService.createNewPCRTestForWebhook(
-            savedAppointment,
-          )
-          LogInfo('CreateAppointmentFromWebhook', 'SuccessCreatePCRResults', {
+        const noUpdatesAllowedStatus = [AppointmentStatus.Reported, AppointmentStatus.Canceled, AppointmentStatus.ReCollectRequired]
+        if(noUpdatesAllowedStatus.includes(appointmentFromDb.appointmentStatus)){
+          LogWarning(`AppointmentWebhookController`, 'AppointmentUpdateNotAllowed', {
             acuityID: id,
-            appointmentID: savedAppointment.id,
-            pcrTestResultID: pcrTestResult.id,
-          })
-        }
-      } catch (e) {
-        LogError('CreateAppointmentFromWebhook', 'FailedToCreateAppointment', {
-          acuityID: id,
-          error: e.toString(),
-        })
-      }
-
-      res.json(actionSucceed(''))
-    } catch (error) {
-      LogError(`CreateAppointmentFromWebhook`, 'FailedToProcessRequest', {
-        error: error.toString(),
-      })
-      next(error)
-    }
-  }
-
-  handleUpdateAppointment = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      const {id, action, calendarID, appointmentTypeID} = req.body as ScheduleWebhookRequest
-
-      if (action === AcuityWebhookActions.Scheduled) {
-        throw new BadRequestException(`ScheduledActionIsNotAllowed for ${id}`)
-      }
-
-      const appointment = await this.appoinmentService.getAppointmentByIdFromAcuity(id)
-      if (!appointment) {
-        throw new ResourceNotFoundException(`AppointmentNotFound on Acuity AcuityID: ${id}`)
-      }
-      const dataForUpdate = await this.updateInformationOnAcuity(
-        id,
-        appointment,
-        WebhookEndpoints.Update,
-      )
-
-      const appointmentFromDb = await this.appoinmentService.getAppointmentByAcuityId(id)
-      if (!appointmentFromDb) {
-        throw new ResourceNotFoundException(`AppointmentNotFound in DB AcuityID: ${id}`)
-      }
-
-      try {
-        let appointmentStatus = appointmentFromDb.appointmentStatus
-        if (
-          appointment.canceled &&
-          appointmentFromDb.appointmentStatus != AppointmentStatus.Canceled
-        ) {
-          LogInfo('UpdateAppointmentFromWebhook', 'AppointmentStatusUpdatedToCancel', {
             appoinmentID: appointmentFromDb.id,
+            appointmentStatus: appointmentFromDb.appointmentStatus
+          })
+        }else{
+          LogInfo(`AppointmentWebhookController`, 'AlreadyCreatedUpdatingNow', {
             acuityID: id,
-          })
-          appointmentStatus = AppointmentStatus.Canceled
-        }
-
-        const {barCodeNumber, organizationId} = dataForUpdate
-        const barCode = appointment.barCode || barCodeNumber
-        const updatedAppointment = await this.appoinmentService.updateAppointmentFromAcuity(
-          appointmentFromDb.id,
-          appointment,
-          {
-            barCodeNumber: barCode,
-            appointmentStatus,
-            organizationId,
-            appointmentTypeID,
-            calendarID,
-            latestResult: appointmentFromDb.latestResult,
-          },
-        )
-        LogInfo('UpdateAppointmentFromWebhook', 'AppointmentSuccessfullyUpdated', {
-          appoinmentID: appointmentFromDb.id,
-          acuityID: id,
-          barCode: barCode,
-        })
-        const pcrTestResult = await this.pcrTestResultsService.getWaitingPCRResultByAppointmentId(
-          appointmentFromDb.id,
-        )
-        //getWaitingPCRResultByAppointmentId will throw exception if pcrTestResult doesn't exists
-
-        if (
-          action === AcuityWebhookActions.Canceled ||
-          appointmentStatus === AppointmentStatus.Canceled
-        ) {
-          await this.pcrTestResultsService.deleteTestResults(pcrTestResult.id)
-          LogInfo('UpdateAppointmentFromWebhook', 'RemovedResults', {
             appoinmentID: appointmentFromDb.id,
-            pcrResultID: pcrTestResult.id,
           })
-        } else {
-          const linkedBarcodes = await this.pcrTestResultsService.getlinkedBarcodes(
-            appointment.certificate,
-          )
-          const pcrResultDataForDb = {
-            adminId: 'WEBHOOK',
-            appointmentId: appointmentFromDb.id,
-            barCode: barCode,
-            displayInResult: true,
-            dateTime: updatedAppointment.dateTime,
-            deadline: updatedAppointment.deadline,
-            firstName: appointment.firstName,
-            lastName: appointment.lastName,
-            linkedBarCodes: linkedBarcodes,
-            organizationId: updatedAppointment.organizationId,
-            deadlineDate: getFirestoreTimeStampDate(updatedAppointment.deadline),
-            dateOfAppointment: getFirestoreTimeStampDate(updatedAppointment.dateTime),
-            //result: ResultTypes.Pending,
-            //runNumber: 1 ,//Start the Run
-            //waitingResult: true,
-          }
-
-          await this.pcrTestResultsService.updateDefaultTestResults(
-            pcrTestResult.id,
-            pcrResultDataForDb,
-          )
-          LogInfo('UpdateAppointmentFromWebhook', 'UpdatedPCRResultsSuccessfully', {
-            appoinmentID: appointmentFromDb.id,
-            pcrResultID: pcrTestResult.id,
-          })
+          this.handleUpdateAppointment(acuityAppointment, dataForUpdate, appointmentFromDb)
         }
-      } catch (e) {
-        if (appointment.canceled) {
-          LogInfo('UpdateAppointmentFromWebhook', 'AlreadyCanceledAppoinment', {
-            appoinmentID: appointmentFromDb.id,
-            acuityID: id,
-            error: e.toString(),
-          })
-        } else {
-          LogError('UpdateAppointmentFromWebhook', 'FailedToUpdateAppointment', {
-            acuityID: id,
-            error: e.toString(),
-          })
-        }
+      }else{
+        this.handleCreateAppointment(acuityAppointment, dataForUpdate)
       }
 
       res.json(actionSucceed(''))
@@ -236,6 +93,133 @@ class AppointmentWebhookController implements IControllerBase {
         error: error.toString(),
       })
       next(error)
+    }
+  } 
+
+  handleCreateAppointment = async (acuityAppointment:AppointmentAcuityResponse,dataForUpdate): Promise<void> => {
+    try {
+      const {barCodeNumber, organizationId} = dataForUpdate
+
+      const savedAppointment = await this.appoinmentService.createAppointment(
+        acuityAppointment,
+        {
+          barCodeNumber,
+          organizationId,
+          appointmentStatus: AppointmentStatus.Pending,
+          latestResult: ResultTypes.Pending,
+        },
+      )
+      LogInfo('CreateAppointmentFromWebhook', 'SuccessCreateAppointment', {
+        acuityID: acuityAppointment.id,
+        appointmentID: savedAppointment.id,
+      })
+
+      if (savedAppointment) {
+        const pcrTestResult = await this.pcrTestResultsService.createNewPCRTestForWebhook(
+          savedAppointment,
+        )
+        LogInfo('CreateAppointmentFromWebhook', 'SuccessCreatePCRResults', {
+          acuityID: acuityAppointment.id,
+          appointmentID: savedAppointment.id,
+          pcrTestResultID: pcrTestResult.id,
+        })
+      }
+    } catch (e) {
+      LogError('CreateAppointmentFromWebhook', 'FailedToCreateAppointment', {
+        acuityID: acuityAppointment.id,
+        error: e.toString(),
+      })
+    }
+  }
+
+  handleUpdateAppointment = async (acuityAppointment:AppointmentAcuityResponse, dataForUpdate, appointmentFromDb: AppointmentDBModel): Promise<void> => {
+    try {
+      let appointmentStatus = appointmentFromDb.appointmentStatus
+      if (
+        acuityAppointment.canceled &&
+        appointmentFromDb.appointmentStatus != AppointmentStatus.Canceled
+      ) {
+        LogInfo('UpdateAppointmentFromWebhook', 'AppointmentStatusUpdatedToCancel', {
+          appoinmentID: appointmentFromDb.id,
+          acuityID: acuityAppointment.id,
+        })
+        appointmentStatus = AppointmentStatus.Canceled
+      }
+
+      const {barCodeNumber, organizationId} = dataForUpdate
+      const barCode = acuityAppointment.barCode || barCodeNumber
+      const updatedAppointment = await this.appoinmentService.updateAppointmentFromAcuity(
+        appointmentFromDb.id,
+        acuityAppointment,
+        {
+          barCodeNumber: barCode,
+          appointmentStatus,
+          organizationId,
+          latestResult: appointmentFromDb.latestResult,
+        },
+      )
+      LogInfo('UpdateAppointmentFromWebhook', 'AppointmentSuccessfullyUpdated', {
+        appoinmentID: appointmentFromDb.id,
+        acuityID: acuityAppointment.id,
+        barCode: barCode,
+      })
+      const pcrTestResult = await this.pcrTestResultsService.getWaitingPCRResultByAppointmentId(
+        appointmentFromDb.id,
+      )
+      //getWaitingPCRResultByAppointmentId will throw exception if pcrTestResult doesn't exists
+
+      if (
+        appointmentStatus === AppointmentStatus.Canceled
+      ) {
+        await this.pcrTestResultsService.deleteTestResults(pcrTestResult.id)
+        LogInfo('UpdateAppointmentFromWebhook', 'RemovedResults', {
+          appoinmentID: appointmentFromDb.id,
+          pcrResultID: pcrTestResult.id,
+        })
+      } else {
+        const linkedBarcodes = await this.pcrTestResultsService.getlinkedBarcodes(
+          acuityAppointment.certificate,
+        )
+        const pcrResultDataForDb = {
+          adminId: 'WEBHOOK',
+          appointmentId: appointmentFromDb.id,
+          barCode: barCode,
+          displayInResult: true,
+          dateTime: updatedAppointment.dateTime,
+          deadline: updatedAppointment.deadline,
+          firstName: acuityAppointment.firstName,
+          lastName: acuityAppointment.lastName,
+          linkedBarCodes: linkedBarcodes,
+          organizationId: updatedAppointment.organizationId,
+          deadlineDate: getFirestoreTimeStampDate(updatedAppointment.deadline),
+          dateOfAppointment: getFirestoreTimeStampDate(updatedAppointment.dateTime),
+          //result: ResultTypes.Pending,
+          //runNumber: 1 ,//Start the Run
+          //waitingResult: true,
+        }
+
+        await this.pcrTestResultsService.updateDefaultTestResults(
+          pcrTestResult.id,
+          pcrResultDataForDb,
+        )
+        LogInfo('UpdateAppointmentFromWebhook', 'UpdatedPCRResultsSuccessfully', {
+          appoinmentID: appointmentFromDb.id,
+          pcrResultID: pcrTestResult.id,
+        })
+      }
+    } catch (e) {
+      if (acuityAppointment.canceled) {
+        LogInfo('UpdateAppointmentFromWebhook', 'AlreadyCanceledAppoinment', {
+          appoinmentID: appointmentFromDb.id,
+          acuityID: acuityAppointment.id,
+          error: e.toString(),
+        })
+      } else {
+        LogError('UpdateAppointmentFromWebhook', 'FailedToUpdateAppointment', {
+          acuityID: acuityAppointment.id,
+          error: e.toString(),
+        })
+      }
     }
   }
 
