@@ -1,21 +1,17 @@
-import {
-  PCRTestResultDBModel,
-} from '../../models/pcr-test-results'
+import {PCRTestResultDBModel} from '../../models/pcr-test-results'
 
-import {
-  AppointmentDBModel, ResultTypes,
-} from '../../models/appointment'
-import { dateToDateTime } from '../../utils/datetime.helper'
+import {AppointmentDBModel, ResultTypes} from '../../models/appointment'
 
 export class PCRTestResultsService {
   public async createNewPCRTestForWebhook(
     appointment: AppointmentDBModel,
   ): Promise<PCRTestResultDBModel> {
-    // @ts-ignore 
+    console.log(appointment)
+    // @ts-ignore
     return {
       appointmentId: '1',
-      adminId:'1',
-      barCode:'BAR12',
+      adminId: '1',
+      barCode: 'BAR12',
       confirmed: false,
       displayInResult: true,
       firstName: 'string',
@@ -30,5 +26,4 @@ export class PCRTestResultsService {
       previousResult: ResultTypes.Pending,
     }
   }
-
 }

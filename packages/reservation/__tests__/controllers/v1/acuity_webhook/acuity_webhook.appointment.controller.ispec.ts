@@ -23,9 +23,9 @@ describe('AppointmentWebhookController', () => {
           appointmentTypeID: 17498479,
           id: 100,
           action: 'scheduled',
-          returnData: true
+          returnData: true,
         })
-        //Safely Ignored
+      //Safely Ignored
       expect(result.status).toBe(200)
       expect(result.body.data.state).toBe('InvalidAcuityIDPosted')
       done()

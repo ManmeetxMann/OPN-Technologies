@@ -1,5 +1,4 @@
-import moment from 'moment-timezone'
-
+/*
 import {FaxService} from '../../../common/src/service/messaging/fax-service'
 import {PdfService} from '../../../common/src/service/reports/pdf'
 import template from '../templates/testResult'
@@ -21,3 +20,4 @@ export class TestResultsService {
     return this.faxService.send(faxNumber, name, pdfContent)
   }
 }
+*/

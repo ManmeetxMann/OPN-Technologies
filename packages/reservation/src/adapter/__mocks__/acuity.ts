@@ -1,12 +1,12 @@
-import { BadRequestException } from '../../../../common/src/exceptions/bad-request-exception'
+import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {Config} from '../../../../common/src/utils/config'
 
-import { AcuityAvailableSlots } from "../../models/acuity"
-import { AppointmentAcuityResponse, DeadlineLabel } from "../../models/appointment"
-import { AppointmentTypes } from "../../models/appointment-types"
-import { Calendar } from "../../models/calendar"
-import { AcuityCouponCodeResponse } from "../../models/coupons"
-import { Certificate } from "../../models/packages"
+//import {AcuityAvailableSlots} from '../../models/acuity'
+import {AppointmentAcuityResponse} from '../../models/appointment'
+import {AppointmentTypes} from '../../models/appointment-types'
+import {Calendar} from '../../models/calendar'
+//import {AcuityCouponCodeResponse} from '../../models/coupons'
+import {Certificate} from '../../models/packages'
 
 type AppointmentAcuityFormField = {
   fieldID: number
@@ -44,193 +44,200 @@ export type RawAcuityResponse = {
 }
 
 const dataSuccess = {
-  "id": 535235625,
-  "firstName": "TESTFNAME",
-  "lastName": "TESTLNAME",
-  "phone": "0954145424",
-  "email": "pavel+1@stayopn.com",
-  "date": "February 27, 2021",
-  "time": "12:00pm",
-  "endTime": "12:30pm",
-  "dateCreated": "February 26, 2021",
-  "datetimeCreated": "2021-02-26T13:39:19-0600",
-  "datetime": "2021-02-27T12:00:00-0500",
-  "price": "45.00",
-  "priceSold": "45.00",
-  "paid": "no",
-  "amountPaid": "0.00",
-  "type": "Consultation",
-  "appointmentTypeID": 19422018,
-  "classID": null,
-  "addonIDs": [],
-  "category": "",
-  "duration": "30",
-  "calendar": "Milton Area Clinic",
-  "calendarID": 4764795,
-  "certificate": null,
-  "confirmationPage": "https://app.acuityscheduling.com/schedule.php?owner=20901096&action=appt&id%5B%5D=d300df9ce521abf78c570e370f7e51eb",
-  "location": "Milton",
-  "notes": "",
-  "timezone": "America/Toronto",
-  "calendarTimezone": "America/Toronto",
-  "canceled": false,
-  "canClientCancel": false,
-  "canClientReschedule": false,
-  "labels": [
-      {
-          "id": 4508822,
-          "name": "NextDay",
-          "color": "yellow"
-      }
+  id: 535235625,
+  firstName: 'TESTFNAME',
+  lastName: 'TESTLNAME',
+  phone: '0954145424',
+  email: 'pavel+1@stayopn.com',
+  date: 'February 27, 2021',
+  time: '12:00pm',
+  endTime: '12:30pm',
+  dateCreated: 'February 26, 2021',
+  datetimeCreated: '2021-02-26T13:39:19-0600',
+  datetime: '2021-02-27T12:00:00-0500',
+  price: '45.00',
+  priceSold: '45.00',
+  paid: 'no',
+  amountPaid: '0.00',
+  type: 'Consultation',
+  appointmentTypeID: 19422018,
+  classID: null,
+  addonIDs: [],
+  category: '',
+  duration: '30',
+  calendar: 'Milton Area Clinic',
+  calendarID: 4764795,
+  certificate: null,
+  confirmationPage:
+    'https://app.acuityscheduling.com/schedule.php?owner=20901096&action=appt&id%5B%5D=d300df9ce521abf78c570e370f7e51eb',
+  location: 'Milton',
+  notes: '',
+  timezone: 'America/Toronto',
+  calendarTimezone: 'America/Toronto',
+  canceled: false,
+  canClientCancel: false,
+  canClientReschedule: false,
+  labels: [
+    {
+      id: 4508822,
+      name: 'NextDay',
+      color: 'yellow',
+    },
   ],
-  "forms": [
-      {
-          "id": 1567398,
-          "name": "",
-          "values": [
-              {
-                  "id": 1630276643,
-                  "fieldID": 8637043,
-                  "value": "4-11-1989",
-                  "name": "Date Of Birth"
-              }
-          ]
-      },
-      {
-          "id": 1657549,
-          "name": "Health Card (Optional)",
-          "values": [
-              {
-                  "id": 1630276644,
-                  "fieldID": 9158796,
-                  "value": "123",
-                  "name": "OHIP"
-              }
-          ]
-      },
-      {
-          "id": 1564839,
-          "name": "Internal Details",
-          "values": [
-              {
-                  "id": 1630276645,
-                  "fieldID": 8622334,
-                  "value": "TEST10000220",
-                  "name": "Bar code Id"
-              },
-              {
-                  "id": 1630276646,
-                  "fieldID": 8622344,
-                  "value": "",
-                  "name": "Nurse"
-              },
-              {
-                  "id": 1630276647,
-                  "fieldID": 8842033,
-                  "value": "",
-                  "name": "Organization Id"
-              },
-              {
-                  "id": 1630276648,
-                  "fieldID": 8981060,
-                  "value": "",
-                  "name": "Please upload your agreement"
-              },
-              {
-                  "id": 1630276649,
-                  "fieldID": 9158271,
-                  "value": "",
-                  "name": "Swab Method"
-              }
-          ]
-      },
-      {
-          "id": 1644637,
-          "name": "Home Address",
-          "values": [
-              {
-                  "id": 1630276650,
-                  "fieldID": 9082854,
-                  "value": "123",
-                  "name": "Home Address"
-              },
-              {
-                  "id": 1630276651,
-                  "fieldID": 9082855,
-                  "value": "123",
-                  "name": "Home Address (Unit Number etc.)"
-              }
-          ]
-      },
-      {
-          "id": 1657461,
-          "name": "Travel Details",
-          "values": [
-              {
-                  "id": 1630276652,
-                  "fieldID": 9158228,
-                  "value": "123",
-                  "name": "Travel ID"
-              },
-              {
-                  "id": 1630276653,
-                  "fieldID": 9158231,
-                  "value": "123",
-                  "name": "Travel ID Issuing Country"
-              }
-          ]
-      },
-      {
-          "id": 1644640,
-          "name": "Terms & Conditions",
-          "values": [
-              {
-                  "id": 1630276654,
-                  "fieldID": 9082890,
-                  "value": "yes",
-                  "name": "I read and accept the terms and conditions above"
-              },
-              {
-                  "id": 1630276655,
-                  "fieldID": 9082891,
-                  "value": "yes",
-                  "name": "I accept to receive my results at the email specified above (only way possible right now)"
-              },
-              {
-                  "id": 1630276656,
-                  "fieldID": 9082892,
-                  "value": "yes",
-                  "name": "I agree to conduct the FH Health self-assessment screening questionnaire the day of and prior to my appointment.  Questionnaire: https://www.fhhealth.ca/selfassessment-screening"
-              },
-              {
-                  "id": 1630276657,
-                  "fieldID": 9082893,
-                  "value": "yes",
-                  "name": "I  agree to receiving communication from FH Health regarding government updates, new requirements and advancements in COVID-19 screening tests"
-              }
-          ]
-      },
-      {
-          "id": 1649724,
-          "name": "",
-          "values": [
-              {
-                  "id": 1630276658,
-                  "fieldID": 9112802,
-                  "value": "yes",
-                  "name": "I agree and permit FH Health to provide the results of my SARS-Cov-2 screening test with my employer (including HR personnel and/or Covid coordinator)  via email for the sole purpose of ensuring employee safety within the workplace"
-              }
-          ]
-      }
+  forms: [
+    {
+      id: 1567398,
+      name: '',
+      values: [
+        {
+          id: 1630276643,
+          fieldID: 8637043,
+          value: '4-11-1989',
+          name: 'Date Of Birth',
+        },
+      ],
+    },
+    {
+      id: 1657549,
+      name: 'Health Card (Optional)',
+      values: [
+        {
+          id: 1630276644,
+          fieldID: 9158796,
+          value: '123',
+          name: 'OHIP',
+        },
+      ],
+    },
+    {
+      id: 1564839,
+      name: 'Internal Details',
+      values: [
+        {
+          id: 1630276645,
+          fieldID: 8622334,
+          value: 'TEST10000220',
+          name: 'Bar code Id',
+        },
+        {
+          id: 1630276646,
+          fieldID: 8622344,
+          value: '',
+          name: 'Nurse',
+        },
+        {
+          id: 1630276647,
+          fieldID: 8842033,
+          value: '',
+          name: 'Organization Id',
+        },
+        {
+          id: 1630276648,
+          fieldID: 8981060,
+          value: '',
+          name: 'Please upload your agreement',
+        },
+        {
+          id: 1630276649,
+          fieldID: 9158271,
+          value: '',
+          name: 'Swab Method',
+        },
+      ],
+    },
+    {
+      id: 1644637,
+      name: 'Home Address',
+      values: [
+        {
+          id: 1630276650,
+          fieldID: 9082854,
+          value: '123',
+          name: 'Home Address',
+        },
+        {
+          id: 1630276651,
+          fieldID: 9082855,
+          value: '123',
+          name: 'Home Address (Unit Number etc.)',
+        },
+      ],
+    },
+    {
+      id: 1657461,
+      name: 'Travel Details',
+      values: [
+        {
+          id: 1630276652,
+          fieldID: 9158228,
+          value: '123',
+          name: 'Travel ID',
+        },
+        {
+          id: 1630276653,
+          fieldID: 9158231,
+          value: '123',
+          name: 'Travel ID Issuing Country',
+        },
+      ],
+    },
+    {
+      id: 1644640,
+      name: 'Terms & Conditions',
+      values: [
+        {
+          id: 1630276654,
+          fieldID: 9082890,
+          value: 'yes',
+          name: 'I read and accept the terms and conditions above',
+        },
+        {
+          id: 1630276655,
+          fieldID: 9082891,
+          value: 'yes',
+          name:
+            'I accept to receive my results at the email specified above (only way possible right now)',
+        },
+        {
+          id: 1630276656,
+          fieldID: 9082892,
+          value: 'yes',
+          name:
+            'I agree to conduct the FH Health self-assessment screening questionnaire the day of and prior to my appointment.  Questionnaire: https://www.fhhealth.ca/selfassessment-screening',
+        },
+        {
+          id: 1630276657,
+          fieldID: 9082893,
+          value: 'yes',
+          name:
+            'I  agree to receiving communication from FH Health regarding government updates, new requirements and advancements in COVID-19 screening tests',
+        },
+      ],
+    },
+    {
+      id: 1649724,
+      name: '',
+      values: [
+        {
+          id: 1630276658,
+          fieldID: 9112802,
+          value: 'yes',
+          name:
+            'I agree and permit FH Health to provide the results of my SARS-Cov-2 screening test with my employer (including HR personnel and/or Covid coordinator)  via email for the sole purpose of ensuring employee safety within the workplace',
+        },
+      ],
+    },
   ],
-  "formsText": "Name: Max Pain\nPhone: 0954145424\nEmail: pavel+1@stayopn.com\nPrice: $45.00\n\nLocation\n============\nMilton\n\n\n\n============\nDate Of Birth: 4-11-1989\n\n\n\nHealth Card (Optional)\n============\nOHIP: 123\n\n\n\nInternal Details\n============\nBar code Id: TEST10000220\n\nNurse: \n\nOrganization Id: \n\nPlease upload your agreement: \n\nSwab Method: \n\n\n\nHome Address\n============\nHome Address: 123\n\nHome Address (Unit Number etc.): 123\n\n\n\nTravel Details\n============\nTravel ID: 123\n\nTravel ID Issuing Country: 123\n\n\n\nTerms & Conditions\n============\nI read and accept the terms and conditions above: yes\n\nI accept to receive my results at the email specified above (only way possible right now): yes\n\nI agree to conduct the FH Health self-assessment screening questionnaire the day of and prior to my appointment.  Questionnaire: https://www.fhhealth.ca/selfassessment-screening: yes\n\nI  agree to receiving communication from FH Health regarding government updates, new requirements and advancements in COVID-19 screening tests: yes\n\n\n\n\n============\nI agree and permit FH Health to provide the results of my SARS-Cov-2 screening test with my employer (including HR personnel and/or Covid coordinator)  via email for the sole purpose of ensuring employee safety within the workplace: yes\n\n",
-  "isVerified": false,
-  "scheduledBy": null
+  formsText:
+    'Name: Max Pain\nPhone: 0954145424\nEmail: pavel+1@stayopn.com\nPrice: $45.00\n\nLocation\n============\nMilton\n\n\n\n============\nDate Of Birth: 4-11-1989\n\n\n\nHealth Card (Optional)\n============\nOHIP: 123\n\n\n\nInternal Details\n============\nBar code Id: TEST10000220\n\nNurse: \n\nOrganization Id: \n\nPlease upload your agreement: \n\nSwab Method: \n\n\n\nHome Address\n============\nHome Address: 123\n\nHome Address (Unit Number etc.): 123\n\n\n\nTravel Details\n============\nTravel ID: 123\n\nTravel ID Issuing Country: 123\n\n\n\nTerms & Conditions\n============\nI read and accept the terms and conditions above: yes\n\nI accept to receive my results at the email specified above (only way possible right now): yes\n\nI agree to conduct the FH Health self-assessment screening questionnaire the day of and prior to my appointment.  Questionnaire: https://www.fhhealth.ca/selfassessment-screening: yes\n\nI  agree to receiving communication from FH Health regarding government updates, new requirements and advancements in COVID-19 screening tests: yes\n\n\n\n\n============\nI agree and permit FH Health to provide the results of my SARS-Cov-2 screening test with my employer (including HR personnel and/or Covid coordinator)  via email for the sole purpose of ensuring employee safety within the workplace: yes\n\n',
+  isVerified: false,
+  scheduledBy: null,
 }
 
 abstract class AcuityAdapter {
+  /*
   protected async cancelAppointmentOnAcuityService(id: number): Promise<AppointmentAcuityResponse> {
-   return
+    return
   }
 
   protected async updateAppointmentOnAcuityService(
@@ -246,12 +253,12 @@ abstract class AcuityAdapter {
   ): Promise<AppointmentAcuityResponse> {
     return
   }
-
+  */
   protected async getAppointmentByIdFromAcuityService(
     id: number,
   ): Promise<AppointmentAcuityResponse> {
-    if(id===100){
-      throw new BadRequestException("Invalid")
+    if (id === 100) {
+      throw new BadRequestException('Invalid')
     }
     return Promise.resolve(this.customFieldsToAppoinment(dataSuccess))
   }
@@ -267,7 +274,7 @@ abstract class AcuityAdapter {
   protected async getCalendars(): Promise<Calendar[]> {
     return
   }
-
+  /*
   protected async createCouponCodeOnAcuityService(
     couponID: number,
     emailToLockCoupon: string,
@@ -285,7 +292,8 @@ abstract class AcuityAdapter {
     certificate: string,
     calendarID: number,
     fields: Record<string, string | boolean>,
-  ): Promise<AppointmentAcuityResponse> {return
+  ): Promise<AppointmentAcuityResponse> {
+    return
   }
 
   protected async getAvailabilityDatesList(
@@ -293,7 +301,8 @@ abstract class AcuityAdapter {
     month: string,
     calendarID: number,
     timezone: string,
-  ): Promise<{date: string}[]> {return
+  ): Promise<{date: string}[]> {
+    return
   }
 
   protected async getAvailableSlotsList(
@@ -301,15 +310,16 @@ abstract class AcuityAdapter {
     date: string,
     calendarID: number,
     timezone: string,
-  ): Promise<AcuityAvailableSlots[]> {return
+  ): Promise<AcuityAvailableSlots[]> {
+    return
   }
-
+  */
   private customFieldsToAppoinment(
-    rawAcuityAppointment: RawAcuityResponse
+    rawAcuityAppointment: RawAcuityResponse,
   ): AppointmentAcuityResponse {
-    // @ts-ignore 
-    const appointment:AppointmentAcuityResponse = {
-      ...rawAcuityAppointment, 
+    // @ts-ignore
+    const appointment: AppointmentAcuityResponse = {
+      ...rawAcuityAppointment,
       barCode: '',
       dateOfBirth: '',
       organizationId: null,
@@ -323,8 +333,8 @@ abstract class AcuityAdapter {
       receiveNotificationsFromGov: false,
       swabMethod: 'Deep Nasal',
       ohipCard: '',
-      travelIDIssuingCountry:'',
-      travelID:''
+      travelIDIssuingCountry: '',
+      travelID: '',
     }
 
     if (Array.isArray(appointment.forms)) {
