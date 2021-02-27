@@ -92,7 +92,7 @@ describe('AdminScanHistoryController', () => {
   })
 
   afterAll(async () => {
-    //await deleteAppointmentByDateTime(`${dateForAppointments}T23:59:59`) //End of Day
-    //deleteAll()
+    await deleteAppointmentByDateTime(`${dateForAppointments}T23:59:59`) //End of Day
+    deleteAll()
   })
 })
