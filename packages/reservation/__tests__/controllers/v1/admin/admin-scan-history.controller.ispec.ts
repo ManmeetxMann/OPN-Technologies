@@ -20,7 +20,7 @@ describe('AdminScanHistoryController', () => {
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
       appointmentStatus: 'InTransit',
-      organizationId
+      organizationId,
     })
   })
 
@@ -34,7 +34,7 @@ describe('AdminScanHistoryController', () => {
         .send({
           barCode: 'BAR1',
           type: 'RapidAntigen',
-          organizationId
+          organizationId,
         })
 
       expect(result.status).toBe(200)
@@ -52,7 +52,7 @@ describe('AdminScanHistoryController', () => {
         .send({
           barCode: 'BAD_BAR1',
           type: 'RapidAntigen',
-          organizationId
+          organizationId,
         })
 
       expect(result.status).toBe(404)

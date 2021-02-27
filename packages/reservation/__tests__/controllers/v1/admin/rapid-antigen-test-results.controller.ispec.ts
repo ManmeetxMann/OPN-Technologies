@@ -3,7 +3,10 @@ import request from 'supertest'
 import {app as server} from '../../../../src/app'
 import {create, deleteAppointmentByDateTime} from '../../../__seeds__/appointments'
 import {deleteAll} from '../../../__seeds__/admin-scan-history'
-import { createPCRTestResult,deletePCRTestResultByDateTime } from '../../../__seeds__/pcr-test-results'
+import {
+  createPCRTestResult,
+  deletePCRTestResultByDateTime,
+} from '../../../__seeds__/pcr-test-results'
 
 //jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
@@ -23,7 +26,7 @@ describe('AdminScanHistoryController', () => {
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
       appointmentStatus: 'InTransit',
-      organizationId
+      organizationId,
     })
     await createPCRTestResult({
       appointmentId: aptID1,
@@ -43,7 +46,7 @@ describe('AdminScanHistoryController', () => {
           {
             appointmentID: 'BAD_ID',
             action: 'DoNothing',
-            sendAgain: true
+            sendAgain: true,
           },
           {
             appointmentID: aptID1,
@@ -54,7 +57,6 @@ describe('AdminScanHistoryController', () => {
       expect(result.status).toBe(200)
       done()
     })
-
   })
 
   afterAll(async () => {
