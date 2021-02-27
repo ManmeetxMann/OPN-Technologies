@@ -57,7 +57,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       recollected: false,
       deadlineDate: getFirestoreTimeStampDate(data.appointment.deadline),
       dateOfAppointment: getFirestoreTimeStampDate(data.appointment.dateTime),
-      testType: data.appointment.testType
+      testType: data.appointment.testType,
     }
     return await this.save(pcrResultDataForDb)
   }

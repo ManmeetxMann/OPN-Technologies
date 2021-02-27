@@ -358,7 +358,7 @@ export const appointmentUiDTOResponse = (
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
     organizationName: appointment.organizationName,
-    testType: (appointment.testType)??'PCR',
+    testType: appointment.testType ?? 'PCR',
     transportRunLabel,
   }
 }
@@ -405,7 +405,7 @@ export const appointmentByBarcodeUiDTOResponse = (
     deadline: formatDateRFC822Local(appointment.deadline),
     registeredNursePractitioner: appointment.registeredNursePractitioner,
     organizationName: organizationName,
-    testType: (appointment.testType)??'PCR',
+    testType: appointment.testType ?? 'PCR',
   }
 }
 

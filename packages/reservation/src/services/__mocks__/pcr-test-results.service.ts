@@ -3,9 +3,7 @@ import {PCRTestResultDBModel} from '../../models/pcr-test-results'
 import {AppointmentDBModel, ResultTypes} from '../../models/appointment'
 
 export class PCRTestResultsService {
-  public async createNewTestResult(
-    appointment: AppointmentDBModel,
-  ): Promise<PCRTestResultDBModel> {
+  public async createNewTestResult(appointment: AppointmentDBModel): Promise<PCRTestResultDBModel> {
     console.log(appointment)
     // @ts-ignore
     return {
