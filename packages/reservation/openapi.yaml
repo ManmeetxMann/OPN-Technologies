@@ -739,10 +739,10 @@ components:
           action:
             type: string
             enum:
-                - DoNothing
-                - SendInvalid
-                - SendNegative
-                - SendPositive
+              - DoNothing
+              - SendInvalid
+              - SendNegative
+              - SendPositive
           sendAgain:
             type: boolean
             default: false
@@ -1012,7 +1012,7 @@ paths:
     delete:
       description: Delete appointments for user
       security:
-          - bearerAuthJWT: [ ]
+        - bearerAuthJWT: [ ]
       parameters:
         - in: query
           name: type
@@ -1393,6 +1393,13 @@ paths:
           name: barCode
           schema:
             type: string
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
         - in: query
           name: result
           schema:
