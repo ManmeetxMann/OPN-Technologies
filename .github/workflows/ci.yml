@@ -2,6 +2,8 @@ name: OPN Services CI Action
 
 on:
   pull_request:
+    paths-ignore:
+      - 'functional-testing/**'
     branches: [ development, master ]
 
 jobs:

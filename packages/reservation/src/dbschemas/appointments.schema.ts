@@ -28,7 +28,6 @@ export default Joi.object({
   packageCode: Joi.string().allow(null),
   phone: Joi.string().required(),
   registeredNursePractitioner: Joi.string().allow(''),
-  // latestResult: ResultTypes
   latestResult: Joi.string().valid(
     'Positive',
     'Negative',
@@ -54,7 +53,8 @@ export default Joi.object({
   readTermsAndConditions: Joi.boolean().required(),
   receiveResultsViaEmail: Joi.boolean().required(),
   receiveNotificationsFromGov: Joi.boolean().required(),
-  userId: Joi.string().allow(''),
+  userId: Joi.string().allow(null),
   locationName: Joi.string().allow(''),
   locationAddress: Joi.string().allow(''),
+  testType: Joi.string().required().valid('PCR', 'RapidAntigen'),
 })

@@ -935,11 +935,13 @@ class OrganizationController implements IControllerBase {
               continue
             }
             if (exitCandidate && (!entryCandidate || exitDate < entryDate)) {
-              pairs.push({
-                location,
-                entry: null,
-                exit: exits.pop(),
-              })
+              // pairs.push({
+              //   location,
+              //   entry: null,
+              //   exit: exits.pop(),
+              // })
+              // frontends don't accept entry: null
+              exits.pop()
               continue
             }
             pairs.push({

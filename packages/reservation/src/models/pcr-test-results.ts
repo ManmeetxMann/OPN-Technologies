@@ -2,7 +2,7 @@ import {firestore} from 'firebase-admin'
 
 import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datetime.helper'
 
-import {AppointmentDBModel, AppointmentStatus, ResultTypes} from './appointment'
+import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
@@ -63,9 +63,11 @@ export enum ResultReportStatus {
   Failed = 'Failed',
   Processing = 'Processing',
   RequestReceived = 'RequestReceived',
-  SentReRunRequest = 'SentReRunRequest',
-  SentReCollectRequest = 'SentReCollectRequest',
-  SentResult = 'SentResult',
+  SentReRunRequest = 'Sent "Re-Run Request"',
+  SentReCollectRequestAsInvalid = 'Sent "Re-Collect Request As Invalid"',
+  SentReCollectRequestAsInconclusive = 'Sent "Re-Collect Request As Inconclusive"',
+  SentPreliminaryPositive = 'Sent "Preliminary Positive"',
+  SentPresumptivePositive = 'Sent "Presumptive Positive"',
   Skipped = 'Skipped',
 }
 
@@ -80,12 +82,6 @@ export enum PCRTestResultStyle {
   Invalid = 'YELLOW',
   Inconclusive = 'BLUE',
   AnyOther = 'GREY',
-}
-
-export enum TestResultType {
-  PCR = 'PCR',
-  TemperatureCheck = 'temperature_check',
-  Attestation = 'self_attestation',
 }
 
 type PCRResultSpecs = {
@@ -155,6 +151,9 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   testRunId?: string
   updatedAt: firestore.Timestamp
   waitingResult: boolean
+  deadlineDate: firestore.Timestamp
+  dateOfAppointment: firestore.Timestamp
+  testType: TestTypes
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -191,6 +190,8 @@ export type PCRTestResultEmailDTO = Omit<
   | 'runNumber'
   | 'reCollectNumber'
   | 'updatedAt'
+  | 'deadlineDate'
+  | 'dateOfAppointment'
 > &
   AppointmentDBModel
 
@@ -210,7 +211,7 @@ export type TestResultsReportingTrackerDBModel = {
 export type TestResultsReportingTrackerPCRResultsDBModel = {
   id: string
   adminId: string
-  status: ResultReportStatus
+  status: ResultReportStatus | ResultTypes
   data: PCRTestResultRequestData
   details?: string
 }
@@ -254,6 +255,7 @@ export type PcrTestResultsListByDeadlineRequest = {
     | AppointmentStatus.InProgress
     | AppointmentStatus.Received
     | AppointmentStatus.ReRunRequired
+  organizationId?: string
 }
 
 export type SinglePcrTestResultsRequest = {
@@ -265,6 +267,7 @@ export type PcrTestResultsListRequest = {
   deadline?: string
   barCode?: string
   result?: ResultTypes
+  date?: string
 }
 
 export type PCRTestResultListDTO = {
@@ -280,6 +283,8 @@ export type PCRTestResultListDTO = {
   dateTime?: string
   deadline?: string
   testRunId?: string
+  organizationId: string
+  organizationName: string
 }
 
 export type PCRTestResultByDeadlineListDTO = {
@@ -292,11 +297,12 @@ export type PCRTestResultByDeadlineListDTO = {
   runNumber: string
   reCollectNumber: string
   dateTime: string
+  organizationName: string
 }
 
 export type pcrTestResultsDTO = {
   barCode: string
-  status: ResultReportStatus
+  status: ResultReportStatus | ResultTypes
   details?: string
 }
 
@@ -314,7 +320,7 @@ export const resultToStyle = (result: ResultTypes): PCRTestResultStyle => {
 
 export type TestResutsDTO = {
   id: string
-  type: TestResultType
+  type: TestTypes
   name: string
   testDateTime: string
   style: PCRTestResultStyle

@@ -33,7 +33,7 @@ import {
 import {statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 
-class PCRTestResultController implements IControllerBase {
+class AdminPCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
@@ -93,6 +93,11 @@ class PCRTestResultController implements IControllerBase {
       this.path + '/pcr-test-results/due-deadline/stats',
       dueTodayAuth,
       this.dueDeadlineStats,
+    )
+    innerRouter.get(
+      this.path + '/pcr-test-results/stats',
+      dueTodayAuth,
+      this.getPCRResultsHistoryStats,
     )
     innerRouter.get(
       this.path + '/pcr-test-results/:pcrTestResultId',
@@ -166,7 +171,11 @@ class PCRTestResultController implements IControllerBase {
         true,
         data.sendUpdatedResults,
       )
-      const successMessage = `For ${pcrResultRecorded.barCode}, a "${pcrResultRecorded.result}" has been  recorded and sent to the client`
+      const status = await this.pcrTestResultsService.getReportStatus(
+        pcrResultRecorded.resultSpecs.action,
+        pcrResultRecorded.result,
+      )
+      const successMessage = `${status} for ${pcrResultRecorded.barCode}`
       res.json(actionSuccess({id: pcrResultRecorded.id}, successMessage))
     } catch (error) {
       next(error)
@@ -214,9 +223,15 @@ class PCRTestResultController implements IControllerBase {
 
   listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {deadline, organizationId, barCode, result} = req.query as PcrTestResultsListRequest
-      if (!barCode && !deadline) {
-        throw new BadRequestException('"deadline" is required if "barCode" is not specified')
+      const {
+        deadline,
+        organizationId,
+        barCode,
+        result,
+        date,
+      } = req.query as PcrTestResultsListRequest
+      if (!barCode && !deadline && !date) {
+        throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
@@ -226,11 +241,53 @@ class PCRTestResultController implements IControllerBase {
           deadline,
           barCode,
           result,
+          date,
         },
         isLabUser,
       )
 
       res.json(actionSucceed(pcrResults))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getPCRResultsHistoryStats = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {deadline, organizationId, barCode, result} = req.query as PcrTestResultsListRequest
+      if (!barCode && !deadline) {
+        throw new BadRequestException('"deadline" is required if "barCode" is not specified')
+      }
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+
+      const {
+        pcrResultStatsByResultArr,
+        pcrResultStatsByOrgIdArr,
+        total,
+      } = await this.pcrTestResultsService.getPCRResultsStats(
+        {
+          organizationId,
+          deadline,
+          barCode,
+          result,
+        },
+        isLabUser,
+      )
+
+      res.json(
+        actionSucceed(
+          statsUiDTOResponse(
+            pcrResultStatsByResultArr,
+            pcrResultStatsByOrgIdArr,
+            total,
+            !organizationId,
+          ),
+        ),
+      )
     } catch (error) {
       next(error)
     }
@@ -299,6 +356,7 @@ class PCRTestResultController implements IControllerBase {
         deadline,
         barCode,
         appointmentStatus,
+        organizationId,
       } = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
@@ -308,6 +366,7 @@ class PCRTestResultController implements IControllerBase {
         testRunId,
         barCode,
         appointmentStatus,
+        organizationId,
       })
 
       res.json(actionSucceed(pcrResults))
@@ -369,4 +428,4 @@ class PCRTestResultController implements IControllerBase {
   }
 }
 
-export default PCRTestResultController
+export default AdminPCRTestResultController
