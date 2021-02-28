@@ -1,3 +1,6 @@
+import {isEqual} from 'lodash'
+import {makeFirestoreTimestamp} from '../utils/datetime.helper'
+import {now} from '../../../common/src/utils/times'
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 import {
@@ -9,7 +12,6 @@ import {
   UpdateAppointmentActionParams,
 } from '../models/appointment'
 import DBSchema from '../dbschemas/appointments.schema'
-import {isEqual} from 'lodash'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
@@ -17,6 +19,14 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
 
   constructor(dataStore: DataStore) {
     super(dataStore)
+  }
+
+  async getAppointmentById(appointmentId: string): Promise<AppointmentDBModel> {
+    return this.get(appointmentId)
+  }
+
+  async getAppointmentsDBByIds(appointmentsIds: string[]): Promise<AppointmentDBModel[]> {
+    return this.findWhereIdIn(appointmentsIds)
   }
 
   public async save(appointments: Omit<AppointmentDBModel, 'id'>): Promise<AppointmentDBModel> {
@@ -33,6 +43,28 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     })
   }
 
+  async addStatusHistoryById(
+    appointmentId: string,
+    newStatus: AppointmentStatus,
+    createdBy: string,
+  ): Promise<AppointmentStatusHistoryDb> {
+    const appointment = await this.getAppointmentById(appointmentId)
+    const appointmentStatusHistory = new StatusHistoryRepository(this.datastore, appointmentId)
+    return appointmentStatusHistory.add({
+      newStatus: newStatus,
+      previousStatus: appointment.appointmentStatus,
+      createdOn: now(),
+      createdBy,
+    })
+  }
+
+  async changeStatusToReported(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.Reported, userId)
+    return this.updateProperties(appointmentId, {
+      appointmentStatus: AppointmentStatus.Reported,
+    })
+  }
+
   public async updateBarCodeById(
     id: string,
     barCode: string,
@@ -46,6 +78,15 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     })
 
     return this.updateProperty(id, 'barCode', barCode)
+  }
+
+  public setDeadlineDate(
+    appointmentId: string,
+    deadlineDate: moment.Moment,
+  ): Promise<AppointmentDBModel> {
+    return this.updateProperties(appointmentId, {
+      deadline: makeFirestoreTimestamp(deadlineDate.toISOString()),
+    })
   }
 
   public async updateAppointment({

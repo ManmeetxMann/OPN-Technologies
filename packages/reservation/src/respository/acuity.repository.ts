@@ -1,11 +1,11 @@
-import AcuityScheduling from '../adapter/acuity'
+import AcuityAdapter from '../adapter/acuity'
 import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
 import {Certificate} from '../models/packages'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
 import {AcuityAvailableSlots} from '../models/acuity'
 
-export class AcuityRepository extends AcuityScheduling {
+export class AcuityRepository extends AcuityAdapter {
   constructor() {
     super()
   }

@@ -38,14 +38,15 @@ components:
               type: string
 
     Answer:
-      type: array
-      items:
-        anyOf:
-          - type: boolean
-          - type: string
-      minItems: 1
-      maxItems: 2
-      description: The first item in the array MUST be a boolean and the second item, if provided, MUST be a string.
+      type: object
+      properties:
+        answer:
+          type: boolean
+        additionalValue:
+          type: string
+          nullable: true
+        questionId:
+          type: number
 
     User:
       type: object

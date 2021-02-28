@@ -8,6 +8,8 @@ export default Joi.object({
   confirmed: Joi.boolean().default(false),
   dateTime: FirestoreTimestamp.isValid().required(),
   deadline: FirestoreTimestamp.isValid().required(),
+  deadlineDate: FirestoreTimestamp.isValid().required(),
+  dateOfAppointment: FirestoreTimestamp.isValid().required(),
   displayInResult: Joi.boolean().required(),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
@@ -33,6 +35,8 @@ export default Joi.object({
   }),
   runNumber: Joi.number().required(),
   testRunId: Joi.string(),
+  testType: Joi.string().required().valid('PCR', 'RapidAntigen'),
+  testKitBatchID: Joi.string().allow(null),
   //updatedAt: FirestoreTimestamp.isValid().required(), //Added after validation
   waitingResult: Joi.boolean().required(),
 })

@@ -2,7 +2,8 @@ import {firestore} from 'firebase-admin'
 
 const database = firestore()
 
-export const createAppointment = async (dataOverwrite: {
+export const create = async (dataOverwrite: {
+  id: string
   dateTime: string
   dateOfAppointment: string
   organizationId?: string
@@ -22,7 +23,7 @@ export const createAppointment = async (dataOverwrite: {
     dateOfBirth: 'February 3, 2021',
     dateTime: firestore.Timestamp.fromDate(new Date(dataOverwrite.dateTime)),
     deadline: firestore.Timestamp.fromDate(new Date('2020-01-01T23:59:00')),
-    email: 'tester@gmail.com',
+    email: 'harpreet@stayopn.com',
     firstName: 'TestFNAME',
     lastName: 'TestLNAME',
     latestResult: 'Pending',
@@ -39,7 +40,7 @@ export const createAppointment = async (dataOverwrite: {
   }
   data.organizationId = dataOverwrite.organizationId ?? null
   data.appointmentStatus = dataOverwrite.appointmentStatus ?? 'Pending'
-  await database.collection('appointments').add(data)
+  await database.collection('appointments').doc(dataOverwrite.id).set(data)
   //console.log(`savedData.id: ${savedData.id}`)
 }
 
