@@ -57,8 +57,5 @@ export default Joi.object({
   userId: Joi.string().allow(null),
   locationName: Joi.string().allow(''),
   locationAddress: Joi.string().allow(''),
-  testType:Joi.string().required().valid(
-    'PCR',
-    'RapidAntigen',
-  )
+  testType: Joi.string().required().valid('PCR', 'RapidAntigen'),
 })

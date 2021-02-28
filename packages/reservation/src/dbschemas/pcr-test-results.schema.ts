@@ -35,10 +35,7 @@ export default Joi.object({
   }),
   runNumber: Joi.number().required(),
   testRunId: Joi.string(),
-  testType:Joi.string().required().valid(
-    'PCR',
-    'RapidAntigen',
-  ),
+  testType: Joi.string().required().valid('PCR', 'RapidAntigen'),
   //updatedAt: FirestoreTimestamp.isValid().required(), //Added after validation
   waitingResult: Joi.boolean().required(),
 })
