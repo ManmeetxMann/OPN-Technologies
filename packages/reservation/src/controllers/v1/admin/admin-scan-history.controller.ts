@@ -46,14 +46,14 @@ class AdminScanHistoryController implements IControllerBase {
 
   createScanHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {barCode, type, organizationId} = req.body as PostAdminScanHistoryRequest
+      const {barCode, type} = req.body as PostAdminScanHistoryRequest
       const adminId = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       let appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
 
-      if (appointment.organizationId !== organizationId) {
-        throw new ForbiddenException('Appointment does not belong to your organization')
+      if (appointment.testType !== type) {
+        throw new ForbiddenException('Invalid TestType')
       }
 
       await this.appointmentService.addAdminScanHistory(adminId, appointment.id, type)
