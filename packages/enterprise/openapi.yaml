@@ -555,6 +555,8 @@ components:
           type: boolean
         isRapidResultSenderAdmin:
           type: boolean
+        isRapidResultOrgAdmin:
+          type: boolean
       required:
         - email
         - isBulkUploadAdmin
@@ -577,6 +579,7 @@ components:
         - isGenerateAdmin
         - isLookupAdmin
         - isRapidResultSenderAdmin
+        - isRapidResultOrgAdmin
         - organizationId
         - showReporting
         - superAdminForOrganizationIds
@@ -876,6 +879,8 @@ components:
         isLookupAdmin:
           type: boolean
         isRapidResultSenderAdmin:
+          type: boolean
+        isRapidResultOrgAdmin:
           type: boolean
     User:
       type: object

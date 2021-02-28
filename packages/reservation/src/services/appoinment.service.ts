@@ -92,7 +92,7 @@ export class AppoinmentService {
     return true
   }
 
-  async makeDeadline15Minutes(
+  async makeDeadlineRapidMinutes(
     appointment: AppointmentDBModel,
     pcrTestResultId: string,
   ): Promise<AppointmentDBModel> {

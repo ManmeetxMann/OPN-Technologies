@@ -30,4 +30,5 @@ export type InternalAdminApprovalCreateRequest = {
   adminForLabIds: string[]
   isClinicUser: boolean
   isRapidResultSenderAdmin: boolean
+  isRapidResultOrgAdmin: boolean
 }
