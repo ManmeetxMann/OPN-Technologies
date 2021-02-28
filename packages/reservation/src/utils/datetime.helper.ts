@@ -52,7 +52,7 @@ export const formatDateRFC822Local = (timestamp: firestore.Timestamp): string =>
   return moment(timestamp.toDate()).tz(timeZone).toISOString()
 }
 
-export const makeDeadlineDate = (): moment.Moment => {
+export const makeRapidDeadline = (): moment.Moment => {
   return moment(new Date()).add(15, 'minutes').tz(timeZone)
 }
 
