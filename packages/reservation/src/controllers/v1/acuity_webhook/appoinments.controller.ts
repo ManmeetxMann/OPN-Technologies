@@ -117,7 +117,7 @@ class AppointmentWebhookController implements IControllerBase {
       await this.appoinmentService.removeSyncInProgressForAcuity(acuityAppointment.id)
       res.json(actionSucceed(''))
     } catch (error) {
-      await this.appoinmentService.removeSyncInProgressForAcuity(id)
+      //await this.appoinmentService.removeSyncInProgressForAcuity(id)
       LogError(
         `AppointmentWebhookController:syncAppointmentFromAcuityToDB`,
         'FailedToProcessRequest',
