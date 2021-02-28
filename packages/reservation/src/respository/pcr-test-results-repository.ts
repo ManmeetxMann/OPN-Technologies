@@ -2,10 +2,11 @@
 import {serverTimestamp} from '../../../common/src/utils/times'
 import DataModel, {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
+import { Config } from '../../../common/src/utils/config'
 
 //Models
 import {PCRTestResultDBModel} from '../models/pcr-test-results'
-import {AppointmentDBModel, ResultTypes} from '../models/appointment'
+import {AppointmentDBModel, ResultTypes, TestTypes} from '../models/appointment'
 //Schema
 import DBSchema from '../dbschemas/pcr-test-results.schema'
 import {getFirestoreTimeStampDate} from '../utils/datetime.helper'
@@ -58,6 +59,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       deadlineDate: getFirestoreTimeStampDate(data.appointment.deadline),
       dateOfAppointment: getFirestoreTimeStampDate(data.appointment.dateTime),
       testType: data.appointment.testType,
+      testKitBatchID: (data.appointment.testType===TestTypes.RapidAntigen)?Config.get('TEST_KIT_BATCH_ID'):null
     }
     return await this.save(pcrResultDataForDb)
   }
