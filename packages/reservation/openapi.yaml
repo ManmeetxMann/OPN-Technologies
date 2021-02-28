@@ -999,12 +999,9 @@ paths:
                     - RapidAntigen
                 barCode:
                   type: string
-                organizationId:
-                  type: string
               required:
                 - type
                 - barCode
-                - organizationId
       responses:
         '200':
           description: Successfully Return
