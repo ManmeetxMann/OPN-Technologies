@@ -54,11 +54,11 @@ import {
   BulkOperationStatus,
 } from '../types/bulk-operation.type'
 import {AdminScanHistory} from '../models/admin-scan-history'
-import { SyncInProgressTypes } from '../models/sync-progress'
+import {SyncInProgressTypes} from '../models/sync-progress'
 
 //Repository
 import {AdminScanHistoryRepository} from '../respository/admin-scan-history'
-import { SyncProgressRepository } from '../respository/sync-progress.repository'
+import {SyncProgressRepository} from '../respository/sync-progress.repository'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -73,18 +73,24 @@ export class AppoinmentService {
   private organizationService = new OrganizationService()
   private enterpriseAdapter = new Enterprise()
 
-  async removeSyncInProgressForAcuity(acuityAppointmentId: number):Promise<void> {
-    this.syncProgressRepository.deleteRecord(SyncInProgressTypes.Acuity, acuityAppointmentId.toString())
-  } 
+  async removeSyncInProgressForAcuity(acuityAppointmentId: number): Promise<void> {
+    this.syncProgressRepository.deleteRecord(
+      SyncInProgressTypes.Acuity,
+      acuityAppointmentId.toString(),
+    )
+  }
 
-  async isSyncingAlreadyInProgress(acuityAppointmentId: number):Promise<boolean> {
-    const inProgress = await this.syncProgressRepository.getByType(SyncInProgressTypes.Acuity, acuityAppointmentId.toString())
-    if(!inProgress){
+  async isSyncingAlreadyInProgress(acuityAppointmentId: number): Promise<boolean> {
+    const inProgress = await this.syncProgressRepository.getByType(
+      SyncInProgressTypes.Acuity,
+      acuityAppointmentId.toString(),
+    )
+    if (!inProgress) {
       this.syncProgressRepository.save(SyncInProgressTypes.Acuity, acuityAppointmentId.toString())
       return false
     }
     return true
-  } 
+  }
 
   async makeDeadline15Minutes(
     appointment: AppointmentDBModel,

@@ -5,7 +5,7 @@ import {NextFunction, Request, Response, Router} from 'express'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {LogError, LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-import { BadRequestException } from '../../../../../common/src/exceptions/bad-request-exception'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 //Services
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
@@ -56,13 +56,11 @@ class AppointmentWebhookController implements IControllerBase {
         appointmentTypeID,
         action,
       })
-      
-      //If there is delay in Acuity Processing then this can will protect in making multiple requests 
+
+      //If there is delay in Acuity Processing then this can will protect in making multiple requests
       const isSyncInProgress = await this.appoinmentService.isSyncingAlreadyInProgress(id)
-      if(isSyncInProgress){
-        throw new BadRequestException(
-          `Sync is already in progress`,
-        )
+      if (isSyncInProgress) {
+        throw new BadRequestException(`Sync is already in progress`)
       }
 
       let acuityAppointment: AppointmentAcuityResponse = null

@@ -1,6 +1,6 @@
-import DataModel, { DataModelFieldMapOperatorType } from '../../../common/src/data/datamodel.base'
+import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
-import { SyncInProgressTypes, SyncProgress } from '../models/sync-progress'
+import {SyncInProgressTypes, SyncProgress} from '../models/sync-progress'
 
 export class SyncProgressRepository extends DataModel<SyncProgress> {
   public rootPath = 'sync-progress'
@@ -14,10 +14,10 @@ export class SyncProgressRepository extends DataModel<SyncProgress> {
     await this.add({
       type,
       key,
-      id: `${type}_${key}`
+      id: `${type}_${key}`,
     })
   }
-  
+
   public async deleteRecord(type: SyncInProgressTypes, key: string): Promise<void> {
     this.delete(`${type}_${key}`)
   }
