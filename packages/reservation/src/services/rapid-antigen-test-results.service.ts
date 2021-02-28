@@ -75,6 +75,7 @@ export class RapidAntigenTestResultsService {
     if (notify) {
       this.pubSub.publish({
         appointmentID: appointmentId,
+        testResultID: id,
       })
     }
 
@@ -190,11 +191,21 @@ export class RapidAntigenTestResultsService {
   }
 
   async sendTestResultEmail(data: string): Promise<void> {
-    const {appointmentID} = (await this.pubSub.getPublishedData(data)) as {appointmentID: string}
+    const {appointmentID, testResultID} = (await this.pubSub.getPublishedData(data)) as {
+      appointmentID: string
+      testResultID: string
+    }
     const appointment = await this.appointmentsRepository.getAppointmentById(appointmentID)
     if (!appointment) {
       LogInfo('RapidAntigenTestResultsService: sendTestResultEmail', 'InvalidAppointmentId', {
         appointmentID,
+      })
+      return
+    }
+    const testResults = await this.pcrTestResultsRepository.get(testResultID)
+    if (!testResults) {
+      LogInfo('RapidAntigenTestResultsService: sendTestResultEmail', 'InvalidTestResultsID', {
+        testResultID,
       })
       return
     }
@@ -204,29 +215,32 @@ export class RapidAntigenTestResultsService {
       ResultTypes.Positive,
       ResultTypes.Invalid,
     ]
-    if (!rapidAlergenAllowedResults.includes(appointment.latestResult)) {
+    if (!rapidAlergenAllowedResults.includes(testResults.result)) {
       LogWarning(
         'RapidAntigenTestResultsService: sendTestResultEmail',
         'InvalidResultSendRequested',
         {
           appointmentID,
-          result: appointment.latestResult,
+          testResultID,
+          result: testResults.result,
         },
       )
       return
     }
 
-    const emailSendStatus = await this.emailService.send(await this.getEmailData(appointment))
+    const emailSendStatus = await this.emailService.send(
+      await this.getEmailData(appointment, testResults.result),
+    )
 
     LogInfo('RapidAntigenTestResultsService: sendTestResultEmail', 'EmailSendSuccess', {
       emailSendStatus,
     })
   }
 
-  async getEmailData(appointment: AppointmentDBModel): Promise<EmailMessage> {
+  async getEmailData(appointment: AppointmentDBModel, result: ResultTypes): Promise<EmailMessage> {
     const resultDate = moment(appointment.dateTime.toDate()).format('LL')
     const templateId =
-      appointment.latestResult === ResultTypes.Invalid
+      result === ResultTypes.Invalid
         ? Config.getInt('TEST_RESULT_INVALID_RAPID_ANTIGEN_TEMPLATE_ID')
         : Config.getInt('TEST_RESULT_RAPID_ANTIGEN_TEMPLATE_ID')
     const emailData = {
@@ -244,10 +258,10 @@ export class RapidAntigenTestResultsService {
       ],
     }
 
-    if (appointment.latestResult !== ResultTypes.Invalid) {
+    if (result !== ResultTypes.Invalid) {
       const pdfContent = await RapidAntigenPDFContent(
         appointment,
-        await this.getPDFType(appointment.id, appointment.latestResult),
+        await this.getPDFType(appointment.id, result),
       )
       const attachment = [
         {
@@ -262,16 +276,16 @@ export class RapidAntigenTestResultsService {
 
   private async getPDFType(
     appointmentID: string,
-    latestResult: ResultTypes,
+    result: ResultTypes,
   ): Promise<RapidAlergenResultPDFType> {
-    if (latestResult === ResultTypes.Negative) {
+    if (result === ResultTypes.Negative) {
       return RapidAlergenResultPDFType.Negative
-    } else if (latestResult === ResultTypes.Positive) {
+    } else if (result === ResultTypes.Positive) {
       return RapidAlergenResultPDFType.Positive
     } else {
       LogError('RapidAntigenTestResultsService: getPDFType', 'Bad Result Type', {
         appointmentID,
-        result: latestResult,
+        result: result,
       })
     }
   }

@@ -28,7 +28,6 @@ export default Joi.object({
   packageCode: Joi.string().allow(null),
   phone: Joi.string().required(),
   registeredNursePractitioner: Joi.string().allow(''),
-  // latestResult: ResultTypes
   latestResult: Joi.string().valid(
     'Positive',
     'Negative',
