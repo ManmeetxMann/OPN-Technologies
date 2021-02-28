@@ -66,7 +66,7 @@ export class AppoinmentService {
   private organizationService = new OrganizationService()
   private enterpriseAdapter = new Enterprise()
 
-  async makeDeadline15Minutes(
+  async makeDeadlineRapidMinutes(
     appointment: AppointmentDBModel,
     pcrTestResultId: string,
   ): Promise<AppointmentDBModel> {
