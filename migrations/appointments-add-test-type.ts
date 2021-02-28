@@ -4,9 +4,6 @@
 import {isEmpty} from 'lodash'
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
-import moment from 'moment-timezone'
-
-const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -25,11 +22,6 @@ type Result = {
   status: ResultStatus
   value: unknown
 }
-
-const getFirestoreTimeStampDate = (datetime: firestore.Timestamp): firestore.Timestamp =>
-  firestore.Timestamp.fromDate(
-    moment(datetime.toDate()).tz(timeZone).hour(0).minute(0).second(0).utc(true).toDate(),
-  )
 
 export async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]> {
   return Promise.all(
