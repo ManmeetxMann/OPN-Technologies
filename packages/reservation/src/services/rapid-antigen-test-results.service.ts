@@ -72,10 +72,20 @@ export class RapidAntigenTestResultsService {
     )
 
     //Send Push Notification
-    if (notify) {
+    const actionsWithNotifyEnabled = [
+      RapidAntigenResultTypes.SendInvalid,
+      RapidAntigenResultTypes.SendPositive,
+    ]
+    if (notify && actionsWithNotifyEnabled.includes(action)) {
       this.pubSub.publish({
         appointmentID: appointmentId,
         testResultID: id,
+      })
+    } else {
+      LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'NotNOtified', {
+        appointmentId,
+        action,
+        notify,
       })
     }
 
