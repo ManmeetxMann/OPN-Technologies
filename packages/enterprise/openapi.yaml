@@ -537,13 +537,10 @@ components:
           type: boolean
         isBulkUploadAdmin:
           type: boolean
-          default: false
         isIDBarCodesAdmin:
           type: boolean
-          default: false
         isSingleResultSendAdmin:
           type: boolean
-          default: false
         isConfirmResultAdmin:
           type: boolean
         isPackageAdmin:
@@ -555,6 +552,8 @@ components:
         isLookupAdmin:
           type: boolean
         isClinicUser:
+          type: boolean
+        isRapidResultSenderAdmin:
           type: boolean
       required:
         - email
@@ -577,6 +576,7 @@ components:
         - isCheckInAdmin
         - isGenerateAdmin
         - isLookupAdmin
+        - isRapidResultSenderAdmin
         - organizationId
         - showReporting
         - superAdminForOrganizationIds
@@ -874,6 +874,8 @@ components:
         isGenerateAdmin:
           type: boolean
         isLookupAdmin:
+          type: boolean
+        isRapidResultSenderAdmin:
           type: boolean
     User:
       type: object
