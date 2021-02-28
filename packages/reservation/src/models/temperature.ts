@@ -1,3 +1,4 @@
+import {firestore} from 'firebase-admin'
 import {ResultTypes} from './appointment'
 import {Timestamp} from '../../../common/src/types/timestamp'
 
@@ -12,7 +13,7 @@ export type Temperature = {
 export type TemperatureDBModel = Temperature & {
   id: string
   timestamps?: {
-    createdAt: Timestamp
+    createdAt: firestore.Timestamp
   }
 }
 

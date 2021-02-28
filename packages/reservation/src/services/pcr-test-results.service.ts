@@ -1528,7 +1528,7 @@ export class PCRTestResultsService {
     attestations.map((attestation) => {
       testResult.push({
         id: attestation.id,
-        type: TestResultType.Attestation,
+        type: TestTypes.Attestation,
         name: 'Self-Attestation',
         testDateTime: formatStringDateRFC822Local(attestation.attestationTime),
         style: resultToStyle(mapAttestationStatusToResultTypes(attestation.status)),
@@ -1540,7 +1540,7 @@ export class PCRTestResultsService {
     temperatures.map((temperature) => {
       testResult.push({
         id: temperature.id,
-        type: TestResultType.TemperatureCheck,
+        type: TestTypes.TemperatureCheck,
         name: 'Temperature Check',
         testDateTime: formatDateRFC822Local(temperature.timestamps.createdAt),
         style: resultToStyle(mapTemperatureStatusToResultTypes(temperature.status)),
