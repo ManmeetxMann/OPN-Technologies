@@ -78,7 +78,7 @@ async function addTestType(snapshot: firestore.QueryDocumentSnapshot<firestore.D
           ...data,
           timestamps: {
             migrations: {
-              addTestType: firestore.FieldValue.serverTimestamp(),
+              appointmentAddTestType: firestore.FieldValue.serverTimestamp(),
             },
           },
         },

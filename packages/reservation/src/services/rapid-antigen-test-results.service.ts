@@ -72,7 +72,6 @@ export class RapidAntigenTestResultsService {
 
     //Send Push Notification
     const actionsWithNotifyEnabled = [
-      RapidAntigenResultTypes.SendInvalid,
       RapidAntigenResultTypes.SendPositive,
     ]
     if (notify && actionsWithNotifyEnabled.includes(action)) {
