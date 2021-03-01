@@ -1,16 +1,21 @@
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {ForbiddenException} from '../../../common/src/exceptions/forbidden-exception'
-
 import {UserModel} from '../../../common/src/data/user'
-import {OrganizationModel} from '../repository/organization.repository'
-
-import {UserActionsRepository} from '../repository/action-items.repository'
 import {safeTimestamp, isPassed} from '../../../common/src/utils/datetime-util'
-import {PassportStatuses} from 'packages/passport/src/models/passport'
-import {TemperatureStatuses} from 'packages/reservation/src/models/temperature'
+import {now} from '../../../common/src/utils/times'
+import {Config} from '../../../common/src/utils/config'
+
+import {OrganizationModel} from '../repository/organization.repository'
+import {UserActionsRepository} from '../repository/action-items.repository'
 import {ActionItem, Recommendations} from '../models/action-items'
-import {ResultTypes} from 'packages/reservation/src/models/appointment'
+
+import {PassportStatuses} from '../../../passport/src/models/passport'
+import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
+import {ResultTypes} from '../../../reservation/src/models/appointment'
+import moment from 'moment'
+
+const tz = Config.get('DEFAULT_TIME_ZONE')
 
 export type DecoratedRecommendation = {
   id: string | null
@@ -64,8 +69,8 @@ export class RecommendationService {
       // PROCEED
       return [Recommendations.PassAvailable, Recommendations.UpdateAssessment]
     }
-    return [Recommendations.UpdateAssessment, Recommendations.BadgeExpiry]
     // STOP
+    return [Recommendations.UpdateAssessment, Recommendations.BadgeExpiry]
   }
 
   private getRecommendationsTemperature = (items: ActionItem): Recommendations[] => {
@@ -100,9 +105,18 @@ export class RecommendationService {
       // PENDING
       if (latestTest?.result === ResultTypes.Pending) {
         // pending test
+        return [Recommendations.ResultReadiness]
       }
       if (items.scheduledPCRTest && !isPassed(safeTimestamp(items.scheduledPCRTest.date))) {
         // upcoming test
+        const isToday = moment(now())
+          .tz(tz)
+          .endOf('day')
+          .isSameOrAfter(safeTimestamp(items.scheduledPCRTest.date))
+        return [
+          Recommendations.CompleteAssessment,
+          isToday ? Recommendations.CheckInPCR : Recommendations.BookingDetailsPCR,
+        ]
       }
       // need to book a test
       return [Recommendations.BookPCR, Recommendations.CompleteAssessment]
@@ -130,6 +144,11 @@ export class RecommendationService {
     ) {
       id = items.PCRTestResult?.testId
       timestamp = items.PCRTestResult?.timestamp
+    } else if (
+      [Recommendations.CheckInPCR, Recommendations.BookingDetailsPCR].includes(recommendation)
+    ) {
+      id = items.scheduledPCRTest?.testId
+      timestamp = items.scheduledPCRTest?.timestamp
     }
     return {
       id,
@@ -138,7 +157,7 @@ export class RecommendationService {
     }
   }
 
-  async getRecommendations(userId: string, orgId: string): Promise<unknown> {
+  async getRecommendations(userId: string, orgId: string): Promise<DecoratedRecommendation[]> {
     const [org, items] = await Promise.all([
       this.organizationRepository.findOneById(orgId),
       this.getItems(userId, orgId),
@@ -154,7 +173,7 @@ export class RecommendationService {
     }
     // Default: attestation only
     else {
-      actions = this.getRecommendationsPCR(items)
+      actions = this.getRecommendationsAttestation(items)
     }
     return actions.map((action) => this.decorateRecommendation(action, items))
   }

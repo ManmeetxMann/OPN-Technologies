@@ -39,7 +39,9 @@ export enum Recommendations {
   ViewNegativeTemp = 'ViewNegativeTemp',
   ViewPositiveTemp = 'ViewPositiveTemp',
   BookPCR = 'BookPCR',
-  CheckInPCRPCR = 'CheckInPCR',
+  BookingDetailsPCR = 'BookingDetailsPCR',
+  CheckInPCR = 'CheckInPCR',
+  ResultReadiness = 'ResultReadiness',
   ViewNegativePCR = 'ViewNegativePCR',
   ViewPositivePCR = 'ViewPositivePCR',
 }
