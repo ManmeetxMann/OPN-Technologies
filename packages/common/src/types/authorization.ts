@@ -18,4 +18,5 @@ export enum RequiredUserPermission {
   LabConfirmResults = 'LabConfirmResults',
   AdminScanHistory = 'AdminScanHistory',
   AllowCheckIn = 'AllowCheckIn',
+  ClinicRapidResultSenderAdmin = 'ClinicRapidResultSenderAdmin',
 }

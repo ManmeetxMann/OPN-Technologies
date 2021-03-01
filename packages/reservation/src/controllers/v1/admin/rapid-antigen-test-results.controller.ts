@@ -23,11 +23,13 @@ class AdminRapidAntigenTestTesultsController implements IControllerBase {
 
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    const sendBulkResultsAuth = authorizationMiddleware([RequiredUserPermission.LabSendBulkResults])
+    const sendResultsAuth = authorizationMiddleware([
+      RequiredUserPermission.ClinicRapidResultSenderAdmin,
+    ])
 
     innerRouter.post(
       this.path + '/rapid-antigen-test-results',
-      sendBulkResultsAuth,
+      sendResultsAuth,
       this.saveRapidAntigenTestTesults,
     )
     this.router.use('/', innerRouter)

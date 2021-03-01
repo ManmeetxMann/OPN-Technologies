@@ -263,8 +263,8 @@ export enum WebhookEndpoints {
 }
 
 export enum DeadlineLabel {
-  SameDay = 'SameDay',
-  NextDay = 'NextDay',
+  SameDay = 'SAMEDAY',
+  NextDay = 'NEXTDAY',
 }
 
 const filteredAppointmentStatus = (
