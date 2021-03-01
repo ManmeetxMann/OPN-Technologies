@@ -23,4 +23,12 @@ export type InternalAdminApprovalCreateRequest = {
   isIDBarCodesAdmin: boolean
   isSingleResultSendAdmin: boolean
   isConfirmResultAdmin: boolean
+  isPackageAdmin: boolean
+  isCheckInAdmin: boolean
+  isGenerateAdmin: boolean
+  isLookupAdmin: boolean
+  adminForLabIds: string[]
+  isClinicUser: boolean
+  isRapidResultSenderAdmin: boolean
+  isRapidResultOrgAdmin: boolean
 }

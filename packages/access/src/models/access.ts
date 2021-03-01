@@ -2,7 +2,7 @@ import {firestore} from 'firebase-admin'
 import {PassportStatus} from '../../../passport/src/models/passport'
 import {Range} from '../../../common/src/types/range'
 import {User, UserDependant} from '../../../common/src/data/user'
-import {safeTimestamp} from '../../../common/src/utils/datetime-util'
+import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
 
 export type AccessWithPassportStatusAndUser = Access & {
   user: User
@@ -106,7 +106,10 @@ export const accessDTOResponseV1 = (access: Access & {id: string}): AccessDTOV1 
   statusToken: access.statusToken,
   locationId: access.locationId,
   enteredAt: access.enteredAt ? safeTimestamp(access.enteredAt).toISOString() : null,
-  exitAt: access.exitAt ? safeTimestamp(access.exitAt).toISOString() : null,
+  exitAt:
+    access.exitAt && isPassed(safeTimestamp(access.exitAt))
+      ? safeTimestamp(access.exitAt).toISOString()
+      : null,
   includesGuardian: access.includesGuardian,
   dependants: (access.dependants
     ? Object.keys(access.dependants).map((id) => access.dependants[id])

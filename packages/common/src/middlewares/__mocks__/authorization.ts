@@ -5,7 +5,7 @@ export const authorizationMiddleware = () => async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  res.locals.authenticatedUser = {
+  const data = {
     id: 'USER1',
     firstName: 'UNITEST_FNAME',
     lastName: 'UNITEST_LNAME',
@@ -18,6 +18,15 @@ export const authorizationMiddleware = () => async (
     authUserId: 'TEST',
     delegates: [],
   }
+
+  switch (req.headers.authorization) {
+    case 'Bearer CorporateUserForTEST1': {
+      data.admin.isLabUser = false
+      break
+    }
+  }
+
+  res.locals.authenticatedUser = data
   // Done
   next()
 }

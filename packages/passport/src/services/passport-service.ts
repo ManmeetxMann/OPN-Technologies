@@ -213,6 +213,42 @@ export class PassportService {
     return passports[0]
   }
 
+  // utility to determine if a passport can be used
+  passportAllowsEntry(passport: Passport | null, attestationRequired = true): boolean {
+    if (attestationRequired) {
+      // must have a passport
+      if (!passport) {
+        return false
+      }
+      // must be proceed
+      if (passport.status !== PassportStatuses.Proceed) {
+        return false
+      }
+      // must not be expired
+      if (moment(now()).isAfter(safeTimestamp(passport.validUntil))) {
+        return false
+      }
+      return true
+    } else {
+      // no passport is allowed
+      if (!passport) {
+        return true
+      }
+      // expired passports are allowed
+      if (moment(now()).isAfter(safeTimestamp(passport.validUntil))) {
+        return true
+      }
+      // valid passports must not be red
+      if (passport.status == PassportStatuses.Stop) {
+        return false
+      }
+      if (passport.status == PassportStatuses.Caution) {
+        return false
+      }
+      return true
+    }
+  }
+
   /**
    * shortestTime
    * Calculates the shortest time to an end of day or elapsed time.
