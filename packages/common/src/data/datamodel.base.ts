@@ -607,6 +607,16 @@ abstract class BaseDataModel<T extends HasId> implements IDataModel<T> {
       .then(() => console.log(`Delete ${this.rootPath}/${subPath ? `${subPath}/` : ''}${id}`))
   }
 
+  public async deleteBulk(ids: string[], subPath = ''): Promise<void> {
+    return this.collection(subPath)
+      .bulkDelete(ids)
+      .then(() =>
+        console.log(
+          `Bulk Delete ${this.rootPath}/${subPath ? `${subPath}/ ` : ' '}${ids.join(', ')}`,
+        ),
+      )
+  }
+
   public async count(subPath = ''): Promise<number> {
     return this.collection(subPath)
       .fetchAll()

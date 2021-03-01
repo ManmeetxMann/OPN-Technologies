@@ -68,6 +68,7 @@ export type AppointmentDBModel = {
   userId?: string
   locationName?: string
   locationAddress?: string
+  testType: TestTypes
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -92,7 +93,9 @@ export type AppointmentAcuityResponse = {
   address: string
   addressUnit: string
   agreeToConductFHHealthAssessment: boolean
+  appointmentTypeID: number
   barCode: string
+  calendar: string
   calendarID: number
   canceled: boolean
   canClientCancel: boolean
@@ -141,6 +144,21 @@ export type CheckAppointmentRequest = {
   from: string
   to: string
   barCodes: string[]
+}
+
+export enum TestTypes {
+  PCR = 'PCR',
+  RapidAntigen = 'RapidAntigen',
+}
+
+export type PostAdminScanHistoryRequest = {
+  type: TestTypes
+  barCode: string
+  organizationId: string
+}
+
+export type GetAdminScanHistoryRequest = {
+  type: TestTypes
 }
 
 export type CreateAppointmentRequest = {
@@ -201,7 +219,7 @@ export type AppointmentUiDTO = {
   registeredNursePractitioner?: string
   organizationName?: string
   transportRunLabel?: string
-  testType?: string
+  testType: string
 }
 
 export type AppointmentsState = {
@@ -245,8 +263,8 @@ export enum WebhookEndpoints {
 }
 
 export enum DeadlineLabel {
-  SameDay = 'SameDay',
-  NextDay = 'NextDay',
+  SameDay = 'SAMEDAY',
+  NextDay = 'NEXTDAY',
 }
 
 const filteredAppointmentStatus = (
@@ -296,21 +314,27 @@ export const statsUiDTOResponse = (
   appointmentStatus: Filter[],
   orgIdArray: Filter[],
   total: number,
-): appointmentStatsUiDTO => ({
-  total,
-  filterGroup: [
+  showOrgFilter = true,
+): appointmentStatsUiDTO => {
+  const filterGroup = [
     {
       name: FilterName.FilterByStatusType,
       key: FilterGroupKey.appointmentStatus,
       filters: appointmentStatus,
     },
-    {
+  ]
+  if (showOrgFilter) {
+    filterGroup.push({
       name: FilterName.FilterByCorporation,
       key: FilterGroupKey.organizationId,
       filters: orgIdArray,
-    },
-  ],
-})
+    })
+  }
+  return {
+    total,
+    filterGroup,
+  }
+}
 
 export const appointmentUiDTOResponse = (
   appointment: AppointmentDBModel & {canCancel?: boolean; organizationName?: string},
@@ -334,7 +358,7 @@ export const appointmentUiDTOResponse = (
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
     organizationName: appointment.organizationName,
-    testType: 'PCR',
+    testType: appointment.testType ?? 'PCR',
     transportRunLabel,
   }
 }
@@ -353,9 +377,9 @@ export type UserAppointment = {
 export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): UserAppointment => ({
   id: appointment.id,
   QRCode: appointment.barCode,
-  showQrCode: moment(new Date()).isBefore(
-    formatStringDateRFC822Local(appointment.dateOfAppointment),
-  ),
+  showQrCode:
+    moment(new Date()).isBefore(formatStringDateRFC822Local(appointment.dateOfAppointment)) &&
+    appointment.appointmentStatus !== AppointmentStatus.Canceled,
   firstName: appointment.firstName,
   lastName: appointment.lastName,
   locationName: appointment.locationName,
@@ -381,6 +405,7 @@ export const appointmentByBarcodeUiDTOResponse = (
     deadline: formatDateRFC822Local(appointment.deadline),
     registeredNursePractitioner: appointment.registeredNursePractitioner,
     organizationName: organizationName,
+    testType: appointment.testType ?? 'PCR',
   }
 }
 

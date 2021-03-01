@@ -500,6 +500,11 @@ components:
           items:
             type: string
           description: Group Ids within Organization
+        adminForLabIds:
+          type: array
+          items:
+            type: string
+          description: Lab ids to become a super admin of. Must be provided can be empty.
         showReporting:
           type: boolean
           description: Show reporting feature
@@ -532,13 +537,10 @@ components:
           type: boolean
         isBulkUploadAdmin:
           type: boolean
-          default: false
         isIDBarCodesAdmin:
           type: boolean
-          default: false
         isSingleResultSendAdmin:
           type: boolean
-          default: false
         isConfirmResultAdmin:
           type: boolean
         isPackageAdmin:
@@ -548,6 +550,12 @@ components:
         isGenerateAdmin:
           type: boolean
         isLookupAdmin:
+          type: boolean
+        isClinicUser:
+          type: boolean
+        isRapidResultSenderAdmin:
+          type: boolean
+        isRapidResultOrgAdmin:
           type: boolean
       required:
         - email
@@ -570,9 +578,12 @@ components:
         - isCheckInAdmin
         - isGenerateAdmin
         - isLookupAdmin
+        - isRapidResultSenderAdmin
+        - isRapidResultOrgAdmin
         - organizationId
         - showReporting
         - superAdminForOrganizationIds
+        - adminForLabIds
 
     InternalAdminListRequest:
       type: object
@@ -866,6 +877,10 @@ components:
         isGenerateAdmin:
           type: boolean
         isLookupAdmin:
+          type: boolean
+        isRapidResultSenderAdmin:
+          type: boolean
+        isRapidResultOrgAdmin:
           type: boolean
     User:
       type: object
