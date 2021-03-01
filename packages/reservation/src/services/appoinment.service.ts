@@ -768,17 +768,34 @@ export class AppoinmentService {
     return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
   }
 
-  async copyAcuityAppointment(refAppointment:AppointmentDBModel, refAcuityAppointment:AppointmentAcuityResponse): Promise<AppointmentDBModel>{
-    const { dateOfAppointment, 
-      timeOfAppointment, appointmentTypeID, 
-      firstName, lastName,
-    email, phone, packageCode, calendarID, dateOfBirth,
-  address, addressUnit, shareTestResultWithEmployer, readTermsAndConditions, 
-  agreeToConductFHHealthAssessment, receiveResultsViaEmail, receiveNotificationsFromGov, barCode,
-appointmentStatus, latestResult, organizationId, couponCode, userId } = refAppointment;
-    const datetime = new Date(dateOfAppointment+' '+timeOfAppointment).toISOString();
-      const barCodeNumber= barCode+'';
-    
+  async copyAcuityAppointment(refAppointment: AppointmentDBModel): Promise<AppointmentDBModel> {
+    const {
+      dateOfAppointment,
+      timeOfAppointment,
+      appointmentTypeID,
+      firstName,
+      lastName,
+      email,
+      phone,
+      packageCode,
+      calendarID,
+      dateOfBirth,
+      address,
+      addressUnit,
+      shareTestResultWithEmployer,
+      readTermsAndConditions,
+      agreeToConductFHHealthAssessment,
+      receiveResultsViaEmail,
+      receiveNotificationsFromGov,
+      barCode,
+      appointmentStatus,
+      latestResult,
+      organizationId,
+      couponCode,
+      userId,
+    } = refAppointment
+    const datetime = new Date(dateOfAppointment + ' ' + timeOfAppointment).toISOString()
+    const barCodeNumber = barCode + ''
 
     const acuityAppointment = await this.acuityRepository.createAppointment(
       datetime,
@@ -786,7 +803,7 @@ appointmentStatus, latestResult, organizationId, couponCode, userId } = refAppoi
       firstName,
       lastName,
       email,
-      phone+'',
+      phone + '',
       packageCode,
       calendarID,
       {

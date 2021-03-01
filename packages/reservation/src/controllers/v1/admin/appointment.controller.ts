@@ -21,8 +21,8 @@ import {AppoinmentService} from '../../../services/appoinment.service'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 import {TransportRunsService} from '../../../services/transport-runs.service'
 import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
-import { PCRTestResultsService } from '../../../services/pcr-test-results.service'
-import { makeFirestoreTimestamp } from '../../../../../reservation/src/utils/datetime.helper'
+import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
+import {makeFirestoreTimestamp} from '../../../../../reservation/src/utils/datetime.helper'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
@@ -31,7 +31,7 @@ class AdminAppointmentController implements IControllerBase {
   private organizationService = new OrganizationService()
   private transportRunsService = new TransportRunsService()
   private pcrTestResultsService = new PCRTestResultsService()
-  
+
   constructor() {
     this.initRoutes()
   }
@@ -380,22 +380,22 @@ class AdminAppointmentController implements IControllerBase {
     }
   }
 
-  scheduleNewAppointmentFromAnotherOne = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  scheduleNewAppointmentFromAnotherOne = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
     try {
       const {refAppointmentId} = req.params as {refAppointmentId: string}
-      const {date, time} = req.body as {date:string , time:string}
+      const {date, time} = req.body as {date: string; time: string}
       //get the appointment that will be copied
-      const refAppointment = await this.appointmentService.getAppointmentDBById(refAppointmentId);
-      refAppointment.dateOfAppointment= date;
-      refAppointment.timeOfAppointment= time;
-      refAppointment.dateTime= makeFirestoreTimestamp(new Date(date + ' ' + time)) ;
-      //get the appointment's acuity
-      const refAcuityAppointment = await this.appointmentService.getAppointmentByIdFromAcuity(
-        refAppointment.acuityAppointmentId
-      )
-      //copyAcuityAppointment
-      const savedAppointment = await this.appointmentService.copyAcuityAppointment(refAppointment, refAcuityAppointment);
-      
+      const refAppointment = await this.appointmentService.getAppointmentDBById(refAppointmentId)
+      refAppointment.dateOfAppointment = date
+      refAppointment.timeOfAppointment = time
+      refAppointment.dateTime = makeFirestoreTimestamp(new Date(date + ' ' + time))
+      //copy AcuityAppointment
+      const savedAppointment = await this.appointmentService.copyAcuityAppointment(refAppointment)
+
       if (savedAppointment) {
         const pcrTestResult = await this.pcrTestResultsService.createNewTestResult(savedAppointment)
         console.log(
@@ -403,9 +403,7 @@ class AdminAppointmentController implements IControllerBase {
         )
       }
 
-      res.json(actionSucceed(
-        appointmentUiDTOResponse(savedAppointment, false))
-      )
+      res.json(actionSucceed(appointmentUiDTOResponse(savedAppointment, false)))
     } catch (error) {
       next(error)
     }
