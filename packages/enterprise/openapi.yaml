@@ -3805,6 +3805,8 @@ paths:
   /enterprise/api/v3/recommendations:
     get:
       summary: recommendations for user
+      security:
+        - bearerAuthJWT: []
       responses:
         '200':
           description: Successfully retrieved
