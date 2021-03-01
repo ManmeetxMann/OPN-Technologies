@@ -1,9 +1,10 @@
 import {Config} from '../../../common/src/utils/config'
 import {DeadlineLabel} from '../models/appointment'
 import {firestore} from 'firebase-admin'
+import moment from 'moment-timezone'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
-import moment from 'moment-timezone'
+const rapidDeadlineTime = Config.get('RAPID_ALERGEN_DEADLINE_MIN')
 
 export const makeDeadline = (
   utcDateTime: moment.Moment,
@@ -52,8 +53,8 @@ export const formatDateRFC822Local = (timestamp: firestore.Timestamp): string =>
   return moment(timestamp.toDate()).tz(timeZone).toISOString()
 }
 
-export const makeDeadlineDate = (): moment.Moment => {
-  return moment(new Date()).add(15, 'minutes').tz(timeZone)
+export const makeRapidDeadline = (): moment.Moment => {
+  return moment(new Date()).add(rapidDeadlineTime, 'minutes').tz(timeZone)
 }
 
 export const formatStringDateRFC822Local = (date: Date | string): string => {
@@ -62,4 +63,38 @@ export const formatStringDateRFC822Local = (date: Date | string): string => {
 
 export const firestoreTimeStampToUTC = (timestamp: firestore.Timestamp): moment.Moment => {
   return moment(timestamp.toDate()).utc()
+}
+
+export const getFirestoreTimeStampDate = (datetime: firestore.Timestamp): firestore.Timestamp =>
+  firestore.Timestamp.fromDate(
+    moment(datetime.toDate())
+      .tz(timeZone)
+      .set({
+        hour: 0,
+        minute: 0,
+        second: 0,
+        millisecond: 0,
+      })
+      .utc(true)
+      .toDate(),
+  )
+
+export const dateToDateTime = (date: string): firestore.Timestamp => {
+  const year = Number(date.split('-')[0])
+  const month = Number(date.split('-')[1]) - 1
+  const day = Number(date.split('-')[2])
+  return firestore.Timestamp.fromDate(
+    moment()
+      .utc(true)
+      .set({
+        year,
+        month,
+        date: day,
+        hour: 0,
+        minute: 0,
+        second: 0,
+        millisecond: 0,
+      })
+      .toDate(),
+  )
 }

@@ -223,9 +223,16 @@ class AdminPCRTestResultController implements IControllerBase {
 
   listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {deadline, organizationId, barCode, result} = req.query as PcrTestResultsListRequest
-      if (!barCode && !deadline) {
-        throw new BadRequestException('"deadline" is required if "barCode" is not specified')
+      const {
+        deadline,
+        organizationId,
+        barCode,
+        result,
+        date,
+        testType,
+      } = req.query as PcrTestResultsListRequest
+      if (!barCode && !deadline && !date) {
+        throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
@@ -235,6 +242,8 @@ class AdminPCRTestResultController implements IControllerBase {
           deadline,
           barCode,
           result,
+          date,
+          testType,
         },
         isLabUser,
       )

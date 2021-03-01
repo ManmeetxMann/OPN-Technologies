@@ -1,20 +1,25 @@
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {NextFunction, Request, Response, Router} from 'express'
+import {sortBy} from 'lodash'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {
+  AppointmentStatus,
   appointmentUiDTOResponse,
   GetAdminScanHistoryRequest,
   PostAdminScanHistoryRequest,
 } from '../../../models/appointment'
+import {ForbiddenException} from '../../../../../common/src/exceptions/forbidden-exception'
+import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 
 class AdminScanHistoryController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
   public router = Router()
   private appointmentService = new AppoinmentService()
+  private pcrTestResultsService = new PCRTestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -31,6 +36,11 @@ class AdminScanHistoryController implements IControllerBase {
       adminWithAppointments,
       this.createScanHistory,
     )
+    innerRouter.delete(
+      this.path + '/admin-scan-history',
+      adminWithAppointments,
+      this.deleteScanHistory,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -41,21 +51,40 @@ class AdminScanHistoryController implements IControllerBase {
       const adminId = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
-      const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
+      let appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
 
-      await this.appointmentService.makeDeadline15Minutes(appointment)
+      if (appointment.testType !== type) {
+        throw new ForbiddenException('Invalid TestType')
+      }
+
       await this.appointmentService.addAdminScanHistory(adminId, appointment.id, type)
-      const updatedAppointment = await this.appointmentService.makeInProgress(
-        appointment.id,
-        null,
-        adminId,
-      )
+      if (appointment.appointmentStatus !== AppointmentStatus.Reported) {
+        const pcrTest = await this.pcrTestResultsService.getWaitingPCRResultByAppointmentId(
+          appointment.id,
+        )
+
+        await this.appointmentService.makeDeadlineRapidMinutes(appointment, pcrTest.id)
+        appointment = await this.appointmentService.makeInProgress(appointment.id, null, adminId)
+      }
 
       res.json(
         actionSucceed({
-          ...appointmentUiDTOResponse(updatedAppointment, isLabUser),
+          ...appointmentUiDTOResponse(appointment, isLabUser),
         }),
       )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  deleteScanHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {type} = req.query as GetAdminScanHistoryRequest
+      const adminId = getUserId(res.locals.authenticatedUser)
+
+      await this.appointmentService.deleteScanHistory(adminId, type)
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
@@ -68,10 +97,9 @@ class AdminScanHistoryController implements IControllerBase {
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       const appointments = await this.appointmentService.getAppointmentByHistory(adminId, type)
-
       res.json(
         actionSucceed(
-          appointments.map((appointment) => ({
+          sortBy(appointments, ['deadline']).map((appointment) => ({
             ...appointmentUiDTOResponse(appointment, isLabUser),
           })),
         ),

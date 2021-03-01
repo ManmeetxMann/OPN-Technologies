@@ -15,9 +15,9 @@ export class LabService {
     return this.labRepository.add(lab)
   }
 
-  getAllByIds(organizationIds: string[]): Promise<LabDBModel[]> {
+  getAllByIds(organizationIds: string[]): Promise<Lab[]> {
     return Promise.all(
       _.chunk(organizationIds, 10).map((chunk) => this.labRepository.findWhereIdIn(chunk)),
-    ).then((results) => _.flatten(results as LabDBModel[][]))
+    ).then((results) => _.flatten(results as Lab[][]))
   }
 }

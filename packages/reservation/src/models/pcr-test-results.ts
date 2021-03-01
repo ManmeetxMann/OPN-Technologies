@@ -2,7 +2,7 @@ import {firestore} from 'firebase-admin'
 
 import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datetime.helper'
 
-import {AppointmentDBModel, AppointmentStatus, ResultTypes} from './appointment'
+import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
@@ -84,10 +84,6 @@ export enum PCRTestResultStyle {
   AnyOther = 'GREY',
 }
 
-export enum PCRTestResultType {
-  PCR = 'PCR',
-}
-
 type PCRResultSpecs = {
   calRed61Ct: string
   calRed61RdRpGene: string
@@ -155,6 +151,9 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   testRunId?: string
   updatedAt: firestore.Timestamp
   waitingResult: boolean
+  deadlineDate: firestore.Timestamp
+  dateOfAppointment: firestore.Timestamp
+  testType: TestTypes
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -191,6 +190,8 @@ export type PCRTestResultEmailDTO = Omit<
   | 'runNumber'
   | 'reCollectNumber'
   | 'updatedAt'
+  | 'deadlineDate'
+  | 'dateOfAppointment'
 > &
   AppointmentDBModel
 
@@ -266,6 +267,8 @@ export type PcrTestResultsListRequest = {
   deadline?: string
   barCode?: string
   result?: ResultTypes
+  date?: string
+  testType?: TestTypes
 }
 
 export type PCRTestResultListDTO = {
@@ -318,7 +321,7 @@ export const resultToStyle = (result: ResultTypes): PCRTestResultStyle => {
 
 export type TestResutsDTO = {
   id: string
-  type: PCRTestResultType
+  type: TestTypes
   name: string
   testDateTime: string
   style: PCRTestResultStyle

@@ -1,7 +1,7 @@
 import moment from 'moment'
-import {Content, TableLayouts} from '../../../common/src/service/reports/pdf-types'
-import {PdfService} from '../../../common/src/service/reports/pdf'
-import {PCRResultPDFType, PCRTestResultEmailDTO} from '../models/pcr-test-results'
+import {Content, TableLayouts} from '../../../../common/src/service/reports/pdf-types'
+import {PdfService} from '../../../../common/src/service/reports/pdf'
+import {PCRResultPDFType, PCRTestResultEmailDTO} from '../../models/pcr-test-results'
 
 import confirmedNegativePCRResultsTemplate from './confirmed-negative-pcr-test-results'
 import confirmedPositivePCRResultsTemplate from './confirmed-positive-pcr-test-results'

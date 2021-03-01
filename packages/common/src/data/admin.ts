@@ -32,6 +32,8 @@ export type AdminProfile = {
   isLookupAdmin: boolean
   adminForLabIds: string[]
   isClinicUser: boolean
+  isRapidResultSenderAdmin: boolean
+  isRapidResultOrgAdmin: boolean
 }
 
 export type AdminApproval = {

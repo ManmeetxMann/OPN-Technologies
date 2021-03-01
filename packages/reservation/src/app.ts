@@ -5,7 +5,6 @@ import loggerMiddleware from '../../common/src/middlewares/logger'
 
 import AdminPCRTestResultController from './controllers/v1/admin/pcr-test-results.controller'
 import ProcessPCRResultController from './controllers/v1/internal/process-pcr-test-result.controller'
-import AdminTestResultController from './controllers/v1/admin/test-results.controller.ts'
 import AdminPackageController from './controllers/v1/admin/package.controller'
 import AdminAppointmentControllerV1 from './controllers/v1/admin/appointment.controller'
 import AdminTestRunsController from './controllers/v1/admin/test-runs.controller'
@@ -20,6 +19,8 @@ import AdminTemperatureV1Controller from './controllers/v1/admin/temperature.con
 import AdminLabController from './controllers/v1/admin/lab.controller'
 import TemperatureController from './controllers/v1/temperature.controller'
 import AdminHistoryController from './controllers/v1/admin/admin-scan-history.controller'
+import AdminRapidAntigenTestTesultsController from './controllers/v1/admin/rapid-antigen-test-results.controller'
+import InternalRapidAntigenResultEmailSendController from './controllers/v1/internal/rapid-alergen-send-result-email.controller'
 
 const PORT = Number(process.env.PORT) || 5008
 
@@ -28,7 +29,6 @@ export const app = new App({
   validation: true,
   corsOptions: '*',
   controllers: [
-    new AdminTestResultController(),
     new AdminPackageController(),
     new AdminAppointmentControllerV1(),
     new AdminTransportRunsController(),
@@ -40,12 +40,14 @@ export const app = new App({
     new AppointmentController(),
     new BookingLocationController(),
     new AppointmentAvailabilityController(),
-    new AppointmentController(),
-    new TestResultsController(),
     new AdminTemperatureV1Controller(),
     new AdminLabController(),
-    new TemperatureController(),
     new AdminHistoryController(),
+    new AdminRapidAntigenTestTesultsController(),
+    new AppointmentController(),
+    new InternalRapidAntigenResultEmailSendController(),
+    new TestResultsController(),
+    new TemperatureController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })

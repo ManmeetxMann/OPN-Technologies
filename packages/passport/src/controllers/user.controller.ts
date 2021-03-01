@@ -199,6 +199,7 @@ class UserController implements IControllerBase {
 
       const saved = await this.attestationService.save({
         answers,
+        organizationId,
         locationId,
         userId,
         appliesTo,
