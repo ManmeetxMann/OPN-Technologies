@@ -289,8 +289,15 @@ const isAllowed = (
     return false
   }
 
-  if (seekLabPCRTestResults && !admin?.isLabResultsAdmin && !admin?.isTestReportsAdmin) {
-    console.warn(`Admin user ${userId} needs isLabResultsAdmin Or isTestReportsAdmin`)
+  if (
+    seekLabPCRTestResults &&
+    !admin?.isLabResultsAdmin &&
+    !admin?.isTestReportsAdmin &&
+    !admin?.isRapidResultOrgAdmin
+  ) {
+    console.warn(
+      `Admin user ${userId} needs isLabResultsAdmin Or isTestReportsAdmin Or isRapidResultOrgAdmin`,
+    )
     return false
   }
   if (seekLabSendBulkResults && !admin?.isBulkUploadAdmin) {
