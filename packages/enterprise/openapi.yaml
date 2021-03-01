@@ -3807,6 +3807,12 @@ paths:
       summary: recommendations for user
       security:
         - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
       responses:
         '200':
           description: Successfully retrieved
