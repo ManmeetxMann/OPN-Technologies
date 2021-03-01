@@ -3746,15 +3746,13 @@ paths:
   /enterprise/api/v3/recommendations:
     get:
       summary: recommendations for user
-      description: stub
       responses:
         '200':
           description: Successfully retrieved
           content:
             application/json:
               schema:
-                # stub
-                $ref: '#/components/schemas/ResponseOfOrganizationGroups'
+                $ref: '#/components/schemas/ResponseRecommendations'
 
     post:
       summary: Group connection
