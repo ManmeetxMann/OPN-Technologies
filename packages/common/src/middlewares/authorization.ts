@@ -256,6 +256,9 @@ const isAllowed = (
   const seekLabConfirmResults = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabConfirmResults,
   )
+  const seekClinicRapidResultSenderAdmin = listOfRequiredPermissions.includes(
+    RequiredUserPermission.ClinicRapidResultSenderAdmin,
+  )
 
   if (
     seekLabOrOrgAppointment &&
@@ -312,6 +315,10 @@ const isAllowed = (
   }
   if (seekLabConfirmResults && !admin?.isConfirmResultAdmin) {
     console.warn(`Admin user ${userId} needs isConfirmResultAdmin`)
+    return false
+  }
+  if (seekClinicRapidResultSenderAdmin && !admin?.isRapidResultSenderAdmin) {
+    console.warn(`Admin user ${userId} needs isRapidResultSenderAdmin`)
     return false
   }
   if (seekOPNAdmin && !admin?.isOpnSuperAdmin) {
