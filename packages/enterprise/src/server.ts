@@ -10,6 +10,7 @@ import UserController from './controllers/user.controller'
 import UserV3Controller from './controllers/v3/user.controller'
 import AdminUserV3Controller from './controllers/v3/admin.user.controller'
 import GroupV3Controller from './controllers/v3/group.controller'
+import RecommendationsController from './controllers/v3/recommendation.controller'
 import AdminUserV4Controller from './controllers/admin/v4/user.controller'
 import RootController from './controllers/root.controller'
 import OrganizationController from './controllers/organization.controller'
@@ -37,6 +38,7 @@ const app = new App({
     new GroupV3Controller(),
     new AdminOrganizationController(),
     new UserInternalController(),
+    new RecommendationsController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],

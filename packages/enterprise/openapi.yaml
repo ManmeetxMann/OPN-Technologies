@@ -1190,6 +1190,37 @@ components:
                 type: string
                 nullable: true
 
+    Recommendation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          nullable: true
+        recommendation:
+          type: string
+          enum:
+            [
+              StatusInfo
+              PassAvailable
+              CompleteAssessment
+              UpdateAssessment
+              BadgeExpiry
+              TempCheckRequired
+              ViewNegativeTemp
+              ViewPositiveTemp
+              BookPCR
+              BookingDetailsPCR
+              CheckInPCR
+              ResultReadiness
+              ViewNegativePCR
+              ViewPositivePCR
+            ]
+          nullable: false
+
     ResponseOfOrganizationConnection:
       type: object
       additionalProperties: false
@@ -1812,6 +1843,34 @@ components:
           type: string
           description: the new "from" index to fetch the next page of the same query
           nullable: true
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    ResponseOfRecommendations:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recommendation'
         status:
           type: object
           additionalProperties: false
@@ -3706,6 +3765,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+
+    put:
+      summary: Update Group
+      description: Update a user's dependent group within the same organization
+      tags:
+        - Account Management
+      parameters:
+        - in: path
+          name: dependentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                organizationId:
+                  type: string
+                  nullable: false
+                fromGroupId:
+                  type: string
+                  nullable: false
+                toGroupId:
+                  type: string
+                  nullable: false
+              required:
+                - organizationId
+                - fromGroupId
+                - toGroupId
+      responses:
+        '200':
+          description: Successfull updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /enterprise/api/v3/recommendations:
+    get:
+      summary: recommendations for user
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfRecommendations'
 
     put:
       summary: Update Group

@@ -108,6 +108,8 @@ export const authorizationMiddleware = (
     (req.query.organizationId as string) ??
     (req.params?.organizationId as string) ??
     (req.body?.organizationId as string) ??
+    // headers are coerced to lowercase
+    (req.headers?.organizationid as string) ??
     null
 
   const admin = connectedUser.admin as AdminProfile
