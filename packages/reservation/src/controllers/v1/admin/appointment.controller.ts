@@ -21,6 +21,8 @@ import {AppoinmentService} from '../../../services/appoinment.service'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 import {TransportRunsService} from '../../../services/transport-runs.service'
 import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
+import { PCRTestResultsService } from '../../../services/pcr-test-results.service'
+import { makeFirestoreTimestamp } from '../../../../../reservation/src/utils/datetime.helper'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
@@ -28,7 +30,8 @@ class AdminAppointmentController implements IControllerBase {
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
   private transportRunsService = new TransportRunsService()
-
+  private pcrTestResultsService = new PCRTestResultsService()
+  
   constructor() {
     this.initRoutes()
   }
@@ -96,7 +99,7 @@ class AdminAppointmentController implements IControllerBase {
       this.regenerateBarCode,
     )
     innerRouter.post(
-      this.path + '/api/v1/appointments/{refAppointmentId}/create-new',
+      this.path + '/api/v1/appointments/:refAppointmentId/create-new',
       apptLabAuth,
       this.scheduleNewAppointmentFromAnotherOne,
     )
@@ -381,11 +384,28 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {refAppointmentId} = req.params as {refAppointmentId: string}
       const {date, time} = req.body as {date:string , time:string}
+      //get the appointment that will be copied
       const refAppointment = await this.appointmentService.getAppointmentDBById(refAppointmentId);
       refAppointment.dateOfAppointment= date;
       refAppointment.timeOfAppointment= time;
-      //const savedAppointment = await this.appointmentService.createAcuityAppointment(refAppointment);
-      //res.json(actionSucceed(appointmentUiDTOResponse(savedAppointment, false)))
+      refAppointment.dateTime= makeFirestoreTimestamp(new Date(date + ' ' + time)) ;
+      //get the appointment's acuity
+      const refAcuityAppointment = await this.appointmentService.getAppointmentByIdFromAcuity(
+        refAppointment.acuityAppointmentId
+      )
+      //copyAcuityAppointment
+      const savedAppointment = await this.appointmentService.copyAcuityAppointment(refAppointment, refAcuityAppointment);
+      
+      if (savedAppointment) {
+        const pcrTestResult = await this.pcrTestResultsService.createNewTestResult(savedAppointment)
+        console.log(
+          `AppointmentWebhookController: CreateAppointment: SuccessCreatePCRResults for AppointmentID: ${savedAppointment.id} PCR Results ID: ${pcrTestResult.id}`,
+        )
+      }
+
+      res.json(actionSucceed(
+        appointmentUiDTOResponse(savedAppointment, false))
+      )
     } catch (error) {
       next(error)
     }
