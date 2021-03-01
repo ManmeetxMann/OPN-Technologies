@@ -1,5 +1,6 @@
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {NextFunction, Request, Response, Router} from 'express'
+import {sortBy} from 'lodash'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
@@ -96,10 +97,9 @@ class AdminScanHistoryController implements IControllerBase {
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       const appointments = await this.appointmentService.getAppointmentByHistory(adminId, type)
-
       res.json(
         actionSucceed(
-          appointments.map((appointment) => ({
+          sortBy(appointments, ['deadline']).map((appointment) => ({
             ...appointmentUiDTOResponse(appointment, isLabUser),
           })),
         ),
