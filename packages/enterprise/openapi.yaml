@@ -3743,3 +3743,85 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  /enterprise/api/v3/recommendations:
+    get:
+      summary: recommendations for user
+      description: stub
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                # stub
+                $ref: '#/components/schemas/ResponseOfOrganizationGroups'
+
+    post:
+      summary: Group connection
+      description: Connects an authenticated-user's dependent to a group if not linked already
+      tags:
+        - Account Management
+      parameters:
+        - in: path
+          name: dependentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                organizationId:
+                  type: string
+                  nullable: false
+                groupId:
+                  type: string
+                  nullable: false
+              required:
+                - organizationId
+                - groupId
+      responses:
+        '200':
+          description: Successfull linked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+    put:
+      summary: Update Group
+      description: Update a user's dependent group within the same organization
+      tags:
+        - Account Management
+      parameters:
+        - in: path
+          name: dependentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                organizationId:
+                  type: string
+                  nullable: false
+                fromGroupId:
+                  type: string
+                  nullable: false
+                toGroupId:
+                  type: string
+                  nullable: false
+              required:
+                - organizationId
+                - fromGroupId
+                - toGroupId
+      responses:
+        '200':
+          description: Successfull updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
