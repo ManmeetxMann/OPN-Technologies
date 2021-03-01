@@ -4,11 +4,11 @@ import {authorizationMiddleware} from '../../../../common/src/middlewares/author
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 
-import {RecommendationService} from '../../services/recommendation-service'
+import {HealthpassService} from '../../services/healthpass-service'
 
 class RecommendationController implements IControllerBase {
   public router = express.Router()
-  private recService = new RecommendationService()
+  private passService = new HealthpassService()
   constructor() {
     this.initRoutes()
   }
@@ -24,11 +24,11 @@ class RecommendationController implements IControllerBase {
   getHealthPass: Handler = async (req, res, next): Promise<void> => {
     try {
       const {organizationId, authenticatedUser} = res.locals
-      const recommendations = await this.recService.getRecommendations(
+      const pass = await this.passService.getHealthPass(
         authenticatedUser.id as string,
         organizationId as string,
       )
-      res.json(recommendations)
+      res.json(pass)
     } catch (error) {
       next(error)
     }

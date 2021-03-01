@@ -51,6 +51,7 @@ export class RecommendationService {
     items = await itemsRepo.add({
       id: orgId,
       latestPassport: null,
+      latestAttestation: null,
       latestTemperature: null,
       scheduledPCRTest: null,
       PCRTestResult: null,
