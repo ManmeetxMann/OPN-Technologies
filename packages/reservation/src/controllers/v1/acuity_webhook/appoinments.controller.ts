@@ -6,6 +6,7 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {LogError, LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import {Config} from '../../../../../common/src/utils/config'
 //Services
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
@@ -18,6 +19,7 @@ import {
   AppointmentAcuityResponse,
   ResultTypes,
   AppointmentDBModel,
+  TestTypes,
 } from '../../../models/appointment'
 //UTILS
 import {getFirestoreTimeStampDate} from '../../../utils/datetime.helper'
@@ -163,6 +165,12 @@ class AppointmentWebhookController implements IControllerBase {
     }
   }
 
+  private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
+    return appointmentTypeID === Config.getInt('ACUITY_APPOINTMENT_TYPE_ID')
+      ? TestTypes.RapidAntigen
+      : TestTypes.PCR
+  }
+
   private handleUpdateAppointment = async (
     acuityAppointment: AppointmentAcuityResponse,
     dataForUpdate: AcuityUpdateDTO,
@@ -229,7 +237,7 @@ class AppointmentWebhookController implements IControllerBase {
           //result: ResultTypes.Pending,
           //runNumber: 1 ,//Start the Run
           //waitingResult: true,
-          //testType: 'PCR'//Assume AppointType not updating
+          testType: await this.getTestType(acuityAppointment.appointmentTypeID),
         }
 
         await this.pcrTestResultsService.updateTestResults(pcrTestResult.id, pcrResultDataForDb)
