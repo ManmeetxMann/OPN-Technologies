@@ -11,6 +11,11 @@ export type ActionItem = {
     expiry: firestore.Timestamp
     timestamp: firestore.Timestamp
   }
+  latestAttestation: null | {
+    attestationId: string
+    status: PassportStatus
+    timestamp: firestore.Timestamp
+  }
   latestTemperature: null | {
     temperatureId: string
     temperature: string // number?
