@@ -130,6 +130,7 @@ export type PCRTestResultData = {
   barCode: string
   adminId: string
   resultSpecs?: PCRResultSpecsForSending
+  userId?: string
 }
 
 export type PCRTestResultDBModel = PCRTestResultData & {
