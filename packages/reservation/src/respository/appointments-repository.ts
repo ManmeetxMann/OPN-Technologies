@@ -3,6 +3,7 @@ import {makeFirestoreTimestamp} from '../utils/datetime.helper'
 import {now} from '../../../common/src/utils/times'
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
+import {firestore} from 'firebase-admin'
 import {
   ActivityTrackingDb,
   AppointmentActivityAction,
@@ -32,6 +33,21 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public async save(appointments: Omit<AppointmentDBModel, 'id'>): Promise<AppointmentDBModel> {
     const validatedData = await DBSchema.validateAsync(appointments)
     return this.add(validatedData)
+  }
+
+  public async rescheduleAppointment(
+    appointmentId: string,
+    dateOfAppointment: string,
+    timeOfAppointment: string,
+    dateTime: firestore.Timestamp,
+    deadline: firestore.Timestamp,
+  ): Promise<AppointmentDBModel> {
+    return this.updateProperties(appointmentId, {
+      dateOfAppointment,
+      timeOfAppointment,
+      dateTime,
+      deadline,
+    })
   }
 
   public changeAppointmentStatus(

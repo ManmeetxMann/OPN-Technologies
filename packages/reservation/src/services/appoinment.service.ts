@@ -1083,11 +1083,12 @@ export class AppoinmentService {
     deadline: firestore.Timestamp,
   ): Promise<AppointmentDBModel> {
     console.log(' timeOfAppointment is :', timeOfAppointment)
-    return this.appointmentsRepository.updateProperties(appointmentId, {
+    return this.appointmentsRepository.rescheduleAppointment(
+      appointmentId,
       dateOfAppointment,
       timeOfAppointment,
       dateTime,
       deadline,
-    })
+    )
   }
 }
