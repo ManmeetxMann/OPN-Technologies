@@ -24,7 +24,7 @@ describe('admin:operations:create', () => {
         .post(
             url,
             {
-              'email': 'harpreet+13@stayopn.com',
+              'email': 'harpreet+14@stayopn.com',
               'organizationId': organizationId,
               'locationIds': [
               ],
@@ -61,6 +61,7 @@ describe('admin:operations:create', () => {
               'adminForLabIds': [],
               'isIDBarCodesAdmin': false,
               'isSingleResultSendAdmin': false,
+              'isRapidResultOrgAdmin': false,
             },
         )
         .expect('status', 200);

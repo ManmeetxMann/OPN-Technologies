@@ -277,7 +277,7 @@ export class PCRTestResultsService {
   }
 
   async getPCRResults(
-    {organizationId, deadline, barCode, result, date}: PcrTestResultsListRequest,
+    {organizationId, deadline, barCode, result, testType, date}: PcrTestResultsListRequest,
     isLabUser: boolean,
   ): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
@@ -307,6 +307,12 @@ export class PCRTestResultsService {
           value: dateToDateTime(date),
         })
       }
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'displayInResult',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      })
     } else if (barCode) {
       pcrTestResultsQuery.push({
         map: '/',
@@ -341,6 +347,15 @@ export class PCRTestResultsService {
         key: 'result',
         operator: DataModelFieldMapOperatorType.Equals,
         value: result,
+      })
+    }
+    //Apply for Corporate
+    if (testType) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'testType',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: testType,
       })
     }
 

@@ -32,7 +32,7 @@ describe('POST: /reservation/acuity_webhook/api/v1/appointment/create', () => {
             url, {
               body: qs.stringify({
                 'calendarID': '4577880',
-                'appointmentTypeID': '17534086',
+                'appointmentTypeID': '536262672',
                 'id': '535953238', // 515676296
                 'action': 'scheduled',
               }),

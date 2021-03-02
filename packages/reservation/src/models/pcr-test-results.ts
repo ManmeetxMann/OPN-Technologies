@@ -269,6 +269,7 @@ export type PcrTestResultsListRequest = {
   barCode?: string
   result?: ResultTypes
   date?: string
+  testType?: TestTypes
 }
 
 export type PCRTestResultListDTO = {
