@@ -2175,29 +2175,15 @@ paths:
                       manufacturer:
                         type: string
                       resultSpecs:
-                        type: object
-                        additionalProperties: false
-                        properties:
-                          calRed61Ct:
-                            type: string
-                          calRed61RdRpGene:
-                            type: string
-                          famCt:
-                            type: string
-                          famEGene:
-                            type: string
-                          hexCt:
-                            type: string
-                          hexIC:
-                            type: string
-                          quasar670Ct:
-                            type: string
-                          quasar670NGene:
-                            type: string
-                          comment:
-                            type: string
-                          autoResult:
-                            type: string
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            label:
+                              type: string
+                            value:
+                              type: string
                     required:
                       - email
                       - phone

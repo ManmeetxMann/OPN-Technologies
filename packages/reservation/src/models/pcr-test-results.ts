@@ -329,6 +329,11 @@ export type TestResutsDTO = {
   detailsAvailable: boolean
 }
 
+type Spec = {
+  label: string
+  value: string | boolean | Date
+}
+
 export type SinglePcrTestResultUi = {
   email: string
   phone: string
@@ -349,18 +354,7 @@ export type SinglePcrTestResultUi = {
   testType: string
   equipment: string
   manufacturer: string
-  resultSpecs: {
-    calRed61Ct: string
-    calRed61RdRpGene: string
-    famCt: string
-    famEGene: string
-    hexCt: string
-    hexIC: string
-    quasar670Ct: string
-    quasar670NGene: string
-    comment?: string
-    autoResult: ResultTypes
-  }
+  resultSpecs: Spec[]
 }
 
 enum LabData {
@@ -393,16 +387,8 @@ export const singlePcrTestResultDTO = (
   testType: LabData.testType,
   equipment: LabData.equipment,
   manufacturer: LabData.manufacturer,
-  resultSpecs: {
-    calRed61Ct: pcrTestResult.resultSpecs.calRed61Ct,
-    calRed61RdRpGene: pcrTestResult.resultSpecs.calRed61RdRpGene,
-    famCt: pcrTestResult.resultSpecs.famCt,
-    famEGene: pcrTestResult.resultSpecs.famEGene,
-    hexCt: pcrTestResult.resultSpecs.hexCt,
-    hexIC: pcrTestResult.resultSpecs.hexIC,
-    quasar670Ct: pcrTestResult.resultSpecs.quasar670Ct,
-    quasar670NGene: pcrTestResult.resultSpecs.quasar670NGene,
-    comment: pcrTestResult.resultSpecs.comment,
-    autoResult: pcrTestResult.resultSpecs.autoResult,
-  },
+  resultSpecs: Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
+    label: resultKey,
+    value: resultValue,
+  })),
 })
