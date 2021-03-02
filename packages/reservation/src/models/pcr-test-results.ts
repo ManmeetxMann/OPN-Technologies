@@ -4,6 +4,7 @@ import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datet
 
 import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
+import {groupByChannel} from '../utils/channel-grouper'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -330,6 +331,12 @@ export type TestResutsDTO = {
   detailsAvailable: boolean
 }
 
+export type GroupedSpecs = {
+  channelName: string
+  description: string
+  groups: Spec[]
+}
+
 type Spec = {
   label: string
   value: string | boolean | Date
@@ -361,6 +368,7 @@ export type SinglePcrTestResultUi = {
   style: PCRTestResultStyle
   testName: string
   doctorId: string
+  resultAnalysis: GroupedSpecs[]
 }
 
 enum LabData {
@@ -399,6 +407,12 @@ export const singlePcrTestResultDTO = (
     label: resultKey,
     value: resultValue,
   })),
+  resultAnalysis: groupByChannel(
+    Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
+      label: resultKey,
+      value: resultValue,
+    })),
+  ),
   style: resultToStyle(pcrTestResult.result),
   testName: 'SARS COV-2',
   doctorId: 'DR1',
