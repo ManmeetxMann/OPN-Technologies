@@ -77,16 +77,14 @@ async function updateTestResults(): Promise<Result[]> {
 async function fixDeadline(snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
   const updatePCRResult = async (pcrResult) => {
     const updateData = {}
-    if (!pcrResult.data().dateOfAppointment) {
-      updateData['dateOfAppointment'] = getFirestoreTimeStampDate(pcrResult.data().dateTime)
-      console.log(
-        `PCRResultId: ${pcrResult.id} ${
-          pcrResult.data().barCode
-        }  add dateOfAppointment ${updateData[
-          'dateOfAppointment'
-        ].toDate()} from dateTime ${pcrResult.data().dateTime.toDate()}`,
-      )
-    }
+
+    updateData['dateOfAppointment'] = getFirestoreTimeStampDate(pcrResult.data().dateTime)
+    console.log(
+      `PCRResultId: ${pcrResult.id} ${pcrResult.data().barCode}  add dateOfAppointment ${updateData[
+        'dateOfAppointment'
+      ].toDate()} from dateTime ${pcrResult.data().dateTime.toDate()}`,
+    )
+
     if (!pcrResult.data().deadlineDate) {
       updateData['deadlineDate'] = getFirestoreTimeStampDate(pcrResult.data().deadline)
       console.log(
@@ -102,7 +100,7 @@ async function fixDeadline(snapshot: firestore.QueryDocumentSnapshot<firestore.D
           ...updateData,
           timestamps: {
             migrations: {
-              addDeadlineDateAndDateOfAppointment: firestore.FieldValue.serverTimestamp(),
+              addDeadlineDateAndDateOfAppointmentv2: firestore.FieldValue.serverTimestamp(),
             },
           },
         },
