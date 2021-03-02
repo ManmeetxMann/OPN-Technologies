@@ -139,17 +139,17 @@ export class RecommendationService {
       [Recommendations.ViewNegativeTemp, Recommendations.ViewPositiveTemp].includes(recommendation)
     ) {
       id = items.latestTemperature?.temperatureId
-      timestamp = items.latestTemperature?.timestamp
+      timestamp = safeTimestamp(items.latestTemperature?.timestamp).toISOString()
     } else if (
       [Recommendations.ViewNegativePCR, Recommendations.ViewPositivePCR].includes(recommendation)
     ) {
       id = items.PCRTestResult?.testId
-      timestamp = items.PCRTestResult?.timestamp
+      timestamp = safeTimestamp(items.PCRTestResult?.timestamp).toISOString()
     } else if (
       [Recommendations.CheckInPCR, Recommendations.BookingDetailsPCR].includes(recommendation)
     ) {
       id = items.scheduledPCRTest?.testId
-      timestamp = items.scheduledPCRTest?.timestamp
+      timestamp = safeTimestamp(items.scheduledPCRTest?.timestamp).toISOString()
     }
     return {
       id,
