@@ -27,7 +27,7 @@ const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => (
 export class PassportService {
   private dataStore = new DataStore()
   private userService = new UserService()
-  private pubsub = new OPNPubSub('passport')
+  private pubsub = new OPNPubSub('passport-topic')
   private passportRepository = new PassportModel(this.dataStore)
   private identifierRepository = new IdentifiersModel(this.dataStore)
 

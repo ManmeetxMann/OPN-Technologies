@@ -8,7 +8,7 @@ import {TemperatureRepository} from '../respository/temperature.repository'
 export class TemperatureService {
   private dataStore = new DataStore()
   private temperatureRepository = new TemperatureRepository(this.dataStore)
-  private pubsub = new OPNPubSub('temperature')
+  private pubsub = new OPNPubSub('temperature-topic')
   async save(temperature: Temperature): Promise<TemperatureDBModel> {
     const temp = await this.temperatureRepository.add(temperature)
     this.pubsub.publish(

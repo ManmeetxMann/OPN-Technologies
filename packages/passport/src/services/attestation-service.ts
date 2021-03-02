@@ -21,7 +21,7 @@ export class AttestationService {
   private dataStore = new DataStore()
   private attestationRepository = new AttestationModel(this.dataStore)
   private traceRepository = new TraceRepository(this.dataStore)
-  private pubsub = new OPNPubSub('attestation')
+  private pubsub = new OPNPubSub('attestation-topic')
 
   save(attestation: Attestation): Promise<Attestation> {
     return this.attestationRepository

@@ -75,7 +75,7 @@ export class AppoinmentService {
   private syncProgressRepository = new SyncProgressRepository(this.dataStore)
   private organizationService = new OrganizationService()
   private enterpriseAdapter = new Enterprise()
-  private pubsub = new OPNPubSub('PCRTest')
+  private pubsub = new OPNPubSub('pcr-test-topic')
 
   private postPubsub(saved: AppointmentDBModel, action: string): void {
     this.pubsub.publish(
