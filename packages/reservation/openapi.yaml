@@ -2224,7 +2224,7 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: path
-          name: pcrTestResultId
+          name: id
           schema:
             type: string
           required: true
