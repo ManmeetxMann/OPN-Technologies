@@ -101,15 +101,15 @@ export class PassportService {
           includesGuardian,
         }),
       )
-      .then(({validFrom, validUntil, ...passport}) => ({
-        ...passport,
-        validFrom,
-        validUntil: firestore.Timestamp.fromDate(
-          // @ts-ignore
-          this.shortestTime(passport.status, validFrom.toDate()),
+      .then(({status, validFrom, id}) =>
+        this.passportRepository.updateProperty(
+          id,
+          'validUntil',
+          firestore.Timestamp.fromDate(
+            this.shortestTime(status as PassportStatuses, safeTimestamp(validFrom)),
+          ),
         ),
-      }))
-      .then((passport) => this.passportRepository.update(passport))
+      )
       .then(mapDates)
   }
 
@@ -286,7 +286,6 @@ export class PassportService {
         `Passport ${passport.id} must have status temperature_check_required to update`,
       )
     }
-    passport.status = status
-    return this.passportRepository.update(passport)
+    return this.passportRepository.updateProperty(passport.id, 'status', status)
   }
 }
