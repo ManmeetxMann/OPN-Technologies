@@ -7,7 +7,7 @@ export class TestKitBatchService {
   private testKitBatchRepository = new TestKitBatchRepository(this.dataStore)
 
   getAll(): Promise<TestKitBatch[]> {
-    return this.testKitBatchRepository.fetchAll()
+    return this.testKitBatchRepository.getAll()
   }
 
   save(TestKitBatch: Omit<TestKitBatch, 'id'>): Promise<TestKitBatchID> {

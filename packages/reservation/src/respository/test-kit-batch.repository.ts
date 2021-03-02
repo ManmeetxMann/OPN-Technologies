@@ -10,6 +10,10 @@ export class TestKitBatchRepository extends DataModel<TestKitBatch> {
     super(dataStore)
   }
 
+  public async getAll(): Promise<TestKitBatch[]> {
+    return this.fetchAll()
+  }
+
   public async save(testKitBatch: Omit<TestKitBatch, 'id'>): Promise<TestKitBatchID> {
     return this.add(testKitBatch)
   }

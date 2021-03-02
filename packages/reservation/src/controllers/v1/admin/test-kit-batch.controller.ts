@@ -17,11 +17,20 @@ class TestKitBatchController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.post(
-      `${this.path}/test-kit-batch`,
-      authorizationMiddleware([RequiredUserPermission.TestKitBatchAdmin]),
-      this.createTestKitBatch,
-    )
+    const testKitBatchAdmin = authorizationMiddleware([RequiredUserPermission.TestKitBatchAdmin])
+
+    this.router.get(`${this.path}/test-kit-batch`, testKitBatchAdmin, this.getTestKitBatchList)
+    this.router.post(`${this.path}/test-kit-batch`, testKitBatchAdmin, this.createTestKitBatch)
+  }
+
+  getTestKitBatchList = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const testKitBatches = await this.testKitBatchService.getAll()
+
+      res.json(actionSucceed(testKitBatches))
+    } catch (error) {
+      next(error)
+    }
   }
 
   createTestKitBatch = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

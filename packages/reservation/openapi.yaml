@@ -879,6 +879,19 @@ paths:
                 items:
                   $ref: '#/components/schemas/TestResult200'
   /reservation/admin/api/v1/test-kit-batch:
+    get:
+      description: Get list of test kit batches
+      tags:
+        - Test Kit Batches
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
     post:
       description: Create test kit batch
       tags:

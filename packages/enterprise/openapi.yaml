@@ -860,6 +860,8 @@ components:
           type: boolean
         isTestRunsAdmin:
           type: boolean
+        isTestKitBatchAdmin:
+          type: boolean
         isDueTodayAdmin:
           type: boolean
         isBulkUploadAdmin:
