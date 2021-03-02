@@ -2,7 +2,7 @@ import * as express from 'express'
 import {Handler, Router} from 'express'
 
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import OPNPubSub from '../../../../common/src/service/google/pub_sub'
+import {OPNPubSub} from '../../../../common/src/service/google/pub_sub'
 
 import {RecommendationService} from '../../services/recommendation-service'
 
@@ -42,7 +42,7 @@ class RecommendationController implements IControllerBase {
       userId: attributes.userId,
       organizationId: attributes.organizationId,
       actionType: attributes.actionType,
-      data: payload,
+      data: (payload as unknown) as Record<string, unknown>,
     }
   }
 
