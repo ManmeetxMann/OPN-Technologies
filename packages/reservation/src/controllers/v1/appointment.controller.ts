@@ -7,9 +7,9 @@ import {CreateAppointmentRequest, userAppointmentDTOResponse} from '../../models
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {getUserId} from '../../../../common/src/utils/auth'
 import {AuthUser} from '../../../../common/src/data/user'
+import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {decodeAvailableTimeId} from '../../utils/base64-converter'
 import {PCRTestResultsService} from '../../services/pcr-test-results.service'
-import {ResourceNotFoundException} from 'packages/common/src/exceptions/resource-not-found-exception'
 
 class AppointmentController implements IControllerBase {
   public path = '/reservation'
