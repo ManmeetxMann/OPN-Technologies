@@ -692,8 +692,11 @@ components:
         name:
           minLength: 1
           type: string
+        templateId:
+          type: string
       required:
         - name
+        - templateId
     LabResponse:
       type: object
       additionalProperties: false
@@ -706,6 +709,8 @@ components:
             additionalProperties: false
             properties:
               id:
+                type: string
+              templateId:
                 type: string
               name:
                 type: string
