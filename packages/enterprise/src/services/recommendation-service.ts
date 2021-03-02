@@ -51,6 +51,7 @@ export class RecommendationService {
     items = await itemsRepo.add({
       id: orgId,
       latestPassport: null,
+      latestAttestation: null,
       latestTemperature: null,
       scheduledPCRTest: null,
       PCRTestResult: null,
@@ -65,7 +66,7 @@ export class RecommendationService {
       // PENDING
       return [Recommendations.StatusInfo, Recommendations.CompleteAssessment]
     }
-    if (passport.status === PassportStatuses.Proceed) {
+    if (passport?.status === PassportStatuses.Proceed) {
       // PROCEED
       return [Recommendations.PassAvailable, Recommendations.UpdateAssessment]
     }
@@ -82,7 +83,7 @@ export class RecommendationService {
       passport.status == PassportStatuses.TemperatureCheckRequired
     ) {
       // PENDING
-      if (passport.status == PassportStatuses.TemperatureCheckRequired) {
+      if (passport?.status == PassportStatuses.TemperatureCheckRequired) {
         return [Recommendations.StatusInfo, Recommendations.TempCheckRequired]
       }
       return [Recommendations.StatusInfo, Recommendations.CompleteAssessment]
@@ -138,17 +139,17 @@ export class RecommendationService {
       [Recommendations.ViewNegativeTemp, Recommendations.ViewPositiveTemp].includes(recommendation)
     ) {
       id = items.latestTemperature?.temperatureId
-      timestamp = items.latestTemperature?.timestamp
+      timestamp = safeTimestamp(items.latestTemperature?.timestamp).toISOString()
     } else if (
       [Recommendations.ViewNegativePCR, Recommendations.ViewPositivePCR].includes(recommendation)
     ) {
       id = items.PCRTestResult?.testId
-      timestamp = items.PCRTestResult?.timestamp
+      timestamp = safeTimestamp(items.PCRTestResult?.timestamp).toISOString()
     } else if (
       [Recommendations.CheckInPCR, Recommendations.BookingDetailsPCR].includes(recommendation)
     ) {
       id = items.scheduledPCRTest?.testId
-      timestamp = items.scheduledPCRTest?.timestamp
+      timestamp = safeTimestamp(items.scheduledPCRTest?.timestamp).toISOString()
     }
     return {
       id,

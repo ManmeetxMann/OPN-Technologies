@@ -1221,6 +1221,21 @@ components:
             ]
           nullable: false
 
+    Test:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        style:
+          type: string
+        
     ResponseOfOrganizationConnection:
       type: object
       additionalProperties: false
@@ -1871,6 +1886,34 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Recommendation'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    ResponseOfHealthPass:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Test'
         status:
           type: object
           additionalProperties: false
@@ -3820,6 +3863,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfRecommendations'
+  /enterprise/api/v3/health-pass:
+    get:
+      summary: recommendations for user
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfHealthPass'
 
     put:
       summary: Update Group
