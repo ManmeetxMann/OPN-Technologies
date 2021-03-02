@@ -56,6 +56,7 @@ class RecommendationController implements IControllerBase {
         data.status as PassportStatus,
         data.expiry as string,
       )
+      res.sendStatus(200)
     } catch (error) {
       next(error)
     }
@@ -69,6 +70,7 @@ class RecommendationController implements IControllerBase {
         data.id as string,
         data.status as PassportStatus,
       )
+      res.sendStatus(200)
     } catch (error) {
       next(error)
     }
@@ -83,6 +85,7 @@ class RecommendationController implements IControllerBase {
         data.temperature as string,
         data.status as TemperatureStatuses,
       )
+      res.sendStatus(200)
     } catch (error) {
       next(error)
     }
@@ -92,7 +95,7 @@ class RecommendationController implements IControllerBase {
       const {userId, organizationId, actionType, data} = this.parseMessage(req.body.message)
       if (actionType === 'canceled') {
         await this.recService.deletePCRTest(userId, organizationId)
-      } else if (actionType === 'created') {
+      } else if (actionType === 'created' || actionType === 'updated') {
         await this.recService.addPCRTest(
           userId,
           organizationId,
@@ -104,9 +107,10 @@ class RecommendationController implements IControllerBase {
           userId,
           organizationId,
           data.id as string,
-          data.status as ResultTypes,
+          data.result as ResultTypes,
         )
       }
+      res.sendStatus(200)
     } catch (error) {
       next(error)
     }
