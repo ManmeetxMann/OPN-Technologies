@@ -93,22 +93,25 @@ class RecommendationController implements IControllerBase {
   newPCR: Handler = async (req, res, next): Promise<void> => {
     try {
       const {userId, organizationId, actionType, data} = this.parseMessage(req.body.message)
+      const isAppointment = !data.result
       if (actionType === 'canceled') {
         await this.recService.deletePCRTest(userId, organizationId)
       } else if (actionType === 'created' || actionType === 'updated') {
-        await this.recService.addPCRTest(
-          userId,
-          organizationId,
-          data.id as string,
-          data.date as string,
-        )
-      } else if (actionType === 'result') {
-        await this.recService.addPCRTestResult(
-          userId,
-          organizationId,
-          data.id as string,
-          data.result as ResultTypes,
-        )
+        if (isAppointment) {
+          await this.recService.addPCRTest(
+            userId,
+            organizationId,
+            data.id as string,
+            data.date as string,
+          )
+        } else {
+          await this.recService.addPCRTestResult(
+            userId,
+            organizationId,
+            data.id as string,
+            data.result as ResultTypes,
+          )
+        }
       }
       res.sendStatus(200)
     } catch (error) {
