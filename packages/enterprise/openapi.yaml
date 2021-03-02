@@ -314,6 +314,19 @@ components:
         - name
         - isPrivate
 
+    PubSubRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        message:
+          type: object
+          additionalProperties: false
+          properties:
+            data:
+              type: string
+            attributes:
+              additionalProperties: true
+
     OrganizationConnectionRequestV1:
       type: object
       additionalProperties: false
@@ -3881,40 +3894,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfHealthPass'
-
-    put:
-      summary: Update Group
-      description: Update a user's dependent group within the same organization
-      tags:
-        - Account Management
-      parameters:
-        - in: path
-          name: dependentId
-          schema:
-            type: string
-          required: true
+  /enterprise/api/v3/pubsub/passport:
+    post:
+      summary: update passport
       requestBody:
         content:
           application/json:
             schema:
-              properties:
-                organizationId:
-                  type: string
-                  nullable: false
-                fromGroupId:
-                  type: string
-                  nullable: false
-                toGroupId:
-                  type: string
-                  nullable: false
-              required:
-                - organizationId
-                - fromGroupId
-                - toGroupId
+              $ref: '#components/schemas/PubSubRequest'
       responses:
         '200':
-          description: Successfull updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
+          description: Successfully digested
+  /enterprise/api/v3/pubsub/attestation:
+    post:
+      summary: update attestation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /enterprise/api/v3/pubsub/temperature:
+    post:
+      summary: update attestation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /enterprise/api/v3/pubsub/pcr-test:
+    post:
+      summary: update attestation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
