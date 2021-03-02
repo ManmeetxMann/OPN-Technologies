@@ -1308,7 +1308,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PCRTestResultsResponse200'
-  /reservation/admin/api/v1/pcr-test-results/stats:
+  /reservation/admin/api/v1/pcr-test-results/list/stats:
     get:
       description: Retrieve list of PCR Results
       tags:
