@@ -95,7 +95,7 @@ class AdminPCRTestResultController implements IControllerBase {
       this.dueDeadlineStats,
     )
     innerRouter.get(
-      this.path + '/pcr-test-results/stats',
+      this.path + '/pcr-test-results/list/stats',
       dueTodayAuth,
       this.getPCRResultsHistoryStats,
     )
