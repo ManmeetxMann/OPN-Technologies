@@ -868,7 +868,7 @@ export class AppoinmentService {
 
       return {
         id,
-        label: moment(time).tz(calendarTimezone).format(timeFormats.standard12h),
+        label: moment(time).tz(calendarTimezone).utc().format(timeFormats.standard12h),
         slotsAvailable: slotsAvailable,
       }
     })
