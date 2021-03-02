@@ -300,6 +300,12 @@ export class PCRTestResultsService {
           value: dateToDateTime(date),
         })
       }
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'displayInResult',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      })
     } else if (barCode) {
       pcrTestResultsQuery.push({
         map: '/',
@@ -336,7 +342,7 @@ export class PCRTestResultsService {
         value: result,
       })
     }
-
+    //Apply for Corporate
     if (testType) {
       pcrTestResultsQuery.push({
         map: '/',
