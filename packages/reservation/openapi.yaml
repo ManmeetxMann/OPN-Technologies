@@ -824,7 +824,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentResponse'         
+                $ref: '#/components/schemas/AppointmentResponse'
   /reservation/admin/api/v1/appointments/add-transport-run:
     put:
       description: Add transport run to appointment
