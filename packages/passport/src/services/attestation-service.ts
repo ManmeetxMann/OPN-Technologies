@@ -200,4 +200,8 @@ export class AttestationService {
 
     return attestation
   }
+
+  getAllAttestationByUserId(userId: string): Promise<Attestation[]> {
+    return this.attestationRepository.findWhereEqual('userId', userId)
+  }
 }

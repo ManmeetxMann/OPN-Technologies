@@ -88,7 +88,7 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
     ['Date of Birth', params.dateOfBirth],
     ['Mobile Number', params.phone],
   ]
-
+  /*
   if (params.address) {
     dataPersonal.push(['Home Address', params.address])
   }
@@ -104,7 +104,7 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
   if (params.travelIDIssuingCountry) {
     dataPersonal.push(['Passport Travel ID Issuing Country', params.travelIDIssuingCountry])
   }
-
+  */
   const dataAppointment = [
     [
       'Date of Test (Sample Collection)',
@@ -112,18 +112,18 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
     ],
     ['Date of Result', resultDate],
     ['Ordering Physician', requisitionDoctor],
-    ['Nurse', params.registeredNursePractitioner],
+    //['Nurse', params.registeredNursePractitioner],
   ]
-
+  /*
   if (params.swabMethod) {
     dataAppointment.push(['Swab Method', params.swabMethod])
   }
-
+  */
   const dataTestDetails = [
-    ['Test', 'RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
+    ['Test', 'Immunochromatographic ‘lateral flow’ POC Assay for COVID-19 Antigen detection'],
     [
       'Equipment approved by \n Health Canada',
-      'Allplex 2019-nCoV Assay manufactured by Seegene, Inc.',
+      'Rapid ResponseTM COVID-19 Antigen Rapid Test Device by BTNX',
     ],
   ]
 
@@ -131,7 +131,7 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
 
   return [
     {
-      text: 'The following client completed a SARS-CoV-2 screening test at FH Health:',
+      text: 'The following client completed a Rapid Antigen POC screening test at FH Health:',
       margin: [0, 20, 0, 0],
       style: ['gray-text'],
       lineHeight: 1.2,

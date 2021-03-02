@@ -739,10 +739,10 @@ components:
           action:
             type: string
             enum:
-                - DoNothing
-                - SendInvalid
-                - SendNegative
-                - SendPositive
+              - DoNothing
+              - SendInvalid
+              - SendNegative
+              - SendPositive
           sendAgain:
             type: boolean
             default: false
@@ -999,12 +999,9 @@ paths:
                     - RapidAntigen
                 barCode:
                   type: string
-                organizationId:
-                  type: string
               required:
                 - type
                 - barCode
-                - organizationId
       responses:
         '200':
           description: Successfully Return
@@ -1015,7 +1012,7 @@ paths:
     delete:
       description: Delete appointments for user
       security:
-          - bearerAuthJWT: [ ]
+        - bearerAuthJWT: [ ]
       parameters:
         - in: query
           name: type
@@ -1033,8 +1030,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
-
-  /reservation/acuity_webhook/api/v1/appointment/update:
+  /reservation/acuity_webhook/api/v1/appointment/sync:
     post:
       description: Webhook for updating appointment in firestore
       tags:
@@ -1054,6 +1050,9 @@ paths:
                   type: string
                 id:
                   type: string
+                returnData:
+                  type: boolean
+                  default: false
               required:
                 - calendarID
                 - appointmentTypeID
@@ -1065,39 +1064,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AppointmentResponse'
-  /reservation/acuity_webhook/api/v1/appointment/create:
-    post:
-      description: Webhook for adding barcode to acuity and cloning to firestore
-      tags:
-        - Acuity Webhooks
-      requestBody:
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              additionalProperties: true
-              properties:
-                calendarID:
-                  type: string
-                appointmentTypeID:
-                  type: string
-                action:
-                  type: string
-                id:
-                  type: string
-              required:
-                - calendarID
-                - appointmentTypeID
-                - action
-                - id
-      responses:
-        '200':
-          description: Successfully Return
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AppointmentResponse'
+                $ref: '#/components/schemas/Response'
   /reservation/admin/api/v1/packages:
     post:
       description: Add Package Codes for Orgs
@@ -1341,7 +1308,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PCRTestResultsResponse200'
-  /reservation/admin/api/v1/pcr-test-results/stats:
+  /reservation/admin/api/v1/pcr-test-results/list/stats:
     get:
       description: Retrieve list of PCR Results
       tags:
@@ -1426,6 +1393,13 @@ paths:
           name: barCode
           schema:
             type: string
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
         - in: query
           name: result
           schema:
@@ -2374,7 +2348,7 @@ paths:
                         type: string
                   page:
                     type: number
-  /reservation/admin/api/v1/pcr-test-results/due-deadline/stats:
+  /reservation/admin/api/v1/pcr-test-results/due-deadline/list/stats:
     get:
       description: Retrieve list of PCR Results
       tags:

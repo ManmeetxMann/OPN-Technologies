@@ -30,7 +30,7 @@ import {Config} from '../../../common/src/utils/config'
 import {
   firestoreTimeStampToUTC,
   makeDeadline,
-  makeDeadlineDate,
+  makeRapidDeadline,
   makeFirestoreTimestamp,
 } from '../utils/datetime.helper'
 
@@ -45,14 +45,20 @@ import {
 } from '../utils/base64-converter'
 import {Enterprise} from '../adapter/enterprise'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+
+//Models
 import {
   AppointmentBulkAction,
   BulkData,
   BulkOperationResponse,
   BulkOperationStatus,
 } from '../types/bulk-operation.type'
-import {AdminScanHistoryRepository} from '../respository/admin-scan-history'
 import {AdminScanHistory} from '../models/admin-scan-history'
+import {SyncInProgressTypes} from '../models/sync-progress'
+
+//Repository
+import {AdminScanHistoryRepository} from '../respository/admin-scan-history'
+import {SyncProgressRepository} from '../respository/sync-progress.repository'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -63,11 +69,43 @@ export class AppoinmentService {
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
+  private syncProgressRepository = new SyncProgressRepository(this.dataStore)
   private organizationService = new OrganizationService()
   private enterpriseAdapter = new Enterprise()
 
-  makeDeadline15Minutes(appointment: AppointmentDBModel): Promise<AppointmentDBModel> {
-    return this.appointmentsRepository.setDeadlineDate(appointment.id, makeDeadlineDate())
+  async removeSyncInProgressForAcuity(acuityAppointmentId: number): Promise<void> {
+    this.syncProgressRepository.deleteRecord(
+      SyncInProgressTypes.Acuity,
+      acuityAppointmentId.toString(),
+    )
+  }
+
+  async isSyncingAlreadyInProgress(acuityAppointmentId: number): Promise<boolean> {
+    const inProgress = await this.syncProgressRepository.getByType(
+      SyncInProgressTypes.Acuity,
+      acuityAppointmentId.toString(),
+    )
+    if (!inProgress) {
+      this.syncProgressRepository.save(SyncInProgressTypes.Acuity, acuityAppointmentId.toString())
+      return false
+    }
+    return true
+  }
+
+  async makeDeadlineRapidMinutes(
+    appointment: AppointmentDBModel,
+    pcrTestResultId: string,
+  ): Promise<AppointmentDBModel> {
+    const updatedAppointment = await this.appointmentsRepository.setDeadlineDate(
+      appointment.id,
+      makeRapidDeadline(),
+    )
+    await this.pcrTestResultsRepository.updateProperty(
+      pcrTestResultId,
+      'deadline',
+      updatedAppointment.deadline,
+    )
+    return updatedAppointment
   }
 
   async checkDuplicatedScanHistory(adminId: string, appointmentId: string): Promise<void> {
@@ -332,20 +370,18 @@ export class AppoinmentService {
     return appointments[0]
   }
 
-  async createAppointmentFromAcuity(
+  async createAppointment(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
       organizationId: string
-      appointmentTypeID: number
-      calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult: ResultTypes
       couponCode?: string
       userId?: string
     },
   ): Promise<AppointmentDBModel> {
-    const data = await this.appointmentFromAcuity(acuityAppointment, additionalData)
+    const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
     return this.appointmentsRepository.save(data)
   }
 
@@ -355,23 +391,25 @@ export class AppoinmentService {
     additionalData: {
       barCodeNumber: string
       organizationId: string
-      appointmentTypeID: number
-      calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult: ResultTypes
     },
   ): Promise<AppointmentDBModel> {
-    const data = await this.appointmentFromAcuity(acuityAppointment, additionalData)
+    const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
     return this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity)
   }
 
-  private async appointmentFromAcuity(
+  private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
+    return appointmentTypeID === Config.getInt('ACUITY_APPOINTMENT_TYPE_ID')
+      ? TestTypes.RapidAntigen
+      : TestTypes.PCR
+  }
+
+  private async mapAcuityAppointmentToDBModel(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
       organizationId: string
-      appointmentTypeID: number
-      calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult: ResultTypes
       couponCode?: string
@@ -388,8 +426,6 @@ export class AppoinmentService {
     const {
       barCodeNumber,
       organizationId,
-      appointmentTypeID,
-      calendarID,
       appointmentStatus,
       latestResult,
       couponCode = '',
@@ -413,10 +449,10 @@ export class AppoinmentService {
     return {
       acuityAppointmentId: acuityAppointment.id,
       appointmentStatus,
-      appointmentTypeID,
+      appointmentTypeID: acuityAppointment.appointmentTypeID,
       barCode: barCode,
       canceled: acuityAppointment.canceled,
-      calendarID,
+      calendarID: acuityAppointment.calendarID,
       dateOfAppointment,
       dateOfBirth: acuityAppointment.dateOfBirth,
       dateTime,
@@ -446,6 +482,7 @@ export class AppoinmentService {
       userId: currentUserId,
       locationName: acuityAppointment.calendar,
       locationAddress: acuityAppointment.location,
+      testType: await this.getTestType(acuityAppointment.appointmentTypeID),
     }
   }
 
@@ -762,7 +799,7 @@ export class AppoinmentService {
 
     const dateTime = utcDateTime.format()
     const barCodeNumber = await this.getNextBarCodeNumber()
-    const data = await this.acuityRepository.createAppointment(
+    const acuityAppointment = await this.acuityRepository.createAppointment(
       dateTime,
       appointmentTypeId,
       firstName,
@@ -783,10 +820,8 @@ export class AppoinmentService {
         barCodeNumber,
       },
     )
-    return this.createAppointmentFromAcuity(data, {
+    return this.createAppointment(acuityAppointment, {
       barCodeNumber,
-      appointmentTypeID: appointmentTypeId,
-      calendarID: calendarId,
       appointmentStatus: AppointmentStatus.Pending,
       latestResult: ResultTypes.Pending,
       organizationId,

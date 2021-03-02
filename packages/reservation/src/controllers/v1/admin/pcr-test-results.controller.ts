@@ -90,12 +90,12 @@ class AdminPCRTestResultController implements IControllerBase {
       this.listDueDeadline,
     )
     innerRouter.get(
-      this.path + '/pcr-test-results/due-deadline/stats',
+      this.path + '/pcr-test-results/due-deadline/list/stats',
       dueTodayAuth,
       this.dueDeadlineStats,
     )
     innerRouter.get(
-      this.path + '/pcr-test-results/stats',
+      this.path + '/pcr-test-results/list/stats',
       dueTodayAuth,
       this.getPCRResultsHistoryStats,
     )
@@ -229,6 +229,7 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         result,
         date,
+        testType,
       } = req.query as PcrTestResultsListRequest
       if (!barCode && !deadline && !date) {
         throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
@@ -242,6 +243,7 @@ class AdminPCRTestResultController implements IControllerBase {
           barCode,
           result,
           date,
+          testType,
         },
         isLabUser,
       )

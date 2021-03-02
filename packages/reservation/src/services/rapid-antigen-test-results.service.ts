@@ -2,31 +2,33 @@ import moment from 'moment'
 
 //Common
 import DataStore from '../../../common/src/data/datastore'
-import {LogError, LogInfo} from '../../../common/src/utils/logging-setup'
+import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
-import {EmailService} from '../../../common/src/service/messaging/email-service'
+import {EmailService, EmailMessage} from '../../../common/src/service/messaging/email-service'
 import {Config} from '../../../common/src/utils/config'
 
 //Repository
+import {AdminScanHistoryRepository} from '../respository/admin-scan-history'
 import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
 //Models
-import {ResultTypes} from '../models/appointment'
+import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from '../models/appointment'
 import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
 import {
   RapidAntigenResultTypes,
   RapidAntigenTestResultRequest,
   RapidAlergenResultPDFType,
 } from '../models/rapid-antigen-test-results'
+import {PCRTestResultDBModel} from '../models/pcr-test-results'
 
 import {RapidAntigenPDFContent} from '../templates/rapid-antigen'
-import {PCRTestResultDBModel} from '../models/pcr-test-results'
 
 export class RapidAntigenTestResultsService {
   private dataStore = new DataStore()
-  private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
+  private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
+  private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private emailService = new EmailService()
   private pubSub = new OPNPubSub('rapid-alergen-test-result-topic')
 
@@ -53,8 +55,7 @@ export class RapidAntigenTestResultsService {
     const {id, result, appointmentId, barCode} = testResult
     //Update Test Results
     await this.pcrTestResultsRepository.updateData(id, {
-      displayInResult: true,
-      previousResult: result !== ResultTypes.Pending ? result : null,
+      previousResult: result !== ResultTypes.Pending ? result : null, //There is no Rerun. Hence No Previous Result
       result: this.getResultBasedOnAction(action),
       waitingResult: false,
     })
@@ -62,10 +63,25 @@ export class RapidAntigenTestResultsService {
     //Update Appointments
     await this.appointmentsRepository.changeStatusToReported(appointmentId, reqeustedBy)
 
+    //Remove Sent Result from Scan List
+    await this.adminScanHistoryRepository.deleteScanRecord(
+      reqeustedBy,
+      appointmentId,
+      TestTypes.RapidAntigen,
+    )
+
     //Send Push Notification
-    if (notify) {
+    const actionsWithNotifyEnabled = [RapidAntigenResultTypes.SendPositive]
+    if (notify && actionsWithNotifyEnabled.includes(action)) {
       this.pubSub.publish({
         appointmentID: appointmentId,
+        testResultID: id,
+      })
+    } else {
+      LogInfo('saveAndSendRapidAntigenTestTesults.processAppointment', 'NotNOtified', {
+        appointmentId,
+        action,
+        notify,
       })
     }
 
@@ -109,6 +125,33 @@ export class RapidAntigenTestResultsService {
       })
     }
 
+    if (sendAgain && appointment.appointmentStatus !== AppointmentStatus.Reported) {
+      return Promise.resolve({
+        id: appointmentID,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'Send Again Not Allowed',
+      })
+    }
+
+    if (!sendAgain && appointment.appointmentStatus === AppointmentStatus.Reported) {
+      return Promise.resolve({
+        id: appointmentID,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'Already Reported',
+      })
+    }
+
+    if (!sendAgain && appointment.appointmentStatus !== AppointmentStatus.InProgress) {
+      return Promise.resolve({
+        id: appointmentID,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'Not In Progress',
+      })
+    }
+
     const waitingResults = await this.pcrTestResultsRepository.getWaitingPCRResultsByAppointmentId(
       appointment.id,
     )
@@ -116,30 +159,28 @@ export class RapidAntigenTestResultsService {
     if (waitingResults && waitingResults.length > 0) {
       const waitingResult = waitingResults[0] //Only One results is expected
       return this.saveResult(action, notify, reqeustedBy, waitingResult)
+    } else if (sendAgain) {
+      const newResult = await this.pcrTestResultsRepository.createNewTestResults({
+        appointment,
+        adminId: reqeustedBy,
+        runNumber: 0,
+        reCollectNumber: 0,
+        previousResult: ResultTypes.Pending,
+      })
+      return this.saveResult(action, notify, reqeustedBy, newResult)
     } else {
-      if (sendAgain) {
-        const newResult = await this.pcrTestResultsRepository.createNewTestResults({
-          appointment,
-          adminId: reqeustedBy,
-          runNumber: 0,
-          reCollectNumber: 0,
-          previousResult: ResultTypes.Pending,
-        })
-        return this.saveResult(action, notify, reqeustedBy, newResult)
-      } else {
-        //LOG Critical and Fail
-        LogError(
-          'RapidAntigenTestResultsService:processAppointment',
-          'Failed:NoWaitingResults',
-          appointment,
-        )
-        return Promise.resolve({
-          id: appointmentID,
-          barCode: appointment.barCode,
-          status: BulkOperationStatus.Failed,
-          reason: 'No Results Available',
-        })
-      }
+      //LOG Critical and Fail
+      LogError(
+        'RapidAntigenTestResultsService:processAppointment',
+        'Failed:NoWaitingResults',
+        appointment,
+      )
+      return Promise.resolve({
+        id: appointmentID,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'No Results Available',
+      })
     }
   }
 
@@ -156,7 +197,10 @@ export class RapidAntigenTestResultsService {
   }
 
   async sendTestResultEmail(data: string): Promise<void> {
-    const {appointmentID} = (await this.pubSub.getPublishedData(data)) as {appointmentID: string}
+    const {appointmentID, testResultID} = (await this.pubSub.getPublishedData(data)) as {
+      appointmentID: string
+      testResultID: string
+    }
     const appointment = await this.appointmentsRepository.getAppointmentById(appointmentID)
     if (!appointment) {
       LogInfo('RapidAntigenTestResultsService: sendTestResultEmail', 'InvalidAppointmentId', {
@@ -164,28 +208,91 @@ export class RapidAntigenTestResultsService {
       })
       return
     }
-    const pdfContent = await RapidAntigenPDFContent(appointment, RapidAlergenResultPDFType.Negative)
-    const resultDate = moment(appointment.dateTime.toDate()).format('LL')
+    const testResults = await this.pcrTestResultsRepository.get(testResultID)
+    if (!testResults) {
+      LogInfo('RapidAntigenTestResultsService: sendTestResultEmail', 'InvalidTestResultsID', {
+        testResultID,
+      })
+      return
+    }
 
-    await this.emailService.send({
-      templateId: Config.getInt('TEST_RESULT_RAPID_ANTIGEN_TEMPLATE_ID'),
+    const rapidAlergenAllowedResults = [
+      ResultTypes.Negative,
+      ResultTypes.Positive,
+      ResultTypes.Invalid,
+    ]
+    if (!rapidAlergenAllowedResults.includes(testResults.result)) {
+      LogWarning(
+        'RapidAntigenTestResultsService: sendTestResultEmail',
+        'InvalidResultSendRequested',
+        {
+          appointmentID,
+          testResultID,
+          result: testResults.result,
+        },
+      )
+      return
+    }
+
+    const emailSendStatus = await this.emailService.send(
+      await this.getEmailData(appointment, testResults.result),
+    )
+
+    LogInfo('RapidAntigenTestResultsService: sendTestResultEmail', 'EmailSendSuccess', {
+      emailSendStatus,
+    })
+  }
+
+  async getEmailData(appointment: AppointmentDBModel, result: ResultTypes): Promise<EmailMessage> {
+    const resultDate = moment(appointment.dateTime.toDate()).format('LL')
+    const templateId =
+      result === ResultTypes.Invalid
+        ? Config.getInt('TEST_RESULT_INVALID_RAPID_ANTIGEN_TEMPLATE_ID')
+        : Config.getInt('TEST_RESULT_RAPID_ANTIGEN_TEMPLATE_ID')
+    const emailData = {
+      templateId,
       to: [{email: appointment.email, name: `${appointment.firstName} ${appointment.lastName}`}],
       params: {
         BARCODE: appointment.barCode,
         DATE_OF_RESULT: resultDate,
         FIRSTNAME: appointment.firstName,
       },
-      attachment: [
-        {
-          content: pdfContent,
-          name: `FHHealth.ca Result - ${appointment.barCode} - ${resultDate}.pdf`,
-        },
-      ],
       bcc: [
         {
           email: Config.get('TEST_RESULT_BCC_EMAIL'),
         },
       ],
-    })
+    }
+
+    if (result !== ResultTypes.Invalid) {
+      const pdfContent = await RapidAntigenPDFContent(
+        appointment,
+        await this.getPDFType(appointment.id, result),
+      )
+      const attachment = [
+        {
+          content: pdfContent,
+          name: `FHHealth.ca Result - ${appointment.barCode}.pdf`,
+        },
+      ]
+      return {...emailData, attachment}
+    }
+    return emailData
+  }
+
+  private async getPDFType(
+    appointmentID: string,
+    result: ResultTypes,
+  ): Promise<RapidAlergenResultPDFType> {
+    if (result === ResultTypes.Negative) {
+      return RapidAlergenResultPDFType.Negative
+    } else if (result === ResultTypes.Positive) {
+      return RapidAlergenResultPDFType.Positive
+    } else {
+      LogError('RapidAntigenTestResultsService: getPDFType', 'Bad Result Type', {
+        appointmentID,
+        result: result,
+      })
+    }
   }
 }

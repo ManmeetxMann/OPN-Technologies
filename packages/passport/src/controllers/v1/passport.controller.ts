@@ -126,6 +126,7 @@ class PassportController implements IControllerBase {
           [0]: answer.answer,
           [1]: answer.additionalValue ?? null,
         })) as AttestationAnswers,
+        organizationId,
         locationId: orgLocations[0].id, // to be removed
         userId: user.id,
         appliesTo: userIds,
