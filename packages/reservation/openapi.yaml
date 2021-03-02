@@ -2507,6 +2507,82 @@ paths:
                         type: string
                   page:
                     type: number
+  /reservation/api/v1/appointments/{id}:
+    get:
+      description: Get user appointment by id
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                      locationName:
+                        type: string
+                      locationAddress:
+                        type: string
+                      firstName:
+                        type: string
+                      lastName:
+                        type: string
+                      dateOfAppointment:
+                        type: string
+                      timeOfAppointment:
+                        type: string
+                      QRCode:
+                        type: string
+                      dateOfBirth:
+                        type: string
+                      showQrCode:
+                        type: boolean
+                    required:
+                      - id
+                      - locationName
+                      - locationAddress
+                      - firstName
+                      - lastName
+                      - dateOfAppointment
+                      - timeOfAppointment
+                      - QRCode
+                      - dateOfBirth
+                      - showQrCode
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
   /reservation/admin/api/v1/appointments/barcode/regenerate:
     put:
       description: Get user appointment list
