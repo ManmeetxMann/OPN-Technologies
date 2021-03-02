@@ -19,7 +19,8 @@ const tz = Config.get('DEFAULT_TIME_ZONE')
 
 export type DecoratedRecommendation = {
   id: string | null
-  timestamp: string | null
+  title: string
+  body: string
   recommendation: Recommendations
 }
 
@@ -131,32 +132,32 @@ export class RecommendationService {
     return [Recommendations.BadgeExpiry, Recommendations.ViewPositivePCR]
   }
 
+  // TODO: Stub and add localization
   private decorateRecommendation = (
     recommendation: Recommendations,
     items: ActionItem,
   ): DecoratedRecommendation => {
     let id = null
-    let timestamp = null
+    const title = `${recommendation} title`
+    const body = `${recommendation} body`
     if (
       [Recommendations.ViewNegativeTemp, Recommendations.ViewPositiveTemp].includes(recommendation)
     ) {
       id = items.latestTemperature?.temperatureId
-      timestamp = safeTimestamp(items.latestTemperature?.timestamp).toISOString()
     } else if (
       [Recommendations.ViewNegativePCR, Recommendations.ViewPositivePCR].includes(recommendation)
     ) {
       id = items.PCRTestResult?.testId
-      timestamp = safeTimestamp(items.PCRTestResult?.timestamp).toISOString()
     } else if (
       [Recommendations.CheckInPCR, Recommendations.BookingDetailsPCR].includes(recommendation)
     ) {
       id = items.scheduledPCRTest?.testId
-      timestamp = safeTimestamp(items.scheduledPCRTest?.timestamp).toISOString()
     }
     return {
       id,
-      timestamp,
       recommendation,
+      title,
+      body,
     }
   }
 

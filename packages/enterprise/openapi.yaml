@@ -1210,9 +1210,10 @@ components:
         id:
           type: string
           nullable: true
-        timestamp:
+        title:
           type: string
-          nullable: true
+        body:
+          type: string
         recommendation:
           type: string
           enum:
@@ -1924,9 +1925,23 @@ components:
       additionalProperties: false
       properties:
         data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Test'
+          type: object
+          properties:
+            organization:
+              $ref: '#/components/schemas/Organization'
+            passes:
+              type: object
+              properties:
+                user:
+                  $ref: '#/components/schemas/UserV3'
+                expiry:
+                  type: string
+                dateOfBirth:
+                  type: string
+                tests:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Test'
         status:
           type: object
           additionalProperties: false
@@ -3878,7 +3893,7 @@ paths:
                 $ref: '#/components/schemas/ResponseOfRecommendations'
   /enterprise/api/v3/health-pass:
     get:
-      summary: recommendations for user
+      summary: health passes for user and dependants
       security:
         - bearerAuthJWT: []
       parameters:
