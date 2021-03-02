@@ -6,14 +6,14 @@ import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import {getUserId} from '../../../../common/src/utils/auth'
-import { ResourceNotFoundException } from '../../../../common/src/exceptions/resource-not-found-exception'
-import { LogWarning } from '../../../../common/src/utils/logging-setup'
+import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
+import {LogWarning} from '../../../../common/src/utils/logging-setup'
 
 //Service
 import {AppoinmentService} from '../../services/appoinment.service'
 import {PCRTestResultsService} from '../../services/pcr-test-results.service'
 //Models
-import { singlePcrTestResultDTO, SingleTestResultsRequest } from '../../models/pcr-test-results'
+import {singlePcrTestResultDTO, SingleTestResultsRequest} from '../../models/pcr-test-results'
 
 class TestResultsController implements IControllerBase {
   public path = '/reservation/api/v1'
@@ -79,7 +79,7 @@ class TestResultsController implements IControllerBase {
         LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
           userId,
           resultId: id,
-          appointmentId: pcrTestResult.appointmentId
+          appointmentId: pcrTestResult.appointmentId,
         })
         throw new ResourceNotFoundException(`${id} does not exist`)
       }
