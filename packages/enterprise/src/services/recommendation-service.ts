@@ -66,7 +66,7 @@ export class RecommendationService {
       // PENDING
       return [Recommendations.StatusInfo, Recommendations.CompleteAssessment]
     }
-    if (passport.status === PassportStatuses.Proceed) {
+    if (passport?.status === PassportStatuses.Proceed) {
       // PROCEED
       return [Recommendations.PassAvailable, Recommendations.UpdateAssessment]
     }
@@ -83,7 +83,7 @@ export class RecommendationService {
       passport.status == PassportStatuses.TemperatureCheckRequired
     ) {
       // PENDING
-      if (passport.status == PassportStatuses.TemperatureCheckRequired) {
+      if (passport?.status == PassportStatuses.TemperatureCheckRequired) {
         return [Recommendations.StatusInfo, Recommendations.TempCheckRequired]
       }
       return [Recommendations.StatusInfo, Recommendations.CompleteAssessment]
