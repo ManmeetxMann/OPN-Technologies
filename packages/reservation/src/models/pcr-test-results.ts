@@ -357,6 +357,9 @@ export type SinglePcrTestResultUi = {
   equipment: string
   manufacturer: string
   resultSpecs: Spec[]
+  style: PCRTestResultStyle
+  testName: string
+  doctorId: string
 }
 
 enum LabData {
@@ -395,4 +398,7 @@ export const singlePcrTestResultDTO = (
     label: resultKey,
     value: resultValue,
   })),
+  style: resultToStyle(pcrTestResult.result),
+  testName: 'SARS COV-2',
+  doctorId: 'DR1',
 })
