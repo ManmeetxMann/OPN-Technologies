@@ -27,7 +27,6 @@ import {
   PcrTestResultsListRequest,
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
-  SinglePcrTestResultsRequest,
   singlePcrTestResultDTO,
   SingleTestResultsRequest,
 } from '../../../models/pcr-test-results'
