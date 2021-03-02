@@ -335,6 +335,8 @@ type Spec = {
 }
 
 export type SinglePcrTestResultUi = {
+  firstName: string
+  lastName: string
   email: string
   phone: string
   ohipCard?: string
@@ -369,6 +371,8 @@ export const singlePcrTestResultDTO = (
   appointment: AppointmentDBModel,
 ): SinglePcrTestResultUi => ({
   email: appointment.email,
+  firstName: appointment.firstName,
+  lastName: appointment.lastName,
   phone: `${appointment.phone}`,
   ohipCard: appointment.ohipCard,
   dateOfBirth: appointment.dateOfBirth,

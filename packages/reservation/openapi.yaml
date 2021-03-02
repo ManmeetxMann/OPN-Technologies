@@ -2136,6 +2136,10 @@ paths:
                     type: object
                     additionalProperties: false
                     properties:
+                      firstName:
+                        type: string
+                      lastName:
+                        type: string
                       email:
                         type: string
                       phone:
