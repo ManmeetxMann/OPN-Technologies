@@ -187,6 +187,8 @@ export class RecommendationService {
     attestationId: string,
     status: PassportStatus,
   ): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
     const repo = new UserActionsRepository(this.dataStore, userId)
     await repo.updateProperty(organizationId, 'latestAttestation', {
       attestationId,
@@ -201,6 +203,8 @@ export class RecommendationService {
     status: PassportStatus,
     expiry: string,
   ): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
     const repo = new UserActionsRepository(this.dataStore, userId)
     await repo.updateProperty(organizationId, 'latestPassport', {
       passportId,
@@ -216,6 +220,8 @@ export class RecommendationService {
     temperature: string,
     status: TemperatureStatuses,
   ): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
     const repo = new UserActionsRepository(this.dataStore, userId)
     await repo.updateProperty(organizationId, 'latestTemperature', {
       temperatureId,
@@ -230,6 +236,8 @@ export class RecommendationService {
     testId: string,
     date: string,
   ): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
     const repo = new UserActionsRepository(this.dataStore, userId)
     await repo.updateProperty(organizationId, 'scheduledPCRTest', {
       testId,
@@ -238,6 +246,8 @@ export class RecommendationService {
     })
   }
   async deletePCRTest(userId: string, organizationId: string): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
     const repo = new UserActionsRepository(this.dataStore, userId)
     await repo.updateProperty(organizationId, 'scheduledPCRTest', null)
   }
@@ -247,6 +257,8 @@ export class RecommendationService {
     testId: string,
     result: ResultTypes,
   ): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
     const repo = new UserActionsRepository(this.dataStore, userId)
     await repo.updateProperty(organizationId, 'PCRTestResult', {
       testId,

@@ -32,12 +32,17 @@ class RecommendationController implements IControllerBase {
     this.router.use(root, route)
   }
 
-  private parseMessage(message: {
+  private async parseMessage(message: {
     data: string
     attributes: Record<string, string>
-  }): {userId: string; organizationId: string; actionType: string; data: Record<string, unknown>} {
+  }): Promise<{
+    userId: string
+    organizationId: string
+    actionType: string
+    data: Record<string, unknown>
+  }> {
     const {data, attributes} = message
-    const payload = OPNPubSub.getPublishedData(data)
+    const payload = await OPNPubSub.getPublishedData(data)
     return {
       userId: attributes.userId,
       organizationId: attributes.organizationId,
@@ -48,7 +53,7 @@ class RecommendationController implements IControllerBase {
 
   newPassport: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {userId, organizationId, data} = this.parseMessage(req.body.message)
+      const {userId, organizationId, data} = await this.parseMessage(req.body.message)
       await this.recService.addPassport(
         userId,
         organizationId,
@@ -63,7 +68,7 @@ class RecommendationController implements IControllerBase {
   }
   newAttestation: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {userId, organizationId, data} = this.parseMessage(req.body.message)
+      const {userId, organizationId, data} = await this.parseMessage(req.body.message)
       await this.recService.addAttestation(
         userId,
         organizationId,
@@ -77,7 +82,7 @@ class RecommendationController implements IControllerBase {
   }
   newTemperature: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {userId, organizationId, data} = this.parseMessage(req.body.message)
+      const {userId, organizationId, data} = await this.parseMessage(req.body.message)
       await this.recService.addTemperature(
         userId,
         organizationId,
@@ -92,7 +97,7 @@ class RecommendationController implements IControllerBase {
   }
   newPCR: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {userId, organizationId, actionType, data} = this.parseMessage(req.body.message)
+      const {userId, organizationId, actionType, data} = await this.parseMessage(req.body.message)
       const isAppointment = !data.result
       if (actionType === 'canceled') {
         await this.recService.deletePCRTest(userId, organizationId)

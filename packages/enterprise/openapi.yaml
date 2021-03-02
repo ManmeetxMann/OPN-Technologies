@@ -3901,7 +3901,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#components/schemas/PubSubRequest'
+              $ref: '#/components/schemas/PubSubRequest'
       responses:
         '200':
           description: Successfully digested
@@ -3912,7 +3912,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#components/schemas/PubSubRequest'
+              $ref: '#/components/schemas/PubSubRequest'
       responses:
         '200':
           description: Successfully digested
@@ -3923,7 +3923,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#components/schemas/PubSubRequest'
+              $ref: '#/components/schemas/PubSubRequest'
       responses:
         '200':
           description: Successfully digested
@@ -3934,7 +3934,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#components/schemas/PubSubRequest'
+              $ref: '#/components/schemas/PubSubRequest'
       responses:
         '200':
           description: Successfully digested
