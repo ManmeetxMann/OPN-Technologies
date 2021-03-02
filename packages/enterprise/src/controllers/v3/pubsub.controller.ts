@@ -2,6 +2,7 @@ import * as express from 'express'
 import {Handler, Router} from 'express'
 
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
+import OPNPubSub from '../../../../common/src/service/google/pub_sub'
 
 import {RecommendationService} from '../../services/recommendation-service'
 
@@ -36,7 +37,7 @@ class RecommendationController implements IControllerBase {
     attributes: Record<string, string>
   }): {userId: string; organizationId: string; actionType: string; data: Record<string, unknown>} {
     const {data, attributes} = message
-    const payload = JSON.parse(Buffer.from(data, 'base64').toString())
+    const payload = OPNPubSub.getPublishedData(data)
     return {
       userId: attributes.userId,
       organizationId: attributes.organizationId,
