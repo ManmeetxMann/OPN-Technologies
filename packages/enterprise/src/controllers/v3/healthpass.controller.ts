@@ -38,14 +38,15 @@ class RecommendationController implements IControllerBase {
       const allUsers: User[] = [authenticatedUser, ...allDependants]
       const passes = await Promise.all(
         allUsers.map(async (user) => {
-          const [tests, group] = await Promise.all([
+          const [pass, group] = await Promise.all([
             this.passService.getHealthPass(user.id, organizationId as string),
-            this.orgService.getUserGroup(organizationId, user.id),
+            this.orgService.getUserGroup(organizationId as string, user.id),
           ])
           return {
             user: userDTOResponse(user),
             group: organizationGroupDTOResponse(group),
-            tests, // already in DTO form
+            ...pass,
+            dateOfBirth: pass.expiry ?? null, // TODO: Stub
           }
         }),
       )
