@@ -13,6 +13,13 @@ export class TemperatureService {
     return this.temperatureRepository.add(temperature)
   }
 
+  getAllByUserAndOrgId(userId: string, organizationId: string): Promise<TemperatureDBModel[]> {
+    return this.temperatureRepository
+      .getQueryFindWhereEqual('userId', userId)
+      .where('organizationId', '==', organizationId)
+      .fetch()
+  }
+
   getAll(): Promise<TemperatureDBModel[]> {
     return this.temperatureRepository.fetchAll()
   }

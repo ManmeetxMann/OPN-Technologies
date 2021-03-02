@@ -1308,7 +1308,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PCRTestResultsResponse200'
-  /reservation/admin/api/v1/pcr-test-results/stats:
+  /reservation/admin/api/v1/pcr-test-results/list/stats:
     get:
       description: Retrieve list of PCR Results
       tags:
@@ -2312,7 +2312,7 @@ paths:
                         type: string
                   page:
                     type: number
-  /reservation/admin/api/v1/pcr-test-results/due-deadline/stats:
+  /reservation/admin/api/v1/pcr-test-results/due-deadline/list/stats:
     get:
       description: Retrieve list of PCR Results
       tags:
@@ -2474,6 +2474,7 @@ paths:
           name: organizationid
           schema:
             type: string
+          required: true
       responses:
         '200':
           description: Successfully Return

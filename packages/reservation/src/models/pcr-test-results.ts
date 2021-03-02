@@ -77,7 +77,7 @@ export type PCRTestResultConfirmRequest = {
 }
 
 export enum PCRTestResultStyle {
-  Postive = 'RED',
+  Positive = 'RED',
   Negative = 'GREEN',
   Invalid = 'YELLOW',
   Inconclusive = 'BLUE',
@@ -130,6 +130,7 @@ export type PCRTestResultData = {
   barCode: string
   adminId: string
   resultSpecs?: PCRResultSpecsForSending
+  userId?: string
 }
 
 export type PCRTestResultDBModel = PCRTestResultData & {
