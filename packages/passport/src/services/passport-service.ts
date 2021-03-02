@@ -1,15 +1,19 @@
-import {Passport, PassportModel, PassportStatus, PassportStatuses} from '../models/passport'
+import * as _ from 'lodash'
+import moment from 'moment'
+import {firestore} from 'firebase-admin'
+
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {ForbiddenException} from '../../../common/src/exceptions/forbidden-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {UserService} from '../../../common/src/service/user/user-service'
+import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {now, serverTimestamp} from '../../../common/src/utils/times'
-import moment from 'moment'
-import {firestore} from 'firebase-admin'
-import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
 import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
+
+import {Passport, PassportModel, PassportStatus, PassportStatuses} from '../models/passport'
+
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
@@ -23,8 +27,24 @@ const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => (
 export class PassportService {
   private dataStore = new DataStore()
   private userService = new UserService()
+  private pubsub = new OPNPubSub('passport')
   private passportRepository = new PassportModel(this.dataStore)
   private identifierRepository = new IdentifiersModel(this.dataStore)
+
+  private postPubsub(passport: Passport) {
+    this.pubsub.publish(
+      {
+        id: passport.id,
+        status: passport.status,
+        expiry: safeTimestamp(passport.validUntil).toISOString(),
+      },
+      {
+        userId: passport.userId,
+        organizationId: passport.organizationId,
+        actionType: 'created',
+      },
+    )
+  }
 
   async findTheLatestValidPassports(
     userIds: string[],
@@ -111,6 +131,10 @@ export class PassportService {
         ),
       )
       .then(mapDates)
+      .then((passport) => {
+        this.postPubsub(passport)
+        return passport
+      })
   }
 
   findOneByToken(token: string, requireValid = false): Promise<Passport> {
@@ -286,6 +310,8 @@ export class PassportService {
         `Passport ${passport.id} must have status temperature_check_required to update`,
       )
     }
-    return this.passportRepository.updateProperty(passport.id, 'status', status)
+    const result = await this.passportRepository.updateProperty(passport.id, 'status', status)
+    this.postPubsub(result)
+    return result
   }
 }
