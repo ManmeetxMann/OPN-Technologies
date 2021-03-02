@@ -264,6 +264,10 @@ export type SinglePcrTestResultsRequest = {
   pcrTestResultId?: string
 }
 
+export type SingleTestResultsRequest = {
+  id: string
+}
+
 export type PcrTestResultsListRequest = {
   organizationId?: string
   deadline?: string

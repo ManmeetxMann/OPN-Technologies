@@ -2215,7 +2215,7 @@ paths:
                       - testType
                       - equipment
                       - manufacturer
-  /reservation/admin/api/v1/test-results/{pcrTestResultId}:
+  /reservation/admin/api/v1/test-results/{id}:
     get:
       description: Retrieve list of PCR Results
       tags:
