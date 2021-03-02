@@ -9,8 +9,9 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {toDateFormat} from '../../../common/src/utils/times'
 import {
-  dateToDateTime,
   formatDateRFC822Local,
+  formatStringDateRFC822Local,
+  dateToDateTime,
   makeDeadlineForFilter,
 } from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
@@ -68,6 +69,10 @@ import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {TestRunsService} from '../services/test-runs.service'
+import {AttestationService} from '../../../passport/src/services/attestation-service'
+import {TemperatureService} from './temperature.service'
+import {mapTemperatureStatusToResultTypes} from '../models/temperature'
+import {mapAttestationStatusToResultTypes} from '../../../passport/src/models/attestation'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -86,6 +91,8 @@ export class PCRTestResultsService {
     ResultTypes.PresumptivePositive,
   ]
   private testRunsService = new TestRunsService()
+  private attestationService = new AttestationService()
+  private temperatureService = new TemperatureService()
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
     //Validate Result Exists for barCode and throws exception
@@ -1505,9 +1512,15 @@ export class PCRTestResultsService {
     const appoinmentIds = pcrResults
       .filter(({result}) => result === ResultTypes.Pending)
       .map(({appointmentId}) => appointmentId)
-    const appoinments = await this.appointmentsRepository.getAppointmentsDBByIds(appoinmentIds)
+    const [appoinments, attestations, temperatures] = await Promise.all([
+      this.appointmentsRepository.getAppointmentsDBByIds(appoinmentIds),
+      this.attestationService.getAllAttestationByUserId(userId),
+      this.temperatureService.getAllByUserAndOrgId(userId, organizationId),
+    ])
 
-    return pcrResults.map((pcr) => {
+    const testResult = []
+
+    pcrResults.map((pcr) => {
       let result = pcr.result
 
       if (result === ResultTypes.Pending) {
@@ -1516,7 +1529,7 @@ export class PCRTestResultsService {
         result = ResultTypes[appoinment.appointmentStatus]
       }
 
-      return {
+      testResult.push({
         id: pcr.id,
         type: pcr.testType ?? TestTypes.PCR,
         name: pcr.testType ?? TestTypes.PCR,
@@ -1524,7 +1537,33 @@ export class PCRTestResultsService {
         style: resultToStyle(result),
         result,
         detailsAvailable: result !== ResultTypes.Pending,
-      }
+      })
     })
+
+    attestations.map((attestation) => {
+      testResult.push({
+        id: attestation.id,
+        type: TestTypes.Attestation,
+        name: 'Self-Attestation',
+        testDateTime: formatStringDateRFC822Local(attestation.attestationTime),
+        style: resultToStyle(mapAttestationStatusToResultTypes(attestation.status)),
+        result: mapAttestationStatusToResultTypes(attestation.status),
+        detailsAvailable: true,
+      })
+    })
+
+    temperatures.map((temperature) => {
+      testResult.push({
+        id: temperature.id,
+        type: TestTypes.TemperatureCheck,
+        name: 'Temperature Check',
+        testDateTime: formatDateRFC822Local(temperature.timestamps.createdAt),
+        style: resultToStyle(mapTemperatureStatusToResultTypes(temperature.status)),
+        result: mapTemperatureStatusToResultTypes(temperature.status),
+        detailsAvailable: true,
+      })
+    })
+
+    return testResult
   }
 }
