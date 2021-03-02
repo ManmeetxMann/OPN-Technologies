@@ -330,7 +330,14 @@ export type TestResutsDTO = {
   detailsAvailable: boolean
 }
 
+type Spec = {
+  label: string
+  value: string | boolean | Date
+}
+
 export type SinglePcrTestResultUi = {
+  firstName: string
+  lastName: string
   email: string
   phone: string
   ohipCard?: string
@@ -350,18 +357,10 @@ export type SinglePcrTestResultUi = {
   testType: string
   equipment: string
   manufacturer: string
-  resultSpecs: {
-    calRed61Ct: string
-    calRed61RdRpGene: string
-    famCt: string
-    famEGene: string
-    hexCt: string
-    hexIC: string
-    quasar670Ct: string
-    quasar670NGene: string
-    comment?: string
-    autoResult: ResultTypes
-  }
+  resultSpecs: Spec[]
+  style: PCRTestResultStyle
+  testName: string
+  doctorId: string
 }
 
 enum LabData {
@@ -376,6 +375,8 @@ export const singlePcrTestResultDTO = (
   appointment: AppointmentDBModel,
 ): SinglePcrTestResultUi => ({
   email: appointment.email,
+  firstName: appointment.firstName,
+  lastName: appointment.lastName,
   phone: `${appointment.phone}`,
   ohipCard: appointment.ohipCard,
   dateOfBirth: appointment.dateOfBirth,
@@ -394,16 +395,11 @@ export const singlePcrTestResultDTO = (
   testType: LabData.testType,
   equipment: LabData.equipment,
   manufacturer: LabData.manufacturer,
-  resultSpecs: {
-    calRed61Ct: pcrTestResult.resultSpecs.calRed61Ct,
-    calRed61RdRpGene: pcrTestResult.resultSpecs.calRed61RdRpGene,
-    famCt: pcrTestResult.resultSpecs.famCt,
-    famEGene: pcrTestResult.resultSpecs.famEGene,
-    hexCt: pcrTestResult.resultSpecs.hexCt,
-    hexIC: pcrTestResult.resultSpecs.hexIC,
-    quasar670Ct: pcrTestResult.resultSpecs.quasar670Ct,
-    quasar670NGene: pcrTestResult.resultSpecs.quasar670NGene,
-    comment: pcrTestResult.resultSpecs.comment,
-    autoResult: pcrTestResult.resultSpecs.autoResult,
-  },
+  resultSpecs: Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
+    label: resultKey,
+    value: resultValue,
+  })),
+  style: resultToStyle(pcrTestResult.result),
+  testName: 'SARS COV-2',
+  doctorId: 'DR1',
 })

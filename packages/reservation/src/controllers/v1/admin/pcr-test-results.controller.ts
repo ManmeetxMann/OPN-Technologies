@@ -104,6 +104,11 @@ class AdminPCRTestResultController implements IControllerBase {
       dueTodayAuth,
       this.onePcrTestResult,
     )
+    innerRouter.get(
+      this.path + '/test-results/:pcrTestResultId',
+      dueTodayAuth,
+      this.onePcrTestResult,
+    )
 
     this.router.use('/', innerRouter)
   }
