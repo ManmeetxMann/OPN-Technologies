@@ -3,6 +3,7 @@ import {Handler, Router} from 'express'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
+import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 
 import {HealthpassService} from '../../services/healthpass-service'
 
@@ -28,7 +29,7 @@ class RecommendationController implements IControllerBase {
         authenticatedUser.id as string,
         organizationId as string,
       )
-      res.json(pass)
+      res.json(actionSucceed(pass))
     } catch (error) {
       next(error)
     }
