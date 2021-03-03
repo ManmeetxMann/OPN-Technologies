@@ -1,6 +1,7 @@
 import {GroupedSpecs} from '../models/pcr-test-results'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
-type Spec = {
+export type Spec = {
   label: string
   value: string | boolean | Date
 }
@@ -32,6 +33,26 @@ const groups = [
     columns: ['comments'],
   },
 ]
+
+const validations = [
+  {
+    column: 'hexCt',
+    validate: (hexCt: string | boolean | Date): void => {
+      if (hexCt instanceof Date || Number(hexCt) > 40) {
+        throw new BadRequestException(`Invalid Hex Ct. Should be less than 40`)
+      }
+    },
+  },
+]
+
+export const validateAnalysis = (specs: Spec[]) => {
+  specs.forEach((spec) => {
+    const validator = validations.find(({column}) => column === spec.label)
+    if (validator) {
+      validator.validate(spec.value)
+    }
+  })
+}
 
 export const groupByChannel = (specs: Spec[]): GroupedSpecs[] =>
   groups

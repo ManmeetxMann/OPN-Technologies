@@ -73,6 +73,8 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 import {TemperatureService} from './temperature.service'
 import {mapTemperatureStatusToResultTypes} from '../models/temperature'
 import {mapAttestationStatusToResultTypes} from '../../../passport/src/models/attestation'
+import {TestResultsMetaData, TestResultSpecsForSending} from '../models/test-results'
+import {Spec} from '../utils/analysis.helper'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -550,6 +552,153 @@ export class PCRTestResultsService {
       return true
     }
     return false
+  }
+
+  async handleResultSaveAndSend(
+    metaData: TestResultsMetaData,
+    resultAnalysis: Spec[],
+    barCode: string,
+    isSingleResult: boolean,
+    sendUpdatedResults: boolean,
+    adminId: string,
+  ): Promise<PCRTestResultDBModel> {
+    if (metaData.action === PCRResultActions.DoNothing) {
+      LogInfo('handlePCRResultSaveAndSend', 'DoNothingSelected HenceIgnored', {
+        barCode: barCode,
+      })
+      return
+    }
+
+    const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
+    const pcrTestResults = await this.getPCRResultsByBarCode(barCode)
+
+    const waitingPCRTestResult = await this.getWaitingPCRTestResult(pcrTestResults)
+    const isAlreadyReported = appointment.appointmentStatus === AppointmentStatus.Reported
+    const inProgress = appointment.appointmentStatus === AppointmentStatus.InProgress
+    const finalResult = this.getFinalResult(metaData.action, metaData.autoResult, barCode)
+
+    if (
+      !this.whiteListedResultsTypes.includes(finalResult) &&
+      metaData.action === PCRResultActions.SendThisResult
+    ) {
+      LogInfo('handlePCRResultSaveAndSend', 'NoAllowedActionRequested', {
+        barCode: barCode,
+        finalResult: finalResult,
+        action: metaData.action,
+      })
+      throw new BadRequestException(
+        `Barcode: ${barCode} not allowed use action SendThisResult for ${finalResult} Results`,
+      )
+    }
+
+    if (!waitingPCRTestResult && (!isSingleResult || !isAlreadyReported)) {
+      console.error(
+        `handlePCRResultSaveAndSend: FailedToSend NotWaitingForResults SingleResult: ${isSingleResult} Current Appointment Status: ${appointment.appointmentStatus}`,
+      )
+      throw new ResourceNotFoundException(
+        `PCR Test Result with barCode ${barCode} is not waiting for results.`,
+      )
+    }
+
+    if (
+      !waitingPCRTestResult &&
+      isSingleResult &&
+      isAlreadyReported &&
+      !this.allowedForResend(metaData.action)
+    ) {
+      console.error(
+        `handlePCRResultSaveAndSend: FailedToSend Already Reported not allowed to do Action: ${metaData.action}`,
+      )
+      throw new BadRequestException(
+        `PCR Test Result with barCode ${barCode} is already Reported. It is not allowed to do ${metaData.action} `,
+      )
+    }
+
+    const latestPCRTestResult = await this.getLatestPCRTestResult(pcrTestResults)
+    if (!waitingPCRTestResult && isSingleResult && isAlreadyReported && !sendUpdatedResults) {
+      console.info(
+        `handlePCRResultSaveAndSend: SendUpdatedResult Flag Requested PCR Result ID ${latestPCRTestResult.id} Already Exists`,
+      )
+      throw new ResultAlreadySentException(
+        `For ${latestPCRTestResult.barCode}, a "${
+          latestPCRTestResult.result
+        }" result has already been sent on ${toDateFormat(
+          latestPCRTestResult.updatedAt,
+        )}. Do you wish to save updated results and send again to client?`,
+      )
+    }
+
+    if (waitingPCRTestResult && !inProgress) {
+      console.error(
+        `handlePCRResultSaveAndSend: Failed PCRResultID ${waitingPCRTestResult.id} Barcode: ${barCode} is not InProgress`,
+      )
+      throw new BadRequestException(`PCR Test Result with barCode ${barCode} is not InProgress`)
+    }
+
+    //Create New Waiting Result for Resend
+    const runNumber = 0 //Not Relevant for Resend
+    const reCollectNumber = 0 //Not Relevant for Resend
+    const testResult =
+      isSingleResult && !waitingPCRTestResult
+        ? await this.pcrTestResultsRepository.createNewTestResults({
+            appointment,
+            adminId,
+            runNumber,
+            reCollectNumber,
+            previousResult: latestPCRTestResult.result,
+          })
+        : waitingPCRTestResult
+
+    const actionsForRecollection = [
+      PCRResultActions.RequestReCollect,
+      PCRResultActions.RecollectAsInvalid,
+      PCRResultActions.RecollectAsInconclusive,
+    ]
+    //Add Test Results to Waiting Result
+    const pcrResultDataForDbUpdate = {
+      resultMetaData: metaData,
+      resultAnalysis,
+      barCode,
+      deadline: appointment.deadline, //TODO: Remove
+      result: finalResult,
+      firstName: appointment.firstName, //TODO: Remove
+      lastName: appointment.lastName, //TODO: Remove
+      appointmentId: appointment.id, //TODO: Remove
+      organizationId: appointment.organizationId, //TODO: Remove
+      dateTime: appointment.dateTime, //TODO: Remove
+      waitingResult: false,
+      displayInResult: true,
+      recollected: actionsForRecollection.includes(metaData.action),
+      confirmed: false,
+    }
+
+    const pcrResultRecorded = await this.pcrTestResultsRepository.updateData(
+      testResult.id,
+      pcrResultDataForDbUpdate,
+    )
+
+    await this.handleActions({
+      resultData, //TODO CHECK THIS @TSOVAK
+      appointment,
+      runNumber: testResult.runNumber,
+      reCollectNumber: testResult.reCollectNumber,
+      result: finalResult,
+    })
+
+    //Send Notification
+    if (metaData.notify) {
+      const pcrResultDataForEmail = {
+        ...pcrResultDataForDbUpdate,
+        ...appointment,
+      }
+      await this.sendNotification(pcrResultDataForEmail, metaData.action)
+    } else {
+      console.log(
+        `handlePCRResultSaveAndSend: Not Notification is sent for ${barCode}. Notify is off.`,
+      )
+    }
+
+    return pcrResultRecorded
   }
 
   async handlePCRResultSaveAndSend(

@@ -4,7 +4,7 @@ import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datet
 
 import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
-import {groupByChannel} from '../utils/channel-grouper'
+import {groupByChannel} from '../utils/analysis.helper'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -112,7 +112,7 @@ type PCRResultsForHistory = PCRResultSpecs & {
   runNumber: string
 }
 
-export type PCRTestResultRequestData = PCRResultSpecsForSending & {
+export type PCRTestResultRequestData = PCRResultSpecsForSending & { // WORKLING ONTHIS
   barCode: string
   sendUpdatedResults?: boolean
 }
@@ -130,7 +130,7 @@ export type PCRTestResultRequest = {
 export type PCRTestResultData = {
   barCode: string
   adminId: string
-  resultSpecs?: PCRResultSpecsForSending
+  resultSpecs?: PCRResultSpecsForSending // CHECK THIS BEFORE MERGING, if this comment exists then not tested
   userId?: string
 }
 
