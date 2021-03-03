@@ -927,6 +927,38 @@ components:
         - lastName
         - base64Photo
 
+    UserCommon:
+      type: object
+      deprecated: false
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+        lastName:
+          type: string
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+        isAdminEnabled:
+          type: boolean
+        organizationIds:
+          type: array
+          items:
+            type: string
+        delegates:
+          type: array
+          items:
+            type: string
+      required:
+        - firstName
+        - lastName
+
     UserV3:
       type: object
       deprecated: false
@@ -1938,7 +1970,7 @@ components:
               type: object
               properties:
                 user:
-                  $ref: '#/components/schemas/UserV3'
+                  $ref: '#/components/schemas/UserCommon'
                 expiry:
                   type: string
                 dateOfBirth:
