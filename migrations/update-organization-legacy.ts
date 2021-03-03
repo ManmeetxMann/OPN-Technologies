@@ -75,7 +75,7 @@ async function setOrganizationLegacyValue(
     return await snapshot.ref.set(
       {
         legacyMode: organization.allowDependants,
-        enablePCRTest: false,
+        enableTesting: false,
         enableTemperatureCheck: false,
         timestamps: {
           migrations: {
