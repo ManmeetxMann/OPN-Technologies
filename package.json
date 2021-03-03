@@ -50,7 +50,10 @@
 		"migration:fix-deadline-for-future-pcr-results": "ts-node ./migrations/fix-deadline-for-future-pcr-results",
 		"migration:remove-pcr-results-for-canceled-appointments": "ts-node ./migrations/remove-pcr-results-for-canceled-appointments",
 		"migration:fix-pcr-organization-id": "ts-node ./migrations/fix-pcr-organization-id",
-		"migration:update-organization-legacy":"ts-node ./migrations/update-organization-legacy"
+		"migration:update-organization-legacy":"ts-node ./migrations/update-organization-legacy",
+		"migration:pcr-datetime-to-date": "ts-node ./migrations/pcr-datetime-to-date",
+		"migration:pcr-add-test-type": "ts-node ./migrations/pcr-add-test-type",
+		"migration:appointments-add-test-type": "ts-node ./migrations/appointments-add-test-type"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",

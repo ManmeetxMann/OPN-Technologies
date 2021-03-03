@@ -10,7 +10,7 @@ import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {TestRunsService} from '../../../services/test-runs.service'
 import {TestRunsRequest, TestRunsPostRequest, testRunDTOResponse} from '../../../models/test-runs'
 
-class TestRunsController implements IControllerBase {
+class AdminTestRunsController implements IControllerBase {
   private testRunsService = new TestRunsService()
   public path = '/reservation/admin/api/v1/test-runs'
   public router = Router()
@@ -70,4 +70,4 @@ class TestRunsController implements IControllerBase {
   }
 }
 
-export default TestRunsController
+export default AdminTestRunsController

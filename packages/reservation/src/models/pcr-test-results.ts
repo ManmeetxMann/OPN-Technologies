@@ -2,8 +2,9 @@ import {firestore} from 'firebase-admin'
 
 import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datetime.helper'
 
-import {AppointmentDBModel, AppointmentStatus, ResultTypes} from './appointment'
+import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
+import {groupByChannel} from '../utils/channel-grouper'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -77,15 +78,11 @@ export type PCRTestResultConfirmRequest = {
 }
 
 export enum PCRTestResultStyle {
-  Postive = 'RED',
+  Positive = 'RED',
   Negative = 'GREEN',
   Invalid = 'YELLOW',
   Inconclusive = 'BLUE',
   AnyOther = 'GREY',
-}
-
-export enum PCRTestResultType {
-  PCR = 'PCR',
 }
 
 type PCRResultSpecs = {
@@ -134,6 +131,7 @@ export type PCRTestResultData = {
   barCode: string
   adminId: string
   resultSpecs?: PCRResultSpecsForSending
+  userId?: string
 }
 
 export type PCRTestResultDBModel = PCRTestResultData & {
@@ -155,6 +153,9 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   testRunId?: string
   updatedAt: firestore.Timestamp
   waitingResult: boolean
+  deadlineDate: firestore.Timestamp
+  dateOfAppointment: firestore.Timestamp
+  testType: TestTypes
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -191,6 +192,8 @@ export type PCRTestResultEmailDTO = Omit<
   | 'runNumber'
   | 'reCollectNumber'
   | 'updatedAt'
+  | 'deadlineDate'
+  | 'dateOfAppointment'
 > &
   AppointmentDBModel
 
@@ -261,11 +264,17 @@ export type SinglePcrTestResultsRequest = {
   pcrTestResultId?: string
 }
 
+export type SingleTestResultsRequest = {
+  id: string
+}
+
 export type PcrTestResultsListRequest = {
   organizationId?: string
   deadline?: string
   barCode?: string
   result?: ResultTypes
+  date?: string
+  testType?: TestTypes
 }
 
 export type PCRTestResultListDTO = {
@@ -281,6 +290,8 @@ export type PCRTestResultListDTO = {
   dateTime?: string
   deadline?: string
   testRunId?: string
+  organizationId: string
+  organizationName: string
 }
 
 export type PCRTestResultByDeadlineListDTO = {
@@ -316,7 +327,7 @@ export const resultToStyle = (result: ResultTypes): PCRTestResultStyle => {
 
 export type TestResutsDTO = {
   id: string
-  type: PCRTestResultType
+  type: TestTypes
   name: string
   testDateTime: string
   style: PCRTestResultStyle
@@ -324,7 +335,20 @@ export type TestResutsDTO = {
   detailsAvailable: boolean
 }
 
+export type GroupedSpecs = {
+  channelName: string
+  description: string
+  groups: Spec[]
+}
+
+type Spec = {
+  label: string
+  value: string | boolean | Date
+}
+
 export type SinglePcrTestResultUi = {
+  firstName: string
+  lastName: string
   email: string
   phone: string
   ohipCard?: string
@@ -344,18 +368,11 @@ export type SinglePcrTestResultUi = {
   testType: string
   equipment: string
   manufacturer: string
-  resultSpecs: {
-    calRed61Ct: string
-    calRed61RdRpGene: string
-    famCt: string
-    famEGene: string
-    hexCt: string
-    hexIC: string
-    quasar670Ct: string
-    quasar670NGene: string
-    comment?: string
-    autoResult: ResultTypes
-  }
+  resultSpecs: Spec[]
+  style: PCRTestResultStyle
+  testName: string
+  doctorId: string
+  resultAnalysis: GroupedSpecs[]
 }
 
 enum LabData {
@@ -370,6 +387,8 @@ export const singlePcrTestResultDTO = (
   appointment: AppointmentDBModel,
 ): SinglePcrTestResultUi => ({
   email: appointment.email,
+  firstName: appointment.firstName,
+  lastName: appointment.lastName,
   phone: `${appointment.phone}`,
   ohipCard: appointment.ohipCard,
   dateOfBirth: appointment.dateOfBirth,
@@ -388,16 +407,17 @@ export const singlePcrTestResultDTO = (
   testType: LabData.testType,
   equipment: LabData.equipment,
   manufacturer: LabData.manufacturer,
-  resultSpecs: {
-    calRed61Ct: pcrTestResult.resultSpecs.calRed61Ct,
-    calRed61RdRpGene: pcrTestResult.resultSpecs.calRed61RdRpGene,
-    famCt: pcrTestResult.resultSpecs.famCt,
-    famEGene: pcrTestResult.resultSpecs.famEGene,
-    hexCt: pcrTestResult.resultSpecs.hexCt,
-    hexIC: pcrTestResult.resultSpecs.hexIC,
-    quasar670Ct: pcrTestResult.resultSpecs.quasar670Ct,
-    quasar670NGene: pcrTestResult.resultSpecs.quasar670NGene,
-    comment: pcrTestResult.resultSpecs.comment,
-    autoResult: pcrTestResult.resultSpecs.autoResult,
-  },
+  resultSpecs: Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
+    label: resultKey,
+    value: resultValue,
+  })),
+  resultAnalysis: groupByChannel(
+    Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
+      label: resultKey,
+      value: resultValue,
+    })),
+  ),
+  style: resultToStyle(pcrTestResult.result),
+  testName: 'SARS COV-2',
+  doctorId: 'DR1',
 })

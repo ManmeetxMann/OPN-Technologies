@@ -19,7 +19,7 @@ import {TemperatureSaveRequest, TemperatureStatuses} from '../../../models/tempe
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
 
-class TemperatureAdminController implements IControllerBase {
+class AdminTemperatureController implements IControllerBase {
   public router = express.Router()
   public path = '/reservation/admin/api/v1'
   public temperatureService = new TemperatureService()
@@ -124,4 +124,4 @@ class TemperatureAdminController implements IControllerBase {
   }
 }
 
-export default TemperatureAdminController
+export default AdminTemperatureController

@@ -1,7 +1,7 @@
 import request from 'supertest'
 
 import {app as server} from '../../../../src/app'
-import {createAppointment, deleteAppointmentByDateTime} from '../../../__seeds__/appointments'
+import {create, deleteAppointmentByDateTime} from '../../../__seeds__/appointments'
 jest.mock('../../../../../common/src/middlewares/authorization')
 
 const dateForAppointments = '2020-02-05'
@@ -10,40 +10,48 @@ const organizationId = 'TEST1'
 
 describe('AdminAppointmentController', () => {
   beforeAll(async () => {
-    await createAppointment({
+    await create({
+      id: 'APT1',
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
       appointmentStatus: 'InTransit',
     })
-    await createAppointment({
+    await create({
+      id: 'APT2',
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
       appointmentStatus: 'InProgress',
     })
-    await createAppointment({
+    await create({
+      id: 'APT3',
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
       organizationId: organizationId,
       appointmentStatus: 'InProgress',
     })
-    await createAppointment({
+    await create({
+      id: 'APT4',
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
       organizationId: organizationId,
     })
-    await createAppointment({
+    await create({
+      id: 'APT5',
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
     })
-    await createAppointment({
+    await create({
+      id: 'APT6',
       dateTime: `2020-02-01T07:00:00`,
       dateOfAppointment: 'February 01, 2020',
     })
-    await createAppointment({
+    await create({
+      id: 'APT7',
       dateTime: `2020-02-01T08:00:00`,
       dateOfAppointment: 'February 01, 2020',
     })
-    await createAppointment({
+    await create({
+      id: 'APT8',
       dateTime: `2020-02-01T08:00:00`,
       dateOfAppointment: 'February 01, 2020',
       appointmentStatus: 'InProgress',

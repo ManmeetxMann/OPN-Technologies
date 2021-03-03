@@ -3,4 +3,5 @@ export type ScheduleWebhookRequest = {
   action: string
   calendarID: number
   appointmentTypeID: number
+  returnData: boolean
 }

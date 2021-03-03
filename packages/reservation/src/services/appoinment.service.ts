@@ -10,7 +10,6 @@ import {
   AppointmentChangeToRerunRequest,
   AppointmentDBModel,
   AppointmentStatus,
-  AppointmentStatusHistoryDb,
   CreateAppointmentRequest,
   DeadlineLabel,
   ResultTypes,
@@ -18,21 +17,20 @@ import {
   userAppointmentDTOResponse,
   AppointmentActivityAction,
   Filter,
+  TestTypes,
 } from '../models/appointment'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
-import {
-  AppointmentsRepository,
-  StatusHistoryRepository,
-} from '../respository/appointments-repository'
+import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 
-import {dateFormats, now, timeFormats} from '../../../common/src/utils/times'
+import {dateFormats, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
 import {
   firestoreTimeStampToUTC,
   makeDeadline,
+  makeRapidDeadline,
   makeFirestoreTimestamp,
 } from '../utils/datetime.helper'
 
@@ -47,12 +45,20 @@ import {
 } from '../utils/base64-converter'
 import {Enterprise} from '../adapter/enterprise'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+
+//Models
 import {
   AppointmentBulkAction,
   BulkData,
   BulkOperationResponse,
   BulkOperationStatus,
 } from '../types/bulk-operation.type'
+import {AdminScanHistory} from '../models/admin-scan-history'
+import {SyncInProgressTypes} from '../models/sync-progress'
+
+//Repository
+import {AdminScanHistoryRepository} from '../respository/admin-scan-history'
+import {SyncProgressRepository} from '../respository/sync-progress.repository'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -62,8 +68,97 @@ export class AppoinmentService {
   private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(this.dataStore)
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
+  private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
+  private syncProgressRepository = new SyncProgressRepository(this.dataStore)
   private organizationService = new OrganizationService()
   private enterpriseAdapter = new Enterprise()
+
+  async removeSyncInProgressForAcuity(acuityAppointmentId: number): Promise<void> {
+    this.syncProgressRepository.deleteRecord(
+      SyncInProgressTypes.Acuity,
+      acuityAppointmentId.toString(),
+    )
+  }
+
+  async isSyncingAlreadyInProgress(acuityAppointmentId: number): Promise<boolean> {
+    const inProgress = await this.syncProgressRepository.getByType(
+      SyncInProgressTypes.Acuity,
+      acuityAppointmentId.toString(),
+    )
+    if (!inProgress) {
+      this.syncProgressRepository.save(SyncInProgressTypes.Acuity, acuityAppointmentId.toString())
+      return false
+    }
+    return true
+  }
+
+  async makeDeadlineRapidMinutes(
+    appointment: AppointmentDBModel,
+    pcrTestResultId: string,
+  ): Promise<AppointmentDBModel> {
+    const updatedAppointment = await this.appointmentsRepository.setDeadlineDate(
+      appointment.id,
+      makeRapidDeadline(),
+    )
+    await this.pcrTestResultsRepository.updateProperty(
+      pcrTestResultId,
+      'deadline',
+      updatedAppointment.deadline,
+    )
+    return updatedAppointment
+  }
+
+  async checkDuplicatedScanHistory(adminId: string, appointmentId: string): Promise<void> {
+    const history = await this.adminScanHistoryRepository.findWhereEqualInMap([
+      {
+        map: '/',
+        key: 'createdBy',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: adminId,
+      },
+      {
+        map: '/',
+        key: 'appointmentId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: appointmentId,
+      },
+    ])
+    if (history?.length > 0) {
+      throw new DuplicateDataException('BarCode already scanned')
+    }
+  }
+
+  async addAdminScanHistory(
+    userId: string,
+    appointmentId: string,
+    type: TestTypes,
+  ): Promise<AdminScanHistory> {
+    await this.checkDuplicatedScanHistory(userId, appointmentId)
+    return this.adminScanHistoryRepository.save({
+      createdBy: userId,
+      type,
+      appointmentId: appointmentId,
+    })
+  }
+
+  async getAppointmentByHistory(adminId: string, type: TestTypes): Promise<AppointmentDBModel[]> {
+    const scanHistory = await this.adminScanHistoryRepository.findWhereEqualInMap([
+      {
+        map: '/',
+        operator: DataModelFieldMapOperatorType.Equals,
+        key: 'createdBy',
+        value: adminId,
+      },
+      {
+        map: '/',
+        operator: DataModelFieldMapOperatorType.Equals,
+        key: 'type',
+        value: type,
+      },
+    ])
+    const scannedIds = scanHistory.map(({appointmentId}) => appointmentId)
+    return scannedIds ? this.appointmentsRepository.getAppointmentsDBByIds(scannedIds) : []
+  }
 
   async getAppointmentByBarCode(
     barCodeNumber: string,
@@ -258,10 +353,6 @@ export class AppoinmentService {
     }
   }
 
-  async getAppointmentsDBByIds(appointmentsIds: string[]): Promise<AppointmentDBModel[]> {
-    return this.appointmentsRepository.findWhereIdIn(appointmentsIds)
-  }
-
   async getAppointmentByAcuityId(id: number | string): Promise<AppointmentDBModel> {
     const appointments = await this.appointmentsRepository.findWhereEqual(
       'acuityAppointmentId',
@@ -279,20 +370,18 @@ export class AppoinmentService {
     return appointments[0]
   }
 
-  async createAppointmentFromAcuity(
+  async createAppointment(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
       organizationId: string
-      appointmentTypeID: number
-      calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult: ResultTypes
       couponCode?: string
       userId?: string
     },
   ): Promise<AppointmentDBModel> {
-    const data = await this.appointmentFromAcuity(acuityAppointment, additionalData)
+    const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
     return this.appointmentsRepository.save(data)
   }
 
@@ -302,23 +391,25 @@ export class AppoinmentService {
     additionalData: {
       barCodeNumber: string
       organizationId: string
-      appointmentTypeID: number
-      calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult: ResultTypes
     },
   ): Promise<AppointmentDBModel> {
-    const data = await this.appointmentFromAcuity(acuityAppointment, additionalData)
+    const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
     return this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity)
   }
 
-  private async appointmentFromAcuity(
+  private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
+    return appointmentTypeID === Config.getInt('ACUITY_APPOINTMENT_TYPE_ID')
+      ? TestTypes.RapidAntigen
+      : TestTypes.PCR
+  }
+
+  private async mapAcuityAppointmentToDBModel(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
       organizationId: string
-      appointmentTypeID: number
-      calendarID: number
       appointmentStatus: AppointmentStatus
       latestResult: ResultTypes
       couponCode?: string
@@ -335,33 +426,33 @@ export class AppoinmentService {
     const {
       barCodeNumber,
       organizationId,
-      appointmentTypeID,
-      calendarID,
       appointmentStatus,
       latestResult,
       couponCode = '',
       userId,
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
-    const currentUserId = userId ? userId : null
-
-    // @TODO Uncomment this code after deploy
-    // (
-    //   await this.enterpriseAdapter.findOrCreateUser({
-    //     email: acuityAppointment.email,
-    //     firstName: acuityAppointment.firstName,
-    //     lastName: acuityAppointment.lastName,
-    //     organizationId: acuityAppointment.organizationId || '',
-    //   })
-    // ).data.id
+    const getNewUserId = async (): Promise<string | null> => {
+      return Config.getInt('FEATURE_CREATE_USER_ON_ENTERPRISE')
+        ? (
+            await this.enterpriseAdapter.findOrCreateUser({
+              email: acuityAppointment.email,
+              firstName: acuityAppointment.firstName,
+              lastName: acuityAppointment.lastName,
+              organizationId: acuityAppointment.organizationId || '',
+            })
+          ).data.id
+        : null
+    }
+    const currentUserId = userId ? userId : await getNewUserId()
 
     return {
       acuityAppointmentId: acuityAppointment.id,
       appointmentStatus,
-      appointmentTypeID,
+      appointmentTypeID: acuityAppointment.appointmentTypeID,
       barCode: barCode,
       canceled: acuityAppointment.canceled,
-      calendarID,
+      calendarID: acuityAppointment.calendarID,
       dateOfAppointment,
       dateOfBirth: acuityAppointment.dateOfBirth,
       dateTime,
@@ -391,6 +482,7 @@ export class AppoinmentService {
       userId: currentUserId,
       locationName: acuityAppointment.calendar,
       locationAddress: acuityAppointment.location,
+      testType: await this.getTestType(acuityAppointment.appointmentTypeID),
     }
   }
 
@@ -481,26 +573,12 @@ export class AppoinmentService {
     }
   }
 
-  private getStatusHistoryRepository(appointmentId: string) {
-    return new StatusHistoryRepository(this.dataStore, appointmentId)
-  }
-
-  async addStatusHistoryById(
-    appointmentId: string,
-    newStatus: AppointmentStatus,
-    createdBy: string,
-  ): Promise<AppointmentStatusHistoryDb> {
-    const appointment = await this.getAppointmentDBById(appointmentId)
-    return this.getStatusHistoryRepository(appointmentId).add({
-      newStatus: newStatus,
-      previousStatus: appointment.appointmentStatus,
-      createdOn: now(),
-      createdBy,
-    })
-  }
-
   async makeCanceled(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.InProgress, userId)
+    await this.appointmentsRepository.addStatusHistoryById(
+      appointmentId,
+      AppointmentStatus.InProgress,
+      userId,
+    )
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Canceled,
       canceled: true,
@@ -512,7 +590,11 @@ export class AppoinmentService {
     testRunId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.InProgress, userId)
+    await this.appointmentsRepository.addStatusHistoryById(
+      appointmentId,
+      AppointmentStatus.InProgress,
+      userId,
+    )
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.InProgress,
       testRunId,
@@ -565,7 +647,11 @@ export class AppoinmentService {
   }
 
   async makeReceived(appointmentId: string, vialLocation: string, userId: string): Promise<void> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.Received, userId)
+    await this.appointmentsRepository.addStatusHistoryById(
+      appointmentId,
+      AppointmentStatus.Received,
+      userId,
+    )
 
     await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Received,
@@ -578,7 +664,11 @@ export class AppoinmentService {
     transportRunId: string,
     userId: string,
   ): Promise<void> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.InTransit, userId)
+    await this.appointmentsRepository.addStatusHistoryById(
+      appointmentId,
+      AppointmentStatus.InTransit,
+      userId,
+    )
 
     await this.appointmentsRepository.updateProperties(appointmentId, {
       transportRunId: transportRunId,
@@ -641,7 +731,7 @@ export class AppoinmentService {
   ): Promise<AppointmentDBModel> {
     const utcDateTime = firestoreTimeStampToUTC(data.appointment.dateTime)
     const deadline = makeDeadline(utcDateTime, data.deadlineLabel)
-    await this.addStatusHistoryById(
+    await this.appointmentsRepository.addStatusHistoryById(
       data.appointment.id,
       AppointmentStatus.ReRunRequired,
       data.userId,
@@ -664,16 +754,13 @@ export class AppoinmentService {
     appointmentId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.ReCollectRequired, userId)
+    await this.appointmentsRepository.addStatusHistoryById(
+      appointmentId,
+      AppointmentStatus.ReCollectRequired,
+      userId,
+    )
     return this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.ReCollectRequired,
-    })
-  }
-
-  async changeStatusToReported(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.Reported, userId)
-    return this.appointmentsRepository.updateProperties(appointmentId, {
-      appointmentStatus: AppointmentStatus.Reported,
     })
   }
 
@@ -705,7 +792,7 @@ export class AppoinmentService {
 
     const dateTime = utcDateTime.format()
     const barCodeNumber = await this.getNextBarCodeNumber()
-    const data = await this.acuityRepository.createAppointment(
+    const acuityAppointment = await this.acuityRepository.createAppointment(
       dateTime,
       appointmentTypeId,
       firstName,
@@ -726,10 +813,8 @@ export class AppoinmentService {
         barCodeNumber,
       },
     )
-    return this.createAppointmentFromAcuity(data, {
+    return this.createAppointment(acuityAppointment, {
       barCodeNumber,
-      appointmentTypeID: appointmentTypeId,
-      calendarID: calendarId,
       appointmentStatus: AppointmentStatus.Pending,
       latestResult: ResultTypes.Pending,
       organizationId,
@@ -805,7 +890,7 @@ export class AppoinmentService {
     failed: BulkOperationResponse[]
     filtredAppointmentIds: string[]
   }> {
-    const appointments = await this.getAppointmentsDBByIds(appointmentIds)
+    const appointments = await this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds)
     const appointmentIdsFromDb = []
     const barCodes = appointments.map(({barCode, id}) => {
       appointmentIdsFromDb.push(id)
@@ -981,11 +1066,36 @@ export class AppoinmentService {
     }
   }
 
+  async deleteScanHistory(adminId: string, type: TestTypes): Promise<void> {
+    const scanHistory = await this.adminScanHistoryRepository.findWhereEqualInMap([
+      {
+        map: '/',
+        operator: DataModelFieldMapOperatorType.Equals,
+        key: 'createdBy',
+        value: adminId,
+      },
+      {
+        map: '/',
+        operator: DataModelFieldMapOperatorType.Equals,
+        key: 'type',
+        value: type,
+      },
+    ])
+    if (scanHistory.length) {
+      return await this.adminScanHistoryRepository.deleteBulk(scanHistory.map(({id}) => id))
+    }
+    throw new ResourceNotFoundException('History for this admin is empty')
+  }
+
   async makeCheckIn(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
     if (!(await this.checkAppointmentStatusOnly(appointmentId, AppointmentStatus.Pending))) {
       throw new BadRequestException('Appointment status should be on Pending state')
     }
-    await this.addStatusHistoryById(appointmentId, AppointmentStatus.CheckedIn, userId)
+    await this.appointmentsRepository.addStatusHistoryById(
+      appointmentId,
+      AppointmentStatus.CheckedIn,
+      userId,
+    )
 
     return this.appointmentsRepository.changeAppointmentStatus(
       appointmentId,
