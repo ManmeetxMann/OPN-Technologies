@@ -75,19 +75,19 @@ export class AppoinmentService {
   private syncProgressRepository = new SyncProgressRepository(this.dataStore)
   private organizationService = new OrganizationService()
   private enterpriseAdapter = new Enterprise()
-  private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
+  private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
 
-  private postPubsub(saved: AppointmentDBModel, action: string): void {
+  private postPubsub(appointment: AppointmentDBModel, action: string): void {
     this.pubsub.publish(
       {
-        id: saved.id,
-        status: saved.appointmentStatus,
-        result: saved.latestResult,
-        date: safeTimestamp(saved.dateTime).toISOString(),
+        id: appointment.id,
+        status: appointment.appointmentStatus,
+        date: safeTimestamp(appointment.dateTime).toISOString(),
+        testType: appointment.testType,
       },
       {
-        userId: saved.userId,
-        organizationId: saved.organizationId,
+        userId: appointment.userId,
+        organizationId: appointment.organizationId,
         actionType: action,
       },
     )
