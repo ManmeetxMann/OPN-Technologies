@@ -92,4 +92,12 @@ export class AcuityRepository extends AcuityAdapter {
   ): Promise<{date: string}[]> {
     return this.getAvailabilityDatesList(appointmentTypeID, month, calendarID, timezone)
   }
+
+  async getAvailableTimes(
+    appointmentTypeId: number,
+    date: string,
+    calendarId: number,
+  ): Promise<AcuityAvailableSlots[]> {
+    return this.getAvailableSlotsList(appointmentTypeId, date, calendarId)
+  }
 }

@@ -861,6 +861,16 @@ export class AppoinmentService {
     })
   }
 
+  async getAvailableTimes(id: string, date: string): Promise<{label: string}[]> {
+    const {appointmentTypeId, calendarId} = decodeBookingLocationId(id)
+    const slots = await this.acuityRepository.getAvailableTimes(appointmentTypeId, date, calendarId)
+    return slots.map((slot) => {
+      return {
+        label: moment(slot.time).format(timeFormats.standard12h),
+      }
+    })
+  }
+
   async getAvailabitlityDateList(
     id: string,
     year: number,

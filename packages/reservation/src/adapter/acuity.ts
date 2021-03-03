@@ -338,13 +338,14 @@ abstract class AcuityAdapter {
     appointmentTypeID: number,
     date: string,
     calendarID: number,
-    timezone: string,
+    timezone?: string,
   ): Promise<AcuityAvailableSlots[]> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = encodeURI(
       APIURL +
-        `/api/v1/availability/times?appointmentTypeID=${appointmentTypeID}&date=${date}&calendarID=${calendarID}&timezone=${timezone}`,
+        `/api/v1/availability/times?appointmentTypeID=${appointmentTypeID}&date=${date}&calendarID=${calendarID}` +
+        (timezone ? '&timezone=' + timezone : ''),
     )
     LogInfo(`AcuityAdapterGetAvailbilitySlots`, 'Success', {
       appointmentTypeID,
