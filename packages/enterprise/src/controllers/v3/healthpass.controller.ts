@@ -14,7 +14,7 @@ import {
   organizationGroupDTOResponse,
   organizationSummaryDTOResponse,
 } from '../../models/organization'
-import {userDTOResponse} from '../../models/user'
+import {userDTO} from '../../../../common/src/data/user'
 
 class RecommendationController implements IControllerBase {
   public router = express.Router()
@@ -46,7 +46,7 @@ class RecommendationController implements IControllerBase {
             this.orgService.getUserGroup(organizationId as string, user.id),
           ])
           return {
-            user: userDTOResponse(user),
+            user: userDTO(user),
             group: organizationGroupDTOResponse(group),
             ...pass,
             dateOfBirth: pass.expiry ?? null, // TODO: Stub
