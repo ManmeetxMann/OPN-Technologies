@@ -7,7 +7,7 @@ const applicationSettings = {
   ACUITY_CALENDAR_URL: 'https://app.acuityscheduling.com/schedule.php',
   TEST_APPOINTMENT_TOPIC: 'test-appointment-topic',
   PCR_TEST_TOPIC: 'pcr-test-topic',
-  PASSPORT_TOPIC: 'pcr-passport-topic',
+  PASSPORT_TOPIC: 'passport-topic',
   TEMPERATURE_TOPIC: 'temperature-topic',
   ATTESTATION_TOPIC: 'attestation-topic',
 }
