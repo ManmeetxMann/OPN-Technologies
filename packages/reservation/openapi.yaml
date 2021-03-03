@@ -388,6 +388,30 @@ components:
             message:
               nullable: true
               type: string
+    TestKitBatchesResponse:
+        allOf:
+          - $ref: '#/components/schemas/Response'
+        properties:  
+          data:
+            nullable: true
+            type: array
+            items:
+              type: object
+              additionalProperties: false
+              properties:
+                id:
+                  type: string
+                lotNumber:
+                  type: string
+                hardwareName:
+                  type: string
+                expiry:
+                  type: string
+                  format: date-time
+                manufacturer:
+                  type: string
+                createdBy:
+                  type: string
     PCRTestResultsResponse200:
       type: object
       additionalProperties: false
@@ -972,7 +996,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                $ref: '#/components/schemas/TestKitBatchesResponse'
     post:
       description: Create test kit batch
       tags:
@@ -1006,7 +1030,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                properties:  
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
   /reservation/admin/api/v1/appointments:
     get:
       description: Get appointment list
