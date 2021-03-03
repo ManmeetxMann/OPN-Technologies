@@ -832,6 +832,27 @@ components:
             - testType
             - equipment
             - manufacturer
+    ClinicsResponse:
+        allOf:
+          - $ref: '#/components/schemas/Response'
+        properties:  
+          data:
+            nullable: true
+            type: array
+            items:
+              type: object
+              additionalProperties: false
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                address:
+                  type: string
+                acuityUser:
+                  type: string
+                acuityPass:
+                  type: string
   
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -993,7 +1014,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AppointmentResponse200'
-  '/reservation/admin/api/v1/appointments/{appointmentId}':
+  /reservation/admin/api/v1/appointments/{appointmentId}:
     get:
       description: Get appointment by appointment ID
       security:
@@ -1186,7 +1207,7 @@ paths:
                     - packageCode
                     - name
                     - remainingCounts
-  '/reservation/admin/api/v1/appointments/{appointmentId}/cancel':
+  /reservation/admin/api/v1/appointments/{appointmentId}/cancel:
     put:
       description: Cancel appointment by appointment ID
       tags:
@@ -1868,7 +1889,7 @@ paths:
                         type: string
                   page:
                     type: number
-  '/reservation/admin/api/v1/appointments/{appointmentId}/check-in':
+  /reservation/admin/api/v1/appointments/{appointmentId}/check-in:
     put:
       description: Make Appointment checked in
       tags:
@@ -2641,7 +2662,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfTemperature'
-  '/reservation/api/v1/temperature/{id}':
+  /reservation/api/v1/temperature/{id}:
     get:
       description: Get temperature by user ID and organization ID
       security:
@@ -2801,3 +2822,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  /reservation/admin/api/v1/clinics:
+    get:
+      description: Get list of clinics
+      tags:
+        - Clinics Management
+      # security:
+      #   - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Successfully returned clinics
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ClinicsResponse'
+    post:
+      description: Create new clinic
+      tags:
+        - Clinics Management
+      # security:
+      #   - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name:
+                  type: string
+                address:
+                  type: string
+                acuityUser:
+                  type: string
+                acuityPass:
+                  type: string
+              required:
+                - name
+                - address
+                - acuityUser
+                - acuityPass
+      responses:
+        '200':
+          description: Successfully added clinic
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Response'
+                properties:  
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string       
