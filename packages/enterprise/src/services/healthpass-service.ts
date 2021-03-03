@@ -9,6 +9,8 @@ import {UserActionsRepository} from '../repository/action-items.repository'
 import {ActionItem} from '../models/action-items'
 
 import {PassportStatuses} from '../../../passport/src/models/passport'
+import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
+import {ResultTypes} from '../../../reservation/src/models/appointment'
 
 type HealthPass = {
   expiry: string
@@ -70,7 +72,7 @@ export class HealthpassService {
       }
     }
     const expiry = safeTimestamp(items.latestPassport.expiry).toISOString()
-    if (items.latestAttestation) {
+    if (items.latestAttestation?.status === PassportStatuses.Proceed) {
       tests.push({
         date: safeTimestamp(items.latestAttestation.timestamp).toISOString(),
         type: 'Attestation',
@@ -79,7 +81,7 @@ export class HealthpassService {
         style: 'GREEN',
       })
     }
-    if (items.latestTemperature) {
+    if (items.latestTemperature.status === TemperatureStatuses.Proceed) {
       tests.push({
         date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
         type: 'Temperature',
@@ -88,7 +90,7 @@ export class HealthpassService {
         style: 'GREEN',
       })
     }
-    if (items.PCRTestResult) {
+    if (items.PCRTestResult?.result !== ResultTypes.Negative) {
       tests.push({
         date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
         type: 'PCR',
