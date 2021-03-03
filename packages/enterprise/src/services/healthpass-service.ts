@@ -8,6 +8,8 @@ import {OrganizationModel} from '../repository/organization.repository'
 import {UserActionsRepository} from '../repository/action-items.repository'
 import {ActionItem} from '../models/action-items'
 
+import {PassportStatuses} from '../../../passport/src/models/passport'
+
 type HealthPass = {
   expiry: string
   tests: {
@@ -58,7 +60,10 @@ export class HealthpassService {
   async getHealthPass(userId: string, orgId: string): Promise<HealthPass> {
     const items = await this.getItems(userId, orgId)
     const tests = []
-    if (!items.latestPassport || isPassed(safeTimestamp(items.latestPassport.expiry))) {
+    if (
+      items.latestPassport?.status !== PassportStatuses.Proceed ||
+      isPassed(safeTimestamp(items.latestPassport.expiry))
+    ) {
       return {
         expiry: null,
         tests,
