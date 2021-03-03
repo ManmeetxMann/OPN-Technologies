@@ -2827,8 +2827,8 @@ paths:
       description: Get list of clinics
       tags:
         - Clinics Management
-      # security:
-      #   - bearerAuthJWT: []
+      security:
+        - bearerAuthJWT: []
       responses:
         '200':
           description: Successfully returned clinics
@@ -2841,8 +2841,8 @@ paths:
       description: Create new clinic
       tags:
         - Clinics Management
-      # security:
-      #   - bearerAuthJWT: []
+      security:
+        - bearerAuthJWT: []
       requestBody:
         content:
           application/json:
