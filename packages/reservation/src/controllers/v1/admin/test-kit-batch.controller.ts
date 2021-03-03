@@ -7,7 +7,7 @@ import {TestKitBatchPostRequest} from '../../../models/test-kit-batch'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {TestKitBatchService} from '../../../services/test-kit-batch.service'
 
-class TestKitBatchController implements IControllerBase {
+class AdminTestKitBatchController implements IControllerBase {
   public router = Router()
   public path = '/reservation/admin/api/v1'
   private testKitBatchService = new TestKitBatchService()
@@ -46,4 +46,4 @@ class TestKitBatchController implements IControllerBase {
   }
 }
 
-export default TestKitBatchController
+export default AdminTestKitBatchController
