@@ -127,31 +127,114 @@ export class RecommendationService {
     }
 
     if (latestTest?.result === ResultTypes.Negative) {
-      return [Recommendations.BadgeExpiry, Recommendations.ViewNegativePCR]
+      return [Recommendations.PassAvailable, Recommendations.ViewNegativePCR]
     }
     return [Recommendations.BadgeExpiry, Recommendations.ViewPositivePCR]
   }
 
-  // TODO: Stub and add localization
+  // TODO: add localization
   private decorateRecommendation = (
     recommendation: Recommendations,
     items: ActionItem,
   ): DecoratedRecommendation => {
     let id = null
-    const title = `${recommendation} title`
-    const body = `${recommendation} body`
-    if (
-      [Recommendations.ViewNegativeTemp, Recommendations.ViewPositiveTemp].includes(recommendation)
-    ) {
-      id = items.latestTemperature?.temperatureId
-    } else if (
-      [Recommendations.ViewNegativePCR, Recommendations.ViewPositivePCR].includes(recommendation)
-    ) {
-      id = items.PCRTestResult?.testId
-    } else if (
-      [Recommendations.CheckInPCR, Recommendations.BookingDetailsPCR].includes(recommendation)
-    ) {
-      id = items.scheduledPCRTest?.testId
+    let title = `${recommendation} title`
+    let body = `${recommendation} body`
+    switch (recommendation) {
+      case Recommendations.ResultReadiness: {
+        title = 'Result Readiness'
+        body = 'Where are my results?'
+        break
+      }
+      case Recommendations.BadgeExpiry: {
+        title = 'Badge Expiry'
+        const expiryTime = safeTimestamp(items.latestPassport.expiry)
+        const minutesDiff = -moment(now()).diff(expiryTime, 'minutes')
+        const minutes = minutesDiff % 60
+        const hours = ((minutesDiff - minutes) % (60 * 24)) / 60
+        const days = (minutesDiff - 60 * hours - minutes) / (60 * 24)
+
+        body = `${minutes}M left`
+        if (hours) {
+          body = `${hours}H ${body}`
+        }
+        if (days) {
+          body = `${days}D ${body}`
+        }
+        break
+      }
+      case Recommendations.BookPCR: {
+        const isRebooking = [
+          ResultTypes.Inconclusive,
+          ResultTypes.Indeterminate,
+          ResultTypes.Invalid,
+        ].includes(items.PCRTestResult?.result)
+        title = isRebooking ? 'Book Re-sample' : 'Book a Covid-19 Test'
+        body = isRebooking ? 'Take a second test' : 'Pick a day and time'
+        break
+      }
+      case Recommendations.BookingDetailsPCR: {
+        title = 'View Booking Details'
+        const date = moment(safeTimestamp(items.scheduledPCRTest.date)).tz(tz)
+        body = date.format('MMMM Do [@] hh:mm a')
+        break
+      }
+      case Recommendations.CheckInPCR: {
+        title = 'View Appointment QR Code'
+        body = 'Check in to appointment'
+        id = items.scheduledPCRTest.testId
+        break
+      }
+      case Recommendations.CompleteAssessment: {
+        title = 'Complete a Self-Assessment'
+        body = 'Get a health pass'
+        break
+      }
+      case Recommendations.PassAvailable: {
+        title = 'Pass Available'
+        body = 'View my pass'
+        // TODO: id?
+        break
+      }
+      case Recommendations.StatusInfo: {
+        title = 'Status Info'
+        body = 'Learn more about my status'
+        break
+      }
+      case Recommendations.TempCheckRequired: {
+        title = 'Complete a Temperature Check'
+        body = 'Verify your badge with a check'
+        break
+      }
+      case Recommendations.UpdateAssessment: {
+        title = 'Update Assessment'
+        body = 'Report a change'
+        break
+      }
+      case Recommendations.ViewNegativePCR: {
+        title = 'View Negative Test Result'
+        body = 'View result details'
+        id = items.PCRTestResult.testId
+        break
+      }
+      case Recommendations.ViewPositivePCR: {
+        title = 'View Positive Test Result'
+        body = 'View result details'
+        id = items.PCRTestResult.testId
+        break
+      }
+      case Recommendations.ViewNegativeTemp: {
+        title = 'View Temperature Result'
+        body = 'Temperature Details'
+        id = items.latestTemperature.temperatureId
+        break
+      }
+      case Recommendations.ViewPositiveTemp: {
+        title = 'View Temperature Result'
+        body = 'Temperature Details'
+        id = items.latestTemperature.temperatureId
+        break
+      }
     }
     return {
       id,
