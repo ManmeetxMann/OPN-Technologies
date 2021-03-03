@@ -17,6 +17,7 @@ export class TransportRunsService {
     transportDateTime: Date,
     driverName: string,
     label: string,
+    labId: string,
   ): Promise<TransportRunsIdentifier> {
     const transportDate = getDateFromDatetime(transportDateTime)
     const transportDay = getDayFromDatetime(transportDateTime)
@@ -31,6 +32,7 @@ export class TransportRunsService {
           transportDate,
           driverName,
           label,
+          labId,
         })
       })
       .then((transportRun: TransportRunsDbModel) => {
