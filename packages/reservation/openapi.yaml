@@ -310,6 +310,8 @@ components:
                 type: string
               label:
                 type: string
+              labId:
+                type: string
         status:
           type: object
           additionalProperties: false
@@ -832,7 +834,7 @@ components:
             - testType
             - equipment
             - manufacturer
-  
+
 paths:
   /admin/api/v1/send-fax-for-positive:
     post:
@@ -895,10 +897,13 @@ paths:
                   type: string
                 label:
                   type: string
+                labId:
+                  type: string
               required:
                 - transportDateTime
                 - driverName
                 - label
+                - labId
       responses:
         '200':
           description: Succesfully create transport
