@@ -49,7 +49,7 @@ class AdminTransportRunsController implements IControllerBase {
       const {admin} = res.locals.authenticatedUser
 
       const checkIfLabExists = await this.labService.findOneById(labId)
-      const isAdminForLab = admin.adminForLabIds.includes(labId)
+      const isAdminForLab = admin.adminForLabIds && admin.adminForLabIds.includes(labId)
 
       if (!isAdminForLab && !isClinicUser) {
         throw new ResourceNotFoundException(
