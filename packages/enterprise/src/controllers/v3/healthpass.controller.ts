@@ -10,7 +10,10 @@ import {User} from '../../../../common/src/data/user'
 
 import {HealthpassService} from '../../services/healthpass-service'
 import {OrganizationService} from '../../services/organization-service'
-import {organizationDTOResponse, organizationGroupDTOResponse} from '../../models/organization'
+import {
+  organizationGroupDTOResponse,
+  organizationSummaryDTOResponse,
+} from '../../models/organization'
 import {userDTOResponse} from '../../models/user'
 
 class RecommendationController implements IControllerBase {
@@ -52,7 +55,7 @@ class RecommendationController implements IControllerBase {
       )
       const organization = await orgPromise
       const response = {
-        organization: organizationDTOResponse([organization])[0],
+        organization: organizationSummaryDTOResponse([organization])[0],
         passes,
       }
       res.json(actionSucceed(response))

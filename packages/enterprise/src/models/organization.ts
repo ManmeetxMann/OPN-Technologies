@@ -32,7 +32,7 @@ export type Organization = {
 
 export type OrganizationListDTO = {
   id: string
-  key: number
+  //key: number
   name: string
 }
 
@@ -127,7 +127,7 @@ export const organizationSummaryDTOResponse = (
 ): OrganizationListDTO[] => {
   return organizations.map((organization) => ({
     id: organization.id,
-    key: organization.key,
+    //key: organization.key,
     name: organization.name,
   }))
 }
