@@ -3,14 +3,14 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {ForbiddenException} from '../../../common/src/exceptions/forbidden-exception'
 import {UserModel} from '../../../common/src/data/user'
 import {safeTimestamp, isPassed} from '../../../common/src/utils/datetime-util'
-import {now} from '../../../common/src/utils/times'
+import {now, serverTimestamp} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 
 import {OrganizationModel} from '../repository/organization.repository'
 import {UserActionsRepository} from '../repository/action-items.repository'
 import {ActionItem, Recommendations} from '../models/action-items'
 
-import {PassportStatuses} from '../../../passport/src/models/passport'
+import {PassportStatuses, PassportStatus} from '../../../passport/src/models/passport'
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 import {ResultTypes} from '../../../reservation/src/models/appointment'
 import moment from 'moment'
@@ -103,13 +103,15 @@ export class RecommendationService {
     const passport = items.latestPassport
     const passportExpiry = passport ? safeTimestamp(passport.expiry) : null
     const latestTest = items.PCRTestResult
+    const appointment = items.scheduledPCRTest
+    const wentToAppointment = latestTest && appointment && latestTest.testId === appointment.testId
     if (!passportExpiry || isPassed(passportExpiry)) {
       // PENDING
-      if (latestTest?.result === ResultTypes.Pending) {
+      if (wentToAppointment) {
         // pending test
         return [Recommendations.ResultReadiness]
       }
-      if (items.scheduledPCRTest && !isPassed(safeTimestamp(items.scheduledPCRTest.date))) {
+      if (appointment && !isPassed(safeTimestamp(appointment.date))) {
         // upcoming test
         const isToday = moment(now())
           .tz(tz)
@@ -178,5 +180,91 @@ export class RecommendationService {
       actions = this.getRecommendationsAttestation(items)
     }
     return actions.map((action) => this.decorateRecommendation(action, items))
+  }
+
+  async addAttestation(
+    userId: string,
+    organizationId: string,
+    attestationId: string,
+    status: PassportStatus,
+  ): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
+    const repo = new UserActionsRepository(this.dataStore, userId)
+    await repo.updateProperty(organizationId, 'latestAttestation', {
+      attestationId,
+      status,
+      timestamp: serverTimestamp(),
+    })
+  }
+  async addPassport(
+    userId: string,
+    organizationId: string,
+    passportId: string,
+    status: PassportStatus,
+    expiry: string,
+  ): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
+    const repo = new UserActionsRepository(this.dataStore, userId)
+    await repo.updateProperty(organizationId, 'latestPassport', {
+      passportId,
+      status,
+      expiry: safeTimestamp(expiry),
+      timestamp: serverTimestamp(),
+    })
+  }
+  async addTemperature(
+    userId: string,
+    organizationId: string,
+    temperatureId: string,
+    temperature: string,
+    status: TemperatureStatuses,
+  ): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
+    const repo = new UserActionsRepository(this.dataStore, userId)
+    await repo.updateProperty(organizationId, 'latestTemperature', {
+      temperatureId,
+      temperature,
+      status,
+      timestamp: serverTimestamp(),
+    })
+  }
+  async addPCRTest(
+    userId: string,
+    organizationId: string,
+    testId: string,
+    date: string,
+  ): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
+    const repo = new UserActionsRepository(this.dataStore, userId)
+    await repo.updateProperty(organizationId, 'scheduledPCRTest', {
+      testId,
+      date: safeTimestamp(date),
+      timestamp: serverTimestamp(),
+    })
+  }
+  async deletePCRTest(userId: string, organizationId: string): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
+    const repo = new UserActionsRepository(this.dataStore, userId)
+    await repo.updateProperty(organizationId, 'scheduledPCRTest', null)
+  }
+  async addPCRTestResult(
+    userId: string,
+    organizationId: string,
+    testId: string,
+    result: ResultTypes,
+  ): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
+    const repo = new UserActionsRepository(this.dataStore, userId)
+    await repo.updateProperty(organizationId, 'PCRTestResult', {
+      testId,
+      result,
+      timestamp: serverTimestamp(),
+    })
   }
 }

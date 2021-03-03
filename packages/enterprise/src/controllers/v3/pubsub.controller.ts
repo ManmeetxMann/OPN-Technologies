@@ -1,0 +1,128 @@
+import * as express from 'express'
+import {Handler, Router} from 'express'
+
+import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
+import {OPNPubSub} from '../../../../common/src/service/google/pub_sub'
+
+import {RecommendationService} from '../../services/recommendation-service'
+
+import {PassportStatus} from '../../../../passport/src/models/passport'
+
+import {TemperatureStatuses} from '../../../../reservation/src/models/temperature'
+import {ResultTypes} from '../../../../reservation/src/models/appointment'
+
+class RecommendationController implements IControllerBase {
+  public router = express.Router()
+  private recService = new RecommendationService()
+  constructor() {
+    this.initRoutes()
+  }
+
+  public initRoutes(): void {
+    const innerRouter = () => Router({mergeParams: true})
+    const root = '/enterprise/api/v3/pubsub'
+    const route = innerRouter().use(
+      '/',
+      innerRouter()
+        .post('/passport', this.newPassport)
+        .post('/attestation', this.newAttestation)
+        .post('/temperature', this.newTemperature)
+        .post('/pcr-test', this.newPCR),
+    )
+    this.router.use(root, route)
+  }
+
+  private async parseMessage(message: {
+    data: string
+    attributes: Record<string, string>
+  }): Promise<{
+    userId: string
+    organizationId: string
+    actionType: string
+    data: Record<string, unknown>
+  }> {
+    const {data, attributes} = message
+    const payload = await OPNPubSub.getPublishedData(data)
+    return {
+      userId: attributes.userId,
+      organizationId: attributes.organizationId,
+      actionType: attributes.actionType,
+      data: (payload as unknown) as Record<string, unknown>,
+    }
+  }
+
+  newPassport: Handler = async (req, res, next): Promise<void> => {
+    try {
+      const {userId, organizationId, data} = await this.parseMessage(req.body.message)
+      await this.recService.addPassport(
+        userId,
+        organizationId,
+        data.id as string,
+        data.status as PassportStatus,
+        data.expiry as string,
+      )
+      res.sendStatus(200)
+    } catch (error) {
+      next(error)
+    }
+  }
+  newAttestation: Handler = async (req, res, next): Promise<void> => {
+    try {
+      const {userId, organizationId, data} = await this.parseMessage(req.body.message)
+      await this.recService.addAttestation(
+        userId,
+        organizationId,
+        data.id as string,
+        data.status as PassportStatus,
+      )
+      res.sendStatus(200)
+    } catch (error) {
+      next(error)
+    }
+  }
+  newTemperature: Handler = async (req, res, next): Promise<void> => {
+    try {
+      const {userId, organizationId, data} = await this.parseMessage(req.body.message)
+      await this.recService.addTemperature(
+        userId,
+        organizationId,
+        data.id as string,
+        data.temperature as string,
+        data.status as TemperatureStatuses,
+      )
+      res.sendStatus(200)
+    } catch (error) {
+      next(error)
+    }
+  }
+  newPCR: Handler = async (req, res, next): Promise<void> => {
+    try {
+      const {userId, organizationId, actionType, data} = await this.parseMessage(req.body.message)
+      const isAppointment = !data.result
+      if (actionType === 'canceled') {
+        await this.recService.deletePCRTest(userId, organizationId)
+      } else if (actionType === 'created' || actionType === 'updated') {
+        if (isAppointment) {
+          await this.recService.addPCRTest(
+            userId,
+            organizationId,
+            data.id as string,
+            data.date as string,
+          )
+        } else {
+          await this.recService.addPCRTestResult(
+            userId,
+            organizationId,
+            data.id as string,
+            data.result as ResultTypes,
+          )
+        }
+      }
+      res.sendStatus(200)
+    } catch (error) {
+      next(error)
+    }
+  }
+}
+
+export default RecommendationController

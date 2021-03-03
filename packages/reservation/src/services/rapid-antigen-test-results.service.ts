@@ -197,7 +197,7 @@ export class RapidAntigenTestResultsService {
   }
 
   async sendTestResultEmail(data: string): Promise<void> {
-    const {appointmentID, testResultID} = (await this.pubSub.getPublishedData(data)) as {
+    const {appointmentID, testResultID} = (await OPNPubSub.getPublishedData(data)) as {
       appointmentID: string
       testResultID: string
     }
