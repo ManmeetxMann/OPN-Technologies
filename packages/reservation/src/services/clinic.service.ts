@@ -1,6 +1,6 @@
 import DataStore from '../../../common/src/data/datastore'
 import {Clinic} from '../models/clinic'
-import {ClinicRepository} from '../respository/Clinic.repository'
+import {ClinicRepository} from '../respository/clinic.repository'
 
 export class ClinicService {
   private dataStore = new DataStore()
