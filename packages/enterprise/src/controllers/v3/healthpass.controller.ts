@@ -37,22 +37,29 @@ class RecommendationController implements IControllerBase {
     try {
       const {organizationId, authenticatedUser} = res.locals
       const orgPromise = this.orgService.getByIdOrThrow(organizationId)
-      const allDependants = await this.userService.getAllDependants(authenticatedUser.id, true)
+      const allDependants = (
+        await this.userService.getAllDependants(authenticatedUser.id, true)
+      ).filter((dep) => dep.organizationIds?.includes(organizationId))
       const allUsers: User[] = [authenticatedUser, ...allDependants]
-      const passes = await Promise.all(
-        allUsers.map(async (user) => {
-          const [pass, group] = await Promise.all([
-            this.passService.getHealthPass(user.id, organizationId as string),
-            this.orgService.getUserGroup(organizationId as string, user.id),
-          ])
-          return {
-            user: userDTO(user),
-            group: organizationGroupDTOResponse(group),
-            ...pass,
-            dateOfBirth: pass.expiry ?? null, // TODO: Stub
-          }
-        }),
-      )
+      const passes = (
+        await Promise.all(
+          allUsers.map(async (user) => {
+            const [pass, group] = await Promise.all([
+              this.passService.getHealthPass(user.id, organizationId as string),
+              this.orgService.getUserGroup(organizationId as string, user.id),
+            ])
+            if (!pass.expiry) {
+              return null
+            }
+            return {
+              user: userDTO(user),
+              group: organizationGroupDTOResponse(group),
+              ...pass,
+              dateOfBirth: pass.expiry ?? null, // TODO: Stub
+            }
+          }),
+        )
+      ).filter((notNull) => notNull)
       const organization = await orgPromise
       const response = {
         organization: organizationSummaryDTOResponse([organization])[0],
