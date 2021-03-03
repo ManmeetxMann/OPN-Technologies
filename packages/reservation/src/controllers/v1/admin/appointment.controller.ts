@@ -21,6 +21,7 @@ import {AppoinmentService} from '../../../services/appoinment.service'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 import {TransportRunsService} from '../../../services/transport-runs.service'
 import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
+import {formatDateRFC822Local} from '../../../utils/datetime.helper'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
@@ -95,7 +96,11 @@ class AdminAppointmentController implements IControllerBase {
       apptLabAuth,
       this.regenerateBarCode,
     )
-
+    innerRouter.get(
+      this.path + '/api/v1/appointments/:appointmentId/user-appointment-history',
+      apptLabAuth,
+      this.getUserAppointmentHistoryByAppointmentId,
+    )
     this.router.use('/', innerRouter)
   }
 
@@ -367,6 +372,28 @@ class AdminAppointmentController implements IControllerBase {
       const appointment = await this.appointmentService.regenerateBarCode(appointmentId, userId)
 
       res.json(actionSucceed(appointmentUiDTOResponse(appointment, false)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getUserAppointmentHistoryByAppointmentId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {appointmentId} = req.params as {appointmentId: string}
+      const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
+      const userAppointments = await this.appointmentService.getUserAppointments(appointment.userId)
+      res.json(
+        actionSucceed(
+          userAppointments.map((userAppointment) => {
+            const {id, dateTime, testType} = userAppointment
+            return {id, dateTime: formatDateRFC822Local(dateTime), testType}
+          }, false),
+        ),
+      )
     } catch (error) {
       next(error)
     }

@@ -327,6 +327,42 @@ components:
             message:
               nullable: true
               type: string
+    UserAppointmentsHistoryResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              dateTime:
+                type: string
+              testType:
+                type: string
+            required:
+              - id
+              - dateTime
+              - testType
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
     AppointmentTransportRunResponse200:
       type: object
       additionalProperties: false
@@ -955,6 +991,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
+  /reservation/admin/api/v1/appointments/{appointmentId}/user-appointment-history:
+    get:
+      description: Get user's appointment history by appointment ID
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Appointment Management
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAppointmentsHistoryResponse200'
   /reservation/admin/api/v1/admin-scan-history:
     get:
       description: Get scanned appointments history for user

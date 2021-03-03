@@ -1102,4 +1102,8 @@ export class AppoinmentService {
       AppointmentStatus.CheckedIn,
     )
   }
+
+  async getUserAppointments(userId: string): Promise<AppointmentDBModel[]> {
+    return this.appointmentsRepository.findWhereEqual('userId', userId)
+  }
 }
