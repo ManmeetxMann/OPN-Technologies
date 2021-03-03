@@ -22,6 +22,7 @@ import {
   OrganizationUsersGroup,
   OrganizationUsersGroupMoveOperation,
   OrganizationReminderSchedule,
+  organizationDTOResponse,
 } from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {ReportService} from '../services/report-service'
@@ -221,12 +222,7 @@ class OrganizationController implements IControllerBase {
       const organization = !!key
         ? await this.organizationService.findOrganizationByKey(parseInt(key))
         : await this.organizationService.findOneById(id)
-      res.json(
-        actionSucceed({
-          ...organization,
-          enableTemperatureCheck: organization.enableTemperatureCheck || false,
-        }),
-      )
+      res.json(actionSucceed(organizationDTOResponse(organization)))
     } catch (error) {
       next(error)
     }
