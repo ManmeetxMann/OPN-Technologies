@@ -86,7 +86,7 @@ export class HealthpassService {
     if (items.PCRTestResult) {
       tests.push({
         date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
-        type: 'PCR Test',
+        type: 'PCR',
         id: items.PCRTestResult.testId,
         status: items.PCRTestResult.result,
         style: 'GREEN',

@@ -927,6 +927,38 @@ components:
         - lastName
         - base64Photo
 
+    UserCommon:
+      type: object
+      deprecated: false
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+        lastName:
+          type: string
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+        isAdminEnabled:
+          type: boolean
+        organizationIds:
+          type: array
+          items:
+            type: string
+        delegates:
+          type: array
+          items:
+            type: string
+      required:
+        - firstName
+        - lastName
+
     UserV3:
       type: object
       deprecated: false
@@ -1938,7 +1970,7 @@ components:
               type: object
               properties:
                 user:
-                  $ref: '#/components/schemas/UserV3'
+                  $ref: '#/components/schemas/UserCommon'
                 expiry:
                   type: string
                 dateOfBirth:
@@ -3938,7 +3970,7 @@ paths:
           description: Successfully digested
   /enterprise/api/v3/pubsub/temperature:
     post:
-      summary: update attestation
+      summary: update temperature
       requestBody:
         content:
           application/json:
@@ -3949,7 +3981,18 @@ paths:
           description: Successfully digested
   /enterprise/api/v3/pubsub/pcr-test:
     post:
-      summary: update attestation
+      summary: update pcr test result
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /enterprise/api/v3/pubsub/test-appointment:
+    post:
+      summary: update appointment
       requestBody:
         content:
           application/json:

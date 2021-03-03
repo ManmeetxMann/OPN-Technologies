@@ -12,7 +12,7 @@ import {ActionItem, Recommendations} from '../models/action-items'
 
 import {PassportStatuses, PassportStatus} from '../../../passport/src/models/passport'
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
-import {ResultTypes} from '../../../reservation/src/models/appointment'
+import {ResultTypes, AppointmentStatus} from '../../../reservation/src/models/appointment'
 import moment from 'moment'
 
 const tz = Config.get('DEFAULT_TIME_ZONE')
@@ -104,13 +104,12 @@ export class RecommendationService {
     const passportExpiry = passport ? safeTimestamp(passport.expiry) : null
     const latestTest = items.PCRTestResult
     const appointment = items.scheduledPCRTest
-    const wentToAppointment = latestTest && appointment && latestTest.testId === appointment.testId
     if (!passportExpiry || isPassed(passportExpiry)) {
-      // PENDING
-      if (wentToAppointment) {
+      if (appointment?.status && appointment.status !== AppointmentStatus.Pending) {
         // pending test
         return [Recommendations.ResultReadiness]
       }
+      // haven't checked in yet
       if (appointment && !isPassed(safeTimestamp(appointment.date))) {
         // upcoming test
         const isToday = moment(now())
@@ -177,12 +176,13 @@ export class RecommendationService {
         title = 'View Booking Details'
         const date = moment(safeTimestamp(items.scheduledPCRTest.date)).tz(tz)
         body = date.format('MMMM Do [@] hh:mm a')
+        id = items.scheduledPCRTest.appointmentId
         break
       }
       case Recommendations.CheckInPCR: {
         title = 'View Appointment QR Code'
         body = 'Check in to appointment'
-        id = items.scheduledPCRTest.testId
+        id = items.scheduledPCRTest.appointmentId
         break
       }
       case Recommendations.CompleteAssessment: {
@@ -314,22 +314,24 @@ export class RecommendationService {
       timestamp: serverTimestamp(),
     })
   }
-  async addPCRTest(
+  async addPCRAppointment(
     userId: string,
     organizationId: string,
-    testId: string,
+    appointmentId: string,
+    status: AppointmentStatus,
     date: string,
   ): Promise<void> {
     // make sure the user has items
     await this.getItems(userId, organizationId)
     const repo = new UserActionsRepository(this.dataStore, userId)
     await repo.updateProperty(organizationId, 'scheduledPCRTest', {
-      testId,
+      appointmentId,
+      status,
       date: safeTimestamp(date),
       timestamp: serverTimestamp(),
     })
   }
-  async deletePCRTest(userId: string, organizationId: string): Promise<void> {
+  async deletePCRAppointment(userId: string, organizationId: string): Promise<void> {
     // make sure the user has items
     await this.getItems(userId, organizationId)
     const repo = new UserActionsRepository(this.dataStore, userId)
