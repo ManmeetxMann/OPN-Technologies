@@ -27,6 +27,8 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {dateFormats, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
+import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
+
 import {
   firestoreTimeStampToUTC,
   makeDeadline,
@@ -37,6 +39,7 @@ import {
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DuplicateDataException} from '../../../common/src/exceptions/duplicate-data-exception'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {AvailableTimes} from '../models/available-times'
 import {
   decodeBookingLocationId,
@@ -72,6 +75,23 @@ export class AppoinmentService {
   private syncProgressRepository = new SyncProgressRepository(this.dataStore)
   private organizationService = new OrganizationService()
   private enterpriseAdapter = new Enterprise()
+  private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
+
+  private postPubsub(appointment: AppointmentDBModel, action: string): void {
+    this.pubsub.publish(
+      {
+        id: appointment.id,
+        status: appointment.appointmentStatus,
+        date: safeTimestamp(appointment.dateTime).toISOString(),
+        testType: appointment.testType,
+      },
+      {
+        userId: appointment.userId,
+        organizationId: appointment.organizationId,
+        actionType: action,
+      },
+    )
+  }
 
   async removeSyncInProgressForAcuity(acuityAppointmentId: number): Promise<void> {
     this.syncProgressRepository.deleteRecord(
@@ -382,7 +402,9 @@ export class AppoinmentService {
     },
   ): Promise<AppointmentDBModel> {
     const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
-    return this.appointmentsRepository.save(data)
+    const saved = await this.appointmentsRepository.save(data)
+    this.postPubsub(saved, 'created')
+    return saved
   }
 
   async updateAppointmentFromAcuity(
@@ -396,7 +418,13 @@ export class AppoinmentService {
     },
   ): Promise<AppointmentDBModel> {
     const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
-    return this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity)
+    const saved = await this.updateAppointmentDB(
+      id,
+      data,
+      AppointmentActivityAction.UpdateFromAcuity,
+    )
+    this.postPubsub(saved, 'updated')
+    return saved
   }
 
   private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
@@ -586,10 +614,12 @@ export class AppoinmentService {
       AppointmentStatus.InProgress,
       userId,
     )
-    return this.appointmentsRepository.updateProperties(appointmentId, {
+    const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Canceled,
       canceled: true,
     })
+    this.postPubsub(saved, 'canceled')
+    return saved
   }
 
   async makeInProgress(
@@ -602,10 +632,12 @@ export class AppoinmentService {
       AppointmentStatus.InProgress,
       userId,
     )
-    return this.appointmentsRepository.updateProperties(appointmentId, {
+    const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.InProgress,
       testRunId,
     })
+    this.postPubsub(saved, 'updated')
+    return saved
   }
 
   async makeBulkAction(
@@ -660,10 +692,11 @@ export class AppoinmentService {
       userId,
     )
 
-    await this.appointmentsRepository.updateProperties(appointmentId, {
+    const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Received,
       vialLocation,
     })
+    this.postPubsub(saved, 'updated')
   }
 
   async addTransportRun(
@@ -677,10 +710,11 @@ export class AppoinmentService {
       userId,
     )
 
-    await this.appointmentsRepository.updateProperties(appointmentId, {
+    const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       transportRunId: transportRunId,
       appointmentStatus: AppointmentStatus.InTransit,
     })
+    this.postPubsub(saved, 'updated')
   }
 
   private async checkAppointmentStatusOnly(
@@ -751,10 +785,12 @@ export class AppoinmentService {
       deadline,
     })
 
-    return this.appointmentsRepository.updateProperties(data.appointment.id, {
+    const saved = await this.appointmentsRepository.updateProperties(data.appointment.id, {
       appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
     })
+    this.postPubsub(saved, 'updated')
+    return saved
   }
 
   async changeStatusToReCollectRequired(
@@ -766,9 +802,11 @@ export class AppoinmentService {
       AppointmentStatus.ReCollectRequired,
       userId,
     )
-    return this.appointmentsRepository.updateProperties(appointmentId, {
+    const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.ReCollectRequired,
     })
+    this.postPubsub(saved, 'updated')
+    return saved
   }
 
   async getAppointmentDBByPackageCode(packageCode: string): Promise<AppointmentDBModel[]> {
@@ -1104,10 +1142,12 @@ export class AppoinmentService {
       userId,
     )
 
-    return this.appointmentsRepository.changeAppointmentStatus(
+    const saved = await this.appointmentsRepository.changeAppointmentStatus(
       appointmentId,
       AppointmentStatus.CheckedIn,
     )
+    this.postPubsub(saved, 'updated')
+    return saved
   }
 
   async rescheduleAppointment(
