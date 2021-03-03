@@ -38,8 +38,7 @@ beforeAll(function() {
       }),
       page: Joi.number().required(),
     });
-    console.log(response.json);
-    const {validatedData, error} = schema.validate(response.json);
+    const {error} = schema.validate(response.json);
     expect(error).toBe(null);
   });
 });

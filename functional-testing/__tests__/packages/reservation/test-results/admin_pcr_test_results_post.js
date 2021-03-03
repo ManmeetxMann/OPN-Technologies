@@ -41,7 +41,7 @@ describe('PCR TestResultsController', () => {
                 'resultDate': '2021-01-25',
                 'autoResult': 'Invalid',
                 'notify': false,
-                'action': 'ReRunToday', // RecollectAsInvalid, RecollectAsInconclusive, SendThisResult, DoNothing, ReRunToday, ReRunTomorrow, MarkAsPositive, MarkAsNegative, SendPreliminaryPositive
+                'action': 'ReRunToday',
                 'sendUpdatedResults': false,
               },
           )
@@ -49,5 +49,17 @@ describe('PCR TestResultsController', () => {
           .inspectBody();
     });
   });
-
 });
+
+/*
+
+RecollectAsInvalid,
+RecollectAsInconclusive,
+SendThisResult,
+DoNothing,
+ReRunToday,
+ReRunTomorrow,
+MarkAsPositive,
+MarkAsNegative,
+SendPreliminaryPositive
+*/

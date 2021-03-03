@@ -1,6 +1,5 @@
 const frisby = require('frisby');
 const helpersCommon = require('helpersCommon');
-const testProfile = require('test_profile');
 
 // Do setup first
 frisby.globalSetup({
@@ -10,7 +9,6 @@ frisby.globalSetup({
 });
 
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
-const organizationId = testProfile.get().organizationId;
 /**
  * @group reservation-service
  * @group /reservation/admin/api/v1/appointments

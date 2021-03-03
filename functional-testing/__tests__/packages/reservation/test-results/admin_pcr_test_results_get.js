@@ -1,13 +1,7 @@
 const frisby = require('frisby');
 const Joi = frisby.Joi;
 const helpersCommon = require('helpersCommon');
-
-const testProfile = require('test_profile');
-const schemaDefinations = require('reservation/test_result').schemaDefinations;
-const test_results_data = require('reservation/test_results');
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
-// const timeZone = process.env.DEFAULT_TIME_ZONE
-const organizationId = testProfile.get().organizationId;
 
 // Do setup first
 frisby.globalSetup({
@@ -40,8 +34,7 @@ beforeAll(function() {
       }),
       page: Joi.number().required(),
     });
-    console.log(response.json);
-    const {validatedData, error} = schema.validate(response.json);
+    const {error} = schema.validate(response.json);
     expect(error).toBe(null);
   });
 });

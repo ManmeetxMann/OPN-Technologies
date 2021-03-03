@@ -1,8 +1,6 @@
 const frisby = require('frisby');
 const helpersCommon = require('helpersCommon');
-// const admin_tags_data = require('enterprise/admin_tags_data');
-const testProfile = require('test_profile');
-const test_results_data = require('reservation/test_results');
+const testResultsData = require('reservation/test_results');
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
 
@@ -36,10 +34,10 @@ describe('PCR Bulk TestResultsController', () => {
               {
                 'resultDate': '2021-02-10',
                 'results': [
-                  test_results_data.getData({'barCode': 'A1313', 'autoResult': 'Negative', 'action': 'ReRunToday'}),
-                  test_results_data.getData({'barCode': 'A1566', 'autoResult': 'Positive', 'action': 'ReRunTomorrow'}),
-                  test_results_data.getData({'barCode': 'A1423', 'autoResult': 'Positive', 'action': 'SendThisResult'}),
-                  test_results_data.getData({'barCode': 'A1560', 'autoResult': 'Positive', 'action': 'RecollectAsInconclusive'}),
+                  testResultsData.getData({'barCode': 'A1313', 'autoResult': 'Negative', 'action': 'ReRunToday'}),
+                  testResultsData.getData({'barCode': 'A1566', 'autoResult': 'Positive', 'action': 'ReRunTomorrow'}),
+                  testResultsData.getData({'barCode': 'A1423', 'autoResult': 'Positive', 'action': 'SendThisResult'}),
+                  testResultsData.getData({'barCode': 'A1560', 'autoResult': 'Positive', 'action': 'RecollectAsInconclusive'}),
                   {
                     'autoResult': 'Negative',
                     'action': 'SendThisResult',

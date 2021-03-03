@@ -1,6 +1,5 @@
 const frisby = require('frisby');
 const helpersCommon = require('helpersCommon');
-const schemaDefinations = require('reservation/test_result').schemaDefinations;
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
 // Do setup first
