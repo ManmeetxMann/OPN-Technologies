@@ -382,8 +382,8 @@ export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): Use
     appointment.appointmentStatus !== AppointmentStatus.Canceled,
   firstName: appointment.firstName,
   lastName: appointment.lastName,
-  locationName: appointment.locationName || 'No information',
-  locationAddress: appointment.locationAddress || 'No information',
+  locationName: appointment.locationName,
+  locationAddress: appointment.locationAddress,
   dateTime: formatDateRFC822Local(appointment.dateTime),
 })
 

@@ -52,7 +52,8 @@
 		"migration:fix-pcr-organization-id": "ts-node ./migrations/fix-pcr-organization-id",
 		"migration:pcr-datetime-to-date": "ts-node ./migrations/pcr-datetime-to-date",
 		"migration:pcr-add-test-type": "ts-node ./migrations/pcr-add-test-type",
-		"migration:appointments-add-test-type": "ts-node ./migrations/appointments-add-test-type"
+		"migration:appointments-add-test-type": "ts-node ./migrations/appointments-add-test-type",
+		"migration:appointments-add-location-name-and-address": "ts-node ./migrations/add-locationName-and-locationAddress-to-appointments"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
