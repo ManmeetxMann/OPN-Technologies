@@ -12,7 +12,7 @@ import {ActionItem, Recommendations} from '../models/action-items'
 
 import {PassportStatuses, PassportStatus} from '../../../passport/src/models/passport'
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
-import {ResultTypes} from '../../../reservation/src/models/appointment'
+import {ResultTypes, AppointmentStatus} from '../../../reservation/src/models/appointment'
 import moment from 'moment'
 
 const tz = Config.get('DEFAULT_TIME_ZONE')
@@ -231,22 +231,24 @@ export class RecommendationService {
       timestamp: serverTimestamp(),
     })
   }
-  async addPCRTest(
+  async addPCRAppointment(
     userId: string,
     organizationId: string,
-    testId: string,
+    appointmentId: string,
+    status: AppointmentStatus,
     date: string,
   ): Promise<void> {
     // make sure the user has items
     await this.getItems(userId, organizationId)
     const repo = new UserActionsRepository(this.dataStore, userId)
     await repo.updateProperty(organizationId, 'scheduledPCRTest', {
-      testId,
+      appointmentId,
+      status,
       date: safeTimestamp(date),
       timestamp: serverTimestamp(),
     })
   }
-  async deletePCRTest(userId: string, organizationId: string): Promise<void> {
+  async deletePCRAppointment(userId: string, organizationId: string): Promise<void> {
     // make sure the user has items
     await this.getItems(userId, organizationId)
     const repo = new UserActionsRepository(this.dataStore, userId)
