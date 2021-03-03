@@ -123,7 +123,12 @@ components:
         enableTemperatureCheck:
           type: boolean
           default: false
-          nullable: true
+        legacyMode:
+          type: boolean
+          default: false
+        enableTesting:
+          type: boolean
+          default: false
       required:
         - name
 
@@ -1192,6 +1197,53 @@ components:
                 type: string
                 nullable: true
 
+    Recommendation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          nullable: true
+        title:
+          type: string
+        body:
+          type: string
+        recommendation:
+          type: string
+          enum:
+            [
+              StatusInfo
+              PassAvailable
+              CompleteAssessment
+              UpdateAssessment
+              BadgeExpiry
+              TempCheckRequired
+              ViewNegativeTemp
+              ViewPositiveTemp
+              BookPCR
+              BookingDetailsPCR
+              CheckInPCR
+              ResultReadiness
+              ViewNegativePCR
+              ViewPositivePCR
+            ]
+          nullable: false
+
+    Test:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        style:
+          type: string
+        
     ResponseOfOrganizationConnection:
       type: object
       additionalProperties: false
@@ -1814,6 +1866,76 @@ components:
           type: string
           description: the new "from" index to fetch the next page of the same query
           nullable: true
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    ResponseOfRecommendations:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recommendation'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    ResponseOfHealthPass:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          properties:
+            organization:
+              $ref: '#/components/schemas/Organization'
+            passes:
+              type: object
+              properties:
+                user:
+                  $ref: '#/components/schemas/UserV3'
+                expiry:
+                  type: string
+                dateOfBirth:
+                  type: string
+                tests:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Test'
         status:
           type: object
           additionalProperties: false
@@ -3708,6 +3830,79 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+
+    put:
+      summary: Update Group
+      description: Update a user's dependent group within the same organization
+      tags:
+        - Account Management
+      parameters:
+        - in: path
+          name: dependentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                organizationId:
+                  type: string
+                  nullable: false
+                fromGroupId:
+                  type: string
+                  nullable: false
+                toGroupId:
+                  type: string
+                  nullable: false
+              required:
+                - organizationId
+                - fromGroupId
+                - toGroupId
+      responses:
+        '200':
+          description: Successfull updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /enterprise/api/v3/recommendations:
+    get:
+      summary: recommendations for user
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfRecommendations'
+  /enterprise/api/v3/health-pass:
+    get:
+      summary: health passes for user and dependants
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfHealthPass'
 
     put:
       summary: Update Group
