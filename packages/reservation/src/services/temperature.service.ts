@@ -1,6 +1,7 @@
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {LogInfo} from '../../../common/src/utils/logging-setup'
 import DataStore from '../../../common/src/data/datastore'
+import {Config} from '../../../common/src/utils/config'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {Temperature, TemperatureDBModel} from '../models/temperature'
 import {TemperatureRepository} from '../respository/temperature.repository'
@@ -8,7 +9,7 @@ import {TemperatureRepository} from '../respository/temperature.repository'
 export class TemperatureService {
   private dataStore = new DataStore()
   private temperatureRepository = new TemperatureRepository(this.dataStore)
-  private pubsub = new OPNPubSub('temperature-topic')
+  private pubsub = new OPNPubSub(Config.get('TEMPERATURE_TOPIC'))
   async save(temperature: Temperature): Promise<TemperatureDBModel> {
     const temp = await this.temperatureRepository.add(temperature)
     this.pubsub.publish(
