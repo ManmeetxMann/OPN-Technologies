@@ -9,7 +9,11 @@ import {RecommendationService} from '../../services/recommendation-service'
 import {PassportStatus} from '../../../../passport/src/models/passport'
 
 import {TemperatureStatuses} from '../../../../reservation/src/models/temperature'
-import {ResultTypes, AppointmentStatus, TestTypes} from '../../../../reservation/src/models/appointment'
+import {
+  ResultTypes,
+  AppointmentStatus,
+  TestTypes,
+} from '../../../../reservation/src/models/appointment'
 
 class RecommendationController implements IControllerBase {
   public router = express.Router()

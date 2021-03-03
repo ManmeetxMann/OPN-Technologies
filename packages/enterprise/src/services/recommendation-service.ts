@@ -104,13 +104,12 @@ export class RecommendationService {
     const passportExpiry = passport ? safeTimestamp(passport.expiry) : null
     const latestTest = items.PCRTestResult
     const appointment = items.scheduledPCRTest
-    const wentToAppointment = latestTest && appointment && latestTest.testId === appointment.testId
     if (!passportExpiry || isPassed(passportExpiry)) {
-      // PENDING
-      if (wentToAppointment) {
+      if (appointment?.status && appointment.status !== AppointmentStatus.Pending) {
         // pending test
         return [Recommendations.ResultReadiness]
       }
+      // haven't checked in yet
       if (appointment && !isPassed(safeTimestamp(appointment.date))) {
         // upcoming test
         const isToday = moment(now())
@@ -151,7 +150,7 @@ export class RecommendationService {
     } else if (
       [Recommendations.CheckInPCR, Recommendations.BookingDetailsPCR].includes(recommendation)
     ) {
-      id = items.scheduledPCRTest?.testId
+      id = items.scheduledPCRTest?.appointmentId
     }
     return {
       id,
