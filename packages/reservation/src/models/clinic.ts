@@ -4,7 +4,7 @@ export type Clinic = {
   address: string
   acuityUser: string
   acuityPass: string
-  timestamps?: string
+  timestamps?: unknown
 }
 
 export type ClinicID = Pick<Clinic, 'id'>
