@@ -2585,7 +2585,7 @@ paths:
                         type: string
                   page:
                     type: number
-  '/reservation/admin/api/v1/appointments/{refAppointmentId}/create-new':
+  /reservation/admin/api/v1/appointments/{refAppointmentId}/create-new:
     post:
       description: Cancel appointment by appointment ID
       tags:

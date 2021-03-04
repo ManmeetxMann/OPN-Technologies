@@ -384,14 +384,12 @@ class AdminAppointmentController implements IControllerBase {
     }
   }
 
-
   scheduleNewAppointmentFromAnotherOne = async (
-        req: Request,
+    req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
     try {
-      
       const {refAppointmentId} = req.params as {refAppointmentId: string}
       const {date, time} = req.body as {date: string; time: string}
       //get the appointment that will be copied
@@ -410,18 +408,17 @@ class AdminAppointmentController implements IControllerBase {
       }
 
       res.json(actionSucceed(appointmentUiDTOResponse(savedAppointment, false)))
-   
     } catch (error) {
       next(error)
     }
   }
+
   rescheduleAppointment = async (
-      req: Request,
+    req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
     try {
-      
       const userID = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
       const {appointmentId} = req.params as {appointmentId: string}
@@ -436,13 +433,10 @@ class AdminAppointmentController implements IControllerBase {
       })
 
       res.json(actionSucceed(appointmentUiDTOResponse(updatedAppointment, isLabUser)))
-  
     } catch (error) {
       next(error)
     }
   }
-
-
 }
 
 export default AdminAppointmentController
