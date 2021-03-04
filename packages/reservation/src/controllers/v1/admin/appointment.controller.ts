@@ -1,5 +1,4 @@
 import {NextFunction, Request, Response, Router} from 'express'
-
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
@@ -94,6 +93,11 @@ class AdminAppointmentController implements IControllerBase {
       this.path + '/api/v1/appointments/barcode/regenerate',
       apptLabAuth,
       this.regenerateBarCode,
+    )
+    innerRouter.put(
+      this.path + '/api/v1/appointments/:appointmentId/reschedule',
+      apptLabAuth,
+      this.rescheduleAppointment,
     )
 
     this.router.use('/', innerRouter)
@@ -367,6 +371,31 @@ class AdminAppointmentController implements IControllerBase {
       const appointment = await this.appointmentService.regenerateBarCode(appointmentId, userId)
 
       res.json(actionSucceed(appointmentUiDTOResponse(appointment, false)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  rescheduleAppointment = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const userID = getUserId(res.locals.authenticatedUser)
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const {appointmentId} = req.params as {appointmentId: string}
+      const {organizationId, dateTime} = req.body as {organizationId: string; dateTime: string}
+
+      const updatedAppointment = await this.appointmentService.rescheduleAppointment({
+        appointmentId,
+        userID,
+        isLabUser,
+        organizationId,
+        dateTime,
+      })
+
+      res.json(actionSucceed(appointmentUiDTOResponse(updatedAppointment, isLabUser)))
     } catch (error) {
       next(error)
     }

@@ -367,6 +367,41 @@ abstract class AcuityAdapter {
     return result
   }
 
+  protected async rescheduleAppoinmentService(
+    id: number,
+    datetime: string,
+  ): Promise<AppointmentAcuityResponse> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = `${APIURL}/api/v1/appointments/${id}/reschedule`
+
+    const res = await fetch(apiUrl, {
+      method: 'put',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        datetime,
+      }),
+    })
+    const appointment = await res.json()
+    if (appointment.status_code) {
+      LogError(`AcuitySchedulingAdapterUpdateAppointment`, 'Failed', {
+        acuityID: id,
+        datetime: datetime,
+        status_code: appointment.status_code,
+        message: appointment.message,
+      })
+      throw new BadRequestException(appointment.message)
+    }
+    LogInfo(`AcuitySchedulingAdapterUpdateAppointment`, 'Success', {
+      acuityID: id,
+    })
+    return this.customFieldsToAppoinment(appointment)
+  }
+
   private customFieldsToAppoinment(
     appointment: AppointmentAcuityResponse,
   ): AppointmentAcuityResponse {
