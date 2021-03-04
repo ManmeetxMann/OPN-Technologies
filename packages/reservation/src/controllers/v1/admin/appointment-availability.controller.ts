@@ -27,6 +27,11 @@ class AdminAppointmentAvailabilityController implements IControllerBase {
       apptLabOrOrgAdminAuthWithOrg,
       this.getAvailableTimes,
     )
+    innerRouter.get(
+      this.path + '/dates-by-appointment-id',
+      apptLabOrOrgAdminAuthWithOrg,
+      this.getAvailableDates,
+    )
     this.router.use('/', innerRouter)
   }
 
@@ -43,6 +48,26 @@ class AdminAppointmentAvailabilityController implements IControllerBase {
         date,
       )
       res.json(actionSucceed(availableSlots))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getAvailableDates = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {year, month, calendarId, appointmentTypeId} = req.query as {
+        year: string
+        month: string
+        calendarId: string
+        appointmentTypeId: string
+      }
+      const response = await this.appointmentService.getAvailableDates(
+        appointmentTypeId,
+        calendarId,
+        year,
+        month,
+      )
+      res.json(actionSucceed(response))
     } catch (error) {
       next(error)
     }

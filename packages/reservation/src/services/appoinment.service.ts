@@ -878,6 +878,29 @@ export class AppoinmentService {
     })
   }
 
+  async getAvailableDates(
+    appointmentTypeId: string,
+    calendarId: string,
+    year: string,
+    month: string,
+  ): Promise<{id: string; availableDates: {date: string}[]}> {
+    const yearMonth = `${year}-${month}`
+    const id = encodeAvailableTimeId({
+      appointmentTypeId: Number(appointmentTypeId),
+      calendarId: Number(calendarId),
+      date: yearMonth,
+    })
+    const availableDates = await this.acuityRepository.getAvailableDates(
+      Number(appointmentTypeId),
+      Number(calendarId),
+      yearMonth,
+    )
+    return {
+      id,
+      availableDates,
+    }
+  }
+
   async getAvailabitlityDateList(
     id: string,
     year: number,

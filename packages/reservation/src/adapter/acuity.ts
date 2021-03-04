@@ -302,15 +302,16 @@ abstract class AcuityAdapter {
 
   protected async getAvailabilityDatesList(
     appointmentTypeID: number,
-    month: string,
     calendarID: number,
-    timezone: string,
+    month: string,
+    timezone?: string,
   ): Promise<{date: string}[]> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = encodeURI(
       APIURL +
-        `/api/v1/availability/dates?appointmentTypeID=${appointmentTypeID}&month=${month}&calendarID=${calendarID}&timezone=${timezone}`,
+        `/api/v1/availability/dates?appointmentTypeID=${appointmentTypeID}&calendarID=${calendarID}&month=${month}` +
+        (timezone ? '&timezone=' + timezone : ''),
     )
 
     LogInfo(`AcuityAdapterGetAvailbilityDates`, 'Success', {
