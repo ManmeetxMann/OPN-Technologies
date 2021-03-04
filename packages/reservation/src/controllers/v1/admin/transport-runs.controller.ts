@@ -48,15 +48,14 @@ class AdminTransportRunsController implements IControllerBase {
       const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
       const {admin} = res.locals.authenticatedUser
 
-      const checkIfLabExists = await this.labService.findOneById(labId)
       const isAdminForLab = admin.adminForLabIds && admin.adminForLabIds.includes(labId)
-
       if (!isAdminForLab && !isClinicUser) {
         throw new ResourceNotFoundException(
           `No permission to add labId [${labId}] to transport run`,
         )
       }
 
+      const checkIfLabExists = await this.labService.findOneById(labId)
       if (!checkIfLabExists) {
         throw new ResourceNotFoundException(`No lab found for this id ${labId}`)
       }
