@@ -1,6 +1,6 @@
 const frisby = require('frisby');
 const helpersCommon = require('helpers_common');
-const testProfile = require('test_profile');
+// const testProfile = require('test_profile');
 
 // Do setup first
 frisby.globalSetup({
@@ -10,7 +10,7 @@ frisby.globalSetup({
 });
 
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
-const organizationId = testProfile.get().organizationId;
+// const organizationId = testProfile.get().organizationId;
 /**
  * @group reservation-service
  * @group /reservation/admin/api/v1/appointments
@@ -31,12 +31,11 @@ describe('Reschedule Appointment', () => {
           .put(
               url,
               {
-                dateTime:'2021-03-05T10:25:00-0500',
-              }
+                dateTime: '2021-03-05T10:25:00-0500',
+              },
           )
           .expect('status', 200);
     });
   });
-
 });
 
