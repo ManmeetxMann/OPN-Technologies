@@ -5,7 +5,7 @@ import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datet
 import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
 import {groupByChannel} from '../utils/channel-grouper'
-import {PassportStatus, PassportStatuses} from 'packages/passport/src/models/passport'
+import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
