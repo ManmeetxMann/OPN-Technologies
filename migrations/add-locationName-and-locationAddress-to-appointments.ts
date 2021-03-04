@@ -1,6 +1,5 @@
 /**
- * This script to go through all appointments and add displayInResult flag to all PCR results.
- * Latest Result will be True
+ * This script to go through all appointments and add locationName and locationAddress.
  */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
@@ -18,7 +17,7 @@ console.log(serviceAccount.project_id)
 
 const database = firestore()
 
-export enum ResultStatus {
+enum ResultStatus {
   Fulfilled = 'fulfilled',
   Rejected = 'rejected',
 }
@@ -44,7 +43,7 @@ export async function promiseAllSettled(promises: Promise<unknown>[]): Promise<R
   )
 }
 
-async function updateTestResults(): Promise<Result[]> {
+async function updateAppointments(): Promise<Result[]> {
   let offset = 0
   let hasMore = true
   calendars = await acuityRepository.getCalendarList()
@@ -129,7 +128,7 @@ async function addLocationsFields(
       )
     }
 
-    return Promise.resolve(snapshot.id)
+    return snapshot.id
   } catch (error) {
     console.warn(error)
     throw error
@@ -139,7 +138,7 @@ async function addLocationsFields(
 async function main() {
   try {
     console.log('Migration Starting')
-    const results = await updateTestResults()
+    const results = await updateAppointments()
     results.forEach((result) => {
       totalCount += 1
       if (result.status === ResultStatus.Fulfilled) {
@@ -168,4 +167,4 @@ const limit = 50
 
 main().then(() => console.log('Script Complete \n'))
 
-// npm run migration:add-display-in-result-flag-to-pcr-results > add-display-in-result-flag-to-pcr-results-info-dev.log 2> add-display-in-result-flag-to-pcr-results-error-dev.log
+// npm run migration:appointments-add-location-name-and-address
