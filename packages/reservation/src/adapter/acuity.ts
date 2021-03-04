@@ -392,7 +392,7 @@ abstract class AcuityAdapter {
         acuityID: id,
         datetime: datetime,
         status_code: appointment.status_code,
-        message:appointment.message,
+        message: appointment.message,
       })
       throw new BadRequestException(appointment.message)
     }

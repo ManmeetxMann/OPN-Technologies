@@ -25,7 +25,7 @@ import {dateFormats, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
-import { LogInfo, LogWarning } from '../../../common/src/utils/logging-setup'
+import {LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 
 import {
   firestoreTimeStampToUTC,
@@ -436,7 +436,7 @@ export class AppoinmentService {
       : TestTypes.PCR
   }
 
-  private async getDateFields(acuityAppointment:AppointmentAcuityResponse){
+  private async getDateFields(acuityAppointment: AppointmentAcuityResponse) {
     const dateTimeStr = acuityAppointment.datetime
     const dateTimeTz = moment(dateTimeStr).tz(timeZone)
     const label = acuityAppointment.labels ? acuityAppointment.labels[0]?.name : null
@@ -450,7 +450,7 @@ export class AppoinmentService {
       deadline,
       dateOfAppointment,
       timeOfAppointment,
-      dateTime
+      dateTime,
     }
   }
 
@@ -465,12 +465,9 @@ export class AppoinmentService {
       userId?: string
     },
   ): Promise<Omit<AppointmentDBModel, 'id'>> {
-    const {
-      deadline,
-      dateOfAppointment,
-      timeOfAppointment,
-      dateTime
-    } = await this.getDateFields(acuityAppointment)
+    const {deadline, dateOfAppointment, timeOfAppointment, dateTime} = await this.getDateFields(
+      acuityAppointment,
+    )
     const {
       barCodeNumber,
       organizationId,
@@ -1163,21 +1160,28 @@ export class AppoinmentService {
     return saved
   }
 
-  async getAppointmentValidatedForUpdate(appointmentId: string, isLabUser:boolean, organizationId?:string): Promise<AppointmentDBModel>{
+  async getAppointmentValidatedForUpdate(
+    appointmentId: string,
+    isLabUser: boolean,
+    organizationId?: string,
+  ): Promise<AppointmentDBModel> {
     const appointmentFromDB = await this.appointmentsRepository.get(appointmentId)
     if (!appointmentFromDB) {
-      LogWarning('AppoinmentService: rescheduleAppointment','BadAppointmentID',{
-        appointmentId
+      LogWarning('AppoinmentService: rescheduleAppointment', 'BadAppointmentID', {
+        appointmentId,
       })
       throw new ResourceNotFoundException(`Invalid Appointment ID`)
     }
 
-    const canReschedule = this.getCanCancelOrReschedule(isLabUser, appointmentFromDB.appointmentStatus)
+    const canReschedule = this.getCanCancelOrReschedule(
+      isLabUser,
+      appointmentFromDB.appointmentStatus,
+    )
     if (!canReschedule) {
-      LogWarning('AppoinmentService: rescheduleAppointment','NotAllowedToReschedule',{
+      LogWarning('AppoinmentService: rescheduleAppointment', 'NotAllowedToReschedule', {
         appointmentId,
         isLabUser,
-        appointmentStatus: appointmentFromDB.appointmentStatus
+        appointmentStatus: appointmentFromDB.appointmentStatus,
       })
       throw new BadRequestException(
         `Appointment can't be rescheduled. It is already in ${appointmentFromDB.appointmentStatus} state`,
@@ -1185,10 +1189,10 @@ export class AppoinmentService {
     }
 
     if (organizationId && appointmentFromDB.organizationId !== organizationId) {
-      LogWarning('AppoinmentService: rescheduleAppointment','Incorrect Organization ID',{
+      LogWarning('AppoinmentService: rescheduleAppointment', 'Incorrect Organization ID', {
         appointmentId,
         isLabUser,
-        organizationId
+        organizationId,
       })
       throw new BadRequestException(`Appointment doesn't belong to selected Organization`)
     }
@@ -1197,22 +1201,29 @@ export class AppoinmentService {
 
   async rescheduleAppointment(requestData: RescheduleAppointmentDTO): Promise<AppointmentDBModel> {
     const {appointmentId, isLabUser, organizationId} = requestData
-    const appointmentFromDB = await this.getAppointmentValidatedForUpdate(appointmentId, isLabUser, organizationId)
+    const appointmentFromDB = await this.getAppointmentValidatedForUpdate(
+      appointmentId,
+      isLabUser,
+      organizationId,
+    )
     const acuityAppointment = await this.acuityRepository.rescheduleAppoinmentOnAcuity(
       appointmentFromDB.acuityAppointmentId,
-      requestData.dateTime
+      requestData.dateTime,
     )
     const dateTimeData = await this.getDateFields(acuityAppointment)
-    const updatedAppointment = await this.appointmentsRepository.updateData(appointmentId, dateTimeData)
+    const updatedAppointment = await this.appointmentsRepository.updateData(
+      appointmentId,
+      dateTimeData,
+    )
 
     await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(appointmentId, {
       dateTime: dateTimeData.dateTime,
-      deadline:dateTimeData.deadline,
+      deadline: dateTimeData.deadline,
     })
-    
+
     LogInfo('AppoinmentService:rescheduleAppointment', 'AppointmentRescheduled', {
       appoinmentId: updatedAppointment.id,
-      appointmentDateTime: dateTimeData.dateTime
+      appointmentDateTime: dateTimeData.dateTime,
     })
     return updatedAppointment
   }

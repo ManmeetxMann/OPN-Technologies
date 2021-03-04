@@ -1,5 +1,4 @@
 import {NextFunction, Request, Response, Router} from 'express'
-import moment from 'moment'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
@@ -16,18 +15,11 @@ import {
   AppointmentDBModel,
   statsUiDTOResponse,
   appointmentUiDTOResponse,
-  AppointmentAcuityResponse,
 } from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 import {TransportRunsService} from '../../../services/transport-runs.service'
 import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
-import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
-import {PCRTestResultDBModel} from '../../../../../reservation/src/models/pcr-test-results'
-import {
-  makeFirestoreTimestamp,
-  makeDeadline,
-} from '../../../../../reservation/src/utils/datetime.helper'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
@@ -35,7 +27,6 @@ class AdminAppointmentController implements IControllerBase {
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
   private transportRunsService = new TransportRunsService()
-  private pcrTestResultsService = new PCRTestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -394,78 +385,20 @@ class AdminAppointmentController implements IControllerBase {
       const userID = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
       const {appointmentId} = req.params as {appointmentId: string}
-      const {organizationId, dateTime} = req.body as {organizationId: string, dateTime: string}
+      const {organizationId, dateTime} = req.body as {organizationId: string; dateTime: string}
 
       await this.appointmentService.rescheduleAppointment({
         appointmentId,
         userID,
         isLabUser,
         organizationId,
-        dateTime
+        dateTime,
       })
 
       res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
-    /*
-    try {
-      const utcDateTime = moment(datetime).utc()
-
-      const dateTime = new Date(datetime)
-      const timestamp = makeFirestoreTimestamp(dateTime)
-
-      const canCancel = this.appointmentService.getCanCancel(
-        isLabUser,
-        appointmentFromDB.appointmentStatus,
-      )
-      const acuityAppointment = await this.appointmentService.getAppointmentByIdFromAcuity(
-        acuityAppointmentId,
-      )
-      console.log('Before can Cancel: ', canCancel)
-
-      const deadline = makeDeadline(moment(dateTime).utc())
-
-      console.log('before acuityAppointment: ', acuityAppointment.datetime)
-        
-      console.log('DateTime: ', utcDateTime.format())
-      if (canCancel && acuityAppointment.canClientCancel && acuityAppointment.canClientReschedule) {
-        //reschedule appointment for acuity
-        const appointmentAcuityResponse: AppointmentAcuityResponse = await this.appointmentService.rescheduleAppointmentOnAcuity(
-          acuityAppointmentId,
-          utcDateTime.format(),
-        )
-
-        //reschedule test result
-        const testResultDBModel: Partial<PCRTestResultDBModel> = {
-          dateTime: timestamp,
-          deadline,
-        }
-        const pcrResponse = await this.pcrTestResultsService.updateTestResultByAppointmentId(
-          appointmentFromDB.id,
-          testResultDBModel,
-        )
-
-        //reschedule appointment
-        const result = await this.appointmentService.rescheduleAppointment(
-          appointmentId,
-          datetime,
-          datetime,
-          timestamp,
-          deadline,
-        )
-
-        console.log('after appointmentAcuityResponse: ', appointmentAcuityResponse.datetime)
-
-        console.log('Test Result changed ID:', pcrResponse.id)
-
-        res.json(actionSucceed(appointmentUiDTOResponse(result, false)))
-      } else {
-        throw new BadRequestException('Clients are not allowed to reschedule this appointment')
-      }
-    } catch (error) {
-      next(error)
-    }*/
   }
 }
 
