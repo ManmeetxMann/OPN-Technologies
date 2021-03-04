@@ -3,7 +3,6 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {getUserId} from '../../../../../common/src/utils/auth'
-import {TestKitBatchPostRequest} from '../../../models/test-kit-batch'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {TestKitBatchService} from '../../../services/test-kit-batch.service'
 
@@ -25,7 +24,8 @@ class AdminTestKitBatchController implements IControllerBase {
 
   getTestKitBatchList = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const testKitBatches = await this.testKitBatchService.getAll()
+      const testKitBatchesList = await this.testKitBatchService.getAll()
+      const testKitBatches = testKitBatchesList.map(({timestamps, ...fields}) => ({...fields}))
 
       res.json(actionSucceed(testKitBatches))
     } catch (error) {
@@ -36,8 +36,14 @@ class AdminTestKitBatchController implements IControllerBase {
   createTestKitBatch = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const createdBy = getUserId(res.locals.authenticatedUser)
-      const testKitBatchRequestBody = req.body as TestKitBatchPostRequest
-      const {id} = await this.testKitBatchService.save({...testKitBatchRequestBody, createdBy})
+      const {lotNumber, hardwareName, expiry, manufacturer} = req.body
+      const {id} = await this.testKitBatchService.save({
+        lotNumber,
+        hardwareName,
+        expiry,
+        manufacturer,
+        createdBy,
+      })
 
       res.json(actionSucceed({id}))
     } catch (error) {

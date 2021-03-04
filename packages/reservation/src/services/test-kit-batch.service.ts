@@ -1,5 +1,5 @@
 import DataStore from '../../../common/src/data/datastore'
-import {TestKitBatch, TestKitBatchID} from '../models/test-kit-batch'
+import {TestKitBatch, TestKitBatchID, TestKitBatchPostRequest} from '../models/test-kit-batch'
 import {TestKitBatchRepository} from '../respository/test-kit-batch.repository'
 
 export class TestKitBatchService {
@@ -10,7 +10,7 @@ export class TestKitBatchService {
     return this.testKitBatchRepository.getAll()
   }
 
-  save(TestKitBatch: Omit<TestKitBatch, 'id'>): Promise<TestKitBatchID> {
-    return this.testKitBatchRepository.add(TestKitBatch)
+  save(testKitBatch: TestKitBatchPostRequest): Promise<TestKitBatchID> {
+    return this.testKitBatchRepository.add(testKitBatch)
   }
 }

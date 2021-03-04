@@ -7,8 +7,9 @@ export type TestKitBatch = {
   expiry: firestore.Timestamp
   manufacturer: string
   createdBy: string
+  timestamps?: unknown
 }
 
-export type TestKitBatchPostRequest = Omit<TestKitBatch, 'id' | 'createdBy'>
+export type TestKitBatchPostRequest = Omit<TestKitBatch, 'id' | 'timestamps'>
 
 export type TestKitBatchID = Pick<TestKitBatch, 'id'>

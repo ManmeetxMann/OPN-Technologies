@@ -1,6 +1,6 @@
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
-import {TestKitBatch, TestKitBatchID} from '../models/test-kit-batch'
+import {TestKitBatch, TestKitBatchID, TestKitBatchPostRequest} from '../models/test-kit-batch'
 
 export class TestKitBatchRepository extends DataModel<TestKitBatch> {
   public rootPath = 'test-kit-batches'
@@ -14,7 +14,7 @@ export class TestKitBatchRepository extends DataModel<TestKitBatch> {
     return this.fetchAll()
   }
 
-  public async save(testKitBatch: Omit<TestKitBatch, 'id'>): Promise<TestKitBatchID> {
+  public async save(testKitBatch: TestKitBatchPostRequest): Promise<TestKitBatchID> {
     return this.add(testKitBatch)
   }
 }
