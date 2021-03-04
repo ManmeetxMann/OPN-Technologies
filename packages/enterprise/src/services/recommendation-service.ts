@@ -78,25 +78,33 @@ export class RecommendationService {
   private getRecommendationsTemperature = (items: ActionItem): Recommendations[] => {
     const passport = items.latestPassport
     const passportExpiry = passport ? safeTimestamp(passport.expiry) : null
-    if (
-      !passportExpiry ||
-      isPassed(passportExpiry) ||
-      passport.status == PassportStatuses.TemperatureCheckRequired
-    ) {
-      // PENDING
-      if (passport?.status == PassportStatuses.TemperatureCheckRequired) {
-        return [Recommendations.StatusInfo, Recommendations.TempCheckRequired]
+    if (!passport || isPassed(passportExpiry) || passport.status === PassportStatuses.Pending) {
+      // pending
+      return [Recommendations.CompleteAssessment, Recommendations.StatusInfo]
+    }
+    const {status} = passport
+    if (status == PassportStatuses.Stop || status == PassportStatuses.Caution) {
+      // stop
+      if (
+        items.latestTemperature?.status === TemperatureStatuses.Stop &&
+        items.latestAttestation &&
+        safeTimestamp(items.latestTemperature.timestamp) >
+          safeTimestamp(items.latestAttestation.timestamp)
+      ) {
+        // temp was too high
+        return [Recommendations.BadgeExpiry, Recommendations.ViewPositiveTemp]
       }
-      return [Recommendations.StatusInfo, Recommendations.CompleteAssessment]
+      // bad attestation
+      return [Recommendations.BadgeExpiry, Recommendations.CompleteAssessment]
     }
-
-    const latestTemp = items.latestTemperature
-    if (latestTemp?.status === TemperatureStatuses.Proceed) {
-      // PROCEED
-      return [Recommendations.BadgeExpiry, Recommendations.ViewNegativeTemp]
+    if (status == PassportStatuses.TemperatureCheckRequired) {
+      // tcr
+      return [Recommendations.TempCheckRequired, Recommendations.PassAvailable]
     }
-    // STOP
-    return [Recommendations.BadgeExpiry, Recommendations.ViewPositiveTemp]
+    if (status == PassportStatuses.Proceed) {
+      // proceed
+      return [Recommendations.PassAvailable, Recommendations.ViewNegativeTemp]
+    }
   }
 
   private getRecommendationsPCR = (items: ActionItem): Recommendations[] => {
@@ -104,37 +112,55 @@ export class RecommendationService {
     const passportExpiry = passport ? safeTimestamp(passport.expiry) : null
     const latestTest = items.PCRTestResult
     const appointment = items.scheduledPCRTest
-    if (!passport || isPassed(passportExpiry)) {
-      // no valid passport
-      if (appointment?.status && appointment.status !== AppointmentStatus.Pending) {
-        // pending test
-        return [Recommendations.ResultReadiness]
-      }
-      // haven't checked in yet
-      if (appointment && !isPassed(safeTimestamp(appointment.date))) {
-        // upcoming test
+
+    if (!passport || isPassed(passportExpiry) || passport.status === PassportStatuses.Pending) {
+      // pending
+      if (appointment?.status === AppointmentStatus.Pending) {
         const isToday = moment(now())
           .tz(tz)
           .endOf('day')
-          .isSameOrAfter(safeTimestamp(items.scheduledPCRTest.date))
+          .isSameOrAfter(safeTimestamp(appointment.date))
         return [
           Recommendations.CompleteAssessment,
           isToday ? Recommendations.CheckInPCR : Recommendations.BookingDetailsPCR,
         ]
       }
-      // need to book a test
-      return [Recommendations.BookPCR, Recommendations.CompleteAssessment]
+      if (
+        !latestTest ||
+        !appointment ||
+        safeTimestamp(latestTest.timestamp) > safeTimestamp(appointment.date)
+      ) {
+        // need to book a test
+        return [Recommendations.BookPCR, Recommendations.CompleteAssessment]
+      }
+      return [Recommendations.ResultReadiness]
     }
-    // valid passport, check status
-    if (passport.status !== PassportStatuses.Proceed) {
-      if (latestTest && latestTest.result !== ResultTypes.Negative) {
+    const {status} = passport
+    if (status == PassportStatuses.Stop || status == PassportStatuses.Caution) {
+      // stop
+      if (
+        items.PCRTestResult &&
+        [
+          ResultTypes.Positive,
+          ResultTypes.PreliminaryPositive,
+          ResultTypes.PresumptivePositive,
+        ].includes(items.PCRTestResult.result)
+      ) {
+        // positive test
         return [Recommendations.BadgeExpiry, Recommendations.ViewPositivePCR]
+      }
+      // bad attestation
+      return [Recommendations.BadgeExpiry, Recommendations.CompleteAssessment]
+    }
+    if (status == PassportStatuses.Proceed) {
+      // proceed
+      if (latestTest) {
+        return [Recommendations.PassAvailable, Recommendations.ViewNegativePCR]
       } else {
-        return [Recommendations.BadgeExpiry]
+        // shouldn't happen but
+        return [Recommendations.PassAvailable]
       }
     }
-    // proceed
-    return [Recommendations.PassAvailable, Recommendations.ViewNegativePCR]
   }
 
   // TODO: add localization
