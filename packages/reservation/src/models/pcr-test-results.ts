@@ -93,7 +93,7 @@ export enum TestResultStyle {
   // Atestation result style
   caution = 'YELLOW',
   stop = 'RED',
-  Proceed = 'GREEN',
+  proceed = 'GREEN',
 }
 
 type PCRResultSpecs = {
