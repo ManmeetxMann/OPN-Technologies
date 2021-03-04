@@ -94,9 +94,9 @@ export class HealthpassService {
         style: 'GREEN',
       })
     }
-    if (items.PCRTestResult?.result !== ResultTypes.Negative) {
+    if (items.PCRTestResult?.result === ResultTypes.Negative) {
       tests.push({
-        date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
+        date: safeTimestamp(items.PCRTestResult.timestamp).toISOString(),
         type: 'PCR',
         id: items.PCRTestResult.testId,
         status: items.PCRTestResult.result,
