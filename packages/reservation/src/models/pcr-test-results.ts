@@ -400,39 +400,49 @@ enum LabData {
 export const singlePcrTestResultDTO = (
   pcrTestResult: PCRTestResultDBModel,
   appointment: AppointmentDBModel,
-): SinglePcrTestResultUi => ({
-  email: appointment.email,
-  firstName: appointment.firstName,
-  lastName: appointment.lastName,
-  phone: `${appointment.phone}`,
-  ohipCard: appointment.ohipCard,
-  dateOfBirth: appointment.dateOfBirth,
-  address: appointment.address,
-  addressUnit: appointment.addressUnit,
-  barCode: pcrTestResult.barCode,
-  appointmentStatus: appointment.appointmentStatus,
-  result: pcrTestResult.result,
-  dateTime: formatStringDateRFC822Local(pcrTestResult.dateTime.toDate()),
-  registeredNursePractitioner: appointment.registeredNursePractitioner,
-  physician: requisitionDoctor,
-  locationName: appointment.locationName,
-  swabMethod: appointment.swabMethod,
-  deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
-  labName: LabData.labName,
-  testType: LabData.testType,
-  equipment: LabData.equipment,
-  manufacturer: LabData.manufacturer,
-  resultSpecs: Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
-    label: resultKey,
-    value: resultValue,
-  })),
-  resultAnalysis: groupByChannel(
-    Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
+): SinglePcrTestResultUi => {
+  let resultSpecs = null
+  let resultAnalysis = null
+  if (pcrTestResult.resultSpecs) {
+    resultSpecs = Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
       label: resultKey,
       value: resultValue,
-    })),
-  ),
-  style: resultToStyle(pcrTestResult.result),
-  testName: 'SARS COV-2',
-  doctorId: 'DR1',
-})
+    }))
+  }
+  if (pcrTestResult.resultSpecs) {
+    resultAnalysis = groupByChannel(
+      Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
+        label: resultKey,
+        value: resultValue,
+      })),
+    )
+  }
+  return {
+    email: appointment.email,
+    firstName: appointment.firstName,
+    lastName: appointment.lastName,
+    phone: `${appointment.phone}`,
+    ohipCard: appointment.ohipCard,
+    dateOfBirth: appointment.dateOfBirth,
+    address: appointment.address,
+    addressUnit: appointment.addressUnit,
+    barCode: pcrTestResult.barCode,
+    appointmentStatus: appointment.appointmentStatus,
+    result: pcrTestResult.result,
+    dateTime: formatStringDateRFC822Local(pcrTestResult.dateTime.toDate()),
+    registeredNursePractitioner: appointment.registeredNursePractitioner,
+    physician: requisitionDoctor,
+    locationName: appointment.locationName,
+    swabMethod: appointment.swabMethod,
+    deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
+    labName: LabData.labName,
+    testType: LabData.testType,
+    equipment: LabData.equipment,
+    manufacturer: LabData.manufacturer,
+    resultSpecs: resultSpecs,
+    resultAnalysis: resultAnalysis,
+    style: resultToStyle(pcrTestResult.result),
+    testName: 'SARS COV-2',
+    doctorId: 'DR1',
+  }
+}
