@@ -833,26 +833,45 @@ components:
             - equipment
             - manufacturer
     ClinicsResponse:
-        allOf:
-          - $ref: '#/components/schemas/Response'
-        properties:  
-          data:
-            nullable: true
-            type: array
-            items:
-              type: object
-              additionalProperties: false
-              properties:
-                id:
-                  type: string
-                name:
-                  type: string
-                address:
-                  type: string
-                acuityUser:
-                  type: string
-                acuityPass:
-                  type: string
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          nullable: true
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              address:
+                type: string
+              acuityUser:
+                type: string
+              acuityPass:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
+        page:
+            type: number
   
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -2835,9 +2854,8 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/ClinicsResponse'
-    post:
+                $ref: '#/components/schemas/ClinicsResponse'
+    post: 
       description: Create new clinic
       tags:
         - Clinics Management
@@ -2869,11 +2887,31 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/Response'
-                properties:  
+                type: object
+                additionalProperties: false
+                properties:
                   data:
+                    nullable: false
                     type: object
                     properties:
                       id:
-                        type: string       
+                        type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string 
+                  page:
+                    type: number   

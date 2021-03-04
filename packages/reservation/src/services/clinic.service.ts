@@ -10,7 +10,7 @@ export class ClinicService {
     return this.clinicRepository.fetchAll()
   }
 
-  save(Clinic: Omit<Clinic, 'id'>): Promise<Clinic> {
-    return this.clinicRepository.add(Clinic)
+  save(clinic: Omit<Clinic, 'id'>): Promise<Clinic> {
+    return this.clinicRepository.add(clinic)
   }
 }

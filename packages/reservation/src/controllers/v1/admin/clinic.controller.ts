@@ -4,7 +4,7 @@ import {ClinicService} from '../../../../../../packages/reservation/src/services
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
-import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 
 class AdminClinicController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -24,7 +24,8 @@ class AdminClinicController implements IControllerBase {
 
   getClinicsList = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const clinics = await this.clinicService.getAll()
+      const clinicsList = await this.clinicService.getAll()
+      const clinics = clinicsList.map(({timestamps, ...fields}) => ({...fields}))
 
       res.json(actionSucceed(clinics))
     } catch (error) {
@@ -34,10 +35,10 @@ class AdminClinicController implements IControllerBase {
 
   createClinic = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const clinicBody = req.body as ClinicPostRequest
-      const {id} = await this.clinicService.save(clinicBody)
+      const {name, address, acuityPass, acuityUser} = req.body as ClinicPostRequest
+      const {id} = await this.clinicService.save({name, address, acuityPass, acuityUser})
 
-      res.json(actionSucceed({id}))
+      res.json(actionSuccess({id}, 'Clinic has been created'))
     } catch (error) {
       next(error)
     }
