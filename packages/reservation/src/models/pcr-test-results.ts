@@ -86,7 +86,7 @@ export enum TestResultStyle {
   Invalid = 'YELLOW',
   ReCollectRequired = 'YELLOW',
   Inconclusive = 'BLUE',
-  AnyOther = 'GREY',
+  AnyOther = 'GRAY',
   // Temperature check style
   Failed = 'RED',
   Passed = 'GREEN',
