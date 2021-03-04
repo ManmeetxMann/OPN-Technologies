@@ -1979,6 +1979,11 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/Test'
+                status:
+                  type: string
+                  enum:
+                    - proceed
+                    - temperature_check_required
         status:
           type: object
           additionalProperties: false
