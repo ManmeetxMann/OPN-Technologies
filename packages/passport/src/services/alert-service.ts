@@ -88,7 +88,7 @@ export class AlertService {
     locationId: string | null,
   ): Promise<void> {
     const {status, dependantIds, includesGuardian, userId} = passport
-    const {answers} = attestation
+    const answers = attestation?.answers
     // TODO switch to getting from organization
     const allLocations = await this.organizationService.getAllLocations(organizationId)
     const allQuestionnaires = new Set(
@@ -113,7 +113,7 @@ export class AlertService {
 
       // TODO: should be uncommented after the locationID is in the temperature controller
       const endTime = now().valueOf()
-      const dateOfTest = this.findTestDate(answers)
+      const dateOfTest = answers ? this.findTestDate(answers) : null
       const startTime = (dateOfTest ? dateOfTest.valueOf() : endTime) - TRACE_LENGTH
 
       this.topic.publish(
@@ -187,7 +187,7 @@ export class AlertService {
       }
     } else {
       // TODO: "if "should be removed after the locationID is in the temperature controller
-      if (attestation) {
+      if (!attestation) {
         console.warn(
           `Could not execute a trace of attestation ${
             attestation ? attestation.id : 'No attestationId provided'
