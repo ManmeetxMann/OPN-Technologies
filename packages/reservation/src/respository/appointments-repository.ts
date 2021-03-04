@@ -35,19 +35,8 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     return this.add(validatedData)
   }
 
-  public async rescheduleAppointment(
-    appointmentId: string,
-    dateOfAppointment: string,
-    timeOfAppointment: string,
-    dateTime: firestore.Timestamp,
-    deadline: firestore.Timestamp,
-  ): Promise<AppointmentDBModel> {
-    return this.updateProperties(appointmentId, {
-      dateOfAppointment,
-      timeOfAppointment,
-      dateTime,
-      deadline,
-    })
+  public async updateData(id:string, appointment: Partial<AppointmentDBModel>): Promise<AppointmentDBModel> {
+    return this.updateProperties(id, appointment)
   }
 
   public changeAppointmentStatus(

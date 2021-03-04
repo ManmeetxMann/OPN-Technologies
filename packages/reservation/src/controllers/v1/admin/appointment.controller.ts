@@ -391,19 +391,29 @@ class AdminAppointmentController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      let result
-      const {appointmentId} = req.params
-      const {date, time} = req.body as {date: string; time: string}
-      const appointmentFromDB: AppointmentDBModel = await this.appointmentService.getAppointmentDBById(
-        appointmentId,
-      )
-      const acuityAppointmentId = appointmentFromDB.acuityAppointmentId
+      const userID = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
-      const parsedTime = time //.replace('am', ' AM').replace('pm', ' PM')
-      const dateTime = new Date(date + ' ' + parsedTime)
+      const {appointmentId} = req.params as {appointmentId: string}
+      const {organizationId, dateTime} = req.body as {organizationId: string, dateTime: string}
+
+      await this.appointmentService.rescheduleAppointment({
+        appointmentId,
+        userID,
+        isLabUser,
+        organizationId,
+        dateTime
+      })
+
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+    /*
+    try {
+      const utcDateTime = moment(datetime).utc()
+
+      const dateTime = new Date(datetime)
       const timestamp = makeFirestoreTimestamp(dateTime)
-      const isosDate = dateTime.toISOString()
-      let deadlineLabel
 
       const canCancel = this.appointmentService.getCanCancel(
         isLabUser,
@@ -414,18 +424,16 @@ class AdminAppointmentController implements IControllerBase {
       )
       console.log('Before can Cancel: ', canCancel)
 
-      if (acuityAppointment?.labels?.length > 0) {
-        deadlineLabel = acuityAppointment.labels[0].name
-      }
-      const deadline = makeDeadline(moment(dateTime).utc(), deadlineLabel)
+      const deadline = makeDeadline(moment(dateTime).utc())
 
-      console.log('before acuityAppointment: ', acuityAppointment)
-
+      console.log('before acuityAppointment: ', acuityAppointment.datetime)
+        
+      console.log('DateTime: ', utcDateTime.format())
       if (canCancel && acuityAppointment.canClientCancel && acuityAppointment.canClientReschedule) {
         //reschedule appointment for acuity
         const appointmentAcuityResponse: AppointmentAcuityResponse = await this.appointmentService.rescheduleAppointmentOnAcuity(
           acuityAppointmentId,
-          isosDate,
+          utcDateTime.format(),
         )
 
         //reschedule test result
@@ -433,22 +441,21 @@ class AdminAppointmentController implements IControllerBase {
           dateTime: timestamp,
           deadline,
         }
-
         const pcrResponse = await this.pcrTestResultsService.updateTestResultByAppointmentId(
           appointmentFromDB.id,
           testResultDBModel,
         )
 
         //reschedule appointment
-        result = await this.appointmentService.rescheduleAppointment(
+        const result = await this.appointmentService.rescheduleAppointment(
           appointmentId,
-          date,
-          time,
+          datetime,
+          datetime,
           timestamp,
           deadline,
         )
 
-        console.log('after appointmentAcuityResponse: ', appointmentAcuityResponse)
+        console.log('after appointmentAcuityResponse: ', appointmentAcuityResponse.datetime)
 
         console.log('Test Result changed ID:', pcrResponse.id)
 
@@ -458,7 +465,7 @@ class AdminAppointmentController implements IControllerBase {
       }
     } catch (error) {
       next(error)
-    }
+    }*/
   }
 }
 
