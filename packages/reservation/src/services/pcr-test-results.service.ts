@@ -69,12 +69,20 @@ import {
 import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
-import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {TestRunsService} from '../services/test-runs.service'
-import {AttestationService} from '../../../passport/src/services/attestation-service'
 import {TemperatureService} from './temperature.service'
 import {mapTemperatureStatusToResultTypes} from '../models/temperature'
+
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+
+import {AttestationService} from '../../../passport/src/services/attestation-service'
+import {PassportService} from '../../../passport/src/services/passport-service'
 import {PassportStatuses} from '../../../passport/src/models/passport'
+
+const passportStatusByPCR = {
+  [ResultTypes.Positive]: PassportStatuses.Proceed,
+  [ResultTypes.Negative]: PassportStatuses.Stop,
+}
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -94,6 +102,7 @@ export class PCRTestResultsService {
   ]
   private testRunsService = new TestRunsService()
   private attestationService = new AttestationService()
+  private passportService = new PassportService() // TODO: remove with pubsub integration
   private temperatureService = new TemperatureService()
   private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
 
@@ -865,6 +874,17 @@ export class PCRTestResultsService {
         break
       }
       default: {
+        const passportStatus = passportStatusByPCR[resultData.result]
+        // TODO: get rid of this and handle passport creation on the other end of pub sub
+        if (passportStatus) {
+          this.passportService.create(
+            passportStatus,
+            resultData.userId,
+            [],
+            true,
+            resultData.organizationId,
+          )
+        }
         if (resultData.result === ResultTypes.Negative) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Negative)
         } else if (resultData.result === ResultTypes.Positive) {
