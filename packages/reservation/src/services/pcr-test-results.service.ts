@@ -8,6 +8,8 @@ import {BadRequestException} from '../../../common/src/exceptions/bad-request-ex
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {toDateFormat} from '../../../common/src/utils/times'
+import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {
   formatDateRFC822Local,
   formatStringDateRFC822Local,
@@ -93,6 +95,22 @@ export class PCRTestResultsService {
   private testRunsService = new TestRunsService()
   private attestationService = new AttestationService()
   private temperatureService = new TemperatureService()
+  private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
+
+  private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
+    this.pubsub.publish(
+      {
+        id: testResult.id,
+        result: testResult.result,
+        date: safeTimestamp(testResult.dateTime).toISOString(),
+      },
+      {
+        userId: testResult.userId,
+        organizationId: testResult.organizationId,
+        actionType: action,
+      },
+    )
+  }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
     //Validate Result Exists for barCode and throws exception
@@ -810,6 +828,7 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
   ): Promise<void> {
+    this.postPubsub(resultData, 'result')
     let addSuccessLog = true
     switch (notficationType) {
       case PCRResultActions.SendPreliminaryPositive: {
@@ -958,6 +977,18 @@ export class PCRTestResultsService {
     defaultTestResults: Partial<PCRTestResultDBModel>,
   ): Promise<void> {
     await this.pcrTestResultsRepository.updateData(id, defaultTestResults)
+  }
+
+  async updateTestResultByAppointmentId(
+    appointmentId: string,
+    testResult: Partial<PCRTestResultDBModel>,
+  ): Promise<PCRTestResultDBModel> {
+    const result = await this.getTestResultsByAppointmentId(appointmentId)
+    if (result.length) {
+      const pcrTestResult = result[0]
+      return await this.pcrTestResultsRepository.updateData(pcrTestResult.id, testResult)
+    }
+    return null
   }
 
   async getPCRTestsByBarcode(barCodes: string[]): Promise<PCRTestResultDBModel[]> {

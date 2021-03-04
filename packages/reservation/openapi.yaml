@@ -1923,6 +1923,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
+  
+  /reservation/admin/api/v1/appointments/{appointmentId}/reschedule:
+    put:
+      description: Update appointment schedule
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                dateTime:
+                  description: The ISO date-time as returned by availbility times call
+                  type: string
+                  format: date-time
+                  example: "2021-09-01T23:17:07.657Z"
+                organizationId:
+                  type: string
+                  description: This should be passwed is corporate is logged in
+              required:
+                - dateTime
+              
+      responses:
+        '200':
+          description: Succesfully reschedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse200'
+
   /reservation/api/v1/appointments:
     post:
       description: Create Appointment
