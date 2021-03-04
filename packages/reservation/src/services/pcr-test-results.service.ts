@@ -74,7 +74,7 @@ import {TestRunsService} from '../services/test-runs.service'
 import {AttestationService} from '../../../passport/src/services/attestation-service'
 import {TemperatureService} from './temperature.service'
 import {mapTemperatureStatusToResultTypes} from '../models/temperature'
-import {mapAttestationStatusToResultTypes} from '../../../passport/src/models/attestation'
+import {PassportStatuses} from '../../../passport/src/models/passport'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -1545,7 +1545,7 @@ export class PCRTestResultsService {
       .map(({appointmentId}) => appointmentId)
     const [appoinments, attestations, temperatures] = await Promise.all([
       this.appointmentsRepository.getAppointmentsDBByIds(appoinmentIds),
-      this.attestationService.getAllAttestationByUserId(userId),
+      this.attestationService.getAllAttestationByUserId(userId, organizationId),
       this.temperatureService.getAllByUserAndOrgId(userId, organizationId),
     ])
 
@@ -1557,7 +1557,7 @@ export class PCRTestResultsService {
       if (result === ResultTypes.Pending) {
         const appoinment = appoinments.find(({id}) => id === pcr.appointmentId)
 
-        result = ResultTypes[appoinment.appointmentStatus]
+        result = ResultTypes[appoinment?.appointmentStatus] || pcr.result
       }
 
       testResult.push({
@@ -1566,21 +1566,26 @@ export class PCRTestResultsService {
         name: pcr.testType ?? TestTypes.PCR,
         testDateTime: formatDateRFC822Local(pcr.deadline),
         style: resultToStyle(result),
-        result,
+        result: result,
         detailsAvailable: result !== ResultTypes.Pending,
       })
     })
 
     attestations.map((attestation) => {
-      testResult.push({
-        id: attestation.id,
-        type: TestTypes.Attestation,
-        name: 'Self-Attestation',
-        testDateTime: formatStringDateRFC822Local(attestation.attestationTime),
-        style: resultToStyle(mapAttestationStatusToResultTypes(attestation.status)),
-        result: mapAttestationStatusToResultTypes(attestation.status),
-        detailsAvailable: true,
-      })
+      if (
+        PassportStatuses.Pending !== attestation.status &&
+        PassportStatuses.TemperatureCheckRequired !== attestation.status
+      ) {
+        testResult.push({
+          id: attestation.id,
+          type: TestTypes.Attestation,
+          name: 'Self-Attestation',
+          testDateTime: formatStringDateRFC822Local(attestation.attestationTime),
+          style: resultToStyle(attestation.status),
+          result: attestation.status,
+          detailsAvailable: true,
+        })
+      }
     })
 
     temperatures.map((temperature) => {
