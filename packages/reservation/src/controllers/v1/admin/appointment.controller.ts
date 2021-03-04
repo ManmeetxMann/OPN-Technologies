@@ -387,7 +387,7 @@ class AdminAppointmentController implements IControllerBase {
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId, dateTime} = req.body as {organizationId: string; dateTime: string}
 
-      await this.appointmentService.rescheduleAppointment({
+      const updatedAppointment = await this.appointmentService.rescheduleAppointment({
         appointmentId,
         userID,
         isLabUser,
@@ -395,7 +395,7 @@ class AdminAppointmentController implements IControllerBase {
         dateTime,
       })
 
-      res.json(actionSucceed())
+      res.json(actionSucceed(appointmentUiDTOResponse(updatedAppointment, isLabUser)))
     } catch (error) {
       next(error)
     }
