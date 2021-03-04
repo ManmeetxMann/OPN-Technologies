@@ -1939,13 +1939,17 @@ paths:
               type: object
               additionalProperties: false
               properties:
-                date:
+                dateTime:
+                  description: The ISO date-time as returned by availbility times call
                   type: string
-                time:
+                  format: date-time
+                  example: "2021-09-01T23:17:07.657Z"
+                organizationId:
                   type: string
+                  description: This should be passwed is corporate is logged in
               required:
-                - date
-                - time
+                - dateTime
+              
       responses:
         '200':
           description: Succesfully reschedule
