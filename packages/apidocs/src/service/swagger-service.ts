@@ -42,7 +42,6 @@ export class SwaggerService {
       info: this.info,
       servers: this.servers,
     }
-
     // Options for the swagger docs
     const options = {
       swaggerDefinition,
@@ -60,6 +59,10 @@ export class SwaggerService {
 
   setup(): RequestHandler {
     return swaggerUi.setup(this.swaggerSpec)
+  }
+
+  generateHTML(): string {
+    return swaggerUi.generateHTML(this.swaggerSpec)
   }
 
   title(): string {
@@ -96,8 +99,10 @@ export class SwaggerServiceFactory {
 
     // Setup services
     for (const service of this.services) {
-      console.log(`${prefix}${service.path()}`)
-      this.router.use(`${prefix}${service.path()}`, service.serve(), service.setup())
+      this.router.use(`${prefix}${service.path()}`, service.serve(), (req, res) => {
+        let html = service.generateHTML();
+        res.send(html);
+      })
     }
   }
 }
