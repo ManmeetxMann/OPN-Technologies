@@ -80,8 +80,8 @@ import {PassportService} from '../../../passport/src/services/passport-service'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 
 const passportStatusByPCR = {
-  [ResultTypes.Positive]: PassportStatuses.Proceed,
-  [ResultTypes.Negative]: PassportStatuses.Stop,
+  [ResultTypes.Positive]: PassportStatuses.Stop,
+  [ResultTypes.Negative]: PassportStatuses.Proceed,
 }
 
 export class PCRTestResultsService {
