@@ -167,6 +167,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   deadlineDate: firestore.Timestamp
   dateOfAppointment: firestore.Timestamp
   testType: TestTypes
+  userId: string
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -205,6 +206,7 @@ export type PCRTestResultEmailDTO = Omit<
   | 'updatedAt'
   | 'deadlineDate'
   | 'dateOfAppointment'
+  | 'userId'
 > &
   AppointmentDBModel
 
