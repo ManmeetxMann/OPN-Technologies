@@ -85,7 +85,7 @@ export class HealthpassService {
         style: 'GREEN',
       })
     }
-    if (items.latestTemperature.status === TemperatureStatuses.Proceed) {
+    if (items.latestTemperature?.status === TemperatureStatuses.Proceed) {
       tests.push({
         date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
         type: 'Temperature',
