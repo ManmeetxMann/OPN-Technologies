@@ -104,7 +104,8 @@ export class RecommendationService {
     const passportExpiry = passport ? safeTimestamp(passport.expiry) : null
     const latestTest = items.PCRTestResult
     const appointment = items.scheduledPCRTest
-    if (!passportExpiry || isPassed(passportExpiry)) {
+    if (!passport || isPassed(passportExpiry)) {
+      // no valid passport
       if (appointment?.status && appointment.status !== AppointmentStatus.Pending) {
         // pending test
         return [Recommendations.ResultReadiness]
@@ -124,11 +125,16 @@ export class RecommendationService {
       // need to book a test
       return [Recommendations.BookPCR, Recommendations.CompleteAssessment]
     }
-
-    if (latestTest?.result === ResultTypes.Negative) {
-      return [Recommendations.PassAvailable, Recommendations.ViewNegativePCR]
+    // valid passport, check status
+    if (passport.status !== PassportStatuses.Proceed) {
+      if (latestTest && latestTest.result !== ResultTypes.Negative) {
+        return [Recommendations.BadgeExpiry, Recommendations.ViewPositivePCR]
+      } else {
+        return [Recommendations.BadgeExpiry]
+      }
     }
-    return [Recommendations.BadgeExpiry, Recommendations.ViewPositivePCR]
+    // proceed
+    return [Recommendations.PassAvailable, Recommendations.ViewNegativePCR]
   }
 
   // TODO: add localization
