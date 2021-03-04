@@ -99,6 +99,7 @@ export type AppointmentAcuityResponse = {
   calendarID: number
   canceled: boolean
   canClientCancel: boolean
+  canClientReschedule: boolean
   certificate: string
   date: string
   dateOfBirth: string
@@ -149,6 +150,8 @@ export type CheckAppointmentRequest = {
 export enum TestTypes {
   PCR = 'PCR',
   RapidAntigen = 'RapidAntigen',
+  TemperatureCheck = 'Temperature',
+  Attestation = 'Attestation',
 }
 
 export type PostAdminScanHistoryRequest = {
@@ -430,4 +433,12 @@ export type UpdateAppointmentActionParams = {
 
 export type ActivityTrackingDb = ActivityTracking & {
   id: string
+}
+
+export type RescheduleAppointmentDTO = {
+  appointmentId: string
+  dateTime: string
+  organizationId?: string
+  userID: string
+  isLabUser: boolean
 }

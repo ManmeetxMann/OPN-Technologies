@@ -27,8 +27,8 @@ import {
   PcrTestResultsListRequest,
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
-  SinglePcrTestResultsRequest,
   singlePcrTestResultDTO,
+  SingleTestResultsRequest,
 } from '../../../models/pcr-test-results'
 import {statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
@@ -90,20 +90,16 @@ class AdminPCRTestResultController implements IControllerBase {
       this.listDueDeadline,
     )
     innerRouter.get(
-      this.path + '/pcr-test-results/due-deadline/stats',
+      this.path + '/pcr-test-results/due-deadline/list/stats',
       dueTodayAuth,
       this.dueDeadlineStats,
     )
     innerRouter.get(
-      this.path + '/pcr-test-results/stats',
+      this.path + '/pcr-test-results/list/stats',
       dueTodayAuth,
       this.getPCRResultsHistoryStats,
     )
-    innerRouter.get(
-      this.path + '/pcr-test-results/:pcrTestResultId',
-      dueTodayAuth,
-      this.onePcrTestResult,
-    )
+    innerRouter.get(this.path + '/test-results/:id', listTestResultsAuth, this.onePcrTestResult)
 
     this.router.use('/', innerRouter)
   }
@@ -405,12 +401,12 @@ class AdminPCRTestResultController implements IControllerBase {
 
   onePcrTestResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {pcrTestResultId} = req.params as SinglePcrTestResultsRequest
+      const {id} = req.params as SingleTestResultsRequest
 
-      const pcrTestResult = await this.pcrTestResultsService.getPCRResultsById(pcrTestResultId)
+      const pcrTestResult = await this.pcrTestResultsService.getPCRResultsById(id)
 
       if (!pcrTestResult) {
-        throw new ResourceNotFoundException(`PCRTestResult with id ${pcrTestResultId} not found`)
+        throw new ResourceNotFoundException(`PCRTestResult with id ${id} not found`)
       }
 
       const appointment = await this.appoinmentService.getAppointmentDBById(
@@ -419,7 +415,7 @@ class AdminPCRTestResultController implements IControllerBase {
 
       if (!appointment) {
         throw new ResourceNotFoundException(
-          `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${pcrTestResultId}`,
+          `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${id}`,
         )
       }
 

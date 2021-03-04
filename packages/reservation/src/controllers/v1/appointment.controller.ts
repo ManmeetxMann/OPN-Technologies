@@ -3,10 +3,11 @@ import {NextFunction, Request, Response, Router} from 'express'
 import {AppoinmentService} from '../../services/appoinment.service'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
-import {CreateAppointmentRequest} from '../../models/appointment'
+import {CreateAppointmentRequest, userAppointmentDTOResponse} from '../../models/appointment'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {getUserId} from '../../../../common/src/utils/auth'
 import {AuthUser} from '../../../../common/src/data/user'
+import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
 import {decodeAvailableTimeId} from '../../utils/base64-converter'
 import {PCRTestResultsService} from '../../services/pcr-test-results.service'
 
@@ -26,6 +27,7 @@ class AppointmentController implements IControllerBase {
     const selfAuth = authorizationMiddleware([RequiredUserPermission.RegUser])
 
     innerRouter.get(this.path + '/api/v1/appointments/self', selfAuth, this.getUserAppointment)
+    innerRouter.get(this.path + '/api/v1/appointments/:id', selfAuth, this.getAppointmentById)
     innerRouter.post(
       this.path + '/api/v1/appointments',
       authorizationMiddleware([RequiredUserPermission.RegUser]),
@@ -42,6 +44,21 @@ class AppointmentController implements IControllerBase {
       const result = await this.appointmentService.getAppointmentByUserId(userId)
 
       res.json(actionSucceed(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getAppointmentById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = getUserId(res.locals.authenticatedUser)
+      const id = req.params.id as string
+
+      const result = await this.appointmentService.getAppointmentDBById(id)
+      if (result?.userId !== userId) {
+        throw new ResourceNotFoundException(`${id} does not exist`)
+      }
+      res.json(actionSucceed(userAppointmentDTOResponse(result)))
     } catch (error) {
       next(error)
     }

@@ -113,14 +113,6 @@ class PassportController implements IControllerBase {
         throw new BadRequestException("Couldn't evaluate answers")
       }
 
-      const isTemperatureCheckEnabled = await this.organizationService.isTemperatureCheckEnabled(
-        organizationId,
-      )
-
-      if (isTemperatureCheckEnabled && passportStatus === PassportStatuses.Proceed) {
-        passportStatus = PassportStatuses.TemperatureCheckRequired
-      }
-
       const saved = await this.attestationService.save({
         answers: answers.map((answer) => ({
           [0]: answer.answer,
@@ -133,6 +125,14 @@ class PassportController implements IControllerBase {
         status: passportStatus,
         questionnaireId,
       } as Attestation)
+
+      const isTemperatureCheckEnabled = await this.organizationService.isTemperatureCheckEnabled(
+        organizationId,
+      )
+
+      if (isTemperatureCheckEnabled && passportStatus === PassportStatuses.Proceed) {
+        passportStatus = PassportStatuses.TemperatureCheckRequired
+      }
 
       const allPassports = await Promise.all(
         userIds.map((userId) =>

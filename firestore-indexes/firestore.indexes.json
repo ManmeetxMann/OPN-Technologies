@@ -113,6 +113,20 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "exitAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "access",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "timestamps.createdAt",
           "order": "ASCENDING"
         }
@@ -142,6 +156,20 @@
         },
         {
           "fieldPath": "deadline",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "appointments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "canceled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dateTime",
           "order": "ASCENDING"
         }
       ]
@@ -293,6 +321,20 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "validFrom",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "passports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "validUntil",
           "order": "ASCENDING"
         }
@@ -317,15 +359,33 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "organizationId",
           "order": "ASCENDING"
         },
+        {
+          "fieldPath": "validUntil",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "passports",
+      "queryScope": "COLLECTION",
+      "fields": [
         {
           "fieldPath": "userId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "validUntil",
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "validFrom",
           "order": "DESCENDING"
         }
       ]
@@ -417,6 +477,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "result",
           "order": "DESCENDING"
         }
@@ -428,6 +492,10 @@
       "fields": [
         {
           "fieldPath": "dateOfAppointment",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "displayInResult",
           "order": "ASCENDING"
         },
         {

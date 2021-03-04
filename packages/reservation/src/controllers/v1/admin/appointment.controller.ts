@@ -1,5 +1,4 @@
 import {NextFunction, Request, Response, Router} from 'express'
-
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
@@ -102,6 +101,11 @@ class AdminAppointmentController implements IControllerBase {
       this.path + '/api/v1/appointments/:refAppointmentId/create-new',
       apptLabAuth,
       this.scheduleNewAppointmentFromAnotherOne,
+    )
+    innerRouter.put(
+      this.path + '/api/v1/appointments/:appointmentId/reschedule',
+      apptLabAuth,
+      this.rescheduleAppointment,
     )
 
     this.router.use('/', innerRouter)
@@ -380,12 +384,14 @@ class AdminAppointmentController implements IControllerBase {
     }
   }
 
+
   scheduleNewAppointmentFromAnotherOne = async (
-    req: Request,
+        req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
     try {
+      
       const {refAppointmentId} = req.params as {refAppointmentId: string}
       const {date, time} = req.body as {date: string; time: string}
       //get the appointment that will be copied
@@ -404,10 +410,39 @@ class AdminAppointmentController implements IControllerBase {
       }
 
       res.json(actionSucceed(appointmentUiDTOResponse(savedAppointment, false)))
+   
     } catch (error) {
       next(error)
     }
   }
+  rescheduleAppointment = async (
+      req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      
+      const userID = getUserId(res.locals.authenticatedUser)
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const {appointmentId} = req.params as {appointmentId: string}
+      const {organizationId, dateTime} = req.body as {organizationId: string; dateTime: string}
+
+      const updatedAppointment = await this.appointmentService.rescheduleAppointment({
+        appointmentId,
+        userID,
+        isLabUser,
+        organizationId,
+        dateTime,
+      })
+
+      res.json(actionSucceed(appointmentUiDTOResponse(updatedAppointment, isLabUser)))
+  
+    } catch (error) {
+      next(error)
+    }
+  }
+
+
 }
 
 export default AdminAppointmentController
