@@ -5,6 +5,8 @@ import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datet
 import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
 import {groupByChannel} from '../utils/channel-grouper'
+import {PassportStatus, PassportStatuses} from 'packages/passport/src/models/passport'
+import {TemperatureStatusesUI} from './temperature'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -77,12 +79,21 @@ export type PCRTestResultConfirmRequest = {
   action: PCRResultActionsForConfirmation
 }
 
-export enum PCRTestResultStyle {
+export enum TestResultStyle {
+  // PCR result style
   Positive = 'RED',
   Negative = 'GREEN',
   Invalid = 'YELLOW',
+  ReCollectRequired = 'YELLOW',
   Inconclusive = 'BLUE',
   AnyOther = 'GREY',
+  // Temperature check style
+  Failed = 'RED',
+  Passed = 'GREEN',
+  // Atestation result style
+  caution = 'YELLOW',
+  stop = 'RED',
+  Proceed = 'GREEN',
 }
 
 type PCRResultSpecs = {
@@ -321,8 +332,10 @@ export const pcrTestResultsResponse = (
   details: pcrTestResult.details,
 })
 
-export const resultToStyle = (result: ResultTypes): PCRTestResultStyle => {
-  return PCRTestResultStyle[result] ? PCRTestResultStyle[result] : PCRTestResultStyle.AnyOther
+export const resultToStyle = (
+  result: ResultTypes | PassportStatus | TemperatureStatusesUI,
+): TestResultStyle => {
+  return TestResultStyle[result] ? TestResultStyle[result] : TestResultStyle.AnyOther
 }
 
 export type TestResutsDTO = {
@@ -330,8 +343,8 @@ export type TestResutsDTO = {
   type: TestTypes
   name: string
   testDateTime: string
-  style: PCRTestResultStyle
-  result: ResultTypes
+  style: TestResultStyle
+  result: ResultTypes | PassportStatuses | TemperatureStatusesUI
   detailsAvailable: boolean
 }
 
@@ -369,7 +382,7 @@ export type SinglePcrTestResultUi = {
   equipment: string
   manufacturer: string
   resultSpecs: Spec[]
-  style: PCRTestResultStyle
+  style: TestResultStyle
   testName: string
   doctorId: string
   resultAnalysis: GroupedSpecs[]
