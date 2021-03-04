@@ -63,6 +63,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
         data.appointment.testType === TestTypes.RapidAntigen
           ? Config.get('TEST_KIT_BATCH_ID')
           : null,
+      userId: data.appointment.userId,
     }
     return await this.save(pcrResultDataForDb)
   }

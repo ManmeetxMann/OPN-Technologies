@@ -238,6 +238,7 @@ class AppointmentWebhookController implements IControllerBase {
           //runNumber: 1 ,//Start the Run
           //waitingResult: true,
           testType: await this.getTestType(acuityAppointment.appointmentTypeID),
+          userId: updatedAppointment.userId,
         }
 
         await this.pcrTestResultsService.updateTestResults(pcrTestResult.id, pcrResultDataForDb)
