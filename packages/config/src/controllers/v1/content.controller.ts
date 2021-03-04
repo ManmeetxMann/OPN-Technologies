@@ -35,11 +35,10 @@ class ContentController implements IControllerBase {
       const contentList: Content[] = await this.contentService.getContentListByLang(lang)
       let result: ResultContentResponse
       if (professional && contentList.length > 0) {
-        const resultInfo: ResultInfo[] = contentList.map((content: Content) => {
-          const {details, resultType} = content
-          return {details, resultType}
-        })
-
+        const resultInfo: ResultInfo[] = contentList.map(({details, resultType}) => ({
+          details,
+          resultType,
+        }))
         result = {
           legalNotice: 'TEST',
           doctorName: professional.name,
