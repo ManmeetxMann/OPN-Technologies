@@ -100,8 +100,8 @@ export class SwaggerServiceFactory {
     // Setup services
     for (const service of this.services) {
       this.router.use(`${prefix}${service.path()}`, service.serve(), (req, res) => {
-        let html = service.generateHTML();
-        res.send(html);
+        const html = service.generateHTML()
+        res.send(html)
       })
     }
   }
