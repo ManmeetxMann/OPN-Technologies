@@ -186,14 +186,11 @@ export class AlertService {
         )
       }
     } else {
-      // TODO: "if "should be removed after the locationID is in the temperature controller
-      if (!attestation) {
-        console.warn(
-          `Could not execute a trace of attestation ${
-            attestation ? attestation.id : 'No attestationId provided'
-          } because userId was not provided`,
-        )
-      }
+      console.warn(
+        `Could not execute a trace of attestation ${
+          attestation ? attestation.id : 'No attestationId provided'
+        } because userId was not provided`,
+      )
     }
 
     // TODO: check for locationId should be removed the locationID is in the temperature controller
