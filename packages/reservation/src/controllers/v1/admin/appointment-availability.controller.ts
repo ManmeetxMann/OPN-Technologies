@@ -32,10 +32,16 @@ class AdminAppointmentAvailabilityController implements IControllerBase {
 
   getAvailableTimes = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {id, date} = req.query as {id: string; date: string}
-
-      const availableSlots = await this.appointmentService.getAvailableTimes(id, date)
-
+      const {calendarId, appointmentTypeId, date} = req.query as {
+        calendarId: string
+        appointmentTypeId: string
+        date: string
+      }
+      const availableSlots = await this.appointmentService.getAvailableTimes(
+        appointmentTypeId,
+        calendarId,
+        date,
+      )
       res.json(actionSucceed(availableSlots))
     } catch (error) {
       next(error)
