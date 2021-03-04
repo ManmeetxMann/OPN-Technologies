@@ -83,7 +83,7 @@ export class AlertService {
 
   async sendAlert(
     passport: Passport,
-    attestation: Attestation,
+    attestation: Attestation | null,
     organizationId: string,
     locationId: string | null,
   ): Promise<void> {
