@@ -866,10 +866,11 @@ export class AppoinmentService {
     calendarId: string,
     date: string,
   ): Promise<{label: string}[]> {
-    const slots = await this.acuityRepository.getAvailableTimes(
+    const slots = await this.acuityRepository.getAvailableSlots(
       Number(appointmentTypeId),
       date,
       Number(calendarId),
+      '',
     )
     return slots.map((slot) => {
       return {
@@ -890,10 +891,11 @@ export class AppoinmentService {
       calendarId: Number(calendarId),
       date: yearMonth,
     })
-    const availableDates = await this.acuityRepository.getAvailableDates(
+    const availableDates = await this.acuityRepository.getAvailabilityDates(
       Number(appointmentTypeId),
-      Number(calendarId),
       yearMonth,
+      Number(calendarId),
+      '',
     )
     return {
       id,
