@@ -393,7 +393,7 @@ class AdminAppointmentController implements IControllerBase {
       next(error)
     }
   }
-  
+
   copyAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {refAppointmentId} = req.params as {refAppointmentId: string}
