@@ -9,7 +9,7 @@ import {BadRequestException} from '../../../../../common/src/exceptions/bad-requ
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
 import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
-import { LogError } from '../../../../../common/src/utils/logging-setup'
+import {LogError} from '../../../../../common/src/utils/logging-setup'
 
 import {
   appointmentByBarcodeUiDTOResponse,
@@ -385,27 +385,23 @@ class AdminAppointmentController implements IControllerBase {
     }
   }
 
-  copyAppointment = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  copyAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {refAppointmentId} = req.params as {refAppointmentId: string}
-      const {dateTime} = req.body as {dateTime: string;}
+      const {dateTime} = req.body as {dateTime: string}
       const savedAppointment = await this.appointmentService.copyAppointment(
         refAppointmentId,
-        dateTime
+        dateTime,
       )
       if (savedAppointment) {
         const pcrTestResult = await this.pcrTestResultsService.createNewTestResult(savedAppointment)
         console.log(
           `AppointmentWebhookController: CreateAppointment: SuccessCreatePCRResults for AppointmentID: ${savedAppointment.id} PCR Results ID: ${pcrTestResult.id}`,
         )
-      }else{
-        LogError('AdminAppointmentController:copyAppointment','FailedCopyAppointment',{
-          appointmentID:refAppointmentId,
-          appointmentDateTime:dateTime
+      } else {
+        LogError('AdminAppointmentController:copyAppointment', 'FailedCopyAppointment', {
+          appointmentID: refAppointmentId,
+          appointmentDateTime: dateTime,
         })
       }
       res.json(actionSucceed(appointmentUiDTOResponse(savedAppointment, false)))

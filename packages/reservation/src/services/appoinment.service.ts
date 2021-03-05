@@ -823,41 +823,38 @@ export class AppoinmentService {
     return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
   }
 
-  async copyAppointment(
-    refAppointmentId: string,
-    dateTime: string,
-  ): Promise<AppointmentDBModel> {
+  async copyAppointment(refAppointmentId: string, dateTime: string): Promise<AppointmentDBModel> {
     //get the appointment that will be copied
     const appointment = await this.getAppointmentDBById(refAppointmentId)
     const barCodeNumber = await this.getNextBarCodeNumber()
     //refAppointment.dateTime = makeFirestoreTimestamp(new Date(dateTime))
     const acuityAppointment = await this.acuityRepository.createAppointment({
       dateTime,
-      appointmentTypeID:appointment.appointmentTypeID,
-      firstName:appointment.firstName,
-      lastName:appointment.lastName,
-      email:appointment.email,
-      phone:appointment.phone+'',
-      packageCode:appointment.packageCode,
-      calendarID:appointment.calendarID,
-      fields:{
-        dateOfBirth:appointment.dateOfBirth,
-        address:appointment.address,
-        addressUnit:appointment.addressUnit,
-        shareTestResultWithEmployer:appointment.shareTestResultWithEmployer,
-        readTermsAndConditions:appointment.readTermsAndConditions,
-        agreeToConductFHHealthAssessment:appointment.agreeToConductFHHealthAssessment,
-        receiveResultsViaEmail:appointment.receiveResultsViaEmail,
-        receiveNotificationsFromGov:appointment.receiveNotificationsFromGov,
+      appointmentTypeID: appointment.appointmentTypeID,
+      firstName: appointment.firstName,
+      lastName: appointment.lastName,
+      email: appointment.email,
+      phone: appointment.phone + '',
+      packageCode: appointment.packageCode,
+      calendarID: appointment.calendarID,
+      fields: {
+        dateOfBirth: appointment.dateOfBirth,
+        address: appointment.address,
+        addressUnit: appointment.addressUnit,
+        shareTestResultWithEmployer: appointment.shareTestResultWithEmployer,
+        readTermsAndConditions: appointment.readTermsAndConditions,
+        agreeToConductFHHealthAssessment: appointment.agreeToConductFHHealthAssessment,
+        receiveResultsViaEmail: appointment.receiveResultsViaEmail,
+        receiveNotificationsFromGov: appointment.receiveNotificationsFromGov,
         barCodeNumber,
       },
     })
     return this.createAppointmentFromAcuity(acuityAppointment, {
       barCodeNumber,
-      appointmentStatus:AppointmentStatus.Pending,
-      latestResult:ResultTypes.Pending,
-      organizationId:appointment.organizationId,
-      userId:appointment.userId,
+      appointmentStatus: AppointmentStatus.Pending,
+      latestResult: ResultTypes.Pending,
+      organizationId: appointment.organizationId,
+      userId: appointment.userId,
     })
   }
 
@@ -887,14 +884,14 @@ export class AppoinmentService {
     const barCodeNumber = await this.getNextBarCodeNumber()
     const acuityAppointment = await this.acuityRepository.createAppointment({
       dateTime,
-      appointmentTypeID:appointmentTypeId,
+      appointmentTypeID: appointmentTypeId,
       firstName,
       lastName,
       email,
-      phone:`${phone.code}${phone.number}`,
+      phone: `${phone.code}${phone.number}`,
       packageCode,
-      calendarID:calendarId,
-      fields:{
+      calendarID: calendarId,
+      fields: {
         dateOfBirth,
         address,
         addressUnit,
@@ -904,9 +901,8 @@ export class AppoinmentService {
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
         barCodeNumber,
-      }
-    }
-    )
+      },
+    })
     return this.createAppointmentFromAcuity(acuityAppointment, {
       barCodeNumber,
       appointmentStatus: AppointmentStatus.Pending,

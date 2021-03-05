@@ -4,13 +4,13 @@ export type AcuityAvailableSlots = {
 }
 
 export type CreateAppointmentDTO = {
-  dateTime: string,
-  appointmentTypeID: number,
-  firstName: string,
-  lastName: string,
-  email: string,
-  phone: string,
-  packageCode: string,
-  calendarID: number,
+  dateTime: string
+  appointmentTypeID: number
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  packageCode: string
+  calendarID: number
   fields: Record<string, string | boolean>
 }

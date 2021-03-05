@@ -138,12 +138,15 @@ class AppointmentWebhookController implements IControllerBase {
     try {
       const {barCodeNumber, organizationId} = dataForUpdate
 
-      const savedAppointment = await this.appoinmentService.createAppointmentFromAcuity(acuityAppointment, {
-        appointmentStatus: AppointmentStatus.Pending,
-        barCodeNumber,
-        latestResult: ResultTypes.Pending,
-        organizationId,
-      })
+      const savedAppointment = await this.appoinmentService.createAppointmentFromAcuity(
+        acuityAppointment,
+        {
+          appointmentStatus: AppointmentStatus.Pending,
+          barCodeNumber,
+          latestResult: ResultTypes.Pending,
+          organizationId,
+        },
+      )
       LogInfo('CreateAppointmentFromWebhook', 'SuccessCreateAppointment', {
         acuityID: acuityAppointment.id,
         appointmentID: savedAppointment.id,

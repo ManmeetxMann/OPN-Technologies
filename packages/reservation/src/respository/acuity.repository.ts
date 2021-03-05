@@ -51,9 +51,19 @@ export class AcuityRepository extends AcuityAdapter {
   }
 
   async createAppointment(
-    appointmentData:CreateAppointmentDTO,
+    appointmentData: CreateAppointmentDTO,
   ): Promise<AppointmentAcuityResponse> {
-    const {dateTime,appointmentTypeID,firstName,lastName,email,phone,packageCode,calendarID, fields} = appointmentData
+    const {
+      dateTime,
+      appointmentTypeID,
+      firstName,
+      lastName,
+      email,
+      phone,
+      packageCode,
+      calendarID,
+      fields,
+    } = appointmentData
     return this.createAppointmentOnAcuityService(
       dateTime,
       appointmentTypeID,

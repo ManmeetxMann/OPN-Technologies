@@ -170,12 +170,9 @@ export class RapidAntigenTestResultsService {
       return this.saveResult(action, notify, reqeustedBy, newResult)
     } else {
       //LOG Critical and Fail
-      LogError(
-        'RapidAntigenTestResultsService:processAppointment',
-        'Failed:NoWaitingResults',{
-          appointmentID:appointment.id,
-        }
-      )
+      LogError('RapidAntigenTestResultsService:processAppointment', 'Failed:NoWaitingResults', {
+        appointmentID: appointment.id,
+      })
       return Promise.resolve({
         id: appointmentID,
         barCode: appointment.barCode,

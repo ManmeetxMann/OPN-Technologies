@@ -28,16 +28,16 @@ if (NodeEnV() === 'production') {
   })
 }
 export type LogMetaData = {
-  appointmentID?: string,
+  appointmentID?: string
   appointmentDateTime?: string
-  appointmentStatus?:string
-  appointmentBarCode?:string
+  appointmentStatus?: string
+  appointmentBarCode?: string
   acuityID?: number
-  acuityStatusCode?:string
+  acuityStatusCode?: string
   errorMessage?: string
-  packageCode?:string
+  packageCode?: string
   reportTrackerId?: string
-  testResultId?:string
+  testResultId?: string
   testRunId?: string
 }
 
@@ -57,11 +57,7 @@ export const LogWarning = (
   Logger.warn({functionName, eventName, ...data})
 }
 
-export const LogError = (
-  functionName: string,
-  eventName: string,
-  data: LogMetaData,
-): void => {
+export const LogError = (functionName: string, eventName: string, data: LogMetaData): void => {
   Logger.error({functionName, eventName, ...data})
 }
 //fatal

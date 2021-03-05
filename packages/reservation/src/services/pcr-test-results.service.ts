@@ -223,7 +223,7 @@ export class PCRTestResultsService {
     if (!pcrResults) {
       LogError('processPCRTestResult', 'InvalidResultIdInReport', {
         reportTrackerId,
-        testResultId:resultId,
+        testResultId: resultId,
       })
       return
     }
@@ -231,7 +231,7 @@ export class PCRTestResultsService {
     if (pcrResults.status !== ResultReportStatus.RequestReceived) {
       LogError('processPCRTestResult', 'AlreadyProcessed', {
         reportTrackerId,
-        testResultId:resultId,
+        testResultId: resultId,
         appointmentStatus: pcrResults.status,
         appointmentBarCode: pcrResults.data.barCode,
       })
