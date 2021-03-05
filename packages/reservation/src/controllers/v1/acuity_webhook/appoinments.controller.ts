@@ -153,7 +153,7 @@ class AppointmentWebhookController implements IControllerBase {
       })
 
       if (savedAppointment) {
-        const pcrTestResult = await this.pcrTestResultsService.createNewTestResult(savedAppointment)
+        const pcrTestResult = await this.pcrTestResultsService.createTestResult(savedAppointment)
         LogInfo('CreateAppointmentFromWebhook', 'SuccessCreatePCRResults', {
           acuityID: acuityAppointment.id,
           appointmentID: savedAppointment.id,

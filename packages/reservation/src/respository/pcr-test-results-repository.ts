@@ -3,6 +3,7 @@ import {serverTimestamp} from '../../../common/src/utils/times'
 import DataModel, {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 //Models
 import {PCRTestResultDBModel} from '../models/pcr-test-results'
@@ -17,6 +18,33 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
 
   constructor(dataStore: DataStore) {
     super(dataStore)
+  }
+
+  async getReCollectedTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
+    const pcrTestResultsQuery = [
+      {
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: barCodeNumber,
+      },
+      {
+        map: '/',
+        key: 'recollected',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      },
+    ]
+    const pcrTestResults = await this.findWhereEqualInMap(pcrTestResultsQuery)
+
+    if (!pcrTestResults || pcrTestResults.length === 0) {
+      throw new ResourceNotFoundException(
+        `PCRTestResult with barCode ${barCodeNumber} and ReCollect Requested not found`,
+      )
+    }
+
+    //Only one Result should be waiting
+    return pcrTestResults[0]
   }
 
   async createNewTestResults(data: {
