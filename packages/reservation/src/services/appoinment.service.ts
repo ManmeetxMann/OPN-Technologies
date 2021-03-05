@@ -823,6 +823,21 @@ export class AppoinmentService {
     return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
   }
 
+  async copyAppointment(
+    refAppointmentId: string,
+    date: string,
+    time: string,
+  ): Promise<AppointmentDBModel> {
+    //get the appointment that will be copied
+    const refAppointment = await this.getAppointmentDBById(refAppointmentId)
+    refAppointment.dateOfAppointment = date
+    refAppointment.timeOfAppointment = time
+    refAppointment.dateTime = makeFirestoreTimestamp(new Date(date + ' ' + time))
+    //copy AcuityAppointment
+    const savedAppointment = await this.copyAcuityAppointment(refAppointment)
+    return savedAppointment
+  }
+
   async copyAcuityAppointment(refAppointment: AppointmentDBModel): Promise<AppointmentDBModel> {
     const {
       dateOfAppointment,
