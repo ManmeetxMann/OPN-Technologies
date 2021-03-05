@@ -168,6 +168,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   dateOfAppointment: firestore.Timestamp
   testType: TestTypes
   userId: string
+  sortOrder: number
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -207,6 +208,7 @@ export type PCRTestResultEmailDTO = Omit<
   | 'deadlineDate'
   | 'dateOfAppointment'
   | 'userId'
+  | 'sortOrder'
 > &
   AppointmentDBModel
 
@@ -324,6 +326,21 @@ export type pcrTestResultsDTO = {
   barCode: string
   status: ResultReportStatus | ResultTypes
   details?: string
+}
+
+export type ResultDictionary = {
+  [index: string]: number
+}
+
+export const ResultOrder: ResultDictionary = {
+  Positive: 7,
+  PresumptivePositive: 6,
+  PreliminaryPositive: 5,
+  Invalid: 4,
+  Inconclusive: 3,
+  Indeterminate: 2,
+  Pending: 1,
+  Negative: 0,
 }
 
 export const pcrTestResultsResponse = (
@@ -446,3 +463,6 @@ export const singlePcrTestResultDTO = (
     doctorId: 'DR1',
   }
 }
+
+// determine priority in test Order based on result
+export const getSortOrderByResult = (result: string): number => ResultOrder[result]

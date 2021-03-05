@@ -6,7 +6,7 @@ import {Config} from '../../../common/src/utils/config'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 //Models
-import {PCRTestResultDBModel} from '../models/pcr-test-results'
+import {PCRTestResultDBModel, getSortOrderByResult} from '../models/pcr-test-results'
 import {AppointmentDBModel, ResultTypes, TestTypes} from '../models/appointment'
 //Schema
 import DBSchema from '../dbschemas/pcr-test-results.schema'
@@ -92,6 +92,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
           ? Config.get('TEST_KIT_BATCH_ID')
           : null,
       userId: data.appointment.userId,
+      sortOrder: getSortOrderByResult(data.result ?? ResultTypes.Pending),
     }
     return await this.save(pcrResultDataForDb)
   }
