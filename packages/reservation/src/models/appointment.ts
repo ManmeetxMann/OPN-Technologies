@@ -99,6 +99,7 @@ export type AppointmentAcuityResponse = {
   calendarID: number
   canceled: boolean
   canClientCancel: boolean
+  canClientReschedule: boolean
   certificate: string
   date: string
   dateOfBirth: string
@@ -432,4 +433,12 @@ export type UpdateAppointmentActionParams = {
 
 export type ActivityTrackingDb = ActivityTracking & {
   id: string
+}
+
+export type RescheduleAppointmentDTO = {
+  appointmentId: string
+  dateTime: string
+  organizationId?: string
+  userID: string
+  isLabUser: boolean
 }

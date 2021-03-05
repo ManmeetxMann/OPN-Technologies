@@ -1,6 +1,6 @@
 const frisby = require('frisby');
 const Joi = frisby.Joi;
-const helpersCommon = require('helpersCommon');
+const helpersCommon = require('helpers_common');
 
 const testProfile = require('test_profile');
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
@@ -51,7 +51,7 @@ beforeAll(function() {
 describe('Get: /reservation/api/v1/test-results details', () => {
   test('Get Test Results for User should Success', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/api/v1/test-results/01Bxp3VHCRIJHYSeOqxK`;
+      const url = `${reservationServiceUrl}/reservation/api/v1/test-results/VNaoFdu07w9Ak3208HRZ`;
       console.log(url);
       return frisby
           .setup({
