@@ -329,6 +329,42 @@ components:
             message:
               nullable: true
               type: string
+    UserAppointmentsHistoryResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              dateTime:
+                type: string
+              testType:
+                type: string
+            required:
+              - id
+              - dateTime
+              - testType
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
     AppointmentTransportRunResponse200:
       type: object
       additionalProperties: false
@@ -1018,6 +1054,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
+  /reservation/admin/api/v1/appointments/{appointmentId}/history:
+    get:
+      description: Get user's appointment history by appointment ID
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Appointment Management
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAppointmentsHistoryResponse200'
   /reservation/admin/api/v1/admin-scan-history:
     get:
       description: Get scanned appointments history for user
@@ -2590,19 +2650,13 @@ paths:
                         type: string
                   page:
                     type: number
-  /reservation/admin/api/v1/appointments/{refAppointmentId}/copy:
+  /reservation/admin/api/v1/appointments/copy:
     post:
       description: Copy appointment by appointment ID
       tags:
         - Appointment Management
       security:
         - bearerAuthJWT: []
-      parameters:
-        - in: path
-          name: refAppointmentId
-          schema:
-            type: string
-          required: true
       requestBody:
         content:
           application/json:
@@ -2610,11 +2664,18 @@ paths:
               type: object
               additionalProperties: false
               properties:
+                appointmentIds:
+                  type: array
+                  items:
+                    type: string
                 dateTime:
                   description: The ISO date-time as returned by availbility times call
                   type: string
                   format: date-time
                   example: "2021-09-01T23:17:07.657Z"
+                organizationId:
+                  type: string
+                  description: This should be passwed is corporate is logged in
               required:
                 - dateTime
       responses:

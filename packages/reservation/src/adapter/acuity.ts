@@ -291,6 +291,11 @@ abstract class AcuityAdapter {
     })
     const result = await res.json()
     if (result.status_code) {
+      LogError(`AcuitySchedulingAdapterUpdateAppointment`, 'Failed', {
+        appointmentDateTime: datetime,
+        acuityStatusCode: result.status_code,
+        errorMessage: result.message,
+      })
       throw new BadRequestException(result.message)
     }
     LogInfo(`AcuityAdapterCreateAppointment`, 'Success', {

@@ -525,35 +525,6 @@ export class PCRTestResultsService {
     return this.pcrTestResultsRepository.findOneById(id)
   }
 
-  async getReCollectedTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
-    const pcrTestResultsQuery = [
-      {
-        map: '/',
-        key: 'barCode',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: barCodeNumber,
-      },
-      {
-        map: '/',
-        key: 'recollected',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: true,
-      },
-    ]
-    const pcrTestResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
-      pcrTestResultsQuery,
-    )
-
-    if (!pcrTestResults || pcrTestResults.length === 0) {
-      throw new ResourceNotFoundException(
-        `PCRTestResult with barCode ${barCodeNumber} and ReCollect Requested not found`,
-      )
-    }
-
-    //Only one Result should be waiting
-    return pcrTestResults[0]
-  }
-
   async getWaitingPCRTestResult(
     pcrTestResults: PCRTestResultDBModel[],
   ): Promise<PCRTestResultDBModel> {
@@ -1265,7 +1236,9 @@ export class PCRTestResultsService {
         linkedBarcodes.push(coupon.lastBarcode)
         try {
           //Get Linked Barcodes for LastBarCode
-          const pcrResult = await this.getReCollectedTestResultByBarCode(coupon.lastBarcode)
+          const pcrResult = await this.pcrTestResultsRepository.getReCollectedTestResultByBarCode(
+            coupon.lastBarcode,
+          )
           if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
             linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
           }
@@ -1286,7 +1259,7 @@ export class PCRTestResultsService {
     return linkedBarcodes
   }
 
-  public async createNewTestResult(appointment: AppointmentDBModel): Promise<PCRTestResultDBModel> {
+  public async createTestResult(appointment: AppointmentDBModel): Promise<PCRTestResultDBModel> {
     const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
 
     return this.pcrTestResultsRepository.createNewTestResults({

@@ -39,6 +39,8 @@ export type LogMetaData = {
   reportTrackerId?: string
   testResultId?: string
   testRunId?: string
+  organizationId?: string
+  requestedOrganization?: string
 }
 
 export const LogInfo = (

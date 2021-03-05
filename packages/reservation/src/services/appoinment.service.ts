@@ -25,7 +25,7 @@ import {dateFormats, timeFormats} from '../../../common/src/utils/times'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
-import {LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
+import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 
 import {
   firestoreTimeStampToUTC,
@@ -823,11 +823,34 @@ export class AppoinmentService {
     return this.appointmentsRepository.findWhereEqual('packageCode', packageCode)
   }
 
-  async copyAppointment(refAppointmentId: string, dateTime: string): Promise<AppointmentDBModel> {
+  async copyAppointment(
+    appointmentId: string,
+    dateTime: string,
+    adminId: string,
+    organizationId: string,
+  ): Promise<BulkOperationResponse> {
     //get the appointment that will be copied
-    const appointment = await this.getAppointmentDBById(refAppointmentId)
+    const appointment = await this.getAppointmentDBById(appointmentId)
+    if (organizationId && organizationId !== appointment.organizationId) {
+      LogError(
+        'AdminAppointmentController:getUserAppointmentHistoryByAppointmentId',
+        'BadOrganizationId',
+        {
+          organizationId: appointment.organizationId,
+          appointmentID: appointmentId,
+          requestedOrganization: organizationId,
+        },
+      )
+      return {
+        id: appointment.id,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'Invalid Request',
+      }
+    }
+
     const barCodeNumber = await this.getNextBarCodeNumber()
-    //refAppointment.dateTime = makeFirestoreTimestamp(new Date(dateTime))
+
     const acuityAppointment = await this.acuityRepository.createAppointment({
       dateTime,
       appointmentTypeID: appointment.appointmentTypeID,
@@ -849,13 +872,48 @@ export class AppoinmentService {
         barCodeNumber,
       },
     })
-    return this.createAppointmentFromAcuity(acuityAppointment, {
+    if (!acuityAppointment.id) {
+      return {
+        id: appointment.id,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'Failed to Book Appointment',
+      }
+    }
+
+    const savedAppointment = await this.createAppointmentFromAcuity(acuityAppointment, {
       barCodeNumber,
       appointmentStatus: AppointmentStatus.Pending,
       latestResult: ResultTypes.Pending,
       organizationId: appointment.organizationId,
       userId: appointment.userId,
     })
+
+    if (savedAppointment) {
+      const linkedBarCodes = []
+      const pcrTestResult = await this.pcrTestResultsRepository.createNewTestResults({
+        appointment: savedAppointment,
+        adminId: adminId,
+        linkedBarCodes,
+        reCollectNumber: linkedBarCodes.length + 1,
+        runNumber: 1,
+        previousResult: null,
+      })
+      console.log(
+        `AppointmentWebhookController: CreateAppointment: SuccessCreatePCRResults for AppointmentID: ${savedAppointment.id} PCR Results ID: ${pcrTestResult.id}`,
+      )
+    } else {
+      LogError('AdminAppointmentController:copyAppointment', 'FailedCopyAppointment', {
+        appointmentID: appointmentId,
+        appointmentDateTime: dateTime,
+      })
+    }
+
+    return {
+      id: savedAppointment.id,
+      barCode: savedAppointment.barCode,
+      status: BulkOperationStatus.Success,
+    }
   }
 
   async createAcuityAppointment({
@@ -1261,5 +1319,9 @@ export class AppoinmentService {
       appointmentDateTime: dateTimeData.dateTime,
     })
     return updatedAppointment
+  }
+
+  async getUserAppointments(userId: string): Promise<AppointmentDBModel[]> {
+    return this.appointmentsRepository.findWhereEqual('userId', userId)
   }
 }
