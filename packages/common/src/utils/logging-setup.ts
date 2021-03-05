@@ -40,6 +40,7 @@ export type LogMetaData = {
   testResultId?: string
   testRunId?: string
   organizationId?: string
+  requestedOrganization?: string
 }
 
 export const LogInfo = (
