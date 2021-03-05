@@ -31,7 +31,7 @@ class AppointmentController implements IControllerBase {
     innerRouter.post(
       this.path + '/api/v1/appointments',
       authorizationMiddleware([RequiredUserPermission.RegUser]),
-      this.createAppointments,
+      this.createAppointment,
     )
 
     this.router.use('/', innerRouter)
@@ -64,7 +64,7 @@ class AppointmentController implements IControllerBase {
     }
   }
 
-  createAppointments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  createAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {
         slotId,
