@@ -1054,7 +1054,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
-  /reservation/admin/api/v1/appointments/{appointmentId}/user-appointment-history:
+  /reservation/admin/api/v1/appointments/{appointmentId}/history:
     get:
       description: Get user's appointment history by appointment ID
       security:

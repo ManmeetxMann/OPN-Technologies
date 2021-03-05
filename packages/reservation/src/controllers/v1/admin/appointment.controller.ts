@@ -103,7 +103,7 @@ class AdminAppointmentController implements IControllerBase {
       this.regenerateBarCode,
     )
     innerRouter.get(
-      this.path + '/api/v1/appointments/:appointmentId/user-appointment-history',
+      this.path + '/api/v1/appointments/:appointmentId/history',
       apptLabAuth,
       this.getUserAppointmentHistoryByAppointmentId,
     )
