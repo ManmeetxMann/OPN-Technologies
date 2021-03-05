@@ -1067,6 +1067,10 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: organizationId
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully Return
@@ -2671,6 +2675,9 @@ paths:
                   type: string
                   format: date-time
                   example: "2021-09-01T23:17:07.657Z"
+                organizationId:
+                  type: string
+                  description: This should be passwed is corporate is logged in
               required:
                 - dateTime
       responses:

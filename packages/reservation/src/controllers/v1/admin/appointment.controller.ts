@@ -426,7 +426,19 @@ class AdminAppointmentController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {appointmentId} = req.params as {appointmentId: string}
+      const {organizationId} = req.query as {organizationId: string}
       const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
+      if (organizationId && organizationId !== appointment.organizationId) {
+        LogError(
+          'AdminAppointmentController:getUserAppointmentHistoryByAppointmentId',
+          'BadOrganizationId',
+          {
+            organizationId: appointment.organizationId,
+            appointmentID: appointmentId,
+          },
+        )
+        throw new BadRequestException('Request is not allowed')
+      }
       const userAppointments = await this.appointmentService.getUserAppointments(appointment.userId)
       res.json(
         actionSucceed(
