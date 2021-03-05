@@ -74,8 +74,8 @@ class AdminTemperatureController implements IControllerBase {
         throw new BadRequestException('No attestation found for user')
       }
 
-      if (atestation.status !== PassportStatuses.TemperatureCheckRequired) {
-        throw new BadRequestException('Temperature check not required for attestation')
+      if (atestation.status !== PassportStatuses.Proceed) {
+        throw new BadRequestException('Attestation Status should be Proceed')
       }
 
       const data = {

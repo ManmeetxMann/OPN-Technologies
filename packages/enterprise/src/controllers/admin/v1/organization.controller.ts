@@ -6,7 +6,7 @@ import {authorizationMiddleware} from '../../../../../common/src/middlewares/aut
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 
 import {OrganizationService} from '../../../services/organization-service'
-import {Organization, organizationDTOResponse} from '../../../models/organization'
+import {Organization, organizationSummaryDTOResponse} from '../../../models/organization'
 
 class AdminOrganizationController implements IControllerBase {
   public path = '/enterprise/admin'
@@ -38,7 +38,7 @@ class AdminOrganizationController implements IControllerBase {
   getOrganizations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const organizations = await this.organizationService.getOrganizations()
-      res.json(actionSucceed(organizationDTOResponse(organizations)))
+      res.json(actionSucceed(organizationSummaryDTOResponse(organizations)))
     } catch (error) {
       next(error)
     }
