@@ -104,17 +104,17 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/:appointmentId/history',
-      apptLabAuth,
+      apptLabOrOrgAdminAuth,
       this.getUserAppointmentHistoryByAppointmentId,
     )
     innerRouter.post(
       this.path + '/api/v1/appointments/:refAppointmentId/copy',
-      apptLabAuth,
+      apptLabOrOrgAdminAuth,
       this.copyAppointment,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/reschedule',
-      apptLabAuth,
+      apptLabOrOrgAdminAuth,
       this.rescheduleAppointment,
     )
 
