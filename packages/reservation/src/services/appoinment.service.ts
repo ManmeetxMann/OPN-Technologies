@@ -393,7 +393,7 @@ export class AppoinmentService {
     return appointments[0]
   }
 
-  async createAppointment(
+  async createAppointmentFromAcuity(
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
@@ -825,77 +825,39 @@ export class AppoinmentService {
 
   async copyAppointment(
     refAppointmentId: string,
-    date: string,
-    time: string,
+    dateTime: string,
   ): Promise<AppointmentDBModel> {
     //get the appointment that will be copied
-    const refAppointment = await this.getAppointmentDBById(refAppointmentId)
-    refAppointment.dateOfAppointment = date
-    refAppointment.timeOfAppointment = time
-    refAppointment.dateTime = makeFirestoreTimestamp(new Date(date + ' ' + time))
-    //copy AcuityAppointment
-    const savedAppointment = await this.copyAcuityAppointment(refAppointment)
-    return savedAppointment
-  }
-
-  async copyAcuityAppointment(refAppointment: AppointmentDBModel): Promise<AppointmentDBModel> {
-    const {
-      dateOfAppointment,
-      timeOfAppointment,
-      appointmentTypeID,
-      firstName,
-      lastName,
-      email,
-      phone,
-      packageCode,
-      calendarID,
-      dateOfBirth,
-      address,
-      addressUnit,
-      shareTestResultWithEmployer,
-      readTermsAndConditions,
-      agreeToConductFHHealthAssessment,
-      receiveResultsViaEmail,
-      receiveNotificationsFromGov,
-      barCode,
-      appointmentStatus,
-      latestResult,
-      organizationId,
-      couponCode,
-      userId,
-    } = refAppointment
-    const datetime = new Date(dateOfAppointment + ' ' + timeOfAppointment).toISOString()
-    const barCodeNumber = barCode + ''
-
-    const acuityAppointment = await this.acuityRepository.createAppointment(
-      datetime,
-      appointmentTypeID,
-      firstName,
-      lastName,
-      email,
-      phone + '',
-      packageCode,
-      calendarID,
-      {
-        dateOfBirth,
-        address,
-        addressUnit,
-        shareTestResultWithEmployer,
-        readTermsAndConditions,
-        agreeToConductFHHealthAssessment,
-        receiveResultsViaEmail,
-        receiveNotificationsFromGov,
+    const appointment = await this.getAppointmentDBById(refAppointmentId)
+    const barCodeNumber = await this.getNextBarCodeNumber()
+    //refAppointment.dateTime = makeFirestoreTimestamp(new Date(dateTime))
+    const acuityAppointment = await this.acuityRepository.createAppointment({
+      dateTime,
+      appointmentTypeID:appointment.appointmentTypeID,
+      firstName:appointment.firstName,
+      lastName:appointment.lastName,
+      email:appointment.email,
+      phone:appointment.phone+'',
+      packageCode:appointment.packageCode,
+      calendarID:appointment.calendarID,
+      fields:{
+        dateOfBirth:appointment.dateOfBirth,
+        address:appointment.address,
+        addressUnit:appointment.addressUnit,
+        shareTestResultWithEmployer:appointment.shareTestResultWithEmployer,
+        readTermsAndConditions:appointment.readTermsAndConditions,
+        agreeToConductFHHealthAssessment:appointment.agreeToConductFHHealthAssessment,
+        receiveResultsViaEmail:appointment.receiveResultsViaEmail,
+        receiveNotificationsFromGov:appointment.receiveNotificationsFromGov,
         barCodeNumber,
       },
-    )
-
-    return this.createAppointment(acuityAppointment, {
+    })
+    return this.createAppointmentFromAcuity(acuityAppointment, {
       barCodeNumber,
-      appointmentStatus,
-      latestResult,
-      organizationId,
-      couponCode,
-      userId,
+      appointmentStatus:AppointmentStatus.Pending,
+      latestResult:ResultTypes.Pending,
+      organizationId:appointment.organizationId,
+      userId:appointment.userId,
     })
   }
 
@@ -923,16 +885,16 @@ export class AppoinmentService {
 
     const dateTime = utcDateTime.format()
     const barCodeNumber = await this.getNextBarCodeNumber()
-    const acuityAppointment = await this.acuityRepository.createAppointment(
+    const acuityAppointment = await this.acuityRepository.createAppointment({
       dateTime,
-      appointmentTypeId,
+      appointmentTypeID:appointmentTypeId,
       firstName,
       lastName,
       email,
-      `${phone.code}${phone.number}`,
+      phone:`${phone.code}${phone.number}`,
       packageCode,
-      calendarId,
-      {
+      calendarID:calendarId,
+      fields:{
         dateOfBirth,
         address,
         addressUnit,
@@ -942,9 +904,10 @@ export class AppoinmentService {
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
         barCodeNumber,
-      },
+      }
+    }
     )
-    return this.createAppointment(acuityAppointment, {
+    return this.createAppointmentFromAcuity(acuityAppointment, {
       barCodeNumber,
       appointmentStatus: AppointmentStatus.Pending,
       latestResult: ResultTypes.Pending,

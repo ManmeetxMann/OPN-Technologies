@@ -3,7 +3,7 @@ import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
 import {Certificate} from '../models/packages'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
-import {AcuityAvailableSlots} from '../models/acuity'
+import {AcuityAvailableSlots, CreateAppointmentDTO} from '../models/acuity'
 
 export class AcuityRepository extends AcuityAdapter {
   constructor() {
@@ -51,25 +51,18 @@ export class AcuityRepository extends AcuityAdapter {
   }
 
   async createAppointment(
-    datetime: string,
-    appointmentTypeID: number,
-    firstName: string,
-    lastName: string,
-    email: string,
-    phone: string,
-    certificate: string,
-    calendarId: number,
-    fields: Record<string, string | boolean>,
+    appointmentData:CreateAppointmentDTO,
   ): Promise<AppointmentAcuityResponse> {
+    const {dateTime,appointmentTypeID,firstName,lastName,email,phone,packageCode,calendarID, fields} = appointmentData
     return this.createAppointmentOnAcuityService(
-      datetime,
+      dateTime,
       appointmentTypeID,
       firstName,
       lastName,
       email,
       phone,
-      certificate,
-      calendarId,
+      packageCode,
+      calendarID,
       fields,
     )
   }
