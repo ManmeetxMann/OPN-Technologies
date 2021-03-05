@@ -5,6 +5,7 @@ import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datet
 import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
 import {groupByChannel} from '../utils/analysis.helper'
+import {TestResultsMetaData} from './test-results'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -112,7 +113,8 @@ type PCRResultsForHistory = PCRResultSpecs & {
   runNumber: string
 }
 
-export type PCRTestResultRequestData = PCRResultSpecsForSending & { // WORKLING ONTHIS
+export type PCRTestResultRequestData = PCRResultSpecsForSending & {
+  // WORKLING ONTHIS
   barCode: string
   sendUpdatedResults?: boolean
 }
@@ -156,6 +158,10 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   deadlineDate: firestore.Timestamp
   dateOfAppointment: firestore.Timestamp
   testType: TestTypes
+  resultMetaData?: TestResultsMetaData
+  resultAnalysis?: Spec[]
+  templateId: string
+  labId: string
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {

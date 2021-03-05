@@ -4,7 +4,6 @@ import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 import {TestRunsService} from '../../../services/test-runs.service'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {getUserId} from '../../../../../common/src/utils/auth'
-import {PCRTestResultRequestData} from '../../../models/pcr-test-results'
 import {Config} from '../../../../../common/src/utils/config'
 import moment from 'moment'
 import {now} from '../../../../../common/src/utils/times'
@@ -14,9 +13,8 @@ import {authorizationMiddleware} from '../../../../../common/src/middlewares/aut
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {TestResultRequestData} from '../../../models/test-results'
 import {validateAnalysis} from '../../../utils/analysis.helper'
-import {send} from '../../../../../common/src/service/messaging/send-email'
 
-class AdminPCRTestResultController implements IControllerBase {
+class AdminTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v2'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
@@ -35,12 +33,20 @@ class AdminPCRTestResultController implements IControllerBase {
     ])
 
     innerRouter.post(this.path + '/test-results', sendSingleResultsAuth, this.createPCRResults)
+    this.router.use('/', innerRouter)
   }
 
   createPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
-      const {barCode, resultAnalysis, sendUpdatedResults, ...metaData} = req.body as TestResultRequestData
+      const {
+        barCode,
+        resultAnalysis,
+        sendUpdatedResults,
+        templateId,
+        labId,
+        ...metaData
+      } = req.body as TestResultRequestData
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
         .tz(timeZone)
@@ -64,9 +70,11 @@ class AdminPCRTestResultController implements IControllerBase {
         true,
         sendUpdatedResults,
         adminId,
+        templateId,
+        labId,
       )
       const status = await this.pcrTestResultsService.getReportStatus(
-        pcrResultRecorded.resultSpecs.action,
+        pcrResultRecorded.resultMetaData.action,
         pcrResultRecorded.result,
       )
       const successMessage = `${status} for ${pcrResultRecorded.barCode}`
@@ -76,3 +84,5 @@ class AdminPCRTestResultController implements IControllerBase {
     }
   }
 }
+
+export default AdminTestResultController

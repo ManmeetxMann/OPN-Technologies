@@ -13,6 +13,8 @@ export type TestResultSpecsForSending = {
 export type TestResultRequestData = TestResultSpecsForSending & {
   barCode: string
   sendUpdatedResults?: boolean
+  templateId: string
+  labId: string
 }
 
 export type TestResultsMetaData = {

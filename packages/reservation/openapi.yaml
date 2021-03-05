@@ -519,6 +519,65 @@ components:
       required:
         - results
         - resultDate
+    TestResultsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        resultDate:
+          type: string
+        action:
+          type: string
+          default: SendThisResult
+          enum:
+            - SendThisResult
+            - ReRunToday
+            - ReRunTomorrow
+            - RequestReCollect
+            - RecollectAsInvalid
+            - RecollectAsInconclusive
+            - MarkAsPositive
+            - MarkAsPresumptivePositive
+            - MarkAsNegative
+            - SendPreliminaryPositive
+        autoResult:
+          type: string
+          enum:
+            - PresumptivePositive
+            - Positive
+            - Negative
+            - Invalid
+            - Inconclusive
+        barCode:
+          type: string
+          minLength: 1
+        templateId:
+          type: string
+          minLength: 1
+        labId:
+          type: string
+          minLength: 1
+        notify:
+          type: boolean
+          default: false
+        sendUpdatedResults:
+          type: boolean
+          default: false
+        resultAnalysis:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              label:
+                type: string
+              value:
+                type: string
+      required:
+        - resultDate
+        - action
+        - autoResult
+        - barCode
+        - resultAnalysis
     PCRTestResultsRequest:
       type: object
       additionalProperties: false
@@ -1349,6 +1408,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatsResponse200'
+  /reservation/admin/api/v2/test-results:
+    post:
+      description: Send PCR Results
+      tags:
+        - PCR Results Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestResultsRequest'
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PCRTestResultsResponse200'
   /reservation/admin/api/v1/pcr-test-results:
     post:
       description: Send PCR Results

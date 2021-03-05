@@ -73,7 +73,7 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 import {TemperatureService} from './temperature.service'
 import {mapTemperatureStatusToResultTypes} from '../models/temperature'
 import {mapAttestationStatusToResultTypes} from '../../../passport/src/models/attestation'
-import {TestResultsMetaData, TestResultSpecsForSending} from '../models/test-results'
+import {TestResultsMetaData} from '../models/test-results'
 import {Spec} from '../utils/analysis.helper'
 
 export class PCRTestResultsService {
@@ -561,6 +561,8 @@ export class PCRTestResultsService {
     isSingleResult: boolean,
     sendUpdatedResults: boolean,
     adminId: string,
+    templateId: string,
+    labId: string,
   ): Promise<PCRTestResultDBModel> {
     if (metaData.action === PCRResultActions.DoNothing) {
       LogInfo('handlePCRResultSaveAndSend', 'DoNothingSelected HenceIgnored', {
@@ -670,6 +672,8 @@ export class PCRTestResultsService {
       displayInResult: true,
       recollected: actionsForRecollection.includes(metaData.action),
       confirmed: false,
+      templateId,
+      labId,
     }
 
     const pcrResultRecorded = await this.pcrTestResultsRepository.updateData(
@@ -678,7 +682,11 @@ export class PCRTestResultsService {
     )
 
     await this.handleActions({
-      resultData, //TODO CHECK THIS @TSOVAK
+      resultData: {
+        adminId,
+        barCode,
+        action: metaData.action,
+      },
       appointment,
       runNumber: testResult.runNumber,
       reCollectNumber: testResult.reCollectNumber,
@@ -688,6 +696,7 @@ export class PCRTestResultsService {
     //Send Notification
     if (metaData.notify) {
       const pcrResultDataForEmail = {
+        adminId,
         ...pcrResultDataForDbUpdate,
         ...appointment,
       }
@@ -825,7 +834,11 @@ export class PCRTestResultsService {
     )
 
     await this.handleActions({
-      resultData,
+      resultData: {
+        adminId: resultData.adminId,
+        barCode: resultData.barCode,
+        action: resultData.resultSpecs.action,
+      },
       appointment,
       runNumber: testResult.runNumber,
       reCollectNumber: testResult.reCollectNumber,
@@ -855,7 +868,11 @@ export class PCRTestResultsService {
     reCollectNumber,
     result,
   }: {
-    resultData: PCRTestResultData
+    resultData: {
+      adminId: string
+      barCode: string
+      action: PCRResultActions
+    }
     appointment: AppointmentDBModel
     runNumber: number
     reCollectNumber: number
@@ -884,7 +901,7 @@ export class PCRTestResultsService {
         })
       }
     }
-    switch (resultData.resultSpecs.action) {
+    switch (resultData.action) {
       case PCRResultActions.SendPreliminaryPositive: {
         const updatedAppointment = await this.appointmentService.changeStatusToReRunRequired({
           appointment: appointment,
@@ -950,7 +967,7 @@ export class PCRTestResultsService {
     }
     LogInfo('handleActions', 'Success', {
       barCode: resultData.barCode,
-      action: resultData.resultSpecs.action,
+      action: resultData.action,
       appointmentId: appointment.id,
     })
   }

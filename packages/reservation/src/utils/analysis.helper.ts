@@ -45,7 +45,7 @@ const validations = [
   },
 ]
 
-export const validateAnalysis = (specs: Spec[]) => {
+export const validateAnalysis = (specs: Spec[]): void => {
   specs.forEach((spec) => {
     const validator = validations.find(({column}) => column === spec.label)
     if (validator) {
