@@ -2650,19 +2650,13 @@ paths:
                         type: string
                   page:
                     type: number
-  /reservation/admin/api/v1/appointments/{refAppointmentId}/copy:
+  /reservation/admin/api/v1/appointments/copy:
     post:
       description: Copy appointment by appointment ID
       tags:
         - Appointment Management
       security:
         - bearerAuthJWT: []
-      parameters:
-        - in: path
-          name: refAppointmentId
-          schema:
-            type: string
-          required: true
       requestBody:
         content:
           application/json:
@@ -2670,6 +2664,10 @@ paths:
               type: object
               additionalProperties: false
               properties:
+                appointmentIds:
+                  type: array
+                  items:
+                    type: string
                 dateTime:
                   description: The ISO date-time as returned by availbility times call
                   type: string

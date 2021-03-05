@@ -108,7 +108,7 @@ class AdminAppointmentController implements IControllerBase {
       this.getUserAppointmentHistoryByAppointmentId,
     )
     innerRouter.post(
-      this.path + '/api/v1/appointments/:refAppointmentId/copy',
+      this.path + '/api/v1/appointments/copy',
       apptLabOrOrgAdminAuth,
       this.copyAppointment,
     )
@@ -396,24 +396,25 @@ class AdminAppointmentController implements IControllerBase {
 
   copyAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {refAppointmentId} = req.params as {refAppointmentId: string}
-      const {dateTime} = req.body as {dateTime: string}
-      const savedAppointment = await this.appointmentService.copyAppointment(
-        refAppointmentId,
-        dateTime,
-      )
-      if (savedAppointment) {
-        const pcrTestResult = await this.pcrTestResultsService.createNewTestResult(savedAppointment)
-        console.log(
-          `AppointmentWebhookController: CreateAppointment: SuccessCreatePCRResults for AppointmentID: ${savedAppointment.id} PCR Results ID: ${pcrTestResult.id}`,
-        )
-      } else {
-        LogError('AdminAppointmentController:copyAppointment', 'FailedCopyAppointment', {
-          appointmentID: refAppointmentId,
-          appointmentDateTime: dateTime,
-        })
+      const {appointmentIds, dateTime, organizationId} = req.body as {
+        appointmentIds: string[]
+        dateTime: string
+        organizationId?: string
       }
-      res.json(actionSucceed(appointmentUiDTOResponse(savedAppointment, false)))
+      const adminId = getUserId(res.locals.authenticatedUser)
+
+      const appointmentsState: BulkOperationResponse[] = await Promise.all(
+        appointmentIds.map(async (appointmentId) => {
+          return await this.appointmentService.copyAppointment(
+            appointmentId,
+            dateTime,
+            adminId,
+            organizationId,
+          )
+        }),
+      )
+
+      res.json(actionSuccess([...appointmentsState]))
     } catch (error) {
       next(error)
     }

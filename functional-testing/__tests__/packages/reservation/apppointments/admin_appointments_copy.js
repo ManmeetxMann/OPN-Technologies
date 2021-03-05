@@ -14,12 +14,12 @@ const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 /**
  * @group reservation-service
  * @group /reservation/admin/api/v1/appointments
- * @group copy-appointment
+ * @group copy-appointments
  */
 describe('Copy Appointment', () => {
   test('Copy Appointments as super admin?', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/admin/api/v1/appointments/lDRcL0txk0jQoIDZF9uh/copy`;
+      const url = `${reservationServiceUrl}/reservation/admin/api/v1/appointments/copy`;
       return frisby
           .setup({
             request: {
@@ -31,10 +31,12 @@ describe('Copy Appointment', () => {
           .post(
               url,
               {
-                dateTime: '2021-03-11T07:30:00-0500',
+                appointmentIds: ['lDRcL0txk0jQoIDZF9uh','xH055VGo4XVEwcaka2ax'],
+                dateTime: '2021-03-14T08:30:00-0500',
               },
           )
-          .expect('status', 200);
+          .expect('status', 200)
+          .inspectBody()
     });
   });
 });
