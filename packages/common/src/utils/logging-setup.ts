@@ -27,6 +27,19 @@ if (NodeEnV() === 'production') {
     ignoreMethods: ['options'], // ignore requests with OPTIONS method (case-insensitive).
   })
 }
+export type LogMetaData = {
+  appointmentID?: string,
+  appointmentDateTime?: string
+  appointmentStatus?:string
+  appointmentBarCode?:string
+  acuityID?: number
+  acuityStatusCode?:string
+  errorMessage?: string
+  packageCode?:string
+  reportTrackerId?: string
+  testResultId?:string
+  testRunId?: string
+}
 
 export const LogInfo = (
   functionName: string,
@@ -47,7 +60,7 @@ export const LogWarning = (
 export const LogError = (
   functionName: string,
   eventName: string,
-  data: Record<string, unknown>,
+  data: LogMetaData,
 ): void => {
   Logger.error({functionName, eventName, ...data})
 }
