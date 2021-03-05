@@ -1,6 +1,6 @@
 import {firestore} from 'firebase-admin'
 import {PassportStatus} from '../../../passport/src/models/passport'
-import {ResultTypes} from '../../../reservation/src/models/appointment'
+import {ResultTypes, AppointmentStatus} from '../../../reservation/src/models/appointment'
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 
 export type ActionItem = {
@@ -11,6 +11,11 @@ export type ActionItem = {
     expiry: firestore.Timestamp
     timestamp: firestore.Timestamp
   }
+  latestAttestation: null | {
+    attestationId: string
+    status: PassportStatus
+    timestamp: firestore.Timestamp
+  }
   latestTemperature: null | {
     temperatureId: string
     temperature: string // number?
@@ -18,7 +23,8 @@ export type ActionItem = {
     timestamp: firestore.Timestamp
   }
   scheduledPCRTest: null | {
-    testId: string
+    appointmentId: string
+    status: AppointmentStatus
     date: firestore.Timestamp
     timestamp: firestore.Timestamp
   }

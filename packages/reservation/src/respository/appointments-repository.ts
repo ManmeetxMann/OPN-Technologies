@@ -34,6 +34,13 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     return this.add(validatedData)
   }
 
+  public async updateData(
+    id: string,
+    appointment: Partial<AppointmentDBModel>,
+  ): Promise<AppointmentDBModel> {
+    return this.updateProperties(id, appointment)
+  }
+
   public changeAppointmentStatus(
     appointmentId: string,
     appointmentStatus: AppointmentStatus,

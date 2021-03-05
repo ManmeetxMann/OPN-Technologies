@@ -310,6 +310,44 @@ components:
                 type: string
               label:
                 type: string
+              labId:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
+    UserAppointmentsHistoryResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              dateTime:
+                type: string
+              testType:
+                type: string
+            required:
+              - id
+              - dateTime
+              - testType
         status:
           type: object
           additionalProperties: false
@@ -692,8 +730,11 @@ components:
         name:
           minLength: 1
           type: string
+        templateId:
+          type: string
       required:
         - name
+        - templateId
     LabResponse:
       type: object
       additionalProperties: false
@@ -706,6 +747,8 @@ components:
             additionalProperties: false
             properties:
               id:
+                type: string
+              templateId:
                 type: string
               name:
                 type: string
@@ -752,6 +795,82 @@ components:
         required:
           - appointmentID
           - action
+    TestResultDetailResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+            ohipCard:
+              type: string
+            dateOfBirth:
+              type: string
+            address:
+              type: string
+            addressUnit:
+              type: string
+            barCode:
+              type: string
+            appointmentStatus:
+              type: string
+            result:
+              type: string
+            dateTime:
+              type: string
+            registeredNursePractitioner:
+              type: string
+            physician:
+              type: string
+            locationName:
+              type: string
+            swabMethod:
+              type: string
+            deadline:
+              type: string
+            labName:
+              type: string
+            testType:
+              type: string
+            equipment:
+              type: string
+            manufacturer:
+              type: string
+            resultSpecs:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                properties:
+                  label:
+                    type: string
+                  value:
+                    type: string
+          required:
+            - email
+            - phone
+            - dateOfBirth
+            - address
+            - barCode
+            - appointmentStatus
+            - result
+            - dateTime
+            - swabMethod
+            - deadline
+            - labName
+            - testType
+            - equipment
+            - manufacturer
+
 paths:
   /admin/api/v1/send-fax-for-positive:
     post:
@@ -814,10 +933,13 @@ paths:
                   type: string
                 label:
                   type: string
+                labId:
+                  type: string
               required:
                 - transportDateTime
                 - driverName
                 - label
+                - labId
       responses:
         '200':
           description: Succesfully create transport
@@ -855,29 +977,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
-  /reservation/admin/api/v1/test-results:
-    get:
-      description: Get Test results
-      tags:
-        - Test Management
-      parameters:
-        - in: query
-          name: organizationId
-          schema:
-            type: string
-        - in: query
-          name: dateOfAppointment
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successfully Return
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TestResult200'
   /reservation/admin/api/v1/appointments:
     get:
       description: Get appointment list
@@ -955,6 +1054,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
+  /reservation/admin/api/v1/appointments/{appointmentId}/history:
+    get:
+      description: Get user's appointment history by appointment ID
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Appointment Management
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAppointmentsHistoryResponse200'
   /reservation/admin/api/v1/admin-scan-history:
     get:
       description: Get scanned appointments history for user
@@ -1293,7 +1416,7 @@ paths:
     post:
       description: Send Multiple PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -1308,11 +1431,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PCRTestResultsResponse200'
-  /reservation/admin/api/v1/pcr-test-results/stats:
+  /reservation/admin/api/v1/pcr-test-results/list/stats:
     get:
       description: Retrieve list of PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -1353,7 +1476,7 @@ paths:
     post:
       description: Send PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -1371,7 +1494,7 @@ paths:
     get:
       description: Retrieve list of PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -1466,6 +1589,18 @@ paths:
                             - PreliminaryPositive
                         organizationName:
                           type: string
+                        style:
+                          type: string
+                          enum:
+                            - RED
+                            - GREEN
+                            - YELLOW
+                            - BLUE
+                            - GREY
+                        testName:
+                          type: string
+                        doctorId:
+                          type: string
                   status:
                     type: object
                     additionalProperties: false
@@ -1489,7 +1624,7 @@ paths:
     post:
       description: Confirm PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -1521,7 +1656,7 @@ paths:
     post:
       description: Process PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       requestBody:
         content:
           application/json:
@@ -1708,7 +1843,7 @@ paths:
       security:
         - bearerAuthJWT: []
       tags:
-        - PCR Results Management
+        - Test Results Management
       requestBody:
         content:
           application/json:
@@ -1848,6 +1983,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
+  
+  /reservation/admin/api/v1/appointments/{appointmentId}/reschedule:
+    put:
+      description: Update appointment schedule
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                dateTime:
+                  description: The ISO date-time as returned by availbility times call
+                  type: string
+                  format: date-time
+                  example: "2021-09-01T23:17:07.657Z"
+                organizationId:
+                  type: string
+                  description: This should be passwed is corporate is logged in
+              required:
+                - dateTime
+              
+      responses:
+        '200':
+          description: Succesfully reschedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse200'
+
   /reservation/api/v1/appointments:
     post:
       description: Create Appointment
@@ -2110,16 +2285,16 @@ paths:
                         type: string
                   page:
                     type: number
-  '/reservation/admin/api/v1/pcr-test-results/{pcrTestResultId}':
+  /reservation/api/v1/test-results/{id}:
     get:
-      description: Retrieve list of PCR Results
+      description: Details for PCR Results for Regular User
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       parameters:
         - in: path
-          name: pcrTestResultId
+          name: id
           schema:
             type: string
           required: true
@@ -2129,95 +2304,32 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: false
-                properties:
-                  data:
-                    type: object
-                    additionalProperties: false
-                    properties:
-                      email:
-                        type: string
-                      phone:
-                        type: string
-                      ohipCard:
-                        type: string
-                      dateOfBirth:
-                        type: string
-                      address:
-                        type: string
-                      addressUnit:
-                        type: string
-                      barCode:
-                        type: string
-                      appointmentStatus:
-                        type: string
-                      result:
-                        type: string
-                      dateTime:
-                        type: string
-                      registeredNursePractitioner:
-                        type: string
-                      physician:
-                        type: string
-                      locationName:
-                        type: string
-                      swabMethod:
-                        type: string
-                      deadline:
-                        type: string
-                      labName:
-                        type: string
-                      testType:
-                        type: string
-                      equipment:
-                        type: string
-                      manufacturer:
-                        type: string
-                      resultSpecs:
-                        type: object
-                        additionalProperties: false
-                        properties:
-                          calRed61Ct:
-                            type: string
-                          calRed61RdRpGene:
-                            type: string
-                          famCt:
-                            type: string
-                          famEGene:
-                            type: string
-                          hexCt:
-                            type: string
-                          hexIC:
-                            type: string
-                          quasar670Ct:
-                            type: string
-                          quasar670NGene:
-                            type: string
-                          comment:
-                            type: string
-                          autoResult:
-                            type: string
-                    required:
-                      - email
-                      - phone
-                      - dateOfBirth
-                      - address
-                      - barCode
-                      - appointmentStatus
-                      - result
-                      - dateTime
-                      - swabMethod
-                      - deadline
-                      - labName
-                      - testType
-                      - equipment
-                      - manufacturer
+                $ref: '#/components/schemas/TestResultDetailResponse'
+  /reservation/admin/api/v1/test-results/{id}:
+    get:
+      description: Details for PCR Results for Admin
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResultDetailResponse'
   /reservation/admin/api/v1/pcr-test-results/due-deadline:
     get:
       description: Retrieve list of PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2312,11 +2424,11 @@ paths:
                         type: string
                   page:
                     type: number
-  /reservation/admin/api/v1/pcr-test-results/due-deadline/stats:
+  /reservation/admin/api/v1/pcr-test-results/due-deadline/list/stats:
     get:
       description: Retrieve list of PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2412,6 +2524,82 @@ paths:
                         type: string
                   page:
                     type: number
+  /reservation/api/v1/appointments/{id}:
+    get:
+      description: Get user appointment by id
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                      locationName:
+                        type: string
+                      locationAddress:
+                        type: string
+                      firstName:
+                        type: string
+                      lastName:
+                        type: string
+                      dateOfAppointment:
+                        type: string
+                      timeOfAppointment:
+                        type: string
+                      QRCode:
+                        type: string
+                      dateOfBirth:
+                        type: string
+                      showQrCode:
+                        type: boolean
+                    required:
+                      - id
+                      - locationName
+                      - locationAddress
+                      - firstName
+                      - lastName
+                      - dateOfAppointment
+                      - timeOfAppointment
+                      - QRCode
+                      - dateOfBirth
+                      - showQrCode
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
   /reservation/admin/api/v1/appointments/barcode/regenerate:
     put:
       description: Get user appointment list
@@ -2462,11 +2650,71 @@ paths:
                         type: string
                   page:
                     type: number
+  /reservation/admin/api/v1/appointments/copy:
+    post:
+      description: Copy appointment by appointment ID
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                appointmentIds:
+                  type: array
+                  items:
+                    type: string
+                dateTime:
+                  description: The ISO date-time as returned by availbility times call
+                  type: string
+                  format: date-time
+                  example: "2021-09-01T23:17:07.657Z"
+                organizationId:
+                  type: string
+                  description: This should be passwed is corporate is logged in
+              required:
+                - dateTime
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+                schema:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AppointmentResponse200'
+                    status:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                            - succeed
+                            - failed
+                            - validation_error
+                            - internal_server_error
+                            - unauthorized
+                            - access_denied
+                            - resource_not_found
+                        message:
+                          nullable: true
+                          type: string
+                    page:
+                      type: number
   /reservation/api/v1/test-results:
     get:
       description: Get user test result list
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2474,6 +2722,7 @@ paths:
           name: organizationid
           schema:
             type: string
+          required: true
       responses:
         '200':
           description: Successfully Return
