@@ -2585,7 +2585,7 @@ paths:
                         type: string
                   page:
                     type: number
-  /reservation/admin/api/v1/appointments/{refAppointmentId}/create-new:
+  /reservation/admin/api/v1/appointments/{refAppointmentId}/copy:
     post:
       description: Cancel appointment by appointment ID
       tags:
@@ -2605,13 +2605,13 @@ paths:
               type: object
               additionalProperties: false
               properties:
-                date:
+                dateTime:
+                  description: The ISO date-time as returned by availbility times call
                   type: string
-                time:
-                  type: string
+                  format: date-time
+                  example: "2021-09-01T23:17:07.657Z"
               required:
-                - date
-                - time
+                - dateTime
       responses:
         '200':
           description: Successfully Return
