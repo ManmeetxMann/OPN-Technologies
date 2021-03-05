@@ -16,11 +16,11 @@ const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
  * @group /reservation/api/v1/availability/slots
  * @group get-availability-times
  */
-const encodedId = '';
+const encodedId = 'XXXX';
 describe('get:availability times', () => {
   test('should get availability times successfully?', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/api/v1/availability/times?date=2021-02-10&id=${encodedId}`;
+      const url = `${reservationServiceUrl}/reservation/api/v1/availability/times?date=2021-03-10&id=${encodedId}`;
       return frisby
           .setup({
             request: {

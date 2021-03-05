@@ -170,11 +170,9 @@ export class RapidAntigenTestResultsService {
       return this.saveResult(action, notify, reqeustedBy, newResult)
     } else {
       //LOG Critical and Fail
-      LogError(
-        'RapidAntigenTestResultsService:processAppointment',
-        'Failed:NoWaitingResults',
-        appointment,
-      )
+      LogError('RapidAntigenTestResultsService:processAppointment', 'Failed:NoWaitingResults', {
+        appointmentID: appointment.id,
+      })
       return Promise.resolve({
         id: appointmentID,
         barCode: appointment.barCode,
@@ -289,9 +287,9 @@ export class RapidAntigenTestResultsService {
     } else if (result === ResultTypes.Positive) {
       return RapidAlergenResultPDFType.Positive
     } else {
-      LogError('RapidAntigenTestResultsService: getPDFType', 'Bad Result Type', {
+      LogError('RapidAntigenTestResultsService: getPDFType', 'UnSupportedPDFResultType', {
         appointmentID,
-        result: result,
+        errorMessage: `NotSupported Result ${result}`,
       })
     }
   }

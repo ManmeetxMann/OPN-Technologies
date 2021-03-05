@@ -1,4 +1,6 @@
 import {NextFunction, Request, Response, Router} from 'express'
+import {fromPairs} from 'lodash'
+//Common
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
@@ -7,7 +9,7 @@ import {BadRequestException} from '../../../../../common/src/exceptions/bad-requ
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
 import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
-import {fromPairs} from 'lodash'
+import {LogError} from '../../../../../common/src/utils/logging-setup'
 
 import {
   appointmentByBarcodeUiDTOResponse,
@@ -20,6 +22,7 @@ import {AppoinmentService} from '../../../services/appoinment.service'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 import {TransportRunsService} from '../../../services/transport-runs.service'
 import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
+import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
@@ -27,6 +30,7 @@ class AdminAppointmentController implements IControllerBase {
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
   private transportRunsService = new TransportRunsService()
+  private pcrTestResultsService = new PCRTestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -93,6 +97,11 @@ class AdminAppointmentController implements IControllerBase {
       this.path + '/api/v1/appointments/barcode/regenerate',
       apptLabAuth,
       this.regenerateBarCode,
+    )
+    innerRouter.post(
+      this.path + '/api/v1/appointments/:refAppointmentId/copy',
+      apptLabAuth,
+      this.copyAppointment,
     )
     innerRouter.put(
       this.path + '/api/v1/appointments/:appointmentId/reschedule',
@@ -371,6 +380,31 @@ class AdminAppointmentController implements IControllerBase {
       const appointment = await this.appointmentService.regenerateBarCode(appointmentId, userId)
 
       res.json(actionSucceed(appointmentUiDTOResponse(appointment, false)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  copyAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {refAppointmentId} = req.params as {refAppointmentId: string}
+      const {dateTime} = req.body as {dateTime: string}
+      const savedAppointment = await this.appointmentService.copyAppointment(
+        refAppointmentId,
+        dateTime,
+      )
+      if (savedAppointment) {
+        const pcrTestResult = await this.pcrTestResultsService.createNewTestResult(savedAppointment)
+        console.log(
+          `AppointmentWebhookController: CreateAppointment: SuccessCreatePCRResults for AppointmentID: ${savedAppointment.id} PCR Results ID: ${pcrTestResult.id}`,
+        )
+      } else {
+        LogError('AdminAppointmentController:copyAppointment', 'FailedCopyAppointment', {
+          appointmentID: refAppointmentId,
+          appointmentDateTime: dateTime,
+        })
+      }
+      res.json(actionSucceed(appointmentUiDTOResponse(savedAppointment, false)))
     } catch (error) {
       next(error)
     }

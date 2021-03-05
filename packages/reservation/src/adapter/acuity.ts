@@ -151,8 +151,8 @@ abstract class AcuityAdapter {
         'InvalidAcuityIDPosted',
         {
           acuityID: id,
-          status_code: result.status_code,
-          message: result.message,
+          acuityStatusCode: result.status_code,
+          errorMessage: result.message,
         },
       )
       throw new BadRequestException(result.message)
@@ -390,9 +390,9 @@ abstract class AcuityAdapter {
     if (appointment.status_code) {
       LogError(`AcuitySchedulingAdapterUpdateAppointment`, 'Failed', {
         acuityID: id,
-        datetime: datetime,
-        status_code: appointment.status_code,
-        message: appointment.message,
+        appointmentDateTime: datetime,
+        acuityStatusCode: appointment.status_code,
+        errorMessage: appointment.message,
       })
       throw new BadRequestException(appointment.message)
     }

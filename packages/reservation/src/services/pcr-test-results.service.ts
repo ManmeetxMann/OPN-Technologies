@@ -223,7 +223,7 @@ export class PCRTestResultsService {
     if (!pcrResults) {
       LogError('processPCRTestResult', 'InvalidResultIdInReport', {
         reportTrackerId,
-        resultId,
+        testResultId: resultId,
       })
       return
     }
@@ -231,9 +231,9 @@ export class PCRTestResultsService {
     if (pcrResults.status !== ResultReportStatus.RequestReceived) {
       LogError('processPCRTestResult', 'AlreadyProcessed', {
         reportTrackerId,
-        resultId,
-        currentStatus: pcrResults.status,
-        barCode: pcrResults.data.barCode,
+        testResultId: resultId,
+        appointmentStatus: pcrResults.status,
+        appointmentBarCode: pcrResults.data.barCode,
       })
       return
     }
@@ -1232,9 +1232,9 @@ export class PCRTestResultsService {
             reason: 'Internal server error',
           })
           LogError('addTestRunToPCR', 'InternalServerError', {
-            appointmentId: pcr.appointmentId,
+            appointmentID: pcr.appointmentId,
             testRunId,
-            error: error,
+            errorMessage: error,
           })
         }
       }),

@@ -124,7 +124,7 @@ class AppointmentWebhookController implements IControllerBase {
         `AppointmentWebhookController:syncAppointmentFromAcuityToDB`,
         'FailedToProcessRequest',
         {
-          error: error.toString(),
+          errorMessage: error.toString(),
         },
       )
       next(error)
@@ -138,12 +138,15 @@ class AppointmentWebhookController implements IControllerBase {
     try {
       const {barCodeNumber, organizationId} = dataForUpdate
 
-      const savedAppointment = await this.appoinmentService.createAppointment(acuityAppointment, {
-        appointmentStatus: AppointmentStatus.Pending,
-        barCodeNumber,
-        latestResult: ResultTypes.Pending,
-        organizationId,
-      })
+      const savedAppointment = await this.appoinmentService.createAppointmentFromAcuity(
+        acuityAppointment,
+        {
+          appointmentStatus: AppointmentStatus.Pending,
+          barCodeNumber,
+          latestResult: ResultTypes.Pending,
+          organizationId,
+        },
+      )
       LogInfo('CreateAppointmentFromWebhook', 'SuccessCreateAppointment', {
         acuityID: acuityAppointment.id,
         appointmentID: savedAppointment.id,
@@ -160,7 +163,7 @@ class AppointmentWebhookController implements IControllerBase {
     } catch (e) {
       LogError('CreateAppointmentFromWebhook', 'FailedToCreateAppointment', {
         acuityID: acuityAppointment.id,
-        error: e.toString(),
+        errorMessage: e.toString(),
       })
     }
   }
@@ -257,7 +260,7 @@ class AppointmentWebhookController implements IControllerBase {
       } else {
         LogError('UpdateAppointmentFromWebhook', 'FailedToUpdateAppointment', {
           acuityID: acuityAppointment.id,
-          error: e.toString(),
+          errorMessage: e.toString(),
         })
       }
     }
