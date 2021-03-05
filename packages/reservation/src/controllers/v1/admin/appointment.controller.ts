@@ -446,7 +446,7 @@ class AdminAppointmentController implements IControllerBase {
           userAppointments.map((userAppointment) => {
             const {id, dateTime, testType} = userAppointment
             return {id, dateTime: formatDateRFC822Local(dateTime), testType}
-          }, false),
+          }),
         ),
       )
     } catch (error) {
