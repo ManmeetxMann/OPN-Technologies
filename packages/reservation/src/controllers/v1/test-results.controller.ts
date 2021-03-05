@@ -22,6 +22,7 @@ class TestResultsController implements IControllerBase {
     const regUserAuth = authorizationMiddleware([RequiredUserPermission.RegUser])
 
     innerRouter.get(this.path + '/test-results', regUserAuth, this.listTestResults)
+    innerRouter.get(this.path + '/test-results/:id/download', regUserAuth, this.getTestResultPDF)
 
     this.router.use('/', innerRouter)
   }
@@ -34,6 +35,17 @@ class TestResultsController implements IControllerBase {
         userId,
         organizationid,
       )
+
+      res.json(actionSucceed(pcrResults))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getTestResultPDF = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {id} = req.params as {id: string}
+      const pcrResults = await this.pcrTestResultsService.getTestResultPDF(id)
 
       res.json(actionSucceed(pcrResults))
     } catch (error) {
