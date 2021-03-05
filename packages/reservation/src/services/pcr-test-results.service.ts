@@ -84,7 +84,6 @@ const passportStatusByPCR = {
   [ResultTypes.Positive]: PassportStatuses.Stop,
   [ResultTypes.Negative]: PassportStatuses.Proceed,
 }
-import {mapAttestationStatusToResultTypes} from '../../../passport/src/models/attestation'
 import {TestResultsMetaData} from '../models/test-results'
 import {Spec} from '../utils/analysis.helper'
 
@@ -848,11 +847,12 @@ export class PCRTestResultsService {
 
     //Send Notification
     if (resultData.resultSpecs.notify) {
-      const pcrResultDataForEmail = {
-        ...pcrResultDataForDbUpdate,
-        ...appointment,
-      }
-      await this.sendNotification(pcrResultDataForEmail, resultData.resultSpecs.action)
+      // @TODO This will not work, after changes of v2 test result migration
+      // const pcrResultDataForEmail = {
+      //   ...pcrResultDataForDbUpdate,
+      //   ...appointment,
+      // }
+      // await this.sendNotification(pcrResultDataForEmail, resultData.resultSpecs.action)
     } else {
       console.log(
         `handlePCRResultSaveAndSend: Not Notification is sent for ${resultData.barCode}. Notify is off.`,
