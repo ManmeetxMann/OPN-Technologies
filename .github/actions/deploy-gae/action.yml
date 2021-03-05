@@ -74,10 +74,6 @@ runs:
         echo "PROJECT_ID=opn-platform-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=dev_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
-      cat > ./packages/${{ inputs.service_name }}/app.yaml << EOF
-        runtime: nodejs12
-        service: ${{ inputs.service_name }}-staging
-      EOF
       else
         echo "Bad Deployment"
         exit 1;

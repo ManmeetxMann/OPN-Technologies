@@ -10,8 +10,11 @@ import {User} from '../../../../common/src/data/user'
 
 import {HealthpassService} from '../../services/healthpass-service'
 import {OrganizationService} from '../../services/organization-service'
-import {organizationDTOResponse, organizationGroupDTOResponse} from '../../models/organization'
-import {userDTOResponse} from '../../models/user'
+import {
+  organizationGroupDTOResponse,
+  organizationSummaryDTOResponse,
+} from '../../models/organization'
+import {userDTO} from '../../../../common/src/data/user'
 
 class RecommendationController implements IControllerBase {
   public router = express.Router()
@@ -34,25 +37,32 @@ class RecommendationController implements IControllerBase {
     try {
       const {organizationId, authenticatedUser} = res.locals
       const orgPromise = this.orgService.getByIdOrThrow(organizationId)
-      const allDependants = await this.userService.getAllDependants(authenticatedUser.id, true)
+      const allDependants = (
+        await this.userService.getAllDependants(authenticatedUser.id, true)
+      ).filter((dep) => dep.organizationIds?.includes(organizationId))
       const allUsers: User[] = [authenticatedUser, ...allDependants]
-      const passes = await Promise.all(
-        allUsers.map(async (user) => {
-          const [pass, group] = await Promise.all([
-            this.passService.getHealthPass(user.id, organizationId as string),
-            this.orgService.getUserGroup(organizationId as string, user.id),
-          ])
-          return {
-            user: userDTOResponse(user),
-            group: organizationGroupDTOResponse(group),
-            ...pass,
-            dateOfBirth: pass.expiry ?? null, // TODO: Stub
-          }
-        }),
-      )
+      const passes = (
+        await Promise.all(
+          allUsers.map(async (user) => {
+            const [pass, group] = await Promise.all([
+              this.passService.getHealthPass(user.id, organizationId as string),
+              this.orgService.getUserGroup(organizationId as string, user.id),
+            ])
+            if (!pass.expiry) {
+              return null
+            }
+            return {
+              user: userDTO(user),
+              group: organizationGroupDTOResponse(group),
+              ...pass,
+              dateOfBirth: pass.expiry ?? null, // TODO: Stub
+            }
+          }),
+        )
+      ).filter((notNull) => notNull)
       const organization = await orgPromise
       const response = {
-        organization: organizationDTOResponse([organization])[0],
+        organization: organizationSummaryDTOResponse([organization])[0],
         passes,
       }
       res.json(actionSucceed(response))

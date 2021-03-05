@@ -1,5 +1,6 @@
 import {NextFunction, Request, Response, Router} from 'express'
-
+import {fromPairs} from 'lodash'
+//Common
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
@@ -8,8 +9,15 @@ import {BadRequestException} from '../../../../../common/src/exceptions/bad-requ
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
 import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
-import {fromPairs} from 'lodash'
+import {LogError} from '../../../../../common/src/utils/logging-setup'
 
+//Services
+import {AppoinmentService} from '../../../services/appoinment.service'
+import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
+import {TransportRunsService} from '../../../services/transport-runs.service'
+import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
+
+//Model
 import {
   appointmentByBarcodeUiDTOResponse,
   AppointmentByOrganizationRequest,
@@ -17,9 +25,6 @@ import {
   statsUiDTOResponse,
   appointmentUiDTOResponse,
 } from '../../../models/appointment'
-import {AppoinmentService} from '../../../services/appoinment.service'
-import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
-import {TransportRunsService} from '../../../services/transport-runs.service'
 import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
 import {formatDateRFC822Local} from '../../../utils/datetime.helper'
 
@@ -29,6 +34,7 @@ class AdminAppointmentController implements IControllerBase {
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
   private transportRunsService = new TransportRunsService()
+  private pcrTestResultsService = new PCRTestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -101,6 +107,17 @@ class AdminAppointmentController implements IControllerBase {
       apptLabAuth,
       this.getUserAppointmentHistoryByAppointmentId,
     )
+    innerRouter.post(
+      this.path + '/api/v1/appointments/:refAppointmentId/copy',
+      apptLabAuth,
+      this.copyAppointment,
+    )
+    innerRouter.put(
+      this.path + '/api/v1/appointments/:appointmentId/reschedule',
+      apptLabAuth,
+      this.rescheduleAppointment,
+    )
+
     this.router.use('/', innerRouter)
   }
 
@@ -376,6 +393,31 @@ class AdminAppointmentController implements IControllerBase {
       next(error)
     }
   }
+  
+  copyAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {refAppointmentId} = req.params as {refAppointmentId: string}
+      const {dateTime} = req.body as {dateTime: string}
+      const savedAppointment = await this.appointmentService.copyAppointment(
+        refAppointmentId,
+        dateTime,
+      )
+      if (savedAppointment) {
+        const pcrTestResult = await this.pcrTestResultsService.createNewTestResult(savedAppointment)
+        console.log(
+          `AppointmentWebhookController: CreateAppointment: SuccessCreatePCRResults for AppointmentID: ${savedAppointment.id} PCR Results ID: ${pcrTestResult.id}`,
+        )
+      } else {
+        LogError('AdminAppointmentController:copyAppointment', 'FailedCopyAppointment', {
+          appointmentID: refAppointmentId,
+          appointmentDateTime: dateTime,
+        })
+      }
+      res.json(actionSucceed(appointmentUiDTOResponse(savedAppointment, false)))
+    } catch (error) {
+      next(error)
+    }
+  }
 
   getUserAppointmentHistoryByAppointmentId = async (
     req: Request,
@@ -394,6 +436,29 @@ class AdminAppointmentController implements IControllerBase {
           }, false),
         ),
       )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  rescheduleAppointment = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const userID = getUserId(res.locals.authenticatedUser)
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const {appointmentId} = req.params as {appointmentId: string}
+      const {organizationId, dateTime} = req.body as {organizationId: string; dateTime: string}
+      const updatedAppointment = await this.appointmentService.rescheduleAppointment({
+        appointmentId,
+        userID,
+        isLabUser,
+        organizationId,
+        dateTime,
+      })
+      res.json(actionSucceed(appointmentUiDTOResponse(updatedAppointment, isLabUser)))
     } catch (error) {
       next(error)
     }
