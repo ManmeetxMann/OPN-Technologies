@@ -26,7 +26,7 @@ describe('Test Kit Batch controller test', () => {
 
   test('should return list of test kit batches', async (done) => {
     const url = `/reservation/admin/api/v1/test-kit-batch`
-    const response = await request(server.app).post(url).set(headers)
+    const response = await request(server.app).get(url).set(headers)
 
     expect(response.status).toBe(200)
     done()
