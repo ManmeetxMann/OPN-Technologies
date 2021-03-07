@@ -1031,13 +1031,17 @@ paths:
               properties:
                 lotNumber:
                   type: string
+                  minLength: 1
                 hardwareName:
                   type: string
+                  minLength: 1
                 expiry:
                   type: string
                   format: date-time
+                  minLength: 1
                 manufacturer:
                   type: string
+                  minLength: 1
               required:
                 - lotNumber
                 - hardwareName
