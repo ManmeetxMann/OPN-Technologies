@@ -19,4 +19,5 @@ export enum RequiredUserPermission {
   AdminScanHistory = 'AdminScanHistory',
   AllowCheckIn = 'AllowCheckIn',
   ClinicRapidResultSenderAdmin = 'ClinicRapidResultSenderAdmin',
+  TestKitBatchAdmin = 'TestKitBatchAdmin',
 }
