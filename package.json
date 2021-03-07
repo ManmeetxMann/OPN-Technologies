@@ -53,7 +53,8 @@
 		"migration:update-organization-legacy": "ts-node ./migrations/update-organization-legacy",
 		"migration:pcr-datetime-to-date": "ts-node ./migrations/pcr-datetime-to-date",
 		"migration:pcr-add-test-type": "ts-node ./migrations/pcr-add-test-type",
-		"migration:appointments-add-test-type": "ts-node ./migrations/appointments-add-test-type"
+		"migration:appointments-add-test-type": "ts-node ./migrations/appointments-add-test-type",
+		"__devops:get-users-with-email-no-authuserid": "ts-node ./__devops/get-users-with-email-no-authuserid"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
