@@ -4,14 +4,10 @@ import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datet
 
 import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
-<<<<<<< HEAD
 import {groupByChannel} from '../utils/analysis.helper'
 import {TestResultsMetaData} from './test-results'
-=======
-import {groupByChannel} from '../utils/channel-grouper'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
->>>>>>> 69173aeb515c4e4de5e71a36abe82cc8ee45f063
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -173,14 +169,11 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   deadlineDate: firestore.Timestamp
   dateOfAppointment: firestore.Timestamp
   testType: TestTypes
-<<<<<<< HEAD
   resultMetaData?: TestResultsMetaData
   resultAnalysis?: Spec[]
   templateId: string
   labId: string
-=======
   userId: string
->>>>>>> 69173aeb515c4e4de5e71a36abe82cc8ee45f063
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
