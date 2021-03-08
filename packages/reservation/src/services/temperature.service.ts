@@ -16,9 +16,10 @@ export class TemperatureService {
       {
         id: temp.id,
         status: temp.status,
+        temperature: temp.temperature,
       },
       {
-        userId: temp.id,
+        userId: temp.userId,
         organizationId: temp.organizationId,
         actionType: 'created',
       },

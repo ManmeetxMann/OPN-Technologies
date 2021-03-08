@@ -23,6 +23,8 @@ import AdminRapidAntigenTestTesultsController from './controllers/v1/admin/rapid
 import AdminAppointmentAvailabilityController from './controllers/v1/admin/appointment-availability.controller'
 
 import InternalRapidAntigenResultEmailSendController from './controllers/v1/internal/rapid-alergen-send-result-email.controller'
+import AdminClinicController from './controllers/v1/admin/clinic.controller'
+import AdminTestKitBatchController from './controllers/v1/admin/test-kit-batch.controller'
 
 const PORT = Number(process.env.PORT) || 5008
 
@@ -44,6 +46,7 @@ export const app = new App({
     new AppointmentAvailabilityController(),
     new AdminTemperatureV1Controller(),
     new AdminLabController(),
+    new AdminClinicController(),
     new AdminHistoryController(),
     new AdminRapidAntigenTestTesultsController(),
     new AppointmentController(),
@@ -51,6 +54,7 @@ export const app = new App({
     new TestResultsController(),
     new TemperatureController(),
     new AdminAppointmentAvailabilityController(),
+    new AdminTestKitBatchController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })

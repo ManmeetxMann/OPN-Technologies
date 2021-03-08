@@ -5,6 +5,8 @@ import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datet
 import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
 import {groupByChannel} from '../utils/channel-grouper'
+import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
+import {TemperatureStatusesUI} from './temperature'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -77,12 +79,21 @@ export type PCRTestResultConfirmRequest = {
   action: PCRResultActionsForConfirmation
 }
 
-export enum PCRTestResultStyle {
+export enum TestResultStyle {
+  // PCR result style
   Positive = 'RED',
   Negative = 'GREEN',
   Invalid = 'YELLOW',
+  ReCollectRequired = 'YELLOW',
   Inconclusive = 'BLUE',
-  AnyOther = 'GREY',
+  AnyOther = 'GRAY',
+  // Temperature check style
+  Failed = 'RED',
+  Passed = 'GREEN',
+  // Atestation result style
+  caution = 'YELLOW',
+  stop = 'RED',
+  proceed = 'GREEN',
 }
 
 type PCRResultSpecs = {
@@ -156,6 +167,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   deadlineDate: firestore.Timestamp
   dateOfAppointment: firestore.Timestamp
   testType: TestTypes
+  userId: string
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -194,6 +206,7 @@ export type PCRTestResultEmailDTO = Omit<
   | 'updatedAt'
   | 'deadlineDate'
   | 'dateOfAppointment'
+  | 'userId'
 > &
   AppointmentDBModel
 
@@ -321,8 +334,10 @@ export const pcrTestResultsResponse = (
   details: pcrTestResult.details,
 })
 
-export const resultToStyle = (result: ResultTypes): PCRTestResultStyle => {
-  return PCRTestResultStyle[result] ? PCRTestResultStyle[result] : PCRTestResultStyle.AnyOther
+export const resultToStyle = (
+  result: ResultTypes | PassportStatus | TemperatureStatusesUI,
+): TestResultStyle => {
+  return TestResultStyle[result] ? TestResultStyle[result] : TestResultStyle.AnyOther
 }
 
 export type TestResutsDTO = {
@@ -330,8 +345,8 @@ export type TestResutsDTO = {
   type: TestTypes
   name: string
   testDateTime: string
-  style: PCRTestResultStyle
-  result: ResultTypes
+  style: TestResultStyle
+  result: ResultTypes | PassportStatuses | TemperatureStatusesUI
   detailsAvailable: boolean
 }
 
@@ -369,7 +384,7 @@ export type SinglePcrTestResultUi = {
   equipment: string
   manufacturer: string
   resultSpecs: Spec[]
-  style: PCRTestResultStyle
+  style: TestResultStyle
   testName: string
   doctorId: string
   resultAnalysis: GroupedSpecs[]
@@ -385,39 +400,49 @@ enum LabData {
 export const singlePcrTestResultDTO = (
   pcrTestResult: PCRTestResultDBModel,
   appointment: AppointmentDBModel,
-): SinglePcrTestResultUi => ({
-  email: appointment.email,
-  firstName: appointment.firstName,
-  lastName: appointment.lastName,
-  phone: `${appointment.phone}`,
-  ohipCard: appointment.ohipCard,
-  dateOfBirth: appointment.dateOfBirth,
-  address: appointment.address,
-  addressUnit: appointment.addressUnit,
-  barCode: pcrTestResult.barCode,
-  appointmentStatus: appointment.appointmentStatus,
-  result: pcrTestResult.result,
-  dateTime: formatStringDateRFC822Local(pcrTestResult.dateTime.toDate()),
-  registeredNursePractitioner: appointment.registeredNursePractitioner,
-  physician: requisitionDoctor,
-  locationName: appointment.locationName,
-  swabMethod: appointment.swabMethod,
-  deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
-  labName: LabData.labName,
-  testType: LabData.testType,
-  equipment: LabData.equipment,
-  manufacturer: LabData.manufacturer,
-  resultSpecs: Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
-    label: resultKey,
-    value: resultValue,
-  })),
-  resultAnalysis: groupByChannel(
-    Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
+): SinglePcrTestResultUi => {
+  let resultSpecs = null
+  let resultAnalysis = null
+  if (pcrTestResult.resultSpecs) {
+    resultSpecs = Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
       label: resultKey,
       value: resultValue,
-    })),
-  ),
-  style: resultToStyle(pcrTestResult.result),
-  testName: 'SARS COV-2',
-  doctorId: 'DR1',
-})
+    }))
+  }
+  if (pcrTestResult.resultSpecs) {
+    resultAnalysis = groupByChannel(
+      Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
+        label: resultKey,
+        value: resultValue,
+      })),
+    )
+  }
+  return {
+    email: appointment.email,
+    firstName: appointment.firstName,
+    lastName: appointment.lastName,
+    phone: `${appointment.phone}`,
+    ohipCard: appointment.ohipCard,
+    dateOfBirth: appointment.dateOfBirth,
+    address: appointment.address,
+    addressUnit: appointment.addressUnit,
+    barCode: pcrTestResult.barCode,
+    appointmentStatus: appointment.appointmentStatus,
+    result: pcrTestResult.result,
+    dateTime: formatStringDateRFC822Local(pcrTestResult.dateTime.toDate()),
+    registeredNursePractitioner: appointment.registeredNursePractitioner,
+    physician: requisitionDoctor,
+    locationName: appointment.locationName,
+    swabMethod: appointment.swabMethod,
+    deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
+    labName: LabData.labName,
+    testType: LabData.testType,
+    equipment: LabData.equipment,
+    manufacturer: LabData.manufacturer,
+    resultSpecs: resultSpecs,
+    resultAnalysis: resultAnalysis,
+    style: resultToStyle(pcrTestResult.result),
+    testName: 'SARS COV-2',
+    doctorId: 'DR1',
+  }
+}

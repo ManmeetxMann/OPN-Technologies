@@ -1,5 +1,6 @@
 import {NextFunction, Request, Response, Router} from 'express'
-
+import {fromPairs} from 'lodash'
+//Common
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
@@ -8,8 +9,15 @@ import {BadRequestException} from '../../../../../common/src/exceptions/bad-requ
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
 import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
-import {fromPairs} from 'lodash'
+import {LogError} from '../../../../../common/src/utils/logging-setup'
 
+//Services
+import {AppoinmentService} from '../../../services/appoinment.service'
+import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
+import {TransportRunsService} from '../../../services/transport-runs.service'
+import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
+
+//Model
 import {
   appointmentByBarcodeUiDTOResponse,
   AppointmentByOrganizationRequest,
@@ -17,10 +25,8 @@ import {
   statsUiDTOResponse,
   appointmentUiDTOResponse,
 } from '../../../models/appointment'
-import {AppoinmentService} from '../../../services/appoinment.service'
-import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
-import {TransportRunsService} from '../../../services/transport-runs.service'
 import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
+import {formatDateRFC822Local} from '../../../utils/datetime.helper'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
@@ -28,6 +34,7 @@ class AdminAppointmentController implements IControllerBase {
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
   private transportRunsService = new TransportRunsService()
+  private pcrTestResultsService = new PCRTestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -94,6 +101,21 @@ class AdminAppointmentController implements IControllerBase {
       this.path + '/api/v1/appointments/barcode/regenerate',
       apptLabAuth,
       this.regenerateBarCode,
+    )
+    innerRouter.get(
+      this.path + '/api/v1/appointments/:appointmentId/history',
+      apptLabOrOrgAdminAuth,
+      this.getUserAppointmentHistoryByAppointmentId,
+    )
+    innerRouter.post(
+      this.path + '/api/v1/appointments/copy',
+      apptLabOrOrgAdminAuth,
+      this.copyAppointment,
+    )
+    innerRouter.put(
+      this.path + '/api/v1/appointments/:appointmentId/reschedule',
+      apptLabOrOrgAdminAuth,
+      this.rescheduleAppointment,
     )
 
     this.router.use('/', innerRouter)
@@ -367,6 +389,89 @@ class AdminAppointmentController implements IControllerBase {
       const appointment = await this.appointmentService.regenerateBarCode(appointmentId, userId)
 
       res.json(actionSucceed(appointmentUiDTOResponse(appointment, false)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  copyAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {appointmentIds, dateTime, organizationId} = req.body as {
+        appointmentIds: string[]
+        dateTime: string
+        organizationId?: string
+      }
+      const adminId = getUserId(res.locals.authenticatedUser)
+
+      const appointmentsState: BulkOperationResponse[] = await Promise.all(
+        appointmentIds.map(async (appointmentId) => {
+          return await this.appointmentService.copyAppointment(
+            appointmentId,
+            dateTime,
+            adminId,
+            organizationId,
+          )
+        }),
+      )
+
+      res.json(actionSuccess([...appointmentsState]))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getUserAppointmentHistoryByAppointmentId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {appointmentId} = req.params as {appointmentId: string}
+      const {organizationId} = req.query as {organizationId: string}
+      const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
+      if (organizationId && organizationId !== appointment.organizationId) {
+        LogError(
+          'AdminAppointmentController:getUserAppointmentHistoryByAppointmentId',
+          'BadOrganizationId',
+          {
+            organizationId: appointment.organizationId,
+            appointmentID: appointmentId,
+          },
+        )
+        throw new BadRequestException('Request is not allowed')
+      }
+      const userAppointments = await this.appointmentService.getUserAppointments(appointment.userId)
+      res.json(
+        actionSucceed(
+          userAppointments.map((userAppointment) => {
+            const {id, dateTime, testType} = userAppointment
+            return {id, dateTime: formatDateRFC822Local(dateTime), testType}
+          }),
+        ),
+      )
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  rescheduleAppointment = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const userID = getUserId(res.locals.authenticatedUser)
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const {appointmentId} = req.params as {appointmentId: string}
+      const {organizationId, dateTime} = req.body as {organizationId: string; dateTime: string}
+      const updatedAppointment = await this.appointmentService.rescheduleAppointment({
+        appointmentId,
+        userID,
+        isLabUser,
+        organizationId,
+        dateTime,
+      })
+      res.json(actionSucceed(appointmentUiDTOResponse(updatedAppointment, isLabUser)))
     } catch (error) {
       next(error)
     }

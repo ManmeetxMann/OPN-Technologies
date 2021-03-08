@@ -8,6 +8,10 @@ import {OrganizationModel} from '../repository/organization.repository'
 import {UserActionsRepository} from '../repository/action-items.repository'
 import {ActionItem} from '../models/action-items'
 
+import {PassportStatuses} from '../../../passport/src/models/passport'
+import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
+import {ResultTypes} from '../../../reservation/src/models/appointment'
+
 type HealthPass = {
   expiry: string
   tests: {
@@ -17,6 +21,7 @@ type HealthPass = {
     status: string
     style: string
   }[]
+  status: PassportStatuses
 }
 
 export class HealthpassService {
@@ -58,14 +63,20 @@ export class HealthpassService {
   async getHealthPass(userId: string, orgId: string): Promise<HealthPass> {
     const items = await this.getItems(userId, orgId)
     const tests = []
-    if (!items.latestPassport || isPassed(safeTimestamp(items.latestPassport.expiry))) {
+    const status = items.latestPassport?.status as PassportStatuses
+    const validStatus = [
+      PassportStatuses.Proceed,
+      PassportStatuses.TemperatureCheckRequired,
+    ].includes(status)
+    if (!validStatus || isPassed(safeTimestamp(items.latestPassport.expiry))) {
       return {
         expiry: null,
         tests,
+        status: null,
       }
     }
     const expiry = safeTimestamp(items.latestPassport.expiry).toISOString()
-    if (items.latestAttestation) {
+    if (items.latestAttestation?.status === PassportStatuses.Proceed) {
       tests.push({
         date: safeTimestamp(items.latestAttestation.timestamp).toISOString(),
         type: 'Attestation',
@@ -74,7 +85,7 @@ export class HealthpassService {
         style: 'GREEN',
       })
     }
-    if (items.latestTemperature) {
+    if (items.latestTemperature?.status === TemperatureStatuses.Proceed) {
       tests.push({
         date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
         type: 'Temperature',
@@ -83,15 +94,15 @@ export class HealthpassService {
         style: 'GREEN',
       })
     }
-    if (items.PCRTestResult) {
+    if (items.PCRTestResult?.result === ResultTypes.Negative) {
       tests.push({
-        date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
-        type: 'PCR Test',
+        date: safeTimestamp(items.PCRTestResult.timestamp).toISOString(),
+        type: 'PCR',
         id: items.PCRTestResult.testId,
         status: items.PCRTestResult.result,
         style: 'GREEN',
       })
     }
-    return {tests, expiry}
+    return {tests, expiry, status}
   }
 }

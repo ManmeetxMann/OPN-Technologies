@@ -9,7 +9,11 @@ import {RecommendationService} from '../../services/recommendation-service'
 import {PassportStatus} from '../../../../passport/src/models/passport'
 
 import {TemperatureStatuses} from '../../../../reservation/src/models/temperature'
-import {ResultTypes} from '../../../../reservation/src/models/appointment'
+import {
+  ResultTypes,
+  AppointmentStatus,
+  TestTypes,
+} from '../../../../reservation/src/models/appointment'
 
 class RecommendationController implements IControllerBase {
   public router = express.Router()
@@ -24,10 +28,11 @@ class RecommendationController implements IControllerBase {
     const route = innerRouter().use(
       '/',
       innerRouter()
-        .post('/passport', this.newPassport)
-        .post('/attestation', this.newAttestation)
-        .post('/temperature', this.newTemperature)
-        .post('/pcr-test', this.newPCR),
+        .post('/passport', this.newPassport) // passport-topic
+        .post('/attestation', this.newAttestation) // attestation-topic
+        .post('/temperature', this.newTemperature) // temperature-topic
+        .post('/test-appointment', this.testAppointment) // test-appointment-topic
+        .post('/pcr-test', this.pcrTest), // pcr-test-topic
     )
     this.router.use(root, route)
   }
@@ -95,28 +100,38 @@ class RecommendationController implements IControllerBase {
       next(error)
     }
   }
-  newPCR: Handler = async (req, res, next): Promise<void> => {
+  pcrTest: Handler = async (req, res, next): Promise<void> => {
+    try {
+      const {userId, organizationId, data} = await this.parseMessage(req.body.message)
+      await this.recService.addPCRTestResult(
+        userId,
+        organizationId,
+        data.id as string,
+        data.result as ResultTypes,
+      )
+      res.sendStatus(200)
+    } catch (error) {
+      next(error)
+    }
+  }
+  testAppointment: Handler = async (req, res, next): Promise<void> => {
     try {
       const {userId, organizationId, actionType, data} = await this.parseMessage(req.body.message)
-      const isAppointment = !data.result
+      if (data.testType !== TestTypes.PCR) {
+        // only care about PCR for now
+        res.sendStatus(200)
+        return
+      }
       if (actionType === 'canceled') {
-        await this.recService.deletePCRTest(userId, organizationId)
-      } else if (actionType === 'created' || actionType === 'updated') {
-        if (isAppointment) {
-          await this.recService.addPCRTest(
-            userId,
-            organizationId,
-            data.id as string,
-            data.date as string,
-          )
-        } else {
-          await this.recService.addPCRTestResult(
-            userId,
-            organizationId,
-            data.id as string,
-            data.result as ResultTypes,
-          )
-        }
+        await this.recService.deletePCRAppointment(userId, organizationId)
+      } else {
+        await this.recService.addPCRAppointment(
+          userId,
+          organizationId,
+          data.id as string,
+          data.status as AppointmentStatus,
+          data.date as string,
+        )
       }
       res.sendStatus(200)
     } catch (error) {
