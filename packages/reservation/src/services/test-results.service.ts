@@ -1,11 +1,13 @@
+import {Stream} from 'stream'
+
 import {AppointmentDBModel, TestTypes} from '../models/appointment'
 import {PCRTestResultDBModel} from '../models/pcr-test-results'
 // services
 import {PCRTestResultsService} from './pcr-test-results.service'
 import {RapidAntigenTestResultsService} from './rapid-antigen-test-results.service'
 // templates
-import {PCRResultPDFContent} from '../templates/pcr-test-results'
-import {RapidAntigenPDFContent} from '../templates/rapid-antigen'
+import {PCRResultPDFStream} from '../templates/pcr-test-results'
+import {RapidAntigenPDFStream} from '../templates/rapid-antigen'
 
 export class TestResultsService {
   private pcrTestResultsService = new PCRTestResultsService()
@@ -26,16 +28,16 @@ export class TestResultsService {
   async getTestResultPDF(
     testResult: PCRTestResultDBModel,
     appointment: AppointmentDBModel,
-  ): Promise<string> {
+  ): Promise<Stream> {
     switch (testResult.testType) {
       case TestTypes.PCR:
-        return PCRResultPDFContent(
+        return PCRResultPDFStream(
           {...testResult, ...appointment},
           this.pcrTestResultsService.getPDFType(appointment.id, testResult.result),
         )
 
       case TestTypes.RapidAntigen:
-        return RapidAntigenPDFContent(
+        return RapidAntigenPDFStream(
           {...testResult, ...appointment},
           this.rapidAntigenTestResultsService.getPDFType(appointment.id, testResult.result),
         )

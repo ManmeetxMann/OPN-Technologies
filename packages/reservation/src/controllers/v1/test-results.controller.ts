@@ -86,18 +86,17 @@ class TestResultsController implements IControllerBase {
         })
         throw new ResourceNotFoundException(`${id} does not exist`)
       }
-      let fileBuffer
       if (Boolean(isDownloadable)) {
-        fileBuffer =
-          (await this.testResultsService.getTestResultPDF(pcrTestResult, appointment)) || ''
-      }
+        const pdfStream = await this.testResultsService.getTestResultPDF(pcrTestResult, appointment)
 
-      res.json(
-        actionSuccess(
-          {...singlePcrTestResultDTO(pcrTestResult, appointment), fileBuffer},
-          fileBuffer ? '' : `NotSupported Result ${pcrTestResult.result} for PDF`,
-        ),
-      )
+        res.contentType('application/pdf')
+
+        pdfStream.pipe(res)
+
+        res.status(200)
+      } else {
+        res.json(actionSuccess(singlePcrTestResultDTO(pcrTestResult, appointment)))
+      }
     } catch (error) {
       next(error)
     }
