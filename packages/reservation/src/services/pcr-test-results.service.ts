@@ -1597,4 +1597,21 @@ export class PCRTestResultsService {
 
     return testResult
   }
+
+  getPDFType(appointmentID: string, result: ResultTypes): PCRResultPDFType {
+    switch (result) {
+      case ResultTypes.Negative:
+        return PCRResultPDFType.Negative
+      case ResultTypes.Positive:
+        return PCRResultPDFType.Positive
+      case ResultTypes.PresumptivePositive:
+        return PCRResultPDFType.PresumptivePositive
+
+      default:
+        LogError('PCRTestResultsService: getPDFType', 'UnSupportedPDFResultType', {
+          appointmentID,
+          errorMessage: `NotSupported Result ${result}`,
+        })
+    }
+  }
 }

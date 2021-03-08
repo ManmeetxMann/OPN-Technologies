@@ -2,7 +2,7 @@ import {NextFunction, Request, Response, Router} from 'express'
 
 //Common
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
+import {actionSucceed, actionSuccess} from '../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import {getUserId} from '../../../../common/src/utils/auth'
@@ -12,6 +12,7 @@ import {LogWarning} from '../../../../common/src/utils/logging-setup'
 //Service
 import {AppoinmentService} from '../../services/appoinment.service'
 import {PCRTestResultsService} from '../../services/pcr-test-results.service'
+import {TestResultsService} from '../../services/test-results.service'
 //Models
 import {singlePcrTestResultDTO, SingleTestResultsRequest} from '../../models/pcr-test-results'
 
@@ -20,6 +21,7 @@ class TestResultsController implements IControllerBase {
   public router = Router()
   private appoinmentService = new AppoinmentService()
   private pcrTestResultsService = new PCRTestResultsService()
+  private testResultsService = new TestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -54,6 +56,7 @@ class TestResultsController implements IControllerBase {
     try {
       const {id} = req.params as SingleTestResultsRequest
       const userId = getUserId(res.locals.authenticatedUser)
+      const {isDownloadable} = req.query as {isDownloadable: string}
 
       const pcrTestResult = await this.pcrTestResultsService.getPCRResultsById(id)
 
@@ -63,7 +66,7 @@ class TestResultsController implements IControllerBase {
 
       //TODO
       if (pcrTestResult?.userId !== userId) {
-        //throw new ResourceNotFoundException(`${id} does not exist`)
+        throw new ResourceNotFoundException(`${id} does not exist`)
       }
 
       const appointment = await this.appoinmentService.getAppointmentDBById(
@@ -83,7 +86,18 @@ class TestResultsController implements IControllerBase {
         })
         throw new ResourceNotFoundException(`${id} does not exist`)
       }
-      res.json(actionSucceed(singlePcrTestResultDTO(pcrTestResult, appointment)))
+      let fileBuffer
+      if (Boolean(isDownloadable)) {
+        fileBuffer =
+          (await this.testResultsService.getTestResultPDF(pcrTestResult, appointment)) || ''
+      }
+
+      res.json(
+        actionSuccess(
+          {...singlePcrTestResultDTO(pcrTestResult, appointment), fileBuffer},
+          fileBuffer ? '' : `NotSupported Result ${pcrTestResult.result} for PDF`,
+        ),
+      )
     } catch (error) {
       next(error)
     }

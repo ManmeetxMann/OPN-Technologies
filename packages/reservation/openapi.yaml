@@ -2298,6 +2298,10 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: isDownloadable
+          schema:
+            type: boolean
       responses:
         '200':
           description: Successfully Return
@@ -2305,6 +2309,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestResultDetailResponse'
+
   /reservation/admin/api/v1/test-results/{id}:
     get:
       description: Details for PCR Results for Admin
