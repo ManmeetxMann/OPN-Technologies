@@ -2419,12 +2419,7 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
-          name: appointmentTypeId
-          schema:
-            type: string
-          required: true
-        - in: query
-          name: calendarId
+          name: appointmentId
           schema:
             type: string
           required: true
@@ -2481,12 +2476,7 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
-          name: appointmentTypeId
-          schema:
-            type: string
-          required: true
-        - in: query
-          name: calendarId
+          name: appointmentId
           schema:
             type: string
           required: true

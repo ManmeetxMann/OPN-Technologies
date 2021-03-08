@@ -37,16 +37,11 @@ class AdminAppointmentAvailabilityController implements IControllerBase {
 
   getAvailableTimes = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {calendarId, appointmentTypeId, date} = req.query as {
-        calendarId: string
-        appointmentTypeId: string
+      const {appointmentId, date} = req.query as {
+        appointmentId: string
         date: string
       }
-      const availableSlots = await this.appointmentService.getAvailableTimes(
-        appointmentTypeId,
-        calendarId,
-        date,
-      )
+      const availableSlots = await this.appointmentService.getAvailableTimes(appointmentId, date)
       res.json(actionSucceed(availableSlots))
     } catch (error) {
       next(error)
@@ -55,18 +50,12 @@ class AdminAppointmentAvailabilityController implements IControllerBase {
 
   getAvailableDates = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {year, month, calendarId, appointmentTypeId} = req.query as {
+      const {year, month, appointmentId} = req.query as {
         year: string
         month: string
-        calendarId: string
-        appointmentTypeId: string
+        appointmentId: string
       }
-      const response = await this.appointmentService.getAvailableDates(
-        appointmentTypeId,
-        calendarId,
-        year,
-        month,
-      )
+      const response = await this.appointmentService.getAvailableDates(appointmentId, year, month)
       res.json(actionSucceed(response))
     } catch (error) {
       next(error)
