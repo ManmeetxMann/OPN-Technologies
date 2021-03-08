@@ -403,15 +403,22 @@ class AdminAppointmentController implements IControllerBase {
       }
       const adminId = getUserId(res.locals.authenticatedUser)
 
-      const appointmentsState: BulkOperationResponse[] = await Promise.all(
-        appointmentIds.map(async (appointmentId) => {
-          return await this.appointmentService.copyAppointment(
+      // Run copy operations in sequence
+      const appointmentsState: BulkOperationResponse[] = await appointmentIds.reduce(
+        // wait previous operation, make a copy then reduce into new array
+        async (previousOperations: Promise<BulkOperationResponse[]>, appointmentId) => {
+          const previousResults = await previousOperations
+
+          const currentResult = await this.appointmentService.copyAppointment(
             appointmentId,
             dateTime,
             adminId,
             organizationId,
           )
-        }),
+
+          return [...previousResults, currentResult]
+        },
+        Promise.resolve([]),
       )
 
       res.json(actionSuccess([...appointmentsState]))
