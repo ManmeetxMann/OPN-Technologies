@@ -3035,12 +3035,16 @@ paths:
               properties:
                 name:
                   type: string
+                  minLength: 1
                 address:
                   type: string
+                  minLength: 1
                 acuityUser:
                   type: string
+                  minLength: 1
                 acuityPass:
                   type: string
+                  minLength: 1
               required:
                 - name
                 - address
