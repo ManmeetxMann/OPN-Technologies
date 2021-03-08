@@ -110,7 +110,6 @@ class AdminPCRTestResultController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const adminId = getUserId(res.locals.authenticatedUser)
       const data = req.body as PCRTestResultRequest
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
@@ -125,12 +124,12 @@ class AdminPCRTestResultController implements IControllerBase {
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
-      const reportTracker = await this.pcrTestResultsService.createReportForPCRResults(
-        data,
-        adminId,
-      )
+      // const reportTracker = await this.pcrTestResultsService.createReportForPCRResults(
+      //   data,
+      //   adminId,
+      // )
 
-      res.json(actionSucceed(reportTracker))
+      res.json(actionSucceed('Outdated api'))
     } catch (error) {
       next(error)
     }

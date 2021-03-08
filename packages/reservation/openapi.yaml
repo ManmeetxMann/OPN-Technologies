@@ -474,6 +474,68 @@ components:
             message:
               nullable: true
               type: string
+    TestResultsRequestBulk:
+      type: object
+      additionalProperties: false
+      properties:
+        reportTrackerId:
+          type: string
+        resultDate:
+          type: string
+        results:
+          type: array
+          items:
+            type: object
+            required:
+              - action
+              - autoResult
+              - barCode
+              - resultAnalysis
+            properties:
+              action:
+                type: string
+                default: SendThisResult
+                enum:
+                  - SendThisResult
+                  - DoNothing
+                  - ReRunToday
+                  - ReRunTomorrow
+                  - RequestReCollect
+                  - RecollectAsInvalid
+                  - RecollectAsInconclusive
+                  - MarkAsPositive
+                  - MarkAsPresumptivePositive
+                  - MarkAsNegative
+                  - SendPreliminaryPositive
+              autoResult:
+                type: string
+                enum:
+                  - PresumptivePositive
+                  - Positive
+                  - Negative
+                  - Invalid
+                  - Inconclusive
+              barCode:
+                type: string
+                minLength: 1
+              notify:
+                type: boolean
+                default: false
+              resultAnalysis:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    label:
+                      type: string
+                    value:
+                      type: string
+              comment:
+                type: string
+      required:
+        - results
+        - resultDate
     PCRTestResultsRequestBulk:
       type: object
       additionalProperties: false
@@ -1471,6 +1533,25 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AppointmentResponse200'
+  /reservation/admin/api/v2/test-results-bulk:
+    post:
+      description: Send Multiple PCR Results
+      tags:
+        - V2 Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestResultsRequestBulk'
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PCRTestResultsResponse200'
   /reservation/admin/api/v1/pcr-test-results-bulk:
     post:
       description: Send Multiple PCR Results
@@ -1535,7 +1616,7 @@ paths:
     post:
       description: Send PCR Results
       tags:
-        - PCR Results Management
+        - V2 Test Results Management
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -1733,6 +1814,23 @@ paths:
   /reservation/internal/api/v1/process-pcr-test-result:
     post:
       description: Process PCR Results
+      tags:
+        - Test Results Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessPCRResultsRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v2/process-test-result:
+    post:
+      description: Process Test Results
       tags:
         - Test Results Management
       requestBody:
@@ -1962,22 +2060,16 @@ paths:
                             type: object
                             additionalProperties: false
                             properties:
-                              famEGene:
-                                type: string
-                              famCt:
-                                type: string
-                              calRed61RdRpGene:
-                                type: string
-                              calRed61Ct:
-                                type: string
-                              quasar670NGene:
-                                type: string
-                              quasar670Ct:
-                                type: string
-                              hexIC:
-                                type: string
-                              hexCt:
-                                type: string
+                              resultAnalysis:
+                                type: array
+                                items:
+                                  type: object
+                                  additionalProperties: false
+                                  properties:
+                                    label:
+                                      type: string
+                                    value:
+                                      type: string
                               result:
                                 type: string
                         reason:

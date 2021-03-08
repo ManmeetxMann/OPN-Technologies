@@ -17,6 +17,7 @@ class ProcessPCRResultController implements IControllerBase {
     const innerRouter = Router({mergeParams: true})
     //TODO: Add Task Validate
     innerRouter.post(this.path + '/api/v1/process-pcr-test-result', this.processPCRTestResult)
+    innerRouter.post(this.path + '/api/v2/process-test-result', this.processTestResult)
 
     this.router.use('/', innerRouter)
   }
@@ -25,6 +26,16 @@ class ProcessPCRResultController implements IControllerBase {
     try {
       const {reportTrackerId, resultId} = req.body as ProcessPCRResultRequest
       await this.pcrTestResultsService.processPCRTestResult(reportTrackerId, resultId)
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  processTestResult = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {reportTrackerId, resultId} = req.body as ProcessPCRResultRequest
+      await this.pcrTestResultsService.processTestResult(reportTrackerId, resultId)
       res.json(actionSucceed())
     } catch (error) {
       next(error)

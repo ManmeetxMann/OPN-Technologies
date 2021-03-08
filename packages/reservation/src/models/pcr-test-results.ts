@@ -4,14 +4,14 @@ import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datet
 
 import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
-<<<<<<< HEAD
+import {
+  TestResultHistoryResponseDTO,
+  TestResultRequestData,
+  TestResultsMetaData,
+} from './test-results'
 import {groupByChannel} from '../utils/analysis.helper'
-import {TestResultsMetaData} from './test-results'
-=======
-import {groupByChannel} from '../utils/channel-grouper'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
->>>>>>> 69173aeb515c4e4de5e71a36abe82cc8ee45f063
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -173,14 +173,11 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   deadlineDate: firestore.Timestamp
   dateOfAppointment: firestore.Timestamp
   testType: TestTypes
-<<<<<<< HEAD
   resultMetaData?: TestResultsMetaData
   resultAnalysis?: Spec[]
   templateId: string
   labId: string
-=======
   userId: string
->>>>>>> 69173aeb515c4e4de5e71a36abe82cc8ee45f063
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -240,7 +237,7 @@ export type TestResultsReportingTrackerPCRResultsDBModel = {
   id: string
   adminId: string
   status: ResultReportStatus | ResultTypes
-  data: PCRTestResultRequestData
+  data: TestResultRequestData
   details?: string
 }
 
@@ -250,19 +247,12 @@ export type CreateReportForPCRResultsResponse = {
 
 export const PCRTestResultHistoryResponse = (
   pcrTests: PCRTestResultHistory,
-): PCRTestResultHistoryResponseDTO => ({
+): TestResultHistoryResponseDTO => ({
   id: pcrTests.id,
   barCode: pcrTests.barCode,
   waitingResult: pcrTests.waitingResult,
   results: pcrTests.results.map((result) => ({
-    famEGene: result.resultSpecs.famEGene,
-    famCt: result.resultSpecs.famCt,
-    calRed61RdRpGene: result.resultSpecs.calRed61RdRpGene,
-    calRed61Ct: result.resultSpecs.calRed61Ct,
-    quasar670NGene: result.resultSpecs.quasar670NGene,
-    quasar670Ct: result.resultSpecs.quasar670Ct,
-    hexIC: result.resultSpecs.hexIC,
-    hexCt: result.resultSpecs.hexCt,
+    resultAnalysis: result.resultAnalysis,
     result: result.result,
     barCode: result.barCode,
     reCollectNumber: result.reCollectNumber ? `S${result.reCollectNumber}` : '',

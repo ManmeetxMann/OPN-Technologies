@@ -8,10 +8,10 @@ import {Config} from '../../../../../common/src/utils/config'
 import moment from 'moment'
 import {now} from '../../../../../common/src/utils/times'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {actionSuccess} from '../../../../../common/src/utils/response-wrapper'
+import {actionSucceed, actionSuccess} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
-import {TestResultRequestData} from '../../../models/test-results'
+import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
 import {validateAnalysis} from '../../../utils/analysis.helper'
 
 class AdminTestResultController implements IControllerBase {
@@ -33,6 +33,11 @@ class AdminTestResultController implements IControllerBase {
     ])
 
     innerRouter.post(this.path + '/test-results', sendSingleResultsAuth, this.createPCRResults)
+    innerRouter.post(
+      this.path + '/test-results-bulk',
+      sendSingleResultsAuth,
+      this.createPCRResultsBulk,
+    )
     this.router.use('/', innerRouter)
   }
 
@@ -79,6 +84,34 @@ class AdminTestResultController implements IControllerBase {
       )
       const successMessage = `${status} for ${pcrResultRecorded.barCode}`
       res.json(actionSuccess({id: pcrResultRecorded.id}, successMessage))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  createPCRResultsBulk = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const adminId = getUserId(res.locals.authenticatedUser)
+      const data = req.body as BulkTestResultRequest
+      const timeZone = Config.get('DEFAULT_TIME_ZONE')
+      const fromDate = moment(now())
+        .tz(timeZone)
+        .subtract(30, 'days')
+        .startOf('day')
+        .format('YYYY-MM-DD')
+      const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
+
+      if (!moment(data.resultDate).isBetween(fromDate, toDate, undefined, '[]')) {
+        throw new BadRequestException(
+          `Date does not match the time range (from ${fromDate} - to ${toDate})`,
+        )
+      }
+      const reportTracker = await this.pcrTestResultsService.createReportForTestResults(
+        data,
+        adminId,
+      )
+
+      res.json(actionSucceed(reportTracker))
     } catch (error) {
       next(error)
     }
