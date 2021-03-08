@@ -1,6 +1,8 @@
 import {NextFunction, Request, Response, Router} from 'express'
-import {ClinicPostRequest} from '../../../../../../packages/reservation/src/models/clinic'
-import {ClinicService} from '../../../../../../packages/reservation/src/services/clinic.service'
+
+import {ClinicPostRequest} from '../../../models/clinic'
+import {ClinicService} from '../../../services/clinic.service'
+
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
