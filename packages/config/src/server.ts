@@ -11,7 +11,7 @@ const PORT = Number(process.env.PORT) || 5001
 
 const app = new App({
   port: PORT,
-  validation: false,
+  validation: true,
   corsOptions: '*',
   controllers: [new UserController(), new ContentController()],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
