@@ -1721,6 +1721,10 @@ paths:
               - Invalid
               - Inconclusive
               - Indeterminate
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully Return
