@@ -1629,7 +1629,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StatsResponse200'
-  /reservation/admin/api/v2/test-results:
+  /reservation/admin/api/v1/pcr-test-results:
     post:
       description: Send Test Results
       tags:
