@@ -120,34 +120,14 @@ type PCRResultSpecsForSending = PCRResultSpecs & {
   resultDate: Date
 }
 
-type PCRResultsForHistory = PCRResultSpecs & {
-  barCode: string
-  dateTime: firestore.Timestamp | string
-  reCollectNumber: string
-  result: string
-  runNumber: string
-}
-
-export type PCRTestResultRequestData = PCRResultSpecsForSending & {
-  // @TODO cleanup this model, and referenced models also
-  barCode: string
-  sendUpdatedResults?: boolean
-}
-
 export type PCRListQueryRequest = {
   barcode: string[]
-}
-
-export type PCRTestResultRequest = {
-  reportTrackerId?: string
-  results: PCRTestResultRequestData[]
-  resultDate: Date
 }
 
 export type PCRTestResultData = {
   barCode: string
   adminId: string
-  resultSpecs?: PCRResultSpecsForSending // @TODO Cleanup this
+  resultSpecs?: PCRResultSpecsForSending // @TODO Cleanup this after migration
   userId?: string
 }
 
@@ -192,17 +172,6 @@ export type PCRTestResultHistory = {
   reCollectNumber: number
   runNumber: number
   dateTime: firestore.Timestamp
-}
-
-export type PCRTestResultHistoryResponseDTO = {
-  id: string
-  barCode: string
-  waitingResult: boolean
-  results: PCRResultsForHistory[]
-  reason?: AppointmentReasons
-  reCollectNumber: string
-  runNumber: string
-  dateTime: string
 }
 
 export type PCRTestResultEmailDTO = Omit<

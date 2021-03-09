@@ -1846,23 +1846,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-  /reservation/internal/api/v2/process-test-result:
-    post:
-      description: Process Test Results
-      tags:
-        - Test Results Management
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProcessPCRResultsRequest'
-      responses:
-        '200':
-          description: Successfully added
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Response'
   /reservation/admin/api/v2/appointments/add-labels:
     put:
       description: Add SameDay/NextDay Labesl to Appointments

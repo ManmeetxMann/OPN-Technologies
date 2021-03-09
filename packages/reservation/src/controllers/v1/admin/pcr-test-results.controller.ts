@@ -22,7 +22,6 @@ import {
   PCRListQueryRequest,
   PCRTestResultHistoryResponse,
   ListPCRResultRequest,
-  PCRTestResultRequest,
   PcrTestResultsListRequest,
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
@@ -31,7 +30,7 @@ import {
 } from '../../../models/pcr-test-results'
 import {statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
-import { BulkTestResultRequest, TestResultRequestData } from "../../../models/test-results";
+import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
 import {validateAnalysis} from '../../../utils/analysis.helper'
 
 class AdminPCRTestResultController implements IControllerBase {
