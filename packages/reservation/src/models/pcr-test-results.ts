@@ -129,7 +129,7 @@ type PCRResultsForHistory = PCRResultSpecs & {
 }
 
 export type PCRTestResultRequestData = PCRResultSpecsForSending & {
-  // WORKLING ONTHIS
+  // @TODO cleanup this model, and referenced models also
   barCode: string
   sendUpdatedResults?: boolean
 }
@@ -147,7 +147,7 @@ export type PCRTestResultRequest = {
 export type PCRTestResultData = {
   barCode: string
   adminId: string
-  resultSpecs?: PCRResultSpecsForSending // CHECK THIS BEFORE MERGING, if this comment exists then not tested
+  resultSpecs?: PCRResultSpecsForSending // @TODO Cleanup this
   userId?: string
 }
 
@@ -291,6 +291,7 @@ export type PcrTestResultsListRequest = {
   result?: ResultTypes
   date?: string
   testType?: TestTypes
+  searchQuery?: string
 }
 
 export type PCRTestResultListDTO = {
@@ -419,6 +420,8 @@ export const singlePcrTestResultDTO = (
         value: resultValue,
       })),
     )
+  } else if (pcrTestResult.resultAnalysis) {
+    resultAnalysis = pcrTestResult.resultAnalysis
   }
   return {
     email: appointment.email,
