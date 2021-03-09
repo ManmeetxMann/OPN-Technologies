@@ -31,7 +31,7 @@ import {
 } from '../../../models/pcr-test-results'
 import {statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
-import {TestResultRequestData} from '../../../models/test-results'
+import { BulkTestResultRequest, TestResultRequestData } from "../../../models/test-results";
 import {validateAnalysis} from '../../../utils/analysis.helper'
 
 class AdminPCRTestResultController implements IControllerBase {
@@ -111,7 +111,8 @@ class AdminPCRTestResultController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const data = req.body as PCRTestResultRequest
+      const adminId = getUserId(res.locals.authenticatedUser)
+      const data = req.body as BulkTestResultRequest
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
         .tz(timeZone)
@@ -125,12 +126,12 @@ class AdminPCRTestResultController implements IControllerBase {
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
-      // const reportTracker = await this.pcrTestResultsService.createReportForPCRResults(
-      //   data,
-      //   adminId,
-      // )
+      const reportTracker = await this.pcrTestResultsService.createReportForTestResults(
+        data,
+        adminId,
+      )
 
-      res.json(actionSucceed('Outdated api'))
+      res.json(actionSucceed(reportTracker))
     } catch (error) {
       next(error)
     }
