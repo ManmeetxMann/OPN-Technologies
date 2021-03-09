@@ -163,7 +163,7 @@ export class PCRTestResultsService {
     await this.pcrTestResultsRepository.delete(id)
   }
 
-  async processTestResult(reportTrackerId: string, resultId: string): Promise<void> {
+  async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
     const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
       this.datastore,
       reportTrackerId,
@@ -193,10 +193,8 @@ export class PCRTestResultsService {
       'status',
       ResultReportStatus.Processing,
     )
-    console.log(1)
     try {
-      console.log(2)
-      const pcrTestResult = await this.handleResultSaveAndSend(
+      const pcrTestResult = await this.handlePCRResultSaveAndSend(
         {
           notify: pcrResults.data.notify,
           resultDate: pcrResults.data.resultDate,
@@ -221,76 +219,11 @@ export class PCRTestResultsService {
         resultId,
       })
     } catch (error) {
-      console.log(3)
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
         status: ResultReportStatus.Failed,
         details: error.toString(),
       })
       LogWarning('processTestResult', 'handlePCRResultSaveAndSendFailed', {
-        reportTrackerId,
-        resultId,
-        error: error.toString(),
-        barCode: pcrResults.data.barCode,
-      })
-    }
-  }
-
-  async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
-    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
-      this.datastore,
-      reportTrackerId,
-    )
-
-    const pcrResults = await testResultsReportingTrackerPCRResult.get(resultId)
-    if (!pcrResults) {
-      LogError('processPCRTestResult', 'InvalidResultIdInReport', {
-        reportTrackerId,
-        testResultId: resultId,
-      })
-      return
-    }
-
-    if (pcrResults.status !== ResultReportStatus.RequestReceived) {
-      LogError('processPCRTestResult', 'AlreadyProcessed', {
-        reportTrackerId,
-        testResultId: resultId,
-        appointmentStatus: pcrResults.status,
-        appointmentBarCode: pcrResults.data.barCode,
-      })
-      return
-    }
-
-    await testResultsReportingTrackerPCRResult.updateProperty(
-      resultId,
-      'status',
-      ResultReportStatus.Processing,
-    )
-    try {
-      // @TODO After migration this will not work, please remove this method entirely
-      // const pcrTestResult = await this.handlePCRResultSaveAndSend(
-      //   {
-      //     barCode: pcrResults.data.barCode,
-      //     resultSpecs: pcrResults.data,
-      //     adminId: pcrResults.adminId,
-      //   },
-      //   false,
-      //   false,
-      // )
-
-      // await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
-      //   status: await this.getReportStatus(pcrResults.data.action, pcrTestResult.result),
-      //   details: 'Action Completed',
-      // })
-      LogInfo('processPCRTestResult', 'SuccessfullyProcessed', {
-        reportTrackerId,
-        resultId,
-      })
-    } catch (error) {
-      await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
-        status: ResultReportStatus.Failed,
-        details: error.toString(),
-      })
-      LogWarning('processPCRTestResult', 'handlePCRResultSaveAndSendFailed', {
         reportTrackerId,
         resultId,
         error: error.toString(),
@@ -673,7 +606,7 @@ export class PCRTestResultsService {
           reportTrackerId: reportTrackerId,
           resultId: result.id,
         },
-        '/reservation/internal/api/v2/process-test-result',
+        '/reservation/internal/api/v1/process-pcr-test-result',
       )
     })
 
