@@ -1,5 +1,5 @@
 const frisby = require('frisby');
-const helpersCommon = require('helpersCommon');
+const helpersCommon = require('helpers_common');
 
 // Do setup first
 frisby.globalSetup({
