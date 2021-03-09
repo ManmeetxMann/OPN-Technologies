@@ -1,6 +1,5 @@
 const frisby = require('frisby');
 const helpersCommon = require('helpers_common');
-const testResultsData = require('reservation/test_results');
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
 
