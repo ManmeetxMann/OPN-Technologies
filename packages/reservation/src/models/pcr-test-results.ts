@@ -4,7 +4,8 @@ import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datet
 
 import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
-import {groupByChannel} from '../utils/channel-grouper'
+import {groupByChannel} from '../utils/analysis.helper'
+import {TestResultsMetaData} from './test-results'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
 
@@ -124,6 +125,7 @@ type PCRResultsForHistory = PCRResultSpecs & {
 }
 
 export type PCRTestResultRequestData = PCRResultSpecsForSending & {
+  // @TODO cleanup this model, and referenced models also
   barCode: string
   sendUpdatedResults?: boolean
 }
@@ -141,7 +143,7 @@ export type PCRTestResultRequest = {
 export type PCRTestResultData = {
   barCode: string
   adminId: string
-  resultSpecs?: PCRResultSpecsForSending
+  resultSpecs?: PCRResultSpecsForSending // @TODO Cleanup this
   userId?: string
 }
 
@@ -167,6 +169,10 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   deadlineDate: firestore.Timestamp
   dateOfAppointment: firestore.Timestamp
   testType: TestTypes
+  resultMetaData?: TestResultsMetaData
+  resultAnalysis?: Spec[]
+  templateId: string
+  labId: string
   userId: string
 }
 
@@ -416,6 +422,8 @@ export const singlePcrTestResultDTO = (
         value: resultValue,
       })),
     )
+  } else if (pcrTestResult.resultAnalysis) {
+    resultAnalysis = pcrTestResult.resultAnalysis
   }
   return {
     email: appointment.email,

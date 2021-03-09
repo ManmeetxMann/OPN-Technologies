@@ -92,6 +92,8 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
           ? Config.get('TEST_KIT_BATCH_ID')
           : null,
       userId: data.appointment.userId,
+      templateId: 'HARDCODED', // @TODO Need need to refactor this to receive from props
+      labId: 'HARDCODED',
     }
     return await this.save(pcrResultDataForDb)
   }

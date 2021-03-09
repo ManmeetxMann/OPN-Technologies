@@ -247,38 +247,10 @@ const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
               fillColor: getFillColorForResultsCell(params.result),
               color: '#FFFFFF',
             },
-            {
-              text: params.resultSpecs.famEGene,
+            ...params.resultAnalysis.map((analysis) => ({
+              text: analysis.value,
               alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.famCt,
-              alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.calRed61RdRpGene,
-              alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.calRed61Ct,
-              alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.quasar670NGene,
-              alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.quasar670Ct,
-              alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.hexIC,
-              alignment: 'center',
-            },
-            {
-              text: params.resultSpecs.hexCt,
-              alignment: 'center',
-            },
+            })),
           ],
         ],
       },
