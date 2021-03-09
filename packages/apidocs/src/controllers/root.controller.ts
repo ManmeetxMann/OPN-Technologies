@@ -3,9 +3,6 @@ import * as express from 'express'
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {SwaggerServiceFactory, SwaggerService} from '../service/swagger-service'
 
-// import swaggerJSDoc from "swagger-jsdoc"
-// import swaggerUi from "swagger-ui-express"
-
 class RootController implements IControllerBase {
   public path = '/'
   public router = express.Router()
@@ -31,8 +28,8 @@ class RootController implements IControllerBase {
               description: 'Development Server',
             },
             {
-              url: 'https://config-staging-dot-opn-platform-dev.nn.r.appspot.com',
-              description: 'Staging Server',
+              url: 'https://config-dot-opn-platform-dev.nn.r.appspot.com',
+              description: 'Dev Server',
             },
             {
               url: 'https://config-dot-opn-platform-preprod.nn.r.appspot.com',
@@ -58,8 +55,8 @@ class RootController implements IControllerBase {
               description: 'Development Server',
             },
             {
-              url: 'https://registry-staging-dot-opn-platform-dev.nn.r.appspot.com',
-              description: 'Staging Server',
+              url: 'https://registry-dot-opn-platform-dev.nn.r.appspot.com',
+              description: 'Dev Server',
             },
             {
               url: 'https://registry-dot-opn-platform-preprod.nn.r.appspot.com',
@@ -85,8 +82,8 @@ class RootController implements IControllerBase {
               description: 'Development Server',
             },
             {
-              url: 'https://enterprise-staging-dot-opn-platform-dev.nn.r.appspot.com',
-              description: 'Staging Server',
+              url: 'https://enterprise-dot-opn-platform-dev.nn.r.appspot.com',
+              description: 'Dev Server',
             },
             {
               url: 'https://enterprise-dot-opn-platform-preprod.nn.r.appspot.com',
@@ -112,8 +109,8 @@ class RootController implements IControllerBase {
               description: 'Development Server',
             },
             {
-              url: 'https://passport-staging-dot-opn-platform-dev.nn.r.appspot.com',
-              description: 'Staging Server',
+              url: 'https://passport-dot-opn-platform-dev.nn.r.appspot.com',
+              description: 'Dev Server',
             },
             {
               url: 'https://passport-dot-opn-platform-preprod.nn.r.appspot.com',
@@ -139,8 +136,12 @@ class RootController implements IControllerBase {
               description: 'Development Server',
             },
             {
-              url: 'https://reservation-staging-dot-opn-platform-dev.nn.r.appspot.com',
-              description: 'Staging Server',
+              url: 'https://reservation-dot-opn-platform-dev.nn.r.appspot.com',
+              description: 'Dev Server',
+            },
+            {
+              url: 'https://reservation-dot-opn-platform-preprod.nn.r.appspot.com',
+              description: 'Preprod Server',
             },
             {
               url: 'https://reservation.services.ca.stayopn.net',
@@ -162,8 +163,12 @@ class RootController implements IControllerBase {
               description: 'Development Server',
             },
             {
-              url: 'https://lookup-staging-dot-opn-platform-dev.nn.r.appspot.com',
-              description: 'Staging Server',
+              url: 'https://lookup-dot-opn-platform-dev.nn.r.appspot.com',
+              description: 'Dev Server',
+            },
+            {
+              url: 'https://lookup-dot-opn-platform-preprod.nn.r.appspot.com',
+              description: 'Dev Server',
             },
             {
               url: 'https://lookup.services.ca.stayopn.net',
@@ -185,8 +190,12 @@ class RootController implements IControllerBase {
               description: 'Development Server',
             },
             {
-              url: 'https://access-staging-dot-opn-platform-dev.nn.r.appspot.com',
-              description: 'Staging Server',
+              url: 'https://access-dot-opn-platform-dev.nn.r.appspot.com',
+              description: 'Dev Server',
+            },
+            {
+              url: 'https://access-dot-opn-platform-preprod.nn.r.appspot.com',
+              description: 'Preprod Server',
             },
             {
               url: 'https://access.services.ca.stayopn.net',

@@ -108,6 +108,8 @@ export const authorizationMiddleware = (
     (req.query.organizationId as string) ??
     (req.params?.organizationId as string) ??
     (req.body?.organizationId as string) ??
+    // headers are coerced to lowercase
+    (req.headers?.organizationid as string) ??
     null
 
   const admin = connectedUser.admin as AdminProfile
@@ -259,6 +261,9 @@ const isAllowed = (
   const seekClinicRapidResultSenderAdmin = listOfRequiredPermissions.includes(
     RequiredUserPermission.ClinicRapidResultSenderAdmin,
   )
+  const seekTestKitBatchAdmin = listOfRequiredPermissions.includes(
+    RequiredUserPermission.TestKitBatchAdmin,
+  )
 
   if (
     seekLabOrOrgAppointment &&
@@ -330,6 +335,10 @@ const isAllowed = (
   }
   if (seekOPNAdmin && !admin?.isOpnSuperAdmin) {
     console.warn(`Admin user ${userId} needs isOpnSuperAdmin`)
+    return false
+  }
+  if (seekTestKitBatchAdmin && !admin?.isTestKitBatchAdmin) {
+    console.warn(`Admin user ${userId} needs isTestKitBatchAdmin`)
     return false
   }
   return true
