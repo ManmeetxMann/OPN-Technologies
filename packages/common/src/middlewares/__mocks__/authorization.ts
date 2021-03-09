@@ -14,6 +14,7 @@ export const authorizationMiddleware = () => async (
     email: 'unitest1@stayopn.com',
     admin: {
       isLabUser: true,
+      isTestKitBatchAdmin: false,
     },
     authUserId: 'TEST',
     delegates: [],

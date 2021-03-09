@@ -71,10 +71,7 @@ export class RapidAntigenTestResultsService {
     )
 
     //Send Push Notification
-    const actionsWithNotifyEnabled = [
-      RapidAntigenResultTypes.SendInvalid,
-      RapidAntigenResultTypes.SendPositive,
-    ]
+    const actionsWithNotifyEnabled = [RapidAntigenResultTypes.SendPositive]
     if (notify && actionsWithNotifyEnabled.includes(action)) {
       this.pubSub.publish({
         appointmentID: appointmentId,
@@ -173,11 +170,9 @@ export class RapidAntigenTestResultsService {
       return this.saveResult(action, notify, reqeustedBy, newResult)
     } else {
       //LOG Critical and Fail
-      LogError(
-        'RapidAntigenTestResultsService:processAppointment',
-        'Failed:NoWaitingResults',
-        appointment,
-      )
+      LogError('RapidAntigenTestResultsService:processAppointment', 'Failed:NoWaitingResults', {
+        appointmentID: appointment.id,
+      })
       return Promise.resolve({
         id: appointmentID,
         barCode: appointment.barCode,
@@ -200,7 +195,7 @@ export class RapidAntigenTestResultsService {
   }
 
   async sendTestResultEmail(data: string): Promise<void> {
-    const {appointmentID, testResultID} = (await this.pubSub.getPublishedData(data)) as {
+    const {appointmentID, testResultID} = (await OPNPubSub.getPublishedData(data)) as {
       appointmentID: string
       testResultID: string
     }
@@ -292,9 +287,9 @@ export class RapidAntigenTestResultsService {
     } else if (result === ResultTypes.Positive) {
       return RapidAlergenResultPDFType.Positive
     } else {
-      LogError('RapidAntigenTestResultsService: getPDFType', 'Bad Result Type', {
+      LogError('RapidAntigenTestResultsService: getPDFType', 'UnSupportedPDFResultType', {
         appointmentID,
-        result: result,
+        errorMessage: `NotSupported Result ${result}`,
       })
     }
   }

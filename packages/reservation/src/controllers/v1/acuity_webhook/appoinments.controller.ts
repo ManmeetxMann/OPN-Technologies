@@ -5,6 +5,8 @@ import {NextFunction, Request, Response, Router} from 'express'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {LogError, LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
+import {Config} from '../../../../../common/src/utils/config'
 //Services
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
@@ -17,6 +19,7 @@ import {
   AppointmentAcuityResponse,
   ResultTypes,
   AppointmentDBModel,
+  TestTypes,
 } from '../../../models/appointment'
 //UTILS
 import {getFirestoreTimeStampDate} from '../../../utils/datetime.helper'
@@ -41,20 +44,26 @@ class AppointmentWebhookController implements IControllerBase {
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
+    const {
+      id,
+      action,
+      calendarID,
+      appointmentTypeID,
+      returnData,
+    } = req.body as ScheduleWebhookRequest
     try {
-      const {
-        id,
-        action,
-        calendarID,
-        appointmentTypeID,
-        returnData,
-      } = req.body as ScheduleWebhookRequest
       LogInfo('AppointmentWebhookController:syncAppointmentFromAcuityToDB', 'SyncRequested', {
         acuityID: id,
         calendarID,
         appointmentTypeID,
         action,
       })
+
+      //If there is delay in Acuity Processing then this can will protect in making multiple requests
+      const isSyncInProgress = await this.appoinmentService.isSyncingAlreadyInProgress(id)
+      if (isSyncInProgress) {
+        throw new BadRequestException(`Sync is already in progress`)
+      }
 
       let acuityAppointment: AppointmentAcuityResponse = null
       try {
@@ -107,40 +116,44 @@ class AppointmentWebhookController implements IControllerBase {
       } else {
         this.handleCreateAppointment(acuityAppointment, dataForUpdate)
       }
-
+      await this.appoinmentService.removeSyncInProgressForAcuity(acuityAppointment.id)
       res.json(actionSucceed(''))
     } catch (error) {
+      //await this.appoinmentService.removeSyncInProgressForAcuity(id)
       LogError(
         `AppointmentWebhookController:syncAppointmentFromAcuityToDB`,
         'FailedToProcessRequest',
         {
-          error: error.toString(),
+          errorMessage: error.toString(),
         },
       )
       next(error)
     }
   }
 
-  handleCreateAppointment = async (
+  private handleCreateAppointment = async (
     acuityAppointment: AppointmentAcuityResponse,
     dataForUpdate: AcuityUpdateDTO,
   ): Promise<void> => {
     try {
       const {barCodeNumber, organizationId} = dataForUpdate
 
-      const savedAppointment = await this.appoinmentService.createAppointment(acuityAppointment, {
-        appointmentStatus: AppointmentStatus.Pending,
-        barCodeNumber,
-        latestResult: ResultTypes.Pending,
-        organizationId,
-      })
+      const savedAppointment = await this.appoinmentService.createAppointmentFromAcuity(
+        acuityAppointment,
+        {
+          appointmentStatus: AppointmentStatus.Pending,
+          barCodeNumber,
+          latestResult: ResultTypes.Pending,
+          organizationId,
+        },
+      )
       LogInfo('CreateAppointmentFromWebhook', 'SuccessCreateAppointment', {
         acuityID: acuityAppointment.id,
         appointmentID: savedAppointment.id,
       })
 
       if (savedAppointment) {
-        const pcrTestResult = await this.pcrTestResultsService.createNewTestResult(savedAppointment)
+        const pcrTestResult = await this.pcrTestResultsService.createTestResult(savedAppointment)
         LogInfo('CreateAppointmentFromWebhook', 'SuccessCreatePCRResults', {
           acuityID: acuityAppointment.id,
           appointmentID: savedAppointment.id,
@@ -150,12 +163,18 @@ class AppointmentWebhookController implements IControllerBase {
     } catch (e) {
       LogError('CreateAppointmentFromWebhook', 'FailedToCreateAppointment', {
         acuityID: acuityAppointment.id,
-        error: e.toString(),
+        errorMessage: e.toString(),
       })
     }
   }
 
-  handleUpdateAppointment = async (
+  private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
+    return appointmentTypeID === Config.getInt('ACUITY_APPOINTMENT_TYPE_ID')
+      ? TestTypes.RapidAntigen
+      : TestTypes.PCR
+  }
+
+  private handleUpdateAppointment = async (
     acuityAppointment: AppointmentAcuityResponse,
     dataForUpdate: AcuityUpdateDTO,
     appointmentFromDb: AppointmentDBModel,
@@ -221,7 +240,8 @@ class AppointmentWebhookController implements IControllerBase {
           //result: ResultTypes.Pending,
           //runNumber: 1 ,//Start the Run
           //waitingResult: true,
-          //testType: 'PCR'//Assume AppointType not updating
+          testType: await this.getTestType(acuityAppointment.appointmentTypeID),
+          userId: updatedAppointment.userId,
         }
 
         await this.pcrTestResultsService.updateTestResults(pcrTestResult.id, pcrResultDataForDb)
@@ -240,7 +260,7 @@ class AppointmentWebhookController implements IControllerBase {
       } else {
         LogError('UpdateAppointmentFromWebhook', 'FailedToUpdateAppointment', {
           acuityID: acuityAppointment.id,
-          error: e.toString(),
+          errorMessage: e.toString(),
         })
       }
     }

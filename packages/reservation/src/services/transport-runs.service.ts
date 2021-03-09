@@ -8,15 +8,19 @@ import {
   getDayFromDatetime,
   getMonthFromDatetime,
 } from '../utils/datetime.helper'
+import {LabService} from './lab.service'
+import {fromPairs} from 'lodash'
 
 export class TransportRunsService {
   private transportRunsRepository = new TransportRunsRepository(new DataStore())
   private identifier = new IdentifiersModel(new DataStore())
+  private labService = new LabService()
 
   create(
     transportDateTime: Date,
     driverName: string,
     label: string,
+    labId: string,
   ): Promise<TransportRunsIdentifier> {
     const transportDate = getDateFromDatetime(transportDateTime)
     const transportDay = getDayFromDatetime(transportDateTime)
@@ -31,14 +35,33 @@ export class TransportRunsService {
           transportDate,
           driverName,
           label,
+          labId,
         })
       })
       .then((transportRun: TransportRunsDbModel) => {
         return {id: transportRun.id, transportRunId: transportRun.transportRunId}
       })
   }
-  getByDate(transportDate: string): Promise<TransportRunsDbModel[]> {
-    return this.transportRunsRepository.findWhereEqual('transportDate', transportDate)
+  async getByDate(transportDate: string): Promise<TransportRunsDbModel[]> {
+    const transports = await this.transportRunsRepository.findWhereEqual(
+      'transportDate',
+      transportDate,
+    )
+
+    const labs = fromPairs(
+      (
+        await this.labService.getAllByIds(
+          transports
+            .map((transport: TransportRunsDbModel) => transport.labId)
+            .filter((labId) => !!labId),
+        )
+      ).map((lab) => [lab.id, lab.name]),
+    )
+
+    return transports.map((transport) => ({
+      ...transport,
+      labName: labs[transport.labId],
+    }))
   }
   getByTransportRunId(transportRunId: string): Promise<TransportRunsDbModel[]> {
     return this.transportRunsRepository.findWhereEqual('transportRunId', transportRunId)
