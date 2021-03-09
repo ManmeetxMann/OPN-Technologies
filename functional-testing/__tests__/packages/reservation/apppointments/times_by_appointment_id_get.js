@@ -17,7 +17,8 @@ const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 describe('get:availability dates by appointment', () => {
   it('should get availability dates successfully by appointment id?', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/admin/api/v1/availability/times-by-appointment-id?appointmentId=HRKR22YzOwMKkrD3SP3L&date=2021-03-10`;
+      const url = `${reservationServiceUrl}/reservation/admin/api/v1/availability/times-by-appointment-id`;
+      url +=`?appointmentId=${appointmentId}&date=2021-03-10`;
       return frisby
           .setup({
             request: {
@@ -33,5 +34,4 @@ describe('get:availability dates by appointment', () => {
           .inspectBody();
     });
   });
-
 });
