@@ -59,7 +59,7 @@ class AdminPCRTestResultController implements IControllerBase {
     const confirmResultsAuth = authorizationMiddleware([RequiredUserPermission.LabConfirmResults])
 
     innerRouter.post(
-      this.path + '/pcr-test-results-bulk',
+      this.path + '/test-results-bulk',
       sendBulkResultsAuth,
       this.createReportForPCRResults,
     )
