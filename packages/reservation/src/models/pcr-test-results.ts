@@ -4,8 +4,12 @@ import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datet
 
 import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
+import {
+  TestResultHistoryResponseDTO,
+  TestResultRequestData,
+  TestResultsMetaData,
+} from './test-results'
 import {groupByChannel} from '../utils/analysis.helper'
-import {TestResultsMetaData} from './test-results'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
 
@@ -116,34 +120,14 @@ type PCRResultSpecsForSending = PCRResultSpecs & {
   resultDate: Date
 }
 
-type PCRResultsForHistory = PCRResultSpecs & {
-  barCode: string
-  dateTime: firestore.Timestamp | string
-  reCollectNumber: string
-  result: string
-  runNumber: string
-}
-
-export type PCRTestResultRequestData = PCRResultSpecsForSending & {
-  // @TODO cleanup this model, and referenced models also
-  barCode: string
-  sendUpdatedResults?: boolean
-}
-
 export type PCRListQueryRequest = {
   barcode: string[]
-}
-
-export type PCRTestResultRequest = {
-  reportTrackerId?: string
-  results: PCRTestResultRequestData[]
-  resultDate: Date
 }
 
 export type PCRTestResultData = {
   barCode: string
   adminId: string
-  resultSpecs?: PCRResultSpecsForSending // @TODO Cleanup this
+  resultSpecs?: PCRResultSpecsForSending // @TODO Cleanup this after migration
   userId?: string
 }
 
@@ -190,17 +174,6 @@ export type PCRTestResultHistory = {
   dateTime: firestore.Timestamp
 }
 
-export type PCRTestResultHistoryResponseDTO = {
-  id: string
-  barCode: string
-  waitingResult: boolean
-  results: PCRResultsForHistory[]
-  reason?: AppointmentReasons
-  reCollectNumber: string
-  runNumber: string
-  dateTime: string
-}
-
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,
   | 'id'
@@ -233,7 +206,7 @@ export type TestResultsReportingTrackerPCRResultsDBModel = {
   id: string
   adminId: string
   status: ResultReportStatus | ResultTypes
-  data: PCRTestResultRequestData
+  data: TestResultRequestData
   details?: string
 }
 
@@ -243,19 +216,12 @@ export type CreateReportForPCRResultsResponse = {
 
 export const PCRTestResultHistoryResponse = (
   pcrTests: PCRTestResultHistory,
-): PCRTestResultHistoryResponseDTO => ({
+): TestResultHistoryResponseDTO => ({
   id: pcrTests.id,
   barCode: pcrTests.barCode,
   waitingResult: pcrTests.waitingResult,
   results: pcrTests.results.map((result) => ({
-    famEGene: result.resultSpecs.famEGene,
-    famCt: result.resultSpecs.famCt,
-    calRed61RdRpGene: result.resultSpecs.calRed61RdRpGene,
-    calRed61Ct: result.resultSpecs.calRed61Ct,
-    quasar670NGene: result.resultSpecs.quasar670NGene,
-    quasar670Ct: result.resultSpecs.quasar670Ct,
-    hexIC: result.resultSpecs.hexIC,
-    hexCt: result.resultSpecs.hexCt,
+    resultAnalysis: result.resultAnalysis,
     result: result.result,
     barCode: result.barCode,
     reCollectNumber: result.reCollectNumber ? `S${result.reCollectNumber}` : '',

@@ -22,7 +22,6 @@ import {
   PCRListQueryRequest,
   PCRTestResultHistoryResponse,
   ListPCRResultRequest,
-  PCRTestResultRequest,
   PcrTestResultsListRequest,
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
@@ -31,7 +30,7 @@ import {
 } from '../../../models/pcr-test-results'
 import {statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
-import {TestResultRequestData} from '../../../models/test-results'
+import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
 import {validateAnalysis} from '../../../utils/analysis.helper'
 
 class AdminPCRTestResultController implements IControllerBase {
@@ -59,7 +58,7 @@ class AdminPCRTestResultController implements IControllerBase {
     const confirmResultsAuth = authorizationMiddleware([RequiredUserPermission.LabConfirmResults])
 
     innerRouter.post(
-      this.path + '/pcr-test-results-bulk',
+      this.path + '/test-results-bulk',
       sendBulkResultsAuth,
       this.createReportForPCRResults,
     )
@@ -112,7 +111,7 @@ class AdminPCRTestResultController implements IControllerBase {
   ): Promise<void> => {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
-      const data = req.body as PCRTestResultRequest
+      const data = req.body as BulkTestResultRequest
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
         .tz(timeZone)
@@ -126,7 +125,7 @@ class AdminPCRTestResultController implements IControllerBase {
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
-      const reportTracker = await this.pcrTestResultsService.createReportForPCRResults(
+      const reportTracker = await this.pcrTestResultsService.createReportForTestResults(
         data,
         adminId,
       )

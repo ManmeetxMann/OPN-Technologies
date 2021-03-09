@@ -517,7 +517,7 @@ components:
             message:
               nullable: true
               type: string
-    PCRTestResultsRequestBulk:
+    TestResultsRequestBulk:
       type: object
       additionalProperties: false
       properties:
@@ -533,14 +533,7 @@ components:
               - action
               - autoResult
               - barCode
-              - calRed61Ct
-              - calRed61RdRpGene
-              - famCt
-              - famEGene
-              - hexCt
-              - hexIC
-              - quasar670Ct
-              - quasar670NGene
+              - resultAnalysis
             properties:
               action:
                 type: string
@@ -568,33 +561,19 @@ components:
               barCode:
                 type: string
                 minLength: 1
-              calRed61RdRpGene:
-                type: string
-                minLength: 1
-              calRed61Ct:
-                type: string
-                minLength: 1
-              famEGene:
-                type: string
-                minLength: 1
-              famCt:
-                type: string
-                minLength: 1
-              hexIC:
-                type: string
-                minLength: 1
-              hexCt:
-                type: string
-                minLength: 1
               notify:
                 type: boolean
                 default: false
-              quasar670NGene:
-                type: string
-                minLength: 1
-              quasar670Ct:
-                type: string
-                minLength: 1
+              resultAnalysis:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    label:
+                      type: string
+                    value:
+                      type: string
               comment:
                 type: string
       required:
@@ -1582,7 +1561,26 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AppointmentResponse200'
-  /reservation/admin/api/v1/pcr-test-results-bulk:
+  /reservation/admin/api/v2/test-results-bulk:
+    post:
+      description: Send Multiple PCR Results
+      tags:
+        - V2 Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestResultsRequestBulk'
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PCRTestResultsResponse200'
+  /reservation/admin/api/v1/test-results-bulk:
     post:
       description: Send Multiple PCR Results
       tags:
@@ -1593,7 +1591,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PCRTestResultsRequestBulk'
+              $ref: '#/components/schemas/TestResultsRequestBulk'
       responses:
         '200':
           description: Successfully Return
@@ -2063,22 +2061,16 @@ paths:
                             type: object
                             additionalProperties: false
                             properties:
-                              famEGene:
-                                type: string
-                              famCt:
-                                type: string
-                              calRed61RdRpGene:
-                                type: string
-                              calRed61Ct:
-                                type: string
-                              quasar670NGene:
-                                type: string
-                              quasar670Ct:
-                                type: string
-                              hexIC:
-                                type: string
-                              hexCt:
-                                type: string
+                              resultAnalysis:
+                                type: array
+                                items:
+                                  type: object
+                                  additionalProperties: false
+                                  properties:
+                                    label:
+                                      type: string
+                                    value:
+                                      type: string
                               result:
                                 type: string
                         reason:

@@ -47,7 +47,6 @@ import {
   PCRTestResultHistory,
   PCRTestResultLinkedDBModel,
   PCRTestResultListDTO,
-  PCRTestResultRequest,
   pcrTestResultsDTO,
   PcrTestResultsListByDeadlineRequest,
   PcrTestResultsListRequest,
@@ -88,7 +87,7 @@ const passportStatusByPCR = {
   [ResultTypes.Indeterminate]: PassportStatuses.Stop,
   [ResultTypes.Negative]: PassportStatuses.Proceed,
 }
-import {TestResultsMetaData} from '../models/test-results'
+import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results'
 import {Spec} from '../utils/analysis.helper'
 
 export class PCRTestResultsService {
@@ -165,56 +164,6 @@ export class PCRTestResultsService {
     return newPCRResult.id
   }
 
-  async createReportForPCRResults(
-    testResultData: PCRTestResultRequest,
-    adminId: string,
-  ): Promise<CreateReportForPCRResultsResponse> {
-    let reportTrackerId: string
-    if (!testResultData.reportTrackerId) {
-      const reportTracker = await this.testResultsReportingTracker.save()
-      reportTrackerId = reportTracker.id
-    } else {
-      reportTrackerId = testResultData.reportTrackerId
-      const reportTracker = await this.testResultsReportingTracker.get(reportTrackerId)
-      if (!reportTracker) {
-        throw new BadRequestException('Invalid Report Tracker ID')
-      }
-    }
-
-    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
-      this.datastore,
-      reportTrackerId,
-    )
-    const resultDate = testResultData.resultDate
-    const pcrResults = testResultData.results.map((result) => {
-      return {
-        data: {
-          ...result,
-          resultDate,
-        },
-        status: ResultReportStatus.RequestReceived,
-        adminId: adminId,
-      }
-    })
-
-    const savedResults = await testResultsReportingTrackerPCRResult.saveAll(pcrResults)
-
-    const taskClient = new OPNCloudTasks('report-results')
-    savedResults.map(async (result) => {
-      await taskClient.createTask(
-        {
-          reportTrackerId: reportTrackerId,
-          resultId: result.id,
-        },
-        '/reservation/internal/api/v1/process-pcr-test-result',
-      )
-    })
-
-    return {
-      reportTrackerId: reportTrackerId,
-    }
-  }
-
   async deleteTestResults(id: string): Promise<void> {
     await this.pcrTestResultsRepository.delete(id)
   }
@@ -227,7 +176,7 @@ export class PCRTestResultsService {
 
     const pcrResults = await testResultsReportingTrackerPCRResult.get(resultId)
     if (!pcrResults) {
-      LogError('processPCRTestResult', 'InvalidResultIdInReport', {
+      LogError('processTestResult', 'InvalidResultIdInReport', {
         reportTrackerId,
         testResultId: resultId,
       })
@@ -235,7 +184,7 @@ export class PCRTestResultsService {
     }
 
     if (pcrResults.status !== ResultReportStatus.RequestReceived) {
-      LogError('processPCRTestResult', 'AlreadyProcessed', {
+      LogError('processTestResult', 'AlreadyProcessed', {
         reportTrackerId,
         testResultId: resultId,
         appointmentStatus: pcrResults.status,
@@ -250,22 +199,27 @@ export class PCRTestResultsService {
       ResultReportStatus.Processing,
     )
     try {
-      // @TODO This resolved with next PR
-      // const pcrTestResult = await this.handlePCRResultSaveAndSend(
-      //   {
-      //     barCode: pcrResults.data.barCode,
-      //     resultSpecs: pcrResults.data,
-      //     adminId: pcrResults.adminId,
-      //   },
-      //   false,
-      //   false,
-      // )
-      //
-      // await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
-      //   status: await this.getReportStatus(pcrResults.data.action, pcrTestResult.result),
-      //   details: 'Action Completed',
-      // })
-      LogInfo('processPCRTestResult', 'SuccessfullyProcessed', {
+      const pcrTestResult = await this.handlePCRResultSaveAndSend(
+        {
+          notify: pcrResults.data.notify,
+          resultDate: pcrResults.data.resultDate,
+          action: pcrResults.data.action,
+          autoResult: pcrResults.data.autoResult,
+        },
+        pcrResults.data.resultAnalysis,
+        pcrResults.data.barCode,
+        false,
+        false,
+        pcrResults.adminId,
+        'HARCODED', // @TODO IMPLEMENT THIS
+        'HARCODED', // @TODO IMPLEMENT THIS
+      )
+
+      await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
+        status: await this.getReportStatus(pcrResults.data.action, pcrTestResult.result),
+        details: 'Action Completed',
+      })
+      LogInfo('processTestResult', 'SuccessfullyProcessed', {
         reportTrackerId,
         resultId,
       })
@@ -274,7 +228,7 @@ export class PCRTestResultsService {
         status: ResultReportStatus.Failed,
         details: error.toString(),
       })
-      LogWarning('processPCRTestResult', 'handlePCRResultSaveAndSendFailed', {
+      LogWarning('processTestResult', 'handlePCRResultSaveAndSendFailed', {
         reportTrackerId,
         resultId,
         error: error.toString(),
@@ -615,6 +569,57 @@ export class PCRTestResultsService {
     }
     return false
   }
+
+  async createReportForTestResults(
+    testResultData: BulkTestResultRequest,
+    adminId: string,
+  ): Promise<CreateReportForPCRResultsResponse> {
+    let reportTrackerId: string
+    if (!testResultData.reportTrackerId) {
+      const reportTracker = await this.testResultsReportingTracker.save()
+      reportTrackerId = reportTracker.id
+    } else {
+      reportTrackerId = testResultData.reportTrackerId
+      const reportTracker = await this.testResultsReportingTracker.get(reportTrackerId)
+      if (!reportTracker) {
+        throw new BadRequestException('Invalid Report Tracker ID')
+      }
+    }
+
+    const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
+      this.datastore,
+      reportTrackerId,
+    )
+    const resultDate = testResultData.resultDate
+    const pcrResults = testResultData.results.map((result) => {
+      return {
+        data: {
+          ...result,
+          resultDate,
+        },
+        status: ResultReportStatus.RequestReceived,
+        adminId: adminId,
+      }
+    })
+
+    const savedResults = await testResultsReportingTrackerPCRResult.saveAll(pcrResults)
+
+    const taskClient = new OPNCloudTasks('report-results')
+    savedResults.map(async (result) => {
+      await taskClient.createTask(
+        {
+          reportTrackerId: reportTrackerId,
+          resultId: result.id,
+        },
+        '/reservation/internal/api/v1/process-pcr-test-result',
+      )
+    })
+
+    return {
+      reportTrackerId: reportTrackerId,
+    }
+  }
+
   async handlePCRResultSaveAndSend(
     metaData: TestResultsMetaData,
     resultAnalysis: Spec[],
