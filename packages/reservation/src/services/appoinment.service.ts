@@ -982,6 +982,7 @@ export class AppoinmentService {
     return slots.map((slot) => {
       return {
         label: moment(slot.time).format(timeFormats.standard12h),
+        time: slot.time,
       }
     })
   }
