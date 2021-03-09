@@ -1629,6 +1629,11 @@ paths:
           schema:
             type: string
         - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+        - in: query
           name: deadline
           schema:
             type: string
