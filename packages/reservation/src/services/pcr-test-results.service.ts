@@ -81,6 +81,11 @@ import {AlertService} from '../../../passport/src/services/alert-service'
 
 const passportStatusByPCR = {
   [ResultTypes.Positive]: PassportStatuses.Stop,
+  [ResultTypes.PresumptivePositive]: PassportStatuses.Stop,
+  [ResultTypes.PreliminaryPositive]: PassportStatuses.Stop,
+  [ResultTypes.Inconclusive]: PassportStatuses.Stop,
+  [ResultTypes.Invalid]: PassportStatuses.Stop,
+  [ResultTypes.Indeterminate]: PassportStatuses.Stop,
   [ResultTypes.Negative]: PassportStatuses.Proceed,
 }
 import {TestResultsMetaData} from '../models/test-results'
