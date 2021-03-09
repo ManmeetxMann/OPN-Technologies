@@ -15,6 +15,7 @@ export type AdminProfile = {
   isManagementDashboardAdmin: boolean
   isTestReportsAdmin: boolean
   isTestAppointmentsAdmin: boolean
+  isTestKitBatchAdmin: boolean
   isLabUser: boolean
   isLabAppointmentsAdmin: boolean
   isLabResultsAdmin: boolean

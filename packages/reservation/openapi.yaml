@@ -426,6 +426,49 @@ components:
             message:
               nullable: true
               type: string
+    TestKitBatchesResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          nullable: true
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+                id:
+                  type: string
+                lotNumber:
+                  type: string
+                hardwareName:
+                  type: string
+                expiry:
+                  type: string
+                  format: date-time
+                manufacturer:
+                  type: string
+                createdBy:
+                  type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
+        page:
+            type: number
     PCRTestResultsResponse200:
       type: object
       additionalProperties: false
@@ -991,6 +1034,46 @@ components:
             - testType
             - equipment
             - manufacturer
+    ClinicsResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          nullable: true
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              address:
+                type: string
+              acuityUser:
+                type: string
+              acuityPass:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
+        page:
+            type: number
 
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -1098,6 +1181,108 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
+  /reservation/admin/api/v1/test-results:
+    get:
+      description: Get Test results
+      tags:
+        - Test Management
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+        - in: query
+          name: dateOfAppointment
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TestResult200'
+  /reservation/admin/api/v1/test-kit-batch:
+    get:
+      description: Get list of test kit batches
+      tags:
+        - Test Kit Batches
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestKitBatchesResponse'
+    post:
+      description: Create test kit batch
+      tags:
+        - Test Kit Batches
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                lotNumber:
+                  type: string
+                  minLength: 1
+                hardwareName:
+                  type: string
+                  minLength: 1
+                expiry:
+                  type: string
+                  format: date-time
+                  minLength: 1
+                manufacturer:
+                  type: string
+                  minLength: 1
+              required:
+                - lotNumber
+                - hardwareName
+                - expiry 
+                - manufacturer
+      responses:
+        '200':
+          description: Successfully Return data with test kit batch id
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    nullable: false
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string 
+                  page:
+                    type: number
   /reservation/admin/api/v1/appointments:
     get:
       description: Get appointment list
@@ -1155,7 +1340,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AppointmentResponse200'
-  '/reservation/admin/api/v1/appointments/{appointmentId}':
+  /reservation/admin/api/v1/appointments/{appointmentId}:
     get:
       description: Get appointment by appointment ID
       security:
@@ -1372,7 +1557,7 @@ paths:
                     - packageCode
                     - name
                     - remainingCounts
-  '/reservation/admin/api/v1/appointments/{appointmentId}/cancel':
+  /reservation/admin/api/v1/appointments/{appointmentId}/cancel:
     put:
       description: Cancel appointment by appointment ID
       tags:
@@ -2103,7 +2288,7 @@ paths:
                         type: string
                   page:
                     type: number
-  '/reservation/admin/api/v1/appointments/{appointmentId}/check-in':
+  /reservation/admin/api/v1/appointments/{appointmentId}/check-in:
     put:
       description: Make Appointment checked in
       tags:
@@ -2976,7 +3161,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfTemperature'
-  '/reservation/api/v1/temperature/{id}':
+  /reservation/api/v1/temperature/{id}:
     get:
       description: Get temperature by user ID and organization ID
       security:
@@ -3136,3 +3321,81 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  /reservation/admin/api/v1/clinics:
+    get:
+      description: Get list of clinics
+      tags:
+        - Clinics Management
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Successfully returned clinics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicsResponse'
+    post: 
+      description: Create new clinic
+      tags:
+        - Clinics Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                address:
+                  type: string
+                  minLength: 1
+                acuityUser:
+                  type: string
+                  minLength: 1
+                acuityPass:
+                  type: string
+                  minLength: 1
+              required:
+                - name
+                - address
+                - acuityUser
+                - acuityPass
+      responses:
+        '200':
+          description: Successfully added clinic
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    nullable: false
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string 
+                  page:
+                    type: number   
