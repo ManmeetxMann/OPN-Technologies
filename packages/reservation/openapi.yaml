@@ -2404,6 +2404,132 @@ paths:
                         type: string
                   page:
                     type: number
+  /reservation/admin/api/v1/availability/times-by-appointment-id:
+    get:
+      description: Get Appointment Available Times
+      tags:
+        - Appointment Booking
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        label:
+                          type: string
+                        time:
+                          type: string
+                      required:
+                        - label
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
+  /reservation/admin/api/v1/availability/dates-by-appointment-id:
+    get:
+      description: Get Appointment Available Dates
+      tags:
+        - Appointment Booking
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: year
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: month
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                      availableDates:
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            date:
+                              type: string
+                          required:
+                            - date
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
   /reservation/api/v1/booking-locations:
     get:
       description: Get list Booking Locations

@@ -100,6 +100,6 @@ export class AcuityRepository extends AcuityAdapter {
     calendarID: number,
     timezone: string,
   ): Promise<{date: string}[]> {
-    return this.getAvailabilityDatesList(appointmentTypeID, month, calendarID, timezone)
+    return this.getAvailabilityDatesList(appointmentTypeID, calendarID, month, timezone)
   }
 }

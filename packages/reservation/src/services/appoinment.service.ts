@@ -971,6 +971,46 @@ export class AppoinmentService {
     })
   }
 
+  async getAvailableTimes(appointmentId: string, date: string): Promise<{label: string}[]> {
+    const appointment = await this.getAppointmentDBById(appointmentId)
+    const slots = await this.acuityRepository.getAvailableSlots(
+      Number(appointment.appointmentTypeID),
+      date,
+      Number(appointment.calendarID),
+      '',
+    )
+    return slots.map((slot) => {
+      return {
+        label: moment(slot.time).format(timeFormats.standard12h),
+        time: slot.time,
+      }
+    })
+  }
+
+  async getAvailableDates(
+    appointmentId: string,
+    year: string,
+    month: string,
+  ): Promise<{id: string; availableDates: {date: string}[]}> {
+    const appointment = await this.getAppointmentDBById(appointmentId)
+    const yearMonth = `${year}-${month}`
+    const id = encodeAvailableTimeId({
+      appointmentTypeId: Number(appointment.appointmentTypeID),
+      calendarId: Number(appointment.calendarID),
+      date: yearMonth,
+    })
+    const availableDates = await this.acuityRepository.getAvailabilityDates(
+      Number(appointment.appointmentTypeID),
+      yearMonth,
+      Number(appointment.calendarID),
+      '',
+    )
+    return {
+      id,
+      availableDates,
+    }
+  }
+
   async getAvailabitlityDateList(
     id: string,
     year: number,

@@ -1,6 +1,5 @@
 const frisby = require('frisby');
 const helpersCommon = require('helpers_common');
-// const testProfile = require('test_profile');
 
 // Do setup first
 frisby.globalSetup({
@@ -10,16 +9,16 @@ frisby.globalSetup({
 });
 
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
-// const organizationId = testProfile.get().organizationId;
 /**
  * @group reservation-service
- * @group /reservation/admin/api/v1/appointments
- * @group copy-appointments
+ * @group /reservation/api/v1/dates-by-appointment-id
+ * @group get-times-by-appointment-id
  */
-describe('Copy Appointment', () => {
-  test('Copy Appointments as super admin?', function() {
+describe('get:availability dates by appointment', () => {
+  it('should get availability dates successfully by appointment id?', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/admin/api/v1/appointments/copy`;
+      const url = `${reservationServiceUrl}/reservation/admin/api/v1/availability/times-by-appointment-id`;
+      url +=`?appointmentId=${appointmentId}&date=2021-03-10`;
       return frisby
           .setup({
             request: {
@@ -28,16 +27,11 @@ describe('Copy Appointment', () => {
               },
             },
           })
-          .post(
+          .get(
               url,
-              {
-                appointmentIds: ['lDRcL0txk0jQoIDZF9uh', 'xH055VGo4XVEwcaka2ax'],
-                dateTime: '2021-03-14T08:30:00-0500',
-              },
           )
           .expect('status', 200)
           .inspectBody();
     });
   });
 });
-
