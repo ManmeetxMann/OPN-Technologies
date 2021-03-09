@@ -139,14 +139,7 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
       const skip = ['id', 'timestamps', 'appointmentStatus']
 
       Object.keys(updates).map((key) => {
-        // isEqual used for timestamps, != used to avoid fouls for the same values in different formats (boolean, strings and numbers)
-        if (
-          !skip.includes(key) &&
-          ((typeof updates[key] === 'object' && !isEqual(updates[key], appointment[key])) ||
-            (typeof updates[key] !== 'object' &&
-              typeof appointment[key] !== 'object' &&
-              updates[key] != appointment[key]))
-        ) {
+        if (!skip.includes(key) && !isEqual(updates[key], appointment[key])) {
           currentData[key] = appointment[key] ?? null
           newData[key] = updates[key] ?? null
         }
@@ -157,7 +150,7 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
         return
       }
 
-      return this.getAppointmentActivityRepository(id).add({
+      await this.getAppointmentActivityRepository(id).add({
         action,
         newData,
         currentData,
