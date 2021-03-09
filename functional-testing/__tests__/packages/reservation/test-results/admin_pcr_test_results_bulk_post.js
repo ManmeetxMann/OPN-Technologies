@@ -1,6 +1,5 @@
 const frisby = require('frisby');
-const helpersCommon = require('helpersCommon');
-const testResultsData = require('reservation/test_results');
+const helpersCommon = require('helpers_common');
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
 
@@ -34,22 +33,28 @@ describe('PCR Bulk TestResultsController', () => {
               {
                 'resultDate': '2021-02-10',
                 'results': [
-                  testResultsData.getData({'barCode': 'A1313', 'autoResult': 'Negative', 'action': 'ReRunToday'}),
-                  testResultsData.getData({'barCode': 'A1566', 'autoResult': 'Positive', 'action': 'ReRunTomorrow'}),
-                  testResultsData.getData({'barCode': 'A1423', 'autoResult': 'Positive', 'action': 'SendThisResult'}),
-                  testResultsData.getData({'barCode': 'A1560', 'autoResult': 'Positive', 'action': 'RecollectAsInconclusive'}),
                   {
                     'autoResult': 'Negative',
                     'action': 'SendThisResult',
                     'barCode': 'A1509',
-                    'famEGene': '-',
-                    'famCt': 'N/A',
-                    'calRed61RdRpGene': '-',
-                    'calRed61Ct': 'N/A',
-                    'quasar670NGene': '-',
-                    'quasar670Ct': 'N/A',
-                    'hexIC': '-',
-                    'hexCt': '36',
+                    'resultAnalysis':[
+                      {
+                        'label':'LBL1',
+                        'value':'26'
+                      },
+                      {
+                        'label':'LBL2',
+                        'value':'26'
+                      },
+                      {
+                        'label':'LBL3',
+                        'value':'26'
+                      },
+                      {
+                        'label':'LBL4',
+                        'value':'26'
+                      }
+                    ],
                     'notify': true,
                     'comment': 'AWESOM',
                   },
