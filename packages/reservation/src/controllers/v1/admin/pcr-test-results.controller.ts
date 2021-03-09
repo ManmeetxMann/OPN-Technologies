@@ -23,7 +23,6 @@ import {
   PCRTestResultHistoryResponse,
   ListPCRResultRequest,
   PCRTestResultRequest,
-  PCRTestResultRequestData,
   PcrTestResultsListRequest,
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
@@ -32,6 +31,8 @@ import {
 } from '../../../models/pcr-test-results'
 import {statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
+import {TestResultRequestData} from '../../../models/test-results'
+import {validateAnalysis} from '../../../utils/analysis.helper'
 
 class AdminPCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -139,7 +140,14 @@ class AdminPCRTestResultController implements IControllerBase {
   createPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
-      const {barCode, ...data} = req.body as PCRTestResultRequestData
+      const {
+        barCode,
+        resultAnalysis,
+        sendUpdatedResults,
+        templateId,
+        labId,
+        ...metaData
+      } = req.body as TestResultRequestData
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
         .tz(timeZone)
@@ -148,27 +156,26 @@ class AdminPCRTestResultController implements IControllerBase {
         .format('YYYY-MM-DD')
       const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
 
-      if (!moment(data.resultDate).isBetween(fromDate, toDate, undefined, '[]')) {
+      if (!moment(metaData.resultDate).isBetween(fromDate, toDate, undefined, '[]')) {
         throw new BadRequestException(
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
 
-      if (Number(data.hexCt) > 40) {
-        throw new BadRequestException(`Invalid Hex Ct. Should be less than 40`)
-      }
+      validateAnalysis(resultAnalysis)
 
       const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
-        {
-          barCode,
-          resultSpecs: data,
-          adminId,
-        },
+        metaData,
+        resultAnalysis,
+        barCode,
         true,
-        data.sendUpdatedResults,
+        sendUpdatedResults,
+        adminId,
+        templateId,
+        labId,
       )
       const status = await this.pcrTestResultsService.getReportStatus(
-        pcrResultRecorded.resultSpecs.action,
+        pcrResultRecorded.resultMetaData.action,
         pcrResultRecorded.result,
       )
       const successMessage = `${status} for ${pcrResultRecorded.barCode}`

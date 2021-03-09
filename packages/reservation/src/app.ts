@@ -21,7 +21,6 @@ import TemperatureController from './controllers/v1/temperature.controller'
 import AdminHistoryController from './controllers/v1/admin/admin-scan-history.controller'
 import AdminRapidAntigenTestTesultsController from './controllers/v1/admin/rapid-antigen-test-results.controller'
 import InternalRapidAntigenResultEmailSendController from './controllers/v1/internal/rapid-alergen-send-result-email.controller'
-import AdminTestResultController from './controllers/v2/admin/test-results.controller'
 import AdminClinicController from './controllers/v1/admin/clinic.controller'
 import AdminTestKitBatchController from './controllers/v1/admin/test-kit-batch.controller'
 
@@ -38,7 +37,6 @@ export const app = new App({
     new AppointmentWebhookController(),
     new AdminTestRunsController(),
     new ProcessPCRResultController(),
-    new AdminTestResultController(),
     new AdminPCRTestResultController(),
     new AdminAppointmentControllerV2(),
     new AppointmentController(),
