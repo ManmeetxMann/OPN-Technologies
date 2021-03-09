@@ -411,8 +411,8 @@ export const singlePcrTestResultDTO = (
 
 export type ActivityTracking = {
   action: PcrResultTestActivityAction
-  currentData: Partial<AppointmentDBModel>
-  newData: Partial<AppointmentDBModel>
+  currentData: Partial<PCRTestResultDBModel>
+  newData: Partial<PCRTestResultDBModel>
   actionBy?: string // not required for action updateFromAcuity
 }
 

@@ -2,7 +2,6 @@
 import {serverTimestamp} from '../../../common/src/utils/times'
 import DataModel, {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
-import {isEqual} from 'lodash'
 
 //Models
 import {
@@ -15,6 +14,8 @@ import {AppointmentDBModel, ResultTypes} from '../models/appointment'
 //Schema
 import DBSchema from '../dbschemas/pcr-test-results.schema'
 import {getFirestoreTimeStampDate} from '../utils/datetime.helper'
+// Utils
+import {findDifference} from '../utils/compare-objects'
 
 export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
   public rootPath = 'pcr-test-results'
@@ -86,7 +87,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     actionBy,
   }: UpdatePcrTestResultActionParams): Promise<PCRTestResultDBModel> {
     if (action) {
-      await this.addPcrTestResultActivityById({
+      this.addPcrTestResultActivityById({
         id,
         action,
         updates,
@@ -134,17 +135,18 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     actionBy?: string,
   ): Promise<void> {
     if (action) {
-      const [pcrTestResult] = await this.findWhereEqual('appointmentId', appointmentId)
-
-      if (pcrTestResult?.id) {
-        await this.addPcrTestResultActivityById({
-          id: pcrTestResult.id,
-          action,
-          updates: pcrTestResults,
-          actionBy,
-        })
-      }
+      this.findWhereEqual('appointmentId', appointmentId).then(([pcrTestResult]) => {
+        if (pcrTestResult?.id) {
+          this.addPcrTestResultActivityById({
+            id: pcrTestResult.id,
+            action,
+            updates: pcrTestResults,
+            actionBy,
+          })
+        }
+      })
     }
+
     await this.updateAllFromCollectionWhereEqual('appointmentId', appointmentId, pcrTestResults)
   }
 
@@ -160,8 +162,6 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
   }: UpdatePcrTestResultActionParams): Promise<ActivityTrackingDb> {
     try {
       const pcrTestResults = await this.get(id)
-      const currentData = {}
-      const newData = {}
       const skip = ['id', 'timestamps']
 
       if (!pcrTestResults) {
@@ -170,21 +170,13 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
         return
       }
 
-      Object.keys(updates).map((key) => {
-        // isEqual used for timestamps, != used to avoid fouls for the same values in different formats (boolean, strings and numbers)
-        if (
-          !skip.includes(key) &&
-          ((typeof updates[key] === 'object' && !isEqual(updates[key], pcrTestResults[key])) ||
-            (typeof updates[key] !== 'object' &&
-              typeof pcrTestResults[key] !== 'object' &&
-              updates[key] != pcrTestResults[key]))
-        ) {
-          currentData[key] = pcrTestResults[key] ?? null
-          newData[key] = updates[key] ?? null
-        }
-      })
+      const {currentData, newData} = findDifference<PCRTestResultDBModel>(
+        pcrTestResults,
+        updates,
+        skip,
+      )
 
-      if (!Object.keys(newData).length) {
+      if (!newData) {
         console.warn(
           `[PCR-Test-Result repository]: No one field has been updated for pcr-test-result ${id}`,
         )
@@ -208,8 +200,8 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
 export class ActivityTrackingRepository extends DataModel<ActivityTrackingDb> {
   public rootPath
   readonly zeroSet = []
-  constructor(dataStore: DataStore, appointmentId: string) {
+  constructor(dataStore: DataStore, pcrTestResultsId: string) {
     super(dataStore)
-    this.rootPath = `pcr-test-results/${appointmentId}/activity`
+    this.rootPath = `pcr-test-results/${pcrTestResultsId}/activity`
   }
 }
