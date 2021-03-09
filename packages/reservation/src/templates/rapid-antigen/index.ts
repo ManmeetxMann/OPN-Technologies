@@ -1,6 +1,9 @@
 import moment from 'moment'
 import {Content, TableLayouts} from '../../../../common/src/service/reports/pdf-types'
 import {PdfService} from '../../../../common/src/service/reports/pdf'
+import {LogInfo} from '../../../../common/src/utils/logging-setup'
+
+//Models
 import {
   RapidAlergenResultPDFType,
   RapidAntigenEmailResultDTO,
@@ -24,6 +27,12 @@ export const RapidAntigenPDFContent = async (
     case RapidAlergenResultPDFType.Negative: {
       data = negativePCRResultTemplate(resultData, resultDate)
       break
+    }
+    default: {
+      LogInfo('RapidAntigenPDFContent', 'InavldiRapidAlergenResultPDFType', {
+        pdfType,
+      })
+      return
     }
   }
   return await pdfService.generatePDFBase64(data.content, data.tableLayouts)

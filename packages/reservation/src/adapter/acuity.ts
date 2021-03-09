@@ -1,7 +1,7 @@
 import fetch from 'node-fetch'
 
 import {Config} from '../../../common/src/utils/config'
-import {LogInfo} from '../../../common/src/utils/logging-setup'
+import {LogError, LogInfo} from '../../../common/src/utils/logging-setup'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
@@ -20,7 +20,7 @@ type AcuityFilter = {
   value: string
 }
 
-abstract class AcuityScheduling {
+abstract class AcuityAdapter {
   private fieldIdMapping = {
     barCodeNumber: Config.get('ACUITY_FIELD_BARCODE'),
     dateOfBirth: Config.get('ACUITY_FIELD_DATE_OF_BIRTH'),
@@ -46,7 +46,7 @@ abstract class AcuityScheduling {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = APIURL + `/api/v1/appointments/${id}/cancel?admin=true`
-    LogInfo(`AcuitySchedulingAdapterCancel`, 'Requested', {
+    LogInfo(`AcuityAdapterCancel`, 'Requested', {
       acuityID: id,
     })
 
@@ -62,7 +62,7 @@ abstract class AcuityScheduling {
     if (result.status_code) {
       throw new BadRequestException(result.message)
     }
-    LogInfo(`AcuitySchedulingAdapterCancel`, 'Success', {
+    LogInfo(`AcuityAdapterCancel`, 'Success', {
       acuityID: id,
     })
     return this.customFieldsToAppoinment(result)
@@ -88,7 +88,7 @@ abstract class AcuityScheduling {
       }),
     })
     const appointment = await res.json()
-    LogInfo(`AcuitySchedulingAdapterUpdateAppointment`, 'Success', {
+    LogInfo(`AcuityAdapterUpdateAppointment`, 'Success', {
       acuityID: id,
     })
     return this.customFieldsToAppoinment(appointment)
@@ -118,7 +118,7 @@ abstract class AcuityScheduling {
       throw new BadRequestException(result.message)
     }
 
-    LogInfo(`AcuitySchedulingAdapterUpdateLabel`, 'Success', {
+    LogInfo(`AcuityAdapterUpdateLabel`, 'Success', {
       acuityID: id,
       label,
     })
@@ -132,7 +132,7 @@ abstract class AcuityScheduling {
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = APIURL + `/api/v1/appointments/${id}`
 
-    LogInfo(`AcuitySchedulingAdapterGetAppointment`, 'Request', {
+    LogInfo(`AcuityAdapterGetAppointment`, 'Request', {
       acuityID: id,
     })
 
@@ -146,6 +146,15 @@ abstract class AcuityScheduling {
     })
     const result = await res.json()
     if (result.status_code) {
+      LogError(
+        `AppointmentWebhookController:syncAppointmentFromAcuityToDB`,
+        'InvalidAcuityIDPosted',
+        {
+          acuityID: id,
+          acuityStatusCode: result.status_code,
+          errorMessage: result.message,
+        },
+      )
       throw new BadRequestException(result.message)
     }
     return this.customFieldsToAppoinment(result)
@@ -155,7 +164,7 @@ abstract class AcuityScheduling {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = APIURL + `/api/v1/certificates`
-    LogInfo(`AcuitySchedulingAdapterGetcertificates`, 'Request', {})
+    LogInfo(`AcuityAdapterGetcertificates`, 'Request', {})
 
     const res = await fetch(apiUrl, {
       method: 'get',
@@ -176,7 +185,7 @@ abstract class AcuityScheduling {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = APIURL + `/api/v1/appointment-types`
-    LogInfo(`AcuitySchedulingAdapterGetAppointmentTypes`, 'Request', {})
+    LogInfo(`AcuityAdapterGetAppointmentTypes`, 'Request', {})
 
     const res = await fetch(apiUrl, {
       method: 'get',
@@ -197,7 +206,7 @@ abstract class AcuityScheduling {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
     const apiUrl = encodeURI(APIURL + `/api/v1/calendars`)
-    LogInfo(`AcuitySchedulingAdapterGetCalendar`, 'Request', {})
+    LogInfo(`AcuityAdapterGetCalendar`, 'Request', {})
     const res = await fetch(apiUrl, {
       method: 'get',
       headers: {
@@ -237,7 +246,7 @@ abstract class AcuityScheduling {
     if (result.status_code) {
       throw new BadRequestException(result.message)
     }
-    LogInfo(`AcuitySchedulingAdapterCreateCoupon`, 'Success', {
+    LogInfo(`AcuityAdapterCreateCoupon`, 'Success', {
       couponID: couponID,
       email: emailToLockCoupon,
     })
@@ -270,7 +279,7 @@ abstract class AcuityScheduling {
       fields: this.handleBooleans(this.renameKeysToId(fields)), // [{id: 1, value: 'Party time!'}]
     }
 
-    LogInfo(`AcuitySchedulingAdapterCreateAppointment`, 'Request', data)
+    LogInfo(`AcuityAdapterCreateAppointment`, 'Request', data)
     const res = await fetch(apiUrl, {
       method: 'post',
       headers: {
@@ -282,9 +291,14 @@ abstract class AcuityScheduling {
     })
     const result = await res.json()
     if (result.status_code) {
+      LogError(`AcuitySchedulingAdapterUpdateAppointment`, 'Failed', {
+        appointmentDateTime: datetime,
+        acuityStatusCode: result.status_code,
+        errorMessage: result.message,
+      })
       throw new BadRequestException(result.message)
     }
-    LogInfo(`AcuitySchedulingAdapterCreateAppointment`, 'Success', {
+    LogInfo(`AcuityAdapterCreateAppointment`, 'Success', {
       email,
       acuityID: result.id,
     })
@@ -304,7 +318,7 @@ abstract class AcuityScheduling {
         `/api/v1/availability/dates?appointmentTypeID=${appointmentTypeID}&month=${month}&calendarID=${calendarID}&timezone=${timezone}`,
     )
 
-    LogInfo(`AcuitySchedulingAdapterGetAvailbilityDates`, 'Success', {
+    LogInfo(`AcuityAdapterGetAvailbilityDates`, 'Success', {
       appointmentTypeID,
       month,
       calendarID,
@@ -337,7 +351,7 @@ abstract class AcuityScheduling {
       APIURL +
         `/api/v1/availability/times?appointmentTypeID=${appointmentTypeID}&date=${date}&calendarID=${calendarID}&timezone=${timezone}`,
     )
-    LogInfo(`AcuitySchedulingAdapterGetAvailbilitySlots`, 'Success', {
+    LogInfo(`AcuityAdapterGetAvailbilitySlots`, 'Success', {
       appointmentTypeID,
       date,
       calendarID,
@@ -356,6 +370,41 @@ abstract class AcuityScheduling {
       throw new BadRequestException(result.message)
     }
     return result
+  }
+
+  protected async rescheduleAppoinmentService(
+    id: number,
+    datetime: string,
+  ): Promise<AppointmentAcuityResponse> {
+    const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
+    const userPassBase64 = userPassBuf.toString('base64')
+    const apiUrl = `${APIURL}/api/v1/appointments/${id}/reschedule`
+
+    const res = await fetch(apiUrl, {
+      method: 'put',
+      headers: {
+        Authorization: 'Basic ' + userPassBase64,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        datetime,
+      }),
+    })
+    const appointment = await res.json()
+    if (appointment.status_code) {
+      LogError(`AcuitySchedulingAdapterUpdateAppointment`, 'Failed', {
+        acuityID: id,
+        appointmentDateTime: datetime,
+        acuityStatusCode: appointment.status_code,
+        errorMessage: appointment.message,
+      })
+      throw new BadRequestException(appointment.message)
+    }
+    LogInfo(`AcuitySchedulingAdapterUpdateAppointment`, 'Success', {
+      acuityID: id,
+    })
+    return this.customFieldsToAppoinment(appointment)
   }
 
   private customFieldsToAppoinment(
@@ -470,4 +519,4 @@ abstract class AcuityScheduling {
   }
 }
 
-export default AcuityScheduling
+export default AcuityAdapter

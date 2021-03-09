@@ -1,13 +1,20 @@
-import AcuityScheduling from '../adapter/acuity'
+import AcuityAdapter from '../adapter/acuity'
 import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
 import {Certificate} from '../models/packages'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
-import {AcuityAvailableSlots} from '../models/acuity'
+import {AcuityAvailableSlots, CreateAppointmentDTO} from '../models/acuity'
 
-export class AcuityRepository extends AcuityScheduling {
+export class AcuityRepository extends AcuityAdapter {
   constructor() {
     super()
+  }
+
+  async rescheduleAppoinmentOnAcuity(
+    id: number,
+    dateTime: string,
+  ): Promise<AppointmentAcuityResponse> {
+    return this.rescheduleAppoinmentService(id, dateTime)
   }
 
   //Used by Webhooks
@@ -44,25 +51,28 @@ export class AcuityRepository extends AcuityScheduling {
   }
 
   async createAppointment(
-    datetime: string,
-    appointmentTypeID: number,
-    firstName: string,
-    lastName: string,
-    email: string,
-    phone: string,
-    certificate: string,
-    calendarId: number,
-    fields: Record<string, string | boolean>,
+    appointmentData: CreateAppointmentDTO,
   ): Promise<AppointmentAcuityResponse> {
-    return this.createAppointmentOnAcuityService(
-      datetime,
+    const {
+      dateTime,
       appointmentTypeID,
       firstName,
       lastName,
       email,
       phone,
-      certificate,
-      calendarId,
+      packageCode,
+      calendarID,
+      fields,
+    } = appointmentData
+    return this.createAppointmentOnAcuityService(
+      dateTime,
+      appointmentTypeID,
+      firstName,
+      lastName,
+      email,
+      phone,
+      packageCode,
+      calendarID,
       fields,
     )
   }

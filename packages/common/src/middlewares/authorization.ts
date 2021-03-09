@@ -108,6 +108,8 @@ export const authorizationMiddleware = (
     (req.query.organizationId as string) ??
     (req.params?.organizationId as string) ??
     (req.body?.organizationId as string) ??
+    // headers are coerced to lowercase
+    (req.headers?.organizationid as string) ??
     null
 
   const admin = connectedUser.admin as AdminProfile
@@ -256,6 +258,12 @@ const isAllowed = (
   const seekLabConfirmResults = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabConfirmResults,
   )
+  const seekClinicRapidResultSenderAdmin = listOfRequiredPermissions.includes(
+    RequiredUserPermission.ClinicRapidResultSenderAdmin,
+  )
+  const seekTestKitBatchAdmin = listOfRequiredPermissions.includes(
+    RequiredUserPermission.TestKitBatchAdmin,
+  )
 
   if (
     seekLabOrOrgAppointment &&
@@ -286,8 +294,15 @@ const isAllowed = (
     return false
   }
 
-  if (seekLabPCRTestResults && !admin?.isLabResultsAdmin && !admin?.isTestReportsAdmin) {
-    console.warn(`Admin user ${userId} needs isLabResultsAdmin Or isTestReportsAdmin`)
+  if (
+    seekLabPCRTestResults &&
+    !admin?.isLabResultsAdmin &&
+    !admin?.isTestReportsAdmin &&
+    !admin?.isRapidResultOrgAdmin
+  ) {
+    console.warn(
+      `Admin user ${userId} needs isLabResultsAdmin Or isTestReportsAdmin Or isRapidResultOrgAdmin`,
+    )
     return false
   }
   if (seekLabSendBulkResults && !admin?.isBulkUploadAdmin) {
@@ -314,8 +329,16 @@ const isAllowed = (
     console.warn(`Admin user ${userId} needs isConfirmResultAdmin`)
     return false
   }
+  if (seekClinicRapidResultSenderAdmin && !admin?.isRapidResultSenderAdmin) {
+    console.warn(`Admin user ${userId} needs isRapidResultSenderAdmin`)
+    return false
+  }
   if (seekOPNAdmin && !admin?.isOpnSuperAdmin) {
     console.warn(`Admin user ${userId} needs isOpnSuperAdmin`)
+    return false
+  }
+  if (seekTestKitBatchAdmin && !admin?.isTestKitBatchAdmin) {
+    console.warn(`Admin user ${userId} needs isTestKitBatchAdmin`)
     return false
   }
   return true

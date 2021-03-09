@@ -4,6 +4,7 @@ import {firestore} from 'firebase-admin'
 import moment from 'moment-timezone'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
+const rapidDeadlineTime = Config.get('RAPID_ALERGEN_DEADLINE_MIN')
 
 export const makeDeadline = (
   utcDateTime: moment.Moment,
@@ -52,8 +53,8 @@ export const formatDateRFC822Local = (timestamp: firestore.Timestamp): string =>
   return moment(timestamp.toDate()).tz(timeZone).toISOString()
 }
 
-export const makeDeadlineDate = (): moment.Moment => {
-  return moment(new Date()).add(15, 'minutes').tz(timeZone)
+export const makeRapidDeadline = (): moment.Moment => {
+  return moment(new Date()).add(rapidDeadlineTime, 'minutes').tz(timeZone)
 }
 
 export const formatStringDateRFC822Local = (date: Date | string): string => {

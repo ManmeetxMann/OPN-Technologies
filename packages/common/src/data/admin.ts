@@ -15,6 +15,7 @@ export type AdminProfile = {
   isManagementDashboardAdmin: boolean
   isTestReportsAdmin: boolean
   isTestAppointmentsAdmin: boolean
+  isTestKitBatchAdmin: boolean
   isLabUser: boolean
   isLabAppointmentsAdmin: boolean
   isLabResultsAdmin: boolean
@@ -32,6 +33,8 @@ export type AdminProfile = {
   isLookupAdmin: boolean
   adminForLabIds: string[]
   isClinicUser: boolean
+  isRapidResultSenderAdmin: boolean
+  isRapidResultOrgAdmin: boolean
 }
 
 export type AdminApproval = {
