@@ -308,10 +308,20 @@ export class PCRTestResultsService {
   }
 
   async getPCRResults(
-    {organizationId, deadline, barCode, result, testType, date}: PcrTestResultsListRequest,
+    {
+      organizationId,
+      deadline,
+      barCode,
+      result,
+      testType,
+      date,
+      searchQuery,
+    }: PcrTestResultsListRequest,
     isLabUser: boolean,
   ): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
+    let pcrResults: PCRTestResultDBModel[] = []
+
     //TODO: Allow BarCode with ORG
     if (organizationId) {
       pcrTestResultsQuery.push({
@@ -390,10 +400,57 @@ export class PCRTestResultsService {
       })
     }
 
-    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
-      pcrTestResultsQuery,
-      result ? null : {key: 'result', direction: 'desc'},
-    )
+    if (searchQuery) {
+      const search: Promise<PCRTestResultDBModel[]>[] = []
+      const query = (key: string, value: string) => ({
+        map: '/',
+        key,
+        operator: DataModelFieldMapOperatorType.Equals,
+        value,
+      })
+
+      const fullName = searchQuery.split(' ')
+      const [firstName, lastName] = fullName
+
+      if (fullName.length == 1) {
+        // in this case query may contain only firstname or lastname
+        search.push(
+          this.pcrTestResultsRepository.findWhereEqualInMap([
+            ...pcrTestResultsQuery,
+            query('firstName', firstName),
+          ]),
+          this.pcrTestResultsRepository.findWhereEqualInMap([
+            ...pcrTestResultsQuery,
+            query('lastName', firstName),
+          ]),
+        )
+      } else {
+        // handle normal and reversed name formatting
+        search.push(
+          this.pcrTestResultsRepository.findWhereEqualInMap([
+            ...pcrTestResultsQuery,
+            query('firstName', firstName),
+            query('lastName', lastName),
+          ]),
+          this.pcrTestResultsRepository.findWhereEqualInMap([
+            ...pcrTestResultsQuery,
+            query('firstName', lastName),
+            query('lastName', firstName),
+          ]),
+        )
+      }
+
+      const queryResults = await Promise.all(search).then((results) => results.flat())
+      //TODO: need to sort final results by sortOrder ref PR: #1733
+      pcrResults = [
+        ...new Map(queryResults.flat().map((item) => [item.id, item])).values(),
+      ] as PCRTestResultDBModel[]
+    } else {
+      pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+        pcrTestResultsQuery,
+        result ? null : {key: 'result', direction: 'desc'},
+      )
+    }
 
     const getResultValue = (result: ResultTypes, notify: boolean): ResultTypes => {
       if (isLabUser) {

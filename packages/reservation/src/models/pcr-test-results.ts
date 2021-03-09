@@ -294,6 +294,7 @@ export type PcrTestResultsListRequest = {
   result?: ResultTypes
   date?: string
   testType?: TestTypes
+  searchQuery?: string
 }
 
 export type PCRTestResultListDTO = {
