@@ -422,6 +422,8 @@ export const singlePcrTestResultDTO = (
         value: resultValue,
       })),
     )
+  } else if (pcrTestResult.resultAnalysis) {
+    resultAnalysis = pcrTestResult.resultAnalysis
   }
   return {
     email: appointment.email,

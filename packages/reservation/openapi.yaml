@@ -659,6 +659,19 @@ components:
         - autoResult
         - barCode
         - resultAnalysis
+    ProcessPCRResultsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reportTrackerId:
+          type: string
+          description: Report Tracker ID
+        resultId:
+          type: string
+          description: Stored Result ID
+      required:
+        - reportTrackerId
+        - resultId
     ResponseOfTemperature:
       type: object
       additionalProperties: false
