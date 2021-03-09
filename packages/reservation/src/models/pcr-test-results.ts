@@ -125,7 +125,7 @@ type PCRResultsForHistory = PCRResultSpecs & {
 }
 
 export type PCRTestResultRequestData = PCRResultSpecsForSending & {
-  // WORKLING ONTHIS
+  // @TODO cleanup this model, and referenced models also
   barCode: string
   sendUpdatedResults?: boolean
 }
@@ -143,7 +143,7 @@ export type PCRTestResultRequest = {
 export type PCRTestResultData = {
   barCode: string
   adminId: string
-  resultSpecs?: PCRResultSpecsForSending // CHECK THIS BEFORE MERGING, if this comment exists then not tested
+  resultSpecs?: PCRResultSpecsForSending // @TODO Cleanup this
   userId?: string
 }
 
