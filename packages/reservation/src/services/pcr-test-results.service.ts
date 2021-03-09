@@ -1069,7 +1069,7 @@ export class PCRTestResultsService {
   }
 
   async getPCRResultsStats(
-    {organizationId, deadline, barCode, result}: PcrTestResultsListRequest,
+    {organizationId, deadline, barCode, result, date}: PcrTestResultsListRequest,
     isLabUser: boolean,
   ): Promise<{
     total: number
@@ -1077,7 +1077,7 @@ export class PCRTestResultsService {
     pcrResultStatsByResultArr: Filter[]
   }> {
     const pcrTestResults = await this.getPCRResults(
-      {organizationId, deadline, barCode, result},
+      {organizationId, deadline, barCode, result, date},
       isLabUser,
     )
 
