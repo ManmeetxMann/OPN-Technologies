@@ -116,7 +116,7 @@ async function updatePcrTestResult(
           autoResult: resultSpecs.autoResult,
           notify: resultSpecs.notify,
           resultDate: resultSpecs.resultDate,
-          comment: resultSpecs.comment,
+          comment: (resultSpecs.comment)??null,
         },
         //resultSpecs: firestore.FieldValue.delete(),
         templateId: 'template1',
