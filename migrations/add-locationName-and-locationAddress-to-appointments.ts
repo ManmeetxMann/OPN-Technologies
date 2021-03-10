@@ -76,11 +76,11 @@ async function addLocationsFields(
 ) {
   try {
     const appointment = snapshot.data()
-    const calendar = calendars.find(
-      ({id}) => appointment.calendarID == id,
-    )
-    if(!calendar){
-      return Promise.reject(`Invalid Calendar ID: ${appointment.calendarID} for Appointment: ${snapshot.id}`)
+    const calendar = calendars.find(({id}) => appointment.calendarID == id)
+    if (!calendar) {
+      return Promise.reject(
+        `Invalid Calendar ID: ${appointment.calendarID} for Appointment: ${snapshot.id}`,
+      )
     }
 
     const {location, name}: {location: string; name: string} = calendar
