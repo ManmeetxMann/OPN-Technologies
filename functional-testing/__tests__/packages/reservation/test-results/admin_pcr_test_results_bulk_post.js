@@ -13,13 +13,13 @@ frisby.globalSetup({
 
 /**
  * @group reservation-service
- * @group /reservation/admin/api/v1/pcr-test-results
+ * @group /reservation/admin/api/v1/test-results-bulk
  * @group send-bulk-test-results
  */
 describe('PCR Bulk TestResultsController', () => {
-  test('/reservation/admin/api/v1/pcr-test-results:post:success should be able to create PCR test results Successfully', function() {
+  test('Should be able to create PCR test results Successfully', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/admin/api/v1/pcr-test-results-bulk`;
+      const url = `${reservationServiceUrl}/reservation/admin/api/v1/test-results-bulk`;
       return frisby
           .setup({
             request: {

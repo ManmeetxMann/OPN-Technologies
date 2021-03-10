@@ -432,9 +432,11 @@ export class AppoinmentService {
   }
 
   private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
-    return appointmentTypeID === Config.getInt('ACUITY_APPOINTMENT_TYPE_ID')
-      ? TestTypes.RapidAntigen
-      : TestTypes.PCR
+    const rapidAntigenTypeIDs = [
+      Config.getInt('ACUITY_APPOINTMENT_TYPE_MULTIPLEX'),
+      Config.getInt('ACUITY_APPOINTMENT_TYPE_ID'),
+    ]
+    return rapidAntigenTypeIDs.includes(appointmentTypeID) ? TestTypes.RapidAntigen : TestTypes.PCR
   }
 
   private async getDateFields(acuityAppointment: AppointmentAcuityResponse) {
@@ -493,12 +495,12 @@ export class AppoinmentService {
     const currentUserId = userId ? userId : await getNewUserId()
 
     return {
-      acuityAppointmentId: acuityAppointment.id,
+      acuityAppointmentId: Number(acuityAppointment.id),
       appointmentStatus,
-      appointmentTypeID: acuityAppointment.appointmentTypeID,
+      appointmentTypeID: Number(acuityAppointment.appointmentTypeID),
       barCode: barCode,
       canceled: acuityAppointment.canceled,
-      calendarID: acuityAppointment.calendarID,
+      calendarID: Number(acuityAppointment.calendarID),
       dateOfAppointment,
       dateOfBirth: acuityAppointment.dateOfBirth,
       dateTime,
@@ -506,7 +508,6 @@ export class AppoinmentService {
       email: acuityAppointment.email,
       firstName: acuityAppointment.firstName,
       lastName: acuityAppointment.lastName,
-      location: acuityAppointment.location,
       organizationId: acuityAppointment.organizationId || organizationId || null,
       packageCode: acuityAppointment.certificate,
       phone: acuityAppointment.phone,
@@ -982,6 +983,46 @@ export class AppoinmentService {
       couponCode,
       userId,
     })
+  }
+
+  async getAvailableTimes(appointmentId: string, date: string): Promise<{label: string}[]> {
+    const appointment = await this.getAppointmentDBById(appointmentId)
+    const slots = await this.acuityRepository.getAvailableSlots(
+      Number(appointment.appointmentTypeID),
+      date,
+      Number(appointment.calendarID),
+      '',
+    )
+    return slots.map((slot) => {
+      return {
+        label: moment(slot.time).format(timeFormats.standard12h),
+        time: slot.time,
+      }
+    })
+  }
+
+  async getAvailableDates(
+    appointmentId: string,
+    year: string,
+    month: string,
+  ): Promise<{id: string; availableDates: {date: string}[]}> {
+    const appointment = await this.getAppointmentDBById(appointmentId)
+    const yearMonth = `${year}-${month}`
+    const id = encodeAvailableTimeId({
+      appointmentTypeId: Number(appointment.appointmentTypeID),
+      calendarId: Number(appointment.calendarID),
+      date: yearMonth,
+    })
+    const availableDates = await this.acuityRepository.getAvailabilityDates(
+      Number(appointment.appointmentTypeID),
+      yearMonth,
+      Number(appointment.calendarID),
+      '',
+    )
+    return {
+      id,
+      availableDates,
+    }
   }
 
   async getAvailabitlityDateList(

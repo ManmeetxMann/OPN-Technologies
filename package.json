@@ -54,6 +54,9 @@
 		"migration:pcr-datetime-to-date": "ts-node ./migrations/pcr-datetime-to-date",
 		"migration:pcr-add-test-type": "ts-node ./migrations/pcr-add-test-type",
 		"migration:appointments-add-test-type": "ts-node ./migrations/appointments-add-test-type",
+		"migration:migrate-pcr-to-analysis-id": "ts-node ./migrations/migrate-pcr-to-analysis-id",
+		"migration:pcr-add-sort-order": "ts-node ./migrations/pcr-add-sort-order",
+		"migration:appointments-add-location-name-and-address": "ts-node ./migrations/add-locationName-and-locationAddress-to-appointments",
 		"__devops:get-users-with-email-no-authuserid": "ts-node ./__devops/get-users-with-email-no-authuserid"
 	},
 	"devDependencies": {

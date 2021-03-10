@@ -168,10 +168,13 @@ class AppointmentWebhookController implements IControllerBase {
     }
   }
 
+  //TODO: Refactor this
   private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
-    return appointmentTypeID === Config.getInt('ACUITY_APPOINTMENT_TYPE_ID')
-      ? TestTypes.RapidAntigen
-      : TestTypes.PCR
+    const rapidAntigenTypeIDs = [
+      Config.getInt('ACUITY_APPOINTMENT_TYPE_MULTIPLEX'),
+      Config.getInt('ACUITY_APPOINTMENT_TYPE_ID'),
+    ]
+    return rapidAntigenTypeIDs.includes(appointmentTypeID) ? TestTypes.RapidAntigen : TestTypes.PCR
   }
 
   private handleUpdateAppointment = async (
@@ -244,7 +247,11 @@ class AppointmentWebhookController implements IControllerBase {
           userId: updatedAppointment.userId,
         }
 
-        await this.pcrTestResultsService.updateTestResults(pcrTestResult.id, pcrResultDataForDb, 'WEBHOOK')
+        await this.pcrTestResultsService.updateTestResults(
+          pcrTestResult.id,
+          pcrResultDataForDb,
+          'WEBHOOK',
+        )
         LogInfo('UpdateAppointmentFromWebhook', 'UpdatedPCRResultsSuccessfully', {
           appoinmentID: appointmentFromDb.id,
           pcrResultID: pcrTestResult.id,
