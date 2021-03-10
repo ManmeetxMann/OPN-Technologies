@@ -165,10 +165,13 @@ class AppointmentWebhookController implements IControllerBase {
     }
   }
 
+  //TODO: Refactor this
   private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
-    return appointmentTypeID === Config.getInt('ACUITY_APPOINTMENT_TYPE_ID')
-      ? TestTypes.RapidAntigen
-      : TestTypes.PCR
+    const rapidAntigenTypeIDs = [
+      Config.getInt('ACUITY_APPOINTMENT_TYPE_MULTIPLEX'),
+      Config.getInt('ACUITY_APPOINTMENT_TYPE_ID'),
+    ]
+    return rapidAntigenTypeIDs.includes(appointmentTypeID) ? TestTypes.RapidAntigen : TestTypes.PCR
   }
 
   private handleUpdateAppointment = async (
