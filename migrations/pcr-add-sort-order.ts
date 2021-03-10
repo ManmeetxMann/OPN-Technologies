@@ -68,8 +68,13 @@ async function updateTestResults(): Promise<Result[]> {
 
 async function addField(snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
   try {
+    const result = snapshot.data().result
+    const sortOrder = getSortOrderByResult(result)
+    if(!sortOrder){
+      return Promise.reject(`resultId: ${snapshot.id} has Result: ${result}. No sortOrder idenified.`)
+    }
     return snapshot.ref.update({
-      sortOrder: getSortOrderByResult(snapshot.data().result),
+      sortOrder: sortOrder,
     })
   } catch (error) {
     console.warn(error)
