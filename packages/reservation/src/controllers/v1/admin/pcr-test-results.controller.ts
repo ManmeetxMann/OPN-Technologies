@@ -275,8 +275,8 @@ class AdminPCRTestResultController implements IControllerBase {
         date,
         labID
       } = req.query as PcrTestResultsListRequest
-      if (!barCode && !deadline) {
-        throw new BadRequestException('"deadline" is required if "barCode" is not specified')
+      if (!barCode && !deadline && !date) {
+        throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
