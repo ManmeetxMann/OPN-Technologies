@@ -38,5 +38,8 @@ export default Joi.object({
   testType: Joi.string().required().valid('PCR', 'RapidAntigen'),
   testKitBatchID: Joi.string().allow(null),
   //updatedAt: FirestoreTimestamp.isValid().required(), //Added after validation
+  userId: Joi.string().allow(null),
   waitingResult: Joi.boolean().required(),
+  templateId: Joi.string().required(),
+  labId: Joi.string().required(),
 })

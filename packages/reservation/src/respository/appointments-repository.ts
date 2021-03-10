@@ -34,6 +34,13 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     return this.add(validatedData)
   }
 
+  public async updateData(
+    id: string,
+    appointment: Partial<AppointmentDBModel>,
+  ): Promise<AppointmentDBModel> {
+    return this.updateProperties(id, appointment)
+  }
+
   public changeAppointmentStatus(
     appointmentId: string,
     appointmentStatus: AppointmentStatus,
@@ -125,17 +132,14 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     updates,
     actionBy = null,
   }: UpdateAppointmentActionParams): Promise<ActivityTrackingDb> {
-    const appointment = await this.get(id)
-    const currentData = {}
-    const newData = {}
-    const skip = ['id', 'timestamps', 'appointmentStatus']
     try {
+      const appointment = await this.get(id)
+      const currentData = {}
+      const newData = {}
+      const skip = ['id', 'timestamps', 'appointmentStatus']
+
       Object.keys(updates).map((key) => {
-        // isEqual used for timestamps, !== used to avoid fouls for the same values in different formats (strings and numbers)
-        if (
-          !skip.includes(key) &&
-          (!isEqual(updates[key], appointment[key]) || updates[key] !== appointment[key])
-        ) {
+        if (!skip.includes(key) && !isEqual(updates[key], appointment[key])) {
           currentData[key] = appointment[key] ?? null
           newData[key] = updates[key] ?? null
         }
@@ -145,16 +149,16 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
         console.warn(`No one field has been updated for appointmen ${id}`)
         return
       }
+
+      await this.getAppointmentActivityRepository(id).add({
+        action,
+        newData,
+        currentData,
+        actionBy,
+      })
     } catch (err) {
       console.warn(`Failed to create Object Difference for activity Tracking ${err}`)
     }
-
-    return this.getAppointmentActivityRepository(id).add({
-      action,
-      newData,
-      currentData,
-      actionBy,
-    })
   }
 }
 

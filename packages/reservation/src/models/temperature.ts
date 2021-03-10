@@ -23,3 +23,19 @@ export type TemperatureSaveRequest = {
   organizationId: string
   userId: string
 }
+
+export enum TemperatureStatusesUI {
+  Passed = 'Passed',
+  Failed = 'Failed',
+}
+
+export const mapTemperatureStatusToResultTypes = (
+  status: TemperatureStatuses,
+): TemperatureStatusesUI => {
+  const mapper = {
+    [TemperatureStatuses.Proceed]: TemperatureStatusesUI.Passed,
+    [TemperatureStatuses.Stop]: TemperatureStatusesUI.Failed,
+  }
+
+  return mapper[status]
+}

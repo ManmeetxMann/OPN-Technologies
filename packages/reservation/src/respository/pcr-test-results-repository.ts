@@ -3,10 +3,11 @@ import {serverTimestamp} from '../../../common/src/utils/times'
 import DataModel, {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
+import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 //Models
 import {PCRTestResultDBModel} from '../models/pcr-test-results'
-import {AppointmentDBModel, ResultTypes, TestTypes} from '../models/appointment'
+import {AppointmentDBModel, ResultTypes} from '../models/appointment'
 //Schema
 import DBSchema from '../dbschemas/pcr-test-results.schema'
 import {getFirestoreTimeStampDate} from '../utils/datetime.helper'
@@ -17,6 +18,33 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
 
   constructor(dataStore: DataStore) {
     super(dataStore)
+  }
+
+  async getReCollectedTestResultByBarCode(barCodeNumber: string): Promise<PCRTestResultDBModel> {
+    const pcrTestResultsQuery = [
+      {
+        map: '/',
+        key: 'barCode',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: barCodeNumber,
+      },
+      {
+        map: '/',
+        key: 'recollected',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      },
+    ]
+    const pcrTestResults = await this.findWhereEqualInMap(pcrTestResultsQuery)
+
+    if (!pcrTestResults || pcrTestResults.length === 0) {
+      throw new ResourceNotFoundException(
+        `PCRTestResult with barCode ${barCodeNumber} and ReCollect Requested not found`,
+      )
+    }
+
+    //Only one Result should be waiting
+    return pcrTestResults[0]
   }
 
   async createNewTestResults(data: {
@@ -59,12 +87,21 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       deadlineDate: getFirestoreTimeStampDate(data.appointment.deadline),
       dateOfAppointment: getFirestoreTimeStampDate(data.appointment.dateTime),
       testType: data.appointment.testType,
-      testKitBatchID:
-        data.appointment.testType === TestTypes.RapidAntigen
-          ? Config.get('TEST_KIT_BATCH_ID')
-          : null,
+      testKitBatchID: this.getTestBatchId(data.appointment.appointmentTypeID),
+      userId: data.appointment.userId,
+      templateId: 'HARDCODED', // @TODO Need need to refactor this to receive from props
+      labId: 'HARDCODED',
     }
     return await this.save(pcrResultDataForDb)
+  }
+
+  private getTestBatchId(appointmentTypeId: number): string {
+    if (appointmentTypeId === Number(Config.get('ACUITY_APPOINTMENT_TYPE_ID'))) {
+      return Config.get('TEST_KIT_BATCH_ID')
+    } else if (appointmentTypeId === Number(Config.get('ACUITY_APPOINTMENT_TYPE_MULTIPLEX'))) {
+      return Config.get('TEST_KIT_BATCH_MULTIPLEX_ID')
+    }
+    return null
   }
 
   public async save(

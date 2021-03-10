@@ -8,11 +8,11 @@ export class OPNPubSub {
     this.topic = this.pubSubClient.topic(topicName)
   }
 
-  async publish(data: unknown): Promise<void> {
-    this.topic.publish(Buffer.from(JSON.stringify(data)))
+  async publish(data: unknown, attributes: Record<string, string> = {}): Promise<void> {
+    this.topic.publish(Buffer.from(JSON.stringify(data)), attributes)
   }
 
-  async getPublishedData(data: string): Promise<unknown> {
+  static async getPublishedData(data: string): Promise<unknown> {
     return JSON.parse(Buffer.from(data, 'base64').toString())
   }
 }
