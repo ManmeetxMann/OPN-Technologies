@@ -396,9 +396,9 @@ class AdminAppointmentController implements IControllerBase {
 
   copyAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {appointmentIds, dateTime, organizationId} = req.body as {
+      const {appointmentIds, date, organizationId} = req.body as {
         appointmentIds: string[]
-        dateTime: string
+        date: string
         organizationId?: string
       }
       const adminId = getUserId(res.locals.authenticatedUser)
@@ -411,7 +411,7 @@ class AdminAppointmentController implements IControllerBase {
 
           const currentResult = await this.appointmentService.copyAppointment(
             appointmentId,
-            dateTime,
+            date,
             adminId,
             organizationId,
           )

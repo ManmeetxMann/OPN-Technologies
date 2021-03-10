@@ -826,7 +826,7 @@ export class AppoinmentService {
 
   async copyAppointment(
     appointmentId: string,
-    dateTime: string,
+    date: string,
     adminId: string,
     organizationId: string,
   ): Promise<BulkOperationResponse> {
@@ -851,6 +851,8 @@ export class AppoinmentService {
     }
 
     const barCodeNumber = await this.getNextBarCodeNumber()
+    const {1: appointmentTime} = appointment.dateTime.toDate().toISOString().split('T')
+    const dateTime = `${date}T${appointmentTime}`
 
     const acuityAppointment = await this.acuityRepository.createAppointment({
       dateTime,
