@@ -215,11 +215,7 @@ export class PCRTestResultsService {
     await this.pcrTestResultsRepository.delete(id)
   }
 
-  async processPCRTestResult(
-    reportTrackerId: string,
-    resultId: string,
-    userId: string,
-  ): Promise<void> {
+  async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
     const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
       this.datastore,
       reportTrackerId,
@@ -567,6 +563,7 @@ export class PCRTestResultsService {
     adminId: string,
     templateId: string,
     labId: string,
+    userId: string
   ): Promise<PCRTestResultDBModel> {
     if (metaData.action === PCRResultActions.DoNothing) {
       LogInfo('handlePCRResultSaveAndSend', 'DoNothingSelected HenceIgnored', {
@@ -682,7 +679,7 @@ export class PCRTestResultsService {
     const pcrResultRecorded = await this.pcrTestResultsRepository.updateData({
       id: testResult.id,
       updates: pcrResultDataForDbUpdate,
-      actionBy: adminId,
+      actionBy: userId,
       action: PcrResultTestActivityAction.Create,
     })
 
@@ -1013,10 +1010,10 @@ export class PCRTestResultsService {
     if (result.length) {
       const pcrTestResult = result[0]
       return await this.pcrTestResultsRepository.updateData({
-        id: pcrTestResult.id, 
+        id: pcrTestResult.id,
         updates: testResult,
         actionBy: userId,
-        action: PcrResultTestActivityAction.UpdateFromAppointment
+        action: PcrResultTestActivityAction.UpdateFromAppointment,
       })
     }
     return null

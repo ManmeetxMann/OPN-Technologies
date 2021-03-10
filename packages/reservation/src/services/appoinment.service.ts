@@ -1327,10 +1327,15 @@ export class AppoinmentService {
       dateTimeData,
     )
 
-    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(appointmentId, {
-      dateTime: dateTimeData.dateTime,
-      deadline: dateTimeData.deadline,
-    })
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+      appointmentId,
+      {
+        dateTime: dateTimeData.dateTime,
+        deadline: dateTimeData.deadline,
+      },
+      PcrResultTestActivityAction.UpdateFromAppointment,
+      requestData.userID,
+    )
 
     LogInfo('AppoinmentService:rescheduleAppointment', 'AppointmentRescheduled', {
       appoinmentId: updatedAppointment.id,
