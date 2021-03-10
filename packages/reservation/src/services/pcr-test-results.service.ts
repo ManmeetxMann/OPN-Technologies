@@ -282,11 +282,21 @@ export class PCRTestResultsService {
       testType,
       date,
       searchQuery,
+      labID
     }: PcrTestResultsListRequest,
     isLabUser: boolean,
   ): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
     let pcrResults: PCRTestResultDBModel[] = []
+
+    if (labID) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'labID',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: labID,
+      })
+    }
 
     //TODO: Allow BarCode with ORG
     if (organizationId) {

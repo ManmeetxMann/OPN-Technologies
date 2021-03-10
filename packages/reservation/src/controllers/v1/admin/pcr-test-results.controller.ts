@@ -234,6 +234,7 @@ class AdminPCRTestResultController implements IControllerBase {
         date,
         testType,
         searchQuery,
+        labID
       } = req.query as PcrTestResultsListRequest
       if (!barCode && !deadline && !date) {
         throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
@@ -249,6 +250,7 @@ class AdminPCRTestResultController implements IControllerBase {
           date,
           testType,
           searchQuery,
+          labID
         },
         isLabUser,
       )
@@ -271,6 +273,7 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         result,
         date,
+        labID
       } = req.query as PcrTestResultsListRequest
       if (!barCode && !deadline) {
         throw new BadRequestException('"deadline" is required if "barCode" is not specified')
