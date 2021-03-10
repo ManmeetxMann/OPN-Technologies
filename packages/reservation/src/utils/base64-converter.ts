@@ -28,7 +28,7 @@ export const decodeBookingLocationId = (id: string): BookingLocationIdParams => 
   return serializedId
 }
 
-export const encodeAvailableTimeId = (idBuf: AvailableTimeIdParams): string => {
+export const encodeAvailableTimeId = (idBuf: Partial<AvailableTimeIdParams>): string => {
   return Buffer.from(JSON.stringify(idBuf)).toString('base64')
 }
 

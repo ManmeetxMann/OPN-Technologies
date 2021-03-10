@@ -31,4 +31,5 @@ export type InternalAdminApprovalCreateRequest = {
   isClinicUser: boolean
   isRapidResultSenderAdmin: boolean
   isRapidResultOrgAdmin: boolean
+  isTestKitBatchAdmin: boolean
 }

@@ -1,6 +1,6 @@
 const frisby = require('frisby');
 const Joi = frisby.Joi;
-const helpersCommon = require('helpersCommon');
+const helpersCommon = require('helpers_common');
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
 // Do setup first
