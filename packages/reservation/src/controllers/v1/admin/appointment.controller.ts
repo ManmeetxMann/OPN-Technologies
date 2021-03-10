@@ -130,6 +130,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         searchQuery,
         transportRunId,
+        labID
       } = req.query as AppointmentByOrganizationRequest
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
@@ -151,6 +152,7 @@ class AdminAppointmentController implements IControllerBase {
         dateOfAppointment,
         searchQuery,
         transportRunId,
+        labID,
       })
 
       const transportRuns = fromPairs(

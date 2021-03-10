@@ -1135,6 +1135,10 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
+          name: labID
+          schema:
+            type: string
+        - in: query
           name: organizationId
           schema:
             type: string

@@ -218,6 +218,14 @@ export class AppoinmentService {
   ): Promise<(AppointmentDBModel & {organizationName: string})[]> {
     const conditions = []
     let appointments = []
+    if (queryParams.labID) {
+      conditions.push({
+        map: '/',
+        key: 'labID',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: queryParams.labID,
+      })
+    }
     if (queryParams.organizationId) {
       conditions.push({
         map: '/',
