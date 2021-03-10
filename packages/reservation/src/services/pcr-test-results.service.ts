@@ -630,13 +630,6 @@ export class PCRTestResultsService {
     templateId: string,
     labId: string,
   ): Promise<PCRTestResultDBModel> {
-    if (metaData.action === PCRResultActions.DoNothing) {
-      LogInfo('handlePCRResultSaveAndSend', 'DoNothingSelected HenceIgnored', {
-        barCode: barCode,
-      })
-      return
-    }
-
     const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
     const pcrTestResults = await this.getPCRResultsByBarCode(barCode)
 
@@ -666,6 +659,13 @@ export class PCRTestResultsService {
       throw new ResourceNotFoundException(
         `PCR Test Result with barCode ${barCode} is not waiting for results.`,
       )
+    }
+
+    if (metaData.action === PCRResultActions.DoNothing) {
+      LogInfo('handlePCRResultSaveAndSend', 'DoNothingSelected HenceIgnored', {
+        barCode: barCode,
+      })
+      return waitingPCRTestResult
     }
 
     if (
