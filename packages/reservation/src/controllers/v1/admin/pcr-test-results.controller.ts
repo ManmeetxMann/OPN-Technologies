@@ -172,6 +172,7 @@ class AdminPCRTestResultController implements IControllerBase {
         adminId,
         templateId,
         labId,
+        adminId,
       )
       const status = await this.pcrTestResultsService.getReportStatus(
         pcrResultRecorded.resultMetaData.action,

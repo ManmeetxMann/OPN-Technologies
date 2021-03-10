@@ -20,9 +20,9 @@ import {
   RapidAntigenTestResultRequest,
   RapidAlergenResultPDFType,
 } from '../models/rapid-antigen-test-results'
-import {PCRTestResultDBModel} from '../models/pcr-test-results'
 
 import {RapidAntigenPDFContent} from '../templates/rapid-antigen'
+import {PcrResultTestActivityAction, PCRTestResultDBModel} from '../models/pcr-test-results'
 
 export class RapidAntigenTestResultsService {
   private dataStore = new DataStore()
@@ -54,10 +54,15 @@ export class RapidAntigenTestResultsService {
   ): Promise<BulkOperationResponse> => {
     const {id, result, appointmentId, barCode} = testResult
     //Update Test Results
-    await this.pcrTestResultsRepository.updateData(id, {
-      previousResult: result !== ResultTypes.Pending ? result : null, //There is no Rerun. Hence No Previous Result
-      result: this.getResultBasedOnAction(action),
-      waitingResult: false,
+    await this.pcrTestResultsRepository.updateData({
+      id,
+      updates: {
+        previousResult: result !== ResultTypes.Pending ? result : null,
+        result: this.getResultBasedOnAction(action),
+        waitingResult: false,
+      },
+      actionBy: reqeustedBy,
+      action: PcrResultTestActivityAction.UpdateFromRapidAntigen,
     })
 
     //Update Appointments

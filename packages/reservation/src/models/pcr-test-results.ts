@@ -439,5 +439,34 @@ export const singlePcrTestResultDTO = (
   }
 }
 
+export type ActivityTracking = {
+  action: PcrResultTestActivityAction
+  currentData: Partial<PCRTestResultDBModel>
+  newData: Partial<PCRTestResultDBModel>
+  actionBy?: string // not required for action updateFromAcuity
+}
+
+export enum PcrResultTestActivityAction {
+  RegenerateBarcode = 'regenerateBarcode',
+  UpdateFromAcuity = 'updateFromAcuity',
+  Create = 'create',
+  ConfirmResult = 'confirmResult',
+  UpdateFromPackage = 'updateFromPackage',
+  AddTestRun = 'addTestRun',
+  UpdateFromAppointment = 'updateFromAppointment',
+  ResetOldResults = 'resetOldResults',
+  UpdateFromRapidAntigen = 'updateFromRapidAntigen',
+}
+
+export type UpdatePcrTestResultActionParams = {
+  id: string
+  updates: Partial<PCRTestResultDBModel>
+  action?: PcrResultTestActivityAction
+  actionBy?: string
+}
+
+export type ActivityTrackingDb = ActivityTracking & {
+  id: string
+}
 // determine priority in test Order based on result
 export const getSortOrderByResult = (result: string): number => ResultOrder[result]

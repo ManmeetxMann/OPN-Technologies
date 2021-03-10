@@ -247,7 +247,11 @@ class AppointmentWebhookController implements IControllerBase {
           userId: updatedAppointment.userId,
         }
 
-        await this.pcrTestResultsService.updateTestResults(pcrTestResult.id, pcrResultDataForDb)
+        await this.pcrTestResultsService.updateTestResults(
+          pcrTestResult.id,
+          pcrResultDataForDb,
+          'WEBHOOK',
+        )
         LogInfo('UpdateAppointmentFromWebhook', 'UpdatedPCRResultsSuccessfully', {
           appoinmentID: appointmentFromDb.id,
           pcrResultID: pcrTestResult.id,

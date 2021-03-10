@@ -1,4 +1,4 @@
-import {isEqual} from 'lodash'
+import {isEmpty} from 'lodash'
 import {makeFirestoreTimestamp} from '../utils/datetime.helper'
 import {now} from '../../../common/src/utils/times'
 import DataModel from '../../../common/src/data/datamodel.base'
@@ -12,6 +12,8 @@ import {
   UpdateAppointmentActionParams,
 } from '../models/appointment'
 import DBSchema from '../dbschemas/appointments.schema'
+import {LogError, LogWarning} from '../../../common/src/utils/logging-setup'
+import {findDifference} from '../utils/compare-objects'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
@@ -134,19 +136,14 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   }: UpdateAppointmentActionParams): Promise<ActivityTrackingDb> {
     try {
       const appointment = await this.get(id)
-      const currentData = {}
-      const newData = {}
       const skip = ['id', 'timestamps', 'appointmentStatus']
 
-      Object.keys(updates).map((key) => {
-        if (!skip.includes(key) && !isEqual(updates[key], appointment[key])) {
-          currentData[key] = appointment[key] ?? null
-          newData[key] = updates[key] ?? null
-        }
-      })
+      const {currentData, newData} = findDifference<AppointmentDBModel>(appointment, updates, skip)
 
-      if (!Object.keys(newData).length) {
-        console.warn(`No one field has been updated for appointmen ${id}`)
+      if (isEmpty(newData, true)) {
+        LogWarning('addAppointmentActivityById', 'NoAppointmentUpdates', {
+          message: `No one field has been updated for appointment ${id}`,
+        })
         return
       }
 
@@ -157,7 +154,9 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
         actionBy,
       })
     } catch (err) {
-      console.warn(`Failed to create Object Difference for activity Tracking ${err}`)
+      LogError('addAppointmentActivityById', 'FailedFindDifference', {
+        errorMessage: err.toString(),
+      })
     }
   }
 }

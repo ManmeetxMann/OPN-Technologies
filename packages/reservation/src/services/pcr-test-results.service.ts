@@ -40,6 +40,7 @@ import {
   PCRResultActionsAllowedResend,
   PCRResultActionsForConfirmation,
   PCRResultPDFType,
+  PcrResultTestActivityAction,
   PCRTestResultByDeadlineListDTO,
   PCRTestResultConfirmRequest,
   PCRTestResultDBModel,
@@ -169,7 +170,11 @@ export class PCRTestResultsService {
     await this.pcrTestResultsRepository.delete(id)
   }
 
-  async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
+  async processPCRTestResult(
+    reportTrackerId: string,
+    resultId: string,
+    userId: string,
+  ): Promise<void> {
     const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
       this.datastore,
       reportTrackerId,
@@ -214,6 +219,7 @@ export class PCRTestResultsService {
         pcrResults.adminId,
         'HARCODED', // @TODO IMPLEMENT THIS
         'HARCODED', // @TODO IMPLEMENT THIS
+        userId,
       )
 
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
@@ -630,6 +636,7 @@ export class PCRTestResultsService {
     adminId: string,
     templateId: string,
     labId: string,
+    userId: string,
   ): Promise<PCRTestResultDBModel> {
     const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
     const pcrTestResults = await this.getPCRResultsByBarCode(barCode)
@@ -743,11 +750,12 @@ export class PCRTestResultsService {
       templateId,
       labId,
     }
-
-    const pcrResultRecorded = await this.pcrTestResultsRepository.updateData(
-      testResult.id,
-      pcrResultDataForDbUpdate,
-    )
+    const pcrResultRecorded = await this.pcrTestResultsRepository.updateData({
+      id: testResult.id,
+      updates: pcrResultDataForDbUpdate,
+      actionBy: userId,
+      action: PcrResultTestActivityAction.Create,
+    })
 
     await this.handleActions({
       resultData: {
@@ -759,6 +767,7 @@ export class PCRTestResultsService {
       runNumber: testResult.runNumber,
       reCollectNumber: testResult.reCollectNumber,
       result: finalResult,
+      actionBy: adminId,
     })
 
     //Send Notification
@@ -784,6 +793,7 @@ export class PCRTestResultsService {
     runNumber,
     reCollectNumber,
     result,
+    actionBy,
   }: {
     resultData: {
       adminId: string
@@ -794,6 +804,7 @@ export class PCRTestResultsService {
     runNumber: number
     reCollectNumber: number
     result: ResultTypes
+    actionBy: string
   }): Promise<void> {
     const nextRunNumber = runNumber + 1
     const handledReCollect = async () => {
@@ -824,6 +835,7 @@ export class PCRTestResultsService {
           appointment: appointment,
           deadlineLabel: DeadlineLabel.NextDay,
           userId: resultData.adminId,
+          actionBy,
         })
         await this.pcrTestResultsRepository.createNewTestResults({
           appointment: updatedAppointment,
@@ -839,6 +851,7 @@ export class PCRTestResultsService {
           appointment: appointment,
           deadlineLabel: DeadlineLabel.SameDay,
           userId: resultData.adminId,
+          actionBy,
         })
         await this.pcrTestResultsRepository.createNewTestResults({
           appointment: updatedAppointment,
@@ -854,6 +867,7 @@ export class PCRTestResultsService {
           appointment: appointment,
           deadlineLabel: DeadlineLabel.NextDay,
           userId: resultData.adminId,
+          actionBy,
         })
         await this.pcrTestResultsRepository.createNewTestResults({
           appointment: updatedAppointment,
@@ -1051,18 +1065,30 @@ export class PCRTestResultsService {
   async updateTestResults(
     id: string,
     defaultTestResults: Partial<PCRTestResultDBModel>,
+    userId: string,
   ): Promise<void> {
-    await this.pcrTestResultsRepository.updateData(id, defaultTestResults)
+    await this.pcrTestResultsRepository.updateData({
+      id,
+      updates: defaultTestResults,
+      action: PcrResultTestActivityAction.UpdateFromAcuity,
+      actionBy: userId,
+    })
   }
 
   async updateTestResultByAppointmentId(
     appointmentId: string,
     testResult: Partial<PCRTestResultDBModel>,
+    userId: string,
   ): Promise<PCRTestResultDBModel> {
     const result = await this.getTestResultsByAppointmentId(appointmentId)
     if (result.length) {
       const pcrTestResult = result[0]
-      return await this.pcrTestResultsRepository.updateData(pcrTestResult.id, testResult)
+      return await this.pcrTestResultsRepository.updateData({
+        id: pcrTestResult.id,
+        updates: testResult,
+        actionBy: userId,
+        action: PcrResultTestActivityAction.UpdateFromAppointment,
+      })
     }
     return null
   }
@@ -1209,11 +1235,18 @@ export class PCRTestResultsService {
   async updateOrganizationIdByAppointmentId(
     appointmentId: string,
     organizationId: string,
+    action: PcrResultTestActivityAction,
+    actionBy: string,
   ): Promise<void> {
     const pcrTestResults = await this.getTestResultsByAppointmentId(appointmentId)
     pcrTestResults.map(
       async (pcrTestResult) =>
-        await this.pcrTestResultsRepository.updateData(pcrTestResult.id, {organizationId}),
+        await this.pcrTestResultsRepository.updateData({
+          id: pcrTestResult.id,
+          updates: {organizationId},
+          action,
+          actionBy,
+        }),
     )
   }
 
@@ -1253,9 +1286,14 @@ export class PCRTestResultsService {
           ]
           if (allowedStatusToBeMarkedAsInProgress.includes(appointment.appointmentStatus)) {
             //Add TestRunID and Mark Waiting As True
-            await this.pcrTestResultsRepository.updateData(pcr.id, {
-              testRunId: testRunId,
-              waitingResult: true,
+            await this.pcrTestResultsRepository.updateData({
+              id: pcr.id,
+              updates: {
+                testRunId,
+                waitingResult: true,
+              },
+              action: PcrResultTestActivityAction.AddTestRun,
+              actionBy: adminId,
             })
 
             await this.appointmentService.makeInProgress(pcr.appointmentId, testRunId, adminId)
