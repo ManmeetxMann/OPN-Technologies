@@ -27,7 +27,7 @@ type Result = {
   value: unknown
 }
 
-export async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]> {
+async function promiseAllSettled(promises: Promise<unknown>[]): Promise<Result[]> {
   return Promise.all(
     promises.map((promise) =>
       promise
@@ -76,9 +76,14 @@ async function addLocationsFields(
 ) {
   try {
     const appointment = snapshot.data()
-    const {location, name}: {location: string; name: string} = calendars.find(
+    const calendar = calendars.find(
       ({id}) => appointment.calendarID == id,
     )
+    if(!calendar){
+      return Promise.reject(`Invalid Calendar ID: ${appointment.calendarID} for Appointment: ${snapshot.id}`)
+    }
+
+    const {location, name}: {location: string; name: string} = calendar
     const updates: {
       locationAddress?: string
       locationName?: string
@@ -137,7 +142,7 @@ async function addLocationsFields(
 
 async function main() {
   try {
-    console.log('Migration Starting')
+    console.log(`Migration Starting Time: ${new Date()}`)
     const results = await updateAppointments()
     results.forEach((result) => {
       totalCount += 1
