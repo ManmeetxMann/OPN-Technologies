@@ -1,5 +1,6 @@
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
+import DbSchema from '../dbschemas/appointment-to-test-type-assoc.schema'
 import {AppointmentToTestTypeAssociation} from '../models/appointment-test-association'
 
 export class AppointmentToTestTypeRepository extends DataModel<AppointmentToTestTypeAssociation> {
@@ -13,6 +14,7 @@ export class AppointmentToTestTypeRepository extends DataModel<AppointmentToTest
   public async save(
     association: Omit<AppointmentToTestTypeAssociation, 'id'>,
   ): Promise<AppointmentToTestTypeAssociation> {
-    return this.add(association)
+    const validAssociation = await DbSchema.validateAsync(association)
+    return this.add(validAssociation)
   }
 }
