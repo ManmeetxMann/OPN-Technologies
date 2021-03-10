@@ -1012,7 +1012,7 @@ export class PCRTestResultsService {
 
   async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
     const templateId =
-      resultData.resultSpecs.action === PCRResultActions.SendPreliminaryPositive
+      resultData.resultMetaData.action === PCRResultActions.SendPreliminaryPositive
         ? Config.getInt('TEST_RESULT_PRELIMNARY_RESULTS_TEMPLATE_ID')
         : Config.getInt('TEST_RESULT_RERUN_NOTIFICATION_TEMPLATE_ID')
     await this.emailService.send({
