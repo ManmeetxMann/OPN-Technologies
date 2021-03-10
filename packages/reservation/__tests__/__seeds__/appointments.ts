@@ -38,7 +38,7 @@ export const create = async (dataOverwrite: {
     registeredNursePractitioner: 'NAME registeredNursePractitioner',
     shareTestResultWithEmployer: true,
     timeOfAppointment: '8:00am',
-    labID: dataOverwrite.labID ?? 'DEFAULT'
+    labID: dataOverwrite.labID ?? 'DEFAULT',
   }
   data.organizationId = dataOverwrite.organizationId ?? null
   data.appointmentStatus = dataOverwrite.appointmentStatus ?? 'Pending'

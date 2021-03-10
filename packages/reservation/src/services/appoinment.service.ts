@@ -1220,7 +1220,7 @@ export class AppoinmentService {
   }
 
   async getAppointmentsStats(
-    queryParams: AppointmentByOrganizationRequest
+    queryParams: AppointmentByOrganizationRequest,
   ): Promise<{
     appointmentStatusArray: Filter[]
     orgIdArray: Filter[]

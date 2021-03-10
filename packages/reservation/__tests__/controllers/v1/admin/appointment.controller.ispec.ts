@@ -19,14 +19,14 @@ describe('AdminAppointmentController', () => {
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
       appointmentStatus: 'InTransit',
-      labID:labID1
+      labID: labID1,
     })
     await create({
       id: 'APT2',
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
       appointmentStatus: 'InProgress',
-      labID:labID1,
+      labID: labID1,
     })
     await create({
       id: 'APT3',
@@ -34,7 +34,7 @@ describe('AdminAppointmentController', () => {
       dateOfAppointment: 'February 05, 2020',
       organizationId: organizationId,
       appointmentStatus: 'InProgress',
-      labID:labID1,
+      labID: labID1,
     })
     await create({
       id: 'APT4',
@@ -114,7 +114,7 @@ describe('AdminAppointmentController', () => {
       done()
     })
   })
-  
+
   describe('get appointment list stats', () => {
     test('get appointments stats by dateOfAppointment and Lab successfully.', async (done) => {
       const url = `/reservation/admin/api/v1/appointments/list/stats?dateOfAppointment=${dateForAppointments}&labID=${labID1}`
