@@ -47,7 +47,7 @@ async function updateTestResults(): Promise<Result[]> {
   while (hasMore) {
     const pcrResultSnapshot = await database
       .collection('pcr-test-results')
-      .where('resultSpecs', '!=', null)
+      //.where('resultSpecs', '!=', null)
       .offset(offset)
       .limit(limit)
       .get()
@@ -114,7 +114,7 @@ async function updatePcrTestResult(
           resultDate: resultSpecs.resultDate,
           comment: resultSpecs.comment,
         },
-        resultSpecs: firestore.FieldValue.delete(),
+        //resultSpecs: firestore.FieldValue.delete(),
         templateId: 'template1',
         labId: 'k0qbPDqTwqitKUwlGHye',
         timestamps: {
