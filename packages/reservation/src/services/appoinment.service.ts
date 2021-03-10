@@ -32,6 +32,8 @@ import {
   makeDeadline,
   makeRapidDeadline,
   makeFirestoreTimestamp,
+  getTimeFromDateTime,
+  makeUtcIsoDate,
 } from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -851,8 +853,8 @@ export class AppoinmentService {
     }
 
     const barCodeNumber = await this.getNextBarCodeNumber()
-    const {1: appointmentTime} = appointment.dateTime.toDate().toISOString().split('T')
-    const dateTime = `${date}T${appointmentTime}`
+    const appointmentTime = getTimeFromDateTime(appointment.dateTime.toDate())
+    const dateTime = makeUtcIsoDate(date, appointmentTime)
 
     const acuityAppointment = await this.acuityRepository.createAppointment({
       dateTime,
