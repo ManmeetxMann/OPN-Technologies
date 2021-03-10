@@ -114,6 +114,8 @@ async function updatePcrTestResult(
           comment: snapshot.data().resultSpecs.comment,
         },
         resultSpecs: firestore.FieldValue.delete(),
+        templateId: 'template1',
+        labId: 'Kitchener',
         timestamps: {
           migrations: {
             specsToMetaAnalysis: firestore.FieldValue.serverTimestamp(),
