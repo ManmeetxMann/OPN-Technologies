@@ -5,7 +5,7 @@ import DataModel, {DataModelFieldMapOperatorType} from '../../../common/src/data
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {LogWarning} from '../../../common/src/utils/logging-setup'
+import {LogError, LogWarning} from '../../../common/src/utils/logging-setup'
 //Models
 import {
   PCRTestResultDBModel,
@@ -223,9 +223,9 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       )
 
       if (isEmpty(newData, true)) {
-        console.warn(
-          `[PCR-Test-Result repository]: No one field has been updated for pcr-test-result ${id}`,
-        )
+        LogWarning('addPcrTestResultActivityById', 'NoPCRTestResultUpdates', {
+          message: `No one field has been updated for pcr-test-result ${id}`,
+        })
         return
       }
 
@@ -236,8 +236,8 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
         actionBy,
       })
     } catch (err) {
-      LogWarning('addPcrTestResultActivityById', 'FailedFindDifference', {
-        message: `Failed to create Object Difference for activity Tracking ${err}`,
+      LogError('addPcrTestResultActivityById', 'FailedFindDifference', {
+        errorMessage: err.toString(),
       })
     }
   }
