@@ -23,7 +23,6 @@ export default Joi.object({
   email: Joi.string().required(),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
-  location: Joi.string().allow(''),
   organizationId: Joi.string().allow(null),
   packageCode: Joi.string().allow(null),
   phone: Joi.string().required(),

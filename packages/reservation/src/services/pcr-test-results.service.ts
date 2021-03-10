@@ -54,6 +54,7 @@ import {
   ResultReportStatus,
   resultToStyle,
   TestResutsDTO,
+  getSortOrderByResult,
 } from '../models/pcr-test-results'
 
 import {
@@ -80,6 +81,11 @@ import {AlertService} from '../../../passport/src/services/alert-service'
 
 const passportStatusByPCR = {
   [ResultTypes.Positive]: PassportStatuses.Stop,
+  [ResultTypes.PresumptivePositive]: PassportStatuses.Stop,
+  [ResultTypes.PreliminaryPositive]: PassportStatuses.Stop,
+  [ResultTypes.Inconclusive]: PassportStatuses.Stop,
+  [ResultTypes.Invalid]: PassportStatuses.Stop,
+  [ResultTypes.Indeterminate]: PassportStatuses.Stop,
   [ResultTypes.Negative]: PassportStatuses.Proceed,
 }
 import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results'
@@ -402,7 +408,7 @@ export class PCRTestResultsService {
     } else {
       pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
         pcrTestResultsQuery,
-        result ? null : {key: 'result', direction: 'desc'},
+        result ? null : {key: 'sortOrder', direction: 'desc'},
       )
     }
 
@@ -625,13 +631,6 @@ export class PCRTestResultsService {
     templateId: string,
     labId: string,
   ): Promise<PCRTestResultDBModel> {
-    if (metaData.action === PCRResultActions.DoNothing) {
-      LogInfo('handlePCRResultSaveAndSend', 'DoNothingSelected HenceIgnored', {
-        barCode: barCode,
-      })
-      return
-    }
-
     const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
     const pcrTestResults = await this.getPCRResultsByBarCode(barCode)
 
@@ -661,6 +660,13 @@ export class PCRTestResultsService {
       throw new ResourceNotFoundException(
         `PCR Test Result with barCode ${barCode} is not waiting for results.`,
       )
+    }
+
+    if (metaData.action === PCRResultActions.DoNothing) {
+      LogInfo('handlePCRResultSaveAndSend', 'DoNothingSelected HenceIgnored', {
+        barCode: barCode,
+      })
+      return waitingPCRTestResult
     }
 
     if (
@@ -733,6 +739,7 @@ export class PCRTestResultsService {
       displayInResult: true,
       recollected: actionsForRecollection.includes(metaData.action),
       confirmed: false,
+      sortOrder: getSortOrderByResult(finalResult),
       templateId,
       labId,
     }
