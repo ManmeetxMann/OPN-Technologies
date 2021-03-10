@@ -59,6 +59,8 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
   async createNewTestResults(data: {
     appointment: AppointmentDBModel
     adminId: string
+    labId: string
+    templateId: string
     linkedBarCodes?: string[]
     reCollectNumber: number
     runNumber: number
@@ -104,8 +106,8 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       testKitBatchID: this.getTestBatchId(data.appointment.appointmentTypeID),
       userId: data.appointment.userId,
       sortOrder: getSortOrderByResult(data.result ?? ResultTypes.Pending),
-      templateId: 'HARDCODED', // @TODO Need need to refactor this to receive from props
-      labId: 'HARDCODED',
+      labId: data.labId,
+      templateId: data.templateId,
     }
     return await this.save(pcrResultDataForDb)
   }

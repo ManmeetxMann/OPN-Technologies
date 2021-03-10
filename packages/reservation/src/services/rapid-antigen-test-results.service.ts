@@ -171,6 +171,8 @@ export class RapidAntigenTestResultsService {
         runNumber: 0,
         reCollectNumber: 0,
         previousResult: ResultTypes.Pending,
+        labId: 'RAPID',
+        templateId: 'RAPID',
       })
       return this.saveResult(action, notify, reqeustedBy, newResult)
     } else {
