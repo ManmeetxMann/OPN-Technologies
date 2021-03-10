@@ -333,14 +333,14 @@ export type ResultDictionary = {
 }
 
 export const ResultOrder: ResultDictionary = {
-  Positive: 7,
-  PresumptivePositive: 6,
-  PreliminaryPositive: 5,
-  Invalid: 4,
-  Inconclusive: 3,
-  Indeterminate: 2,
-  Pending: 1,
-  Negative: 0,
+  Positive: 8,
+  PresumptivePositive: 7,
+  PreliminaryPositive: 6,
+  Invalid: 5,
+  Inconclusive: 4,
+  Indeterminate: 3,
+  Pending: 2,
+  Negative: 1,
 }
 
 export const pcrTestResultsResponse = (
