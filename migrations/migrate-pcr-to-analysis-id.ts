@@ -70,52 +70,53 @@ async function updatePcrTestResult(
   snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
 ) {
   try {
+    const resultSpecs = snapshot.data().resultSpecs
     await snapshot.ref.set(
       {
         resultAnalysis: [
           {
             label: 'calRed61RdRpGene',
-            value: snapshot.data().resultSpecs.calRed61RdRpGene,
+            value: resultSpecs.calRed61RdRpGene,
           },
           {
             label: 'calRed61Ct',
-            value: snapshot.data().resultSpecs.calRed61Ct,
+            value: resultSpecs.calRed61Ct,
           },
           {
             label: 'famEGene',
-            value: snapshot.data().resultSpecs.famEGene,
+            value: resultSpecs.famEGene,
           },
           {
             label: 'famCt',
-            value: snapshot.data().resultSpecs.famCt,
+            value: resultSpecs.famCt,
           },
           {
             label: 'hexIC',
-            value: snapshot.data().resultSpecs.hexIC,
+            value: resultSpecs.hexIC,
           },
           {
             label: 'hexCt',
-            value: snapshot.data().resultSpecs.hexCt,
+            value: resultSpecs.hexCt,
           },
           {
             label: 'quasar670NGene',
-            value: snapshot.data().resultSpecs.quasar670NGene,
+            value: resultSpecs.quasar670NGene,
           },
           {
             label: 'quasar670Ct',
-            value: snapshot.data().resultSpecs.quasar670Ct,
+            value: resultSpecs.quasar670Ct,
           },
         ],
         resultMeta: {
-          action: snapshot.data().resultSpecs.action,
-          autoResult: snapshot.data().resultSpecs.autoResult,
-          notify: snapshot.data().resultSpecs.notify,
-          resultDate: snapshot.data().resultSpecs.resultDate,
-          comment: snapshot.data().resultSpecs.comment,
+          action: resultSpecs.action,
+          autoResult: resultSpecs.autoResult,
+          notify: resultSpecs.notify,
+          resultDate: resultSpecs.resultDate,
+          comment: resultSpecs.comment,
         },
         resultSpecs: firestore.FieldValue.delete(),
         templateId: 'template1',
-        labId: 'Kitchener',
+        labId: 'k0qbPDqTwqitKUwlGHye',
         timestamps: {
           migrations: {
             specsToMetaAnalysis: firestore.FieldValue.serverTimestamp(),
