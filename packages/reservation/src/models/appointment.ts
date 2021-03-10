@@ -192,6 +192,7 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   transportRunId?: string
   barCode?: string
   appointmentStatus?: AppointmentStatus[]
+  labID?: string
 }
 
 //Update to Acuity Service
