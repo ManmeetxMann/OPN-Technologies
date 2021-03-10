@@ -59,12 +59,18 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       deadlineDate: getFirestoreTimeStampDate(data.appointment.deadline),
       dateOfAppointment: getFirestoreTimeStampDate(data.appointment.dateTime),
       testType: data.appointment.testType,
-      testKitBatchID:
-        data.appointment.testType === TestTypes.RapidAntigen
-          ? Config.get('TEST_KIT_BATCH_ID')
-          : null,
+      testKitBatchID: this.getTestBatchId(data.appointment.appointmentTypeID),
     }
     return await this.save(pcrResultDataForDb)
+  }
+
+  private getTestBatchId(appointmentTypeId: number): string {
+    if (appointmentTypeId === Number(Config.get('ACUITY_APPOINTMENT_TYPE_ID'))) {
+      return Config.get('TEST_KIT_BATCH_ID')
+    } else if (appointmentTypeId === Number(Config.get('ACUITY_APPOINTMENT_TYPE_MULTIPLEX'))) {
+      return Config.get('TEST_KIT_BATCH_MULTIPLEX_ID')
+    }
+    return null
   }
 
   public async save(
