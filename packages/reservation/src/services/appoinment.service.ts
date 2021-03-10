@@ -494,12 +494,12 @@ export class AppoinmentService {
     const currentUserId = userId ? userId : await getNewUserId()
 
     return {
-      acuityAppointmentId: acuityAppointment.id,
+      acuityAppointmentId: Number(acuityAppointment.id),
       appointmentStatus,
-      appointmentTypeID: acuityAppointment.appointmentTypeID,
+      appointmentTypeID: Number(acuityAppointment.appointmentTypeID),
       barCode: barCode,
       canceled: acuityAppointment.canceled,
-      calendarID: acuityAppointment.calendarID,
+      calendarID: Number(acuityAppointment.calendarID),
       dateOfAppointment,
       dateOfBirth: acuityAppointment.dateOfBirth,
       dateTime,
