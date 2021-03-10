@@ -507,7 +507,6 @@ export class AppoinmentService {
       email: acuityAppointment.email,
       firstName: acuityAppointment.firstName,
       lastName: acuityAppointment.lastName,
-      location: acuityAppointment.location,
       organizationId: acuityAppointment.organizationId || organizationId || null,
       packageCode: acuityAppointment.certificate,
       phone: acuityAppointment.phone,
