@@ -6,7 +6,7 @@ import {Config} from '../../../common/src/utils/config'
 
 //Models
 import {PCRTestResultDBModel} from '../models/pcr-test-results'
-import {AppointmentDBModel, ResultTypes, TestTypes} from '../models/appointment'
+import {AppointmentDBModel, ResultTypes} from '../models/appointment'
 //Schema
 import DBSchema from '../dbschemas/pcr-test-results.schema'
 import {getFirestoreTimeStampDate} from '../utils/datetime.helper'
