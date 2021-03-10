@@ -1220,25 +1220,13 @@ export class AppoinmentService {
   }
 
   async getAppointmentsStats(
-    appointmentStatus: AppointmentStatus[],
-    barCode: string,
-    organizationId: string,
-    dateOfAppointment: string,
-    searchQuery: string,
-    transportRunId: string,
+    queryParams: AppointmentByOrganizationRequest
   ): Promise<{
     appointmentStatusArray: Filter[]
     orgIdArray: Filter[]
     total: number
   }> {
-    const appointments = await this.getAppointmentsDB({
-      appointmentStatus,
-      barCode,
-      organizationId,
-      dateOfAppointment,
-      searchQuery,
-      transportRunId,
-    })
+    const appointments = await this.getAppointmentsDB(queryParams)
     const appointmentStatsByTypes: Record<AppointmentStatus, number> = {} as Record<
       AppointmentStatus,
       number

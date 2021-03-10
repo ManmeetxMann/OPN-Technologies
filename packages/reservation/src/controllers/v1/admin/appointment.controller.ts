@@ -190,6 +190,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         searchQuery,
         transportRunId,
+        labID
       } = req.query as AppointmentByOrganizationRequest
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
@@ -200,14 +201,15 @@ class AdminAppointmentController implements IControllerBase {
         appointmentStatusArray,
         orgIdArray,
         total,
-      } = await this.appointmentService.getAppointmentsStats(
+      } = await this.appointmentService.getAppointmentsStats({
         appointmentStatus,
         barCode,
         organizationId,
         dateOfAppointment,
         searchQuery,
         transportRunId,
-      )
+        labID,
+      })
 
       res.json(actionSucceed(statsUiDTOResponse(appointmentStatusArray, orgIdArray, total)))
     } catch (error) {
