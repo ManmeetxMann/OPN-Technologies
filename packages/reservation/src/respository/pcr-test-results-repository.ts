@@ -6,7 +6,7 @@ import {Config} from '../../../common/src/utils/config'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 
 //Models
-import {PCRTestResultDBModel} from '../models/pcr-test-results'
+import {PCRTestResultDBModel, getSortOrderByResult} from '../models/pcr-test-results'
 import {AppointmentDBModel, ResultTypes} from '../models/appointment'
 //Schema
 import DBSchema from '../dbschemas/pcr-test-results.schema'
@@ -89,6 +89,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       testType: data.appointment.testType,
       testKitBatchID: this.getTestBatchId(data.appointment.appointmentTypeID),
       userId: data.appointment.userId,
+      sortOrder: getSortOrderByResult(data.result ?? ResultTypes.Pending),
       templateId: 'HARDCODED', // @TODO Need need to refactor this to receive from props
       labId: 'HARDCODED',
     }

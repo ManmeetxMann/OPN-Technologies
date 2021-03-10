@@ -158,6 +158,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   templateId: string
   labId: string
   userId: string
+  sortOrder: number
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -186,6 +187,7 @@ export type PCRTestResultEmailDTO = Omit<
   | 'deadlineDate'
   | 'dateOfAppointment'
   | 'userId'
+  | 'sortOrder'
 > &
   AppointmentDBModel
 
@@ -297,6 +299,21 @@ export type pcrTestResultsDTO = {
   barCode: string
   status: ResultReportStatus | ResultTypes
   details?: string
+}
+
+export type ResultDictionary = {
+  [index: string]: number
+}
+
+export const ResultOrder: ResultDictionary = {
+  Positive: 8,
+  PresumptivePositive: 7,
+  PreliminaryPositive: 6,
+  Invalid: 5,
+  Inconclusive: 4,
+  Indeterminate: 3,
+  Pending: 2,
+  Negative: 1,
 }
 
 export const pcrTestResultsResponse = (
@@ -421,3 +438,6 @@ export const singlePcrTestResultDTO = (
     doctorId: 'DR1',
   }
 }
+
+// determine priority in test Order based on result
+export const getSortOrderByResult = (result: string): number => ResultOrder[result]

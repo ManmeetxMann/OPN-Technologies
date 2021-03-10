@@ -54,6 +54,7 @@ import {
   ResultReportStatus,
   resultToStyle,
   TestResutsDTO,
+  getSortOrderByResult,
 } from '../models/pcr-test-results'
 
 import {
@@ -407,7 +408,7 @@ export class PCRTestResultsService {
     } else {
       pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
         pcrTestResultsQuery,
-        result ? null : {key: 'result', direction: 'desc'},
+        result ? null : {key: 'sortOrder', direction: 'desc'},
       )
     }
 
@@ -738,6 +739,7 @@ export class PCRTestResultsService {
       displayInResult: true,
       recollected: actionsForRecollection.includes(metaData.action),
       confirmed: false,
+      sortOrder: getSortOrderByResult(finalResult),
       templateId,
       labId,
     }
