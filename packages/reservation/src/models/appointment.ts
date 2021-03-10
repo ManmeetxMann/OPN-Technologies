@@ -43,7 +43,6 @@ export type AppointmentDBModel = {
   email: string
   firstName: string
   lastName: string
-  location?: string
   organizationId?: string
   packageCode?: string
   phone: number
@@ -109,8 +108,8 @@ export type AppointmentAcuityResponse = {
   id: number
   labels: LabelsAcuityResponse[]
   lastName: string
-  location: string
   ohipCard?: string
+  location: string
   organizationId?: string
   phone: number
   readTermsAndConditions: boolean
@@ -347,7 +346,7 @@ export const appointmentUiDTOResponse = (
     lastName: appointment.lastName,
     status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser),
     barCode: appointment.barCode,
-    location: appointment.location,
+    location: appointment.locationAddress,
     email: appointment.email,
     phone: appointment.phone,
     dateTime: formatDateRFC822Local(appointment.dateTime),
@@ -397,7 +396,7 @@ export const appointmentByBarcodeUiDTOResponse = (
     lastName: appointment.lastName,
     status: appointment.appointmentStatus,
     barCode: appointment.barCode,
-    location: appointment.location,
+    location: appointment.locationAddress,
     email: appointment.email,
     phone: appointment.phone,
     dateTime: formatDateRFC822Local(appointment.dateTime),
