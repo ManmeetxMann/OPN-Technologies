@@ -1406,13 +1406,21 @@ export class PCRTestResultsService {
     deadline,
     testRunId,
     barCode,
+    labID
   }: PcrTestResultsListByDeadlineRequest): Promise<{
     pcrResultStatsByResultArr: Filter[]
     pcrResultStatsByOrgIdArr: Filter[]
     total: number
   }> {
     const pcrTestResultsQuery = []
-
+    if(labID){
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'labID',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: labID,
+      })
+    }
     if (deadline) {
       pcrTestResultsQuery.push({
         map: '/',
@@ -1521,7 +1529,7 @@ export class PCRTestResultsService {
         value: labID,
       })
     }
-    
+
     if (barCode) {
       pcrTestResultsQuery.push({
         map: '/',
