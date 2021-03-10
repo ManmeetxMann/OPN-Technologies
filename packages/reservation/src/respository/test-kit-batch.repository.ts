@@ -1,5 +1,6 @@
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
+import DbSchema from '../dbschemas/test-kit-batches.schema'
 import {TestKitBatch, TestKitBatchID, TestKitBatchPostRequest} from '../models/test-kit-batch'
 
 export class TestKitBatchRepository extends DataModel<TestKitBatch> {
@@ -15,6 +16,7 @@ export class TestKitBatchRepository extends DataModel<TestKitBatch> {
   }
 
   public async save(testKitBatch: TestKitBatchPostRequest): Promise<TestKitBatchID> {
-    return this.add(testKitBatch)
+    const validTestKitBatch = await DbSchema.validateAsync(testKitBatch)
+    return this.add(validTestKitBatch)
   }
 }
