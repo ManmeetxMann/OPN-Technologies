@@ -401,10 +401,10 @@ export class PCRTestResultsService {
       }
 
       const queryResults = await Promise.all(search).then((results) => results.flat())
-      //TODO: need to sort final results by sortOrder ref PR: #1733
       pcrResults = [
         ...new Map(queryResults.flat().map((item) => [item.id, item])).values(),
       ] as PCRTestResultDBModel[]
+      pcrResults.sort((a, b) => b.sortOrder - a.sortOrder)
     } else {
       pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
         pcrTestResultsQuery,
