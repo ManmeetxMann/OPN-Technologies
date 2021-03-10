@@ -291,6 +291,7 @@ class AdminPCRTestResultController implements IControllerBase {
           barCode,
           result,
           date,
+          labID,
         },
         isLabUser,
       )
@@ -374,6 +375,7 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         appointmentStatus,
         organizationId,
+        labID,
       } = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
@@ -384,6 +386,7 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         appointmentStatus,
         organizationId,
+        labID,
       })
 
       res.json(actionSucceed(pcrResults))

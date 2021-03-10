@@ -1187,8 +1187,7 @@ export class PCRTestResultsService {
     return testResultsWithHistory
   }
 
-  async getPCRResultsStats(
-    {organizationId, deadline, barCode, result, date}: PcrTestResultsListRequest,
+  async getPCRResultsStats(queryParams: PcrTestResultsListRequest,
     isLabUser: boolean,
   ): Promise<{
     total: number
@@ -1196,7 +1195,7 @@ export class PCRTestResultsService {
     pcrResultStatsByResultArr: Filter[]
   }> {
     const pcrTestResults = await this.getPCRResults(
-      {organizationId, deadline, barCode, result, date},
+      queryParams,
       isLabUser,
     )
 
@@ -1511,9 +1510,18 @@ export class PCRTestResultsService {
     barCode,
     appointmentStatus,
     organizationId,
+    labID,
   }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrTestResultsQuery = []
-
+    if(labID){
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'labID',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: labID,
+      })
+    }
+    
     if (barCode) {
       pcrTestResultsQuery.push({
         map: '/',
