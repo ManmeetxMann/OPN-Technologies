@@ -20,4 +20,8 @@ export class LabService {
       _.chunk(organizationIds, 10).map((chunk) => this.labRepository.findWhereIdIn(chunk)),
     ).then((results) => _.flatten(results as Lab[][]))
   }
+
+  findOneById(id: string): Promise<Lab> {
+    return this.labRepository.get(id)
+  }
 }

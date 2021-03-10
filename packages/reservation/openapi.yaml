@@ -310,6 +310,44 @@ components:
                 type: string
               label:
                 type: string
+              labId:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
+    UserAppointmentsHistoryResponse200:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              dateTime:
+                type: string
+              testType:
+                type: string
+            required:
+              - id
+              - dateTime
+              - testType
         status:
           type: object
           additionalProperties: false
@@ -388,6 +426,49 @@ components:
             message:
               nullable: true
               type: string
+    TestKitBatchesResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          nullable: true
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+                id:
+                  type: string
+                lotNumber:
+                  type: string
+                hardwareName:
+                  type: string
+                expiry:
+                  type: string
+                  format: date-time
+                manufacturer:
+                  type: string
+                createdBy:
+                  type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
+        page:
+            type: number
     PCRTestResultsResponse200:
       type: object
       additionalProperties: false
@@ -436,7 +517,7 @@ components:
             message:
               nullable: true
               type: string
-    PCRTestResultsRequestBulk:
+    TestResultsRequestBulk:
       type: object
       additionalProperties: false
       properties:
@@ -452,14 +533,7 @@ components:
               - action
               - autoResult
               - barCode
-              - calRed61Ct
-              - calRed61RdRpGene
-              - famCt
-              - famEGene
-              - hexCt
-              - hexIC
-              - quasar670Ct
-              - quasar670NGene
+              - resultAnalysis
             properties:
               action:
                 type: string
@@ -487,39 +561,25 @@ components:
               barCode:
                 type: string
                 minLength: 1
-              calRed61RdRpGene:
-                type: string
-                minLength: 1
-              calRed61Ct:
-                type: string
-                minLength: 1
-              famEGene:
-                type: string
-                minLength: 1
-              famCt:
-                type: string
-                minLength: 1
-              hexIC:
-                type: string
-                minLength: 1
-              hexCt:
-                type: string
-                minLength: 1
               notify:
                 type: boolean
                 default: false
-              quasar670NGene:
-                type: string
-                minLength: 1
-              quasar670Ct:
-                type: string
-                minLength: 1
+              resultAnalysis:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    label:
+                      type: string
+                    value:
+                      type: string
               comment:
                 type: string
       required:
         - results
         - resultDate
-    PCRTestResultsRequest:
+    TestResultsRequest:
       type: object
       additionalProperties: false
       properties:
@@ -550,49 +610,34 @@ components:
         barCode:
           type: string
           minLength: 1
-        calRed61RdRpGene:
+        templateId:
           type: string
           minLength: 1
-        calRed61Ct:
-          type: string
-          minLength: 1
-        famEGene:
-          type: string
-          minLength: 1
-        famCt:
-          type: string
-          minLength: 1
-        hexIC:
-          type: string
-          minLength: 1
-        hexCt:
+        labId:
           type: string
           minLength: 1
         notify:
           type: boolean
           default: false
-        quasar670NGene:
-          type: string
-          minLength: 1
-        quasar670Ct:
-          type: string
-          minLength: 1
         sendUpdatedResults:
           type: boolean
           default: false
+        resultAnalysis:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              label:
+                type: string
+              value:
+                type: string
       required:
         - resultDate
         - action
         - autoResult
         - barCode
-        - calRed61Ct
-        - calRed61RdRpGene
-        - famCt
-        - famEGene
-        - hexCt
-        - hexIC
-        - quasar670Ct
-        - quasar670NGene
+        - resultAnalysis
     ProcessPCRResultsRequest:
       type: object
       additionalProperties: false
@@ -692,8 +737,11 @@ components:
         name:
           minLength: 1
           type: string
+        templateId:
+          type: string
       required:
         - name
+        - templateId
     LabResponse:
       type: object
       additionalProperties: false
@@ -706,6 +754,8 @@ components:
             additionalProperties: false
             properties:
               id:
+                type: string
+              templateId:
                 type: string
               name:
                 type: string
@@ -752,6 +802,122 @@ components:
         required:
           - appointmentID
           - action
+    TestResultDetailResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+            ohipCard:
+              type: string
+            dateOfBirth:
+              type: string
+            address:
+              type: string
+            addressUnit:
+              type: string
+            barCode:
+              type: string
+            appointmentStatus:
+              type: string
+            result:
+              type: string
+            dateTime:
+              type: string
+            registeredNursePractitioner:
+              type: string
+            physician:
+              type: string
+            locationName:
+              type: string
+            swabMethod:
+              type: string
+            deadline:
+              type: string
+            labName:
+              type: string
+            testType:
+              type: string
+            equipment:
+              type: string
+            manufacturer:
+              type: string
+            resultSpecs:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                properties:
+                  label:
+                    type: string
+                  value:
+                    type: string
+          required:
+            - email
+            - phone
+            - dateOfBirth
+            - address
+            - barCode
+            - appointmentStatus
+            - result
+            - dateTime
+            - swabMethod
+            - deadline
+            - labName
+            - testType
+            - equipment
+            - manufacturer
+    ClinicsResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          nullable: true
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              address:
+                type: string
+              acuityUser:
+                type: string
+              acuityPass:
+                type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                - succeed
+                - failed
+                - validation_error
+                - internal_server_error
+                - unauthorized
+                - access_denied
+                - resource_not_found
+            message:
+              nullable: true
+              type: string
+        page:
+            type: number
+
 paths:
   /admin/api/v1/send-fax-for-positive:
     post:
@@ -814,10 +980,13 @@ paths:
                   type: string
                 label:
                   type: string
+                labId:
+                  type: string
               required:
                 - transportDateTime
                 - driverName
                 - label
+                - labId
       responses:
         '200':
           description: Succesfully create transport
@@ -878,6 +1047,85 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TestResult200'
+  /reservation/admin/api/v1/test-kit-batch:
+    get:
+      description: Get list of test kit batches
+      tags:
+        - Test Kit Batches
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestKitBatchesResponse'
+    post:
+      description: Create test kit batch
+      tags:
+        - Test Kit Batches
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                lotNumber:
+                  type: string
+                  minLength: 1
+                hardwareName:
+                  type: string
+                  minLength: 1
+                expiry:
+                  type: string
+                  format: date-time
+                  minLength: 1
+                manufacturer:
+                  type: string
+                  minLength: 1
+              required:
+                - lotNumber
+                - hardwareName
+                - expiry 
+                - manufacturer
+      responses:
+        '200':
+          description: Successfully Return data with test kit batch id
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    nullable: false
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string 
+                  page:
+                    type: number
   /reservation/admin/api/v1/appointments:
     get:
       description: Get appointment list
@@ -935,7 +1183,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AppointmentResponse200'
-  '/reservation/admin/api/v1/appointments/{appointmentId}':
+  /reservation/admin/api/v1/appointments/{appointmentId}:
     get:
       description: Get appointment by appointment ID
       security:
@@ -955,6 +1203,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentResponse200'
+  /reservation/admin/api/v1/appointments/{appointmentId}/history:
+    get:
+      description: Get user's appointment history by appointment ID
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Appointment Management
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAppointmentsHistoryResponse200'
   /reservation/admin/api/v1/admin-scan-history:
     get:
       description: Get scanned appointments history for user
@@ -1128,7 +1400,7 @@ paths:
                     - packageCode
                     - name
                     - remainingCounts
-  '/reservation/admin/api/v1/appointments/{appointmentId}/cancel':
+  /reservation/admin/api/v1/appointments/{appointmentId}/cancel:
     put:
       description: Cancel appointment by appointment ID
       tags:
@@ -1289,18 +1561,18 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/AppointmentResponse200'
-  /reservation/admin/api/v1/pcr-test-results-bulk:
+  /reservation/admin/api/v2/test-results-bulk:
     post:
       description: Send Multiple PCR Results
       tags:
-        - PCR Results Management
+        - V2 Test Results Management
       security:
-        - bearerAuthJWT: []
+        - bearerAuthJWT: [ ]
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PCRTestResultsRequestBulk'
+              $ref: '#/components/schemas/TestResultsRequestBulk'
       responses:
         '200':
           description: Successfully Return
@@ -1308,11 +1580,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PCRTestResultsResponse200'
-  /reservation/admin/api/v1/pcr-test-results/stats:
+  /reservation/admin/api/v1/test-results-bulk:
+    post:
+      description: Send Multiple PCR Results
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestResultsRequestBulk'
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PCRTestResultsResponse200'
+  /reservation/admin/api/v1/pcr-test-results/list/stats:
     get:
       description: Retrieve list of PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -1320,6 +1611,11 @@ paths:
           name: organizationId
           schema:
             type: string
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
         - in: query
           name: deadline
           schema:
@@ -1351,16 +1647,16 @@ paths:
                 $ref: '#/components/schemas/StatsResponse200'
   /reservation/admin/api/v1/pcr-test-results:
     post:
-      description: Send PCR Results
+      description: Send Test Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PCRTestResultsRequest'
+              $ref: '#/components/schemas/TestResultsRequest'
       responses:
         '200':
           description: Successfully Return
@@ -1371,7 +1667,7 @@ paths:
     get:
       description: Retrieve list of PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -1413,6 +1709,10 @@ paths:
               - Invalid
               - Inconclusive
               - Indeterminate
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully Return
@@ -1466,6 +1766,18 @@ paths:
                             - PreliminaryPositive
                         organizationName:
                           type: string
+                        style:
+                          type: string
+                          enum:
+                            - RED
+                            - GREEN
+                            - YELLOW
+                            - BLUE
+                            - GREY
+                        testName:
+                          type: string
+                        doctorId:
+                          type: string
                   status:
                     type: object
                     additionalProperties: false
@@ -1489,7 +1801,7 @@ paths:
     post:
       description: Confirm PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -1521,7 +1833,7 @@ paths:
     post:
       description: Process PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       requestBody:
         content:
           application/json:
@@ -1708,7 +2020,7 @@ paths:
       security:
         - bearerAuthJWT: []
       tags:
-        - PCR Results Management
+        - Test Results Management
       requestBody:
         content:
           application/json:
@@ -1749,22 +2061,16 @@ paths:
                             type: object
                             additionalProperties: false
                             properties:
-                              famEGene:
-                                type: string
-                              famCt:
-                                type: string
-                              calRed61RdRpGene:
-                                type: string
-                              calRed61Ct:
-                                type: string
-                              quasar670NGene:
-                                type: string
-                              quasar670Ct:
-                                type: string
-                              hexIC:
-                                type: string
-                              hexCt:
-                                type: string
+                              resultAnalysis:
+                                type: array
+                                items:
+                                  type: object
+                                  additionalProperties: false
+                                  properties:
+                                    label:
+                                      type: string
+                                    value:
+                                      type: string
                               result:
                                 type: string
                         reason:
@@ -1798,7 +2104,7 @@ paths:
                         type: string
                   page:
                     type: number
-  '/reservation/admin/api/v1/appointments/{appointmentId}/check-in':
+  /reservation/admin/api/v1/appointments/{appointmentId}/check-in:
     put:
       description: Make Appointment checked in
       tags:
@@ -1848,6 +2154,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
+  
+  /reservation/admin/api/v1/appointments/{appointmentId}/reschedule:
+    put:
+      description: Update appointment schedule
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                dateTime:
+                  description: The ISO date-time as returned by availbility times call
+                  type: string
+                  format: date-time
+                  example: "2021-09-01T23:17:07.657Z"
+                organizationId:
+                  type: string
+                  description: This should be passwed is corporate is logged in
+              required:
+                - dateTime
+              
+      responses:
+        '200':
+          description: Succesfully reschedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse200'
+
   /reservation/api/v1/appointments:
     post:
       description: Create Appointment
@@ -2050,6 +2396,132 @@ paths:
                         type: string
                   page:
                     type: number
+  /reservation/admin/api/v1/availability/times-by-appointment-id:
+    get:
+      description: Get Appointment Available Times
+      tags:
+        - Appointment Booking
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        label:
+                          type: string
+                        time:
+                          type: string
+                      required:
+                        - label
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
+  /reservation/admin/api/v1/availability/dates-by-appointment-id:
+    get:
+      description: Get Appointment Available Dates
+      tags:
+        - Appointment Booking
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: appointmentId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: year
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: month
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                      availableDates:
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            date:
+                              type: string
+                          required:
+                            - date
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
   /reservation/api/v1/booking-locations:
     get:
       description: Get list Booking Locations
@@ -2110,16 +2582,16 @@ paths:
                         type: string
                   page:
                     type: number
-  '/reservation/admin/api/v1/pcr-test-results/{pcrTestResultId}':
+  /reservation/api/v1/test-results/{id}:
     get:
-      description: Retrieve list of PCR Results
+      description: Details for PCR Results for Regular User
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       parameters:
         - in: path
-          name: pcrTestResultId
+          name: id
           schema:
             type: string
           required: true
@@ -2129,95 +2601,32 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: false
-                properties:
-                  data:
-                    type: object
-                    additionalProperties: false
-                    properties:
-                      email:
-                        type: string
-                      phone:
-                        type: string
-                      ohipCard:
-                        type: string
-                      dateOfBirth:
-                        type: string
-                      address:
-                        type: string
-                      addressUnit:
-                        type: string
-                      barCode:
-                        type: string
-                      appointmentStatus:
-                        type: string
-                      result:
-                        type: string
-                      dateTime:
-                        type: string
-                      registeredNursePractitioner:
-                        type: string
-                      physician:
-                        type: string
-                      locationName:
-                        type: string
-                      swabMethod:
-                        type: string
-                      deadline:
-                        type: string
-                      labName:
-                        type: string
-                      testType:
-                        type: string
-                      equipment:
-                        type: string
-                      manufacturer:
-                        type: string
-                      resultSpecs:
-                        type: object
-                        additionalProperties: false
-                        properties:
-                          calRed61Ct:
-                            type: string
-                          calRed61RdRpGene:
-                            type: string
-                          famCt:
-                            type: string
-                          famEGene:
-                            type: string
-                          hexCt:
-                            type: string
-                          hexIC:
-                            type: string
-                          quasar670Ct:
-                            type: string
-                          quasar670NGene:
-                            type: string
-                          comment:
-                            type: string
-                          autoResult:
-                            type: string
-                    required:
-                      - email
-                      - phone
-                      - dateOfBirth
-                      - address
-                      - barCode
-                      - appointmentStatus
-                      - result
-                      - dateTime
-                      - swabMethod
-                      - deadline
-                      - labName
-                      - testType
-                      - equipment
-                      - manufacturer
+                $ref: '#/components/schemas/TestResultDetailResponse'
+  /reservation/admin/api/v1/test-results/{id}:
+    get:
+      description: Details for PCR Results for Admin
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResultDetailResponse'
   /reservation/admin/api/v1/pcr-test-results/due-deadline:
     get:
       description: Retrieve list of PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2312,11 +2721,11 @@ paths:
                         type: string
                   page:
                     type: number
-  /reservation/admin/api/v1/pcr-test-results/due-deadline/stats:
+  /reservation/admin/api/v1/pcr-test-results/due-deadline/list/stats:
     get:
       description: Retrieve list of PCR Results
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2412,6 +2821,82 @@ paths:
                         type: string
                   page:
                     type: number
+  /reservation/api/v1/appointments/{id}:
+    get:
+      description: Get user appointment by id
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: string
+                      locationName:
+                        type: string
+                      locationAddress:
+                        type: string
+                      firstName:
+                        type: string
+                      lastName:
+                        type: string
+                      dateOfAppointment:
+                        type: string
+                      timeOfAppointment:
+                        type: string
+                      QRCode:
+                        type: string
+                      dateOfBirth:
+                        type: string
+                      showQrCode:
+                        type: boolean
+                    required:
+                      - id
+                      - locationName
+                      - locationAddress
+                      - firstName
+                      - lastName
+                      - dateOfAppointment
+                      - timeOfAppointment
+                      - QRCode
+                      - dateOfBirth
+                      - showQrCode
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
   /reservation/admin/api/v1/appointments/barcode/regenerate:
     put:
       description: Get user appointment list
@@ -2462,11 +2947,71 @@ paths:
                         type: string
                   page:
                     type: number
+  /reservation/admin/api/v1/appointments/copy:
+    post:
+      description: Copy appointment by appointment ID
+      tags:
+        - Appointment Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                appointmentIds:
+                  type: array
+                  items:
+                    type: string
+                dateTime:
+                  description: The ISO date-time as returned by availbility times call
+                  type: string
+                  format: date-time
+                  example: "2021-09-01T23:17:07.657Z"
+                organizationId:
+                  type: string
+                  description: This should be passwed is corporate is logged in
+              required:
+                - dateTime
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+                schema:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AppointmentResponse200'
+                    status:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        code:
+                          type: string
+                          enum:
+                            - succeed
+                            - failed
+                            - validation_error
+                            - internal_server_error
+                            - unauthorized
+                            - access_denied
+                            - resource_not_found
+                        message:
+                          nullable: true
+                          type: string
+                    page:
+                      type: number
   /reservation/api/v1/test-results:
     get:
       description: Get user test result list
       tags:
-        - PCR Results Management
+        - Test Results Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2474,6 +3019,7 @@ paths:
           name: organizationid
           schema:
             type: string
+          required: true
       responses:
         '200':
           description: Successfully Return
@@ -2557,7 +3103,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfTemperature'
-  '/reservation/api/v1/temperature/{id}':
+  /reservation/api/v1/temperature/{id}:
     get:
       description: Get temperature by user ID and organization ID
       security:
@@ -2717,3 +3263,81 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  /reservation/admin/api/v1/clinics:
+    get:
+      description: Get list of clinics
+      tags:
+        - Clinics Management
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Successfully returned clinics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClinicsResponse'
+    post: 
+      description: Create new clinic
+      tags:
+        - Clinics Management
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                address:
+                  type: string
+                  minLength: 1
+                acuityUser:
+                  type: string
+                  minLength: 1
+                acuityPass:
+                  type: string
+                  minLength: 1
+              required:
+                - name
+                - address
+                - acuityUser
+                - acuityPass
+      responses:
+        '200':
+          description: Successfully added clinic
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    nullable: false
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string 
+                  page:
+                    type: number   
