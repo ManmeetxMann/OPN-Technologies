@@ -71,6 +71,10 @@ async function updatePcrTestResult(
 ) {
   try {
     const resultSpecs = snapshot.data().resultSpecs
+    if(!resultSpecs){
+      return Promise.reject(`PCRResultID: ${snapshot.id} Missing Results Specs`)
+    }
+
     await snapshot.ref.set(
       {
         resultAnalysis: [
