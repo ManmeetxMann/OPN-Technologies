@@ -527,6 +527,7 @@ export class AccessService {
               sum.proceedPassports += current.proceedPassports
               sum.cautionPassports += current.cautionPassports
               sum.stopPassports += current.stopPassports
+              sum.temperature_check_requiredPassports += current.temperature_check_requiredPassports
               return sum
             },
             {
@@ -539,6 +540,7 @@ export class AccessService {
               proceedPassports: 0,
               cautionPassports: 0,
               stopPassports: 0,
+              temperature_check_requiredPassports: 0,
               asOfDateTime: new Date(),
               checkInsPerHour: [],
               createdAt: new firestore.Timestamp(0, 0),
@@ -612,6 +614,7 @@ export class AccessService {
       proceedPassports: 0,
       cautionPassports: 0,
       stopPassports: 0,
+      temperature_check_requiredPassports: 0,
       createdAt: serverTimestamp(),
     } as AccessStatsModel)
   }
