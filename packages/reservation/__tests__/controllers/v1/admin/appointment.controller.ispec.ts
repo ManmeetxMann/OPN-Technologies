@@ -2,7 +2,11 @@ import request from 'supertest'
 
 import {app as server} from '../../../../src/app'
 import {create, deleteAppointmentByDateTime} from '../../../__seeds__/appointments'
+
+jest.spyOn(global.console, 'error').mockImplementation()
+jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
+jest.mock('../../../../../common/src/utils/logging-setup')
 
 const dateForAppointments = '2020-02-05'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
@@ -107,6 +111,16 @@ describe('AdminAppointmentController', () => {
       const url = `/reservation/admin/api/v1/appointments?appointmentStatus=InTransit`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(400)
+      done()
+    })
+  })
+  
+  describe('get appointment list stats', () => {
+    test('get appointments stats by dateOfAppointment and Lab successfully.', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments/list/stats?dateOfAppointment=${dateForAppointments}&labID=${labID1}`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      expect(result.status).toBe(200)
+      expect(result.body.data.total).toBe(3)
       done()
     })
   })
