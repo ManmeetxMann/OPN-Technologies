@@ -8,8 +8,8 @@ export const findDifference = <T>(
   currentData: Partial<T>
   newData: Partial<T>
 } => {
-  let currentData
-  let newData
+  const currentData = {}
+  const newData = {}
 
   Object.keys(incoming).map((key) => {
     if (!skip.includes(key) && !isEqual(incoming[key], current[key])) {

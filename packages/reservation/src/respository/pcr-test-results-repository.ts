@@ -1,10 +1,11 @@
+import {isEmpty} from 'lodash'
 //Common
 import {serverTimestamp} from '../../../common/src/utils/times'
 import DataModel, {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-
+import {LogWarning} from '../../../common/src/utils/logging-setup'
 //Models
 import {
   PCRTestResultDBModel,
@@ -16,8 +17,8 @@ import {
 import {AppointmentDBModel, ResultTypes} from '../models/appointment'
 //Schema
 import DBSchema from '../dbschemas/pcr-test-results.schema'
-import {getFirestoreTimeStampDate} from '../utils/datetime.helper'
 // Utils
+import {getFirestoreTimeStampDate} from '../utils/datetime.helper'
 import {findDifference} from '../utils/compare-objects'
 
 export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
@@ -221,7 +222,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
         skip,
       )
 
-      if (!newData) {
+      if (isEmpty(newData, true)) {
         console.warn(
           `[PCR-Test-Result repository]: No one field has been updated for pcr-test-result ${id}`,
         )
@@ -235,9 +236,9 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
         actionBy,
       })
     } catch (err) {
-      console.warn(
-        `[PCR-Test-Result repository]: Failed to create Object Difference for activity Tracking ${err}`,
-      )
+      LogWarning('addPcrTestResultActivityById', 'FailedFindDifference', {
+        message: `Failed to create Object Difference for activity Tracking ${err}`,
+      })
     }
   }
 }

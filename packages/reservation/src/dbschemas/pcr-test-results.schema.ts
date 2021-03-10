@@ -42,4 +42,5 @@ export default Joi.object({
   waitingResult: Joi.boolean().required(),
   templateId: Joi.string().required(),
   labId: Joi.string().required(),
+  sortOrder: Joi.number().required(),
 })

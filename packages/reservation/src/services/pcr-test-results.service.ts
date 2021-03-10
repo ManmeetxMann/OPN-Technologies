@@ -170,7 +170,11 @@ export class PCRTestResultsService {
     await this.pcrTestResultsRepository.delete(id)
   }
 
-  async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
+  async processPCRTestResult(
+    reportTrackerId: string,
+    resultId: string,
+    userId: string,
+  ): Promise<void> {
     const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
       this.datastore,
       reportTrackerId,
@@ -215,6 +219,7 @@ export class PCRTestResultsService {
         pcrResults.adminId,
         'HARCODED', // @TODO IMPLEMENT THIS
         'HARCODED', // @TODO IMPLEMENT THIS
+        userId,
       )
 
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
