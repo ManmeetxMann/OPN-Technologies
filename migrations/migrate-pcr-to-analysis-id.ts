@@ -71,7 +71,7 @@ async function updatePcrTestResult(
 ) {
   try {
     const resultSpecs = snapshot.data().resultSpecs
-    if(!resultSpecs){
+    if (!resultSpecs) {
       return Promise.reject(`PCRResultID: ${snapshot.id} Missing Results Specs`)
     }
 
@@ -116,7 +116,7 @@ async function updatePcrTestResult(
           autoResult: resultSpecs.autoResult,
           notify: resultSpecs.notify,
           resultDate: resultSpecs.resultDate,
-          comment: (resultSpecs.comment)??null,
+          comment: resultSpecs.comment ?? null,
         },
         //resultSpecs: firestore.FieldValue.delete(),
         templateId: 'template1',
@@ -132,8 +132,8 @@ async function updatePcrTestResult(
       },
     )
 
-    console.info(`Successfully Changed organization to null for ${snapshot.id}`)
-    return Promise.resolve(`Successfully Changed organization to null for ${snapshot.id}`)
+    console.info(`Successfully Migrated PCR Results ${snapshot.id}`)
+    return Promise.resolve(`Successfully Migrated PCR Results ${snapshot.id}`)
   } catch (error) {
     console.warn(error)
     throw error
