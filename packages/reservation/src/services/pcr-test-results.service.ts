@@ -282,19 +282,19 @@ export class PCRTestResultsService {
       testType,
       date,
       searchQuery,
-      labID
+      labId
     }: PcrTestResultsListRequest,
     isLabUser: boolean,
   ): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
     let pcrResults: PCRTestResultDBModel[] = []
 
-    if (labID) {
+    if (labId) {
       pcrTestResultsQuery.push({
         map: '/',
-        key: 'labID',
+        key: 'labId',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: labID,
+        value: labId,
       })
     }
 
@@ -1406,19 +1406,19 @@ export class PCRTestResultsService {
     deadline,
     testRunId,
     barCode,
-    labID
+    labId
   }: PcrTestResultsListByDeadlineRequest): Promise<{
     pcrResultStatsByResultArr: Filter[]
     pcrResultStatsByOrgIdArr: Filter[]
     total: number
   }> {
     const pcrTestResultsQuery = []
-    if(labID){
+    if(labId){
       pcrTestResultsQuery.push({
         map: '/',
-        key: 'labID',
+        key: 'labId',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: labID,
+        value: labId,
       })
     }
     if (deadline) {
@@ -1518,15 +1518,15 @@ export class PCRTestResultsService {
     barCode,
     appointmentStatus,
     organizationId,
-    labID,
+    labId,
   }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrTestResultsQuery = []
-    if(labID){
+    if(labId){
       pcrTestResultsQuery.push({
         map: '/',
-        key: 'labID',
+        key: 'labId',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: labID,
+        value: labId,
       })
     }
 
