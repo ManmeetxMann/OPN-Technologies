@@ -218,12 +218,12 @@ export class AppoinmentService {
   ): Promise<(AppointmentDBModel & {organizationName: string})[]> {
     const conditions = []
     let appointments = []
-    if (queryParams.labID) {
+    if (queryParams.labId) {
       conditions.push({
         map: '/',
-        key: 'labID',
+        key: 'labId',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: queryParams.labID,
+        value: queryParams.labId,
       })
     }
     if (queryParams.organizationId) {

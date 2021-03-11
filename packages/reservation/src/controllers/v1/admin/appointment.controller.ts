@@ -130,7 +130,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         searchQuery,
         transportRunId,
-        labID,
+        labId,
       } = req.query as AppointmentByOrganizationRequest
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
@@ -152,7 +152,7 @@ class AdminAppointmentController implements IControllerBase {
         dateOfAppointment,
         searchQuery,
         transportRunId,
-        labID,
+        labId,
       })
 
       const transportRuns = fromPairs(
@@ -190,7 +190,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         searchQuery,
         transportRunId,
-        labID,
+        labId,
       } = req.query as AppointmentByOrganizationRequest
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
@@ -208,7 +208,7 @@ class AdminAppointmentController implements IControllerBase {
         dateOfAppointment,
         searchQuery,
         transportRunId,
-        labID,
+        labId,
       })
 
       res.json(actionSucceed(statsUiDTOResponse(appointmentStatusArray, orgIdArray, total)))
