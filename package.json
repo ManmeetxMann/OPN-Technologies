@@ -57,7 +57,8 @@
 		"migration:migrate-pcr-to-analysis-id": "ts-node ./migrations/migrate-pcr-to-analysis-id",
 		"migration:pcr-add-sort-order": "ts-node ./migrations/pcr-add-sort-order",
 		"migration:appointments-add-location-name-and-address": "ts-node ./migrations/add-locationName-and-locationAddress-to-appointments",
-		"__devops:get-users-with-email-no-authuserid": "ts-node ./__devops/get-users-with-email-no-authuserid"
+		"__devops:get-users-with-email-no-authuserid": "ts-node ./__devops/get-users-with-email-no-authuserid",
+		"migration:appointments-add-lab-id": "ts-node ./migrations/appointments-add-lab-id"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
