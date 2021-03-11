@@ -7,7 +7,7 @@ import {
   getDayFromDatetime,
   getMonthFromDatetime,
 } from '../utils/datetime.helper'
-import { DataModelFieldMapOperatorType } from "../../../common/src/data/datamodel.base";
+import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 
 export class TestRunsService {
   private dataStore = new DataStore()
