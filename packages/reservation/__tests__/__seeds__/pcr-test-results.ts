@@ -12,7 +12,7 @@ export const createPCRTestResult = async (dataOverwrite: {
   result?: string
   displayInResult?: boolean
   testType?: string
-  labId?:string
+  labId?: string
 }): Promise<void> => {
   //console.log(new Date(dataOverwrite.dateTime))
   const data = {
@@ -40,8 +40,8 @@ export const createPCRTestResult = async (dataOverwrite: {
     waitingResult: true,
     recollected: false,
     testType: 'PCR',
-    labId:dataOverwrite.labId ?? 'DEFAULT',
-    sortOrder:1
+    labId: dataOverwrite.labId ?? 'DEFAULT',
+    sortOrder: 1,
   }
   data.organizationId = dataOverwrite.organizationId ?? null
   data.appointmentId = dataOverwrite.appointmentId ?? 'A1'

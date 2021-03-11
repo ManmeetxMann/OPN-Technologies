@@ -24,7 +24,7 @@ describe('PCRTestResultController', () => {
       dateTime: dateTimeForAppointment7AM,
       deadline: deadlineSameDay,
       displayInResult: false,
-      testType: 'PCR'
+      testType: 'PCR',
     })
     await createPCRTestResult({
       dateTime: dateTimeForAppointment7AM,
@@ -35,7 +35,7 @@ describe('PCRTestResultController', () => {
     await createPCRTestResult({
       dateTime: dateTimeForAppointment7AM,
       deadline: deadlineSameDay,
-      labId:labID1
+      labId: labID1,
     })
     await createPCRTestResult({
       dateTime: dateTimeForAppointment7AM,
@@ -56,7 +56,6 @@ describe('PCRTestResultController', () => {
   })
 
   describe('get result list', () => {
-
     test('get results for lab successfully. date filter', async (done) => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
@@ -64,7 +63,7 @@ describe('PCRTestResultController', () => {
       expect(result.body.data.length).toBe(4)
       done()
     })
-    
+
     test('get results for non lab successfully. date and organizationId filter', async (done) => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}&organizationId=${organizationId}`
       const result = await request(server.app)

@@ -282,7 +282,7 @@ export class PCRTestResultsService {
       testType,
       date,
       searchQuery,
-      labId
+      labId,
     }: PcrTestResultsListRequest,
     isLabUser: boolean,
   ): Promise<PCRTestResultListDTO[]> {
@@ -1187,17 +1187,15 @@ export class PCRTestResultsService {
     return testResultsWithHistory
   }
 
-  async getPCRResultsStats(queryParams: PcrTestResultsListRequest,
+  async getPCRResultsStats(
+    queryParams: PcrTestResultsListRequest,
     isLabUser: boolean,
   ): Promise<{
     total: number
     pcrResultStatsByOrgIdArr: Filter[]
     pcrResultStatsByResultArr: Filter[]
   }> {
-    const pcrTestResults = await this.getPCRResults(
-      queryParams,
-      isLabUser,
-    )
+    const pcrTestResults = await this.getPCRResults(queryParams, isLabUser)
 
     const pcrResultStatsByResult: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
     const pcrResultStatsByOrgId: Record<string, number> = {}
@@ -1406,14 +1404,14 @@ export class PCRTestResultsService {
     deadline,
     testRunId,
     barCode,
-    labId
+    labId,
   }: PcrTestResultsListByDeadlineRequest): Promise<{
     pcrResultStatsByResultArr: Filter[]
     pcrResultStatsByOrgIdArr: Filter[]
     total: number
   }> {
     const pcrTestResultsQuery = []
-    if(labId){
+    if (labId) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'labId',
@@ -1521,7 +1519,7 @@ export class PCRTestResultsService {
     labId,
   }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrTestResultsQuery = []
-    if(labId){
+    if (labId) {
       pcrTestResultsQuery.push({
         map: '/',
         key: 'labId',
