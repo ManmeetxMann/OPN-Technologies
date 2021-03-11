@@ -907,6 +907,8 @@ export class AppoinmentService {
     if (savedAppointment) {
       const linkedBarCodes = []
       const pcrTestResult = await this.pcrTestResultsRepository.createNewTestResults({
+        labId: 'CopyAppointmentNotImplemented', // @TODO Copy appointment endpoint not implemented labId, tempatlId
+        templateId: 'CopyAppointmentNotImplemented',
         appointment: savedAppointment,
         adminId: adminId,
         linkedBarCodes,
