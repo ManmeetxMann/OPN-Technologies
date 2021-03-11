@@ -864,6 +864,12 @@ components:
                     type: string
             isDownloadable:
               type: boolean
+            travelID: 
+              type: string
+            travelIDIssuingCountry:
+              type: string
+            dateOfResult:
+              type: string
           required:
             - email
             - phone
@@ -1632,6 +1638,14 @@ paths:
             format: date
         - in: query
           name: barCode
+          schema:
+            type: string
+        - in: query
+          name: testType
+          schema:
+            type: string
+        - in: query
+          name: searchQuery
           schema:
             type: string
         - in: query
@@ -3005,16 +3019,15 @@ paths:
                   type: array
                   items:
                     type: string
-                dateTime:
-                  description: The ISO date-time as returned by availbility times call
+                date:
                   type: string
-                  format: date-time
-                  example: "2021-09-01T23:17:07.657Z"
+                  format: date
+                  example: "2021-12-25"
                 organizationId:
                   type: string
                   description: This should be passwed is corporate is logged in
               required:
-                - dateTime
+                - date
       responses:
         '200':
           description: Successfully Return

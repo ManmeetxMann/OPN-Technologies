@@ -40,6 +40,14 @@ export const getDateFromDatetime = (transportDateTime: Date | string): string =>
   return moment(transportDateTime).tz(timeZone).format('YYYY-MM-DD')
 }
 
+export const getTimeFromFirestoreDateTime = (dateTime: firestore.Timestamp): string => {
+  return moment(dateTime.toDate()).utc().format('HH:mm:ss')
+}
+
+export const makeUtcIsoDate = (date: string, time: string): string => {
+  return moment(`${date}T${time}`).utc().toISOString()
+}
+
 export const makeDeadlineForFilter = (date: Date | string): firestore.Timestamp => {
   const utcEndOfDay = makeTimeEndOfTheDayMoment(moment.tz(date, timeZone)).toDate()
   return firestore.Timestamp.fromDate(utcEndOfDay)

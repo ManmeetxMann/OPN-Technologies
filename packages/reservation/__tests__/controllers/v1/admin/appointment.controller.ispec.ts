@@ -11,7 +11,7 @@ jest.mock('../../../../../common/src/utils/logging-setup')
 const dateForAppointments = '2020-02-05'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
 const organizationId = 'TEST1'
-const labID1 = 'Lab1'
+const laboratoryId = 'Lab1'
 describe('AdminAppointmentController', () => {
   beforeAll(async () => {
     await create({
@@ -19,14 +19,14 @@ describe('AdminAppointmentController', () => {
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
       appointmentStatus: 'InTransit',
-      labID: labID1,
+      labId: laboratoryId,
     })
     await create({
       id: 'APT2',
       dateTime: dateTimeForAppointment1,
       dateOfAppointment: 'February 05, 2020',
       appointmentStatus: 'InProgress',
-      labID: labID1,
+      labId: laboratoryId,
     })
     await create({
       id: 'APT3',
@@ -34,7 +34,7 @@ describe('AdminAppointmentController', () => {
       dateOfAppointment: 'February 05, 2020',
       organizationId: organizationId,
       appointmentStatus: 'InProgress',
-      labID: labID1,
+      labId: laboratoryId,
     })
     await create({
       id: 'APT4',
@@ -74,7 +74,7 @@ describe('AdminAppointmentController', () => {
       done()
     })
     test('get appointments by dateOfAppointment and Lab successfully.', async (done) => {
-      const url = `/reservation/admin/api/v1/appointments?dateOfAppointment=${dateForAppointments}&labID=${labID1}`
+      const url = `/reservation/admin/api/v1/appointments?dateOfAppointment=${dateForAppointments}&labId=${laboratoryId}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(3)
@@ -117,7 +117,7 @@ describe('AdminAppointmentController', () => {
 
   describe('get appointment list stats', () => {
     test('get appointments stats by dateOfAppointment and Lab successfully.', async (done) => {
-      const url = `/reservation/admin/api/v1/appointments/list/stats?dateOfAppointment=${dateForAppointments}&labID=${labID1}`
+      const url = `/reservation/admin/api/v1/appointments/list/stats?dateOfAppointment=${dateForAppointments}&labId=${laboratoryId}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.total).toBe(3)

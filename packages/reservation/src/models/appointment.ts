@@ -68,6 +68,7 @@ export type AppointmentDBModel = {
   locationName?: string
   locationAddress?: string
   testType: TestTypes
+  labId?: string
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard

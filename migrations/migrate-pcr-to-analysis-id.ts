@@ -111,7 +111,7 @@ async function updatePcrTestResult(
             value: resultSpecs.quasar670Ct,
           },
         ],
-        resultMeta: {
+        resultMetaData: {
           action: resultSpecs.action,
           autoResult: resultSpecs.autoResult,
           notify: resultSpecs.notify,
