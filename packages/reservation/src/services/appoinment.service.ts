@@ -687,6 +687,10 @@ export class AppoinmentService {
           await this.addAppointmentLabel(appointment, data.label, userId)
           break
 
+        case AppointmentBulkAction.AddLab:
+          await this.addLab(appointmentId, data.labId)
+          break
+
         default:
           console.warn('Wrong bulk action type')
       }

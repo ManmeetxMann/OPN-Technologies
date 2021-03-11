@@ -289,7 +289,13 @@ class AdminAppointmentController implements IControllerBase {
       const appointmentsState: BulkOperationResponse[] = await Promise.all(
         filtredAppointmentIds.map(async (appointmentId) => {
           if (labId) {
-            await this.appointmentService.addLab(appointmentId, labId)
+            await this.appointmentService.makeBulkAction(
+              appointmentId,
+              {
+                labId,
+              },
+              AppointmentBulkAction.AddLab,
+            )
           }
 
           return this.appointmentService.makeBulkAction(
