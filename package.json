@@ -59,7 +59,6 @@
 		"migration:appointments-add-location-name-and-address": "ts-node ./migrations/add-locationName-and-locationAddress-to-appointments",
 		"__devops:get-users-with-email-no-authuserid": "ts-node ./__devops/get-users-with-email-no-authuserid",
 		"migration:appointments-add-lab-id": "ts-node ./migrations/appointments-add-lab-id",
-		"migration:test-result-move-resultMeta-to-resultMetaData": "ts-node ./migrations/pcr-resultMeta-to-resultMetaData.ts"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
