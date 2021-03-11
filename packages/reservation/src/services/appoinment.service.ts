@@ -689,6 +689,10 @@ export class AppoinmentService {
           await this.addAppointmentLabel(appointment, data.label, userId)
           break
 
+        case AppointmentBulkAction.AddLab:
+          await this.addLab(appointmentId, data.labId)
+          break
+
         default:
           console.warn('Wrong bulk action type')
       }
@@ -738,6 +742,12 @@ export class AppoinmentService {
       appointmentStatus: AppointmentStatus.InTransit,
     })
     this.postPubsub(saved, 'updated')
+  }
+
+  async addLab(appointmentId: string, labId: string): Promise<void> {
+    await this.appointmentsRepository.updateProperties(appointmentId, {
+      labId: labId,
+    })
   }
 
   private async checkAppointmentStatusOnly(
