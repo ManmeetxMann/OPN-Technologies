@@ -1639,6 +1639,14 @@ paths:
           schema:
             type: string
         - in: query
+          name: testType
+          schema:
+            type: string
+        - in: query
+          name: searchQuery
+          schema:
+            type: string
+        - in: query
           name: result
           schema:
             type: string

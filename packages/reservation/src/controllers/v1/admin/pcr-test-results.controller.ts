@@ -265,7 +265,15 @@ class AdminPCRTestResultController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {organizationId, barCode, result, date, labId} = req.query as PcrTestResultsListRequest
+      const {
+        organizationId,
+        barCode,
+        result,
+        date,
+        labId,
+        testType,
+        searchQuery,
+      } = req.query as PcrTestResultsListRequest
       if (!barCode && !date) {
         throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
       }
@@ -282,6 +290,8 @@ class AdminPCRTestResultController implements IControllerBase {
           result,
           date,
           labId,
+          testType,
+          searchQuery,
         },
         isLabUser,
       )
