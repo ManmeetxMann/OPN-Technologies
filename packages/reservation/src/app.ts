@@ -20,7 +20,12 @@ import AdminLabController from './controllers/v1/admin/lab.controller'
 import TemperatureController from './controllers/v1/temperature.controller'
 import AdminHistoryController from './controllers/v1/admin/admin-scan-history.controller'
 import AdminRapidAntigenTestTesultsController from './controllers/v1/admin/rapid-antigen-test-results.controller'
-import InternalRapidAntigenResultEmailSendController from './controllers/v1/internal/rapid-alergen-send-result-email.controller'
+import AdminAppointmentAvailabilityController from './controllers/v1/admin/appointment-availability.controller'
+
+import InternalRapidAntigenResultEmailSendController from './controllers/v1/internal/rapid-antigen-send-result-email.controller'
+import AdminClinicController from './controllers/v1/admin/clinic.controller'
+import AdminTestKitBatchController from './controllers/v1/admin/test-kit-batch.controller'
+import AppointmentToTestTypeAssociationController from './controllers/v1/admin/appointment-to-test-type-association.controller'
 
 const PORT = Number(process.env.PORT) || 5008
 
@@ -42,12 +47,16 @@ export const app = new App({
     new AppointmentAvailabilityController(),
     new AdminTemperatureV1Controller(),
     new AdminLabController(),
+    new AdminClinicController(),
     new AdminHistoryController(),
     new AdminRapidAntigenTestTesultsController(),
     new AppointmentController(),
     new InternalRapidAntigenResultEmailSendController(),
     new TestResultsController(),
     new TemperatureController(),
+    new AdminAppointmentAvailabilityController(),
+    new AdminTestKitBatchController(),
+    new AppointmentToTestTypeAssociationController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })

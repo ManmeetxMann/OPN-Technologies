@@ -1,4 +1,4 @@
-import {isEqual} from 'lodash'
+import {isEmpty} from 'lodash'
 import {makeFirestoreTimestamp} from '../utils/datetime.helper'
 import {now} from '../../../common/src/utils/times'
 import DataModel from '../../../common/src/data/datamodel.base'
@@ -12,6 +12,8 @@ import {
   UpdateAppointmentActionParams,
 } from '../models/appointment'
 import DBSchema from '../dbschemas/appointments.schema'
+import {LogError, LogWarning} from '../../../common/src/utils/logging-setup'
+import {findDifference} from '../utils/compare-objects'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
@@ -132,36 +134,30 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     updates,
     actionBy = null,
   }: UpdateAppointmentActionParams): Promise<ActivityTrackingDb> {
-    const appointment = await this.get(id)
-    const currentData = {}
-    const newData = {}
-    const skip = ['id', 'timestamps', 'appointmentStatus']
     try {
-      Object.keys(updates).map((key) => {
-        // isEqual used for timestamps, !== used to avoid fouls for the same values in different formats (strings and numbers)
-        if (
-          !skip.includes(key) &&
-          (!isEqual(updates[key], appointment[key]) || updates[key] !== appointment[key])
-        ) {
-          currentData[key] = appointment[key] ?? null
-          newData[key] = updates[key] ?? null
-        }
-      })
+      const appointment = await this.get(id)
+      const skip = ['id', 'timestamps', 'appointmentStatus']
 
-      if (!Object.keys(newData).length) {
-        console.warn(`No one field has been updated for appointmen ${id}`)
+      const {currentData, newData} = findDifference<AppointmentDBModel>(appointment, updates, skip)
+
+      if (isEmpty(newData, true)) {
+        LogWarning('addAppointmentActivityById', 'NoAppointmentUpdates', {
+          message: `No one field has been updated for appointment ${id}`,
+        })
         return
       }
-    } catch (err) {
-      console.warn(`Failed to create Object Difference for activity Tracking ${err}`)
-    }
 
-    return this.getAppointmentActivityRepository(id).add({
-      action,
-      newData,
-      currentData,
-      actionBy,
-    })
+      await this.getAppointmentActivityRepository(id).add({
+        action,
+        newData,
+        currentData,
+        actionBy,
+      })
+    } catch (err) {
+      LogError('addAppointmentActivityById', 'FailedFindDifference', {
+        errorMessage: err.toString(),
+      })
+    }
   }
 }
 

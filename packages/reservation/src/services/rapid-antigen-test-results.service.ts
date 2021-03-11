@@ -18,11 +18,11 @@ import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operatio
 import {
   RapidAntigenResultTypes,
   RapidAntigenTestResultRequest,
-  RapidAlergenResultPDFType,
+  RapidAntigenResultPDFType,
 } from '../models/rapid-antigen-test-results'
-import {PCRTestResultDBModel} from '../models/pcr-test-results'
 
 import {RapidAntigenPDFContent} from '../templates/rapid-antigen'
+import {PcrResultTestActivityAction, PCRTestResultDBModel} from '../models/pcr-test-results'
 
 export class RapidAntigenTestResultsService {
   private dataStore = new DataStore()
@@ -30,7 +30,7 @@ export class RapidAntigenTestResultsService {
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private emailService = new EmailService()
-  private pubSub = new OPNPubSub('rapid-alergen-test-result-topic')
+  private pubSub = new OPNPubSub('rapid-antigen-test-result-topic')
 
   private getResultBasedOnAction = (action: RapidAntigenResultTypes) => {
     switch (action) {
@@ -54,10 +54,15 @@ export class RapidAntigenTestResultsService {
   ): Promise<BulkOperationResponse> => {
     const {id, result, appointmentId, barCode} = testResult
     //Update Test Results
-    await this.pcrTestResultsRepository.updateData(id, {
-      previousResult: result !== ResultTypes.Pending ? result : null, //There is no Rerun. Hence No Previous Result
-      result: this.getResultBasedOnAction(action),
-      waitingResult: false,
+    await this.pcrTestResultsRepository.updateData({
+      id,
+      updates: {
+        previousResult: result !== ResultTypes.Pending ? result : null,
+        result: this.getResultBasedOnAction(action),
+        waitingResult: false,
+      },
+      actionBy: reqeustedBy,
+      action: PcrResultTestActivityAction.UpdateFromRapidAntigen,
     })
 
     //Update Appointments
@@ -214,12 +219,12 @@ export class RapidAntigenTestResultsService {
       return
     }
 
-    const rapidAlergenAllowedResults = [
+    const rapidAntigenAllowedResults = [
       ResultTypes.Negative,
       ResultTypes.Positive,
       ResultTypes.Invalid,
     ]
-    if (!rapidAlergenAllowedResults.includes(testResults.result)) {
+    if (!rapidAntigenAllowedResults.includes(testResults.result)) {
       LogWarning(
         'RapidAntigenTestResultsService: sendTestResultEmail',
         'InvalidResultSendRequested',
@@ -278,11 +283,11 @@ export class RapidAntigenTestResultsService {
     return emailData
   }
 
-  getPDFType(appointmentID: string, result: ResultTypes): RapidAlergenResultPDFType {
+  getPDFType(appointmentID: string, result: ResultTypes): RapidAntigenResultPDFType {
     if (result === ResultTypes.Negative) {
-      return RapidAlergenResultPDFType.Negative
+      return RapidAntigenResultPDFType.Negative
     } else if (result === ResultTypes.Positive) {
-      return RapidAlergenResultPDFType.Positive
+      return RapidAntigenResultPDFType.Positive
     } else {
       LogError('RapidAntigenTestResultsService: getPDFType', 'UnSupportedPDFResultType', {
         appointmentID,

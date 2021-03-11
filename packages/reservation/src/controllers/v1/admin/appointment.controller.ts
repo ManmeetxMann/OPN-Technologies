@@ -130,6 +130,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         searchQuery,
         transportRunId,
+        labId,
       } = req.query as AppointmentByOrganizationRequest
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
@@ -151,6 +152,7 @@ class AdminAppointmentController implements IControllerBase {
         dateOfAppointment,
         searchQuery,
         transportRunId,
+        labId,
       })
 
       const transportRuns = fromPairs(
@@ -188,6 +190,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         searchQuery,
         transportRunId,
+        labId,
       } = req.query as AppointmentByOrganizationRequest
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
@@ -198,14 +201,15 @@ class AdminAppointmentController implements IControllerBase {
         appointmentStatusArray,
         orgIdArray,
         total,
-      } = await this.appointmentService.getAppointmentsStats(
+      } = await this.appointmentService.getAppointmentsStats({
         appointmentStatus,
         barCode,
         organizationId,
         dateOfAppointment,
         searchQuery,
         transportRunId,
-      )
+        labId,
+      })
 
       res.json(actionSucceed(statsUiDTOResponse(appointmentStatusArray, orgIdArray, total)))
     } catch (error) {
@@ -403,15 +407,22 @@ class AdminAppointmentController implements IControllerBase {
       }
       const adminId = getUserId(res.locals.authenticatedUser)
 
-      const appointmentsState: BulkOperationResponse[] = await Promise.all(
-        appointmentIds.map(async (appointmentId) => {
-          return await this.appointmentService.copyAppointment(
+      // Run copy operations in sequence
+      const appointmentsState: BulkOperationResponse[] = await appointmentIds.reduce(
+        // wait previous operation, make a copy then reduce into new array
+        async (previousOperations: Promise<BulkOperationResponse[]>, appointmentId) => {
+          const previousResults = await previousOperations
+
+          const currentResult = await this.appointmentService.copyAppointment(
             appointmentId,
             dateTime,
             adminId,
             organizationId,
           )
-        }),
+
+          return [...previousResults, currentResult]
+        },
+        Promise.resolve([]),
       )
 
       res.json(actionSuccess([...appointmentsState]))

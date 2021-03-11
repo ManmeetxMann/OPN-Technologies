@@ -6,7 +6,7 @@ import {LogInfo} from '../../../../common/src/utils/logging-setup'
 
 //Models
 import {
-  RapidAlergenResultPDFType,
+  RapidAntigenResultPDFType,
   RapidAntigenEmailResultDTO,
 } from '../../models/rapid-antigen-test-results'
 
@@ -17,19 +17,19 @@ import {BadRequestException} from '../../../../common/src/exceptions/bad-request
 
 const getRapidAntigenTemplate = (
   resultData: RapidAntigenEmailResultDTO,
-  pdfType: RapidAlergenResultPDFType,
+  pdfType: RapidAntigenResultPDFType,
 ): {content: Content; tableLayouts: TableLayouts} => {
   const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
   switch (pdfType) {
-    case RapidAlergenResultPDFType.Positive: {
+    case RapidAntigenResultPDFType.Positive: {
       return positivePCRResultTemplate(resultData, resultDate)
     }
-    case RapidAlergenResultPDFType.Negative: {
+    case RapidAntigenResultPDFType.Negative: {
       return negativePCRResultTemplate(resultData, resultDate)
     }
     default: {
-      LogInfo('getRapidAntigenTemplate', 'InavldiRapidAlergenResultPDFType', {
+      LogInfo('getRapidAntigenTemplate', 'InavldiRapidAntigenResultPDFType', {
         pdfType,
       })
       return
@@ -39,7 +39,7 @@ const getRapidAntigenTemplate = (
 
 export const RapidAntigenPDFContent = async (
   resultData: RapidAntigenEmailResultDTO,
-  pdfType: RapidAlergenResultPDFType,
+  pdfType: RapidAntigenResultPDFType,
 ): Promise<string> => {
   const pdfService = new PdfService()
 
@@ -54,7 +54,7 @@ export const RapidAntigenPDFContent = async (
 
 export const RapidAntigenPDFStream = (
   resultData: RapidAntigenEmailResultDTO,
-  pdfType: RapidAlergenResultPDFType,
+  pdfType: RapidAntigenResultPDFType,
 ): Stream => {
   const pdfService = new PdfService()
   const data = getRapidAntigenTemplate(resultData, pdfType)

@@ -55,6 +55,7 @@ import {
   BulkOperationResponse,
   BulkOperationStatus,
 } from '../types/bulk-operation.type'
+import {PcrResultTestActivityAction} from '../models/pcr-test-results'
 import {AdminScanHistory} from '../models/admin-scan-history'
 import {SyncInProgressTypes} from '../models/sync-progress'
 
@@ -217,6 +218,14 @@ export class AppoinmentService {
   ): Promise<(AppointmentDBModel & {organizationName: string})[]> {
     const conditions = []
     let appointments = []
+    if (queryParams.labId) {
+      conditions.push({
+        map: '/',
+        key: 'labId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: queryParams.labId,
+      })
+    }
     if (queryParams.organizationId) {
       conditions.push({
         map: '/',
@@ -431,9 +440,11 @@ export class AppoinmentService {
   }
 
   private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
-    return appointmentTypeID === Config.getInt('ACUITY_APPOINTMENT_TYPE_ID')
-      ? TestTypes.RapidAntigen
-      : TestTypes.PCR
+    const rapidAntigenTypeIDs = [
+      Config.getInt('ACUITY_APPOINTMENT_TYPE_MULTIPLEX'),
+      Config.getInt('ACUITY_APPOINTMENT_TYPE_ID'),
+    ]
+    return rapidAntigenTypeIDs.includes(appointmentTypeID) ? TestTypes.RapidAntigen : TestTypes.PCR
   }
 
   private async getDateFields(acuityAppointment: AppointmentAcuityResponse) {
@@ -492,12 +503,12 @@ export class AppoinmentService {
     const currentUserId = userId ? userId : await getNewUserId()
 
     return {
-      acuityAppointmentId: acuityAppointment.id,
+      acuityAppointmentId: Number(acuityAppointment.id),
       appointmentStatus,
-      appointmentTypeID: acuityAppointment.appointmentTypeID,
+      appointmentTypeID: Number(acuityAppointment.appointmentTypeID),
       barCode: barCode,
       canceled: acuityAppointment.canceled,
-      calendarID: acuityAppointment.calendarID,
+      calendarID: Number(acuityAppointment.calendarID),
       dateOfAppointment,
       dateOfBirth: acuityAppointment.dateOfBirth,
       dateTime,
@@ -505,7 +516,6 @@ export class AppoinmentService {
       email: acuityAppointment.email,
       firstName: acuityAppointment.firstName,
       lastName: acuityAppointment.lastName,
-      location: acuityAppointment.location,
       organizationId: acuityAppointment.organizationId || organizationId || null,
       packageCode: acuityAppointment.certificate,
       phone: acuityAppointment.phone,
@@ -654,6 +664,7 @@ export class AppoinmentService {
     appointmentId: string,
     data: BulkData,
     actionType: AppointmentBulkAction,
+    userId?: string,
   ): Promise<BulkOperationResponse> {
     try {
       const appointment = await this.appointmentsRepository.findOneById(appointmentId)
@@ -673,7 +684,7 @@ export class AppoinmentService {
           break
 
         case AppointmentBulkAction.AddAppointmentLabel:
-          await this.addAppointmentLabel(appointment, data.label)
+          await this.addAppointmentLabel(appointment, data.label, userId)
           break
 
         default:
@@ -759,12 +770,21 @@ export class AppoinmentService {
     }
   }
 
-  async addAppointmentLabel(appointment: AppointmentDBModel, label: DeadlineLabel): Promise<void> {
+  async addAppointmentLabel(
+    appointment: AppointmentDBModel,
+    label: DeadlineLabel,
+    userId: string,
+  ): Promise<void> {
     const deadline = makeDeadline(moment(appointment.dateTime.toDate()).utc(), label)
     await this.acuityRepository.addAppointmentLabelOnAcuity(appointment.acuityAppointmentId, label)
 
     await Promise.all([
-      this.pcrTestResultsRepository.updateAllResultsForAppointmentId(appointment.id, {deadline}),
+      this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+        appointment.id,
+        {deadline},
+        PcrResultTestActivityAction.UpdateFromAppointment,
+        userId,
+      ),
       this.updateAppointmentDB(appointment.id, {deadline}),
     ])
   }
@@ -791,9 +811,12 @@ export class AppoinmentService {
       data.appointment.acuityAppointmentId,
       data.deadlineLabel,
     )
-    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(data.appointment.id, {
-      deadline,
-    })
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+      data.appointment.id,
+      {deadline},
+      PcrResultTestActivityAction.UpdateFromAppointment,
+      data.actionBy,
+    )
 
     const saved = await this.appointmentsRepository.updateProperties(data.appointment.id, {
       appointmentStatus: AppointmentStatus.ReRunRequired,
@@ -937,7 +960,6 @@ export class AppoinmentService {
   }: CreateAppointmentRequest & {email: string}): Promise<AppointmentDBModel> {
     const {time, appointmentTypeId, calendarId} = decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
-
     const dateTime = utcDateTime.format()
     const barCodeNumber = await this.getNextBarCodeNumber()
     const acuityAppointment = await this.acuityRepository.createAppointment({
@@ -969,6 +991,46 @@ export class AppoinmentService {
       couponCode,
       userId,
     })
+  }
+
+  async getAvailableTimes(appointmentId: string, date: string): Promise<{label: string}[]> {
+    const appointment = await this.getAppointmentDBById(appointmentId)
+    const slots = await this.acuityRepository.getAvailableSlots(
+      Number(appointment.appointmentTypeID),
+      date,
+      Number(appointment.calendarID),
+      '',
+    )
+    return slots.map((slot) => {
+      return {
+        label: moment(slot.time).format(timeFormats.standard12h),
+        time: slot.time,
+      }
+    })
+  }
+
+  async getAvailableDates(
+    appointmentId: string,
+    year: string,
+    month: string,
+  ): Promise<{id: string; availableDates: {date: string}[]}> {
+    const appointment = await this.getAppointmentDBById(appointmentId)
+    const yearMonth = `${year}-${month}`
+    const id = encodeAvailableTimeId({
+      appointmentTypeId: Number(appointment.appointmentTypeID),
+      calendarId: Number(appointment.calendarID),
+      date: yearMonth,
+    })
+    const availableDates = await this.acuityRepository.getAvailabilityDates(
+      Number(appointment.appointmentTypeID),
+      yearMonth,
+      Number(appointment.calendarID),
+      '',
+    )
+    return {
+      id,
+      availableDates,
+    }
   }
 
   async getAvailabitlityDateList(
@@ -1142,7 +1204,12 @@ export class AppoinmentService {
 
     if (pcrTest.length) {
       pcrTest.forEach(async (pcrTest) => {
-        await this.pcrTestResultsRepository.updateData(pcrTest.id, {barCode: newBarCode})
+        await this.pcrTestResultsRepository.updateData({
+          id: pcrTest.id,
+          updates: {barCode: newBarCode},
+          actionBy: userId,
+          action: PcrResultTestActivityAction.RegenerateBarcode,
+        })
         console.log(`regenerateBarCode: PCRTestID: ${pcrTest.id} New BarCode: ${newBarCode}`)
       })
     } else {
@@ -1153,25 +1220,13 @@ export class AppoinmentService {
   }
 
   async getAppointmentsStats(
-    appointmentStatus: AppointmentStatus[],
-    barCode: string,
-    organizationId: string,
-    dateOfAppointment: string,
-    searchQuery: string,
-    transportRunId: string,
+    queryParams: AppointmentByOrganizationRequest,
   ): Promise<{
     appointmentStatusArray: Filter[]
     orgIdArray: Filter[]
     total: number
   }> {
-    const appointments = await this.getAppointmentsDB({
-      appointmentStatus,
-      barCode,
-      organizationId,
-      dateOfAppointment,
-      searchQuery,
-      transportRunId,
-    })
+    const appointments = await this.getAppointmentsDB(queryParams)
     const appointmentStatsByTypes: Record<AppointmentStatus, number> = {} as Record<
       AppointmentStatus,
       number
@@ -1309,10 +1364,15 @@ export class AppoinmentService {
       dateTimeData,
     )
 
-    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(appointmentId, {
-      dateTime: dateTimeData.dateTime,
-      deadline: dateTimeData.deadline,
-    })
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+      appointmentId,
+      {
+        dateTime: dateTimeData.dateTime,
+        deadline: dateTimeData.deadline,
+      },
+      PcrResultTestActivityAction.UpdateFromAppointment,
+      requestData.userID,
+    )
 
     LogInfo('AppoinmentService:rescheduleAppointment', 'AppointmentRescheduled', {
       appoinmentId: updatedAppointment.id,

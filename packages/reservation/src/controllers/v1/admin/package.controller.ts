@@ -11,6 +11,8 @@ import {PackageService} from '../../../services/package.service'
 import {SavePackageAndOrganizationRequest} from '../../../models/packages'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
+import {PcrResultTestActivityAction} from '../../../../../reservation/src/models/pcr-test-results'
+import {getUserId} from '../../../../../common/src/utils/auth'
 
 class AdminPackageController implements IControllerBase {
   public path = '/reservation/admin'
@@ -42,6 +44,7 @@ class AdminPackageController implements IControllerBase {
   addPackageCode = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {packageCode, organizationId} = req.body as SavePackageAndOrganizationRequest
+      const adminId = getUserId(res.locals.authenticatedUser)
 
       const isPackageExist = await this.packageService.isExist(packageCode)
 
@@ -59,6 +62,8 @@ class AdminPackageController implements IControllerBase {
           await this.pcrTestResultsService.updateOrganizationIdByAppointmentId(
             appointment.id,
             organizationId,
+            PcrResultTestActivityAction.UpdateFromPackage,
+            adminId,
           )
         }),
       )

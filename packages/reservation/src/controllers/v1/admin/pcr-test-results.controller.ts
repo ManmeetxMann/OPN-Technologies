@@ -22,8 +22,6 @@ import {
   PCRListQueryRequest,
   PCRTestResultHistoryResponse,
   ListPCRResultRequest,
-  PCRTestResultRequest,
-  PCRTestResultRequestData,
   PcrTestResultsListRequest,
   PcrTestResultsListByDeadlineRequest,
   PCRTestResultConfirmRequest,
@@ -32,6 +30,8 @@ import {
 } from '../../../models/pcr-test-results'
 import {statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
+import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
+import {validateAnalysis} from '../../../utils/analysis.helper'
 
 class AdminPCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -58,7 +58,7 @@ class AdminPCRTestResultController implements IControllerBase {
     const confirmResultsAuth = authorizationMiddleware([RequiredUserPermission.LabConfirmResults])
 
     innerRouter.post(
-      this.path + '/pcr-test-results-bulk',
+      this.path + '/test-results-bulk',
       sendBulkResultsAuth,
       this.createReportForPCRResults,
     )
@@ -111,7 +111,7 @@ class AdminPCRTestResultController implements IControllerBase {
   ): Promise<void> => {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
-      const data = req.body as PCRTestResultRequest
+      const data = req.body as BulkTestResultRequest
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
         .tz(timeZone)
@@ -125,7 +125,7 @@ class AdminPCRTestResultController implements IControllerBase {
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
-      const reportTracker = await this.pcrTestResultsService.createReportForPCRResults(
+      const reportTracker = await this.pcrTestResultsService.createReportForTestResults(
         data,
         adminId,
       )
@@ -139,7 +139,14 @@ class AdminPCRTestResultController implements IControllerBase {
   createPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
-      const {barCode, ...data} = req.body as PCRTestResultRequestData
+      const {
+        barCode,
+        resultAnalysis,
+        sendUpdatedResults,
+        templateId,
+        labId,
+        ...metaData
+      } = req.body as TestResultRequestData
       const timeZone = Config.get('DEFAULT_TIME_ZONE')
       const fromDate = moment(now())
         .tz(timeZone)
@@ -148,27 +155,27 @@ class AdminPCRTestResultController implements IControllerBase {
         .format('YYYY-MM-DD')
       const toDate = moment(now()).tz(timeZone).format('YYYY-MM-DD')
 
-      if (!moment(data.resultDate).isBetween(fromDate, toDate, undefined, '[]')) {
+      if (!moment(metaData.resultDate).isBetween(fromDate, toDate, undefined, '[]')) {
         throw new BadRequestException(
           `Date does not match the time range (from ${fromDate} - to ${toDate})`,
         )
       }
 
-      if (Number(data.hexCt) > 40) {
-        throw new BadRequestException(`Invalid Hex Ct. Should be less than 40`)
-      }
+      validateAnalysis(resultAnalysis)
 
       const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
-        {
-          barCode,
-          resultSpecs: data,
-          adminId,
-        },
+        metaData,
+        resultAnalysis,
+        barCode,
         true,
-        data.sendUpdatedResults,
+        sendUpdatedResults,
+        adminId,
+        templateId,
+        labId,
+        adminId,
       )
       const status = await this.pcrTestResultsService.getReportStatus(
-        pcrResultRecorded.resultSpecs.action,
+        pcrResultRecorded.resultMetaData.action,
         pcrResultRecorded.result,
       )
       const successMessage = `${status} for ${pcrResultRecorded.barCode}`
@@ -220,26 +227,28 @@ class AdminPCRTestResultController implements IControllerBase {
   listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {
-        deadline,
         organizationId,
         barCode,
         result,
         date,
         testType,
+        searchQuery,
+        labId,
       } = req.query as PcrTestResultsListRequest
-      if (!barCode && !deadline && !date) {
-        throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
+      if (!barCode && !date) {
+        throw new BadRequestException('One of the "barCode" or "date" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       const pcrResults = await this.pcrTestResultsService.getPCRResults(
         {
           organizationId,
-          deadline,
           barCode,
           result,
           date,
           testType,
+          searchQuery,
+          labId,
         },
         isLabUser,
       )
@@ -256,9 +265,9 @@ class AdminPCRTestResultController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {deadline, organizationId, barCode, result} = req.query as PcrTestResultsListRequest
-      if (!barCode && !deadline) {
-        throw new BadRequestException('"deadline" is required if "barCode" is not specified')
+      const {organizationId, barCode, result, date, labId} = req.query as PcrTestResultsListRequest
+      if (!barCode && !date) {
+        throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
@@ -269,9 +278,10 @@ class AdminPCRTestResultController implements IControllerBase {
       } = await this.pcrTestResultsService.getPCRResultsStats(
         {
           organizationId,
-          deadline,
           barCode,
           result,
+          date,
+          labId,
         },
         isLabUser,
       )
@@ -355,6 +365,7 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         appointmentStatus,
         organizationId,
+        labId,
       } = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
@@ -365,6 +376,7 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         appointmentStatus,
         organizationId,
+        labId,
       })
 
       res.json(actionSucceed(pcrResults))
@@ -375,7 +387,7 @@ class AdminPCRTestResultController implements IControllerBase {
 
   dueDeadlineStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunId, deadline, barCode} = req.query as PcrTestResultsListByDeadlineRequest
+      const {testRunId, deadline, barCode, labId} = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
       }
@@ -387,6 +399,7 @@ class AdminPCRTestResultController implements IControllerBase {
         deadline,
         testRunId,
         barCode,
+        labId,
       })
 
       res.json(

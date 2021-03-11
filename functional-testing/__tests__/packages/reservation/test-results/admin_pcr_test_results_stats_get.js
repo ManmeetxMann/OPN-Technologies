@@ -1,5 +1,5 @@
 const frisby = require('frisby');
-const helpersCommon = require('helpersCommon');
+const helpersCommon = require('helpers_common');
 
 // Do setup first
 frisby.globalSetup({
@@ -12,7 +12,7 @@ const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 /**
  * @group reservation-service
  * @group /reservation/admin/api/v1/appointments
- * @group get-pcr-test-results-stats
+ * @group get-stats-pcr-test-results
  */
 
 describe('PCR test results stats', () => {
