@@ -738,6 +738,12 @@ export class AppoinmentService {
     this.postPubsub(saved, 'updated')
   }
 
+  async addLab(appointmentId: string, labId: string): Promise<void> {
+    await this.appointmentsRepository.updateProperties(appointmentId, {
+      labId: labId,
+    })
+  }
+
   private async checkAppointmentStatusOnly(
     appointmentId: string,
     appointmentStatus: AppointmentStatus,

@@ -282,8 +282,16 @@ class AdminAppointmentController implements IControllerBase {
         throw new ResourceNotFoundException(`Transport Run for the id ${transportRunId} Not found`)
       }
 
+      // Get lab associated with transport run
+      const [transportRun] = transportRuns
+      const labId = transportRun?.labId
+
       const appointmentsState: BulkOperationResponse[] = await Promise.all(
         filtredAppointmentIds.map(async (appointmentId) => {
+          if (labId) {
+            await this.appointmentService.addLab(appointmentId, labId)
+          }
+
           return this.appointmentService.makeBulkAction(
             appointmentId,
             {
