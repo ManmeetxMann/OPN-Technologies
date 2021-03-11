@@ -40,8 +40,8 @@ export const getDateFromDatetime = (transportDateTime: Date | string): string =>
   return moment(transportDateTime).tz(timeZone).format('YYYY-MM-DD')
 }
 
-export const getTimeFromDateTime = (dateTime: Date | string): string => {
-  return moment(dateTime).format('HH:mm:ss')
+export const getTimeFromFirestoreDateTime = (dateTime: firestore.Timestamp): string => {
+  return moment(dateTime.toDate()).utc().format('HH:mm:ss')
 }
 
 export const makeUtcIsoDate = (date: string, time: string): string => {

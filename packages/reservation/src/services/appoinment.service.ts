@@ -32,7 +32,7 @@ import {
   makeDeadline,
   makeRapidDeadline,
   makeFirestoreTimestamp,
-  getTimeFromDateTime,
+  getTimeFromFirestoreDateTime,
   makeUtcIsoDate,
 } from '../utils/datetime.helper'
 
@@ -853,7 +853,7 @@ export class AppoinmentService {
     }
 
     const barCodeNumber = await this.getNextBarCodeNumber()
-    const appointmentTime = getTimeFromDateTime(appointment.dateTime.toDate())
+    const appointmentTime = getTimeFromFirestoreDateTime(appointment.dateTime)
     const dateTime = makeUtcIsoDate(date, appointmentTime)
 
     const acuityAppointment = await this.acuityRepository.createAppointment({
