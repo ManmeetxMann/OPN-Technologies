@@ -279,22 +279,29 @@ export class PassportService {
    * Ex: end of day: 3am at night and 12 hours – we'd pick which is closer to now()
    */
   shortestTime(passportStatus: PassportStatuses | TemperatureStatuses, validFrom: Date): Date {
+    if (
+      [PassportStatuses.Stop, PassportStatuses.Caution, TemperatureStatuses.Stop].includes(
+        passportStatus,
+      )
+    ) {
+      const weeksToAdd = parseInt(Config.get('STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_WEEKS'))
+      // TODO: end of day?
+      return moment(validFrom).add(weeksToAdd, 'weeks').toDate()
+    }
+    // valid passes remain until they are this old
     const expiryDuration = parseInt(Config.get('PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
+    // all valid passes expire at this time of day, regardless of age
     const expiryMax = parseInt(Config.get('PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS'))
-    const expiryDurationForRedPassports = parseInt(
-      Config.get('STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_WEEKS'),
-    )
 
-    const date = validFrom.toISOString()
-    const byDuration =
-      passportStatus === PassportStatuses.Stop
-        ? moment(date).add(expiryDurationForRedPassports, 'weeks')
-        : moment(date).add(expiryDuration, 'hours')
-    const lookAtNextDay = validFrom.getHours() < expiryMax ? 0 : 1
-    const byMax = moment(date).startOf('day').add(lookAtNextDay, 'day').add(expiryMax, 'hours')
-    const shorter = byMax.isBefore(byDuration) ? byMax : byDuration
+    const byDuration = moment(validFrom).add(expiryDuration, 'hours')
+    const lookAtNextDay = moment(validFrom).hours() < expiryMax ? 0 : 1
+    const byMax = moment(validFrom)
+      .startOf('day')
+      .add(lookAtNextDay, 'days')
+      .add(expiryMax, 'hours')
+    const earlier = byMax.isBefore(byDuration) ? byMax : byDuration
 
-    return shorter.toDate()
+    return earlier.toDate()
   }
 
   /**
@@ -310,7 +317,12 @@ export class PassportService {
         `Passport ${passport.id} must have status temperature_check_required to update`,
       )
     }
-    const result = await this.passportRepository.updateProperty(passport.id, 'status', status)
+    const result = await this.passportRepository.updateProperties(passport.id, {
+      status,
+      validUntil: firestore.Timestamp.fromDate(
+        this.shortestTime(status, safeTimestamp(passport.validFrom)),
+      ),
+    })
     this.postPubsub(result)
     return result
   }
