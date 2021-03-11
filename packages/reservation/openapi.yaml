@@ -1135,7 +1135,7 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
-          name: labID
+          name: labId
           schema:
             type: string
         - in: query
@@ -1519,7 +1519,7 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
-          name: labID
+          name: labId
           schema:
             type: string
         - in: query
@@ -1616,7 +1616,7 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
-          name: labID
+          name: labId
           schema:
             type: string
         - in: query
@@ -1684,7 +1684,7 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
-          name: labID
+          name: labId
           schema:
             type: string
         - in: query
@@ -2647,7 +2647,7 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
-          name: labID
+          name: labId
           schema:
             type: string
         - in: query
@@ -2750,7 +2750,7 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
-          name: labID
+          name: labId
           schema:
             type: string
         - in: query
