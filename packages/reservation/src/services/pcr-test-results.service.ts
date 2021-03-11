@@ -282,11 +282,21 @@ export class PCRTestResultsService {
       testType,
       date,
       searchQuery,
+      labId,
     }: PcrTestResultsListRequest,
     isLabUser: boolean,
   ): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
     let pcrResults: PCRTestResultDBModel[] = []
+
+    if (labId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'labId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: labId,
+      })
+    }
 
     //TODO: Allow BarCode with ORG
     if (organizationId) {
@@ -1178,17 +1188,14 @@ export class PCRTestResultsService {
   }
 
   async getPCRResultsStats(
-    {organizationId, deadline, barCode, result, date}: PcrTestResultsListRequest,
+    queryParams: PcrTestResultsListRequest,
     isLabUser: boolean,
   ): Promise<{
     total: number
     pcrResultStatsByOrgIdArr: Filter[]
     pcrResultStatsByResultArr: Filter[]
   }> {
-    const pcrTestResults = await this.getPCRResults(
-      {organizationId, deadline, barCode, result, date},
-      isLabUser,
-    )
+    const pcrTestResults = await this.getPCRResults(queryParams, isLabUser)
 
     const pcrResultStatsByResult: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
     const pcrResultStatsByOrgId: Record<string, number> = {}
@@ -1397,13 +1404,21 @@ export class PCRTestResultsService {
     deadline,
     testRunId,
     barCode,
+    labId,
   }: PcrTestResultsListByDeadlineRequest): Promise<{
     pcrResultStatsByResultArr: Filter[]
     pcrResultStatsByOrgIdArr: Filter[]
     total: number
   }> {
     const pcrTestResultsQuery = []
-
+    if (labId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'labId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: labId,
+      })
+    }
     if (deadline) {
       pcrTestResultsQuery.push({
         map: '/',
@@ -1501,8 +1516,17 @@ export class PCRTestResultsService {
     barCode,
     appointmentStatus,
     organizationId,
+    labId,
   }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
     const pcrTestResultsQuery = []
+    if (labId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'labId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: labId,
+      })
+    }
 
     if (barCode) {
       pcrTestResultsQuery.push({

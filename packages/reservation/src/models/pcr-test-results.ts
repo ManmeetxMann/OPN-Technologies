@@ -245,6 +245,7 @@ export type PcrTestResultsListByDeadlineRequest = {
     | AppointmentStatus.Received
     | AppointmentStatus.ReRunRequired
   organizationId?: string
+  labId?: string
 }
 
 export type SinglePcrTestResultsRequest = {
@@ -263,6 +264,7 @@ export type PcrTestResultsListRequest = {
   date?: string
   testType?: TestTypes
   searchQuery?: string
+  labId?: string
 }
 
 export type PCRTestResultListDTO = {

@@ -1135,7 +1135,7 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
-          name: labID
+          name: labId
           schema:
             type: string
         - in: query
@@ -1519,7 +1519,7 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
-          name: labID
+          name: labId
           schema:
             type: string
         - in: query
@@ -1616,6 +1616,10 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
+          name: labId
+          schema:
+            type: string
+        - in: query
           name: organizationId
           schema:
             type: string
@@ -1679,6 +1683,10 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
+        - in: query
+          name: labId
+          schema:
+            type: string
         - in: query
           name: organizationId
           schema:
@@ -2639,6 +2647,14 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
+          name: labId
+          schema:
+            type: string
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+        - in: query
           name: deadline
           schema:
             type: string
@@ -2659,10 +2675,6 @@ paths:
               - Received
               - InProgress
               - ReRunRequired
-        - in: query
-          name: organizationId
-          schema:
-            type: string
       responses:
         '200':
           description: Successfully Return
@@ -2737,6 +2749,10 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
+        - in: query
+          name: labId
+          schema:
+            type: string
         - in: query
           name: deadline
           schema:
