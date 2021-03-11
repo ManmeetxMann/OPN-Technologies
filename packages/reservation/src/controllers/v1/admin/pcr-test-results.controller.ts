@@ -227,7 +227,6 @@ class AdminPCRTestResultController implements IControllerBase {
   listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {
-        deadline,
         organizationId,
         barCode,
         result,
@@ -236,15 +235,14 @@ class AdminPCRTestResultController implements IControllerBase {
         searchQuery,
         labId,
       } = req.query as PcrTestResultsListRequest
-      if (!barCode && !deadline && !date) {
-        throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
+      if (!barCode && !date) {
+        throw new BadRequestException('One of the "barCode" or "date" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       const pcrResults = await this.pcrTestResultsService.getPCRResults(
         {
           organizationId,
-          deadline,
           barCode,
           result,
           date,
@@ -267,15 +265,8 @@ class AdminPCRTestResultController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {
-        deadline,
-        organizationId,
-        barCode,
-        result,
-        date,
-        labId,
-      } = req.query as PcrTestResultsListRequest
-      if (!barCode && !deadline && !date) {
+      const {organizationId, barCode, result, date, labId} = req.query as PcrTestResultsListRequest
+      if (!barCode && !date) {
         throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
@@ -287,7 +278,6 @@ class AdminPCRTestResultController implements IControllerBase {
       } = await this.pcrTestResultsService.getPCRResultsStats(
         {
           organizationId,
-          deadline,
           barCode,
           result,
           date,

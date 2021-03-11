@@ -1629,11 +1629,6 @@ paths:
             type: string
             format: date
         - in: query
-          name: deadline
-          schema:
-            type: string
-            format: date
-        - in: query
           name: barCode
           schema:
             type: string
@@ -1691,11 +1686,6 @@ paths:
           name: organizationId
           schema:
             type: string
-        - in: query
-          name: deadline
-          schema:
-            type: string
-            format: date
         - in: query
           name: date
           schema:
