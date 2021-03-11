@@ -1614,4 +1614,52 @@ export class PCRTestResultsService {
         })
     }
   }
+
+  async getTestResultAndAppointment(
+    id: string,
+    userId: string,
+  ): Promise<{appointment: AppointmentDBModel; pcrTestResult: PCRTestResultDBModel}> {
+    const pcrTestResult = await this.getPCRResultsById(id)
+
+    if (!pcrTestResult) {
+      throw new ResourceNotFoundException(`PCRTestResult with id ${id} not found`)
+    }
+
+    //TODO
+    if (pcrTestResult?.userId !== userId) {
+      throw new ResourceNotFoundException(`${id} does not exist`)
+    }
+
+    const appointment = await this.appointmentService.getAppointmentDBById(
+      pcrTestResult.appointmentId,
+    )
+
+    if (!appointment) {
+      throw new ResourceNotFoundException(
+        `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${id}`,
+      )
+    }
+    if (appointment?.userId !== userId) {
+      LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
+        userId,
+        resultId: id,
+        appointmentId: pcrTestResult.appointmentId,
+      })
+      throw new ResourceNotFoundException(`${id} does not exist`)
+    }
+
+    return {
+      appointment,
+      pcrTestResult,
+    }
+  }
+
+  isDownloadable(pcrTestResult: PCRTestResultDBModel): boolean {
+    const allowedResultTypes = [
+      ResultTypes.Negative,
+      ResultTypes.Positive,
+      ResultTypes.PresumptivePositive,
+    ]
+    return allowedResultTypes.includes(pcrTestResult.result)
+  }
 }
