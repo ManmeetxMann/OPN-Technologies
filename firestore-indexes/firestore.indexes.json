@@ -459,11 +459,15 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "organizationId",
+          "fieldPath": "displayInResult",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "result",
+          "fieldPath": "labId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sortOrder",
           "order": "DESCENDING"
         }
       ]
@@ -481,7 +485,33 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "result",
+          "fieldPath": "labId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sortOrder",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "deadlineDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sortOrder",
           "order": "DESCENDING"
         }
       ]
@@ -499,7 +529,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "result",
+          "fieldPath": "sortOrder",
           "order": "DESCENDING"
         }
       ]
@@ -513,11 +543,63 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "labId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sortOrder",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dateOfAppointment",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "organizationId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "result",
+          "fieldPath": "sortOrder",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "dateOfAppointment",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "testType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sortOrder",
           "order": "DESCENDING"
         }
       ]
@@ -535,7 +617,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "result",
+          "fieldPath": "sortOrder",
           "order": "DESCENDING"
         }
       ]
@@ -553,7 +635,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "result",
+          "fieldPath": "sortOrder",
           "order": "DESCENDING"
         }
       ]
@@ -571,7 +653,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "result",
+          "fieldPath": "sortOrder",
           "order": "DESCENDING"
         }
       ]
@@ -589,7 +671,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "result",
+          "fieldPath": "sortOrder",
           "order": "DESCENDING"
         }
       ]
@@ -611,7 +693,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "result",
+          "fieldPath": "sortOrder",
           "order": "DESCENDING"
         }
       ]
@@ -633,7 +715,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "result",
+          "fieldPath": "sortOrder",
           "order": "DESCENDING"
         }
       ]
