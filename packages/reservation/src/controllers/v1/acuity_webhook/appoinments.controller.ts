@@ -212,10 +212,29 @@ class AppointmentWebhookController implements IControllerBase {
         acuityID: acuityAppointment.id,
         barCode: barCode,
       })
-      const pcrTestResult = await this.pcrTestResultsService.getWaitingPCRResultByAppointmentId(
-        appointmentFromDb.id,
-      )
-      //getWaitingPCRResultByAppointmentId will throw exception if pcrTestResult doesn't exists
+      let pcrTestResult
+
+      try {
+        pcrTestResult = await this.pcrTestResultsService.getWaitingPCRResultByAppointmentId(
+          appointmentFromDb.id,
+        )
+      } catch (error) {
+        LogWarning('UpdateAppointmentFromWebhook', 'FailedToGetWaitingPCRResults', {
+          acuityID: acuityAppointment.id,
+          appoinmentID: appointmentFromDb.id,
+          errorMessage: error.toString(),
+        })
+      }
+
+      if (!pcrTestResult) {
+        pcrTestResult = await this.pcrTestResultsService.createTestResult(updatedAppointment)
+
+        LogInfo('UpdateAppointmentFromWebhook', 'SuccessCreatePCRResults', {
+          acuityID: acuityAppointment.id,
+          appointmentID: updatedAppointment.id,
+          pcrTestResultID: pcrTestResult.id,
+        })
+      }
 
       if (appointmentStatus === AppointmentStatus.Canceled) {
         await this.pcrTestResultsService.deleteTestResults(pcrTestResult.id)
