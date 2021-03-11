@@ -1629,11 +1629,6 @@ paths:
             type: string
             format: date
         - in: query
-          name: deadline
-          schema:
-            type: string
-            format: date
-        - in: query
           name: barCode
           schema:
             type: string
@@ -1691,11 +1686,6 @@ paths:
           name: organizationId
           schema:
             type: string
-        - in: query
-          name: deadline
-          schema:
-            type: string
-            format: date
         - in: query
           name: date
           schema:
@@ -3243,7 +3233,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
-  /reservation/internal/api/v1/rapid-alergen-send-result-email:
+  /reservation/internal/api/v1/rapid-antigen-send-result-email:
     summary: Rapid Antigen Test Results Email Notification
     post:
       description: 'Send Email Notification for Rapid Antigen Test Results'

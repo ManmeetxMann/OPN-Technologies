@@ -5,7 +5,7 @@ import {LogInfo} from '../../../../common/src/utils/logging-setup'
 
 //Models
 import {
-  RapidAlergenResultPDFType,
+  RapidAntigenResultPDFType,
   RapidAntigenEmailResultDTO,
 } from '../../models/rapid-antigen-test-results'
 
@@ -14,22 +14,22 @@ import negativePCRResultTemplate from './negative'
 
 export const RapidAntigenPDFContent = async (
   resultData: RapidAntigenEmailResultDTO,
-  pdfType: RapidAlergenResultPDFType,
+  pdfType: RapidAntigenResultPDFType,
 ): Promise<string> => {
   const pdfService = new PdfService()
   const resultDate = moment(resultData.dateTime.toDate()).format('LL')
   let data: {content: Content; tableLayouts: TableLayouts}
   switch (pdfType) {
-    case RapidAlergenResultPDFType.Positive: {
+    case RapidAntigenResultPDFType.Positive: {
       data = positivePCRResultTemplate(resultData, resultDate)
       break
     }
-    case RapidAlergenResultPDFType.Negative: {
+    case RapidAntigenResultPDFType.Negative: {
       data = negativePCRResultTemplate(resultData, resultDate)
       break
     }
     default: {
-      LogInfo('RapidAntigenPDFContent', 'InavldiRapidAlergenResultPDFType', {
+      LogInfo('RapidAntigenPDFContent', 'InavldiRapidAntigenResultPDFType', {
         pdfType,
       })
       return

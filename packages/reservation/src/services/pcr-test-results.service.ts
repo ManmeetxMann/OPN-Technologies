@@ -276,7 +276,6 @@ export class PCRTestResultsService {
   async getPCRResults(
     {
       organizationId,
-      deadline,
       barCode,
       result,
       testType,
@@ -343,21 +342,9 @@ export class PCRTestResultsService {
         operator: DataModelFieldMapOperatorType.Equals,
         value: true,
       })
-    } else if (deadline) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'deadline',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: makeDeadlineForFilter(deadline),
-      })
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'displayInResult',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: true,
-      })
     }
 
+    //Filter
     if (result) {
       pcrTestResultsQuery.push({
         map: '/',
@@ -366,6 +353,7 @@ export class PCRTestResultsService {
         value: result,
       })
     }
+
     //Apply for Corporate
     if (testType) {
       pcrTestResultsQuery.push({

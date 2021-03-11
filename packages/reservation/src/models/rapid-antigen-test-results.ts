@@ -14,7 +14,7 @@ export type RapidAntigenTestResultRequest = {
   notify: boolean
 }
 
-export enum RapidAlergenResultPDFType {
+export enum RapidAntigenResultPDFType {
   Positive = 'Positive',
   Negative = 'Negative',
 }

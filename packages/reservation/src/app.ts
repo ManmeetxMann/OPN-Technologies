@@ -22,7 +22,7 @@ import AdminHistoryController from './controllers/v1/admin/admin-scan-history.co
 import AdminRapidAntigenTestTesultsController from './controllers/v1/admin/rapid-antigen-test-results.controller'
 import AdminAppointmentAvailabilityController from './controllers/v1/admin/appointment-availability.controller'
 
-import InternalRapidAntigenResultEmailSendController from './controllers/v1/internal/rapid-alergen-send-result-email.controller'
+import InternalRapidAntigenResultEmailSendController from './controllers/v1/internal/rapid-antigen-send-result-email.controller'
 import AdminClinicController from './controllers/v1/admin/clinic.controller'
 import AdminTestKitBatchController from './controllers/v1/admin/test-kit-batch.controller'
 import AppointmentToTestTypeAssociationController from './controllers/v1/admin/appointment-to-test-type-association.controller'
