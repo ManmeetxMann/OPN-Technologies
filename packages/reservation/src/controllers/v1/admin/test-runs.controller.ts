@@ -37,7 +37,7 @@ class AdminTestRunsController implements IControllerBase {
 
   getListTestRuns = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunDate} = req.query as TestRunsRequest
+      const {testRunDate, labId} = req.query as TestRunsRequest
 
       if (testRunDate && !isValidDate(testRunDate)) {
         throw new BadRequestException('testRunDate is invalid')
@@ -45,6 +45,7 @@ class AdminTestRunsController implements IControllerBase {
 
       const testRuns = await this.testRunsService.getTestRunsByDate(
         toDateFormatWithoutTimezone(testRunDate),
+        labId,
       )
 
       res.json(actionSucceed(testRuns.map((testRun) => testRunDTOResponse(testRun))))

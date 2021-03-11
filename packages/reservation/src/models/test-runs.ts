@@ -3,6 +3,7 @@ import {Auditable} from '../../../common/src/types/auditable'
 
 export type TestRunsRequest = {
   testRunDate: string
+  labId: string
 }
 
 export type TestRunsPostRequest = {
