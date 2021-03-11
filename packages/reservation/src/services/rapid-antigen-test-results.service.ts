@@ -18,7 +18,7 @@ import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operatio
 import {
   RapidAntigenResultTypes,
   RapidAntigenTestResultRequest,
-  RapidAlergenResultPDFType,
+  RapidAntigenResultPDFType,
 } from '../models/rapid-antigen-test-results'
 
 import {RapidAntigenPDFContent} from '../templates/rapid-antigen'
@@ -30,7 +30,7 @@ export class RapidAntigenTestResultsService {
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private emailService = new EmailService()
-  private pubSub = new OPNPubSub('rapid-alergen-test-result-topic')
+  private pubSub = new OPNPubSub('rapid-antigen-test-result-topic')
 
   private getResultBasedOnAction = (action: RapidAntigenResultTypes) => {
     switch (action) {
@@ -219,12 +219,12 @@ export class RapidAntigenTestResultsService {
       return
     }
 
-    const rapidAlergenAllowedResults = [
+    const rapidAntigenAllowedResults = [
       ResultTypes.Negative,
       ResultTypes.Positive,
       ResultTypes.Invalid,
     ]
-    if (!rapidAlergenAllowedResults.includes(testResults.result)) {
+    if (!rapidAntigenAllowedResults.includes(testResults.result)) {
       LogWarning(
         'RapidAntigenTestResultsService: sendTestResultEmail',
         'InvalidResultSendRequested',
@@ -286,11 +286,11 @@ export class RapidAntigenTestResultsService {
   private async getPDFType(
     appointmentID: string,
     result: ResultTypes,
-  ): Promise<RapidAlergenResultPDFType> {
+  ): Promise<RapidAntigenResultPDFType> {
     if (result === ResultTypes.Negative) {
-      return RapidAlergenResultPDFType.Negative
+      return RapidAntigenResultPDFType.Negative
     } else if (result === ResultTypes.Positive) {
-      return RapidAlergenResultPDFType.Positive
+      return RapidAntigenResultPDFType.Positive
     } else {
       LogError('RapidAntigenTestResultsService: getPDFType', 'UnSupportedPDFResultType', {
         appointmentID,

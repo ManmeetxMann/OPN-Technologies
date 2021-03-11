@@ -3233,7 +3233,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
-  /reservation/internal/api/v1/rapid-alergen-send-result-email:
+  /reservation/internal/api/v1/rapid-antigen-send-result-email:
     summary: Rapid Antigen Test Results Email Notification
     post:
       description: 'Send Email Notification for Rapid Antigen Test Results'
