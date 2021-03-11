@@ -40,7 +40,7 @@ export default Joi.object({
   //updatedAt: FirestoreTimestamp.isValid().required(), //Added after validation
   userId: Joi.string().allow(null),
   waitingResult: Joi.boolean().required(),
-  templateId: Joi.string().required(),
-  labId: Joi.string().required(),
+  templateId: Joi.string().required().allow(null),
+  labId: Joi.string().required().allow(null),
   sortOrder: Joi.number().required(),
 })

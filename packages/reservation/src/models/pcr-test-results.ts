@@ -155,8 +155,8 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   testType: TestTypes
   resultMetaData?: TestResultsMetaData
   resultAnalysis?: Spec[]
-  templateId: string
-  labId: string
+  templateId?: string
+  labId?: string
   userId: string
   sortOrder: number
 }

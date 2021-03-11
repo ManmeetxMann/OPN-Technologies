@@ -40,7 +40,7 @@ export default Joi.object({
   appointmentTypeID: Joi.number().required(),
   calendarID: Joi.number().required(),
   vialLocation: Joi.string().allow(''),
-  address: Joi.string().required(),
+  address: Joi.string().required().allow(''),
   addressUnit: Joi.string().allow(''),
   couponCode: Joi.string().allow(''),
   travelID: Joi.string().allow(''),

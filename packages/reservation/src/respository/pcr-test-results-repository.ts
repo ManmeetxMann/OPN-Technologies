@@ -59,8 +59,8 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
   async createNewTestResults(data: {
     appointment: AppointmentDBModel
     adminId: string
-    labId: string
-    templateId: string
+    labId?: string
+    templateId?: string
     linkedBarCodes?: string[]
     reCollectNumber: number
     runNumber: number
@@ -106,8 +106,8 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       testKitBatchID: this.getTestBatchId(data.appointment.appointmentTypeID),
       userId: data.appointment.userId,
       sortOrder: getSortOrderByResult(data.result ?? ResultTypes.Pending),
-      labId: data.labId,
-      templateId: data.templateId,
+      labId: data.labId || null,
+      templateId: data.templateId || null,
     }
     return await this.save(pcrResultDataForDb)
   }

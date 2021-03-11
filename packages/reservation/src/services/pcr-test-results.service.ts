@@ -161,8 +161,6 @@ export class PCRTestResultsService {
       waitingResult: false,
       confirmed: true,
       previousResult: latestPCRResult.result,
-      labId: 'ConfirmPCRNotImplemented', // @TODO Confirm PCR implement labId and templateID
-      templateId: 'ConfirmPCRNotImplemented',
     })
     await this.sendNotification({...newPCRResult, ...appointment}, notificationType)
     return newPCRResult.id
@@ -1410,8 +1408,6 @@ export class PCRTestResultsService {
       reCollectNumber: linkedBarCodes.length + 1,
       runNumber: 1,
       previousResult: null,
-      labId: 'BookAppointmentNotImplemented', // @TODO BOOK appointment endpoint not implemented labId, tempatlId
-      templateId: 'BookAppointmentNotImplemented',
     })
   }
 
