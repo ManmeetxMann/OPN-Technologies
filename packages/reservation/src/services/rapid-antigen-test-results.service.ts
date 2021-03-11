@@ -283,10 +283,7 @@ export class RapidAntigenTestResultsService {
     return emailData
   }
 
-  private async getPDFType(
-    appointmentID: string,
-    result: ResultTypes,
-  ): Promise<RapidAntigenResultPDFType> {
+  getPDFType(appointmentID: string, result: ResultTypes): RapidAntigenResultPDFType {
     if (result === ResultTypes.Negative) {
       return RapidAntigenResultPDFType.Negative
     } else if (result === ResultTypes.Positive) {

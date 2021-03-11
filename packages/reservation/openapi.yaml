@@ -862,6 +862,8 @@ components:
                     type: string
                   value:
                     type: string
+            isDownloadable:
+              type: boolean
             travelID: 
               type: string
             travelIDIssuingCountry:
@@ -2622,6 +2624,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestResultDetailResponse'
+
+  /reservation/api/v1/test-results/{id}/download:
+    get:
+      description: Download test Results PDF for Regular User
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
   /reservation/admin/api/v1/test-results/{id}:
     get:
       description: Details for PCR Results for Admin
@@ -2642,6 +2667,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestResultDetailResponse'
+
   /reservation/admin/api/v1/pcr-test-results/due-deadline:
     get:
       description: Retrieve list of PCR Results
