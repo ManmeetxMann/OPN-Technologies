@@ -217,8 +217,8 @@ export class PCRTestResultsService {
         false,
         false,
         pcrResults.adminId,
-        'HARCODED', // @TODO IMPLEMENT THIS
-        'HARCODED', // @TODO IMPLEMENT THIS
+        pcrResults.data.templateId,
+        pcrResults.data.labId,
         userId,
       )
 
@@ -596,11 +596,17 @@ export class PCRTestResultsService {
       reportTrackerId,
     )
     const resultDate = testResultData.resultDate
+    const templateId = testResultData.templateId
+    const labId = testResultData.labId
+    const fileName = testResultData.fileName
     const pcrResults = testResultData.results.map((result) => {
       return {
         data: {
           ...result,
           resultDate,
+          templateId,
+          labId,
+          fileName,
         },
         status: ResultReportStatus.RequestReceived,
         adminId: adminId,
@@ -720,6 +726,8 @@ export class PCRTestResultsService {
             runNumber,
             reCollectNumber,
             previousResult: latestPCRTestResult.result,
+            labId: labId,
+            templateId: templateId,
           })
         : waitingPCRTestResult
 
@@ -760,6 +768,8 @@ export class PCRTestResultsService {
         adminId,
         barCode,
         action: metaData.action,
+        templateId,
+        labId,
       },
       appointment,
       runNumber: testResult.runNumber,
@@ -796,6 +806,8 @@ export class PCRTestResultsService {
     resultData: {
       adminId: string
       barCode: string
+      labId: string
+      templateId: string
       action: PCRResultActions
     }
     appointment: AppointmentDBModel
@@ -841,6 +853,8 @@ export class PCRTestResultsService {
           runNumber: nextRunNumber,
           reCollectNumber,
           previousResult: result,
+          labId: resultData.labId,
+          templateId: resultData.templateId,
         })
         break
       }
@@ -857,6 +871,8 @@ export class PCRTestResultsService {
           runNumber: nextRunNumber,
           reCollectNumber,
           previousResult: result,
+          labId: resultData.labId,
+          templateId: resultData.templateId,
         })
         break
       }
@@ -873,6 +889,8 @@ export class PCRTestResultsService {
           runNumber: nextRunNumber,
           reCollectNumber,
           previousResult: result,
+          labId: resultData.labId,
+          templateId: resultData.templateId,
         })
         break
       }

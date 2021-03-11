@@ -16,6 +16,7 @@ export type TestResultRequestData = TestResultSpecsForSending & {
   sendUpdatedResults?: boolean
   templateId: string
   labId: string
+  fileName?: string
 }
 
 export type TestResultsMetaData = {
@@ -29,6 +30,9 @@ export type BulkTestResultRequest = {
   reportTrackerId?: string
   results: TestResultRequestData[]
   resultDate: Date
+  templateId: string
+  labId: string
+  fileName?: string
 }
 
 type ResultSpecs = {
