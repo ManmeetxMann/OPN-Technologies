@@ -32,6 +32,8 @@ import {
   makeDeadline,
   makeRapidDeadline,
   makeFirestoreTimestamp,
+  getTimeFromFirestoreDateTime,
+  makeUtcIsoDate,
 } from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -848,7 +850,7 @@ export class AppoinmentService {
 
   async copyAppointment(
     appointmentId: string,
-    dateTime: string,
+    date: string,
     adminId: string,
     organizationId: string,
   ): Promise<BulkOperationResponse> {
@@ -873,6 +875,8 @@ export class AppoinmentService {
     }
 
     const barCodeNumber = await this.getNextBarCodeNumber()
+    const appointmentTime = getTimeFromFirestoreDateTime(appointment.dateTime)
+    const dateTime = makeUtcIsoDate(date, appointmentTime)
 
     const acuityAppointment = await this.acuityRepository.createAppointment({
       dateTime,
