@@ -379,6 +379,9 @@ export type SinglePcrTestResultUi = {
   testName: string
   doctorId: string
   resultAnalysis: GroupedSpecs[]
+  travelID: string
+  travelIDIssuingCountry: string
+  dateOfResult: string
 }
 
 enum LabData {
@@ -437,6 +440,11 @@ export const singlePcrTestResultDTO = (
     style: resultToStyle(pcrTestResult.result),
     testName: 'SARS COV-2',
     doctorId: 'DR1',
+    travelID: appointment.travelID,
+    travelIDIssuingCountry: appointment.travelIDIssuingCountry,
+    dateOfResult: pcrTestResult.resultMetaData
+      ? formatStringDateRFC822Local(pcrTestResult.resultMetaData.resultDate)
+      : null,
   }
 }
 

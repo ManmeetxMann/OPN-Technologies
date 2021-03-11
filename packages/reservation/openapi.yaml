@@ -862,6 +862,12 @@ components:
                     type: string
                   value:
                     type: string
+            travelID: 
+              type: string
+            travelIDIssuingCountry:
+              type: string
+            dateOfResult:
+              type: string
           required:
             - email
             - phone
