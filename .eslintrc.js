@@ -12,6 +12,7 @@ module.exports = {
     project: "./tsconfig.json"
   },
   rules: {
+    //'max-params': [2,{ "max":4 }],
     '@typescript-eslint/no-explicit-any': 2,
     '@typescript-eslint/no-unused-vars': [
       'error',

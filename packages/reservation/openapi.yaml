@@ -638,6 +638,8 @@ components:
         - autoResult
         - barCode
         - resultAnalysis
+        - labId
+        - templateId
     ProcessPCRResultsRequest:
       type: object
       additionalProperties: false

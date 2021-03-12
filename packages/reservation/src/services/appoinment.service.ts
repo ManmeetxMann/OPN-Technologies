@@ -868,7 +868,7 @@ export class AppoinmentService {
     const appointment = await this.appointmentsRepository.getAppointmentById(appointmentId)
     if (!appointment) {
       LogInfo('AppoinmentService:copyAppointment', 'InvalidAppointmentId', {
-        appointmentID:appointmentId,
+        appointmentID: appointmentId,
       })
       return Promise.resolve({
         id: appointmentId,
