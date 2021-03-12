@@ -14,7 +14,6 @@ export enum RequiredUserPermission {
   LabSendBulkResults = 'LabSendBulkResults',
   LabSendSingleResults = 'LabSendSingleResults',
   LabDueToday = 'LabDueToday',
-  LabAdminToolIDBarcode = 'LabAdminToolIDBarcode',
   LabConfirmResults = 'LabConfirmResults',
   AdminScanHistory = 'AdminScanHistory',
   AllowCheckIn = 'AllowCheckIn',
