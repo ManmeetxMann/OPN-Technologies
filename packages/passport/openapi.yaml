@@ -160,7 +160,29 @@ components:
             message:
               nullable: true
               type: string
-    
+
+    Attestation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        questionsAnswers:
+          type: object
+          description: questions and answers to the questionnaire
+          additionalProperties: true
+        locationId:
+          type: string
+        attestationTime:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - proceed
+            - caution
+            - stop
+
     V1ResponseOfPassport:
       type: object
       additionalProperties: false
@@ -384,6 +406,31 @@ paths:
       responses:
         '200':
           description: Passports updated
+
+  /passport/api/v1/attestation/{attestationId}:
+    get:
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: attestationId
+          schema:
+            type: string
+          required: true
+      description: Get attestation by ID
+
+      responses:
+        '200':
+          description: Attestation available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attestation'
 
   /passport/api/v1/passport:
     get:

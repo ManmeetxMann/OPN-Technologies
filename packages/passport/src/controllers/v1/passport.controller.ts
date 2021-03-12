@@ -1,23 +1,24 @@
 import * as express from 'express'
-import {NextFunction, Request, Response} from 'express'
+import { NextFunction, Request, Response } from 'express'
 
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {UserService} from '../../../../common/src/service/user/user-service'
-import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
-import {User, userDTO} from '../../../../common/src/data/user'
-import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
-import {RequiredUserPermission} from '../../../../common/src/types/authorization'
+import { actionSucceed } from '../../../../common/src/utils/response-wrapper'
+import { UserService } from '../../../../common/src/service/user/user-service'
+import { BadRequestException } from '../../../../common/src/exceptions/bad-request-exception'
+import { User, userDTO } from '../../../../common/src/data/user'
+import { safeTimestamp } from '../../../../common/src/utils/datetime-util'
+import { authorizationMiddleware } from '../../../../common/src/middlewares/authorization'
+import { RequiredUserPermission } from '../../../../common/src/types/authorization'
 
-import {PassportService} from '../../services/passport-service'
-import {AttestationService} from '../../services/attestation-service'
-import {AlertService} from '../../services/alert-service'
-import {PassportStatuses, passportDTO} from '../../models/passport'
-import {Attestation, AttestationAnswers, AttestationAnswersV1} from '../../models/attestation'
+import { AccessService } from '../../../../access/src/service/access.service'
+import { PassportService } from '../../services/passport-service'
+import { AttestationService } from '../../services/attestation-service'
+import { AlertService } from '../../services/alert-service'
+import { PassportStatuses, passportDTO } from '../../models/passport'
+import { Attestation, AttestationAnswers, AttestationAnswersV1 } from '../../models/attestation'
+import { OrganizationService } from '../../../../enterprise/src/services/organization-service'
 
-import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
-
-import {QuestionnaireService} from '../../../../lookup/src/services/questionnaire-service'
+import { QuestionnaireService } from '../../../../lookup/src/services/questionnaire-service'
 
 class PassportController implements IControllerBase {
   public path = '/passport/api/v1'
@@ -37,12 +38,13 @@ class PassportController implements IControllerBase {
     const auth = authorizationMiddleware([RequiredUserPermission.RegUser], true)
     this.router.get(this.path + '/passport', auth, this.check)
     this.router.post(this.path + '/attestation', auth, this.update)
+    this.router.get(this.path + '/attestation/:attestationId', auth, this.get)
   }
 
   check = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const user = res.locals.authenticatedUser as User
-      const {organizationId} = req.query as {
+      const { organizationId } = req.query as {
         organizationId: string
       }
       const allDependants = (await this.userService.getAllDependants(user.id, true)).filter((dep) =>
@@ -68,7 +70,7 @@ class PassportController implements IControllerBase {
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const user = res.locals.authenticatedUser as User
-      const {organizationId, userIds} = req.body as {
+      const { organizationId, userIds } = req.body as {
         organizationId: string
         userIds: string[]
       }
@@ -147,6 +149,73 @@ class PassportController implements IControllerBase {
       }
 
       res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  get = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const authenticatedUser = res.locals.connectedUser as User
+      const usedId = authenticatedUser.id
+      const { attestationId } = req.params as {
+        attestationId: string
+      }
+
+      // TODO check with if required
+      // const { organizationid } = req.headers as {
+      //   organizationid: string
+      // }
+
+      // Get attestation by id, check if it exist and belong to the user
+      const attestation = await this.attestationService.getByAttestationId(attestationId)
+      if (!attestation) {
+        throw new BadRequestException("Couldn't find attestation")
+      }
+      if (attestation.userId !== usedId) {
+        throw new BadRequestException("Attestation doesn't belong to the user")
+      }
+
+      // Validate answers and fetch questions
+      const { questionnaireId, answers } = attestation
+      const mappedAnswers = Object.keys(answers).map(answerKey => {
+        return {
+          questionId: Number(answerKey) + 1,
+          answer: answers[answerKey][0],
+          additionalValue: answers[answerKey][1]
+        }
+      }) as AttestationAnswersV1
+      const [status, questionnaires] = await Promise.all([
+        this.questionnaireService.evaluateAnswers(questionnaireId, mappedAnswers),
+        this.questionnaireService.getQuestionnaires([questionnaireId])
+      ])
+
+      // Merge questions and answers by index
+      const questionsAnswersResult = []
+      const { questions } = questionnaires[0]
+      Object.keys(questions).forEach(questionKey => {
+        const answersResult = {}
+        const questionsAnswers = questions[questionKey].answers
+        Object.keys(questionsAnswers).forEach((questionsAnswersKey, questionsAnswersIndex) => {
+          const answerType = questionsAnswers[questionsAnswersKey]
+          const answerValue = answers[Number(questionKey) - 1][questionsAnswersIndex]
+          answersResult[answerType] = answerValue
+        })
+        questionsAnswersResult.push({
+          value: questions[questionKey].value,
+          answers: answersResult
+        })
+      })
+
+      const { id, locationId, attestationTime } = attestation
+      const response = {
+        id,
+        locationId,
+        questionsAnswers: questionsAnswersResult,
+        attestationTime: safeTimestamp(attestationTime),
+        status
+      }
+      res.json(actionSucceed(response))
     } catch (error) {
       next(error)
     }
