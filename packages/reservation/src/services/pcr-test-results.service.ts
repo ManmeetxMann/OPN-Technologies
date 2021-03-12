@@ -447,6 +447,7 @@ export class PCRTestResultsService {
         testType: pcr.testType ?? 'PCR',
         organizationId: organization?.id,
         organizationName: organization?.name,
+        appointmentStatus: pcr.appointmentStatus,
       }
     })
   }

@@ -108,6 +108,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       sortOrder: getSortOrderByResult(data.result ?? ResultTypes.Pending),
       labId: data.labId || null,
       templateId: data.templateId || null,
+      appointmentStatus: data.appointment.appointmentStatus,
     }
     return await this.save(pcrResultDataForDb)
   }

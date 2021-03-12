@@ -170,6 +170,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   labId?: string
   userId: string
   sortOrder: number
+  appointmentStatus: AppointmentStatus
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -292,6 +293,7 @@ export type PCRTestResultListDTO = {
   testRunId?: string
   organizationId: string
   organizationName: string
+  appointmentStatus: AppointmentStatus
 }
 
 export type PCRTestResultByDeadlineListDTO = {

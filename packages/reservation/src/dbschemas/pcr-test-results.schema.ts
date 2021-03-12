@@ -43,4 +43,16 @@ export default Joi.object({
   templateId: Joi.string().required().allow(null),
   labId: Joi.string().required().allow(null),
   sortOrder: Joi.number().required(),
+  appointmentStatus: Joi.string().valid(
+    'Pending',
+    'Submitted',
+    'InTransit',
+    'Received',
+    'CheckedIn',
+    'InProgress',
+    'Reported',
+    'ReRunRequired',
+    'ReCollectRequired',
+    'Canceled',
+  ),
 })
