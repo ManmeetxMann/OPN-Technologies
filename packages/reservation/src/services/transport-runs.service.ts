@@ -43,21 +43,24 @@ export class TransportRunsService {
         return {id: transportRun.id, transportRunId: transportRun.transportRunId}
       })
   }
-  async getByDate(transportDate: string, labId: string): Promise<TransportRunsDbModel[]> {
-    const transports = await this.transportRunsRepository.findWhereEqualInMap([
-      {
-        map: '/',
-        key: 'transportDate',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: transportDate,
-      },
-      {
+  async getByDate(transportDate: string, labId?: string): Promise<TransportRunsDbModel[]> {
+    const query = []
+    query.push({
+      map: '/',
+      key: 'transportDate',
+      operator: DataModelFieldMapOperatorType.Equals,
+      value: transportDate,
+    })
+
+    if(!!labId){
+      query.push({
         map: '/',
         key: 'labId',
         operator: DataModelFieldMapOperatorType.Equals,
         value: labId,
-      },
-    ])
+      })
+    }
+    const transports = await this.transportRunsRepository.findWhereEqualInMap(query)
 
     const labs = fromPairs(
       (
