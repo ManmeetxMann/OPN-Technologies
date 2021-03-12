@@ -7,7 +7,6 @@ export type AccessStats = {
   proceedPassports: number
   cautionPassports: number
   stopPassports: number
-  temperature_check_requiredPassports: number
   checkInsPerHour: CheckInsCount[]
 }
 
