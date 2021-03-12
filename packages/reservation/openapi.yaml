@@ -525,6 +525,12 @@ components:
           type: string
         resultDate:
           type: string
+        templateId:
+          type: string
+        labId:
+          type: string
+        fileName:
+          type: string
         results:
           type: array
           items:
@@ -579,6 +585,9 @@ components:
       required:
         - results
         - resultDate
+        - templateId
+        - labId
+        - fileName
     TestResultsRequest:
       type: object
       additionalProperties: false
