@@ -52,7 +52,7 @@ export class TransportRunsService {
       value: transportDate,
     })
 
-    if(!!labId){
+    if (!!labId) {
       query.push({
         map: '/',
         key: 'labId',
