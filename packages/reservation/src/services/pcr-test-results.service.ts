@@ -606,7 +606,7 @@ export class PCRTestResultsService {
           resultDate,
           templateId,
           labId,
-          fileName,
+          fileName: fileName || null,
         },
         status: ResultReportStatus.RequestReceived,
         adminId: adminId,
