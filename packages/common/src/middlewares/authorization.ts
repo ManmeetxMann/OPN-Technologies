@@ -198,13 +198,15 @@ export const authorizationMiddleware = (
 const authorizedWithoutOrgId = (admin: AdminProfile, organizationId: string): boolean => {
   //IF OPN Super Admin or LAB User then Allow Access Without ORG ID
   const isOpnSuperAdmin = admin?.isOpnSuperAdmin ?? false
+  const isClinicUser = admin?.isClinicUser ?? false
   const isLabUser = admin?.isLabUser ?? false
+
   const authorizedOrganizationIds = [
     ...(admin?.superAdminForOrganizationIds ?? []),
     admin?.adminForOrganizationId,
   ].filter((id) => !!id)
   const hasGrantedAccess = new Set(authorizedOrganizationIds).has(organizationId)
-  if (!isLabUser && !isOpnSuperAdmin && !hasGrantedAccess) {
+  if (!isLabUser && !isOpnSuperAdmin && !isClinicUser && !hasGrantedAccess) {
     return false
   }
   return true
