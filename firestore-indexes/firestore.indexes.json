@@ -653,6 +653,20 @@
       ]
     },
     {
+      "collectionGroup": "stats-for-date",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "organization",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "descending"
+        }
+      ]
+    },
+    {
       "collectionGroup": "traces",
       "queryScope": "COLLECTION",
       "fields": [
