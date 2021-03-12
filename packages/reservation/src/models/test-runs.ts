@@ -9,6 +9,7 @@ export type TestRunsRequest = {
 export type TestRunsPostRequest = {
   testRunDateTime: string
   name: string
+  labId: string
 }
 
 export type TestRunDBModel = Auditable &
@@ -21,6 +22,7 @@ export type TestRun = {
   testRunId: string
   testRunDateTime: firestore.Timestamp
   name: string
+  labId: string
 }
 
 type TestRunUi = {

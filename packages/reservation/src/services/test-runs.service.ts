@@ -46,7 +46,7 @@ export class TestRunsService {
     return new DateTestRunsRepository(this.dataStore, testRunDate)
   }
 
-  async create(testRunDateTime: Date, name: string): Promise<TestRunDBModel> {
+  async create(testRunDateTime: Date, name: string, labId: string): Promise<TestRunDBModel> {
     const testRunDate = getDateFromDatetime(testRunDateTime)
     const transportDay = getDayFromDatetime(testRunDateTime)
     const transportMonth = getMonthFromDatetime(testRunDateTime)
@@ -57,6 +57,7 @@ export class TestRunsService {
       testRunDateTime: firestore.Timestamp.fromDate(testRunDateTime),
       testRunDate,
       name,
+      labId,
     } as TestRunDBModel)
   }
 }
