@@ -52,8 +52,11 @@ class AdminAppointmentController implements IControllerBase {
     )
     const receivingAuth = authorizationMiddleware([RequiredUserPermission.LabReceiving])
     const allowCheckIn = authorizationMiddleware([RequiredUserPermission.AllowCheckIn])
-    const idBarCodeToolAuth = authorizationMiddleware([
-      RequiredUserPermission.LabAdminToolIDBarcode,
+    const generateBarCodeAdminAuth = authorizationMiddleware([
+      RequiredUserPermission.GenerateBarCodeAdmin,
+    ])
+    const lookupAdminAuth = authorizationMiddleware([
+      RequiredUserPermission.LookupAdmin,
     ])
     innerRouter.get(
       this.path + '/api/v1/appointments',
@@ -78,12 +81,12 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/lookup',
-      idBarCodeToolAuth,
+      lookupAdminAuth,
       this.getAppointmentByBarcode,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/get-new-code',
-      idBarCodeToolAuth,
+      generateBarCodeAdminAuth,
       this.getNextBarcode,
     )
     innerRouter.get(

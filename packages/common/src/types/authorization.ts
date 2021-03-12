@@ -19,4 +19,6 @@ export enum RequiredUserPermission {
   AllowCheckIn = 'AllowCheckIn',
   ClinicRapidResultSenderAdmin = 'ClinicRapidResultSenderAdmin',
   TestKitBatchAdmin = 'TestKitBatchAdmin',
+  GenerateBarCodeAdmin = 'GenerateBarCodeAdmin',
+  LookupAdmin = 'LookupAdmin',
 }
