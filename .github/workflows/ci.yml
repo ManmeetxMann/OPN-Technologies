@@ -4,7 +4,7 @@ on:
   pull_request:
     paths-ignore:
       - 'functional-testing/**'
-      - "cloud-functions/sms-notifications/**"
+      - "cloud-functions/sms-notification/**"
     branches: [ development, master ]
 
 jobs:
