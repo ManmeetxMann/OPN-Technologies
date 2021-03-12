@@ -167,10 +167,21 @@ components:
       properties:
         id:
           type: string
-        questionsAnswers:
-          type: object
-          description: questions and answers to the questionnaire
-          additionalProperties: true
+        answers:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              question:
+                type: string
+              boolean:
+                type: boolean
+              datetime:
+                type: string
+            required:
+              - question
+              - boolean
         locationId:
           type: string
         attestationTime:

@@ -186,34 +186,32 @@ class PassportController implements IControllerBase {
           additionalValue: answers[answerKey][1]
         }
       }) as AttestationAnswersV1
-
       const [status, questionnaires] = await Promise.all([
         this.questionnaireService.evaluateAnswers(questionnaireId, mappedAnswers),
         this.questionnaireService.getQuestionnaires([questionnaireId])
       ])
 
       // Merge questions and answers by index
-      const questionsAnswersResult = []
+      const answersResults = []
       const { questions } = questionnaires[0]
       Object.keys(questions).forEach(questionKey => {
-        const answersResult = {}
-        const questionsAnswers = questions[questionKey].answers
-        Object.keys(questionsAnswers).forEach((questionsAnswersKey, questionsAnswersIndex) => {
-          const answerType = questionsAnswers[questionsAnswersKey]
-          const answerValue = answers[Number(questionKey) - 1][questionsAnswersIndex]
-          answersResult[answerType] = answerValue
+        const question = questions[questionKey]
+        const answersResult = {
+          question: question.value
+        }
+        Object.keys(question.answers).forEach((questionAnswerKey, questionsAnswersIndex) => {
+          const questionAnswer = question.answers[questionAnswerKey]
+          answersResult[questionAnswer] =  answers[Number(questionKey) - 1][questionsAnswersIndex]
         })
-        questionsAnswersResult.push({
-          value: questions[questionKey].value,
-          answers: answersResult
-        })
+        answersResults.push(answersResult)
       })
 
+      // Build and returns result
       const { id, locationId, attestationTime } = attestation
       const response = {
         id,
         locationId,
-        questionsAnswers: questionsAnswersResult,
+        answers: answersResults,
         attestationTime: safeTimestamp(attestationTime),
         status
       }
