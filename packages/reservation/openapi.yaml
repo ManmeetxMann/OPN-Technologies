@@ -875,7 +875,7 @@ components:
                     type: string
             isDownloadable:
               type: boolean
-            travelID: 
+            travelID:
               type: string
             travelIDIssuingCountry:
               type: string
@@ -1113,7 +1113,7 @@ paths:
               required:
                 - lotNumber
                 - hardwareName
-                - expiry 
+                - expiry
                 - manufacturer
       responses:
         '200':
@@ -1146,7 +1146,7 @@ paths:
                           - resource_not_found
                       message:
                         nullable: true
-                        type: string 
+                        type: string
                   page:
                     type: number
   /reservation/admin/api/v1/appointments:
@@ -1494,9 +1494,12 @@ paths:
                   format: date-time
                 name:
                   type: string
+                labId:
+                  type: string
               required:
                 - testRunDateTime
                 - name
+                - labId
       responses:
         '200':
           description: Successfully handled
@@ -2209,7 +2212,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
-  
+
   /reservation/admin/api/v1/appointments/{appointmentId}/reschedule:
     put:
       description: Update appointment schedule
@@ -2240,7 +2243,7 @@ paths:
                   description: This should be passwed is corporate is logged in
               required:
                 - dateTime
-              
+
       responses:
         '200':
           description: Succesfully reschedule
@@ -3363,7 +3366,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClinicsResponse'
-    post: 
+    post:
       description: Create new clinic
       tags:
         - Clinics Management
@@ -3424,11 +3427,11 @@ paths:
                           - resource_not_found
                       message:
                         nullable: true
-                        type: string 
+                        type: string
                   page:
-                    type: number   
+                    type: number
   /reservation/admin/api/v1/appointment-type-to-test-type-assoc:
-    post: 
+    post:
       description: Create new appointment type to test type association
       tags:
         - Appointment Type to Test Type Association
@@ -3482,6 +3485,6 @@ paths:
                           - resource_not_found
                       message:
                         nullable: true
-                        type: string 
+                        type: string
                   page:
                     type: number
