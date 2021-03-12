@@ -17,10 +17,12 @@ export type BulkData = {
   transportRunId?: string
   label?: DeadlineLabel
   userId?: string
+  labId?: string
 }
 
 export enum AppointmentBulkAction {
   MakeRecived = 'MakeRecived',
   AddTransportRun = 'AddTransportRun',
   AddAppointmentLabel = 'AddAppointmentLabel',
+  AddLab = 'AddLab',
 }

@@ -525,6 +525,12 @@ components:
           type: string
         resultDate:
           type: string
+        templateId:
+          type: string
+        labId:
+          type: string
+        fileName:
+          type: string
         results:
           type: array
           items:
@@ -579,6 +585,9 @@ components:
       required:
         - results
         - resultDate
+        - templateId
+        - labId
+        - fileName
     TestResultsRequest:
       type: object
       additionalProperties: false
@@ -638,6 +647,8 @@ components:
         - autoResult
         - barCode
         - resultAnalysis
+        - labId
+        - templateId
     ProcessPCRResultsRequest:
       type: object
       additionalProperties: false
@@ -862,6 +873,14 @@ components:
                     type: string
                   value:
                     type: string
+            isDownloadable:
+              type: boolean
+            travelID:
+              type: string
+            travelIDIssuingCountry:
+              type: string
+            dateOfResult:
+              type: string
           required:
             - email
             - phone
@@ -955,6 +974,10 @@ paths:
             type: string
             format: date
           required: true
+        - in: query
+          name: labId
+          schema:
+            type: string
       responses:
         '200':
           description: Succesfully retrieve transport run list
@@ -1090,7 +1113,7 @@ paths:
               required:
                 - lotNumber
                 - hardwareName
-                - expiry 
+                - expiry
                 - manufacturer
       responses:
         '200':
@@ -1123,7 +1146,7 @@ paths:
                           - resource_not_found
                       message:
                         nullable: true
-                        type: string 
+                        type: string
                   page:
                     type: number
   /reservation/admin/api/v1/appointments:
@@ -1134,6 +1157,10 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
+        - in: query
+          name: labId
+          schema:
+            type: string
         - in: query
           name: organizationId
           schema:
@@ -1437,6 +1464,11 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: labId
+          schema:
+            type: string
+          required: true
       responses:
         '200':
           description: Successfully Return
@@ -1462,9 +1494,12 @@ paths:
                   format: date-time
                 name:
                   type: string
+                labId:
+                  type: string
               required:
                 - testRunDateTime
                 - name
+                - labId
       responses:
         '200':
           description: Successfully handled
@@ -1514,6 +1549,10 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
+        - in: query
+          name: labId
+          schema:
+            type: string
         - in: query
           name: organizationId
           schema:
@@ -1608,6 +1647,10 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
+          name: labId
+          schema:
+            type: string
+        - in: query
           name: organizationId
           schema:
             type: string
@@ -1617,12 +1660,15 @@ paths:
             type: string
             format: date
         - in: query
-          name: deadline
+          name: barCode
           schema:
             type: string
-            format: date
         - in: query
-          name: barCode
+          name: testType
+          schema:
+            type: string
+        - in: query
+          name: searchQuery
           schema:
             type: string
         - in: query
@@ -1672,14 +1718,13 @@ paths:
         - bearerAuthJWT: []
       parameters:
         - in: query
-          name: organizationId
+          name: labId
           schema:
             type: string
         - in: query
-          name: deadline
+          name: organizationId
           schema:
             type: string
-            format: date
         - in: query
           name: date
           schema:
@@ -2154,7 +2199,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
-  
+
   /reservation/admin/api/v1/appointments/{appointmentId}/reschedule:
     put:
       description: Update appointment schedule
@@ -2185,7 +2230,7 @@ paths:
                   description: This should be passwed is corporate is logged in
               required:
                 - dateTime
-              
+
       responses:
         '200':
           description: Succesfully reschedule
@@ -2602,6 +2647,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestResultDetailResponse'
+
+  /reservation/api/v1/test-results/{id}/download:
+    get:
+      description: Download test Results PDF for Regular User
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
   /reservation/admin/api/v1/test-results/{id}:
     get:
       description: Details for PCR Results for Admin
@@ -2622,6 +2690,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestResultDetailResponse'
+
   /reservation/admin/api/v1/pcr-test-results/due-deadline:
     get:
       description: Retrieve list of PCR Results
@@ -2630,6 +2699,14 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
+        - in: query
+          name: labId
+          schema:
+            type: string
+        - in: query
+          name: organizationId
+          schema:
+            type: string
         - in: query
           name: deadline
           schema:
@@ -2651,10 +2728,6 @@ paths:
               - Received
               - InProgress
               - ReRunRequired
-        - in: query
-          name: organizationId
-          schema:
-            type: string
       responses:
         '200':
           description: Successfully Return
@@ -2729,6 +2802,10 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
+        - in: query
+          name: labId
+          schema:
+            type: string
         - in: query
           name: deadline
           schema:
@@ -2965,16 +3042,15 @@ paths:
                   type: array
                   items:
                     type: string
-                dateTime:
-                  description: The ISO date-time as returned by availbility times call
+                date:
                   type: string
-                  format: date-time
-                  example: "2021-09-01T23:17:07.657Z"
+                  format: date
+                  example: "2021-12-25"
                 organizationId:
                   type: string
                   description: This should be passwed is corporate is logged in
               required:
-                - dateTime
+                - date
       responses:
         '200':
           description: Successfully Return
@@ -3219,7 +3295,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BulkOperationResponse'
-  /reservation/internal/api/v1/rapid-alergen-send-result-email:
+  /reservation/internal/api/v1/rapid-antigen-send-result-email:
     summary: Rapid Antigen Test Results Email Notification
     post:
       description: 'Send Email Notification for Rapid Antigen Test Results'
@@ -3277,7 +3353,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClinicsResponse'
-    post: 
+    post:
       description: Create new clinic
       tags:
         - Clinics Management
@@ -3338,11 +3414,11 @@ paths:
                           - resource_not_found
                       message:
                         nullable: true
-                        type: string 
+                        type: string
                   page:
-                    type: number   
+                    type: number
   /reservation/admin/api/v1/appointment-type-to-test-type-assoc:
-    post: 
+    post:
       description: Create new appointment type to test type association
       tags:
         - Appointment Type to Test Type Association
@@ -3396,6 +3472,6 @@ paths:
                           - resource_not_found
                       message:
                         nullable: true
-                        type: string 
+                        type: string
                   page:
                     type: number

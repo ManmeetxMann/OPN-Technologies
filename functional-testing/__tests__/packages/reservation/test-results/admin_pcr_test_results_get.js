@@ -47,7 +47,7 @@ beforeAll(function() {
 describe('Get: /reservation/admin/api/v1/pcr-test-results', () => {
   test('Get PCR Results for Organization should succeed', function() {
     return helpersCommon.runAuthenticatedTest(frisby).then(function(token) {
-      const url = `${reservationServiceUrl}/reservation/admin/api/v1/pcr-test-results?date=2021-03-01&organizationId=TEST1&testType=RapidAntigen`;
+      const url = `${reservationServiceUrl}/reservation/admin/api/v1/pcr-test-results?date=2021-01-13&labId=k0qbPDqTwqitKUwlGHye`;
       console.log(url);
       return frisby
           .setup({

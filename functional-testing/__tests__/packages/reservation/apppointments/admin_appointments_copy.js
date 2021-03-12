@@ -32,7 +32,7 @@ describe('Copy Appointment', () => {
               url,
               {
                 appointmentIds: ['lDRcL0txk0jQoIDZF9uh', 'xH055VGo4XVEwcaka2ax'],
-                dateTime: '2021-03-14T08:30:00-0500',
+                date: '2021-03-14',
               },
           )
           .expect('status', 200)

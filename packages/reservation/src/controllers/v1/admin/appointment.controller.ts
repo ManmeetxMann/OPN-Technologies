@@ -130,6 +130,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         searchQuery,
         transportRunId,
+        labId,
       } = req.query as AppointmentByOrganizationRequest
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
@@ -151,6 +152,7 @@ class AdminAppointmentController implements IControllerBase {
         dateOfAppointment,
         searchQuery,
         transportRunId,
+        labId,
       })
 
       const transportRuns = fromPairs(
@@ -188,6 +190,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         searchQuery,
         transportRunId,
+        labId,
       } = req.query as AppointmentByOrganizationRequest
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
@@ -198,14 +201,15 @@ class AdminAppointmentController implements IControllerBase {
         appointmentStatusArray,
         orgIdArray,
         total,
-      } = await this.appointmentService.getAppointmentsStats(
+      } = await this.appointmentService.getAppointmentsStats({
         appointmentStatus,
         barCode,
         organizationId,
         dateOfAppointment,
         searchQuery,
         transportRunId,
-      )
+        labId,
+      })
 
       res.json(actionSucceed(statsUiDTOResponse(appointmentStatusArray, orgIdArray, total)))
     } catch (error) {
@@ -278,8 +282,22 @@ class AdminAppointmentController implements IControllerBase {
         throw new ResourceNotFoundException(`Transport Run for the id ${transportRunId} Not found`)
       }
 
+      // Get lab associated with transport run
+      const [transportRun] = transportRuns
+      const labId = transportRun?.labId
+
       const appointmentsState: BulkOperationResponse[] = await Promise.all(
         filtredAppointmentIds.map(async (appointmentId) => {
+          if (labId) {
+            await this.appointmentService.makeBulkAction(
+              appointmentId,
+              {
+                labId,
+              },
+              AppointmentBulkAction.AddLab,
+            )
+          }
+
           return this.appointmentService.makeBulkAction(
             appointmentId,
             {
@@ -396,9 +414,9 @@ class AdminAppointmentController implements IControllerBase {
 
   copyAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {appointmentIds, dateTime, organizationId} = req.body as {
+      const {appointmentIds, date, organizationId} = req.body as {
         appointmentIds: string[]
-        dateTime: string
+        date: string
         organizationId?: string
       }
       const adminId = getUserId(res.locals.authenticatedUser)
@@ -411,7 +429,7 @@ class AdminAppointmentController implements IControllerBase {
 
           const currentResult = await this.appointmentService.copyAppointment(
             appointmentId,
-            dateTime,
+            date,
             adminId,
             organizationId,
           )

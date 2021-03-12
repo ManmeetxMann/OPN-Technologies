@@ -5,16 +5,18 @@ import {
   createPCRTestResult,
   deletePCRTestResultByDateTime,
 } from '../../../__seeds__/pcr-test-results'
+
 //jest.spyOn(global.console, 'error').mockImplementation()
-jest.spyOn(global.console, 'info').mockImplementation()
+//jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
-jest.mock('../../../../../common/src/utils/logging-setup')
+//jest.mock('../../../../../common/src/utils/logging-setup')
 
 const dateForAppointments = '2020-02-05'
 const dateTimeForAppointment7AM = `${dateForAppointments}T07:00:00`
 const deadlineSameDay = `${dateForAppointments}T23:59:00`
 
 const organizationId = 'TEST1'
+const labID1 = 'Lab1'
 
 describe('PCRTestResultController', () => {
   beforeAll(async () => {
@@ -33,6 +35,7 @@ describe('PCRTestResultController', () => {
     await createPCRTestResult({
       dateTime: dateTimeForAppointment7AM,
       deadline: deadlineSameDay,
+      labId: labID1,
     })
     await createPCRTestResult({
       dateTime: dateTimeForAppointment7AM,
@@ -53,16 +56,16 @@ describe('PCRTestResultController', () => {
   })
 
   describe('get result list', () => {
-    test('get results for lab successfully. deadline filter', async (done) => {
-      const url = `/reservation/admin/api/v1/pcr-test-results?deadline=${dateForAppointments}`
+    test('get results for lab successfully. date filter', async (done) => {
+      const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(4)
       done()
     })
 
-    test('get results for non lab successfully. deadline filter', async (done) => {
-      const url = `/reservation/admin/api/v1/pcr-test-results?deadline=${dateForAppointments}&organizationId=${organizationId}`
+    test('get results for non lab successfully. date and organizationId filter', async (done) => {
+      const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}&organizationId=${organizationId}`
       const result = await request(server.app)
         .get(url)
         .set('authorization', 'Bearer CorporateUserForTEST1')
@@ -71,11 +74,11 @@ describe('PCRTestResultController', () => {
       done()
     })
 
-    test('get results for lab successfully. date filter', async (done) => {
-      const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}`
+    test('get results for lab successfully. date & lab filter', async (done) => {
+      const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}&labId=${labID1}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
-      expect(result.body.data.length).toBe(4)
+      expect(result.body.data.length).toBe(1)
       done()
     })
 

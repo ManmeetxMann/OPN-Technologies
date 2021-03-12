@@ -1,7 +1,9 @@
 const frisby = require('frisby');
+const moment =  require('moment')
 const helpersCommon = require('helpers_common');
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 
+const todaysDate = moment(new Date()).format("YYYY-MM-DD")
 // Do setup first
 frisby.globalSetup({
   request: {
@@ -29,20 +31,48 @@ describe('PCR TestResultsController', () => {
           .post(
               url,
               {
-                'famEGene': '-',
-                'famCt': 'N/A',
-                'calRed61RdRpGene': '-',
-                'calRed61Ct': 'N/A',
-                'quasar670NGene': '-',
-                'quasar670Ct': 'N/A',
-                'hexIC': '-',
-                'hexCt': '36',
+                'action': 'SendThisResult',
+                'autoResult': 'Negative',
                 'barCode': 'A1423',
-                'resultDate': '2021-01-25',
-                'autoResult': 'Invalid',
-                'notify': false,
-                'action': 'ReRunToday',
-                'sendUpdatedResults': false,
+                //'comment': 'AWESOM',
+                'labId':'k0qbPDqTwqitKUwlGHye',
+                'templateId':'template1',
+                'notify': true,
+                'resultAnalysis':[
+                  {
+                    'label':'LBL1',
+                    'value':'1'
+                  },
+                  {
+                    'label':'LBL1',
+                    'value':'2'
+                  },
+                  {
+                    'label':'LBL2',
+                    'value':'3'
+                  },
+                  {
+                    'label':'LBL3',
+                    'value':'4'
+                  },
+                  {
+                    'label':'LBL4',
+                    'value':'5'
+                  },
+                  {
+                    'label':'LBL4',
+                    'value':'6'
+                  },
+                  {
+                    'label':'LBL4',
+                    'value':'7'
+                  },
+                  {
+                    'label':'LBL4',
+                    'value':'8'
+                  }],
+                'resultDate': todaysDate,
+                'sendUpdatedResults': true,
               },
           )
           .expect('status', 200)

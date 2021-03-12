@@ -163,17 +163,16 @@ class AdminPCRTestResultController implements IControllerBase {
 
       validateAnalysis(resultAnalysis)
 
-      const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
+      const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend({
         metaData,
         resultAnalysis,
         barCode,
-        true,
+        isSingleResult: true,
         sendUpdatedResults,
         adminId,
         templateId,
         labId,
-        adminId,
-      )
+      })
       const status = await this.pcrTestResultsService.getReportStatus(
         pcrResultRecorded.resultMetaData.action,
         pcrResultRecorded.result,
@@ -227,28 +226,28 @@ class AdminPCRTestResultController implements IControllerBase {
   listPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {
-        deadline,
         organizationId,
         barCode,
         result,
         date,
         testType,
         searchQuery,
+        labId,
       } = req.query as PcrTestResultsListRequest
-      if (!barCode && !deadline && !date) {
-        throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
+      if (!barCode && !date) {
+        throw new BadRequestException('One of the "barCode" or "date" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
       const pcrResults = await this.pcrTestResultsService.getPCRResults(
         {
           organizationId,
-          deadline,
           barCode,
           result,
           date,
           testType,
           searchQuery,
+          labId,
         },
         isLabUser,
       )
@@ -266,14 +265,16 @@ class AdminPCRTestResultController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {
-        deadline,
         organizationId,
         barCode,
         result,
         date,
+        labId,
+        testType,
+        searchQuery,
       } = req.query as PcrTestResultsListRequest
-      if (!barCode && !deadline) {
-        throw new BadRequestException('"deadline" is required if "barCode" is not specified')
+      if (!barCode && !date) {
+        throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
 
@@ -284,10 +285,12 @@ class AdminPCRTestResultController implements IControllerBase {
       } = await this.pcrTestResultsService.getPCRResultsStats(
         {
           organizationId,
-          deadline,
           barCode,
           result,
           date,
+          labId,
+          testType,
+          searchQuery,
         },
         isLabUser,
       )
@@ -371,6 +374,7 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         appointmentStatus,
         organizationId,
+        labId,
       } = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
@@ -381,6 +385,7 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         appointmentStatus,
         organizationId,
+        labId,
       })
 
       res.json(actionSucceed(pcrResults))
@@ -391,7 +396,7 @@ class AdminPCRTestResultController implements IControllerBase {
 
   dueDeadlineStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunId, deadline, barCode} = req.query as PcrTestResultsListByDeadlineRequest
+      const {testRunId, deadline, barCode, labId} = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
       }
@@ -403,6 +408,7 @@ class AdminPCRTestResultController implements IControllerBase {
         deadline,
         testRunId,
         barCode,
+        labId,
       })
 
       res.json(

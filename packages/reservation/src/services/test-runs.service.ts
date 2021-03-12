@@ -7,6 +7,7 @@ import {
   getDayFromDatetime,
   getMonthFromDatetime,
 } from '../utils/datetime.helper'
+import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 
 export class TestRunsService {
   private dataStore = new DataStore()
@@ -24,15 +25,28 @@ export class TestRunsService {
     return this.testRunsRepository.findWhereIn('testRunId', testRunIds)
   }
 
-  async getTestRunsByDate(date: string): Promise<TestRunDBModel[]> {
-    return this.testRunsRepository.findWhereEqual('testRunDate', date)
+  async getTestRunsByDate(date: string, labId: string): Promise<TestRunDBModel[]> {
+    return this.testRunsRepository.findWhereEqualInMap([
+      {
+        map: '/',
+        key: 'testRunDate',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: date,
+      },
+      {
+        map: '/',
+        key: 'labId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: labId,
+      },
+    ])
   }
 
   async getIdentifierRepository(testRunDate: string): Promise<DateTestRunsRepository> {
     return new DateTestRunsRepository(this.dataStore, testRunDate)
   }
 
-  async create(testRunDateTime: Date, name: string): Promise<TestRunDBModel> {
+  async create(testRunDateTime: Date, name: string, labId: string): Promise<TestRunDBModel> {
     const testRunDate = getDateFromDatetime(testRunDateTime)
     const transportDay = getDayFromDatetime(testRunDateTime)
     const transportMonth = getMonthFromDatetime(testRunDateTime)
@@ -43,6 +57,7 @@ export class TestRunsService {
       testRunDateTime: firestore.Timestamp.fromDate(testRunDateTime),
       testRunDate,
       name,
+      labId,
     } as TestRunDBModel)
   }
 }

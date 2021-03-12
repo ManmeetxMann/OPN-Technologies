@@ -10,6 +10,7 @@ import {
 } from '../utils/datetime.helper'
 import {LabService} from './lab.service'
 import {fromPairs} from 'lodash'
+import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
 
 export class TransportRunsService {
   private transportRunsRepository = new TransportRunsRepository(new DataStore())
@@ -42,11 +43,24 @@ export class TransportRunsService {
         return {id: transportRun.id, transportRunId: transportRun.transportRunId}
       })
   }
-  async getByDate(transportDate: string): Promise<TransportRunsDbModel[]> {
-    const transports = await this.transportRunsRepository.findWhereEqual(
-      'transportDate',
-      transportDate,
-    )
+  async getByDate(transportDate: string, labId?: string): Promise<TransportRunsDbModel[]> {
+    const query = []
+    query.push({
+      map: '/',
+      key: 'transportDate',
+      operator: DataModelFieldMapOperatorType.Equals,
+      value: transportDate,
+    })
+
+    if (!!labId) {
+      query.push({
+        map: '/',
+        key: 'labId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: labId,
+      })
+    }
+    const transports = await this.transportRunsRepository.findWhereEqualInMap(query)
 
     const labs = fromPairs(
       (

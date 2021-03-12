@@ -32,6 +32,8 @@ import {
   makeDeadline,
   makeRapidDeadline,
   makeFirestoreTimestamp,
+  getTimeFromFirestoreDateTime,
+  makeUtcIsoDate,
 } from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -218,6 +220,14 @@ export class AppoinmentService {
   ): Promise<(AppointmentDBModel & {organizationName: string})[]> {
     const conditions = []
     let appointments = []
+    if (queryParams.labId) {
+      conditions.push({
+        map: '/',
+        key: 'labId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: queryParams.labId,
+      })
+    }
     if (queryParams.organizationId) {
       conditions.push({
         map: '/',
@@ -679,6 +689,10 @@ export class AppoinmentService {
           await this.addAppointmentLabel(appointment, data.label, userId)
           break
 
+        case AppointmentBulkAction.AddLab:
+          await this.addLab(appointmentId, data.labId)
+          break
+
         default:
           console.warn('Wrong bulk action type')
       }
@@ -728,6 +742,12 @@ export class AppoinmentService {
       appointmentStatus: AppointmentStatus.InTransit,
     })
     this.postPubsub(saved, 'updated')
+  }
+
+  async addLab(appointmentId: string, labId: string): Promise<void> {
+    await this.appointmentsRepository.updateProperties(appointmentId, {
+      labId: labId,
+    })
   }
 
   private async checkAppointmentStatusOnly(
@@ -840,12 +860,22 @@ export class AppoinmentService {
 
   async copyAppointment(
     appointmentId: string,
-    dateTime: string,
+    date: string,
     adminId: string,
     organizationId: string,
   ): Promise<BulkOperationResponse> {
     //get the appointment that will be copied
-    const appointment = await this.getAppointmentDBById(appointmentId)
+    const appointment = await this.appointmentsRepository.getAppointmentById(appointmentId)
+    if (!appointment) {
+      LogInfo('AppoinmentService:copyAppointment', 'InvalidAppointmentId', {
+        appointmentID: appointmentId,
+      })
+      return Promise.resolve({
+        id: appointmentId,
+        status: BulkOperationStatus.Failed,
+        reason: 'Bad Request',
+      })
+    }
     if (organizationId && organizationId !== appointment.organizationId) {
       LogError(
         'AdminAppointmentController:getUserAppointmentHistoryByAppointmentId',
@@ -865,6 +895,8 @@ export class AppoinmentService {
     }
 
     const barCodeNumber = await this.getNextBarCodeNumber()
+    const appointmentTime = getTimeFromFirestoreDateTime(appointment.dateTime)
+    const dateTime = makeUtcIsoDate(date, appointmentTime)
 
     const acuityAppointment = await this.acuityRepository.createAppointment({
       dateTime,
@@ -1212,25 +1244,13 @@ export class AppoinmentService {
   }
 
   async getAppointmentsStats(
-    appointmentStatus: AppointmentStatus[],
-    barCode: string,
-    organizationId: string,
-    dateOfAppointment: string,
-    searchQuery: string,
-    transportRunId: string,
+    queryParams: AppointmentByOrganizationRequest,
   ): Promise<{
     appointmentStatusArray: Filter[]
     orgIdArray: Filter[]
     total: number
   }> {
-    const appointments = await this.getAppointmentsDB({
-      appointmentStatus,
-      barCode,
-      organizationId,
-      dateOfAppointment,
-      searchQuery,
-      transportRunId,
-    })
+    const appointments = await this.getAppointmentsDB(queryParams)
     const appointmentStatsByTypes: Record<AppointmentStatus, number> = {} as Record<
       AppointmentStatus,
       number

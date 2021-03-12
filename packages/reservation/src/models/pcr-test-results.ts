@@ -84,6 +84,17 @@ export type PCRTestResultConfirmRequest = {
   action: PCRResultActionsForConfirmation
 }
 
+export type PCRSendResultDTO = {
+  adminId: string
+  barCode: string
+  isSingleResult: boolean
+  labId: string
+  metaData: TestResultsMetaData
+  resultAnalysis: Spec[]
+  sendUpdatedResults: boolean
+  templateId: string
+}
+
 export enum TestResultStyle {
   // PCR result style
   Positive = 'RED',
@@ -155,8 +166,8 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   testType: TestTypes
   resultMetaData?: TestResultsMetaData
   resultAnalysis?: Spec[]
-  templateId: string
-  labId: string
+  templateId?: string
+  labId?: string
   userId: string
   sortOrder: number
 }
@@ -245,6 +256,7 @@ export type PcrTestResultsListByDeadlineRequest = {
     | AppointmentStatus.Received
     | AppointmentStatus.ReRunRequired
   organizationId?: string
+  labId?: string
 }
 
 export type SinglePcrTestResultsRequest = {
@@ -257,12 +269,12 @@ export type SingleTestResultsRequest = {
 
 export type PcrTestResultsListRequest = {
   organizationId?: string
-  deadline?: string
   barCode?: string
   result?: ResultTypes
   date?: string
   testType?: TestTypes
   searchQuery?: string
+  labId?: string
 }
 
 export type PCRTestResultListDTO = {
@@ -378,6 +390,9 @@ export type SinglePcrTestResultUi = {
   testName: string
   doctorId: string
   resultAnalysis: GroupedSpecs[]
+  travelID: string
+  travelIDIssuingCountry: string
+  dateOfResult: string
 }
 
 enum LabData {
@@ -436,6 +451,11 @@ export const singlePcrTestResultDTO = (
     style: resultToStyle(pcrTestResult.result),
     testName: 'SARS COV-2',
     doctorId: 'DR1',
+    travelID: appointment.travelID,
+    travelIDIssuingCountry: appointment.travelIDIssuingCountry,
+    dateOfResult: pcrTestResult.resultMetaData
+      ? formatStringDateRFC822Local(pcrTestResult.resultMetaData.resultDate)
+      : null,
   }
 }
 
