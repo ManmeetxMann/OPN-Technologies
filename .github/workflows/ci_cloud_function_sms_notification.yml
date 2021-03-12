@@ -19,5 +19,5 @@ jobs:
     - run: |
         cd cloud-functions/sms-notifications
         pwd
-        gcloud functions deploy sms-notification --entry-point sendSMS
+        gcloud functions deploy sms-notification --entry-point sendSMS --project opn-platform-dev
     
