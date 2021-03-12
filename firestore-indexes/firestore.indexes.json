@@ -427,25 +427,15 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "labId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "waitingResult",
           "order": "ASCENDING"
         },
         {
           "fieldPath": "deadline",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "pcr-test-results",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "deadline",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "waitingResult",
           "order": "ASCENDING"
         }
       ]
