@@ -978,7 +978,6 @@ paths:
           name: labId
           schema:
             type: string
-          required: true
       responses:
         '200':
           description: Succesfully retrieve transport run list
