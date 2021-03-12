@@ -1,7 +1,7 @@
 const frisby = require('frisby');
 const helpersCommon = require('helpers_common');
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
-
+const todaysDate = moment(new Date()).format("YYYY-MM-DD")
 
 // Do setup first
 frisby.globalSetup({
@@ -34,9 +34,11 @@ describe('PCR Bulk TestResultsController', () => {
                 'resultDate': '2021-02-10',
                 'results': [
                   {
-                    'autoResult': 'Negative',
                     'action': 'SendThisResult',
-                    'barCode': 'A1509',
+                    'autoResult': 'Negative',
+                    'barCode': 'A1423',
+                    //'comment': 'AWESOM',
+                    'notify': true,
                     'resultAnalysis':[
                       {
                         'label':'LBL1',
@@ -53,10 +55,9 @@ describe('PCR Bulk TestResultsController', () => {
                       {
                         'label':'LBL4',
                         'value':'26'
-                      }
-                    ],
-                    'notify': true,
-                    'comment': 'AWESOM',
+                      }],
+                    'resultDate': todaysDate,
+                    'sendUpdatedResults': false,
                   },
                 ],
               },
