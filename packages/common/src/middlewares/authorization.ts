@@ -228,15 +228,11 @@ const isAllowed = (
     RequiredUserPermission.LabOrOrgAppointments,
   )
   const seekLabReceiving = listOfRequiredPermissions.includes(RequiredUserPermission.LabReceiving)
-  const seekAllowCheckIn = listOfRequiredPermissions.includes(
-    RequiredUserPermission.AllowCheckIn,
-  )
+  const seekAllowCheckIn = listOfRequiredPermissions.includes(RequiredUserPermission.AllowCheckIn)
   const seekGenerateBarCodeAdmin = listOfRequiredPermissions.includes(
     RequiredUserPermission.GenerateBarCodeAdmin,
   )
-  const seekLookupAdmin = listOfRequiredPermissions.includes(
-    RequiredUserPermission.LookupAdmin,
-  )
+  const seekLookupAdmin = listOfRequiredPermissions.includes(RequiredUserPermission.LookupAdmin)
   const seekLabAppointments = listOfRequiredPermissions.includes(
     RequiredUserPermission.LabAppointments,
   )

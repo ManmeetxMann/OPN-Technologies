@@ -55,9 +55,7 @@ class AdminAppointmentController implements IControllerBase {
     const generateBarCodeAdminAuth = authorizationMiddleware([
       RequiredUserPermission.GenerateBarCodeAdmin,
     ])
-    const lookupAdminAuth = authorizationMiddleware([
-      RequiredUserPermission.LookupAdmin,
-    ])
+    const lookupAdminAuth = authorizationMiddleware([RequiredUserPermission.LookupAdmin])
     innerRouter.get(
       this.path + '/api/v1/appointments',
       apptLabOrOrgAdminAuthWithOrg,
