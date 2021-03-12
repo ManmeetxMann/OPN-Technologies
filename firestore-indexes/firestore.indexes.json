@@ -756,7 +756,7 @@
         },
         {
           "fieldPath": "date",
-          "order": "descending"
+          "order": "DESCENDING"
         }
       ]
     },

@@ -555,8 +555,6 @@ components:
           type: boolean
         isBulkUploadAdmin:
           type: boolean
-        isIDBarCodesAdmin:
-          type: boolean
         isSingleResultSendAdmin:
           type: boolean
         isConfirmResultAdmin:
@@ -576,32 +574,32 @@ components:
         isRapidResultOrgAdmin:
           type: boolean
       required:
-        - email
-        - isBulkUploadAdmin
-        - isConfirmResultAdmin
-        - isDueTodayAdmin
-        - isIDBarCodesAdmin
-        - isLabAppointmentsAdmin
-        - isLabResultsAdmin
-        - isLabUser
-        - isManagementDashboardAdmin
-        - isOpnSuperAdmin
-        - isReceivingAdmin
-        - isSingleResultSendAdmin
-        - isTestAppointmentsAdmin
-        - isTestReportsAdmin
-        - isTestRunsAdmin
-        - isTransportsRunsAdmin
-        - isPackageAdmin
-        - isCheckInAdmin
-        - isGenerateAdmin
-        - isLookupAdmin
-        - isRapidResultSenderAdmin
-        - isRapidResultOrgAdmin
-        - organizationId
-        - showReporting
-        - superAdminForOrganizationIds
-        - adminForLabIds
+        - adminForLabIds	
+        - email	
+        - isBulkUploadAdmin	
+        - isCheckInAdmin	
+        - isClinicUser	
+        - isConfirmResultAdmin	
+        - isDueTodayAdmin	
+        - isGenerateAdmin	
+        - isLabAppointmentsAdmin	
+        - isLabResultsAdmin	
+        - isLabUser	
+        - isLookupAdmin	
+        - isManagementDashboardAdmin	
+        - isOpnSuperAdmin	
+        - isPackageAdmin	
+        - isRapidResultOrgAdmin	
+        - isRapidResultSenderAdmin	
+        - isReceivingAdmin	
+        - isSingleResultSendAdmin	
+        - isTestAppointmentsAdmin	
+        - isTestReportsAdmin	
+        - isTestRunsAdmin	
+        - isTransportsRunsAdmin	
+        - organizationId	
+        - showReporting	
+        - superAdminForOrganizationIds	
 
     InternalAdminListRequest:
       type: object
@@ -883,8 +881,6 @@ components:
         isDueTodayAdmin:
           type: boolean
         isBulkUploadAdmin:
-          type: boolean
-        isIDBarCodesAdmin:
           type: boolean
         isSingleResultSendAdmin:
           type: boolean
