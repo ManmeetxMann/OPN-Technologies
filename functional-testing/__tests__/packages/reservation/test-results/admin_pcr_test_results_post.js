@@ -54,7 +54,7 @@ describe('PCR TestResultsController', () => {
                     'value':'26'
                   }],
                 'resultDate': todaysDate,
-                'sendUpdatedResults': false,
+                'sendUpdatedResults': true,
               },
           )
           .expect('status', 200)
