@@ -1356,6 +1356,50 @@ export class PCRTestResultsService {
     }
   }
 
+  async getPCRResultsFromDB(
+    queryParams: PcrTestResultsListByDeadlineRequest,
+  ): Promise<PCRTestResultDBModel[]> {
+    const pcrTestResultsQuery = []
+    const {labId, deadline, barCode, testRunId, organizationId} = queryParams
+
+    const equals = (key: string, value) => ({
+      map: '/',
+      key,
+      operator: DataModelFieldMapOperatorType.Equals,
+      value,
+    })
+
+    if (labId) {
+      pcrTestResultsQuery.push(equals('labId', labId))
+    }
+
+    if (deadline) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'deadline',
+        operator: DataModelFieldMapOperatorType.LessOrEqual,
+        value: makeDeadlineForFilter(deadline),
+      })
+      pcrTestResultsQuery.push(equals('waitingResult', true))
+    }
+
+    if (barCode) {
+      pcrTestResultsQuery.push(equals('barCode', barCode))
+    }
+
+    if (testRunId) {
+      pcrTestResultsQuery.push(equals('testRunId', testRunId))
+    }
+
+    if (organizationId) {
+      pcrTestResultsQuery.push(
+        equals('organizationId', organizationId === 'null' ? null : organizationId),
+      )
+    }
+
+    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+  }
+
   public getlinkedBarcodes = async (couponCode: string): Promise<string[]> => {
     let linkedBarcodes = []
     if (couponCode) {
@@ -1401,59 +1445,14 @@ export class PCRTestResultsService {
     })
   }
 
-  async getDueDeadlineStats({
-    deadline,
-    testRunId,
-    barCode,
-    labId,
-  }: PcrTestResultsListByDeadlineRequest): Promise<{
+  async getDueDeadlineStats(
+    queryParams: PcrTestResultsListByDeadlineRequest,
+  ): Promise<{
     pcrResultStatsByResultArr: Filter[]
     pcrResultStatsByOrgIdArr: Filter[]
     total: number
   }> {
-    const pcrTestResultsQuery = []
-    if (labId) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'labId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: labId,
-      })
-    }
-    if (deadline) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'deadline',
-        operator: DataModelFieldMapOperatorType.LessOrEqual,
-        value: makeDeadlineForFilter(deadline),
-      })
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'waitingResult',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: true,
-      })
-    }
-
-    if (barCode) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'barCode',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: barCode,
-      })
-    }
-
-    if (testRunId) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'testRunId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: testRunId,
-      })
-    }
-
-    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+    const pcrResults = await this.getPCRResultsFromDB(queryParams)
     const appointmentIds = pcrResults.map(({appointmentId}) => `${appointmentId}`)
     const appointments = await this.appointmentsRepository.getAppointmentsDBByIds(appointmentIds)
 
@@ -1468,6 +1467,7 @@ export class PCRTestResultsService {
         AppointmentStatus.Received,
       ]
 
+      const {testRunId} = queryParams
       if (!(allowedAppointmentStatus.includes(appointment.appointmentStatus) || testRunId)) {
         return
       }
@@ -1511,69 +1511,10 @@ export class PCRTestResultsService {
     }
   }
 
-  async getDueDeadline({
-    deadline,
-    testRunId,
-    barCode,
-    appointmentStatus,
-    organizationId,
-    labId,
-  }: PcrTestResultsListByDeadlineRequest): Promise<PCRTestResultByDeadlineListDTO[]> {
-    const pcrTestResultsQuery = []
-    if (labId) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'labId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: labId,
-      })
-    }
-
-    if (barCode) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'barCode',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: barCode,
-      })
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'waitingResult',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: true,
-      })
-    } else if (testRunId) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'testRunId',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: testRunId,
-      })
-    } else if (deadline) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'deadline',
-        operator: DataModelFieldMapOperatorType.LessOrEqual,
-        value: makeDeadlineForFilter(deadline),
-      })
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'waitingResult',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: true,
-      })
-
-      if (organizationId) {
-        pcrTestResultsQuery.push({
-          map: '/',
-          key: 'organizationId',
-          operator: DataModelFieldMapOperatorType.Equals,
-          value: organizationId === 'null' ? null : organizationId,
-        })
-      }
-    }
-
-    const pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
+  async getDueDeadline(
+    queryParams: PcrTestResultsListByDeadlineRequest,
+  ): Promise<PCRTestResultByDeadlineListDTO[]> {
+    const pcrResults = await this.getPCRResultsFromDB(queryParams)
     const appointmentIds = []
     const testRunIds = []
     const pcrFiltred = []
@@ -1603,6 +1544,7 @@ export class PCRTestResultsService {
         AppointmentStatus.Received,
       ]
 
+      const {appointmentStatus, testRunId} = queryParams
       if (
         appointment &&
         ((!appointmentStatus && allowedAppointmentStatus.includes(appointment.appointmentStatus)) ||
