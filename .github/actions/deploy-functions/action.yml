@@ -1,0 +1,70 @@
+name: 'Deploy to Cloud Functions'
+
+runs:
+  using: 'composite'
+  steps:
+  
+  - name: Deploy Modules
+    run: |
+      echo "Function Name: ${{ inputs.function_name }}"
+      EVENT_NAME=${{ github.event_name }}
+      EVENT_ACTION=${{ github.event.action }}
+
+      TAG_STRING=$GITHUB_REF
+      TAG_NUMBER="${TAG_STRING##*-}"
+      GAE_VERSION=${TAG_NUMBER//./-}
+      GAE_VERSION_FLAG=""
+      
+      INFRA_DEV_TAG_REF=refs/tags/infra-dev-
+      PREPROD_TAG_REF=refs/tags/preprod-
+      PROD_TAG_REF=refs/tags/prod-
+      echo "::group::Define Deployment Variables"
+      if [[ $GITHUB_REF == 'refs/heads/cleanup' ]]; then
+        echo "Deploy to INFRA"
+        echo "PROJECT_ID=opn-platform-infra-dev" > $GITHUB_ENV
+        echo "ENV_SERVICE_ACCOUNT=infra_dev_service_account" >> $GITHUB_ENV
+        echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
+      elif [[ "$GITHUB_REF" == *"$INFRA_DEV_TAG_REF"* ]]; then
+        echo "Deploy to INFRA DEV"
+        echo "PROJECT_ID=opn-platform-infra-dev" > $GITHUB_ENV
+        echo "ENV_SERVICE_ACCOUNT=infra_dev_service_account" >> $GITHUB_ENV
+        echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
+        echo "GAE_VERSION_FLAG=--version=$GAE_VERSION" >> $GITHUB_ENV
+      elif [[ "$GITHUB_REF" == *"$PREPROD_TAG_REF"* ]]; then
+        echo "Deploy to PREPROD"
+        echo "PROJECT_ID=opn-platform-preprod" > $GITHUB_ENV
+        echo "ENV_SERVICE_ACCOUNT=preprod_service_account" >> $GITHUB_ENV
+        echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
+      elif [[ "$GITHUB_REF" == *"$PROD_TAG_REF"* ]]; then
+        echo "Deploy to PROD"
+        echo "PROJECT_ID=opn-platform-ca-prod" > $GITHUB_ENV
+        echo "ENV_SERVICE_ACCOUNT=prod_service_account" >> $GITHUB_ENV
+        echo "PROMOTE_FLAG=--no-promote" >> $GITHUB_ENV
+      elif [[ $GITHUB_REF == 'refs/heads/master' ]]; then
+        echo "Deploy to DEV"
+        echo "PROJECT_ID=opn-platform-dev" > $GITHUB_ENV
+        echo "ENV_SERVICE_ACCOUNT=dev_service_account" >> $GITHUB_ENV
+        echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
+      else
+        echo "Bad Deployment"
+        exit 1;
+      fi
+      echo "::endgroup::"
+    shell: bash
+
+  - name: Deploy to GAE
+    run: |
+      echo "::group::Auth with GCLOUD"
+      cat >> service-account.json << EOF
+      ${{ env[env.ENV_SERVICE_ACCOUNT] }}
+      EOF
+      echo "Deploying to: ${{ env.PROJECT_ID }}"
+      gcloud auth activate-service-account --key-file=./service-account.json --project=${{ env.PROJECT_ID }}
+      rm ./service-account.json
+      echo "::endgroup::"
+      
+      echo "::group::Deploy to GAE"
+      cd ./cloud-functions/sms-notification
+      gcloud functions deploy ${{ inputs.function_name }} --entry-point sendSMS --project ${{ env.PROJECT_ID }}
+      echo "::endgroup::"
+    shell: bash

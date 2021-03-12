@@ -23,18 +23,4 @@ jobs:
           preprod_service_account: ${{ secrets.PREPROD_GCP_CLOUDBUILD_SA_KEY }}
           prod_service_account: ${{ secrets.PROD_GCP_CLOUDBUILD_SA_KEY }}
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-jobs:
-  build:
-    runs-on: ubuntu-18.04
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup Node.js
-      uses: actions/setup-node@v1
-      with:
-        node-version: 12.x
-    - run: |
-        cd cloud-functions/sms-notifications
-        pwd
-        gcloud functions deploy sms-notification --entry-point sendSMS --project opn-platform-dev
     
