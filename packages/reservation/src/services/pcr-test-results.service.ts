@@ -219,7 +219,7 @@ export class PCRTestResultsService {
         sendUpdatedResults: false,
         adminId: pcrResults.adminId,
         templateId: pcrResults.data.templateId,
-        labId: pcrResults.data.labId
+        labId: pcrResults.data.labId,
       })
 
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
@@ -631,10 +631,17 @@ export class PCRTestResultsService {
     }
   }
 
-  async handlePCRResultSaveAndSend(
-    requestData:PCRSendResultDTO
-  ): Promise<PCRTestResultDBModel> {
-    const {metaData, resultAnalysis, barCode, isSingleResult, sendUpdatedResults, adminId, templateId, labId} = requestData
+  async handlePCRResultSaveAndSend(requestData: PCRSendResultDTO): Promise<PCRTestResultDBModel> {
+    const {
+      metaData,
+      resultAnalysis,
+      barCode,
+      isSingleResult,
+      sendUpdatedResults,
+      adminId,
+      templateId,
+      labId,
+    } = requestData
     const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
     const pcrTestResults = await this.getPCRResultsByBarCode(barCode)
 

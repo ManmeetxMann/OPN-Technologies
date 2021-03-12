@@ -85,14 +85,14 @@ export type PCRTestResultConfirmRequest = {
 }
 
 export type PCRSendResultDTO = {
-  adminId: string,
-  barCode: string,
-  isSingleResult: boolean,
-  labId: string,
-  metaData: TestResultsMetaData,
-  resultAnalysis: Spec[],
-  sendUpdatedResults: boolean,
-  templateId: string,
+  adminId: string
+  barCode: string
+  isSingleResult: boolean
+  labId: string
+  metaData: TestResultsMetaData
+  resultAnalysis: Spec[]
+  sendUpdatedResults: boolean
+  templateId: string
 }
 
 export enum TestResultStyle {
