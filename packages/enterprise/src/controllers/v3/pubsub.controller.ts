@@ -5,8 +5,10 @@ import IControllerBase from '../../../../common/src/interfaces/IControllerBase.i
 import {OPNPubSub} from '../../../../common/src/service/google/pub_sub'
 
 import {RecommendationService} from '../../services/recommendation-service'
+import {StatusStatsService} from '../../services/status-stats-service'
+import {OrganizationService} from '../../services/organization-service'
 
-import {PassportStatus} from '../../../../passport/src/models/passport'
+import {PassportStatus, PassportStatuses} from '../../../../passport/src/models/passport'
 
 import {TemperatureStatuses} from '../../../../reservation/src/models/temperature'
 import {
@@ -18,6 +20,8 @@ import {
 class RecommendationController implements IControllerBase {
   public router = express.Router()
   private recService = new RecommendationService()
+  private statsService = new StatusStatsService()
+  private orgService = new OrganizationService()
   constructor() {
     this.initRoutes()
   }
@@ -59,13 +63,27 @@ class RecommendationController implements IControllerBase {
   newPassport: Handler = async (req, res, next): Promise<void> => {
     try {
       const {userId, organizationId, data} = await this.parseMessage(req.body.message)
-      await this.recService.addPassport(
+      const recPromise = this.recService.addPassport(
         userId,
         organizationId,
         data.id as string,
         data.status as PassportStatus,
         data.expiry as string,
       )
+      const statsPromise = this.orgService
+        .getUserGroupId(organizationId, userId)
+        .then((groupId) => {
+          if (groupId) {
+            return this.statsService.updateStatsForUser(
+              organizationId,
+              groupId,
+              userId,
+              data.status as PassportStatuses,
+            )
+          }
+          console.warn(`User ${userId} has no group in ${organizationId}`)
+        })
+      await Promise.all([recPromise, statsPromise])
       res.sendStatus(200)
     } catch (error) {
       next(error)

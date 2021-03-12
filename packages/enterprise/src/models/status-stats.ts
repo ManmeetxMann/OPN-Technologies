@@ -1,4 +1,4 @@
-import {PassportStatuses} from './passport'
+import {PassportStatuses} from '../../../passport/src/models/passport'
 
 // records how many users received each status *today*
 export type StatusStats = {
