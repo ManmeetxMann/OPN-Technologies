@@ -57,6 +57,16 @@ class AdminPCRTestResultController implements IControllerBase {
     )
     const confirmResultsAuth = authorizationMiddleware([RequiredUserPermission.LabConfirmResults])
 
+    //Test Results List
+    innerRouter.get(this.path + '/pcr-test-results', listTestResultsAuth, this.listPCRResults)
+    innerRouter.get(
+      this.path + '/pcr-test-results/list/stats',
+      listTestResultsAuth,
+      this.getPCRResultsHistoryStats,
+    )
+    innerRouter.get(this.path + '/test-results/:id', listTestResultsAuth, this.onePcrTestResult)
+
+    //Send Test Results
     innerRouter.post(
       this.path + '/test-results-bulk',
       sendBulkResultsAuth,
@@ -73,12 +83,13 @@ class AdminPCRTestResultController implements IControllerBase {
       sendBulkResultsAuth,
       this.listPCRResultsHistory,
     )
-    innerRouter.get(this.path + '/pcr-test-results', listTestResultsAuth, this.listPCRResults)
     innerRouter.get(
       this.path + '/pcr-test-results-bulk/report-status',
       sendBulkResultsAuth,
       this.listPCRTestResultReportStatus,
     )
+
+    //Due Today
     innerRouter.put(
       this.path + '/pcr-test-results/add-test-run',
       dueTodayAuth,
@@ -94,12 +105,6 @@ class AdminPCRTestResultController implements IControllerBase {
       dueTodayAuth,
       this.dueDeadlineStats,
     )
-    innerRouter.get(
-      this.path + '/pcr-test-results/list/stats',
-      dueTodayAuth,
-      this.getPCRResultsHistoryStats,
-    )
-    innerRouter.get(this.path + '/test-results/:id', listTestResultsAuth, this.onePcrTestResult)
 
     this.router.use('/', innerRouter)
   }
