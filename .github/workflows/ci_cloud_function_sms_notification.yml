@@ -1,11 +1,13 @@
 name: CloudFunctionSMSNotification
 
 on:
-  pull_request: 
+  push: 
     paths:
       - "cloud-functions/sms-notification/**"
       - ".github/workflows/ci_cloud_function_sms_notification.yml"
-    branches: [ master ]
+    branches: 
+      - master
+      - feature/sms_notification
 
 jobs:
   build:

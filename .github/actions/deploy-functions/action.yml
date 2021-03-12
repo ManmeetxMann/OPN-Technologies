@@ -1,4 +1,9 @@
 name: 'Deploy to Cloud Functions'
+inputs:
+  function_name:
+    description: 'Function Name'
+    required: true
+    default: ""
 
 runs:
   using: 'composite'
