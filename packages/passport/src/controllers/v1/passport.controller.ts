@@ -161,19 +161,20 @@ class PassportController implements IControllerBase {
       const { attestationId } = req.params as {
         attestationId: string
       }
+      const { organizationid } = req.headers as {
+        organizationid: string
+      }
 
-      // TODO check with if required
-      // const { organizationid } = req.headers as {
-      //   organizationid: string
-      // }
-
-      // Get attestation by id, check if it exist and belong to the user
+      // Get attestation by id, check if it exist and belong to the user and organization
       const attestation = await this.attestationService.getByAttestationId(attestationId)
       if (!attestation) {
         throw new BadRequestException("Couldn't find attestation")
       }
       if (attestation.userId !== usedId) {
         throw new BadRequestException("Attestation doesn't belong to the user")
+      }
+      if (attestation.organizationId !== organizationid) {
+        throw new BadRequestException("Attestation doesn't belong to the organization")
       }
 
       // Validate answers and fetch questions
@@ -185,6 +186,7 @@ class PassportController implements IControllerBase {
           additionalValue: answers[answerKey][1]
         }
       }) as AttestationAnswersV1
+
       const [status, questionnaires] = await Promise.all([
         this.questionnaireService.evaluateAnswers(questionnaireId, mappedAnswers),
         this.questionnaireService.getQuestionnaires([questionnaireId])
