@@ -84,6 +84,17 @@ export type PCRTestResultConfirmRequest = {
   action: PCRResultActionsForConfirmation
 }
 
+export type PCRSendResultDTO = {
+  adminId: string
+  barCode: string
+  isSingleResult: boolean
+  labId: string
+  metaData: TestResultsMetaData
+  resultAnalysis: Spec[]
+  sendUpdatedResults: boolean
+  templateId: string
+}
+
 export enum TestResultStyle {
   // PCR result style
   Positive = 'RED',

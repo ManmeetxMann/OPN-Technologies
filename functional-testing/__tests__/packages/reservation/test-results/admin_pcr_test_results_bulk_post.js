@@ -1,7 +1,8 @@
 const frisby = require('frisby');
+const moment =  require('moment')
 const helpersCommon = require('helpers_common');
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
-
+const todaysDate = moment(new Date()).format("YYYY-MM-DD")
 
 // Do setup first
 frisby.globalSetup({
@@ -31,33 +32,52 @@ describe('PCR Bulk TestResultsController', () => {
           .post(
               url,
               {
-                'resultDate': '2021-02-10',
+                'resultDate': todaysDate,
+                'labId':'k0qbPDqTwqitKUwlGHye',
+                'templateId':'template1',
+                'fileName':'fileName',
                 'results': [
                   {
-                    'autoResult': 'Negative',
                     'action': 'SendThisResult',
-                    'barCode': 'A1509',
+                    'autoResult': 'Negative',
+                    'barCode': 'A1423',
+                    //'comment': 'AWESOM',
+                    'notify': true,
                     'resultAnalysis':[
                       {
                         'label':'LBL1',
-                        'value':'26'
+                        'value':'1'
+                      },
+                      {
+                        'label':'LBL1',
+                        'value':'2'
                       },
                       {
                         'label':'LBL2',
-                        'value':'26'
+                        'value':'3'
                       },
                       {
                         'label':'LBL3',
-                        'value':'26'
+                        'value':'4'
                       },
                       {
                         'label':'LBL4',
-                        'value':'26'
-                      }
-                    ],
-                    'notify': true,
-                    'comment': 'AWESOM',
-                  },
+                        'value':'5'
+                      },
+                      {
+                        'label':'LBL4',
+                        'value':'6'
+                      },
+                      {
+                        'label':'LBL4',
+                        'value':'7'
+                      },
+                      {
+                        'label':'LBL4',
+                        'value':'8'
+                      }],
+                    'sendUpdatedResults': true,
+                  }
                 ],
               },
           )

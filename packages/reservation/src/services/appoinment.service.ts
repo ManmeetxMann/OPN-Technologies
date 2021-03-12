@@ -865,7 +865,17 @@ export class AppoinmentService {
     organizationId: string,
   ): Promise<BulkOperationResponse> {
     //get the appointment that will be copied
-    const appointment = await this.getAppointmentDBById(appointmentId)
+    const appointment = await this.appointmentsRepository.getAppointmentById(appointmentId)
+    if (!appointment) {
+      LogInfo('AppoinmentService:copyAppointment', 'InvalidAppointmentId', {
+        appointmentID: appointmentId,
+      })
+      return Promise.resolve({
+        id: appointmentId,
+        status: BulkOperationStatus.Failed,
+        reason: 'Bad Request',
+      })
+    }
     if (organizationId && organizationId !== appointment.organizationId) {
       LogError(
         'AdminAppointmentController:getUserAppointmentHistoryByAppointmentId',

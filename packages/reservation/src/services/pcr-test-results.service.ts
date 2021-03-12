@@ -56,6 +56,7 @@ import {
   resultToStyle,
   TestResutsDTO,
   getSortOrderByResult,
+  PCRSendResultDTO,
 } from '../models/pcr-test-results'
 
 import {
@@ -89,8 +90,7 @@ const passportStatusByPCR = {
   [ResultTypes.Indeterminate]: PassportStatuses.Stop,
   [ResultTypes.Negative]: PassportStatuses.Proceed,
 }
-import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results'
-import {Spec} from '../utils/analysis.helper'
+import {BulkTestResultRequest} from '../models/test-results'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -170,11 +170,7 @@ export class PCRTestResultsService {
     await this.pcrTestResultsRepository.delete(id)
   }
 
-  async processPCRTestResult(
-    reportTrackerId: string,
-    resultId: string,
-    userId: string,
-  ): Promise<void> {
+  async processPCRTestResult(reportTrackerId: string, resultId: string): Promise<void> {
     const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
       this.datastore,
       reportTrackerId,
@@ -205,22 +201,21 @@ export class PCRTestResultsService {
       ResultReportStatus.Processing,
     )
     try {
-      const pcrTestResult = await this.handlePCRResultSaveAndSend(
-        {
+      const pcrTestResult = await this.handlePCRResultSaveAndSend({
+        metaData: {
           notify: pcrResults.data.notify,
           resultDate: pcrResults.data.resultDate,
           action: pcrResults.data.action,
           autoResult: pcrResults.data.autoResult,
         },
-        pcrResults.data.resultAnalysis,
-        pcrResults.data.barCode,
-        false,
-        false,
-        pcrResults.adminId,
-        pcrResults.data.templateId,
-        pcrResults.data.labId,
-        userId,
-      )
+        resultAnalysis: pcrResults.data.resultAnalysis,
+        barCode: pcrResults.data.barCode,
+        isSingleResult: false,
+        sendUpdatedResults: false,
+        adminId: pcrResults.adminId,
+        templateId: pcrResults.data.templateId,
+        labId: pcrResults.data.labId,
+      })
 
       await testResultsReportingTrackerPCRResult.updateProperties(resultId, {
         status: await this.getReportStatus(pcrResults.data.action, pcrTestResult.result),
@@ -631,17 +626,17 @@ export class PCRTestResultsService {
     }
   }
 
-  async handlePCRResultSaveAndSend(
-    metaData: TestResultsMetaData,
-    resultAnalysis: Spec[],
-    barCode: string,
-    isSingleResult: boolean,
-    sendUpdatedResults: boolean,
-    adminId: string,
-    templateId: string,
-    labId: string,
-    userId: string,
-  ): Promise<PCRTestResultDBModel> {
+  async handlePCRResultSaveAndSend(requestData: PCRSendResultDTO): Promise<PCRTestResultDBModel> {
+    const {
+      metaData,
+      resultAnalysis,
+      barCode,
+      isSingleResult,
+      sendUpdatedResults,
+      adminId,
+      templateId,
+      labId,
+    } = requestData
     const appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
     const pcrTestResults = await this.getPCRResultsByBarCode(barCode)
 
@@ -759,7 +754,7 @@ export class PCRTestResultsService {
     const pcrResultRecorded = await this.pcrTestResultsRepository.updateData({
       id: testResult.id,
       updates: pcrResultDataForDbUpdate,
-      actionBy: userId,
+      actionBy: adminId,
       action: PcrResultTestActivityAction.Create,
     })
 

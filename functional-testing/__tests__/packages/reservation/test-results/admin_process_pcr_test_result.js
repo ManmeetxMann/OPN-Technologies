@@ -28,7 +28,7 @@ describe('/reservation/internal/api/v1/process-pcr-test-result:post', () => {
           })
           .post(
               url,
-              {reportTrackerId: 'rXVZ2iTC4aNmlDJV8FHj', resultId: 'UyUhg1evjeDZmrdBnCaK'},
+              {reportTrackerId: 'yU3dVgxRTMKZeHpAfTaT', resultId: 'OsG2AvQ3sU2XoQFR8vHB'},
           )
           .expect('status', 200)
           .inspectBody();

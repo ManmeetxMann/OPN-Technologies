@@ -163,17 +163,16 @@ class AdminPCRTestResultController implements IControllerBase {
 
       validateAnalysis(resultAnalysis)
 
-      const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend(
+      const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend({
         metaData,
         resultAnalysis,
         barCode,
-        true,
+        isSingleResult: true,
         sendUpdatedResults,
         adminId,
         templateId,
         labId,
-        adminId,
-      )
+      })
       const status = await this.pcrTestResultsService.getReportStatus(
         pcrResultRecorded.resultMetaData.action,
         pcrResultRecorded.result,
