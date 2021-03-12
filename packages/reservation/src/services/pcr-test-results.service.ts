@@ -90,8 +90,7 @@ const passportStatusByPCR = {
   [ResultTypes.Indeterminate]: PassportStatuses.Stop,
   [ResultTypes.Negative]: PassportStatuses.Proceed,
 }
-import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results'
-import {Spec} from '../utils/analysis.helper'
+import {BulkTestResultRequest} from '../models/test-results'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -174,7 +173,6 @@ export class PCRTestResultsService {
   async processPCRTestResult(
     reportTrackerId: string,
     resultId: string,
-    userId: string,
   ): Promise<void> {
     const testResultsReportingTrackerPCRResult = new TestResultsReportingTrackerPCRResultsRepository(
       this.datastore,
