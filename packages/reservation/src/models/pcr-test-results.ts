@@ -4,6 +4,7 @@ import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datet
 
 import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {
   TestResultHistoryResponseDTO,
   TestResultRequestData,
@@ -454,7 +455,7 @@ export const singlePcrTestResultDTO = (
     travelID: appointment.travelID,
     travelIDIssuingCountry: appointment.travelIDIssuingCountry,
     dateOfResult: pcrTestResult.resultMetaData
-      ? formatStringDateRFC822Local(pcrTestResult.resultMetaData.resultDate)
+      ? formatStringDateRFC822Local(safeTimestamp(pcrTestResult.resultMetaData.resultDate))
       : null,
   }
 }
