@@ -1720,9 +1720,9 @@ export class PCRTestResultsService {
     }
 
     //TODO
-    if (pcrTestResult?.userId !== userId) {
-      throw new ResourceNotFoundException(`${id} does not exist`)
-    }
+    // if (pcrTestResult?.userId !== userId) {
+    //   throw new ResourceNotFoundException(`${id} does not exist`)
+    // }
 
     const appointment = await this.appointmentService.getAppointmentDBById(
       pcrTestResult.appointmentId,
@@ -1733,14 +1733,14 @@ export class PCRTestResultsService {
         `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${id}`,
       )
     }
-    if (appointment?.userId !== userId) {
-      LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
-        userId,
-        resultId: id,
-        appointmentId: pcrTestResult.appointmentId,
-      })
-      throw new ResourceNotFoundException(`${id} does not exist`)
-    }
+    // if (appointment?.userId !== userId) {
+    //   LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
+    //     userId,
+    //     resultId: id,
+    //     appointmentId: pcrTestResult.appointmentId,
+    //   })
+    //   throw new ResourceNotFoundException(`${id} does not exist`)
+    // }
 
     return {
       appointment,
