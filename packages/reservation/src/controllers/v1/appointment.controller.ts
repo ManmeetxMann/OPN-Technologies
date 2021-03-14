@@ -55,9 +55,9 @@ class AppointmentController implements IControllerBase {
       const id = req.params.id as string
 
       const result = await this.appointmentService.getAppointmentDBById(id)
-      // if (result?.userId !== userId) {
-      //   throw new ResourceNotFoundException(`${id} does not exist`)
-      // }
+      if (result?.userId !== userId) {
+        throw new ResourceNotFoundException(`${id} does not exist`)
+      }
       res.json(actionSucceed(userAppointmentDTOResponse(result)))
     } catch (error) {
       next(error)
