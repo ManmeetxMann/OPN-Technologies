@@ -1,10 +1,5 @@
-import {GroupedSpecs} from '../models/pcr-test-results'
+import {GroupedSpecs, Spec} from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
-
-export type Spec = {
-  label: string
-  value: string | boolean | Date
-}
 
 const groups = [
   {
@@ -63,6 +58,7 @@ const channelLabelMapping = new Map([
   ['hexCt', 'C(t)'],
   ['quasar670NGene', 'N gene'],
   ['quasar670Ct', 'C(t)'],
+
   ['ORF1abCt', 'ORF1ab Ct'],
   ['NGeneCt', 'N gene Ct'],
   ['SGeneCt', 'S gene Ct'],
@@ -71,12 +67,26 @@ const channelLabelMapping = new Map([
   ['NGene', 'N gene'],
   ['SGene', 'S gene'],
   ['MS2', 'MS2'],
+
+  ['profileR1', 'profileR1'],
+  ['profileR2', 'profileR2'],
+  ['profileR3', 'profileR3'],
+  ['IgA', 'IgA'],
+  ['IgG', 'IgG'],
+  ['IgM', 'IgM'],
+])
+
+const channelNameMapping = new Map([
+  ['FAM', 'FAM'],
+  ['calRed', 'CAL RED 61'],
+  ['HEX', 'HEX'],
+  ['quasar', 'QUASAR 670'],
 ])
 
 export const groupByChannel = (specs: Spec[]): GroupedSpecs[] =>
   groups
     .map((group) => ({
-      channelName: group.name,
+      channelName: channelNameMapping.get(group.name),
       description: group.description,
       groups: specs
         .filter((spec) => group.columns.includes(spec.label))
