@@ -394,8 +394,8 @@ export enum GroupLabel {
   quasar = 'quasar',
 }
 
-type Spec = {
-  label: string
+export type Spec = {
+  label: SpecLabel
   value: string | boolean | Date
 }
 
@@ -453,7 +453,7 @@ export const singlePcrTestResultDTO = (
   if (pcrTestResult.resultSpecs) {
     resultAnalysis = groupByChannel(
       Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
-        label: resultKey,
+        label: resultKey as SpecLabel,
         value: resultValue,
       })),
     )
