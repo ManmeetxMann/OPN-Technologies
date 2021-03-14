@@ -384,6 +384,13 @@ export enum SpecLabel {
   IgM = 'IgM',
 }
 
+export enum GroupLabel {
+  FAM = 'FAM',
+  calRed = 'calRed',
+  HEX = 'HEX',
+  quasar = 'quasar',
+}
+
 export type Spec = {
   label: SpecLabel
   value: string | boolean | Date
