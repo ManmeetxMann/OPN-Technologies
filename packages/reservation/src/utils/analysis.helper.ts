@@ -1,4 +1,4 @@
-import { GroupedSpecs, GroupLabel, Spec, SpecLabel } from "../models/pcr-test-results";
+import {GroupedSpecs, Spec, SpecLabel} from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 const groups = [
