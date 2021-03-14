@@ -54,11 +54,27 @@ export const validateAnalysis = (specs: Spec[]): void => {
   })
 }
 
+const channelLabelMapping = new Map([
+  ['famEGene', 'E Gene'],
+  ['famCt', 'C(t)'],
+  ['calRed61RdRpGene', 'RdRP gene'],
+  ['calRed61Ct', 'C(t)'],
+  ['hexIC', 'IC'],
+  ['hexCt', 'C(t)'],
+  ['quasar670NGene', 'N gene'],
+  ['quasar670Ct', 'C(t)'],
+])
+
 export const groupByChannel = (specs: Spec[]): GroupedSpecs[] =>
   groups
     .map((group) => ({
       channelName: group.name,
       description: group.description,
-      groups: specs.filter((spec) => group.columns.includes(spec.label)),
+      groups: specs
+        .filter((spec) => group.columns.includes(spec.label))
+        .map((spec) => ({
+          ...spec,
+          label: channelLabelMapping.get(spec.label),
+        })),
     }))
     .filter((group) => group.groups.length)
