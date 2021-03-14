@@ -578,6 +578,23 @@ components:
                   properties:
                     label:
                       type: string
+                      enum:
+                        - famEGene
+                        - famCt
+                        - calRed61RdRpGene
+                        - calRed61Ct
+                        - hexIC
+                        - hexCt
+                        - quasar670NGene
+                        - quasar670Ct
+                        - ORF1abCt
+                        - NGeneCt
+                        - SGeneCt
+                        - MS2Ct
+                        - ORF1ab
+                        - NGene
+                        - SGene
+                        - MS2
                     value:
                       type: string
               comment:

@@ -63,6 +63,14 @@ const channelLabelMapping = new Map([
   ['hexCt', 'C(t)'],
   ['quasar670NGene', 'N gene'],
   ['quasar670Ct', 'C(t)'],
+  ['ORF1abCt', 'ORF1ab Ct'],
+  ['NGeneCt', 'N gene Ct'],
+  ['SGeneCt', 'S gene Ct'],
+  ['MS2Ct', 'MS2 Ct'],
+  ['ORF1ab', 'ORF1ab'],
+  ['NGene', 'N gene'],
+  ['SGene', 'S gene'],
+  ['MS2', 'MS2'],
 ])
 
 export const groupByChannel = (specs: Spec[]): GroupedSpecs[] =>
