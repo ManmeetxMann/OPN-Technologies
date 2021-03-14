@@ -11,6 +11,9 @@ import {ActionItem} from '../models/action-items'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 import {ResultTypes} from '../../../reservation/src/models/appointment'
+import {now} from 'packages/common/src/utils/times'
+import {Config} from 'packages/common/src/utils/config'
+import moment from 'moment'
 
 type HealthPass = {
   expiry: string
@@ -76,7 +79,22 @@ export class HealthpassService {
       }
     }
     const expiry = safeTimestamp(items.latestPassport.expiry).toISOString()
-    if (items.latestAttestation?.status === PassportStatuses.Proceed) {
+    const validDuration = parseInt(Config.get('PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
+    const validDurationAgo = moment(now()).utc().subtract(validDuration, 'hours')
+    const rolloverHour = parseInt(Config.get('PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS'))
+    const lastRollover = moment(now())
+      .utc()
+      .set({hour: rolloverHour, minute: 0, second: 0, millisecond: 0})
+    if (lastRollover.isAfter(now())) {
+      lastRollover.subtract(1, 'day')
+    }
+    const earliestValid = lastRollover.isSameOrAfter(validDurationAgo)
+      ? lastRollover
+      : validDurationAgo
+    if (
+      items.latestAttestation?.status === PassportStatuses.Proceed &&
+      earliestValid.isSameOrBefore(items.latestAttestation.timestamp)
+    ) {
       tests.push({
         date: safeTimestamp(items.latestAttestation.timestamp).toISOString(),
         type: 'Attestation',
@@ -85,7 +103,10 @@ export class HealthpassService {
         style: 'GREEN',
       })
     }
-    if (items.latestTemperature?.status === TemperatureStatuses.Proceed) {
+    if (
+      items.latestTemperature?.status === TemperatureStatuses.Proceed &&
+      earliestValid.isSameOrBefore(items.latestTemperature.timestamp)
+    ) {
       tests.push({
         date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
         type: 'Temperature',
@@ -94,7 +115,10 @@ export class HealthpassService {
         style: 'GREEN',
       })
     }
-    if (items.PCRTestResult?.result === ResultTypes.Negative) {
+    if (
+      items.PCRTestResult?.result === ResultTypes.Negative &&
+      earliestValid.isSameOrBefore(items.PCRTestResult.timestamp)
+    ) {
       tests.push({
         date: safeTimestamp(items.PCRTestResult.timestamp).toISOString(),
         type: 'PCR',
