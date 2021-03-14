@@ -588,13 +588,19 @@ components:
                         - quasar670NGene
                         - quasar670Ct
                         - ORF1abCt
-                        - NGeneCt
                         - SGeneCt
+                        - NGeneCt
                         - MS2Ct
                         - ORF1ab
-                        - NGene
                         - SGene
+                        - NGene
                         - MS2
+                        - profileR1
+                        - profileR2
+                        - profileR3
+                        - IgA
+                        - IgG
+                        - IgM
                     value:
                       type: string
               comment:
