@@ -356,7 +356,10 @@ export type TestResutsDTO = {
 export type GroupedSpecs = {
   channelName: string
   description: string
-  groups: Record<string, string | boolean | Date>[]
+  groups: {
+    label: string
+    value: string | boolean | Date
+  }[]
 }
 
 export enum SpecLabel {
