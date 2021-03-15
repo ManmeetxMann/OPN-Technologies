@@ -1,4 +1,4 @@
-import {GroupedSpecs, Spec, SpecLabel} from '../models/pcr-test-results'
+import {GroupedSpecs, Spec} from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 const groups = [
@@ -63,32 +63,31 @@ export const validateAnalysis = (specs: Spec[]): void => {
     }
   })
 }
-
 const channelLabelMapping = new Map([
-  [SpecLabel.famEGene, 'E Gene'],
-  [SpecLabel.famCt, 'C(t)'],
-  [SpecLabel.calRed61RdRpGene, 'RdRP gene'],
-  [SpecLabel.calRed61Ct, 'C(t)'],
-  [SpecLabel.hexIC, 'IC'],
-  [SpecLabel.hexCt, 'C(t)'],
-  [SpecLabel.quasar670NGene, 'N gene'],
-  [SpecLabel.quasar670Ct, 'C(t)'],
+  ['famEGene', 'E Gene'],
+  ['famCt', 'C(t)'],
+  ['calRed61RdRpGene', 'RdRP gene'],
+  ['calRed61Ct', 'C(t)'],
+  ['hexIC', 'IC'],
+  ['hexCt', 'C(t)'],
+  ['quasar670NGene', 'N gene'],
+  ['quasar670Ct', 'C(t)'],
 
-  [SpecLabel.ORF1abCt, 'ORF1ab Ct'],
-  [SpecLabel.SGeneCt, 'S gene Ct'],
-  [SpecLabel.NGeneCt, 'N gene Ct'],
-  [SpecLabel.MS2Ct, 'MS2 Ct'],
-  [SpecLabel.ORF1ab, 'ORF1ab'],
-  [SpecLabel.SGene, 'S gene'],
-  [SpecLabel.NGene, 'N gene'],
-  [SpecLabel.MS2, 'MS2'],
+  ['ORF1abCt', 'ORF1ab Ct'],
+  ['NGeneCt', 'S gene Ct'],
+  ['SGeneCt', 'N gene Ct'],
+  ['MS2Ct', 'MS2 Ct'],
+  ['ORF1ab', 'ORF1ab'],
+  ['NGene', 'S gene'],
+  ['SGene', 'N gene'],
+  ['MS2', 'MS2'],
 
-  [SpecLabel.profileR1, 'profileR1'],
-  [SpecLabel.profileR2, 'profileR2'],
-  [SpecLabel.profileR3, 'profileR3'],
-  [SpecLabel.IgA, 'IgA'],
-  [SpecLabel.IgG, 'IgG'],
-  [SpecLabel.IgM, 'IgM'],
+  ['profileR1', 'profileR1'],
+  ['profileR2', 'profileR2'],
+  ['profileR3', 'profileR3'],
+  ['IgA', 'IgA'],
+  ['IgG', 'IgG'],
+  ['IgM', 'IgM'],
 ])
 
 export const groupByChannel = (specs: Spec[]): GroupedSpecs[] =>
