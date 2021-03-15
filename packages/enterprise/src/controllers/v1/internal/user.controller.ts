@@ -48,7 +48,7 @@ class UserController implements IControllerBase {
       // create user only if: user doesn't exists in collection and firebase
       // and user is associated with organization
       if (!user && !firebaseUser && organizationId) {
-        const firebaseUser = await this.authService.createUser(email)
+        const firebaseUserId = await this.authService.createUser(email)
 
         user = await this.userService.create({
           firstName,
@@ -56,7 +56,7 @@ class UserController implements IControllerBase {
           email,
           dateOfBirth,
           admin: null,
-          authUserId: firebaseUser,
+          authUserId: firebaseUserId,
           base64Photo: Config.get('DEFAULT_USER_PHOTO') || '',
           registrationId: null,
           delegates: [],
