@@ -77,19 +77,8 @@ import {mapTemperatureStatusToResultTypes} from '../models/temperature'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 import {AttestationService} from '../../../passport/src/services/attestation-service'
-import {PassportService} from '../../../passport/src/services/passport-service'
 import {PassportStatuses} from '../../../passport/src/models/passport'
-import {AlertService} from '../../../passport/src/services/alert-service'
 
-const passportStatusByPCR = {
-  [ResultTypes.Positive]: PassportStatuses.Stop,
-  [ResultTypes.PresumptivePositive]: PassportStatuses.Stop,
-  [ResultTypes.PreliminaryPositive]: PassportStatuses.Stop,
-  [ResultTypes.Inconclusive]: PassportStatuses.Stop,
-  [ResultTypes.Invalid]: PassportStatuses.Stop,
-  [ResultTypes.Indeterminate]: PassportStatuses.Stop,
-  [ResultTypes.Negative]: PassportStatuses.Proceed,
-}
 import {BulkTestResultRequest} from '../models/test-results'
 
 export class PCRTestResultsService {
@@ -110,8 +99,6 @@ export class PCRTestResultsService {
   ]
   private testRunsService = new TestRunsService()
   private attestationService = new AttestationService()
-  private passportService = new PassportService() // TODO: remove with pubsub integration
-  private alertService = new AlertService() // TODO: remove with pubsub integration
   private temperatureService = new TemperatureService()
   private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
 
@@ -955,17 +942,6 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        const passportStatus = passportStatusByPCR[resultData.result]
-        // TODO: get rid of this and handle passport creation on the other end of pub sub
-        if (passportStatus) {
-          this.passportService
-            .create(passportStatus, resultData.userId, [], true, resultData.organizationId)
-            .then((passport) => {
-              if (passportStatus === PassportStatuses.Stop) {
-                this.alertService.sendAlert(passport, null, passport.organizationId, null)
-              }
-            })
-        }
         if (resultData.result === ResultTypes.Negative) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Negative)
         } else if (resultData.result === ResultTypes.Positive) {
