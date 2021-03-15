@@ -433,7 +433,7 @@ export type SinglePcrTestResultUi = {
 
 enum LabData {
   labName = 'FH Health',
-  testType = 'PCR',
+  testType = 'RT-PCR',
   equipment = 'Allplex 2019-nCoV Assay',
   manufacturer = 'Seegeene Inc.',
 }
@@ -487,11 +487,13 @@ export const singlePcrTestResultDTO = (
     style: resultToStyle(pcrTestResult.result),
     testName: 'SARS COV-2',
     doctorId: 'DR1',
-    travelID: appointment.travelID,
-    travelIDIssuingCountry: appointment.travelIDIssuingCountry,
+    travelID: appointment.travelID.trim() ? appointment.travelID : 'N/A',
+    travelIDIssuingCountry: appointment.travelIDIssuingCountry.trim()
+      ? appointment.travelIDIssuingCountry
+      : 'N/A',
     dateOfResult: pcrTestResult.resultMetaData
       ? formatStringDateRFC822Local(safeTimestamp(pcrTestResult.resultMetaData.resultDate))
-      : null,
+      : 'N/A',
   }
 }
 
