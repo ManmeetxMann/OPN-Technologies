@@ -1670,7 +1670,7 @@ export class PCRTestResultsService {
           id: attestation.id,
           type: TestTypes.Attestation,
           name: 'Self-Attestation',
-          testDateTime: formatStringDateRFC822Local(attestation.attestationTime),
+          testDateTime: formatStringDateRFC822Local(safeTimestamp(attestation.attestationTime)),
           style: resultToStyle(attestation.status),
           result: attestation.status,
           detailsAvailable: true,

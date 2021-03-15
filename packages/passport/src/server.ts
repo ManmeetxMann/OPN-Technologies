@@ -14,7 +14,7 @@ import DataStore from '../../common/src/data/datastore'
 
 const PORT = Number(process.env.PORT) || 5005
 
-const app = new App({
+export const app = new App({
   port: PORT,
   validation: true,
   corsOptions: '*',
