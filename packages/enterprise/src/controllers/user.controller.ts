@@ -14,6 +14,7 @@ import {Organization, OrganizationUsersGroup} from '../models/organization'
 import * as _ from 'lodash'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {AuthService} from '../../../common/src/service/auth/auth-service'
+import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 
@@ -25,6 +26,7 @@ class UserController implements IControllerBase {
   private enterpriseUserService = new EnterpriseUserService()
   private registrationService = new RegistrationService()
   private authService = new AuthService()
+  private adminApprovalService = new AdminApprovalService()
 
   constructor() {
     this.initRoutes()
@@ -89,6 +91,13 @@ class UserController implements IControllerBase {
 
       // Add to registry
       await this.registrationService.linkUser(registrationId, user.id)
+
+      // Get the admin approval and attach to user
+      const approval = await this.adminApprovalService.findOneByEmail(user.email)
+      if (approval) {
+        user.admin = approval.profile
+        await this.userService.update(user)
+      }
 
       res.json(actionSucceed({user, organization, group}))
     } catch (error) {
