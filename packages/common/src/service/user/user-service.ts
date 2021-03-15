@@ -3,13 +3,15 @@ import {User, UserDependant, UserFilter, UserModel, LegacyDependant} from '../..
 import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
 import {cleanStringField} from '../../../../common/src/utils/utils'
 import {DataModelFieldMapOperatorType} from '../../../../common/src/data/datamodel.base'
+import UserDbSchema from '../../dbschemas/user.schema'
 
 export class UserService {
   private dataStore = new DataStore()
   private userRepository = new UserModel(this.dataStore)
 
-  create(user: Omit<User, 'id'>): Promise<User> {
-    return this.userRepository.add(this.cleanUserData(user))
+  async create(user: Omit<User, 'id'>): Promise<User> {
+    const validUser = await UserDbSchema.validateAsync(this.cleanUserData(user))
+    return this.userRepository.add(validUser)
   }
 
   async update(user: User): Promise<void> {
