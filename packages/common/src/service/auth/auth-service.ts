@@ -47,6 +47,16 @@ export class AuthService {
     await this.firebaseAuth.updateUser(userId, properties)
   }
 
+  async getUserByEmail(email: string): Promise<string> {
+    try {
+      const user = await this.firebaseAuth.getUserByEmail(email)
+
+      return user.uid
+    } catch (error) {
+      return null
+    }
+  }
+
   async getUserEmail(userId: string): Promise<string> {
     const userRecord = await this.firebaseAuth.getUser(userId)
     return userRecord.email

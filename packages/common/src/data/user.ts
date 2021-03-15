@@ -10,12 +10,18 @@ export type User = {
   registrationId: string
   firstName: string
   lastName: string
+  dateOfBirth?: string
   base64Photo: string
   organizationIds?: string[]
   email?: string
   admin?: AdminProfile | FieldValue
   authUserId?: string | FieldValue
   delegates: null | string[]
+  agreeToConductFHHealthAssessment?: boolean
+  shareTestResultWithEmployer?: boolean
+  readTermsAndConditions?: boolean
+  receiveResultsViaEmail?: boolean
+  receiveNotificationsFromGov?: boolean
 }
 
 export type LocalUser = Auditable & {
