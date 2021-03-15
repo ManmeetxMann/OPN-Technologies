@@ -1090,8 +1090,8 @@ class OrganizationController implements IControllerBase {
       // ids of all the users we need more information about
       const allUserIds = new Set<string>()
       rawTraces.forEach((exposure) => {
-        ;(exposure.dependantIds ?? []).forEach((id) => allUserIds.add(id))
         allUserIds.add(exposure.userId)
+        ;(exposure.dependantIds ?? []).forEach((id) => allUserIds.add(id))
       })
 
       const {

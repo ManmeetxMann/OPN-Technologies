@@ -9,7 +9,6 @@ import {Config} from '../../../common/src/utils/config'
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 import {AttestationAnswersV1, AnswerV1} from '../../../passport/src/models/attestation'
 
-type Answer = AnswerV1
 export type Answers = AttestationAnswersV1
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
