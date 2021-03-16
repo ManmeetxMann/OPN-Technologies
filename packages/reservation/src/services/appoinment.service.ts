@@ -19,6 +19,7 @@ import {
   Filter,
   TestTypes,
   RescheduleAppointmentDTO,
+  UpdateTransPortRun,
 } from '../models/appointment'
 
 import {dateFormats, timeFormats} from '../../../common/src/utils/times'
@@ -679,15 +680,11 @@ export class AppoinmentService {
           break
 
         case AppointmentBulkAction.AddTransportRun:
-          await this.addTransportRun(appointmentId, data.transportRunId, data.userId)
+          await this.addTransportRun(appointmentId, data as UpdateTransPortRun)
           break
 
         case AppointmentBulkAction.AddAppointmentLabel:
           await this.addAppointmentLabel(appointment, data.label, userId)
-          break
-
-        case AppointmentBulkAction.AddLab:
-          await this.addLab(appointmentId, data.labId)
           break
 
         default:
@@ -719,24 +716,26 @@ export class AppoinmentService {
     this.postPubsub(saved, 'updated')
   }
 
-  async addTransportRun(
-    appointmentId: string,
-    transportRunId: string,
-    userId: string,
-  ): Promise<void> {
-    await this.appointmentStatusChange(appointmentId, AppointmentStatus.InTransit, userId)
-
+  async addTransportRun(appointmentId: string, data: UpdateTransPortRun): Promise<void> {
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
-      transportRunId: transportRunId,
       appointmentStatus: AppointmentStatus.InTransit,
+      transportRunId: data.transportRunId,
+      labId: data.labId ?? null,
     })
-    this.postPubsub(saved, 'updated')
-  }
 
-  async addLab(appointmentId: string, labId: string): Promise<void> {
-    await this.appointmentsRepository.updateProperties(appointmentId, {
-      labId: labId,
-    })
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+      appointmentId,
+      {labId: data.labId, appointmentStatus: AppointmentStatus.InTransit},
+      PcrResultTestActivityAction.UpdateFromAppointment,
+      data.userId,
+    )
+
+    await this.appointmentsRepository.addStatusHistoryById(
+      appointmentId,
+      AppointmentStatus.InTransit,
+      data.userId,
+    )
+    this.postPubsub(saved, 'updated')
   }
 
   private async checkAppointmentStatusOnly(

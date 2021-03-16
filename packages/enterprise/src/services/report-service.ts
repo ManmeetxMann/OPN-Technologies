@@ -364,21 +364,19 @@ export class ReportService {
     })
 
     const printableAttestations = attestations.map((attestation) => {
-      const answerKeys = Object.keys(attestation.answers)
-      answerKeys.sort((a, b) => parseInt(a) - parseInt(b))
-      const answerCount = answerKeys.length
+      const answerCount = attestation.answers.length
       const questionnaire = questionnairesLookup[answerCount]
       if (!questionnaire) {
         console.warn(`no questionnaire found for attestation ${attestation.id}`)
       }
       return {
-        responses: answerKeys.map((key) => {
-          const yes = attestation.answers[key]['1']
-          const dateOfTest =
-            yes && attestation.answers[key]['2'] && toDateFormat(attestation.answers[key]['2'])
+        responses: attestation.answers.map((answer, key) => {
+          const yes = answer['0']
+          const dateOfTest = yes && answer['1'] && toDateFormat(answer['1'])
           const question =
             questionnaire?.questions[
-              Object.keys(questionnaire.questions).find((qKey) => parseInt(qKey) === parseInt(key))
+              // questions start at 1, answers start at 0
+              Object.keys(questionnaire.questions).find((qKey) => parseInt(qKey) === key + 1)
             ]?.value ?? `Question ${key}`
           return {
             question: question as string,

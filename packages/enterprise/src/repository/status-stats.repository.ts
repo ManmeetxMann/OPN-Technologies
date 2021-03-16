@@ -52,10 +52,16 @@ export class StatusStatsRepository extends DataModel<StatusStatsStorable> {
       date,
       organization: this.orgId,
       group: this.groupId,
-      [PassportStatuses.Stop]: firestore.FieldValue.arrayUnion(stopUsers),
-      [PassportStatuses.Caution]: firestore.FieldValue.arrayUnion(cautionUsers),
-      [PassportStatuses.Proceed]: [],
-      [PassportStatuses.TemperatureCheckRequired]: [],
+      [PassportStatuses.Stop]: [] as string[] | firestore.FieldValue,
+      [PassportStatuses.Caution]: [] as string[] | firestore.FieldValue,
+      [PassportStatuses.Proceed]: [] as string[] | firestore.FieldValue,
+      [PassportStatuses.TemperatureCheckRequired]: [] as string[] | firestore.FieldValue,
+    }
+    if (stopUsers.length) {
+      base[PassportStatuses.Stop] = firestore.FieldValue.arrayUnion(...stopUsers)
+    }
+    if (cautionUsers.length) {
+      base[PassportStatuses.Caution] = firestore.FieldValue.arrayUnion(...cautionUsers)
     }
     // actually adds or sets
     // @ts-ignore
