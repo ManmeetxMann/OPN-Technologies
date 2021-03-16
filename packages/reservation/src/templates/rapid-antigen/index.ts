@@ -19,7 +19,7 @@ const getRapidAntigenTemplate = (
   resultData: RapidAntigenEmailResultDTO,
   pdfType: RapidAntigenResultPDFType,
 ): {content: Content; tableLayouts: TableLayouts} => {
-  const resultDate = moment(resultData.dateTime.toDate()).format('LL')
+  const resultDate = moment(resultData.resultMetaData.resultDate).format('LL')
 
   switch (pdfType) {
     case RapidAntigenResultPDFType.Positive: {
