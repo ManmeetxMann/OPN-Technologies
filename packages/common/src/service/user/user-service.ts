@@ -152,9 +152,9 @@ export class UserService {
       registrationId: '',
       base64Photo: '',
       organizationIds: [organizationId],
-      agreeToConductFHHealthAssessment: parent?.agreeToConductFHHealthAssessment,
-      shareTestResultWithEmployer: parent?.shareTestResultWithEmployer,
-      readTermsAndConditions: parent?.readTermsAndConditions,
+      agreeToConductFHHealthAssessment: parent.agreeToConductFHHealthAssessment,
+      shareTestResultWithEmployer: parent.shareTestResultWithEmployer,
+      readTermsAndConditions: parent.readTermsAndConditions,
       receiveResultsViaEmail: false,
       receiveNotificationsFromGov: false,
     }))
