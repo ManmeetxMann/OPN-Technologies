@@ -10,12 +10,12 @@ const groups = [
   {
     name: 'CAL RED 61',
     description: 'lorem',
-    columns: ['hexCt', 'hexIc'],
+    columns: ['calRedCt', 'calRedRdrp'],
   },
   {
     name: 'HEX',
     description: 'lorem',
-    columns: ['calRed61Ct', 'calRed61RdRpGene'],
+    columns: ['hexCt', 'hexIc'],
   },
   {
     name: 'QUASAR 670',
