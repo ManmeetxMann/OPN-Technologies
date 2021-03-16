@@ -17,11 +17,11 @@ export type User = {
   admin?: AdminProfile | FieldValue
   authUserId?: string | FieldValue
   delegates: null | string[]
-  agreeToConductFHHealthAssessment?: boolean
-  shareTestResultWithEmployer?: boolean
-  readTermsAndConditions?: boolean
-  receiveResultsViaEmail?: boolean
-  receiveNotificationsFromGov?: boolean
+  agreeToConductFHHealthAssessment: boolean
+  shareTestResultWithEmployer: boolean
+  readTermsAndConditions: boolean
+  receiveResultsViaEmail: boolean
+  receiveNotificationsFromGov: boolean
 }
 
 export type LocalUser = Auditable & {
