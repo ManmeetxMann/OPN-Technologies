@@ -461,7 +461,7 @@ export const singlePcrTestResultDTO = (
       })),
     )
   } else if (pcrTestResult.resultAnalysis) {
-    resultAnalysis = pcrTestResult.resultAnalysis
+    resultAnalysis = groupByChannel(pcrTestResult.resultAnalysis)
   }
   return {
     email: appointment.email,
