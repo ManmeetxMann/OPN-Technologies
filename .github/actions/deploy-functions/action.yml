@@ -69,7 +69,9 @@ runs:
       echo "::endgroup::"
       
       echo "::group::Deploy to GAE"
-      cd ./cloud-functions/sms-notification
-      gcloud functions deploy ${{ inputs.function_name }} --entry-point sendSMS --project ${{ env.PROJECT_ID }}
+      cd ./cloud-functions
+      npm install
+      npm run build
+      npm run deploy
       echo "::endgroup::"
     shell: bash
