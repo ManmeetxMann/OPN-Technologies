@@ -723,14 +723,20 @@ export class AppoinmentService {
     this.postPubsub(saved, 'updated')
   }
 
-  async addTransportRun(
-    appointmentId: string, data: UpdateTransPortRun
-  ): Promise<void> {
+  async addTransportRun(appointmentId: string, data: UpdateTransPortRun): Promise<void> {
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.InTransit,
       transportRunId: data.transportRunId,
-      labId: data.labId??null,
+      labId: data.labId ?? null,
     })
+
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+      appointmentId,
+      {labId: data.labId},
+      PcrResultTestActivityAction.UpdateFromAppointment,
+      data.userId,
+    )
+
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
       AppointmentStatus.InTransit,

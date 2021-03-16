@@ -446,7 +446,7 @@ export type RescheduleAppointmentDTO = {
 }
 
 export type UpdateTransPortRun = {
-  transportRunId: string, 
-  userId: string, 
-  labId?:string
+  transportRunId: string
+  userId: string
+  labId?: string
 }
