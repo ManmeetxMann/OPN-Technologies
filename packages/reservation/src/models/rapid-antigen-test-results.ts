@@ -20,17 +20,20 @@ export enum RapidAntigenResultPDFType {
   Negative = 'Negative',
 }
 
-export type RapidAntigenEmailResultDTO = Partial<Omit<
-PCRTestResultDBModel,
-| 'id'
-| 'linkedBarCodes'
-| 'deadline'
-| 'previousResult'
-| 'runNumber'
-| 'reCollectNumber'
-| 'updatedAt'
-| 'deadlineDate'
-| 'dateOfAppointment'
-| 'userId'
-| 'sortOrder'
-> & AppointmentDBModel>
+export type RapidAntigenEmailResultDTO = Partial<
+  Omit<
+    PCRTestResultDBModel,
+    | 'id'
+    | 'linkedBarCodes'
+    | 'deadline'
+    | 'previousResult'
+    | 'runNumber'
+    | 'reCollectNumber'
+    | 'updatedAt'
+    | 'deadlineDate'
+    | 'dateOfAppointment'
+    | 'userId'
+    | 'sortOrder'
+  > &
+    AppointmentDBModel
+>
