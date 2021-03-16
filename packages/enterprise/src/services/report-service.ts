@@ -17,7 +17,7 @@ import userTemplate from '../templates/user-report'
 import {AccessService} from '../../../access/src/service/access.service'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
 import {ExposureReport} from '../../../access/src/models/trace'
-import {Access, AccessWithPassportStatusAndUser} from '../../../access/src/models/access'
+import {Access} from '../../../access/src/models/access'
 
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
@@ -41,7 +41,7 @@ type UserInfoBundle = {
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
-const getHourlyCheckInsCounts = (accesses: AccessWithPassportStatusAndUser[]): CheckInsCount[] => {
+const getHourlyCheckInsCounts = (accesses: {enteredAt: string}[]): CheckInsCount[] => {
   const countsPerHour: Record<string, number> = {}
   for (const {enteredAt} of accesses) {
     if (enteredAt) {
@@ -55,7 +55,7 @@ const getHourlyCheckInsCounts = (accesses: AccessWithPassportStatusAndUser[]): C
 }
 
 const getPassportsCountPerStatus = (
-  accesses: AccessWithPassportStatusAndUser[],
+  accesses: {status: PassportStatus}[],
 ): Record<PassportStatus, number> => {
   const counts = {
     [PassportStatuses.Pending]: 0,
@@ -91,25 +91,32 @@ export class ReportService {
       allUserIds.add(userId)
     })
     // Get accesses
-    const data = await this.getAccessesFor(
-      [...allUserIds],
-      organizationId,
-      locationId,
-      dateRange.from,
-      dateRange.to,
-    )
+    const data = (
+      await this.getAccessesFor(
+        [...allUserIds],
+        organizationId,
+        locationId,
+        dateRange.from,
+        dateRange.to,
+      )
+    ).filter(({access}) => {
+      if (locationId) {
+        return access
+      }
+      return true
+    })
     const nowMoment = moment(now())
     const accesses = data.map(({user, status, access}) => ({
-      ...access,
       // remove not-yet-exited exitAt
       exitAt:
-        access.exitAt && nowMoment.isSameOrAfter(safeTimestamp(access.exitAt))
+        access?.exitAt && nowMoment.isSameOrAfter(safeTimestamp(access.exitAt))
           ? safeTimestamp(access.exitAt).toISOString()
           : null,
-      // should never be null but safer to check
-      enteredAt: access.enteredAt ? safeTimestamp(access.enteredAt).toISOString() : null,
-      user,
+      enteredAt: access?.enteredAt ? safeTimestamp(access.enteredAt).toISOString() : null,
+      parentUserId: user.delegates?.length ? user.delegates[0] : null,
       status,
+      user,
+      locationId: access?.locationId,
     }))
 
     return {
@@ -117,7 +124,7 @@ export class ReportService {
       asOfDateTime: live ? now().toISOString() : null,
       passportsCountByStatus: getPassportsCountPerStatus(accesses),
       hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
-    } as Stats
+    }
   }
 
   async getUserReportTemplate(
@@ -521,9 +528,6 @@ export class ReportService {
             : this.accessService.findAnywhereOnDay(id, after, before),
           repo.get(organizationId),
         ])
-        if (!access) {
-          return null
-        }
         let status
         if (!items?.latestPassport || nowMoment.isAfter(items.latestPassport.expiry)) {
           status = PassportStatuses.Pending
