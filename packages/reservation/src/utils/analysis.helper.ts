@@ -5,12 +5,12 @@ const groups = [
   {
     name: 'FAM',
     description: 'lorem',
-    columns: ['famCt', 'famEGene', 'ORF1ab Ct', 'ORF1ab'],
+    columns: ['famCt', 'famEGene', 'ORF1abCt', 'ORF1ab'],
   },
   {
     name: 'CAL RED 61',
     description: 'lorem',
-    columns: ['hexCt', 'hexIC'],
+    columns: ['hexCt', 'hexIc'],
   },
   {
     name: 'HEX',
@@ -20,22 +20,27 @@ const groups = [
   {
     name: 'QUASAR 670',
     description: 'lorem',
-    columns: ['quasar670Ct', 'quasar670NGene'],
+    columns: ['quasarCt', 'quasarNgene'],
   },
   {
     name: 'VIC',
     description: 'lorem',
-    columns: ['N gene Ct', 'N gene'],
+    columns: ['NGeneCt', 'NGene'],
   },
   {
     name: 'ABY',
     description: 'lorem',
-    columns: ['S gene Ct', 'S gene'],
+    columns: ['SGeneCt', 'SGene'],
   },
   {
     name: 'Jun',
     description: 'lorem',
-    columns: ['MS2 Ct', 'MS2'],
+    columns: ['MS2Ct', 'MS2'],
+  },
+  {
+    name: 'Antigen',
+    description: 'lorem',
+    columns: ['profileR1', 'profileR2', 'profileR3', 'IgA', 'IgG', 'IgM'],
   },
   {
     name: 'other',
@@ -66,16 +71,16 @@ export const validateAnalysis = (specs: Spec[]): void => {
 const channelLabelMapping = new Map([
   ['famEGene', 'E Gene'],
   ['famCt', 'C(t)'],
-  ['calRed61RdRpGene', 'RdRP gene'],
-  ['calRed61Ct', 'C(t)'],
-  ['hexIC', 'IC'],
+  ['calRedRdrp', 'RdRP gene'],
+  ['calRedCt', 'C(t)'],
+  ['hexIc', 'IC'],
   ['hexCt', 'C(t)'],
-  ['quasar670NGene', 'N gene'],
-  ['quasar670Ct', 'C(t)'],
+  ['quasarNgene', 'N gene'],
+  ['quasarCt', 'C(t)'],
 
   ['ORF1abCt', 'ORF1ab Ct'],
-  ['NGeneCt', 'S gene Ct'],
-  ['SGeneCt', 'N gene Ct'],
+  ['SGeneCt', 'S gene Ct'],
+  ['NGeneCt', 'N gene Ct'],
   ['MS2Ct', 'MS2 Ct'],
   ['ORF1ab', 'ORF1ab'],
   ['NGene', 'S gene'],

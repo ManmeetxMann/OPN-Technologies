@@ -581,12 +581,12 @@ components:
                       enum:
                         - famEGene
                         - famCt
-                        - calRed61RdRpGene
-                        - calRed61Ct
-                        - hexIC
+                        - calRedRdrp
+                        - calRedCt
+                        - quasarNgene
+                        - quasarCt
+                        - hexIc
                         - hexCt
-                        - quasar670NGene
-                        - quasar670Ct
                         - ORF1abCt
                         - SGeneCt
                         - NGeneCt

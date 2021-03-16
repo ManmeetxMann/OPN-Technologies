@@ -60,15 +60,10 @@ class AdminTemperatureController implements IControllerBase {
         temperature > temperatureThreshold ? TemperatureStatuses.Stop : TemperatureStatuses.Proceed
       const validFrom = now()
 
-      const [atestation, activePassport] = await Promise.all([
-        this.attestationService.lastAttestationByUserId(userId, organizationId),
-        this.passportService.findLatestPassport(
-          userId,
-          null,
-          PassportStatuses.TemperatureCheckRequired,
-          organizationId,
-        ),
-      ])
+      const atestation = await this.attestationService.lastAttestationByUserId(
+        userId,
+        organizationId,
+      )
 
       if (!atestation) {
         throw new BadRequestException('No attestation found for user')
@@ -93,28 +88,6 @@ class AdminTemperatureController implements IControllerBase {
         userId: result.userId,
         validFrom,
         validUntil: this.passportService.shortestTime(status, now()),
-      }
-
-      // NOTE - as soon as the QR token scanning flow does not require an access to be created, this needs
-      // to be restored to simply creating a new passport
-      let passport
-      if (activePassport.status === PassportStatuses.TemperatureCheckRequired) {
-        passport = await this.passportService.reviseStatus(
-          activePassport.statusToken,
-          status === TemperatureStatuses.Stop ? PassportStatuses.Stop : PassportStatuses.Proceed,
-        )
-      } else {
-        console.warn("Couldn't find the right passport to update")
-        passport = await this.passportService.create(status, data.userId, [], false, organizationId)
-      }
-
-      if (status === TemperatureStatuses.Stop) {
-        await this.alertService.sendAlert(
-          passport,
-          atestation,
-          organizationId,
-          atestation.locationId,
-        )
       }
 
       res.json(actionSucceed(response))
