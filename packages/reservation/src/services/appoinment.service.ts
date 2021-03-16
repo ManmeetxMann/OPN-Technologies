@@ -50,6 +50,7 @@ import {
 } from '../utils/base64-converter'
 import {Enterprise} from '../adapter/enterprise'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {LabService} from './lab.service'
 
 //Models
 import {
@@ -81,6 +82,7 @@ export class AppoinmentService {
   private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
   private syncProgressRepository = new SyncProgressRepository(this.dataStore)
   private organizationService = new OrganizationService()
+  private labService = new LabService()
   private enterpriseAdapter = new Enterprise()
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
 
@@ -218,7 +220,7 @@ export class AppoinmentService {
 
   async getAppointmentsDB(
     queryParams: AppointmentByOrganizationRequest,
-  ): Promise<(AppointmentDBModel & {organizationName: string})[]> {
+  ): Promise<(AppointmentDBModel & {organizationName: string; labName?: string})[]> {
     const conditions = []
     let appointments = []
     if (queryParams.labId) {
@@ -358,9 +360,13 @@ export class AppoinmentService {
       ).map((organization) => [organization.id, organization.name]),
     )
 
+    const labs = await this.labService.getAll()
+    const lab = (appointment) => labs.find(({id}) => id == appointment?.labId)
+
     return appointments.map((appointment) => ({
       ...appointment,
       organizationName: organizations[appointment.organizationId],
+      labName: lab(appointment)?.name,
     }))
   }
 

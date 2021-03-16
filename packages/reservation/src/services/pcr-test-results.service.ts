@@ -72,6 +72,7 @@ import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
 import {TestRunsService} from '../services/test-runs.service'
 import {TemperatureService} from './temperature.service'
+import {LabService} from './lab.service'
 import {mapTemperatureStatusToResultTypes} from '../models/temperature'
 
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
@@ -100,6 +101,7 @@ export class PCRTestResultsService {
   private testRunsService = new TestRunsService()
   private attestationService = new AttestationService()
   private temperatureService = new TemperatureService()
+  private labService = new LabService()
   private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
 
   private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
@@ -417,9 +419,11 @@ export class PCRTestResultsService {
     })
 
     const organizations = await this.organizationService.getAllByIds(orgIds)
+    const labs = await this.labService.getAll()
 
     return pcrResults.map((pcr) => {
       const organization = organizations.find(({id}) => id === pcr.organizationId)
+      const lab = labs.find(({id}) => id === pcr?.labId)
 
       return {
         id: pcr.id,
@@ -435,6 +439,7 @@ export class PCRTestResultsService {
         organizationId: organization?.id,
         organizationName: organization?.name,
         appointmentStatus: pcr.appointmentStatus,
+        labName: lab?.name,
       }
     })
   }
