@@ -323,10 +323,20 @@ components:
       type: object
       additionalProperties: false
       properties:
+        subscription:
+          type: string
         message:
           type: object
           additionalProperties: false
           properties:
+            messageId:
+              type: string
+            message_id:
+              type: string
+            publishTime:
+              type: string
+            publish_time:
+              type: string
             data:
               type: string
             attributes:
