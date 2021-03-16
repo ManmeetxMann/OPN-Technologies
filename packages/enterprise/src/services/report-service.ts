@@ -104,8 +104,10 @@ export class ReportService {
       // remove not-yet-exited exitAt
       exitAt:
         access.exitAt && nowMoment.isSameOrAfter(safeTimestamp(access.exitAt))
-          ? access.exitAt
+          ? safeTimestamp(access.exitAt).toISOString()
           : null,
+      // should never be null but safer to check
+      enteredAt: access.enteredAt ? safeTimestamp(access.enteredAt).toISOString() : null,
       user,
       status,
     }))
@@ -116,31 +118,6 @@ export class ReportService {
       passportsCountByStatus: getPassportsCountPerStatus(accesses),
       hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
     } as Stats
-  }
-
-  private getDependantsById(
-    parentUserIds: Set<string> | string[],
-    usersById: Record<string, User>,
-    dependantIds?: Set<string>,
-  ): Promise<Record<string, User>> {
-    const promises = []
-    parentUserIds.forEach((userId) =>
-      promises.push(
-        this.userService
-          .getAllDependants(userId, true)
-          .then((results) =>
-            results
-              .filter(({id}) => dependantIds.has(id))
-              .map((dependant) => ({...usersById[userId], ...dependant})),
-          ),
-      ),
-    )
-
-    return Promise.all(promises).then((pages) => {
-      const byId: Record<string, User> = {}
-      pages.forEach((page) => page.forEach((dependant) => (byId[dependant.id] = dependant)))
-      return byId
-    })
   }
 
   async getUserReportTemplate(
