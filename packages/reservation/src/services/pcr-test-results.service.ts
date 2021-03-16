@@ -72,24 +72,14 @@ import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
 import {TestRunsService} from '../services/test-runs.service'
 import {TemperatureService} from './temperature.service'
+import {LabService} from './lab.service'
 import {mapTemperatureStatusToResultTypes} from '../models/temperature'
 
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 import {AttestationService} from '../../../passport/src/services/attestation-service'
-import {PassportService} from '../../../passport/src/services/passport-service'
 import {PassportStatuses} from '../../../passport/src/models/passport'
-import {AlertService} from '../../../passport/src/services/alert-service'
 
-const passportStatusByPCR = {
-  [ResultTypes.Positive]: PassportStatuses.Stop,
-  [ResultTypes.PresumptivePositive]: PassportStatuses.Stop,
-  [ResultTypes.PreliminaryPositive]: PassportStatuses.Stop,
-  [ResultTypes.Inconclusive]: PassportStatuses.Stop,
-  [ResultTypes.Invalid]: PassportStatuses.Stop,
-  [ResultTypes.Indeterminate]: PassportStatuses.Stop,
-  [ResultTypes.Negative]: PassportStatuses.Proceed,
-}
 import {BulkTestResultRequest} from '../models/test-results'
 
 export class PCRTestResultsService {
@@ -110,9 +100,8 @@ export class PCRTestResultsService {
   ]
   private testRunsService = new TestRunsService()
   private attestationService = new AttestationService()
-  private passportService = new PassportService() // TODO: remove with pubsub integration
-  private alertService = new AlertService() // TODO: remove with pubsub integration
   private temperatureService = new TemperatureService()
+  private labService = new LabService()
   private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
 
   private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
@@ -430,9 +419,11 @@ export class PCRTestResultsService {
     })
 
     const organizations = await this.organizationService.getAllByIds(orgIds)
+    const labs = await this.labService.getAll()
 
     return pcrResults.map((pcr) => {
       const organization = organizations.find(({id}) => id === pcr.organizationId)
+      const lab = labs.find(({id}) => id === pcr?.labId)
 
       return {
         id: pcr.id,
@@ -447,6 +438,8 @@ export class PCRTestResultsService {
         testType: pcr.testType ?? 'PCR',
         organizationId: organization?.id,
         organizationName: organization?.name,
+        appointmentStatus: pcr.appointmentStatus,
+        labName: lab?.name,
       }
     })
   }
@@ -903,7 +896,15 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        await this.appointmentsRepository.changeStatusToReported(appointment.id, resultData.adminId)
+        await Promise.all([
+          this.appointmentsRepository.changeStatusToReported(appointment.id, resultData.adminId),
+          this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+            appointment.id,
+            {appointmentStatus: AppointmentStatus.Reported},
+            PcrResultTestActivityAction.UpdateFromAppointment,
+            actionBy,
+          ),
+        ])
         break
       }
     }
@@ -955,17 +956,6 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        const passportStatus = passportStatusByPCR[resultData.result]
-        // TODO: get rid of this and handle passport creation on the other end of pub sub
-        if (passportStatus) {
-          this.passportService
-            .create(passportStatus, resultData.userId, [], true, resultData.organizationId)
-            .then((passport) => {
-              if (passportStatus === PassportStatuses.Stop) {
-                this.alertService.sendAlert(passport, null, passport.organizationId, null)
-              }
-            })
-        }
         if (resultData.result === ResultTypes.Negative) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Negative)
         } else if (resultData.result === ResultTypes.Positive) {
@@ -1669,7 +1659,7 @@ export class PCRTestResultsService {
           id: attestation.id,
           type: TestTypes.Attestation,
           name: 'Self-Attestation',
-          testDateTime: formatStringDateRFC822Local(attestation.attestationTime),
+          testDateTime: formatStringDateRFC822Local(safeTimestamp(attestation.attestationTime)),
           style: resultToStyle(attestation.status),
           result: attestation.status,
           detailsAvailable: true,

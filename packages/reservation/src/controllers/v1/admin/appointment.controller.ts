@@ -24,6 +24,7 @@ import {
   AppointmentDBModel,
   statsUiDTOResponse,
   appointmentUiDTOResponse,
+  UpdateTransPortRun,
 } from '../../../models/appointment'
 import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
 import {formatDateRFC822Local} from '../../../utils/datetime.helper'
@@ -52,9 +53,10 @@ class AdminAppointmentController implements IControllerBase {
     )
     const receivingAuth = authorizationMiddleware([RequiredUserPermission.LabReceiving])
     const allowCheckIn = authorizationMiddleware([RequiredUserPermission.AllowCheckIn])
-    const idBarCodeToolAuth = authorizationMiddleware([
-      RequiredUserPermission.LabAdminToolIDBarcode,
+    const generateBarCodeAdminAuth = authorizationMiddleware([
+      RequiredUserPermission.GenerateBarCodeAdmin,
     ])
+    const lookupAdminAuth = authorizationMiddleware([RequiredUserPermission.LookupAdmin])
     innerRouter.get(
       this.path + '/api/v1/appointments',
       apptLabOrOrgAdminAuthWithOrg,
@@ -78,12 +80,12 @@ class AdminAppointmentController implements IControllerBase {
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/lookup',
-      idBarCodeToolAuth,
+      lookupAdminAuth,
       this.getAppointmentByBarcode,
     )
     innerRouter.get(
       this.path + '/api/v1/appointments/barcode/get-new-code',
-      idBarCodeToolAuth,
+      generateBarCodeAdminAuth,
       this.getNextBarcode,
     )
     innerRouter.get(
@@ -288,22 +290,18 @@ class AdminAppointmentController implements IControllerBase {
 
       const appointmentsState: BulkOperationResponse[] = await Promise.all(
         filtredAppointmentIds.map(async (appointmentId) => {
+          const data = {
+            transportRunId,
+            userId: adminId,
+          } as UpdateTransPortRun
+
           if (labId) {
-            await this.appointmentService.makeBulkAction(
-              appointmentId,
-              {
-                labId,
-              },
-              AppointmentBulkAction.AddLab,
-            )
+            data.labId = labId
           }
 
           return this.appointmentService.makeBulkAction(
             appointmentId,
-            {
-              transportRunId,
-              userId: adminId,
-            },
+            data,
             AppointmentBulkAction.AddTransportRun,
           )
         }),

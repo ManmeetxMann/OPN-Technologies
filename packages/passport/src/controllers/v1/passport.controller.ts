@@ -6,15 +6,14 @@ import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {UserService} from '../../../../common/src/service/user/user-service'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {User, userDTO} from '../../../../common/src/data/user'
+import {safeTimestamp} from '../../../../common/src/utils/datetime-util'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 
 import {PassportService} from '../../services/passport-service'
 import {AttestationService} from '../../services/attestation-service'
-import {AlertService} from '../../services/alert-service'
-import {PassportStatuses, passportDTO} from '../../models/passport'
+import {passportDTO} from '../../models/passport'
 import {Attestation, AttestationAnswers, AttestationAnswersV1} from '../../models/attestation'
-
 import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
 
 import {QuestionnaireService} from '../../../../lookup/src/services/questionnaire-service'
@@ -27,7 +26,6 @@ class PassportController implements IControllerBase {
   private organizationService = new OrganizationService()
   private userService = new UserService()
   private questionnaireService = new QuestionnaireService()
-  private alertService = new AlertService()
 
   constructor() {
     this.initRoutes()
@@ -37,6 +35,7 @@ class PassportController implements IControllerBase {
     const auth = authorizationMiddleware([RequiredUserPermission.RegUser], true)
     this.router.get(this.path + '/passport', auth, this.check)
     this.router.post(this.path + '/attestation', auth, this.update)
+    this.router.get(this.path + '/attestation/:attestationId', auth, this.get)
   }
 
   check = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -113,7 +112,7 @@ class PassportController implements IControllerBase {
         throw new BadRequestException("Couldn't evaluate answers")
       }
 
-      const saved = await this.attestationService.save({
+      await this.attestationService.save({
         answers: answers.map((answer) => ({
           [0]: answer.answer,
           [1]: answer.additionalValue ?? null,
@@ -126,27 +125,74 @@ class PassportController implements IControllerBase {
         questionnaireId,
       } as Attestation)
 
-      const isTemperatureCheckEnabled = await this.organizationService.isTemperatureCheckEnabled(
-        organizationId,
-      )
-
-      if (isTemperatureCheckEnabled && passportStatus === PassportStatuses.Proceed) {
-        passportStatus = PassportStatuses.TemperatureCheckRequired
-      }
-
-      const allPassports = await Promise.all(
-        userIds.map((userId) =>
-          this.passportService.create(passportStatus, userId, [], true, organizationId),
-        ),
-      )
-      if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
-        // TODO: we should only send one alert for all of the passports
-        allPassports.forEach((passport) =>
-          this.alertService.sendAlert(passport, saved, organizationId, null),
-        )
-      }
-
       res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  get = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const authenticatedUser = res.locals.connectedUser as User
+      const usedId = authenticatedUser.id
+      const {attestationId} = req.params as {
+        attestationId: string
+      }
+      const {organizationid} = req.headers as {
+        organizationid: string
+      }
+
+      // Get attestation by id, check if it exist and belong to the user and organization
+      const attestation = await this.attestationService.getByAttestationId(attestationId)
+      if (!attestation) {
+        throw new BadRequestException("Couldn't find attestation")
+      }
+      if (attestation.userId !== usedId) {
+        throw new BadRequestException("Attestation doesn't belong to the user")
+      }
+      if (attestation.organizationId !== organizationid) {
+        throw new BadRequestException("Attestation doesn't belong to the organization")
+      }
+
+      // Validate answers and fetch questions
+      const {questionnaireId, answers} = attestation
+      const mappedAnswers = Object.keys(answers).map((answerKey) => {
+        return {
+          questionId: Number(answerKey) + 1,
+          answer: answers[answerKey][0],
+          additionalValue: answers[answerKey][1],
+        }
+      }) as AttestationAnswersV1
+      const [status, questionnaires] = await Promise.all([
+        this.questionnaireService.evaluateAnswers(questionnaireId, mappedAnswers),
+        this.questionnaireService.getQuestionnaires([questionnaireId]),
+      ])
+
+      // Merge questions and answers by index
+      const answersResults = []
+      const {questions} = questionnaires[0]
+      Object.keys(questions).forEach((questionKey) => {
+        const question = questions[questionKey]
+        const answersResult = {
+          question: question.value,
+        }
+        Object.keys(question.answers).forEach((questionAnswerKey, questionsAnswersIndex) => {
+          const questionAnswer = question.answers[questionAnswerKey]
+          answersResult[questionAnswer] = answers[Number(questionKey) - 1][questionsAnswersIndex]
+        })
+        answersResults.push(answersResult)
+      })
+
+      // Build and returns result
+      const {id, locationId, attestationTime} = attestation
+      const response = {
+        id,
+        locationId,
+        answers: answersResults,
+        attestationTime: safeTimestamp(attestationTime),
+        status,
+      }
+      res.json(actionSucceed(response))
     } catch (error) {
       next(error)
     }

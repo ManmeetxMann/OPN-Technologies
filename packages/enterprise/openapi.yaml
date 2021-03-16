@@ -555,8 +555,6 @@ components:
           type: boolean
         isBulkUploadAdmin:
           type: boolean
-        isIDBarCodesAdmin:
-          type: boolean
         isSingleResultSendAdmin:
           type: boolean
         isConfirmResultAdmin:
@@ -575,33 +573,36 @@ components:
           type: boolean
         isRapidResultOrgAdmin:
           type: boolean
+        isOrganizeAdmin:
+          type: boolean
       required:
-        - email
-        - isBulkUploadAdmin
-        - isConfirmResultAdmin
-        - isDueTodayAdmin
-        - isIDBarCodesAdmin
-        - isLabAppointmentsAdmin
-        - isLabResultsAdmin
-        - isLabUser
-        - isManagementDashboardAdmin
-        - isOpnSuperAdmin
-        - isReceivingAdmin
-        - isSingleResultSendAdmin
-        - isTestAppointmentsAdmin
-        - isTestReportsAdmin
-        - isTestRunsAdmin
-        - isTransportsRunsAdmin
-        - isPackageAdmin
-        - isCheckInAdmin
-        - isGenerateAdmin
-        - isLookupAdmin
-        - isRapidResultSenderAdmin
-        - isRapidResultOrgAdmin
-        - organizationId
-        - showReporting
+        - adminForLabIds	
+        - email	
+        - isBulkUploadAdmin	
+        - isCheckInAdmin	
+        - isClinicUser	
+        - isConfirmResultAdmin	
+        - isDueTodayAdmin	
+        - isGenerateAdmin	
+        - isLabAppointmentsAdmin	
+        - isLabResultsAdmin	
+        - isLabUser	
+        - isLookupAdmin	
+        - isManagementDashboardAdmin	
+        - isOpnSuperAdmin	
+        - isPackageAdmin	
+        - isRapidResultOrgAdmin	
+        - isRapidResultSenderAdmin	
+        - isReceivingAdmin	
+        - isSingleResultSendAdmin	
+        - isTestAppointmentsAdmin	
+        - isTestReportsAdmin	
+        - isTestRunsAdmin	
+        - isTransportsRunsAdmin	
+        - organizationId	
+        - showReporting	
         - superAdminForOrganizationIds
-        - adminForLabIds
+        - isOrganizeAdmin
 
     InternalAdminListRequest:
       type: object
@@ -884,8 +885,6 @@ components:
           type: boolean
         isBulkUploadAdmin:
           type: boolean
-        isIDBarCodesAdmin:
-          type: boolean
         isSingleResultSendAdmin:
           type: boolean
         isConfirmResultAdmin:
@@ -901,6 +900,8 @@ components:
         isRapidResultSenderAdmin:
           type: boolean
         isRapidResultOrgAdmin:
+          type: boolean
+        isOrganizeAdmin:
           type: boolean
     User:
       type: object

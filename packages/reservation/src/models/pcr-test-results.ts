@@ -4,6 +4,7 @@ import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datet
 
 import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {
   TestResultHistoryResponseDTO,
   TestResultRequestData,
@@ -170,6 +171,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   labId?: string
   userId: string
   sortOrder: number
+  appointmentStatus: AppointmentStatus
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -292,6 +294,8 @@ export type PCRTestResultListDTO = {
   testRunId?: string
   organizationId: string
   organizationName: string
+  appointmentStatus: AppointmentStatus
+  labName?: string
 }
 
 export type PCRTestResultByDeadlineListDTO = {
@@ -355,11 +359,46 @@ export type TestResutsDTO = {
 export type GroupedSpecs = {
   channelName: string
   description: string
-  groups: Spec[]
+  groups: {
+    label: string
+    value: string | boolean | Date
+  }[]
 }
 
-type Spec = {
-  label: string
+export enum SpecLabel {
+  famEGene = 'famEGene',
+  famCt = 'famCt',
+  calRed61RdRpGene = 'calRed61RdRpGene',
+  calRed61Ct = 'calRed61Ct',
+  hexIC = 'hexIC',
+  hexCt = 'hexCt',
+  quasar670NGene = 'quasar670NGene',
+  quasar670Ct = 'quasar670Ct',
+  ORF1abCt = 'ORF1abCt',
+  NGeneCt = 'NGeneCt',
+  SGeneCt = 'SGeneCt',
+  MS2Ct = 'MS2Ct',
+  ORF1ab = 'ORF1ab',
+  NGene = 'NGene',
+  SGene = 'SGene',
+  MS2 = 'MS2',
+  profileR1 = 'profileR1',
+  profileR2 = 'profileR2',
+  profileR3 = 'profileR3',
+  IgA = 'IgA',
+  IgG = 'IgG',
+  IgM = 'IgM',
+}
+
+export enum GroupLabel {
+  FAM = 'FAM',
+  calRed = 'calRed',
+  HEX = 'HEX',
+  quasar = 'quasar',
+}
+
+export type Spec = {
+  label: SpecLabel
   value: string | boolean | Date
 }
 
@@ -417,7 +456,7 @@ export const singlePcrTestResultDTO = (
   if (pcrTestResult.resultSpecs) {
     resultAnalysis = groupByChannel(
       Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
-        label: resultKey,
+        label: resultKey as SpecLabel,
         value: resultValue,
       })),
     )
@@ -454,7 +493,7 @@ export const singlePcrTestResultDTO = (
     travelID: appointment.travelID,
     travelIDIssuingCountry: appointment.travelIDIssuingCountry,
     dateOfResult: pcrTestResult.resultMetaData
-      ? formatStringDateRFC822Local(pcrTestResult.resultMetaData.resultDate)
+      ? formatStringDateRFC822Local(safeTimestamp(pcrTestResult.resultMetaData.resultDate))
       : null,
   }
 }

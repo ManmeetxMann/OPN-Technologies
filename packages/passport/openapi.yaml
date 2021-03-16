@@ -160,7 +160,40 @@ components:
             message:
               nullable: true
               type: string
-    
+
+    Attestation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        answers:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              question:
+                type: string
+              boolean:
+                type: boolean
+              datetime:
+                type: string
+            required:
+              - question
+              - boolean
+        locationId:
+          type: string
+        attestationTime:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - proceed
+            - caution
+            - stop
+
     V1ResponseOfPassport:
       type: object
       additionalProperties: false
@@ -230,6 +263,18 @@ components:
             message:
               nullable: true
               type: string
+    PubSubRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        message:
+          type: object
+          additionalProperties: false
+          properties:
+            data:
+              type: string
+            attributes:
+              additionalProperties: true
 
   responses:
     Response:
@@ -385,6 +430,31 @@ paths:
         '200':
           description: Passports updated
 
+  /passport/api/v1/attestation/{attestationId}:
+    get:
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: attestationId
+          schema:
+            type: string
+          required: true
+      description: Get attestation by ID
+
+      responses:
+        '200':
+          description: Attestation available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attestation'
+
   /passport/api/v1/passport:
     get:
       security:
@@ -429,3 +499,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/V1ResponseOfPassport'
+  /passport/api/v1/pubsub/attestation:
+    post:
+      summary: update attestation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /passport/api/v1/pubsub/temperature:
+    post:
+      summary: update temperature
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /passport/api/v1/pubsub/pcr-test:
+    post:
+      summary: update pcr test result
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested

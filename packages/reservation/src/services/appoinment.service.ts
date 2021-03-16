@@ -19,6 +19,7 @@ import {
   Filter,
   TestTypes,
   RescheduleAppointmentDTO,
+  UpdateTransPortRun,
 } from '../models/appointment'
 
 import {dateFormats, timeFormats} from '../../../common/src/utils/times'
@@ -50,6 +51,7 @@ import {
 import {Enterprise} from '../adapter/enterprise'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {UserAddressService} from '../../../enterprise/src/services/user-address-service'
+import {LabService} from './lab.service'
 
 //Models
 import {
@@ -82,6 +84,7 @@ export class AppoinmentService {
   private syncProgressRepository = new SyncProgressRepository(this.dataStore)
   private organizationService = new OrganizationService()
   private userAddressService = new UserAddressService()
+  private labService = new LabService()
   private enterpriseAdapter = new Enterprise()
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
 
@@ -219,7 +222,7 @@ export class AppoinmentService {
 
   async getAppointmentsDB(
     queryParams: AppointmentByOrganizationRequest,
-  ): Promise<(AppointmentDBModel & {organizationName: string})[]> {
+  ): Promise<(AppointmentDBModel & {organizationName: string; labName?: string})[]> {
     const conditions = []
     let appointments = []
     if (queryParams.labId) {
@@ -359,9 +362,13 @@ export class AppoinmentService {
       ).map((organization) => [organization.id, organization.name]),
     )
 
+    const labs = await this.labService.getAll()
+    const lab = (appointment) => labs.find(({id}) => id == appointment?.labId)
+
     return appointments.map((appointment) => ({
       ...appointment,
       organizationName: organizations[appointment.organizationId],
+      labName: lab(appointment)?.name,
     }))
   }
 
@@ -667,11 +674,8 @@ export class AppoinmentService {
     testRunId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.appointmentsRepository.addStatusHistoryById(
-      appointmentId,
-      AppointmentStatus.InProgress,
-      userId,
-    )
+    await this.appointmentStatusChange(appointmentId, AppointmentStatus.InProgress, userId)
+
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.InProgress,
       testRunId,
@@ -700,15 +704,11 @@ export class AppoinmentService {
           break
 
         case AppointmentBulkAction.AddTransportRun:
-          await this.addTransportRun(appointmentId, data.transportRunId, data.userId)
+          await this.addTransportRun(appointmentId, data as UpdateTransPortRun)
           break
 
         case AppointmentBulkAction.AddAppointmentLabel:
           await this.addAppointmentLabel(appointment, data.label, userId)
-          break
-
-        case AppointmentBulkAction.AddLab:
-          await this.addLab(appointmentId, data.labId)
           break
 
         default:
@@ -731,11 +731,7 @@ export class AppoinmentService {
   }
 
   async makeReceived(appointmentId: string, vialLocation: string, userId: string): Promise<void> {
-    await this.appointmentsRepository.addStatusHistoryById(
-      appointmentId,
-      AppointmentStatus.Received,
-      userId,
-    )
+    await this.appointmentStatusChange(appointmentId, AppointmentStatus.Received, userId)
 
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Received,
@@ -744,28 +740,26 @@ export class AppoinmentService {
     this.postPubsub(saved, 'updated')
   }
 
-  async addTransportRun(
-    appointmentId: string,
-    transportRunId: string,
-    userId: string,
-  ): Promise<void> {
+  async addTransportRun(appointmentId: string, data: UpdateTransPortRun): Promise<void> {
+    const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
+      appointmentStatus: AppointmentStatus.InTransit,
+      transportRunId: data.transportRunId,
+      labId: data.labId ?? null,
+    })
+
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+      appointmentId,
+      {labId: data.labId, appointmentStatus: AppointmentStatus.InTransit},
+      PcrResultTestActivityAction.UpdateFromAppointment,
+      data.userId,
+    )
+
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
       AppointmentStatus.InTransit,
-      userId,
+      data.userId,
     )
-
-    const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
-      transportRunId: transportRunId,
-      appointmentStatus: AppointmentStatus.InTransit,
-    })
     this.postPubsub(saved, 'updated')
-  }
-
-  async addLab(appointmentId: string, labId: string): Promise<void> {
-    await this.appointmentsRepository.updateProperties(appointmentId, {
-      labId: labId,
-    })
   }
 
   private async checkAppointmentStatusOnly(
@@ -832,7 +826,7 @@ export class AppoinmentService {
   ): Promise<AppointmentDBModel> {
     const utcDateTime = firestoreTimeStampToUTC(data.appointment.dateTime)
     const deadline = makeDeadline(utcDateTime, data.deadlineLabel)
-    await this.appointmentsRepository.addStatusHistoryById(
+    await this.appointmentStatusChange(
       data.appointment.id,
       AppointmentStatus.ReRunRequired,
       data.userId,
@@ -860,11 +854,7 @@ export class AppoinmentService {
     appointmentId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.appointmentsRepository.addStatusHistoryById(
-      appointmentId,
-      AppointmentStatus.ReCollectRequired,
-      userId,
-    )
+    await this.appointmentStatusChange(appointmentId, AppointmentStatus.ReCollectRequired, userId)
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.ReCollectRequired,
     })
@@ -1336,11 +1326,8 @@ export class AppoinmentService {
     if (!(await this.checkAppointmentStatusOnly(appointmentId, AppointmentStatus.Pending))) {
       throw new BadRequestException('Appointment status should be on Pending state')
     }
-    await this.appointmentsRepository.addStatusHistoryById(
-      appointmentId,
-      AppointmentStatus.CheckedIn,
-      userId,
-    )
+
+    await this.appointmentStatusChange(appointmentId, AppointmentStatus.CheckedIn, userId)
 
     const saved = await this.appointmentsRepository.changeAppointmentStatus(
       appointmentId,
@@ -1425,5 +1412,23 @@ export class AppoinmentService {
 
   async getUserAppointments(userId: string): Promise<AppointmentDBModel[]> {
     return this.appointmentsRepository.findWhereEqual('userId', userId)
+  }
+
+  private async appointmentStatusChange(
+    appointmentId: string,
+    newStatus: AppointmentStatus,
+    userId: string,
+  ) {
+    const [updatedAppoinment] = await Promise.all([
+      await this.appointmentsRepository.addStatusHistoryById(appointmentId, newStatus, userId),
+      this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+        appointmentId,
+        {appointmentStatus: newStatus},
+        PcrResultTestActivityAction.UpdateFromAppointment,
+        userId,
+      ),
+    ])
+
+    return updatedAppoinment
   }
 }

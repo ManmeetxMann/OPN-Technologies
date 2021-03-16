@@ -12,7 +12,7 @@ export type AttestationAnswersV1 = AnswerV1[]
 
 export type Attestation = {
   id: string
-  answers: AttestationAnswers
+  answers: AttestationAnswersV1
   userId: string
   // userIds and dependantIds, easier to query this way
   appliesTo: string[]

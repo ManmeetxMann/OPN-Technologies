@@ -59,6 +59,7 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   ): Promise<AppointmentStatusHistoryDb> {
     const appointment = await this.getAppointmentById(appointmentId)
     const appointmentStatusHistory = new StatusHistoryRepository(this.datastore, appointmentId)
+
     return appointmentStatusHistory.add({
       newStatus: newStatus,
       previousStatus: appointment.appointmentStatus,

@@ -60,6 +60,7 @@ export class RapidAntigenTestResultsService {
         previousResult: result !== ResultTypes.Pending ? result : null,
         result: this.getResultBasedOnAction(action),
         waitingResult: false,
+        appointmentStatus: AppointmentStatus.Reported,
       },
       actionBy: reqeustedBy,
       action: PcrResultTestActivityAction.UpdateFromRapidAntigen,

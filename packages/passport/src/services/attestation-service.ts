@@ -226,4 +226,13 @@ export class AttestationService {
       .where('userId', '==', userId)
       .fetch()
   }
+
+  async getByAttestationId(attestationId: string): Promise<Attestation> {
+    const [attestation] = await this.attestationRepository
+      .collection()
+      .where(firestore.FieldPath.documentId(), '==', attestationId)
+      .fetch()
+
+    return attestation
+  }
 }

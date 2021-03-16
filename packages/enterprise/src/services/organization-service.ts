@@ -300,6 +300,14 @@ export class OrganizationService {
     return _.flatten(pagedResults)
   }
 
+  async getUserGroupId(organizationId: string, userId: string): Promise<string> {
+    const memberships = await this.getUsersGroups(organizationId, null, [userId])
+    if (memberships?.length) {
+      return memberships[0].groupId
+    }
+    return null
+  }
+
   async getDependantGroups(
     organizationId: string,
     parentId: string,

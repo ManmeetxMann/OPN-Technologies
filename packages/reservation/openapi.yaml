@@ -218,6 +218,8 @@ components:
               type: string
             testRunId:
               type: string
+            labName:
+              type: string
           required:
             - id
             - firstName
@@ -578,6 +580,29 @@ components:
                   properties:
                     label:
                       type: string
+                      enum:
+                        - famEGene
+                        - famCt
+                        - calRedRdrp
+                        - calRedCt
+                        - quasarNgene
+                        - quasarCt
+                        - hexIc
+                        - hexCt
+                        - ORF1abCt
+                        - SGeneCt
+                        - NGeneCt
+                        - MS2Ct
+                        - ORF1ab
+                        - SGene
+                        - NGene
+                        - MS2
+                        - profileR1
+                        - profileR2
+                        - profileR3
+                        - IgA
+                        - IgG
+                        - IgM
                     value:
                       type: string
               comment:
@@ -1822,6 +1847,21 @@ paths:
                         testName:
                           type: string
                         doctorId:
+                          type: string
+                        appointmentStatus:
+                          type: string
+                          enum:
+                            - Pending
+                            - Submitted
+                            - InTransit
+                            - Received
+                            - CheckedIn
+                            - InProgress
+                            - Reported
+                            - ReRunRequired
+                            - ReCollectRequired
+                            - Canceled
+                        labName:
                           type: string
                   status:
                     type: object

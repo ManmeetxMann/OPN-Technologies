@@ -144,7 +144,6 @@ class InternalController implements IControllerBase {
         isTestKitBatchAdmin,
         isDueTodayAdmin,
         isBulkUploadAdmin,
-        isIDBarCodesAdmin,
         isSingleResultSendAdmin,
         isConfirmResultAdmin,
         isPackageAdmin,
@@ -155,6 +154,7 @@ class InternalController implements IControllerBase {
         isClinicUser,
         isRapidResultSenderAdmin,
         isRapidResultOrgAdmin,
+        isOrganizeAdmin,
       } = req.body as InternalAdminApprovalCreateRequest
 
       // Make sure it does not exist
@@ -188,7 +188,6 @@ class InternalController implements IControllerBase {
         isTestKitBatchAdmin: isTestKitBatchAdmin ?? false,
         isDueTodayAdmin: isDueTodayAdmin ?? false,
         isBulkUploadAdmin: isBulkUploadAdmin ?? false,
-        isIDBarCodesAdmin: isIDBarCodesAdmin ?? false,
         isSingleResultSendAdmin: isSingleResultSendAdmin ?? false,
         isConfirmResultAdmin: isConfirmResultAdmin ?? false,
         isPackageAdmin: isPackageAdmin ?? false,
@@ -199,6 +198,7 @@ class InternalController implements IControllerBase {
         adminForLabIds: adminForLabIds ?? [],
         isRapidResultSenderAdmin: isRapidResultSenderAdmin ?? false,
         isRapidResultOrgAdmin: isRapidResultOrgAdmin ?? false,
+        isOrganizeAdmin: isOrganizeAdmin ?? false,
       })
       res.json(actionSucceed())
     } catch (error) {

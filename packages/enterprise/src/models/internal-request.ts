@@ -20,7 +20,6 @@ export type InternalAdminApprovalCreateRequest = {
   isTestRunsAdmin: boolean
   isDueTodayAdmin: boolean
   isBulkUploadAdmin: boolean
-  isIDBarCodesAdmin: boolean
   isSingleResultSendAdmin: boolean
   isConfirmResultAdmin: boolean
   isPackageAdmin: boolean
@@ -32,4 +31,5 @@ export type InternalAdminApprovalCreateRequest = {
   isRapidResultSenderAdmin: boolean
   isRapidResultOrgAdmin: boolean
   isTestKitBatchAdmin: boolean
+  isOrganizeAdmin: boolean
 }
