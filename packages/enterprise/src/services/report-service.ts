@@ -530,14 +530,23 @@ export class ReportService {
     const nowMoment = moment(now())
     const results = await Promise.all(
       userIds.map(async (id) => {
+        const user = usersById[id]
+        if (!user) {
+          console.warn(
+            `user with id ${id} does not exist - they may be have a zombie membership in org ${organizationId}`,
+          )
+          return null
+        }
         const repo = new UserActionsRepository(this.dataStore, id)
         const [access, items] = await Promise.all([
           locationId
             ? this.accessService.findAtLocationOnDay(id, locationId, after, before)
             : this.accessService.findAnywhereOnDay(id, after, before),
           repo.get(organizationId),
-          this.userService.findOne(id),
         ])
+        if (!access) {
+          return null
+        }
         let status
         if (!items?.latestPassport || nowMoment.isAfter(items.latestPassport.expiry)) {
           status = PassportStatuses.Pending
@@ -547,6 +556,6 @@ export class ReportService {
         return {access, status, user: usersById[id]}
       }),
     )
-    return results
+    return results.filter((notNull) => notNull)
   }
 }
