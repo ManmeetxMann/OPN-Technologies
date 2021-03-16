@@ -91,25 +91,32 @@ export class ReportService {
       allUserIds.add(userId)
     })
     // Get accesses
-    const data = await this.getAccessesFor(
-      [...allUserIds],
-      organizationId,
-      locationId,
-      dateRange.from,
-      dateRange.to,
-    )
+    const data = (
+      await this.getAccessesFor(
+        [...allUserIds],
+        organizationId,
+        locationId,
+        dateRange.from,
+        dateRange.to,
+      )
+    ).filter(({access}) => {
+      if (locationId) {
+        return access
+      }
+      return true
+    })
     const nowMoment = moment(now())
     const accesses = data.map(({user, status, access}) => ({
-      ...access,
       // remove not-yet-exited exitAt
       exitAt:
-        access.exitAt && nowMoment.isSameOrAfter(safeTimestamp(access.exitAt))
+        access?.exitAt && nowMoment.isSameOrAfter(safeTimestamp(access.exitAt))
           ? safeTimestamp(access.exitAt).toISOString()
           : null,
-      // should never be null but safer to check
-      enteredAt: access.enteredAt ? safeTimestamp(access.enteredAt).toISOString() : null,
-      user,
+      enteredAt: access?.enteredAt ? safeTimestamp(access.enteredAt).toISOString() : null,
+      parentUserId: user.delegates?.length ? user.delegates[0] : null,
       status,
+      user,
+      locationId: access?.locationId,
     }))
 
     return {
@@ -521,9 +528,6 @@ export class ReportService {
             : this.accessService.findAnywhereOnDay(id, after, before),
           repo.get(organizationId),
         ])
-        if (!access) {
-          return null
-        }
         let status
         if (!items?.latestPassport || nowMoment.isAfter(items.latestPassport.expiry)) {
           status = PassportStatuses.Pending
