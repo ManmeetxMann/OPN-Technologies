@@ -60,6 +60,7 @@ class AdminTemperatureController implements IControllerBase {
         temperature > temperatureThreshold ? TemperatureStatuses.Stop : TemperatureStatuses.Proceed
       const validFrom = now()
 
+      // checks for attestations that apply to this user
       const atestation = await this.attestationService.lastAttestationByUserId(
         userId,
         organizationId,
