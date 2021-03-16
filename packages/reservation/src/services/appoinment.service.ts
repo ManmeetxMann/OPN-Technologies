@@ -434,14 +434,12 @@ export class AppoinmentService {
     },
   ): Promise<AppointmentDBModel> {
     const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
-    const saved = await this.updateAppointmentDB(
-      id,
-      data,
-      AppointmentActivityAction.UpdateFromAcuity,
-    )
 
-    // create or update user related collections
-    await this.updatedUserRelatedData(data)
+    const [saved] = await Promise.all([
+      this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity),
+      // create or update user related collections
+      this.updatedUserRelatedData(data),
+    ])
 
     this.postPubsub(saved, 'updated')
     return saved
