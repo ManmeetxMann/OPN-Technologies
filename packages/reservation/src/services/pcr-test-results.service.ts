@@ -904,7 +904,15 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        await this.appointmentsRepository.changeStatusToReported(appointment.id, resultData.adminId)
+        await Promise.all([
+          this.appointmentsRepository.changeStatusToReported(appointment.id, resultData.adminId),
+          this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+            appointment.id,
+            {appointmentStatus: AppointmentStatus.Reported},
+            PcrResultTestActivityAction.UpdateFromAppointment,
+            actionBy,
+          ),
+        ])
         break
       }
     }

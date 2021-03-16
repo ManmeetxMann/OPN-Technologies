@@ -14,11 +14,8 @@ import {
 import DBSchema from '../dbschemas/appointments.schema'
 import {LogError, LogWarning} from '../../../common/src/utils/logging-setup'
 import {findDifference} from '../utils/compare-objects'
-import {PCRTestResultsRepository} from './pcr-test-results-repository'
-import {PcrResultTestActivityAction} from '../models/pcr-test-results'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
-  private pcrTestResultsRepository = new PCRTestResultsRepository(new DataStore())
   public rootPath = 'appointments'
   readonly zeroSet = []
 
@@ -62,22 +59,13 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   ): Promise<AppointmentStatusHistoryDb> {
     const appointment = await this.getAppointmentById(appointmentId)
     const appointmentStatusHistory = new StatusHistoryRepository(this.datastore, appointmentId)
-    const [updatedAppointment] = await Promise.all([
-      appointmentStatusHistory.add({
-        newStatus: newStatus,
-        previousStatus: appointment.appointmentStatus,
-        createdOn: now(),
-        createdBy,
-      }),
-      this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
-        appointmentId,
-        {appointmentStatus: appointment.appointmentStatus},
-        PcrResultTestActivityAction.UpdateFromAppointment,
-        createdBy,
-      ),
-    ])
 
-    return updatedAppointment
+    return appointmentStatusHistory.add({
+      newStatus: newStatus,
+      previousStatus: appointment.appointmentStatus,
+      createdOn: now(),
+      createdBy,
+    })
   }
 
   async changeStatusToReported(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
