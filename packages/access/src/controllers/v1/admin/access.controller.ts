@@ -155,8 +155,11 @@ class AdminController implements IRouteController {
         userIds.map((id) => this.accessService.findLatestAnywhere(id)),
       )
       accesses.forEach((acc) => {
-        if (acc.exitAt && isPassed(safeTimestamp(acc.exitAt))) {
-          throw new BadRequestException('Already exited')
+        if (!acc) {
+          throw new BadRequestException('User has never entered a location')
+        }
+        if (isPassed(safeTimestamp(acc.exitAt))) {
+          throw new BadRequestException('User already exited location')
         }
       })
 
