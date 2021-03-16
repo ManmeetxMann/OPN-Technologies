@@ -212,7 +212,6 @@ export class AttestationService {
   ): Promise<Attestation> {
     const [attestation] = await this.attestationRepository
       .getQueryFindWhereArrayContains('appliesTo', userOrDependantId)
-      .where('userId', '==', userOrDependantId)
       .where('organizationId', '==', organizationId)
       .orderBy('attestationTime', 'desc')
       .fetch()
