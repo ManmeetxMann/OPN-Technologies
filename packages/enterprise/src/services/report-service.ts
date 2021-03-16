@@ -17,7 +17,7 @@ import userTemplate from '../templates/user-report'
 import {AccessService} from '../../../access/src/service/access.service'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
 import {ExposureReport} from '../../../access/src/models/trace'
-import {Access, AccessWithPassportStatusAndUser} from '../../../access/src/models/access'
+import {Access} from '../../../access/src/models/access'
 
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
@@ -41,7 +41,7 @@ type UserInfoBundle = {
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
-const getHourlyCheckInsCounts = (accesses: AccessWithPassportStatusAndUser[]): CheckInsCount[] => {
+const getHourlyCheckInsCounts = (accesses: {enteredAt: string}[]): CheckInsCount[] => {
   const countsPerHour: Record<string, number> = {}
   for (const {enteredAt} of accesses) {
     if (enteredAt) {
@@ -55,7 +55,7 @@ const getHourlyCheckInsCounts = (accesses: AccessWithPassportStatusAndUser[]): C
 }
 
 const getPassportsCountPerStatus = (
-  accesses: AccessWithPassportStatusAndUser[],
+  accesses: {status: PassportStatus}[],
 ): Record<PassportStatus, number> => {
   const counts = {
     [PassportStatuses.Pending]: 0,
@@ -124,7 +124,7 @@ export class ReportService {
       asOfDateTime: live ? now().toISOString() : null,
       passportsCountByStatus: getPassportsCountPerStatus(accesses),
       hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
-    } as Stats
+    }
   }
 
   async getUserReportTemplate(
