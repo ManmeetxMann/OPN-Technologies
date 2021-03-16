@@ -92,9 +92,10 @@ export class HealthpassService {
     const earliestValid = lastRollover.isSameOrAfter(validDurationAgo)
       ? lastRollover
       : validDurationAgo
+    const notStale = (ts) => earliestValid.isSameOrBefore(safeTimestamp(ts))
     if (
       items.latestAttestation?.status === PassportStatuses.Proceed &&
-      earliestValid.isSameOrBefore(items.latestAttestation.timestamp)
+      notStale(items.latestAttestation.timestamp)
     ) {
       tests.push({
         date: safeTimestamp(items.latestAttestation.timestamp).toISOString(),
@@ -106,7 +107,7 @@ export class HealthpassService {
     }
     if (
       items.latestTemperature?.status === TemperatureStatuses.Proceed &&
-      earliestValid.isSameOrBefore(items.latestTemperature.timestamp)
+      notStale(items.latestTemperature.timestamp)
     ) {
       tests.push({
         date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
@@ -118,7 +119,7 @@ export class HealthpassService {
     }
     if (
       items.PCRTestResult?.result === ResultTypes.Negative &&
-      earliestValid.isSameOrBefore(items.PCRTestResult.timestamp)
+      notStale(items.PCRTestResult.timestamp)
     ) {
       tests.push({
         date: safeTimestamp(items.PCRTestResult.timestamp).toISOString(),
