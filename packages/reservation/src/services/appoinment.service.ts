@@ -656,11 +656,8 @@ export class AppoinmentService {
     testRunId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.appointmentsRepository.addStatusHistoryById(
-      appointmentId,
-      AppointmentStatus.InProgress,
-      userId,
-    )
+    await this.appointmentStatusChange(appointmentId, AppointmentStatus.InProgress, userId)
+
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.InProgress,
       testRunId,
@@ -716,11 +713,7 @@ export class AppoinmentService {
   }
 
   async makeReceived(appointmentId: string, vialLocation: string, userId: string): Promise<void> {
-    await this.appointmentsRepository.addStatusHistoryById(
-      appointmentId,
-      AppointmentStatus.Received,
-      userId,
-    )
+    await this.appointmentStatusChange(appointmentId, AppointmentStatus.Received, userId)
 
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Received,
@@ -738,7 +731,7 @@ export class AppoinmentService {
 
     await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
       appointmentId,
-      {labId: data.labId},
+      {labId: data.labId, appointmentStatus: AppointmentStatus.InTransit},
       PcrResultTestActivityAction.UpdateFromAppointment,
       data.userId,
     )
@@ -815,7 +808,7 @@ export class AppoinmentService {
   ): Promise<AppointmentDBModel> {
     const utcDateTime = firestoreTimeStampToUTC(data.appointment.dateTime)
     const deadline = makeDeadline(utcDateTime, data.deadlineLabel)
-    await this.appointmentsRepository.addStatusHistoryById(
+    await this.appointmentStatusChange(
       data.appointment.id,
       AppointmentStatus.ReRunRequired,
       data.userId,
@@ -843,11 +836,7 @@ export class AppoinmentService {
     appointmentId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.appointmentsRepository.addStatusHistoryById(
-      appointmentId,
-      AppointmentStatus.ReCollectRequired,
-      userId,
-    )
+    await this.appointmentStatusChange(appointmentId, AppointmentStatus.ReCollectRequired, userId)
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.ReCollectRequired,
     })
@@ -1319,11 +1308,8 @@ export class AppoinmentService {
     if (!(await this.checkAppointmentStatusOnly(appointmentId, AppointmentStatus.Pending))) {
       throw new BadRequestException('Appointment status should be on Pending state')
     }
-    await this.appointmentsRepository.addStatusHistoryById(
-      appointmentId,
-      AppointmentStatus.CheckedIn,
-      userId,
-    )
+
+    await this.appointmentStatusChange(appointmentId, AppointmentStatus.CheckedIn, userId)
 
     const saved = await this.appointmentsRepository.changeAppointmentStatus(
       appointmentId,
@@ -1408,5 +1394,23 @@ export class AppoinmentService {
 
   async getUserAppointments(userId: string): Promise<AppointmentDBModel[]> {
     return this.appointmentsRepository.findWhereEqual('userId', userId)
+  }
+
+  private async appointmentStatusChange(
+    appointmentId: string,
+    newStatus: AppointmentStatus,
+    userId: string,
+  ) {
+    const [updatedAppoinment] = await Promise.all([
+      await this.appointmentsRepository.addStatusHistoryById(appointmentId, newStatus, userId),
+      this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+        appointmentId,
+        {appointmentStatus: newStatus},
+        PcrResultTestActivityAction.UpdateFromAppointment,
+        userId,
+      ),
+    ])
+
+    return updatedAppoinment
   }
 }

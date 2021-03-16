@@ -438,6 +438,7 @@ export class PCRTestResultsService {
         testType: pcr.testType ?? 'PCR',
         organizationId: organization?.id,
         organizationName: organization?.name,
+        appointmentStatus: pcr.appointmentStatus,
         labName: lab?.name,
       }
     })
@@ -895,7 +896,15 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        await this.appointmentsRepository.changeStatusToReported(appointment.id, resultData.adminId)
+        await Promise.all([
+          this.appointmentsRepository.changeStatusToReported(appointment.id, resultData.adminId),
+          this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+            appointment.id,
+            {appointmentStatus: AppointmentStatus.Reported},
+            PcrResultTestActivityAction.UpdateFromAppointment,
+            actionBy,
+          ),
+        ])
         break
       }
     }

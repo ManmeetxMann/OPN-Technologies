@@ -1848,6 +1848,19 @@ paths:
                           type: string
                         doctorId:
                           type: string
+                        appointmentStatus:
+                          type: string
+                          enum:
+                            - Pending
+                            - Submitted
+                            - InTransit
+                            - Received
+                            - CheckedIn
+                            - InProgress
+                            - Reported
+                            - ReRunRequired
+                            - ReCollectRequired
+                            - Canceled
                         labName:
                           type: string
                   status:

@@ -1091,6 +1091,7 @@ class OrganizationController implements IControllerBase {
       const allUserIds = new Set<string>()
       rawTraces.forEach((exposure) => {
         allUserIds.add(exposure.userId)
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
         ;(exposure.dependantIds ?? []).forEach((id) => allUserIds.add(id))
       })
 
