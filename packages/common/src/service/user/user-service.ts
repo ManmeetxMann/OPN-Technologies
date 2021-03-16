@@ -143,6 +143,8 @@ export class UserService {
     dependants: (UserDependant | LegacyDependant)[],
     organizationId: string,
   ): Promise<UserDependant[]> {
+    const parent = await this.userRepository.get(userId)
+
     const dependantsToAdd = dependants.map((dependant) => ({
       firstName: cleanStringField(dependant.firstName),
       lastName: cleanStringField(dependant.lastName),
@@ -150,6 +152,11 @@ export class UserService {
       registrationId: '',
       base64Photo: '',
       organizationIds: [organizationId],
+      agreeToConductFHHealthAssessment: parent?.agreeToConductFHHealthAssessment,
+      shareTestResultWithEmployer: parent?.shareTestResultWithEmployer,
+      readTermsAndConditions: parent?.readTermsAndConditions,
+      receiveResultsViaEmail: false,
+      receiveNotificationsFromGov: false,
     }))
     return Promise.all(dependantsToAdd.map((dependant) => this.create(dependant)))
   }
