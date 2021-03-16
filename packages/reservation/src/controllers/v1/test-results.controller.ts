@@ -53,7 +53,7 @@ class TestResultsController implements IControllerBase {
   testResultDetails = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {id} = req.params as SingleTestResultsRequest
-      const userId = 'Me0cgGcdDpJBTdeayl4i' // getUserId(res.locals.authenticatedUser)
+      const userId = getUserId(res.locals.authenticatedUser)
 
       const {
         appointment,
@@ -74,7 +74,7 @@ class TestResultsController implements IControllerBase {
   getTestResultPDF = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {id} = req.params as SingleTestResultsRequest
-      const userId = 'Me0cgGcdDpJBTdeayl4i' // getUserId(res.locals.authenticatedUser)
+      const userId = getUserId(res.locals.authenticatedUser)
       const {
         appointment,
         pcrTestResult,
