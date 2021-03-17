@@ -12,12 +12,13 @@ import {UserService} from '../../../common/src/service/user/user-service'
 import {authorizationMiddleware} from '../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../common/src/types/authorization'
 import {FirebaseManager} from '../../../common/src/utils/firebase'
-
+import {LabService} from '../../../reservation/src/services/lab.service'
 class AdminController implements IControllerBase {
   public path = '/admin'
   public router = express.Router()
   private authService = new AuthService()
-
+  public labService = new LabService()
+  
   constructor() {
     this.initRoutes()
   }
@@ -140,8 +141,16 @@ class AdminController implements IControllerBase {
   }
 
   adminInfo = async (req: Request, res: Response): Promise<void> => {
-    const {connectedUser} = res.locals
-    res.json(connectedUser.admin)
+    let {
+      connectedUser: {admin},
+    } = res.locals
+
+    if (admin.adminForLabIds && admin.adminForLabIds.length > 0) {
+      const labs = await this.labService.getAllByIds(admin.adminForLabIds)
+      admin = {...admin, adminForLabIds: labs}
+    }
+
+    res.json(admin)
   }
 }
 
