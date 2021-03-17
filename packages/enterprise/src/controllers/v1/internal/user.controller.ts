@@ -4,11 +4,14 @@ import {UserService} from '../../../../../common/src/service/user/user-service'
 import {NextFunction, Request, Response} from 'express'
 import {WebhookUserCreateRequest} from '../../../models/user'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {Config} from '../../../../../common/src/utils/config'
+import {OrganizationService} from '../../../services/organization-service'
 
 class UserController implements IControllerBase {
   public path = '/enterprise/internal/api/v1/user'
   public router = express.Router()
   private userService = new UserService()
+  private organizationService = new OrganizationService()
 
   constructor() {
     this.initRoutes()
@@ -25,6 +28,9 @@ class UserController implements IControllerBase {
       let user = await this.userService.findOneByEmail(email)
 
       if (!user) {
+        const defaultOrgId = Config.get('DEFAULT_ORG_ID')
+        const defaultGroupId = Config.get('DEFAULT_GROUP_ID')
+
         user = await this.userService.create({
           firstName,
           lastName,
@@ -34,8 +40,11 @@ class UserController implements IControllerBase {
           base64Photo: null,
           registrationId: null,
           delegates: [],
-          organizationIds: [organizationId],
+          organizationIds: [defaultOrgId, organizationId],
         })
+
+        // add user in default group
+        await this.organizationService.addUserToGroup(defaultOrgId, defaultGroupId, user.id)
       }
 
       res.json(actionSucceed(user))
