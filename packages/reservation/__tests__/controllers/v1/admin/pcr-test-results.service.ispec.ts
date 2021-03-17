@@ -17,6 +17,7 @@ const deadlineSameDay = `${dateForAppointments}T23:59:00`
 
 const organizationId = 'TEST1'
 const labID1 = 'Lab1'
+const barCode = 'BAR1'
 
 describe('PCRTestResultController', () => {
   beforeAll(async () => {
@@ -116,6 +117,29 @@ describe('PCRTestResultController', () => {
         .set('authorization', 'Bearer CorporateUserForTEST1')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(1)
+      done()
+    })
+    test('get result list stats for lab successfully', async (done) => {
+      const url = `/reservation/admin/api/v1/pcr-test-results/list/stats?barCode=${barCode}`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      expect(result.status).toBe(200)
+      done()
+    })
+    test('get pcr results due deadline successfully', async (done) => {
+      const url = `/reservation/admin/api/v1/pcr-test-results/due-deadline?barCode=${barCode}`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      expect(result.status).toBe(200)
+      done()
+    })
+    test('get pcr results history by barcode successfully', async (done) => {
+      const url = `/reservation/admin/api/v1/pcr-test-results/history`
+      const result = await request(server.app)
+        .post(url)
+        .set('authorization', 'Bearer LabUser')
+        .send({
+          barcode: ['BAR1'],
+        })
+      expect(result.status).toBe(200)
       done()
     })
   })
