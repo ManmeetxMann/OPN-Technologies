@@ -150,12 +150,15 @@ export class PCRTestResultsService {
       waitingResult: false,
       confirmed: true,
       previousResult: latestPCRResult.result,
-      labId: latestPCRResult.labId
+      labId: latestPCRResult.labId,
     })
 
     const lab = await this.labService.findOneById(latestPCRResult.labId)
 
-    await this.sendNotification({...newPCRResult, ...appointment, labAssay: lab.assay}, notificationType)
+    await this.sendNotification(
+      {...newPCRResult, ...appointment, labAssay: lab.assay},
+      notificationType,
+    )
     return newPCRResult.id
   }
 
