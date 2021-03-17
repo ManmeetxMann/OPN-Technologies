@@ -18,7 +18,7 @@ class AdminController implements IControllerBase {
   public router = express.Router()
   private authService = new AuthService()
   public labService = new LabService()
-  
+
   constructor() {
     this.initRoutes()
   }
