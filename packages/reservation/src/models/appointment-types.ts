@@ -17,9 +17,7 @@ export type AppointmentTypeUiDTO = {
   name: string
 }
 
-export const appointmentTypeUiDTOResponse = (
-  type: AppointmentTypes,
-): AppointmentTypeUiDTO => {
+export const appointmentTypeUiDTOResponse = (type: AppointmentTypes): AppointmentTypeUiDTO => {
   return {
     id: type.id,
     name: type.name,
