@@ -92,6 +92,7 @@ describe('PCRTestResultController', () => {
       expect(result.body.data.length).toBe(2)
       done()
     })
+
     test('get results for lab successfully. date & testType filter', async (done) => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}&testType=PCR`
       const result = await request(server.app)
@@ -101,6 +102,7 @@ describe('PCRTestResultController', () => {
       expect(result.body.data.length).toBe(3)
       done()
     })
+
     test('get results for non lab successfully. date & testType:PCR filter', async (done) => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}&organizationId=${organizationId}&testType=PCR`
       const result = await request(server.app)
@@ -110,6 +112,7 @@ describe('PCRTestResultController', () => {
       expect(result.body.data.length).toBe(1)
       done()
     })
+
     test('get results for non lab successfully. date & testType:RapidAntigen filter', async (done) => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}&organizationId=${organizationId}&testType=RapidAntigen`
       const result = await request(server.app)
@@ -119,18 +122,27 @@ describe('PCRTestResultController', () => {
       expect(result.body.data.length).toBe(1)
       done()
     })
+
     test('get result list stats for lab successfully', async (done) => {
       const url = `/reservation/admin/api/v1/pcr-test-results/list/stats?barCode=${barCode}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       done()
     })
-    test('get pcr results due deadline successfully', async (done) => {
+
+    test('get pcr results due deadline successfully, every result should have waitingResult true', async (done) => {
       const url = `/reservation/admin/api/v1/pcr-test-results/due-deadline?barCode=${barCode}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+
+      if (result.body.data.length) {
+        const everyWaitingResult = result.body.data.every((pcr) => pcr.waitingResult == true)
+        expect(everyWaitingResult).toBe(true)
+      }
+
       expect(result.status).toBe(200)
       done()
     })
+
     test('get pcr results history by barcode successfully', async (done) => {
       const url = `/reservation/admin/api/v1/pcr-test-results/history`
       const result = await request(server.app)
