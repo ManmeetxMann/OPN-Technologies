@@ -8,7 +8,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
-import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
+import {getIsClinicUser, getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
 import {LogError} from '../../../../../common/src/utils/logging-setup'
 
 //Services
@@ -146,6 +146,7 @@ class AdminAppointmentController implements IControllerBase {
       }
 
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
 
       const appointments = await this.appointmentService.getAppointmentsDB({
         appointmentStatus,
@@ -173,6 +174,7 @@ class AdminAppointmentController implements IControllerBase {
             ...appointmentUiDTOResponse(
               appointment,
               isLabUser,
+              isClinicUser,
               transportRuns[appointment.transportRunId],
             ),
           })),
@@ -223,6 +225,7 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {appointmentId} = req.params as {appointmentId: string}
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
 
       const appointment = await this.appointmentService.getAppointmentDBByIdWithCancel(
         appointmentId,
@@ -234,7 +237,7 @@ class AdminAppointmentController implements IControllerBase {
 
       res.json(
         actionSucceed({
-          ...appointmentUiDTOResponse(appointment, isLabUser),
+          ...appointmentUiDTOResponse(appointment, isLabUser, isClinicUser),
         }),
       )
     } catch (error) {
@@ -385,6 +388,7 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
 
       const {appointmentId} = req.params as {
         appointmentId: string
@@ -392,7 +396,7 @@ class AdminAppointmentController implements IControllerBase {
 
       const updatedAppointment = await this.appointmentService.makeCheckIn(appointmentId, adminId)
 
-      res.json(actionSucceed(appointmentUiDTOResponse(updatedAppointment, isLabUser)))
+      res.json(actionSucceed(appointmentUiDTOResponse(updatedAppointment, isLabUser, isClinicUser)))
     } catch (error) {
       next(error)
     }
@@ -402,9 +406,10 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {appointmentId} = req.body as {appointmentId: string}
       const userId = getUserId(res.locals.authenticatedUser)
+      const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
       const appointment = await this.appointmentService.regenerateBarCode(appointmentId, userId)
 
-      res.json(actionSucceed(appointmentUiDTOResponse(appointment, false)))
+      res.json(actionSucceed(appointmentUiDTOResponse(appointment, false, isClinicUser)))
     } catch (error) {
       next(error)
     }
@@ -485,6 +490,7 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const userID = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId, dateTime} = req.body as {organizationId: string; dateTime: string}
       const updatedAppointment = await this.appointmentService.rescheduleAppointment({
@@ -494,7 +500,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         dateTime,
       })
-      res.json(actionSucceed(appointmentUiDTOResponse(updatedAppointment, isLabUser)))
+      res.json(actionSucceed(appointmentUiDTOResponse(updatedAppointment, isLabUser, isClinicUser)))
     } catch (error) {
       next(error)
     }
