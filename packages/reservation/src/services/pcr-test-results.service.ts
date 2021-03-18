@@ -1385,6 +1385,7 @@ export class PCRTestResultsService {
 
     if (barCode) {
       pcrTestResultsQuery.push(equals('barCode', barCode))
+      pcrTestResultsQuery.push(equals('waitingResult', true))
     }
 
     if (testRunId) {
