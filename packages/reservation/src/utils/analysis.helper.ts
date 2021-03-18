@@ -13,14 +13,14 @@ const groups = [
     columns: ['calRedCt', 'calRedRdrp'],
   },
   {
-    name: 'HEX',
-    description: 'lorem',
-    columns: ['hexCt', 'hexIc'],
-  },
-  {
     name: 'QUASAR 670',
     description: 'lorem',
     columns: ['quasarCt', 'quasarNgene'],
+  },
+  {
+    name: 'HEX',
+    description: 'lorem',
+    columns: ['hexCt', 'hexIc'],
   },
   {
     name: 'VIC',
