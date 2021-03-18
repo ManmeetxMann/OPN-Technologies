@@ -249,7 +249,7 @@ class AdminController implements IRouteController {
       res.json(
         actionSucceed({
           access: accessDTOResponseV1(access),
-          passport: passportDTO(latestPassport),
+          passport: latestPassport ? passportDTO(latestPassport) : null,
         }),
       )
     } catch (error) {
