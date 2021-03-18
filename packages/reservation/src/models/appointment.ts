@@ -152,6 +152,9 @@ export enum TestTypes {
   RapidAntigen = 'RapidAntigen',
   TemperatureCheck = 'Temperature',
   Attestation = 'Attestation',
+  EmergencyRapidAntigen = 'EmergencyRapidAntigen',
+  Antibody_All = 'Antibody_All',
+  Antibody_IgM = 'Antibody_IgM',
 }
 
 export type PostAdminScanHistoryRequest = {
