@@ -28,8 +28,8 @@ class UserController implements IControllerBase {
       let user = await this.userService.findOneByEmail(email)
 
       if (!user) {
-        const defaultOrgId = Config.get('DEFAULT_ORG_ID')
-        const defaultGroupId = Config.get('DEFAULT_GROUP_ID')
+        const publicOrgId = Config.get('PUBLIC_ORG_ID')
+        const publicGroupId = Config.get('PUBLIC_GROUP_ID')
 
         user = await this.userService.create({
           firstName,
@@ -40,11 +40,11 @@ class UserController implements IControllerBase {
           base64Photo: null,
           registrationId: null,
           delegates: [],
-          organizationIds: [defaultOrgId, organizationId],
+          organizationIds: [publicOrgId, organizationId],
         })
 
-        // add user in default group
-        await this.organizationService.addUserToGroup(defaultOrgId, defaultGroupId, user.id)
+        // add user in public group
+        await this.organizationService.addUserToGroup(publicOrgId, publicGroupId, user.id)
       }
 
       res.json(actionSucceed(user))
