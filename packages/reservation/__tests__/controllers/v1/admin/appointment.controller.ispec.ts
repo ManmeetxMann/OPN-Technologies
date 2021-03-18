@@ -125,6 +125,16 @@ describe('AdminAppointmentController', () => {
     })
   })
 
+  describe('get appointment types', () => {
+    test('get acuity appointment types list', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments/acuity/types`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      expect(result.status).toBe(200)
+      expect(result.body.data.length).toBeGreaterThanOrEqual(1)
+      done()
+    })
+  })
+
   afterAll(async () => {
     await deleteAppointmentByDateTime(`${dateForAppointments}T23:59:59`) //End of Day
   })

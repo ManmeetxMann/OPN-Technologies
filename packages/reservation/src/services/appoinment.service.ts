@@ -70,6 +70,7 @@ import {SyncProgressRepository} from '../respository/sync-progress.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
 import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
+import {AppointmentTypes} from '../models/appointment-types'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -1412,5 +1413,9 @@ export class AppoinmentService {
     ])
 
     return updatedAppoinment
+  }
+
+  async getAcuityAppointmentTypes(): Promise<AppointmentTypes[]> {
+    return this.acuityRepository.getAppointmentTypeList()
   }
 }
