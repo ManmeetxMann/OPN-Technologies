@@ -380,7 +380,7 @@ abstract class AcuityAdapter {
   ): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
-    const apiUrl = `${APIURL}/api/v1/appointments/${id}/reschedule`
+    const apiUrl = `${APIURL}/api/v1/appointments/${id}/reschedule?admin=true`
 
     const res = await fetch(apiUrl, {
       method: 'put',
