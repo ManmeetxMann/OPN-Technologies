@@ -28,6 +28,7 @@ import {
 } from '../../../models/appointment'
 import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
 import {formatDateRFC822Local} from '../../../utils/datetime.helper'
+import {appointmentTypeUiDTOResponse} from '../../../models/appointment-types'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin'
@@ -118,6 +119,11 @@ class AdminAppointmentController implements IControllerBase {
       this.path + '/api/v1/appointments/:appointmentId/reschedule',
       apptLabOrOrgAdminAuth,
       this.rescheduleAppointment,
+    )
+    innerRouter.get(
+      this.path + '/api/v1/appointments/acuity/types',
+      apptLabOrOrgAdminAuth,
+      this.getAcuityAppointmentTypeList,
     )
 
     this.router.use('/', innerRouter)
@@ -495,6 +501,25 @@ class AdminAppointmentController implements IControllerBase {
         dateTime,
       })
       res.json(actionSucceed(appointmentUiDTOResponse(updatedAppointment, isLabUser)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getAcuityAppointmentTypeList = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const types = await this.appointmentService.getAcuityAppointmentTypes()
+      res.json(
+        actionSucceed(
+          types.map((type) => ({
+            ...appointmentTypeUiDTOResponse(type),
+          })),
+        ),
+      )
     } catch (error) {
       next(error)
     }
