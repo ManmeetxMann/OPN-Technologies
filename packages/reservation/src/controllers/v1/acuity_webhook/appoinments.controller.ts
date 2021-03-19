@@ -6,7 +6,6 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {LogError, LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {Config} from '../../../../../common/src/utils/config'
 //Services
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
@@ -19,7 +18,6 @@ import {
   AppointmentAcuityResponse,
   ResultTypes,
   AppointmentDBModel,
-  TestTypes,
 } from '../../../models/appointment'
 //UTILS
 import {getFirestoreTimeStampDate} from '../../../utils/datetime.helper'
