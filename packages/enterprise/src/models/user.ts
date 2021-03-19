@@ -53,7 +53,14 @@ export type WebhookUserCreateRequest = {
   email: string
   firstName: string
   lastName: string
+  address: string
+  dateOfBirth: string
   organizationId: string
+  agreeToConductFHHealthAssessment: boolean
+  shareTestResultWithEmployer: boolean
+  readTermsAndConditions: boolean
+  receiveResultsViaEmail: boolean
+  receiveNotificationsFromGov: boolean
 }
 
 export type UserCreateMessage = {
