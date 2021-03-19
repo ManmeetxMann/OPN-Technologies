@@ -40,7 +40,7 @@ export class UserService {
     const cleanUser = user
     cleanUser.firstName = cleanStringField(user.firstName)
     cleanUser.lastName = cleanStringField(user.lastName)
-    if (cleanUser.email) cleanUser.email = cleanStringField(user.email)
+    if (cleanUser.email) cleanUser.email = cleanStringField(user.email.toLowerCase())
     return cleanUser
   }
 
@@ -56,7 +56,7 @@ export class UserService {
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    const results = await this.userRepository.findWhereEqual('email', email)
+    const results = await this.userRepository.findWhereEqual('email', email.toLowerCase())
     if (results.length > 1) {
       console.warn(`${results.length} users found with email ${email}`)
     }
