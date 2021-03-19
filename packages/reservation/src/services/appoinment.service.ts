@@ -70,6 +70,7 @@ import {SyncProgressRepository} from '../respository/sync-progress.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
 import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
+import {AppointmentToTestTypeRepository} from '../respository/appointment-to-test-type-association.repository'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -81,6 +82,7 @@ export class AppoinmentService {
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
   private syncProgressRepository = new SyncProgressRepository(this.dataStore)
+  private appointmentToTestTypeRepository = new AppointmentToTestTypeRepository(this.dataStore)
   private organizationService = new OrganizationService()
   private labService = new LabService()
   private enterpriseAdapter = new Enterprise()
@@ -449,11 +451,11 @@ export class AppoinmentService {
   }
 
   private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
-    const rapidAntigenTypeIDs = [
-      Config.getInt('ACUITY_APPOINTMENT_TYPE_MULTIPLEX'),
-      Config.getInt('ACUITY_APPOINTMENT_TYPE_ID'),
-    ]
-    return rapidAntigenTypeIDs.includes(appointmentTypeID) ? TestTypes.RapidAntigen : TestTypes.PCR
+    const appointmentToTestType = await this.appointmentToTestTypeRepository.findWhereEqual(
+      'appointmentType',
+      appointmentTypeID,
+    )
+    return appointmentToTestType?.length ? appointmentToTestType[0].testType : TestTypes.PCR
   }
 
   private async getDateFields(acuityAppointment: AppointmentAcuityResponse) {
