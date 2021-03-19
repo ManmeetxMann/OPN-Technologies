@@ -8,7 +8,7 @@ export class AppointmentToTestTypeAssocService {
   private appointmentToTestTypeRepository = new AppointmentToTestTypeRepository(this.dataStore)
   private acuityRepository = new AcuityRepository()
 
-  async save(
+  save(
     association: Omit<AppointmentToTestTypeAssociation, 'id'>,
   ): Promise<AppointmentToTestTypeAssociation> {
     return this.appointmentToTestTypeRepository.add(association)
