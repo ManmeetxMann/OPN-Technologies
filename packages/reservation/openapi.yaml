@@ -964,6 +964,37 @@ components:
               type: string
         page:
             type: number
+    AppointmentTypesResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+              name:
+                type: string
+        status:
+           type: object
+           additionalProperties: false
+           properties:
+               code:
+                   type: string
+                   enum:
+                     - succeed
+                     - failed
+                     - validation_error
+                     - internal_server_error
+                     - unauthorized
+                     - access_denied
+                     - resource_not_found
+               message:
+                   nullable: true
+                   type: string
 
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -1569,6 +1600,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenerateNextBarCodeResponse'
+  /reservation/admin/api/v1/appointments/acuity/types:
+    get:
+      description: Acuity Appointment Type List
+      tags:
+      - Appointment Management
+      security:
+      - bearerAuthJWT: [ ]
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentTypesResponse'
   /reservation/admin/api/v1/appointments/list/stats:
     get:
       description: Get appointment list
