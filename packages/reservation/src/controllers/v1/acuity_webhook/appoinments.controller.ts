@@ -168,15 +168,6 @@ class AppointmentWebhookController implements IControllerBase {
     }
   }
 
-  //TODO: Refactor this
-  private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
-    const rapidAntigenTypeIDs = [
-      Config.getInt('ACUITY_APPOINTMENT_TYPE_MULTIPLEX'),
-      Config.getInt('ACUITY_APPOINTMENT_TYPE_ID'),
-    ]
-    return rapidAntigenTypeIDs.includes(appointmentTypeID) ? TestTypes.RapidAntigen : TestTypes.PCR
-  }
-
   private handleUpdateAppointment = async (
     acuityAppointment: AppointmentAcuityResponse,
     dataForUpdate: AcuityUpdateDTO,
@@ -262,7 +253,7 @@ class AppointmentWebhookController implements IControllerBase {
           //result: ResultTypes.Pending,
           //runNumber: 1 ,//Start the Run
           //waitingResult: true,
-          testType: await this.getTestType(acuityAppointment.appointmentTypeID),
+          testType: updatedAppointment.testType,
           userId: updatedAppointment.userId,
           appointmentStatus: updatedAppointment.appointmentStatus,
         }
