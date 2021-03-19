@@ -35,7 +35,17 @@ export default Joi.object({
   }),
   runNumber: Joi.number().required(),
   testRunId: Joi.string(),
-  testType: Joi.string().required().valid('PCR', 'RapidAntigen'),
+  testType: Joi.string()
+    .required()
+    .valid(
+      'PCR',
+      'RapidAntigen',
+      'Temperature',
+      'Attestation',
+      'EmergencyRapidAntigen',
+      'Antibody_All',
+      'Antibody_IgM',
+    ),
   testKitBatchID: Joi.string().allow(null),
   //updatedAt: FirestoreTimestamp.isValid().required(), //Added after validation
   userId: Joi.string().allow(null),
