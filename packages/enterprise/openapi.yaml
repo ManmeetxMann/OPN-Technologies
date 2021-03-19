@@ -3826,11 +3826,32 @@ paths:
                   type: string
                 organizationId:
                   type: string
+                address:
+                  type: string
+                dateOfBirth:
+                  type: string
+                agreeToConductFHHealthAssessment:
+                  type: boolean
+                shareTestResultWithEmployer:
+                  type: boolean
+                readTermsAndConditions:
+                  type: boolean
+                receiveResultsViaEmail:
+                  type: boolean
+                receiveNotificationsFromGov:
+                  type: boolean
               required:
                 - email
                 - firstName
                 - lastName
                 - organizationId
+                - address
+                - dateOfBirth
+                - agreeToConductFHHealthAssessment
+                - shareTestResultWithEmployer
+                - readTermsAndConditions
+                - receiveResultsViaEmail
+                - receiveNotificationsFromGov
       responses:
         '200':
           description: Successfull linked
