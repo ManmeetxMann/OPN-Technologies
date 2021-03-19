@@ -11,19 +11,21 @@ export class AppointmentToTestTypeAssocService {
   async save(
     association: Omit<AppointmentToTestTypeAssociation, 'id'>,
   ): Promise<AppointmentToTestTypeAssociation> {
-    const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
-
-    const appointmentType = appointmentTypes.find(
-      ({id}) => id === Number(association.appointmentType),
-    )
-
-    return this.appointmentToTestTypeRepository.add({
-      ...association,
-      appointmentTypeName: appointmentType ? appointmentType.name : '',
-    })
+    return this.appointmentToTestTypeRepository.add(association)
   }
 
-  getAll(): Promise<AppointmentToTestTypeAssociation[]> {
-    return this.appointmentToTestTypeRepository.fetchAll()
+  async getAll(): Promise<AppointmentToTestTypeAssociation[]> {
+    const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
+    const associations = await this.appointmentToTestTypeRepository.fetchAll()
+
+    return associations.map((association) => {
+      const appointmentType = appointmentTypes.find(
+        ({id}) => id === Number(association.appointmentType),
+      )
+      return {
+        ...association,
+        appointmentTypeName: appointmentType ? appointmentType.name : '',
+      }
+    })
   }
 }
