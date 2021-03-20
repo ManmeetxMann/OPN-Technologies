@@ -435,7 +435,7 @@ export class PCRTestResultsService {
       return {
         id: pcr.id,
         barCode: pcr.barCode,
-        result: getResultValue(pcr.result, !!pcr.resultSpecs?.notify),
+        result: getResultValue(pcr.result, !!pcr.resultMetaData?.notify),
         previousResult: pcr.previousResult,
         dateTime: formatDateRFC822Local(pcr.dateTime),
         deadline: formatDateRFC822Local(pcr.deadline),
