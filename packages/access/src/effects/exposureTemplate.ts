@@ -7,8 +7,9 @@ import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
-type Answer = Record<string, boolean | string>
-export type Answers = Record<string, Answer>
+import {AttestationAnswersV1, AnswerV1} from '../../../passport/src/models/attestation'
+
+export type Answers = AttestationAnswersV1
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
 // printable info about a user's group membership and the memberships of their dependants
@@ -47,7 +48,7 @@ const formatTime = (date: Date) => {
   }
   return moment(date).tz(timeZone).format('hh:mm a')
 }
-const printableAnswers = (answer: Answer): string => {
+const printableAnswers = (answer: AnswerV1): string => {
   const keys = Object.keys(answer)
   keys.sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
   return keys
@@ -62,13 +63,16 @@ const printableAnswers = (answer: Answer): string => {
     )
     .join(', ')
 }
-const getResponseSection = (questionnaire: Questionnaire, answers: Answers): string => {
+const getResponseSection = (
+  questionnaire: Questionnaire,
+  answers: AttestationAnswersV1,
+): string => {
   const questionsKeys = Object.keys(questionnaire.questions)
   questionsKeys.sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
   return `<ul>${questionsKeys
     .map(
       (key) => `<li>${questionnaire.questions[key].value}:<br>
-      ${printableAnswers(answers[key])}</li>`,
+      ${printableAnswers(answers[parseInt(key) - 1])}</li>`,
     )
     .join('\n')}</ul>`
 }

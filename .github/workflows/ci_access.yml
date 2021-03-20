@@ -12,6 +12,8 @@ on:
     tags:
       - infra-dev-access-*
       - preprod-access-*
+      - preprod-all-*
+      - prod-access-*
 
 jobs:
   build:

@@ -10,11 +10,11 @@ export type NewUser = {
   authUserId?: string
   active?: boolean
   memberId?: string
+  organizationId: string
 }
 
 export type CreateUserRequest = NewUser & {
   idToken: string
-  organizationId: string
 }
 
 export type MigrateUserRequest = {

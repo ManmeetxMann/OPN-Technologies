@@ -6,21 +6,23 @@ import {
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 import {User, UserDependant} from '../../../common/src/data/user'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {authMiddleware} from '../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../common/src/types/authorization'
 import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {now} from '../../../common/src/utils/times'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {Config} from '../../../common/src/utils/config'
 import {PdfService} from '../../../common/src/service/reports/pdf'
+import {adminOrSelf} from '../middleware/admin-or-self'
 
 import {
-  Organization,
   OrganizationGroup,
   OrganizationLocation,
   OrganizationUsersGroup,
   OrganizationUsersGroupMoveOperation,
   OrganizationReminderSchedule,
+  organizationDTOResponse,
 } from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {ReportService} from '../services/report-service'
@@ -83,7 +85,11 @@ class OrganizationController implements IControllerBase {
       '/groups',
       innerRouter()
         .post('/', this.addGroups)
-        .get('/', authMiddleware, this.getGroupsForAdmin)
+        .get(
+          '/',
+          authorizationMiddleware([RequiredUserPermission.OrgAdmin], true),
+          this.getGroupsForAdmin,
+        )
         .get('/public', this.getGroupsForPublic)
         .put('/', this.updateMultipleUserGroup)
         .post('/users', this.addUsersToGroups)
@@ -92,27 +98,59 @@ class OrganizationController implements IControllerBase {
         .delete('/:groupId', this.removeGroup)
         .delete('/:groupId/users/:userId', this.removeUserFromGroup),
     )
+    // this has to be more specific than the general 'stats' section
+    // TODO: move these to a separate route prefix, to avoid repetition
+    const sharedAccess = authorizationMiddleware(
+      [RequiredUserPermission.OrgAdmin, RequiredUserPermission.RegUser],
+      true,
+    )
+    const publicStats = [
+      innerRouter().use(
+        '/stats/family',
+        sharedAccess,
+        adminOrSelf,
+        innerRouter().get('/', this.getFamilyStats),
+      ),
+      innerRouter().use(
+        '/stats/contact-trace-locations',
+        sharedAccess,
+        adminOrSelf,
+        innerRouter().get('/', this.getUserContactTraceLocations),
+      ),
+      innerRouter().use(
+        '/stats/contact-traces',
+        sharedAccess,
+        adminOrSelf,
+        innerRouter().get('/', this.getUserContactTraces),
+      ),
+      innerRouter().use(
+        '/stats/contact-trace-exposures',
+        sharedAccess,
+        adminOrSelf,
+        innerRouter().get('/', this.getUserContactTraceExposures),
+      ),
+      innerRouter().use(
+        '/stats/contact-trace-attestations',
+        sharedAccess,
+        adminOrSelf,
+        innerRouter().get('/', this.getUserContactTraceAttestations),
+      ),
+    ]
     // prettier-ignore
     const stats = innerRouter().use(
       '/stats',
-      authMiddleware,
+      authorizationMiddleware([RequiredUserPermission.OrgAdmin], true),
       innerRouter()
         .get('/', this.getStatsInDetailForGroupsOrLocations)
         .get('/health', this.getStatsHealth)
-        .get('/contact-trace-locations', this.getUserContactTraceLocations)
-        .get('/contact-traces', this.getUserContactTraces)
-        .get('/contact-trace-exposures', this.getUserContactTraceExposures)
-        .get('/contact-trace-attestations', this.getUserContactTraceAttestations)
-        .get('/family', this.getFamilyStats)
         .get('/group-report', this.getGroupReport)
         .get('/user-report', this.getUserReport)
     )
     const organizations = Router().use(
       '/organizations',
-      Router().post('/', this.create), // TODO: must be a protected route
       Router().post('/:organizationId/scheduling', this.updateReportInfo), // TODO: must be a protected route
       Router().get('/one', this.findOneByKeyOrId),
-      Router().use('/:organizationId', locations, groups, stats),
+      Router().use('/:organizationId', locations, groups, ...publicStats, stats),
       Router().get('/:organizationId/config', this.getOrgConfig),
     )
 
@@ -137,19 +175,22 @@ class OrganizationController implements IControllerBase {
     )
   }
 
-  create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const organization = await this.organizationService
-        .create({
-          ...req.body,
-          enableTemperatureCheck: req.body.enableTemperatureCheck || false,
-        } as Organization)
-        .catch((error) => {
-          throw new HttpException(error.message)
-        })
-      res.json(actionSucceed(organization))
-    } catch (error) {
-      next(error)
+  private validatePermission = (
+    authenticatedUser: User,
+    organizationId: string,
+    userId: string,
+    parentUserId: string,
+  ): void => {
+    if (authenticatedUser.admin) {
+      // if they are an admin, it must for for this organization
+      if ((authenticatedUser.admin as AdminProfile).adminForOrganizationId !== organizationId) {
+        throw 'Invalid'
+      }
+    } else {
+      // if they are a regular user, they must be asking about themself or their dependant
+      if ((parentUserId || userId) !== authenticatedUser.id) {
+        throw 'Invalid'
+      }
     }
   }
 
@@ -181,12 +222,7 @@ class OrganizationController implements IControllerBase {
       const organization = !!key
         ? await this.organizationService.findOrganizationByKey(parseInt(key))
         : await this.organizationService.findOneById(id)
-      res.json(
-        actionSucceed({
-          ...organization,
-          enableTemperatureCheck: organization.enableTemperatureCheck || false,
-        }),
-      )
+      res.json(actionSucceed(organizationDTOResponse(organization)))
     } catch (error) {
       next(error)
     }
@@ -256,7 +292,7 @@ class OrganizationController implements IControllerBase {
       }
       const locations = await this.organizationService.getLocations(
         organizationId,
-        parentLocationId as string | null,
+        parentLocationId,
       )
       await Promise.all(
         locations.map(async (location) => this.populateZones(location, organizationId)),
@@ -534,6 +570,9 @@ class OrganizationController implements IControllerBase {
       const canAccessOrganization = isSuperAdmin || admin.adminForOrganizationId === organizationId
 
       if (!canAccessOrganization) {
+        console.warn(
+          `OrganizationController: getStatsInDetailForGroupsOrLocations: Can not access OrganizationID: ${organizationId}`,
+        )
         replyInsufficientPermission(res)
         return
       }
@@ -542,6 +581,9 @@ class OrganizationController implements IControllerBase {
       if (groupId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForGroupIds?.includes(groupId)
         if (!hasGrantedPermission) {
+          console.warn(
+            `OrganizationController: getStatsInDetailForGroupsOrLocations: Can not access GroupId: ${groupId}`,
+          )
           replyInsufficientPermission(res)
           return
         }
@@ -553,6 +595,9 @@ class OrganizationController implements IControllerBase {
       if (locationId) {
         const hasGrantedPermission = isSuperAdmin || admin.adminForLocationIds?.includes(locationId)
         if (!hasGrantedPermission) {
+          console.warn(
+            `OrganizationController: getStatsInDetailForGroupsOrLocations: Can not access LocationId: ${locationId}`,
+          )
           replyInsufficientPermission(res)
           return
         }
@@ -562,6 +607,9 @@ class OrganizationController implements IControllerBase {
 
       // If no group and no location is specified, make sure we are the health admin
       if (!groupId && !locationId && !isHealthAdmin) {
+        console.warn(
+          `OrganizationController: getStatsInDetailForGroupsOrLocations: Is not HealthAdmin for OrganizationID: ${organizationId}`,
+        )
         replyInsufficientPermission(res)
         return
       }
@@ -883,11 +931,13 @@ class OrganizationController implements IControllerBase {
               continue
             }
             if (exitCandidate && (!entryCandidate || exitDate < entryDate)) {
-              pairs.push({
-                location,
-                entry: null,
-                exit: exits.pop(),
-              })
+              // pairs.push({
+              //   location,
+              //   entry: null,
+              //   exit: exits.pop(),
+              // })
+              // frontends don't accept entry: null
+              exits.pop()
               continue
             }
             pairs.push({
@@ -938,9 +988,13 @@ class OrganizationController implements IControllerBase {
         .map((trace) => {
           const exposures = trace.exposures.map((exposure) => {
             const overlapping = exposure.overlapping
-              .filter((overlap) =>
-                isParentUser ? !overlap.sourceDependantId : overlap.sourceDependantId === userId,
-              )
+              .filter((overlap) => {
+                if (isParentUser) {
+                  return overlap.sourceUserId === userId && !overlap.sourceDependantId
+                } else {
+                  return overlap.sourceDependantId === userId
+                }
+              })
               .filter(
                 (overlap) =>
                   //@ts-ignore these are timestamps, not strings
@@ -986,27 +1040,20 @@ class OrganizationController implements IControllerBase {
           date,
           organizationId,
           location: locationsById[locationId],
-          overlapping: overlapping.map(({userId, dependant, start, end}) => ({
-            userId,
-            status: statusesLookup[userId] ?? PassportStatuses.Pending,
-            group: membershipLookup[userId],
-            firstName: usersById[userId].firstName,
-            lastName: usersById[userId].lastName,
-            base64Photo: usersById[userId].base64Photo,
-            // @ts-ignore this is a firestore timestamp, not a string
-            start: start?.toDate() ?? null,
-            // @ts-ignore this is a firestore timestamp, not a string
-            end: end?.toDate() ?? null,
-            dependant: dependant
-              ? {
-                  id: dependant.id,
-                  firstName: dependant.firstName,
-                  lastName: dependant.lastName,
-                  group: membershipLookup[dependant.id],
-                  status: statusesLookup[dependant.id] ?? PassportStatuses.Pending,
-                }
-              : null,
-          })),
+          overlapping: overlapping.map((overlap) => {
+            const userId = overlap.dependant?.id ?? overlap.userId
+            return {
+              userId,
+              status: statusesLookup[userId] ?? PassportStatuses.Pending,
+              group: membershipLookup[userId],
+              firstName: usersById[userId].firstName,
+              lastName: usersById[userId].lastName,
+              base64Photo: usersById[userId].base64Photo,
+              start: overlap.start ? safeTimestamp(overlap.start) : null,
+              end: overlap.end ? safeTimestamp(overlap.end) : null,
+              dependant: null,
+            }
+          }),
         })),
       }))
       res.json(actionSucceed(result))
@@ -1041,11 +1088,11 @@ class OrganizationController implements IControllerBase {
       )
 
       // ids of all the users we need more information about
-      // dependant info is already included in the trace
       const allUserIds = new Set<string>()
       rawTraces.forEach((exposure) => {
-        ;(exposure.dependantIds ?? []).forEach((id) => allUserIds.add(id))
         allUserIds.add(exposure.userId)
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
+        ;(exposure.dependantIds ?? []).forEach((id) => allUserIds.add(id))
       })
 
       const {
@@ -1065,9 +1112,13 @@ class OrganizationController implements IControllerBase {
             organizationId,
             location: locationsById[locationId],
             overlapping: overlapping
-              .filter(
-                (overlap) => (parentUserId ? overlap.dependant?.id : overlap.userId) === userId,
-              )
+              .filter((overlap) => {
+                if (parentUserId) {
+                  return overlap.dependant?.id === userId
+                } else {
+                  return overlap.userId === userId && !overlap.dependant
+                }
+              })
               .filter(
                 (overlap) =>
                   //@ts-ignore these are timestamps, not strings
@@ -1075,19 +1126,20 @@ class OrganizationController implements IControllerBase {
                   //@ts-ignore these are timestamps, not strings
                   moment(overlap.start.toDate()) <= moment(to),
               )
-              .map((overlap) => ({
-                userId: overlap.sourceUserId,
-                status: statusesLookup[overlap.sourceUserId] ?? PassportStatuses.Pending,
-                group: groupsByUserOrDependantId[overlap.sourceUserId],
-                firstName: usersById[overlap.sourceUserId].firstName,
-                lastName: usersById[overlap.sourceUserId].lastName,
-                base64Photo: usersById[overlap.sourceUserId].base64Photo,
-                // @ts-ignore this is a firestore timestamp, not a string
-                start: overlap.start?.toDate() ?? null,
-                // @ts-ignore this is a firestore timestamp, not a string
-                end: overlap.end?.toDate() ?? null,
-                dependant: overlap.sourceDependantId ? usersById[overlap.sourceDependantId] : null,
-              })),
+              .map((overlap) => {
+                const userId = overlap.sourceDependantId ?? overlap.sourceUserId
+                return {
+                  userId,
+                  status: statusesLookup[userId] ?? PassportStatuses.Pending,
+                  group: groupsByUserOrDependantId[userId],
+                  firstName: usersById[userId].firstName,
+                  lastName: usersById[userId].lastName,
+                  base64Photo: usersById[userId].base64Photo,
+                  start: overlap.start ? safeTimestamp(overlap.start) : null,
+                  end: overlap.end ? safeTimestamp(overlap.end) : null,
+                  dependant: null,
+                }
+              }),
           }))
           .filter(({overlapping}) => overlapping.length),
       }))
@@ -1106,7 +1158,6 @@ class OrganizationController implements IControllerBase {
       const {organizationId} = req.params
       const {userId, parentUserId, from, to} = req.query as UserContactTraceReportRequest
       const primaryUserId = parentUserId ?? userId
-
       // fetch attestation array in the time period
       const [
         allAttestations,
@@ -1174,7 +1225,7 @@ class OrganizationController implements IControllerBase {
               id: appliesToId,
               firstName: user?.firstName ?? 'deleted',
               lastName: user?.lastName ?? 'user',
-              base64Photo: (user as User)?.base64Photo ?? '',
+              base64Photo: user?.base64Photo ?? '',
               group:
                 groupsById[
                   allMemberships.find((membership) => membership.userId === appliesToId)?.groupId ??
@@ -1205,6 +1256,7 @@ class OrganizationController implements IControllerBase {
 
       const parentStatus = await this.attestationService.latestStatus(
         isParentUser ? userId : parentUserId,
+        organizationId,
       )
 
       const dependents = await this.userService.getAllDependants(
@@ -1214,7 +1266,10 @@ class OrganizationController implements IControllerBase {
       const dependentsWithGroup = await Promise.all(
         dependents.map(async (dependent: UserDependant) => {
           const group = await this.organizationService.getUserGroup(organizationId, dependent.id)
-          const dependentStatus = await this.attestationService.latestStatus(dependent.id)
+          const dependentStatus = await this.attestationService.latestStatus(
+            dependent.id,
+            organizationId,
+          )
 
           return {
             ...dependent,

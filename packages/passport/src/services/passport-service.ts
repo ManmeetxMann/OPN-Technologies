@@ -1,15 +1,19 @@
-import {Passport, PassportModel, PassportStatus, PassportStatuses} from '../models/passport'
+import * as _ from 'lodash'
+import moment from 'moment'
+import {firestore} from 'firebase-admin'
+
 import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {UserService} from '../../../common/src/service/user/user-service'
+import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {now, serverTimestamp} from '../../../common/src/utils/times'
-import moment from 'moment'
-import {firestore} from 'firebase-admin'
-import * as _ from 'lodash'
 import {Config} from '../../../common/src/utils/config'
-import {isPassed} from '../../../common/src/utils/datetime-util'
-import {TemperatureStatuses} from '../models/temperature'
+import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
+
+import {Passport, PassportModel, PassportStatus, PassportStatuses} from '../models/passport'
+
+import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
   ...passport,
@@ -22,8 +26,24 @@ const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => (
 export class PassportService {
   private dataStore = new DataStore()
   private userService = new UserService()
+  private pubsub = new OPNPubSub(Config.get('PASSPORT_TOPIC'))
   private passportRepository = new PassportModel(this.dataStore)
   private identifierRepository = new IdentifiersModel(this.dataStore)
+
+  private postPubsub(passport: Passport) {
+    this.pubsub.publish(
+      {
+        id: passport.id,
+        status: passport.status,
+        expiry: safeTimestamp(passport.validUntil).toISOString(),
+      },
+      {
+        userId: passport.userId,
+        organizationId: passport.organizationId,
+        actionType: 'created',
+      },
+    )
+  }
 
   async findTheLatestValidPassports(
     userIds: string[],
@@ -77,6 +97,7 @@ export class PassportService {
     userId: string,
     dependantIds: string[],
     includesGuardian: boolean,
+    organizationId: string,
   ): Promise<Passport> {
     if (dependantIds.length) {
       const allDependants = (await this.userService.getAllDependants(userId)).map(({id}) => id)
@@ -92,22 +113,27 @@ export class PassportService {
           status,
           statusToken,
           userId,
+          organizationId,
           dependantIds,
           validFrom: serverTimestamp(),
           validUntil: null,
           includesGuardian,
         }),
       )
-      .then(({validFrom, validUntil, ...passport}) => ({
-        ...passport,
-        validFrom,
-        validUntil: firestore.Timestamp.fromDate(
-          // @ts-ignore
-          this.shortestTime(passport.status, validFrom.toDate()),
+      .then(({status, validFrom, id}) =>
+        this.passportRepository.updateProperty(
+          id,
+          'validUntil',
+          firestore.Timestamp.fromDate(
+            this.shortestTime(status as PassportStatuses, safeTimestamp(validFrom)),
+          ),
         ),
-      }))
-      .then((passport) => this.passportRepository.update(passport))
+      )
       .then(mapDates)
+      .then((passport) => {
+        this.postPubsub(passport)
+        return passport
+      })
   }
 
   findOneByToken(token: string, requireValid = false): Promise<Passport> {
@@ -135,12 +161,15 @@ export class PassportService {
   async findLatestPassport(
     userId: string,
     parentUserId: string | null = null,
+    requiredStatus: PassportStatus = null,
+    organizationId: string | null = null,
     nowDate: Date = now(),
   ): Promise<Passport> {
     const timeZone = Config.get('DEFAULT_TIME_ZONE')
     const directPassports = await this.passportRepository
       .collection()
       .where('userId', '==', userId)
+      .where('organizationId', '==', organizationId)
       .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
       .orderBy('validUntil', 'desc')
       .fetch()
@@ -149,36 +178,98 @@ export class PassportService {
           await this.passportRepository
             .collection()
             .where('userId', '==', parentUserId)
+            .where('organizationId', '==', organizationId)
             .where('validUntil', '>', moment(nowDate).tz(timeZone).toDate())
             .orderBy('validUntil', 'desc')
             .fetch()
         ).filter((ppt) => ppt.dependantIds?.includes(userId))
       : []
 
-    const passports = [...directPassports, ...indirectPassports].filter(
-      (ppt) => ppt.status !== PassportStatuses.Pending,
+    const passports = [...directPassports, ...indirectPassports].filter((ppt) =>
+      requiredStatus ? ppt.status === requiredStatus : ppt.status !== PassportStatuses.Pending,
     )
     // Deal with the bad
     if (!passports || passports.length == 0) {
       return null
     }
 
-    // Get the Latest validForm Passport
+    // Get the Latest validFrom Passport
     const momentDate = moment(nowDate)
     let selectedPassport: Passport = null
     for (const passport of passports) {
+      if (!momentDate.isSameOrAfter(safeTimestamp(passport.validFrom))) {
+        continue
+      }
+      if (!selectedPassport) {
+        selectedPassport = passport
+        continue
+      }
       if (
-        // @ts-ignore
-        momentDate.isSameOrAfter(passport.validFrom.toDate()) &&
-        // @ts-ignore
-        (!selectedPassport ||
-          // @ts-ignore
-          moment(passport.validFrom.toDate()).isSameOrAfter(selectedPassport.validFrom.toDate()))
+        moment(safeTimestamp(passport.validFrom)).isSameOrAfter(
+          safeTimestamp(selectedPassport.validFrom),
+        )
       ) {
         selectedPassport = passport
       }
     }
     return selectedPassport
+  }
+
+  // find a user's active status  at a moment in time (default now)
+  async findLatestDirectPassport(
+    userId: string,
+    organizationId: string,
+    nowDate: Date = now(),
+  ): Promise<Passport | null> {
+    const timeZone = Config.get('DEFAULT_TIME_ZONE')
+    const passports = await this.passportRepository
+      .collection()
+      .where('userId', '==', userId)
+      .where('organizationId', '==', organizationId)
+      .where('validFrom', '<', moment(nowDate).tz(timeZone).toDate())
+      .orderBy('validFrom', 'desc')
+      .limit(1)
+      .fetch()
+    if (!passports.length) {
+      return null
+    }
+    return passports[0]
+  }
+
+  // utility to determine if a passport can be used
+  passportAllowsEntry(passport: Passport | null, attestationRequired = true): boolean {
+    if (attestationRequired) {
+      // must have a passport
+      if (!passport) {
+        return false
+      }
+      // must be proceed
+      if (passport.status !== PassportStatuses.Proceed) {
+        return false
+      }
+      // must not be expired
+      if (moment(now()).isAfter(safeTimestamp(passport.validUntil))) {
+        return false
+      }
+      return true
+    } else {
+      // no passport is allowed
+      if (!passport) {
+        return true
+      }
+      // expired passports are allowed
+      if (moment(now()).isAfter(safeTimestamp(passport.validUntil))) {
+        return true
+      }
+      // valid passports must not be red
+      if (passport.status == PassportStatuses.Stop) {
+        return false
+      }
+      if (passport.status == PassportStatuses.Caution) {
+        return false
+      }
+      return true
+    }
   }
 
   /**
@@ -187,21 +278,28 @@ export class PassportService {
    * Ex: end of day: 3am at night and 12 hours – we'd pick which is closer to now()
    */
   shortestTime(passportStatus: PassportStatuses | TemperatureStatuses, validFrom: Date): Date {
+    if (
+      [PassportStatuses.Stop, PassportStatuses.Caution, TemperatureStatuses.Stop].includes(
+        passportStatus,
+      )
+    ) {
+      const weeksToAdd = parseInt(Config.get('STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_WEEKS'))
+      // TODO: end of day?
+      return moment(validFrom).add(weeksToAdd, 'weeks').toDate()
+    }
+    // valid passes remain until they are this old
     const expiryDuration = parseInt(Config.get('PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
+    // all valid passes expire at this time of day, regardless of age
     const expiryMax = parseInt(Config.get('PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS'))
-    const expiryDurationForRedPassports = parseInt(
-      Config.get('STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_WEEKS'),
-    )
 
-    const date = validFrom.toISOString()
-    const byDuration =
-      passportStatus === PassportStatuses.Stop
-        ? moment(date).add(expiryDurationForRedPassports, 'weeks')
-        : moment(date).add(expiryDuration, 'hours')
-    const lookAtNextDay = validFrom.getHours() < expiryMax ? 0 : 1
-    const byMax = moment(date).startOf('day').add(lookAtNextDay, 'day').add(expiryMax, 'hours')
-    const shorter = byMax.isBefore(byDuration) ? byMax : byDuration
+    const byDuration = moment(validFrom).add(expiryDuration, 'hours')
+    const lookAtNextDay = moment(validFrom).hours() < expiryMax ? 0 : 1
+    const byMax = moment(validFrom)
+      .startOf('day')
+      .add(lookAtNextDay, 'days')
+      .add(expiryMax, 'hours')
+    const earlier = byMax.isBefore(byDuration) ? byMax : byDuration
 
-    return shorter.toDate()
+    return earlier.toDate()
   }
 }

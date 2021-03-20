@@ -1,120 +1,49 @@
-import moment from 'moment-timezone'
+import {Stream} from 'stream'
 
-import {TestResultsDBRepository} from '../respository/test-results-db.repository'
-
-import DataStore from '../../../common/src/data/datastore'
-
-import {EmailService} from '../../../common/src/service/messaging/email-service'
-import {FaxService} from '../../../common/src/service/messaging/fax-service'
-import {PdfService} from '../../../common/src/service/reports/pdf'
-
-import {Config} from '../../../common/src/utils/config'
-
-import template from '../templates/testResult'
-import {
-  TestResultsDTOForEmail,
-  TestResultsDBModel,
-  TestResultForPagination,
-} from '../models/test-result'
+import {AppointmentDBModel, TestTypes} from '../models/appointment'
+import {PCRTestResultDBModel} from '../models/pcr-test-results'
+// services
+import {PCRTestResultsService} from './pcr-test-results.service'
+import {RapidAntigenTestResultsService} from './rapid-antigen-test-results.service'
+// templates
+import {PCRResultPDFStream} from '../templates/pcr-test-results'
+import {RapidAntigenPDFStream} from '../templates/rapid-antigen'
+import {LabService} from './lab.service'
 
 export class TestResultsService {
-  private testResultEmailTemplateId = (Config.getInt('TEST_RESULT_EMAIL_TEMPLATE_ID') ??
-    2) as number
-  private testResultBccEmail = Config.get('TEST_RESULT_BCC_EMAIL')
-  private testResultsDBRepository = new TestResultsDBRepository(new DataStore())
-  private emailService = new EmailService()
-  private pdfService = new PdfService()
-  private faxService = new FaxService()
+  private pcrTestResultsService = new PCRTestResultsService()
+  private rapidAntigenTestResultsService = new RapidAntigenTestResultsService()
+  private labService = new LabService()
+  // async sendFax(testResults: TestResultsDTOForEmail, faxNumber: string): Promise<string> {
+  //   const resultDateRaw = testResults.resultDate
+  //   const date = new Date()
+  //   const resultDate = moment(resultDateRaw).format('LL')
+  //   const name = `${testResults.barCode} - ${date}`
 
-  async sendTestResults(
-    testResults: TestResultsDTOForEmail,
-    dateFromRequest: Date = null,
-  ): Promise<void> {
-    const resultDateRaw = dateFromRequest
-    const resultDate = moment(resultDateRaw).format('LL')
+  //   const {content, tableLayouts} = template(testResults, resultDate)
+  //   const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
 
-    const {content, tableLayouts} = template(testResults, resultDate)
-    const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
+  //   return this.faxService.send(faxNumber, name, pdfContent)
+  // }
 
-    this.emailService.send({
-      templateId: this.testResultEmailTemplateId,
-      to: [{email: testResults.email, name: `${testResults.firstName} ${testResults.lastName}`}],
-      params: {
-        BARCODE: testResults.barCode,
-        DATE_OF_RESULT: resultDate,
-      },
-      attachment: [
-        {
-          content: pdfContent,
-          name: `FHHealth.ca Result - ${testResults.barCode} - ${resultDate}.pdf`,
-        },
-      ],
-      bcc: [
-        {
-          email: this.testResultBccEmail,
-        },
-      ],
-    })
-  }
+  async getTestResultPDF(
+    testResult: PCRTestResultDBModel,
+    appointment: AppointmentDBModel,
+  ): Promise<Stream> {
+    switch (testResult.testType) {
+      case TestTypes.PCR:
+        const lab = await this.labService.findOneById(testResult.labId)
 
-  async sendFax(testResults: TestResultsDTOForEmail, faxNumber: string): Promise<string> {
-    const resultDateRaw = testResults.resultDate
-    const resultDate = moment(resultDateRaw).format('LL')
-    const name = `${testResults.barCode} - ${new Date()}`
+        return PCRResultPDFStream(
+          {...testResult, ...appointment, labAssay: lab.assay},
+          this.pcrTestResultsService.getPDFType(appointment.id, testResult.result),
+        )
 
-    const {content, tableLayouts} = template(testResults, resultDate)
-    const pdfContent = await this.pdfService.generatePDFBase64(content, tableLayouts)
-
-    return this.faxService.send(faxNumber, name, pdfContent)
-  }
-
-  async saveResults(testResults: TestResultsDBModel): Promise<void> {
-    this.testResultsDBRepository.save(testResults)
-  }
-
-  async resultAlreadySentMany(barCode: string[]): Promise<string[]> {
-    return (await this.testResultsDBRepository.findWhereIdIn(barCode)).map((test) => test.id)
-  }
-
-  async resultAlreadySent(barCode: string): Promise<boolean> {
-    return this.testResultsDBRepository.get(barCode).then((testResults) => !!testResults)
-  }
-
-  async getResults(barCode: string): Promise<TestResultsDBModel> {
-    return this.testResultsDBRepository.get(barCode)
-  }
-
-  async getResultsByPackageCode(packageCode: string): Promise<TestResultsDBModel[]> {
-    return this.testResultsDBRepository.findWhereEqual('packageCode', packageCode)
-  }
-
-  async getAllByOrganizationId(
-    organizationId: string,
-    dateOfAppointmentStr: string,
-    page: number,
-    perPage: number,
-  ): Promise<TestResultForPagination[]> {
-    const testResultQuery = this.testResultsDBRepository.getQueryFindWhereEqual(
-      'organizationId',
-      organizationId,
-    )
-
-    testResultQuery.where('dateOfAppointment', '==', dateOfAppointmentStr)
-
-    const testResults = await this.testResultsDBRepository.fetchPage(testResultQuery, page, perPage)
-
-    return testResults.map(
-      (result: TestResultsDBModel): TestResultForPagination => ({
-        barCode: result.barCode,
-        firstName: result.firstName,
-        lastName: result.lastName,
-        result: result.result,
-        resultDate: result.resultDate,
-        dateOfAppointment: result.dateOfAppointment,
-        timeOfAppointment: result.timeOfAppointment,
-        testType: 'PCR',
-        id: result.id,
-      }),
-    )
+      case TestTypes.RapidAntigen:
+        return RapidAntigenPDFStream(
+          {...testResult, ...appointment},
+          this.rapidAntigenTestResultsService.getPDFType(appointment.id, testResult.result),
+        )
+    }
   }
 }

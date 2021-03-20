@@ -57,6 +57,7 @@ class Doc {
       const val = props[k]
       if (val instanceof FieldValue) {
         // increment, presumably by one
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
         ;(this.document[k] as number) += 1
       } else {
         this.document[k] = val

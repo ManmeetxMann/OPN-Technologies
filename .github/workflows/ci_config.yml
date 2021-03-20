@@ -12,6 +12,8 @@ on:
     tags:
       - infra-dev-config-*
       - preprod-config-*
+      - preprod-all-*
+      - prod-config-*
 
 jobs:
   build:

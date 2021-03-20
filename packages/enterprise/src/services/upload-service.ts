@@ -1,4 +1,4 @@
-import BucketService from '../../../common/src/service/storage/bucket'
+import BucketService from '../../../common/src/service/google/bucket'
 import {Config} from '../../../common/src/utils/config'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import DataStore from '../../../common/src/data/datastore'

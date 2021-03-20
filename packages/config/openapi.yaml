@@ -1,9 +1,15 @@
 openapi: 3.0.1
 info:
-  title: Registry Endpoint
+  title: Config Endpoint
   version: 1.0.0
 
 components:
+  securitySchemes:
+    bearerAuthJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
   schemas:
     Error:
       type: object
@@ -22,6 +28,38 @@ components:
             - message
       required:
         - error
+
+    ResultContentResponse: 
+      type: object
+      deprecated: false
+      additionalProperties: false
+      properties:
+        legalNotice:
+          type: string
+        doctorName:
+          type: string
+        doctorSignature:
+          type: string
+        resultInfo:
+          type: array
+          items: 
+            type: object
+            properties:
+              details:
+                type: string
+              resultType: 
+                type: string
+                enum:
+                  [
+                    PresumptivePositive,
+                    PreliminaryPositive,
+                    Positive,
+                    Negative,
+                    Pending,
+                    Invalid,
+                    Inconclusive,
+                    Indeterminate,
+                  ]
   responses:
     error:
       description: Default error response with error object
@@ -32,6 +70,42 @@ components:
 paths:
   /:
     post:
+      description: Get Config
+      deprecated: true
+      responses:
+        "200":
+          description: Successfully registered
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - complete
+                      - error
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                        updates:
+                          type: object
+                          additionalProperties: false
+                        services:
+                          type: object
+                          additionalProperties: false
+                        badgeValidityPeriod:
+                          type: object
+                          additionalProperties: false
+                        badges:
+                          type: object
+                          additionalProperties: false
+        default:
+          $ref: "#/components/responses/error"
+
+    get:
       description: Get Config
       responses:
         "200":
@@ -65,3 +139,33 @@ paths:
                           additionalProperties: false
         default:
           $ref: "#/components/responses/error"
+  /config/api/v1/content/result:
+    get:
+      description: Return Copy for Results Screen
+      tags:
+        - Content Result
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: lang
+          schema:
+            type: string
+            enum: 
+              [
+                en,
+                fr
+              ]
+          required: true
+        - in: query
+          name: doctor
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Succesfully retrieve transport run list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultContentResponse'

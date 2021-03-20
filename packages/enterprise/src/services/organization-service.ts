@@ -49,6 +49,10 @@ export class OrganizationService {
     )
   }
 
+  async getOrganizations(): Promise<Organization[]> {
+    return this.organizationRepository.fetchAll()
+  }
+
   async addLocations(
     organizationId: string,
     locations: OrganizationLocation[],
@@ -296,6 +300,14 @@ export class OrganizationService {
     return _.flatten(pagedResults)
   }
 
+  async getUserGroupId(organizationId: string, userId: string): Promise<string> {
+    const memberships = await this.getUsersGroups(organizationId, null, [userId])
+    if (memberships?.length) {
+      return memberships[0].groupId
+    }
+    return null
+  }
+
   async getDependantGroups(
     organizationId: string,
     parentId: string,
@@ -463,5 +475,9 @@ export class OrganizationService {
         return results.length > 0 ? results[0] : undefined
       },
     )
+  }
+
+  async isTemperatureCheckEnabled(organizationId: string): Promise<boolean> {
+    return (await this.findOneById(organizationId)).enableTemperatureCheck
   }
 }

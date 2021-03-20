@@ -12,6 +12,8 @@ on:
     tags:
       - infra-dev-registry-*
       - preprod-registry-*
+      - preprod-all-*
+      - prod-registry-*
 
 jobs:
   build:

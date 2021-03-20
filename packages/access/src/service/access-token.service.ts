@@ -8,6 +8,7 @@ import {AccessService} from './access.service'
 import {AccessModel} from '../repository/access.repository'
 
 const permissiveMode = Config.get('FEATURE_CREATE_TOKEN_PERMISSIVE_MODE') === 'enabled'
+const allowTempCheck = Config.get('FEATURE_CREATE_TOKEN_TEMPERATURE_CHECK_ALLOWED') === 'enabled'
 
 export class AccessTokenService {
   private organizationService: OrganizationService
@@ -44,39 +45,42 @@ export class AccessTokenService {
 
     if (!passport) {
       fail('Access denied: status-token does not link to a passport')
-      return
-    }
-
-    if (passport.userId !== userId) {
-      // TODO: we could remove userId from this call
-      fail(`Access denied: passport does not belong to ${userId}`)
-      return
     }
     if (
       !(
         passport.status === PassportStatuses.Pending ||
+        (allowTempCheck && passport.status === PassportStatuses.TemperatureCheckRequired) ||
         (passport.status === PassportStatuses.Proceed && !isPassed(passport.validUntil))
       )
     ) {
-      fail('Access denied: this passport does not permit entry')
-      return
+      fail(`Access denied: passport ${passport.id} does not permit entry`)
+    }
+    const authorizedUserIds = new Set(passport.dependantIds ?? [])
+    if (passport.includesGuardian) {
+      authorizedUserIds.add(passport.userId)
     }
 
-    const enteringDependantIds = dependantIds.filter((depId) =>
-      passport.dependantIds.includes(depId),
-    )
+    const enteringDependantIds = dependantIds.filter((depId) => authorizedUserIds.has(depId))
+    const enteringUserId = includeGuardian && authorizedUserIds.has(userId) ? userId : null
     if (permissiveMode) {
-      if (!enteringDependantIds.length && !includeGuardian) {
-        fail('Access denied: this passport does not apply to any specified users')
-        return
-      } else if (enteringDependantIds.length < dependantIds.length) {
-        console.warn(
-          `Allowing 'partial credit' entry (requested: ${dependantIds.join()} - entering: ${enteringDependantIds.join()})`,
-        )
+      if (!enteringDependantIds.length && !enteringUserId) {
+        fail(`Access denied: passport ${passport.id} does not apply to any specified users`)
+      } else {
+        if (enteringDependantIds.length < dependantIds.length) {
+          console.warn(
+            `Allowing 'partial credit' entry (requested: ${dependantIds.join()} - entering: ${enteringDependantIds.join()})`,
+          )
+        }
+        if (includeGuardian && !enteringUserId) {
+          console.warn(
+            `Allowing 'partial credit' entry (requested guardian: ${userId} is not authorized)`,
+          )
+        }
       }
     } else if (enteringDependantIds.length < dependantIds.length) {
-      fail('Access denied: this passport does not apply to all dependants')
-      return
+      fail(`Access denied: passport ${passport.id} does not apply to all dependants`)
+    } else if (includeGuardian && !enteringUserId) {
+      fail(`Access denied: passport ${passport.id} does not apply to the guardian`)
     }
 
     if (!delegateAdminUserId) delegateAdminUserId = null
@@ -85,7 +89,7 @@ export class AccessTokenService {
       statusToken,
       locationId,
       userId,
-      includeGuardian,
+      !!enteringUserId, // only include guardian if the user is allowed (they might not be in permissive mode)
       enteringDependantIds,
       delegateAdminUserId,
     )

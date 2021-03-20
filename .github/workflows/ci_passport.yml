@@ -12,6 +12,8 @@ on:
     tags:
       - infra-dev-passport-*
       - preprod-passport-*
+      - preprod-all-*
+      - prod-passport-*
 
 jobs:
   build:

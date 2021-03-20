@@ -1,5 +1,8 @@
 # Standard files
-* @sepsepsep @harpreet-gill-shopthing @David-Owen-Walker @lcareto
+* @sepsepsep @harpreet-gill-shopthing @JoeTot
 
 # GitHub files
 /.github @sepsepsep @harpreet-gill-shopthing
+
+# Functional Testing
+/functional-testing @harpreet-gill-shopthing

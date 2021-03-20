@@ -72,7 +72,40 @@ components:
               exitAt:
                 type: string
                 nullable: true
-
+    V1Access:
+      type: object
+      additionalProperties: false
+      properties:
+        token:
+          type: string
+        statusToken:
+          type: string
+        userId:
+          type: string
+        locationId:
+          type: string
+        enteredAt:
+          type: string
+          nullable: true
+        exitAt:
+          type: string
+          nullable: true
+        includesGuardian:
+          type: boolean
+        dependants:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+              enteredAt:
+                type: string
+                nullable: true
+              exitAt:
+                type: string
+                nullable: true
 
     Passport:
       type: object
@@ -89,6 +122,31 @@ components:
           type: string
         validUntil:
           type: string
+
+    User:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+        lastName:
+          type: string
+        base64Photo:
+          type: string
+        organizationIds:
+          type: array
+          nullable: true
+          items:
+            type: string
+        delegateIds:
+          type: array
+          items:
+            type: string
 
     EntryOrExitRequest:
       type: object
@@ -153,6 +211,79 @@ components:
         - locationId
         - userId
         - includeGuardian
+    
+    V1UserEnterRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        locationId:
+          type: string
+        organizationId:
+          type: string
+        userIds:
+          type: array
+          items:
+            type: string
+      required:
+        - locationId
+        - organizationId
+    
+    V1UserExitRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        organizationId:
+          type: string
+        userIds:
+          type: array
+          items:
+            type: string
+      required:
+        - organizationId
+        - userIds
+    
+    V1ScanRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        accessToken:
+          type: string
+        organizationId:
+          type: string
+      required:
+        - accessToken
+        - organizationId
+    
+    V1EnterRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        userIds:
+          type: array
+          items:
+            type: string
+        organizationId:
+          type: string
+        locationId:
+          type: string
+      required:
+        - userIds
+        - organizationId
+        - locationId
+
+    V1ExitRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        userIds:
+          type: array
+          items:
+            type: string
+        organizationId:
+          type: string
+      required:
+        - userIds
+        - organizationId
 
     Statistics:
       type: object
@@ -218,13 +349,15 @@ components:
             message:
               nullable: true
               type: string
-
-    ResponseOfPassport:
+    
+    V1ResponseOfAccess:
       type: object
       additionalProperties: false
       properties:
         data:
-          $ref: '#/components/schemas/Passport'
+          type: array
+          items:
+            $ref: '#/components/schemas/V1Access'
         status:
           type: object
           additionalProperties: false
@@ -244,7 +377,106 @@ components:
             message:
               nullable: true
               type: string
-
+   
+    V1ResponseOfEnter:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties: 
+            access:
+              $ref: '#/components/schemas/V1Access'
+            passport:
+              $ref: '#/components/schemas/Passport'
+            user:
+              $ref: '#/components/schemas/User'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    V1ResponseOfExit:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties: 
+            access:
+              $ref: '#/components/schemas/V1Access'
+            user:
+              $ref: '#/components/schemas/User'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    V1ResponseOfTag:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          properties: 
+            access:
+              $ref: '#/components/schemas/V1Access'
+            passport:
+              $ref: '#/components/schemas/Passport'
+            user:
+              $ref: '#/components/schemas/User'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
 
     ResponseOfStatistics:
       type: object
@@ -362,6 +594,120 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfAccess'
+  
+  /access/api/v1/access/enter:
+    post:
+      description: Enter the specified location
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V1UserEnterRequest'
+      responses:
+        '200':
+          description: Successfully entered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfAccess'
+  
+  /access/api/v1/access/exit:
+    post:
+      description: Exit the given users from wherever they are
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V1UserExitRequest'
+      responses:
+        '200':
+          description: Successfully exited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfAccess'
+
+  /access/api/v1/admin/access/enter:
+    post:
+      description: Manually check a group of users into a location. The users will automatically exit their current locations.
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V1EnterRequest'
+      responses:
+        '200':
+          description: Successfully exited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfEnter'
+
+  /access/api/v1/admin/access/exit:
+    post:
+      description: Manually check a group of users out of their current locations.
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/V1ExitRequest'
+      responses:
+        '200':
+          description: Successfully exited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfExit'
+  
+  /access/api/v1/admin/access/enter-or-exit/tag:
+    post:
+      description: Enter or exit using a tag
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryOrExitUsingTagRequest'
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfTag'
+
+  /access/api/v1/admin/access/stats:
+    get:
+      description: Daily and live stats for a location
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: locationId
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully handled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfStatistics'
 
   /admin/createToken:
     post:
@@ -404,6 +750,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Response'
+
   /admin/enter:
     post:
       description: Handle user's entrance with access-token

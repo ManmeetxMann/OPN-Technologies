@@ -13,7 +13,8 @@ import {AdminProfile} from '../../../common/src/data/admin'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {authMiddleware} from '../../../common/src/middlewares/auth'
+import {authorizationMiddleware} from '../../../common/src/middlewares/authorization'
+import {RequiredUserPermission} from '../../../common/src/types/authorization'
 import {now} from '../../../common/src/utils/times'
 import moment from 'moment-timezone'
 import * as _ from 'lodash'
@@ -54,14 +55,19 @@ class AdminController implements IRouteController {
   }
 
   public initRoutes(): void {
+    // TODO: all of these should specify the organizationId
+    const requireAdmin = authorizationMiddleware([RequiredUserPermission.OrgAdmin], false)
+    // const requireAdminWithOrg = authorizationMiddleware([RequiredUserPermission.OrgAdmin], true)
     const routes = express
       .Router()
-      .post('/stats', authMiddleware, this.stats)
-      .post('/stats/v2', authMiddleware, this.statsV2)
-      .post('/enter', authMiddleware, this.enter)
-      .post('/exit', authMiddleware, this.exit)
-      .post('/createToken', authMiddleware, this.createToken)
-      .post('/enterorexit/tag', authMiddleware, this.enterOrExitUsingATag)
+      .post('/stats', requireAdmin, this.stats)
+      // TODO: should be adminWithOrg, but frontend does not always send org.
+      // We will do the check locally instead for now
+      .post('/stats/v2', requireAdmin, this.statsV2)
+      .post('/enter', requireAdmin, this.enter)
+      .post('/exit', requireAdmin, this.exit)
+      .post('/createToken', requireAdmin, this.createToken)
+      .post('/enterorexit/tag', requireAdmin, this.enterOrExitUsingATag)
       .get('/:organizationId/locations/accessible', this.getAccessibleLocations)
     this.router.use('/admin', routes)
   }
@@ -87,6 +93,17 @@ class AdminController implements IRouteController {
       if (!organizationId && !locationId) {
         throw new BadRequestException('either organization or location id must be provided')
       }
+
+      if (!organizationId) {
+        // need to determine org based on location
+        // to confirm permissions
+        const orgId = (await this.organizationService.getLocationById(locationId)).organizationId
+        const user = res.locals.connectedUser.admin as AdminProfile
+        if (!user.adminForOrganizationId?.includes(orgId)) {
+          throw new UnauthorizedException(`Not an admin for organization ${orgId}`)
+        }
+      }
+
       const responseBody = await this.statsHelper(organizationId, locationId)
 
       res.json(actionSucceed(responseBody))
@@ -236,16 +253,19 @@ class AdminController implements IRouteController {
   enterOrExitUsingATag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Get request inputs
-      const {tagId, locationId, legacyMode} = req.body
+      const {tagId, locationId} = req.body
 
       // Get tag appropriately
-      const tag =
-        legacyMode === true
-          ? await this.tagService.getByLegacyId(tagId)
-          : await this.tagService.getById(tagId)
+      // Fix: Ticket #1035
+      // Note: there's a bug that legacy mode is always passed through as true... so must try both
+      let tag = await this.tagService.getByLegacyId(tagId)
+      if (!tag) {
+        tag = await this.tagService.getById(tagId)
+      }
       if (!tag) {
         throw new ResourceNotFoundException(`NFC Tag not found`)
       }
+
       // Save org
       const organizationId = tag.organizationId
 
@@ -265,11 +285,20 @@ class AdminController implements IRouteController {
       const user = await this.userService.findOne(tag.userId)
       const parentUserId = user.delegates?.length ? user.delegates[0] : null
       const isADependant = !!parentUserId
-      const latestPassport = await this.passportService.findLatestPassport(tag.userId, parentUserId)
+      const latestPassport = await this.passportService.findLatestPassport(
+        tag.userId,
+        parentUserId,
+        null,
+        organizationId,
+      )
+      const authorizedUserIds = new Set(latestPassport?.dependantIds ?? [])
+      if (latestPassport?.includesGuardian) {
+        authorizedUserIds.add(latestPassport.userId)
+      }
       // Make sure it's valid
       if (
         !latestPassport ||
-        ![parentUserId, tag.userId].includes(latestPassport.userId) ||
+        !authorizedUserIds.has(tag.userId) ||
         latestPassport.status !== 'proceed'
       ) {
         replyUnauthorizedEntry(res)
@@ -305,11 +334,14 @@ class AdminController implements IRouteController {
       } else {
         // Get Latest Passport (as they need a valid access)
         const specificPassport = await this.passportService.findOneByToken(access.statusToken)
-
+        const specificAuthorizedUserIds = new Set(specificPassport?.dependantIds ?? [])
+        if (specificPassport?.includesGuardian) {
+          specificAuthorizedUserIds.add(specificPassport.userId)
+        }
         // Make sure it's valid
         if (
           !specificPassport ||
-          ![parentUserId, tag.userId].includes(latestPassport.userId) ||
+          !specificAuthorizedUserIds.has(tag.userId) ||
           specificPassport.status !== 'proceed'
         ) {
           replyUnauthorizedEntry(res)

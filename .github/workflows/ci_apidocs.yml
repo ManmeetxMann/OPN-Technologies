@@ -12,6 +12,8 @@ on:
     tags:
       - infra-dev-apidocs-*
       - preprod-apidocs-*
+      - preprod-all-*
+      - prod-apidocs-*
 
 jobs:
   build:

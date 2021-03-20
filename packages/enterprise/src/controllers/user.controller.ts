@@ -6,6 +6,7 @@ import Validation from '../../../common/src/utils/validation'
 import {OrganizationService} from '../services/organization-service'
 import {OrganizationConnectionRequest} from '../models/organization-connection-request'
 import {UserService} from '../../../common/src/service/user/user-service'
+import {UserService as EnterpriseUserService} from '../services/user-service'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
 import {User, UserEdit, UserWithGroup, UserDependant} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
@@ -13,6 +14,7 @@ import {Organization, OrganizationUsersGroup} from '../models/organization'
 import * as _ from 'lodash'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {AuthService} from '../../../common/src/service/auth/auth-service'
+import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 
@@ -21,8 +23,10 @@ class UserController implements IControllerBase {
   public router = express.Router()
   private organizationService = new OrganizationService()
   private userService = new UserService()
+  private enterpriseUserService = new EnterpriseUserService()
   private registrationService = new RegistrationService()
   private authService = new AuthService()
+  private adminApprovalService = new AdminApprovalService()
 
   constructor() {
     this.initRoutes()
@@ -57,23 +61,22 @@ class UserController implements IControllerBase {
       const group = await this.organizationService.getGroup(organization.id, groupId)
 
       const authUser = !!idToken ? await this.authService.verifyAuthToken(idToken) : null
-      if (idToken && !authUser) {
+      if (idToken && (!authUser || !authUser.email)) {
         throw new UnauthorizedException(`Cannot verify id-token`)
       }
 
       if (authUser) {
         // check if auth user is already there
-        const usersByAuthId = await this.userService.findAllByAuthUserId(authUser.uid)
-        if (usersByAuthId && usersByAuthId.length) {
-          if (usersByAuthId.some((user) => user.email === authUser.email)) {
-            throw new ResourceAlreadyExistsException(authUser.email)
-          }
+        const usersByEmail = await this.enterpriseUserService.getByEmail(authUser.email)
+        if (usersByEmail) {
+          console.log(`DuplicateEmailConnect: ${authUser.email}`)
+          throw new ResourceAlreadyExistsException(authUser.email)
         }
       }
 
       // Create user
       // registrationId might be undefined, since this could be the old version
-      const user = await this.userService.create(({
+      const user = await this.userService.create({
         email: authUser?.email ?? null,
         authUserId: authUser?.uid ?? null,
         registrationId: registrationId ?? null,
@@ -81,13 +84,20 @@ class UserController implements IControllerBase {
         lastName,
         base64Photo,
         organizationIds: [organization.id],
-      } as unknown) as User)
+      } as Omit<User, 'id'>)
 
       // Add user to group
       await this.organizationService.addUserToGroup(organization.id, group.id, user.id)
 
       // Add to registry
       await this.registrationService.linkUser(registrationId, user.id)
+
+      // Get the admin approval and attach to user
+      const approval = await this.adminApprovalService.findOneByEmail(user.email)
+      if (approval) {
+        user.admin = approval.profile
+        await this.userService.update(user)
+      }
 
       res.json(actionSucceed({user, organization, group}))
     } catch (error) {

@@ -5,15 +5,17 @@ import loggerMiddleware from '../../common/src/middlewares/logger'
 
 import AdminController from './controllers/admin.controller'
 import UserController from './controllers/user.controller'
+import PassportController from './controllers/v1/passport.controller'
+import PubSubController from './controllers/v1/pubsub.controller'
+import AdminPassportController from './controllers/v1/admin/passport.controller'
 import RootController from './controllers/root.controller'
-import TemperatureV1Controller from './controllers/admin/v1/temperature.controller'
 
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
 
 const PORT = Number(process.env.PORT) || 5005
 
-const app = new App({
+export const app = new App({
   port: PORT,
   validation: true,
   corsOptions: '*',
@@ -21,7 +23,9 @@ const app = new App({
     new RootController(),
     new UserController(),
     new AdminController(),
-    new TemperatureV1Controller(),
+    new PassportController(),
+    new PubSubController(),
+    new AdminPassportController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],

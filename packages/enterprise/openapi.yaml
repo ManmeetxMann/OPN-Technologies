@@ -37,6 +37,32 @@ components:
               nullable: true
               type: string
 
+    UserResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
     OrganizationReminderSchedule:
       type: object
       properties:
@@ -93,11 +119,32 @@ components:
           type: string
         enablePushNotifications:
           type: boolean
+          default: true
         enableTemperatureCheck:
           type: boolean
           default: false
-          nullable: true
+        legacyMode:
+          type: boolean
+          default: false
+        enableTesting:
+          type: boolean
+          default: false
       required:
+        - name
+
+    OrganizationSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        name:
+          type: string
+      required:
+        - id
+        - key
         - name
 
     OrganizationLocation:
@@ -271,6 +318,29 @@ components:
       required:
         - name
         - isPrivate
+
+    PubSubRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        subscription:
+          type: string
+        message:
+          type: object
+          additionalProperties: false
+          properties:
+            messageId:
+              type: string
+            message_id:
+              type: string
+            publishTime:
+              type: string
+            publish_time:
+              type: string
+            data:
+              type: string
+            attributes:
+              additionalProperties: true
 
     OrganizationConnectionRequestV1:
       type: object
@@ -458,6 +528,11 @@ components:
           items:
             type: string
           description: Group Ids within Organization
+        adminForLabIds:
+          type: array
+          items:
+            type: string
+          description: Lab ids to become a super admin of. Must be provided can be empty.
         showReporting:
           type: boolean
           description: Show reporting feature
@@ -473,15 +548,71 @@ components:
         isTestAppointmentsAdmin:
           type: boolean
           description: Can see Test Appoinments
+        isLabUser:
+          type: boolean
+          description: This should be true for all lab users
+        isLabAppointmentsAdmin:
+          type: boolean
+        isLabResultsAdmin:
+          type: boolean
+        isTransportsRunsAdmin:
+          type: boolean
+        isReceivingAdmin:
+          type: boolean
+        isTestRunsAdmin:
+          type: boolean
+        isDueTodayAdmin:
+          type: boolean
+        isBulkUploadAdmin:
+          type: boolean
+        isSingleResultSendAdmin:
+          type: boolean
+        isConfirmResultAdmin:
+          type: boolean
+        isPackageAdmin:
+          type: boolean
+        isCheckInAdmin:
+          type: boolean
+        isGenerateAdmin:
+          type: boolean
+        isLookupAdmin:
+          type: boolean
+        isClinicUser:
+          type: boolean
+        isRapidResultSenderAdmin:
+          type: boolean
+        isRapidResultOrgAdmin:
+          type: boolean
+        isOrganizeAdmin:
+          type: boolean
       required:
-        - email
-        - showReporting
-        - organizationId
+        - adminForLabIds	
+        - email	
+        - isBulkUploadAdmin	
+        - isCheckInAdmin	
+        - isClinicUser	
+        - isConfirmResultAdmin	
+        - isDueTodayAdmin	
+        - isGenerateAdmin	
+        - isLabAppointmentsAdmin	
+        - isLabResultsAdmin	
+        - isLabUser	
+        - isLookupAdmin	
+        - isManagementDashboardAdmin	
+        - isOpnSuperAdmin	
+        - isPackageAdmin	
+        - isRapidResultOrgAdmin	
+        - isRapidResultSenderAdmin	
+        - isReceivingAdmin	
+        - isSingleResultSendAdmin	
+        - isTestAppointmentsAdmin	
+        - isTestReportsAdmin	
+        - isTestRunsAdmin	
+        - isTransportsRunsAdmin	
+        - organizationId	
+        - showReporting	
         - superAdminForOrganizationIds
-        - isOpnSuperAdmin
-        - isManagementDashboardAdmin
-        - isTestReportsAdmin
-        - isTestAppointmentsAdmin
+        - isOrganizeAdmin
 
     InternalAdminListRequest:
       type: object
@@ -746,6 +877,42 @@ components:
           type: boolean
         isTestAppointmentsAdmin:
           type: boolean
+        isLabAppointmentsAdmin:
+          type: boolean
+        isLabUser:
+          type: boolean
+        isLabResultsAdmin:
+          type: boolean
+        isTransportsRunsAdmin:
+          type: boolean
+        isReceivingAdmin:
+          type: boolean
+        isTestRunsAdmin:
+          type: boolean
+        isTestKitBatchAdmin:
+          type: boolean
+        isDueTodayAdmin:
+          type: boolean
+        isBulkUploadAdmin:
+          type: boolean
+        isSingleResultSendAdmin:
+          type: boolean
+        isConfirmResultAdmin:
+          type: boolean
+        isPackageAdmin:
+          type: boolean
+        isCheckInAdmin:
+          type: boolean
+        isGenerateAdmin:
+          type: boolean
+        isLookupAdmin:
+          type: boolean
+        isRapidResultSenderAdmin:
+          type: boolean
+        isRapidResultOrgAdmin:
+          type: boolean
+        isOrganizeAdmin:
+          type: boolean
     User:
       type: object
       deprecated: true
@@ -772,6 +939,38 @@ components:
         - firstName
         - lastName
         - base64Photo
+
+    UserCommon:
+      type: object
+      deprecated: false
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+        lastName:
+          type: string
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+        isAdminEnabled:
+          type: boolean
+        organizationIds:
+          type: array
+          items:
+            type: string
+        delegates:
+          type: array
+          items:
+            type: string
+      required:
+        - firstName
+        - lastName
 
     UserV3:
       type: object
@@ -800,6 +999,8 @@ components:
         memberId:
           type: string
           nullable: true
+        isAdminEnabled:
+          type: boolean
       required:
         - firstName
         - lastName
@@ -1052,6 +1253,53 @@ components:
                 type: string
                 nullable: true
 
+    Recommendation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          nullable: true
+        title:
+          type: string
+        body:
+          type: string
+        recommendation:
+          type: string
+          enum:
+            [
+              StatusInfo
+              PassAvailable
+              CompleteAssessment
+              UpdateAssessment
+              BadgeExpiry
+              TempCheckRequired
+              ViewNegativeTemp
+              ViewPositiveTemp
+              BookPCR
+              BookingDetailsPCR
+              CheckInPCR
+              ResultReadiness
+              ViewNegativePCR
+              ViewPositivePCR
+            ]
+          nullable: false
+
+    Test:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        style:
+          type: string
+        
     ResponseOfOrganizationConnection:
       type: object
       additionalProperties: false
@@ -1128,6 +1376,32 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Organization'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfOrganizationSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationSummary'
         status:
           type: object
           additionalProperties: false
@@ -1667,6 +1941,81 @@ components:
             message:
               nullable: true
               type: string
+    
+    ResponseOfRecommendations:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recommendation'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    ResponseOfHealthPass:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          properties:
+            organization:
+              $ref: '#/components/schemas/Organization'
+            passes:
+              type: object
+              properties:
+                user:
+                  $ref: '#/components/schemas/UserCommon'
+                expiry:
+                  type: string
+                dateOfBirth:
+                  type: string
+                tests:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Test'
+                status:
+                  type: string
+                  enum:
+                    - proceed
+                    - temperature_check_required
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
 
   responses:
     Response:
@@ -1692,9 +2041,28 @@ paths:
         '200':
           description: Successfully set
 
-  /organizations:
+  /enterprise/admin/api/v1/organizations:
+    get:
+      description: Get List of Organizations
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Organization Management
+      responses:
+        '200':
+          description: Successfully created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResponseOfOrganizationSummary'
     post:
       description: Create new organization
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Organization Management
       requestBody:
         content:
           application/json:
@@ -1711,6 +2079,8 @@ paths:
   /organizations/one:
     get:
       description: Find one organization by key or id
+      tags:
+        - Organization Management
       parameters:
         - in: query
           name: key
@@ -1732,6 +2102,8 @@ paths:
   /organizations/{organizationId}/scheduling:
     post:
       description: Update an organization's mailing schedule
+      tags:
+        - Organization Management
       parameters:
         - in: path
           name: organizationId
@@ -1769,6 +2141,8 @@ paths:
   /organizations/{organizationId}/locations:
     post:
       description: Add locations to an organization
+      tags:
+        - Location Management
       parameters:
         - in: path
           name: organizationId
@@ -1799,6 +2173,8 @@ paths:
                   $ref: '#/components/schemas/ResponseOfOrganizationLocations'
     put:
       description: Update locations
+      tags:
+        - Location Management
       parameters:
         - in: path
           name: organizationId
@@ -1823,6 +2199,8 @@ paths:
                   $ref: '#/components/schemas/ResponseOfOrganizationLocations'
     get:
       description: Get organization locations
+      tags:
+        - Location Management
       parameters:
         - in: query
           name: parentLocationId
@@ -1854,6 +2232,8 @@ paths:
   /organizations/{organizationId}/locations/{locationId}:
     get:
       description: Get a location
+      tags:
+        - Location Management
       parameters:
         - in: path
           name: organizationId
@@ -1878,6 +2258,8 @@ paths:
   /organizations/{organizationId}/groups/public:
     get:
       description: Get organization groups
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -1897,6 +2279,8 @@ paths:
   /organizations/{organizationId}/groups:
     post:
       description: Add groups to an organization
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -1921,6 +2305,8 @@ paths:
                   $ref: '#/components/schemas/ResponseOfOrganizationGroups'
     get:
       description: Get organization groups
+      tags:
+        - Group Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -1940,6 +2326,8 @@ paths:
                   $ref: '#/components/schemas/ResponseOfOrganizationGroups'
     put:
       description: Move users in between groups
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -1964,6 +2352,8 @@ paths:
   /organizations/{organizationId}/stats:
     get:
       description: Get stats for one organization (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -1999,6 +2389,8 @@ paths:
   /organizations/{organizationId}/stats/user-report:
     get:
       description: Get pdf for one user (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2036,6 +2428,8 @@ paths:
   /organizations/{organizationId}/stats/group-report:
     get:
       description: Get user reports for an entire group (admin access required). This may take a long time
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2070,6 +2464,8 @@ paths:
   /organizations/{organizationId}/stats/contact-trace-locations:
     get:
       description: Get contact traces locations (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2107,6 +2503,8 @@ paths:
   /organizations/{organizationId}/stats/contact-traces:
     get:
       description: Get contact traces (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2142,6 +2540,8 @@ paths:
   /organizations/{organizationId}/stats/contact-trace-exposures:
     get:
       description: Get contact traces exposures (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2177,6 +2577,8 @@ paths:
   /organizations/{organizationId}/stats/contact-trace-attestations:
     get:
       description: Get contact traces attestations (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2208,6 +2610,8 @@ paths:
   /organizations/{organizationId}/stats/family:
     get:
       description: Get family data for the given userId
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2236,6 +2640,8 @@ paths:
   /organizations/{organizationId}/stats/health:
     get:
       description: Get stats summary for one organization (admin access required)
+      tags:
+        - Reports
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2267,6 +2673,8 @@ paths:
   /organizations/{organizationId}/groups/{groupId}/users:
     post:
       description: Add users to a group (admin access required)
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -2299,6 +2707,8 @@ paths:
   /organizations/{organizationId}/groups/{groupId}:
     delete:
       description: Remove a group
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -2327,6 +2737,8 @@ paths:
   /organizations/{organizationId}/groups/zombie-users:
     delete:
       description: Remove dead users
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -2346,6 +2758,8 @@ paths:
   /organizations/{organizationId}/groups/{groupId}/users/{userId}:
     delete:
       description: Take a user off a group (admin access required)
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -2374,6 +2788,8 @@ paths:
 
     put:
       description: Update a groupId for a user (admin access required)
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -2409,6 +2825,8 @@ paths:
   /organizations/{organizationId}/config:
     get:
       description: Get app config info for the organization
+      tags:
+        - Organization Management
       parameters:
         - in: path
           name: organizationId
@@ -2609,6 +3027,8 @@ paths:
     get:
       summary: Organization users list
       description: Get users by organizationId
+      tags:
+        - Account Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2644,6 +3064,8 @@ paths:
     post:
       summary: Create User
       description: Creates a user profile with `CreateUserByAdminRequest` payload and returns a `User`
+      tags:
+        - Account Management
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -2663,6 +3085,8 @@ paths:
     get:
       summary: Fetch matching users within an organization
       description: Returns a page of users matching filter for an organization
+      tags:
+        - Account Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2703,6 +3127,8 @@ paths:
     put:
       summary: Update User
       description: Update a user profile with `UpdateUserByAdminRequest` payload and returns a `User`
+      tags:
+        - Account Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2727,6 +3153,8 @@ paths:
   /enterprise/admin/api/v3/tags:
     post:
       description: Create NFC TagId
+      tags:
+        - Tag Management
       security:
         - bearerAuthJWT: []
       requestBody:
@@ -2752,6 +3180,8 @@ paths:
   /enterprise/admin/api/v3/tags/{tagId}/user:
     get:
       description: Get user details by tagId
+      tags:
+        - Tag Management
       security:
         - bearerAuthJWT: []
       parameters:
@@ -2775,6 +3205,8 @@ paths:
   /internal/group-report:
     post:
       description: Request a report be sent to an email
+      tags:
+        - Internal Tasks
       requestBody:
         content:
           application/json:
@@ -2791,6 +3223,8 @@ paths:
   /internal/admin/operations/create:
     post:
       description: Internal Admin Approval Creation API
+      tags:
+        - Internal Tasks
       requestBody:
         content:
           application/json:
@@ -2807,6 +3241,8 @@ paths:
   /internal/admin/operations/list:
     post:
       description: Internal Admin List API
+      tags:
+        - Internal Tasks
       requestBody:
         content:
           application/json:
@@ -2825,7 +3261,7 @@ paths:
       summary: Account Registration
       description: Creates a user profile with `CreateUserRequest` payload and returns a `User`
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -2846,7 +3282,7 @@ paths:
       security:
         - bearerAuthJWT: []
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: query
           name: searchQuery
@@ -2861,31 +3297,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfUsersByOrganization'
 
-  /enterprise/api/v3/users/migration:
-    post:
-      summary: Profile Migration
-      description: Creates a user profile and link/migrate existing user's data
-      tags:
-        - Account management
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MigrateUserRequest'
-      responses:
-        '200':
-          description: Successfully migrated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfUser'
-
   /enterprise/api/v3/users/auth:
     post:
       summary: User authentication
       description: Sends a magic-link to authenticate the user
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -2896,13 +3313,12 @@ paths:
                   nullable: false
                 organizationId:
                   type: string
-                  nullable: false
+                  nullable: true
                 userId:
                   type: string
                   nullable: true
               required:
                 - email
-                - organizationId
       responses:
         '200':
           description: Successful
@@ -2916,7 +3332,7 @@ paths:
       summary: User authentication
       description: Sends a magic-link to authenticate by short-code the user
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -2925,15 +3341,11 @@ paths:
                 email:
                   type: string
                   nullable: false
-                organizationId:
-                  type: string
-                  nullable: false
                 shortCode:
                   type: string
                   nullable: false
               required:
                 - email
-                - organizationId
                 - shortCode
       responses:
         '200':
@@ -2952,7 +3364,7 @@ paths:
       summary: Account registration confirmation
       description: Completes user registration with magic-link information
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -2981,11 +3393,11 @@ paths:
   /enterprise/api/v3/users/self:
     get:
       summary: User details
-      description: Gets authenticated user details
+      description: Gets authenticated user details. Note that unlike other calls, isAdminEnabled will be true if there is an admin approval available to this user, whether or not it has been connected to the user
       security:
         - bearerAuthJWT: []
       tags:
-        - Account management
+        - Account Management
       responses:
         '200':
           description: Successfull retrieved
@@ -2998,7 +3410,7 @@ paths:
       summary: Account update
       description: Updates authenticated user (only first name, last name and photo)
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -3026,7 +3438,7 @@ paths:
       summary: Connected organizations
       description: Get all the authenticated-user's organizations
       tags:
-        - Account management
+        - Account Management
       responses:
         '200':
           description: Successfull retrieved
@@ -3039,7 +3451,7 @@ paths:
       summary: Organization connection
       description: Connect an organization to the authenticated user, if relation doesn't yet exist
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -3063,7 +3475,7 @@ paths:
       summary: Unlink organization
       description: Removes the authenticated user from an organization and all the groups within that organization
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: organizationId
@@ -3082,6 +3494,8 @@ paths:
     get:
       summary: Get users by group Id
       description: Get users within an group
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: groupId
@@ -3111,10 +3525,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfUsers'
+
   /enterprise/admin/api/v3/organizations/{organizationId}/groups/{groupId}:
     put:
       summary: Update group by groupId
       description: Update group data
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: groupId
@@ -3153,6 +3570,8 @@ paths:
     get:
       summary: Get groups by organizationId
       description: Get users
+      tags:
+        - Group Management
       parameters:
         - in: path
           name: organizationId
@@ -3174,7 +3593,7 @@ paths:
       summary: Connected groups
       description: Get all the authenticated-user's connected-groups within an organization
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: query
           name: organizationId
@@ -3193,7 +3612,7 @@ paths:
       summary: Group connection
       description: Connects the authenticated user to a group if not linked already
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -3221,7 +3640,7 @@ paths:
       summary: Unlink group
       description: Removes the authenticated user from a group
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: groupId
@@ -3241,7 +3660,7 @@ paths:
       summary: Account dependents
       description: Gets the authenticated user's direct dependents
       tags:
-        - Account management
+        - Account Management
       responses:
         '200':
           description: Successfull retrieved
@@ -3256,7 +3675,7 @@ paths:
         Create and/or links one or multiple user(s) to the authenticated user
         If the "dependent.id" is provided, the found dependent will be linked
       tags:
-        - Account management
+        - Account Management
       requestBody:
         content:
           application/json:
@@ -3277,7 +3696,7 @@ paths:
       summary: Account parents
       description: Gets the authenticated user's direct-parents
       tags:
-        - Account management
+        - Account Management
       responses:
         '200':
           description: Successfull retrieved
@@ -3293,7 +3712,7 @@ paths:
         Remove a user as a dependent of the authenticated user
         Delete the dependent's data if query param `hard` is true
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: dependentId
@@ -3319,7 +3738,7 @@ paths:
       summary: Connected organizations
       description: Get all the organizations connected with an authenticated-user's dependent
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: dependentId
@@ -3338,7 +3757,7 @@ paths:
       summary: Organization connection
       description: Connect an organization to a dependent, if relation doesn't yet exist
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: dependentId
@@ -3368,7 +3787,7 @@ paths:
       summary: Unlink dependent from an organization
       description: Removes the authenticated user's dependent from an organization and all the groups within that organization
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: dependentId
@@ -3388,12 +3807,65 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
+  /enterprise/internal/api/v1/user:
+    post:
+      summary: Webhook
+      description: Find or create user
+      tags:
+        - User Webhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                email:
+                  type: string
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                organizationId:
+                  type: string
+                address:
+                  type: string
+                dateOfBirth:
+                  type: string
+                agreeToConductFHHealthAssessment:
+                  type: boolean
+                shareTestResultWithEmployer:
+                  type: boolean
+                readTermsAndConditions:
+                  type: boolean
+                receiveResultsViaEmail:
+                  type: boolean
+                receiveNotificationsFromGov:
+                  type: boolean
+              required:
+                - email
+                - firstName
+                - lastName
+                - organizationId
+                - address
+                - dateOfBirth
+                - agreeToConductFHHealthAssessment
+                - shareTestResultWithEmployer
+                - readTermsAndConditions
+                - receiveResultsViaEmail
+                - receiveNotificationsFromGov
+      responses:
+        '200':
+          description: Successfull linked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
   /enterprise/api/v3/users/self/dependents/{dependentId}/groups:
     get:
       summary: Connected groups
       description: Get all the connected-groups of a dependent
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: query
           name: dependentId
@@ -3412,7 +3884,7 @@ paths:
       summary: Group connection
       description: Connects an authenticated-user's dependent to a group if not linked already
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: dependentId
@@ -3445,7 +3917,7 @@ paths:
       summary: Update Group
       description: Update a user's dependent group within the same organization
       tags:
-        - Account management
+        - Account Management
       parameters:
         - in: path
           name: dependentId
@@ -3477,3 +3949,94 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  /enterprise/api/v3/recommendations:
+    get:
+      summary: recommendations for user
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfRecommendations'
+  /enterprise/api/v3/health-pass:
+    get:
+      summary: health passes for user and dependants
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfHealthPass'
+  /enterprise/api/v3/pubsub/passport:
+    post:
+      summary: update passport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /enterprise/api/v3/pubsub/attestation:
+    post:
+      summary: update attestation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /enterprise/api/v3/pubsub/temperature:
+    post:
+      summary: update temperature
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /enterprise/api/v3/pubsub/pcr-test:
+    post:
+      summary: update pcr test result
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /enterprise/api/v3/pubsub/test-appointment:
+    post:
+      summary: update appointment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested

@@ -2,17 +2,24 @@ import DataStore from '../../data/datastore'
 import {User, UserDependant, UserFilter, UserModel, LegacyDependant} from '../../data/user'
 import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
 import {cleanStringField} from '../../../../common/src/utils/utils'
+import {DataModelFieldMapOperatorType} from '../../../../common/src/data/datamodel.base'
+import UserDbSchema from '../../dbschemas/user.schema'
 
 export class UserService {
   private dataStore = new DataStore()
   private userRepository = new UserModel(this.dataStore)
 
-  create(user: User): Promise<User> {
-    return this.userRepository.add(this.cleanUserData(user))
+  async create(user: Omit<User, 'id'>): Promise<User> {
+    const validUser = await UserDbSchema.validateAsync(this.cleanUserData(user))
+    return this.userRepository.add(validUser)
   }
 
   async update(user: User): Promise<void> {
-    await this.userRepository.update(this.cleanUserData(user))
+    const {id, ...cleanableUser} = user
+    await this.userRepository.update({
+      id,
+      ...this.cleanUserData(cleanableUser),
+    })
   }
 
   async updateProperty(id: string, fieldName: string, fieldValue: unknown): Promise<void> {
@@ -31,7 +38,7 @@ export class UserService {
     await this.userRepository.updateProperties(id, fields)
   }
 
-  private cleanUserData(user: User): User {
+  private cleanUserData(user: Omit<User, 'id'>): Omit<User, 'id'> {
     const cleanUser = user
     cleanUser.firstName = cleanStringField(user.firstName)
     cleanUser.lastName = cleanStringField(user.lastName)
@@ -50,18 +57,39 @@ export class UserService {
     })
   }
 
+  async findOneByEmail(email: string): Promise<User> {
+    const results = await this.userRepository.findWhereEqual('email', email)
+    if (results.length > 1) {
+      console.warn(`${results.length} users found with email ${email}`)
+    }
+    return results.length > 0 ? results.shift() : null
+  }
+
   findOneSilently(id: string): Promise<User | undefined> {
     return this.userRepository.get(id)
   }
 
   async findOneByAuthUserId(authUserId: string): Promise<User> {
     const results = await this.userRepository.findWhereEqual('authUserId', authUserId)
+    if (results.length > 1) {
+      console.warn(`${results.length} users found with authUserId ${authUserId}`)
+    }
     return results.length > 0 ? results.shift() : null
   }
 
-  async findAllByAuthUserId(authUserId: string): Promise<User[]> {
-    const results = await this.userRepository.findWhereEqual('authUserId', authUserId)
-    return results.length > 0 ? results : null
+  async findOneByAdminAuthUserId(authUserId: string): Promise<User> {
+    const results = await this.userRepository.findWhereEqualInMap([
+      {
+        map: 'admin',
+        key: 'authUserId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: authUserId,
+      },
+    ])
+    if (results.length > 1) {
+      console.warn(`${results.length} users found with admin.authUserId ${authUserId}`)
+    }
+    return results.length > 0 ? results.shift() : null
   }
 
   getAllDependants(userId: string, skipUserCheck = false): Promise<UserDependant[]> {
@@ -109,21 +137,27 @@ export class UserService {
     }
     await this.userRepository.updateProperties(dependantId, fields)
   }
-  // TODO: validate this
+
   async addDependants(
     userId: string,
     dependants: (UserDependant | LegacyDependant)[],
+    organizationId: string,
   ): Promise<UserDependant[]> {
-    const parent = await this.findOne(userId)
+    const parent = await this.userRepository.get(userId)
+
     const dependantsToAdd = dependants.map((dependant) => ({
       firstName: cleanStringField(dependant.firstName),
       lastName: cleanStringField(dependant.lastName),
       delegates: [userId],
       registrationId: '',
       base64Photo: '',
-      organizationIds: parent.organizationIds,
+      organizationIds: [organizationId],
+      agreeToConductFHHealthAssessment: parent.agreeToConductFHHealthAssessment,
+      shareTestResultWithEmployer: parent.shareTestResultWithEmployer,
+      readTermsAndConditions: parent.readTermsAndConditions,
+      receiveResultsViaEmail: false,
+      receiveNotificationsFromGov: false,
     }))
-    // @ts-ignore no id needed
     return Promise.all(dependantsToAdd.map((dependant) => this.create(dependant)))
   }
 

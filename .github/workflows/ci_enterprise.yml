@@ -12,6 +12,8 @@ on:
     tags:
       - infra-dev-enterprise-*
       - preprod-enterprise-*
+      - preprod-all-*
+      - prod-enterprise-*
 
 jobs:
   build:

@@ -37,6 +37,45 @@ components:
               nullable: true
               type: string
 
+    Answer:
+      type: object
+      properties:
+        answer:
+          type: boolean
+        additionalValue:
+          type: string
+          nullable: true
+        questionId:
+          type: number
+
+    User:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          nullable: true
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+        organizationIds:
+          type: array
+          items:
+            type: string
+        isAdminEnabled:
+          type: boolean
+        delegates:
+          type: array
+          items:
+            type: string
+
     Passport:
       type: object
       additionalProperties: false
@@ -60,6 +99,41 @@ components:
           type: array
           items:
             type: string
+
+    Access:
+      type: object
+      additionalProperties: false
+      properties:
+        token:
+          type: string
+        statusToken:
+          type: string
+        userId:
+          type: string
+        locationId:
+          type: string
+        enteredAt:
+          type: string
+          nullable: true
+        exitAt:
+          type: string
+          nullable: true
+        includesGuardian:
+          type: boolean
+        dependants:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              id:
+                type: string
+              enteredAt:
+                type: string
+                nullable: true
+              exitAt:
+                type: string
+                nullable: true
 
     ResponseOfPassport:
       type: object
@@ -87,23 +161,53 @@ components:
               nullable: true
               type: string
 
-    ResponseOfTemperature:
+    Attestation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        answers:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              question:
+                type: string
+              boolean:
+                type: boolean
+              datetime:
+                type: string
+            required:
+              - question
+              - boolean
+        locationId:
+          type: string
+        attestationTime:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - proceed
+            - caution
+            - stop
+
+    V1ResponseOfPassport:
       type: object
       additionalProperties: false
       properties:
         data:
-          type: object
-          additionalProperties: false
-          properties:
-            status:
-              type: string
-              enum: [proceed,stop]
-            userId:
-              type: string
-            validFrom:
-              type: string
-            validUntil:
-              type: string
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              user:
+                $ref: '#/components/schemas/User'
+              passport:
+                $ref: '#/components/schemas/Passport'
         status:
           type: object
           additionalProperties: false
@@ -123,6 +227,64 @@ components:
             message:
               nullable: true
               type: string
+
+    V1ResponseOfAdminPassport:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              user:
+                $ref: '#/components/schemas/User'
+              passport:
+                $ref: '#/components/schemas/Passport'
+              access:
+                $ref: '#/components/schemas/Access'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                  succeed,
+                  failed,
+                  validation_error,
+                  internal_server_error,
+                  unauthorized,
+                  access_denied,
+                  resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    PubSubRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        subscription:
+          type: string
+        message:
+          type: object
+          additionalProperties: false
+          properties:
+            messageId:
+              type: string
+            message_id:
+              type: string
+            publishTime:
+              type: string
+            publish_time:
+              type: string
+            data:
+              type: string
+            attributes:
+              additionalProperties: true
 
   responses:
     Response:
@@ -149,7 +311,8 @@ paths:
 
   /user/status/get:
     post:
-      description: Get user's passport by statusToken or create a pending one if any. Not including userId is deprecated and will be removed
+      deprecated: true
+      description: Get user's passport for the organization by statusToken or create a pending one if any. Not including userId is deprecated and will be removed
       requestBody:
         content:
           application/json:
@@ -159,6 +322,8 @@ paths:
                   type: string
                   nullable: true
                 userId:
+                  type: string
+                organizationId:
                   type: string
                 dependantIds:
                   type: array
@@ -178,8 +343,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfPassport'
+
   /user/status/update:
     post:
+      deprecated: true
       description: Solve badge status based on user's questionnaire answers. Not including userId is deprecated and will be removed
       requestBody:
         content:
@@ -192,6 +359,8 @@ paths:
                   type: object
                   additionalProperties: true
                 userId:
+                  type: string
+                questionnaireId:
                   type: string
                 dependantIds:
                   type: array
@@ -213,6 +382,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfPassport'
+
   /user/testNotify:
     post:
       description: Send a notification to the user with the given userId. Used to check connectivity
@@ -241,11 +411,11 @@ paths:
         '404':
           description: No Registrations with pushToken !== null exist for that user.
 
-  /passport/admin/api/v1/temperature:
+  /passport/api/v1/attestation:
     post:
-      description: Create record temperature and update user passport
       security:
         - bearerAuthJWT: []
+      description: Update a list of users' statuses based on an attestation
       requestBody:
         content:
           application/json:
@@ -253,20 +423,122 @@ paths:
               properties:
                 organizationId:
                   type: string
-                temperature: 
-                  type: number
-                userId:
-                  type: string
+                answers:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Answer'
+                userIds:
+                  type: array
+                  items:
+                    type: string
               required:
                 - organizationId
-                - temperature
-                - userId
-              additionalProperties: false
+                - answers
+                - userIds
 
       responses:
         '200':
-          description: Temperature record created successfully.
+          description: Passports updated
+
+  /passport/api/v1/attestation/{attestationId}:
+    get:
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: attestationId
+          schema:
+            type: string
+          required: true
+      description: Get attestation by ID
+
+      responses:
+        '200':
+          description: Attestation available
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponseOfTemperature'
+                $ref: '#/components/schemas/Attestation'
+
+  /passport/api/v1/passport:
+    get:
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      description: Get all active passports for the authenticated user and their dependants
+
+      responses:
+        '200':
+          description: Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfPassport'
+
+  /passport/api/v1/admin/passport:
+    get:
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: userIdId
+          schema:
+            type: string
+          required: true
+      description: Get active passport and access for the specified user, as well as info about that user
+
+      responses:
+        '200':
+          description: Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/V1ResponseOfPassport'
+  /passport/api/v1/pubsub/attestation:
+    post:
+      summary: update attestation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /passport/api/v1/pubsub/temperature:
+    post:
+      summary: update temperature
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /passport/api/v1/pubsub/pcr-test:
+    post:
+      summary: update pcr test result
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested

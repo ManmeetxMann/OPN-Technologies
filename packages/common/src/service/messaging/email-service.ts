@@ -41,7 +41,7 @@ type EmailAttachment = {
   name: string
 }
 
-type EmailMessage = {
+export type EmailMessage = {
   to: EmailMessageParticipant[]
   templateId?: number
   textContent?: string
