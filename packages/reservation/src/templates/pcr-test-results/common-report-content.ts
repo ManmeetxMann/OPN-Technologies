@@ -148,10 +148,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
 
   const dataTestDetails = [
     ['Test', 'RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
-    [
-      'Equipment approved by \n Health Canada',
-      'Allplex 2019-nCoV Assay manufactured by Seegene, Inc.',
-    ],
+    ['Equipment approved by \n Health Canada', params.labAssay],
   ]
 
   const data = dataPersonal.concat(dataAppointment, dataTestDetails)
