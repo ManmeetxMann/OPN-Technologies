@@ -16,9 +16,8 @@ async function main() {
   try {
     console.log('Starting Count')
     let after = null
-    const baseQuery = database
-      .collection('users')
-      //.where('organizationIds', 'array-contains', 'PPTEST')
+    const baseQuery = database.collection('users')
+    //.where('organizationIds', 'array-contains', 'PPTEST')
     const queryWithLimit = baseQuery.orderBy(firestore.FieldPath.documentId()).limit(limit)
     let pageIndex = 0
     while (true) {
@@ -30,16 +29,16 @@ async function main() {
       after = page[page.length - 1]
       totalCount += page.length
       pageIndex += 1
-      
+
       for (const user of page) {
         const userData = user.data()
-        if(!userData.hasOwnProperty('organizationIds')){
+        if (!userData.hasOwnProperty('organizationIds')) {
           console.log(`User Id: ${user.id} has no ORGS`)
           continue
         }
         //console.log(userData)
         const totalNumberOfOrgs = userData.organizationIds.length
-        if(totalNumberOfOrgs > 1){
+        if (totalNumberOfOrgs > 1) {
           numberOfUsersWithOrgsGtThan1 += 1
           console.log(`User Id: ${user.id} has ${totalNumberOfOrgs} ORGS`)
         }
