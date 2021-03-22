@@ -22,6 +22,7 @@ const database = firestore()
  * Reads all organizations locations
  */
 async function getSubCollections(locations: string) {
+  let offset = 0
   let hasMore = true
   const results = []
   while (hasMore) {
@@ -29,10 +30,10 @@ async function getSubCollections(locations: string) {
       .collection('organizations')
       .doc(locations)
       .collection('locations')
+      .offset(offset)
       .limit(limit)
       .get()
 
-    let offset = 0
     offset += subCollections.docs.length
     hasMore = !subCollections.empty
     // hasMore = false
@@ -64,7 +65,7 @@ function getMostUsedQuestionnaire(questionnaireIdMap) {
 
 /**
  * For each organization migrates questionnaireId for location to parent
- * 
+ *
  * TODO:
  * 1. How to handle if not location and questionnaireId
  */
@@ -119,9 +120,9 @@ async function main() {
 }
 
 // Maximum batch size to query for
-let successCount = 0
-let failureCount = 0
-let totalCount = 0
+// const successCount = 0
+// const failureCount = 0
+// const totalCount = 0
 const limit = 50
 
 main().then(() => console.log('Script Complete \n'))

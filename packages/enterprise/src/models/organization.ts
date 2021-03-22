@@ -28,6 +28,7 @@ export type Organization = {
   enableTemperatureCheck: boolean
   legacyMode: boolean
   enableTesting: boolean
+  questionnaireId: string
 }
 
 export type OrganizationListDTO = {
@@ -88,7 +89,6 @@ export type OrganizationLocation = {
 export type OrganizationConfiguration = {
   attestationRequired: boolean
   allowsSelfCheckInOut: boolean
-  questionnaireId?: string
 }
 
 export type OrganizationKeySequence = {
@@ -149,5 +149,6 @@ export const organizationDTOResponse = (organization: Organization): Omit<Organi
     notificationIconStop: organization.notificationIconStop,
     notificationFormatCaution: organization.notificationFormatCaution,
     notificationFormatStop: organization.notificationFormatStop,
+    questionnaireId: organization.questionnaireId,
   }
 }
