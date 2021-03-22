@@ -106,3 +106,6 @@ export const dateToDateTime = (date: string): firestore.Timestamp => {
       .toDate(),
   )
 }
+
+
+export const isSameOrBefore = (date: string): boolean => moment(moment().tz(timeZone).format('YYYY-MM-DD')).isSameOrBefore(formatStringDateRFC822Local(date))

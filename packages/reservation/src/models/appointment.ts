@@ -1,9 +1,8 @@
 import {firestore} from 'firebase-admin'
-import {formatStringDateRFC822Local} from '../utils/datetime.helper'
+import {formatStringDateRFC822Local, isSameOrBefore} from '../utils/datetime.helper'
 
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
-import moment from 'moment-timezone'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
@@ -398,7 +397,7 @@ export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): Use
   id: appointment.id,
   QRCode: appointment.barCode,
   showQrCode:
-    moment(new Date()).isBefore(formatStringDateRFC822Local(appointment.dateOfAppointment)) &&
+    isSameOrBefore(appointment.dateOfAppointment) &&
     appointment.appointmentStatus !== AppointmentStatus.Canceled,
   firstName: appointment.firstName,
   lastName: appointment.lastName,
