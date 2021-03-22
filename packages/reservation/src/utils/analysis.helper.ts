@@ -40,7 +40,7 @@ const groups = [
   {
     name: 'Antigen',
     description: 'lorem',
-    columns: ['profileR1', 'profileR2', 'profileR3', 'IgA', 'IgG', 'IgM'],
+    columns: ['IgAResult', 'IgGResult', 'IgMResult', 'IgA', 'IgG', 'IgM'],
   },
   {
     name: 'other',
@@ -87,9 +87,9 @@ const channelLabelMapping = new Map([
   ['SGene', 'N gene'],
   ['MS2', 'MS2'],
 
-  ['profileR1', 'profileR1'],
-  ['profileR2', 'profileR2'],
-  ['profileR3', 'profileR3'],
+  ['IgAResult', 'IgAResult'],
+  ['IgGResult', 'IgGResult'],
+  ['IgMResult', 'IgMResult'],
   ['IgA', 'IgA'],
   ['IgG', 'IgG'],
   ['IgM', 'IgM'],

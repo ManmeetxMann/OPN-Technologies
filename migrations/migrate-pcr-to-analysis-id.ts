@@ -120,7 +120,7 @@ async function updatePcrTestResult(
         },
         //resultSpecs: firestore.FieldValue.delete(),
         templateId: 'template1',
-        labId: 'k0qbPDqTwqitKUwlGHye',
+        labId: 'H3O3Fa1lQj8q5C8LLRzt',
         timestamps: {
           migrations: {
             specsToMetaAnalysis: firestore.FieldValue.serverTimestamp(),

@@ -4,7 +4,7 @@ import {sortBy} from 'lodash'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
-import {getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
+import {getIsClinicUser, getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {
   AppointmentStatus,
@@ -50,6 +50,7 @@ class AdminScanHistoryController implements IControllerBase {
       const {barCode, type} = req.body as PostAdminScanHistoryRequest
       const adminId = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
 
       let appointment = await this.appointmentService.getAppointmentByBarCode(barCode)
 
@@ -69,7 +70,7 @@ class AdminScanHistoryController implements IControllerBase {
 
       res.json(
         actionSucceed({
-          ...appointmentUiDTOResponse(appointment, isLabUser),
+          ...appointmentUiDTOResponse(appointment, isLabUser, isClinicUser),
         }),
       )
     } catch (error) {
@@ -95,12 +96,13 @@ class AdminScanHistoryController implements IControllerBase {
       const {type} = req.query as GetAdminScanHistoryRequest
       const adminId = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
 
       const appointments = await this.appointmentService.getAppointmentByHistory(adminId, type)
       res.json(
         actionSucceed(
           sortBy(appointments, ['deadline']).map((appointment) => ({
-            ...appointmentUiDTOResponse(appointment, isLabUser),
+            ...appointmentUiDTOResponse(appointment, isLabUser, isClinicUser),
           })),
         ),
       )

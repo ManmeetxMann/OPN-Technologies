@@ -70,7 +70,7 @@ async function addLabId(snapshot: firestore.QueryDocumentSnapshot<firestore.Docu
   const updateData = async (record) => {
     const data = {}
     if (!record.data().labId) {
-      data['labId'] = 'k0qbPDqTwqitKUwlGHye'
+      data['labId'] = 'H3O3Fa1lQj8q5C8LLRzt'
     }
     if (!isEmpty(data)) {
       await record.ref.set(

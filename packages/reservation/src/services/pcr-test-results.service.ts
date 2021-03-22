@@ -66,6 +66,7 @@ import {
   Filter,
   ResultTypes,
   TestTypes,
+  filteredAppointmentStatus,
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
@@ -275,6 +276,7 @@ export class PCRTestResultsService {
       labId,
     }: PcrTestResultsListRequest,
     isLabUser: boolean,
+    isClinicUser: boolean,
   ): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
     let pcrResults: PCRTestResultDBModel[] = []
@@ -435,7 +437,7 @@ export class PCRTestResultsService {
       return {
         id: pcr.id,
         barCode: pcr.barCode,
-        result: getResultValue(pcr.result, !!pcr.resultSpecs?.notify),
+        result: getResultValue(pcr.result, !!pcr.resultMetaData?.notify),
         previousResult: pcr.previousResult,
         dateTime: formatDateRFC822Local(pcr.dateTime),
         deadline: formatDateRFC822Local(pcr.deadline),
@@ -445,7 +447,11 @@ export class PCRTestResultsService {
         testType: pcr.testType ?? 'PCR',
         organizationId: organization?.id,
         organizationName: organization?.name,
-        appointmentStatus: pcr.appointmentStatus,
+        appointmentStatus: filteredAppointmentStatus(
+          pcr.appointmentStatus,
+          isLabUser,
+          isClinicUser,
+        ),
         labName: lab?.name,
       }
     })
@@ -1191,12 +1197,13 @@ export class PCRTestResultsService {
   async getPCRResultsStats(
     queryParams: PcrTestResultsListRequest,
     isLabUser: boolean,
+    isClinicUser: boolean,
   ): Promise<{
     total: number
     pcrResultStatsByOrgIdArr: Filter[]
     pcrResultStatsByResultArr: Filter[]
   }> {
-    const pcrTestResults = await this.getPCRResults(queryParams, isLabUser)
+    const pcrTestResults = await this.getPCRResults(queryParams, isLabUser, isClinicUser)
 
     const pcrResultStatsByResult: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
     const pcrResultStatsByOrgId: Record<string, number> = {}
