@@ -50,6 +50,7 @@ import {
 } from '../utils/base64-converter'
 import {Enterprise} from '../adapter/enterprise'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {UserAddressService} from '../../../enterprise/src/services/user-address-service'
 import {LabService} from './lab.service'
 
 //Models
@@ -70,6 +71,7 @@ import {SyncProgressRepository} from '../respository/sync-progress.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
 import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
+import {AppointmentToTestTypeRepository} from '../respository/appointment-to-test-type-association.repository'
 import {AppointmentTypes} from '../models/appointment-types'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
@@ -82,7 +84,9 @@ export class AppoinmentService {
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
   private syncProgressRepository = new SyncProgressRepository(this.dataStore)
+  private appointmentToTestTypeRepository = new AppointmentToTestTypeRepository(this.dataStore)
   private organizationService = new OrganizationService()
+  private userAddressService = new UserAddressService()
   private labService = new LabService()
   private enterpriseAdapter = new Enterprise()
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
@@ -440,21 +444,30 @@ export class AppoinmentService {
     },
   ): Promise<AppointmentDBModel> {
     const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
-    const saved = await this.updateAppointmentDB(
-      id,
-      data,
-      AppointmentActivityAction.UpdateFromAcuity,
-    )
+
+    const [saved] = await Promise.all([
+      this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity),
+      // create or update user related collections
+      this.updatedUserRelatedData(data),
+    ])
+
     this.postPubsub(saved, 'updated')
     return saved
   }
 
+  async updatedUserRelatedData(data: Omit<AppointmentDBModel, 'id'>): Promise<void> {
+    // handle user address update
+    if (data.userId) {
+      await this.userAddressService.InsertIfNotExists(data.userId, data.address)
+    }
+  }
+
   private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
-    const rapidAntigenTypeIDs = [
-      Config.getInt('ACUITY_APPOINTMENT_TYPE_MULTIPLEX'),
-      Config.getInt('ACUITY_APPOINTMENT_TYPE_ID'),
-    ]
-    return rapidAntigenTypeIDs.includes(appointmentTypeID) ? TestTypes.RapidAntigen : TestTypes.PCR
+    const appointmentToTestType = await this.appointmentToTestTypeRepository.findWhereEqual(
+      'appointmentType',
+      appointmentTypeID,
+    )
+    return appointmentToTestType?.length ? appointmentToTestType[0].testType : TestTypes.PCR
   }
 
   private async getDateFields(acuityAppointment: AppointmentAcuityResponse) {
@@ -506,6 +519,13 @@ export class AppoinmentService {
               firstName: acuityAppointment.firstName,
               lastName: acuityAppointment.lastName,
               organizationId: acuityAppointment.organizationId || '',
+              address: acuityAppointment.address,
+              dateOfBirth: acuityAppointment.dateOfBirth,
+              agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
+              shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
+              readTermsAndConditions: acuityAppointment.readTermsAndConditions,
+              receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
+              receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
             })
           ).data.id
         : null

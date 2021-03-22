@@ -3,7 +3,6 @@
  */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
-import {getSortOrderByResult} from '../packages/reservation/src/models/pcr-test-results'
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
@@ -68,15 +67,14 @@ async function updateTestResults(): Promise<Result[]> {
 
 async function addField(snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
   try {
-    const result = snapshot.data().result
-    const sortOrder = getSortOrderByResult(result)
-    if (!sortOrder) {
-      return Promise.reject(
-        `resultId: ${snapshot.id} has Result: ${result}. No sortOrder idenified.`,
-      )
-    }
     return snapshot.ref.update({
-      sortOrder: sortOrder,
+      templateId: 'template1',
+      labId: 'H3O3Fa1lQj8q5C8LLRzt',
+      timestamps: {
+        migrations: {
+          setLabId: firestore.FieldValue.serverTimestamp(),
+        },
+      },
     })
   } catch (error) {
     console.warn(error)

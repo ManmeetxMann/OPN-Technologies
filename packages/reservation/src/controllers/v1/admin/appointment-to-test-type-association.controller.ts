@@ -19,6 +19,11 @@ class AppointmentToTestTypeAssociationController implements IControllerBase {
     const opnAdmin = authorizationMiddleware([RequiredUserPermission.OPNAdmin])
 
     this.router.post(`${this.path}/appointment-type-to-test-type-assoc`, opnAdmin, this.associate)
+    this.router.get(
+      `${this.path}/appointment-type-to-test-type-assoc`,
+      opnAdmin,
+      this.getAssociationList,
+    )
   }
 
   /**
@@ -30,6 +35,16 @@ class AppointmentToTestTypeAssociationController implements IControllerBase {
       const {id} = await this.appointmentToTestTypeAssocService.save({appointmentType, testType})
 
       res.json(actionSucceed({id}))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getAssociationList = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const associations = await this.appointmentToTestTypeAssocService.getAll()
+
+      res.json(actionSucceed(associations))
     } catch (error) {
       next(error)
     }
