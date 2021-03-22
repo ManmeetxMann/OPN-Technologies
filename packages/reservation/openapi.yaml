@@ -597,9 +597,9 @@ components:
                         - SGene
                         - NGene
                         - MS2
-                        - profileR1
-                        - profileR2
-                        - profileR3
+                        - IgAResult
+                        - IgGResult
+                        - IgMResult
                         - IgA
                         - IgG
                         - IgM
