@@ -81,6 +81,7 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 import {PassportStatuses} from '../../../passport/src/models/passport'
 
 import {BulkTestResultRequest} from '../models/test-results'
+import {AntibodyAllPDFContent} from '../templates/antibody-all'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -996,7 +997,18 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     pcrResultPDFType: PCRResultPDFType,
   ): Promise<void> {
-    const pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
+    let pdfContent = ''
+
+    switch (resultData.testType) {
+      case 'Antibody_All':
+        pdfContent = await AntibodyAllPDFContent(resultData, pcrResultPDFType)
+        break
+      //TODO case  Antibody_IgM
+      default:
+        pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
+        break
+    }
+
     const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
     await this.emailService.send({
