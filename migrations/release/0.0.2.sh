@@ -14,4 +14,3 @@ ts-node ./migrations/add-questionnaireid-to-organization
 ts-node ./migrations/appointments-add-lab-id
 ts-node ./migrations/test-runs-add-lab-id
 ts-node ./migrations/transport-runs-add-lab-id
-ts-node ./migrations/pcr-add-appointment-status

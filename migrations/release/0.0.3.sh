@@ -1,2 +1,3 @@
 #!/bin/bash
-ts-node ./migrations/relocate-questionnaireId-organization.ts
+ts-node ./migrations/pcr-add-appointment-status
+ts-node ./migrations/pcr-add-lab-id

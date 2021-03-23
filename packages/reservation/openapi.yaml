@@ -597,9 +597,9 @@ components:
                         - SGene
                         - NGene
                         - MS2
-                        - profileR1
-                        - profileR2
-                        - profileR3
+                        - IgAResult
+                        - IgGResult
+                        - IgMResult
                         - IgA
                         - IgG
                         - IgM
@@ -977,6 +977,41 @@ components:
               id:
                 type: number
               name:
+                type: string
+        status:
+           type: object
+           additionalProperties: false
+           properties:
+               code:
+                   type: string
+                   enum:
+                     - succeed
+                     - failed
+                     - validation_error
+                     - internal_server_error
+                     - unauthorized
+                     - access_denied
+                     - resource_not_found
+               message:
+                   nullable: true
+                   type: string
+    AssociationsResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              appointmentType:
+                type: number
+              appointmentTypeName:
+                type: string
+              testType:
                 type: string
         status:
            type: object
@@ -3563,3 +3598,16 @@ paths:
                         type: string
                   page:
                     type: number
+    get:
+      description: Get all Associations
+      security:
+        - bearerAuthJWT: [ ]
+      tags:
+          - Associations
+      responses:
+          '200':
+            description: Successfully returned Associations
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AssociationsResponse'

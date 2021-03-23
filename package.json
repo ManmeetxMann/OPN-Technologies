@@ -3,8 +3,8 @@
 	"private": true,
 	"scripts": {
 		"clean-all": "lerna clean --yes && lerna run clean",
-		"lint-all": "eslint 'packages/**/**/*.ts' 'migrations/**/*.ts' --ignore-path .gitignore --max-warnings=0",
-		"lint-fix-all": "eslint 'packages/**/**/*.ts' 'migrations/**/*.ts' --ignore-path .gitignore --max-warnings=0 --fix",
+		"lint-all": "eslint 'packages/**/**/*.ts' 'migrations/**/*.ts' 'tools/**/*.ts' --ignore-path .gitignore --max-warnings=0",
+		"lint-fix-all": "eslint 'packages/**/**/*.ts' 'migrations/**/*.ts' 'tools/**/*.ts' --ignore-path .gitignore --max-warnings=0 --fix",
 		"test-all": "lerna run test --stream",
 		"test:coverage-all": "lerna run test:coverage --stream",
 		"install-all": "lerna bootstrap --hoist",

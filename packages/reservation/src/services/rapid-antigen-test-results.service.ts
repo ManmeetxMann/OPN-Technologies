@@ -77,7 +77,10 @@ export class RapidAntigenTestResultsService {
     )
 
     //Send Push Notification
-    const actionsWithNotifyEnabled = [RapidAntigenResultTypes.SendPositive]
+    const actionsWithNotifyEnabled = [
+      RapidAntigenResultTypes.SendPositive,
+      RapidAntigenResultTypes.SendNegative,
+    ]
     if (notify && actionsWithNotifyEnabled.includes(action)) {
       this.pubSub.publish({
         appointmentID: appointmentId,
