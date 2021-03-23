@@ -9,6 +9,7 @@ on:
       - ".github/actions/**"
     branches: 
       - master
+      - ci_cd
     tags:
       - infra-dev-access-*
       - preprod-access-*
