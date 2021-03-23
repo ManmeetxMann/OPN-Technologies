@@ -54,14 +54,8 @@ class UserController implements IControllerBase {
         registrationId,
         firstName,
         lastName,
-        dateOfBirth,
         base64Photo,
         groupId,
-        agreeToConductFHHealthAssessment,
-        shareTestResultWithEmployer,
-        readTermsAndConditions,
-        receiveNotificationsFromGov,
-        receiveResultsViaEmail,
       } = body
       const organization = await this.organizationService.findOneById(organizationId)
       const group = await this.organizationService.getGroup(organization.id, groupId)
@@ -88,15 +82,9 @@ class UserController implements IControllerBase {
         registrationId: registrationId ?? null,
         firstName,
         lastName,
-        dateOfBirth,
         base64Photo,
         organizationIds: [organization.id],
         delegates: [],
-        agreeToConductFHHealthAssessment,
-        shareTestResultWithEmployer,
-        readTermsAndConditions,
-        receiveNotificationsFromGov,
-        receiveResultsViaEmail,
       })
 
       // Add user to group
