@@ -89,6 +89,9 @@ export class AppoinmentService {
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
 
   private postPubsub(appointment: AppointmentDBModel, action: string): void {
+    if(Config.get('APPOINTMENTS_PUB_SUB_NOTIFY')!=='enabled'){
+      return
+    }
     this.pubsub.publish(
       {
         id: appointment.id,
