@@ -4,13 +4,12 @@ import {Handler, Router} from 'express'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {OPNPubSub} from '../../../../common/src/service/google/pub_sub'
 
-import {PassportStatus, PassportStatuses, Passport} from '../../models/passport'
+import {PassportStatuses, Passport} from '../../models/passport'
 import {PassportService} from '../../services/passport-service'
 import {AttestationService} from '../../services/attestation-service'
 
 import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
 
-import {TemperatureStatuses} from '../../../../reservation/src/models/temperature'
 import {ResultTypes} from '../../../../reservation/src/models/appointment'
 import {AlertService} from '../../services/alert-service'
 
@@ -23,11 +22,6 @@ const passportStatusByPCR = {
   [ResultTypes.Indeterminate]: PassportStatuses.Stop,
   [ResultTypes.Negative]: PassportStatuses.Proceed,
   [ResultTypes.Pending]: null,
-}
-
-const passportStatusByTemp = {
-  [TemperatureStatuses.Proceed]: PassportStatuses.Proceed,
-  [TemperatureStatuses.Stop]: PassportStatuses.Stop,
 }
 
 class RecommendationController implements IControllerBase {
