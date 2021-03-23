@@ -107,6 +107,9 @@ export class PCRTestResultsService {
   private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
 
   private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
+    if(Config.get('TEST_RESULT_PUB_SUB_NOTIFY')!=='enabled'){
+      return
+    }
     this.pubsub.publish(
       {
         id: testResult.id,
