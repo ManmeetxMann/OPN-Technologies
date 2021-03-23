@@ -36,6 +36,7 @@ export enum PCRResultPDFType {
   ConfirmedNegative = 'ConfirmedNegative',
   Negative = 'Negative',
   Positive = 'Positive',
+  Intermediate = 'Intermediate',
   PresumptivePositive = 'PresumptivePositive',
 }
 
