@@ -84,6 +84,7 @@ export enum ResultReportStatus {
 export type PCRTestResultConfirmRequest = {
   barCode: string
   action: PCRResultActionsForConfirmation
+  labId?: string
 }
 
 export type PCRSendResultDTO = {
@@ -383,9 +384,9 @@ export enum SpecLabel {
   NGene = 'NGene',
   SGene = 'SGene',
   MS2 = 'MS2',
-  profileR1 = 'profileR1',
-  profileR2 = 'profileR2',
-  profileR3 = 'profileR3',
+  IgAResult = 'IgAResult',
+  IgGResult = 'IgGResult',
+  IgMResult = 'IgMResult',
   IgA = 'IgA',
   IgG = 'IgG',
   IgM = 'IgM',

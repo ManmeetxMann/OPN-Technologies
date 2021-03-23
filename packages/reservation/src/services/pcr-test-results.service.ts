@@ -83,6 +83,7 @@ import {PassportStatuses} from '../../../passport/src/models/passport'
 
 import {BulkTestResultRequest} from '../models/test-results'
 import {AntibodyAllPDFContent} from '../templates/antibody-all'
+import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -107,6 +108,10 @@ export class PCRTestResultsService {
   private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
 
   private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
+    if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
+      LogInfo('PCRTestResultsService:postPubsub', 'PubSubDisabled', {})
+      return
+    }
     this.pubsub.publish(
       {
         id: testResult.id,
@@ -126,6 +131,14 @@ export class PCRTestResultsService {
     const pcrResultHistory = await this.getPCRResultsByBarCode(data.barCode)
     const latestPCRResult = pcrResultHistory[0]
     const appointment = await this.appointmentService.getAppointmentByBarCode(data.barCode)
+    if (latestPCRResult.labId !== data.labId) {
+      LogWarning('PCRTestResultsService:confirmPCRResults', 'IncorrectLabId', {
+        labIdInDB: latestPCRResult.labId,
+        labIdInRequest: data.labId,
+      })
+      throw new BadRequestException('Not Allowed to Confirm results')
+    }
+
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
@@ -1004,12 +1017,13 @@ export class PCRTestResultsService {
     pcrResultPDFType: PCRResultPDFType,
   ): Promise<void> {
     let pdfContent = ''
-
     switch (resultData.testType) {
       case 'Antibody_All':
         pdfContent = await AntibodyAllPDFContent(resultData, pcrResultPDFType)
         break
-      //TODO case  Antibody_IgM
+      case 'Antibody_IgM':
+        pdfContent = await AntibodyIgmPDFContent(resultData, pcrResultPDFType)
+        break
       default:
         pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
         break

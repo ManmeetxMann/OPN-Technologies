@@ -1987,6 +1987,8 @@ paths:
                     - Indeterminate
                     - MarkAsPositive
                     - MarkAsNegative
+                labId:
+                  type: string
               required:
                 - barCode
                 - action
@@ -2060,6 +2062,10 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: labId
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully Return
@@ -2200,6 +2206,8 @@ paths:
                   type: array
                   items:
                     type: string
+                labId:
+                  type: string
               required:
                 - barcode
       responses:

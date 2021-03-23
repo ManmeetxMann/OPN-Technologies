@@ -166,7 +166,7 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
         body: [
           [
             {text: 'Type', bold: true},
-            {text: 'Antibody IgA, IgG, IgM Test', bold: true, colSpan: 4},
+            {text: 'Antibody IgM Test', bold: true, colSpan: 4},
           ],
           [
             {text: 'Antibody Specimen Type', bold: true},
@@ -187,18 +187,25 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
     {
       layout: 'mainTable',
       table: {
-        headerRows: 3,
+        headerRows: 1,
         widths: [150, 30, 40, 60, 90],
         body: [
           [
-            {text: 'Antibody Cut-off Index Values', bold: true, rowSpan: 3},
-            {text: 'IgA'},
-            {text: resultAnalysis(params.resultAnalysis, 'IgA')?.value},
+            {text: 'Antibody Cut-off Index Values', bold: true, rowSpan: 1},
+            {text: 'IgM', alignment: 'center', margin: [0, 20, 0, 0]},
             {
-              text: resultAnalysis(params.resultAnalysis, 'IgAResult')?.value,
+              text: resultAnalysis(params.resultAnalysis, 'IgM')?.value,
+              alignment: 'center',
+              margin: [0, 20, 0, 0],
+            },
+            {
+              text: resultAnalysis(params.resultAnalysis, 'IgMResult')?.value,
               fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'IgAResult')?.value as ResultTypes,
+                resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as ResultTypes,
               ),
+              color: '#FFF',
+              alignment: 'center',
+              margin: [0, 20, 0, 0],
             },
             {
               text:
@@ -206,29 +213,7 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
                 '0.8 - < 1.0 = Indeterminate \n' +
                 '≥ 1.0 = Positive\n' +
                 '< 0.8 = Negative',
-              rowSpan: 3,
-            },
-          ],
-          [
-            {},
-            {text: 'IgG'},
-            {text: resultAnalysis(params.resultAnalysis, 'IgG')?.value},
-            {
-              text: resultAnalysis(params.resultAnalysis, 'IgGResult')?.value,
-              fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as ResultTypes,
-              ),
-            },
-          ],
-          [
-            {},
-            {text: 'IgM'},
-            {text: resultAnalysis(params.resultAnalysis, 'IgM')?.value},
-            {
-              text: resultAnalysis(params.resultAnalysis, 'IgMResult')?.value,
-              fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as ResultTypes,
-              ),
+              rowSpan: 1,
             },
           ],
         ],
