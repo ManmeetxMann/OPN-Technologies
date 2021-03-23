@@ -108,6 +108,7 @@ export class PCRTestResultsService {
 
   private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
     if(Config.get('TEST_RESULT_PUB_SUB_NOTIFY')!=='enabled'){
+      LogInfo('PCRTestResultsService:postPubsub', 'PubSubDisabled', {})
       return
     }
     this.pubsub.publish(

@@ -90,6 +90,7 @@ export class AppoinmentService {
 
   private postPubsub(appointment: AppointmentDBModel, action: string): void {
     if(Config.get('APPOINTMENTS_PUB_SUB_NOTIFY')!=='enabled'){
+      LogInfo('AppoinmentService:postPubsub', 'PubSubDisabled', {})
       return
     }
     this.pubsub.publish(
