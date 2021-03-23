@@ -63,7 +63,7 @@ describe('PCR TestResultsController', () => {
                     'label': 'IgMResult',
                     'value': '6',
                   }],
-                'resultDate': '2021-03-05',
+                'resultDate': todaysDate,
                 'sendUpdatedResults': true,
               },
           )
