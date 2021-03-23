@@ -84,6 +84,7 @@ export enum ResultReportStatus {
 export type PCRTestResultConfirmRequest = {
   barCode: string
   action: PCRResultActionsForConfirmation
+  labId?: string
 }
 
 export type PCRSendResultDTO = {

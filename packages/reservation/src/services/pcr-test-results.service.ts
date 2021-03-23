@@ -130,6 +130,14 @@ export class PCRTestResultsService {
     const pcrResultHistory = await this.getPCRResultsByBarCode(data.barCode)
     const latestPCRResult = pcrResultHistory[0]
     const appointment = await this.appointmentService.getAppointmentByBarCode(data.barCode)
+    if (latestPCRResult.labId !== data.labId) {
+      LogWarning('PCRTestResultsService:confirmPCRResults', 'IncorrectLabId', {
+        labIdInDB: latestPCRResult.labId,
+        labIdInRequest: data.labId,
+      })
+      throw new BadRequestException('Not Allowed to Confirm results')
+    }
+
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant

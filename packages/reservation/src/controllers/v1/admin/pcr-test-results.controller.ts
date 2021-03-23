@@ -192,12 +192,13 @@ class AdminPCRTestResultController implements IControllerBase {
   confirmPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
-      const {barCode, action} = req.body as PCRTestResultConfirmRequest
+      const {barCode, action, labId} = req.body as PCRTestResultConfirmRequest
 
       const pcrResultRecordedId = await this.pcrTestResultsService.confirmPCRResults(
         {
           barCode,
           action,
+          labId,
         },
         adminId,
       )
