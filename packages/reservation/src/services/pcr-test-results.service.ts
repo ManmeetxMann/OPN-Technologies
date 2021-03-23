@@ -82,6 +82,7 @@ import {PassportStatuses} from '../../../passport/src/models/passport'
 
 import {BulkTestResultRequest} from '../models/test-results'
 import {AntibodyAllPDFContent} from '../templates/antibody-all'
+import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -998,12 +999,13 @@ export class PCRTestResultsService {
     pcrResultPDFType: PCRResultPDFType,
   ): Promise<void> {
     let pdfContent = ''
-
     switch (resultData.testType) {
       case 'Antibody_All':
         pdfContent = await AntibodyAllPDFContent(resultData, pcrResultPDFType)
         break
-      //TODO case  Antibody_IgM
+      case 'Antibody_IgM':
+        pdfContent = await AntibodyIgmPDFContent(resultData, pcrResultPDFType)
+        break
       default:
         pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
         break
