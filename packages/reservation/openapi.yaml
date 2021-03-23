@@ -2126,6 +2126,8 @@ paths:
                   type: array
                   items:
                     type: string
+                labId:
+                  type: string
               required:
                 - barcode
       responses:
