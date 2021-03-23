@@ -7,15 +7,19 @@ import {UserService} from '../../../../../common/src/service/user/user-service'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 
 import {PassportService} from '../../../services/passport-service'
+import {AlertService} from '../../../services/alert-service'
+import {AttestationService} from '../../../services/attestation-service'
 
-import {PassportStatuses, PassportStatus} from '../../../models/passport'
+import {Passport, PassportStatuses, PassportStatus} from '../../../models/passport'
 import {BadRequestException} from 'packages/common/src/exceptions/bad-request-exception'
 
 class PassportController implements IControllerBase {
   public path = '/passport/api/v1/internal'
   public router = express.Router()
   private passportService = new PassportService()
+  private alertService = new AlertService()
   private userService = new UserService()
+  private attService = new AttestationService()
 
   constructor() {
     this.initRoutes()
@@ -25,12 +29,21 @@ class PassportController implements IControllerBase {
     this.router.post(this.path + '/passport', this.update)
   }
 
+  private async alertIfNeeded(passport: Passport, attestationId?: string | null): Promise<void> {
+    const status = passport.status
+    if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(status as PassportStatuses)) {
+      const att = attestationId ? await this.attService.getByAttestationId(attestationId) : null
+      this.alertService.sendAlert(passport, att, passport.organizationId, null)
+    }
+  }
+
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {userId, organizationId, status} = req.body as {
+      const {userId, organizationId, status, attestationId} = req.body as {
         userId: string
         organizationId: string
         status: string
+        attestationId: string
       }
       const user = await this.userService.findOneSilently(userId)
 
@@ -47,7 +60,14 @@ class PassportController implements IControllerBase {
         ].includes(status as PassportStatuses)
       )
         throw new BadRequestException(`${status} is not a valid status`)
-      await this.passportService.create(status as PassportStatus, userId, [], false, organizationId)
+      const passport = await this.passportService.create(
+        status as PassportStatus,
+        userId,
+        [],
+        false,
+        organizationId,
+      )
+      this.alertIfNeeded(passport, attestationId)
       res.json(actionSucceed())
     } catch (error) {
       next(error)

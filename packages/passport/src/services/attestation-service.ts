@@ -67,7 +67,7 @@ export class AttestationService {
               att.status as PassportStatuses,
               org.enableTemperatureCheck,
             )
-            return this.adapter.createPassport(userId, att.organizationId, passportStatus)
+            return this.adapter.createPassport(userId, att.organizationId, passportStatus, att.id)
           }),
         )
         return att
