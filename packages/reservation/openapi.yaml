@@ -1907,6 +1907,8 @@ paths:
                     - Indeterminate
                     - MarkAsPositive
                     - MarkAsNegative
+                labId:
+                  type: string
               required:
                 - barCode
                 - action
