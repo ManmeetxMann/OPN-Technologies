@@ -4,7 +4,7 @@ import {BadRequestException} from 'src/exceptions/bad-request-exception'
 
 const APIURL = Config.get('DOMAIN_PASSPORT')
 
-export class PassportAdapter {
+export default class PassportAdapter {
   async createPassport(userId: string, organizationId: string, status: string): Promise<void> {
     const url = `${APIURL}/passports/internal/api/v1/passport`
     const body = JSON.stringify({
