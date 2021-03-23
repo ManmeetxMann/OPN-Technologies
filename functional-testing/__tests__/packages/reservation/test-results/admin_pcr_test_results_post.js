@@ -33,9 +33,9 @@ describe('PCR TestResultsController', () => {
               {
                 'action': 'SendThisResult',
                 'autoResult': 'Negative',
-                'barCode': 'TEST10000548',
+                'barCode': 'TEST10000000055',
                 // 'comment': 'AWESOM',
-                'labId': 'maZSoqhfaidWg2ysjZHh',
+                'labId': 'CINkotCuHoZSLDN9wYjQ',
                 'templateId': 'template2',
                 'notify': true,
                 'resultAnalysis': [
@@ -63,7 +63,7 @@ describe('PCR TestResultsController', () => {
                     'label': 'profileR3',
                     'value': '6',
                   }],
-                'resultDate': todaysDate,
+                'resultDate': '2021-03-05',
                 'sendUpdatedResults': true,
               },
           )
