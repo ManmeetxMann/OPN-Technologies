@@ -195,9 +195,9 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
             {text: 'IgA'},
             {text: resultAnalysis(params.resultAnalysis, 'IgA')?.value},
             {
-              text: resultAnalysis(params.resultAnalysis, 'profileR1')?.value,
+              text: resultAnalysis(params.resultAnalysis, 'IgAResult')?.value,
               fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'profileR1')?.value as ResultTypes,
+                resultAnalysis(params.resultAnalysis, 'IgAResult')?.value as ResultTypes,
               ),
             },
             {
@@ -214,9 +214,9 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
             {text: 'IgG'},
             {text: resultAnalysis(params.resultAnalysis, 'IgG')?.value},
             {
-              text: resultAnalysis(params.resultAnalysis, 'profileR2')?.value,
+              text: resultAnalysis(params.resultAnalysis, 'IgGResult')?.value,
               fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'profileR2')?.value as ResultTypes,
+                resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as ResultTypes,
               ),
             },
           ],
@@ -225,9 +225,9 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
             {text: 'IgM'},
             {text: resultAnalysis(params.resultAnalysis, 'IgM')?.value},
             {
-              text: resultAnalysis(params.resultAnalysis, 'profileR3')?.value,
+              text: resultAnalysis(params.resultAnalysis, 'IgMResult')?.value,
               fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'profileR3')?.value as ResultTypes,
+                resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as ResultTypes,
               ),
             },
           ],

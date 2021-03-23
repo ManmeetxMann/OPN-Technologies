@@ -52,15 +52,15 @@ describe('PCR TestResultsController', () => {
                     'value': '3',
                   },
                   {
-                    'label': 'profileR1',
+                    'label': 'IgAResult',
                     'value': '4',
                   },
                   {
-                    'label': 'profileR2',
+                    'label': 'IgGResult',
                     'value': '5',
                   },
                   {
-                    'label': 'profileR3',
+                    'label': 'IgMResult',
                     'value': '6',
                   }],
                 'resultDate': '2021-03-05',

@@ -199,9 +199,9 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
               margin: [0, 20, 0, 0],
             },
             {
-              text: resultAnalysis(params.resultAnalysis, 'profileR1')?.value,
+              text: resultAnalysis(params.resultAnalysis, 'IgMResult')?.value,
               fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'profileR1')?.value as ResultTypes,
+                resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as ResultTypes,
               ),
               color: '#FFF',
               alignment: 'center',
