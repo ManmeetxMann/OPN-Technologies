@@ -387,22 +387,10 @@ components:
           type: string
         lastName:
           type: string
-        dateOfBirth:
-          type: string
         base64Photo:
           type: string
         groupId:
           type: string
-        agreeToConductFHHealthAssessment:
-          type: boolean
-        shareTestResultWithEmployer:
-          type: boolean
-        readTermsAndConditions:
-          type: boolean
-        receiveNotificationsFromGov:
-          type: boolean
-        receiveResultsViaEmail:
-          type: boolean
         responses:
           type: array
           items:
@@ -413,13 +401,7 @@ components:
         - groupId
         - firstName
         - lastName
-        - dateOfBirth
         - base64Photo
-        - agreeToConductFHHealthAssessment
-        - shareTestResultWithEmployer
-        - readTermsAndConditions
-        - receiveNotificationsFromGov
-        - receiveResultsViaEmail
 
     OrganizationUsersGroupMoveData:
       type: object
