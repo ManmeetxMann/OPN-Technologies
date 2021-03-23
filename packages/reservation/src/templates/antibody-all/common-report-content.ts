@@ -3,6 +3,8 @@ import path from 'path'
 import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-types'
 import {Config} from '../../../../common/src/utils/config'
 import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
+import {Spec} from '../../models/pcr-test-results'
+import {ResultTypes} from '../../models/appointment'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
@@ -75,6 +77,17 @@ const companyInfoHeader = (): Content => {
   }
 }
 
+const getFillColorForResultsCell = (result: ResultTypes): string => {
+  if (result === ResultTypes.PresumptivePositive) {
+    return '#FF0000'
+  } else if (result === ResultTypes.Positive) {
+    return '#FF0000'
+  } else if (result === ResultTypes.Indeterminate) {
+    return '#B7B7B7'
+  }
+  return '#6AA84F'
+}
+
 const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: string): Content => {
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
   const dataPersonal = [
@@ -117,6 +130,10 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
 
   const data = [...dataPersonal, ...dataAppointment]
 
+  const resultAnalysis = (analysis: Spec[], keyName): Spec => {
+    return analysis.find((analys) => analys.label === keyName)
+  }
+
   return [
     {
       text: 'The following client completed a SARS-CoV-2 Antibody screening test:',
@@ -145,19 +162,77 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
       layout: 'mainTable',
       table: {
         headerRows: 1,
-        widths: [150, 180],
+        widths: [150, 30, 50, 50, 90],
         body: [
           [
             {text: 'Type', bold: true},
-            {text: 'Antibody IgA, IgG, IgM Test', bold: true},
+            {text: 'Antibody IgA, IgG, IgM Test', bold: true, colSpan: 4},
           ],
-          [{text: 'Antibody Specimen Type', bold: true}, 'Serum'],
-          [{text: 'Methodology', bold: true}, 'Chemiluminescence'],
-          [{text: 'Indication', bold: true}, 'Suspected Exposure to COVID-19'],
-          [{text: 'Antibody Cut-off Index Values', bold: true}, 'values'],
+          [
+            {text: 'Antibody Specimen Type', bold: true},
+            {text: 'Serum', colSpan: 4},
+          ],
+          [
+            {text: 'Methodology', bold: true},
+            {text: 'Chemiluminescence', colSpan: 4},
+          ],
+          [
+            {text: 'Indication', bold: true},
+            {text: 'Suspected Exposure to COVID-19', colSpan: 4},
+          ],
         ],
       },
-      margin: [0, 10, 0, 10],
+      margin: [0, 10, 0, 0],
+    },
+    {
+      layout: 'mainTable',
+      table: {
+        headerRows: 3,
+        widths: [150, 30, 40, 60, 90],
+        body: [
+          [
+            {text: 'Antibody Cut-off Index Values', bold: true, rowSpan: 3},
+            {text: 'IgA'},
+            {text: resultAnalysis(params.resultAnalysis, 'IgA')?.value},
+            {
+              text: resultAnalysis(params.resultAnalysis, 'profileR1')?.value,
+              fillColor: getFillColorForResultsCell(
+                resultAnalysis(params.resultAnalysis, 'profileR1')?.value as ResultTypes,
+              ),
+            },
+            {
+              text:
+                'Reference Cut-off Index\n' +
+                '0.8 - < 1.0 = Indeterminate \n' +
+                '≥ 1.0 = Positive\n' +
+                '< 0.8 = Negative',
+              rowSpan: 3,
+            },
+          ],
+          [
+            {},
+            {text: 'IgG'},
+            {text: resultAnalysis(params.resultAnalysis, 'IgG')?.value},
+            {
+              text: resultAnalysis(params.resultAnalysis, 'profileR2')?.value,
+              fillColor: getFillColorForResultsCell(
+                resultAnalysis(params.resultAnalysis, 'profileR2')?.value as ResultTypes,
+              ),
+            },
+          ],
+          [
+            {},
+            {text: 'IgM'},
+            {text: resultAnalysis(params.resultAnalysis, 'IgM')?.value},
+            {
+              text: resultAnalysis(params.resultAnalysis, 'profileR3')?.value,
+              fillColor: getFillColorForResultsCell(
+                resultAnalysis(params.resultAnalysis, 'profileR3')?.value as ResultTypes,
+              ),
+            },
+          ],
+        ],
+      },
     },
   ]
 }
