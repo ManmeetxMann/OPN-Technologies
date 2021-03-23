@@ -83,17 +83,18 @@ class RecommendationController implements IControllerBase {
 
   newAttestation: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {userId, organizationId, data} = await this.parseMessage(req.body.message)
-      const org = await this.orgService.findOneById(organizationId)
-      const attStatus = data.status as PassportStatus
-      const status =
-        attStatus === PassportStatuses.Proceed
-          ? org.enableTemperatureCheck
-            ? PassportStatuses.TemperatureCheckRequired
-            : PassportStatuses.Proceed
-          : attStatus
-      const passport = await this.passportService.create(status, userId, [], true, organizationId)
-      await this.alertIfNeeded(passport, data.id as string)
+      // DISABLED FOR NOW, THESE USE THE ADAPTER
+      // const {userId, organizationId, data} = await this.parseMessage(req.body.message)
+      // const org = await this.orgService.findOneById(organizationId)
+      // const attStatus = data.status as PassportStatus
+      // const status =
+      //   attStatus === PassportStatuses.Proceed
+      //     ? org.enableTemperatureCheck
+      //       ? PassportStatuses.TemperatureCheckRequired
+      //       : PassportStatuses.Proceed
+      //     : attStatus
+      // const passport = await this.passportService.create(status, userId, [], true, organizationId)
+      // await this.alertIfNeeded(passport, data.id as string)
       res.sendStatus(200)
     } catch (error) {
       next(error)
@@ -101,12 +102,13 @@ class RecommendationController implements IControllerBase {
   }
   newTemperature: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {userId, organizationId, data} = await this.parseMessage(req.body.message)
-      const status = passportStatusByTemp[data.status as TemperatureStatuses]
-      if (status) {
-        const passport = await this.passportService.create(status, userId, [], true, organizationId)
-        await this.alertIfNeeded(passport)
-      }
+      // DISABLED FOR NOW, THESE USE THE ADAPTER
+      // const {userId, organizationId, data} = await this.parseMessage(req.body.message)
+      // const status = passportStatusByTemp[data.status as TemperatureStatuses]
+      // if (status) {
+      //   const passport = await this.passportService.create(status, userId, [], true, organizationId)
+      //   await this.alertIfNeeded(passport)
+      // }
       res.sendStatus(200)
     } catch (error) {
       next(error)
