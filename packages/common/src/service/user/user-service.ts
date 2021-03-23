@@ -145,6 +145,10 @@ export class UserService {
   ): Promise<UserDependant[]> {
     const parent = await this.userRepository.get(userId)
 
+    if (!parent) {
+      throw new ResourceNotFoundException(`ParentId with ${userId} was not found`)
+    }
+
     const dependantsToAdd = dependants.map((dependant) => ({
       firstName: cleanStringField(dependant.firstName),
       lastName: cleanStringField(dependant.lastName),
