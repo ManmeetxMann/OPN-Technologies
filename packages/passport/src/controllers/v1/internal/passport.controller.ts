@@ -5,13 +5,13 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {UserService} from '../../../../../common/src/service/user/user-service'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
+import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 
 import {PassportService} from '../../../services/passport-service'
 import {AlertService} from '../../../services/alert-service'
 import {AttestationService} from '../../../services/attestation-service'
 
 import {Passport, PassportStatuses, PassportStatus} from '../../../models/passport'
-import {BadRequestException} from 'packages/common/src/exceptions/bad-request-exception'
 
 class PassportController implements IControllerBase {
   public path = '/passport/api/v1/internal'

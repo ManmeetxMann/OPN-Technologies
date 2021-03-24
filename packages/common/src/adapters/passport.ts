@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
-import {Config} from 'src/utils/config'
-import {BadRequestException} from 'src/exceptions/bad-request-exception'
+import {Config} from '../utils/config'
+import {BadRequestException} from '../exceptions/bad-request-exception'
 
 const APIURL = Config.get('DOMAIN_PASSPORT')
 

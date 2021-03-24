@@ -6,7 +6,7 @@ import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import PassportAdapter from '../../../common/src/adapters/passport'
 import {Temperature, TemperatureDBModel, TemperatureStatuses} from '../models/temperature'
 import {TemperatureRepository} from '../respository/temperature.repository'
-import {PassportStatuses} from 'packages/passport/src/models/passport'
+import {PassportStatuses} from '../../../passport/src/models/passport'
 
 export class TemperatureService {
   private dataStore = new DataStore()
