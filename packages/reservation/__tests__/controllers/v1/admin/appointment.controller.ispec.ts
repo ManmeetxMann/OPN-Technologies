@@ -8,7 +8,8 @@ jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
 jest.mock('../../../../../common/src/utils/logging-setup')
 
-const dateForAppointments = '2020-02-05'
+const dateForAppointments = '2020-06-05'
+const dateForAppointmentStr = 'June 05, 2020'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
 const organizationId = 'TEST1'
 const laboratoryId = 'Lab1'
@@ -17,21 +18,21 @@ describe('AdminAppointmentController', () => {
     await create({
       id: 'APT1',
       dateTime: dateTimeForAppointment1,
-      dateOfAppointment: 'February 05, 2020',
+      dateOfAppointment: dateForAppointmentStr,
       appointmentStatus: 'InTransit',
       labId: laboratoryId,
     })
     await create({
       id: 'APT2',
       dateTime: dateTimeForAppointment1,
-      dateOfAppointment: 'February 05, 2020',
+      dateOfAppointment: dateForAppointmentStr,
       appointmentStatus: 'InProgress',
       labId: laboratoryId,
     })
     await create({
       id: 'APT3',
       dateTime: dateTimeForAppointment1,
-      dateOfAppointment: 'February 05, 2020',
+      dateOfAppointment: dateForAppointmentStr,
       organizationId: organizationId,
       appointmentStatus: 'InProgress',
       labId: laboratoryId,
@@ -39,13 +40,13 @@ describe('AdminAppointmentController', () => {
     await create({
       id: 'APT4',
       dateTime: dateTimeForAppointment1,
-      dateOfAppointment: 'February 05, 2020',
+      dateOfAppointment: dateForAppointmentStr,
       organizationId: organizationId,
     })
     await create({
       id: 'APT5',
       dateTime: dateTimeForAppointment1,
-      dateOfAppointment: 'February 05, 2020',
+      dateOfAppointment: dateForAppointmentStr,
     })
     await create({
       id: 'APT6',
