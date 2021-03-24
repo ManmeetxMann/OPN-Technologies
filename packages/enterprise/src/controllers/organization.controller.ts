@@ -42,7 +42,7 @@ import {CloudTasksClient} from '@google-cloud/tasks'
 import * as _ from 'lodash'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
-const actionSucceed = (body: unknown, userId?: string): ReturnType<typeof rawSucceed> => {
+const actionSucceed = (body?: unknown, userId?: string): ReturnType<typeof rawSucceed> => {
   if (userId && userId === Config.get('USER_OF_INTEREST')) {
     console.log(`Response to ${userId}`, body)
   }
