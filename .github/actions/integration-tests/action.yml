@@ -42,7 +42,8 @@ runs:
       echo "::group::Add Application Environment Variables"
       echo "Writing Environment Variables to: .env"
       gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/common/.env
-      export GOOGLE_APPLICATION_CREDENTIALS=../../packages/common/.env
+      gcloud secrets versions access latest --secret=SERVICE_ACCOUNT > ./packages/common/service_account.json
+      export GOOGLE_APPLICATION_CREDENTIALS=../../packages/common/service_account.json
       echo "::endgroup::"
       echo "::group::Test"
       npm run test-all
