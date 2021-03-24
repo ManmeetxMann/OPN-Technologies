@@ -37,7 +37,7 @@ runs:
       echo "::endgroup::"
       echo "::group::Activate Service"
       cat >> service-account.json << EOF
-      ${{ env[infra_dev_service_account] }}
+      ${{ env.infra_dev_service_account }}
       EOF
       gcloud auth activate-service-account --key-file=./service-account.json --project=opn-platform-infra-dev
       rm ./service-account.json
