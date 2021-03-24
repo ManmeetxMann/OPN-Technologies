@@ -9,9 +9,9 @@ on:
       - ".github/actions/**"
     branches: 
       - master
-      - ci_cd
     tags:
       - infra-dev-passport-*
+      - infra-dev-all-*
       - preprod-passport-*
       - preprod-all-*
       - prod-passport-*

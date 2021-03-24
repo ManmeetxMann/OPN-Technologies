@@ -9,9 +9,9 @@ on:
       - ".github/actions/**"
     branches: 
       - master
-      - ci_cd
     tags:
       - infra-dev-registry-*
+      - infra-dev-all-*
       - preprod-registry-*
       - preprod-all-*
       - prod-registry-*
