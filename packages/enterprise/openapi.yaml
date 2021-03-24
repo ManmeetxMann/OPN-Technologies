@@ -123,6 +123,9 @@ components:
         enableTemperatureCheck:
           type: boolean
           default: false
+        enablePulseOxygen:
+          type: boolean
+          default: false
         legacyMode:
           type: boolean
           default: false
