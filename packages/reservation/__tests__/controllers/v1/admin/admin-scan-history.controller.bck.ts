@@ -3,8 +3,10 @@ import request from 'supertest'
 import {app as server} from '../../../../src/app'
 import {create, deleteAppointmentByDateTime} from '../../../__seeds__/appointments'
 import {deleteAll} from '../../../__seeds__/admin-scan-history'
-import { createPCRTestResult, deletePCRTestResultByDateTime } from '../../../__seeds__/pcr-test-results'
-
+import {
+  createPCRTestResult,
+  deletePCRTestResultByDateTime,
+} from '../../../__seeds__/pcr-test-results'
 
 jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
@@ -26,7 +28,7 @@ describe('AdminScanHistoryController', () => {
       dateOfAppointment: dateForAppointmentStr,
       appointmentStatus: 'InTransit',
       organizationId,
-      testType:'RapidAntigen'
+      testType: 'RapidAntigen',
     })
     await createPCRTestResult({
       appointmentId: aptID1,
@@ -44,7 +46,7 @@ describe('AdminScanHistoryController', () => {
         .set('Content-Type', 'application/json')
         .send({
           barCode: 'BAR1',
-          type: 'RapidAntigen'
+          type: 'RapidAntigen',
         })
 
       expect(result.status).toBe(200)
@@ -61,7 +63,7 @@ describe('AdminScanHistoryController', () => {
         .set('Content-Type', 'application/json')
         .send({
           barCode: 'BAD_BAR1',
-          type: 'RapidAntigen'
+          type: 'RapidAntigen',
         })
 
       expect(result.status).toBe(404)
