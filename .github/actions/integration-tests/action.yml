@@ -32,32 +32,22 @@ runs:
 
   - name: Define Deployment Variables
     run: |
-      echo "::group::Define Deployment Variables"
-      echo "Deploy to INFRA"
-      echo "PROJECT_ID=opn-platform-infra-dev" > $GITHUB_ENV
-      echo "ENV_SERVICE_ACCOUNT=infra_dev_service_account" >> $GITHUB_ENV
-      echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
-      echo "::endgroup::"
-    shell: bash
-
-  - name: Deploy to GAE
-    run: |
-      echo $GAE_VERSION_FLAG
-
-      echo "::group::Auth with GCLOUD"
-      cat >> service-account.json << EOF
-      ${{ env[env.ENV_SERVICE_ACCOUNT] }}
-      EOF
-      echo "Deploying to: ${{ env.PROJECT_ID }}"
-      gcloud auth activate-service-account --key-file=./service-account.json --project=${{ env.PROJECT_ID }}
-      rm ./service-account.json
-      echo "::endgroup::"
       echo "::group::Build"
       npm run build-all
+      echo "::endgroup::"
+      echo "::group::Activate Service"
+      cat >> service-account.json << EOF
+      ${{ env[infra_dev_service_account] }}
+      EOF
+      gcloud auth activate-service-account --key-file=./service-account.json --project=opn-platform-infra-dev
+      rm ./service-account.json
       echo "::endgroup::"
       echo "::group::Add Application Environment Variables"
       echo "Writing Environment Variables to: .env"
       gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/common/.env
+      echo "::endgroup::"
+      echo "::group::Test"
+      npm run test-all
       echo "::endgroup::"
     shell: bash
 
