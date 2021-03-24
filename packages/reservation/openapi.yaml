@@ -597,9 +597,9 @@ components:
                         - SGene
                         - NGene
                         - MS2
-                        - profileR1
-                        - profileR2
-                        - profileR3
+                        - IgAResult
+                        - IgGResult
+                        - IgMResult
                         - IgA
                         - IgG
                         - IgM
@@ -775,9 +775,12 @@ components:
           type: string
         templateId:
           type: string
+        assay:
+          type: string
       required:
         - name
         - templateId
+        - assay
     LabResponse:
       type: object
       additionalProperties: false
@@ -961,6 +964,72 @@ components:
               type: string
         page:
             type: number
+    AppointmentTypesResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+              name:
+                type: string
+        status:
+           type: object
+           additionalProperties: false
+           properties:
+               code:
+                   type: string
+                   enum:
+                     - succeed
+                     - failed
+                     - validation_error
+                     - internal_server_error
+                     - unauthorized
+                     - access_denied
+                     - resource_not_found
+               message:
+                   nullable: true
+                   type: string
+    AssociationsResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              appointmentType:
+                type: number
+              appointmentTypeName:
+                type: string
+              testType:
+                type: string
+        status:
+           type: object
+           additionalProperties: false
+           properties:
+               code:
+                   type: string
+                   enum:
+                     - succeed
+                     - failed
+                     - validation_error
+                     - internal_server_error
+                     - unauthorized
+                     - access_denied
+                     - resource_not_found
+               message:
+                   nullable: true
+                   type: string
 
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -1566,6 +1635,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenerateNextBarCodeResponse'
+  /reservation/admin/api/v1/appointments/acuity/types:
+    get:
+      description: Acuity Appointment Type List
+      tags:
+      - Appointment Management
+      security:
+      - bearerAuthJWT: [ ]
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentTypesResponse'
   /reservation/admin/api/v1/appointments/list/stats:
     get:
       description: Get appointment list
@@ -1904,6 +1987,8 @@ paths:
                     - Indeterminate
                     - MarkAsPositive
                     - MarkAsNegative
+                labId:
+                  type: string
               required:
                 - barCode
                 - action
@@ -1977,6 +2062,10 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: labId
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully Return
@@ -2117,6 +2206,8 @@ paths:
                   type: array
                   items:
                     type: string
+                labId:
+                  type: string
               required:
                 - barcode
       responses:
@@ -3515,3 +3606,16 @@ paths:
                         type: string
                   page:
                     type: number
+    get:
+      description: Get all Associations
+      security:
+        - bearerAuthJWT: [ ]
+      tags:
+          - Associations
+      responses:
+          '200':
+            description: Successfully returned Associations
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AssociationsResponse'

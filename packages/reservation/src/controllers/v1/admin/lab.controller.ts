@@ -33,8 +33,12 @@ class AdminLabController implements IControllerBase {
 
   addLab = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {name, templateId} = req.body as {name: string; templateId: string}
-      const result = await this.labService.save({name, templateId})
+      const {name, templateId, assay} = req.body as {
+        name: string
+        templateId: string
+        assay: string
+      }
+      const result = await this.labService.save({name, templateId, assay})
       res.json(actionSucceed(result))
     } catch (error) {
       next(error)

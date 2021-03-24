@@ -44,7 +44,7 @@ let profiles = {
         "locationTitle":"TEST1_LOC1"
     },
     "harpreet_preprod":{
-        "email":"harpreet+preprod1@stayopn.com",
+        "email":"harpreet+kitchener@stayopn.com",
         "organizationId":"TESTPROD1",
         "firstName":"Harpreet",
         "lastName":"Gill",

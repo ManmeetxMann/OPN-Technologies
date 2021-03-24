@@ -112,6 +112,6 @@ async function main() {
 let successCount = 0
 let failureCount = 0
 let totalCount = 0
-const limit = 50
+const limit = 500
 
 main().then(() => console.log('Script Complete \n'))
