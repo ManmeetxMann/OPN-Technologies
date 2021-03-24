@@ -1263,8 +1263,12 @@ class OrganizationController implements IControllerBase {
         isParentUser ? userId : parentUserId,
       )
 
+      const dependentsInOrg = dependents.filter((dependent) =>
+        dependent.organizationIds.includes(organizationId),
+      )
+
       const dependentsWithGroup = await Promise.all(
-        dependents.map(async (dependent: UserDependant) => {
+        dependentsInOrg.map(async (dependent: UserDependant) => {
           const group = await this.organizationService.getUserGroup(organizationId, dependent.id)
           const dependentStatus = await this.attestationService.latestStatus(
             dependent.id,
