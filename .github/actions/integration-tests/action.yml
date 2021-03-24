@@ -49,17 +49,3 @@ runs:
       npm run test-all
       echo "::endgroup::"
     shell: bash
-
-  - name: Send Status Update to Slack
-    run: |
-      JOB_STATUS=${{ job.status }}
-      
-      if [[ $JOB_STATUS == 'success' ]]; then
-        SLACK_STATUS=good
-      elif [[ $JOB_STATUS == 'failure' ]]; then
-        SLACK_STATUS=danger
-      else
-        SLACK_STATUS=warning
-      fi
-      curl -X POST -H 'Content-type: application/json' --data "{'username': 'action-slack','icon_emoji': ':octocat:','attachments': [{'color': '$SLACK_STATUS','text': 'Integration Tests'}]}" ${{ env.slack_webhook_url }}
-    shell: bash
