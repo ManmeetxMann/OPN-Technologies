@@ -42,12 +42,9 @@ runs:
       echo "::group::Add Application Environment Variables"
       echo "Writing Environment Variables to: .env"
       gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/common/.env
-      echo "::endgroup::"
-      echo "::group::Build"
-      npm run build-all
-      echo "::endgroup::"
-      echo "::group::Test"
-      npm run test-all
+      cd ./packages/common/
+      ls -al
+      cat .env
       echo "::endgroup::"
     shell: bash
 
