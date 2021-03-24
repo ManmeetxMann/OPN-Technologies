@@ -3296,11 +3296,17 @@ paths:
                   type: string
                 temperature:
                   type: number
+                pulse:
+                  type: number
+                oxygen:
+                  type: number
                 userId:
                   type: string
               required:
                 - organizationId
                 - temperature
+                - pulse
+                - oxygen
                 - userId
               additionalProperties: false
       responses:
