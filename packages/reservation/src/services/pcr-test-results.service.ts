@@ -1690,7 +1690,7 @@ export class PCRTestResultsService {
         testDateTime: formatDateRFC822Local(pcr.deadline),
         style: resultToStyle(result),
         result: result,
-        detailsAvailable: result !== ResultTypes.Pending,
+        detailsAvailable: result !== ResultTypes.Invalid && result !== ResultTypes.Pending,
       })
     })
 
