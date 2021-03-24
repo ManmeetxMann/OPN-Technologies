@@ -1,5 +1,7 @@
-name: OPN Services Integration Test
+name: Integration Test (2AM)
 on:
+  schedule:
+   - cron: "0 2 * * *"
   push:
     paths:
       - "packages/common/**"
@@ -8,6 +10,8 @@ on:
       - ".github/actions/**"
     branches: 
       - ci_cd
+    tags:
+      - preprod-*
 
 jobs:
   build:
