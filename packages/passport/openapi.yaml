@@ -285,6 +285,19 @@ components:
               type: string
             attributes:
               additionalProperties: true
+    InternalPassportCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        organizationId:
+          type: string
+        status:
+          type: string
+        attestationId:
+          type: string
+          nullable: true
 
   responses:
     Response:
@@ -509,17 +522,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/V1ResponseOfPassport'
-  /passport/api/v1/pubsub/attestation:
+  # /passport/api/v1/pubsub/attestation:
+  #   post:
+  #     summary: update attestation
+  #     requestBody:
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: '#/components/schemas/PubSubRequest'
+  #     responses:
+  #       '200':
+  #         description: Successfully digested
+  # /passport/api/v1/pubsub/temperature:
+  #   post:
+  #     summary: update temperature
+  #     requestBody:
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: '#/components/schemas/PubSubRequest'
+  #     responses:
+  #       '200':
+  #         description: Successfully digested
+  /passport/internal/api/v1/passport:
     post:
-      summary: update attestation
+      summary: internal use only. Create a passport for a user in an organization
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PubSubRequest'
+              $ref: '#/components/schemas/InternalPassportCreateRequest'
       responses:
         '200':
-          description: Successfully digested
+          description: Successfully created
   /passport/api/v1/pubsub/temperature:
     post:
       summary: update temperature

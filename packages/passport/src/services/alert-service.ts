@@ -1,7 +1,7 @@
-import {PubSub, Topic} from '@google-cloud/pubsub'
-
 import {Attestation, AttestationAnswers} from '../models/attestation'
 import {Passport, PassportStatuses} from '../models/passport'
+
+import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 
 import {AccessService} from '../../../access/src/service/access.service'
 import {User} from '../../../common/src/data/user'
@@ -21,25 +21,7 @@ export class AlertService {
   private organizationService = new OrganizationService()
   private registrationService = new RegistrationService()
   private userService = new UserService()
-  private topic: Topic
-
-  constructor() {
-    try {
-      const pubsub = new PubSub()
-      pubsub
-        .createTopic(Config.get('PUBSUB_TRACE_TOPIC'))
-        .catch((err) => {
-          if (err.code !== 6) {
-            throw err
-          }
-        })
-        .then(() => {
-          this.topic = pubsub.topic(Config.get('PUBSUB_TRACE_TOPIC'))
-        })
-    } catch (error) {
-      if (error.code !== 6) throw error
-    }
-  }
+  private pubsub = new OPNPubSub(Config.get('PUBSUB_TRACE_TOPIC'))
 
   private dateFromAnswer(answer: Record<number, boolean | string>): Date | null {
     const answerKeys = Object.keys(answer).sort((a, b) => parseInt(a) - parseInt(b))
@@ -116,22 +98,18 @@ export class AlertService {
       const dateOfTest = answers ? this.findTestDate(answers) : null
       const startTime = (dateOfTest ? dateOfTest.valueOf() : endTime) - TRACE_LENGTH
 
-      this.topic.publish(
-        Buffer.from(
-          JSON.stringify({
-            userId,
-            dependantIds: dependantIds,
-            includesGuardian,
-            passportStatus: status,
-            startTime,
-            endTime,
-            organizationId,
-            locationId,
-            questionnaireId,
-            answers: answers,
-          }),
-        ),
-      )
+      this.pubsub.publish({
+        userId,
+        dependantIds,
+        includesGuardian,
+        passportStatus: status,
+        startTime,
+        endTime,
+        organizationId,
+        locationId,
+        questionnaireId,
+        answers: answers,
+      })
 
       const organization = await this.organizationService.findOneById(organizationId)
       if (organization.enablePushNotifications) {
