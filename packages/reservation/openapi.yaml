@@ -3261,6 +3261,8 @@ paths:
                             - GREY
                         result:
                           type: string
+                        detailsAvailable:
+                          type: boolean
                   status:
                     type: object
                     additionalProperties: false

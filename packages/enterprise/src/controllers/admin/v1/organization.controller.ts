@@ -49,6 +49,7 @@ class AdminOrganizationController implements IControllerBase {
       const organization = await this.organizationService.create({
         ...req.body,
         enableTemperatureCheck: req.body.enableTemperatureCheck || false,
+        enablePulseOxygen: req.body.enablePulseOxygen || false,
       } as Organization)
       res.json(actionSucceed(organization))
     } catch (error) {
