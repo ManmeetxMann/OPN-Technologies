@@ -1,7 +1,7 @@
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {
   actionReplyInsufficientPermission,
-  actionSucceed,
+  actionSucceed as rawSucceed,
 } from '../../../common/src/utils/response-wrapper'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 import {User, UserDependant} from '../../../common/src/data/user'
@@ -42,7 +42,12 @@ import {CloudTasksClient} from '@google-cloud/tasks'
 import * as _ from 'lodash'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
-
+const actionSucceed = (body?: unknown, userId?: string): ReturnType<typeof rawSucceed> => {
+  if (userId && userId === Config.get('USER_OF_INTEREST')) {
+    console.log(`Response to ${userId}`, body)
+  }
+  return rawSucceed(body)
+}
 const dataConversionAndSortGroups = (groups: OrganizationGroup[]): OrganizationGroup[] => {
   return groups
     .sort((a, b) => {
@@ -213,7 +218,7 @@ class OrganizationController implements IControllerBase {
   findOneByKeyOrId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {key, id} = req.query as {key?: string; id?: string}
-
+      const authenticatedUser = res.locals.connectedUser as User
       // Further validation
       if ((!key && !id) || (!!key && !!id))
         throw new BadRequestException('Key or Id is required independently')
@@ -225,7 +230,8 @@ class OrganizationController implements IControllerBase {
         actionSucceed({
           ...organization,
           enableTemperatureCheck: organization.enableTemperatureCheck || false,
-        }),
+        },
+        authenticatedUser?.id),
       )
     } catch (error) {
       next(error)
@@ -846,13 +852,16 @@ class OrganizationController implements IControllerBase {
       )
 
       res.json(
-        actionSucceed({
-          permissionToViewDetail: !!isHealthAdmin,
-          asOfDateTime: response.asOfDateTime,
-          passportsCountByStatus: response.passportsCountByStatus,
-          hourlyCheckInsCounts: response.hourlyCheckInsCounts,
-          ...(!!isHealthAdmin && {accesses}),
-        }),
+        actionSucceed(
+          {
+            permissionToViewDetail: !!isHealthAdmin,
+            asOfDateTime: response.asOfDateTime,
+            passportsCountByStatus: response.passportsCountByStatus,
+            hourlyCheckInsCounts: response.hourlyCheckInsCounts,
+            ...(!!isHealthAdmin && {accesses}),
+          },
+          authenticatedUser.id,
+        ),
       )
     } catch (error) {
       next(error)
