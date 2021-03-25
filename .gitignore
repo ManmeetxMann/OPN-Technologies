@@ -46,3 +46,6 @@ packages/apidocs/docs/*.yaml
 
 #TestFiles
 packages/*/__tests__/*/*.pdf
+
+# Migration logs
+migration-logs

@@ -6,7 +6,7 @@ lastVerstion=$(ls ./migrations/release/ -v | tail -n 1)
 echo 'Script to run without RUN_WITH_APPLY flag:'
 echo $lastVerstion
 cat ./migrations/release/$lastVerstion
-
+echo "\n"
 read -p "Following migration will run (y/n):" choice
 case "$choice" in 
     y|Y ) sh ./migrations/release/$lastVerstion;;

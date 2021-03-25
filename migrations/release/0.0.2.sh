@@ -1,4 +1,3 @@
-#!/bin/bash
 ts-node ./migrations/add-display-in-result-flag-to-pcr-results
 ts-node ./migrations/fix-deadline-for-future-pcr-results
 ts-node ./migrations/remove-pcr-results-for-canceled-appointments

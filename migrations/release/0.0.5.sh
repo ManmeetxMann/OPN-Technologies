@@ -1,0 +1,1 @@
+ts-node ./migrations/remove-questionnaireId-organization.ts
