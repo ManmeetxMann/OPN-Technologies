@@ -25,6 +25,8 @@ import {
   statsUiDTOResponse,
   appointmentUiDTOResponse,
   UpdateTransPortRun,
+  FilterName,
+  FilterGroupKey,
 } from '../../../models/appointment'
 import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
 import {formatDateRFC822Local} from '../../../utils/datetime.helper'
@@ -221,7 +223,20 @@ class AdminAppointmentController implements IControllerBase {
         labId,
       })
 
-      res.json(actionSucceed(statsUiDTOResponse(appointmentStatusArray, orgIdArray, total)))
+      const filterGroup = [
+        {
+          name: FilterName.FilterByStatusType,
+          key: FilterGroupKey.appointmentStatus,
+          filters: appointmentStatusArray,
+        },
+        {
+          name: FilterName.FilterByCorporation,
+          key: FilterGroupKey.organizationId,
+          filters: orgIdArray,
+        },
+      ]
+
+      res.json(actionSucceed(statsUiDTOResponse(filterGroup, total)))
     } catch (error) {
       next(error)
     }

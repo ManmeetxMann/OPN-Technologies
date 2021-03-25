@@ -302,12 +302,12 @@ export type Filter = {
   count: number
 }
 
-enum FilterGroupKey {
+export enum FilterGroupKey {
   organizationId = 'organizationId',
   appointmentStatus = 'appointmentStatus',
 }
 
-enum FilterName {
+export enum FilterName {
   FilterByStatusType = 'Filter By Status Type',
   FilterByCorporation = 'Filter By Corporation',
 }
@@ -324,30 +324,12 @@ export type appointmentStatsUiDTO = {
 }
 
 export const statsUiDTOResponse = (
-  appointmentStatus: Filter[],
-  orgIdArray: Filter[],
+  filterGroup: FilterGroup[],
   total: number,
-  showOrgFilter = true,
-): appointmentStatsUiDTO => {
-  const filterGroup = [
-    {
-      name: FilterName.FilterByStatusType,
-      key: FilterGroupKey.appointmentStatus,
-      filters: appointmentStatus,
-    },
-  ]
-  if (showOrgFilter) {
-    filterGroup.push({
-      name: FilterName.FilterByCorporation,
-      key: FilterGroupKey.organizationId,
-      filters: orgIdArray,
-    })
-  }
-  return {
-    total,
-    filterGroup,
-  }
-}
+): appointmentStatsUiDTO => ({
+  total,
+  filterGroup,
+})
 
 export const appointmentUiDTOResponse = (
   appointment: AppointmentDBModel & {
