@@ -47,14 +47,14 @@ export async function promiseAllSettled(promises: Promise<unknown>[]): Promise<R
 /**
  * Reads all organizations locations
  */
-async function getSubCollections(locations: string) {
+async function getSubCollections(organizationId: string) {
   let offset = 0
   let hasMore = true
   const results = []
   while (hasMore) {
     const subCollections = await database
       .collection('organizations')
-      .doc(locations)
+      .doc(organizationId)
       .collection('locations')
       .offset(offset)
       .limit(limit)
