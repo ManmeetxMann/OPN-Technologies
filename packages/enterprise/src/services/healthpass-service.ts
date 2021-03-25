@@ -15,18 +15,7 @@ import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 import {ResultTypes} from '../../../reservation/src/models/appointment'
 
 import moment from 'moment'
-
-type HealthPass = {
-  expiry: string
-  tests: {
-    id: string
-    date: string
-    type: string
-    status: string
-    style: string
-  }[]
-  status: PassportStatuses
-}
+import {HealthPassType, HealthPass} from '../types/health-pass'
 
 export class HealthpassService {
   private dataStore = new DataStore()
@@ -99,7 +88,7 @@ export class HealthpassService {
     ) {
       tests.push({
         date: safeTimestamp(items.latestAttestation.timestamp).toISOString(),
-        type: 'Attestation',
+        type: HealthPassType.Attestation,
         id: items.latestAttestation.attestationId,
         status: items.latestAttestation.status,
         style: 'GREEN',
@@ -111,7 +100,7 @@ export class HealthpassService {
     ) {
       tests.push({
         date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
-        type: 'Temperature',
+        type: HealthPassType.Temperature,
         id: items.latestTemperature.temperatureId,
         status: items.latestTemperature.status,
         style: 'GREEN',
@@ -123,7 +112,7 @@ export class HealthpassService {
     ) {
       tests.push({
         date: safeTimestamp(items.PCRTestResult.timestamp).toISOString(),
-        type: 'PCR',
+        type: HealthPassType.PCR,
         id: items.PCRTestResult.testId,
         status: items.PCRTestResult.result,
         style: 'GREEN',
