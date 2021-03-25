@@ -87,8 +87,8 @@ async function checkUpdateSubCollection(
   }
 
   // moveQuestionnaireId
+  console.log(`Updating organizationId: ${organizations.id}, questionnaireId:${questionnaireId}`)
   if (!DRY_RUN) {
-    console.log(`Updating organizationId: ${organizations.id}, questionnaireId:${questionnaireId}`)
     await organizations.ref.update({questionnaireId})
     successUpdateCount++
   }
