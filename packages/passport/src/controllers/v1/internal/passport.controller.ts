@@ -14,7 +14,7 @@ import {AttestationService} from '../../../services/attestation-service'
 import {Passport, PassportStatuses, PassportStatus} from '../../../models/passport'
 
 class PassportController implements IControllerBase {
-  public path = '/passport/api/v1/internal'
+  public path = '/passport/internal/api/v1'
   public router = express.Router()
   private passportService = new PassportService()
   private alertService = new AlertService()

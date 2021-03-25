@@ -544,7 +544,7 @@ paths:
   #     responses:
   #       '200':
   #         description: Successfully digested
-  /passport/api/v1/internal/passport:
+  /passport/internal/api/v1/passport:
     post:
       summary: internal use only. Create a passport for a user in an organization
       requestBody:
