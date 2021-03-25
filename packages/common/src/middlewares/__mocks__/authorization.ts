@@ -15,6 +15,7 @@ export const authorizationMiddleware = () => async (
     admin: {
       isLabUser: true,
       isTestKitBatchAdmin: false,
+      isOpnSuperAdmin: false,
       isClinicUser: false,
     },
     authUserId: 'TEST',
@@ -24,6 +25,10 @@ export const authorizationMiddleware = () => async (
   switch (req.headers.authorization) {
     case 'Bearer CorporateUserForTEST1': {
       data.admin.isLabUser = false
+      break
+    }
+    case 'Bearer SuperAdmin': {
+      data.admin.isOpnSuperAdmin = true
       break
     }
     case 'Bearer ClinicUser': {

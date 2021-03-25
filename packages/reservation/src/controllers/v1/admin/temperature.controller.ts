@@ -13,16 +13,20 @@ import {AttestationService} from '../../../../../passport/src/services/attestati
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 import {PassportService} from '../../../../../passport/src/services/passport-service'
 import {TemperatureService} from '../../../services/temperature.service'
+import {PulseOxygenService} from '../../../services/pulse-oxygen.service'
 
 import {PassportStatuses} from '../../../../../passport/src/models/passport'
+import {PulseOxygenStatuses} from '../../../../../reservation/src/models/pulse-oxygen'
 import {TemperatureSaveRequest, TemperatureStatuses} from '../../../models/temperature'
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
+const oxygenThreshold = Number(Config.get('OXYGEN_THRESHOLD'))
 
 class AdminTemperatureController implements IControllerBase {
   public router = express.Router()
   public path = '/reservation/admin/api/v1'
   public temperatureService = new TemperatureService()
+  public pulseOxygenService = new PulseOxygenService()
   public passportService = new PassportService()
   private alertService = new AlertService()
   private attestationService = new AttestationService()
@@ -42,10 +46,20 @@ class AdminTemperatureController implements IControllerBase {
 
   saveTemperature = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {organizationId, temperature, userId} = req.body as TemperatureSaveRequest
+      const {
+        organizationId,
+        temperature,
+        pulse,
+        oxygen,
+        userId,
+      } = req.body as TemperatureSaveRequest
 
       if (!temperatureThreshold) {
-        throw new BadRequestException('Threshold is not specified in config file')
+        throw new BadRequestException('Temperature Threshold is not specified in config file')
+      }
+
+      if (!oxygenThreshold) {
+        throw new BadRequestException('Oxygen Threshold is not specified in config file')
       }
 
       const isTemperatureCheckEnabled = await this.organizationService.isTemperatureCheckEnabled(
@@ -56,8 +70,15 @@ class AdminTemperatureController implements IControllerBase {
         throw new BadRequestException('Temperature check is disabled for this organization')
       }
 
+      const isHighTemperatureStatus = temperature > temperatureThreshold
+      const isLowOxygenStatus = oxygen <= oxygenThreshold
+
+      // final status which will update passport
       const status =
-        temperature > temperatureThreshold ? TemperatureStatuses.Stop : TemperatureStatuses.Proceed
+        isHighTemperatureStatus || isLowOxygenStatus
+          ? TemperatureStatuses.Stop
+          : TemperatureStatuses.Proceed
+
       const validFrom = now()
 
       const attestation = await this.attestationService.lastAttestationByUserId(
@@ -82,6 +103,15 @@ class AdminTemperatureController implements IControllerBase {
       }
 
       const result = await this.temperatureService.save(data)
+
+      await this.pulseOxygenService.savePulseOxygenStatus({
+        pulse,
+        oxygen,
+        locationId: attestation.locationId,
+        organizationId,
+        status: isLowOxygenStatus ? PulseOxygenStatuses.Failed : PulseOxygenStatuses.Passed,
+        userId,
+      })
 
       const response = {
         status,
