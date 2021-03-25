@@ -2,7 +2,7 @@ module.exports = {
   parser: '@typescript-eslint/parser', // Specifies ESLint parser
   extends: [
     'plugin:@typescript-eslint/recommended',
-    'prettier/@typescript-eslint',
+    'prettier',
     'plugin:prettier/recommended',
   ],
   plugins: ['@typescript-eslint'],
@@ -12,6 +12,7 @@ module.exports = {
     project: "./tsconfig.json"
   },
   rules: {
+    //'max-params': [2,{ "max":4 }],
     '@typescript-eslint/no-explicit-any': 2,
     '@typescript-eslint/no-unused-vars': [
       'error',

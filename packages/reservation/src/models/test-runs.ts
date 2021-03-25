@@ -3,11 +3,13 @@ import {Auditable} from '../../../common/src/types/auditable'
 
 export type TestRunsRequest = {
   testRunDate: string
+  labId: string
 }
 
 export type TestRunsPostRequest = {
   testRunDateTime: string
   name: string
+  labId: string
 }
 
 export type TestRunDBModel = Auditable &
@@ -20,6 +22,7 @@ export type TestRun = {
   testRunId: string
   testRunDateTime: firestore.Timestamp
   name: string
+  labId: string
 }
 
 type TestRunUi = {

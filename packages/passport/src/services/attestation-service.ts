@@ -1,15 +1,17 @@
-import DataStore from '../../../common/src/data/datastore'
 import {firestore} from 'firebase-admin'
-import {serverTimestamp} from '../../../common/src/utils/times'
-import {Attestation, AttestationModel} from '../models/attestation'
-import {PassportStatus, PassportStatuses} from '../models/passport'
+import DataStore from '../../../common/src/data/datastore'
+import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {
   DataModelFieldMapOperatorType,
   DataModelFieldMap,
 } from '../../../common/src/data/datamodel.base'
-import {TraceModel, TraceRepository} from '../../../access/src/repository/trace.repository'
-import {ExposureResult} from '../types/status-changes-result'
 import {Config} from '../../../common/src/utils/config'
+import {serverTimestamp} from '../../../common/src/utils/times'
+import {Attestation, AttestationModel} from '../models/attestation'
+import {PassportStatus, PassportStatuses} from '../models/passport'
+import {ExposureResult} from '../types/status-changes-result'
+
+import {TraceModel, TraceRepository} from '../../../access/src/repository/trace.repository'
 
 import moment from 'moment'
 
@@ -19,6 +21,7 @@ export class AttestationService {
   private dataStore = new DataStore()
   private attestationRepository = new AttestationModel(this.dataStore)
   private traceRepository = new TraceRepository(this.dataStore)
+  private pubsub = new OPNPubSub(Config.get('ATTESTATION_TOPIC'))
 
   save(attestation: Attestation): Promise<Attestation> {
     return this.attestationRepository
@@ -33,6 +36,22 @@ export class AttestationService {
           .toDate()
           .toISOString(),
       }))
+      .then((att) => {
+        att.appliesTo.forEach((userId) => {
+          this.pubsub.publish(
+            {
+              id: att.id,
+              status: att.status,
+            },
+            {
+              userId: userId,
+              organizationId: att.organizationId,
+              actionType: 'created',
+            },
+          )
+        })
+        return att
+      })
   }
 
   async latestStatus(userOrDependantId: string, organizationId: string): Promise<PassportStatus> {
@@ -193,9 +212,24 @@ export class AttestationService {
   ): Promise<Attestation> {
     const [attestation] = await this.attestationRepository
       .getQueryFindWhereArrayContains('appliesTo', userOrDependantId)
-      .where('userId', '==', userOrDependantId)
       .where('organizationId', '==', organizationId)
       .orderBy('attestationTime', 'desc')
+      .fetch()
+
+    return attestation
+  }
+
+  getAllAttestationByUserId(userId: string, organizationId: string): Promise<Attestation[]> {
+    return this.attestationRepository
+      .getQueryFindWhereEqual('organizationId', organizationId)
+      .where('userId', '==', userId)
+      .fetch()
+  }
+
+  async getByAttestationId(attestationId: string): Promise<Attestation> {
+    const [attestation] = await this.attestationRepository
+      .collection()
+      .where(firestore.FieldPath.documentId(), '==', attestationId)
       .fetch()
 
     return attestation

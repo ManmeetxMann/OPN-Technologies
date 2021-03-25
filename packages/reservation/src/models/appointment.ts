@@ -1,9 +1,8 @@
 import {firestore} from 'firebase-admin'
-import {formatStringDateRFC822Local} from '../utils/datetime.helper'
+import {isSameOrBefore} from '../utils/datetime.helper'
 
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
-import moment from 'moment-timezone'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
@@ -43,7 +42,6 @@ export type AppointmentDBModel = {
   email: string
   firstName: string
   lastName: string
-  location?: string
   organizationId?: string
   packageCode?: string
   phone: number
@@ -68,6 +66,8 @@ export type AppointmentDBModel = {
   userId?: string
   locationName?: string
   locationAddress?: string
+  testType: TestTypes
+  labId?: string
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -92,10 +92,13 @@ export type AppointmentAcuityResponse = {
   address: string
   addressUnit: string
   agreeToConductFHHealthAssessment: boolean
+  appointmentTypeID: number
   barCode: string
+  calendar: string
   calendarID: number
   canceled: boolean
   canClientCancel: boolean
+  canClientReschedule: boolean
   certificate: string
   date: string
   dateOfBirth: string
@@ -106,8 +109,8 @@ export type AppointmentAcuityResponse = {
   id: number
   labels: LabelsAcuityResponse[]
   lastName: string
-  location: string
   ohipCard?: string
+  location: string
   organizationId?: string
   phone: number
   readTermsAndConditions: boolean
@@ -143,6 +146,26 @@ export type CheckAppointmentRequest = {
   barCodes: string[]
 }
 
+export enum TestTypes {
+  PCR = 'PCR',
+  RapidAntigen = 'RapidAntigen',
+  TemperatureCheck = 'Temperature',
+  Attestation = 'Attestation',
+  EmergencyRapidAntigen = 'EmergencyRapidAntigen',
+  Antibody_All = 'Antibody_All',
+  Antibody_IgM = 'Antibody_IgM',
+}
+
+export type PostAdminScanHistoryRequest = {
+  type: TestTypes
+  barCode: string
+  organizationId: string
+}
+
+export type GetAdminScanHistoryRequest = {
+  type: TestTypes
+}
+
 export type CreateAppointmentRequest = {
   slotId: string
   firstName: string
@@ -172,6 +195,7 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   transportRunId?: string
   barCode?: string
   appointmentStatus?: AppointmentStatus[]
+  labId?: string
 }
 
 //Update to Acuity Service
@@ -200,8 +224,9 @@ export type AppointmentUiDTO = {
   canCancel?: boolean
   registeredNursePractitioner?: string
   organizationName?: string
+  labName?: string
   transportRunLabel?: string
-  testType?: string
+  testType: string
 }
 
 export type AppointmentsState = {
@@ -220,6 +245,7 @@ export type AppointmentChangeToRerunRequest = {
   appointment: AppointmentDBModel
   deadlineLabel: DeadlineLabel
   userId: string
+  actionBy: string
 }
 
 export type AppointmentStatusHistoryDb = AppointmentStatusHistory & {
@@ -245,23 +271,28 @@ export enum WebhookEndpoints {
 }
 
 export enum DeadlineLabel {
-  SameDay = 'SameDay',
-  NextDay = 'NextDay',
+  SameDay = 'SAMEDAY',
+  NextDay = 'NEXTDAY',
 }
 
-const filteredAppointmentStatus = (
+export const filteredAppointmentStatus = (
   status: AppointmentStatus,
   isLabUser: boolean,
+  isClinicUser: boolean,
 ): AppointmentStatus => {
+  const isNotLabOrClinicUser = !(isLabUser || isClinicUser)
+
   if (
-    !isLabUser &&
+    isNotLabOrClinicUser &&
     (status === AppointmentStatus.InTransit || status === AppointmentStatus.Received)
   ) {
     return AppointmentStatus.Submitted
   }
-  if (!isLabUser && status === AppointmentStatus.ReRunRequired) {
+
+  if (isNotLabOrClinicUser && status === AppointmentStatus.ReRunRequired) {
     return AppointmentStatus.InProgress
   }
+
   return status
 }
 
@@ -296,34 +327,45 @@ export const statsUiDTOResponse = (
   appointmentStatus: Filter[],
   orgIdArray: Filter[],
   total: number,
-): appointmentStatsUiDTO => ({
-  total,
-  filterGroup: [
+  showOrgFilter = true,
+): appointmentStatsUiDTO => {
+  const filterGroup = [
     {
       name: FilterName.FilterByStatusType,
       key: FilterGroupKey.appointmentStatus,
       filters: appointmentStatus,
     },
-    {
+  ]
+  if (showOrgFilter) {
+    filterGroup.push({
       name: FilterName.FilterByCorporation,
       key: FilterGroupKey.organizationId,
       filters: orgIdArray,
-    },
-  ],
-})
+    })
+  }
+  return {
+    total,
+    filterGroup,
+  }
+}
 
 export const appointmentUiDTOResponse = (
-  appointment: AppointmentDBModel & {canCancel?: boolean; organizationName?: string},
+  appointment: AppointmentDBModel & {
+    canCancel?: boolean
+    organizationName?: string
+    labName?: string
+  },
   isLabUser: boolean,
+  isClinicUser: boolean,
   transportRunLabel?: string,
 ): AppointmentUiDTO => {
   return {
     id: appointment.id,
     firstName: appointment.firstName,
     lastName: appointment.lastName,
-    status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser),
+    status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser, isClinicUser),
     barCode: appointment.barCode,
-    location: appointment.location,
+    location: appointment.locationAddress,
     email: appointment.email,
     phone: appointment.phone,
     dateTime: formatDateRFC822Local(appointment.dateTime),
@@ -334,7 +376,8 @@ export const appointmentUiDTOResponse = (
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
     organizationName: appointment.organizationName,
-    testType: 'PCR',
+    labName: appointment?.labName,
+    testType: appointment.testType ?? 'PCR',
     transportRunLabel,
   }
 }
@@ -353,9 +396,9 @@ export type UserAppointment = {
 export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): UserAppointment => ({
   id: appointment.id,
   QRCode: appointment.barCode,
-  showQrCode: moment(new Date()).isBefore(
-    formatStringDateRFC822Local(appointment.dateOfAppointment),
-  ),
+  showQrCode:
+    isSameOrBefore(appointment.dateOfAppointment) &&
+    appointment.appointmentStatus !== AppointmentStatus.Canceled,
   firstName: appointment.firstName,
   lastName: appointment.lastName,
   locationName: appointment.locationName,
@@ -373,7 +416,7 @@ export const appointmentByBarcodeUiDTOResponse = (
     lastName: appointment.lastName,
     status: appointment.appointmentStatus,
     barCode: appointment.barCode,
-    location: appointment.location,
+    location: appointment.locationAddress,
     email: appointment.email,
     phone: appointment.phone,
     dateTime: formatDateRFC822Local(appointment.dateTime),
@@ -381,6 +424,7 @@ export const appointmentByBarcodeUiDTOResponse = (
     deadline: formatDateRFC822Local(appointment.deadline),
     registeredNursePractitioner: appointment.registeredNursePractitioner,
     organizationName: organizationName,
+    testType: appointment.testType ?? 'PCR',
   }
 }
 
@@ -405,4 +449,18 @@ export type UpdateAppointmentActionParams = {
 
 export type ActivityTrackingDb = ActivityTracking & {
   id: string
+}
+
+export type RescheduleAppointmentDTO = {
+  appointmentId: string
+  dateTime: string
+  organizationId?: string
+  userID: string
+  isLabUser: boolean
+}
+
+export type UpdateTransPortRun = {
+  transportRunId: string
+  userId: string
+  labId?: string
 }

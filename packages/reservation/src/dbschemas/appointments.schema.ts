@@ -23,12 +23,10 @@ export default Joi.object({
   email: Joi.string().required(),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
-  location: Joi.string().allow(''),
   organizationId: Joi.string().allow(null),
   packageCode: Joi.string().allow(null),
   phone: Joi.string().required(),
   registeredNursePractitioner: Joi.string().allow(''),
-  // latestResult: ResultTypes
   latestResult: Joi.string().valid(
     'Positive',
     'Negative',
@@ -42,7 +40,7 @@ export default Joi.object({
   appointmentTypeID: Joi.number().required(),
   calendarID: Joi.number().required(),
   vialLocation: Joi.string().allow(''),
-  address: Joi.string().required(),
+  address: Joi.string().required().allow(''),
   addressUnit: Joi.string().allow(''),
   couponCode: Joi.string().allow(''),
   travelID: Joi.string().allow(''),
@@ -54,7 +52,19 @@ export default Joi.object({
   readTermsAndConditions: Joi.boolean().required(),
   receiveResultsViaEmail: Joi.boolean().required(),
   receiveNotificationsFromGov: Joi.boolean().required(),
-  userId: Joi.string().allow(''),
+  userId: Joi.string().allow(null),
   locationName: Joi.string().allow(''),
   locationAddress: Joi.string().allow(''),
+  testType: Joi.string()
+    .required()
+    .valid(
+      'PCR',
+      'RapidAntigen',
+      'Temperature',
+      'Attestation',
+      'EmergencyRapidAntigen',
+      'Antibody_All',
+      'Antibody_IgM',
+    ),
+  labId: Joi.string().allow(null),
 })

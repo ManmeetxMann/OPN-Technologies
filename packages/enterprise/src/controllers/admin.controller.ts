@@ -13,6 +13,7 @@ import {authorizationMiddleware} from '../../../common/src/middlewares/authoriza
 import {RequiredUserPermission} from '../../../common/src/types/authorization'
 import {FirebaseManager} from '../../../common/src/utils/firebase'
 import {LabService} from '../../../reservation/src/services/lab.service'
+
 class AdminController implements IControllerBase {
   public path = '/admin'
   public router = express.Router()

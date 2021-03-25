@@ -22,6 +22,7 @@ import {
   OrganizationUsersGroup,
   OrganizationUsersGroupMoveOperation,
   OrganizationReminderSchedule,
+  organizationDTOResponse,
 } from '../models/organization'
 import {OrganizationService} from '../services/organization-service'
 import {ReportService} from '../services/report-service'
@@ -226,13 +227,7 @@ class OrganizationController implements IControllerBase {
       const organization = !!key
         ? await this.organizationService.findOrganizationByKey(parseInt(key))
         : await this.organizationService.findOneById(id)
-      res.json(
-        actionSucceed({
-          ...organization,
-          enableTemperatureCheck: organization.enableTemperatureCheck || false,
-        },
-        authenticatedUser?.id),
-      )
+      res.json(actionSucceed(organizationDTOResponse(organization), authenticatedUser?.id))
     } catch (error) {
       next(error)
     }
@@ -944,11 +939,13 @@ class OrganizationController implements IControllerBase {
               continue
             }
             if (exitCandidate && (!entryCandidate || exitDate < entryDate)) {
-              pairs.push({
-                location,
-                entry: null,
-                exit: exits.pop(),
-              })
+              // pairs.push({
+              //   location,
+              //   entry: null,
+              //   exit: exits.pop(),
+              // })
+              // frontends don't accept entry: null
+              exits.pop()
               continue
             }
             pairs.push({
@@ -1101,8 +1098,9 @@ class OrganizationController implements IControllerBase {
       // ids of all the users we need more information about
       const allUserIds = new Set<string>()
       rawTraces.forEach((exposure) => {
-        ;(exposure.dependantIds ?? []).forEach((id) => allUserIds.add(id))
         allUserIds.add(exposure.userId)
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
+        ;(exposure.dependantIds ?? []).forEach((id) => allUserIds.add(id))
       })
 
       const {
@@ -1273,8 +1271,12 @@ class OrganizationController implements IControllerBase {
         isParentUser ? userId : parentUserId,
       )
 
+      const dependentsInOrg = dependents.filter((dependent) =>
+        dependent.organizationIds.includes(organizationId),
+      )
+
       const dependentsWithGroup = await Promise.all(
-        dependents.map(async (dependent: UserDependant) => {
+        dependentsInOrg.map(async (dependent: UserDependant) => {
           const group = await this.organizationService.getUserGroup(organizationId, dependent.id)
           const dependentStatus = await this.attestationService.latestStatus(
             dependent.id,

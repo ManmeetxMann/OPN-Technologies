@@ -6,12 +6,16 @@ import {authorizationMiddleware} from '../../../../../common/src/middlewares/aut
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 
 import {TransportRunsService} from '../../../services/transport-runs.service'
+import {LabService} from '../../../services/lab.service'
 import {TransportRunsDTOResponse} from '../../../models/transport-runs'
+import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
+import {getIsClinicUser} from '../../../../../common/src/utils/auth'
 
-class TransportRunsController implements IControllerBase {
+class AdminTransportRunsController implements IControllerBase {
   public path = '/reservation/admin/api/v1/transport-runs'
   public router = Router()
   private transportRunsService = new TransportRunsService()
+  private labService = new LabService()
 
   constructor() {
     this.initRoutes()
@@ -35,16 +39,32 @@ class TransportRunsController implements IControllerBase {
 
   createTransportRun: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {transportDateTime, driverName, label} = req.body as {
+      const {transportDateTime, driverName, label, labId} = req.body as {
         transportDateTime: string
         driverName: string
         label: string
+        labId: string
+      }
+      const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
+      const {admin} = res.locals.authenticatedUser
+
+      const isAdminForLab = admin.adminForLabIds && admin.adminForLabIds.includes(labId)
+      if (!isAdminForLab && !isClinicUser) {
+        throw new ResourceNotFoundException(
+          `No permission to add labId [${labId}] to transport run`,
+        )
+      }
+
+      const checkIfLabExists = await this.labService.findOneById(labId)
+      if (!checkIfLabExists) {
+        throw new ResourceNotFoundException(`No lab found for this id ${labId}`)
       }
 
       const transportRun = await this.transportRunsService.create(
         new Date(transportDateTime),
         driverName,
         label,
+        labId,
       )
 
       res.json(
@@ -59,9 +79,9 @@ class TransportRunsController implements IControllerBase {
 
   listTransportRun: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {transportDate} = req.query as {transportDate: string}
+      const {transportDate, labId} = req.query as {transportDate: string; labId?: string}
 
-      const transportRuns = await this.transportRunsService.getByDate(transportDate)
+      const transportRuns = await this.transportRunsService.getByDate(transportDate, labId)
 
       res.json(actionSucceed(transportRuns.map(TransportRunsDTOResponse)))
     } catch (error) {
@@ -70,4 +90,4 @@ class TransportRunsController implements IControllerBase {
   }
 }
 
-export default TransportRunsController
+export default AdminTransportRunsController

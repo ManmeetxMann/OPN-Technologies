@@ -19,7 +19,7 @@ import {TemperatureSaveRequest, TemperatureStatuses} from '../../../models/tempe
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
 
-class TemperatureAdminController implements IControllerBase {
+class AdminTemperatureController implements IControllerBase {
   public router = express.Router()
   public path = '/reservation/admin/api/v1'
   public temperatureService = new TemperatureService()
@@ -60,27 +60,22 @@ class TemperatureAdminController implements IControllerBase {
         temperature > temperatureThreshold ? TemperatureStatuses.Stop : TemperatureStatuses.Proceed
       const validFrom = now()
 
-      const [atestation, activePassport] = await Promise.all([
-        this.attestationService.lastAttestationByUserId(userId, organizationId),
-        this.passportService.findLatestPassport(
-          userId,
-          null,
-          PassportStatuses.TemperatureCheckRequired,
-          organizationId,
-        ),
-      ])
+      const attestation = await this.attestationService.lastAttestationByUserId(
+        userId,
+        organizationId,
+      )
 
-      if (!atestation) {
+      if (!attestation) {
         throw new BadRequestException('No attestation found for user')
       }
 
-      if (atestation.status !== PassportStatuses.TemperatureCheckRequired) {
-        throw new BadRequestException('Temperature check not required for attestation')
+      if (attestation.status !== PassportStatuses.Proceed) {
+        throw new BadRequestException('Attestation Status should be Proceed')
       }
 
       const data = {
         organizationId,
-        locationId: atestation.locationId,
+        locationId: attestation.locationId,
         temperature,
         status,
         userId,
@@ -95,28 +90,6 @@ class TemperatureAdminController implements IControllerBase {
         validUntil: this.passportService.shortestTime(status, now()),
       }
 
-      // NOTE - as soon as the QR token scanning flow does not require an access to be created, this needs
-      // to be restored to simply creating a new passport
-      let passport
-      if (activePassport.status === PassportStatuses.TemperatureCheckRequired) {
-        passport = await this.passportService.reviseStatus(
-          activePassport.statusToken,
-          status === TemperatureStatuses.Stop ? PassportStatuses.Stop : PassportStatuses.Proceed,
-        )
-      } else {
-        console.warn("Couldn't find the right passport to update")
-        passport = await this.passportService.create(status, data.userId, [], false, organizationId)
-      }
-
-      if (status === TemperatureStatuses.Stop) {
-        await this.alertService.sendAlert(
-          passport,
-          atestation,
-          organizationId,
-          atestation.locationId,
-        )
-      }
-
       res.json(actionSucceed(response))
     } catch (error) {
       next(error)
@@ -124,4 +97,4 @@ class TemperatureAdminController implements IControllerBase {
   }
 }
 
-export default TemperatureAdminController
+export default AdminTemperatureController

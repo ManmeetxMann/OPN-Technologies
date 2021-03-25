@@ -38,14 +38,15 @@ components:
               type: string
 
     Answer:
-      type: array
-      items:
-        anyOf:
-          - type: boolean
-          - type: string
-      minItems: 1
-      maxItems: 2
-      description: The first item in the array MUST be a boolean and the second item, if provided, MUST be a string.
+      type: object
+      properties:
+        answer:
+          type: boolean
+        additionalValue:
+          type: string
+          nullable: true
+        questionId:
+          type: number
 
     User:
       type: object
@@ -159,7 +160,40 @@ components:
             message:
               nullable: true
               type: string
-    
+
+    Attestation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        answers:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              question:
+                type: string
+              boolean:
+                type: boolean
+              datetime:
+                type: string
+            required:
+              - question
+              - boolean
+        locationId:
+          type: string
+        attestationTime:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - proceed
+            - caution
+            - stop
+
     V1ResponseOfPassport:
       type: object
       additionalProperties: false
@@ -229,6 +263,28 @@ components:
             message:
               nullable: true
               type: string
+    PubSubRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        subscription:
+          type: string
+        message:
+          type: object
+          additionalProperties: false
+          properties:
+            messageId:
+              type: string
+            message_id:
+              type: string
+            publishTime:
+              type: string
+            publish_time:
+              type: string
+            data:
+              type: string
+            attributes:
+              additionalProperties: true
 
   responses:
     Response:
@@ -384,6 +440,31 @@ paths:
         '200':
           description: Passports updated
 
+  /passport/api/v1/attestation/{attestationId}:
+    get:
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: attestationId
+          schema:
+            type: string
+          required: true
+      description: Get attestation by ID
+
+      responses:
+        '200':
+          description: Attestation available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attestation'
+
   /passport/api/v1/passport:
     get:
       security:
@@ -428,3 +509,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/V1ResponseOfPassport'
+  /passport/api/v1/pubsub/attestation:
+    post:
+      summary: update attestation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /passport/api/v1/pubsub/temperature:
+    post:
+      summary: update temperature
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /passport/api/v1/pubsub/pcr-test:
+    post:
+      summary: update pcr test result
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested

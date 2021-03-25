@@ -48,7 +48,7 @@ runs:
       PREPROD_TAG_REF=refs/tags/preprod-
       PROD_TAG_REF=refs/tags/prod-
       echo "::group::Define Deployment Variables"
-      if [[ $GITHUB_REF == 'refs/heads/cleanup' ]]; then
+      if [[ $GITHUB_REF == 'refs/heads/ci_cd' ]]; then
         echo "Deploy to INFRA"
         echo "PROJECT_ID=opn-platform-infra-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=infra_dev_service_account" >> $GITHUB_ENV
@@ -74,10 +74,6 @@ runs:
         echo "PROJECT_ID=opn-platform-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=dev_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
-      cat > ./packages/${{ inputs.service_name }}/app.yaml << EOF
-        runtime: nodejs12
-        service: ${{ inputs.service_name }}-staging
-      EOF
       else
         echo "Bad Deployment"
         exit 1;

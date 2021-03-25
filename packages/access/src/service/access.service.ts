@@ -493,6 +493,47 @@ export class AccessService {
     return allAccesses.length > 0 ? allAccesses[0] : null
   }
 
+  async findAtLocationOnDay(
+    userId: string,
+    locationId: string,
+    after: Date,
+    before: Date,
+  ): Promise<AccessModel> {
+    const query = this.accessRepository
+      .collection()
+      .where(`userId`, '==', userId)
+      .where(`locationId`, '==', locationId)
+      .where(`exitAt`, '>=', after)
+      .where(`exitAt`, '<=', before)
+      .orderBy('exitAt', 'desc')
+      .limit(1)
+    const allAccesses = await query.fetch()
+    return allAccesses.length > 0 ? allAccesses[0] : null
+  }
+
+  async findAnywhereOnDay(userId: string, after: Date, before: Date): Promise<AccessModel> {
+    const query = this.accessRepository
+      .collection()
+      .where(`userId`, '==', userId)
+      .where(`exitAt`, '>=', after)
+      .where(`exitAt`, '<=', before)
+      .orderBy('exitAt', 'desc')
+      .limit(1)
+    const allAccesses = await query.fetch()
+    return allAccesses.length > 0 ? allAccesses[0] : null
+  }
+
+  async findLatestAtLocation(userId: string, locationId: string): Promise<AccessModel> {
+    const query = this.accessRepository
+      .collection()
+      .where(`userId`, '==', userId)
+      .where(`locationId`, '==', locationId)
+      .orderBy('exitAt', 'desc')
+      .limit(1)
+    const allAccesses = await query.fetch()
+    return allAccesses.length > 0 ? allAccesses[0] : null
+  }
+
   async getTodayStatsForLocation(locationId: string): Promise<AccessStatsModel> {
     return await this.getTodayStatsForLocations([locationId])
   }

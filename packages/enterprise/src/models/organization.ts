@@ -25,12 +25,15 @@ export type Organization = {
   // The icon for push notifications to use
   notificationIconCaution?: string
   notificationIconStop?: string
-  enableTemperatureCheck?: boolean
+  enableTemperatureCheck: boolean
+  enablePulseOxygen: boolean
+  legacyMode: boolean
+  enableTesting: boolean
 }
 
 export type OrganizationListDTO = {
   id: string
-  key: number
+  //key: number
   name: string
 }
 
@@ -120,10 +123,33 @@ export const organizationGroupDTOResponse = (group: OrganizationGroup): Organiza
   isPrivate: group.isPrivate,
 })
 
-export const organizationDTOResponse = (organizations: Organization[]): OrganizationListDTO[] => {
+export const organizationSummaryDTOResponse = (
+  organizations: Organization[],
+): OrganizationListDTO[] => {
   return organizations.map((organization) => ({
     id: organization.id,
-    key: organization.key,
+    //key: organization.key,
     name: organization.name,
   }))
+}
+
+export const organizationDTOResponse = (organization: Organization): Omit<Organization, 'key'> => {
+  return {
+    id: organization.id,
+    name: organization.name,
+    type: organization.type,
+    allowDependants: organization.allowDependants,
+    hourToSendReport: organization.hourToSendReport,
+    dayShift: organization.dayShift,
+    dailyReminder: organization.dailyReminder,
+    enableTesting: organization.enableTesting,
+    enableTemperatureCheck: organization.enableTemperatureCheck,
+    enablePulseOxygen: organization.enablePulseOxygen,
+    enablePushNotifications: organization.enablePushNotifications,
+    legacyMode: organization.legacyMode,
+    notificationIconCaution: organization.notificationIconCaution,
+    notificationIconStop: organization.notificationIconStop,
+    notificationFormatCaution: organization.notificationFormatCaution,
+    notificationFormatStop: organization.notificationFormatStop,
+  }
 }

@@ -8,12 +8,13 @@ import {OrganizationConnectionRequest} from '../models/organization-connection-r
 import {UserService} from '../../../common/src/service/user/user-service'
 import {UserService as EnterpriseUserService} from '../services/user-service'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
-import {User, UserEdit, UserWithGroup, UserDependant} from '../../../common/src/data/user'
+import {UserEdit, UserWithGroup, UserDependant} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Organization, OrganizationUsersGroup} from '../models/organization'
 import * as _ from 'lodash'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {AuthService} from '../../../common/src/service/auth/auth-service'
+import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
 
@@ -25,6 +26,7 @@ class UserController implements IControllerBase {
   private enterpriseUserService = new EnterpriseUserService()
   private registrationService = new RegistrationService()
   private authService = new AuthService()
+  private adminApprovalService = new AdminApprovalService()
 
   constructor() {
     this.initRoutes()
@@ -82,13 +84,21 @@ class UserController implements IControllerBase {
         lastName,
         base64Photo,
         organizationIds: [organization.id],
-      } as Omit<User, 'id'>)
+        delegates: [],
+      })
 
       // Add user to group
       await this.organizationService.addUserToGroup(organization.id, group.id, user.id)
 
       // Add to registry
       await this.registrationService.linkUser(registrationId, user.id)
+
+      // Get the admin approval and attach to user
+      const approval = await this.adminApprovalService.findOneByEmail(user.email)
+      if (approval) {
+        user.admin = approval.profile
+        await this.userService.update(user)
+      }
 
       res.json(actionSucceed({user, organization, group}))
     } catch (error) {

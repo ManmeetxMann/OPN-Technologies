@@ -2,8 +2,17 @@ import {firestore} from 'firebase-admin'
 
 import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datetime.helper'
 
-import {AppointmentDBModel, AppointmentStatus, ResultTypes} from './appointment'
+import {AppointmentDBModel, AppointmentStatus, ResultTypes, TestTypes} from './appointment'
 import {Config} from '../../../common/src/utils/config'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
+import {
+  TestResultHistoryResponseDTO,
+  TestResultRequestData,
+  TestResultsMetaData,
+} from './test-results'
+import {groupByChannel} from '../utils/analysis.helper'
+import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
+import {TemperatureStatusesUI} from './temperature'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -27,6 +36,7 @@ export enum PCRResultPDFType {
   ConfirmedNegative = 'ConfirmedNegative',
   Negative = 'Negative',
   Positive = 'Positive',
+  Intermediate = 'Intermediate',
   PresumptivePositive = 'PresumptivePositive',
 }
 
@@ -63,27 +73,46 @@ export enum ResultReportStatus {
   Failed = 'Failed',
   Processing = 'Processing',
   RequestReceived = 'RequestReceived',
-  SentReRunRequest = 'SentReRunRequest',
-  SentReCollectRequest = 'SentReCollectRequest',
-  SentResult = 'SentResult',
+  SentReRunRequest = 'Sent "Re-Run Request"',
+  SentReCollectRequestAsInvalid = 'Sent "Re-Collect Request As Invalid"',
+  SentReCollectRequestAsInconclusive = 'Sent "Re-Collect Request As Inconclusive"',
+  SentPreliminaryPositive = 'Sent "Preliminary Positive"',
+  SentPresumptivePositive = 'Sent "Presumptive Positive"',
   Skipped = 'Skipped',
 }
 
 export type PCRTestResultConfirmRequest = {
   barCode: string
   action: PCRResultActionsForConfirmation
+  labId?: string
 }
 
-export enum PCRTestResultStyle {
-  Postive = 'RED',
+export type PCRSendResultDTO = {
+  adminId: string
+  barCode: string
+  isSingleResult: boolean
+  labId: string
+  metaData: TestResultsMetaData
+  resultAnalysis: Spec[]
+  sendUpdatedResults: boolean
+  templateId: string
+}
+
+export enum TestResultStyle {
+  // PCR result style
+  Positive = 'RED',
   Negative = 'GREEN',
   Invalid = 'YELLOW',
+  ReCollectRequired = 'YELLOW',
   Inconclusive = 'BLUE',
-  AnyOther = 'GREY',
-}
-
-export enum PCRTestResultType {
-  PCR = 'PCR',
+  AnyOther = 'GRAY',
+  // Temperature check style
+  Failed = 'RED',
+  Passed = 'GREEN',
+  // Atestation result style
+  caution = 'YELLOW',
+  stop = 'RED',
+  proceed = 'GREEN',
 }
 
 type PCRResultSpecs = {
@@ -105,33 +134,15 @@ type PCRResultSpecsForSending = PCRResultSpecs & {
   resultDate: Date
 }
 
-type PCRResultsForHistory = PCRResultSpecs & {
-  barCode: string
-  dateTime: firestore.Timestamp | string
-  reCollectNumber: string
-  result: string
-  runNumber: string
-}
-
-export type PCRTestResultRequestData = PCRResultSpecsForSending & {
-  barCode: string
-  sendUpdatedResults?: boolean
-}
-
 export type PCRListQueryRequest = {
   barcode: string[]
-}
-
-export type PCRTestResultRequest = {
-  reportTrackerId?: string
-  results: PCRTestResultRequestData[]
-  resultDate: Date
 }
 
 export type PCRTestResultData = {
   barCode: string
   adminId: string
-  resultSpecs?: PCRResultSpecsForSending
+  resultSpecs?: PCRResultSpecsForSending // @TODO Cleanup this after migration
+  userId?: string
 }
 
 export type PCRTestResultDBModel = PCRTestResultData & {
@@ -153,6 +164,16 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   testRunId?: string
   updatedAt: firestore.Timestamp
   waitingResult: boolean
+  deadlineDate: firestore.Timestamp
+  dateOfAppointment: firestore.Timestamp
+  testType: TestTypes
+  resultMetaData?: TestResultsMetaData
+  resultAnalysis?: Spec[]
+  templateId?: string
+  labId?: string
+  userId: string
+  sortOrder: number
+  appointmentStatus: AppointmentStatus
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -169,17 +190,6 @@ export type PCRTestResultHistory = {
   dateTime: firestore.Timestamp
 }
 
-export type PCRTestResultHistoryResponseDTO = {
-  id: string
-  barCode: string
-  waitingResult: boolean
-  results: PCRResultsForHistory[]
-  reason?: AppointmentReasons
-  reCollectNumber: string
-  runNumber: string
-  dateTime: string
-}
-
 export type PCRTestResultEmailDTO = Omit<
   PCRTestResultDBModel,
   | 'id'
@@ -189,8 +199,12 @@ export type PCRTestResultEmailDTO = Omit<
   | 'runNumber'
   | 'reCollectNumber'
   | 'updatedAt'
+  | 'deadlineDate'
+  | 'dateOfAppointment'
+  | 'userId'
+  | 'sortOrder'
 > &
-  AppointmentDBModel
+  AppointmentDBModel & {labAssay: string}
 
 export type ProcessPCRResultRequest = {
   reportTrackerId: string
@@ -208,8 +222,8 @@ export type TestResultsReportingTrackerDBModel = {
 export type TestResultsReportingTrackerPCRResultsDBModel = {
   id: string
   adminId: string
-  status: ResultReportStatus
-  data: PCRTestResultRequestData
+  status: ResultReportStatus | ResultTypes
+  data: TestResultRequestData
   details?: string
 }
 
@@ -219,19 +233,12 @@ export type CreateReportForPCRResultsResponse = {
 
 export const PCRTestResultHistoryResponse = (
   pcrTests: PCRTestResultHistory,
-): PCRTestResultHistoryResponseDTO => ({
+): TestResultHistoryResponseDTO => ({
   id: pcrTests.id,
   barCode: pcrTests.barCode,
   waitingResult: pcrTests.waitingResult,
   results: pcrTests.results.map((result) => ({
-    famEGene: result.resultSpecs.famEGene,
-    famCt: result.resultSpecs.famCt,
-    calRed61RdRpGene: result.resultSpecs.calRed61RdRpGene,
-    calRed61Ct: result.resultSpecs.calRed61Ct,
-    quasar670NGene: result.resultSpecs.quasar670NGene,
-    quasar670Ct: result.resultSpecs.quasar670Ct,
-    hexIC: result.resultSpecs.hexIC,
-    hexCt: result.resultSpecs.hexCt,
+    resultAnalysis: result.resultAnalysis,
     result: result.result,
     barCode: result.barCode,
     reCollectNumber: result.reCollectNumber ? `S${result.reCollectNumber}` : '',
@@ -253,17 +260,25 @@ export type PcrTestResultsListByDeadlineRequest = {
     | AppointmentStatus.Received
     | AppointmentStatus.ReRunRequired
   organizationId?: string
+  labId?: string
 }
 
 export type SinglePcrTestResultsRequest = {
   pcrTestResultId?: string
 }
 
+export type SingleTestResultsRequest = {
+  id: string
+}
+
 export type PcrTestResultsListRequest = {
   organizationId?: string
-  deadline?: string
   barCode?: string
   result?: ResultTypes
+  date?: string
+  testType?: TestTypes
+  searchQuery?: string
+  labId?: string
 }
 
 export type PCRTestResultListDTO = {
@@ -279,6 +294,10 @@ export type PCRTestResultListDTO = {
   dateTime?: string
   deadline?: string
   testRunId?: string
+  organizationId: string
+  organizationName: string
+  appointmentStatus: AppointmentStatus
+  labName?: string
 }
 
 export type PCRTestResultByDeadlineListDTO = {
@@ -296,8 +315,23 @@ export type PCRTestResultByDeadlineListDTO = {
 
 export type pcrTestResultsDTO = {
   barCode: string
-  status: ResultReportStatus
+  status: ResultReportStatus | ResultTypes
   details?: string
+}
+
+export type ResultDictionary = {
+  [index: string]: number
+}
+
+export const ResultOrder: ResultDictionary = {
+  Positive: 8,
+  PresumptivePositive: 7,
+  PreliminaryPositive: 6,
+  Invalid: 5,
+  Inconclusive: 4,
+  Indeterminate: 3,
+  Pending: 2,
+  Negative: 1,
 }
 
 export const pcrTestResultsResponse = (
@@ -308,21 +342,71 @@ export const pcrTestResultsResponse = (
   details: pcrTestResult.details,
 })
 
-export const resultToStyle = (result: ResultTypes): PCRTestResultStyle => {
-  return PCRTestResultStyle[result] ? PCRTestResultStyle[result] : PCRTestResultStyle.AnyOther
+export const resultToStyle = (
+  result: ResultTypes | PassportStatus | TemperatureStatusesUI,
+): TestResultStyle => {
+  return TestResultStyle[result] ? TestResultStyle[result] : TestResultStyle.AnyOther
 }
 
 export type TestResutsDTO = {
   id: string
-  type: PCRTestResultType
+  type: TestTypes
   name: string
   testDateTime: string
-  style: PCRTestResultStyle
-  result: ResultTypes
+  style: TestResultStyle
+  result: ResultTypes | PassportStatuses | TemperatureStatusesUI
   detailsAvailable: boolean
 }
 
+export type GroupedSpecs = {
+  channelName: string
+  description: string
+  groups: {
+    label: string
+    value: string | boolean | Date
+  }[]
+}
+
+export enum SpecLabel {
+  famEGene = 'famEGene',
+  famCt = 'famCt',
+  calRed61RdRpGene = 'calRed61RdRpGene',
+  calRed61Ct = 'calRed61Ct',
+  hexIC = 'hexIC',
+  hexCt = 'hexCt',
+  quasar670NGene = 'quasar670NGene',
+  quasar670Ct = 'quasar670Ct',
+  ORF1abCt = 'ORF1abCt',
+  NGeneCt = 'NGeneCt',
+  SGeneCt = 'SGeneCt',
+  MS2Ct = 'MS2Ct',
+  ORF1ab = 'ORF1ab',
+  NGene = 'NGene',
+  SGene = 'SGene',
+  MS2 = 'MS2',
+  IgAResult = 'IgAResult',
+  IgGResult = 'IgGResult',
+  IgMResult = 'IgMResult',
+  IgA = 'IgA',
+  IgG = 'IgG',
+  IgM = 'IgM',
+}
+
+export enum GroupLabel {
+  FAM = 'FAM',
+  calRed = 'calRed',
+  HEX = 'HEX',
+  quasar = 'quasar',
+}
+
+export type Spec = {
+  label: SpecLabel
+  value: string | boolean | Date
+}
+
 export type SinglePcrTestResultUi = {
+  firstName: string
+  lastName: string
   email: string
   phone: string
   ohipCard?: string
@@ -342,23 +426,19 @@ export type SinglePcrTestResultUi = {
   testType: string
   equipment: string
   manufacturer: string
-  resultSpecs: {
-    calRed61Ct: string
-    calRed61RdRpGene: string
-    famCt: string
-    famEGene: string
-    hexCt: string
-    hexIC: string
-    quasar670Ct: string
-    quasar670NGene: string
-    comment?: string
-    autoResult: ResultTypes
-  }
+  resultSpecs: Spec[]
+  style: TestResultStyle
+  testName: string
+  doctorId: string
+  resultAnalysis: GroupedSpecs[]
+  travelID: string
+  travelIDIssuingCountry: string
+  dateOfResult: string
 }
 
 enum LabData {
   labName = 'FH Health',
-  testType = 'PCR',
+  testType = 'RT-PCR',
   equipment = 'Allplex 2019-nCoV Assay',
   manufacturer = 'Seegeene Inc.',
 }
@@ -366,36 +446,90 @@ enum LabData {
 export const singlePcrTestResultDTO = (
   pcrTestResult: PCRTestResultDBModel,
   appointment: AppointmentDBModel,
-): SinglePcrTestResultUi => ({
-  email: appointment.email,
-  phone: `${appointment.phone}`,
-  ohipCard: appointment.ohipCard,
-  dateOfBirth: appointment.dateOfBirth,
-  address: appointment.address,
-  addressUnit: appointment.addressUnit,
-  barCode: pcrTestResult.barCode,
-  appointmentStatus: appointment.appointmentStatus,
-  result: pcrTestResult.result,
-  dateTime: formatStringDateRFC822Local(pcrTestResult.dateTime.toDate()),
-  registeredNursePractitioner: appointment.registeredNursePractitioner,
-  physician: requisitionDoctor,
-  locationName: appointment.locationName,
-  swabMethod: appointment.swabMethod,
-  deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
-  labName: LabData.labName,
-  testType: LabData.testType,
-  equipment: LabData.equipment,
-  manufacturer: LabData.manufacturer,
-  resultSpecs: {
-    calRed61Ct: pcrTestResult.resultSpecs.calRed61Ct,
-    calRed61RdRpGene: pcrTestResult.resultSpecs.calRed61RdRpGene,
-    famCt: pcrTestResult.resultSpecs.famCt,
-    famEGene: pcrTestResult.resultSpecs.famEGene,
-    hexCt: pcrTestResult.resultSpecs.hexCt,
-    hexIC: pcrTestResult.resultSpecs.hexIC,
-    quasar670Ct: pcrTestResult.resultSpecs.quasar670Ct,
-    quasar670NGene: pcrTestResult.resultSpecs.quasar670NGene,
-    comment: pcrTestResult.resultSpecs.comment,
-    autoResult: pcrTestResult.resultSpecs.autoResult,
-  },
-})
+): SinglePcrTestResultUi => {
+  let resultSpecs = null
+  let resultAnalysis = null
+  if (pcrTestResult.resultSpecs) {
+    resultSpecs = Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
+      label: resultKey,
+      value: resultValue,
+    }))
+  }
+  if (pcrTestResult.resultSpecs) {
+    resultAnalysis = groupByChannel(
+      Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
+        label: resultKey as SpecLabel,
+        value: resultValue,
+      })),
+    )
+  } else if (pcrTestResult.resultAnalysis) {
+    resultAnalysis = groupByChannel(pcrTestResult.resultAnalysis)
+  }
+  return {
+    email: appointment.email,
+    firstName: appointment.firstName,
+    lastName: appointment.lastName,
+    phone: `${appointment.phone}`,
+    ohipCard: appointment.ohipCard || 'N/A',
+    dateOfBirth: appointment.dateOfBirth,
+    address: appointment.address,
+    addressUnit: appointment.addressUnit,
+    barCode: pcrTestResult.barCode,
+    appointmentStatus: appointment.appointmentStatus,
+    result: pcrTestResult.result,
+    dateTime: formatStringDateRFC822Local(pcrTestResult.dateTime.toDate()),
+    registeredNursePractitioner: appointment.registeredNursePractitioner || 'N/A',
+    physician: requisitionDoctor || 'N/A',
+    locationName: appointment.locationName || 'N/A',
+    swabMethod: appointment.swabMethod || 'N/A',
+    deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
+    labName: LabData.labName,
+    testType: LabData.testType,
+    equipment: LabData.equipment,
+    manufacturer: LabData.manufacturer,
+    resultSpecs: resultSpecs,
+    resultAnalysis: resultAnalysis,
+    style: resultToStyle(pcrTestResult.result),
+    testName: 'SARS COV-2',
+    doctorId: 'DR1',
+    travelID: appointment.travelID.trim() ? appointment.travelID : 'N/A',
+    travelIDIssuingCountry: appointment.travelIDIssuingCountry.trim()
+      ? appointment.travelIDIssuingCountry
+      : 'N/A',
+    dateOfResult: pcrTestResult.resultMetaData
+      ? formatStringDateRFC822Local(safeTimestamp(pcrTestResult.resultMetaData.resultDate))
+      : 'N/A',
+  }
+}
+
+export type ActivityTracking = {
+  action: PcrResultTestActivityAction
+  currentData: Partial<PCRTestResultDBModel>
+  newData: Partial<PCRTestResultDBModel>
+  actionBy?: string // not required for action updateFromAcuity
+}
+
+export enum PcrResultTestActivityAction {
+  RegenerateBarcode = 'regenerateBarcode',
+  UpdateFromAcuity = 'updateFromAcuity',
+  Create = 'create',
+  ConfirmResult = 'confirmResult',
+  UpdateFromPackage = 'updateFromPackage',
+  AddTestRun = 'addTestRun',
+  UpdateFromAppointment = 'updateFromAppointment',
+  ResetOldResults = 'resetOldResults',
+  UpdateFromRapidAntigen = 'updateFromRapidAntigen',
+}
+
+export type UpdatePcrTestResultActionParams = {
+  id: string
+  updates: Partial<PCRTestResultDBModel>
+  action?: PcrResultTestActivityAction
+  actionBy?: string
+}
+
+export type ActivityTrackingDb = ActivityTracking & {
+  id: string
+}
+// determine priority in test Order based on result
+export const getSortOrderByResult = (result: string): number => ResultOrder[result]

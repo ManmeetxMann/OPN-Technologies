@@ -123,7 +123,15 @@ components:
         enableTemperatureCheck:
           type: boolean
           default: false
-          nullable: true
+        enablePulseOxygen:
+          type: boolean
+          default: false
+        legacyMode:
+          type: boolean
+          default: false
+        enableTesting:
+          type: boolean
+          default: false
       required:
         - name
 
@@ -314,6 +322,29 @@ components:
         - name
         - isPrivate
 
+    PubSubRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        subscription:
+          type: string
+        message:
+          type: object
+          additionalProperties: false
+          properties:
+            messageId:
+              type: string
+            message_id:
+              type: string
+            publishTime:
+              type: string
+            publish_time:
+              type: string
+            data:
+              type: string
+            attributes:
+              additionalProperties: true
+
     OrganizationConnectionRequestV1:
       type: object
       additionalProperties: false
@@ -500,6 +531,11 @@ components:
           items:
             type: string
           description: Group Ids within Organization
+        adminForLabIds:
+          type: array
+          items:
+            type: string
+          description: Lab ids to become a super admin of. Must be provided can be empty.
         showReporting:
           type: boolean
           description: Show reporting feature
@@ -532,13 +568,8 @@ components:
           type: boolean
         isBulkUploadAdmin:
           type: boolean
-          default: false
-        isIDBarCodesAdmin:
-          type: boolean
-          default: false
         isSingleResultSendAdmin:
           type: boolean
-          default: false
         isConfirmResultAdmin:
           type: boolean
         isPackageAdmin:
@@ -549,30 +580,42 @@ components:
           type: boolean
         isLookupAdmin:
           type: boolean
+        isClinicUser:
+          type: boolean
+        isRapidResultSenderAdmin:
+          type: boolean
+        isRapidResultOrgAdmin:
+          type: boolean
+        isOrganizeAdmin:
+          type: boolean
       required:
-        - email
-        - isBulkUploadAdmin
-        - isConfirmResultAdmin
-        - isDueTodayAdmin
-        - isIDBarCodesAdmin
-        - isLabAppointmentsAdmin
-        - isLabResultsAdmin
-        - isLabUser
-        - isManagementDashboardAdmin
-        - isOpnSuperAdmin
-        - isReceivingAdmin
-        - isSingleResultSendAdmin
-        - isTestAppointmentsAdmin
-        - isTestReportsAdmin
-        - isTestRunsAdmin
-        - isTransportsRunsAdmin
-        - isPackageAdmin
-        - isCheckInAdmin
-        - isGenerateAdmin
-        - isLookupAdmin
-        - organizationId
-        - showReporting
+        - adminForLabIds	
+        - email	
+        - isBulkUploadAdmin	
+        - isCheckInAdmin	
+        - isClinicUser	
+        - isConfirmResultAdmin	
+        - isDueTodayAdmin	
+        - isGenerateAdmin	
+        - isLabAppointmentsAdmin	
+        - isLabResultsAdmin	
+        - isLabUser	
+        - isLookupAdmin	
+        - isManagementDashboardAdmin	
+        - isOpnSuperAdmin	
+        - isPackageAdmin	
+        - isRapidResultOrgAdmin	
+        - isRapidResultSenderAdmin	
+        - isReceivingAdmin	
+        - isSingleResultSendAdmin	
+        - isTestAppointmentsAdmin	
+        - isTestReportsAdmin	
+        - isTestRunsAdmin	
+        - isTransportsRunsAdmin	
+        - organizationId	
+        - showReporting	
         - superAdminForOrganizationIds
+        - isOrganizeAdmin
 
     InternalAdminListRequest:
       type: object
@@ -849,11 +892,11 @@ components:
           type: boolean
         isTestRunsAdmin:
           type: boolean
+        isTestKitBatchAdmin:
+          type: boolean
         isDueTodayAdmin:
           type: boolean
         isBulkUploadAdmin:
-          type: boolean
-        isIDBarCodesAdmin:
           type: boolean
         isSingleResultSendAdmin:
           type: boolean
@@ -866,6 +909,12 @@ components:
         isGenerateAdmin:
           type: boolean
         isLookupAdmin:
+          type: boolean
+        isRapidResultSenderAdmin:
+          type: boolean
+        isRapidResultOrgAdmin:
+          type: boolean
+        isOrganizeAdmin:
           type: boolean
     User:
       type: object
@@ -893,6 +942,38 @@ components:
         - firstName
         - lastName
         - base64Photo
+
+    UserCommon:
+      type: object
+      deprecated: false
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+        lastName:
+          type: string
+        photo:
+          type: string
+          description: Photo URL
+          nullable: true
+        isAdminEnabled:
+          type: boolean
+        organizationIds:
+          type: array
+          items:
+            type: string
+        delegates:
+          type: array
+          items:
+            type: string
+      required:
+        - firstName
+        - lastName
 
     UserV3:
       type: object
@@ -1175,6 +1256,53 @@ components:
                 type: string
                 nullable: true
 
+    Recommendation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          nullable: true
+        title:
+          type: string
+        body:
+          type: string
+        recommendation:
+          type: string
+          enum:
+            [
+              StatusInfo
+              PassAvailable
+              CompleteAssessment
+              UpdateAssessment
+              BadgeExpiry
+              TempCheckRequired
+              ViewNegativeTemp
+              ViewPositiveTemp
+              BookPCR
+              BookingDetailsPCR
+              CheckInPCR
+              ResultReadiness
+              ViewNegativePCR
+              ViewPositivePCR
+            ]
+          nullable: false
+
+    Test:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        style:
+          type: string
+        
     ResponseOfOrganizationConnection:
       type: object
       additionalProperties: false
@@ -1797,6 +1925,81 @@ components:
           type: string
           description: the new "from" index to fetch the next page of the same query
           nullable: true
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    ResponseOfRecommendations:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recommendation'
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+    
+    ResponseOfHealthPass:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          properties:
+            organization:
+              $ref: '#/components/schemas/Organization'
+            passes:
+              type: object
+              properties:
+                user:
+                  $ref: '#/components/schemas/UserCommon'
+                expiry:
+                  type: string
+                dateOfBirth:
+                  type: string
+                tests:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Test'
+                status:
+                  type: string
+                  enum:
+                    - proceed
+                    - temperature_check_required
         status:
           type: object
           additionalProperties: false
@@ -3626,11 +3829,32 @@ paths:
                   type: string
                 organizationId:
                   type: string
+                address:
+                  type: string
+                dateOfBirth:
+                  type: string
+                agreeToConductFHHealthAssessment:
+                  type: boolean
+                shareTestResultWithEmployer:
+                  type: boolean
+                readTermsAndConditions:
+                  type: boolean
+                receiveResultsViaEmail:
+                  type: boolean
+                receiveNotificationsFromGov:
+                  type: boolean
               required:
                 - email
                 - firstName
                 - lastName
                 - organizationId
+                - address
+                - dateOfBirth
+                - agreeToConductFHHealthAssessment
+                - shareTestResultWithEmployer
+                - readTermsAndConditions
+                - receiveResultsViaEmail
+                - receiveNotificationsFromGov
       responses:
         '200':
           description: Successfull linked
@@ -3728,3 +3952,94 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  /enterprise/api/v3/recommendations:
+    get:
+      summary: recommendations for user
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfRecommendations'
+  /enterprise/api/v3/health-pass:
+    get:
+      summary: health passes for user and dependants
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfHealthPass'
+  /enterprise/api/v3/pubsub/passport:
+    post:
+      summary: update passport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /enterprise/api/v3/pubsub/attestation:
+    post:
+      summary: update attestation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /enterprise/api/v3/pubsub/temperature:
+    post:
+      summary: update temperature
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /enterprise/api/v3/pubsub/pcr-test:
+    post:
+      summary: update pcr test result
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+  /enterprise/api/v3/pubsub/test-appointment:
+    post:
+      summary: update appointment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested

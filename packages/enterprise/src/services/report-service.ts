@@ -1,33 +1,28 @@
+import * as _ from 'lodash'
+import moment from 'moment'
+
 import {now, toDateTimeFormat, toDateFormat} from '../../../common/src/utils/times'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {User} from '../../../common/src/data/user'
-import {Range} from '../../../common/src/types/range'
+import DataStore from '../../../common/src/data/datastore'
+import {Config} from '../../../common/src/utils/config'
 
 import {OrganizationService} from './organization-service'
-import {
-  OrganizationGroup,
-  OrganizationLocation,
-  OrganizationUsersGroup,
-  Organization,
-} from '../models/organization'
+import {UserActionsRepository} from '../repository/action-items.repository'
+import {OrganizationGroup, OrganizationLocation, Organization} from '../models/organization'
 import {Stats, StatsFilter} from '../models/stats'
 import userTemplate from '../templates/user-report'
 
 import {AccessService} from '../../../access/src/service/access.service'
 import {CheckInsCount} from '../../../access/src/models/access-stats'
 import {ExposureReport} from '../../../access/src/models/trace'
-import {Access, AccessWithPassportStatusAndUser} from '../../../access/src/models/access'
+import {Access} from '../../../access/src/models/access'
 
 import {Questionnaire} from '../../../lookup/src/models/questionnaire'
-import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 
-import {Passport, PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
-import {PassportService} from '../../../passport/src/services/passport-service'
+import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {AttestationService} from '../../../passport/src/services/attestation-service'
-
-import * as _ from 'lodash'
-import moment from 'moment'
 
 type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
 type Lookups = {
@@ -38,7 +33,15 @@ type Lookups = {
   statusesLookup: Record<string, PassportStatus> // statuses by person (user or dependant) id
 }
 
-const getHourlyCheckInsCounts = (accesses: AccessWithPassportStatusAndUser[]): CheckInsCount[] => {
+type UserInfoBundle = {
+  access: Access
+  user: User
+  status: PassportStatus
+}
+
+const timeZone = Config.get('DEFAULT_TIME_ZONE')
+
+const getHourlyCheckInsCounts = (accesses: {enteredAt: string}[]): CheckInsCount[] => {
   const countsPerHour: Record<string, number> = {}
   for (const {enteredAt} of accesses) {
     if (enteredAt) {
@@ -52,7 +55,7 @@ const getHourlyCheckInsCounts = (accesses: AccessWithPassportStatusAndUser[]): C
 }
 
 const getPassportsCountPerStatus = (
-  accesses: AccessWithPassportStatusAndUser[],
+  accesses: {status: PassportStatus}[],
 ): Record<PassportStatus, number> => {
   const counts = {
     [PassportStatuses.Pending]: 0,
@@ -65,124 +68,63 @@ const getPassportsCountPerStatus = (
   return counts
 }
 
-// select the 'fresher' access
-const getPriorityAccess = (
-  accessOne: AccessWithPassportStatusAndUser | null,
-  accessTwo: AccessWithPassportStatusAndUser | null,
-): AccessWithPassportStatusAndUser | null => {
-  if (!accessOne) {
-    return accessTwo
-  }
-  if (!accessTwo) {
-    return accessOne
-  }
-
-  // Check if we status mismatch AND send back non-pending if can
-  if (accessOne.status === 'pending' && accessTwo.status !== 'pending') return accessTwo
-  else if (accessTwo.status === 'pending' && accessOne.status !== 'pending') return accessOne
-
-  // Else, continue ...
-
-  const accessOneTime = accessOne.exitAt ?? accessOne.enteredAt
-  const accessTwoTime = accessTwo.exitAt ?? accessTwo.enteredAt
-  if (!accessTwoTime) {
-    return accessOne
-  }
-  if (!accessOneTime) {
-    return accessTwo
-  }
-  if (new Date(accessOneTime) < new Date(accessTwoTime)) {
-    return accessTwo
-  }
-  return accessOne
-}
-
 export class ReportService {
   private organizationService = new OrganizationService()
   private attestationService = new AttestationService()
-  private questionnaireService = new QuestionnaireService()
   private userService = new UserService()
   private accessService = new AccessService()
-  private passportService = new PassportService()
+  private dataStore = new DataStore()
 
   async getStatsHelper(organizationId: string, filter?: StatsFilter): Promise<Stats> {
     const {groupId, locationId, from, to} = filter ?? {}
     const live = !from && !to
 
-    const betweenCreatedDate = {
-      from: live ? moment(now()).startOf('day').toDate() : new Date(from),
+    const dateRange = {
+      from: live ? moment(now()).tz(timeZone).startOf('day').toDate() : new Date(from),
       to: live ? now() : new Date(to),
     }
     // Fetch user groups
     const usersGroups = await this.organizationService.getUsersGroups(organizationId, groupId)
     // Get users & dependants
-    const nonGuardiansUserIds = new Set<string>()
-    const parentUserIds: Record<string, string> = {}
-    usersGroups.forEach(({userId, parentUserId}) => {
-      if (!!parentUserId) {
-        parentUserIds[userId] = parentUserId
-      } else nonGuardiansUserIds.add(userId)
+    const allUserIds = new Set<string>()
+    usersGroups.forEach(({userId}) => {
+      allUserIds.add(userId)
     })
-    const guardianIds = new Set(Object.values(parentUserIds))
-    const dependantIds = new Set(Object.keys(parentUserIds))
-    const userIds = new Set([...nonGuardiansUserIds, ...guardianIds])
-    const usersById = await this.getUsersById([...userIds])
-    const dependantsById = await this.getDependantsById(guardianIds, usersById, dependantIds)
-
-    // Fetch Guardians groups
-    const guardiansGroups: OrganizationUsersGroup[] = await Promise.all(
-      _.chunk([...guardianIds], 10).map((chunk) =>
-        this.organizationService.getUsersGroups(organizationId, null, chunk),
-      ),
-    ).then((results) => _.flatten(results as OrganizationUsersGroup[][]))
-
-    const allGroups = [...new Set([...(usersGroups ?? []), ...(guardiansGroups ?? [])])]
-    const usersGroupsByUserId: Record<string, OrganizationUsersGroup> = {}
-    allGroups.forEach((groupUser) => (usersGroupsByUserId[groupUser.userId] = groupUser))
     // Get accesses
-    const accesses = await this.getAccessesFor(
-      [...userIds],
-      [...dependantIds],
-      parentUserIds,
-      locationId,
-      groupId,
-      betweenCreatedDate,
-      usersGroupsByUserId,
-      usersById,
-      dependantsById,
-    )
+    const data = (
+      await this.getAccessesFor(
+        [...allUserIds],
+        organizationId,
+        locationId,
+        dateRange.from,
+        dateRange.to,
+      )
+    ).filter(({access}) => {
+      if (locationId) {
+        return access
+      }
+      return true
+    })
+    const nowMoment = moment(now())
+    const accesses = data.map(({user, status, access}) => ({
+      // remove not-yet-exited exitAt
+      exitAt:
+        access?.exitAt && nowMoment.isSameOrAfter(safeTimestamp(access.exitAt))
+          ? safeTimestamp(access.exitAt).toISOString()
+          : null,
+      enteredAt: access?.enteredAt ? safeTimestamp(access.enteredAt).toISOString() : null,
+      parentUserId: user.delegates?.length ? user.delegates[0] : null,
+      status,
+      user,
+      locationId: access?.locationId,
+    }))
 
     return {
       accesses,
       asOfDateTime: live ? now().toISOString() : null,
       passportsCountByStatus: getPassportsCountPerStatus(accesses),
       hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
-    } as Stats
-  }
-
-  private getDependantsById(
-    parentUserIds: Set<string> | string[],
-    usersById: Record<string, User>,
-    dependantIds?: Set<string>,
-  ): Promise<Record<string, User>> {
-    const promises = []
-    parentUserIds.forEach((userId) =>
-      promises.push(
-        this.userService
-          .getAllDependants(userId, true)
-          .then((results) =>
-            results
-              .filter(({id}) => dependantIds.has(id))
-              .map((dependant) => ({...usersById[userId], ...dependant})),
-          ),
-      ),
-    )
-
-    return Promise.all(promises).then((pages) => {
-      const byId: Record<string, User> = {}
-      pages.forEach((page) => page.forEach((dependant) => (byId[dependant.id] = dependant)))
-      return byId
-    })
+    }
   }
 
   async getUserReportTemplate(
@@ -364,21 +306,19 @@ export class ReportService {
     })
 
     const printableAttestations = attestations.map((attestation) => {
-      const answerKeys = Object.keys(attestation.answers)
-      answerKeys.sort((a, b) => parseInt(a) - parseInt(b))
-      const answerCount = answerKeys.length
+      const answerCount = attestation.answers.length
       const questionnaire = questionnairesLookup[answerCount]
       if (!questionnaire) {
         console.warn(`no questionnaire found for attestation ${attestation.id}`)
       }
       return {
-        responses: answerKeys.map((key) => {
-          const yes = attestation.answers[key]['1']
-          const dateOfTest =
-            yes && attestation.answers[key]['2'] && toDateFormat(attestation.answers[key]['2'])
+        responses: attestation.answers.map((answer, key) => {
+          const yes = answer['0']
+          const dateOfTest = yes && answer['1'] && toDateFormat(answer['1'])
           const question =
             questionnaire?.questions[
-              Object.keys(questionnaire.questions).find((qKey) => parseInt(qKey) === parseInt(key))
+              // questions start at 1, answers start at 0
+              Object.keys(questionnaire.questions).find((qKey) => parseInt(qKey) === key + 1)
             ]?.value ?? `Question ${key}`
           return {
             question: question as string,
@@ -565,139 +505,38 @@ export class ReportService {
 
   private async getAccessesFor(
     userIds: string[],
-    dependantIds: string[],
-    parentUserIds: Record<string, string>,
+    organizationId: string,
     locationId: string | undefined,
-    groupId: string | undefined,
-    betweenCreatedDate: Range<Date>,
-    groupsByUserId: Record<string, OrganizationUsersGroup>,
-    usersById: Record<string, User>,
-    dependantsByIds: Record<string, User>,
-  ): Promise<AccessWithPassportStatusAndUser[]> {
-    // Fetch passports
-    const passportsByUserIds = await this.passportService.findTheLatestValidPassports(
-      userIds,
-      dependantIds,
-      betweenCreatedDate.to,
-    )
-    const implicitPendingPassports = [...userIds, ...dependantIds]
-      .filter((userId) => !passportsByUserIds[userId])
-      .map(
-        (userId) =>
-          ({
-            status: PassportStatuses.Pending,
-            userId,
-            parentUserId: parentUserIds[userId] ?? null,
-          } as Passport),
-      )
-
-    // Fetch accesses by status-token
-    const proceedStatusTokens = Object.values(passportsByUserIds)
-      .filter(({status}) => status === PassportStatuses.Proceed)
-      .map(({statusToken}) => statusToken)
-    const accessesByStatusToken: Record<string, Access[]> = await Promise.all(
-      _.chunk(proceedStatusTokens, 10).map((chunk) =>
-        this.accessService.findAllWith({
-          statusTokens: chunk,
-          locationId,
-        }),
-      ),
-    )
-      .then((results) => _.flatten(results as Access[][]))
-      .then((results) =>
-        results.reduce((byStatusToken, access) => {
-          if (!byStatusToken[access.statusToken]) {
-            byStatusToken[access.statusToken] = []
-          }
-          byStatusToken[access.statusToken].push(access)
-          return byStatusToken
-        }, {}),
-      )
-
-    const isAccessEligibleForUserId = (userId: string) =>
-      !groupId || groupsByUserId[userId]?.groupId === groupId
-
-    // Remap accesses
-    const accesses = [...implicitPendingPassports, ...Object.values(passportsByUserIds)]
-      .filter(({userId}) => isAccessEligibleForUserId(userId))
-      .map(({userId, status, statusToken}) => {
-        const user = usersById[userId] ?? dependantsByIds[userId]
-        const parentUserId =
-          passportsByUserIds[userId]?.parentUserId ??
-          implicitPendingPassports.find((passport) => passport.userId === userId)?.parentUserId
+    after: Date,
+    before: Date,
+  ): Promise<UserInfoBundle[]> {
+    const usersById = await this.getUsersById(userIds)
+    const nowMoment = moment(now())
+    const results = await Promise.all(
+      userIds.map(async (id) => {
+        const user = usersById[id]
         if (!user) {
-          if (userIds.includes(userId)) {
-            console.warn(`Invalid state exception: Cannot find user for ID [${userId}]`)
-          } else if (dependantIds.includes(userId)) {
-            console.warn(
-              `Invalid state exception: Cannot find dependant for ID [${userId}], guardian [${parentUserIds[userId]}]`,
-            )
-          } else {
-            console.warn(`[${userId}] is not in userIds or dependantIds`)
-          }
+          console.warn(
+            `user with id ${id} does not exist - they may be have a zombie membership in org ${organizationId}`,
+          )
           return null
         }
-        // access which represents the user's present location
-        const activeAccess = (accessesByStatusToken[statusToken] || [])
-          .filter((access) =>
-            parentUserId
-              ? access.userId === parentUserId && access.dependants[userId]
-              : access.userId === userId && access.includesGuardian,
-          )
-          .map((access) => ({
-            ...access,
-            enteredAt: parentUserId
-              ? ((access.dependants[userId]?.enteredAt ?? null) as string)
-              : access.enteredAt,
-            exitAt: parentUserId
-              ? ((access.dependants[userId]?.exitAt ?? null) as string)
-              : access.exitAt,
-            status,
-            user,
-            userId,
-          }))
-          .reduce(getPriorityAccess, null)
-        const access = activeAccess ?? {
-          token: null,
-          statusToken: null,
-          locationId: null,
-          createdAt: null,
-          enteredAt: null,
-          exitAt: null,
-          includesGuardian: null,
-          dependants: null,
+        const repo = new UserActionsRepository(this.dataStore, id)
+        const [access, items] = await Promise.all([
+          locationId
+            ? this.accessService.findAtLocationOnDay(id, locationId, after, before)
+            : this.accessService.findAnywhereOnDay(id, after, before),
+          repo.get(organizationId),
+        ])
+        let status
+        if (!items?.latestPassport || nowMoment.isAfter(items.latestPassport.expiry)) {
+          status = PassportStatuses.Pending
+        } else {
+          status = items?.latestPassport.status
         }
-
-        return {
-          ...access,
-          userId,
-          user,
-          status,
-          enteredAt: access.enteredAt,
-          exitAt: access.exitAt,
-          parentUserId,
-          groupId,
-        }
-      })
-      .filter((access) => !!access)
-
-    // Handle duplicates
-    const distinctAccesses: Record<string, AccessWithPassportStatusAndUser> = {}
-    const normalize = (s?: string): string => (!!s ? s.toLowerCase().trim() : '')
-    accesses.forEach(({user, status, ...access}) => {
-      if (!groupsByUserId[user.id]) {
-        console.log('Invalid state: Cannot find group for user: ', user.id)
-        return
-      }
-      const duplicateKey = `${normalize(user.firstName)}|${normalize(user.lastName)}|${
-        groupsByUserId[user.id]?.groupId
-      }`
-      distinctAccesses[duplicateKey] = getPriorityAccess(distinctAccesses[duplicateKey], {
-        ...access,
-        user,
-        status,
-      })
-    })
-    return Object.values(distinctAccesses)
+        return {access, status, user: usersById[id]}
+      }),
+    )
+    return results.filter((notNull) => notNull)
   }
 }

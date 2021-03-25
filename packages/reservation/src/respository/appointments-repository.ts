@@ -1,3 +1,6 @@
+import {isEmpty} from 'lodash'
+import {makeFirestoreTimestamp} from '../utils/datetime.helper'
+import {now} from '../../../common/src/utils/times'
 import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 import {
@@ -9,7 +12,8 @@ import {
   UpdateAppointmentActionParams,
 } from '../models/appointment'
 import DBSchema from '../dbschemas/appointments.schema'
-import {isEqual} from 'lodash'
+import {LogError, LogWarning} from '../../../common/src/utils/logging-setup'
+import {findDifference} from '../utils/compare-objects'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
@@ -19,9 +23,24 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     super(dataStore)
   }
 
+  async getAppointmentById(appointmentId: string): Promise<AppointmentDBModel> {
+    return this.get(appointmentId)
+  }
+
+  async getAppointmentsDBByIds(appointmentsIds: string[]): Promise<AppointmentDBModel[]> {
+    return this.findWhereIdIn(appointmentsIds)
+  }
+
   public async save(appointments: Omit<AppointmentDBModel, 'id'>): Promise<AppointmentDBModel> {
     const validatedData = await DBSchema.validateAsync(appointments)
     return this.add(validatedData)
+  }
+
+  public async updateData(
+    id: string,
+    appointment: Partial<AppointmentDBModel>,
+  ): Promise<AppointmentDBModel> {
+    return this.updateProperties(id, appointment)
   }
 
   public changeAppointmentStatus(
@@ -30,6 +49,29 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   ): Promise<AppointmentDBModel> {
     return this.updateProperties(appointmentId, {
       appointmentStatus,
+    })
+  }
+
+  async addStatusHistoryById(
+    appointmentId: string,
+    newStatus: AppointmentStatus,
+    createdBy: string,
+  ): Promise<AppointmentStatusHistoryDb> {
+    const appointment = await this.getAppointmentById(appointmentId)
+    const appointmentStatusHistory = new StatusHistoryRepository(this.datastore, appointmentId)
+
+    return appointmentStatusHistory.add({
+      newStatus: newStatus,
+      previousStatus: appointment.appointmentStatus,
+      createdOn: now(),
+      createdBy,
+    })
+  }
+
+  async changeStatusToReported(appointmentId: string, userId: string): Promise<AppointmentDBModel> {
+    await this.addStatusHistoryById(appointmentId, AppointmentStatus.Reported, userId)
+    return this.updateProperties(appointmentId, {
+      appointmentStatus: AppointmentStatus.Reported,
     })
   }
 
@@ -46,6 +88,15 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     })
 
     return this.updateProperty(id, 'barCode', barCode)
+  }
+
+  public setDeadlineDate(
+    appointmentId: string,
+    deadlineDate: moment.Moment,
+  ): Promise<AppointmentDBModel> {
+    return this.updateProperties(appointmentId, {
+      deadline: makeFirestoreTimestamp(deadlineDate.toISOString()),
+    })
   }
 
   public async updateAppointment({
@@ -84,36 +135,30 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     updates,
     actionBy = null,
   }: UpdateAppointmentActionParams): Promise<ActivityTrackingDb> {
-    const appointment = await this.get(id)
-    const currentData = {}
-    const newData = {}
-    const skip = ['id', 'timestamps', 'appointmentStatus']
     try {
-      Object.keys(updates).map((key) => {
-        // isEqual used for timestamps, !== used to avoid fouls for the same values in different formats (strings and numbers)
-        if (
-          !skip.includes(key) &&
-          (!isEqual(updates[key], appointment[key]) || updates[key] !== appointment[key])
-        ) {
-          currentData[key] = appointment[key] ?? null
-          newData[key] = updates[key] ?? null
-        }
-      })
+      const appointment = await this.get(id)
+      const skip = ['id', 'timestamps', 'appointmentStatus']
 
-      if (!Object.keys(newData).length) {
-        console.warn(`No one field has been updated for appointmen ${id}`)
+      const {currentData, newData} = findDifference<AppointmentDBModel>(appointment, updates, skip)
+
+      if (isEmpty(newData, true)) {
+        LogWarning('addAppointmentActivityById', 'NoAppointmentUpdates', {
+          message: `No one field has been updated for appointment ${id}`,
+        })
         return
       }
-    } catch (err) {
-      console.warn(`Failed to create Object Difference for activity Tracking ${err}`)
-    }
 
-    return this.getAppointmentActivityRepository(id).add({
-      action,
-      newData,
-      currentData,
-      actionBy,
-    })
+      await this.getAppointmentActivityRepository(id).add({
+        action,
+        newData,
+        currentData,
+        actionBy,
+      })
+    } catch (err) {
+      LogError('addAppointmentActivityById', 'FailedFindDifference', {
+        errorMessage: err.toString(),
+      })
+    }
   }
 }
 
