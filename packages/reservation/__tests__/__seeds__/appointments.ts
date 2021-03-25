@@ -40,6 +40,7 @@ export const create = async (dataOverwrite: {
     shareTestResultWithEmployer: true,
     timeOfAppointment: '8:00am',
     labId: dataOverwrite.labId ?? 'DEFAULT',
+    userId: 'TestUser',
     testType: dataOverwrite.testType ?? 'PCR',
   }
   data.organizationId = dataOverwrite.organizationId ?? null

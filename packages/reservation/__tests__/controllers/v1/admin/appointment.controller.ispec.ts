@@ -13,6 +13,8 @@ const dateForAppointmentStr = 'June 05, 2020'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
 const organizationId = 'TEST1'
 const laboratoryId = 'Lab1'
+const barCode = 'BAR1'
+
 describe('AdminAppointmentController', () => {
   beforeAll(async () => {
     await create({
@@ -122,6 +124,40 @@ describe('AdminAppointmentController', () => {
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.total).toBe(3)
+      done()
+    })
+  })
+
+  describe('fetch appointments by id', () => {
+    test('should get appointment by id: APT1 successfully', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments/APT1`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      expect(result.status).toBe(200)
+      expect(result.body.data.id).toBe('APT1')
+      done()
+    })
+    test('should get appointment history by id: APT1 successfully', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments/APT1/history`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      expect(result.status).toBe(200)
+      expect(result.body.data.length).toBeGreaterThan(1)
+      done()
+    })
+  })
+
+  describe('appointment barcodes', () => {
+    test('should get appointment by barCode', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments/barcode/lookup?barCode=${barCode}`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      expect(result.status).toBe(200)
+      expect(result.body.data.id).toBeTruthy()
+      done()
+    })
+    test('should generate new barcode', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments/barcode/get-new-code`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      console.log(result.body)
+      expect(result.status).toBe(200)
       done()
     })
   })
