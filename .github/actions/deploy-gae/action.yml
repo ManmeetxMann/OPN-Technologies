@@ -48,7 +48,7 @@ runs:
       PREPROD_TAG_REF=refs/tags/preprod-
       PROD_TAG_REF=refs/tags/prod-
       echo "::group::Define Deployment Variables"
-      if [[ $GITHUB_REF == 'refs/heads/cleanup' ]]; then
+      if [[ $GITHUB_REF == 'refs/heads/ci_cd' ]]; then
         echo "Deploy to INFRA"
         echo "PROJECT_ID=opn-platform-infra-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=infra_dev_service_account" >> $GITHUB_ENV

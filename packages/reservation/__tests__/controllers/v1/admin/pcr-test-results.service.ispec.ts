@@ -11,7 +11,7 @@ import {
 jest.mock('../../../../../common/src/middlewares/authorization')
 //jest.mock('../../../../../common/src/utils/logging-setup')
 
-const dateForAppointments = '2020-02-05'
+const dateForAppointments = '2020-01-05'
 const dateTimeForAppointment7AM = `${dateForAppointments}T07:00:00`
 const deadlineSameDay = `${dateForAppointments}T23:59:00`
 

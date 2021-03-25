@@ -8,9 +8,9 @@ on:
       - ".github/actions/**"
     branches: 
       - master
-      - cleanup
     tags:
       - infra-dev-reservation-*
+      - infra-dev-all-*
       - preprod-reservation-*
       - preprod-all-*
       - prod-reservation-*

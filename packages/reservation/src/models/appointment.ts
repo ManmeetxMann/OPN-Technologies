@@ -1,9 +1,8 @@
 import {firestore} from 'firebase-admin'
-import {formatStringDateRFC822Local} from '../utils/datetime.helper'
+import {isSameOrBefore} from '../utils/datetime.helper'
 
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
-import moment from 'moment-timezone'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
@@ -152,6 +151,9 @@ export enum TestTypes {
   RapidAntigen = 'RapidAntigen',
   TemperatureCheck = 'Temperature',
   Attestation = 'Attestation',
+  EmergencyRapidAntigen = 'EmergencyRapidAntigen',
+  Antibody_All = 'Antibody_All',
+  Antibody_IgM = 'Antibody_IgM',
 }
 
 export type PostAdminScanHistoryRequest = {
@@ -273,19 +275,24 @@ export enum DeadlineLabel {
   NextDay = 'NEXTDAY',
 }
 
-const filteredAppointmentStatus = (
+export const filteredAppointmentStatus = (
   status: AppointmentStatus,
   isLabUser: boolean,
+  isClinicUser: boolean,
 ): AppointmentStatus => {
+  const isNotLabOrClinicUser = !(isLabUser || isClinicUser)
+
   if (
-    !isLabUser &&
+    isNotLabOrClinicUser &&
     (status === AppointmentStatus.InTransit || status === AppointmentStatus.Received)
   ) {
     return AppointmentStatus.Submitted
   }
-  if (!isLabUser && status === AppointmentStatus.ReRunRequired) {
+
+  if (isNotLabOrClinicUser && status === AppointmentStatus.ReRunRequired) {
     return AppointmentStatus.InProgress
   }
+
   return status
 }
 
@@ -349,13 +356,14 @@ export const appointmentUiDTOResponse = (
     labName?: string
   },
   isLabUser: boolean,
+  isClinicUser: boolean,
   transportRunLabel?: string,
 ): AppointmentUiDTO => {
   return {
     id: appointment.id,
     firstName: appointment.firstName,
     lastName: appointment.lastName,
-    status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser),
+    status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser, isClinicUser),
     barCode: appointment.barCode,
     location: appointment.locationAddress,
     email: appointment.email,
@@ -389,7 +397,7 @@ export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): Use
   id: appointment.id,
   QRCode: appointment.barCode,
   showQrCode:
-    moment(new Date()).isBefore(formatStringDateRFC822Local(appointment.dateOfAppointment)) &&
+    isSameOrBefore(appointment.dateOfAppointment) &&
     appointment.appointmentStatus !== AppointmentStatus.Canceled,
   firstName: appointment.firstName,
   lastName: appointment.lastName,

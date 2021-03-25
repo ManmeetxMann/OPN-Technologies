@@ -66,6 +66,7 @@ import {
   Filter,
   ResultTypes,
   TestTypes,
+  filteredAppointmentStatus,
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
@@ -81,6 +82,8 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 import {PassportStatuses} from '../../../passport/src/models/passport'
 
 import {BulkTestResultRequest} from '../models/test-results'
+import {AntibodyAllPDFContent} from '../templates/antibody-all'
+import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -105,6 +108,10 @@ export class PCRTestResultsService {
   private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
 
   private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
+    if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
+      LogInfo('PCRTestResultsService:postPubsub', 'PubSubDisabled', {})
+      return
+    }
     this.pubsub.publish(
       {
         id: testResult.id,
@@ -124,6 +131,14 @@ export class PCRTestResultsService {
     const pcrResultHistory = await this.getPCRResultsByBarCode(data.barCode)
     const latestPCRResult = pcrResultHistory[0]
     const appointment = await this.appointmentService.getAppointmentByBarCode(data.barCode)
+    if (latestPCRResult.labId !== data.labId) {
+      LogWarning('PCRTestResultsService:confirmPCRResults', 'IncorrectLabId', {
+        labIdInDB: latestPCRResult.labId,
+        labIdInRequest: data.labId,
+      })
+      throw new BadRequestException('Not Allowed to Confirm results')
+    }
+
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
@@ -275,6 +290,7 @@ export class PCRTestResultsService {
       labId,
     }: PcrTestResultsListRequest,
     isLabUser: boolean,
+    isClinicUser: boolean,
   ): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
     let pcrResults: PCRTestResultDBModel[] = []
@@ -435,7 +451,7 @@ export class PCRTestResultsService {
       return {
         id: pcr.id,
         barCode: pcr.barCode,
-        result: getResultValue(pcr.result, !!pcr.resultSpecs?.notify),
+        result: getResultValue(pcr.result, !!pcr.resultMetaData?.notify),
         previousResult: pcr.previousResult,
         dateTime: formatDateRFC822Local(pcr.dateTime),
         deadline: formatDateRFC822Local(pcr.deadline),
@@ -445,7 +461,11 @@ export class PCRTestResultsService {
         testType: pcr.testType ?? 'PCR',
         organizationId: organization?.id,
         organizationName: organization?.name,
-        appointmentStatus: pcr.appointmentStatus,
+        appointmentStatus: filteredAppointmentStatus(
+          pcr.appointmentStatus,
+          isLabUser,
+          isClinicUser,
+        ),
         labName: lab?.name,
       }
     })
@@ -996,7 +1016,19 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     pcrResultPDFType: PCRResultPDFType,
   ): Promise<void> {
-    const pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
+    let pdfContent = ''
+    switch (resultData.testType) {
+      case 'Antibody_All':
+        pdfContent = await AntibodyAllPDFContent(resultData, pcrResultPDFType)
+        break
+      case 'Antibody_IgM':
+        pdfContent = await AntibodyIgmPDFContent(resultData, pcrResultPDFType)
+        break
+      default:
+        pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
+        break
+    }
+
     const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
     await this.emailService.send({
@@ -1191,12 +1223,13 @@ export class PCRTestResultsService {
   async getPCRResultsStats(
     queryParams: PcrTestResultsListRequest,
     isLabUser: boolean,
+    isClinicUser: boolean,
   ): Promise<{
     total: number
     pcrResultStatsByOrgIdArr: Filter[]
     pcrResultStatsByResultArr: Filter[]
   }> {
-    const pcrTestResults = await this.getPCRResults(queryParams, isLabUser)
+    const pcrTestResults = await this.getPCRResults(queryParams, isLabUser, isClinicUser)
 
     const pcrResultStatsByResult: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
     const pcrResultStatsByOrgId: Record<string, number> = {}
@@ -1657,7 +1690,7 @@ export class PCRTestResultsService {
         testDateTime: formatDateRFC822Local(pcr.deadline),
         style: resultToStyle(result),
         result: result,
-        detailsAvailable: result !== ResultTypes.Pending,
+        detailsAvailable: result !== ResultTypes.Invalid && result !== ResultTypes.Pending,
       })
     })
 
