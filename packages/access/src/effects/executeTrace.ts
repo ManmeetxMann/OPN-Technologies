@@ -216,7 +216,7 @@ export default class TraceListener {
       includesGuardian,
       dependantIds,
       passportStatus as StopStatus,
-      moment(endTime).format('YYYY-MM-DD'),
+      moment(endTime).tz(timeZone).format('YYYY-MM-DD'),
       endTime - startTime,
       [...impactedUsersAndDependants],
     )

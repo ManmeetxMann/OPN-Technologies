@@ -33,43 +33,35 @@ describe('PCR TestResultsController', () => {
               {
                 'action': 'SendThisResult',
                 'autoResult': 'Negative',
-                'barCode': 'A1423',
+                'barCode': 'TEST10000000055',
                 // 'comment': 'AWESOM',
-                'labId': 'k0qbPDqTwqitKUwlGHye',
-                'templateId': 'template1',
+                'labId': 'CINkotCuHoZSLDN9wYjQ',
+                'templateId': 'template2',
                 'notify': true,
                 'resultAnalysis': [
                   {
-                    'label': 'LBL1',
+                    'label': 'IgA',
                     'value': '1',
                   },
                   {
-                    'label': 'LBL1',
+                    'label': 'IgG',
                     'value': '2',
                   },
                   {
-                    'label': 'LBL2',
+                    'label': 'IgM',
                     'value': '3',
                   },
                   {
-                    'label': 'LBL3',
+                    'label': 'IgAResult',
                     'value': '4',
                   },
                   {
-                    'label': 'LBL4',
+                    'label': 'IgGResult',
                     'value': '5',
                   },
                   {
-                    'label': 'LBL4',
+                    'label': 'IgMResult',
                     'value': '6',
-                  },
-                  {
-                    'label': 'LBL4',
-                    'value': '7',
-                  },
-                  {
-                    'label': 'LBL4',
-                    'value': '8',
                   }],
                 'resultDate': todaysDate,
                 'sendUpdatedResults': true,
