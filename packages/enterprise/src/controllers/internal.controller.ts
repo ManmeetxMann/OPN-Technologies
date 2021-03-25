@@ -60,20 +60,10 @@ class InternalController implements IControllerBase {
       })
       console.log(`${memberships.length} memberships found`)
 
-      const organizationPromise = this.organizationService.findOneById(organizationId)
-      const lookups = await this.reportService.getLookups(userIds, organizationId)
-      const questionnaireIds = new Set<string>()
-      Object.values(lookups.locationsLookup).forEach((location) => {
-        if (location.questionnaireId) {
-          questionnaireIds.add(location.questionnaireId)
-        }
-      })
-      const questionnairePromise = this.questionnaireService.getQuestionnaires([
-        ...questionnaireIds,
-      ])
-      const [organization, questionnaire] = await Promise.all([
-        organizationPromise,
-        questionnairePromise,
+      const [organization, lookups, questionnaire] = await Promise.all([
+        this.organizationService.findOneById(organizationId),
+        this.reportService.getLookups(userIds, organizationId),
+        this.questionnaireService.getQuestionnaire(organizationId),
       ])
       console.log(`lookups retrieved`)
 
@@ -89,7 +79,7 @@ class InternalController implements IControllerBase {
                 from,
                 to,
                 lookups,
-                questionnaire,
+                [questionnaire],
               )
               .catch((err) => {
                 console.warn(`error getting content for ${JSON.stringify(membership)} - ${err}`)

@@ -71,18 +71,7 @@ export class AlertService {
   ): Promise<void> {
     const {status, dependantIds, includesGuardian, userId} = passport
     const answers = attestation?.answers
-    // TODO switch to getting from organization
-    const allLocations = await this.organizationService.getAllLocations(organizationId)
-    const allQuestionnaires = new Set(
-      allLocations.map((org) => org.questionnaireId).filter((notNull) => notNull),
-    )
-    if (!allQuestionnaires.size) {
-      throw new Error('No questionnaire id found')
-    }
-    if (allQuestionnaires.size > 1) {
-      throw new Error(`Org ${organizationId} has several questionnaire ids`)
-    }
-    const questionnaireId = allQuestionnaires.keys()[0]
+    const {questionnaireId} = await this.organizationService.findOneById(organizationId)
     const count = dependantIds.length + (includesGuardian ? 1 : 0)
     if (locationId) {
       await this.accessService.incrementTodayPassportStatusCount(locationId, passport.status, count)
