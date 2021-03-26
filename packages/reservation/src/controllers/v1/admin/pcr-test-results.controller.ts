@@ -307,8 +307,8 @@ class AdminPCRTestResultController implements IControllerBase {
 
       const filterGroup = [
         {
-          name: FilterName.FilterByStatusType,
-          key: FilterGroupKey.appointmentStatus,
+          name: FilterName.FilterByResult,
+          key: FilterGroupKey.result,
           filters: pcrResultStatsByResultArr,
         },
       ]
