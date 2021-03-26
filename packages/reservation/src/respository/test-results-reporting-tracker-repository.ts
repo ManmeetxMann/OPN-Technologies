@@ -5,9 +5,7 @@ import {
   TestResultsReportingTrackerPCRResultsDBModel,
 } from '../models/pcr-test-results'
 
-export class TestResultsReportingTrackerRepository extends DataModel<
-  TestResultsReportingTrackerDBModel
-> {
+export class TestResultsReportingTrackerRepository extends DataModel<TestResultsReportingTrackerDBModel> {
   public rootPath = 'test-results-reporting-tracker'
   readonly zeroSet = []
 
@@ -20,9 +18,7 @@ export class TestResultsReportingTrackerRepository extends DataModel<
   }
 }
 
-export class TestResultsReportingTrackerPCRResultsRepository extends DataModel<
-  TestResultsReportingTrackerPCRResultsDBModel
-> {
+export class TestResultsReportingTrackerPCRResultsRepository extends DataModel<TestResultsReportingTrackerPCRResultsDBModel> {
   public rootPath
   readonly zeroSet = []
   constructor(dataStore: DataStore, reportTrackerId: string) {
