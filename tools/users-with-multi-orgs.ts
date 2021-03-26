@@ -1,5 +1,5 @@
 /**
- 
+ Script to get users with multi ORGs
  */
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
