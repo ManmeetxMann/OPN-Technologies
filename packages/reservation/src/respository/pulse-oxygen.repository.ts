@@ -19,4 +19,13 @@ export class PulseOxygenRepository extends DataModel<PulseOxygenDBModel> {
   async getById(id: string): Promise<PulseOxygenDBModel> {
     return this.get(id)
   }
+
+  async getAllByUserAndOrgId(
+    userId: string,
+    organizationId: string,
+  ): Promise<PulseOxygenDBModel[]> {
+    return this.getQueryFindWhereEqual('userId', userId)
+      .where('organizationId', '==', organizationId)
+      .fetch()
+  }
 }

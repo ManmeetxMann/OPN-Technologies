@@ -165,6 +165,7 @@ export enum TestTypes {
   EmergencyRapidAntigen = 'EmergencyRapidAntigen',
   Antibody_All = 'Antibody_All',
   Antibody_IgM = 'Antibody_IgM',
+  PulseOxygenCheck = 'PulseOxygenCheck',
 }
 
 export type PostAdminScanHistoryRequest = {

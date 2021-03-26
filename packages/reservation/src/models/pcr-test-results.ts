@@ -13,6 +13,7 @@ import {
 import {groupByChannel} from '../utils/analysis.helper'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
+import {PulseOxygenStatuses} from './pulse-oxygen'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -344,7 +345,7 @@ export const pcrTestResultsResponse = (
 })
 
 export const resultToStyle = (
-  result: ResultTypes | PassportStatus | TemperatureStatusesUI,
+  result: ResultTypes | PassportStatus | TemperatureStatusesUI | PulseOxygenStatuses,
 ): TestResultStyle => {
   return TestResultStyle[result] ? TestResultStyle[result] : TestResultStyle.AnyOther
 }
