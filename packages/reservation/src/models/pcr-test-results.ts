@@ -100,6 +100,7 @@ export type PCRSendResultDTO = {
 
 export enum TestResultStyle {
   // PCR result style
+  PresumptivePositive = 'RED',
   Positive = 'RED',
   Negative = 'GREEN',
   Invalid = 'YELLOW',
