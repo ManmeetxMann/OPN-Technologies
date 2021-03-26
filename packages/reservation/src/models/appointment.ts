@@ -28,6 +28,13 @@ export enum ResultTypes {
   Indeterminate = 'Indeterminate',
 }
 
+export enum Gender {
+  Male = 'Male',
+  Female = 'Female',
+  Other = 'Other',
+  PreferNotToSay = 'Prefer Not to Say',
+}
+
 export type AppointmentDBModel = {
   id: string
   acuityAppointmentId: number
@@ -42,7 +49,7 @@ export type AppointmentDBModel = {
   email: string
   firstName: string
   lastName: string
-  gender?: string
+  gender?: Gender
   organizationId?: string
   packageCode?: string
   phone: number
@@ -108,7 +115,7 @@ export type AppointmentAcuityResponse = {
   email: string
   firstName: string
   forms: Array<AppointmentAcuityForm>
-  gender: string
+  gender: Gender
   id: number
   labels: LabelsAcuityResponse[]
   lastName: string
@@ -174,6 +181,7 @@ export type CreateAppointmentRequest = {
   slotId: string
   firstName: string
   lastName: string
+  gender: Gender
   phone: {
     code: number
     number: number
@@ -181,6 +189,7 @@ export type CreateAppointmentRequest = {
   dateOfBirth: string
   address: string
   addressUnit: string
+  postalCode: string
   couponCode: string
   shareTestResultWithEmployer: boolean
   readTermsAndConditions: boolean

@@ -2390,6 +2390,13 @@ paths:
                   type: string
                 lastName:
                   type: string
+                gender:
+                  type: string
+                  enum:
+                    - Male
+                    - Female
+                    - Other
+                    - Prefer Not to Say
                 phone:
                   type: object
                   additionalProperties: false
@@ -2404,6 +2411,8 @@ paths:
                 address:
                   type: string
                 addressUnit:
+                  type: string
+                postalCode:
                   type: string
                 couponCode:
                   type: string
@@ -2421,9 +2430,11 @@ paths:
                 - slotId
                 - firstName
                 - lastName
+                - gender
                 - dateOfBirth
                 - address
                 - addressUnit
+                - postalCode
                 - couponCode
                 - shareTestResultWithEmployer
                 - readTermsAndConditions
