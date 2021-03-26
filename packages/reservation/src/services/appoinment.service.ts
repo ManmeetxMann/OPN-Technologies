@@ -572,6 +572,8 @@ export class AppoinmentService {
       locationName: acuityAppointment.calendar,
       locationAddress: acuityAppointment.location,
       testType: await this.getTestType(acuityAppointment.appointmentTypeID),
+      gender: acuityAppointment.gender,
+      postalCode: acuityAppointment.postalCode,
     }
   }
 

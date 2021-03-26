@@ -42,9 +42,11 @@ export type AppointmentDBModel = {
   email: string
   firstName: string
   lastName: string
+  gender?: string
   organizationId?: string
   packageCode?: string
   phone: number
+  postalCode?: string
   registeredNursePractitioner?: string
   latestResult: ResultTypes
   timeOfAppointment: string
@@ -106,6 +108,7 @@ export type AppointmentAcuityResponse = {
   email: string
   firstName: string
   forms: Array<AppointmentAcuityForm>
+  gender: string
   id: number
   labels: LabelsAcuityResponse[]
   lastName: string
@@ -113,6 +116,7 @@ export type AppointmentAcuityResponse = {
   location: string
   organizationId?: string
   phone: number
+  postalCode: string
   readTermsAndConditions: boolean
   receiveNotificationsFromGov: boolean
   receiveResultsViaEmail: boolean

@@ -102,12 +102,21 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
     [{text: 'Mobile Number', bold: true}, params.phone],
   ]
 
+  if (params.gender) {
+    // if gender exists add as second field
+    dataPersonal.splice(1, 0, [{text: 'Gender', bold: true}, params.gender])
+  }
+
   if (params.address) {
     dataPersonal.push([{text: 'Home Address', bold: true}, params.address])
   }
 
   if (params.addressUnit) {
     dataPersonal.push([{text: 'Home Address (unit number, etc)', bold: true}, params.addressUnit])
+  }
+
+  if (params.postalCode) {
+    dataPersonal.push([{text: 'Postal Code', bold: true}, params.postalCode])
   }
 
   if (params.travelID) {
