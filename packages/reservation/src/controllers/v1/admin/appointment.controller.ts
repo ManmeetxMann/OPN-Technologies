@@ -212,6 +212,7 @@ class AdminAppointmentController implements IControllerBase {
       const {
         appointmentStatusArray,
         orgIdArray,
+        appointmentStatsByLabIdArr,
         total,
       } = await this.appointmentService.getAppointmentsStats({
         appointmentStatus,
@@ -233,6 +234,11 @@ class AdminAppointmentController implements IControllerBase {
           name: FilterName.FilterByCorporation,
           key: FilterGroupKey.organizationId,
           filters: orgIdArray,
+        },
+        {
+          name: FilterName.FilterByLab,
+          key: FilterGroupKey.labId,
+          filters: appointmentStatsByLabIdArr,
         },
       ]
 
