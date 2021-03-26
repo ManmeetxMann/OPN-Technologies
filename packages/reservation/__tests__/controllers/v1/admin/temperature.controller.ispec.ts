@@ -4,6 +4,7 @@ import {app as server} from '../../../../src/app'
 
 jest.mock('../../../../../common/src/middlewares/authorization')
 jest.mock('../../../../../passport/src/services/attestation-service')
+jest.mock('../../../../../enterprise/src/services/organization-service')
 
 import {deleteAllPulseOxygenByUserId} from '../../../__seeds__/pulse-oxygen'
 import {deleteAllTemperatureByUserId} from '../../../__seeds__/temperature'
