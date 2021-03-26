@@ -290,6 +290,7 @@ class AdminPCRTestResultController implements IControllerBase {
       const {
         pcrResultStatsByResultArr,
         pcrResultStatsByOrgIdArr,
+        pcrResultStatsByLabIdArr,
         total,
       } = await this.pcrTestResultsService.getPCRResultsStats(
         {
@@ -318,6 +319,14 @@ class AdminPCRTestResultController implements IControllerBase {
           name: FilterName.FilterByCorporation,
           key: FilterGroupKey.organizationId,
           filters: pcrResultStatsByOrgIdArr,
+        })
+      }
+
+      if (pcrResultStatsByLabIdArr.length) {
+        filterGroup.push({
+          name: FilterName.FilterByLab,
+          key: FilterGroupKey.labId,
+          filters: pcrResultStatsByLabIdArr,
         })
       }
 

@@ -304,6 +304,7 @@ export type Filter = {
 
 export enum FilterGroupKey {
   organizationId = 'organizationId',
+  labId = 'labId',
   appointmentStatus = 'appointmentStatus',
   result = 'result',
 }
@@ -312,6 +313,7 @@ export enum FilterName {
   FilterByStatusType = 'Filter By Status Type',
   FilterByResult = 'Filter By Result',
   FilterByCorporation = 'Filter By Corporation',
+  FilterByLab = 'Filter By Lab',
 }
 
 type FilterGroup = {
