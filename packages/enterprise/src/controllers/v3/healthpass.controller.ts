@@ -35,7 +35,7 @@ class RecommendationController implements IControllerBase {
     const auth = authorizationMiddleware([RequiredUserPermission.RegUser], true)
     const route = innerRouter()
       .use('/', innerRouter().get('/', auth, this.getHealthPass))
-      .get('/badge-settings', auth, this.getBadges)
+      .get('/badge', auth, this.getBadges)
     this.router.use(root, route)
   }
 

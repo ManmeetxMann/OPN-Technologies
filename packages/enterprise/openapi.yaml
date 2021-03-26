@@ -4026,7 +4026,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResponseOfHealthPass'
 
-  /enterprise/api/v3/health-pass/badge-settings:
+  /enterprise/api/v3/health-pass/badge:
     get:
       summary: health passes for user and dependants
       security:
