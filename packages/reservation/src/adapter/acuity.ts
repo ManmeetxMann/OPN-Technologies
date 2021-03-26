@@ -28,6 +28,8 @@ abstract class AcuityAdapter {
     organizationId: Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
     address: Config.get('ACUITY_FIELD_ADDRESS'),
     addressUnit: Config.get('ACUITY_FIELD_ADDRESS_UNIT'),
+    gender: Config.get('ACUITY_FIELD_GENDER'),
+    postalCode: Config.get('ACUITY_FIELD_POSTAL_CODE'),
     shareTestResultWithEmployer: Config.get('ACUITY_FIELD_SHARE_TEST_RESULT_WITH_EMPLOYER'),
     readTermsAndConditions: Config.get('ACUITY_FIELD_READ_TERMS_AND_CONDITIONS'),
     receiveResultsViaEmail: Config.get('ACUITY_FIELD_RECEIVE_RESULTS_VIA_EMAIL'),
@@ -426,6 +428,8 @@ abstract class AcuityAdapter {
     appointment.ohipCard = ''
     appointment.travelIDIssuingCountry = ''
     appointment.travelID = ''
+    appointment.gender = ''
+    appointment.postalCode = ''
 
     if (Array.isArray(appointment.forms)) {
       appointment.forms.forEach((form) => {
@@ -479,6 +483,12 @@ abstract class AcuityAdapter {
             if (!!field.value) {
               appointment.swabMethod = field.value
             }
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_GENDER'))) {
+            appointment.gender = field.value
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_POSTAL_CODE'))) {
+            appointment.postalCode = field.value
           }
         })
       })
