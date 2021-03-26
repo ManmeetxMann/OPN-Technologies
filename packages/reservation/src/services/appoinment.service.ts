@@ -1117,7 +1117,7 @@ export class AppoinmentService {
 
       return {
         id,
-        label: moment(time).tz(calendarTimezone).utc().format(timeFormats.standard12h),
+        label: moment(time).tz(calendarTimezone).utc().toISOString(),
         slotsAvailable: slotsAvailable,
       }
     })
