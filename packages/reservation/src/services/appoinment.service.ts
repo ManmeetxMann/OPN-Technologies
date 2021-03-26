@@ -572,6 +572,8 @@ export class AppoinmentService {
       locationName: acuityAppointment.calendar,
       locationAddress: acuityAppointment.location,
       testType: await this.getTestType(acuityAppointment.appointmentTypeID),
+      gender: acuityAppointment.gender,
+      postalCode: acuityAppointment.postalCode,
     }
   }
 
@@ -999,7 +1001,7 @@ export class AppoinmentService {
   }: CreateAppointmentRequest & {email: string}): Promise<AppointmentDBModel> {
     const {time, appointmentTypeId, calendarId} = decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
-    const dateTime = utcDateTime.format()
+    const dateTime = utcDateTime.tz(timeZone).format()
     const barCodeNumber = await this.getNextBarCodeNumber()
     const acuityAppointment = await this.acuityRepository.createAppointment({
       dateTime,
@@ -1117,7 +1119,7 @@ export class AppoinmentService {
 
       return {
         id,
-        label: moment(time).tz(calendarTimezone).utc().format(timeFormats.standard12h),
+        label: moment(time).tz(calendarTimezone).utc().toISOString(),
         slotsAvailable: slotsAvailable,
       }
     })

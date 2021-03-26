@@ -167,9 +167,9 @@ class UserController implements IControllerBase {
 
       let {locationId, userId, includeGuardian} = req.body
 
-      const {organizationId, questionnaireId} = await this.organizationService.getLocationById(
-        locationId,
-      )
+      const {organizationId} = await this.organizationService.getLocationById(locationId)
+      const {questionnaireId} = await this.organizationService.findOneById(organizationId)
+
       const dependantIds: string[] = req.body.dependantIds ?? []
 
       // HOT FIX: if missing (not actually true or false) ... force it to true for now because parents are always implicitly included

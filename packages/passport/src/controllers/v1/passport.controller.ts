@@ -88,22 +88,7 @@ class PassportController implements IControllerBase {
         }
       })
 
-      let questionnaireId: string
-      // @ts-ignore
-      questionnaireId = organization.questionnaireId
-      if (!questionnaireId) {
-        const allQuestionnaires = new Set(
-          orgLocations.map((org) => org.questionnaireId).filter((notNull) => notNull),
-        )
-        if (!allQuestionnaires.size) {
-          throw new BadRequestException('No questionnaire id found')
-        }
-        if (allQuestionnaires.size > 1) {
-          console.warn(allQuestionnaires)
-          throw new BadRequestException(`Org ${organizationId} has several questionnaire ids`)
-        }
-        questionnaireId = [...allQuestionnaires][0]
-      }
+      const {questionnaireId} = organization
       const answers: AttestationAnswersV1 = req.body.answers
       let passportStatus
       try {
@@ -165,7 +150,7 @@ class PassportController implements IControllerBase {
       }) as AttestationAnswersV1
       const [status, questionnaires] = await Promise.all([
         this.questionnaireService.evaluateAnswers(questionnaireId, mappedAnswers),
-        this.questionnaireService.getQuestionnaires([questionnaireId]),
+        this.questionnaireService.getQuestionnaire(questionnaireId),
       ])
 
       // Merge questions and answers by index
