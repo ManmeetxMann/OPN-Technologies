@@ -13,27 +13,27 @@ console.log(serviceAccount.project_id)
 const database = firestore()
 
 async function main() {
-  database.collection('organizations').add({
-    key: 88190,
-    name: 'OPN Public ORG',
-    type: 'default',
-    allowDependants: false,
-    enablePushNotifications: false,
-    dayShift:0,
-    enableTemperatureCheck: false,
-    legacyMode: false,
-    enableTesting: false
-  }).then((response)=>{
-    database.collection('organizations')
-    .doc(response.id)
-    .collection('organization_groups')
+  database
+    .collection('organizations')
     .add({
-      name: 'Default Group',
-      isPrivate: false,
-      priority:0
+      key: 88190,
+      name: 'OPN Public ORG',
+      type: 'default',
+      allowDependants: false,
+      enablePushNotifications: false,
+      dayShift: 0,
+      enableTemperatureCheck: false,
+      legacyMode: false,
+      enableTesting: false,
     })
-  })
-  
+    .then((response) => {
+      database.collection('organizations').doc(response.id).collection('organization_groups').add({
+        name: 'Default Group',
+        isPrivate: false,
+        priority: 0,
+      })
+    })
+
   return
 }
 
