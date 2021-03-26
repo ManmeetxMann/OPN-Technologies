@@ -4,7 +4,7 @@ import {Config} from '../../../common/src/utils/config'
 import {LogError, LogInfo} from '../../../common/src/utils/logging-setup'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
-import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
+import {AppointmentAcuityResponse, DeadlineLabel, Gender} from '../models/appointment'
 import {Certificate} from '../models/packages'
 import {AcuityCouponCodeResponse} from '../models/coupons'
 import {AppointmentTypes} from '../models/appointment-types'
@@ -428,7 +428,7 @@ abstract class AcuityAdapter {
     appointment.ohipCard = ''
     appointment.travelIDIssuingCountry = ''
     appointment.travelID = ''
-    appointment.gender = ''
+    appointment.gender = null
     appointment.postalCode = ''
 
     if (Array.isArray(appointment.forms)) {
@@ -485,7 +485,7 @@ abstract class AcuityAdapter {
             }
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_GENDER'))) {
-            appointment.gender = field.value
+            appointment.gender = field.value as Gender
           }
           if (field.fieldID == Number(Config.get('ACUITY_FIELD_POSTAL_CODE'))) {
             appointment.postalCode = field.value
