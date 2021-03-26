@@ -1275,7 +1275,7 @@ export class PCRTestResultsService {
         count,
       }),
     )
-    console.log(pcrResultStatsByLabId)
+
     const pcrResultStatsByLabIdArr = Object.entries(pcrResultStatsByLabId).map(
       ([labId, count]) => ({
         id: labId === 'undefined' ? null : labId,
