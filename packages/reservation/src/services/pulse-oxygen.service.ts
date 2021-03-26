@@ -29,4 +29,11 @@ export class PulseOxygenService {
 
     return pulseOxygen
   }
+
+  async getAllByUserAndOrgId(
+    userId: string,
+    organizationId: string,
+  ): Promise<PulseOxygenDBModel[]> {
+    return this.pusleOxygenRepository.getAllByUserAndOrgId(userId, organizationId)
+  }
 }
