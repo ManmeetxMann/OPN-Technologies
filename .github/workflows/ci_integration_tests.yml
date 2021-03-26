@@ -1,7 +1,7 @@
 name: Integration Test (2AM)
 on:
   schedule:
-   - cron: "0 2 * * *"
+   - cron: "0 3 * * *"
   push:
     paths:
       - "packages/common/**"
@@ -9,7 +9,7 @@ on:
       - ".github/workflows/**"
       - ".github/actions/**"
     branches: 
-      - ci_cd
+      - master
     tags:
       - preprod-*
 
@@ -19,7 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        ref: ci_cd
+        ref: master
         
     - uses: ./.github/actions/integration-tests
       name: Run Integration Tests
