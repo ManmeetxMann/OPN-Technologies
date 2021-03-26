@@ -16,9 +16,8 @@ async function main() {
   try {
     console.log('Starting Count')
     let after = null
-    const baseQuery = database
-      .collection('appointments')
-      //.where('organizationIds', 'array-contains', 'PPTEST')
+    const baseQuery = database.collection('appointments')
+    //.where('organizationIds', 'array-contains', 'PPTEST')
     const queryWithLimit = baseQuery.orderBy(firestore.FieldPath.documentId()).limit(limit)
     let pageIndex = 0
     while (true) {
@@ -33,7 +32,7 @@ async function main() {
       console.log(`On Page: ${pageIndex}`)
       for (const appointment of appointments) {
         const data = appointment.data()
-        if(!emails.includes(data.email)){
+        if (!emails.includes(data.email)) {
           totalUniqueEmails++
           emails.push(data.email)
         }
