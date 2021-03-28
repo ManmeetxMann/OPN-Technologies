@@ -44,7 +44,7 @@ let profiles = {
         "locationTitle":"TEST1_LOC1"
     },
     "harpreet_preprod":{
-        "email":"harpreet+preprod1@stayopn.com",
+        "email":"harpreet+kitchener@stayopn.com",
         "organizationId":"TESTPROD1",
         "firstName":"Harpreet",
         "lastName":"Gill",
@@ -54,8 +54,8 @@ let profiles = {
         "locationTitle":"TEST1_LOC1",
         "locationId":"70Cd5Qxtma0tVLPlmX0Y"
     },
-    "harpreetplusdev1":{
-        "email":"harpreet+dev2@stayopn.com",
+    "meselisaac":{
+        "email":"meselisaac@gmail.com",
         "organizationId":"TEST1",
         "firstName":"Harpreet",
         "lastName":"Dev 2",

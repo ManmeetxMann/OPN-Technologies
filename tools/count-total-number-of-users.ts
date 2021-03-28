@@ -16,9 +16,8 @@ async function main() {
   try {
     console.log('Starting Count')
     let after = null
-    const baseQuery = database
-      .collection('users')
-      .where('organizationIds', 'array-contains', 'PPTEST')
+    const baseQuery = database.collection('users')
+    //.where('organizationIds', 'array-contains', 'PPTEST')
     const queryWithLimit = baseQuery.orderBy(firestore.FieldPath.documentId()).limit(limit)
     let pageIndex = 0
     while (true) {

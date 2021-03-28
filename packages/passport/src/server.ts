@@ -7,6 +7,7 @@ import AdminController from './controllers/admin.controller'
 import UserController from './controllers/user.controller'
 import PassportController from './controllers/v1/passport.controller'
 import PubSubController from './controllers/v1/pubsub.controller'
+import InternalController from './controllers/v1/internal/passport.controller'
 import AdminPassportController from './controllers/v1/admin/passport.controller'
 import RootController from './controllers/root.controller'
 
@@ -24,6 +25,7 @@ export const app = new App({
     new UserController(),
     new AdminController(),
     new PassportController(),
+    new InternalController(),
     new PubSubController(),
     new AdminPassportController(),
   ],

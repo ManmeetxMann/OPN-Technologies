@@ -5,6 +5,7 @@ import {UserService} from '../../../../../common/src/service/user/user-service'
 import {NextFunction, Request, Response} from 'express'
 import {WebhookUserCreateRequest} from '../../../models/user'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
+import {OrganizationService} from '../../../services/organization-service'
 import {AuthService} from '../../../../../common/src/service/auth/auth-service'
 import {UserAddressService} from '../../../services/user-address-service'
 
@@ -12,6 +13,7 @@ class UserController implements IControllerBase {
   public path = '/enterprise/internal/api/v1/user'
   public router = express.Router()
   private userService = new UserService()
+  private organizationService = new OrganizationService()
   private authService = new AuthService()
   private userAddressService = new UserAddressService()
 
@@ -39,6 +41,9 @@ class UserController implements IControllerBase {
         receiveNotificationsFromGov,
       } = req.body as WebhookUserCreateRequest
 
+      const publicOrgId = Config.get('PUBLIC_ORG_ID')
+      const publicGroupId = Config.get('PUBLIC_GROUP_ID')
+
       // user inside users collection
       let user = await this.userService.findOneByEmail(email)
 
@@ -60,13 +65,16 @@ class UserController implements IControllerBase {
           base64Photo: Config.get('DEFAULT_USER_PHOTO') || '',
           registrationId: null,
           delegates: [],
-          organizationIds: [organizationId],
+          organizationIds: [publicOrgId, organizationId],
           agreeToConductFHHealthAssessment,
           shareTestResultWithEmployer,
           readTermsAndConditions,
           receiveResultsViaEmail,
           receiveNotificationsFromGov,
         })
+
+        // add user in public group
+        await this.organizationService.addUserToGroup(publicOrgId, publicGroupId, user.id)
 
         await this.userAddressService.create({userId: user.id, address})
       }

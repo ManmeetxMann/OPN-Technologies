@@ -123,6 +123,9 @@ components:
         enableTemperatureCheck:
           type: boolean
           default: false
+        enablePulseOxygen:
+          type: boolean
+          default: false
         legacyMode:
           type: boolean
           default: false
@@ -387,22 +390,10 @@ components:
           type: string
         lastName:
           type: string
-        dateOfBirth:
-          type: string
         base64Photo:
           type: string
         groupId:
           type: string
-        agreeToConductFHHealthAssessment:
-          type: boolean
-        shareTestResultWithEmployer:
-          type: boolean
-        readTermsAndConditions:
-          type: boolean
-        receiveNotificationsFromGov:
-          type: boolean
-        receiveResultsViaEmail:
-          type: boolean
         responses:
           type: array
           items:
@@ -413,13 +404,7 @@ components:
         - groupId
         - firstName
         - lastName
-        - dateOfBirth
         - base64Photo
-        - agreeToConductFHHealthAssessment
-        - shareTestResultWithEmployer
-        - readTermsAndConditions
-        - receiveNotificationsFromGov
-        - receiveResultsViaEmail
 
     OrganizationUsersGroupMoveData:
       type: object
@@ -2015,6 +2000,43 @@ components:
                   enum:
                     - proceed
                     - temperature_check_required
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfBadgesSettings:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          properties:
+            hasSelfTestBadge:
+              type: boolean
+            hasTempBadge:
+              type: boolean
+            hasPCRBadge:
+              type: boolean
+            # hasPulseBadge:
+            #   type: boolean
+            # hasVaccineBadge:
+            #   type: boolean
         status:
           type: object
           additionalProperties: false
@@ -4003,6 +4025,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfHealthPass'
+
+  /enterprise/api/v3/health-pass/badge:
+    get:
+      summary: health passes for user and dependants
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfBadgesSettings'
+
   /enterprise/api/v3/pubsub/passport:
     post:
       summary: update passport

@@ -109,12 +109,21 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
     ['Mobile Number', params.phone],
   ]
 
+  if (params.gender) {
+    // if gender exists add as second field
+    dataPersonal.splice(1, 0, [{text: 'Gender', bold: true}, params.gender])
+  }
+
   if (params.address) {
     dataPersonal.push(['Home Address', params.address])
   }
 
   if (params.addressUnit) {
     dataPersonal.push(['Home Address (unit number, etc)', params.addressUnit])
+  }
+
+  if (params.postalCode) {
+    dataPersonal.push([{text: 'Postal Code', bold: true}, params.postalCode])
   }
 
   if (
