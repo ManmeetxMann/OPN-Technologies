@@ -1690,7 +1690,7 @@ export class PCRTestResultsService {
         id: pcr.id,
         type: pcr.testType ?? TestTypes.PCR,
         name: pcr.testType ?? TestTypes.PCR,
-        testDateTime: formatDateRFC822Local(pcr.deadline),
+        testDateTime: formatDateRFC822Local(pcr.dateTime),
         style: resultToStyle(result),
         result: result,
         detailsAvailable: result !== ResultTypes.Invalid && result !== ResultTypes.Pending,
