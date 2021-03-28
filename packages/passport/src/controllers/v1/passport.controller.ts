@@ -12,8 +12,7 @@ import {RequiredUserPermission} from '../../../../common/src/types/authorization
 
 import {PassportService} from '../../services/passport-service'
 import {AttestationService} from '../../services/attestation-service'
-import {AlertService} from '../../services/alert-service'
-import {PassportStatuses, passportDTO} from '../../models/passport'
+import {passportDTO} from '../../models/passport'
 import {Attestation, AttestationAnswers, AttestationAnswersV1} from '../../models/attestation'
 import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
 
@@ -27,7 +26,6 @@ class PassportController implements IControllerBase {
   private organizationService = new OrganizationService()
   private userService = new UserService()
   private questionnaireService = new QuestionnaireService()
-  private alertService = new AlertService()
 
   constructor() {
     this.initRoutes()
@@ -90,22 +88,7 @@ class PassportController implements IControllerBase {
         }
       })
 
-      let questionnaireId: string
-      // @ts-ignore
-      questionnaireId = organization.questionnaireId
-      if (!questionnaireId) {
-        const allQuestionnaires = new Set(
-          orgLocations.map((org) => org.questionnaireId).filter((notNull) => notNull),
-        )
-        if (!allQuestionnaires.size) {
-          throw new BadRequestException('No questionnaire id found')
-        }
-        if (allQuestionnaires.size > 1) {
-          console.warn(allQuestionnaires)
-          throw new BadRequestException(`Org ${organizationId} has several questionnaire ids`)
-        }
-        questionnaireId = [...allQuestionnaires][0]
-      }
+      const {questionnaireId} = organization
       const answers: AttestationAnswersV1 = req.body.answers
       let passportStatus
       try {
@@ -114,7 +97,7 @@ class PassportController implements IControllerBase {
         throw new BadRequestException("Couldn't evaluate answers")
       }
 
-      const saved = await this.attestationService.save({
+      await this.attestationService.save({
         answers: answers.map((answer) => ({
           [0]: answer.answer,
           [1]: answer.additionalValue ?? null,
@@ -126,26 +109,6 @@ class PassportController implements IControllerBase {
         status: passportStatus,
         questionnaireId,
       } as Attestation)
-
-      const isTemperatureCheckEnabled = await this.organizationService.isTemperatureCheckEnabled(
-        organizationId,
-      )
-
-      if (isTemperatureCheckEnabled && passportStatus === PassportStatuses.Proceed) {
-        passportStatus = PassportStatuses.TemperatureCheckRequired
-      }
-
-      const allPassports = await Promise.all(
-        userIds.map((userId) =>
-          this.passportService.create(passportStatus, userId, [], true, organizationId),
-        ),
-      )
-      if ([PassportStatuses.Caution, PassportStatuses.Stop].includes(passportStatus)) {
-        // TODO: we should only send one alert for all of the passports
-        allPassports.forEach((passport) =>
-          this.alertService.sendAlert(passport, saved, organizationId, null),
-        )
-      }
 
       res.json(actionSucceed())
     } catch (error) {
@@ -187,7 +150,7 @@ class PassportController implements IControllerBase {
       }) as AttestationAnswersV1
       const [status, questionnaires] = await Promise.all([
         this.questionnaireService.evaluateAnswers(questionnaireId, mappedAnswers),
-        this.questionnaireService.getQuestionnaires([questionnaireId]),
+        this.questionnaireService.getQuestionnaire(questionnaireId),
       ])
 
       // Merge questions and answers by index

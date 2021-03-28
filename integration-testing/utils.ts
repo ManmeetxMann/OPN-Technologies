@@ -84,7 +84,6 @@ export const createLocation = async (
       country: 'CA',
       state: 'ON',
       zip: 'MV5 1P1',
-      questionnaireId: 'questionnaire1',
       type: 'default',
     },
   ])

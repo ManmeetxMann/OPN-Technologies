@@ -6,7 +6,6 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {LogError, LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {Config} from '../../../../../common/src/utils/config'
 //Services
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
@@ -19,7 +18,6 @@ import {
   AppointmentAcuityResponse,
   ResultTypes,
   AppointmentDBModel,
-  TestTypes,
 } from '../../../models/appointment'
 //UTILS
 import {getFirestoreTimeStampDate} from '../../../utils/datetime.helper'
@@ -168,15 +166,6 @@ class AppointmentWebhookController implements IControllerBase {
     }
   }
 
-  //TODO: Refactor this
-  private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
-    const rapidAntigenTypeIDs = [
-      Config.getInt('ACUITY_APPOINTMENT_TYPE_MULTIPLEX'),
-      Config.getInt('ACUITY_APPOINTMENT_TYPE_ID'),
-    ]
-    return rapidAntigenTypeIDs.includes(appointmentTypeID) ? TestTypes.RapidAntigen : TestTypes.PCR
-  }
-
   private handleUpdateAppointment = async (
     acuityAppointment: AppointmentAcuityResponse,
     dataForUpdate: AcuityUpdateDTO,
@@ -262,8 +251,9 @@ class AppointmentWebhookController implements IControllerBase {
           //result: ResultTypes.Pending,
           //runNumber: 1 ,//Start the Run
           //waitingResult: true,
-          testType: await this.getTestType(acuityAppointment.appointmentTypeID),
+          testType: updatedAppointment.testType,
           userId: updatedAppointment.userId,
+          appointmentStatus: updatedAppointment.appointmentStatus,
         }
 
         await this.pcrTestResultsService.updateTestResults(

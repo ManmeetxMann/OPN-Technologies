@@ -9,6 +9,7 @@ export const create = async (dataOverwrite: {
   organizationId?: string
   appointmentStatus?: string
   labId?: string
+  testType?: string
 }): Promise<void> => {
   const data = {
     acuityAppointmentId: 111,
@@ -39,6 +40,8 @@ export const create = async (dataOverwrite: {
     shareTestResultWithEmployer: true,
     timeOfAppointment: '8:00am',
     labId: dataOverwrite.labId ?? 'DEFAULT',
+    userId: 'TestUser',
+    testType: dataOverwrite.testType ?? 'PCR',
   }
   data.organizationId = dataOverwrite.organizationId ?? null
   data.appointmentStatus = dataOverwrite.appointmentStatus ?? 'Pending'

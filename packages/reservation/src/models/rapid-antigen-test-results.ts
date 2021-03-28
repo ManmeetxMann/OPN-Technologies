@@ -1,4 +1,5 @@
 import {AppointmentDBModel} from './appointment'
+import {PCRTestResultDBModel} from './pcr-test-results'
 
 export enum RapidAntigenResultTypes {
   DoNothing = 'DoNothing',
@@ -19,4 +20,20 @@ export enum RapidAntigenResultPDFType {
   Negative = 'Negative',
 }
 
-export type RapidAntigenEmailResultDTO = AppointmentDBModel
+export type RapidAntigenEmailResultDTO = Partial<
+  Omit<
+    PCRTestResultDBModel,
+    | 'id'
+    | 'linkedBarCodes'
+    | 'deadline'
+    | 'previousResult'
+    | 'runNumber'
+    | 'reCollectNumber'
+    | 'updatedAt'
+    | 'deadlineDate'
+    | 'dateOfAppointment'
+    | 'userId'
+    | 'sortOrder'
+  > &
+    AppointmentDBModel
+>

@@ -4,6 +4,7 @@ import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-
 import {Config} from '../../../../common/src/utils/config'
 import {ResultTypes} from '../../models/appointment'
 import {PCRTestResultEmailDTO} from '../../models/pcr-test-results'
+import {groupByChannel} from '../../utils/analysis.helper'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
@@ -108,12 +109,21 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
     ['Mobile Number', params.phone],
   ]
 
+  if (params.gender) {
+    // if gender exists add as second field
+    dataPersonal.splice(1, 0, [{text: 'Gender', bold: true}, params.gender])
+  }
+
   if (params.address) {
     dataPersonal.push(['Home Address', params.address])
   }
 
   if (params.addressUnit) {
     dataPersonal.push(['Home Address (unit number, etc)', params.addressUnit])
+  }
+
+  if (params.postalCode) {
+    dataPersonal.push([{text: 'Postal Code', bold: true}, params.postalCode])
   }
 
   if (
@@ -147,10 +157,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
 
   const dataTestDetails = [
     ['Test', 'RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
-    [
-      'Equipment approved by \n Health Canada',
-      'Allplex 2019-nCoV Assay manufactured by Seegene, Inc.',
-    ],
+    ['Equipment approved by \n Health Canada', params.labAssay],
   ]
 
   const data = dataPersonal.concat(dataAppointment, dataTestDetails)
@@ -191,6 +198,8 @@ const documentFooter = (): Content => {
   }
 }
 const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
+  const groupedAnalysis = groupByChannel(params.resultAnalysis)
+
   return [
     {
       text: 'Detailed Test Analysis Data:',
@@ -214,8 +223,8 @@ const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
               layout: 'resultTable',
               width: 350,
               table: {
-                widths: [88, 88, 88, 88],
-                body: [['FAM', 'Cal Red 61', 'Quasar 670', 'HEX']],
+                widths: [...groupedAnalysis.map((channel) => channel.groups.length * 44)],
+                body: [[...groupedAnalysis.map((channel) => channel.channelName)]],
               },
               margin: [3, 0, 0, 0],
               alignment: 'center',
@@ -225,7 +234,13 @@ const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
               width: 350,
               table: {
                 widths: [40, 39, 40, 39, 40, 39, 40, 39],
-                body: [['E gene', 'C(t)', 'RdRP gene', 'C(t)', 'N gene', 'C(t)', 'IC', 'C(t)']],
+                body: [
+                  [
+                    ...groupedAnalysis
+                      .map((channel) => channel.groups.map((group) => group.label))
+                      .flat(),
+                  ],
+                ],
               },
               margin: [3, -1, 0, 0],
               alignment: 'center',
@@ -247,10 +262,14 @@ const testAnalysisTable = (params: PCRTestResultEmailDTO): Content => {
               fillColor: getFillColorForResultsCell(params.result),
               color: '#FFFFFF',
             },
-            ...params.resultAnalysis.map((analysis) => ({
-              text: analysis.value,
-              alignment: 'center',
-            })),
+            ...groupedAnalysis
+              .map((channel) =>
+                channel.groups.map((group) => ({
+                  text: group.value,
+                  alignment: 'center',
+                })),
+              )
+              .flat(),
           ],
         ],
       },

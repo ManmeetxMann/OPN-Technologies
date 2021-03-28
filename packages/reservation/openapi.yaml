@@ -218,6 +218,8 @@ components:
               type: string
             testRunId:
               type: string
+            labName:
+              type: string
           required:
             - id
             - firstName
@@ -578,6 +580,29 @@ components:
                   properties:
                     label:
                       type: string
+                      enum:
+                        - famEGene
+                        - famCt
+                        - calRedRdrp
+                        - calRedCt
+                        - quasarNgene
+                        - quasarCt
+                        - hexIc
+                        - hexCt
+                        - ORF1abCt
+                        - SGeneCt
+                        - NGeneCt
+                        - MS2Ct
+                        - ORF1ab
+                        - SGene
+                        - NGene
+                        - MS2
+                        - IgAResult
+                        - IgGResult
+                        - IgMResult
+                        - IgA
+                        - IgG
+                        - IgM
                     value:
                       type: string
               comment:
@@ -750,9 +775,12 @@ components:
           type: string
         templateId:
           type: string
+        assay:
+          type: string
       required:
         - name
         - templateId
+        - assay
     LabResponse:
       type: object
       additionalProperties: false
@@ -936,6 +964,72 @@ components:
               type: string
         page:
             type: number
+    AppointmentTypesResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+              name:
+                type: string
+        status:
+           type: object
+           additionalProperties: false
+           properties:
+               code:
+                   type: string
+                   enum:
+                     - succeed
+                     - failed
+                     - validation_error
+                     - internal_server_error
+                     - unauthorized
+                     - access_denied
+                     - resource_not_found
+               message:
+                   nullable: true
+                   type: string
+    AssociationsResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              appointmentType:
+                type: number
+              appointmentTypeName:
+                type: string
+              testType:
+                type: string
+        status:
+           type: object
+           additionalProperties: false
+           properties:
+               code:
+                   type: string
+                   enum:
+                     - succeed
+                     - failed
+                     - validation_error
+                     - internal_server_error
+                     - unauthorized
+                     - access_denied
+                     - resource_not_found
+               message:
+                   nullable: true
+                   type: string
 
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -1541,6 +1635,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenerateNextBarCodeResponse'
+  /reservation/admin/api/v1/appointments/acuity/types:
+    get:
+      description: Acuity Appointment Type List
+      tags:
+      - Appointment Management
+      security:
+      - bearerAuthJWT: [ ]
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentTypesResponse'
   /reservation/admin/api/v1/appointments/list/stats:
     get:
       description: Get appointment list
@@ -1823,6 +1931,21 @@ paths:
                           type: string
                         doctorId:
                           type: string
+                        appointmentStatus:
+                          type: string
+                          enum:
+                            - Pending
+                            - Submitted
+                            - InTransit
+                            - Received
+                            - CheckedIn
+                            - InProgress
+                            - Reported
+                            - ReRunRequired
+                            - ReCollectRequired
+                            - Canceled
+                        labName:
+                          type: string
                   status:
                     type: object
                     additionalProperties: false
@@ -1864,6 +1987,8 @@ paths:
                     - Indeterminate
                     - MarkAsPositive
                     - MarkAsNegative
+                labId:
+                  type: string
               required:
                 - barCode
                 - action
@@ -1937,6 +2062,10 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: labId
+          schema:
+            type: string
       responses:
         '200':
           description: Successfully Return
@@ -2077,6 +2206,8 @@ paths:
                   type: array
                   items:
                     type: string
+                labId:
+                  type: string
               required:
                 - barcode
       responses:
@@ -2259,6 +2390,13 @@ paths:
                   type: string
                 lastName:
                   type: string
+                gender:
+                  type: string
+                  enum:
+                    - Male
+                    - Female
+                    - Other
+                    - Prefer Not to Say
                 phone:
                   type: object
                   additionalProperties: false
@@ -2273,6 +2411,8 @@ paths:
                 address:
                   type: string
                 addressUnit:
+                  type: string
+                postalCode:
                   type: string
                 couponCode:
                   type: string
@@ -2290,9 +2430,11 @@ paths:
                 - slotId
                 - firstName
                 - lastName
+                - gender
                 - dateOfBirth
                 - address
                 - addressUnit
+                - postalCode
                 - couponCode
                 - shareTestResultWithEmployer
                 - readTermsAndConditions
@@ -3130,6 +3272,8 @@ paths:
                             - GREY
                         result:
                           type: string
+                        detailsAvailable:
+                          type: boolean
                   status:
                     type: object
                     additionalProperties: false
@@ -3165,11 +3309,17 @@ paths:
                   type: string
                 temperature:
                   type: number
+                pulse:
+                  type: number
+                oxygen:
+                  type: number
                 userId:
                   type: string
               required:
                 - organizationId
                 - temperature
+                - pulse
+                - oxygen
                 - userId
               additionalProperties: false
       responses:
@@ -3224,6 +3374,68 @@ paths:
                             - stop
                         result:
                           type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
+  /reservation/api/v1/pulse-oxygen/{id}:
+    get:
+      description: Get pulse and oxygen details by pulseOxygen ID and organization ID
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Pulse & Oxygen Management
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return pulse and oxygen details
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pulse:
+                          type: number
+                        oxygen:
+                          type: number
+                        createdAt:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            - Passed
+                            - Failed
                   status:
                     type: object
                     additionalProperties: false
@@ -3475,3 +3687,16 @@ paths:
                         type: string
                   page:
                     type: number
+    get:
+      description: Get all Associations
+      security:
+        - bearerAuthJWT: [ ]
+      tags:
+          - Associations
+      responses:
+          '200':
+            description: Successfully returned Associations
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AssociationsResponse'

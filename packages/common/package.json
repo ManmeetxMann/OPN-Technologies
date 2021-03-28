@@ -15,7 +15,7 @@
         "test": "jest",
         "test:coverage": "jest --coverage",
         "clean": "rimraf -rf ./dist",
-        "prepare": "copyfiles package.json dist && node ../../__devops/package-cleaner.js common start",
+        "prepare": "copyfiles package.json dist && node ../../tools/package-cleaner.js common start",
         "compile": "tsc --module amd -p tsconfig.build.json",
         "build": "npm run clean && npm run prepare && npm run compile",
         "prepublishOnly": "npm run build"
@@ -34,7 +34,7 @@
         "dotenv": "^8.2.0",
         "express": "^4.17.1",
         "express-basic-auth": "^1.2.0",
-        "express-openapi-validator": "^3.17.1",
+        "express-openapi-validator": "^4.12.5",
         "firebase-admin": "^9.1.0",
         "joi":"^17.3.0",
         "lodash": "^4.17.20",

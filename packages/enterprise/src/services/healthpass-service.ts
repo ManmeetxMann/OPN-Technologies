@@ -3,6 +3,8 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import {ForbiddenException} from '../../../common/src/exceptions/forbidden-exception'
 import {UserModel} from '../../../common/src/data/user'
 import {safeTimestamp, isPassed} from '../../../common/src/utils/datetime-util'
+import {now} from '../../../common/src/utils/times'
+import {Config} from '../../../common/src/utils/config'
 
 import {OrganizationModel} from '../repository/organization.repository'
 import {UserActionsRepository} from '../repository/action-items.repository'
@@ -12,17 +14,8 @@ import {PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 import {ResultTypes} from '../../../reservation/src/models/appointment'
 
-type HealthPass = {
-  expiry: string
-  tests: {
-    id: string
-    date: string
-    type: string
-    status: string
-    style: string
-  }[]
-  status: PassportStatuses
-}
+import moment from 'moment'
+import {HealthPassType, HealthPass} from '../types/health-pass'
 
 export class HealthpassService {
   private dataStore = new DataStore()
@@ -76,28 +69,50 @@ export class HealthpassService {
       }
     }
     const expiry = safeTimestamp(items.latestPassport.expiry).toISOString()
-    if (items.latestAttestation?.status === PassportStatuses.Proceed) {
+    const validDuration = parseInt(Config.get('PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
+    const validDurationAgo = moment(now()).utc().subtract(validDuration, 'hours')
+    const rolloverHour = parseInt(Config.get('PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS'))
+    const lastRollover = moment(now())
+      .utc()
+      .set({hour: rolloverHour, minute: 0, second: 0, millisecond: 0})
+    if (lastRollover.isAfter(now())) {
+      lastRollover.subtract(1, 'day')
+    }
+    const earliestValid = lastRollover.isSameOrAfter(validDurationAgo)
+      ? lastRollover
+      : validDurationAgo
+    const notStale = (ts) => earliestValid.isSameOrBefore(safeTimestamp(ts))
+    if (
+      items.latestAttestation?.status === PassportStatuses.Proceed &&
+      notStale(items.latestAttestation.timestamp)
+    ) {
       tests.push({
         date: safeTimestamp(items.latestAttestation.timestamp).toISOString(),
-        type: 'Attestation',
+        type: HealthPassType.Attestation,
         id: items.latestAttestation.attestationId,
         status: items.latestAttestation.status,
         style: 'GREEN',
       })
     }
-    if (items.latestTemperature?.status === TemperatureStatuses.Proceed) {
+    if (
+      items.latestTemperature?.status === TemperatureStatuses.Proceed &&
+      notStale(items.latestTemperature.timestamp)
+    ) {
       tests.push({
         date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
-        type: 'Temperature',
+        type: HealthPassType.Temperature,
         id: items.latestTemperature.temperatureId,
         status: items.latestTemperature.status,
         style: 'GREEN',
       })
     }
-    if (items.PCRTestResult?.result === ResultTypes.Negative) {
+    if (
+      items.PCRTestResult?.result === ResultTypes.Negative &&
+      notStale(items.PCRTestResult.timestamp)
+    ) {
       tests.push({
         date: safeTimestamp(items.PCRTestResult.timestamp).toISOString(),
-        type: 'PCR',
+        type: HealthPassType.PCR,
         id: items.PCRTestResult.testId,
         status: items.PCRTestResult.result,
         style: 'GREEN',

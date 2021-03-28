@@ -23,9 +23,11 @@ export default Joi.object({
   email: Joi.string().required(),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
+  gender: Joi.string().required().allow('Male', 'Female', 'Other', 'Prefer Not to Say'),
   organizationId: Joi.string().allow(null),
   packageCode: Joi.string().allow(null),
   phone: Joi.string().required(),
+  postalCode: Joi.string().required(),
   registeredNursePractitioner: Joi.string().allow(''),
   latestResult: Joi.string().valid(
     'Positive',
@@ -55,6 +57,16 @@ export default Joi.object({
   userId: Joi.string().allow(null),
   locationName: Joi.string().allow(''),
   locationAddress: Joi.string().allow(''),
-  testType: Joi.string().required().valid('PCR', 'RapidAntigen'),
+  testType: Joi.string()
+    .required()
+    .valid(
+      'PCR',
+      'RapidAntigen',
+      'Temperature',
+      'Attestation',
+      'EmergencyRapidAntigen',
+      'Antibody_All',
+      'Antibody_IgM',
+    ),
   labId: Joi.string().allow(null),
 })

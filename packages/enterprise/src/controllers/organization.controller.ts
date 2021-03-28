@@ -1,7 +1,7 @@
 import IControllerBase from '../../../common/src/interfaces/IControllerBase.interface'
 import {
   actionReplyInsufficientPermission,
-  actionSucceed,
+  actionSucceed as rawSucceed,
 } from '../../../common/src/utils/response-wrapper'
 import {HttpException} from '../../../common/src/exceptions/httpexception'
 import {User, UserDependant} from '../../../common/src/data/user'
@@ -33,7 +33,6 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 import {PassportStatuses} from '../../../passport/src/models/passport'
 
 import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
-import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
 import {Access} from '../../../access/src/models/access'
 
@@ -43,7 +42,12 @@ import {CloudTasksClient} from '@google-cloud/tasks'
 import * as _ from 'lodash'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
-
+const actionSucceed = (body?: unknown, userId?: string): ReturnType<typeof rawSucceed> => {
+  if (userId && userId === Config.get('USER_OF_INTEREST')) {
+    console.log(`Response to ${userId}`, body)
+  }
+  return rawSucceed(body)
+}
 const dataConversionAndSortGroups = (groups: OrganizationGroup[]): OrganizationGroup[] => {
   return groups
     .sort((a, b) => {
@@ -161,15 +165,18 @@ class OrganizationController implements IControllerBase {
       // location cannot have children
       return
     }
-    const zones = await this.organizationService.getLocations(organizationId, location.id)
+    const fetchOrganization = this.organizationService.findOneById(organizationId)
+    const fetchZones = this.organizationService.getLocations(organizationId, location.id)
+    const [organization, zones] = await Promise.all([fetchOrganization, fetchZones])
+
     zones.sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))
     location.zones = zones.map(
-      ({id, title, address, attestationRequired, questionnaireId, allowsSelfCheckInOut}) => ({
+      ({id, title, address, attestationRequired, allowsSelfCheckInOut}) => ({
         id,
         title,
         address,
         attestationRequired,
-        questionnaireId,
+        questionnaireId: organization.questionnaireId,
         allowsSelfCheckInOut,
       }),
     )
@@ -214,7 +221,7 @@ class OrganizationController implements IControllerBase {
   findOneByKeyOrId = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {key, id} = req.query as {key?: string; id?: string}
-
+      const authenticatedUser = res.locals.connectedUser as User
       // Further validation
       if ((!key && !id) || (!!key && !!id))
         throw new BadRequestException('Key or Id is required independently')
@@ -222,7 +229,7 @@ class OrganizationController implements IControllerBase {
       const organization = !!key
         ? await this.organizationService.findOrganizationByKey(parseInt(key))
         : await this.organizationService.findOneById(id)
-      res.json(actionSucceed(organizationDTOResponse(organization)))
+      res.json(actionSucceed(organizationDTOResponse(organization), authenticatedUser?.id))
     } catch (error) {
       next(error)
     }
@@ -644,20 +651,18 @@ class OrganizationController implements IControllerBase {
       const from: string =
         (queryFrom as string) ??
         moment(now()).tz(timeZone).startOf('day').subtract(2, 'days').toISOString()
-      const orgPromise = this.organizationService.findOneById(organizationId)
       // @ts-ignore these are strings
       const allIds: string[] = parentUserId ? [parentUserId, userId] : [userId]
-      const lookup = await this.reportService.getLookups(new Set(allIds), organizationId)
-      const questionnaireIds = new Set<string>()
-      Object.values(lookup.locationsLookup).forEach((location) => {
-        if (location.questionnaireId) {
-          questionnaireIds.add(location.questionnaireId)
-        }
-      })
-      const questionnairePromise = this.questionnaireService.getQuestionnaires([
-        ...questionnaireIds,
+
+      const [organization, lookup] = await Promise.all([
+        this.organizationService.findOneById(organizationId),
+        this.reportService.getLookups(new Set(allIds), organizationId),
       ])
-      const [organization, questionnaire] = await Promise.all([orgPromise, questionnairePromise])
+
+      const questionnaireId = organization.questionnaireId
+      const questionnaire = await this.questionnaireService.getQuestionnaire(questionnaireId)
+
+      // const [organization, questionnaire] = await Promise.all([orgPromise, questionnairePromise])
       const {content, tableLayouts} = await this.reportService.getUserReportTemplate(
         organization,
         userId as string,
@@ -665,7 +670,7 @@ class OrganizationController implements IControllerBase {
         from,
         to,
         lookup,
-        questionnaire,
+        [questionnaire],
       )
 
       const stream = this.pdfService.generatePDFStream(content, tableLayouts)
@@ -755,22 +760,13 @@ class OrganizationController implements IControllerBase {
         await this.taskClient.createTask(request)
         return
       }
+      const [organization, lookups] = await Promise.all([
+        this.organizationService.findOneById(organizationId),
+        this.reportService.getLookups(userIds, organizationId),
+      ])
 
-      const organizationPromise = this.organizationService.findOneById(organizationId)
-      const lookups = await this.reportService.getLookups(userIds, organizationId)
-      const questionnaireIds = new Set<string>()
-      Object.values(lookups.locationsLookup).forEach((location) => {
-        if (location.questionnaireId) {
-          questionnaireIds.add(location.questionnaireId)
-        }
-      })
-      const questionnairePromise = this.questionnaireService.getQuestionnaires([
-        ...questionnaireIds,
-      ])
-      const [organization, questionnaire] = await Promise.all([
-        organizationPromise,
-        questionnairePromise,
-      ])
+      const questionnaireId = organization.questionnaireId
+      const questionnaire = await this.questionnaireService.getQuestionnaire(questionnaireId)
       console.log(`lookups retrieved`)
 
       const allTemplates = await Promise.all(
@@ -785,7 +781,7 @@ class OrganizationController implements IControllerBase {
                 from,
                 to,
                 lookups,
-                questionnaire,
+                [questionnaire],
               )
               .catch((err) => {
                 console.warn(`error getting content for ${JSON.stringify(membership)} - ${err}`)
@@ -842,13 +838,16 @@ class OrganizationController implements IControllerBase {
       )
 
       res.json(
-        actionSucceed({
-          permissionToViewDetail: !!isHealthAdmin,
-          asOfDateTime: response.asOfDateTime,
-          passportsCountByStatus: response.passportsCountByStatus,
-          hourlyCheckInsCounts: response.hourlyCheckInsCounts,
-          ...(!!isHealthAdmin && {accesses}),
-        }),
+        actionSucceed(
+          {
+            permissionToViewDetail: !!isHealthAdmin,
+            asOfDateTime: response.asOfDateTime,
+            passportsCountByStatus: response.passportsCountByStatus,
+            hourlyCheckInsCounts: response.hourlyCheckInsCounts,
+            ...(!!isHealthAdmin && {accesses}),
+          },
+          authenticatedUser.id,
+        ),
       )
     } catch (error) {
       next(error)
@@ -1090,8 +1089,9 @@ class OrganizationController implements IControllerBase {
       // ids of all the users we need more information about
       const allUserIds = new Set<string>()
       rawTraces.forEach((exposure) => {
-        ;(exposure.dependantIds ?? []).forEach((id) => allUserIds.add(id))
         allUserIds.add(exposure.userId)
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
+        ;(exposure.dependantIds ?? []).forEach((id) => allUserIds.add(id))
       })
 
       const {
@@ -1148,6 +1148,11 @@ class OrganizationController implements IControllerBase {
     }
   }
 
+  /**
+   * TODO:
+   * 1. Check functionality of this feature after questionary ID migration.
+   * 2. Consider querying attestationsInOrg from DB instead of filtering in controller.
+   */
   getUserContactTraceAttestations = async (
     req: Request,
     res: Response,
@@ -1160,38 +1165,25 @@ class OrganizationController implements IControllerBase {
       // fetch attestation array in the time period
       const [
         allAttestations,
-        locations,
+        organization,
         {guardian, dependants},
         parentMembership,
         dependantMemberships,
         groups,
       ] = await Promise.all([
         this.attestationService.getAttestationsInPeriod(userId, from, to),
-        this.organizationService.getLocations(organizationId),
+        this.organizationService.findOneById(organizationId),
         this.userService.getUserAndDependants(primaryUserId),
         this.organizationService.getUsersGroups(organizationId, null, [primaryUserId]),
         this.organizationService.getDependantGroups(organizationId, primaryUserId),
         this.organizationService.getGroups(organizationId),
       ])
-      const allLocationIds = new Set(locations.map(({id}) => id))
-      const attestationsInOrg = allAttestations.filter((att) => allLocationIds.has(att.locationId))
-      const attestedLocationIds = new Set(attestationsInOrg.map((att) => att.locationId))
-      const questionnaireIdsByLocationId: Record<string, string> = locations.reduce(
-        (lookup, location) => {
-          if (!attestedLocationIds.has(location.id)) {
-            // don't care about this location
-            return lookup
-          }
-          return {
-            ...lookup,
-            [location.id]: location.questionnaireId,
-          }
-        },
-        {},
-      )
 
-      const questionnaireIds: string[] = _.uniq(Object.values(questionnaireIdsByLocationId))
-      const questionnaires = await this.questionnaireService.getQuestionnaires(questionnaireIds)
+      const questionnaireId = organization.questionnaireId
+      const attestationsInOrg = allAttestations.filter(
+        (att) => questionnaireId === att.questionnaireId,
+      )
+      const questionnaires = await this.questionnaireService.getQuestionnaire(questionnaireId)
 
       const allMemberships = [...parentMembership, ...dependantMemberships]
       const groupsById: Record<string, OrganizationGroup> = groups.reduce((lookup, group) => {
@@ -1199,21 +1191,13 @@ class OrganizationController implements IControllerBase {
         return lookup
       }, {})
 
-      const questionnairesById: Record<string, Questionnaire> = questionnaires.reduce(
-        (lookup, questionnaire) => ({
-          ...lookup,
-          [questionnaire.id]: questionnaire,
-        }),
-        {},
-      )
-
       const response = attestationsInOrg.map(
         // @ts-ignore 'timestamps' does not exist in typescript
         ({timestamps, attestationTime, locationId, appliesTo, ...passThrough}) => ({
           ...passThrough,
           locationId,
           attestationTime: safeTimestamp(attestationTime),
-          questions: questionnairesById[questionnaireIdsByLocationId[locationId]]?.questions ?? {},
+          questions: questionnaires.questions,
           appliesTo,
           appliesToUsers: appliesTo.map((appliesToId) => {
             const user =
@@ -1262,8 +1246,12 @@ class OrganizationController implements IControllerBase {
         isParentUser ? userId : parentUserId,
       )
 
+      const dependentsInOrg = dependents.filter((dependent) =>
+        dependent.organizationIds.includes(organizationId),
+      )
+
       const dependentsWithGroup = await Promise.all(
-        dependents.map(async (dependent: UserDependant) => {
+        dependentsInOrg.map(async (dependent: UserDependant) => {
           const group = await this.organizationService.getUserGroup(organizationId, dependent.id)
           const dependentStatus = await this.attestationService.latestStatus(
             dependent.id,

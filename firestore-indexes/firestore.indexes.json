@@ -71,6 +71,24 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "exitAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "access",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "locationId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "timestamps.createdAt",
           "order": "DESCENDING"
         }

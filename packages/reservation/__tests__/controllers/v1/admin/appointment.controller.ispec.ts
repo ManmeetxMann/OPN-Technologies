@@ -8,30 +8,33 @@ jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
 jest.mock('../../../../../common/src/utils/logging-setup')
 
-const dateForAppointments = '2020-02-05'
+const dateForAppointments = '2020-06-05'
+const dateForAppointmentStr = 'June 05, 2020'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
 const organizationId = 'TEST1'
 const laboratoryId = 'Lab1'
+const barCode = 'BAR1'
+
 describe('AdminAppointmentController', () => {
   beforeAll(async () => {
     await create({
       id: 'APT1',
       dateTime: dateTimeForAppointment1,
-      dateOfAppointment: 'February 05, 2020',
+      dateOfAppointment: dateForAppointmentStr,
       appointmentStatus: 'InTransit',
       labId: laboratoryId,
     })
     await create({
       id: 'APT2',
       dateTime: dateTimeForAppointment1,
-      dateOfAppointment: 'February 05, 2020',
+      dateOfAppointment: dateForAppointmentStr,
       appointmentStatus: 'InProgress',
       labId: laboratoryId,
     })
     await create({
       id: 'APT3',
       dateTime: dateTimeForAppointment1,
-      dateOfAppointment: 'February 05, 2020',
+      dateOfAppointment: dateForAppointmentStr,
       organizationId: organizationId,
       appointmentStatus: 'InProgress',
       labId: laboratoryId,
@@ -39,13 +42,13 @@ describe('AdminAppointmentController', () => {
     await create({
       id: 'APT4',
       dateTime: dateTimeForAppointment1,
-      dateOfAppointment: 'February 05, 2020',
+      dateOfAppointment: dateForAppointmentStr,
       organizationId: organizationId,
     })
     await create({
       id: 'APT5',
       dateTime: dateTimeForAppointment1,
-      dateOfAppointment: 'February 05, 2020',
+      dateOfAppointment: dateForAppointmentStr,
     })
     await create({
       id: 'APT6',
@@ -121,6 +124,50 @@ describe('AdminAppointmentController', () => {
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.total).toBe(3)
+      done()
+    })
+  })
+
+  describe('fetch appointments by id', () => {
+    test('should get appointment by id: APT1 successfully', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments/APT1`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      expect(result.status).toBe(200)
+      expect(result.body.data.id).toBe('APT1')
+      done()
+    })
+    test('should get appointment history by id: APT1 successfully', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments/APT1/history`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      expect(result.status).toBe(200)
+      expect(result.body.data.length).toBeGreaterThan(1)
+      done()
+    })
+  })
+
+  describe('appointment barcodes', () => {
+    test('should get appointment by barCode', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments/barcode/lookup?barCode=${barCode}`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      expect(result.status).toBe(200)
+      expect(result.body.data.id).toBeTruthy()
+      done()
+    })
+    test('should generate new barcode', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments/barcode/get-new-code`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      console.log(result.body)
+      expect(result.status).toBe(200)
+      done()
+    })
+  })
+
+  describe('get appointment types', () => {
+    test('get acuity appointment types list', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments/acuity/types`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      expect(result.status).toBe(200)
+      expect(result.body.data.length).toBeGreaterThanOrEqual(1)
       done()
     })
   })

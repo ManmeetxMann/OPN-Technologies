@@ -19,10 +19,6 @@ export class QuestionnaireService {
     return this.questionnaireRepository.get(questionnaireId)
   }
 
-  getQuestionnaires(questionnaireIds: string[]): Promise<Questionnaire[]> {
-    return this.questionnaireRepository.findWhereIdIn(questionnaireIds)
-  }
-
   async updateProperty(
     questionnaireId: string,
     fieldName: string,

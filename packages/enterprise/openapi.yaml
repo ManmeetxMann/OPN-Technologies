@@ -123,6 +123,9 @@ components:
         enableTemperatureCheck:
           type: boolean
           default: false
+        enablePulseOxygen:
+          type: boolean
+          default: false
         legacyMode:
           type: boolean
           default: false
@@ -323,10 +326,20 @@ components:
       type: object
       additionalProperties: false
       properties:
+        subscription:
+          type: string
         message:
           type: object
           additionalProperties: false
           properties:
+            messageId:
+              type: string
+            message_id:
+              type: string
+            publishTime:
+              type: string
+            publish_time:
+              type: string
             data:
               type: string
             attributes:
@@ -573,6 +586,8 @@ components:
           type: boolean
         isRapidResultOrgAdmin:
           type: boolean
+        isOrganizeAdmin:
+          type: boolean
       required:
         - adminForLabIds	
         - email	
@@ -599,7 +614,8 @@ components:
         - isTransportsRunsAdmin	
         - organizationId	
         - showReporting	
-        - superAdminForOrganizationIds	
+        - superAdminForOrganizationIds
+        - isOrganizeAdmin
 
     InternalAdminListRequest:
       type: object
@@ -897,6 +913,8 @@ components:
         isRapidResultSenderAdmin:
           type: boolean
         isRapidResultOrgAdmin:
+          type: boolean
+        isOrganizeAdmin:
           type: boolean
     User:
       type: object
@@ -1982,6 +2000,43 @@ components:
                   enum:
                     - proceed
                     - temperature_check_required
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+
+    ResponseOfBadgesSettings:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: object
+          properties:
+            hasSelfTestBadge:
+              type: boolean
+            hasTempBadge:
+              type: boolean
+            hasPCRBadge:
+              type: boolean
+            # hasPulseBadge:
+            #   type: boolean
+            # hasVaccineBadge:
+            #   type: boolean
         status:
           type: object
           additionalProperties: false
@@ -3811,11 +3866,32 @@ paths:
                   type: string
                 organizationId:
                   type: string
+                address:
+                  type: string
+                dateOfBirth:
+                  type: string
+                agreeToConductFHHealthAssessment:
+                  type: boolean
+                shareTestResultWithEmployer:
+                  type: boolean
+                readTermsAndConditions:
+                  type: boolean
+                receiveResultsViaEmail:
+                  type: boolean
+                receiveNotificationsFromGov:
+                  type: boolean
               required:
                 - email
                 - firstName
                 - lastName
                 - organizationId
+                - address
+                - dateOfBirth
+                - agreeToConductFHHealthAssessment
+                - shareTestResultWithEmployer
+                - readTermsAndConditions
+                - receiveResultsViaEmail
+                - receiveNotificationsFromGov
       responses:
         '200':
           description: Successfull linked
@@ -3949,6 +4025,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseOfHealthPass'
+
+  /enterprise/api/v3/health-pass/badge:
+    get:
+      summary: health passes for user and dependants
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfBadgesSettings'
+
   /enterprise/api/v3/pubsub/passport:
     post:
       summary: update passport

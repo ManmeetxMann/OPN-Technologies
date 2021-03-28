@@ -10,7 +10,7 @@ initializeApp({
 
 console.log(`Migrate Dependents: ${serviceAccount.project_id}`)
 
-const DRY = false
+const DRY = !(process.env.RUN_WITH_APPLY === 'true')
 const database = firestore()
 
 let originalUserCount = 0

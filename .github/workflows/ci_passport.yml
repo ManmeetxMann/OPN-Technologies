@@ -11,6 +11,7 @@ on:
       - master
     tags:
       - infra-dev-passport-*
+      - infra-dev-all-*
       - preprod-passport-*
       - preprod-all-*
       - prod-passport-*

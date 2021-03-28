@@ -8,7 +8,7 @@ jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
 jest.mock('../../../../../common/src/utils/logging-setup')
 
-const dateForCreation = '2020-02-05'
+const dateForCreation = '2020-04-05'
 const dateTimeForCreation1 = `${dateForCreation}T07:00:00`
 const labID1 = 'TEMP1'
 describe('AdminLabController', () => {

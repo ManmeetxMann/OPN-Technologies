@@ -8,8 +8,8 @@ import {passportDTO} from '../../../../../passport/src/models/passport'
 import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
 
 import {AccessService} from '../../../service/access.service'
-import {AccessTokenService} from '../../../service/access-token.service'
 import {accessDTOResponseV1} from '../../../models/access'
+import {AccessModel} from '../../../repository/access.repository'
 
 import IRouteController from '../../../../../common/src/interfaces/IRouteController.interface'
 import {isPassed, safeTimestamp} from '../../../../../common/src/utils/datetime-util'
@@ -39,11 +39,6 @@ class AdminController implements IRouteController {
   private accessService = new AccessService()
   private userService = new UserService()
   private organizationService = new OrganizationService()
-  private accessTokenService = new AccessTokenService(
-    this.organizationService,
-    this.passportService,
-    this.accessService,
-  )
   private tagService = new NfcTagService()
 
   constructor() {
@@ -155,8 +150,11 @@ class AdminController implements IRouteController {
         userIds.map((id) => this.accessService.findLatestAnywhere(id)),
       )
       accesses.forEach((acc) => {
-        if (acc.exitAt && isPassed(safeTimestamp(acc.exitAt))) {
-          throw new BadRequestException('Already exited')
+        if (!acc) {
+          throw new BadRequestException('User has never entered a location')
+        }
+        if (isPassed(safeTimestamp(acc.exitAt))) {
+          throw new BadRequestException('User already exited location')
         }
       })
 
@@ -224,7 +222,7 @@ class AdminController implements IRouteController {
         ? await this.passportService.findLatestDirectPassport(tag.userId, organizationId)
         : null
       const location = await this.organizationService.getLocation(organizationId, locationId)
-      let access
+      let access: AccessModel
       if (shouldEnter) {
         if (
           this.passportService.passportAllowsEntry(latestPassport, location.attestationRequired)
@@ -241,12 +239,12 @@ class AdminController implements IRouteController {
           throw new ForbiddenException('Passport does not allow entry')
         }
       } else {
-        access = this.accessService.handleExitV2(latestAccess)
+        access = await this.accessService.handleExitV2(latestAccess)
       }
       res.json(
         actionSucceed({
           access: accessDTOResponseV1(access),
-          passport: passportDTO(latestPassport),
+          passport: latestPassport ? passportDTO(latestPassport) : null,
         }),
       )
     } catch (error) {

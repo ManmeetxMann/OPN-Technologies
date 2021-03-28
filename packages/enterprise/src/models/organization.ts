@@ -26,8 +26,10 @@ export type Organization = {
   notificationIconCaution?: string
   notificationIconStop?: string
   enableTemperatureCheck: boolean
+  enablePulseOxygen: boolean
   legacyMode: boolean
   enableTesting: boolean
+  questionnaireId: string
 }
 
 export type OrganizationListDTO = {
@@ -88,7 +90,6 @@ export type OrganizationLocation = {
 export type OrganizationConfiguration = {
   attestationRequired: boolean
   allowsSelfCheckInOut: boolean
-  questionnaireId?: string
 }
 
 export type OrganizationKeySequence = {
@@ -143,11 +144,13 @@ export const organizationDTOResponse = (organization: Organization): Omit<Organi
     dailyReminder: organization.dailyReminder,
     enableTesting: organization.enableTesting,
     enableTemperatureCheck: organization.enableTemperatureCheck,
+    enablePulseOxygen: organization.enablePulseOxygen,
     enablePushNotifications: organization.enablePushNotifications,
     legacyMode: organization.legacyMode,
     notificationIconCaution: organization.notificationIconCaution,
     notificationIconStop: organization.notificationIconStop,
     notificationFormatCaution: organization.notificationFormatCaution,
     notificationFormatStop: organization.notificationFormatStop,
+    questionnaireId: organization.questionnaireId,
   }
 }

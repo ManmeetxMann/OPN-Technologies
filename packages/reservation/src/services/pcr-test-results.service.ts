@@ -66,31 +66,25 @@ import {
   Filter,
   ResultTypes,
   TestTypes,
+  filteredAppointmentStatus,
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
 import {BulkOperationResponse, BulkOperationStatus} from '../types/bulk-operation.type'
 import {TestRunsService} from '../services/test-runs.service'
 import {TemperatureService} from './temperature.service'
+import {LabService} from './lab.service'
 import {mapTemperatureStatusToResultTypes} from '../models/temperature'
 
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 import {AttestationService} from '../../../passport/src/services/attestation-service'
-import {PassportService} from '../../../passport/src/services/passport-service'
 import {PassportStatuses} from '../../../passport/src/models/passport'
-import {AlertService} from '../../../passport/src/services/alert-service'
+import {PulseOxygenService} from './pulse-oxygen.service'
 
-const passportStatusByPCR = {
-  [ResultTypes.Positive]: PassportStatuses.Stop,
-  [ResultTypes.PresumptivePositive]: PassportStatuses.Stop,
-  [ResultTypes.PreliminaryPositive]: PassportStatuses.Stop,
-  [ResultTypes.Inconclusive]: PassportStatuses.Stop,
-  [ResultTypes.Invalid]: PassportStatuses.Stop,
-  [ResultTypes.Indeterminate]: PassportStatuses.Stop,
-  [ResultTypes.Negative]: PassportStatuses.Proceed,
-}
 import {BulkTestResultRequest} from '../models/test-results'
+import {AntibodyAllPDFContent} from '../templates/antibody-all'
+import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -110,12 +104,16 @@ export class PCRTestResultsService {
   ]
   private testRunsService = new TestRunsService()
   private attestationService = new AttestationService()
-  private passportService = new PassportService() // TODO: remove with pubsub integration
-  private alertService = new AlertService() // TODO: remove with pubsub integration
   private temperatureService = new TemperatureService()
+  private pulseOxygenService = new PulseOxygenService()
+  private labService = new LabService()
   private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
 
   private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
+    if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
+      LogInfo('PCRTestResultsService:postPubsub', 'PubSubDisabled', {})
+      return
+    }
     this.pubsub.publish(
       {
         id: testResult.id,
@@ -135,6 +133,14 @@ export class PCRTestResultsService {
     const pcrResultHistory = await this.getPCRResultsByBarCode(data.barCode)
     const latestPCRResult = pcrResultHistory[0]
     const appointment = await this.appointmentService.getAppointmentByBarCode(data.barCode)
+    if (latestPCRResult.labId !== data.labId) {
+      LogWarning('PCRTestResultsService:confirmPCRResults', 'IncorrectLabId', {
+        labIdInDB: latestPCRResult.labId,
+        labIdInRequest: data.labId,
+      })
+      throw new BadRequestException('Not Allowed to Confirm results')
+    }
+
     //Create New Waiting Result
     const runNumber = 0 //Not Relevant
     const reCollectNumber = 0 //Not Relevant
@@ -161,8 +167,15 @@ export class PCRTestResultsService {
       waitingResult: false,
       confirmed: true,
       previousResult: latestPCRResult.result,
+      labId: latestPCRResult.labId,
     })
-    await this.sendNotification({...newPCRResult, ...appointment}, notificationType)
+
+    const lab = await this.labService.findOneById(latestPCRResult.labId)
+
+    await this.sendNotification(
+      {...newPCRResult, ...appointment, labAssay: lab.assay},
+      notificationType,
+    )
     return newPCRResult.id
   }
 
@@ -279,6 +292,7 @@ export class PCRTestResultsService {
       labId,
     }: PcrTestResultsListRequest,
     isLabUser: boolean,
+    isClinicUser: boolean,
   ): Promise<PCRTestResultListDTO[]> {
     const pcrTestResultsQuery = []
     let pcrResults: PCRTestResultDBModel[] = []
@@ -430,14 +444,16 @@ export class PCRTestResultsService {
     })
 
     const organizations = await this.organizationService.getAllByIds(orgIds)
+    const labs = await this.labService.getAll()
 
     return pcrResults.map((pcr) => {
       const organization = organizations.find(({id}) => id === pcr.organizationId)
+      const lab = labs.find(({id}) => id === pcr?.labId)
 
       return {
         id: pcr.id,
         barCode: pcr.barCode,
-        result: getResultValue(pcr.result, !!pcr.resultSpecs?.notify),
+        result: getResultValue(pcr.result, !!pcr.resultMetaData?.notify),
         previousResult: pcr.previousResult,
         dateTime: formatDateRFC822Local(pcr.dateTime),
         deadline: formatDateRFC822Local(pcr.deadline),
@@ -447,6 +463,12 @@ export class PCRTestResultsService {
         testType: pcr.testType ?? 'PCR',
         organizationId: organization?.id,
         organizationName: organization?.name,
+        appointmentStatus: filteredAppointmentStatus(
+          pcr.appointmentStatus,
+          isLabUser,
+          isClinicUser,
+        ),
+        labName: lab?.name,
       }
     })
   }
@@ -773,10 +795,13 @@ export class PCRTestResultsService {
       actionBy: adminId,
     })
 
+    const lab = await this.labService.findOneById(labId)
+
     //Send Notification
     if (metaData.notify) {
       const pcrResultDataForEmail = {
         adminId,
+        labAssay: lab.assay,
         ...pcrResultDataForDbUpdate,
         ...appointment,
       }
@@ -903,7 +928,15 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        await this.appointmentsRepository.changeStatusToReported(appointment.id, resultData.adminId)
+        await Promise.all([
+          this.appointmentsRepository.changeStatusToReported(appointment.id, resultData.adminId),
+          this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+            appointment.id,
+            {appointmentStatus: AppointmentStatus.Reported},
+            PcrResultTestActivityAction.UpdateFromAppointment,
+            actionBy,
+          ),
+        ])
         break
       }
     }
@@ -955,17 +988,6 @@ export class PCRTestResultsService {
         break
       }
       default: {
-        const passportStatus = passportStatusByPCR[resultData.result]
-        // TODO: get rid of this and handle passport creation on the other end of pub sub
-        if (passportStatus) {
-          this.passportService
-            .create(passportStatus, resultData.userId, [], true, resultData.organizationId)
-            .then((passport) => {
-              if (passportStatus === PassportStatuses.Stop) {
-                this.alertService.sendAlert(passport, null, passport.organizationId, null)
-              }
-            })
-        }
         if (resultData.result === ResultTypes.Negative) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Negative)
         } else if (resultData.result === ResultTypes.Positive) {
@@ -996,7 +1018,19 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     pcrResultPDFType: PCRResultPDFType,
   ): Promise<void> {
-    const pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
+    let pdfContent = ''
+    switch (resultData.testType) {
+      case 'Antibody_All':
+        pdfContent = await AntibodyAllPDFContent(resultData, pcrResultPDFType)
+        break
+      case 'Antibody_IgM':
+        pdfContent = await AntibodyIgmPDFContent(resultData, pcrResultPDFType)
+        break
+      default:
+        pdfContent = await PCRResultPDFContent(resultData, pcrResultPDFType)
+        break
+    }
+
     const resultDate = moment(resultData.dateTime.toDate()).format('LL')
 
     await this.emailService.send({
@@ -1191,12 +1225,13 @@ export class PCRTestResultsService {
   async getPCRResultsStats(
     queryParams: PcrTestResultsListRequest,
     isLabUser: boolean,
+    isClinicUser: boolean,
   ): Promise<{
     total: number
     pcrResultStatsByOrgIdArr: Filter[]
     pcrResultStatsByResultArr: Filter[]
   }> {
-    const pcrTestResults = await this.getPCRResults(queryParams, isLabUser)
+    const pcrTestResults = await this.getPCRResults(queryParams, isLabUser, isClinicUser)
 
     const pcrResultStatsByResult: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
     const pcrResultStatsByOrgId: Record<string, number> = {}
@@ -1385,6 +1420,7 @@ export class PCRTestResultsService {
 
     if (barCode) {
       pcrTestResultsQuery.push(equals('barCode', barCode))
+      pcrTestResultsQuery.push(equals('waitingResult', true))
     }
 
     if (testRunId) {
@@ -1632,10 +1668,11 @@ export class PCRTestResultsService {
     const appoinmentIds = pcrResults
       .filter(({result}) => result === ResultTypes.Pending)
       .map(({appointmentId}) => appointmentId)
-    const [appoinments, attestations, temperatures] = await Promise.all([
+    const [appoinments, attestations, temperatures, pulseOxygens] = await Promise.all([
       this.appointmentsRepository.getAppointmentsDBByIds(appoinmentIds),
       this.attestationService.getAllAttestationByUserId(userId, organizationId),
       this.temperatureService.getAllByUserAndOrgId(userId, organizationId),
+      this.pulseOxygenService.getAllByUserAndOrgId(userId, organizationId),
     ])
 
     const testResult = []
@@ -1653,10 +1690,10 @@ export class PCRTestResultsService {
         id: pcr.id,
         type: pcr.testType ?? TestTypes.PCR,
         name: pcr.testType ?? TestTypes.PCR,
-        testDateTime: formatDateRFC822Local(pcr.deadline),
+        testDateTime: formatDateRFC822Local(pcr.dateTime),
         style: resultToStyle(result),
         result: result,
-        detailsAvailable: result !== ResultTypes.Pending,
+        detailsAvailable: result !== ResultTypes.Invalid && result !== ResultTypes.Pending,
       })
     })
 
@@ -1685,6 +1722,18 @@ export class PCRTestResultsService {
         testDateTime: formatDateRFC822Local(temperature.timestamps.createdAt),
         style: resultToStyle(mapTemperatureStatusToResultTypes(temperature.status)),
         result: mapTemperatureStatusToResultTypes(temperature.status),
+        detailsAvailable: true,
+      })
+    })
+
+    pulseOxygens.map((pulseOxygen) => {
+      testResult.push({
+        id: pulseOxygen.id,
+        type: TestTypes.PulseOxygenCheck,
+        name: 'Pulse Oxygen',
+        testDateTime: formatDateRFC822Local(pulseOxygen.timestamps.createdAt),
+        style: resultToStyle(pulseOxygen.status),
+        result: pulseOxygen.status,
         detailsAvailable: true,
       })
     })

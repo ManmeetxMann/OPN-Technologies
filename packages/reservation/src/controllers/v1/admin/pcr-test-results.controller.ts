@@ -12,7 +12,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {getUserId, getIsLabUser} from '../../../../../common/src/utils/auth'
+import {getUserId, getIsLabUser, getIsClinicUser} from '../../../../../common/src/utils/auth'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
@@ -192,12 +192,13 @@ class AdminPCRTestResultController implements IControllerBase {
   confirmPCRResults = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
-      const {barCode, action} = req.body as PCRTestResultConfirmRequest
+      const {barCode, action, labId} = req.body as PCRTestResultConfirmRequest
 
       const pcrResultRecordedId = await this.pcrTestResultsService.confirmPCRResults(
         {
           barCode,
           action,
+          labId,
         },
         adminId,
       )
@@ -243,6 +244,7 @@ class AdminPCRTestResultController implements IControllerBase {
         throw new BadRequestException('One of the "barCode" or "date" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
 
       const pcrResults = await this.pcrTestResultsService.getPCRResults(
         {
@@ -255,6 +257,7 @@ class AdminPCRTestResultController implements IControllerBase {
           labId,
         },
         isLabUser,
+        isClinicUser,
       )
 
       res.json(actionSucceed(pcrResults))
@@ -282,6 +285,7 @@ class AdminPCRTestResultController implements IControllerBase {
         throw new BadRequestException('One of the "deadline", "barCode" or "date" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
 
       const {
         pcrResultStatsByResultArr,
@@ -298,6 +302,7 @@ class AdminPCRTestResultController implements IControllerBase {
           searchQuery,
         },
         isLabUser,
+        isClinicUser,
       )
 
       res.json(

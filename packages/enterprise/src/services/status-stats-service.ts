@@ -27,7 +27,7 @@ export class StatusStatsService {
     }
     // need to create the new day's stats
     // some might carry over
-    const allIds: string[] = [...latest[PassportStatuses.Stop], ...latest[PassportStatuses.Pending]]
+    const allIds: string[] = [...latest[PassportStatuses.Stop], ...latest[PassportStatuses.Caution]]
     const stop = []
     const caution = []
     await Promise.all(

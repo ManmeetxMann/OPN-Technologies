@@ -11,6 +11,7 @@ on:
       - master
     tags:
       - infra-dev-lookup-*
+      - infra-dev-all-*
       - preprod-lookup-*
       - preprod-all-*
       - prod-lookup-*

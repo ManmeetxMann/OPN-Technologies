@@ -7,11 +7,14 @@ import {
 } from '../../../common/src/data/datamodel.base'
 import {Config} from '../../../common/src/utils/config'
 import {serverTimestamp} from '../../../common/src/utils/times'
+import PassportAdapter from '../../../common/src/adapters/passport'
+
 import {Attestation, AttestationModel} from '../models/attestation'
 import {PassportStatus, PassportStatuses} from '../models/passport'
 import {ExposureResult} from '../types/status-changes-result'
 
 import {TraceModel, TraceRepository} from '../../../access/src/repository/trace.repository'
+import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 import moment from 'moment'
 
@@ -22,6 +25,15 @@ export class AttestationService {
   private attestationRepository = new AttestationModel(this.dataStore)
   private traceRepository = new TraceRepository(this.dataStore)
   private pubsub = new OPNPubSub(Config.get('ATTESTATION_TOPIC'))
+  private adapter = new PassportAdapter()
+  private orgService = new OrganizationService()
+
+  private statusFor(status: PassportStatuses, tempRequired: boolean): PassportStatuses {
+    if (status === PassportStatuses.Proceed && tempRequired) {
+      return PassportStatuses.TemperatureCheckRequired
+    }
+    return status
+  }
 
   save(attestation: Attestation): Promise<Attestation> {
     return this.attestationRepository
@@ -36,20 +48,28 @@ export class AttestationService {
           .toDate()
           .toISOString(),
       }))
-      .then((att) => {
-        att.appliesTo.forEach((userId) => {
-          this.pubsub.publish(
-            {
-              id: att.id,
-              status: att.status,
-            },
-            {
-              userId: userId,
-              organizationId: att.organizationId,
-              actionType: 'created',
-            },
-          )
-        })
+      .then(async (att) => {
+        const org = await this.orgService.findOneById(att.organizationId)
+        await Promise.all(
+          att.appliesTo.map((userId) => {
+            this.pubsub.publish(
+              {
+                id: att.id,
+                status: att.status,
+              },
+              {
+                userId: userId,
+                organizationId: att.organizationId,
+                actionType: 'created',
+              },
+            )
+            const passportStatus = this.statusFor(
+              att.status as PassportStatuses,
+              org.enableTemperatureCheck,
+            )
+            return this.adapter.createPassport(userId, att.organizationId, passportStatus, att.id)
+          }),
+        )
         return att
       })
   }
@@ -212,7 +232,6 @@ export class AttestationService {
   ): Promise<Attestation> {
     const [attestation] = await this.attestationRepository
       .getQueryFindWhereArrayContains('appliesTo', userOrDependantId)
-      .where('userId', '==', userOrDependantId)
       .where('organizationId', '==', organizationId)
       .orderBy('attestationTime', 'desc')
       .fetch()

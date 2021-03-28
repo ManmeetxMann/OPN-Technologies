@@ -4,7 +4,11 @@ import IRouteController from '../../../common/src/interfaces/IRouteController.in
 import {PassportService} from '../../../passport/src/services/passport-service'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {AccessService} from '../service/access.service'
-import {actionFailed, actionSucceed, of} from '../../../common/src/utils/response-wrapper'
+import {
+  actionFailed,
+  actionSucceed as rawSucceed,
+  of,
+} from '../../../common/src/utils/response-wrapper'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {isPassed} from '../../../common/src/utils/datetime-util'
 import {UserService} from '../../../common/src/service/user/user-service'
@@ -23,6 +27,13 @@ import {AccessTokenService} from '../service/access-token.service'
 import {ResponseStatusCodes} from '../../../common/src/types/response-status'
 import {AccessStats} from '../models/access'
 import {NfcTagService} from '../../../common/src/service/hardware/nfctag-service'
+
+const actionSucceed = (body?: unknown, userId?: string): ReturnType<typeof rawSucceed> => {
+  if (userId && userId === Config.get('USER_OF_INTEREST')) {
+    console.log(`Response to ${userId}`, body)
+  }
+  return rawSucceed(body)
+}
 
 const replyInsufficientPermission = (res: Response) =>
   res
@@ -105,8 +116,8 @@ class AdminController implements IRouteController {
       }
 
       const responseBody = await this.statsHelper(organizationId, locationId)
-
-      res.json(actionSucceed(responseBody))
+      const authenticatedUser = res.locals.connectedUser as User
+      res.json(actionSucceed(responseBody, authenticatedUser.id))
     } catch (error) {
       next(error)
     }

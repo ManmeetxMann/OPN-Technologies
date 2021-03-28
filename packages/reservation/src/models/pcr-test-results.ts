@@ -13,6 +13,7 @@ import {
 import {groupByChannel} from '../utils/analysis.helper'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
+import {PulseOxygenStatuses} from './pulse-oxygen'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -36,6 +37,7 @@ export enum PCRResultPDFType {
   ConfirmedNegative = 'ConfirmedNegative',
   Negative = 'Negative',
   Positive = 'Positive',
+  Intermediate = 'Intermediate',
   PresumptivePositive = 'PresumptivePositive',
 }
 
@@ -83,6 +85,7 @@ export enum ResultReportStatus {
 export type PCRTestResultConfirmRequest = {
   barCode: string
   action: PCRResultActionsForConfirmation
+  labId?: string
 }
 
 export type PCRSendResultDTO = {
@@ -98,6 +101,7 @@ export type PCRSendResultDTO = {
 
 export enum TestResultStyle {
   // PCR result style
+  PresumptivePositive = 'RED',
   Positive = 'RED',
   Negative = 'GREEN',
   Invalid = 'YELLOW',
@@ -171,6 +175,7 @@ export type PCRTestResultDBModel = PCRTestResultData & {
   labId?: string
   userId: string
   sortOrder: number
+  appointmentStatus: AppointmentStatus
 }
 
 export type PCRTestResultLinkedDBModel = PCRTestResultDBModel & {
@@ -201,7 +206,7 @@ export type PCRTestResultEmailDTO = Omit<
   | 'userId'
   | 'sortOrder'
 > &
-  AppointmentDBModel
+  AppointmentDBModel & {labAssay: string}
 
 export type ProcessPCRResultRequest = {
   reportTrackerId: string
@@ -293,6 +298,8 @@ export type PCRTestResultListDTO = {
   testRunId?: string
   organizationId: string
   organizationName: string
+  appointmentStatus: AppointmentStatus
+  labName?: string
 }
 
 export type PCRTestResultByDeadlineListDTO = {
@@ -338,7 +345,7 @@ export const pcrTestResultsResponse = (
 })
 
 export const resultToStyle = (
-  result: ResultTypes | PassportStatus | TemperatureStatusesUI,
+  result: ResultTypes | PassportStatus | TemperatureStatusesUI | PulseOxygenStatuses,
 ): TestResultStyle => {
   return TestResultStyle[result] ? TestResultStyle[result] : TestResultStyle.AnyOther
 }
@@ -356,11 +363,46 @@ export type TestResutsDTO = {
 export type GroupedSpecs = {
   channelName: string
   description: string
-  groups: Spec[]
+  groups: {
+    label: string
+    value: string | boolean | Date
+  }[]
 }
 
-type Spec = {
-  label: string
+export enum SpecLabel {
+  famEGene = 'famEGene',
+  famCt = 'famCt',
+  calRed61RdRpGene = 'calRed61RdRpGene',
+  calRed61Ct = 'calRed61Ct',
+  hexIC = 'hexIC',
+  hexCt = 'hexCt',
+  quasar670NGene = 'quasar670NGene',
+  quasar670Ct = 'quasar670Ct',
+  ORF1abCt = 'ORF1abCt',
+  NGeneCt = 'NGeneCt',
+  SGeneCt = 'SGeneCt',
+  MS2Ct = 'MS2Ct',
+  ORF1ab = 'ORF1ab',
+  NGene = 'NGene',
+  SGene = 'SGene',
+  MS2 = 'MS2',
+  IgAResult = 'IgAResult',
+  IgGResult = 'IgGResult',
+  IgMResult = 'IgMResult',
+  IgA = 'IgA',
+  IgG = 'IgG',
+  IgM = 'IgM',
+}
+
+export enum GroupLabel {
+  FAM = 'FAM',
+  calRed = 'calRed',
+  HEX = 'HEX',
+  quasar = 'quasar',
+}
+
+export type Spec = {
+  label: SpecLabel
   value: string | boolean | Date
 }
 
@@ -398,7 +440,7 @@ export type SinglePcrTestResultUi = {
 
 enum LabData {
   labName = 'FH Health',
-  testType = 'PCR',
+  testType = 'RT-PCR',
   equipment = 'Allplex 2019-nCoV Assay',
   manufacturer = 'Seegeene Inc.',
 }
@@ -418,19 +460,19 @@ export const singlePcrTestResultDTO = (
   if (pcrTestResult.resultSpecs) {
     resultAnalysis = groupByChannel(
       Object.entries(pcrTestResult.resultSpecs).map(([resultKey, resultValue]) => ({
-        label: resultKey,
+        label: resultKey as SpecLabel,
         value: resultValue,
       })),
     )
   } else if (pcrTestResult.resultAnalysis) {
-    resultAnalysis = pcrTestResult.resultAnalysis
+    resultAnalysis = groupByChannel(pcrTestResult.resultAnalysis)
   }
   return {
     email: appointment.email,
     firstName: appointment.firstName,
     lastName: appointment.lastName,
     phone: `${appointment.phone}`,
-    ohipCard: appointment.ohipCard,
+    ohipCard: appointment.ohipCard || 'N/A',
     dateOfBirth: appointment.dateOfBirth,
     address: appointment.address,
     addressUnit: appointment.addressUnit,
@@ -438,10 +480,10 @@ export const singlePcrTestResultDTO = (
     appointmentStatus: appointment.appointmentStatus,
     result: pcrTestResult.result,
     dateTime: formatStringDateRFC822Local(pcrTestResult.dateTime.toDate()),
-    registeredNursePractitioner: appointment.registeredNursePractitioner,
-    physician: requisitionDoctor,
-    locationName: appointment.locationName,
-    swabMethod: appointment.swabMethod,
+    registeredNursePractitioner: appointment.registeredNursePractitioner || 'N/A',
+    physician: requisitionDoctor || 'N/A',
+    locationName: appointment.locationName || 'N/A',
+    swabMethod: appointment.swabMethod || 'N/A',
     deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
     labName: LabData.labName,
     testType: LabData.testType,
@@ -452,11 +494,13 @@ export const singlePcrTestResultDTO = (
     style: resultToStyle(pcrTestResult.result),
     testName: 'SARS COV-2',
     doctorId: 'DR1',
-    travelID: appointment.travelID,
-    travelIDIssuingCountry: appointment.travelIDIssuingCountry,
+    travelID: appointment.travelID.trim() ? appointment.travelID : 'N/A',
+    travelIDIssuingCountry: appointment.travelIDIssuingCountry.trim()
+      ? appointment.travelIDIssuingCountry
+      : 'N/A',
     dateOfResult: pcrTestResult.resultMetaData
       ? formatStringDateRFC822Local(safeTimestamp(pcrTestResult.resultMetaData.resultDate))
-      : null,
+      : 'N/A',
   }
 }
 

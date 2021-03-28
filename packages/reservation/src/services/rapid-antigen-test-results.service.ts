@@ -60,6 +60,7 @@ export class RapidAntigenTestResultsService {
         previousResult: result !== ResultTypes.Pending ? result : null,
         result: this.getResultBasedOnAction(action),
         waitingResult: false,
+        appointmentStatus: AppointmentStatus.Reported,
       },
       actionBy: reqeustedBy,
       action: PcrResultTestActivityAction.UpdateFromRapidAntigen,
@@ -76,7 +77,10 @@ export class RapidAntigenTestResultsService {
     )
 
     //Send Push Notification
-    const actionsWithNotifyEnabled = [RapidAntigenResultTypes.SendPositive]
+    const actionsWithNotifyEnabled = [
+      RapidAntigenResultTypes.SendPositive,
+      RapidAntigenResultTypes.SendNegative,
+    ]
     if (notify && actionsWithNotifyEnabled.includes(action)) {
       this.pubSub.publish({
         appointmentID: appointmentId,

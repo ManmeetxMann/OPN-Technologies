@@ -1,6 +1,5 @@
 import {ResultTypes} from './appointment'
-import {AppointmentReasons, PCRResultActions} from './pcr-test-results'
-import {Spec} from '../utils/analysis.helper'
+import {AppointmentReasons, PCRResultActions, Spec} from './pcr-test-results'
 import {firestore} from 'firebase-admin'
 
 export type TestResultSpecsForSending = {

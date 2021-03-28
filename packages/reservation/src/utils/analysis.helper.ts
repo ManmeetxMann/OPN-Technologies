@@ -1,31 +1,46 @@
-import {GroupedSpecs} from '../models/pcr-test-results'
+import {GroupedSpecs, Spec} from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
-
-export type Spec = {
-  label: string
-  value: string | boolean | Date
-}
 
 const groups = [
   {
     name: 'FAM',
     description: 'lorem',
-    columns: ['famCt', 'famEGene'],
+    columns: ['famCt', 'famEGene', 'ORF1abCt', 'ORF1ab'],
+  },
+  {
+    name: 'CAL RED 61',
+    description: 'lorem',
+    columns: ['calRedCt', 'calRedRdrp'],
+  },
+  {
+    name: 'QUASAR 670',
+    description: 'lorem',
+    columns: ['quasarCt', 'quasarNgene'],
   },
   {
     name: 'HEX',
     description: 'lorem',
-    columns: ['hexCt', 'hexIC'],
+    columns: ['hexCt', 'hexIc'],
   },
   {
-    name: 'calRed',
+    name: 'VIC',
     description: 'lorem',
-    columns: ['calRed61Ct', 'calRed61RdRpGene'],
+    columns: ['NGeneCt', 'NGene'],
   },
   {
-    name: 'quasar',
+    name: 'ABY',
     description: 'lorem',
-    columns: ['quasar670Ct', 'quasar670NGene'],
+    columns: ['SGeneCt', 'SGene'],
+  },
+  {
+    name: 'Jun',
+    description: 'lorem',
+    columns: ['MS2Ct', 'MS2'],
+  },
+  {
+    name: 'Antigen',
+    description: 'lorem',
+    columns: ['IgAResult', 'IgGResult', 'IgMResult', 'IgA', 'IgG', 'IgM'],
   },
   {
     name: 'other',
@@ -53,12 +68,43 @@ export const validateAnalysis = (specs: Spec[]): void => {
     }
   })
 }
+const channelLabelMapping = new Map([
+  ['famEGene', 'E Gene'],
+  ['famCt', 'C(t)'],
+  ['calRedRdrp', 'RdRP gene'],
+  ['calRedCt', 'C(t)'],
+  ['hexIc', 'IC'],
+  ['hexCt', 'C(t)'],
+  ['quasarNgene', 'N gene'],
+  ['quasarCt', 'C(t)'],
+
+  ['ORF1abCt', 'ORF1ab Ct'],
+  ['SGeneCt', 'S gene Ct'],
+  ['NGeneCt', 'N gene Ct'],
+  ['MS2Ct', 'MS2 Ct'],
+  ['ORF1ab', 'ORF1ab'],
+  ['NGene', 'S gene'],
+  ['SGene', 'N gene'],
+  ['MS2', 'MS2'],
+
+  ['IgAResult', 'IgAResult'],
+  ['IgGResult', 'IgGResult'],
+  ['IgMResult', 'IgMResult'],
+  ['IgA', 'IgA'],
+  ['IgG', 'IgG'],
+  ['IgM', 'IgM'],
+])
 
 export const groupByChannel = (specs: Spec[]): GroupedSpecs[] =>
   groups
     .map((group) => ({
       channelName: group.name,
       description: group.description,
-      groups: specs.filter((spec) => group.columns.includes(spec.label)),
+      groups: specs
+        .filter((spec) => group.columns.includes(spec.label))
+        .map((spec) => ({
+          ...spec,
+          label: channelLabelMapping.get(spec.label),
+        })),
     }))
     .filter((group) => group.groups.length)

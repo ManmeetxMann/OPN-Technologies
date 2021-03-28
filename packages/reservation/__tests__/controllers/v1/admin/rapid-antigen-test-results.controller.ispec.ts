@@ -14,7 +14,7 @@ jest.mock('../../../../../common/src/middlewares/authorization')
 jest.mock('../../../../../common/src/utils/logging-setup')
 jest.mock('../../../../../common/src/service/google/pub_sub')
 
-const dateForAppointments = '2020-02-05'
+const dateForAppointments = '2020-03-05'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
 const deadlineSameDay = `${dateForAppointments}T23:59:00`
 const aptID1 = 'APT1'

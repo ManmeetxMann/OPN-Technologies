@@ -3,7 +3,7 @@ import {Config} from '../utils/config'
 Config.load()
 
 import express, {Application, RequestHandler} from 'express'
-import {OpenApiValidator} from 'express-openapi-validator'
+import * as OpenApiValidator from 'express-openapi-validator'
 import cors from 'cors'
 
 import {handleErrors, handleValidationErrors, handleRouteNotFound} from '../middlewares/error'
@@ -79,13 +79,14 @@ class App {
     this.app.use(handleRouteNotFound)
   }
 
-  private setupValidation(): Promise<unknown> {
-    const validator = new OpenApiValidator({
-      apiSpec: 'openapi.yaml',
-      validateRequests: true,
-      validateResponses: Config.get('FEATURE_VALIDATE_RESPONSES') === 'enabled',
-    })
-    return validator.install(this.app)
+  private async setupValidation(): Promise<void> {
+    this.app.use(
+      OpenApiValidator.middleware({
+        apiSpec: 'openapi.yaml',
+        validateRequests: true,
+        validateResponses: Config.get('FEATURE_VALIDATE_RESPONSES') === 'enabled',
+      }),
+    )
   }
 
   // this needs to run before routes

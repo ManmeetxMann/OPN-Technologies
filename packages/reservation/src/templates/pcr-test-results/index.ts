@@ -16,7 +16,12 @@ const getPCRTemplate = (
   resultData: PCRTestResultEmailDTO,
   pdfType: PCRResultPDFType,
 ): {content: Content; tableLayouts: TableLayouts} => {
-  const resultDate = moment(resultData.dateTime.toDate()).format('LL')
+  const resultDateRaw =
+    resultData.resultMetaData && resultData.resultMetaData.resultDate
+      ? resultData.resultMetaData.resultDate
+      : new Date()
+  //const resultDate = moment(resultData.resultMetaData.resultDate).format('LL')
+  const resultDate = moment(resultDateRaw).format('LL')
 
   switch (pdfType) {
     case PCRResultPDFType.ConfirmedNegative: {

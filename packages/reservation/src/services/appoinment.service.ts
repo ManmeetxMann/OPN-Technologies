@@ -19,6 +19,7 @@ import {
   Filter,
   TestTypes,
   RescheduleAppointmentDTO,
+  UpdateTransPortRun,
 } from '../models/appointment'
 
 import {dateFormats, timeFormats} from '../../../common/src/utils/times'
@@ -49,6 +50,8 @@ import {
 } from '../utils/base64-converter'
 import {Enterprise} from '../adapter/enterprise'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {UserAddressService} from '../../../enterprise/src/services/user-address-service'
+import {LabService} from './lab.service'
 
 //Models
 import {
@@ -68,6 +71,8 @@ import {SyncProgressRepository} from '../respository/sync-progress.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
 import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
+import {AppointmentToTestTypeRepository} from '../respository/appointment-to-test-type-association.repository'
+import {AppointmentTypes} from '../models/appointment-types'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -79,11 +84,18 @@ export class AppoinmentService {
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
   private syncProgressRepository = new SyncProgressRepository(this.dataStore)
+  private appointmentToTestTypeRepository = new AppointmentToTestTypeRepository(this.dataStore)
   private organizationService = new OrganizationService()
+  private userAddressService = new UserAddressService()
+  private labService = new LabService()
   private enterpriseAdapter = new Enterprise()
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
 
   private postPubsub(appointment: AppointmentDBModel, action: string): void {
+    if (Config.get('APPOINTMENTS_PUB_SUB_NOTIFY') !== 'enabled') {
+      LogInfo('AppoinmentService:postPubsub', 'PubSubDisabled', {})
+      return
+    }
     this.pubsub.publish(
       {
         id: appointment.id,
@@ -217,7 +229,7 @@ export class AppoinmentService {
 
   async getAppointmentsDB(
     queryParams: AppointmentByOrganizationRequest,
-  ): Promise<(AppointmentDBModel & {organizationName: string})[]> {
+  ): Promise<(AppointmentDBModel & {organizationName: string; labName?: string})[]> {
     const conditions = []
     let appointments = []
     if (queryParams.labId) {
@@ -357,9 +369,13 @@ export class AppoinmentService {
       ).map((organization) => [organization.id, organization.name]),
     )
 
+    const labs = await this.labService.getAll()
+    const lab = (appointment) => labs.find(({id}) => id == appointment?.labId)
+
     return appointments.map((appointment) => ({
       ...appointment,
       organizationName: organizations[appointment.organizationId],
+      labName: lab(appointment)?.name,
     }))
   }
 
@@ -432,21 +448,30 @@ export class AppoinmentService {
     },
   ): Promise<AppointmentDBModel> {
     const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
-    const saved = await this.updateAppointmentDB(
-      id,
-      data,
-      AppointmentActivityAction.UpdateFromAcuity,
-    )
+
+    const [saved] = await Promise.all([
+      this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity),
+      // create or update user related collections
+      this.updatedUserRelatedData(data),
+    ])
+
     this.postPubsub(saved, 'updated')
     return saved
   }
 
+  async updatedUserRelatedData(data: Omit<AppointmentDBModel, 'id'>): Promise<void> {
+    // handle user address update
+    if (data.userId) {
+      await this.userAddressService.InsertIfNotExists(data.userId, data.address)
+    }
+  }
+
   private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
-    const rapidAntigenTypeIDs = [
-      Config.getInt('ACUITY_APPOINTMENT_TYPE_MULTIPLEX'),
-      Config.getInt('ACUITY_APPOINTMENT_TYPE_ID'),
-    ]
-    return rapidAntigenTypeIDs.includes(appointmentTypeID) ? TestTypes.RapidAntigen : TestTypes.PCR
+    const appointmentToTestType = await this.appointmentToTestTypeRepository.findWhereEqual(
+      'appointmentType',
+      appointmentTypeID,
+    )
+    return appointmentToTestType?.length ? appointmentToTestType[0].testType : TestTypes.PCR
   }
 
   private async getDateFields(acuityAppointment: AppointmentAcuityResponse) {
@@ -498,6 +523,13 @@ export class AppoinmentService {
               firstName: acuityAppointment.firstName,
               lastName: acuityAppointment.lastName,
               organizationId: acuityAppointment.organizationId || '',
+              address: acuityAppointment.address,
+              dateOfBirth: acuityAppointment.dateOfBirth,
+              agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
+              shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
+              readTermsAndConditions: acuityAppointment.readTermsAndConditions,
+              receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
+              receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
             })
           ).data.id
         : null
@@ -540,6 +572,8 @@ export class AppoinmentService {
       locationName: acuityAppointment.calendar,
       locationAddress: acuityAppointment.location,
       testType: await this.getTestType(acuityAppointment.appointmentTypeID),
+      gender: acuityAppointment.gender,
+      postalCode: acuityAppointment.postalCode,
     }
   }
 
@@ -649,11 +683,8 @@ export class AppoinmentService {
     testRunId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.appointmentsRepository.addStatusHistoryById(
-      appointmentId,
-      AppointmentStatus.InProgress,
-      userId,
-    )
+    await this.appointmentStatusChange(appointmentId, AppointmentStatus.InProgress, userId)
+
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.InProgress,
       testRunId,
@@ -682,15 +713,11 @@ export class AppoinmentService {
           break
 
         case AppointmentBulkAction.AddTransportRun:
-          await this.addTransportRun(appointmentId, data.transportRunId, data.userId)
+          await this.addTransportRun(appointmentId, data as UpdateTransPortRun)
           break
 
         case AppointmentBulkAction.AddAppointmentLabel:
           await this.addAppointmentLabel(appointment, data.label, userId)
-          break
-
-        case AppointmentBulkAction.AddLab:
-          await this.addLab(appointmentId, data.labId)
           break
 
         default:
@@ -713,11 +740,7 @@ export class AppoinmentService {
   }
 
   async makeReceived(appointmentId: string, vialLocation: string, userId: string): Promise<void> {
-    await this.appointmentsRepository.addStatusHistoryById(
-      appointmentId,
-      AppointmentStatus.Received,
-      userId,
-    )
+    await this.appointmentStatusChange(appointmentId, AppointmentStatus.Received, userId)
 
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.Received,
@@ -726,28 +749,26 @@ export class AppoinmentService {
     this.postPubsub(saved, 'updated')
   }
 
-  async addTransportRun(
-    appointmentId: string,
-    transportRunId: string,
-    userId: string,
-  ): Promise<void> {
+  async addTransportRun(appointmentId: string, data: UpdateTransPortRun): Promise<void> {
+    const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
+      appointmentStatus: AppointmentStatus.InTransit,
+      transportRunId: data.transportRunId,
+      labId: data.labId ?? null,
+    })
+
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+      appointmentId,
+      {labId: data.labId, appointmentStatus: AppointmentStatus.InTransit},
+      PcrResultTestActivityAction.UpdateFromAppointment,
+      data.userId,
+    )
+
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
       AppointmentStatus.InTransit,
-      userId,
+      data.userId,
     )
-
-    const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
-      transportRunId: transportRunId,
-      appointmentStatus: AppointmentStatus.InTransit,
-    })
     this.postPubsub(saved, 'updated')
-  }
-
-  async addLab(appointmentId: string, labId: string): Promise<void> {
-    await this.appointmentsRepository.updateProperties(appointmentId, {
-      labId: labId,
-    })
   }
 
   private async checkAppointmentStatusOnly(
@@ -814,7 +835,7 @@ export class AppoinmentService {
   ): Promise<AppointmentDBModel> {
     const utcDateTime = firestoreTimeStampToUTC(data.appointment.dateTime)
     const deadline = makeDeadline(utcDateTime, data.deadlineLabel)
-    await this.appointmentsRepository.addStatusHistoryById(
+    await this.appointmentStatusChange(
       data.appointment.id,
       AppointmentStatus.ReRunRequired,
       data.userId,
@@ -842,11 +863,7 @@ export class AppoinmentService {
     appointmentId: string,
     userId: string,
   ): Promise<AppointmentDBModel> {
-    await this.appointmentsRepository.addStatusHistoryById(
-      appointmentId,
-      AppointmentStatus.ReCollectRequired,
-      userId,
-    )
+    await this.appointmentStatusChange(appointmentId, AppointmentStatus.ReCollectRequired, userId)
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.ReCollectRequired,
     })
@@ -967,11 +984,13 @@ export class AppoinmentService {
     slotId,
     firstName,
     lastName,
+    gender,
     email,
     phone,
     dateOfBirth,
     address,
     addressUnit,
+    postalCode,
     couponCode,
     shareTestResultWithEmployer,
     readTermsAndConditions,
@@ -984,7 +1003,7 @@ export class AppoinmentService {
   }: CreateAppointmentRequest & {email: string}): Promise<AppointmentDBModel> {
     const {time, appointmentTypeId, calendarId} = decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
-    const dateTime = utcDateTime.format()
+    const dateTime = utcDateTime.tz(timeZone).format()
     const barCodeNumber = await this.getNextBarCodeNumber()
     const acuityAppointment = await this.acuityRepository.createAppointment({
       dateTime,
@@ -997,8 +1016,10 @@ export class AppoinmentService {
       calendarID: calendarId,
       fields: {
         dateOfBirth,
+        gender,
         address,
         addressUnit,
+        postalCode,
         shareTestResultWithEmployer,
         readTermsAndConditions,
         agreeToConductFHHealthAssessment,
@@ -1102,7 +1123,7 @@ export class AppoinmentService {
 
       return {
         id,
-        label: moment(time).tz(calendarTimezone).utc().format(timeFormats.standard12h),
+        label: moment(time).tz(calendarTimezone).utc().toISOString(),
         slotsAvailable: slotsAvailable,
       }
     })
@@ -1318,11 +1339,8 @@ export class AppoinmentService {
     if (!(await this.checkAppointmentStatusOnly(appointmentId, AppointmentStatus.Pending))) {
       throw new BadRequestException('Appointment status should be on Pending state')
     }
-    await this.appointmentsRepository.addStatusHistoryById(
-      appointmentId,
-      AppointmentStatus.CheckedIn,
-      userId,
-    )
+
+    await this.appointmentStatusChange(appointmentId, AppointmentStatus.CheckedIn, userId)
 
     const saved = await this.appointmentsRepository.changeAppointmentStatus(
       appointmentId,
@@ -1407,5 +1425,27 @@ export class AppoinmentService {
 
   async getUserAppointments(userId: string): Promise<AppointmentDBModel[]> {
     return this.appointmentsRepository.findWhereEqual('userId', userId)
+  }
+
+  private async appointmentStatusChange(
+    appointmentId: string,
+    newStatus: AppointmentStatus,
+    userId: string,
+  ) {
+    const [updatedAppoinment] = await Promise.all([
+      await this.appointmentsRepository.addStatusHistoryById(appointmentId, newStatus, userId),
+      this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+        appointmentId,
+        {appointmentStatus: newStatus},
+        PcrResultTestActivityAction.UpdateFromAppointment,
+        userId,
+      ),
+    ])
+
+    return updatedAppoinment
+  }
+
+  async getAcuityAppointmentTypes(): Promise<AppointmentTypes[]> {
+    return this.acuityRepository.getAppointmentTypeList()
   }
 }
