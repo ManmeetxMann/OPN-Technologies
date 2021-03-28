@@ -4,7 +4,7 @@
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
 
-const DRY_RUN = !Boolean(process.env.RUN_WITH_APPLY)
+const DRY_RUN = true
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
