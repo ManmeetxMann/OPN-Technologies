@@ -10,7 +10,7 @@
         "dev:debug": "nodemon --inspect=3008 src/server.ts",
         "dev:local": "FIRESTORE_EMULATOR_HOST=localhost:8080 PUBSUB_EMULATOR_HOST=localhost:8085 FEATURE_DEBUG_MANUAL_TIMESTAMPS=enabled DEBUG_GUILIBLE_MODE=enabled ts-node src/server.ts",
         "clean": "rimraf -rf ./dist",
-        "prepare": "copyfiles ../common/.env dist/common && copyfiles app.yaml dist && copyfiles openapi.yaml dist && copyfiles package.json dist && node ../../__devops/package-cleaner.js reservation start",
+        "prepare": "copyfiles ../common/.env dist/common && copyfiles app.yaml dist && copyfiles openapi.yaml dist && copyfiles package.json dist && node ../../tools/package-cleaner.js reservation start",
         "add_static_assets": "copyfiles ./src/views/* dist/reservation/ && copyfiles ./src/views/layouts/* dist/reservation/ && copyfiles ./src/static/js/* dist/reservation/ && copyfiles ./src/static/images/* dist/reservation/ && copyfiles ./src/templates/* dist/reservation/ && copyfiles ../common/src/static/fonts/* dist/common/",
         "compile": "tsc -p tsconfig.build.json",
         "build": "npm run clean && npm run compile && npm run prepare && npm run add_static_assets",

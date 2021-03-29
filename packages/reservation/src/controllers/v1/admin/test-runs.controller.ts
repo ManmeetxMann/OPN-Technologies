@@ -41,7 +41,8 @@ class AdminTestRunsController implements IControllerBase {
 
   getListTestRuns = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunDate, labId} = req.query as TestRunsRequest
+      const {testRunDate} = req.query as TestRunsRequest
+      const labId = req.headers?.labid as string
 
       if (testRunDate && !isValidDate(testRunDate)) {
         throw new BadRequestException('testRunDate is invalid')

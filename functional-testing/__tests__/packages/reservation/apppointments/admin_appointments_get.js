@@ -11,6 +11,7 @@ frisby.globalSetup({
 
 const reservationServiceUrl = process.env.RESERVATION_SERVICE_URL;
 const organizationId = testProfile.get().organizationId;
+const labId = testProfile.get().labId;
 /**
  * @group reservation-service
  * @group /reservation/admin/api/v1/appointments
@@ -26,6 +27,7 @@ describe('get:admin:appointments', () => {
             request: {
               headers: {
                 'Authorization': `Bearer ${token}`,
+                'labid': labId
               },
             },
           })

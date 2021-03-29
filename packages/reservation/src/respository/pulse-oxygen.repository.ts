@@ -15,4 +15,17 @@ export class PulseOxygenRepository extends DataModel<PulseOxygenDBModel> {
     const validPulseOxygen = await pulseOxygenSchema.validateAsync(pulseOxygen)
     return this.add(validPulseOxygen)
   }
+
+  async getById(id: string): Promise<PulseOxygenDBModel> {
+    return this.get(id)
+  }
+
+  async getAllByUserAndOrgId(
+    userId: string,
+    organizationId: string,
+  ): Promise<PulseOxygenDBModel[]> {
+    return this.getQueryFindWhereEqual('userId', userId)
+      .where('organizationId', '==', organizationId)
+      .fetch()
+  }
 }

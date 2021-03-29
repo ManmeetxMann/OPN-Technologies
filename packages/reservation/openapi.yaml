@@ -1068,8 +1068,8 @@ paths:
             type: string
             format: date
           required: true
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
       responses:
@@ -1251,8 +1251,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -1558,8 +1558,8 @@ paths:
           schema:
             type: string
           required: true
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
           required: true
@@ -1657,8 +1657,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -1754,8 +1754,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -1825,10 +1825,10 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
-            type: string
+           type: string
         - in: query
           name: organizationId
           schema:
@@ -2062,8 +2062,8 @@ paths:
           schema:
             type: string
           required: true
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
       responses:
@@ -2390,6 +2390,13 @@ paths:
                   type: string
                 lastName:
                   type: string
+                gender:
+                  type: string
+                  enum:
+                    - Male
+                    - Female
+                    - Other
+                    - Prefer Not to Say
                 phone:
                   type: object
                   additionalProperties: false
@@ -2404,6 +2411,8 @@ paths:
                 address:
                   type: string
                 addressUnit:
+                  type: string
+                postalCode:
                   type: string
                 couponCode:
                   type: string
@@ -2421,9 +2430,11 @@ paths:
                 - slotId
                 - firstName
                 - lastName
+                - gender
                 - dateOfBirth
                 - address
                 - addressUnit
+                - postalCode
                 - couponCode
                 - shareTestResultWithEmployer
                 - readTermsAndConditions
@@ -2830,8 +2841,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -2933,8 +2944,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -3363,6 +3374,68 @@ paths:
                             - stop
                         result:
                           type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
+  /reservation/api/v1/pulse-oxygen/{id}:
+    get:
+      description: Get pulse and oxygen details by pulseOxygen ID and organization ID
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Pulse & Oxygen Management
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return pulse and oxygen details
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pulse:
+                          type: number
+                        oxygen:
+                          type: number
+                        createdAt:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            - Passed
+                            - Failed
                   status:
                     type: object
                     additionalProperties: false

@@ -4,7 +4,7 @@ import {Handler, Router} from 'express'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
-import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
+import {actionSucceed, actionSuccess} from '../../../../common/src/utils/response-wrapper'
 import {UserService} from '../../../../common/src/service/user/user-service'
 import {User} from '../../../../common/src/data/user'
 
@@ -15,6 +15,10 @@ import {
   organizationSummaryDTOResponse,
 } from '../../models/organization'
 import {userDTO} from '../../../../common/src/data/user'
+import {HealthPassType} from '../../types/health-pass'
+import {PassportStatuses} from '../../../../passport/src/models/passport'
+import {TemperatureStatuses} from '../../../../reservation/src/models/temperature'
+import {ResultTypes} from '../../../../reservation/src/models/appointment'
 
 class RecommendationController implements IControllerBase {
   public router = express.Router()
@@ -29,7 +33,9 @@ class RecommendationController implements IControllerBase {
     const innerRouter = () => Router({mergeParams: true})
     const root = '/enterprise/api/v3/health-pass'
     const auth = authorizationMiddleware([RequiredUserPermission.RegUser], true)
-    const route = innerRouter().use('/', innerRouter().get('/', auth, this.getHealthPass))
+    const route = innerRouter()
+      .use('/', innerRouter().get('/', auth, this.getHealthPass))
+      .get('/badge', auth, this.getBadges)
     this.router.use(root, route)
   }
 
@@ -66,6 +72,41 @@ class RecommendationController implements IControllerBase {
         passes,
       }
       res.json(actionSucceed(response))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getBadges: Handler = async (req, res, next): Promise<void> => {
+    try {
+      const {organizationId, authenticatedUser} = res.locals as {
+        organizationId: string
+        authenticatedUser: User
+      }
+
+      const pass = await this.passService.getHealthPass(authenticatedUser.id, organizationId)
+      let badges = {
+        hasSelfTestBadge: false,
+        hasTempBadge: false,
+        hasPCRBadge: false,
+        // hasPulseBadge: false,
+        // hasVaccineBadge: false,
+      }
+      if (pass.tests) {
+        const attestation = pass.tests.find(({type}) => type === HealthPassType.Attestation)
+        const temperature = pass.tests.find(({type}) => type === HealthPassType.Temperature)
+        const PCR = pass.tests.find(({type}) => type === HealthPassType.PCR)
+
+        badges = {
+          hasSelfTestBadge: attestation?.status === PassportStatuses.Proceed,
+          hasTempBadge: temperature?.status === TemperatureStatuses.Proceed,
+          hasPCRBadge: PCR?.status === ResultTypes.Negative,
+          // hasPulseBadge: false,
+          // hasVaccineBadge: false,
+        }
+      }
+
+      res.json(actionSuccess(badges))
     } catch (error) {
       next(error)
     }

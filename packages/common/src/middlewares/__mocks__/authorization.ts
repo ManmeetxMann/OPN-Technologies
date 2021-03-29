@@ -10,7 +10,7 @@ export const authorizationMiddleware = () => async (
     firstName: 'UNITEST_FNAME',
     lastName: 'UNITEST_LNAME',
     base64Photo: null,
-    organizationIds: ['TEST1'],
+    organizationIds: ['TEST1', 'TestOrg1', 'TestOrg2'],
     email: 'unitest1@stayopn.com',
     admin: {
       isLabUser: true,

@@ -13,6 +13,7 @@ import {
 import {groupByChannel} from '../utils/analysis.helper'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
+import {PulseOxygenStatuses} from './pulse-oxygen'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -100,6 +101,7 @@ export type PCRSendResultDTO = {
 
 export enum TestResultStyle {
   // PCR result style
+  PresumptivePositive = 'RED',
   Positive = 'RED',
   Negative = 'GREEN',
   Invalid = 'YELLOW',
@@ -344,7 +346,7 @@ export const pcrTestResultsResponse = (
 })
 
 export const resultToStyle = (
-  result: ResultTypes | PassportStatus | TemperatureStatusesUI,
+  result: ResultTypes | PassportStatus | TemperatureStatusesUI | PulseOxygenStatuses,
 ): TestResultStyle => {
   return TestResultStyle[result] ? TestResultStyle[result] : TestResultStyle.AnyOther
 }

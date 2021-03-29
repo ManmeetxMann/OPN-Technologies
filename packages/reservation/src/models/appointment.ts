@@ -28,6 +28,13 @@ export enum ResultTypes {
   Indeterminate = 'Indeterminate',
 }
 
+export enum Gender {
+  Male = 'Male',
+  Female = 'Female',
+  Other = 'Other',
+  PreferNotToSay = 'Prefer Not to Say',
+}
+
 export type AppointmentDBModel = {
   id: string
   acuityAppointmentId: number
@@ -42,9 +49,11 @@ export type AppointmentDBModel = {
   email: string
   firstName: string
   lastName: string
+  gender?: Gender
   organizationId?: string
   packageCode?: string
   phone: number
+  postalCode?: string
   registeredNursePractitioner?: string
   latestResult: ResultTypes
   timeOfAppointment: string
@@ -106,6 +115,7 @@ export type AppointmentAcuityResponse = {
   email: string
   firstName: string
   forms: Array<AppointmentAcuityForm>
+  gender: Gender
   id: number
   labels: LabelsAcuityResponse[]
   lastName: string
@@ -113,6 +123,7 @@ export type AppointmentAcuityResponse = {
   location: string
   organizationId?: string
   phone: number
+  postalCode: string
   readTermsAndConditions: boolean
   receiveNotificationsFromGov: boolean
   receiveResultsViaEmail: boolean
@@ -154,6 +165,7 @@ export enum TestTypes {
   EmergencyRapidAntigen = 'EmergencyRapidAntigen',
   Antibody_All = 'Antibody_All',
   Antibody_IgM = 'Antibody_IgM',
+  PulseOxygenCheck = 'PulseOxygenCheck',
 }
 
 export type PostAdminScanHistoryRequest = {
@@ -170,6 +182,7 @@ export type CreateAppointmentRequest = {
   slotId: string
   firstName: string
   lastName: string
+  gender: Gender
   phone: {
     code: number
     number: number
@@ -177,6 +190,7 @@ export type CreateAppointmentRequest = {
   dateOfBirth: string
   address: string
   addressUnit: string
+  postalCode: string
   couponCode: string
   shareTestResultWithEmployer: boolean
   readTermsAndConditions: boolean

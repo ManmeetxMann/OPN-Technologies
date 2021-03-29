@@ -80,6 +80,7 @@ import {OrganizationService} from '../../../enterprise/src/services/organization
 
 import {AttestationService} from '../../../passport/src/services/attestation-service'
 import {PassportStatuses} from '../../../passport/src/models/passport'
+import {PulseOxygenService} from './pulse-oxygen.service'
 
 import {BulkTestResultRequest} from '../models/test-results'
 import {AntibodyAllPDFContent} from '../templates/antibody-all'
@@ -104,6 +105,7 @@ export class PCRTestResultsService {
   private testRunsService = new TestRunsService()
   private attestationService = new AttestationService()
   private temperatureService = new TemperatureService()
+  private pulseOxygenService = new PulseOxygenService()
   private labService = new LabService()
   private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
 
@@ -1685,10 +1687,11 @@ export class PCRTestResultsService {
     const appoinmentIds = pcrResults
       .filter(({result}) => result === ResultTypes.Pending)
       .map(({appointmentId}) => appointmentId)
-    const [appoinments, attestations, temperatures] = await Promise.all([
+    const [appoinments, attestations, temperatures, pulseOxygens] = await Promise.all([
       this.appointmentsRepository.getAppointmentsDBByIds(appoinmentIds),
       this.attestationService.getAllAttestationByUserId(userId, organizationId),
       this.temperatureService.getAllByUserAndOrgId(userId, organizationId),
+      this.pulseOxygenService.getAllByUserAndOrgId(userId, organizationId),
     ])
 
     const testResult = []
@@ -1706,7 +1709,7 @@ export class PCRTestResultsService {
         id: pcr.id,
         type: pcr.testType ?? TestTypes.PCR,
         name: pcr.testType ?? TestTypes.PCR,
-        testDateTime: formatDateRFC822Local(pcr.deadline),
+        testDateTime: formatDateRFC822Local(pcr.dateTime),
         style: resultToStyle(result),
         result: result,
         detailsAvailable: result !== ResultTypes.Invalid && result !== ResultTypes.Pending,
@@ -1738,6 +1741,18 @@ export class PCRTestResultsService {
         testDateTime: formatDateRFC822Local(temperature.timestamps.createdAt),
         style: resultToStyle(mapTemperatureStatusToResultTypes(temperature.status)),
         result: mapTemperatureStatusToResultTypes(temperature.status),
+        detailsAvailable: true,
+      })
+    })
+
+    pulseOxygens.map((pulseOxygen) => {
+      testResult.push({
+        id: pulseOxygen.id,
+        type: TestTypes.PulseOxygenCheck,
+        name: 'Pulse Oxygen',
+        testDateTime: formatDateRFC822Local(pulseOxygen.timestamps.createdAt),
+        style: resultToStyle(pulseOxygen.status),
+        result: pulseOxygen.status,
         detailsAvailable: true,
       })
     })

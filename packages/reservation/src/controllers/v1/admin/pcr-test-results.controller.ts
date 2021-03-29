@@ -238,13 +238,13 @@ class AdminPCRTestResultController implements IControllerBase {
         date,
         testType,
         searchQuery,
-        labId,
       } = req.query as PcrTestResultsListRequest
       if (!barCode && !date) {
         throw new BadRequestException('One of the "barCode" or "date" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
       const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
+      const labId = req.headers?.labid as string
 
       const pcrResults = await this.pcrTestResultsService.getPCRResults(
         {
@@ -277,7 +277,6 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         result,
         date,
-        labId,
         testType,
         searchQuery,
       } = req.query as PcrTestResultsListRequest
@@ -286,6 +285,7 @@ class AdminPCRTestResultController implements IControllerBase {
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
       const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
+      const labId = req.headers?.labid as string
 
       const {
         pcrResultStatsByResultArr,
@@ -400,11 +400,11 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         appointmentStatus,
         organizationId,
-        labId,
       } = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
       }
+      const labId = req.headers?.labid as string
       const pcrResults = await this.pcrTestResultsService.getDueDeadline({
         deadline,
         testRunId,
@@ -422,7 +422,8 @@ class AdminPCRTestResultController implements IControllerBase {
 
   dueDeadlineStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunId, deadline, barCode, labId} = req.query as PcrTestResultsListByDeadlineRequest
+      const {testRunId, deadline, barCode} = req.query as PcrTestResultsListByDeadlineRequest
+      const labId = req.headers?.labid as string
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
       }

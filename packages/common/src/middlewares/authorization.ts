@@ -117,7 +117,7 @@ export const authorizationMiddleware = (
     (req.params?.labId as string) ??
     (req.body?.labId as string) ??
     // headers are coerced to lowercase
-    (req.headers?.labId as string) ??
+    (req.headers?.labid as string) ??
     null
 
   const admin = connectedUser.admin as AdminProfile
