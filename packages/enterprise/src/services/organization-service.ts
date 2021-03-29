@@ -50,9 +50,9 @@ export class OrganizationService {
       },
     }
 
-    const validDbRecord = await organizationDbSchema.validateAsync(organizationData)
+    const validDbData = await organizationDbSchema.validateAsync(organizationData)
 
-    return this.organizationRepository.add(validDbRecord)
+    return this.organizationRepository.add(validDbData)
   }
 
   async getOrganizations(): Promise<Organization[]> {
