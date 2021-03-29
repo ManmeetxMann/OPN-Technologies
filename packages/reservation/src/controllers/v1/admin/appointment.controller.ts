@@ -209,6 +209,8 @@ class AdminAppointmentController implements IControllerBase {
         throw new BadRequestException('dateOfAppointment is invalid')
       }
 
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+
       const {
         appointmentStatusArray,
         orgIdArray,
@@ -235,12 +237,15 @@ class AdminAppointmentController implements IControllerBase {
           key: FilterGroupKey.organizationId,
           filters: orgIdArray,
         },
-        {
+      ]
+
+      if (!isLabUser) {
+        filterGroup.push({
           name: FilterName.FilterByLab,
           key: FilterGroupKey.labId,
           filters: appointmentStatsByLabIdArr,
-        },
-      ]
+        })
+      }
 
       res.json(actionSucceed(statsUiDTOResponse(filterGroup, total)))
     } catch (error) {
