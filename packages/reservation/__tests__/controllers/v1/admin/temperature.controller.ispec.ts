@@ -51,7 +51,7 @@ describe('Test temperature check request and update passport. Assume user has PR
       oxygen: 97,
       userId,
     })
-    console.log({result})
+
     expect(result.body.data.status).toBe('proceed')
     done()
   })
