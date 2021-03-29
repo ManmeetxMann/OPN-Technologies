@@ -1,0 +1,17 @@
+{
+		"name": "tools",
+		"private": true,
+		"version": "0.0.1",
+		"description": "",
+		"scripts": {
+				"tools:count-total-number-of-users-by-appointments": "ts-node ./count-total-number-of-users-by-appointments",
+				"tools:count-total-number-of-users": "ts-node ./count-total-number-of-users",
+				"tools:get-users-with-email-no-authuserid": "ts-node ./get-users-with-email-no-authuserid",
+				"tool:update-user-emails": "node ./update-user-emails"
+		},
+		"author": "",
+		"license": "Appropriate",
+		"dependencies": {
+				"ts-node": "^9.1.1"
+		}
+}
