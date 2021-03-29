@@ -71,7 +71,7 @@ class AdminTemperatureController implements IControllerBase {
       }
 
       const isHighTemperatureStatus = temperature > temperatureThreshold
-      const isLowOxygenStatus = oxygen <= oxygenThreshold
+      const isLowOxygenStatus = oxygen < oxygenThreshold
 
       // final status which will update passport
       const status =
