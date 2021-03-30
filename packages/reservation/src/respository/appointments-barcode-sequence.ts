@@ -28,6 +28,8 @@ export class AppointmentsBarCodeSequence extends DataModel<AppoinmentBarCodeSequ
       }
     })
 
-    return this.get(prefix).then((barCode) => barCode)
+    const barCode = await this.get(prefix)
+
+    return barCode
   }
 }
