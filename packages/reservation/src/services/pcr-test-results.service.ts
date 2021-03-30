@@ -119,14 +119,14 @@ export class PCRTestResultsService {
       result: testResult.result,
       date: safeTimestamp(testResult.dateTime).toISOString(),
     }
-    const attribute: Record<string, string> = {
+    const attributes: Record<string, string> = {
       userId: testResult.userId,
       organizationId: testResult.organizationId,
       actionType: action,
       phone: testResult.phone.toString(),
       firstName: testResult.firstName,
     }
-    this.pubsub.publish(data, attribute)
+    this.pubsub.publish(data, attributes)
   }
 
   async confirmPCRResults(data: PCRTestResultConfirmRequest, adminId: string): Promise<string> {
