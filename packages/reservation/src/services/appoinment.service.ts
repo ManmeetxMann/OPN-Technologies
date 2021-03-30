@@ -60,6 +60,7 @@ import {
   BulkOperationResponse,
   BulkOperationStatus,
 } from '../types/bulk-operation.type'
+import {AppointmentPushTypes} from '../types/appointment-push'
 import {PcrResultTestActivityAction} from '../models/pcr-test-results'
 import {AdminScanHistory} from '../models/admin-scan-history'
 import {SyncInProgressTypes} from '../models/sync-progress'
@@ -1447,5 +1448,28 @@ export class AppoinmentService {
 
   async getAcuityAppointmentTypes(): Promise<AppointmentTypes[]> {
     return this.acuityRepository.getAppointmentTypeList()
+  }
+
+  async getAppointmentsNotNotifiedInPeriod(dateTimeFrom, dateTimeTo) {
+    return this.appointmentsRepository.findWhereEqualInMap([
+      {
+        map: '/',
+        key: 'dateTime',
+        operator: DataModelFieldMapOperatorType.GreatOrEqual,
+        value: new Date(dateTimeFrom),
+      },
+      {
+        map: '/',
+        key: 'dateTime',
+        operator: DataModelFieldMapOperatorType.LessOrEqual,
+        value: new Date(dateTimeTo),
+      },
+      {
+        map: 'profile',
+        key: 'notifiedByPushType',
+        operator: DataModelFieldMapOperatorType.ArrayContainsAny,
+        value: [AppointmentPushTypes.before3hours, AppointmentPushTypes.before24hours],
+      },
+    ])
   }
 }

@@ -1,16 +1,16 @@
 import admin from 'firebase-admin'
 import * as _ from 'lodash'
 
+export type PushMessages = {
+  recipientToken: string
+  title: string
+  body: string
+  imageUrl?: string
+}
+
 type Recipient = {
   token: string
   data?: Record<string, string | null | undefined>
-}
-
-export type PushMessages = {
-  title: string,
-  body: string,
-  imageUrl?: string,
-  recipient: Recipient
 }
 
 export const sendMessage = (
@@ -60,7 +60,7 @@ export const sendMessage = (
   )
 }
 
-export const sendBulkMessage = (pushMessages: PushMessages): Promise<unknown> => {
+export const sendBulkMessagesByToken = (pushMessages: PushMessages[]): Promise<unknown> => {
 
   return null
 }

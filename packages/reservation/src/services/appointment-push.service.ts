@@ -1,19 +1,16 @@
 // import {dateFormats, timeFormats} from '../../../common/src'
-import {sendBulkMessage, PushMessages} from '../../../common/src/service/messaging/push-notify-service'
-
-export enum AppointmentPushTypes {
-  before24hours,
-  before3hours,
-  ready,
-  reSample,
-}
+import {
+  sendBulkMessagesByToken,
+  PushMessages,
+} from '../../../common/src/service/messaging/push-notify-service'
+import {PushMeta, AppointmentPushTypes} from '../types/appointment-push'
 
 /**
  * TODO:
  * 1. Message title
  */
 export class AppointmentPushService {
-  messagesBody: {[index: number]: Function} = {
+  private messagesBody: {[index: number]: Function} = {
     [AppointmentPushTypes.before24hours]: (dateTime, clinicName) =>
       `Copy: You have a Covid-19 test scheduled for ${dateTime} at our ${clinicName} location.`,
     [AppointmentPushTypes.before3hours]: (dateTime, clinicName) =>
@@ -22,10 +19,19 @@ export class AppointmentPushService {
     [AppointmentPushTypes.reSample]: () =>
       `We need another sample to complete your Covid-19 test. Please book another appointment.`,
   }
+  private messagesQueue: PushMessages[] = []
 
-  sendPush(messageType: AppointmentPushTypes, dateTime?: string, clinicName?: string) {
+  addPushToQueue(messageType: AppointmentPushTypes, pushMeta?: PushMeta) {
     const title = 'Test title'
-    const body = this.messagesBody[messageType](dateTime, clinicName)
+    const body = this.messagesBody[messageType](pushMeta?.dateTime, pushMeta?.clinicName)
+    this.messagesQueue.push({
+        recipientToken: pushMeta?.recipientToken,
+        title,
+        body
+    })
+  }
 
+  async sendQueue() {
+    await sendBulkMessagesByToken(this.messagesQueue)
   }
 }
