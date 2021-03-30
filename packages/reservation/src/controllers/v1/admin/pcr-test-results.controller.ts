@@ -28,7 +28,7 @@ import {
   singlePcrTestResultDTO,
   SingleTestResultsRequest,
 } from '../../../models/pcr-test-results'
-import {statsUiDTOResponse} from '../../../models/appointment'
+import {FilterGroupKey, FilterName, statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
 import {validateAnalysis} from '../../../utils/analysis.helper'
@@ -290,6 +290,7 @@ class AdminPCRTestResultController implements IControllerBase {
       const {
         pcrResultStatsByResultArr,
         pcrResultStatsByOrgIdArr,
+        pcrResultStatsByLabIdArr,
         total,
       } = await this.pcrTestResultsService.getPCRResultsStats(
         {
@@ -305,16 +306,31 @@ class AdminPCRTestResultController implements IControllerBase {
         isClinicUser,
       )
 
-      res.json(
-        actionSucceed(
-          statsUiDTOResponse(
-            pcrResultStatsByResultArr,
-            pcrResultStatsByOrgIdArr,
-            total,
-            !organizationId,
-          ),
-        ),
-      )
+      const filterGroup = [
+        {
+          name: FilterName.FilterByResult,
+          key: FilterGroupKey.result,
+          filters: pcrResultStatsByResultArr,
+        },
+      ]
+
+      if (!organizationId) {
+        filterGroup.push({
+          name: FilterName.FilterByCorporation,
+          key: FilterGroupKey.organizationId,
+          filters: pcrResultStatsByOrgIdArr,
+        })
+      }
+
+      if (pcrResultStatsByLabIdArr.length) {
+        filterGroup.push({
+          name: FilterName.FilterByLab,
+          key: FilterGroupKey.labId,
+          filters: pcrResultStatsByLabIdArr,
+        })
+      }
+
+      res.json(actionSucceed(statsUiDTOResponse(filterGroup, total)))
     } catch (error) {
       next(error)
     }
@@ -422,11 +438,20 @@ class AdminPCRTestResultController implements IControllerBase {
         labId,
       })
 
-      res.json(
-        actionSucceed(
-          statsUiDTOResponse(pcrResultStatsByResultArr, pcrResultStatsByOrgIdArr, total),
-        ),
-      )
+      const filterGroup = [
+        {
+          name: FilterName.FilterByStatusType,
+          key: FilterGroupKey.appointmentStatus,
+          filters: pcrResultStatsByResultArr,
+        },
+        {
+          name: FilterName.FilterByCorporation,
+          key: FilterGroupKey.organizationId,
+          filters: pcrResultStatsByOrgIdArr,
+        },
+      ]
+
+      res.json(actionSucceed(statsUiDTOResponse(filterGroup, total)))
     } catch (error) {
       next(error)
     }
