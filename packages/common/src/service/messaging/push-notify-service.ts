@@ -6,6 +6,13 @@ type Recipient = {
   data?: Record<string, string | null | undefined>
 }
 
+export type PushMessages = {
+  title: string,
+  body: string,
+  imageUrl?: string,
+  recipient: Recipient
+}
+
 export const sendMessage = (
   title: string,
   body: string,
@@ -51,4 +58,9 @@ export const sendMessage = (
       }
     }),
   )
+}
+
+export const sendBulkMessage = (pushMessages: PushMessages): Promise<unknown> => {
+
+  return null
 }

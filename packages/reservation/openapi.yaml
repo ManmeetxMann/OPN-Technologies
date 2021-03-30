@@ -3700,3 +3700,11 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/AssociationsResponse'
+  /reservation/internal/api/v1/trigger-appointments-push-reminder:
+    post:
+      description: Triggers push notification reminder
+      tags:
+        - Cloud Scheduler triggered
+      responses:
+        '200':
+          description: Success
