@@ -8,16 +8,14 @@
 import type {EventFunctionWithCallback} from '@google-cloud/functions-framework/build/src/functions'
 import {Twilio} from 'twilio'
 
-export const enum SMSMessageType {
-  MessageTypeOne = 'MessageTypeOne',
-  MessageTypeTwo = 'MessageTypeTwo',
-}
-
 interface PubSubMessage {
   data: string
   attributes: {
-    toPhoneNumber: string
-    messageType: SMSMessageType
+    userId: string
+    organizationId: string
+    actionType: string
+    phone: string
+    firstName: string
   }
 }
 
@@ -28,20 +26,16 @@ interface Context {
   resource: {} // The resource that emitted the event.
 }
 
-/**
- * TODO:
- * 1. Place actual values
- */
-const messageText = {
-  [SMSMessageType.MessageTypeOne]: 'Message type 1',
-  [SMSMessageType.MessageTypeTwo]: 'Message type 2',
+const getMessageBody = (pubSubMessage: PubSubMessage): string => {
+  return `Hi ${pubSubMessage.attributes.firstName},
+The results from your Covid-19 test with FH Health have been sent to the email address on file. 
+If you did not receive your test results, please email info@fhhealth.ca and we can resend it to you.
+Thank you,
+FH Health`
 }
 
-const getMessageFromType = (messageType: string): string => {
-  if (!Object.keys(messageText).includes(messageType)) {
-    return null
-  }
-  return messageText[messageType]
+const getPhoneNumber = (pubSubMessage: PubSubMessage): string => {
+  return `+1${pubSubMessage.attributes.phone}`
 }
 
 /**
@@ -60,12 +54,15 @@ const smsNotification: EventFunctionWithCallback = (
   const twilioFromNumber = process.env.TWILIO_FROM_PHONE_NUMBER
 
   // Validate if message type is valid
-  const messageType = pubSubMessage.attributes.messageType
-  const toPhoneNumber = pubSubMessage.attributes.toPhoneNumber
-  const smsBody = getMessageFromType(messageType)
-  if (!smsBody) {
-    callback(new Error(`Not valid attribute messageType: ${messageType}`))
+  if (!pubSubMessage.attributes.firstName || !pubSubMessage.attributes.phone) {
+    callback(
+      new Error(
+        `Not valid attribute firstName or phone: ${JSON.stringify(pubSubMessage.attributes)}`,
+      ),
+    )
   }
+  const smsBody = getMessageBody(pubSubMessage)
+  const toPhoneNumber = getPhoneNumber(pubSubMessage)
 
   // Initiate twillio client and validate phone number format
   const client = new Twilio(accountSid, authToken)
@@ -78,7 +75,7 @@ const smsNotification: EventFunctionWithCallback = (
         .create({
           from: twilioFromNumber,
           to: toPhoneNumber,
-          body: 'You just sent an SMS from TypeScript using Twilio!' + smsBody,
+          body: smsBody,
         })
         .then((message) => {
           callback(null, `Message sent: ${message.sid}`)
