@@ -448,43 +448,35 @@ export class ReportService {
     from: string | null,
     to: string | null,
     userId: string,
-    parentUserId: string | null,
   ): Promise<{enteringAccesses: Access[]; exitingAccesses: Access[]}> {
     const live = !from && !to
-
     const betweenCreatedDate = {
       from: live ? moment(now()).subtract(24, 'hours').toDate() : new Date(from),
       to: live ? now() : new Date(to),
     }
-    const accesses = parentUserId
-      ? await this.accessService.findAllWithDependents({
-          userId: parentUserId,
-          dependentId: userId,
-          betweenCreatedDate,
-        })
-      : (
-          await this.accessService.findAllWith({
-            userIds: [userId],
-            betweenCreatedDate,
-          })
-        ).filter((acc) => acc.includesGuardian)
+    const accesses = await this.accessService.findAllWith({
+      userIds: [userId],
+      betweenCreatedDate,
+    })
     const enteringAccesses = accesses.filter((access) => {
-      if (parentUserId) {
-        return access.dependants[userId]?.enteredAt
-      } else {
-        return access.enteredAt
+      if (!access.enteredAt) {
+        // legacy
+        return false
       }
+      return true
     })
     const exitingAccesses = accesses.filter((access) => {
-      if (parentUserId) {
-        return access?.dependants[userId]?.exitAt
-      } else {
-        return access.exitAt
+      if (!access.exitAt) {
+        // legacy
+        return false
+      }
+      if (safeTimestamp(access.exitAt) > betweenCreatedDate.to) {
+        return false
       }
     })
     enteringAccesses.sort((a, b) => {
-      const aEnter = safeTimestamp(parentUserId ? a.dependants[userId].enteredAt : a.enteredAt)
-      const bEnter = safeTimestamp(parentUserId ? b.dependants[userId].enteredAt : b.enteredAt)
+      const aEnter = safeTimestamp(a.enteredAt)
+      const bEnter = safeTimestamp(b.enteredAt)
       if (aEnter < bEnter) {
         return -1
       } else if (bEnter < aEnter) {
@@ -493,8 +485,8 @@ export class ReportService {
       return 0
     })
     exitingAccesses.sort((a, b) => {
-      const aExit = safeTimestamp(parentUserId ? a.dependants[userId].exitAt : a.exitAt)
-      const bExit = safeTimestamp(parentUserId ? b.dependants[userId].exitAt : b.exitAt)
+      const aExit = safeTimestamp(a.exitAt)
+      const bExit = safeTimestamp(b.exitAt)
       if (aExit < bExit) {
         return -1
       } else if (bExit < aExit) {

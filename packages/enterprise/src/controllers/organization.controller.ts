@@ -861,12 +861,7 @@ class OrganizationController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {
-        userId,
-        parentUserId,
-        from: queryFrom,
-        to: queryTo,
-      } = req.query as UserContactTraceReportRequest
+      const {userId, from: queryFrom, to: queryTo} = req.query as UserContactTraceReportRequest
       const to = queryTo ?? now().toISOString()
       const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
 
@@ -874,7 +869,6 @@ class OrganizationController implements IControllerBase {
         from,
         to,
         userId,
-        parentUserId,
       )
 
       const accessedLocationIds = new Set(
@@ -902,17 +896,9 @@ class OrganizationController implements IControllerBase {
           exits.reverse()
           while (entries.length || exits.length) {
             const entryCandidate = entries[0] ?? null
-            const entryTimestamp = entryCandidate
-              ? parentUserId
-                ? entryCandidate.enteredAt
-                : entryCandidate.dependants[userId]?.enteredAt
-              : null
+            const entryTimestamp = entryCandidate ? entryCandidate.enteredAt : null
             const exitCandidate = exits[0] ?? null
-            const exitTimestamp = exitCandidate
-              ? parentUserId
-                ? exitCandidate.exitAt
-                : exitCandidate.dependants[userId]?.exitAt
-              : null
+            const exitTimestamp = exitCandidate ? exitCandidate.exitAt : null
             // @ts-ignore these are strings, not field values
             const entryDate = new Date(entryTimestamp)
             // @ts-ignore these are strings, not field values
@@ -958,41 +944,19 @@ class OrganizationController implements IControllerBase {
   getUserContactTraces = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {organizationId} = req.params
-      const {
-        userId,
-        parentUserId,
-        from: queryFrom,
-        to: queryTo,
-      } = req.query as UserContactTraceReportRequest
+      const {userId, from: queryFrom, to: queryTo} = req.query as UserContactTraceReportRequest
       const to = queryTo ?? now().toISOString()
       const from = queryFrom ?? moment(to).subtract(24, 'hours').toISOString()
 
-      let isParentUser = true
-      if (parentUserId) {
-        const user = await this.userService.findOne(parentUserId)
-        if (user && user.organizationIds.indexOf(organizationId) > -1) {
-          isParentUser = false
-        }
-      }
-
       // fetch exposures in the time period
-      const rawTraces = await this.attestationService.getTracesInPeriod(
-        isParentUser ? userId : parentUserId,
-        from,
-        to,
-        isParentUser ? null : userId,
-      )
+      const rawTraces = await this.attestationService.getTracesInPeriod(userId, from, to)
       // filter down to only the overlaps with the user we're interested in
       const relevantTraces = rawTraces
         .map((trace) => {
           const exposures = trace.exposures.map((exposure) => {
             const overlapping = exposure.overlapping
               .filter((overlap) => {
-                if (isParentUser) {
-                  return overlap.sourceUserId === userId && !overlap.sourceDependantId
-                } else {
-                  return overlap.sourceDependantId === userId
-                }
+                return overlap.sourceUserId === userId && !overlap.sourceDependantId
               })
               .filter(
                 (overlap) =>

@@ -97,12 +97,7 @@ export class AttestationService {
     return attestation
   }
 
-  async getTracesInPeriod(
-    userId: string,
-    from: string,
-    to: string,
-    dependantId: string | null,
-  ): Promise<ExposureResult[]> {
+  async getTracesInPeriod(userId: string, from: string, to: string): Promise<ExposureResult[]> {
     const query = this.traceRepository.collection().where('userId', '==', userId)
 
     if (from) {
@@ -115,38 +110,7 @@ export class AttestationService {
 
     const allTracesForUserInPeriod = await query.fetch()
 
-    const riskyTraces = allTracesForUserInPeriod.filter((trace) => {
-      // NOTE: some of these checks could theoretically be done in the firestore query
-      // but it would require many more indices than we want to create
-      if (![PassportStatuses.Stop, PassportStatuses.Caution].includes(trace.passportStatus)) {
-        return false
-      }
-      if (dependantId) {
-        if (!trace.dependantIds) {
-          console.warn(`trace ${trace.id} has no dependantIds array`)
-          return true
-        }
-        return trace.dependantIds.includes(dependantId)
-      }
-      if (typeof trace.includesGuardian === 'boolean') {
-        return trace.includesGuardian
-      }
-      // old records do not have an includesGuardian field, we need to guess
-      if (!trace.dependantIds?.length) {
-        // no dependants, must be the guardian
-        return true
-      }
-      if (trace.exposedIds.includes(userId)) {
-        // can't be this user if they were exposed
-        return false
-      }
-      console.warn(
-        `Trace ${trace.id} is ambiguous (it may or may not originate from user ${userId})`,
-      )
-      return true
-    })
-
-    const exposures: ExposureResult[] = riskyTraces.map((trace: TraceModel) => {
+    const exposures: ExposureResult[] = allTracesForUserInPeriod.map((trace: TraceModel) => {
       return {
         userId: userId,
         date: trace.date,
