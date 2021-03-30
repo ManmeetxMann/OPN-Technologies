@@ -20,6 +20,7 @@ import AdminOrganizationController from './controllers/admin/v1/organization.con
 import UserInternalController from './controllers/v1/internal/user.controller'
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
+import UserV1Controller from './controllers/v1/user.controller'
 
 const PORT = Number(process.env.PORT) || 5003
 
@@ -30,6 +31,7 @@ const app = new App({
   controllers: [
     new RootController(),
     new UserController(),
+    new UserV1Controller(),
     new UserV3Controller(),
     new AdminController(),
     new AdminUserV3Controller(),

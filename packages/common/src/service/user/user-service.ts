@@ -1,9 +1,9 @@
-import DataStore from '../../data/datastore'
-import {User, UserDependant, UserFilter, UserModel, LegacyDependant} from '../../data/user'
-import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
-import {cleanStringField} from '../../../../common/src/utils/utils'
-import {DataModelFieldMapOperatorType} from '../../../../common/src/data/datamodel.base'
-import UserDbSchema from '../../dbschemas/user.schema'
+import DataStore from "../../data/datastore";
+import { LegacyDependant, User, UserDependant, UserFilter, UserModel } from "../../data/user";
+import { ResourceNotFoundException } from "../../exceptions/resource-not-found-exception";
+import { cleanStringField } from "../../../../common/src/utils/utils";
+import { DataModelFieldMap, DataModelFieldMapOperatorType } from "../../../../common/src/data/datamodel.base";
+import UserDbSchema from "../../dbschemas/user.schema";
 
 export class UserService {
   private dataStore = new DataStore()
@@ -179,6 +179,34 @@ export class UserService {
       'healthAdminForOrganizationIds',
       organizationId,
     )
+  }
+
+  getAll(labId?: string): Promise<User[]> {
+    const filters: DataModelFieldMap[] = [
+      {
+        map: 'admin',
+        key: 'isClinicUser',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      },
+      {
+        map: 'admin',
+        key: 'isLabUser',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: true,
+      },
+    ]
+
+    if (labId) {
+      filters.push({
+        map: 'admin',
+        key: 'adminForLabIds',
+        operator: DataModelFieldMapOperatorType.ArrayContains,
+        value: labId,
+      })
+    }
+
+    return this.userRepository.findWhereEqualInMap(filters)
   }
 
   getAdminsForGroup(groupId: string): Promise<User[]> {
