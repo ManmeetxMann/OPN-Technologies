@@ -14,6 +14,7 @@ import {
 import DBSchema from '../dbschemas/appointments.schema'
 import {LogError, LogWarning} from '../../../common/src/utils/logging-setup'
 import {findDifference} from '../utils/compare-objects'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
@@ -31,9 +32,36 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     return this.findWhereIdIn(appointmentsIds)
   }
 
-  public async save(appointments: Omit<AppointmentDBModel, 'id'>): Promise<AppointmentDBModel> {
-    const validatedData = await DBSchema.validateAsync(appointments)
-    return this.add(validatedData)
+  public async save(appointmentData: Omit<AppointmentDBModel, 'id'>): Promise<AppointmentDBModel> {
+    const validatedData = await DBSchema.validateAsync(appointmentData)
+    const appointmentCollection = this.datastore.firestoreORM.collection({path: this.rootPath})
+    const query = appointmentCollection.collectionRef.where(
+      'acuityAppointmentId',
+      '==',
+      appointmentData.acuityAppointmentId,
+    )
+
+    await this.datastore.firestoreORM.runTransaction(async (tx) => {
+      const result = await tx.get(query)
+      const appointmentExists = result.docs.length
+
+      if (!appointmentExists) {
+        const newAppointmentRef = appointmentCollection.docRef()
+
+        tx.set(newAppointmentRef, validatedData)
+      } else {
+        throw new BadRequestException(
+          `Appointment with given Acuity id already exists: ${appointmentData.acuityAppointmentId}`,
+        )
+      }
+    })
+
+    const [createdAppointment] = await this.findWhereEqual(
+      'acuityAppointmentId',
+      appointmentData.acuityAppointmentId,
+    )
+
+    return createdAppointment
   }
 
   public async updateData(
