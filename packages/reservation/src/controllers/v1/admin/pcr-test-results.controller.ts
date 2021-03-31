@@ -27,9 +27,12 @@ import {
   PCRTestResultConfirmRequest,
   singlePcrTestResultDTO,
   SingleTestResultsRequest,
+  TestResultCommentParamRequest,
+  TestResultCommentBodyRequest,
 } from '../../../models/pcr-test-results'
 import {FilterGroupKey, FilterName, statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
+import {CommentService} from '../../../services/comment.service'
 import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
 import {validateAnalysis} from '../../../utils/analysis.helper'
 
@@ -38,6 +41,7 @@ class AdminPCRTestResultController implements IControllerBase {
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
+  private commentService = new CommentService()
   private appoinmentService = new AppoinmentService()
 
   constructor() {
@@ -104,6 +108,12 @@ class AdminPCRTestResultController implements IControllerBase {
       this.path + '/pcr-test-results/due-deadline/list/stats',
       dueTodayAuth,
       this.dueDeadlineStats,
+    )
+
+    innerRouter.post(
+      this.path + '/test-results/:testResultId/comment',
+      listTestResultsAuth,
+      this.addComment,
     )
 
     this.router.use('/', innerRouter)
@@ -478,6 +488,39 @@ class AdminPCRTestResultController implements IControllerBase {
       }
 
       res.json(actionSucceed(singlePcrTestResultDTO(pcrTestResult, appointment)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  addComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {testResultId} = req.params as TestResultCommentParamRequest
+      const adminId = getUserId(res.locals.authenticatedUser)
+
+      const {
+        comment,
+        attachmentUrls,
+        assignedTo,
+        internal = true,
+      } = req.body as TestResultCommentBodyRequest
+
+      const comments = await this.commentService.getCommentsByTestResultId(testResultId)
+
+      if (comments.length >= 20) {
+        throw new BadRequestException(`Comments quantity should be maximum 20`)
+      }
+
+      await this.commentService.addComment({
+        testResultId,
+        comment,
+        attachmentUrls: attachmentUrls,
+        assignedTo: assignedTo,
+        internal,
+        addedBy: adminId,
+      })
+
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
