@@ -12,5 +12,5 @@ export type CreateAppointmentDTO = {
   phone: string
   packageCode: string
   calendarID: number
-  fields: Record<string, string | boolean>
+  fields: Record<string, string | boolean | number[]>
 }

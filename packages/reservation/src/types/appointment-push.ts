@@ -5,8 +5,3 @@ export enum AppointmentPushTypes {
   reSample,
 }
 
-export type PushMeta = {
-  recipientToken: string
-  dateTime: string
-  clinicName: string
-}

@@ -1027,6 +1027,10 @@ export class AppoinmentService {
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
         barCodeNumber,
+        scheduledPushesToSend: [
+          AppointmentPushTypes.before24hours,
+          AppointmentPushTypes.before3hours,
+        ],
       },
     })
     return this.createAppointmentFromAcuity(acuityAppointment, {
@@ -1450,26 +1454,40 @@ export class AppoinmentService {
     return this.acuityRepository.getAppointmentTypeList()
   }
 
-  async getAppointmentsNotNotifiedInPeriod(dateTimeFrom, dateTimeTo) {
-    return this.appointmentsRepository.findWhereEqualInMap([
+  async getAppointmentsNotNotifiedInPeriod(
+    fromUntilDateTime,
+    untilDateTime,
+  ): Promise<AppointmentDBModel[]> {
+    return this.appointmentsRepository.findWhereEqualInMap(
+      [
+        {
+          map: '/',
+          key: 'dateTime',
+          operator: DataModelFieldMapOperatorType.Greater,
+          value: new Date(fromUntilDateTime),
+        },
+        {
+          map: '/',
+          key: 'dateTime',
+          operator: DataModelFieldMapOperatorType.Less,
+          value: new Date(untilDateTime),
+        },
+        // {
+        //   map: '/',
+        //   key: 'scheduledPushesToSend',
+        //   operator: DataModelFieldMapOperatorType.ArrayContainsAny,
+        //   value: [AppointmentPushTypes.before24hours, AppointmentPushTypes.before3hours],
+        // },
+      ],
       {
-        map: '/',
         key: 'dateTime',
-        operator: DataModelFieldMapOperatorType.GreatOrEqual,
-        value: new Date(dateTimeFrom),
+        direction: 'desc',
       },
-      {
-        map: '/',
-        key: 'dateTime',
-        operator: DataModelFieldMapOperatorType.LessOrEqual,
-        value: new Date(dateTimeTo),
-      },
-      {
-        map: 'profile',
-        key: 'notifiedByPushType',
-        operator: DataModelFieldMapOperatorType.ArrayContainsAny,
-        value: [AppointmentPushTypes.before3hours, AppointmentPushTypes.before24hours],
-      },
-    ])
+    )
   }
+
+  async removeScheduledPushesToSend(
+    appointmentId: string,
+    appointmentPushTypes: AppointmentPushTypes,
+  ) {}
 }

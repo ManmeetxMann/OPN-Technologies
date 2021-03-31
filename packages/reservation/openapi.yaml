@@ -3702,7 +3702,7 @@ paths:
                   $ref: '#/components/schemas/AssociationsResponse'
   /reservation/internal/api/v1/trigger-appointments-push-reminder:
     post:
-      description: Triggers push notification reminder
+      description: Triggers push notification reminder before appointment   
       tags:
         - Cloud Scheduler triggered
       responses:
