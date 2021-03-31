@@ -1,4 +1,4 @@
-import {PulseOxygenStatuses} from 'packages/reservation/src/models/pulse-oxygen'
+import {PulseOxygenStatuses} from '../../../reservation/src/models/pulse-oxygen'
 
 export type AddPulse = {
   userId: string
