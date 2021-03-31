@@ -130,7 +130,7 @@ export class ReportService {
   async getUserReportTemplate(
     organization: Organization,
     primaryId: string, // user
-    secondaryId: string, // parent
+    _secondaryId: string, // parent
     from: string,
     to: string,
     // lookup table with users, dependants and groups
@@ -138,7 +138,7 @@ export class ReportService {
     partialLookup: Lookups,
     questionnaires: Questionnaire[],
   ): Promise<ReturnType<typeof userTemplate>> {
-    const userId = secondaryId || primaryId
+    const userId = primaryId
 
     const [
       attestations,
@@ -203,7 +203,7 @@ export class ReportService {
 
     // create a lookup with all the delegates of all users in the lookup
     const missingDelegates = new Set<string>()
-    Object.keys(allUsersLookups).forEach((uID: string) => {
+    Object.keys(allUsersLookups.usersLookup).forEach((uID: string) => {
       const user = allUsersLookups.usersLookup[uID]
       if (!user.delegates?.length) {
         return
@@ -343,7 +343,8 @@ export class ReportService {
     const named = usersLookup[userId] ?? deletedUser
     const {group} = named
     // TODO: need to look up delegates
-    const namedGuardian = usersLookup[userId] ?? deletedUser
+    const guardianId = usersLookup[userId].delegates ? usersLookup[userId].delegates[0] : null
+    const namedGuardian = guardianId ? usersLookup[guardianId] : null
     return userTemplate({
       attestations: printableAttestations,
       locations: printableAccessHistory,
@@ -473,6 +474,7 @@ export class ReportService {
       if (safeTimestamp(access.exitAt) > betweenCreatedDate.to) {
         return false
       }
+      return true
     })
     enteringAccesses.sort((a, b) => {
       const aEnter = safeTimestamp(a.enteredAt)

@@ -99,7 +99,6 @@ export class AttestationService {
 
   async getTracesInPeriod(userId: string, from: string, to: string): Promise<ExposureResult[]> {
     const query = this.traceRepository.collection().where('userId', '==', userId)
-
     if (from) {
       query.where('date', '>=', moment(from).tz(timeZone).format('YYYY-MM-DD'))
     }
@@ -107,7 +106,6 @@ export class AttestationService {
     if (to) {
       query.where('date', '<=', moment(to).tz(timeZone).format('YYYY-MM-DD'))
     }
-
     const allTracesForUserInPeriod = await query.fetch()
 
     const exposures: ExposureResult[] = allTracesForUserInPeriod.map((trace: TraceModel) => {

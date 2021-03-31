@@ -662,7 +662,6 @@ class OrganizationController implements IControllerBase {
       const questionnaireId = organization.questionnaireId
       const questionnaire = await this.questionnaireService.getQuestionnaire(questionnaireId)
 
-      // const [organization, questionnaire] = await Promise.all([orgPromise, questionnairePromise])
       const {content, tableLayouts} = await this.reportService.getUserReportTemplate(
         organization,
         userId as string,
