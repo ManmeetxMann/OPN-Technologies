@@ -8,7 +8,7 @@ export type Registration = {
   osVersion: string
   pushToken?: string
   userIds?: string[]
-  timestamps: {
+  timestamps?: {
     createdAt: firestore.Timestamp
   }
 }
