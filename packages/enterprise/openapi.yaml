@@ -2033,10 +2033,10 @@ components:
               type: boolean
             hasPCRBadge:
               type: boolean
-            # hasPulseBadge:
-            #   type: boolean
-            # hasVaccineBadge:
-            #   type: boolean
+            hasPulseBadge:
+              type: boolean
+            hasVaccineBadge:
+              type: boolean
         status:
           type: object
           additionalProperties: false
@@ -2056,6 +2056,63 @@ components:
             message:
               nullable: true
               type: string
+
+    PubSubPulse:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        pulse:
+          type: number
+        oxygen:
+          type: number
+        organizationId:
+          type: string
+        pulseId:
+          type: string
+        status:
+          type: string
+          enum:
+            - Passed
+            - Failed
+
+    PubSubAttestation:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        organizationId:
+          type: string
+        id:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - proceed
+            - caution
+            - stop
+            - temperature_check_required
+
+    PubSubTemperature:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        organizationId:
+          type: string
+        id:
+          type: string
+        temperature:
+          type: number
+        status:
+          type: string
+          enum:
+            - proceed
+            - stop
 
   responses:
     Response:
@@ -4063,7 +4120,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PubSubRequest'
+              $ref: '#/components/schemas/PubSubAttestation'
       responses:
         '200':
           description: Successfully digested
@@ -4074,7 +4131,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PubSubRequest'
+              $ref: '#/components/schemas/PubSubTemperature'
       responses:
         '200':
           description: Successfully digested
@@ -4097,6 +4154,18 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+
+  /enterprise/api/v3/pubsub/pulse:
+    post:
+      summary: update pulse oxygen
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PubSubPulse'
       responses:
         '200':
           description: Successfully digested

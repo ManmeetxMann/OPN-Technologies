@@ -16,6 +16,7 @@ import {
   AppointmentStatus,
   TestTypes,
 } from '../../../../reservation/src/models/appointment'
+import {AddPulse} from '../../types/resomendations'
 
 class RecommendationController implements IControllerBase {
   public router = express.Router()
@@ -36,7 +37,8 @@ class RecommendationController implements IControllerBase {
         .post('/attestation', this.newAttestation) // attestation-topic
         .post('/temperature', this.newTemperature) // temperature-topic
         .post('/test-appointment', this.testAppointment) // test-appointment-topic
-        .post('/pcr-test', this.pcrTest), // pcr-test-topic
+        .post('/pcr-test', this.pcrTest) // pcr-test-topic
+        .post('/pulse', this.newPulse), // attestation-topic
     )
     this.router.use(root, route)
   }
@@ -91,12 +93,13 @@ class RecommendationController implements IControllerBase {
   }
   newAttestation: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {userId, organizationId, data} = await this.parseMessage(req.body.message)
+      // const {userId, organizationId, data} = await this.parseMessage(req.body.message)
+      const {userId, organizationId, id, status} = req.body
       await this.recService.addAttestation(
         userId,
         organizationId,
-        data.id as string,
-        data.status as PassportStatus,
+        id as string,
+        status as PassportStatus,
       )
       res.sendStatus(200)
     } catch (error) {
@@ -105,13 +108,14 @@ class RecommendationController implements IControllerBase {
   }
   newTemperature: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {userId, organizationId, data} = await this.parseMessage(req.body.message)
+      // const {userId, organizationId, data} = await this.parseMessage(req.body.message)
+      const {id, status, temperature, userId, organizationId} = req.body
       await this.recService.addTemperature(
         userId,
         organizationId,
-        data.id as string,
-        data.temperature as string,
-        data.status as TemperatureStatuses,
+        id as string,
+        temperature as string,
+        status as TemperatureStatuses,
       )
       res.sendStatus(200)
     } catch (error) {
@@ -151,6 +155,23 @@ class RecommendationController implements IControllerBase {
           data.date as string,
         )
       }
+      res.sendStatus(200)
+    } catch (error) {
+      next(error)
+    }
+  }
+  newPulse: Handler = async (req, res, next): Promise<void> => {
+    try {
+      // const {userId, organizationId, data} = await this.parseMessage(req.body.message)
+      const {userId, organizationId, pulse, oxygen, pulseId, status} = req.body as AddPulse
+      await this.recService.addPulse({
+        userId,
+        pulse,
+        oxygen,
+        organizationId,
+        pulseId,
+        status,
+      })
       res.sendStatus(200)
     } catch (error) {
       next(error)
