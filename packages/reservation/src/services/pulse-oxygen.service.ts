@@ -7,10 +7,10 @@ import {Enterprise} from '../adapter/enterprise'
 
 export class PulseOxygenService {
   private dataStore = new DataStore()
-  private pusleOxygenRepository = new PulseOxygenRepository(this.dataStore)
+  private pulseOxygenRepository = new PulseOxygenRepository(this.dataStore)
   private enterpriseAdapter = new Enterprise()
 
-  private async postPubsub(pulseResult: PulseOxygenDBModel): Promise<void> {
+  private async postPulse(pulseResult: PulseOxygenDBModel): Promise<void> {
     await this.enterpriseAdapter.pubsubPulse({
       id: pulseResult.id,
       status: pulseResult.status,
@@ -24,8 +24,8 @@ export class PulseOxygenService {
   async savePulseOxygenStatus(
     pulseOxygen: Omit<PulseOxygenDBModel, 'id'>,
   ): Promise<PulseOxygenDBModel> {
-    const saved = await this.pusleOxygenRepository.create(pulseOxygen)
-    await this.postPubsub(saved)
+    const saved = await this.pulseOxygenRepository.create(pulseOxygen)
+    await this.postPulse(saved)
     return saved
   }
 
@@ -34,7 +34,7 @@ export class PulseOxygenService {
     userId: string,
     organizationId: unknown,
   ): Promise<PulseOxygenDBModel> {
-    const pulseOxygen = await this.pusleOxygenRepository.get(id)
+    const pulseOxygen = await this.pulseOxygenRepository.get(id)
 
     if (!pulseOxygen) {
       throw new ResourceNotFoundException(`Resource not found for given ID: ${id}`)
@@ -51,6 +51,6 @@ export class PulseOxygenService {
     userId: string,
     organizationId: string,
   ): Promise<PulseOxygenDBModel[]> {
-    return this.pusleOxygenRepository.getAllByUserAndOrgId(userId, organizationId)
+    return this.pulseOxygenRepository.getAllByUserAndOrgId(userId, organizationId)
   }
 }

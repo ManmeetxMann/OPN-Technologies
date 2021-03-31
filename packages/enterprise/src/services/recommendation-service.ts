@@ -14,7 +14,7 @@ import {PassportStatuses, PassportStatus} from '../../../passport/src/models/pas
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 import {ResultTypes, AppointmentStatus} from '../../../reservation/src/models/appointment'
 import moment from 'moment'
-import {AddPulse} from '../types/resomendations'
+import {AddPulse} from '../types/recommendations'
 
 const tz = Config.get('DEFAULT_TIME_ZONE')
 

@@ -16,7 +16,7 @@ import {
   AppointmentStatus,
   TestTypes,
 } from '../../../../reservation/src/models/appointment'
-import {AddPulse} from '../../types/resomendations'
+import {AddPulse} from '../../types/recommendations'
 
 class RecommendationController implements IControllerBase {
   public router = express.Router()
