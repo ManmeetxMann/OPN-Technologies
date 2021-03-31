@@ -469,6 +469,7 @@ export class PCRTestResultsService {
           isClinicUser,
         ),
         labName: lab?.name,
+        labId: lab?.id,
       }
     })
   }
@@ -1230,12 +1231,15 @@ export class PCRTestResultsService {
     total: number
     pcrResultStatsByOrgIdArr: Filter[]
     pcrResultStatsByResultArr: Filter[]
+    pcrResultStatsByLabIdArr: Filter[]
   }> {
     const pcrTestResults = await this.getPCRResults(queryParams, isLabUser, isClinicUser)
 
     const pcrResultStatsByResult: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
     const pcrResultStatsByOrgId: Record<string, number> = {}
+    const pcrResultStatsByLabId: Record<string, number> = {}
     const organizations = {}
+    const labs = {}
     let total = 0
 
     pcrTestResults.forEach((pcrTest) => {
@@ -1249,6 +1253,12 @@ export class PCRTestResultsService {
       } else {
         pcrResultStatsByOrgId[pcrTest.organizationId] = 1
         organizations[pcrTest.organizationId] = pcrTest.organizationName
+      }
+      if (pcrResultStatsByLabId[pcrTest.labId]) {
+        ++pcrResultStatsByLabId[pcrTest.labId]
+      } else {
+        pcrResultStatsByLabId[pcrTest.labId] = 1
+        labs[pcrTest.labId] = pcrTest.labName
       }
       ++total
     })
@@ -1268,9 +1278,18 @@ export class PCRTestResultsService {
       }),
     )
 
+    const pcrResultStatsByLabIdArr = Object.entries(pcrResultStatsByLabId).map(
+      ([labId, count]) => ({
+        id: labId === 'undefined' ? null : labId,
+        name: labId === 'undefined' ? 'None' : labs[labId],
+        count,
+      }),
+    )
+
     return {
       pcrResultStatsByResultArr,
       pcrResultStatsByOrgIdArr,
+      pcrResultStatsByLabIdArr,
       total,
     }
   }

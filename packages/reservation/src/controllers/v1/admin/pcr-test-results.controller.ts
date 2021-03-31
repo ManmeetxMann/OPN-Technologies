@@ -28,7 +28,7 @@ import {
   singlePcrTestResultDTO,
   SingleTestResultsRequest,
 } from '../../../models/pcr-test-results'
-import {statsUiDTOResponse} from '../../../models/appointment'
+import {FilterGroupKey, FilterName, statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
 import {validateAnalysis} from '../../../utils/analysis.helper'
@@ -238,13 +238,13 @@ class AdminPCRTestResultController implements IControllerBase {
         date,
         testType,
         searchQuery,
-        labId,
       } = req.query as PcrTestResultsListRequest
       if (!barCode && !date) {
         throw new BadRequestException('One of the "barCode" or "date" should exist')
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
       const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
+      const labId = req.headers?.labid as string
 
       const pcrResults = await this.pcrTestResultsService.getPCRResults(
         {
@@ -277,7 +277,6 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         result,
         date,
-        labId,
         testType,
         searchQuery,
       } = req.query as PcrTestResultsListRequest
@@ -286,10 +285,12 @@ class AdminPCRTestResultController implements IControllerBase {
       }
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
       const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
+      const labId = req.headers?.labid as string
 
       const {
         pcrResultStatsByResultArr,
         pcrResultStatsByOrgIdArr,
+        pcrResultStatsByLabIdArr,
         total,
       } = await this.pcrTestResultsService.getPCRResultsStats(
         {
@@ -305,16 +306,31 @@ class AdminPCRTestResultController implements IControllerBase {
         isClinicUser,
       )
 
-      res.json(
-        actionSucceed(
-          statsUiDTOResponse(
-            pcrResultStatsByResultArr,
-            pcrResultStatsByOrgIdArr,
-            total,
-            !organizationId,
-          ),
-        ),
-      )
+      const filterGroup = [
+        {
+          name: FilterName.FilterByResult,
+          key: FilterGroupKey.result,
+          filters: pcrResultStatsByResultArr,
+        },
+      ]
+
+      if (!organizationId) {
+        filterGroup.push({
+          name: FilterName.FilterByCorporation,
+          key: FilterGroupKey.organizationId,
+          filters: pcrResultStatsByOrgIdArr,
+        })
+      }
+
+      if (pcrResultStatsByLabIdArr.length) {
+        filterGroup.push({
+          name: FilterName.FilterByLab,
+          key: FilterGroupKey.labId,
+          filters: pcrResultStatsByLabIdArr,
+        })
+      }
+
+      res.json(actionSucceed(statsUiDTOResponse(filterGroup, total)))
     } catch (error) {
       next(error)
     }
@@ -384,11 +400,11 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         appointmentStatus,
         organizationId,
-        labId,
       } = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
       }
+      const labId = req.headers?.labid as string
       const pcrResults = await this.pcrTestResultsService.getDueDeadline({
         deadline,
         testRunId,
@@ -406,7 +422,8 @@ class AdminPCRTestResultController implements IControllerBase {
 
   dueDeadlineStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunId, deadline, barCode, labId} = req.query as PcrTestResultsListByDeadlineRequest
+      const {testRunId, deadline, barCode} = req.query as PcrTestResultsListByDeadlineRequest
+      const labId = req.headers?.labid as string
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
       }
@@ -421,11 +438,20 @@ class AdminPCRTestResultController implements IControllerBase {
         labId,
       })
 
-      res.json(
-        actionSucceed(
-          statsUiDTOResponse(pcrResultStatsByResultArr, pcrResultStatsByOrgIdArr, total),
-        ),
-      )
+      const filterGroup = [
+        {
+          name: FilterName.FilterByStatusType,
+          key: FilterGroupKey.appointmentStatus,
+          filters: pcrResultStatsByResultArr,
+        },
+        {
+          name: FilterName.FilterByCorporation,
+          key: FilterGroupKey.organizationId,
+          filters: pcrResultStatsByOrgIdArr,
+        },
+      ]
+
+      res.json(actionSucceed(statsUiDTOResponse(filterGroup, total)))
     } catch (error) {
       next(error)
     }

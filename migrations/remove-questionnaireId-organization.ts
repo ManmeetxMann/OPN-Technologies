@@ -1,8 +1,6 @@
 /**
- * Moves organizations/id/location/questionnaireId to organizations questionnaireId
- * Checks if all locations have same questionnaireId before merging
+ * Removed questionnaireId field in organizations/location
  */
-import * as _ from 'lodash'
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
 
@@ -62,41 +60,35 @@ async function getSubCollections(organizationId: string) {
     // hasMore = false
 
     for (const testResult of subCollections.docs) {
-      const locationData = testResult.data()
+      const locationData = testResult
       results.push(locationData)
     }
   }
   return results
 }
 
-async function checkUpdateSubCollection(
+/**
+ * Remove a field questionnaireId from locations
+ */
+async function removeQuestionnaireIdromSubCollection(
   organizations: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
 ) {
   const organizationsId = organizations.id
   const subCollections = await getSubCollections(organizationsId)
-  const questionnaireIdMap = _.countBy(subCollections, 'questionnaireId')
-  const questionnaireIdKeys = Object.keys(questionnaireIdMap)
 
-  // Only if all locations have same questionnaire
-  let questionnaireId = null
-  if (questionnaireIdKeys.length === 1) {
-    questionnaireId = questionnaireIdKeys[0]
-  }
-
-  // move QuestionnaireId
-  if (!DRY_RUN) {
-    console.log(`Updating organizationId: ${organizations.id}, questionnaireId:${questionnaireId}`)
-    await organizations.ref.update({questionnaireId})
-    // Don't count update to null as success
-    if (questionnaireId !== null) {
+  subCollections.forEach(async (subCollection) => {
+    if (!DRY_RUN) {
+      console.log(
+        `Removing questionnaireId field from organizationId: ${organizations.id}, locationId: ${subCollection.id}`,
+      )
+      await subCollection.ref.update({questionnaireId: firestore.FieldValue.delete()})
       successUpdateCount++
+    } else {
+      console.log(
+        `Going to removing questionnaireId field from organizationId: ${organizations.id}, locationId: ${subCollection.id}`,
+      )
     }
-  } else {
-    console.log(
-      `Going to update organizationId: ${organizations.id}, questionnaireId:${questionnaireId}`,
-    )
-  }
-  return {questionnaireIdMap, questionnaireId, organizationsId}
+  })
 }
 
 async function updateOrganizations(): Promise<Result[]> {
@@ -118,7 +110,7 @@ async function updateOrganizations(): Promise<Result[]> {
 
     const promises = []
     organizationsSnapshot.docs.forEach((organizations) =>
-      promises.push(checkUpdateSubCollection(organizations)),
+      promises.push(removeQuestionnaireIdromSubCollection(organizations)),
     )
     const result = await promiseAllSettled(promises)
     results.push(...result)
@@ -131,24 +123,7 @@ function logCountMigrationIssue(result) {
   totalCount++
   if (result.status === ResultStatus.Fulfilled) {
     // @ts-ignore - We will always have a value if the status is fulfilled
-    if (result.value) {
-      successCount += 1
-    }
-    const questionnaireIdMap = result.value.questionnaireIdMap
-    const organizationsId = result.value.organizationsId
-    const questionnaireCount = Object.keys(questionnaireIdMap).length
-
-    if (questionnaireCount == 0) {
-      console.error(`OrganizationId: ${organizationsId} doesn't have questionnaireId in locations`)
-      invalidQuestionnaire++
-    } else if (questionnaireCount >= 2) {
-      console.error(
-        `OrganizationId: ${organizationsId} has different questionnaireId in locations: ${JSON.stringify(
-          questionnaireIdMap,
-        )}`,
-      )
-      invalidQuestionnaire++
-    }
+    successCount += 1
   } else {
     failureCount += 1
   }
@@ -164,7 +139,6 @@ async function main() {
 
     console.log(`Succesfully processed ${successCount} `)
     console.log(`Succesfully updated ${successUpdateCount} `)
-    console.error(`Invalid questionnaire ${invalidQuestionnaire} `)
   } catch (error) {
     console.error('Error running migration', error)
   } finally {
@@ -178,7 +152,6 @@ let successCount = 0
 let successUpdateCount = 0
 let failureCount = 0
 let totalCount = 0
-let invalidQuestionnaire = 0
 // Maximum batch size to query for
 const limit = 50
 

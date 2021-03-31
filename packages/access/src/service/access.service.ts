@@ -639,7 +639,7 @@ export class AccessService {
     count = 1,
   ): Promise<AccessStatsModel> {
     return this.getTodayStatsForLocation(locationId).then((stats) =>
-      this.accessStatsRepository.increment(stats.id, `${status}Passport`, count),
+      this.accessStatsRepository.increment(stats.id, `${status}Passports`, count),
     )
   }
 

@@ -1068,8 +1068,8 @@ paths:
             type: string
             format: date
           required: true
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
       responses:
@@ -1251,8 +1251,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -1558,8 +1558,8 @@ paths:
           schema:
             type: string
           required: true
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
           required: true
@@ -1657,8 +1657,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -1754,8 +1754,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -1825,10 +1825,10 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
-            type: string
+           type: string
         - in: query
           name: organizationId
           schema:
@@ -2062,8 +2062,8 @@ paths:
           schema:
             type: string
           required: true
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
       responses:
@@ -2841,8 +2841,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -2944,8 +2944,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
