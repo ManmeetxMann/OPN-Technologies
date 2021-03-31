@@ -94,7 +94,7 @@ class RecommendationController implements IControllerBase {
         hasPulseBadge: false,
         hasVaccineBadge: false,
       }
-      console.log(pass.tests)
+
       if (pass.tests) {
         const attestation = pass.tests.find(({type}) => type === HealthPassType.Attestation)
         const temperature = pass.tests.find(({type}) => type === HealthPassType.Temperature)
