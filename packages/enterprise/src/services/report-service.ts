@@ -9,7 +9,6 @@ import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
 
 import {OrganizationService} from './organization-service'
-import {UserActionsRepository} from '../repository/action-items.repository'
 import {OrganizationGroup, OrganizationLocation, Organization} from '../models/organization'
 import {Stats, StatsFilter} from '../models/stats'
 import userTemplate from '../templates/user-report'
@@ -23,6 +22,7 @@ import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {AttestationService} from '../../../passport/src/services/attestation-service'
+import {PassportService} from '../../../passport/src/services/passport-service'
 
 type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
 type Lookups = {
@@ -73,6 +73,7 @@ export class ReportService {
   private attestationService = new AttestationService()
   private userService = new UserService()
   private accessService = new AccessService()
+  private passportService = new PassportService()
   private dataStore = new DataStore()
 
   async getStatsHelper(organizationId: string, filter?: StatsFilter): Promise<Stats> {
@@ -521,19 +522,22 @@ export class ReportService {
           )
           return null
         }
-        const repo = new UserActionsRepository(this.dataStore, id)
-        const [access, items] = await Promise.all([
+
+        const [access, latestPassport] = await Promise.all([
           locationId
             ? this.accessService.findAtLocationOnDay(id, locationId, after, before)
             : this.accessService.findAnywhereOnDay(id, after, before),
-          repo.get(organizationId),
+          this.passportService.findLatestDirectPassport(id, organizationId),
         ])
+
         let status
-        if (!items?.latestPassport || nowMoment.isAfter(items.latestPassport.expiry)) {
+
+        if (!latestPassport || nowMoment.isAfter(safeTimestamp(latestPassport.validUntil))) {
           status = PassportStatuses.Pending
         } else {
-          status = items?.latestPassport.status
+          status = latestPassport.status
         }
+
         return {access, status, user: usersById[id]}
       }),
     )
