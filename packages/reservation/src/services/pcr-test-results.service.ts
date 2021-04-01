@@ -78,6 +78,7 @@ import {mapTemperatureStatusToResultTypes} from '../models/temperature'
 
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
+import {UserService} from '../../../common/src/service/user/user-service'
 import {AttestationService} from '../../../passport/src/services/attestation-service'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {PulseOxygenService} from './pulse-oxygen.service'
@@ -96,6 +97,7 @@ export class PCRTestResultsService {
   private organizationService = new OrganizationService()
   private couponService = new CouponService()
   private emailService = new EmailService()
+  private userService = new UserService()
   private couponCode: string
   private whiteListedResultsTypes = [
     ResultTypes.Negative,
@@ -1823,5 +1825,31 @@ export class PCRTestResultsService {
       ResultTypes.PresumptivePositive,
     ]
     return allowedResultTypes.includes(pcrTestResult.result)
+  }
+
+  async getAllResultsByUserAndChildren(
+    userId: string,
+    organizationid: string,
+  ): Promise<TestResutsDTO[]> {
+    const {guardian, dependants} = await this.userService.getUserAndDependants(userId)
+    const guardianTestResults = await this.getTestResultsByUserId(guardian.id, organizationid)
+
+    if (dependants.length) {
+      const pendingResults = dependants.map(({id}) =>
+        this.getTestResultsByUserId(id, organizationid),
+      )
+      const dependantsTestResults = await Promise.all(pendingResults)
+      const childrenTestResults = dependantsTestResults.flat()
+
+      return this.sortTestResultsByDate([...guardianTestResults, ...childrenTestResults])
+    }
+
+    return this.sortTestResultsByDate(guardianTestResults)
+  }
+
+  async sortTestResultsByDate(tests: TestResutsDTO[]): Promise<TestResutsDTO[]> {
+    return tests.sort(
+      (a, b) => new Date(b.testDateTime).getTime() - new Date(a.testDateTime).getTime(),
+    )
   }
 }
