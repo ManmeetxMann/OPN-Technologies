@@ -16,6 +16,7 @@ import {ResultTypes} from '../../../reservation/src/models/appointment'
 
 import moment from 'moment'
 import {HealthPassType, HealthPass} from '../types/health-pass'
+import {PulseOxygenStatuses} from '../../../reservation/src/models/pulse-oxygen'
 
 export class HealthpassService {
   private dataStore = new DataStore()
@@ -49,6 +50,7 @@ export class HealthpassService {
       latestTemperature: null,
       scheduledPCRTest: null,
       PCRTestResult: null,
+      latestPulse: null,
     })
     return items
   }
@@ -118,6 +120,18 @@ export class HealthpassService {
         type: HealthPassType.PCR,
         id: items.PCRTestResult.testId,
         status: items.PCRTestResult.result,
+        style: 'GREEN',
+      })
+    }
+    if (
+      items.latestPulse?.status === PulseOxygenStatuses.Passed &&
+      notStale(items.latestPulse.timestamp)
+    ) {
+      tests.push({
+        date: safeTimestamp(items.latestPulse.timestamp).toISOString(),
+        type: HealthPassType.PulseOxygenCheck,
+        id: items.latestPulse.pulseId,
+        status: items.latestPulse.status,
         style: 'GREEN',
       })
     }

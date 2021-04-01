@@ -3,13 +3,30 @@ import {ResourceNotFoundException} from '../../../common/src/exceptions/resource
 import DataStore from '../../../common/src/data/datastore'
 import {PulseOxygenDBModel} from '../models/pulse-oxygen'
 import {PulseOxygenRepository} from '../respository/pulse-oxygen.repository'
+import {Enterprise} from '../adapter/enterprise'
 
 export class PulseOxygenService {
   private dataStore = new DataStore()
-  private pusleOxygenRepository = new PulseOxygenRepository(this.dataStore)
+  private pulseOxygenRepository = new PulseOxygenRepository(this.dataStore)
+  private enterpriseAdapter = new Enterprise()
 
-  savePulseOxygenStatus(pulseOxygen: Omit<PulseOxygenDBModel, 'id'>): Promise<PulseOxygenDBModel> {
-    return this.pusleOxygenRepository.create(pulseOxygen)
+  private async postPulse(pulseResult: PulseOxygenDBModel): Promise<void> {
+    await this.enterpriseAdapter.postPulse({
+      id: pulseResult.id,
+      status: pulseResult.status,
+      userId: pulseResult.userId,
+      pulse: pulseResult.pulse,
+      oxygen: pulseResult.oxygen,
+      organizationId: pulseResult.organizationId,
+    })
+  }
+
+  async savePulseOxygenStatus(
+    pulseOxygen: Omit<PulseOxygenDBModel, 'id'>,
+  ): Promise<PulseOxygenDBModel> {
+    const saved = await this.pulseOxygenRepository.create(pulseOxygen)
+    await this.postPulse(saved)
+    return saved
   }
 
   async getPulseOxygenDetails(
@@ -17,7 +34,7 @@ export class PulseOxygenService {
     userId: string,
     organizationId: unknown,
   ): Promise<PulseOxygenDBModel> {
-    const pulseOxygen = await this.pusleOxygenRepository.get(id)
+    const pulseOxygen = await this.pulseOxygenRepository.get(id)
 
     if (!pulseOxygen) {
       throw new ResourceNotFoundException(`Resource not found for given ID: ${id}`)
@@ -34,6 +51,6 @@ export class PulseOxygenService {
     userId: string,
     organizationId: string,
   ): Promise<PulseOxygenDBModel[]> {
-    return this.pusleOxygenRepository.getAllByUserAndOrgId(userId, organizationId)
+    return this.pulseOxygenRepository.getAllByUserAndOrgId(userId, organizationId)
   }
 }

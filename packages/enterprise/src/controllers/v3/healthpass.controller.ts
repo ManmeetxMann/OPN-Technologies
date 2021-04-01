@@ -19,6 +19,7 @@ import {HealthPassType} from '../../types/health-pass'
 import {PassportStatuses} from '../../../../passport/src/models/passport'
 import {TemperatureStatuses} from '../../../../reservation/src/models/temperature'
 import {ResultTypes} from '../../../../reservation/src/models/appointment'
+import {PulseOxygenStatuses} from '../../../../reservation/src/models/pulse-oxygen'
 
 class RecommendationController implements IControllerBase {
   public router = express.Router()
@@ -85,24 +86,27 @@ class RecommendationController implements IControllerBase {
       }
 
       const pass = await this.passService.getHealthPass(authenticatedUser.id, organizationId)
+
       let badges = {
         hasSelfTestBadge: false,
         hasTempBadge: false,
         hasPCRBadge: false,
-        // hasPulseBadge: false,
-        // hasVaccineBadge: false,
+        hasPulseBadge: false,
+        hasVaccineBadge: false,
       }
+
       if (pass.tests) {
         const attestation = pass.tests.find(({type}) => type === HealthPassType.Attestation)
         const temperature = pass.tests.find(({type}) => type === HealthPassType.Temperature)
         const PCR = pass.tests.find(({type}) => type === HealthPassType.PCR)
+        const pulse = pass.tests.find(({type}) => type === HealthPassType.PulseOxygenCheck)
 
         badges = {
           hasSelfTestBadge: attestation?.status === PassportStatuses.Proceed,
           hasTempBadge: temperature?.status === TemperatureStatuses.Proceed,
           hasPCRBadge: PCR?.status === ResultTypes.Negative,
-          // hasPulseBadge: false,
-          // hasVaccineBadge: false,
+          hasPulseBadge: pulse?.status === PulseOxygenStatuses.Passed,
+          hasVaccineBadge: false,
         }
       }
 
