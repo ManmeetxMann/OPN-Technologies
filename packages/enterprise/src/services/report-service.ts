@@ -80,8 +80,10 @@ export class ReportService {
     const {groupId, locationId, from, to} = filter ?? {}
     const live = !from && !to
 
+    const duration = moment.duration({hours: 24})
+    // fetch documents from last 24 hour
     const dateRange = {
-      from: live ? moment(now()).tz(timeZone).startOf('day').toDate() : new Date(from),
+      from: live ? moment(now()).tz(timeZone).subtract(duration).toDate() : new Date(from),
       to: live ? now() : new Date(to),
     }
     // Fetch user groups
