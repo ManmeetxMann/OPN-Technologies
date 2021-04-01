@@ -8,8 +8,6 @@ import {PassportStatuses, Passport} from '../../models/passport'
 import {PassportService} from '../../services/passport-service'
 import {AttestationService} from '../../services/attestation-service'
 
-import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
-
 import {ResultTypes} from '../../../../reservation/src/models/appointment'
 import {AlertService} from '../../services/alert-service'
 
@@ -28,7 +26,6 @@ class RecommendationController implements IControllerBase {
   public router = express.Router()
   private passportService = new PassportService()
   private attService = new AttestationService()
-  private orgService = new OrganizationService()
   private alertService = new AlertService()
 
   constructor() {
