@@ -2789,6 +2789,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestResultDetailResponse'
+  /reservation/admin/api/v1/test-results/{testResultId}/comment/{commentId}/reply:
+    post:
+      description: Add reply to comment
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: commentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                reply:
+                  type: string
+                attachmentUrls:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - reply
+                - attachmentUrls
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResultDetailResponse'
   /reservation/admin/api/v1/test-results/{testResultId}/comment:
     post:
       description: Add comment to test results
