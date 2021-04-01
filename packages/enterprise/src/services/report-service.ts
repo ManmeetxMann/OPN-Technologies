@@ -9,7 +9,6 @@ import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
 
 import {OrganizationService} from './organization-service'
-import {UserActionsRepository} from '../repository/action-items.repository'
 import {OrganizationGroup, OrganizationLocation, Organization} from '../models/organization'
 import {Stats, StatsFilter} from '../models/stats'
 import userTemplate from '../templates/user-report'
@@ -23,6 +22,7 @@ import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {AttestationService} from '../../../passport/src/services/attestation-service'
+import {PassportService} from '../../../passport/src/services/passport-service'
 
 type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
 type Lookups = {
@@ -73,6 +73,7 @@ export class ReportService {
   private attestationService = new AttestationService()
   private userService = new UserService()
   private accessService = new AccessService()
+  private passportService = new PassportService()
   private dataStore = new DataStore()
 
   async getStatsHelper(organizationId: string, filter?: StatsFilter): Promise<Stats> {
@@ -129,8 +130,8 @@ export class ReportService {
 
   async getUserReportTemplate(
     organization: Organization,
-    primaryId: string,
-    secondaryId: string,
+    primaryId: string, // user
+    _secondaryId: string, // parent
     from: string,
     to: string,
     // lookup table with users, dependants and groups
@@ -138,8 +139,7 @@ export class ReportService {
     partialLookup: Lookups,
     questionnaires: Questionnaire[],
   ): Promise<ReturnType<typeof userTemplate>> {
-    const userId = secondaryId || primaryId
-    const dependantId = secondaryId ? primaryId : null
+    const userId = primaryId
 
     const [
       attestations,
@@ -149,31 +149,22 @@ export class ReportService {
     ] = await Promise.all([
       this.attestationService.getAttestationsInPeriod(primaryId, from, to),
       this.attestationService.getExposuresInPeriod(primaryId, from, to),
-      this.attestationService.getTracesInPeriod(userId, from, to, dependantId),
-      this.getAccessHistory(from, to, primaryId, secondaryId),
+      this.attestationService.getTracesInPeriod(primaryId, from, to),
+      this.getAccessHistory(from, to, primaryId),
     ])
     // sort by descending attestation time
     // (default ascending)
     attestations.reverse()
-    const userIds = new Set<string>([userId])
-    const guardians: Record<string, string> = {}
-    if (dependantId) {
-      guardians[dependantId] = userId
-    }
+    const userIds = new Set<string>([primaryId])
+
     // overlaps where the other user might have been sick
     const exposureOverlaps: ExposureReport['overlapping'] = []
     exposureTraces.forEach((trace) =>
       trace.exposures.forEach((exposure) =>
         exposure.overlapping.forEach((overlap) => {
-          if (
-            overlap.userId === userId &&
-            (dependantId ? overlap.dependant?.id === dependantId : !overlap.dependant)
-          ) {
+          if (overlap.userId === primaryId) {
             exposureOverlaps.push(overlap)
             userIds.add(overlap.sourceUserId)
-            if (overlap.sourceDependantId) {
-              guardians[overlap.sourceDependantId] = overlap.sourceUserId
-            }
           }
         }),
       ),
@@ -183,25 +174,16 @@ export class ReportService {
     userTraces.forEach((trace) =>
       trace.exposures.forEach((exposure) =>
         exposure.overlapping.forEach((overlap) => {
-          if (
-            overlap.sourceUserId === userId &&
-            (dependantId ? overlap.sourceDependantId === dependantId : !overlap.sourceDependantId)
-          ) {
+          if (overlap.sourceUserId === primaryId) {
             traceOverlaps.push(overlap)
             userIds.add(overlap.userId)
-          }
-          if (overlap.dependant) {
-            guardians[overlap.dependant.id] = overlap.userId
           }
         }),
       ),
     )
-    const missingUsers = _.uniq(
-      [...userIds, ...Object.keys(guardians), ...Object.values(guardians)].filter(
-        (id) => !partialLookup.usersLookup[id],
-      ),
-    )
 
+    // create a lookup that includes any users not listed in the pre-existing lookup
+    const missingUsers = _.uniq([...userIds].filter((id) => !partialLookup.usersLookup[id]))
     const extraLookup = missingUsers.length
       ? await this.getLookups(
           new Set(missingUsers),
@@ -210,7 +192,7 @@ export class ReportService {
           partialLookup.locationsLookup,
         )
       : null
-    const lookups = missingUsers.length
+    const allUsersLookups = missingUsers.length
       ? {
           ...partialLookup,
           usersLookup: {
@@ -219,6 +201,37 @@ export class ReportService {
           },
         }
       : partialLookup
+
+    // create a lookup with all the delegates of all users in the lookup
+    const missingDelegates = new Set<string>()
+    Object.keys(allUsersLookups.usersLookup).forEach((uID: string) => {
+      const user = allUsersLookups.usersLookup[uID]
+      if (!user.delegates?.length) {
+        return
+      }
+      const delegateId = user.delegates[0]
+      if (allUsersLookups.usersLookup[delegateId]) {
+        return
+      }
+      missingDelegates.add(delegateId)
+    })
+    const delegatesLookup = missingDelegates.size
+      ? null
+      : await this.getLookups(
+          missingDelegates,
+          organization.id,
+          allUsersLookups.groupsLookup,
+          allUsersLookups.locationsLookup,
+        )
+    const lookups = delegatesLookup
+      ? {
+          ...allUsersLookups,
+          usersLookup: {
+            ...allUsersLookups.usersLookup,
+            ...delegatesLookup.usersLookup,
+          },
+        }
+      : allUsersLookups
     const {locationsLookup, usersLookup} = lookups
 
     const questionnairesLookup: Record<number, Questionnaire> = {}
@@ -243,12 +256,8 @@ export class ReportService {
       } else {
         const entering = enteringAccesses[enterIndex]
         const exiting = exitingAccesses[exitIndex]
-        const enterTime = safeTimestamp(
-          dependantId ? entering.dependants[dependantId].enteredAt : entering.enteredAt,
-        )
-        const exitTime = safeTimestamp(
-          dependantId ? exiting.dependants[dependantId].exitAt : exiting.exitAt,
-        )
+        const enterTime = safeTimestamp(entering.enteredAt)
+        const exitTime = safeTimestamp(exiting.exitAt)
         if (enterTime > exitTime) {
           addExit = true
         }
@@ -256,9 +265,7 @@ export class ReportService {
       if (addExit) {
         const access = exitingAccesses[exitIndex]
         const location = locationsLookup[access.locationId]
-        const time = toDateTimeFormat(
-          dependantId ? access.dependants[dependantId].exitAt : access.exitAt,
-        )
+        const time = toDateTimeFormat(access.exitAt)
         printableAccessHistory.push({
           name: location.title,
           time,
@@ -268,9 +275,7 @@ export class ReportService {
       } else {
         const access = enteringAccesses[enterIndex]
         const location = locationsLookup[access.locationId]
-        const time = toDateTimeFormat(
-          dependantId ? access.dependants[dependantId].enteredAt : access.enteredAt,
-        )
+        const time = toDateTimeFormat(access.enteredAt)
         printableAccessHistory.push({
           name: location.title,
           time,
@@ -284,7 +289,7 @@ export class ReportService {
     traceOverlaps.sort((a, b) => (a.start > b.start ? -1 : 1))
     // victims
     const printableTraces = traceOverlaps.map((overlap) => {
-      const user = usersLookup[overlap.dependant?.id ?? overlap.userId]
+      const user = usersLookup[overlap.userId]
       return {
         firstName: user.firstName,
         lastName: user.lastName,
@@ -295,7 +300,7 @@ export class ReportService {
     })
     // perpetrators
     const printableExposures = exposureOverlaps.map((overlap) => {
-      const user = usersLookup[overlap.sourceDependantId ?? overlap.sourceUserId]
+      const user = usersLookup[overlap.sourceUserId]
       return {
         firstName: user.firstName,
         lastName: user.lastName,
@@ -336,9 +341,11 @@ export class ReportService {
         name: 'Unknown Group',
       },
     }
-    const named = usersLookup[dependantId ?? userId] ?? deletedUser
+    const named = usersLookup[userId] ?? deletedUser
     const {group} = named
-    const namedGuardian = dependantId ? usersLookup[userId] ?? deletedUser : null
+    // TODO: need to look up delegates
+    const guardianId = usersLookup[userId].delegates ? usersLookup[userId].delegates[0] : null
+    const namedGuardian = guardianId ? usersLookup[guardianId] : null
     return userTemplate({
       attestations: printableAttestations,
       locations: printableAccessHistory,
@@ -443,43 +450,36 @@ export class ReportService {
     from: string | null,
     to: string | null,
     userId: string,
-    parentUserId: string | null,
   ): Promise<{enteringAccesses: Access[]; exitingAccesses: Access[]}> {
     const live = !from && !to
-
     const betweenCreatedDate = {
       from: live ? moment(now()).subtract(24, 'hours').toDate() : new Date(from),
       to: live ? now() : new Date(to),
     }
-    const accesses = parentUserId
-      ? await this.accessService.findAllWithDependents({
-          userId: parentUserId,
-          dependentId: userId,
-          betweenCreatedDate,
-        })
-      : (
-          await this.accessService.findAllWith({
-            userIds: [userId],
-            betweenCreatedDate,
-          })
-        ).filter((acc) => acc.includesGuardian)
+    const accesses = await this.accessService.findAllWith({
+      userIds: [userId],
+      betweenCreatedDate,
+    })
     const enteringAccesses = accesses.filter((access) => {
-      if (parentUserId) {
-        return access.dependants[userId]?.enteredAt
-      } else {
-        return access.enteredAt
+      if (!access.enteredAt) {
+        // legacy
+        return false
       }
+      return true
     })
     const exitingAccesses = accesses.filter((access) => {
-      if (parentUserId) {
-        return access?.dependants[userId]?.exitAt
-      } else {
-        return access.exitAt
+      if (!access.exitAt) {
+        // legacy
+        return false
       }
+      if (safeTimestamp(access.exitAt) > betweenCreatedDate.to) {
+        return false
+      }
+      return true
     })
     enteringAccesses.sort((a, b) => {
-      const aEnter = safeTimestamp(parentUserId ? a.dependants[userId].enteredAt : a.enteredAt)
-      const bEnter = safeTimestamp(parentUserId ? b.dependants[userId].enteredAt : b.enteredAt)
+      const aEnter = safeTimestamp(a.enteredAt)
+      const bEnter = safeTimestamp(b.enteredAt)
       if (aEnter < bEnter) {
         return -1
       } else if (bEnter < aEnter) {
@@ -488,8 +488,8 @@ export class ReportService {
       return 0
     })
     exitingAccesses.sort((a, b) => {
-      const aExit = safeTimestamp(parentUserId ? a.dependants[userId].exitAt : a.exitAt)
-      const bExit = safeTimestamp(parentUserId ? b.dependants[userId].exitAt : b.exitAt)
+      const aExit = safeTimestamp(a.exitAt)
+      const bExit = safeTimestamp(b.exitAt)
       if (aExit < bExit) {
         return -1
       } else if (bExit < aExit) {
@@ -521,19 +521,22 @@ export class ReportService {
           )
           return null
         }
-        const repo = new UserActionsRepository(this.dataStore, id)
-        const [access, items] = await Promise.all([
+
+        const [access, latestPassport] = await Promise.all([
           locationId
             ? this.accessService.findAtLocationOnDay(id, locationId, after, before)
             : this.accessService.findAnywhereOnDay(id, after, before),
-          repo.get(organizationId),
+          this.passportService.findLatestDirectPassport(id, organizationId),
         ])
+
         let status
-        if (!items?.latestPassport || nowMoment.isAfter(items.latestPassport.expiry)) {
+
+        if (!latestPassport || nowMoment.isAfter(safeTimestamp(latestPassport.validUntil))) {
           status = PassportStatuses.Pending
         } else {
-          status = items?.latestPassport.status
+          status = latestPassport.status
         }
+
         return {access, status, user: usersById[id]}
       }),
     )

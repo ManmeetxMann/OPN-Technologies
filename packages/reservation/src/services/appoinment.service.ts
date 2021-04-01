@@ -1274,6 +1274,7 @@ export class AppoinmentService {
   ): Promise<{
     appointmentStatusArray: Filter[]
     orgIdArray: Filter[]
+    appointmentStatsByLabIdArr: Filter[]
     total: number
   }> {
     const appointments = await this.getAppointmentsDB(queryParams)
@@ -1282,6 +1283,8 @@ export class AppoinmentService {
       number
     >
     const appointmentStatsByOrganization: Record<string, number> = {}
+    const appointmentStatsByLabId: Record<string, number> = {}
+    const labs: Record<string, string> = {}
 
     appointments.forEach((appointment) => {
       if (appointmentStatsByTypes[appointment.appointmentStatus]) {
@@ -1293,6 +1296,12 @@ export class AppoinmentService {
         appointmentStatsByOrganization[appointment.organizationId]++
       } else {
         appointmentStatsByOrganization[appointment.organizationId] = 1
+      }
+      if (appointmentStatsByLabId[appointment.labId]) {
+        ++appointmentStatsByLabId[appointment.labId]
+      } else {
+        appointmentStatsByLabId[appointment.labId] = 1
+        labs[appointment.labId] = appointment.labName
       }
     })
     const organizations = await this.organizationService.getAllByIds(
@@ -1312,9 +1321,17 @@ export class AppoinmentService {
         count,
       }),
     )
+    const appointmentStatsByLabIdArr = Object.entries(appointmentStatsByLabId).map(
+      ([labId, count]) => ({
+        id: labId === 'undefined' ? null : labId,
+        name: labId === 'undefined' ? 'None' : labs[labId],
+        count,
+      }),
+    )
     return {
       appointmentStatusArray: appointmentStatsByTypesArr,
       orgIdArray: appointmentStatsByOrgIdArr,
+      appointmentStatsByLabIdArr,
       total: appointments.length,
     }
   }

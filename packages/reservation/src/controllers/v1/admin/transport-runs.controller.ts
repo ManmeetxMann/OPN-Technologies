@@ -79,7 +79,8 @@ class AdminTransportRunsController implements IControllerBase {
 
   listTransportRun: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {transportDate, labId} = req.query as {transportDate: string; labId?: string}
+      const {transportDate} = req.query as {transportDate: string}
+      const labId = req.headers?.labid as string
 
       const transportRuns = await this.transportRunsService.getByDate(transportDate, labId)
 
