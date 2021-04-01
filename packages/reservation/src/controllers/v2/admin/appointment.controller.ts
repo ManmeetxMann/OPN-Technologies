@@ -42,7 +42,7 @@ class AdminAppointmentController implements IControllerBase {
         appointmentIds.map(async (appointmentId) => {
           return this.appointmentService.makeBulkAction(
             appointmentId,
-            {label},
+            {label: label.toUpperCase() as DeadlineLabel},
             AppointmentBulkAction.AddAppointmentLabel,
           )
         }),
