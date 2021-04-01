@@ -74,7 +74,7 @@ export class PdfService {
         disclaimer: {
           fontSize: 7,
           font: 'Helvetica',
-        }
+        },
       },
       defaultStyle: {
         color: '#666666',
