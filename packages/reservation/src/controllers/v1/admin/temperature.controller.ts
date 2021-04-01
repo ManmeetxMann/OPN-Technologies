@@ -117,7 +117,7 @@ class AdminTemperatureController implements IControllerBase {
         status,
         userId: result.userId,
         validFrom,
-        validUntil: this.passportService.shortestTime(status, now()),
+        validUntil: this.passportService.shortestTime(status, now(), false),
       }
 
       res.json(actionSucceed(response))
