@@ -11,7 +11,7 @@ export class PulseOxygenService {
   private enterpriseAdapter = new Enterprise()
 
   private async postPulse(pulseResult: PulseOxygenDBModel): Promise<void> {
-    await this.enterpriseAdapter.pubsubPulse({
+    await this.enterpriseAdapter.postPulse({
       id: pulseResult.id,
       status: pulseResult.status,
       userId: pulseResult.userId,

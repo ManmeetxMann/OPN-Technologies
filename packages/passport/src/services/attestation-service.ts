@@ -38,7 +38,7 @@ export class AttestationService {
   }
 
   async postPubsub(att: Attestation): Promise<void> {
-    await this.enterprise.pubsubAttestation(att)
+    await this.enterprise.postAttestation(att)
     // this.pubsub.publish(
     //   {
     //     id: att.id,

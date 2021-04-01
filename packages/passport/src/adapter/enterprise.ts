@@ -6,8 +6,8 @@ import {Attestation} from '../models/attestation'
 const APIURL = Config.get('DOMAIN_ENTERPRISE')
 
 export class Enterprise {
-  async pubsubAttestation(attestation: Partial<Attestation>): Promise<void> {
-    const apiUrl = `${APIURL}enterprise/api/v3/pubsub/attestation`
+  async postAttestation(attestation: Partial<Attestation>): Promise<void> {
+    const apiUrl = `${APIURL}enterprise/api/v1/internal/attestation`
     const body = JSON.stringify({
       id: attestation.id,
       status: attestation.status,

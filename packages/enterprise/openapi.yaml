@@ -2057,7 +2057,7 @@ components:
               nullable: true
               type: string
 
-    PubSubPulse:
+    PostPulse:
       type: object
       additionalProperties: false
       properties:
@@ -2077,7 +2077,7 @@ components:
             - Passed
             - Failed
 
-    PubSubAttestation:
+    PostAttestation:
       type: object
       additionalProperties: false
       properties:
@@ -2096,7 +2096,7 @@ components:
             - stop
             - temperature_check_required
 
-    PubSubTemperature:
+    PostTemperature:
       type: object
       additionalProperties: false
       properties:
@@ -4120,7 +4120,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PubSubAttestation'
+              $ref: '#/components/schemas/PubSubRequest'
       responses:
         '200':
           description: Successfully digested
@@ -4131,7 +4131,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PubSubTemperature'
+              $ref: '#/components/schemas/PubSubRequest'
       responses:
         '200':
           description: Successfully digested
@@ -4158,14 +4158,38 @@ paths:
         '200':
           description: Successfully digested
 
-  /enterprise/api/v3/pubsub/pulse:
+  /enterprise/api/v1/internal/attestation:
+    post:
+      summary: update attestation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostAttestation'
+      responses:
+        '200':
+          description: Successfully digested
+
+  /enterprise/api/v1/internal/temperature:
+    post:
+      summary: update temperature
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostTemperature'
+      responses:
+        '200':
+          description: Successfully digested
+
+  /enterprise/api/v1/internal/pulse:
     post:
       summary: update pulse oxygen
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PubSubPulse'
+              $ref: '#/components/schemas/PostPulse'
       responses:
         '200':
           description: Successfully digested

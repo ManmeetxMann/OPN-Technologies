@@ -21,7 +21,7 @@ export class TemperatureService {
     const status =
       temp.status === TemperatureStatuses.Proceed ? PassportStatuses.Proceed : PassportStatuses.Stop
     await this.adapter.createPassport(temp.userId, temp.organizationId, status)
-    this.enterpriseAdapter.pubsubTemperature({
+    this.enterpriseAdapter.postTemperature({
       id: temp.id,
       status: temp.status,
       temperature: temp.temperature,

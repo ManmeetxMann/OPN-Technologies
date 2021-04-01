@@ -46,8 +46,8 @@ export class Enterprise {
     return res.json()
   }
 
-  async pubsubPulse(pulseResult: Partial<PulseOxygenDBModel>): Promise<void> {
-    const apiUrl = `${APIURL}enterprise/api/v3/pubsub/pulse`
+  async postPulse(pulseResult: Partial<PulseOxygenDBModel>): Promise<void> {
+    const apiUrl = `${APIURL}enterprise/api/v1/internal/pulse`
     const body = JSON.stringify({
       userId: pulseResult.userId,
       organizationId: pulseResult.organizationId,
@@ -56,7 +56,7 @@ export class Enterprise {
       oxygen: pulseResult.oxygen,
       status: pulseResult.status,
     })
-    LogInfo(`EnterpriseAdapter`, 'pubsubPulse', {
+    LogInfo(`EnterpriseAdapter`, 'postPulse', {
       id: pulseResult.id,
       organizationId: pulseResult.organizationId,
       status: pulseResult.status,
@@ -75,8 +75,8 @@ export class Enterprise {
     }
   }
 
-  async pubsubTemperature(temp: Partial<TemperatureDBModel>): Promise<void> {
-    const apiUrl = `${APIURL}enterprise/api/v3/pubsub/temperature`
+  async postTemperature(temp: Partial<TemperatureDBModel>): Promise<void> {
+    const apiUrl = `${APIURL}enterprise/api/v1/internal/temperature`
     const body = JSON.stringify({
       id: temp.id,
       status: temp.status,
@@ -84,7 +84,7 @@ export class Enterprise {
       userId: temp.userId,
       organizationId: temp.organizationId,
     })
-    LogInfo(`EnterpriseAdapter`, 'pubsubTemperature', {
+    LogInfo(`EnterpriseAdapter`, 'postTemperature', {
       id: temp.id,
       userId: temp.userId,
       organizationId: temp.organizationId,
