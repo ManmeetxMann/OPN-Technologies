@@ -99,7 +99,7 @@ class RecommendationController implements IControllerBase {
         const attestation = pass.tests.find(({type}) => type === HealthPassType.Attestation)
         const temperature = pass.tests.find(({type}) => type === HealthPassType.Temperature)
         const PCR = pass.tests.find(({type}) => type === HealthPassType.PCR)
-        const pulse = pass.tests.find(({type}) => type === HealthPassType.Pulse)
+        const pulse = pass.tests.find(({type}) => type === HealthPassType.PulseOxygenCheck)
 
         badges = {
           hasSelfTestBadge: attestation?.status === PassportStatuses.Proceed,

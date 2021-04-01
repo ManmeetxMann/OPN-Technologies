@@ -126,7 +126,7 @@ export class HealthpassService {
     ) {
       tests.push({
         date: safeTimestamp(items.latestPulse.timestamp).toISOString(),
-        type: HealthPassType.Pulse,
+        type: HealthPassType.PulseOxygenCheck,
         id: items.latestPulse.pulseId,
         status: items.latestPulse.status,
         style: 'GREEN',

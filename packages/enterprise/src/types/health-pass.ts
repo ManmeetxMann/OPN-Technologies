@@ -7,7 +7,7 @@ export enum HealthPassType {
   Attestation = 'Attestation',
   Temperature = 'Temperature',
   PCR = 'PCR',
-  Pulse = 'Pulse',
+  PulseOxygenCheck = 'PulseOxygenCheck',
 }
 
 export type HealthPass = {
