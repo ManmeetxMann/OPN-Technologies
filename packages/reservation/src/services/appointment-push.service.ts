@@ -18,14 +18,21 @@ import {Registration} from '../../../common/src/data/registration'
  * TODO:
  * 1. Message title
  */
-interface ExecutionStats {
+interface SelectExecutionStats {
   notNotifiedAppointments?: number
-  users?: number
-  tokens?: number
+  users: number
+  totalPushTokens: number
+  recentUserTokens: number
+  pushesToSend: number
+}
+
+interface SendExecutionStats {
+  successSend: number
+  successScheduledRemoved: number
 }
 
 interface UpcomingPushes {
-  executionStats: ExecutionStats
+  SelectExecutionStats: SelectExecutionStats
   pushMessages: PushMessages[]
 }
 
@@ -37,12 +44,15 @@ export class AppointmentPushService {
   private maxUntilHours = 24
   // In case push didn't worked 24 or 4 hours before appointment, send it max after:
   private maxNotifyShiftHours = 1
+  // Max size of pushes to send to FCM in one call and to batch update
+  private pushSenderChunkSize = 500
 
   private messageBeforeHours = {
     [AppointmentPushTypes.before24hours]: 24,
     [AppointmentPushTypes.before3hours]: 3,
   }
 
+  private messageTitle = 'TODO title'
   private messagesBody: {[index: number]: Function} = {
     [AppointmentPushTypes.before24hours]: (dateTime, clinicName) =>
       `Copy: You have a Covid-19 test scheduled for ${dateTime} at our ${clinicName} location.`,
@@ -84,16 +94,13 @@ export class AppointmentPushService {
     appointmentType: AppointmentPushTypes,
   ): boolean => {
     const nowDateTime = moment(new Date()).tz(this.timeZone)
-    const needsSend = appointment.scheduledPushesToSend?.some(
-      (scheduledPushes) => scheduledPushes === appointmentType,
+    const needsSend = appointment.scheduledPushesToSend?.some((scheduledPushes) => {
+      return scheduledPushes === AppointmentPushTypes[appointmentType]
+    })
+    const isInTimeSpan = moment(appointment.dateTime).isBetween(
+      nowDateTime.clone().add(hoursOffset - this.maxNotifyShiftHours, 'hours'),
+      nowDateTime.clone().add(hoursOffset, 'hours'),
     )
-    const isInTimeSpan = moment(appointment.dateTime)
-      .tz(this.timeZone)
-      .isBetween(
-        nowDateTime.clone().add(hoursOffset - this.maxNotifyShiftHours, 'hours'),
-        nowDateTime.clone().add(hoursOffset, 'hours'),
-      )
-
     return needsSend && isInTimeSpan
   }
 
@@ -115,6 +122,7 @@ export class AppointmentPushService {
 
     // Add auxiliary information for appointment and only required fields
     const appointmentsWithMeta: Array<{
+      id: string
       locationName: string
       dateTime: string
       userId: string
@@ -134,26 +142,68 @@ export class AppointmentPushService {
         const hours = this.messageBeforeHours[appointmentPushType]
         if (this.isMessageToSend(appointment, hours, AppointmentPushTypes[appointmentPushType])) {
           pushMessages.push({
-            recipientToken: appointment.pushToken,
-            title: 'TODO title',
-            body: this.messagesBody[AppointmentPushTypes[appointmentPushType]](
-              appointment.dateTime,
-              appointment.locationName,
-            ),
+            token: appointment.pushToken,
+            notification: {
+              title: this.messageTitle,
+              body: this.messagesBody[appointmentPushType](
+                appointment.dateTime,
+                appointment.locationName,
+              ),
+            },
+            data: {
+              appointmentId: appointment.id,
+              scheduledAppointmentType: appointmentPushType,
+            },
           })
         }
       }
     })
 
-    const executionStats = {
+    const SelectExecutionStats = {
       notNotifiedAppointments: appointments.length,
       users: userIds.length,
-      tokens: tokens.length,
+      totalPushTokens: tokens.length,
+      recentUserTokens: Object.keys(recentUserToken).length,
+      pushesToSend: pushMessages.length,
     }
 
     return {
-      executionStats,
+      SelectExecutionStats,
       pushMessages,
     }
+  }
+
+  /**
+   * Sends push messages and updates scheduledPushesToSend to avoid duplicated pushes
+   * TODO:
+   * 1. DB transactions if method needs to run in parallel
+   */
+  async sendPushUpdateScheduled(pushMessages: PushMessages[]): Promise<SendExecutionStats> {
+    const chunks: PushMessages[][] = _.chunk(pushMessages, this.pushSenderChunkSize)
+
+    chunks.forEach(async (messageChunk) => {
+      // Send chunk of pushes
+      const pushResult = await sendBulkMessagesByToken(messageChunk)
+      const batchAppointments: {
+        appointmentId: string
+        scheduledAppointmentType: number
+      }[] = []
+
+      pushResult.responses.forEach((el, index) => {
+        const pushStatus = messageChunk[index]
+        const {appointmentId, scheduledAppointmentType} = pushStatus.data
+
+        batchAppointments.push({
+          appointmentId,
+          scheduledAppointmentType: Number(scheduledAppointmentType),
+        })
+      })
+
+      const dbResult = await this.appointmentService.removeBatchScheduledPushesToSend(
+        batchAppointments,
+      )
+    })
+
+    return null
   }
 }

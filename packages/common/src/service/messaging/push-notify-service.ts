@@ -55,6 +55,10 @@ export const sendMessage = (
   )
 }
 
-export const sendBulkMessagesByToken = (pushMessages: PushMessages[]): Promise<unknown> => {
-  return null
+export const sendBulkMessagesByToken = async (
+  pushMessages: PushMessages[],
+): Promise<admin.messaging.BatchResponse> => {
+  const messages: admin.messaging.Message[] = pushMessages
+  const messaging = admin.messaging()
+  return messaging.sendAll(messages)
 }

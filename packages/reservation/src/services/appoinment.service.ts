@@ -1472,12 +1472,12 @@ export class AppoinmentService {
           operator: DataModelFieldMapOperatorType.Less,
           value: new Date(untilDateTime),
         },
-        // {
-        //   map: '/',
-        //   key: 'scheduledPushesToSend',
-        //   operator: DataModelFieldMapOperatorType.ArrayContainsAny,
-        //   value: [AppointmentPushTypes.before24hours, AppointmentPushTypes.before3hours],
-        // },
+        {
+          map: '/',
+          key: 'scheduledPushesToSend',
+          operator: DataModelFieldMapOperatorType.ArrayContainsAny,
+          value: [AppointmentPushTypes.before24hours, AppointmentPushTypes.before3hours],
+        },
       ],
       {
         key: 'dateTime',
@@ -1486,8 +1486,12 @@ export class AppoinmentService {
     )
   }
 
-  async removeScheduledPushesToSend(
-    appointmentId: string,
-    appointmentPushTypes: AppointmentPushTypes,
-  ) {}
+  async removeBatchScheduledPushesToSend(
+    batchAppointments: {
+      appointmentId: string
+      scheduledAppointmentType: number
+    }[],
+  ) {
+    return null
+  }
 }

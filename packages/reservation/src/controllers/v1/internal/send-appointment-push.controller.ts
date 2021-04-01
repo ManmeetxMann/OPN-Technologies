@@ -6,16 +6,11 @@ import {LogInfo} from '../../../../../common/src/utils/logging-setup'
 
 //Services
 import {AppointmentPushService} from '../../../services/appointment-push.service'
-
-//Types
-
-
 class InternalSendAppointmentPushController implements IControllerBase {
   public path = '/reservation/internal'
   public router = Router()
 
   private appointmentPushService = new AppointmentPushService()
-
 
   constructor() {
     this.initRoutes()
@@ -42,11 +37,13 @@ class InternalSendAppointmentPushController implements IControllerBase {
   ): Promise<void> => {
     try {
       const upcomingPushes = await this.appointmentPushService.fetchUpcomingPushes()
-
-      
+      const result = await this.appointmentPushService.sendPushUpdateScheduled(
+        upcomingPushes.pushMessages,
+      )
 
       LogInfo('SendAppointmentPush', 'ExecutionStats', {
-        ...upcomingPushes.executionStats,
+        ...upcomingPushes.SelectExecutionStats,
+        ...result,
       })
       res.json(actionSucceed())
     } catch (error) {
