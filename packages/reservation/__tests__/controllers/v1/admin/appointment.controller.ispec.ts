@@ -78,7 +78,10 @@ describe('AdminAppointmentController', () => {
     })
     test('get appointments by dateOfAppointment and Lab successfully.', async (done) => {
       const url = `/reservation/admin/api/v1/appointments?dateOfAppointment=${dateForAppointments}&labId=${laboratoryId}`
-      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      const result = await request(server.app)
+        .get(url)
+        .set('labid', laboratoryId)
+        .set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(3)
       done()
@@ -120,8 +123,11 @@ describe('AdminAppointmentController', () => {
 
   describe('get appointment list stats', () => {
     test('get appointments stats by dateOfAppointment and Lab successfully.', async (done) => {
-      const url = `/reservation/admin/api/v1/appointments/list/stats?dateOfAppointment=${dateForAppointments}&labId=${laboratoryId}`
-      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      const url = `/reservation/admin/api/v1/appointments/list/stats?dateOfAppointment=${dateForAppointments}`
+      const result = await request(server.app)
+        .get(url)
+        .set('labid', laboratoryId)
+        .set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.total).toBe(3)
       done()
