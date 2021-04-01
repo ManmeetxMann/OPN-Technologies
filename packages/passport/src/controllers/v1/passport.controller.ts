@@ -155,7 +155,7 @@ class PassportController implements IControllerBase {
 
       // Merge questions and answers by index
       const answersResults = []
-      const {questions} = questionnaires[0]
+      const {questions} = questionnaires
       Object.keys(questions).forEach((questionKey) => {
         const question = questions[questionKey]
         const answersResult = {
