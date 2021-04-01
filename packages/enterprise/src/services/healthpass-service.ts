@@ -81,6 +81,9 @@ export class HealthpassService {
     const earliestValid = lastRollover.isSameOrAfter(validDurationAgo)
       ? lastRollover
       : validDurationAgo
+
+    const PCRDuration = parseInt(Config.get('PCR_VALIDITY_HOURS'))
+    const earliestValidPCR = moment(now()).utc().subtract(PCRDuration, 'hours')
     const notStale = (ts) => earliestValid.isSameOrBefore(safeTimestamp(ts))
     if (
       items.latestAttestation?.status === PassportStatuses.Proceed &&
@@ -108,7 +111,7 @@ export class HealthpassService {
     }
     if (
       items.PCRTestResult?.result === ResultTypes.Negative &&
-      notStale(items.PCRTestResult.timestamp)
+      earliestValidPCR.isSameOrBefore(safeTimestamp(items.PCRTestResult.timestamp))
     ) {
       tests.push({
         date: safeTimestamp(items.PCRTestResult.timestamp).toISOString(),
