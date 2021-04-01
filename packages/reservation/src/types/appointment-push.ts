@@ -4,4 +4,3 @@ export enum AppointmentPushTypes {
   ready,
   reSample,
 }
-

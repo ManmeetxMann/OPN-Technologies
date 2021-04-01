@@ -12,8 +12,9 @@ import {AppoinmentService} from '../services/appoinment.service'
 
 //Types
 import {AppointmentPushTypes} from '../types/appointment-push'
-import {PushMessages} from '../../../common/src/types/push-notification'
+import {PushMessages, DbBatchAppointments} from '../../../common/src/types/push-notification'
 import {Registration} from '../../../common/src/data/registration'
+
 /**
  * TODO:
  * 1. Message title
@@ -27,13 +28,27 @@ interface SelectExecutionStats {
 }
 
 interface SendExecutionStats {
-  successSend: number
-  successScheduledRemoved: number
+  push: {
+    successCount: number
+    failureCount: number
+  }
+  db: {
+    scheduledPushesToSendRemovedSuccess: number
+  }
 }
 
 interface UpcomingPushes {
-  SelectExecutionStats: SelectExecutionStats
+  selectExecutionStats: SelectExecutionStats
   pushMessages: PushMessages[]
+}
+
+interface AppointmentWithMeta {
+  id: string
+  locationName: string
+  dateTime: string
+  userId: string
+  scheduledPushesToSend: number[]
+  pushToken: string
 }
 
 export class AppointmentPushService {
@@ -45,7 +60,7 @@ export class AppointmentPushService {
   // In case push didn't worked 24 or 4 hours before appointment, send it max after:
   private maxNotifyShiftHours = 1
   // Max size of pushes to send to FCM in one call and to batch update
-  private pushSenderChunkSize = 500
+  private pushSenderChunkSize = 1
 
   private messageBeforeHours = {
     [AppointmentPushTypes.before24hours]: 24,
@@ -53,7 +68,7 @@ export class AppointmentPushService {
   }
 
   private messageTitle = 'TODO title'
-  private messagesBody: {[index: number]: Function} = {
+  private messagesBody = {
     [AppointmentPushTypes.before24hours]: (dateTime, clinicName) =>
       `Copy: You have a Covid-19 test scheduled for ${dateTime} at our ${clinicName} location.`,
     [AppointmentPushTypes.before3hours]: (dateTime, clinicName) =>
@@ -64,7 +79,7 @@ export class AppointmentPushService {
   }
 
   /**
-   * Gets resent push token for user
+   * Gets recent push token for user
    */
   private getRecentUsersToken(registrations: Registration[]): {[userId: string]: string} {
     const orderedRegistrations: Registration[] = _.sortBy(registrations, (registration) =>
@@ -72,7 +87,7 @@ export class AppointmentPushService {
     ).reverse()
     // Take all uniq userIds from all registrations
     const userIds = orderedRegistrations.map((registration) => registration.userIds)
-    const uniqueUserIds = _.uniq([].concat.apply([], userIds))
+    const uniqueUserIds = _.uniq([].concat(...userIds))
 
     // Get first from ordered by date token for each user
     const userTokens: {[userId: string]: string} = {}
@@ -121,14 +136,7 @@ export class AppointmentPushService {
     const recentUserToken = this.getRecentUsersToken(tokens)
 
     // Add auxiliary information for appointment and only required fields
-    const appointmentsWithMeta: Array<{
-      id: string
-      locationName: string
-      dateTime: string
-      userId: string
-      scheduledPushesToSend: number[]
-      pushToken: string
-    }> = _.map(appointments, (appointment) => ({
+    const appointmentsWithMeta: AppointmentWithMeta[] = _.map(appointments, (appointment) => ({
       ..._.pick(appointment, ['id', 'userId', 'locationName', 'scheduledPushesToSend']),
       dateTime: appointment.dateTime.toDate(),
       pushToken: recentUserToken[appointment.userId],
@@ -159,7 +167,7 @@ export class AppointmentPushService {
       }
     })
 
-    const SelectExecutionStats = {
+    const selectExecutionStats = {
       notNotifiedAppointments: appointments.length,
       users: userIds.length,
       totalPushTokens: tokens.length,
@@ -168,7 +176,7 @@ export class AppointmentPushService {
     }
 
     return {
-      SelectExecutionStats,
+      selectExecutionStats,
       pushMessages,
     }
   }
@@ -181,29 +189,36 @@ export class AppointmentPushService {
   async sendPushUpdateScheduled(pushMessages: PushMessages[]): Promise<SendExecutionStats> {
     const chunks: PushMessages[][] = _.chunk(pushMessages, this.pushSenderChunkSize)
 
-    chunks.forEach(async (messageChunk) => {
-      // Send chunk of pushes
+    const sendExecutionStats: SendExecutionStats = {
+      push: {
+        successCount: 0,
+        failureCount: 0,
+      },
+      db: {
+        scheduledPushesToSendRemovedSuccess: 0,
+      },
+    }
+
+    for (const messageChunkKey in chunks) {
+      const messageChunk = chunks[messageChunkKey]
+      // Send chunk of pushes via FCM
       const pushResult = await sendBulkMessagesByToken(messageChunk)
-      const batchAppointments: {
-        appointmentId: string
-        scheduledAppointmentType: number
-      }[] = []
+      const batchAppointments: DbBatchAppointments[] = pushResult.responses.map((el, index) => ({
+        appointmentId: messageChunk[index].data.appointmentId,
+        scheduledAppointmentType: Number(messageChunk[index].data.scheduledAppointmentType),
+      }))
+      sendExecutionStats.push.successCount += pushResult.successCount
+      sendExecutionStats.push.failureCount += pushResult.failureCount
 
-      pushResult.responses.forEach((el, index) => {
-        const pushStatus = messageChunk[index]
-        const {appointmentId, scheduledAppointmentType} = pushStatus.data
-
-        batchAppointments.push({
-          appointmentId,
-          scheduledAppointmentType: Number(scheduledAppointmentType),
-        })
-      })
-
+      // Save execution in data
       const dbResult = await this.appointmentService.removeBatchScheduledPushesToSend(
         batchAppointments,
       )
-    })
+      if (dbResult) {
+        sendExecutionStats.db.scheduledPushesToSendRemovedSuccess += batchAppointments.length
+      }
+    }
 
-    return null
+    return sendExecutionStats
   }
 }

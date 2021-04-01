@@ -9,3 +9,8 @@ export type PushMessages = {
     [key: string]: string
   }
 }
+
+export type DbBatchAppointments = {
+  appointmentId: string
+  scheduledAppointmentType: number
+}

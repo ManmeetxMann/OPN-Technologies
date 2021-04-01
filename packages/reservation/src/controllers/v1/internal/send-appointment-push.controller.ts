@@ -2,7 +2,7 @@ import {NextFunction, Request, Response, Router} from 'express'
 //Common
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-import {LogInfo} from '../../../../../common/src/utils/logging-setup'
+import {LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
 
 //Services
 import {AppointmentPushService} from '../../../services/appointment-push.service'
@@ -36,14 +36,23 @@ class InternalSendAppointmentPushController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
+      const executionStart = new Date().getTime()
       const upcomingPushes = await this.appointmentPushService.fetchUpcomingPushes()
-      const result = await this.appointmentPushService.sendPushUpdateScheduled(
+      const sendPushStats = await this.appointmentPushService.sendPushUpdateScheduled(
         upcomingPushes.pushMessages,
       )
+      const executionEnd = new Date().getTime()
+      const executionTime = Number(executionEnd - executionStart)
+      const executionTimeSec = executionTime / 1000
+
+      if (executionTimeSec > 5) {
+        LogWarning('SendAppointmentPush', 'LongExecutionTime', {executionTimeSec})
+      }
 
       LogInfo('SendAppointmentPush', 'ExecutionStats', {
-        ...upcomingPushes.SelectExecutionStats,
-        ...result,
+        ...upcomingPushes.selectExecutionStats,
+        ...sendPushStats,
+        executionTime,
       })
       res.json(actionSucceed())
     } catch (error) {

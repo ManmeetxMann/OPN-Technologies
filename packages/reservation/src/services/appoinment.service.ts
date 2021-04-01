@@ -61,6 +61,7 @@ import {
   BulkOperationStatus,
 } from '../types/bulk-operation.type'
 import {AppointmentPushTypes} from '../types/appointment-push'
+import {DbBatchAppointments} from '../../../common/src/types/push-notification'
 import {PcrResultTestActivityAction} from '../models/pcr-test-results'
 import {AdminScanHistory} from '../models/admin-scan-history'
 import {SyncInProgressTypes} from '../models/sync-progress'
@@ -1472,8 +1473,8 @@ export class AppoinmentService {
   }
 
   async getAppointmentsNotNotifiedInPeriod(
-    fromUntilDateTime,
-    untilDateTime,
+    fromUntilDateTime: moment.Moment,
+    untilDateTime: moment.Moment,
   ): Promise<AppointmentDBModel[]> {
     return this.appointmentsRepository.findWhereEqualInMap(
       [
@@ -1481,13 +1482,13 @@ export class AppoinmentService {
           map: '/',
           key: 'dateTime',
           operator: DataModelFieldMapOperatorType.Greater,
-          value: new Date(fromUntilDateTime),
+          value: new Date(fromUntilDateTime.toDate()),
         },
         {
           map: '/',
           key: 'dateTime',
           operator: DataModelFieldMapOperatorType.Less,
-          value: new Date(untilDateTime),
+          value: new Date(untilDateTime.toDate()),
         },
         {
           map: '/',
@@ -1504,11 +1505,8 @@ export class AppoinmentService {
   }
 
   async removeBatchScheduledPushesToSend(
-    batchAppointments: {
-      appointmentId: string
-      scheduledAppointmentType: number
-    }[],
-  ) {
-    return null
+    batchAppointments: DbBatchAppointments[],
+  ): Promise<unknown[]> {
+    return this.appointmentsRepository.removeBatchScheduledPushesToSend(batchAppointments)
   }
 }
