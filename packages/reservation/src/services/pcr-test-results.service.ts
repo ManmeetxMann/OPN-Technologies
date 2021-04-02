@@ -969,11 +969,6 @@ export class PCRTestResultsService {
         await this.sendEmailNotification(resultData)
         break
       }
-      case PCRResultActions.RequestReCollect: {
-        //TODO Remove This
-        await this.sendReCollectNotification(resultData)
-        break
-      }
       case PCRResultActions.RecollectAsInconclusive: {
         await this.sendReCollectNotification(resultData)
         break
