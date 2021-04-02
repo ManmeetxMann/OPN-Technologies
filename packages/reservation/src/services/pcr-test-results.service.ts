@@ -98,7 +98,6 @@ export class PCRTestResultsService {
   private couponService = new CouponService()
   private emailService = new EmailService()
   private userService = new UserService()
-  private couponCode: string
   private whiteListedResultsTypes = [
     ResultTypes.Negative,
     ResultTypes.Positive,
@@ -157,6 +156,11 @@ export class PCRTestResultsService {
       case PCRResultActionsForConfirmation.MarkAsPositive: {
         finalResult = ResultTypes.Positive
         notificationType = EmailNotficationTypes.MarkAsConfirmedPositive
+        break
+      }
+      case PCRResultActionsForConfirmation.Indeterminate: {
+        finalResult = ResultTypes.Inconclusive
+        notificationType = EmailNotficationTypes.Indeterminate
         break
       }
     }
@@ -844,22 +848,6 @@ export class PCRTestResultsService {
         appointment.id,
         resultData.adminId,
       )
-
-      if (!appointment.organizationId) {
-        //TODO: Move this to Email Function
-        this.couponCode = await this.couponService.createCoupon(appointment.email)
-        await this.couponService.saveCoupon(
-          this.couponCode,
-          appointment.organizationId,
-          resultData.barCode,
-        )
-        LogInfo('handleActions->handledReCollect', 'CouponCodeCreated', {
-          barCode: resultData.barCode,
-          organizationId: appointment.organizationId,
-          appointmentId: appointment.id,
-          appointmentEmail: appointment.email,
-        })
-      }
     }
     switch (resultData.action) {
       case PCRResultActions.SendPreliminaryPositive: {
@@ -948,7 +936,6 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
   ): Promise<void> {
-    this.postPubsub(resultData, 'result')
     let addSuccessLog = true
     switch (notficationType) {
       case PCRResultActions.SendPreliminaryPositive: {
@@ -968,6 +955,10 @@ export class PCRTestResultsService {
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
+        await this.sendReCollectNotification(resultData)
+        break
+      }
+      case EmailNotficationTypes.Indeterminate: {
         await this.sendReCollectNotification(resultData)
         break
       }
@@ -1003,6 +994,7 @@ export class PCRTestResultsService {
         notficationType,
         resultSent: resultData.result,
       })
+      this.postPubsub(resultData, 'result')
     }
   }
 
@@ -1078,16 +1070,31 @@ export class PCRTestResultsService {
         return Config.getInt('TEST_RESULT_NO_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 5
       }
     }
+    let couponCode = null
+    if (!resultData.organizationId) {
+      const couponCode = await this.couponService.createCoupon(resultData.email)
+      await this.couponService.saveCoupon(
+        couponCode,
+        resultData.organizationId,
+        resultData.barCode,
+      )
+      LogInfo('handleActions->handledReCollect', 'CouponCodeCreated', {
+        barCode: resultData.barCode,
+        organizationId: resultData.organizationId,
+        appointmentId: resultData.appointmentId,
+        appointmentEmail: resultData.email,
+      })
+    }
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
     const owner = Config.get('ACUITY_SCHEDULER_USERNAME')
-    const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${this.couponCode}`
+    const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${couponCode}`
     const templateId = getTemplateId()
 
     await this.emailService.send({
       templateId: templateId,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
-        COUPON_CODE: this.couponCode,
+        COUPON_CODE: couponCode,
         BOOKING_LINK: appointmentBookingLink,
         FIRSTNAME: resultData.firstName,
       },
