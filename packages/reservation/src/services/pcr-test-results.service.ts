@@ -1060,19 +1060,19 @@ export class PCRTestResultsService {
 
   async sendReCollectNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
     const getTemplateId = (): number => {
-      if (resultData.result === ResultTypes.Inconclusive) {
+      if (!!resultData.organizationId) {
+        return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
+      } else if (resultData.result === ResultTypes.Inconclusive) {
         return (
           Config.getInt('TEST_RESULT_NO_ORG_INCONCLUSIVE_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 8
         )
-      } else if (!!resultData.organizationId) {
-        return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
-      } else {
+      } else  {
         return Config.getInt('TEST_RESULT_NO_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 5
       }
     }
     let couponCode = null
     if (!resultData.organizationId) {
-      const couponCode = await this.couponService.createCoupon(resultData.email)
+      couponCode = await this.couponService.createCoupon(resultData.email)
       await this.couponService.saveCoupon(
         couponCode,
         resultData.organizationId,
