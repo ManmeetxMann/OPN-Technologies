@@ -76,8 +76,11 @@ describe('PCRTestResultController', () => {
     })
 
     test('get results for lab successfully. date & lab filter', async (done) => {
-      const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}&labId=${labID1}`
-      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}`
+      const result = await request(server.app)
+        .get(url)
+        .set('labid', labID1)
+        .set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(1)
       done()
