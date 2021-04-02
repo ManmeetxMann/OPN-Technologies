@@ -35,7 +35,7 @@ import {
   makeRapidDeadline,
   makeFirestoreTimestamp,
   getTimeFromFirestoreDateTime,
-  makeUtcIsoDate,
+  makeDefaultIsoDate,
 } from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -74,6 +74,7 @@ import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 import {AppointmentToTestTypeRepository} from '../respository/appointment-to-test-type-association.repository'
 import {AppointmentTypes} from '../models/appointment-types'
+import {PackageService} from './package.service'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -89,6 +90,7 @@ export class AppoinmentService {
   private organizationService = new OrganizationService()
   private userAddressService = new UserAddressService()
   private labService = new LabService()
+  private packageService = new PackageService()
   private enterpriseAdapter = new Enterprise()
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
 
@@ -914,7 +916,13 @@ export class AppoinmentService {
 
     const barCodeNumber = await this.getNextBarCodeNumber()
     const appointmentTime = getTimeFromFirestoreDateTime(appointment.dateTime)
-    const dateTime = makeUtcIsoDate(date, appointmentTime)
+    const dateTime = makeDefaultIsoDate(date, appointmentTime)
+
+    const packageCode = await this.packageService.getAllByOrganizationId(
+      appointment.organizationId,
+      1,
+      1,
+    )
 
     const acuityAppointment = await this.acuityRepository.createAppointment({
       dateTime,
@@ -923,7 +931,7 @@ export class AppoinmentService {
       lastName: appointment.lastName,
       email: appointment.email,
       phone: appointment.phone + '',
-      packageCode: appointment.packageCode,
+      packageCode: packageCode[0].packageCode,
       calendarID: appointment.calendarID,
       fields: {
         dateOfBirth: appointment.dateOfBirth,
@@ -1049,7 +1057,7 @@ export class AppoinmentService {
     )
     return slots.map((slot) => {
       return {
-        label: moment(slot.time).format(timeFormats.standard12h),
+        label: moment(slot.time).tz(timeZone).format(timeFormats.standard12h),
         time: slot.time,
       }
     })
