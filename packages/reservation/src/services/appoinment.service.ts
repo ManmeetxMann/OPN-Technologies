@@ -20,6 +20,7 @@ import {
   TestTypes,
   RescheduleAppointmentDTO,
   UpdateTransPortRun,
+  Gender,
 } from '../models/appointment'
 
 import {dateFormats, timeFormats} from '../../../common/src/utils/times'
@@ -572,7 +573,7 @@ export class AppoinmentService {
       locationName: acuityAppointment.calendar,
       locationAddress: acuityAppointment.location,
       testType: await this.getTestType(acuityAppointment.appointmentTypeID),
-      gender: acuityAppointment.gender,
+      gender: acuityAppointment.gender || Gender.PreferNotToSay,
       postalCode: acuityAppointment.postalCode,
     }
   }
