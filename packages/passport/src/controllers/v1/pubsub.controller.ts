@@ -108,7 +108,8 @@ class RecommendationController implements IControllerBase {
   pcrTest: Handler = async (req, res, next): Promise<void> => {
     try {
       const {userId, organizationId, data} = await this.parseMessage(req.body.message)
-      const status = passportStatusByPCR[data.status as ResultTypes]
+      const status = passportStatusByPCR[data.result as ResultTypes]
+
       if (status) {
         const passport = await this.passportService.create(status, userId, [], true, organizationId)
         await this.alertIfNeeded(passport)
