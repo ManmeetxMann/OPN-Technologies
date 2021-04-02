@@ -551,7 +551,6 @@ components:
                   - DoNothing
                   - ReRunToday
                   - ReRunTomorrow
-                  - RequestReCollect
                   - RecollectAsInvalid
                   - RecollectAsInconclusive
                   - MarkAsPositive
@@ -626,7 +625,6 @@ components:
             - SendThisResult
             - ReRunToday
             - ReRunTomorrow
-            - RequestReCollect
             - RecollectAsInvalid
             - RecollectAsInconclusive
             - MarkAsPositive

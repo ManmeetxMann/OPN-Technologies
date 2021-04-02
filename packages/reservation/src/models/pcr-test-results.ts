@@ -47,7 +47,6 @@ export enum PCRResultActions {
   DoNothing = 'DoNothing',
   ReRunToday = 'ReRunToday',
   ReRunTomorrow = 'ReRunTomorrow',
-  RequestReCollect = 'RequestReCollect',
   RecollectAsInvalid = 'RecollectAsInvalid',
   RecollectAsInconclusive = 'RecollectAsInconclusive',
   MarkAsPositive = 'MarkAsPositive',

@@ -752,7 +752,6 @@ export class PCRTestResultsService {
         : waitingPCRTestResult
 
     const actionsForRecollection = [
-      PCRResultActions.RequestReCollect,
       PCRResultActions.RecollectAsInvalid,
       PCRResultActions.RecollectAsInconclusive,
     ]
@@ -915,11 +914,6 @@ export class PCRTestResultsService {
           labId: resultData.labId,
           templateId: resultData.templateId,
         })
-        break
-      }
-      case PCRResultActions.RequestReCollect: {
-        //TODO: Remove this after FE updates
-        await handledReCollect()
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
