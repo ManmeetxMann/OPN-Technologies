@@ -692,13 +692,13 @@ components:
       additionalProperties: false
       properties:
         calendarID:
-          type: number
+          type: string
         appointmentTypeID:
-          type: number
+          type: string
         action:
           type: string
         acuityID:
-          type: number
+          type: string
       required:
         - calendarID
         - appointmentTypeID
