@@ -517,7 +517,7 @@ export class AppoinmentService {
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
     const getNewUserId = async (): Promise<string | null> => {
-      if(Config.getInt('FEATURE_CREATE_USER_ON_ENTERPRISE')){
+      if (Config.getInt('FEATURE_CREATE_USER_ON_ENTERPRISE')) {
         const user = await this.enterpriseAdapter.findOrCreateUser({
           email: acuityAppointment.email,
           firstName: acuityAppointment.firstName,
@@ -531,11 +531,11 @@ export class AppoinmentService {
           receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
           receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
         })
-        return (user.data)?user.data.id:null
+        return user.data ? user.data.id : null
       }
       return null
     }
-    
+
     const currentUserId = userId ? userId : await getNewUserId()
 
     return {

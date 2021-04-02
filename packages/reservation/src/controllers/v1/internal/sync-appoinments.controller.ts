@@ -5,13 +5,12 @@ import {NextFunction, Request, Response, Router} from 'express'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {LogError, LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
-import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 //Services
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {PackageService} from '../../../services/package.service'
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
 //Models
-import {AppointmentSyncRequest, ScheduleWebhookRequest} from '../../../models/webhook'
+import {AppointmentSyncRequest} from '../../../models/webhook'
 import {
   AppointmentStatus,
   AcuityUpdateDTO,

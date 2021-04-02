@@ -2,7 +2,7 @@ import {NextFunction, Request, Response, Router} from 'express'
 
 //Common
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
-import {LogError, LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
+import {LogError, LogInfo} from '../../../../../common/src/utils/logging-setup'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {OPNCloudTasks} from '../../../../../common/src/service/google/cloud_tasks'
 //Models
@@ -20,17 +20,8 @@ class AppointmentWebhookController implements IControllerBase {
     this.router.post(this.path + '/sync', this.createTask)
   }
 
-  createTask = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    const {
-      id,
-      action,
-      calendarID,
-      appointmentTypeID
-    } = req.body as ScheduleWebhookRequest
+  createTask = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const {id, action, calendarID, appointmentTypeID} = req.body as ScheduleWebhookRequest
     try {
       LogInfo('AppointmentWebhookController:createTask', 'SyncRequested', {
         acuityID: id,

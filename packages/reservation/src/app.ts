@@ -60,7 +60,7 @@ export const app = new App({
     new AdminTestKitBatchController(),
     new AppointmentToTestTypeAssociationController(),
     new PulseOxygenController(),
-    new InternalSyncAppointmentController()
+    new InternalSyncAppointmentController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })
