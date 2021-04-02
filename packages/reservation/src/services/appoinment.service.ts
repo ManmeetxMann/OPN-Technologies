@@ -60,7 +60,7 @@ import {
   BulkOperationResponse,
   BulkOperationStatus,
 } from '../types/bulk-operation.type'
-import {AppointmentPushTypes} from '../types/appointment-push'
+import {ReservationPushTypes} from '../types/appointment-push'
 import {DbBatchAppointments} from '../../../common/src/types/push-notification'
 import {PcrResultTestActivityAction} from '../models/pcr-test-results'
 import {AdminScanHistory} from '../models/admin-scan-history'
@@ -1029,8 +1029,8 @@ export class AppoinmentService {
         receiveNotificationsFromGov,
         barCodeNumber,
         scheduledPushesToSend: [
-          AppointmentPushTypes.before24hours,
-          AppointmentPushTypes.before3hours,
+          ReservationPushTypes.before24hours,
+          ReservationPushTypes.before3hours,
         ],
       },
     })
@@ -1494,7 +1494,7 @@ export class AppoinmentService {
           map: '/',
           key: 'scheduledPushesToSend',
           operator: DataModelFieldMapOperatorType.ArrayContainsAny,
-          value: [AppointmentPushTypes.before24hours, AppointmentPushTypes.before3hours],
+          value: [ReservationPushTypes.before24hours, ReservationPushTypes.before3hours],
         },
       ],
       {

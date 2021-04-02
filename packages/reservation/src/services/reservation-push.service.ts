@@ -3,15 +3,15 @@ import moment from 'moment'
 import * as _ from 'lodash'
 
 //Common
-import {sendBulkMessagesByToken} from '../../../common/src/service/messaging/push-notify-service'
+import {sendBulkPushByToken} from '../../../common/src/service/messaging/push-notify-service'
 import {Config} from '../../../common/src/utils/config'
 
 //Services
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
-import {AppoinmentService} from '../services/appoinment.service'
+import {AppoinmentService} from './appoinment.service'
 
 //Types
-import {AppointmentPushTypes} from '../types/appointment-push'
+import {ReservationPushTypes} from '../types/appointment-push'
 import {PushMessages, DbBatchAppointments} from '../../../common/src/types/push-notification'
 import {Registration} from '../../../common/src/data/registration'
 
@@ -51,7 +51,7 @@ interface AppointmentWithMeta {
   pushToken: string
 }
 
-export class AppointmentPushService {
+export class ReservationPushService {
   private registrationService = new RegistrationService()
   private appointmentService = new AppoinmentService()
   private timeZone = Config.get('DEFAULT_TIME_ZONE')
@@ -63,18 +63,23 @@ export class AppointmentPushService {
   private pushSenderChunkSize = 1
 
   private messageBeforeHours = {
-    [AppointmentPushTypes.before24hours]: 24,
-    [AppointmentPushTypes.before3hours]: 3,
+    [ReservationPushTypes.before24hours]: 24,
+    [ReservationPushTypes.before3hours]: 3,
   }
 
-  private messageTitle = 'TODO title'
+  private messageTitle = {
+    [ReservationPushTypes.before24hours]: 'Upcoming Covid-19 Test',
+    [ReservationPushTypes.before3hours]: 'Your Covid-19 Test is Today',
+    [ReservationPushTypes.ready]: 'Covid-19 Test Results',
+    [ReservationPushTypes.reSample]: 'Covid-19 Resample Required',
+  }
   private messagesBody = {
-    [AppointmentPushTypes.before24hours]: (dateTime, clinicName) =>
+    [ReservationPushTypes.before24hours]: (dateTime, clinicName) =>
       `Copy: You have a Covid-19 test scheduled for ${dateTime} at our ${clinicName} location.`,
-    [AppointmentPushTypes.before3hours]: (dateTime, clinicName) =>
+    [ReservationPushTypes.before3hours]: (dateTime, clinicName) =>
       `Your Covid-19 test is scheduled for today at ${dateTime} at our ${clinicName} location.`,
-    [AppointmentPushTypes.ready]: () => `Your Covid-19 test result is ready. Tap here to view.`,
-    [AppointmentPushTypes.reSample]: () =>
+    [ReservationPushTypes.ready]: () => `Your Covid-19 test result is ready. Tap here to view.`,
+    [ReservationPushTypes.reSample]: () =>
       `We need another sample to complete your Covid-19 test. Please book another appointment.`,
   }
 
@@ -106,11 +111,11 @@ export class AppointmentPushService {
   private isMessageToSend = (
     appointment,
     hoursOffset: number,
-    appointmentType: AppointmentPushTypes,
+    appointmentType: ReservationPushTypes,
   ): boolean => {
     const nowDateTime = moment(new Date()).tz(this.timeZone)
     const needsSend = appointment.scheduledPushesToSend?.some((scheduledPushes) => {
-      return scheduledPushes === AppointmentPushTypes[appointmentType]
+      return scheduledPushes === ReservationPushTypes[appointmentType]
     })
     const isInTimeSpan = moment(appointment.dateTime).isBetween(
       nowDateTime.clone().add(hoursOffset - this.maxNotifyShiftHours, 'hours'),
@@ -148,11 +153,11 @@ export class AppointmentPushService {
       // Each reminder type
       for (const appointmentPushType in this.messageBeforeHours) {
         const hours = this.messageBeforeHours[appointmentPushType]
-        if (this.isMessageToSend(appointment, hours, AppointmentPushTypes[appointmentPushType])) {
+        if (this.isMessageToSend(appointment, hours, ReservationPushTypes[appointmentPushType])) {
           pushMessages.push({
             token: appointment.pushToken,
             notification: {
-              title: this.messageTitle,
+              title: this.messageTitle[appointmentPushType],
               body: this.messagesBody[appointmentPushType](
                 appointment.dateTime,
                 appointment.locationName,
@@ -202,7 +207,7 @@ export class AppointmentPushService {
     for (const messageChunkKey in chunks) {
       const messageChunk = chunks[messageChunkKey]
       // Send chunk of pushes via FCM
-      const pushResult = await sendBulkMessagesByToken(messageChunk)
+      const pushResult = await sendBulkPushByToken(messageChunk)
       const batchAppointments: DbBatchAppointments[] = pushResult.responses.map((el, index) => ({
         appointmentId: messageChunk[index].data.appointmentId,
         scheduledAppointmentType: Number(messageChunk[index].data.scheduledAppointmentType),
@@ -220,5 +225,29 @@ export class AppointmentPushService {
     }
 
     return sendExecutionStats
+  }
+
+  /**
+   * Sends a push to the user by userId and type of message
+   */
+  async sendPushByUserId(
+    userId: string,
+    messageType: ReservationPushTypes,
+    data?: {[key: string]: string},
+  ): Promise<unknown> {
+    const tokens = await this.registrationService.findForUserIds([userId])
+    const recentUserToken = this.getRecentUsersToken(tokens)
+
+    const message: PushMessages = {
+      token: recentUserToken[userId],
+      notification: {
+        title: this.messageTitle[messageType],
+        body: this.messagesBody[messageType](null, null),
+      },
+      data,
+    }
+
+    const pushResult = await sendBulkPushByToken([message])
+    return pushResult
   }
 }

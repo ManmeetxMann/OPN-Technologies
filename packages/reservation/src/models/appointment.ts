@@ -3,7 +3,7 @@ import {isSameOrBefore} from '../utils/datetime.helper'
 
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
-import {AppointmentPushTypes} from '../types/appointment-push'
+import {ReservationPushTypes} from '../types/appointment-push'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
@@ -78,7 +78,7 @@ export type AppointmentDBModel = {
   locationAddress?: string
   testType: TestTypes
   labId?: string
-  scheduledPushesToSend?: AppointmentPushTypes[]
+  scheduledPushesToSend?: ReservationPushTypes[]
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard

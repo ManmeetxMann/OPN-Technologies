@@ -55,7 +55,7 @@ export const sendMessage = (
   )
 }
 
-export const sendBulkMessagesByToken = async (
+export const sendBulkPushByToken = async (
   pushMessages: PushMessages[],
 ): Promise<admin.messaging.BatchResponse> => {
   const messages: admin.messaging.Message[] = pushMessages
