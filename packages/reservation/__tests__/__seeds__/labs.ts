@@ -9,6 +9,7 @@ export const create = async (dataOverwrite: {
 }): Promise<void> => {
   const data = {
     name: 'Lab1',
+    isIntegration: true,
     timestamps: {
       createdAt: firestore.Timestamp.fromDate(new Date(dataOverwrite.createdAt)),
       updatedAt: null,
@@ -20,7 +21,7 @@ export const create = async (dataOverwrite: {
 }
 
 export const deleteAll = async (): Promise<void> => {
-  const appointments_query = database.collection(collectionName)
+  const appointments_query = database.collection(collectionName).where('isIntegration', '==', true)
   await appointments_query.get().then(function (querySnapshot) {
     querySnapshot.forEach(function (doc) {
       doc.ref.delete()
