@@ -8,6 +8,7 @@ import {Temperature, TemperatureDBModel, TemperatureStatuses} from '../models/te
 import {TemperatureRepository} from '../respository/temperature.repository'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {Enterprise} from '../adapter/enterprise'
+import {UserService} from '../../../common/src/service/user/user-service'
 
 export class TemperatureService {
   private dataStore = new DataStore()
@@ -15,6 +16,7 @@ export class TemperatureService {
   // private pubsub = new OPNPubSub(Config.get('TEMPERATURE_TOPIC'))
   private adapter = new PassportAdapter()
   private enterpriseAdapter = new Enterprise()
+  private userService = new UserService()
 
   async save(temperature: Temperature): Promise<TemperatureDBModel> {
     const temp = await this.temperatureRepository.add(temperature)
@@ -59,7 +61,10 @@ export class TemperatureService {
       throw new BadRequestException(`Invalid Request`)
     }
 
-    if (temperature.organizationId !== organizationId || temperature.userId !== userId) {
+    const isParent = await this.userService.isParentForChild(userId, temperature.userId)
+    const isNotParentAndAuthUser = temperature.userId !== userId && !isParent
+
+    if (temperature.organizationId !== organizationId || isNotParentAndAuthUser) {
       LogInfo('getByUserIdAndOrganizationId', 'NotAuthorized', {
         temperatureId: id,
         organizationId,

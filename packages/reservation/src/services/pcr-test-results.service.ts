@@ -1789,8 +1789,10 @@ export class PCRTestResultsService {
       throw new ResourceNotFoundException(`PCRTestResult with id ${id} not found`)
     }
 
+    const isParent = await this.userService.isParentForChild(userId, pcrTestResult?.userId)
+
     //TODO
-    if (pcrTestResult?.userId !== userId) {
+    if (pcrTestResult?.userId !== userId && !isParent) {
       throw new ResourceNotFoundException(`${id} does not exist`)
     }
 
@@ -1803,7 +1805,7 @@ export class PCRTestResultsService {
         `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${id}`,
       )
     }
-    if (appointment?.userId !== userId) {
+    if (appointment?.userId !== userId && !isParent) {
       LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
         userId,
         resultId: id,
