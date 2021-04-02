@@ -69,7 +69,7 @@ export class AttestationService {
         const org = await this.orgService.findOneById(att.organizationId)
         await Promise.all(
           att.appliesTo.map(async (userId) => {
-            await this.postPubsub(att)
+            await this.postPubsub({...att, userId})
             const passportStatus = this.statusFor(
               att.status as PassportStatuses,
               org.enableTemperatureCheck,
