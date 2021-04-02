@@ -98,7 +98,7 @@ class AdminTemperatureController implements IControllerBase {
         organizationId,
         locationId: attestation.locationId,
         temperature,
-        status,
+        status: isHighTemperatureStatus ? TemperatureStatuses.Stop : TemperatureStatuses.Proceed,
         userId,
       }
 
