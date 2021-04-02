@@ -303,6 +303,10 @@ abstract class AcuityAdapter {
         throw new BadRequestException(
           `${getDateDefaultHumanReadable(datetime)} is not available for appointments`,
         )
+      } else if (result.error === 'certificate_uses') {
+        throw new BadRequestException(
+          `You organization has no more appointment credits left on account. Please contact your account manager.`,
+        )
       }
       throw new BadRequestException(result.message)
     }
