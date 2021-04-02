@@ -4,11 +4,13 @@ import DataStore from '../../../common/src/data/datastore'
 import {PulseOxygenDBModel} from '../models/pulse-oxygen'
 import {PulseOxygenRepository} from '../respository/pulse-oxygen.repository'
 import {Enterprise} from '../adapter/enterprise'
+import {UserService} from '../../../common/src/service/user/user-service'
 
 export class PulseOxygenService {
   private dataStore = new DataStore()
   private pulseOxygenRepository = new PulseOxygenRepository(this.dataStore)
   private enterpriseAdapter = new Enterprise()
+  private userService = new UserService()
 
   private async postPulse(pulseResult: PulseOxygenDBModel): Promise<void> {
     await this.enterpriseAdapter.postPulse({
@@ -40,7 +42,10 @@ export class PulseOxygenService {
       throw new ResourceNotFoundException(`Resource not found for given ID: ${id}`)
     }
 
-    if (pulseOxygen.organizationId !== organizationId || pulseOxygen.userId !== userId) {
+    const isParent = await this.userService.isParentForChild(userId, pulseOxygen.userId)
+    const isNotParentAndAuthUser = pulseOxygen.userId !== userId && !isParent
+
+    if (pulseOxygen.organizationId !== organizationId || isNotParentAndAuthUser) {
       throw new BadRequestException(`Not Authorized to view details`)
     }
 
