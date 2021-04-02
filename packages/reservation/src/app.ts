@@ -27,6 +27,7 @@ import InternalRapidAntigenResultEmailSendController from './controllers/v1/inte
 import AdminClinicController from './controllers/v1/admin/clinic.controller'
 import AdminTestKitBatchController from './controllers/v1/admin/test-kit-batch.controller'
 import AppointmentToTestTypeAssociationController from './controllers/v1/admin/appointment-to-test-type-association.controller'
+import InternalSyncAppointmentController from './controllers/v1/internal/sync-appoinments.controller'
 
 const PORT = Number(process.env.PORT) || 5008
 
@@ -59,6 +60,7 @@ export const app = new App({
     new AdminTestKitBatchController(),
     new AppointmentToTestTypeAssociationController(),
     new PulseOxygenController(),
+    new InternalSyncAppointmentController()
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })

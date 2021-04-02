@@ -517,24 +517,25 @@ export class AppoinmentService {
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
     const getNewUserId = async (): Promise<string | null> => {
-      return Config.getInt('FEATURE_CREATE_USER_ON_ENTERPRISE')
-        ? (
-            await this.enterpriseAdapter.findOrCreateUser({
-              email: acuityAppointment.email,
-              firstName: acuityAppointment.firstName,
-              lastName: acuityAppointment.lastName,
-              organizationId: acuityAppointment.organizationId || '',
-              address: acuityAppointment.address,
-              dateOfBirth: acuityAppointment.dateOfBirth,
-              agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
-              shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
-              readTermsAndConditions: acuityAppointment.readTermsAndConditions,
-              receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
-              receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
-            })
-          ).data.id
-        : null
+      if(Config.getInt('FEATURE_CREATE_USER_ON_ENTERPRISE')){
+        const user = await this.enterpriseAdapter.findOrCreateUser({
+          email: acuityAppointment.email,
+          firstName: acuityAppointment.firstName,
+          lastName: acuityAppointment.lastName,
+          organizationId: acuityAppointment.organizationId || '',
+          address: acuityAppointment.address,
+          dateOfBirth: acuityAppointment.dateOfBirth,
+          agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
+          shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
+          readTermsAndConditions: acuityAppointment.readTermsAndConditions,
+          receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
+          receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
+        })
+        return (user.data)?user.data.id:null
+      }
+      return null
     }
+    
     const currentUserId = userId ? userId : await getNewUserId()
 
     return {
