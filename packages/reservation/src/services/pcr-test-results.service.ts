@@ -147,6 +147,7 @@ export class PCRTestResultsService {
     const reCollectNumber = 0 //Not Relevant
     let finalResult: ResultTypes = ResultTypes.Indeterminate
     let notificationType = EmailNotficationTypes.Indeterminate
+    let recollected = false
     switch (data.action) {
       case PCRResultActionsForConfirmation.MarkAsNegative: {
         finalResult = ResultTypes.Negative
@@ -161,6 +162,7 @@ export class PCRTestResultsService {
       case PCRResultActionsForConfirmation.Indeterminate: {
         finalResult = ResultTypes.Inconclusive
         notificationType = EmailNotficationTypes.Indeterminate
+        recollected = true
         break
       }
     }
@@ -174,6 +176,7 @@ export class PCRTestResultsService {
       confirmed: true,
       previousResult: latestPCRResult.result,
       labId: latestPCRResult.labId,
+      recollected
     })
 
     const lab = await this.labService.findOneById(latestPCRResult.labId)

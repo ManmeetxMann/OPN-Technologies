@@ -32,7 +32,7 @@ describe('PCR TestResultsController', () => {
 
               {
                 'barCode': 'TEST10000146',
-                'action': 'Indeterminate', // Indeterminate, MarkAsPositive, MarkAsNegative
+                'action': 'MarkAsPositive', // Indeterminate, MarkAsPositive, MarkAsNegative
                 'labId': 'k0qbPDqTwqitKUwlGHye',
               },
           )
