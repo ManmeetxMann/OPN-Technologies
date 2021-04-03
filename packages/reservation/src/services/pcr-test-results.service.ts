@@ -98,7 +98,6 @@ export class PCRTestResultsService {
   private couponService = new CouponService()
   private emailService = new EmailService()
   private userService = new UserService()
-  private couponCode: string
   private whiteListedResultsTypes = [
     ResultTypes.Negative,
     ResultTypes.Positive,
@@ -148,6 +147,7 @@ export class PCRTestResultsService {
     const reCollectNumber = 0 //Not Relevant
     let finalResult: ResultTypes = ResultTypes.Indeterminate
     let notificationType = EmailNotficationTypes.Indeterminate
+    let recollected = false
     switch (data.action) {
       case PCRResultActionsForConfirmation.MarkAsNegative: {
         finalResult = ResultTypes.Negative
@@ -157,6 +157,12 @@ export class PCRTestResultsService {
       case PCRResultActionsForConfirmation.MarkAsPositive: {
         finalResult = ResultTypes.Positive
         notificationType = EmailNotficationTypes.MarkAsConfirmedPositive
+        break
+      }
+      case PCRResultActionsForConfirmation.Indeterminate: {
+        finalResult = ResultTypes.Inconclusive
+        notificationType = EmailNotficationTypes.Indeterminate
+        recollected = true
         break
       }
     }
@@ -170,6 +176,7 @@ export class PCRTestResultsService {
       confirmed: true,
       previousResult: latestPCRResult.result,
       labId: latestPCRResult.labId,
+      recollected,
     })
 
     const lab = await this.labService.findOneById(latestPCRResult.labId)
@@ -666,7 +673,9 @@ export class PCRTestResultsService {
     const pcrTestResults = await this.getPCRResultsByBarCode(barCode)
 
     const waitingPCRTestResult = await this.getWaitingPCRTestResult(pcrTestResults)
-    const isAlreadyReported = appointment.appointmentStatus === AppointmentStatus.Reported
+    const isAlreadyReported =
+      appointment.appointmentStatus === AppointmentStatus.Reported ||
+      appointment.appointmentStatus === AppointmentStatus.ReCollectRequired
     const inProgress = appointment.appointmentStatus === AppointmentStatus.InProgress
     const finalResult = this.getFinalResult(metaData.action, metaData.autoResult, barCode)
 
@@ -752,7 +761,6 @@ export class PCRTestResultsService {
         : waitingPCRTestResult
 
     const actionsForRecollection = [
-      PCRResultActions.RequestReCollect,
       PCRResultActions.RecollectAsInvalid,
       PCRResultActions.RecollectAsInconclusive,
     ]
@@ -845,22 +853,6 @@ export class PCRTestResultsService {
         appointment.id,
         resultData.adminId,
       )
-
-      if (!appointment.organizationId) {
-        //TODO: Move this to Email Function
-        this.couponCode = await this.couponService.createCoupon(appointment.email)
-        await this.couponService.saveCoupon(
-          this.couponCode,
-          appointment.organizationId,
-          resultData.barCode,
-        )
-        LogInfo('handleActions->handledReCollect', 'CouponCodeCreated', {
-          barCode: resultData.barCode,
-          organizationId: appointment.organizationId,
-          appointmentId: appointment.id,
-          appointmentEmail: appointment.email,
-        })
-      }
     }
     switch (resultData.action) {
       case PCRResultActions.SendPreliminaryPositive: {
@@ -917,11 +909,6 @@ export class PCRTestResultsService {
         })
         break
       }
-      case PCRResultActions.RequestReCollect: {
-        //TODO: Remove this after FE updates
-        await handledReCollect()
-        break
-      }
       case PCRResultActions.RecollectAsInvalid: {
         await handledReCollect()
         break
@@ -954,7 +941,6 @@ export class PCRTestResultsService {
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
   ): Promise<void> {
-    this.postPubsub(resultData, 'result')
     let addSuccessLog = true
     switch (notficationType) {
       case PCRResultActions.SendPreliminaryPositive: {
@@ -969,16 +955,15 @@ export class PCRTestResultsService {
         await this.sendEmailNotification(resultData)
         break
       }
-      case PCRResultActions.RequestReCollect: {
-        //TODO Remove This
-        await this.sendReCollectNotification(resultData)
-        break
-      }
       case PCRResultActions.RecollectAsInconclusive: {
         await this.sendReCollectNotification(resultData)
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
+        await this.sendReCollectNotification(resultData)
+        break
+      }
+      case EmailNotficationTypes.Indeterminate: {
         await this.sendReCollectNotification(resultData)
         break
       }
@@ -1014,6 +999,7 @@ export class PCRTestResultsService {
         notficationType,
         resultSent: resultData.result,
       })
+      this.postPubsub(resultData, 'result')
     }
   }
 
@@ -1079,26 +1065,37 @@ export class PCRTestResultsService {
 
   async sendReCollectNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
     const getTemplateId = (): number => {
-      if (resultData.result === ResultTypes.Inconclusive) {
+      if (!!resultData.organizationId) {
+        return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
+      } else if (resultData.result === ResultTypes.Inconclusive) {
         return (
           Config.getInt('TEST_RESULT_NO_ORG_INCONCLUSIVE_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 8
         )
-      } else if (!!resultData.organizationId) {
-        return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
       } else {
         return Config.getInt('TEST_RESULT_NO_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 5
       }
     }
+    let couponCode = null
+    if (!resultData.organizationId) {
+      couponCode = await this.couponService.createCoupon(resultData.email)
+      await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
+      LogInfo('sendReCollectNotification', 'CouponCodeCreated', {
+        barCode: resultData.barCode,
+        organizationId: resultData.organizationId,
+        appointmentId: resultData.appointmentId,
+        appointmentEmail: resultData.email,
+      })
+    }
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
     const owner = Config.get('ACUITY_SCHEDULER_USERNAME')
-    const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${this.couponCode}`
+    const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${couponCode}`
     const templateId = getTemplateId()
 
     await this.emailService.send({
       templateId: templateId,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
-        COUPON_CODE: this.couponCode,
+        COUPON_CODE: couponCode,
         BOOKING_LINK: appointmentBookingLink,
         FIRSTNAME: resultData.firstName,
       },
