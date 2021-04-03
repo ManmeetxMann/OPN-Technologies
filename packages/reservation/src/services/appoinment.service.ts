@@ -386,6 +386,11 @@ export class AppoinmentService {
     return this.acuityRepository.getAppointmentByIdFromAcuity(id)
   }
 
+  async getAppointmentOnlyDBById(id: string): Promise<AppointmentDBModel> {
+    const appointment = await this.appointmentsRepository.get(id)
+    return appointment
+  }
+
   async getAppointmentDBById(id: string): Promise<AppointmentDBModel & {organizationName: string}> {
     const appointment = await this.appointmentsRepository.get(id)
     const organization = await this.organizationService.findOneById(appointment.organizationId)
