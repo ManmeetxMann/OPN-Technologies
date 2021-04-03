@@ -66,6 +66,11 @@ export enum PCRResultActionsAllowedResend {
   SendThisResult = 'SendThisResult',
   MarkAsPositive = 'MarkAsPositive',
   MarkAsNegative = 'MarkAsNegative',
+  RecollectAsInconclusive = 'RecollectAsInconclusive',
+  RecollectAsInvalid = 'RecollectAsInvalid',
+  ReRunToday = 'ReRunToday',
+  ReRunTomorrow = 'ReRunTomorrow',
+  SendPreliminaryPositive = 'SendPreliminaryPositive'
 }
 
 //Possible report Status when Results are sent

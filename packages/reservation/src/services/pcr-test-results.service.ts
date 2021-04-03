@@ -670,7 +670,7 @@ export class PCRTestResultsService {
     const pcrTestResults = await this.getPCRResultsByBarCode(barCode)
 
     const waitingPCRTestResult = await this.getWaitingPCRTestResult(pcrTestResults)
-    const isAlreadyReported = appointment.appointmentStatus === AppointmentStatus.Reported
+    const isAlreadyReported = (appointment.appointmentStatus === AppointmentStatus.Reported || appointment.appointmentStatus === AppointmentStatus.ReCollectRequired)
     const inProgress = appointment.appointmentStatus === AppointmentStatus.InProgress
     const finalResult = this.getFinalResult(metaData.action, metaData.autoResult, barCode)
 
@@ -1078,7 +1078,7 @@ export class PCRTestResultsService {
         resultData.organizationId,
         resultData.barCode,
       )
-      LogInfo('handleActions->handledReCollect', 'CouponCodeCreated', {
+      LogInfo('sendReCollectNotification', 'CouponCodeCreated', {
         barCode: resultData.barCode,
         organizationId: resultData.organizationId,
         appointmentId: resultData.appointmentId,
