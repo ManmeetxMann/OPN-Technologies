@@ -67,7 +67,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     result?: ResultTypes
     waitingResult?: boolean
     confirmed?: boolean
-    previousResult: ResultTypes,
+    previousResult: ResultTypes
     recollected?: boolean
   }): Promise<PCRTestResultDBModel> {
     //Reset Display for all OLD results

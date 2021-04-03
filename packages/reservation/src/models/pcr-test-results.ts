@@ -70,7 +70,7 @@ export enum PCRResultActionsAllowedResend {
   RecollectAsInvalid = 'RecollectAsInvalid',
   ReRunToday = 'ReRunToday',
   ReRunTomorrow = 'ReRunTomorrow',
-  SendPreliminaryPositive = 'SendPreliminaryPositive'
+  SendPreliminaryPositive = 'SendPreliminaryPositive',
 }
 
 //Possible report Status when Results are sent

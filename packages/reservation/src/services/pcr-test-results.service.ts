@@ -176,7 +176,7 @@ export class PCRTestResultsService {
       confirmed: true,
       previousResult: latestPCRResult.result,
       labId: latestPCRResult.labId,
-      recollected
+      recollected,
     })
 
     const lab = await this.labService.findOneById(latestPCRResult.labId)
@@ -673,7 +673,9 @@ export class PCRTestResultsService {
     const pcrTestResults = await this.getPCRResultsByBarCode(barCode)
 
     const waitingPCRTestResult = await this.getWaitingPCRTestResult(pcrTestResults)
-    const isAlreadyReported = (appointment.appointmentStatus === AppointmentStatus.Reported || appointment.appointmentStatus === AppointmentStatus.ReCollectRequired)
+    const isAlreadyReported =
+      appointment.appointmentStatus === AppointmentStatus.Reported ||
+      appointment.appointmentStatus === AppointmentStatus.ReCollectRequired
     const inProgress = appointment.appointmentStatus === AppointmentStatus.InProgress
     const finalResult = this.getFinalResult(metaData.action, metaData.autoResult, barCode)
 
@@ -1069,18 +1071,14 @@ export class PCRTestResultsService {
         return (
           Config.getInt('TEST_RESULT_NO_ORG_INCONCLUSIVE_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 8
         )
-      } else  {
+      } else {
         return Config.getInt('TEST_RESULT_NO_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 5
       }
     }
     let couponCode = null
     if (!resultData.organizationId) {
       couponCode = await this.couponService.createCoupon(resultData.email)
-      await this.couponService.saveCoupon(
-        couponCode,
-        resultData.organizationId,
-        resultData.barCode,
-      )
+      await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
       LogInfo('sendReCollectNotification', 'CouponCodeCreated', {
         barCode: resultData.barCode,
         organizationId: resultData.organizationId,
