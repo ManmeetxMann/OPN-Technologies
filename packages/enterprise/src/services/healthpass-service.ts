@@ -6,6 +6,8 @@ import {safeTimestamp, isPassed} from '../../../common/src/utils/datetime-util'
 import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 
+import {AppoinmentService} from '../../../reservation/src/services/appoinment.service'
+
 import {OrganizationModel} from '../repository/organization.repository'
 import {UserActionsRepository} from '../repository/action-items.repository'
 import {ActionItem} from '../models/action-items'
@@ -22,6 +24,7 @@ export class HealthpassService {
   private dataStore = new DataStore()
   private organizationRepository = new OrganizationModel(this.dataStore)
   private userRepository = new UserModel(this.dataStore)
+  private appointmentService = new AppoinmentService()
 
   private getItems = async (userId: string, orgId: string): Promise<ActionItem> => {
     const itemsRepo = new UserActionsRepository(this.dataStore, userId)
@@ -136,5 +139,23 @@ export class HealthpassService {
       })
     }
     return {tests, expiry, status}
+  }
+
+  async getDobFromLastPCR(pass: HealthPass): Promise<string | null> {
+    const testsPCR = pass.tests
+      .filter((test) => test.type === HealthPassType.PCR)
+      .sort((current, next) => {
+        const currentDate = new Date(current.date).getDate()
+        const nextDate = new Date(next.date).getDate()
+        return nextDate - currentDate
+      })
+
+    if (testsPCR[0]) {
+      const testId = testsPCR[0].id
+      const appointment = await this.appointmentService.getAppointmentOnlyDBById(testId)
+      return appointment.dateOfBirth
+    }
+
+    return null
   }
 }

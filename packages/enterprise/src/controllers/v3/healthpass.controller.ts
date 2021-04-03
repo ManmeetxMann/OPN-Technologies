@@ -58,11 +58,12 @@ class RecommendationController implements IControllerBase {
             if (!pass.expiry) {
               return null
             }
+            const dateOfBirth = await this.passService.getDobFromLastPCR(pass)
             return {
               user: userDTO(user),
               group: organizationGroupDTOResponse(group),
               ...pass,
-              dateOfBirth: pass.expiry ?? null, // TODO: Stub
+              dateOfBirth,
             }
           }),
         )
