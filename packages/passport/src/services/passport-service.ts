@@ -283,13 +283,20 @@ export class PassportService {
         passportStatus,
       )
     ) {
-      const weeksToAdd = parseInt(Config.get('STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_WEEKS'))
+      const weeksToAdd = parseInt(
+        Config.get(
+          isPCR ? 'STOP_PASSPORT_EXPIRY_PCR_HOURS' : 'STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_WEEKS',
+        ),
+      )
+      if (isPCR) {
+        return moment(validFrom).add(weeksToAdd, 'hours').toDate()
+      }
       // TODO: end of day?
       return moment(validFrom).add(weeksToAdd, 'weeks').toDate()
     }
     // valid passes remain until they are this old
     const expiryDuration = parseInt(
-      Config.get(isPCR ? 'PCR_VALIDITY_HOURS' : 'PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'),
+      Config.get(isPCR ? 'PASSPORT_EXPIRY_PCR_HOURS' : 'PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'),
     )
     const byDuration = moment(validFrom).add(expiryDuration, 'hours')
 

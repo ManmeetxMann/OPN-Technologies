@@ -111,7 +111,16 @@ class RecommendationController implements IControllerBase {
       const status = passportStatusByPCR[data.result as ResultTypes]
 
       if (status) {
-        const passport = await this.passportService.create(status, userId, [], true, organizationId)
+        const includesGuardian = true
+        const isPCR = true
+        const passport = await this.passportService.create(
+          status,
+          userId,
+          [],
+          includesGuardian,
+          organizationId,
+          isPCR,
+        )
         await this.alertIfNeeded(passport)
       }
       res.sendStatus(200)
