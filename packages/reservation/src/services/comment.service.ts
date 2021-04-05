@@ -1,6 +1,6 @@
 import DataStore from '../../../common/src/data/datastore'
 import {CommentRepository} from '../respository/comment.repository'
-import { Comment } from "../models/comment";
+import {Comment} from '../models/comment'
 
 export class CommentService {
   private dataStore = new DataStore()
@@ -10,6 +10,10 @@ export class CommentService {
     return this.commentRepository.findWhereEqual('testResultId', testResultId)
   }
 
+  getRepliesByCommentId = (commentId: string): Promise<Comment[]> => {
+    return this.commentRepository.findWhereEqual('replyTo', commentId)
+  }
+
   addComment = ({
     testResultId,
     comment,
@@ -17,6 +21,7 @@ export class CommentService {
     assignedTo,
     internal,
     addedBy,
+    replyTo,
   }: {
     testResultId: string
     comment: string
@@ -24,14 +29,16 @@ export class CommentService {
     assignedTo?: string
     internal: boolean
     addedBy: string
+    replyTo?: string
   }): Promise<void> => {
     return this.commentRepository.save({
       testResultId: testResultId,
       comment: comment,
       attachmentUrls: attachmentUrls,
-      assignedTo: assignedTo,
+      assignedTo: assignedTo || null,
       internal: internal,
       addedBy: addedBy,
+      replyTo: replyTo || null,
     })
   }
 }

@@ -2863,7 +2863,6 @@ paths:
               required:
                 - comment
                 - attachmentUrls
-                - assignedTo
                 - internal
       responses:
         '200':

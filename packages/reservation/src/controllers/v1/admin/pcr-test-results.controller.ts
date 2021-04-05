@@ -29,6 +29,8 @@ import {
   SingleTestResultsRequest,
   TestResultCommentParamRequest,
   TestResultCommentBodyRequest,
+  TestResultReplyCommentBodyRequest,
+  TestResultReplyCommentParamRequest,
 } from '../../../models/pcr-test-results'
 import {FilterGroupKey, FilterName, statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
@@ -114,6 +116,12 @@ class AdminPCRTestResultController implements IControllerBase {
       this.path + '/test-results/:testResultId/comment',
       listTestResultsAuth,
       this.addComment,
+    )
+
+    innerRouter.post(
+      this.path + '/test-results/{testResultId}/comment/{commentId}/reply',
+      listTestResultsAuth,
+      this.replyComment,
     )
 
     this.router.use('/', innerRouter)
@@ -518,6 +526,33 @@ class AdminPCRTestResultController implements IControllerBase {
         assignedTo: assignedTo,
         internal,
         addedBy: adminId,
+      })
+
+      res.json(actionSucceed())
+    } catch (error) {
+      next(error)
+    }
+  }
+  replyComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {testResultId, commentId} = req.params as TestResultReplyCommentParamRequest
+      const adminId = getUserId(res.locals.authenticatedUser)
+
+      const {reply, attachmentUrls} = req.body as TestResultReplyCommentBodyRequest
+
+      const comments = await this.commentService.getRepliesByCommentId(testResultId)
+
+      if (comments.length >= 50) {
+        throw new BadRequestException(`Comments quantity should be maximum 50`)
+      }
+
+      await this.commentService.addComment({
+        testResultId,
+        comment: reply,
+        attachmentUrls: attachmentUrls,
+        internal: false,
+        addedBy: adminId,
+        replyTo: commentId,
       })
 
       res.json(actionSucceed())

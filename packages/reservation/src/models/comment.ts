@@ -6,4 +6,5 @@ export type Comment = {
   assignedTo?: string
   internal: boolean
   addedBy: string
+  replyTo: string
 }
