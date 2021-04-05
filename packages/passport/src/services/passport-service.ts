@@ -289,7 +289,7 @@ export class PassportService {
     }
     // valid passes remain until they are this old
     const expiryDuration = parseInt(
-      Config.get(isPCR ? 'PCR_VALIDITY_HOURS' : 'PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'),
+      Config.get(isPCR ? 'PASSPORT_EXPIRY_PCR_HOURS' : 'PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'),
     )
     const byDuration = moment(validFrom).add(expiryDuration, 'hours')
 
