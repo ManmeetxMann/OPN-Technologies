@@ -260,13 +260,13 @@ export class RecommendationService {
       case Recommendations.ViewNegativeTemp: {
         title = 'View Temperature Result'
         body = 'Temperature Details'
-        id = items.latestTemperature.temperatureId
+        id = items.latestTemperature?.temperatureId
         break
       }
       case Recommendations.ViewPositiveTemp: {
         title = 'View Temperature Result'
         body = 'Temperature Details'
-        id = items.latestTemperature.temperatureId
+        id = items.latestTemperature?.temperatureId
         break
       }
     }
