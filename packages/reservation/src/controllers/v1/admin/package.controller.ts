@@ -37,6 +37,11 @@ class AdminPackageController implements IControllerBase {
       authorizationMiddleware([RequiredUserPermission.OPNAdmin]),
       this.getPackageList,
     )
+    innerRouter.get(
+      this.path + '/api/v1/packages/appointment-credits',
+      authorizationMiddleware([RequiredUserPermission.LabOrOrgAppointments]),
+      this.getAppointmentCredits,
+    )
 
     this.router.use('/', innerRouter)
   }
@@ -81,6 +86,23 @@ class AdminPackageController implements IControllerBase {
       const results = await this.packageService.getPackageList(Boolean(all))
 
       res.json(actionSucceed(results))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getAppointmentCredits = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const {packageCode} = req.query as {packageCode: string}
+      const {organizationid} = req.headers as {organizationid: string}
+
+      const credits = await this.packageService.getPackageListByOrgId(packageCode, organizationid)
+
+      res.json(actionSucceed(credits))
     } catch (error) {
       next(error)
     }
