@@ -71,6 +71,10 @@ export class PdfService {
           font: 'Helvetica',
           alignment: 'center',
         },
+        disclaimer: {
+          fontSize: 7,
+          font: 'Helvetica',
+        },
       },
       defaultStyle: {
         color: '#666666',

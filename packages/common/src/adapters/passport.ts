@@ -11,7 +11,7 @@ export default class PassportAdapter {
     status: string,
     attestationId: string = null,
   ): Promise<void> {
-    const url = `${APIURL}/passport/internal/api/v1/passport`
+    const url = `${APIURL}passport/internal/api/v1/passport`
     const body = JSON.stringify({
       organizationId,
       userId,

@@ -14,6 +14,7 @@ import {PassportStatuses, PassportStatus} from '../../../passport/src/models/pas
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 import {ResultTypes, AppointmentStatus} from '../../../reservation/src/models/appointment'
 import moment from 'moment'
+import {AddPulse} from '../types/recommendations'
 
 const tz = Config.get('DEFAULT_TIME_ZONE')
 
@@ -56,6 +57,7 @@ export class RecommendationService {
       latestTemperature: null,
       scheduledPCRTest: null,
       PCRTestResult: null,
+      latestPulse: null,
     })
     return items
   }
@@ -381,6 +383,25 @@ export class RecommendationService {
     await repo.updateProperty(organizationId, 'PCRTestResult', {
       testId,
       result,
+      timestamp: serverTimestamp(),
+    })
+  }
+  async addPulse({
+    userId,
+    organizationId,
+    pulseId,
+    pulse,
+    oxygen,
+    status,
+  }: AddPulse): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
+    const repo = new UserActionsRepository(this.dataStore, userId)
+    await repo.updateProperty(organizationId, 'latestPulse', {
+      pulseId,
+      pulse,
+      oxygen,
+      status,
       timestamp: serverTimestamp(),
     })
   }

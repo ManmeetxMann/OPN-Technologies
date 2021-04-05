@@ -36,6 +36,9 @@ export const getMonthFromDatetime = (transportDateTime: Date | string): string =
   return moment(transportDateTime).tz(timeZone).format('MMM')
 }
 
+export const getDateDefaultHumanReadable = (dateTime: Date | string): string =>
+  moment(dateTime).tz(timeZone).format('MMMM Do, YYYY h:mmA ')
+
 export const getDateFromDatetime = (transportDateTime: Date | string): string => {
   return moment(transportDateTime).tz(timeZone).format('YYYY-MM-DD')
 }
@@ -46,6 +49,10 @@ export const getTimeFromFirestoreDateTime = (dateTime: firestore.Timestamp): str
 
 export const makeUtcIsoDate = (date: string, time: string): string => {
   return moment(`${date}T${time}`).utc().toISOString()
+}
+
+export const makeDefaultIsoDate = (date: string, time: string): string => {
+  return moment(`${date}T${time}`).tz(timeZone).toISOString()
 }
 
 export const makeDeadlineForFilter = (date: Date | string): firestore.Timestamp => {

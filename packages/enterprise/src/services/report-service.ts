@@ -80,8 +80,10 @@ export class ReportService {
     const {groupId, locationId, from, to} = filter ?? {}
     const live = !from && !to
 
+    const duration = moment.duration({hours: 24})
+    // fetch documents from last 24 hour
     const dateRange = {
-      from: live ? moment(now()).tz(timeZone).startOf('day').toDate() : new Date(from),
+      from: live ? moment(now()).tz(timeZone).subtract(duration).toDate() : new Date(from),
       to: live ? now() : new Date(to),
     }
     // Fetch user groups
@@ -99,6 +101,7 @@ export class ReportService {
         locationId,
         dateRange.from,
         dateRange.to,
+        live,
       )
     ).filter(({access}) => {
       if (locationId) {
@@ -509,6 +512,7 @@ export class ReportService {
     locationId: string | undefined,
     after: Date,
     before: Date,
+    isLive?: boolean,
   ): Promise<UserInfoBundle[]> {
     const usersById = await this.getUsersById(userIds)
     const nowMoment = moment(now())
@@ -522,10 +526,20 @@ export class ReportService {
           return null
         }
 
+        const getAccess = () => {
+          if (isLive) {
+            return locationId
+              ? this.accessService.findLatestAtLocation(id, locationId)
+              : this.accessService.findLatestAnywhere(id)
+          } else {
+            return locationId
+              ? this.accessService.findAtLocationOnDay(id, locationId, after, before)
+              : this.accessService.findAnywhereOnDay(id, after, before)
+          }
+        }
+
         const [access, latestPassport] = await Promise.all([
-          locationId
-            ? this.accessService.findAtLocationOnDay(id, locationId, after, before)
-            : this.accessService.findAnywhereOnDay(id, after, before),
+          getAccess(),
           this.passportService.findLatestDirectPassport(id, organizationId),
         ])
 

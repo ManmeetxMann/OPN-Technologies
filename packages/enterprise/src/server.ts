@@ -20,6 +20,7 @@ import AdminOrganizationController from './controllers/admin/v1/organization.con
 import UserInternalController from './controllers/v1/internal/user.controller'
 import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
+import InternalV1Controller from './controllers/v1/internal/internal.controller'
 
 const PORT = Number(process.env.PORT) || 5003
 
@@ -43,6 +44,7 @@ const app = new App({
     new RecommendationsController(),
     new HealthpassController(),
     new PubSubController(),
+    new InternalV1Controller(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
   initializers: [new IdentifiersModel(new DataStore())],

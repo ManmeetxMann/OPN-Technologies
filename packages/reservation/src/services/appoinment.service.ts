@@ -20,6 +20,7 @@ import {
   TestTypes,
   RescheduleAppointmentDTO,
   UpdateTransPortRun,
+  Gender,
 } from '../models/appointment'
 
 import {dateFormats, timeFormats} from '../../../common/src/utils/times'
@@ -34,7 +35,7 @@ import {
   makeRapidDeadline,
   makeFirestoreTimestamp,
   getTimeFromFirestoreDateTime,
-  makeUtcIsoDate,
+  makeDefaultIsoDate,
 } from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -75,6 +76,7 @@ import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 import {AppointmentToTestTypeRepository} from '../respository/appointment-to-test-type-association.repository'
 import {AppointmentTypes} from '../models/appointment-types'
+import {PackageService} from './package.service'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -90,6 +92,7 @@ export class AppoinmentService {
   private organizationService = new OrganizationService()
   private userAddressService = new UserAddressService()
   private labService = new LabService()
+  private packageService = new PackageService()
   private enterpriseAdapter = new Enterprise()
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
 
@@ -385,6 +388,11 @@ export class AppoinmentService {
     return this.acuityRepository.getAppointmentByIdFromAcuity(id)
   }
 
+  async getAppointmentOnlyDBById(id: string): Promise<AppointmentDBModel> {
+    const appointment = await this.appointmentsRepository.get(id)
+    return appointment
+  }
+
   async getAppointmentDBById(id: string): Promise<AppointmentDBModel & {organizationName: string}> {
     const appointment = await this.appointmentsRepository.get(id)
     const organization = await this.organizationService.findOneById(appointment.organizationId)
@@ -518,24 +526,25 @@ export class AppoinmentService {
     } = additionalData
     const barCode = acuityAppointment.barCode || barCodeNumber
     const getNewUserId = async (): Promise<string | null> => {
-      return Config.getInt('FEATURE_CREATE_USER_ON_ENTERPRISE')
-        ? (
-            await this.enterpriseAdapter.findOrCreateUser({
-              email: acuityAppointment.email,
-              firstName: acuityAppointment.firstName,
-              lastName: acuityAppointment.lastName,
-              organizationId: acuityAppointment.organizationId || '',
-              address: acuityAppointment.address,
-              dateOfBirth: acuityAppointment.dateOfBirth,
-              agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
-              shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
-              readTermsAndConditions: acuityAppointment.readTermsAndConditions,
-              receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
-              receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
-            })
-          ).data.id
-        : null
+      if (Config.getInt('FEATURE_CREATE_USER_ON_ENTERPRISE')) {
+        const user = await this.enterpriseAdapter.findOrCreateUser({
+          email: acuityAppointment.email,
+          firstName: acuityAppointment.firstName,
+          lastName: acuityAppointment.lastName,
+          organizationId: acuityAppointment.organizationId || '',
+          address: acuityAppointment.address,
+          dateOfBirth: acuityAppointment.dateOfBirth,
+          agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
+          shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
+          readTermsAndConditions: acuityAppointment.readTermsAndConditions,
+          receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
+          receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
+        })
+        return user.data ? user.data.id : null
+      }
+      return null
     }
+
     const currentUserId = userId ? userId : await getNewUserId()
 
     return {
@@ -574,7 +583,7 @@ export class AppoinmentService {
       locationName: acuityAppointment.calendar,
       locationAddress: acuityAppointment.location,
       testType: await this.getTestType(acuityAppointment.appointmentTypeID),
-      gender: acuityAppointment.gender,
+      gender: acuityAppointment.gender || Gender.PreferNotToSay,
       postalCode: acuityAppointment.postalCode,
     }
   }
@@ -915,7 +924,13 @@ export class AppoinmentService {
 
     const barCodeNumber = await this.getNextBarCodeNumber()
     const appointmentTime = getTimeFromFirestoreDateTime(appointment.dateTime)
-    const dateTime = makeUtcIsoDate(date, appointmentTime)
+    const dateTime = makeDefaultIsoDate(date, appointmentTime)
+
+    const packageCode = await this.packageService.getAllByOrganizationId(
+      appointment.organizationId,
+      1,
+      1,
+    )
 
     const acuityAppointment = await this.acuityRepository.createAppointment({
       dateTime,
@@ -924,7 +939,7 @@ export class AppoinmentService {
       lastName: appointment.lastName,
       email: appointment.email,
       phone: appointment.phone + '',
-      packageCode: appointment.packageCode,
+      packageCode: packageCode[0].packageCode,
       calendarID: appointment.calendarID,
       fields: {
         dateOfBirth: appointment.dateOfBirth,
@@ -1054,7 +1069,7 @@ export class AppoinmentService {
     )
     return slots.map((slot) => {
       return {
-        label: moment(slot.time).format(timeFormats.standard12h),
+        label: moment(slot.time).tz(timeZone).format(timeFormats.standard12h),
         time: slot.time,
       }
     })
