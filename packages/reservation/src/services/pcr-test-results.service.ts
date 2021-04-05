@@ -1081,11 +1081,6 @@ export class PCRTestResultsService {
         },
       ],
     })
-
-    // await this.reservationPushService.sendPushByUserId(
-    //   resultData.userId,
-    //   ReservationPushTypes.ready,
-    // )
   }
 
   async sendReCollectNotification(resultData: PCRTestResultEmailDTO): Promise<void> {

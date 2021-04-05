@@ -5,6 +5,7 @@ import * as _ from 'lodash'
 //Common
 import {sendBulkPushByToken} from '../../../common/src/service/messaging/push-notify-service'
 import {Config} from '../../../common/src/utils/config'
+import {now} from '../../../common/src/utils/times'
 
 //Services
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
@@ -75,7 +76,7 @@ export class ReservationPushService {
   }
   private messagesBody = {
     [ReservationPushTypes.before24hours]: (dateTime, clinicName) =>
-      `Copy: You have a Covid-19 test scheduled for ${dateTime} at our ${clinicName} location.`,
+      `You have a Covid-19 test scheduled for ${dateTime} at our ${clinicName} location.`,
     [ReservationPushTypes.before3hours]: (dateTime, clinicName) =>
       `Your Covid-19 test is scheduled for today at ${dateTime} at our ${clinicName} location.`,
     [ReservationPushTypes.ready]: () => `Your Covid-19 test result is ready. Tap here to view.`,
@@ -113,7 +114,7 @@ export class ReservationPushService {
     hoursOffset: number,
     appointmentType: ReservationPushTypes,
   ): boolean => {
-    const nowDateTime = moment(new Date()).tz(this.timeZone)
+    const nowDateTime = moment(now()).tz(this.timeZone)
     const needsSend = appointment.scheduledPushesToSend?.some((scheduledPushes) => {
       return scheduledPushes === ReservationPushTypes[appointmentType]
     })
@@ -128,7 +129,7 @@ export class ReservationPushService {
    * Builds a list of push notification to send for appointment reminder
    */
   async fetchUpcomingPushes(): Promise<UpcomingPushes> {
-    const nowDateTime = moment(new Date()).tz(this.timeZone)
+    const nowDateTime = moment(now()).tz(this.timeZone)
     const untilDateTime = nowDateTime.clone().add(this.maxUntilHours, 'hours')
 
     // Fetch upcoming appointment, Fetch recent token for each unique userIds

@@ -5,9 +5,7 @@ export type PushMessages = {
     body: string
     imageUrl?: string
   }
-  data?: {
-    [key: string]: string
-  }
+  data?: Record<string, string>
 }
 
 export type DbBatchAppointments = {

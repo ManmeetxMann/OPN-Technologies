@@ -1473,7 +1473,7 @@ export class AppoinmentService {
   }
 
   async getAppointmentsNotNotifiedInPeriod(
-    fromUntilDateTime: moment.Moment,
+    fromDateTime: moment.Moment,
     untilDateTime: moment.Moment,
   ): Promise<AppointmentDBModel[]> {
     return this.appointmentsRepository.findWhereEqualInMap(
@@ -1482,7 +1482,7 @@ export class AppoinmentService {
           map: '/',
           key: 'dateTime',
           operator: DataModelFieldMapOperatorType.Greater,
-          value: new Date(fromUntilDateTime.toDate()),
+          value: new Date(fromDateTime.toDate()),
         },
         {
           map: '/',
