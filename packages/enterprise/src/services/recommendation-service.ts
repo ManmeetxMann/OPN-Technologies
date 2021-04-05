@@ -104,8 +104,11 @@ export class RecommendationService {
       return [Recommendations.TempCheckRequired, Recommendations.PassAvailable]
     }
     if (status == PassportStatuses.Proceed) {
-      // proceed
-      return [Recommendations.PassAvailable, Recommendations.ViewNegativeTemp]
+      const recommendations = [Recommendations.PassAvailable]
+      if (items.latestTemperature) {
+        recommendations.push(Recommendations.ViewNegativeTemp)
+      }
+      return recommendations
     }
   }
 
@@ -260,13 +263,13 @@ export class RecommendationService {
       case Recommendations.ViewNegativeTemp: {
         title = 'View Temperature Result'
         body = 'Temperature Details'
-        id = items.latestTemperature?.temperatureId
+        id = items.latestTemperature.temperatureId
         break
       }
       case Recommendations.ViewPositiveTemp: {
         title = 'View Temperature Result'
         body = 'Temperature Details'
-        id = items.latestTemperature?.temperatureId
+        id = items.latestTemperature.temperatureId
         break
       }
     }
