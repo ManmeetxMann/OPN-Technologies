@@ -1,0 +1,48 @@
+{
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/opn-services/src",
+  "monorepo": true,
+  "root": "apps/opn-services",
+  "compilerOptions": {
+    "webpack": true,
+    "tsConfigPath": "apps/opn-services/tsconfig.app.json"
+  },
+  "projects": {
+    "opn-services": {
+      "type": "application",
+      "root": "apps/opn-services",
+      "entryFile": "main",
+      "sourceRoot": "apps/opn-services/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/opn-services/tsconfig.app.json"
+      }
+    },
+    "user-service": {
+      "type": "application",
+      "root": "apps/user-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/user-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/user-service/tsconfig.app.json"
+      }
+    },
+    "common": {
+      "type": "library",
+      "root": "libs/common",
+      "entryFile": "index",
+      "sourceRoot": "libs/common/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/common/tsconfig.lib.json"
+      }
+    },
+    "passport-service": {
+      "type": "application",
+      "root": "apps/passport-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/passport-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/passport-service/tsconfig.app.json"
+      }
+    }
+  }
+}
