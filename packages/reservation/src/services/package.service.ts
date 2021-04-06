@@ -48,7 +48,10 @@ export class PackageService {
     return !!result.length
   }
 
-  async getPackageListByOrgId(packageCode: string, organizationId: string): Promise<{ count: number; testType: string }[]> {
+  async getPackageListByOrgId(
+    packageCode: string,
+    organizationId: string,
+  ): Promise<{count: number; testType: string}[]> {
     const packagesAcuity = await this.acuityRepository.getPackagesList()
     const packageCodes: string[] = packagesAcuity.map(({certificate}) => certificate)
     const packages = await this.packageRepository.findWhereIn('packageCode', packageCodes)
