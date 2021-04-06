@@ -2,8 +2,8 @@ import {Config} from '../../../common/src/utils/config'
 import fetch from 'node-fetch'
 import {LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
 import {Attestation} from '../models/attestation'
-import { Passport } from '../models/passport'
-import { safeTimestamp } from '../../../common/src/utils/datetime-util'
+import {Passport} from '../models/passport'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 
 const APIURL = Config.get('DOMAIN_ENTERPRISE')
 

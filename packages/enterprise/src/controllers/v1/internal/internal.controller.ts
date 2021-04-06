@@ -1,11 +1,11 @@
 import * as express from 'express'
 import {Handler, Router} from 'express'
 
-import { LogWarning } from '../../../../../common/src/utils/logging-setup'
+import {LogWarning} from '../../../../../common/src/utils/logging-setup'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 
-import { OrganizationService } from '../../../../../enterprise/src/services/organization-service'
-import { StatusStatsService } from '../../../../../enterprise/src/services/status-stats-service'
+import {OrganizationService} from '../../../../../enterprise/src/services/organization-service'
+import {StatusStatsService} from '../../../../../enterprise/src/services/status-stats-service'
 
 import {PassportStatus, PassportStatuses} from '../../../../../passport/src/models/passport'
 
@@ -107,7 +107,7 @@ class RecommendationController implements IControllerBase {
             )
           }
           LogWarning('RecommendationController', 'newPassport', {
-            message: `User ${userId} has no group in ${organizationId}`
+            message: `User ${userId} has no group in ${organizationId}`,
           })
         })
       await Promise.all([recPromise, statsPromise])

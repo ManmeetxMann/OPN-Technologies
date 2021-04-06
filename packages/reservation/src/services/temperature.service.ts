@@ -22,16 +22,16 @@ export class TemperatureService {
     const temp = await this.temperatureRepository.add(temperature)
     const status =
       temp.status === TemperatureStatuses.Proceed ? PassportStatuses.Proceed : PassportStatuses.Stop
-      await Promise.all([
-        this.adapter.createPassport(temp.userId, temp.organizationId, status),
-        this.enterpriseAdapter.postTemperature({
-          id: temp.id,
-          status: temp.status,
-          temperature: temp.temperature,
-          userId: temp.userId,
-          organizationId: temp.organizationId,
-        })
-      ])
+    await Promise.all([
+      this.adapter.createPassport(temp.userId, temp.organizationId, status),
+      this.enterpriseAdapter.postTemperature({
+        id: temp.id,
+        status: temp.status,
+        temperature: temp.temperature,
+        userId: temp.userId,
+        organizationId: temp.organizationId,
+      }),
+    ])
     return temp
   }
 
