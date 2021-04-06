@@ -110,13 +110,17 @@ export class ReportService {
       return true
     })
     const nowMoment = moment(now())
+    const nullOrISOString = (status: PassportStatus, timestamp: string | null): string | null => {
+      if (!timestamp) return null
+      if (status !== PassportStatuses.Proceed) return null
+      if (nowMoment.isSameOrBefore(safeTimestamp(timestamp))) return null
+      return safeTimestamp(timestamp).toISOString()
+    }
+
     const accesses = data.map(({user, status, access}) => ({
       // remove not-yet-exited exitAt
-      exitAt:
-        access?.exitAt && nowMoment.isSameOrAfter(safeTimestamp(access.exitAt))
-          ? safeTimestamp(access.exitAt).toISOString()
-          : null,
-      enteredAt: access?.enteredAt ? safeTimestamp(access.enteredAt).toISOString() : null,
+      exitAt: nullOrISOString(status, access?.exitAt),
+      enteredAt: nullOrISOString(status, access?.enteredAt),
       parentUserId: user.delegates?.length ? user.delegates[0] : null,
       status,
       user,
