@@ -2114,6 +2114,27 @@ components:
             - proceed
             - stop
 
+    PostPassport:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        organizationId:
+          type: string
+        id:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - proceed
+            - caution
+            - stop
+            - temperature_check_required
+        expiry:
+          type: string
+
   responses:
     Response:
       description: Default Response wrapper
@@ -4190,6 +4211,18 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostPulse'
+      responses:
+        '200':
+          description: Successfully digested
+
+  /enterprise/api/v1/internal/passport:
+    post:
+      summary: update passport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostPassport'
       responses:
         '200':
           description: Successfully digested
