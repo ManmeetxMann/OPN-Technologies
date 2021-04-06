@@ -8,7 +8,7 @@ export const createUser = async (
     id: string
     organizationIds: string[]
   },
-  testDataCreator,
+  testDataCreator: string,
 ): Promise<void> => {
   const data = {
     id: dataOverwrite.id,

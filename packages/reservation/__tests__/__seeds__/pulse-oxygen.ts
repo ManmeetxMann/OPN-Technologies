@@ -7,7 +7,7 @@ export const createPulseOxygen = async (
   id: string,
   userId: string,
   organizationId: string,
-  testDataCreator: string
+  testDataCreator: string,
 ): Promise<void> => {
   const pulseOxygenCollection = database.collection(collectionName)
   await pulseOxygenCollection.doc(id).set({
@@ -21,7 +21,7 @@ export const createPulseOxygen = async (
       createdAt: firestore.Timestamp.fromDate(new Date()),
       updatedAt: null,
     },
-    testDataCreator
+    testDataCreator,
   })
 }
 

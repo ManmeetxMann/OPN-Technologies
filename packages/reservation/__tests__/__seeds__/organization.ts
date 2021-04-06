@@ -14,7 +14,7 @@ export const createOrganization = async (
     enableTemperatureCheck: boolean
     userIdToAdd?: string
   },
-  testDataCreator,
+  testDataCreator: string,
 ): Promise<void> => {
   const data = {
     id: dataOverwrite.id,
