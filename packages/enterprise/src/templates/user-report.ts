@@ -1,4 +1,8 @@
 import {Content, TableLayouts} from '../../../common/src/service/reports/pdf-types'
+import {TemperatureDBModel} from '../../../reservation/src/models/temperature'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
+import {toDateFormat} from '../../../common/src/utils/times'
+import * as _ from 'lodash'
 
 type Contact = {
   firstName: string
@@ -19,6 +23,7 @@ type Attestation = {
     response: string
   }[]
   time: string
+  status: string
 }
 
 type Params = {
@@ -32,6 +37,8 @@ type Params = {
   attestations: Attestation[]
   exposures: Contact[]
   traces: Contact[]
+  passportStatus: string
+  temperatureChecks: TemperatureDBModel[]
 }
 
 const tableLayouts: TableLayouts = {
@@ -45,6 +52,8 @@ const tableLayouts: TableLayouts = {
   },
 }
 
+const passportStatusName = (status: string): string => _.capitalize(status.split('_').join(' '))
+
 const getHeaderTable = (
   generationDate: string,
   userName: string,
@@ -52,6 +61,7 @@ const getHeaderTable = (
   orgName: string,
   dateRange: string,
   groupName: string,
+  passportStatus: string,
 ): Content => ({
   layout: 'mainTable',
   table: {
@@ -65,6 +75,7 @@ const getHeaderTable = (
       ['Organization Name', orgName],
       ['Date of report', dateRange],
       ['User Group', groupName],
+      ['Passport Status', passportStatusName(passportStatus)],
     ].filter((notNull) => notNull),
   },
   margin: [14, 14, 14, 14],
@@ -93,6 +104,7 @@ const getAttestationTables = (attestations: Attestation[]): Content[] =>
       body: [
         ['Attestation Report', {}],
         ['Time of Attestation', attestation.time],
+        ['Status', passportStatusName(attestation.status)],
         ...attestation.responses.map(({question, response}) => [question, response]),
       ],
     },
@@ -116,6 +128,22 @@ const getContactTable = (title: string, contacts: Contact[]): Content => ({
   margin: [14, 14, 14, 14],
 })
 
+const getTemperatureTables = (temperatureChecks: TemperatureDBModel[]): Content[] =>
+  temperatureChecks.map((temperature) => ({
+    layout: 'mainTable',
+    table: {
+      headerRows: 1,
+      widths: [183, 240],
+      body: [
+        ['Temperature Check Report', {}],
+        ['Temperature', temperature.temperature],
+        ['Time of Check', toDateFormat(safeTimestamp(temperature.timestamps.createdAt))],
+        ['Status', _.capitalize(temperature.status)],
+      ],
+    },
+    margin: [14, 14, 14, 14],
+  }))
+
 const generate = (params: Params): {content: Content[]; tableLayouts: TableLayouts} => ({
   content: [
     getHeaderTable(
@@ -125,7 +153,9 @@ const generate = (params: Params): {content: Content[]; tableLayouts: TableLayou
       params.organizationName,
       params.reportDate,
       params.userGroup,
+      params.passportStatus,
     ),
+    ...getTemperatureTables(params.temperatureChecks),
     ...getAttestationTables(params.attestations),
     getLocationsTable(params.locations),
     getContactTable('Potential Exposures', params.exposures),

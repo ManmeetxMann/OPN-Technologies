@@ -9,6 +9,7 @@ import {TemperatureRepository} from '../respository/temperature.repository'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {Enterprise} from '../adapter/enterprise'
 import {UserService} from '../../../common/src/service/user/user-service'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 
 export class TemperatureService {
   private dataStore = new DataStore()
@@ -40,6 +41,24 @@ export class TemperatureService {
       .getQueryFindWhereEqual('userId', userId)
       .where('organizationId', '==', organizationId)
       .fetch()
+  }
+
+  async getTemperaturesInRange(
+    userId: string,
+    organizationId: string,
+    from: string,
+    to: string,
+  ): Promise<TemperatureDBModel[]> {
+    const temperatures = await this.getAllByUserAndOrgId(userId, organizationId)
+
+    return temperatures.filter((temperature) => {
+      const createdAt = temperature.timestamps.createdAt
+
+      return (
+        createdAt.toMillis() >= safeTimestamp(from).getTime() &&
+        createdAt.toMillis() <= safeTimestamp(to).getTime()
+      )
+    })
   }
 
   getAll(): Promise<TemperatureDBModel[]> {
