@@ -10,7 +10,7 @@ export class CommentRepository extends DataModel<Comment> {
     super(dataStore)
   }
 
-  public async save(comment: Omit<Comment, 'id'>): Promise<void> {
-    await this.add(comment)
+  public save(comment: Omit<Comment, 'id'>): Promise<Comment> {
+    return this.add(comment)
   }
 }

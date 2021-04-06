@@ -12,7 +12,12 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {getUserId, getIsLabUser, getIsClinicUser} from '../../../../../common/src/utils/auth'
+import {
+  getUserId,
+  getIsLabUser,
+  getIsClinicUser,
+  getUserName,
+} from '../../../../../common/src/utils/auth'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
@@ -119,7 +124,7 @@ class AdminPCRTestResultController implements IControllerBase {
     )
 
     innerRouter.post(
-      this.path + '/test-results/{testResultId}/comment/{commentId}/reply',
+      this.path + '/test-results/:testResultId/comment/:commentId/reply',
       listTestResultsAuth,
       this.replyComment,
     )
@@ -505,6 +510,7 @@ class AdminPCRTestResultController implements IControllerBase {
     try {
       const {testResultId} = req.params as TestResultCommentParamRequest
       const adminId = getUserId(res.locals.authenticatedUser)
+      const fullName = getUserName(res.locals.authenticatedUser)
 
       const {
         comment,
@@ -519,7 +525,7 @@ class AdminPCRTestResultController implements IControllerBase {
         throw new BadRequestException(`Comments quantity should be maximum 20`)
       }
 
-      await this.commentService.addComment({
+      const newComment = await this.commentService.addComment({
         testResultId,
         comment,
         attachmentUrls: attachmentUrls,
@@ -528,7 +534,15 @@ class AdminPCRTestResultController implements IControllerBase {
         addedBy: adminId,
       })
 
-      res.json(actionSucceed())
+      res.json(
+        actionSucceed({
+          id: newComment.id,
+          addedBy: fullName,
+          assignedTo,
+          comment,
+          addedOn: newComment.time,
+        }),
+      )
     } catch (error) {
       next(error)
     }
@@ -537,16 +551,17 @@ class AdminPCRTestResultController implements IControllerBase {
     try {
       const {testResultId, commentId} = req.params as TestResultReplyCommentParamRequest
       const adminId = getUserId(res.locals.authenticatedUser)
+      const fullName = getUserName(res.locals.authenticatedUser)
 
       const {reply, attachmentUrls} = req.body as TestResultReplyCommentBodyRequest
 
-      const comments = await this.commentService.getRepliesByCommentId(testResultId)
+      const comments = await this.commentService.getRepliesByCommentId(commentId)
 
       if (comments.length >= 50) {
         throw new BadRequestException(`Comments quantity should be maximum 50`)
       }
 
-      await this.commentService.addComment({
+      const newComment = await this.commentService.addComment({
         testResultId,
         comment: reply,
         attachmentUrls: attachmentUrls,
@@ -555,7 +570,15 @@ class AdminPCRTestResultController implements IControllerBase {
         replyTo: commentId,
       })
 
-      res.json(actionSucceed())
+      res.json(
+        actionSucceed({
+          id: newComment.id,
+          reply: newComment.comment,
+          attachmentUrls,
+          addedBy: fullName,
+          addedOn: newComment.time,
+        }),
+      )
     } catch (error) {
       next(error)
     }

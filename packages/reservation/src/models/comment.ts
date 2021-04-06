@@ -1,3 +1,5 @@
+import {Timestamp} from '../../../common/src/types/timestamp'
+
 export type Comment = {
   id: string
   testResultId: string
@@ -6,5 +8,6 @@ export type Comment = {
   assignedTo?: string
   internal: boolean
   addedBy: string
+  timestamps?: Timestamp
   replyTo: string
 }

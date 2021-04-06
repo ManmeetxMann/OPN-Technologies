@@ -1,6 +1,8 @@
 import DataStore from '../../../common/src/data/datastore'
 import {CommentRepository} from '../respository/comment.repository'
 import {Comment} from '../models/comment'
+import {firestoreTimeStampToUTC} from '../utils/datetime.helper'
+import moment from 'moment'
 
 export class CommentService {
   private dataStore = new DataStore()
@@ -14,7 +16,7 @@ export class CommentService {
     return this.commentRepository.findWhereEqual('replyTo', commentId)
   }
 
-  addComment = ({
+  addComment = async ({
     testResultId,
     comment,
     attachmentUrls,
@@ -30,8 +32,8 @@ export class CommentService {
     internal: boolean
     addedBy: string
     replyTo?: string
-  }): Promise<void> => {
-    return this.commentRepository.save({
+  }): Promise<Comment & {time: moment.Moment}> => {
+    const newComment = await this.commentRepository.save({
       testResultId: testResultId,
       comment: comment,
       attachmentUrls: attachmentUrls,
@@ -40,5 +42,9 @@ export class CommentService {
       addedBy: addedBy,
       replyTo: replyTo || null,
     })
+
+    const time = firestoreTimeStampToUTC(newComment.timestamps.createdAt)
+
+    return {...newComment, time}
   }
 }
