@@ -35,7 +35,7 @@ describe('Test temperature check request and update passport. Assume user has PR
     })
 
     await createOrganization({
-      id: 'TestOrg2',
+      id: orgIdWithTempDisabled,
       name: 'OrgWithTemperatureCheckDisabled',
       enableTemperatureCheck: false,
       userIdToAdd: userId,
