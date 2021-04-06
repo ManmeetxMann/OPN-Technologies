@@ -5,6 +5,7 @@ import {app as server} from '../../../src/app'
 jest.mock('../../../../common/src/middlewares/authorization')
 
 import {createPulseOxygen, deleteAllPulseOxygenByUserId} from '../../__seeds__/pulse-oxygen'
+import {createUser, deleteUserById} from '../../__seeds__/user'
 
 const headers = {
   accept: 'application/json',
@@ -17,7 +18,10 @@ const userId = 'USER1'
 const organizationId = 'TEST1'
 
 describe('test getPulseOxygenDetails controller function', () => {
-  beforeAll(async () => await createPulseOxygen(id, userId, organizationId))
+  beforeAll(async () => {
+    await createUser({id: userId, organizationIds: [organizationId]})
+    await createPulseOxygen(id, userId, organizationId)
+  })
 
   test('should return pulse oxygen details', async (done) => {
     const url = `/reservation/api/v1/pulse-oxygen/${id}?organizationId=${organizationId}`
@@ -35,5 +39,5 @@ describe('test getPulseOxygenDetails controller function', () => {
     done()
   })
 
-  afterAll(() => deleteAllPulseOxygenByUserId(userId))
+  afterAll(() => Promise.all([deleteAllPulseOxygenByUserId(userId), deleteUserById(userId)]))
 })
