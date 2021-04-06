@@ -1,11 +1,11 @@
 import request from 'supertest'
 
 import {app as server} from '../../../../src/app'
-import {create, deleteAppointmentByDateTime} from '../../../__seeds__/appointments'
+import {create, deleteAppointmentByTestDataCreator} from '../../../__seeds__/appointments'
 import {deleteAll} from '../../../__seeds__/admin-scan-history'
 import {
   createPCRTestResult,
-  deletePCRTestResultByDateTime,
+  deletePCRTestResultByTestDataCreator,
 } from '../../../__seeds__/pcr-test-results'
 
 jest.spyOn(global.console, 'error').mockImplementation()
@@ -14,6 +14,7 @@ jest.mock('../../../../../common/src/middlewares/authorization')
 jest.mock('../../../../../common/src/utils/logging-setup')
 jest.mock('../../../../../common/src/service/google/pub_sub')
 
+const testDataCreator = __filename.slice(__dirname.length + 1, -3)
 const dateForAppointments = '2019-12-05'
 const dateForAppointmentStr = 'December 05, 2019'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
@@ -22,19 +23,27 @@ const aptID1 = 'RapidAPT1'
 const organizationId = 'TEST1'
 describe('AdminScanHistoryController', () => {
   beforeAll(async () => {
-    await create({
-      id: aptID1,
-      dateTime: dateTimeForAppointment1,
-      dateOfAppointment: dateForAppointmentStr,
-      appointmentStatus: 'InTransit',
-      organizationId,
-      testType: 'RapidAntigen',
-    })
-    await createPCRTestResult({
-      appointmentId: aptID1,
-      dateTime: dateTimeForAppointment1,
-      deadline: deadlineSameDay,
-    })
+    await deletePCRTestResultByTestDataCreator(testDataCreator)
+    await deleteAppointmentByTestDataCreator(testDataCreator)
+    await create(
+      {
+        id: aptID1,
+        dateTime: dateTimeForAppointment1,
+        dateOfAppointment: dateForAppointmentStr,
+        appointmentStatus: 'InTransit',
+        organizationId,
+        testType: 'RapidAntigen',
+      },
+      testDataCreator,
+    )
+    await createPCRTestResult(
+      {
+        appointmentId: aptID1,
+        dateTime: dateTimeForAppointment1,
+        deadline: deadlineSameDay,
+      },
+      testDataCreator,
+    )
   })
 
   describe('create scan history record', () => {
@@ -103,8 +112,8 @@ describe('AdminScanHistoryController', () => {
   })
 
   afterAll(async () => {
-    await deletePCRTestResultByDateTime(`${dateForAppointments}T23:59:59`) //End of Day
-    await deleteAppointmentByDateTime(`${dateForAppointments}T23:59:59`) //End of Day
+    await deletePCRTestResultByTestDataCreator(testDataCreator)
+    await deleteAppointmentByTestDataCreator(testDataCreator)
     deleteAll()
   })
 })

@@ -4,16 +4,20 @@ import {getFirestoreTimeStampDate} from '../../src/utils/datetime.helper'
 const database = firestore()
 const collectionName = 'pcr-test-results'
 
-export const createPCRTestResult = async (dataOverwrite: {
-  appointmentId?: string
-  dateTime: string
-  deadline: string
-  organizationId?: string
-  result?: string
-  displayInResult?: boolean
-  testType?: string
-  labId?: string
-}): Promise<void> => {
+// : Promise<unknown>
+export const createPCRTestResult = async (
+  dataOverwrite: {
+    appointmentId?: string
+    dateTime: string
+    deadline: string
+    organizationId?: string
+    result?: string
+    displayInResult?: boolean
+    testType?: string
+    labId?: string
+  },
+  testDataCreator: string,
+): Promise<void> => {
   //console.log(new Date(dataOverwrite.dateTime))
   const data = {
     adminId: 'TEST',
@@ -42,21 +46,26 @@ export const createPCRTestResult = async (dataOverwrite: {
     testType: 'PCR',
     labId: dataOverwrite.labId ?? 'DEFAULT',
     sortOrder: 1,
+    testDataCreator,
   }
   data.organizationId = dataOverwrite.organizationId ?? null
   data.appointmentId = dataOverwrite.appointmentId ?? 'A1'
   data.result = dataOverwrite.result ?? 'Pending'
   data.displayInResult = dataOverwrite.displayInResult ?? true
   data.testType = dataOverwrite.testType ?? 'PCR'
+
   //console.log(data)
   await database.collection(collectionName).add(data)
   //console.log(`savedData.id: ${savedData.id}`)
 }
 
-export const deletePCRTestResultByDateTime = async (dateTime: string): Promise<void> => {
+export const deletePCRTestResultByTestDataCreator = async (
+  testDataCreator: string,
+): Promise<void> => {
   const appointments_query = database
     .collection(collectionName)
-    .where('dateTime', '<=', firestore.Timestamp.fromDate(new Date(dateTime)))
+    // .where('dateTime', '<=', firestore.Timestamp.fromDate(new Date(dateTime)))
+    .where('testDataCreator', '==', testDataCreator)
   await appointments_query.get().then(function (querySnapshot) {
     querySnapshot.forEach(function (doc) {
       doc.ref.delete()

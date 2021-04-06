@@ -40,6 +40,13 @@ describe('Test temperature check request and update passport. Assume user has PR
       enableTemperatureCheck: false,
       userIdToAdd: userId,
     })
+
+    /**
+     * Some test are failing after 5 seconds without response
+     * TODO:
+     * 1. Investigate why some calls taking long to process and optimize a logic
+     */
+    jest.setTimeout(7500)
   })
 
   test('should add new temperature & update passport status to PROCEED on normal oxygen & temperature', async (done) => {

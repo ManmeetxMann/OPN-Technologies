@@ -3,7 +3,7 @@ import request from 'supertest'
 import {app as server} from '../../../../src/app'
 import {
   createPCRTestResult,
-  deletePCRTestResultByDateTime,
+  deletePCRTestResultByTestDataCreator,
 } from '../../../__seeds__/pcr-test-results'
 
 //jest.spyOn(global.console, 'error').mockImplementation()
@@ -11,6 +11,7 @@ import {
 jest.mock('../../../../../common/src/middlewares/authorization')
 //jest.mock('../../../../../common/src/utils/logging-setup')
 
+const testDataCreator = __filename.slice(__dirname.length + 1, -3)
 const dateForAppointments = '2020-01-05'
 const dateTimeForAppointment7AM = `${dateForAppointments}T07:00:00`
 const deadlineSameDay = `${dateForAppointments}T23:59:00`
@@ -21,39 +22,58 @@ const barCode = 'BAR1'
 
 describe('PCRTestResultController', () => {
   beforeAll(async () => {
-    await createPCRTestResult({
-      dateTime: dateTimeForAppointment7AM,
-      deadline: deadlineSameDay,
-      displayInResult: false,
-      testType: 'PCR',
-    })
-    await createPCRTestResult({
-      dateTime: dateTimeForAppointment7AM,
-      deadline: deadlineSameDay,
-      displayInResult: false,
-      testType: 'RapidAntigen',
-    })
-    await createPCRTestResult({
-      dateTime: dateTimeForAppointment7AM,
-      deadline: deadlineSameDay,
-      labId: labID1,
-    })
-    await createPCRTestResult({
-      dateTime: dateTimeForAppointment7AM,
-      organizationId: organizationId,
-      deadline: deadlineSameDay,
-    })
-    await createPCRTestResult({
-      dateTime: dateTimeForAppointment7AM,
-      deadline: deadlineSameDay,
-      testType: 'PCR',
-    })
-    await createPCRTestResult({
-      dateTime: dateTimeForAppointment7AM,
-      organizationId: organizationId,
-      deadline: deadlineSameDay,
-      testType: 'RapidAntigen',
-    })
+    await deletePCRTestResultByTestDataCreator(testDataCreator)
+    await createPCRTestResult(
+      {
+        dateTime: dateTimeForAppointment7AM,
+        deadline: deadlineSameDay,
+        displayInResult: false,
+        testType: 'PCR',
+      },
+      testDataCreator,
+    )
+    await createPCRTestResult(
+      {
+        dateTime: dateTimeForAppointment7AM,
+        deadline: deadlineSameDay,
+        displayInResult: false,
+        testType: 'RapidAntigen',
+      },
+      testDataCreator,
+    )
+    await createPCRTestResult(
+      {
+        dateTime: dateTimeForAppointment7AM,
+        deadline: deadlineSameDay,
+        labId: labID1,
+      },
+      testDataCreator,
+    )
+    await createPCRTestResult(
+      {
+        dateTime: dateTimeForAppointment7AM,
+        organizationId: organizationId,
+        deadline: deadlineSameDay,
+      },
+      testDataCreator,
+    )
+    await createPCRTestResult(
+      {
+        dateTime: dateTimeForAppointment7AM,
+        deadline: deadlineSameDay,
+        testType: 'PCR',
+      },
+      testDataCreator,
+    )
+    await createPCRTestResult(
+      {
+        dateTime: dateTimeForAppointment7AM,
+        organizationId: organizationId,
+        deadline: deadlineSameDay,
+        testType: 'RapidAntigen',
+      },
+      testDataCreator,
+    )
   })
 
   describe('get result list', () => {
@@ -160,6 +180,6 @@ describe('PCRTestResultController', () => {
   })
 
   afterAll(async () => {
-    await deletePCRTestResultByDateTime(`${dateForAppointments}T23:59:59`) //End of Day
+    await deletePCRTestResultByTestDataCreator(testDataCreator)
   })
 })
