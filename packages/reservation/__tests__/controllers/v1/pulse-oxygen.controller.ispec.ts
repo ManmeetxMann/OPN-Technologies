@@ -5,7 +5,7 @@ import {app as server} from '../../../src/app'
 jest.mock('../../../../common/src/middlewares/authorization')
 
 import {createPulseOxygen, deleteAllPulseOxygenByUserId} from '../../__seeds__/pulse-oxygen'
-import {createUser, deleteUserById} from '../../__seeds__/user'
+import {createUser, deleteUserByIdTestDataCreator} from '../../__seeds__/user'
 
 const headers = {
   accept: 'application/json',
@@ -13,14 +13,18 @@ const headers = {
   Authorization: 'Bearer RegUser',
 }
 
-const id = 'test'
+const testDataCreator = __filename.slice(__dirname.length + 1, -3)
+const id = 'testPulseOxygen'
 const userId = 'USER1'
-const organizationId = 'TEST1'
+const organizationId = 'otherOrg'
+const organizationIdOther = 'randomOtherOrg'
 
 describe('test getPulseOxygenDetails controller function', () => {
   beforeAll(async () => {
-    await createUser({id: userId, organizationIds: [organizationId]})
-    await createPulseOxygen(id, userId, organizationId)
+    await deleteUserByIdTestDataCreator(userId, testDataCreator)
+    await deleteAllPulseOxygenByUserId(userId, testDataCreator)
+    await createUser({id: userId, organizationIds: [organizationId]}, testDataCreator)
+    await createPulseOxygen(id, userId, organizationId, testDataCreator)
   })
 
   test('should return pulse oxygen details', async (done) => {
@@ -32,12 +36,15 @@ describe('test getPulseOxygenDetails controller function', () => {
   })
 
   test('should return not authorised for other organization user', async (done) => {
-    const url = `/reservation/api/v1/pulse-oxygen/${id}?organizationId=otherOrg`
+    const url = `/reservation/api/v1/pulse-oxygen/${id}?organizationId=${organizationIdOther}`
     const result = await request(server.app).get(url).set(headers)
 
     expect(result.status).toBe(400)
     done()
   })
 
-  afterAll(() => Promise.all([deleteAllPulseOxygenByUserId(userId), deleteUserById(userId)]))
+  afterAll(async () => {
+    await deleteAllPulseOxygenByUserId(userId, testDataCreator)
+    await deleteUserByIdTestDataCreator(userId, testDataCreator)
+  })
 })
