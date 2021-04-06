@@ -42,6 +42,7 @@ import {AppoinmentService} from '../../../services/appoinment.service'
 import {CommentService} from '../../../services/comment.service'
 import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
 import {validateAnalysis} from '../../../utils/analysis.helper'
+import { commentsDTO } from "../../../models/comment";
 
 class AdminPCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -121,6 +122,12 @@ class AdminPCRTestResultController implements IControllerBase {
       this.path + '/test-results/:testResultId/comment',
       listTestResultsAuth,
       this.addComment,
+    )
+
+    innerRouter.get(
+      this.path + '/test-results/:testResultId/comment',
+      listTestResultsAuth,
+      this.getComments,
     )
 
     innerRouter.post(
@@ -501,6 +508,24 @@ class AdminPCRTestResultController implements IControllerBase {
       }
 
       res.json(actionSucceed(singlePcrTestResultDTO(pcrTestResult, appointment)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getComments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {testResultId} = req.params as TestResultCommentParamRequest
+
+      const comments = await this.commentService.getCommentsByTestResultId(testResultId)
+      const commentsWithReplies = await Promise.all(
+        comments.map(async (comment) => ({
+          ...comment,
+          replies: await this.commentService.getRepliesByCommentId(comment.id),
+        })),
+      )
+
+      res.json(actionSucceed(commentsWithReplies.map(commentsDTO)))
     } catch (error) {
       next(error)
     }
