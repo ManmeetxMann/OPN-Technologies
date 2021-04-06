@@ -137,7 +137,7 @@ const getTemperatureTables = (temperatureChecks: TemperatureDBModel[]): Content[
       body: [
         ['Temperature Check Report', {}],
         ['Temperature', temperature.temperature],
-        ['Time of Check', toDateFormat(safeTimestamp(temperature.timestamps.createdAt))],
+        ['Date of Check', toDateFormat(safeTimestamp(temperature.timestamps.createdAt))],
         ['Status', _.capitalize(temperature.status)],
       ],
     },
