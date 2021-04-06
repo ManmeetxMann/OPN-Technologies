@@ -7,6 +7,7 @@ export const createPulseOxygen = async (
   id: string,
   userId: string,
   organizationId: string,
+  testDataCreator: string
 ): Promise<void> => {
   const pulseOxygenCollection = database.collection(collectionName)
   await pulseOxygenCollection.doc(id).set({
@@ -20,12 +21,19 @@ export const createPulseOxygen = async (
       createdAt: firestore.Timestamp.fromDate(new Date()),
       updatedAt: null,
     },
+    testDataCreator
   })
 }
 
-export const deleteAllPulseOxygenByUserId = async (userId: string): Promise<void> => {
+export const deleteAllPulseOxygenByUserId = async (
+  userId: string,
+  testDataCreator: string,
+): Promise<void> => {
   const pulseOxygenCollection = database.collection(collectionName)
-  const ref = await pulseOxygenCollection.where('userId', '==', userId).get()
+  const ref = await pulseOxygenCollection
+    .where('userId', '==', userId)
+    .where('testDataCreator', '==', testDataCreator)
+    .get()
   const deleteAll = ref.docs.map((doc) => doc.ref.delete())
   await Promise.all(deleteAll)
 }

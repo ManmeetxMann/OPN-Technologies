@@ -8,38 +8,48 @@ jest.mock('../../../../../passport/src/services/attestation-service')
 import {deleteAllPulseOxygenByUserId} from '../../../__seeds__/pulse-oxygen'
 import {deleteAllTemperatureByUserId} from '../../../__seeds__/temperature'
 import {createOrganization, deleteOrgById} from '../../../__seeds__/organization'
-import {createUser, deleteUserById} from '../../../__seeds__/user'
+import {createUser, deleteUserByIdTestDataCreator} from '../../../__seeds__/user'
 
+const testDataCreator = __filename.slice(__dirname.length + 1, -3)
 const headers = {
   accept: 'application/json',
   'Content-Type': 'application/json',
   Authorization: 'Bearer SuperAdmin',
 }
 
-const userId = 'USER1'
+const userId = 'USER_TEMPERATURE_1'
 const orgIdWithTempCheckEnabled = 'TestOrg1'
 const orgIdWithTempDisabled = 'TestOrg2'
 
 describe('Test temperature check request and update passport. Assume user has PROCEED as attestation status', () => {
   beforeAll(async () => {
-    await createUser({
-      id: userId,
-      organizationIds: [orgIdWithTempCheckEnabled, orgIdWithTempDisabled],
-    })
+    await createUser(
+      {
+        id: userId,
+        organizationIds: [orgIdWithTempCheckEnabled, orgIdWithTempDisabled],
+      },
+      testDataCreator,
+    )
 
-    await createOrganization({
-      id: orgIdWithTempCheckEnabled,
-      name: 'OrgWithTemperatureCheckEnabled',
-      enableTemperatureCheck: true,
-      userIdToAdd: userId,
-    })
+    await createOrganization(
+      {
+        id: orgIdWithTempCheckEnabled,
+        name: 'OrgWithTemperatureCheckEnabled',
+        enableTemperatureCheck: true,
+        userIdToAdd: userId,
+      },
+      testDataCreator,
+    )
 
-    await createOrganization({
-      id: orgIdWithTempDisabled,
-      name: 'OrgWithTemperatureCheckDisabled',
-      enableTemperatureCheck: false,
-      userIdToAdd: userId,
-    })
+    await createOrganization(
+      {
+        id: orgIdWithTempDisabled,
+        name: 'OrgWithTemperatureCheckDisabled',
+        enableTemperatureCheck: false,
+        userIdToAdd: userId,
+      },
+      testDataCreator,
+    )
 
     /**
      * Some test are failing after 5 seconds without response
@@ -121,11 +131,11 @@ describe('Test temperature check request and update passport. Assume user has PR
 
   afterAll(async () => {
     await Promise.all([
-      deleteAllPulseOxygenByUserId(userId),
-      deleteAllTemperatureByUserId(userId),
-      deleteOrgById(orgIdWithTempCheckEnabled),
-      deleteOrgById(orgIdWithTempDisabled),
-      deleteUserById(userId),
+      deleteAllPulseOxygenByUserId(userId, testDataCreator),
+      deleteAllTemperatureByUserId(userId, testDataCreator),
+      deleteOrgById(orgIdWithTempCheckEnabled, testDataCreator),
+      deleteOrgById(orgIdWithTempDisabled, testDataCreator),
+      deleteUserByIdTestDataCreator(userId, testDataCreator),
     ])
   })
 })

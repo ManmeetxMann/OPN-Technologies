@@ -3,10 +3,13 @@ import {firestore} from 'firebase-admin'
 const database = firestore()
 const collectionName = 'users'
 
-export const createUser = async (dataOverwrite: {
-  id: string
-  organizationIds: string[]
-}): Promise<void> => {
+export const createUser = async (
+  dataOverwrite: {
+    id: string
+    organizationIds: string[]
+  },
+  testDataCreator,
+): Promise<void> => {
   const data = {
     id: dataOverwrite.id,
     registrationId: null,
@@ -27,14 +30,21 @@ export const createUser = async (dataOverwrite: {
       createdAt: firestore.Timestamp.fromDate(new Date()),
       updatedAt: null,
     },
+    testDataCreator,
   }
 
   await database.collection(collectionName).doc(dataOverwrite.id).set(data)
 }
 
-export const deleteUserById = async (id: string): Promise<void> => {
+export const deleteUserByIdTestDataCreator = async (
+  id: string,
+  testDataCreator: string,
+): Promise<void> => {
   const userCollection = database.collection(collectionName)
-  const ref = await userCollection.where('id', '==', id).get()
+  const ref = await userCollection
+    .where('id', '==', id)
+    .where('testDataCreator', '==', testDataCreator)
+    .get()
   const deleteDocs = ref.docs.map((doc) => doc.ref.delete())
   await Promise.all(deleteDocs)
 }
