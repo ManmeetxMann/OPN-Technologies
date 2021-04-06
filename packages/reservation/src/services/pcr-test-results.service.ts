@@ -990,6 +990,9 @@ export class PCRTestResultsService {
             resultSent: resultData.result,
           })
         }
+        if (addSuccessLog) {
+          this.postPubsub(resultData, 'result')
+        }
       }
     }
 
@@ -999,7 +1002,6 @@ export class PCRTestResultsService {
         notficationType,
         resultSent: resultData.result,
       })
-      this.postPubsub(resultData, 'result')
     }
   }
 
