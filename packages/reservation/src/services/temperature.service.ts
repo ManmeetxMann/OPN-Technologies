@@ -49,16 +49,19 @@ export class TemperatureService {
     from: string,
     to: string,
   ): Promise<TemperatureDBModel[]> {
-    const temperatures = await this.getAllByUserAndOrgId(userId, organizationId)
-
-    return temperatures.filter((temperature) => {
-      const createdAt = temperature.timestamps.createdAt
-
-      return (
-        createdAt.toMillis() >= safeTimestamp(from).getTime() &&
-        createdAt.toMillis() <= safeTimestamp(to).getTime()
-      )
-    })
+    return (
+      this.temperatureRepository
+        .collection()
+        //@ts-ignore
+        .where('timestamps.createdAt', '>=', safeTimestamp(from))
+        //@ts-ignore
+        .where('timestamps.createdAt', '<=', safeTimestamp(to))
+        .where('organizationId', '==', organizationId)
+        .where(`userId`, '==', userId)
+        //@ts-ignore
+        .orderBy('timestamps.createdAt', 'desc')
+        .fetch()
+    )
   }
 
   getAll(): Promise<TemperatureDBModel[]> {
