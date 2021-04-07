@@ -68,6 +68,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     waitingResult?: boolean
     confirmed?: boolean
     previousResult: ResultTypes
+    recollected?: boolean
   }): Promise<PCRTestResultDBModel> {
     //Reset Display for all OLD results
     await this.updateAllResultsForAppointmentId(
@@ -99,7 +100,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       runNumber: data.runNumber,
       reCollectNumber: data.reCollectNumber,
       waitingResult: data.waitingResult ?? true,
-      recollected: false,
+      recollected: data.recollected ?? false,
       deadlineDate: getFirestoreTimeStampDate(data.appointment.deadline),
       dateOfAppointment: getFirestoreTimeStampDate(data.appointment.dateTime),
       testType: data.appointment.testType,

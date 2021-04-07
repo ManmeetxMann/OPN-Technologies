@@ -352,7 +352,7 @@ class AdminPCRTestResultController implements IControllerBase {
         })
       }
 
-      if (pcrResultStatsByLabIdArr.length) {
+      if (isClinicUser && pcrResultStatsByLabIdArr.length) {
         filterGroup.push({
           name: FilterName.FilterByLab,
           key: FilterGroupKey.labId,

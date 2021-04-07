@@ -1,6 +1,6 @@
 import {firestore} from 'firebase-admin'
 import DataStore from '../../../common/src/data/datastore'
-import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
+// import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {
   DataModelFieldMapOperatorType,
   DataModelFieldMap,
@@ -17,6 +17,7 @@ import {TraceModel, TraceRepository} from '../../../access/src/repository/trace.
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 import moment from 'moment'
+import {Enterprise} from '../adapter/enterprise'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -24,15 +25,31 @@ export class AttestationService {
   private dataStore = new DataStore()
   private attestationRepository = new AttestationModel(this.dataStore)
   private traceRepository = new TraceRepository(this.dataStore)
-  private pubsub = new OPNPubSub(Config.get('ATTESTATION_TOPIC'))
+  // private pubsub = new OPNPubSub(Config.get('ATTESTATION_TOPIC'))
   private adapter = new PassportAdapter()
   private orgService = new OrganizationService()
+  private enterprise = new Enterprise()
 
   private statusFor(status: PassportStatuses, tempRequired: boolean): PassportStatuses {
     if (status === PassportStatuses.Proceed && tempRequired) {
       return PassportStatuses.TemperatureCheckRequired
     }
     return status
+  }
+
+  async postPubsub(att: Attestation): Promise<void> {
+    await this.enterprise.postAttestation(att)
+    // this.pubsub.publish(
+    //   {
+    //     id: att.id,
+    //     status: att.status,
+    //   },
+    //   {
+    //     userId: userId,
+    //     organizationId: att.organizationId,
+    //     actionType: 'created',
+    //   },
+    // )
   }
 
   save(attestation: Attestation): Promise<Attestation> {
@@ -51,18 +68,8 @@ export class AttestationService {
       .then(async (att) => {
         const org = await this.orgService.findOneById(att.organizationId)
         await Promise.all(
-          att.appliesTo.map((userId) => {
-            this.pubsub.publish(
-              {
-                id: att.id,
-                status: att.status,
-              },
-              {
-                userId: userId,
-                organizationId: att.organizationId,
-                actionType: 'created',
-              },
-            )
+          att.appliesTo.map(async (userId) => {
+            await this.postPubsub({...att, userId})
             const passportStatus = this.statusFor(
               att.status as PassportStatuses,
               org.enableTemperatureCheck,

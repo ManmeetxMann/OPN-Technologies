@@ -551,7 +551,6 @@ components:
                   - DoNothing
                   - ReRunToday
                   - ReRunTomorrow
-                  - RequestReCollect
                   - RecollectAsInvalid
                   - RecollectAsInconclusive
                   - MarkAsPositive
@@ -626,7 +625,6 @@ components:
             - SendThisResult
             - ReRunToday
             - ReRunTomorrow
-            - RequestReCollect
             - RecollectAsInvalid
             - RecollectAsInconclusive
             - MarkAsPositive
@@ -687,6 +685,23 @@ components:
       required:
         - reportTrackerId
         - resultId
+    AppointmentsSyncRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        calendarID:
+          type: string
+        appointmentTypeID:
+          type: string
+        action:
+          type: string
+        acuityID:
+          type: string
+      required:
+        - calendarID
+        - appointmentTypeID
+        - action
+        - acuityID
     ResponseOfTemperature:
       type: object
       additionalProperties: false
@@ -1458,6 +1473,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  /reservation/admin/api/v1/packages/appointment-credits:
+    get:
+      description: Get packages count by appointments credits
+      tags:
+        - Package Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Packages
+          content:
+            text/html:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    testType:
+                      type: string
+                    count:
+                      type: number
+                  required:
+                    - testType
+                    - count
   /reservation/admin/api/v1/packages:
     post:
       description: Add Package Codes for Orgs
@@ -2009,6 +2055,23 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ProcessPCRResultsRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/appointments/sync:
+    post:
+      description: Sync Appointments
+      tags:
+        - Test Results Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentsSyncRequest'
       responses:
         '200':
           description: Successfully added

@@ -1,13 +1,14 @@
 import request from 'supertest'
 
 import {app as server} from '../../../../src/app'
-import {create, deleteAppointmentByDateTime} from '../../../__seeds__/appointments'
+import {create, deleteAppointmentByTestDataCreator} from '../../../__seeds__/appointments'
 
 jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
 jest.mock('../../../../../common/src/utils/logging-setup')
 
+const testDataCreator = __filename.split('/packages/')[1]
 const dateForAppointments = '2020-06-05'
 const dateForAppointmentStr = 'June 05, 2020'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
@@ -17,55 +18,80 @@ const barCode = 'BAR1'
 
 describe('AdminAppointmentController', () => {
   beforeAll(async () => {
-    await create({
-      id: 'APT1',
-      dateTime: dateTimeForAppointment1,
-      dateOfAppointment: dateForAppointmentStr,
-      appointmentStatus: 'InTransit',
-      labId: laboratoryId,
-    })
-    await create({
-      id: 'APT2',
-      dateTime: dateTimeForAppointment1,
-      dateOfAppointment: dateForAppointmentStr,
-      appointmentStatus: 'InProgress',
-      labId: laboratoryId,
-    })
-    await create({
-      id: 'APT3',
-      dateTime: dateTimeForAppointment1,
-      dateOfAppointment: dateForAppointmentStr,
-      organizationId: organizationId,
-      appointmentStatus: 'InProgress',
-      labId: laboratoryId,
-    })
-    await create({
-      id: 'APT4',
-      dateTime: dateTimeForAppointment1,
-      dateOfAppointment: dateForAppointmentStr,
-      organizationId: organizationId,
-    })
-    await create({
-      id: 'APT5',
-      dateTime: dateTimeForAppointment1,
-      dateOfAppointment: dateForAppointmentStr,
-    })
-    await create({
-      id: 'APT6',
-      dateTime: `2020-02-01T07:00:00`,
-      dateOfAppointment: 'February 01, 2020',
-    })
-    await create({
-      id: 'APT7',
-      dateTime: `2020-02-01T08:00:00`,
-      dateOfAppointment: 'February 01, 2020',
-    })
-    await create({
-      id: 'APT8',
-      dateTime: `2020-02-01T08:00:00`,
-      dateOfAppointment: 'February 01, 2020',
-      appointmentStatus: 'InProgress',
-    })
+    await deleteAppointmentByTestDataCreator(testDataCreator)
+    await create(
+      {
+        id: 'APT1',
+        dateTime: dateTimeForAppointment1,
+        dateOfAppointment: dateForAppointmentStr,
+        appointmentStatus: 'InTransit',
+        labId: laboratoryId,
+      },
+      testDataCreator,
+    )
+    await create(
+      {
+        id: 'APT2',
+        dateTime: dateTimeForAppointment1,
+        dateOfAppointment: dateForAppointmentStr,
+        appointmentStatus: 'InProgress',
+        labId: laboratoryId,
+      },
+      testDataCreator,
+    )
+    await create(
+      {
+        id: 'APT3',
+        dateTime: dateTimeForAppointment1,
+        dateOfAppointment: dateForAppointmentStr,
+        organizationId: organizationId,
+        appointmentStatus: 'InProgress',
+        labId: laboratoryId,
+      },
+      testDataCreator,
+    )
+    await create(
+      {
+        id: 'APT4',
+        dateTime: dateTimeForAppointment1,
+        dateOfAppointment: dateForAppointmentStr,
+        organizationId: organizationId,
+      },
+      testDataCreator,
+    )
+    await create(
+      {
+        id: 'APT5',
+        dateTime: dateTimeForAppointment1,
+        dateOfAppointment: dateForAppointmentStr,
+      },
+      testDataCreator,
+    )
+    await create(
+      {
+        id: 'APT6',
+        dateTime: `2020-02-01T07:00:00`,
+        dateOfAppointment: 'February 01, 2020',
+      },
+      testDataCreator,
+    )
+    await create(
+      {
+        id: 'APT7',
+        dateTime: `2020-02-01T08:00:00`,
+        dateOfAppointment: 'February 01, 2020',
+      },
+      testDataCreator,
+    )
+    await create(
+      {
+        id: 'APT8',
+        dateTime: `2020-02-01T08:00:00`,
+        dateOfAppointment: 'February 01, 2020',
+        appointmentStatus: 'InProgress',
+      },
+      testDataCreator,
+    )
   })
 
   describe('get appointment list', () => {
@@ -78,7 +104,10 @@ describe('AdminAppointmentController', () => {
     })
     test('get appointments by dateOfAppointment and Lab successfully.', async (done) => {
       const url = `/reservation/admin/api/v1/appointments?dateOfAppointment=${dateForAppointments}&labId=${laboratoryId}`
-      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      const result = await request(server.app)
+        .get(url)
+        .set('labid', laboratoryId)
+        .set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.length).toBe(3)
       done()
@@ -120,8 +149,11 @@ describe('AdminAppointmentController', () => {
 
   describe('get appointment list stats', () => {
     test('get appointments stats by dateOfAppointment and Lab successfully.', async (done) => {
-      const url = `/reservation/admin/api/v1/appointments/list/stats?dateOfAppointment=${dateForAppointments}&labId=${laboratoryId}`
-      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+      const url = `/reservation/admin/api/v1/appointments/list/stats?dateOfAppointment=${dateForAppointments}`
+      const result = await request(server.app)
+        .get(url)
+        .set('labid', laboratoryId)
+        .set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
       expect(result.body.data.total).toBe(3)
       done()
@@ -173,6 +205,6 @@ describe('AdminAppointmentController', () => {
   })
 
   afterAll(async () => {
-    await deleteAppointmentByDateTime(`${dateForAppointments}T23:59:59`) //End of Day
+    await deleteAppointmentByTestDataCreator(testDataCreator)
   })
 })

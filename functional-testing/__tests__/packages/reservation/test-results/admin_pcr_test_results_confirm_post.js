@@ -31,9 +31,9 @@ describe('PCR TestResultsController', () => {
               url,
 
               {
-                'barCode': 'TEST10000000055',
+                'barCode': 'TEST10000146',
                 'action': 'MarkAsPositive', // Indeterminate, MarkAsPositive, MarkAsNegative
-                'labId': 'CINkotCuHoZSLDN9wYjQ',
+                'labId': 'k0qbPDqTwqitKUwlGHye',
               },
           )
           .expect('status', 200)

@@ -80,8 +80,10 @@ export class ReportService {
     const {groupId, locationId, from, to} = filter ?? {}
     const live = !from && !to
 
+    const duration = moment.duration({hours: 24})
+    // fetch documents from last 24 hour
     const dateRange = {
-      from: live ? moment(now()).tz(timeZone).startOf('day').toDate() : new Date(from),
+      from: live ? moment(now()).tz(timeZone).subtract(duration).toDate() : new Date(from),
       to: live ? now() : new Date(to),
     }
     // Fetch user groups
@@ -99,6 +101,7 @@ export class ReportService {
         locationId,
         dateRange.from,
         dateRange.to,
+        live,
       )
     ).filter(({access}) => {
       if (locationId) {
@@ -107,13 +110,17 @@ export class ReportService {
       return true
     })
     const nowMoment = moment(now())
+    const nullOrISOString = (status: PassportStatus, timestamp: string | null): string | null => {
+      if (!timestamp) return null
+      if (status !== PassportStatuses.Proceed) return null
+      if (nowMoment.isSameOrBefore(safeTimestamp(timestamp))) return null
+      return safeTimestamp(timestamp).toISOString()
+    }
+
     const accesses = data.map(({user, status, access}) => ({
       // remove not-yet-exited exitAt
-      exitAt:
-        access?.exitAt && nowMoment.isSameOrAfter(safeTimestamp(access.exitAt))
-          ? safeTimestamp(access.exitAt).toISOString()
-          : null,
-      enteredAt: access?.enteredAt ? safeTimestamp(access.enteredAt).toISOString() : null,
+      exitAt: nullOrISOString(status, access?.exitAt),
+      enteredAt: nullOrISOString(status, access?.enteredAt),
       parentUserId: user.delegates?.length ? user.delegates[0] : null,
       status,
       user,
@@ -509,6 +516,7 @@ export class ReportService {
     locationId: string | undefined,
     after: Date,
     before: Date,
+    isLive?: boolean,
   ): Promise<UserInfoBundle[]> {
     const usersById = await this.getUsersById(userIds)
     const nowMoment = moment(now())
@@ -522,10 +530,20 @@ export class ReportService {
           return null
         }
 
+        const getAccess = () => {
+          if (isLive) {
+            return locationId
+              ? this.accessService.findLatestAtLocation(id, locationId)
+              : this.accessService.findLatestAnywhere(id)
+          } else {
+            return locationId
+              ? this.accessService.findAtLocationOnDay(id, locationId, after, before)
+              : this.accessService.findAnywhereOnDay(id, after, before)
+          }
+        }
+
         const [access, latestPassport] = await Promise.all([
-          locationId
-            ? this.accessService.findAtLocationOnDay(id, locationId, after, before)
-            : this.accessService.findAnywhereOnDay(id, after, before),
+          getAccess(),
           this.passportService.findLatestDirectPassport(id, organizationId),
         ])
 

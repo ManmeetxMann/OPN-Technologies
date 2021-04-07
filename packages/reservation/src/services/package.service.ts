@@ -4,11 +4,14 @@ import {PackageBase, PackageListItem} from '../models/packages'
 import {PackageRepository} from '../respository/package.repository'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
+import {ForbiddenException} from '../../../common/src/exceptions/forbidden-exception'
+import {AppointmentToTestTypeAssocService} from './appointment-to-test-type-association.service'
 
 export class PackageService {
   private acuityRepository = new AcuityRepository()
   private packageRepository = new PackageRepository(new DataStore())
   private organizationService = new OrganizationService()
+  private appointmentToTestTypeService = new AppointmentToTestTypeAssocService()
 
   async getAllByOrganizationId(
     organizationId: string,
@@ -43,6 +46,46 @@ export class PackageService {
   async isExist(packageCode: string): Promise<boolean> {
     const result = await this.packageRepository.findWhereEqual('packageCode', packageCode)
     return !!result.length
+  }
+
+  async getPackageListByOrgId(
+    packageCode: string,
+    organizationId: string,
+  ): Promise<{count: number; testType: string}[]> {
+    const packagesAcuity = await this.acuityRepository.getPackagesList()
+    const packageCodes: string[] = packagesAcuity.map(({certificate}) => certificate)
+    const packages = await this.packageRepository.findWhereIn('packageCode', packageCodes)
+
+    const currentPackage = packages.find((packageBase) => packageBase.packageCode === packageCode)
+
+    if (currentPackage?.organizationId !== organizationId) {
+      throw new ForbiddenException('Current package is not associated with your organizationId')
+    }
+
+    const currentPackageAcuity = packagesAcuity.find(
+      (packageAcuity) => packageAcuity.certificate === currentPackage.packageCode,
+    )
+
+    const acuityTypeToTestType = await this.appointmentToTestTypeService.getAllByTypes(
+      currentPackageAcuity.appointmentTypeIDs,
+    )
+
+    const countsByType: Record<string, number> = {}
+
+    Object.entries(currentPackageAcuity.remainingCounts).forEach(([acuityType, count]) => {
+      const testType = acuityTypeToTestType.find(
+        (testType) => testType.appointmentType === Number(acuityType),
+      )
+      if (countsByType[testType.testType]) {
+        countsByType[testType.testType] += count
+      } else {
+        countsByType[testType.testType] = count
+      }
+    })
+    return Object.entries(countsByType).map(([testType, count]) => ({
+      testType,
+      count,
+    }))
   }
 
   async getPackageList(all: boolean): Promise<PackageListItem[]> {

@@ -31,11 +31,11 @@ describe('PCR TestResultsController', () => {
           .post(
               url,
               {
-                'action': 'SendThisResult',
+                'action': 'ReRunToday',
                 'autoResult': 'Negative',
-                'barCode': 'TEST10000000055',
+                'barCode': 'TEST10000146',
                 // 'comment': 'AWESOM',
-                'labId': 'CINkotCuHoZSLDN9wYjQ',
+                'labId': 'k0qbPDqTwqitKUwlGHye',
                 'templateId': 'template2',
                 'notify': true,
                 'resultAnalysis': [

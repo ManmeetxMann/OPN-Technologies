@@ -2033,10 +2033,10 @@ components:
               type: boolean
             hasPCRBadge:
               type: boolean
-            # hasPulseBadge:
-            #   type: boolean
-            # hasVaccineBadge:
-            #   type: boolean
+            hasPulseBadge:
+              type: boolean
+            hasVaccineBadge:
+              type: boolean
         status:
           type: object
           additionalProperties: false
@@ -2056,6 +2056,84 @@ components:
             message:
               nullable: true
               type: string
+
+    PostPulse:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        pulse:
+          type: number
+        oxygen:
+          type: number
+        organizationId:
+          type: string
+        pulseId:
+          type: string
+        status:
+          type: string
+          enum:
+            - Passed
+            - Failed
+
+    PostAttestation:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        organizationId:
+          type: string
+        id:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - proceed
+            - caution
+            - stop
+            - temperature_check_required
+
+    PostTemperature:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        organizationId:
+          type: string
+        id:
+          type: string
+        temperature:
+          type: number
+        status:
+          type: string
+          enum:
+            - proceed
+            - stop
+
+    PostPassport:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        organizationId:
+          type: string
+        id:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - proceed
+            - caution
+            - stop
+            - temperature_check_required
+        expiry:
+          type: string
 
   responses:
     Response:
@@ -4097,6 +4175,54 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PubSubRequest'
+      responses:
+        '200':
+          description: Successfully digested
+
+  /enterprise/api/v1/internal/attestation:
+    post:
+      summary: update attestation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostAttestation'
+      responses:
+        '200':
+          description: Successfully digested
+
+  /enterprise/api/v1/internal/temperature:
+    post:
+      summary: update temperature
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostTemperature'
+      responses:
+        '200':
+          description: Successfully digested
+
+  /enterprise/api/v1/internal/pulse:
+    post:
+      summary: update pulse oxygen
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostPulse'
+      responses:
+        '200':
+          description: Successfully digested
+
+  /enterprise/api/v1/internal/passport:
+    post:
+      summary: update passport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostPassport'
       responses:
         '200':
           description: Successfully digested
