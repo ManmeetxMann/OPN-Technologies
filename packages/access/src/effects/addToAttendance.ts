@@ -8,6 +8,7 @@ import DataStore from '../../../common/src/data/datastore'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {Config} from '../../../common/src/utils/config'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
+import {LogWarning} from '../../../common/src/utils/logging-setup'
 
 const ACCESS_KEY = 'accesses'
 const USER_MEMO_KEY = 'accessingUsers'
@@ -62,6 +63,9 @@ export default class AccessListener {
     // TODO: this theoretically allows for duplicates. move to making date an id
     const record = await this.repo.findWhereEqual('date', date, path).then((existing) => {
       if (existing.length) {
+        if (existing.length > 1) {
+          LogWarning('processAccess', 'multipleEntries', {date, path})
+        }
         return existing[0]
       }
       return this.repo.add(
