@@ -1795,13 +1795,6 @@ export class PCRTestResultsService {
       throw new ResourceNotFoundException(`${id} does not exist`)
     }
 
-    const additionalInfo: {labAssay?: string} = {}
-
-    if (pcrTestResult.labId) {
-      const lab = await this.labService.findOneById(pcrTestResult.labId)
-      additionalInfo.labAssay = lab.assay
-    }
-
     const appointment = await this.appointmentService.getAppointmentDBById(
       pcrTestResult.appointmentId,
     )
@@ -1824,7 +1817,7 @@ export class PCRTestResultsService {
 
     return {
       appointment,
-      pcrTestResult: {...pcrTestResult, ...additionalInfo},
+      pcrTestResult,
     }
   }
 
