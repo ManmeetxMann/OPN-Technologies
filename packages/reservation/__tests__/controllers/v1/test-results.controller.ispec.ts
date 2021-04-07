@@ -13,7 +13,7 @@ const headers = {
   accept: 'application/json',
   'Content-Type': 'application/json',
   Authorization: 'Bearer RegUser',
-  organizationid: organizationId
+  organizationid: organizationId,
 }
 const userId = 'USER1'
 
