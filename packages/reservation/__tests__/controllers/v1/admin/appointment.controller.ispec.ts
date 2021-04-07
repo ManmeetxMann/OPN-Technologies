@@ -8,7 +8,7 @@ jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
 jest.mock('../../../../../common/src/utils/logging-setup')
 
-const testDataCreator = __filename.slice(__dirname.length + 1, -3)
+const testDataCreator = __filename.split('/packages/')[1]
 const dateForAppointments = '2020-06-05'
 const dateForAppointmentStr = 'June 05, 2020'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
