@@ -6,6 +6,7 @@ jest.mock('../../../../common/src/middlewares/authorization')
 
 import {createPulseOxygen, deleteAllPulseOxygenByUserId} from '../../__seeds__/pulse-oxygen'
 
+const testDataCreator = __filename.slice(__dirname.length + 1, -3)
 const headers = {
   accept: 'application/json',
   'Content-Type': 'application/json',
@@ -15,8 +16,8 @@ const headers = {
 
 describe('listTestResults', () => {
   beforeAll(async () => {
-    await createPulseOxygen('PulseOxygen1', 'USER1', 'TEST1')
-    await createPulseOxygen('PulseOxygen2', 'USER1', 'TEST1')
+    await createPulseOxygen('PulseOxygen1', 'USER1', 'TEST1', testDataCreator)
+    await createPulseOxygen('PulseOxygen2', 'USER1', 'TEST1', testDataCreator)
   })
 
   test('should return all test results', async (done) => {
@@ -26,5 +27,5 @@ describe('listTestResults', () => {
     done()
   })
 
-  afterAll(() => deleteAllPulseOxygenByUserId('USER1'))
+  afterAll(() => deleteAllPulseOxygenByUserId('USER1', testDataCreator))
 })
