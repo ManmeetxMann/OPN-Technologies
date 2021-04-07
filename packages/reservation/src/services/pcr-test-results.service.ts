@@ -1795,6 +1795,13 @@ export class PCRTestResultsService {
       throw new ResourceNotFoundException(`${id} does not exist`)
     }
 
+    const additionalInfo: {labAssay?: string} = {}
+
+    if (pcrTestResult.labId) {
+      const lab = await this.labService.findOneById(pcrTestResult.labId)
+      additionalInfo.labAssay = lab.assay
+    }
+
     const appointment = await this.appointmentService.getAppointmentDBById(
       pcrTestResult.appointmentId,
     )
@@ -1804,6 +1811,7 @@ export class PCRTestResultsService {
         `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${id}`,
       )
     }
+
     if (appointment?.userId !== userId && !isParent) {
       LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
         userId,
@@ -1811,11 +1819,12 @@ export class PCRTestResultsService {
         appointmentId: pcrTestResult.appointmentId,
       })
       throw new ResourceNotFoundException(`${id} does not exist`)
+
     }
 
     return {
       appointment,
-      pcrTestResult,
+      pcrTestResult: {...pcrTestResult, ...additionalInfo},
     }
   }
 

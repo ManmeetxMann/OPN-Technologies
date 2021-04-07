@@ -14,6 +14,7 @@ import {groupByChannel} from '../utils/analysis.helper'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
 import {PulseOxygenStatuses} from './pulse-oxygen'
+import {Lab} from './lab'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -453,6 +454,7 @@ enum LabData {
 export const singlePcrTestResultDTO = (
   pcrTestResult: PCRTestResultDBModel,
   appointment: AppointmentDBModel,
+  lab: Omit<Lab, 'id'>,
 ): SinglePcrTestResultUi => {
   let resultSpecs = null
   let resultAnalysis = null
@@ -490,9 +492,9 @@ export const singlePcrTestResultDTO = (
     locationName: appointment.locationName || 'N/A',
     swabMethod: appointment.swabMethod || 'N/A',
     deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
-    labName: LabData.labName,
-    testType: LabData.testType,
-    equipment: LabData.equipment,
+    labName: lab.name,
+    testType: pcrTestResult.testType,
+    equipment: lab.assay,
     manufacturer: LabData.manufacturer,
     resultSpecs: resultSpecs,
     resultAnalysis: resultAnalysis,
