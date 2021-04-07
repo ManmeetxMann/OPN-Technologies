@@ -10,7 +10,6 @@ on:
       - ".github/actions/**"
     branches: 
       - master
-      - feature/integration-tests-fresh
     tags:
       - preprod-*
 
@@ -20,7 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        ref: feature/integration-tests-fresh
+        ref: master
 
     - uses: ./.github/actions/integration-tests
       name: Run Integration Tests
