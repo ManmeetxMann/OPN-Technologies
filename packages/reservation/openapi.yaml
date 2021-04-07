@@ -1473,6 +1473,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  /reservation/admin/api/v1/packages/appointment-credits:
+    get:
+      description: Get packages count by appointments credits
+      tags:
+        - Package Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Packages
+          content:
+            text/html:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    testType:
+                      type: string
+                    count:
+                      type: number
+                  required:
+                    - testType
+                    - count
   /reservation/admin/api/v1/packages:
     post:
       description: Add Package Codes for Orgs

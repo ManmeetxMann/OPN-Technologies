@@ -6,18 +6,20 @@ jest.mock('../../../../../common/src/middlewares/authorization')
 describe('Test Kit Batch controller test', () => {
   const headers = {
     accept: 'application/json',
-    'Content-Type': 'application/json',
     Authorization: 'Bearer CorporateUserForTEST1',
   }
 
   test('should create test kit batch', async (done) => {
     const url = `/reservation/admin/api/v1/test-kit-batch`
-    const response = await request(server.app).post(url).set(headers).send({
-      lotNumber: 'string',
-      hardwareName: 'string',
-      expiry: '2021-03-01T20:29:46.010Z',
-      manufacturer: 'string',
-    })
+    const response = await request(server.app)
+      .post(url)
+      .set({...headers, 'Content-Type': 'application/json'})
+      .send({
+        lotNumber: 'string',
+        hardwareName: 'string',
+        expiry: '2021-03-01T20:29:46.010Z',
+        manufacturer: 'string',
+      })
 
     expect(response.status).toBe(200)
     expect(response.body.data.id.length).toBeGreaterThan(0)
