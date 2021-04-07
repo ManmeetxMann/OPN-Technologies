@@ -97,10 +97,13 @@ class AdminPackageController implements IControllerBase {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const {packageCode} = req.query as {packageCode: string}
       const {organizationid} = req.headers as {organizationid: string}
 
-      const credits = await this.packageService.getPackageListByOrgId(packageCode, organizationid)
+      const packages = await this.packageService.getAllByOrganizationId(organizationid, 1, 1)
+      const credits = await this.packageService.getPackageListByOrgId(
+        packages[0].packageCode,
+        organizationid,
+      )
 
       res.json(actionSucceed(credits))
     } catch (error) {
