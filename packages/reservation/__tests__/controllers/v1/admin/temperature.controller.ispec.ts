@@ -10,7 +10,16 @@ import {deleteAllTemperatureByUserId} from '../../../__seeds__/temperature'
 import {createOrganization, deleteOrgById} from '../../../__seeds__/organization'
 import {createUser, deleteUserByIdTestDataCreator} from '../../../__seeds__/user'
 
-const testDataCreator = __filename.slice(__dirname.length + 1, -3)
+// Mock internal calls to always return success
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const fetch = require('node-fetch')
+jest.mock('node-fetch')
+fetch.mockResolvedValue({
+  ok: true,
+  json: () => ({}),
+})
+
+const testDataCreator = __filename.split('/packages/')[1]
 const headers = {
   accept: 'application/json',
   'Content-Type': 'application/json',

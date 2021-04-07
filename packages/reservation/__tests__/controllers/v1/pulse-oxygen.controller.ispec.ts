@@ -9,11 +9,10 @@ import {createUser, deleteUserByIdTestDataCreator} from '../../__seeds__/user'
 
 const headers = {
   accept: 'application/json',
-  'Content-Type': 'application/json',
   Authorization: 'Bearer RegUser',
 }
 
-const testDataCreator = __filename.slice(__dirname.length + 1, -3)
+const testDataCreator = __filename.split('/packages/')[1]
 const id = 'testPulseOxygen'
 const userId = 'USER1'
 const organizationId = 'otherOrg'

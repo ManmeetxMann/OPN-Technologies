@@ -11,7 +11,7 @@ const dateTimeForCreation1 = `${dateForCreation}T07:00:00`
 const temperatureID1 = 'TEMP1'
 const temperatureID2 = 'TEMP2'
 const organizationID = 'TEST1'
-describe('AdminAppointmentController', () => {
+describe('TemperatureController', () => {
   beforeAll(async () => {
     await createTemperature({
       id: temperatureID1,
@@ -29,7 +29,6 @@ describe('AdminAppointmentController', () => {
 
   const headers = {
     accept: 'application/json',
-    'Content-Type': 'application/json',
     Authorization: 'Bearer RegUser',
   }
 

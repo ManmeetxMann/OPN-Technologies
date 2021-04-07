@@ -14,7 +14,7 @@ jest.mock('../../../../../common/src/middlewares/authorization')
 jest.mock('../../../../../common/src/utils/logging-setup')
 jest.mock('../../../../../common/src/service/google/pub_sub')
 
-const testDataCreator = __filename.slice(__dirname.length + 1, -3)
+const testDataCreator = __filename.split('/packages/')[1]
 const dateForAppointments = '2019-12-05'
 const dateForAppointmentStr = 'December 05, 2019'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`

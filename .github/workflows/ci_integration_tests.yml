@@ -10,6 +10,7 @@ on:
       - ".github/actions/**"
     branches: 
       - master
+      - feature/integration-tests-fresh
     tags:
       - preprod-*
 
@@ -19,21 +20,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        ref: master
+        ref: feature/integration-tests-fresh
         
     - uses: ./.github/actions/integration-tests
       name: Run Integration Tests
       env:
           infra_dev_service_account: ${{ secrets.INFRA_DEV_GCP_CLOUDBUILD_SA_KEY}}
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_INTEGRATION_TEST_URL }}
-    - uses: sonots/slack-notice-action@v3
-      with:
-        status: ${{ job.status }}
-        title: 'Integration Test Run'
-        text_on_success: 'Integration Tests Succeed'
-        text_on_fail: 'Integration Tests Failed'
-        text_on_cancel: 'Integration Tests Cancel'
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # required, but GitHub should automatically supply
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INTEGRATION_TEST_URL }} # required
-      if: always() # Pick up events even if the job fails or is canceled.
