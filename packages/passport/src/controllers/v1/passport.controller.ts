@@ -118,14 +118,15 @@ class PassportController implements IControllerBase {
 
   get = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const authenticatedUser = res.locals.connectedUser as User
+      const authenticatedUser = {id:'FkQqWA9xFa5onNs4DSwW'} //res.locals.connectedUser as User
       const userId = authenticatedUser.id
       const {attestationId} = req.params as {
         attestationId: string
       }
-      const {organizationid} = req.headers as {
-        organizationid: string
-      }
+      // const {organizationid} = req.headers as {
+      //   organizationid: string
+      // }
+      const organizationid = '9oKLJnpBKeoeNWiYdWHg'
 
       // Get attestation by id, check if it exist and belong to the user and organization
       const attestation = await this.attestationService.getByAttestationId(attestationId)
@@ -159,7 +160,7 @@ class PassportController implements IControllerBase {
       // Merge questions and answers by index
       const answersResults = []
       const {questions} = questionnaires
-      Object.keys(questions).forEach((questionKey) => {
+      Object.keys(questions).sort().forEach((questionKey) => {
         const question = questions[questionKey]
         const answersResult = {
           question: question.value,
