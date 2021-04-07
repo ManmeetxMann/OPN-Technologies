@@ -433,7 +433,6 @@ export type SinglePcrTestResultUi = {
   labName: string
   testType: string
   equipment: string
-  manufacturer: string
   resultSpecs: Spec[]
   style: TestResultStyle
   testName: string
@@ -442,13 +441,6 @@ export type SinglePcrTestResultUi = {
   travelID: string
   travelIDIssuingCountry: string
   dateOfResult: string
-}
-
-enum LabData {
-  labName = 'FH Health',
-  testType = 'RT-PCR',
-  equipment = 'Allplex 2019-nCoV Assay',
-  manufacturer = 'Seegeene Inc.',
 }
 
 export const singlePcrTestResultDTO = (
@@ -495,7 +487,6 @@ export const singlePcrTestResultDTO = (
     labName: lab.name,
     testType: pcrTestResult.testType,
     equipment: lab.assay,
-    manufacturer: LabData.manufacturer,
     resultSpecs: resultSpecs,
     resultAnalysis: resultAnalysis,
     style: resultToStyle(pcrTestResult.result),
