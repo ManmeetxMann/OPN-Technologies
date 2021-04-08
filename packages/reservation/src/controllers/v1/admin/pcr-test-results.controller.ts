@@ -42,14 +42,15 @@ import {AppoinmentService} from '../../../services/appoinment.service'
 import {CommentService} from '../../../services/comment.service'
 import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
 import {validateAnalysis} from '../../../utils/analysis.helper'
-import { commentsDTO } from "../../../models/comment";
+import {commentsDTO} from '../../../models/comment'
+import {UserService} from '../../../../../enterprise/src/services/user-service'
 
 class AdminPCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
-  private commentService = new CommentService()
+  private commentService = new CommentService(new UserService())
   private appoinmentService = new AppoinmentService()
 
   constructor() {
@@ -517,13 +518,7 @@ class AdminPCRTestResultController implements IControllerBase {
     try {
       const {testResultId} = req.params as TestResultCommentParamRequest
 
-      const comments = await this.commentService.getCommentsByTestResultId(testResultId)
-      const commentsWithReplies = await Promise.all(
-        comments.map(async (comment) => ({
-          ...comment,
-          replies: await this.commentService.getRepliesByCommentId(comment.id),
-        })),
-      )
+      const commentsWithReplies = await this.commentService.getCommentsDetailed(testResultId)
 
       res.json(actionSucceed(commentsWithReplies.map(commentsDTO)))
     } catch (error) {
