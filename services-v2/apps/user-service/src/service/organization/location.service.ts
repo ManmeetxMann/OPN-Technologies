@@ -52,7 +52,7 @@ export class LocationService {
    * @throws ResourceNotFoundException
    */
   getOne(locationId: string): Promise<OrganizationLocation> {
-    return this.findOne(locationId).then((target) => {
+    return this.findOne(locationId).then(target => {
       if (target) return target
 
       throw new ResourceNotFoundException(`Cannot find location [${locationId}]`)

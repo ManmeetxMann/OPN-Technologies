@@ -29,7 +29,7 @@ export class GroupService {
    * @param group
    */
   update(id: string, group: GroupUpdateRequest): Promise<OrganizationGroup> {
-    return this.getOne(id).then((target) => this.groupRepository.save({...target, group}))
+    return this.getOne(id).then(target => this.groupRepository.save({...target, group}))
   }
 
   /**
@@ -64,7 +64,7 @@ export class GroupService {
    * @throws ResourceNotFoundException
    */
   getOne(id: string): Promise<OrganizationGroup> {
-    return this.findOne(id).then((target) => {
+    return this.findOne(id).then(target => {
       if (target) return target
 
       throw new ResourceNotFoundException(`Cannot find group with id ${id}`)

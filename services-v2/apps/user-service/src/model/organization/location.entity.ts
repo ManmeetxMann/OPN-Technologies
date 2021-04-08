@@ -34,7 +34,10 @@ export class OrganizationLocation extends Auditable {
   @ApiProperty()
   country: string
 
-  @ManyToOne(() => Organization, (organization) => organization.id)
+  @ManyToOne(
+    () => Organization,
+    organization => organization.id,
+  )
   @JoinColumn({name: 'organizationId'})
   @ApiProperty()
   organizationId: string
