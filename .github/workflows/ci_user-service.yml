@@ -8,11 +8,11 @@ on:
     branches: 
       - master
     tags:
-      - infra-dev-user-service-*
-      - infra-dev-all-*
-      - preprod-reservation-*
-      - preprod-all-*
-      - prod-reservation-*
+      - infra-dev-v2-user-*
+      - infra-dev-v2-all-*
+      - preprod-v2-user-*
+      - preprod-v2-all-*
+      - prod-v2-user-*
 
 jobs:
   build:
