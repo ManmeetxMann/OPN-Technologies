@@ -26,13 +26,13 @@
         "tsConfigPath": "libs/common/tsconfig.lib.json"
       }
     },
-    "access-service": {
+    "passport-service": {
       "type": "application",
-      "root": "apps/access-service",
+      "root": "apps/passport-service",
       "entryFile": "main",
-      "sourceRoot": "apps/access-service/src",
+      "sourceRoot": "apps/passport-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/access-service/tsconfig.app.json",
+        "tsConfigPath": "apps/passport-service/tsconfig.app.json",
         "assets": ["app.yaml"]
       }
     },

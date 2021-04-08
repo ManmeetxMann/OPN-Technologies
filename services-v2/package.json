@@ -7,7 +7,7 @@
   "license": "Appropriate",
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "nest build user-service && nest build access-service",
+    "build": "nest build user-service && nest build passport-service",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -19,10 +19,10 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./apps/opn-services/test/jest-e2e.json",
-    "build:user-service": "nest build user-service",
-    "build:access-service": "nest build access-service",
+    "build:user-service": "nest build user-service && cp ./package.json ./dist/apps/user-service/",
+    "build:passport-service": "nest build passport-service && cp ./package.json ./dist/apps/passport-service/",
     "deploy:user-service": "gcloud app deploy ./dist/apps/user-service --quiet",
-    "deploy:access-service": "gcloud app deploy ./dist/apps/access-service --quiet"
+    "deploy:passport-service": "gcloud app deploy ./dist/apps/passport-service --quiet"
   },
   "dependencies": {
     "@nestjs/common": "^7.0.0",

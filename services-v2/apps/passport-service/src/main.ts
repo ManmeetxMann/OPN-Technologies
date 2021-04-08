@@ -11,7 +11,7 @@ class App {}
 
 async function bootstrap() {
   const app = await NestFactory.create(App)
-  await app.listen(3000)
+  await app.listen(process.env.PORT || 8080)
 }
 bootstrap()
 

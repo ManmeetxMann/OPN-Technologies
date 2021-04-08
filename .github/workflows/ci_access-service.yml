@@ -22,7 +22,7 @@ jobs:
         
     - uses: ./.github/actions/deploy-gae-services-v2
       with:
-        service_name: "access-service"
+        service_name: "passport-service"
       name: Build & Deploy to GAE
       env:
           dev_service_account: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY}}
