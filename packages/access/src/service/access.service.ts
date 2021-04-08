@@ -83,7 +83,7 @@ export class AccessService {
       dependants: {},
     })
     this.incrementPeopleOnPremises(access.locationId, 1)
-    this.accessListener.addEntry(access)
+    this.accessListener.processAccess(access)
     return access
   }
 
@@ -322,7 +322,7 @@ export class AccessService {
       console.error(`Failed to decrement people for access ${access.id}: [${e}]`),
     )
     this.accessListener
-      .addExit(savedAccess, true, [])
+      .processAccess(savedAccess)
       .catch((e) => console.error(`Failed to add exit for access ${access.id}: [${e}]`))
     return savedAccess
   }
