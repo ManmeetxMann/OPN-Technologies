@@ -4,9 +4,8 @@ import DataStore from '../../../common/src/data/datastore'
 // import {Config} from '../../../common/src/utils/config'
 // import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import PassportAdapter from '../../../common/src/adapters/passport'
-import {Temperature, TemperatureDBModel, TemperatureStatuses} from '../models/temperature'
+import {Temperature, TemperatureDBModel} from '../models/temperature'
 import {TemperatureRepository} from '../respository/temperature.repository'
-import {PassportStatuses} from '../../../passport/src/models/passport'
 import {Enterprise} from '../adapter/enterprise'
 import {UserService} from '../../../common/src/service/user/user-service'
 
@@ -20,18 +19,15 @@ export class TemperatureService {
 
   async save(temperature: Temperature): Promise<TemperatureDBModel> {
     const temp = await this.temperatureRepository.add(temperature)
-    const status =
-      temp.status === TemperatureStatuses.Proceed ? PassportStatuses.Proceed : PassportStatuses.Stop
-    await Promise.all([
-      this.adapter.createPassport(temp.userId, temp.organizationId, status),
-      this.enterpriseAdapter.postTemperature({
-        id: temp.id,
-        status: temp.status,
-        temperature: temp.temperature,
-        userId: temp.userId,
-        organizationId: temp.organizationId,
-      }),
-    ])
+
+    this.enterpriseAdapter.postTemperature({
+      id: temp.id,
+      status: temp.status,
+      temperature: temp.temperature,
+      userId: temp.userId,
+      organizationId: temp.organizationId,
+    })
+
     return temp
   }
 

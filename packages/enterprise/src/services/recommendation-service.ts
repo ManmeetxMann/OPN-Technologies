@@ -104,8 +104,11 @@ export class RecommendationService {
       return [Recommendations.TempCheckRequired, Recommendations.PassAvailable]
     }
     if (status == PassportStatuses.Proceed) {
-      // proceed
-      return [Recommendations.PassAvailable, Recommendations.ViewNegativeTemp]
+      const recommendations = [Recommendations.PassAvailable]
+      if (items.latestTemperature) {
+        recommendations.push(Recommendations.ViewNegativeTemp)
+      }
+      return recommendations
     }
   }
 

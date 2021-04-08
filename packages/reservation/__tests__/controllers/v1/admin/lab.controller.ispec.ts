@@ -3,7 +3,7 @@ import request from 'supertest'
 import {app as server} from '../../../../src/app'
 import {create, deleteLabsByTestDataCreator} from '../../../__seeds__/labs'
 
-const testDataCreator = __filename.slice(__dirname.length + 1, -3)
+const testDataCreator = __filename.split('/packages/')[1]
 jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
