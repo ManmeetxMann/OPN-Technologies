@@ -1455,8 +1455,25 @@ export class AppoinmentService {
     return updatedAppointment
   }
 
-  async getUserAppointments(userId: string): Promise<AppointmentDBModel[]> {
-    return this.appointmentsRepository.findWhereEqual('userId', userId)
+  async getUserAppointments(userId: string, labId: string): Promise<AppointmentDBModel[]> {
+    const conditions = []
+    if (labId) {
+      conditions.push({
+        map: '/',
+        key: 'labId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: labId,
+      })
+    }
+
+    conditions.push({
+      map: '/',
+      key: 'userId',
+      operator: DataModelFieldMapOperatorType.Equals,
+      value: userId,
+    })
+
+    return this.appointmentsRepository.findWhereEqualInMap(conditions);
   }
 
   private async appointmentStatusChange(
