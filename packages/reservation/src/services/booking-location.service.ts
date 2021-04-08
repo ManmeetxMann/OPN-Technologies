@@ -10,8 +10,14 @@ export class BookingLocationService {
   private acuityRepository = new AcuityRepository()
   private packageRepository = new PackageRepository(new DataStore())
 
-  async getBookingLocations(organizationId: string): Promise<BookingLocations[]> {
-    const packages = await this.getPackageListByOrganizationId(organizationId)
+  async getBookingLocations(
+    organizationId: string,
+    enablePaymentForBooking: boolean,
+  ): Promise<BookingLocations[]> {
+    const packages = await this.getPackageListByOrganizationId(
+      organizationId,
+      enablePaymentForBooking,
+    )
     const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
     const calendars = await this.acuityRepository.getCalendarList()
     const appointmentTypesWithPackages = new Map<
@@ -61,6 +67,7 @@ export class BookingLocationService {
           appointmentTypeName: appointmentType.name,
           name: calendar.name,
           address: calendar.location,
+          price: appointmentType.price,
         })
       })
     })
@@ -68,12 +75,19 @@ export class BookingLocationService {
     return bookingLocations
   }
 
-  async getPackageListByOrganizationId(organizationId: string): Promise<Certificate[]> {
+  async getPackageListByOrganizationId(
+    organizationId: string,
+    enablePaymentForBooking: boolean,
+  ): Promise<Certificate[]> {
     const packagesAcuity = await this.acuityRepository.getPackagesList()
 
     const packageCodeWithRemaining = packagesAcuity.filter((packageCode) => {
       return packageCode.remainingCounts && Object.keys(packageCode.remainingCounts).length
     })
+
+    if (enablePaymentForBooking) {
+      return packageCodeWithRemaining
+    }
 
     const packages = await this.packageRepository.findWhereEqual('organizationId', organizationId)
     const packageCodeIds = packages.map(({packageCode}) => packageCode)
