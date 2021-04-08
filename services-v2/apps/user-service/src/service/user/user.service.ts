@@ -31,7 +31,7 @@ export class UserService {
       const lower = query.toLowerCase()
       const matches = (property: Partial<keyof User>) => `LOWER(u.${property}) like '%${lower}%'`
       queryBuilder = queryBuilder.andWhere(
-        new Brackets(sqb => {
+        new Brackets((sqb) => {
           sqb.where(matches('firstName'))
           sqb.orWhere(matches('lastName'))
           sqb.orWhere(matches('email'))
@@ -60,7 +60,7 @@ export class UserService {
    * @throws ResourceNotFoundException
    */
   getOne(userId: string): Promise<User> {
-    return this.findOne(userId).then(target => {
+    return this.findOne(userId).then((target) => {
       if (target) return target
 
       throw new ResourceNotFoundException(`Cannot find user [${userId}]`)

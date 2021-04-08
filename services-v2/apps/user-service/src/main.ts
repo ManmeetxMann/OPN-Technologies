@@ -15,9 +15,7 @@ import {GroupService} from './service/organization/group.service'
 
 @Module({
   imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],
-  controllers: [
-    AdminV1UserController,
-  ],
+  controllers: [AdminV1UserController],
   providers: [OrganizationService, LocationService, GroupService, UserService],
 })
 class App {}
@@ -30,3 +28,5 @@ async function bootstrap() {
   await app.listen(3000)
 }
 bootstrap()
+
+export {App}

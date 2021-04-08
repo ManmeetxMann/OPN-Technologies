@@ -18,10 +18,7 @@ export class OrganizationGroup extends Auditable {
   @ApiProperty()
   priority?: number
 
-  @ManyToOne(
-    type => Organization,
-    organization => organization.id,
-  )
+  @ManyToOne(() => Organization, (organization) => organization.id)
   @JoinColumn({name: 'organizationId'})
   @ApiProperty()
   organizationId: string

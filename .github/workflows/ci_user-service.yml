@@ -1,0 +1,32 @@
+name: Deploy User Service V2
+on:
+  push:
+    paths:
+      - "services-v2/**"
+      - ".github/workflows/ci_user-service.yml"
+      - ".github/actions/**"
+    branches: 
+      - master
+    tags:
+      - infra-dev-user-service-*
+      - infra-dev-all-*
+      - preprod-reservation-*
+      - preprod-all-*
+      - prod-reservation-*
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+        
+    - uses: ./.github/actions/deploy-gae-services-v2
+      with:
+        service_name: "user-service"
+      name: Build & Deploy to GAE
+      env:
+          dev_service_account: ${{ secrets.DEV_GCP_CLOUDBUILD_SA_KEY}}
+          infra_dev_service_account: ${{ secrets.INFRA_DEV_GCP_CLOUDBUILD_SA_KEY}}
+          preprod_service_account: ${{ secrets.PREPROD_GCP_CLOUDBUILD_SA_KEY }}
+          prod_service_account: ${{ secrets.PROD_GCP_CLOUDBUILD_SA_KEY }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}

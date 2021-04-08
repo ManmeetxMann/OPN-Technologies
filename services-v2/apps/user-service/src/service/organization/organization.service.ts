@@ -49,7 +49,7 @@ export class OrganizationService {
    * @throws ResourceNotFoundException
    */
   getOne(id: string): Promise<Organization> {
-    return this.findOne(id).then(target => {
+    return this.findOne(id).then((target) => {
       if (target) return target
 
       throw new ResourceNotFoundException(`Cannot find organization with id ${id}`)

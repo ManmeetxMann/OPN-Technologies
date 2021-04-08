@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { ResponseStatus, ResponseStatusCodes } from './response-status';
+import {ApiProperty} from '@nestjs/swagger'
+import {ResponseStatus, ResponseStatusCodes} from './response-status'
 
 /**
  * Generic response wrapper.
@@ -10,19 +10,19 @@ import { ResponseStatus, ResponseStatusCodes } from './response-status';
  */
 export class ResponseWrapper<T = unknown> {
   @ApiProperty()
-  status: ResponseStatus;
+  status: ResponseStatus
 
   @ApiProperty()
-  data: T;
+  data: T
 
   @ApiProperty()
-  page?: number;
+  page?: number
 
   @ApiProperty()
-  totalPages?: number;
+  totalPages?: number
 
   @ApiProperty()
-  totalItems?: number;
+  totalItems?: number
 
   static of<T>(
     data: T,
@@ -34,18 +34,18 @@ export class ResponseWrapper<T = unknown> {
   ): ResponseWrapper<T> {
     return {
       data,
-      status: { code, message },
+      status: {code, message},
       page,
       totalPages,
       totalItems,
-    } as ResponseWrapper<T>;
+    } as ResponseWrapper<T>
   }
 
   static actionSucceed<T>(data: T = null): ResponseWrapper<T> {
-    return ResponseWrapper.of(data, ResponseStatusCodes.Succeed);
+    return ResponseWrapper.of(data, ResponseStatusCodes.Succeed)
   }
 
   static actionFailed<T>(message?: string, data: T = null): ResponseWrapper<T> {
-    return ResponseWrapper.of(data, ResponseStatusCodes.Failed, message);
+    return ResponseWrapper.of(data, ResponseStatusCodes.Failed, message)
   }
 }

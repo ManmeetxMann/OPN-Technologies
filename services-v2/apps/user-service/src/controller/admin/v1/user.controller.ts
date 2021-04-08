@@ -19,6 +19,6 @@ export class AdminV1UserController {
 
   @Get('/:userId')
   getOne(@Param('userId') userId: string): Promise<ResponseWrapper<User>> {
-    return this.userService.getOne(userId).then(target => ResponseWrapper.actionSucceed(target))
+    return this.userService.getOne(userId).then((target) => ResponseWrapper.actionSucceed(target))
   }
 }

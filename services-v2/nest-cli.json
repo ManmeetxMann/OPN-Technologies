@@ -5,7 +5,7 @@
   "root": "apps/opn-services",
   "compilerOptions": {
     "webpack": true,
-    "tsConfigPath": "apps/opn-services/tsconfig.app.json"
+    "tsConfigPath": "tsconfig.json"
   },
   "projects": {
     "opn-services": {
@@ -17,15 +17,6 @@
         "tsConfigPath": "apps/opn-services/tsconfig.app.json"
       }
     },
-    "user-service": {
-      "type": "application",
-      "root": "apps/user-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/user-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/user-service/tsconfig.app.json"
-      }
-    },
     "common": {
       "type": "library",
       "root": "libs/common",
@@ -35,13 +26,24 @@
         "tsConfigPath": "libs/common/tsconfig.lib.json"
       }
     },
-    "passport-service": {
+    "access-service": {
       "type": "application",
-      "root": "apps/passport-service",
+      "root": "apps/access-service",
       "entryFile": "main",
-      "sourceRoot": "apps/passport-service/src",
+      "sourceRoot": "apps/access-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/passport-service/tsconfig.app.json"
+        "tsConfigPath": "apps/access-service/tsconfig.app.json",
+        "assets": ["app.yaml"]
+      }
+    },
+    "user-service": {
+      "type": "application",
+      "root": "apps/user-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/user-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/user-service/tsconfig.app.json",
+        "assets": ["app.yaml"]
       }
     }
   }

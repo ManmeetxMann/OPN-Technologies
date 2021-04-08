@@ -7,18 +7,22 @@
   "license": "UNLICENSED",
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "nest build",
+    "build": "nest build user-service && nest build access-service",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "node dist/apps/opn-services/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./apps/opn-services/test/jest-e2e.json"
+    "test:e2e": "jest --config ./apps/opn-services/test/jest-e2e.json",
+    "build:user-service": "nest build user-service",
+    "build:access-service": "nest build access-service",
+    "deploy:user-service": "gcloud app deploy ./dist/apps/user-service --quiet",
+    "deploy:access-service": "gcloud app deploy ./dist/apps/access-service --quiet"
   },
   "dependencies": {
     "@nestjs/common": "^7.0.0",
