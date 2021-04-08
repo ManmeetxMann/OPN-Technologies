@@ -13,6 +13,7 @@ export type TransportRunsDbModel = TransportRunsBase & {
   transportDate: string
   labId?: string
   labName?: string
+  createdBy: string
 }
 
 export type TransportRunsIdentifier = {

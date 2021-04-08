@@ -7,4 +7,5 @@ export default Joi.object({
   labId: Joi.string().required(),
   testRunDateTime: FirestoreTimestamp.isValid(),
   name: Joi.string().allow(''),
+  createdBy: Joi.string().required(),
 })
