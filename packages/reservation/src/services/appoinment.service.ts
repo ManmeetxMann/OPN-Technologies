@@ -1473,7 +1473,7 @@ export class AppoinmentService {
       value: userId,
     })
 
-    return this.appointmentsRepository.findWhereEqualInMap(conditions);
+    return this.appointmentsRepository.findWhereEqualInMap(conditions)
   }
 
   private async appointmentStatusChange(
