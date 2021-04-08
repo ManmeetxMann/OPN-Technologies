@@ -132,6 +132,9 @@ components:
         enableTesting:
           type: boolean
           default: false
+        enablePaymentForBooking:
+          type: boolean
+          default: false
       required:
         - name
 
@@ -589,31 +592,31 @@ components:
         isOrganizeAdmin:
           type: boolean
       required:
-        - adminForLabIds	
-        - email	
-        - isBulkUploadAdmin	
-        - isCheckInAdmin	
-        - isClinicUser	
-        - isConfirmResultAdmin	
-        - isDueTodayAdmin	
-        - isGenerateAdmin	
-        - isLabAppointmentsAdmin	
-        - isLabResultsAdmin	
-        - isLabUser	
-        - isLookupAdmin	
-        - isManagementDashboardAdmin	
-        - isOpnSuperAdmin	
-        - isPackageAdmin	
-        - isRapidResultOrgAdmin	
-        - isRapidResultSenderAdmin	
-        - isReceivingAdmin	
-        - isSingleResultSendAdmin	
-        - isTestAppointmentsAdmin	
-        - isTestReportsAdmin	
-        - isTestRunsAdmin	
-        - isTransportsRunsAdmin	
-        - organizationId	
-        - showReporting	
+        - adminForLabIds
+        - email
+        - isBulkUploadAdmin
+        - isCheckInAdmin
+        - isClinicUser
+        - isConfirmResultAdmin
+        - isDueTodayAdmin
+        - isGenerateAdmin
+        - isLabAppointmentsAdmin
+        - isLabResultsAdmin
+        - isLabUser
+        - isLookupAdmin
+        - isManagementDashboardAdmin
+        - isOpnSuperAdmin
+        - isPackageAdmin
+        - isRapidResultOrgAdmin
+        - isRapidResultSenderAdmin
+        - isReceivingAdmin
+        - isSingleResultSendAdmin
+        - isTestAppointmentsAdmin
+        - isTestReportsAdmin
+        - isTestRunsAdmin
+        - isTransportsRunsAdmin
+        - organizationId
+        - showReporting
         - superAdminForOrganizationIds
         - isOrganizeAdmin
 
@@ -1302,7 +1305,7 @@ components:
           type: string
         style:
           type: string
-        
+
     ResponseOfOrganizationConnection:
       type: object
       additionalProperties: false
@@ -1944,7 +1947,7 @@ components:
             message:
               nullable: true
               type: string
-    
+
     ResponseOfRecommendations:
       type: object
       additionalProperties: false
@@ -1972,7 +1975,7 @@ components:
             message:
               nullable: true
               type: string
-    
+
     ResponseOfHealthPass:
       type: object
       additionalProperties: false
