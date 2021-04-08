@@ -94,7 +94,8 @@ runs:
       rm ./service-account.json
       echo "::endgroup::"
       echo "::group::Build"
-      npm run cd-build-${{ inputs.service_name }}
+
+      npm run build:${{ inputs.service_name }}
       echo "::endgroup::"
 
       echo "::group::Add Application Environment Variables"
