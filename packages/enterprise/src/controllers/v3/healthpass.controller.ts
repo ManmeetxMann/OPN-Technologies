@@ -15,8 +15,7 @@ import {
   organizationSummaryDTOResponse,
 } from '../../models/organization'
 import {userDTO} from '../../../../common/src/data/user'
-import {HealthPassType} from '../../types/health-pass'
-import {PassportStatuses} from '../../../../passport/src/models/passport'
+import {PassportStatuses, PassportType} from '../../../../passport/src/models/passport'
 import {TemperatureStatuses} from '../../../../reservation/src/models/temperature'
 import {ResultTypes} from '../../../../reservation/src/models/appointment'
 import {PulseOxygenStatuses} from '../../../../reservation/src/models/pulse-oxygen'
@@ -97,10 +96,10 @@ class RecommendationController implements IControllerBase {
       }
 
       if (pass.tests) {
-        const attestation = pass.tests.find(({type}) => type === HealthPassType.Attestation)
-        const temperature = pass.tests.find(({type}) => type === HealthPassType.Temperature)
-        const PCR = pass.tests.find(({type}) => type === HealthPassType.PCR)
-        const pulse = pass.tests.find(({type}) => type === HealthPassType.PulseOxygenCheck)
+        const attestation = pass.tests.find(({type}) => type === PassportType.Attestation)
+        const temperature = pass.tests.find(({type}) => type === PassportType.Temperature)
+        const PCR = pass.tests.find(({type}) => type === PassportType.PCR)
+        const pulse = pass.tests.find(({type}) => type === PassportType.PulseOxygenCheck)
 
         badges = {
           hasSelfTestBadge: attestation?.status === PassportStatuses.Proceed,
