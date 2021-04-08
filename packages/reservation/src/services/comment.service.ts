@@ -3,15 +3,15 @@ import {CommentRepository} from '../respository/comment.repository'
 import {Comment, CommentResponse} from '../models/comment'
 import {firestoreTimeStampToUTC} from '../utils/datetime.helper'
 import moment from 'moment'
-import {UserService} from '../../../enterprise/src/services/user-service'
 import {AuthUser, User} from '../../../common/src/data/user'
+import {UserServiceInterface} from '../../../enterprise/src/interfaces/user-service-interface'
 
 export class CommentService {
   private dataStore = new DataStore()
   private commentRepository = new CommentRepository(this.dataStore)
-  private userService: UserService
+  private userService: UserServiceInterface
 
-  constructor(userService: UserService) {
+  constructor(userService: UserServiceInterface) {
     this.userService = userService
   }
 
