@@ -30,6 +30,7 @@ export type Organization = {
   legacyMode: boolean
   enableTesting: boolean
   questionnaireId: string
+  enablePaymentForBooking: boolean
 }
 
 export type OrganizationListDTO = {
@@ -152,5 +153,6 @@ export const organizationDTOResponse = (organization: Organization): Omit<Organi
     notificationFormatCaution: organization.notificationFormatCaution,
     notificationFormatStop: organization.notificationFormatStop,
     questionnaireId: organization.questionnaireId,
+    enablePaymentForBooking: organization.enablePaymentForBooking,
   }
 }
