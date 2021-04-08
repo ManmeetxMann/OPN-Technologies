@@ -4,7 +4,7 @@ import {Handler, Router} from 'express'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {OPNPubSub} from '../../../../common/src/service/google/pub_sub'
 
-import {PassportStatuses, Passport} from '../../models/passport'
+import {PassportStatuses, Passport, PassportType} from '../../models/passport'
 import {PassportService} from '../../services/passport-service'
 import {AttestationService} from '../../services/attestation-service'
 
@@ -112,14 +112,13 @@ class RecommendationController implements IControllerBase {
 
       if (status) {
         const includesGuardian = true
-        const isPCR = true
         const passport = await this.passportService.create(
           status,
           userId,
           [],
           includesGuardian,
           organizationId,
-          isPCR,
+          PassportType.PCR,
         )
         await this.alertIfNeeded(passport)
       }

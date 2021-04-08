@@ -4,7 +4,6 @@ import * as bodyParser from 'body-parser'
 import loggerMiddleware from '../../common/src/middlewares/logger'
 
 import AdminController from './controllers/admin.controller'
-import UserController from './controllers/user.controller'
 import PassportController from './controllers/v1/passport.controller'
 import PubSubController from './controllers/v1/pubsub.controller'
 import InternalController from './controllers/v1/internal/passport.controller'
@@ -22,7 +21,6 @@ export const app = new App({
   corsOptions: '*',
   controllers: [
     new RootController(),
-    new UserController(),
     new AdminController(),
     new PassportController(),
     new InternalController(),
