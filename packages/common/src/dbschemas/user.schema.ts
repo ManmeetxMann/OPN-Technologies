@@ -1,7 +1,7 @@
 import Joi from 'joi'
 
 export default Joi.object({
-  registrationId: Joi.string().allow(null),
+  registrationId: Joi.string().allow(null,""),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
   dateOfBirth: Joi.string(),
