@@ -1,10 +1,10 @@
 {
   "name": "opn-services",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "Next JS with MySQL microservices for OPN mobile and web",
+  "author": "OPN Technologies Inc",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "Appropriate",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build user-service && nest build access-service",
@@ -13,7 +13,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/opn-services/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint --resolve-plugins-relative-to . \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
