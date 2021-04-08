@@ -813,8 +813,8 @@ export class PCRTestResultsService {
       const pcrResultDataForEmail = {
         adminId,
         labAssay: lab.assay,
-        ...pcrResultDataForDbUpdate,
         ...appointment,
+        ...pcrResultDataForDbUpdate,
       }
       await this.sendNotification(pcrResultDataForEmail, metaData.action)
     } else {
