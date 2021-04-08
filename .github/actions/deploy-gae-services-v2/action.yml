@@ -94,7 +94,7 @@ runs:
       rm ./service-account.json
       echo "::endgroup::"
       echo "::group::Build"
-
+      cd services-v2
       npm run build:${{ inputs.service_name }}
       echo "::endgroup::"
 
