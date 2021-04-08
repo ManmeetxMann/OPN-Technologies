@@ -1812,7 +1812,6 @@ export class PCRTestResultsService {
         appointmentId: pcrTestResult.appointmentId,
       })
       throw new ResourceNotFoundException(`${id} does not exist`)
-
     }
 
     return {
