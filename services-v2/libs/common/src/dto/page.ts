@@ -7,6 +7,7 @@ export class Page<T> {
   totalPages: number
   totalItems: number
 
+  // eslint-disable-next-line max-params
   static of<T>(data: T[], page: number, perPage: number, totalItems: number): Page<T> {
     return {
       data,

@@ -24,6 +24,7 @@ export class ResponseWrapper<T = unknown> {
   @ApiProperty()
   totalItems?: number
 
+  // eslint-disable-next-line max-params
   static of<T>(
     data: T,
     code: string,
