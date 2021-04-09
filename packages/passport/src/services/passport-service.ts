@@ -103,6 +103,7 @@ export class PassportService {
     dependantIds: string[],
     includesGuardian: boolean,
     organizationId: string,
+    isPCR = false,
     pcrResultType?: ResultTypes, // whether or not to use the long duration for PROCEED
   ): Promise<Passport> {
     if (dependantIds.length) {
@@ -117,6 +118,7 @@ export class PassportService {
     const validUntilDate = this.shortestTime(
       status as PassportStatuses,
       validFromDate,
+      isPCR,
       pcrResultType,
     )
 
@@ -285,10 +287,9 @@ export class PassportService {
   shortestTime(
     passportStatus: PassportStatuses | TemperatureStatuses,
     validFrom: Date,
+    isPCR: boolean,
     pcrResultType?: ResultTypes,
   ): Date {
-    const isPCR = pcrResultType && pcrResultType != ResultTypes.Pending
-
     if (
       [PassportStatuses.Stop, PassportStatuses.Caution, TemperatureStatuses.Stop].includes(
         passportStatus,

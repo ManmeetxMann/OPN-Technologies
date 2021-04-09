@@ -113,12 +113,14 @@ class RecommendationController implements IControllerBase {
 
       if (status) {
         const includesGuardian = true
+        const isPCR = true
         const passport = await this.passportService.create(
           status,
           userId,
           [],
           includesGuardian,
           organizationId,
+          isPCR,
           pcrResultType,
         )
         await this.alertIfNeeded(passport)
