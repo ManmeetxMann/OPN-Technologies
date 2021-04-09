@@ -490,6 +490,7 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId} = req.query as {organizationId: string}
+      const labId = req.headers?.labid as string
       const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
       if (organizationId && organizationId !== appointment.organizationId) {
         LogError(
@@ -502,7 +503,13 @@ class AdminAppointmentController implements IControllerBase {
         )
         throw new BadRequestException('Request is not allowed')
       }
-      const userAppointments = await this.appointmentService.getUserAppointments(appointment.userId)
+      if (labId && labId !== appointment.labId) {
+        throw new BadRequestException('Request is not allowed')
+      }
+      const userAppointments = await this.appointmentService.getUserAppointments(
+        appointment.userId,
+        labId,
+      )
       res.json(
         actionSucceed(
           userAppointments.map((userAppointment) => {
