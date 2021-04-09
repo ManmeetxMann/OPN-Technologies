@@ -23,6 +23,7 @@ import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {AttestationService} from '../../../passport/src/services/attestation-service'
 import {PassportService} from '../../../passport/src/services/passport-service'
+import {TemperatureService} from '../../../reservation/src/services/temperature.service'
 
 type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
 type Lookups = {
@@ -74,6 +75,7 @@ export class ReportService {
   private userService = new UserService()
   private accessService = new AccessService()
   private passportService = new PassportService()
+  private temperatureService = new TemperatureService()
   private dataStore = new DataStore()
 
   async getStatsHelper(organizationId: string, filter?: StatsFilter): Promise<Stats> {
@@ -153,11 +155,15 @@ export class ReportService {
       exposureTraces,
       userTraces,
       {enteringAccesses, exitingAccesses},
+      passport,
+      temperatureChecks,
     ] = await Promise.all([
       this.attestationService.getAttestationsInPeriod(primaryId, from, to),
       this.attestationService.getExposuresInPeriod(primaryId, from, to),
       this.attestationService.getTracesInPeriod(primaryId, from, to),
       this.getAccessHistory(from, to, primaryId),
+      this.passportService.findLatestDirectPassport(userId, organization.id),
+      this.temperatureService.getTemperaturesInRange(userId, organization.id, from, to),
     ])
     // sort by descending attestation time
     // (default ascending)
@@ -356,6 +362,8 @@ export class ReportService {
     return userTemplate({
       attestations: printableAttestations,
       locations: printableAccessHistory,
+      passportStatus: passport.status ?? PassportStatuses.Pending,
+      temperatureChecks,
       exposures: _.uniqBy(
         printableExposures,
         (exposure) =>
