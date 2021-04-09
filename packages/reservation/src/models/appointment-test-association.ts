@@ -5,6 +5,7 @@ export type AppointmentToTestTypeAssociation = {
   appointmentType: number
   appointmentTypeName?: string
   testType: TestTypes
+  createdBy: string
 }
 
 export type AppointmentToTestTypeAssocPostRequest = Omit<AppointmentToTestTypeAssociation, 'id'>
