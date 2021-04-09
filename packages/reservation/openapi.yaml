@@ -1849,7 +1849,7 @@ paths:
               - Antibody_IgM
         - in: query
           name: searchQuery
-          schema: 
+          schema:
             type: string
         - in: query
           name: result
