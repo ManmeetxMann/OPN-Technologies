@@ -475,11 +475,8 @@ export class AppoinmentService {
   }
 
   private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
-    const appointmentToTestType = await this.appointmentToTestTypeRepository.findWhereEqual(
-      'appointmentType',
-      appointmentTypeID,
-    )
-    return appointmentToTestType?.length ? appointmentToTestType[0].testType : TestTypes.PCR
+    const testType = await this.appointmentToTestTypeRepository.getTestType(appointmentTypeID)
+    return testType
   }
 
   private async getDateFields(acuityAppointment: AppointmentAcuityResponse) {
