@@ -32,6 +32,7 @@ import {FilterGroupKey, FilterName, statsUiDTOResponse} from '../../../models/ap
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
 import {validateAnalysis} from '../../../utils/analysis.helper'
+import {LabService} from '../../../services/lab.service'
 
 class AdminPCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -39,6 +40,7 @@ class AdminPCRTestResultController implements IControllerBase {
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
   private appoinmentService = new AppoinmentService()
+  public labService = new LabService()
 
   constructor() {
     this.initRoutes()
@@ -477,7 +479,9 @@ class AdminPCRTestResultController implements IControllerBase {
         )
       }
 
-      res.json(actionSucceed(singlePcrTestResultDTO(pcrTestResult, appointment)))
+      const lab = await this.labService.findOneById(pcrTestResult.labId)
+
+      res.json(actionSucceed(singlePcrTestResultDTO(pcrTestResult, appointment, lab)))
     } catch (error) {
       next(error)
     }

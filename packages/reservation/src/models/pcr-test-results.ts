@@ -14,6 +14,7 @@ import {groupByChannel} from '../utils/analysis.helper'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
 import {PulseOxygenStatuses} from './pulse-oxygen'
+import {Lab} from './lab'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -432,7 +433,6 @@ export type SinglePcrTestResultUi = {
   labName: string
   testType: string
   equipment: string
-  manufacturer: string
   resultSpecs: Spec[]
   style: TestResultStyle
   testName: string
@@ -443,16 +443,10 @@ export type SinglePcrTestResultUi = {
   dateOfResult: string
 }
 
-enum LabData {
-  labName = 'FH Health',
-  testType = 'RT-PCR',
-  equipment = 'Allplex 2019-nCoV Assay',
-  manufacturer = 'Seegeene Inc.',
-}
-
 export const singlePcrTestResultDTO = (
   pcrTestResult: PCRTestResultDBModel,
   appointment: AppointmentDBModel,
+  lab: Omit<Lab, 'id'>,
 ): SinglePcrTestResultUi => {
   let resultSpecs = null
   let resultAnalysis = null
@@ -490,10 +484,9 @@ export const singlePcrTestResultDTO = (
     locationName: appointment.locationName || 'N/A',
     swabMethod: appointment.swabMethod || 'N/A',
     deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
-    labName: LabData.labName,
-    testType: LabData.testType,
-    equipment: LabData.equipment,
-    manufacturer: LabData.manufacturer,
+    labName: lab.name,
+    testType: pcrTestResult.testType,
+    equipment: lab.assay,
     resultSpecs: resultSpecs,
     resultAnalysis: resultAnalysis,
     style: resultToStyle(pcrTestResult.result),
