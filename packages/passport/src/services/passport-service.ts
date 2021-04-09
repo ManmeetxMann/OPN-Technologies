@@ -134,7 +134,8 @@ export class PassportService {
         status === PassportStatuses.Proceed &&
         currentPassport.status !== PassportStatuses.Proceed
       ) {
-        const currentPriority = PassportTypePriority[currentPassport.status] ?? 0 // legacy passports have no type and can always be overwritten
+        const currentPriority =
+          (currentPassport.type && PassportTypePriority[currentPassport.type]) ?? 0 // legacy passports have no type and can always be overwritten
         if (currentPriority > typePriority) {
           // current passport takes precedence
           return {passport: currentPassport, created: false}
