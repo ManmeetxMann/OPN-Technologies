@@ -13,9 +13,9 @@ export enum PassportType {
 // lower priority proceed passports cannot override higher priority stop passports
 export const PassportTypePriority: Record<PassportType, number> = {
   [PassportType.Attestation]: 1,
-  [PassportType.Temperature]: 2,
-  [PassportType.PulseOxygenCheck]: 2,
-  [PassportType.PCR]: 3,
+  [PassportType.Temperature]: 1,
+  [PassportType.PulseOxygenCheck]: 1,
+  [PassportType.PCR]: 2,
 }
 
 export type Passport = {

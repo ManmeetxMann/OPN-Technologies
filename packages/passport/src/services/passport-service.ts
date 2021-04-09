@@ -130,6 +130,10 @@ export class PassportService {
 
     if (currentPassport) {
       // need to check if it would be appropriate to overwrite this passport
+      // RULES:
+      // new stop beats existing proceed
+      // high priority existing stop beats low priority existing proceed
+      // long lasting stop beats short lasting stop
       if (
         status === PassportStatuses.Proceed &&
         currentPassport.status !== PassportStatuses.Proceed
@@ -138,6 +142,13 @@ export class PassportService {
           (currentPassport.type && PassportTypePriority[currentPassport.type]) ?? 0 // legacy passports have no type and can always be overwritten
         if (currentPriority > typePriority) {
           // current passport takes precedence
+          return {passport: currentPassport, created: false}
+        }
+      } else if (
+        status !== PassportStatuses.Proceed &&
+        currentPassport.status !== PassportStatuses.Proceed
+      ) {
+        if (validUntilDate < safeTimestamp(currentPassport.validUntil)) {
           return {passport: currentPassport, created: false}
         }
       }
