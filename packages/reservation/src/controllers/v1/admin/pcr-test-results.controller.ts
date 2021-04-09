@@ -402,6 +402,7 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         appointmentStatus,
         organizationId,
+        testType,
       } = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
@@ -414,6 +415,7 @@ class AdminPCRTestResultController implements IControllerBase {
         appointmentStatus,
         organizationId,
         labId,
+        testType,
       })
 
       res.json(actionSucceed(pcrResults))
@@ -424,7 +426,12 @@ class AdminPCRTestResultController implements IControllerBase {
 
   dueDeadlineStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunId, deadline, barCode} = req.query as PcrTestResultsListByDeadlineRequest
+      const {
+        testRunId,
+        deadline,
+        barCode,
+        testType,
+      } = req.query as PcrTestResultsListByDeadlineRequest
       const labId = req.headers?.labid as string
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
@@ -438,6 +445,7 @@ class AdminPCRTestResultController implements IControllerBase {
         testRunId,
         barCode,
         labId,
+        testType,
       })
 
       const filterGroup = [

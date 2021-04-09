@@ -210,6 +210,7 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   barCode?: string
   appointmentStatus?: AppointmentStatus[]
   labId?: string
+  testType?: TestTypes
 }
 
 //Update to Acuity Service

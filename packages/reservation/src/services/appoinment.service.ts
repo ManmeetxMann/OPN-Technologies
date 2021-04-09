@@ -234,7 +234,7 @@ export class AppoinmentService {
     queryParams: AppointmentByOrganizationRequest,
   ): Promise<(AppointmentDBModel & {organizationName: string; labName?: string})[]> {
     const conditions = []
-    let appointments = []
+    let appointments: AppointmentDBModel[] = []
     if (queryParams.labId) {
       conditions.push({
         map: '/',
@@ -371,6 +371,12 @@ export class AppoinmentService {
         )
       ).map((organization) => [organization.id, organization.name]),
     )
+
+    if (queryParams.testType) {
+      appointments = appointments.filter(
+        (appointment) => appointment.testType == queryParams.testType,
+      )
+    }
 
     const labs = await this.labService.getAll()
     const lab = (appointment) => labs.find(({id}) => id == appointment?.labId)
