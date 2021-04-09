@@ -140,6 +140,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         searchQuery,
         transportRunId,
+        testType,
       } = req.query as AppointmentByOrganizationRequest
 
       const labId = req.headers?.labid as string
@@ -165,6 +166,7 @@ class AdminAppointmentController implements IControllerBase {
         searchQuery,
         transportRunId,
         labId,
+        testType,
       })
 
       const transportRuns = fromPairs(
@@ -203,6 +205,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         searchQuery,
         transportRunId,
+        testType,
       } = req.query as AppointmentByOrganizationRequest
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
@@ -226,6 +229,7 @@ class AdminAppointmentController implements IControllerBase {
         searchQuery,
         transportRunId,
         labId,
+        testType,
       })
 
       const filterGroup = [

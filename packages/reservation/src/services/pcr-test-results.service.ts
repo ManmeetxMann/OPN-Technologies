@@ -1415,7 +1415,7 @@ export class PCRTestResultsService {
     queryParams: PcrTestResultsListByDeadlineRequest,
   ): Promise<PCRTestResultDBModel[]> {
     const pcrTestResultsQuery = []
-    const {labId, deadline, barCode, testRunId, organizationId} = queryParams
+    const {labId, deadline, barCode, testRunId, organizationId, testType} = queryParams
 
     const equals = (key: string, value) => ({
       map: '/',
@@ -1451,6 +1451,10 @@ export class PCRTestResultsService {
       pcrTestResultsQuery.push(
         equals('organizationId', organizationId === 'null' ? null : organizationId),
       )
+    }
+
+    if (testType) {
+      pcrTestResultsQuery.push(equals('testType', testType))
     }
 
     return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
