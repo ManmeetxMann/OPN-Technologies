@@ -1,4 +1,5 @@
 import {firestore} from 'firebase-admin'
+import moment from 'moment'
 
 import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datetime.helper'
 
@@ -472,13 +473,18 @@ export const singlePcrTestResultDTO = (
   } else if (pcrTestResult.resultAnalysis) {
     resultAnalysis = groupByChannel(pcrTestResult.resultAnalysis)
   }
+
+  const isBirthDateParsable = moment(appointment.dateOfBirth).isValid()
+
   return {
     email: appointment.email,
     firstName: appointment.firstName,
     lastName: appointment.lastName,
     phone: `${appointment.phone}`,
     ohipCard: appointment.ohipCard || 'N/A',
-    dateOfBirth: appointment.dateOfBirth,
+    dateOfBirth: isBirthDateParsable
+      ? moment(appointment.dateOfBirth).format('LL')
+      : appointment.dateOfBirth,
     address: appointment.address,
     addressUnit: appointment.addressUnit,
     barCode: pcrTestResult.barCode,
