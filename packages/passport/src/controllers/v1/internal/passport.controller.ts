@@ -70,7 +70,7 @@ class PassportController implements IControllerBase {
         ].includes(type as PassportType)
       )
         throw new BadRequestException(`${type} is not a valid passport type`)
-      const passport = await this.passportService.create(
+      const {passport, created} = await this.passportService.create(
         status as PassportStatus,
         userId,
         [],
@@ -78,7 +78,7 @@ class PassportController implements IControllerBase {
         organizationId,
         type as PassportType,
       )
-      this.alertIfNeeded(passport, attestationId)
+      if (created) this.alertIfNeeded(passport, attestationId)
       res.json(actionSucceed())
     } catch (error) {
       next(error)

@@ -112,7 +112,7 @@ class RecommendationController implements IControllerBase {
 
       if (status) {
         const includesGuardian = true
-        const passport = await this.passportService.create(
+        const {passport, created} = await this.passportService.create(
           status,
           userId,
           [],
@@ -120,7 +120,7 @@ class RecommendationController implements IControllerBase {
           organizationId,
           PassportType.PCR,
         )
-        await this.alertIfNeeded(passport)
+        if (created) await this.alertIfNeeded(passport)
       }
       res.sendStatus(200)
     } catch (error) {

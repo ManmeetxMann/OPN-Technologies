@@ -110,7 +110,7 @@ export class PassportService {
     includesGuardian: boolean,
     organizationId: string,
     type: PassportType,
-  ): Promise<Passport> {
+  ): Promise<{passport: Passport; created: boolean}> {
     const isPCR = type === PassportType.PCR
     const typePriority = PassportTypePriority[type]
     if (dependantIds.length) {
@@ -137,7 +137,7 @@ export class PassportService {
         const currentPriority = PassportTypePriority[currentPassport.status] ?? 0 // legacy passports have no type and can always be overwritten
         if (currentPriority > typePriority) {
           // current passport takes precedence
-          return currentPassport
+          return {passport: currentPassport, created: false}
         }
       }
     }
@@ -160,7 +160,7 @@ export class PassportService {
       .then(mapDates)
       .then(async (passport) => {
         await this.postPassport(passport)
-        return passport
+        return {passport, created: true}
       })
   }
 
