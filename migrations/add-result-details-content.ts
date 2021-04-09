@@ -26,23 +26,21 @@ const resultTypes = [
   'PreliminaryPositive',
   'Positive',
   'Negative',
-  'Pending',
-  'Invalid',
   'Inconclusive',
   'Indeterminate',
 ]
 
 async function main() {
-  resultTypes.map(async resultType => {
+  resultTypes.map(async (resultType) => {
     const content = await database.collection('content').where('resultType', '==', resultType).get()
-  
+
     if (content.docs[0]) {
       if (content.docs.length > 1) {
         console.log('More than one entry was found for a "Negative" resultType')
       }
       return content.docs[0].ref.update({details})
     }
-  
+
     return database.collection('content').add({
       contentType: 'result',
       lang: 'en',
