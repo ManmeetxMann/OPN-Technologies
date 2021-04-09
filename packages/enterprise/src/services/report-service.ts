@@ -565,17 +565,17 @@ export class ReportService {
   }
 
   async getDailyExposures(userIds: string[]): Promise<number> {
-    const today = moment().tz(timeZone).format('YYYY-MM-DD')
+    const today = moment(now()).format('YYYY-MM-DD')
 
-    const exposures = []
+    let exposures = 0
     const exposureCount = userIds.map(async (id) => {
       const userExposures = await this.attestationService.getExposuresInPeriod(id, today, today)
 
-      return exposures.push(...userExposures)
+      return (exposures += userExposures.length)
     })
 
     await Promise.all(exposureCount)
 
-    return exposures.length
+    return exposures
   }
 }
