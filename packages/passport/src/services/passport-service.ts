@@ -103,8 +103,8 @@ export class PassportService {
     dependantIds: string[],
     includesGuardian: boolean,
     organizationId: string,
-    isPCR = false,
-    pcrResultType?: ResultTypes, // whether or not to use the long duration for PROCEED
+    isPCR = false, // whether or not to use the long duration for PROCEED
+    pcrResultType?: ResultTypes,
   ): Promise<Passport> {
     if (dependantIds.length) {
       const allDependants = (await this.userService.getAllDependants(userId)).map(({id}) => id)
