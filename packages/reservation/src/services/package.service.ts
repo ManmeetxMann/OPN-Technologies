@@ -76,10 +76,12 @@ export class PackageService {
       const testType = acuityTypeToTestType.find(
         (testType) => testType.appointmentType === Number(acuityType),
       )
-      if (countsByType[testType.testType]) {
-        countsByType[testType.testType] += count
-      } else {
-        countsByType[testType.testType] = count
+      if (testType && testType.testType) {
+        if (countsByType[testType.testType]) {
+          countsByType[testType.testType] += count
+        } else {
+          countsByType[testType.testType] = count
+        }
       }
     })
     return Object.entries(countsByType).map(([testType, count]) => ({
