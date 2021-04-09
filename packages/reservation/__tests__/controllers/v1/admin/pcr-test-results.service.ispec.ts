@@ -20,7 +20,7 @@ const deadlineSameDay = `${dateForAppointments}T23:59:00`
 const organizationId = 'TEST1'
 const labID1 = 'Lab1'
 const barCode = 'BAR1'
-const pcrTestId = `${testDataCreator}pcrTestId1`
+const pcrTestId = `commentPcrTestId1`
 const commentTestId = 'commentTestId1'
 
 describe('PCRTestResultController', () => {
@@ -94,7 +94,7 @@ describe('PCRTestResultController', () => {
       const url = `/reservation/admin/api/v1/pcr-test-results?date=${dateForAppointments}`
       const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
-      expect(result.body.data.length).toBe(4)
+      expect(result.body.data.length).toBe(5)
       done()
     })
 
@@ -115,7 +115,7 @@ describe('PCRTestResultController', () => {
         .set('labid', labID1)
         .set('authorization', 'Bearer LabUser')
       expect(result.status).toBe(200)
-      expect(result.body.data.length).toBe(1)
+      expect(result.body.data.length).toBe(2)
       done()
     })
 
@@ -228,6 +228,16 @@ describe('PCRTestResultController', () => {
           reply: 'My testing reply comment',
           attachmentUrls: ['https://via.placeholder.com/210'],
         })
+      expect(result.status).toBe(200)
+      done()
+    })
+    test('list comments successfully', async (done) => {
+      const url = `/reservation/admin/api/v1/test-results/${pcrTestId}/comment`
+      const result = await request(server.app)
+        .get(url)
+        .set('authorization', 'Bearer LabUser')
+        .send()
+      console.log(result)
       expect(result.status).toBe(200)
       done()
     })
