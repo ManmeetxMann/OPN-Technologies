@@ -93,13 +93,14 @@ runs:
       gcloud auth activate-service-account --key-file=./service-account.json --project=${{ env.PROJECT_ID }}
       rm ./service-account.json
       echo "::endgroup::"
-      echo "::group::Build"
-      cd services-v2
-      npm run build:${{ inputs.service_name }}
-      echo "::endgroup::"
 
       echo "::group::Add Application Environment Variables"
       gcloud secrets versions access latest --secret=OPN_SERVICES_V2_SECRETS > ./.env
+      echo "::endgroup::"
+
+      echo "::group::Build"
+      cd services-v2
+      npm run build:${{ inputs.service_name }}
       echo "::endgroup::"
 
       ONLY_VALIDATE_DEPLOYMENT=${{ inputs.only_validate_deployment }}
