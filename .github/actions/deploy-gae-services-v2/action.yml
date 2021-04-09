@@ -99,7 +99,7 @@ runs:
       echo "::endgroup::"
 
       echo "::group::Add Application Environment Variables"
-      echo "TODO: Writing Environment Variables to: .env"
+      gcloud secrets versions access latest --secret=OPN_SERVICES_V2_SECRETS > ./.env
       echo "::endgroup::"
 
       ONLY_VALIDATE_DEPLOYMENT=${{ inputs.only_validate_deployment }}
