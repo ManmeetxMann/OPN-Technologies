@@ -72,7 +72,6 @@ The shared library is importable from `@opn/common`
     ```sh
     gcloud secrets versions access latest --secret=OPN_SERVICES_V2_SECRETS > ./.env
     ```
-1. Replace a value for `USER_DB_HOST` in .env to point DB to local to `127.0.0.1`
 
 ## Configure environment
 
@@ -95,7 +94,7 @@ Clouds SQL is accessible on local environment for application and DB management 
     ```
     cloud_sql_proxy -instances=opn-platform-infra-dev:northamerica-northeast1:opn-platform-db-server-infra-dev:sql-inst=tcp:3306
     ```
-1. MySQL DB should be accessible for local connection from application or DB management tool using host: 12
+1. MySQL DB should be accessible for local connection from application or DB management tool using host: 127.0.0.1:3306. Login, password and DB name will be in .env file.
 
 ### Environment variables
 Create a `.env` file in the root folder and add the following:
