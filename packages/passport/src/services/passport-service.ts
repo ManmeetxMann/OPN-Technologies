@@ -287,7 +287,7 @@ export class PassportService {
     validFrom: Date,
     pcrResultType?: ResultTypes,
   ): Date {
-    const isPCR = pcrResultType != ResultTypes.Pending
+    const isPCR = pcrResultType && pcrResultType != ResultTypes.Pending
 
     if (
       [PassportStatuses.Stop, PassportStatuses.Caution, TemperatureStatuses.Stop].includes(
