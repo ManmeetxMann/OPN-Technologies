@@ -64,6 +64,7 @@ runs:
         echo "PROJECT_ID=opn-platform-preprod" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=preprod_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
+        echo "GAE_VERSION_FLAG=--version=$GAE_VERSION" >> $GITHUB_ENV
       elif [[ "$GITHUB_REF" == *"$PROD_TAG_REF"* ]]; then
         echo "Deploy to PROD"
         echo "PROJECT_ID=opn-platform-ca-prod" > $GITHUB_ENV

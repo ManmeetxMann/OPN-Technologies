@@ -132,6 +132,9 @@ components:
         enableTesting:
           type: boolean
           default: false
+        enablePaymentForBooking:
+          type: boolean
+          default: false
       required:
         - name
 
@@ -589,31 +592,31 @@ components:
         isOrganizeAdmin:
           type: boolean
       required:
-        - adminForLabIds	
-        - email	
-        - isBulkUploadAdmin	
-        - isCheckInAdmin	
-        - isClinicUser	
-        - isConfirmResultAdmin	
-        - isDueTodayAdmin	
-        - isGenerateAdmin	
-        - isLabAppointmentsAdmin	
-        - isLabResultsAdmin	
-        - isLabUser	
-        - isLookupAdmin	
-        - isManagementDashboardAdmin	
-        - isOpnSuperAdmin	
-        - isPackageAdmin	
-        - isRapidResultOrgAdmin	
-        - isRapidResultSenderAdmin	
-        - isReceivingAdmin	
-        - isSingleResultSendAdmin	
-        - isTestAppointmentsAdmin	
-        - isTestReportsAdmin	
-        - isTestRunsAdmin	
-        - isTransportsRunsAdmin	
-        - organizationId	
-        - showReporting	
+        - adminForLabIds
+        - email
+        - isBulkUploadAdmin
+        - isCheckInAdmin
+        - isClinicUser
+        - isConfirmResultAdmin
+        - isDueTodayAdmin
+        - isGenerateAdmin
+        - isLabAppointmentsAdmin
+        - isLabResultsAdmin
+        - isLabUser
+        - isLookupAdmin
+        - isManagementDashboardAdmin
+        - isOpnSuperAdmin
+        - isPackageAdmin
+        - isRapidResultOrgAdmin
+        - isRapidResultSenderAdmin
+        - isReceivingAdmin
+        - isSingleResultSendAdmin
+        - isTestAppointmentsAdmin
+        - isTestReportsAdmin
+        - isTestRunsAdmin
+        - isTransportsRunsAdmin
+        - organizationId
+        - showReporting
         - superAdminForOrganizationIds
         - isOrganizeAdmin
 
@@ -1302,7 +1305,7 @@ components:
           type: string
         style:
           type: string
-        
+
     ResponseOfOrganizationConnection:
       type: object
       additionalProperties: false
@@ -1595,7 +1598,8 @@ components:
                   count:
                     type: number
                 example: [{"date": "2020-09-01T13:00:00.000Z","count": 1},{"date": "2020-09-01T17:00:00.000Z","count": 1}]
-
+            dailyExposuresCount:
+              type: number
         status:
           type: object
           additionalProperties: false
@@ -1944,7 +1948,7 @@ components:
             message:
               nullable: true
               type: string
-    
+
     ResponseOfRecommendations:
       type: object
       additionalProperties: false
@@ -1972,7 +1976,7 @@ components:
             message:
               nullable: true
               type: string
-    
+
     ResponseOfHealthPass:
       type: object
       additionalProperties: false
@@ -2113,6 +2117,27 @@ components:
           enum:
             - proceed
             - stop
+
+    PostPassport:
+      type: object
+      additionalProperties: false
+      properties:
+        userId:
+          type: string
+        organizationId:
+          type: string
+        id:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - proceed
+            - caution
+            - stop
+            - temperature_check_required
+        expiry:
+          type: string
 
   responses:
     Response:
@@ -4190,6 +4215,18 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostPulse'
+      responses:
+        '200':
+          description: Successfully digested
+
+  /enterprise/api/v1/internal/passport:
+    post:
+      summary: update passport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostPassport'
       responses:
         '200':
           description: Successfully digested

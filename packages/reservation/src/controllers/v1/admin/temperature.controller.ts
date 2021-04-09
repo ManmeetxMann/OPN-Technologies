@@ -19,6 +19,9 @@ import {PassportStatuses} from '../../../../../passport/src/models/passport'
 import {PulseOxygenStatuses} from '../../../../../reservation/src/models/pulse-oxygen'
 import {TemperatureSaveRequest, TemperatureStatuses} from '../../../models/temperature'
 
+import PassportAdapter from '../../../../../common/src/adapters/passport'
+import {getUserId} from '../../../../../common/src/utils/auth'
+
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
 const oxygenThreshold = Number(Config.get('OXYGEN_THRESHOLD'))
 
@@ -31,6 +34,7 @@ class AdminTemperatureController implements IControllerBase {
   private alertService = new AlertService()
   private attestationService = new AttestationService()
   public organizationService = new OrganizationService()
+  private passportAdapter = new PassportAdapter()
 
   constructor() {
     this.initRoutes()
@@ -53,6 +57,7 @@ class AdminTemperatureController implements IControllerBase {
         oxygen,
         userId,
       } = req.body as TemperatureSaveRequest
+      const createdBy = getUserId(res.locals.authenticatedUser)
 
       if (!temperatureThreshold) {
         throw new BadRequestException('Temperature Threshold is not specified in config file')
@@ -74,10 +79,10 @@ class AdminTemperatureController implements IControllerBase {
       const isLowOxygenStatus = oxygen < oxygenThreshold
 
       // final status which will update passport
-      const status =
+      const temperatureOxygenStatus =
         isHighTemperatureStatus || isLowOxygenStatus
-          ? TemperatureStatuses.Stop
-          : TemperatureStatuses.Proceed
+          ? PassportStatuses.Stop
+          : PassportStatuses.Proceed
 
       const validFrom = now()
 
@@ -94,15 +99,14 @@ class AdminTemperatureController implements IControllerBase {
         throw new BadRequestException('Attestation Status should be Proceed')
       }
 
-      const data = {
+      const temperatureResult = await this.temperatureService.save({
         organizationId,
         locationId: attestation.locationId,
         temperature,
         status: isHighTemperatureStatus ? TemperatureStatuses.Stop : TemperatureStatuses.Proceed,
         userId,
-      }
-
-      const result = await this.temperatureService.save(data)
+        createdBy,
+      })
 
       await this.pulseOxygenService.savePulseOxygenStatus({
         pulse,
@@ -113,11 +117,13 @@ class AdminTemperatureController implements IControllerBase {
         userId,
       })
 
+      await this.passportAdapter.createPassport(userId, organizationId, temperatureOxygenStatus)
+
       const response = {
-        status,
-        userId: result.userId,
+        status: temperatureOxygenStatus,
+        userId: temperatureResult.userId,
         validFrom,
-        validUntil: this.passportService.shortestTime(status, now(), false),
+        validUntil: this.passportService.shortestTime(temperatureOxygenStatus, now(), false),
       }
 
       res.json(actionSucceed(response))

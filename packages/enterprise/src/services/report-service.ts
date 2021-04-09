@@ -23,6 +23,7 @@ import {Questionnaire} from '../../../lookup/src/models/questionnaire'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {AttestationService} from '../../../passport/src/services/attestation-service'
 import {PassportService} from '../../../passport/src/services/passport-service'
+import {TemperatureService} from '../../../reservation/src/services/temperature.service'
 
 type AugmentedUser = User & {group: OrganizationGroup; status: PassportStatus}
 type Lookups = {
@@ -74,6 +75,7 @@ export class ReportService {
   private userService = new UserService()
   private accessService = new AccessService()
   private passportService = new PassportService()
+  private temperatureService = new TemperatureService()
   private dataStore = new DataStore()
 
   async getStatsHelper(organizationId: string, filter?: StatsFilter): Promise<Stats> {
@@ -110,24 +112,31 @@ export class ReportService {
       return true
     })
     const nowMoment = moment(now())
+    const nullOrISOString = (status: PassportStatus, timestamp: string | null): string | null => {
+      if (!timestamp) return null
+      if (status !== PassportStatuses.Proceed) return null
+      if (nowMoment.isSameOrBefore(safeTimestamp(timestamp))) return null
+      return safeTimestamp(timestamp).toISOString()
+    }
+
     const accesses = data.map(({user, status, access}) => ({
       // remove not-yet-exited exitAt
-      exitAt:
-        access?.exitAt && nowMoment.isSameOrAfter(safeTimestamp(access.exitAt))
-          ? safeTimestamp(access.exitAt).toISOString()
-          : null,
-      enteredAt: access?.enteredAt ? safeTimestamp(access.enteredAt).toISOString() : null,
+      exitAt: nullOrISOString(status, access?.exitAt),
+      enteredAt: nullOrISOString(status, access?.enteredAt),
       parentUserId: user.delegates?.length ? user.delegates[0] : null,
       status,
       user,
       locationId: access?.locationId,
     }))
 
+    const dailyExposuresCount = await this.getDailyExposures([...allUserIds])
+
     return {
       accesses,
       asOfDateTime: live ? now().toISOString() : null,
       passportsCountByStatus: getPassportsCountPerStatus(accesses),
       hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
+      dailyExposuresCount,
     }
   }
 
@@ -149,11 +158,15 @@ export class ReportService {
       exposureTraces,
       userTraces,
       {enteringAccesses, exitingAccesses},
+      passport,
+      temperatureChecks,
     ] = await Promise.all([
       this.attestationService.getAttestationsInPeriod(primaryId, from, to),
       this.attestationService.getExposuresInPeriod(primaryId, from, to),
       this.attestationService.getTracesInPeriod(primaryId, from, to),
       this.getAccessHistory(from, to, primaryId),
+      this.passportService.findLatestDirectPassport(userId, organization.id),
+      this.temperatureService.getTemperaturesInRange(userId, organization.id, from, to),
     ])
     // sort by descending attestation time
     // (default ascending)
@@ -352,6 +365,8 @@ export class ReportService {
     return userTemplate({
       attestations: printableAttestations,
       locations: printableAccessHistory,
+      passportStatus: passport.status ?? PassportStatuses.Pending,
+      temperatureChecks,
       exposures: _.uniqBy(
         printableExposures,
         (exposure) =>
@@ -555,5 +570,20 @@ export class ReportService {
       }),
     )
     return results.filter((notNull) => notNull)
+  }
+
+  async getDailyExposures(userIds: string[]): Promise<number> {
+    const today = moment(now()).format('YYYY-MM-DD')
+
+    let exposures = 0
+    const exposureCount = userIds.map(async (id) => {
+      const userExposures = await this.attestationService.getExposuresInPeriod(id, today, today)
+
+      return (exposures += userExposures.length)
+    })
+
+    await Promise.all(exposureCount)
+
+    return exposures
   }
 }

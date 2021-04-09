@@ -7,6 +7,7 @@ export type Stats = {
   accesses: AccessWithPassportStatusAndUser[]
   passportsCountByStatus: Record<PassportStatus, number>
   hourlyCheckInsCounts: CheckInsCount[]
+  dailyExposuresCount: number
 }
 
 export type StatsFilter = {

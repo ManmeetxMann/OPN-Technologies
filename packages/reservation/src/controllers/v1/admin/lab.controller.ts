@@ -4,6 +4,7 @@ import {authorizationMiddleware} from '../../../../../common/src/middlewares/aut
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {LabService} from '../../../services/lab.service'
+import {getUserId} from '../../../../../common/src/utils/auth'
 
 class AdminLabController implements IControllerBase {
   public path = '/reservation/admin'
@@ -38,7 +39,10 @@ class AdminLabController implements IControllerBase {
         templateId: string
         assay: string
       }
-      const result = await this.labService.save({name, templateId, assay})
+
+      const createdBy = getUserId(res.locals.authenticatedUser)
+      const result = await this.labService.save({name, templateId, assay, createdBy})
+
       res.json(actionSucceed(result))
     } catch (error) {
       next(error)

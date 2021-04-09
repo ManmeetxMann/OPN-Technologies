@@ -4,11 +4,11 @@ import DataStore from '../../../common/src/data/datastore'
 // import {Config} from '../../../common/src/utils/config'
 // import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import PassportAdapter from '../../../common/src/adapters/passport'
-import {Temperature, TemperatureDBModel, TemperatureStatuses} from '../models/temperature'
+import {Temperature, TemperatureDBModel} from '../models/temperature'
 import {TemperatureRepository} from '../respository/temperature.repository'
-import {PassportStatuses} from '../../../passport/src/models/passport'
 import {Enterprise} from '../adapter/enterprise'
 import {UserService} from '../../../common/src/service/user/user-service'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 
 export class TemperatureService {
   private dataStore = new DataStore()
@@ -20,9 +20,7 @@ export class TemperatureService {
 
   async save(temperature: Temperature): Promise<TemperatureDBModel> {
     const temp = await this.temperatureRepository.add(temperature)
-    const status =
-      temp.status === TemperatureStatuses.Proceed ? PassportStatuses.Proceed : PassportStatuses.Stop
-    await this.adapter.createPassport(temp.userId, temp.organizationId, status)
+
     this.enterpriseAdapter.postTemperature({
       id: temp.id,
       status: temp.status,
@@ -30,6 +28,7 @@ export class TemperatureService {
       userId: temp.userId,
       organizationId: temp.organizationId,
     })
+
     return temp
   }
 
@@ -38,6 +37,27 @@ export class TemperatureService {
       .getQueryFindWhereEqual('userId', userId)
       .where('organizationId', '==', organizationId)
       .fetch()
+  }
+
+  async getTemperaturesInRange(
+    userId: string,
+    organizationId: string,
+    from: string,
+    to: string,
+  ): Promise<TemperatureDBModel[]> {
+    return (
+      this.temperatureRepository
+        .collection()
+        //@ts-ignore
+        .where('timestamps.createdAt', '>=', safeTimestamp(from))
+        //@ts-ignore
+        .where('timestamps.createdAt', '<=', safeTimestamp(to))
+        .where('organizationId', '==', organizationId)
+        .where(`userId`, '==', userId)
+        //@ts-ignore
+        .orderBy('timestamps.createdAt', 'desc')
+        .fetch()
+    )
   }
 
   getAll(): Promise<TemperatureDBModel[]> {

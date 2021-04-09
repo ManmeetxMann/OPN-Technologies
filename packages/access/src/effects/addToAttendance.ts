@@ -1,10 +1,14 @@
-import type {Access} from '../models/access'
-import {AttendanceRepository} from '../repository/attendance.repository'
-import DataStore from '../../../common/src/data/datastore'
 import {FieldValue} from '@google-cloud/firestore'
 import moment from 'moment-timezone'
+
+import type {Access} from '../models/access'
+import {AttendanceRepository} from '../repository/attendance.repository'
+
+import DataStore from '../../../common/src/data/datastore'
 import {UserService} from '../../../common/src/service/user/user-service'
 import {Config} from '../../../common/src/utils/config'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
+import {LogWarning} from '../../../common/src/utils/logging-setup'
 
 const ACCESS_KEY = 'accesses'
 const USER_MEMO_KEY = 'accessingUsers'
@@ -42,6 +46,71 @@ export default class AccessListener {
     this.repo = new AttendanceRepository(dataStore)
     this.dataStore = dataStore
     this.userService = new UserService()
+  }
+
+  async processAccess(access: Access): Promise<unknown> {
+    if (access.enteredAt) {
+      throw new Error('called processAccess on an access which never entered')
+    }
+    if (!access.exitAt) {
+      throw new Error('called processAccess on an access which never exited')
+    }
+    if (access.dependants?.length || !access.includesGuardian) {
+      throw new Error('called processAccess on a legacy access')
+    }
+    const date = dateOfEntry(access)
+    const path = `${access.locationId}/daily-reports`
+    // TODO: this theoretically allows for duplicates. move to making date an id
+    const record = await this.repo.findWhereEqual('date', date, path).then((existing) => {
+      if (existing.length) {
+        if (existing.length > 1) {
+          LogWarning('processAccess', 'multipleEntries', {date, path})
+        }
+        return existing[0]
+      }
+      return this.repo.add(
+        {
+          date,
+          [ACCESS_KEY]: [],
+          [USER_MEMO_KEY]: [],
+        },
+        path,
+      )
+    })
+
+    const toAdd = {
+      userId: access.userId,
+      enteredAt: safeTimestamp(access.enteredAt),
+      exitAt: safeTimestamp(access.exitAt),
+      dependant: null,
+      dependantId: null,
+    }
+    const existingAccess = record.accesses.find(
+      (pastAccess) =>
+        pastAccess.userId === access.userId &&
+        pastAccess.includesGuardian &&
+        !pastAccess.dependantId &&
+        pastAccess.enteredAt &&
+        safeTimestamp(pastAccess.enteredAt).valueOf() === safeTimestamp(access.enteredAt).valueOf(),
+    )
+    if (existingAccess) {
+      await this.repo.updateProperties(
+        record.id,
+        {
+          [ACCESS_KEY]: FieldValue.arrayRemove(existingAccess),
+        },
+        path,
+      )
+    }
+
+    return this.repo.updateProperties(
+      record.id,
+      {
+        [ACCESS_KEY]: FieldValue.arrayUnion(toAdd),
+        accessingUsers: FieldValue.arrayUnion(access.userId),
+      },
+      path,
+    )
   }
 
   async addEntry(access: Access): Promise<unknown> {
@@ -86,6 +155,7 @@ export default class AccessListener {
       dependant: dependantId ? dependantsById[dependantId] : null,
       dependantId,
     }))
+
     return this.repo.updateProperties(
       record.id,
       {

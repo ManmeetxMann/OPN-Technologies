@@ -104,8 +104,11 @@ export class RecommendationService {
       return [Recommendations.TempCheckRequired, Recommendations.PassAvailable]
     }
     if (status == PassportStatuses.Proceed) {
-      // proceed
-      return [Recommendations.PassAvailable, Recommendations.ViewNegativeTemp]
+      const recommendations = [Recommendations.PassAvailable]
+      if (items.latestTemperature) {
+        recommendations.push(Recommendations.ViewNegativeTemp)
+      }
+      return recommendations
     }
   }
 
@@ -236,7 +239,7 @@ export class RecommendationService {
         break
       }
       case Recommendations.TempCheckRequired: {
-        title = 'Complete a Temperature Check'
+        title = 'Complete a Pulse/Temp Check'
         body = 'Verify your badge with a check'
         break
       }
