@@ -42,7 +42,9 @@ export class BookingLocationService {
             (remainingCounts[appointmentTypeId] &&
               appointmentTypesWithPackage.count > remainingCounts[appointmentTypeId])
           ) {
-            const appointmentType = appointmentTypes.find(({id}) => id === Number(appointmentTypeId))
+            const appointmentType = appointmentTypes.find(
+              ({id}) => id === Number(appointmentTypeId),
+            )
 
             if (appointmentType) {
               appointmentTypesWithPackages.set(appointmentTypeId, {
