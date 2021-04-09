@@ -22,7 +22,6 @@ If you have further questions or concerns, you can contact FH Health at info@fhh
 const database = firestore()
 
 async function main() {
-
   const content = await database.collection('content').where('resultType', '==', 'Negative').get()
 
   if (content.docs[0]) {
