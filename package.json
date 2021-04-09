@@ -32,9 +32,7 @@
 		"cd-deploy-access": "lerna run --scope @opn/access gcloud_deploy --stream",
 		"cd-deploy-reservation": "lerna run --scope @opn/reservation gcloud_deploy --stream",
 		"cd-deploy-apidocs": "lerna run --scope @opn/apidocs gcloud_deploy --stream",
-		"cd-deploy-tools-pages": "lerna run --scope @opn/tools-pages deploy --stream",
-		"migration-dry:firestore": "sh ./migrations/migration-recent-dry.sh",
-		"migration:firestore": "sh ./migrations/migration-cli.sh"
+		"cd-deploy-tools-pages": "lerna run --scope @opn/tools-pages deploy --stream"
 	},
 	"devDependencies": {
 		"@types/jest": "^26.0.4",
