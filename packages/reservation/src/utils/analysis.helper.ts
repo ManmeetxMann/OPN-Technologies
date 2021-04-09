@@ -60,6 +60,27 @@ const validations = [
   },
 ]
 
+const analysePositiveTypes = ['POSITIVE', 'Positive', 'positive']
+const analyseNegativeTypes = ['NEGATIVE', 'Negative', 'negative']
+
+export const normalizeAnalysis = (specs: Spec[]): Spec[] => {
+  return specs.map((spec) => {
+    if (analysePositiveTypes.includes(spec.value as string)) {
+      return {
+        label: spec.label,
+        value: '+',
+      }
+    }
+    if (analyseNegativeTypes.includes(spec.value as string)) {
+      return {
+        label: spec.label,
+        value: '-',
+      }
+    }
+    return spec
+  })
+}
+
 export const validateAnalysis = (specs: Spec[]): void => {
   specs.forEach((spec) => {
     const validator = validations.find(({column}) => column === spec.label)
