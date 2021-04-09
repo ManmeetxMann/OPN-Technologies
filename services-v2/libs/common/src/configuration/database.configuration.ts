@@ -1,5 +1,6 @@
 import {TypeOrmModule} from '@nestjs/typeorm'
 import {ConfigModule, ConfigService} from '@nestjs/config'
+import {isRunningOnGCP} from '@opn/common/utils'
 
 export const DefaultDatabaseConfiguration = (service: string) => {
   const env = (property: string) => [service, 'DB', property].join('_').toUpperCase()
@@ -8,10 +9,8 @@ export const DefaultDatabaseConfiguration = (service: string) => {
     imports: [ConfigModule],
     inject: [ConfigService],
     useFactory: (configService: ConfigService) => {
-      const isGAE = Boolean(configService.get('GOOGLE_CLOUD_PROJECT'))
       let connection = {}
-
-      if (isGAE) {
+      if (isRunningOnGCP()) {
         // Connect via socket when deployed to GCP
         connection = {
           host: configService.get<string>(env('HOST')),
@@ -20,7 +19,7 @@ export const DefaultDatabaseConfiguration = (service: string) => {
           },
         }
       } else {
-        // Connect via TCP when on local with local DB or cloud proxy
+        // Connect via TCP when on local with local DB or Cloud SQL with proxy
         connection = {
           host: configService.get<string>(env('LOCAL_HOST')),
           port: configService.get<number>(env('LOCAL_PORT')),
