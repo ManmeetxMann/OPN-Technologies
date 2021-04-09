@@ -4,6 +4,7 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
     'prettier',
     'plugin:prettier/recommended',
+    'plugin:promise/recommended'
   ],
   plugins: ['@typescript-eslint'],
   parserOptions: {
@@ -12,13 +13,15 @@ module.exports = {
     project: "./tsconfig.json"
   },
   rules: {
-    'max-params': [2,{ "max":3 }],
+    'max-params': [2, { "max": 3 }],
+    'max-lines': ["error", { "max": 450, "skipBlankLines": true, "skipComments": true }],
+    'max-lines-per-function': ["error", { "max": 80, "skipBlankLines": true, "skipComments": true }],
+    'complexity': ["error", 20], // cyclomatic complexity
     '@typescript-eslint/no-explicit-any': 2,
     '@typescript-eslint/no-unused-vars': [
       'error',
-      {argsIgnorePattern: '^_', ignoreRestSiblings: true},
+      { argsIgnorePattern: '^_', ignoreRestSiblings: true },
     ],
-    '@typescript-eslint/ban-ts-comment': 'off',
   },
   root: true
 }
