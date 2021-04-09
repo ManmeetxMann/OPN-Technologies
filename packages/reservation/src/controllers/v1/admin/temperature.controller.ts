@@ -15,7 +15,7 @@ import {PassportService} from '../../../../../passport/src/services/passport-ser
 import {TemperatureService} from '../../../services/temperature.service'
 import {PulseOxygenService} from '../../../services/pulse-oxygen.service'
 
-import {PassportStatuses} from '../../../../../passport/src/models/passport'
+import {PassportStatuses, PassportType} from '../../../../../passport/src/models/passport'
 import {PulseOxygenStatuses} from '../../../../../reservation/src/models/pulse-oxygen'
 import {TemperatureSaveRequest, TemperatureStatuses} from '../../../models/temperature'
 
@@ -114,7 +114,12 @@ class AdminTemperatureController implements IControllerBase {
         userId,
       })
 
-      await this.passportAdapter.createPassport(userId, organizationId, temperatureOxygenStatus)
+      await this.passportAdapter.createPassport(
+        userId,
+        organizationId,
+        temperatureOxygenStatus,
+        PassportType.Temperature,
+      )
 
       const response = {
         status: temperatureOxygenStatus,
