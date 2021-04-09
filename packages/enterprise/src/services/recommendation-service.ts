@@ -239,7 +239,7 @@ export class RecommendationService {
         break
       }
       case Recommendations.TempCheckRequired: {
-        title = 'Complete a Temperature Check'
+        title = 'Complete a Pulse/Temp Check'
         body = 'Verify your badge with a check'
         break
       }
