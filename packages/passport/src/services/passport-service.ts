@@ -16,6 +16,7 @@ import {Passport, PassportModel, PassportStatus, PassportStatuses} from '../mode
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 
 import {Enterprise} from '../adapter/enterprise'
+import {ResultTypes} from '../../../reservation/src/models/appointment'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
   ...passport,
@@ -102,7 +103,7 @@ export class PassportService {
     dependantIds: string[],
     includesGuardian: boolean,
     organizationId: string,
-    isPCR = false, // whether or not to use the long duration for PROCEED
+    pcrResultType?: ResultTypes, // whether or not to use the long duration for PROCEED
   ): Promise<Passport> {
     if (dependantIds.length) {
       const allDependants = (await this.userService.getAllDependants(userId)).map(({id}) => id)
@@ -113,7 +114,11 @@ export class PassportService {
     }
 
     const validFromDate = now()
-    const validUntilDate = this.shortestTime(status as PassportStatuses, validFromDate, isPCR)
+    const validUntilDate = this.shortestTime(
+      status as PassportStatuses,
+      validFromDate,
+      pcrResultType,
+    )
 
     return this.identifierRepository
       .getUniqueValue('status')
@@ -280,13 +285,21 @@ export class PassportService {
   shortestTime(
     passportStatus: PassportStatuses | TemperatureStatuses,
     validFrom: Date,
-    isPCR: boolean,
+    pcrResultType?: ResultTypes,
   ): Date {
+    const isPCR = pcrResultType != ResultTypes.Pending
+
     if (
       [PassportStatuses.Stop, PassportStatuses.Caution, TemperatureStatuses.Stop].includes(
         passportStatus,
       )
     ) {
+      if (pcrResultType == ResultTypes.Inconclusive) {
+        return moment(validFrom)
+          .add(Config.get('STOP_PASSPORT_EXPIRY_INCONCLUSIVE_HOURS'), 'hours')
+          .toDate()
+      }
+
       const weeksToAdd = parseInt(Config.get('STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_WEEKS'))
       // TODO: end of day?
       return moment(validFrom).add(weeksToAdd, 'weeks').toDate()
