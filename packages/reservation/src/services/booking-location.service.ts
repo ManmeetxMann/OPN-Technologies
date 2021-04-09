@@ -14,38 +14,47 @@ export class BookingLocationService {
     organizationId: string,
     enablePaymentForBooking: boolean,
   ): Promise<BookingLocations[]> {
-    const packages = await this.getPackageListByOrganizationId(
-      organizationId,
-      enablePaymentForBooking,
-    )
     const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
     const calendars = await this.acuityRepository.getCalendarList()
     const appointmentTypesWithPackages = new Map<
       string,
-      {certificate: string; count: number; appointmentType: AppointmentTypes}
+      {certificate: string; count?: number; appointmentType: AppointmentTypes}
     >()
 
-    packages.map(({certificate, remainingCounts}) => {
-      Object.keys(remainingCounts).map((appointmentTypeId) => {
-        const appointmentTypesWithPackage = appointmentTypesWithPackages.get(appointmentTypeId)
+    if (enablePaymentForBooking) {
+      const publicTypes = appointmentTypes.filter((type) => !type.private)
 
-        if (
-          (!appointmentTypesWithPackage && remainingCounts[appointmentTypeId]) ||
-          (remainingCounts[appointmentTypeId] &&
-            appointmentTypesWithPackage.count > remainingCounts[appointmentTypeId])
-        ) {
-          const appointmentType = appointmentTypes.find(({id}) => id === Number(appointmentTypeId))
-
-          if (appointmentType) {
-            appointmentTypesWithPackages.set(appointmentTypeId, {
-              appointmentType,
-              count: remainingCounts[appointmentTypeId],
-              certificate,
-            })
-          }
-        }
+      publicTypes.map((appointmentType) => {
+        appointmentTypesWithPackages.set(String(appointmentType.id), {
+          appointmentType,
+          certificate: '',
+        })
       })
-    })
+    } else {
+      const packages = await this.getPackageListByOrganizationId(organizationId)
+
+      packages.map(({certificate, remainingCounts}) => {
+        Object.keys(remainingCounts).map((appointmentTypeId) => {
+          const appointmentTypesWithPackage = appointmentTypesWithPackages.get(appointmentTypeId)
+
+          if (
+            (!appointmentTypesWithPackage && remainingCounts[appointmentTypeId]) ||
+            (remainingCounts[appointmentTypeId] &&
+              appointmentTypesWithPackage.count > remainingCounts[appointmentTypeId])
+          ) {
+            const appointmentType = appointmentTypes.find(({id}) => id === Number(appointmentTypeId))
+
+            if (appointmentType) {
+              appointmentTypesWithPackages.set(appointmentTypeId, {
+                appointmentType,
+                count: remainingCounts[appointmentTypeId],
+                certificate,
+              })
+            }
+          }
+        })
+      })
+    }
 
     const bookingLocations = []
     Array.from(appointmentTypesWithPackages.values()).map((appointmentTypesWithPackage) => {
@@ -75,19 +84,12 @@ export class BookingLocationService {
     return bookingLocations
   }
 
-  async getPackageListByOrganizationId(
-    organizationId: string,
-    enablePaymentForBooking: boolean,
-  ): Promise<Certificate[]> {
+  async getPackageListByOrganizationId(organizationId: string): Promise<Certificate[]> {
     const packagesAcuity = await this.acuityRepository.getPackagesList()
 
     const packageCodeWithRemaining = packagesAcuity.filter((packageCode) => {
       return packageCode.remainingCounts && Object.keys(packageCode.remainingCounts).length
     })
-
-    if (enablePaymentForBooking) {
-      return packageCodeWithRemaining
-    }
 
     const packages = await this.packageRepository.findWhereEqual('organizationId', organizationId)
     const packageCodeIds = packages.map(({packageCode}) => packageCode)
