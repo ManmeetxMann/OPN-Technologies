@@ -1,13 +1,12 @@
 {
   "name": "opn-services",
   "version": "0.0.1",
-  "description": "Next JS with MySQL microservices for OPN mobile and web",
+  "description": "NestJS with SQL database micro-services API for OPN mobile and web",
   "author": "OPN Technologies Inc",
   "private": true,
   "license": "Appropriate",
   "scripts": {
     "prebuild": "rimraf dist",
-    "build:service": "nest build $SERVICE && cp ./package.json ./dist/apps/$SERVICE/ && cp ./.env ./dist/apps/$SERVICE/",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -19,10 +18,12 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./apps/opn-services/test/jest-e2e.json",
+    "build:all": "npm run build:user-service && npm run build:passport-service",
     "build:user-service": "SERVICE=user-service npm run build:service",
     "build:passport-service": "SERVICE=passport-service npm run build:service",
-    "deploy:user-service": "gcloud app deploy ./dist/apps/user-service --quiet",
-    "deploy:passport-service": "gcloud app deploy ./dist/apps/passport-service --quiet"
+    "build:service": "nest build $SERVICE && cp ./package.json ./dist/apps/$SERVICE/ && cp ./.env ./dist/apps/$SERVICE/",
+    "deploy:user-service": "gcloud app deploy ./dist/apps/user-service",
+    "deploy:passport-service": "gcloud app deploy ./dist/apps/passport-service"
   },
   "dependencies": {
     "@nestjs/common": "^7.0.0",
@@ -39,7 +40,8 @@
     "rimraf": "^3.0.2",
     "rxjs": "^6.5.4",
     "swagger-ui-express": "^4.1.4",
-    "typeorm": "^0.2.26"
+    "typeorm": "^0.2.26",
+    "express-basic-auth": "^1.2.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^7.0.0",
@@ -56,7 +58,6 @@
     "eslint-plugin-import": "^2.20.1",
     "eslint-plugin-prettier": "^3.3.1",
     "eslint-plugin-promise": "^5.0.0",
-    "express-basic-auth": "^1.2.0",
     "jest": "26.4.2",
     "prettier": "^1.19.1",
     "supertest": "^4.0.2",

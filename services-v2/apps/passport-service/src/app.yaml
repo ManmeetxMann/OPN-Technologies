@@ -1,4 +1,4 @@
 runtime: nodejs12
 service: passport-service
 
-entrypoint: node main.js
+entrypoint: node ./main.js

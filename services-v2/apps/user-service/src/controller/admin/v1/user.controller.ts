@@ -1,10 +1,13 @@
 import {Controller, Get, Param, Query} from '@nestjs/common'
+import {ApiBearerAuth} from '@nestjs/swagger';
+
 import {assignWithoutUndefined, ResponseStatusCodes, ResponseWrapper} from '@opn/common/dto'
 import {UserService} from '../../../service/user/user.service'
 import {User} from '../../../model/user/user.entity'
 import {UserFilter} from '../../../dto/user'
 
 @Controller('/admin/api/v1/users')
+@ApiBearerAuth('JWT')
 export class AdminV1UserController {
   constructor(private userService: UserService) {}
 
