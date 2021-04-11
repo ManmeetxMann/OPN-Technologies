@@ -1598,7 +1598,8 @@ components:
                   count:
                     type: number
                 example: [{"date": "2020-09-01T13:00:00.000Z","count": 1},{"date": "2020-09-01T17:00:00.000Z","count": 1}]
-
+            dailyExposuresCount:
+              type: number
         status:
           type: object
           additionalProperties: false

@@ -1292,6 +1292,16 @@ paths:
           schema:
             type: string
         - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
+        - in: query
           name: appointmentStatus
           explode: true
           style: form
@@ -1729,6 +1739,16 @@ paths:
           schema:
             type: string
         - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
+        - in: query
           name: appointmentStatus
           explode: true
           style: form
@@ -1821,6 +1841,12 @@ paths:
           name: testType
           schema:
             type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: searchQuery
           schema:
@@ -1895,6 +1921,9 @@ paths:
             enum:
               - PCR
               - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: result
           schema:
@@ -2933,6 +2962,16 @@ paths:
               - Received
               - InProgress
               - ReRunRequired
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
       responses:
         '200':
           description: Successfully Return
@@ -3024,6 +3063,16 @@ paths:
           name: barCode
           schema:
             type: string
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
       responses:
         '200':
           description: Succesfully return stats

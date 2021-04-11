@@ -108,7 +108,8 @@ class RecommendationController implements IControllerBase {
   pcrTest: Handler = async (req, res, next): Promise<void> => {
     try {
       const {userId, organizationId, data} = await this.parseMessage(req.body.message)
-      const status = passportStatusByPCR[data.result as ResultTypes]
+      const pcrResultType = data.result as ResultTypes
+      const status = passportStatusByPCR[pcrResultType]
 
       if (status) {
         const includesGuardian = true
@@ -120,6 +121,7 @@ class RecommendationController implements IControllerBase {
           includesGuardian,
           organizationId,
           isPCR,
+          pcrResultType,
         )
         await this.alertIfNeeded(passport)
       }

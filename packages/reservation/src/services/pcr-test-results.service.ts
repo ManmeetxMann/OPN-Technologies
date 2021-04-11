@@ -1415,7 +1415,7 @@ export class PCRTestResultsService {
     queryParams: PcrTestResultsListByDeadlineRequest,
   ): Promise<PCRTestResultDBModel[]> {
     const pcrTestResultsQuery = []
-    const {labId, deadline, barCode, testRunId, organizationId} = queryParams
+    const {labId, deadline, barCode, testRunId, organizationId, testType} = queryParams
 
     const equals = (key: string, value) => ({
       map: '/',
@@ -1451,6 +1451,10 @@ export class PCRTestResultsService {
       pcrTestResultsQuery.push(
         equals('organizationId', organizationId === 'null' ? null : organizationId),
       )
+    }
+
+    if (testType) {
+      pcrTestResultsQuery.push(equals('testType', testType))
     }
 
     return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
@@ -1804,6 +1808,7 @@ export class PCRTestResultsService {
         `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${id}`,
       )
     }
+
     if (appointment?.userId !== userId && !isParent) {
       LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
         userId,
