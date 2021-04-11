@@ -457,7 +457,7 @@ export type RescheduleAppointmentDTO = {
   dateTime: string
   organizationId?: string
   userID: string
-  isLabUser: boolean
+  isOpnSuperAdmin: boolean
 }
 
 export type UpdateTransPortRun = {

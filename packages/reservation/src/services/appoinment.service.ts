@@ -408,12 +408,12 @@ export class AppoinmentService {
 
   async getAppointmentDBByIdWithCancel(
     id: string,
-    isLabUser: boolean,
+    isOpnSuperAdmin: boolean,
   ): Promise<AppointmentDBModel & {canCancel: boolean}> {
     const appointment = await this.getAppointmentDBById(id)
     return {
       ...appointment,
-      canCancel: this.getCanCancelOrReschedule(isLabUser, appointment.appointmentStatus),
+      canCancel: this.getCanCancelOrReschedule(isOpnSuperAdmin, appointment.appointmentStatus),
     }
   }
 
@@ -607,7 +607,7 @@ export class AppoinmentService {
   async cancelAppointment(
     appointmentId: string,
     userId: string,
-    isLabUser: boolean,
+    isOpnSuperAdmin: boolean,
     organizationId?: string,
   ): Promise<void> {
     const appointmentFromDB = await this.appointmentsRepository.get(appointmentId)
@@ -618,11 +618,14 @@ export class AppoinmentService {
       throw new ResourceNotFoundException(`Invalid Appointment ID`)
     }
 
-    const canCancel = this.getCanCancelOrReschedule(isLabUser, appointmentFromDB.appointmentStatus)
+    const canCancel = this.getCanCancelOrReschedule(
+      isOpnSuperAdmin,
+      appointmentFromDB.appointmentStatus,
+    )
 
     if (!canCancel) {
       console.warn(
-        `cancelAppointment: Failed for appointmentId ${appointmentId} isLabUser: ${isLabUser} appointmentStatus: ${appointmentFromDB.appointmentStatus}`,
+        `cancelAppointment: Failed for appointmentId ${appointmentId} isOpnSuperAdmin: ${isOpnSuperAdmin} appointmentStatus: ${appointmentFromDB.appointmentStatus}`,
       )
       throw new BadRequestException(
         `Appointment can't be canceled. It is already in ${appointmentFromDB.appointmentStatus} state`,
@@ -1150,10 +1153,13 @@ export class AppoinmentService {
     })
   }
 
-  getCanCancelOrReschedule(isLabUser: boolean, appointmentStatus: AppointmentStatus): boolean {
+  getCanCancelOrReschedule(
+    isOpnSuperAdmin: boolean,
+    appointmentStatus: AppointmentStatus,
+  ): boolean {
     return (
-      (!isLabUser && appointmentStatus === AppointmentStatus.Pending) ||
-      (isLabUser &&
+      (!isOpnSuperAdmin && appointmentStatus === AppointmentStatus.Pending) ||
+      (isOpnSuperAdmin &&
         appointmentStatus !== AppointmentStatus.Canceled &&
         appointmentStatus !== AppointmentStatus.Reported &&
         appointmentStatus !== AppointmentStatus.ReCollectRequired)
@@ -1390,7 +1396,7 @@ export class AppoinmentService {
 
   async getAppointmentValidatedForUpdate(
     appointmentId: string,
-    isLabUser: boolean,
+    isOpnSuperAdmin: boolean,
     organizationId?: string,
   ): Promise<AppointmentDBModel> {
     const appointmentFromDB = await this.appointmentsRepository.get(appointmentId)
@@ -1402,13 +1408,13 @@ export class AppoinmentService {
     }
 
     const canReschedule = this.getCanCancelOrReschedule(
-      isLabUser,
+      isOpnSuperAdmin,
       appointmentFromDB.appointmentStatus,
     )
     if (!canReschedule) {
       LogWarning('AppoinmentService: rescheduleAppointment', 'NotAllowedToReschedule', {
         appointmentId,
-        isLabUser,
+        isOpnSuperAdmin,
         appointmentStatus: appointmentFromDB.appointmentStatus,
       })
       throw new BadRequestException(
@@ -1419,7 +1425,7 @@ export class AppoinmentService {
     if (organizationId && appointmentFromDB.organizationId !== organizationId) {
       LogWarning('AppoinmentService: rescheduleAppointment', 'Incorrect Organization ID', {
         appointmentId,
-        isLabUser,
+        isOpnSuperAdmin,
         organizationId,
       })
       throw new BadRequestException(`Appointment doesn't belong to selected Organization`)
@@ -1428,10 +1434,10 @@ export class AppoinmentService {
   }
 
   async rescheduleAppointment(requestData: RescheduleAppointmentDTO): Promise<AppointmentDBModel> {
-    const {appointmentId, isLabUser, organizationId} = requestData
+    const {appointmentId, isOpnSuperAdmin, organizationId} = requestData
     const appointmentFromDB = await this.getAppointmentValidatedForUpdate(
       appointmentId,
-      isLabUser,
+      isOpnSuperAdmin,
       organizationId,
     )
     const acuityAppointment = await this.acuityRepository.rescheduleAppoinmentOnAcuity(
