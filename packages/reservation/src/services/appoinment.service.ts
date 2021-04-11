@@ -486,14 +486,6 @@ export class AppoinmentService {
     }
   }
 
-  private getTestType = async (appointmentTypeID: number): Promise<TestTypes> => {
-    const appointmentToTestType = await this.appointmentToTestTypeRepository.findWhereEqual(
-      'appointmentType',
-      appointmentTypeID,
-    )
-    return appointmentToTestType?.length ? appointmentToTestType[0].testType : TestTypes.PCR
-  }
-
   private async getDateFields(acuityAppointment: AppointmentAcuityResponse) {
     const dateTimeStr = acuityAppointment.datetime
     const dateTimeTz = moment(dateTimeStr).tz(timeZone)
@@ -611,7 +603,9 @@ export class AppoinmentService {
       userId: currentUserId,
       locationName: acuityAppointment.calendar,
       locationAddress: acuityAppointment.location,
-      testType: await this.getTestType(acuityAppointment.appointmentTypeID),
+      testType: await this.appointmentToTestTypeRepository.getTestType(
+        acuityAppointment.appointmentTypeID,
+      ),
       gender: acuityAppointment.gender || Gender.PreferNotToSay,
       postalCode: acuityAppointment.postalCode,
     }
