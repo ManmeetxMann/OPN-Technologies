@@ -31,7 +31,7 @@ import {
 import {FilterGroupKey, FilterName, statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
-import {validateAnalysis} from '../../../utils/analysis.helper'
+import {validateAnalysis, normalizeAnalysis} from '../../../utils/analysis.helper'
 import {LabService} from '../../../services/lab.service'
 
 class AdminPCRTestResultController implements IControllerBase {
@@ -172,7 +172,7 @@ class AdminPCRTestResultController implements IControllerBase {
 
       const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend({
         metaData,
-        resultAnalysis,
+        resultAnalysis: normalizeAnalysis(resultAnalysis),
         barCode,
         isSingleResult: true,
         sendUpdatedResults,

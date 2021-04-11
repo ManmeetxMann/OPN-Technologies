@@ -509,6 +509,11 @@ export const singlePcrTestResultDTO = (
   }
 }
 
+export enum AnalyseTypes {
+  POSITIVE = 'POSITIVE',
+  NEGATIVE = 'NEGATIVE',
+}
+
 export type ActivityTracking = {
   action: PcrResultTestActivityAction
   currentData: Partial<PCRTestResultDBModel>
