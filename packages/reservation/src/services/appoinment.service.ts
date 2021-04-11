@@ -75,6 +75,7 @@ import {PCRTestResultsRepository} from '../respository/pcr-test-results-reposito
 import {AppointmentToTestTypeRepository} from '../respository/appointment-to-test-type-association.repository'
 import {AppointmentTypes} from '../models/appointment-types'
 import {PackageService} from './package.service'
+import {firestore} from 'firebase-admin'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -452,7 +453,7 @@ export class AppoinmentService {
   }
 
   async updateAppointmentFromAcuity(
-    id: string,
+    appointmentDb: AppointmentDBModel,
     acuityAppointment: AppointmentAcuityResponse,
     additionalData: {
       barCodeNumber: string
@@ -461,7 +462,12 @@ export class AppoinmentService {
       latestResult: ResultTypes
     },
   ): Promise<AppointmentDBModel> {
-    const data = await this.mapAcuityAppointmentToDBModel(acuityAppointment, additionalData)
+    const id = appointmentDb.id
+    const data = await this.mapAcuityAppointmentToDBModel(
+      acuityAppointment,
+      additionalData,
+      appointmentDb,
+    )
 
     const [saved] = await Promise.all([
       this.updateAppointmentDB(id, data, AppointmentActivityAction.UpdateFromAcuity),
@@ -516,10 +522,29 @@ export class AppoinmentService {
       couponCode?: string
       userId?: string
     },
+    appointmentDb?: AppointmentDBModel,
   ): Promise<Omit<AppointmentDBModel, 'id'>> {
-    const {deadline, dateOfAppointment, timeOfAppointment, dateTime} = await this.getDateFields(
-      acuityAppointment,
-    )
+    const newDateTimeTz = moment(acuityAppointment.datetime).utc()
+    const oldDateTimeTz = appointmentDb?.dateTime && firestoreTimeStampToUTC(appointmentDb.dateTime)
+    let dateTimeUpdates: {
+      deadline?: firestore.Timestamp
+      dateOfAppointment?: string
+      timeOfAppointment?: string
+      dateTime?: firestore.Timestamp
+    } = {}
+
+    if (!appointmentDb || !newDateTimeTz.isSame(oldDateTimeTz)) {
+      const {deadline, dateOfAppointment, timeOfAppointment, dateTime} = await this.getDateFields(
+        acuityAppointment,
+      )
+      dateTimeUpdates = {
+        deadline,
+        dateOfAppointment,
+        timeOfAppointment,
+        dateTime,
+      }
+    }
+
     const {
       barCodeNumber,
       organizationId,
@@ -558,10 +583,11 @@ export class AppoinmentService {
       barCode: barCode,
       canceled: acuityAppointment.canceled,
       calendarID: Number(acuityAppointment.calendarID),
-      dateOfAppointment,
       dateOfBirth: acuityAppointment.dateOfBirth,
-      dateTime,
-      deadline,
+      dateOfAppointment: dateTimeUpdates.dateOfAppointment ?? appointmentDb.dateOfAppointment,
+      dateTime: dateTimeUpdates.dateTime ?? appointmentDb.dateTime,
+      deadline: dateTimeUpdates.deadline ?? appointmentDb.deadline,
+      timeOfAppointment: dateTimeUpdates.timeOfAppointment ?? appointmentDb.timeOfAppointment,
       email: acuityAppointment.email,
       firstName: acuityAppointment.firstName,
       lastName: acuityAppointment.lastName,
@@ -570,7 +596,6 @@ export class AppoinmentService {
       phone: acuityAppointment.phone,
       registeredNursePractitioner: acuityAppointment.registeredNursePractitioner,
       latestResult,
-      timeOfAppointment,
       address: acuityAppointment.address,
       addressUnit: acuityAppointment.addressUnit,
       travelID: acuityAppointment.travelID,
