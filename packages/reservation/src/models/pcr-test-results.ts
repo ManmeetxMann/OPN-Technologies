@@ -13,6 +13,8 @@ import {
 import {groupByChannel} from '../utils/analysis.helper'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
+import {PulseOxygenStatuses} from './pulse-oxygen'
+import {Lab} from './lab'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -46,7 +48,6 @@ export enum PCRResultActions {
   DoNothing = 'DoNothing',
   ReRunToday = 'ReRunToday',
   ReRunTomorrow = 'ReRunTomorrow',
-  RequestReCollect = 'RequestReCollect',
   RecollectAsInvalid = 'RecollectAsInvalid',
   RecollectAsInconclusive = 'RecollectAsInconclusive',
   MarkAsPositive = 'MarkAsPositive',
@@ -66,6 +67,11 @@ export enum PCRResultActionsAllowedResend {
   SendThisResult = 'SendThisResult',
   MarkAsPositive = 'MarkAsPositive',
   MarkAsNegative = 'MarkAsNegative',
+  RecollectAsInconclusive = 'RecollectAsInconclusive',
+  RecollectAsInvalid = 'RecollectAsInvalid',
+  ReRunToday = 'ReRunToday',
+  ReRunTomorrow = 'ReRunTomorrow',
+  SendPreliminaryPositive = 'SendPreliminaryPositive',
 }
 
 //Possible report Status when Results are sent
@@ -100,6 +106,7 @@ export type PCRSendResultDTO = {
 
 export enum TestResultStyle {
   // PCR result style
+  PresumptivePositive = 'RED',
   Positive = 'RED',
   Negative = 'GREEN',
   Invalid = 'YELLOW',
@@ -261,6 +268,7 @@ export type PcrTestResultsListByDeadlineRequest = {
     | AppointmentStatus.ReRunRequired
   organizationId?: string
   labId?: string
+  testType?: TestTypes
 }
 
 export type SinglePcrTestResultsRequest = {
@@ -298,6 +306,7 @@ export type PCRTestResultListDTO = {
   organizationName: string
   appointmentStatus: AppointmentStatus
   labName?: string
+  labId?: string
 }
 
 export type PCRTestResultByDeadlineListDTO = {
@@ -343,7 +352,7 @@ export const pcrTestResultsResponse = (
 })
 
 export const resultToStyle = (
-  result: ResultTypes | PassportStatus | TemperatureStatusesUI,
+  result: ResultTypes | PassportStatus | TemperatureStatusesUI | PulseOxygenStatuses,
 ): TestResultStyle => {
   return TestResultStyle[result] ? TestResultStyle[result] : TestResultStyle.AnyOther
 }
@@ -425,7 +434,6 @@ export type SinglePcrTestResultUi = {
   labName: string
   testType: string
   equipment: string
-  manufacturer: string
   resultSpecs: Spec[]
   style: TestResultStyle
   testName: string
@@ -436,16 +444,10 @@ export type SinglePcrTestResultUi = {
   dateOfResult: string
 }
 
-enum LabData {
-  labName = 'FH Health',
-  testType = 'RT-PCR',
-  equipment = 'Allplex 2019-nCoV Assay',
-  manufacturer = 'Seegeene Inc.',
-}
-
 export const singlePcrTestResultDTO = (
   pcrTestResult: PCRTestResultDBModel,
   appointment: AppointmentDBModel,
+  lab: Omit<Lab, 'id'>,
 ): SinglePcrTestResultUi => {
   let resultSpecs = null
   let resultAnalysis = null
@@ -470,7 +472,7 @@ export const singlePcrTestResultDTO = (
     firstName: appointment.firstName,
     lastName: appointment.lastName,
     phone: `${appointment.phone}`,
-    ohipCard: appointment.ohipCard,
+    ohipCard: appointment.ohipCard || 'N/A',
     dateOfBirth: appointment.dateOfBirth,
     address: appointment.address,
     addressUnit: appointment.addressUnit,
@@ -478,15 +480,14 @@ export const singlePcrTestResultDTO = (
     appointmentStatus: appointment.appointmentStatus,
     result: pcrTestResult.result,
     dateTime: formatStringDateRFC822Local(pcrTestResult.dateTime.toDate()),
-    registeredNursePractitioner: appointment.registeredNursePractitioner,
-    physician: requisitionDoctor,
-    locationName: appointment.locationName,
-    swabMethod: appointment.swabMethod,
+    registeredNursePractitioner: appointment.registeredNursePractitioner || 'N/A',
+    physician: requisitionDoctor || 'N/A',
+    locationName: appointment.locationName || 'N/A',
+    swabMethod: appointment.swabMethod || 'N/A',
     deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
-    labName: LabData.labName,
-    testType: LabData.testType,
-    equipment: LabData.equipment,
-    manufacturer: LabData.manufacturer,
+    labName: lab.name,
+    testType: pcrTestResult.testType,
+    equipment: lab.assay,
     resultSpecs: resultSpecs,
     resultAnalysis: resultAnalysis,
     style: resultToStyle(pcrTestResult.result),

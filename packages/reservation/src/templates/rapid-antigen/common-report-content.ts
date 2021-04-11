@@ -88,7 +88,12 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
     ['Date of Birth', params.dateOfBirth],
     ['Mobile Number', params.phone],
   ]
-  /*
+
+  if (params.gender) {
+    // if gender exists add as second field
+    dataPersonal.splice(1, 0, [{text: 'Gender', bold: true}, params.gender])
+  }
+
   if (params.address) {
     dataPersonal.push(['Home Address', params.address])
   }
@@ -97,14 +102,18 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
     dataPersonal.push(['Home Address (unit number, etc)', params.addressUnit])
   }
 
-  if (params.travelID) {
-    dataPersonal.push(['Passport / Travel ID', params.travelID])
+  if (params.postalCode) {
+    dataPersonal.push([{text: 'Postal Code', bold: true}, params.postalCode])
   }
 
-  if (params.travelIDIssuingCountry) {
-    dataPersonal.push(['Passport Travel ID Issuing Country', params.travelIDIssuingCountry])
-  }
-  */
+  // if (params.travelID) {
+  //   dataPersonal.push(['Passport / Travel ID', params.travelID])
+  // }
+
+  // if (params.travelIDIssuingCountry) {
+  //   dataPersonal.push(['Passport Travel ID Issuing Country', params.travelIDIssuingCountry])
+  // }
+
   const dataAppointment = [
     [
       'Date of Test (Sample Collection)',
@@ -144,6 +153,11 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
         body: data,
       },
       margin: [0, 5, 0, 0],
+    },
+    {
+      text: 'All dates and times shown are displayed in EST',
+      margin: [0, 5, 0, 0],
+      style: ['disclaimer'],
     },
   ]
 }

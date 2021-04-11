@@ -23,9 +23,11 @@ export default Joi.object({
   email: Joi.string().required(),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
+  gender: Joi.string().allow(null, 'Male', 'Female', 'Other', 'Prefer Not to Say'),
   organizationId: Joi.string().allow(null),
   packageCode: Joi.string().allow(null),
   phone: Joi.string().required(),
+  postalCode: Joi.string().allow(''),
   registeredNursePractitioner: Joi.string().allow(''),
   latestResult: Joi.string().valid(
     'Positive',

@@ -4,12 +4,13 @@ import {Config} from '../../../common/src/utils/config'
 import {LogError, LogInfo} from '../../../common/src/utils/logging-setup'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
-import {AppointmentAcuityResponse, DeadlineLabel} from '../models/appointment'
+import {AppointmentAcuityResponse, DeadlineLabel, Gender} from '../models/appointment'
 import {Certificate} from '../models/packages'
 import {AcuityCouponCodeResponse} from '../models/coupons'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
 import {AcuityAvailableSlots} from '../models/acuity'
+import {getDateDefaultHumanReadable} from '../utils/datetime.helper'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -28,6 +29,8 @@ abstract class AcuityAdapter {
     organizationId: Config.get('ACUITY_FIELD_ORGANIZATION_ID'),
     address: Config.get('ACUITY_FIELD_ADDRESS'),
     addressUnit: Config.get('ACUITY_FIELD_ADDRESS_UNIT'),
+    gender: Config.get('ACUITY_FIELD_GENDER'),
+    postalCode: Config.get('ACUITY_FIELD_POSTAL_CODE'),
     shareTestResultWithEmployer: Config.get('ACUITY_FIELD_SHARE_TEST_RESULT_WITH_EMPLOYER'),
     readTermsAndConditions: Config.get('ACUITY_FIELD_READ_TERMS_AND_CONDITIONS'),
     receiveResultsViaEmail: Config.get('ACUITY_FIELD_RECEIVE_RESULTS_VIA_EMAIL'),
@@ -296,6 +299,15 @@ abstract class AcuityAdapter {
         acuityStatusCode: result.status_code,
         errorMessage: result.message,
       })
+      if (result.error === 'not_available') {
+        throw new BadRequestException(
+          `${getDateDefaultHumanReadable(datetime)} is not available for appointments`,
+        )
+      } else if (result.error === 'certificate_uses') {
+        throw new BadRequestException(
+          `You organization has no more appointment credits left on account. Please contact your account manager.`,
+        )
+      }
       throw new BadRequestException(result.message)
     }
     LogInfo(`AcuityAdapterCreateAppointment`, 'Success', {
@@ -380,7 +392,7 @@ abstract class AcuityAdapter {
   ): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
-    const apiUrl = `${APIURL}/api/v1/appointments/${id}/reschedule`
+    const apiUrl = `${APIURL}/api/v1/appointments/${id}/reschedule?admin=true`
 
     const res = await fetch(apiUrl, {
       method: 'put',
@@ -426,6 +438,8 @@ abstract class AcuityAdapter {
     appointment.ohipCard = ''
     appointment.travelIDIssuingCountry = ''
     appointment.travelID = ''
+    appointment.gender = null
+    appointment.postalCode = ''
 
     if (Array.isArray(appointment.forms)) {
       appointment.forms.forEach((form) => {
@@ -479,6 +493,12 @@ abstract class AcuityAdapter {
             if (!!field.value) {
               appointment.swabMethod = field.value
             }
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_GENDER'))) {
+            appointment.gender = field.value as Gender
+          }
+          if (field.fieldID == Number(Config.get('ACUITY_FIELD_POSTAL_CODE'))) {
+            appointment.postalCode = field.value
           }
         })
       })

@@ -1,25 +1,29 @@
 import moment from 'moment-timezone'
 import * as _ from 'lodash'
 
+import type {Answers} from './exposureTemplate'
+import {getExposureSection, getHeaderSection, UserGroupData} from './exposureTemplate'
 import TraceRepository, {DailyReportRepository} from '../repository/trace.repository'
 import type {ExposureReport, StopStatus} from '../models/trace'
 import type {SinglePersonAccess} from '../models/attendance'
+
 import DataStore from '../../../common/src/data/datastore'
 import {AdminApprovalModel} from '../../../common/src/data/admin'
 import {UserModel, User} from '../../../common/src/data/user'
-import {getExposureSection, getHeaderSection, UserGroupData} from './exposureTemplate'
-import type {Answers} from './exposureTemplate'
 import {send} from '../../../common/src/service/messaging/send-email'
+import {UserService} from '../../../common/src/service/user/user-service'
 import {Config} from '../../../common/src/utils/config'
+import {now} from '../../../common/src/utils/times'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 
 import {
   OrganizationModel,
   AllLocationsModel,
 } from '../../../enterprise/src/repository/organization.repository'
-import {UserService} from '../../../common/src/service/user/user-service'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
-import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 import {Organization, OrganizationGroup} from '../../../enterprise/src/models/organization'
+
+import {QuestionnaireService} from '../../../lookup/src/services/questionnaire-service'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 const SUPPRESS_USER_EMAILS = Config.get('FEATURE_ONLY_EMAIL_SUPPORT') === 'enabled'
@@ -38,24 +42,23 @@ const overlap = (
   a: SinglePersonAccess,
   b: SinglePersonAccess,
   earliestTime: number,
-  latestTime: number,
+  rawLatestTime: number,
 ): Overlap | null => {
-  const aEnterAt = a.enteredAt ?? {toDate: () => new Date(earliestTime)}
-  const bEnterAt = b.enteredAt ?? {toDate: () => new Date(earliestTime)}
-  const aExitAt = a.exitAt ?? {toDate: () => new Date(latestTime)}
-  const bExitAt = b.exitAt ?? {toDate: () => new Date(latestTime)}
-  // @ts-ignore these are timestamps (or fake timestamps), not dates
-  const lastGotIn = aEnterAt.toDate() > bEnterAt.toDate() ? aEnterAt : bEnterAt
-  // @ts-ignore these are timestamps (or fake timestamps), not dates
-  const firstGotOut = aExitAt.toDate() < bExitAt.toDate() ? aExitAt : bExitAt
+  const latestTime = Math.min(rawLatestTime, now().valueOf())
+  const clamp = (raw: number) => Math.max(earliestTime, Math.min(latestTime, raw))
+  const aEnterAt: number = clamp(a.enteredAt ? safeTimestamp(a.enteredAt).valueOf() : earliestTime)
+  const bEnterAt: number = clamp(b.enteredAt ? safeTimestamp(b.enteredAt).valueOf() : earliestTime)
+  const aExitAt: number = clamp(a.exitAt ? safeTimestamp(a.exitAt).valueOf() : latestTime)
+  const bExitAt: number = clamp(b.exitAt ? safeTimestamp(b.exitAt).valueOf() : latestTime)
+
+  const lastGotIn = Math.max(aEnterAt, bEnterAt)
+  const firstGotOut = Math.min(aExitAt, bExitAt)
   if (lastGotIn > firstGotOut) {
     return null
   }
   return {
-    // @ts-ignore these are timestamps, not dates
-    start: lastGotIn.toDate(),
-    // @ts-ignore these are timestamps, not dates
-    end: firstGotOut.toDate(),
+    start: new Date(lastGotIn),
+    end: new Date(firstGotOut),
   }
 }
 
@@ -216,7 +219,7 @@ export default class TraceListener {
       includesGuardian,
       dependantIds,
       passportStatus as StopStatus,
-      moment(endTime).format('YYYY-MM-DD'),
+      moment(endTime).tz(timeZone).format('YYYY-MM-DD'),
       endTime - startTime,
       [...impactedUsersAndDependants],
     )

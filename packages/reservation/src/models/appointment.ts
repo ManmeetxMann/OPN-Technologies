@@ -1,9 +1,8 @@
 import {firestore} from 'firebase-admin'
-import {formatStringDateRFC822Local} from '../utils/datetime.helper'
+import {isSameOrBefore} from '../utils/datetime.helper'
 
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
-import moment from 'moment-timezone'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
@@ -29,6 +28,13 @@ export enum ResultTypes {
   Indeterminate = 'Indeterminate',
 }
 
+export enum Gender {
+  Male = 'Male',
+  Female = 'Female',
+  Other = 'Other',
+  PreferNotToSay = 'Prefer Not to Say',
+}
+
 export type AppointmentDBModel = {
   id: string
   acuityAppointmentId: number
@@ -43,9 +49,11 @@ export type AppointmentDBModel = {
   email: string
   firstName: string
   lastName: string
+  gender?: Gender
   organizationId?: string
   packageCode?: string
   phone: number
+  postalCode?: string
   registeredNursePractitioner?: string
   latestResult: ResultTypes
   timeOfAppointment: string
@@ -107,6 +115,7 @@ export type AppointmentAcuityResponse = {
   email: string
   firstName: string
   forms: Array<AppointmentAcuityForm>
+  gender: Gender
   id: number
   labels: LabelsAcuityResponse[]
   lastName: string
@@ -114,6 +123,7 @@ export type AppointmentAcuityResponse = {
   location: string
   organizationId?: string
   phone: number
+  postalCode: string
   readTermsAndConditions: boolean
   receiveNotificationsFromGov: boolean
   receiveResultsViaEmail: boolean
@@ -155,6 +165,7 @@ export enum TestTypes {
   EmergencyRapidAntigen = 'EmergencyRapidAntigen',
   Antibody_All = 'Antibody_All',
   Antibody_IgM = 'Antibody_IgM',
+  PulseOxygenCheck = 'PulseOxygenCheck',
 }
 
 export type PostAdminScanHistoryRequest = {
@@ -171,6 +182,7 @@ export type CreateAppointmentRequest = {
   slotId: string
   firstName: string
   lastName: string
+  gender: Gender
   phone: {
     code: number
     number: number
@@ -178,6 +190,7 @@ export type CreateAppointmentRequest = {
   dateOfBirth: string
   address: string
   addressUnit: string
+  postalCode: string
   couponCode: string
   shareTestResultWithEmployer: boolean
   readTermsAndConditions: boolean
@@ -197,6 +210,7 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   barCode?: string
   appointmentStatus?: AppointmentStatus[]
   labId?: string
+  testType?: TestTypes
 }
 
 //Update to Acuity Service
@@ -276,19 +290,24 @@ export enum DeadlineLabel {
   NextDay = 'NEXTDAY',
 }
 
-const filteredAppointmentStatus = (
+export const filteredAppointmentStatus = (
   status: AppointmentStatus,
   isLabUser: boolean,
+  isClinicUser: boolean,
 ): AppointmentStatus => {
+  const isNotLabOrClinicUser = !(isLabUser || isClinicUser)
+
   if (
-    !isLabUser &&
+    isNotLabOrClinicUser &&
     (status === AppointmentStatus.InTransit || status === AppointmentStatus.Received)
   ) {
     return AppointmentStatus.Submitted
   }
-  if (!isLabUser && status === AppointmentStatus.ReRunRequired) {
+
+  if (isNotLabOrClinicUser && status === AppointmentStatus.ReRunRequired) {
     return AppointmentStatus.InProgress
   }
+
   return status
 }
 
@@ -298,14 +317,18 @@ export type Filter = {
   count: number
 }
 
-enum FilterGroupKey {
+export enum FilterGroupKey {
   organizationId = 'organizationId',
+  labId = 'labId',
   appointmentStatus = 'appointmentStatus',
+  result = 'result',
 }
 
-enum FilterName {
+export enum FilterName {
   FilterByStatusType = 'Filter By Status Type',
+  FilterByResult = 'Filter By Result',
   FilterByCorporation = 'Filter By Corporation',
+  FilterByLab = 'Filter By Lab',
 }
 
 type FilterGroup = {
@@ -320,30 +343,12 @@ export type appointmentStatsUiDTO = {
 }
 
 export const statsUiDTOResponse = (
-  appointmentStatus: Filter[],
-  orgIdArray: Filter[],
+  filterGroup: FilterGroup[],
   total: number,
-  showOrgFilter = true,
-): appointmentStatsUiDTO => {
-  const filterGroup = [
-    {
-      name: FilterName.FilterByStatusType,
-      key: FilterGroupKey.appointmentStatus,
-      filters: appointmentStatus,
-    },
-  ]
-  if (showOrgFilter) {
-    filterGroup.push({
-      name: FilterName.FilterByCorporation,
-      key: FilterGroupKey.organizationId,
-      filters: orgIdArray,
-    })
-  }
-  return {
-    total,
-    filterGroup,
-  }
-}
+): appointmentStatsUiDTO => ({
+  total,
+  filterGroup,
+})
 
 export const appointmentUiDTOResponse = (
   appointment: AppointmentDBModel & {
@@ -352,13 +357,14 @@ export const appointmentUiDTOResponse = (
     labName?: string
   },
   isLabUser: boolean,
+  isClinicUser: boolean,
   transportRunLabel?: string,
 ): AppointmentUiDTO => {
   return {
     id: appointment.id,
     firstName: appointment.firstName,
     lastName: appointment.lastName,
-    status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser),
+    status: filteredAppointmentStatus(appointment.appointmentStatus, isLabUser, isClinicUser),
     barCode: appointment.barCode,
     location: appointment.locationAddress,
     email: appointment.email,
@@ -392,7 +398,7 @@ export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): Use
   id: appointment.id,
   QRCode: appointment.barCode,
   showQrCode:
-    moment(new Date()).isBefore(formatStringDateRFC822Local(appointment.dateOfAppointment)) &&
+    isSameOrBefore(appointment.dateOfAppointment) &&
     appointment.appointmentStatus !== AppointmentStatus.Canceled,
   firstName: appointment.firstName,
   lastName: appointment.lastName,

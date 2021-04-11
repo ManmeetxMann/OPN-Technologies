@@ -13,7 +13,6 @@ let base_data = [
       "type": "default",
       "attestationRequired": true,
       "allowAccess": true,
-      "questionnaireId": "HSG_TEST_QUESTIONS",
       "allowsSelfCheckInOut": true,
       "zones": [
       ],
@@ -32,10 +31,7 @@ module.exports = {
         if (overWriteObj.title !== undefined) {
             data[0].title = overWriteObj.title;
         }
-        if (overWriteObj.questionnaireId !== undefined) {
-            data[0].questionnaireId = overWriteObj.questionnaireId;
-        }
-        
+ 
         return data;
     }
 }

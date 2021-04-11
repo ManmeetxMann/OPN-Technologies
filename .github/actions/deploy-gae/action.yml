@@ -48,7 +48,7 @@ runs:
       PREPROD_TAG_REF=refs/tags/preprod-
       PROD_TAG_REF=refs/tags/prod-
       echo "::group::Define Deployment Variables"
-      if [[ $GITHUB_REF == 'refs/heads/cleanup' ]]; then
+      if [[ $GITHUB_REF == 'refs/heads/ci_cd' ]]; then
         echo "Deploy to INFRA"
         echo "PROJECT_ID=opn-platform-infra-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=infra_dev_service_account" >> $GITHUB_ENV
@@ -64,6 +64,7 @@ runs:
         echo "PROJECT_ID=opn-platform-preprod" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=preprod_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
+        echo "GAE_VERSION_FLAG=--version=$GAE_VERSION" >> $GITHUB_ENV
       elif [[ "$GITHUB_REF" == *"$PROD_TAG_REF"* ]]; then
         echo "Deploy to PROD"
         echo "PROJECT_ID=opn-platform-ca-prod" > $GITHUB_ENV

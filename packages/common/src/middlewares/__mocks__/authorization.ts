@@ -10,11 +10,13 @@ export const authorizationMiddleware = () => async (
     firstName: 'UNITEST_FNAME',
     lastName: 'UNITEST_LNAME',
     base64Photo: null,
-    organizationIds: ['TEST1'],
+    organizationIds: ['TEST1', 'TestOrg1', 'TestOrg2'],
     email: 'unitest1@stayopn.com',
     admin: {
       isLabUser: true,
       isTestKitBatchAdmin: false,
+      isOpnSuperAdmin: false,
+      isClinicUser: false,
     },
     authUserId: 'TEST',
     delegates: [],
@@ -23,6 +25,19 @@ export const authorizationMiddleware = () => async (
   switch (req.headers.authorization) {
     case 'Bearer CorporateUserForTEST1': {
       data.admin.isLabUser = false
+      break
+    }
+    case 'Bearer SuperAdmin': {
+      data.admin.isOpnSuperAdmin = true
+      break
+    }
+    case 'Bearer ClinicUser': {
+      data.admin.isLabUser = false
+      data.admin.isClinicUser = true
+      break
+    }
+    case 'Bearer LabUser': {
+      data.admin.isLabUser = true
       break
     }
   }

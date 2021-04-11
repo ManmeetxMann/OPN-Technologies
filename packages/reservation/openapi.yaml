@@ -551,7 +551,6 @@ components:
                   - DoNothing
                   - ReRunToday
                   - ReRunTomorrow
-                  - RequestReCollect
                   - RecollectAsInvalid
                   - RecollectAsInconclusive
                   - MarkAsPositive
@@ -626,7 +625,6 @@ components:
             - SendThisResult
             - ReRunToday
             - ReRunTomorrow
-            - RequestReCollect
             - RecollectAsInvalid
             - RecollectAsInconclusive
             - MarkAsPositive
@@ -687,6 +685,23 @@ components:
       required:
         - reportTrackerId
         - resultId
+    AppointmentsSyncRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        calendarID:
+          type: string
+        appointmentTypeID:
+          type: string
+        action:
+          type: string
+        acuityID:
+          type: string
+      required:
+        - calendarID
+        - appointmentTypeID
+        - action
+        - acuityID
     ResponseOfTemperature:
       type: object
       additionalProperties: false
@@ -964,6 +979,72 @@ components:
               type: string
         page:
             type: number
+    AppointmentTypesResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          items:
+            type: object
+            properties:
+              id:
+                type: number
+              name:
+                type: string
+        status:
+           type: object
+           additionalProperties: false
+           properties:
+               code:
+                   type: string
+                   enum:
+                     - succeed
+                     - failed
+                     - validation_error
+                     - internal_server_error
+                     - unauthorized
+                     - access_denied
+                     - resource_not_found
+               message:
+                   nullable: true
+                   type: string
+    AssociationsResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          additionalProperties: false
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              appointmentType:
+                type: number
+              appointmentTypeName:
+                type: string
+              testType:
+                type: string
+        status:
+           type: object
+           additionalProperties: false
+           properties:
+               code:
+                   type: string
+                   enum:
+                     - succeed
+                     - failed
+                     - validation_error
+                     - internal_server_error
+                     - unauthorized
+                     - access_denied
+                     - resource_not_found
+               message:
+                   nullable: true
+                   type: string
 
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -1002,8 +1083,8 @@ paths:
             type: string
             format: date
           required: true
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
       responses:
@@ -1185,8 +1266,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -1210,6 +1291,16 @@ paths:
           name: transportRunId
           schema:
             type: string
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: appointmentStatus
           explode: true
@@ -1392,6 +1483,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  /reservation/admin/api/v1/packages/appointment-credits:
+    get:
+      description: Get packages count by appointments credits
+      tags:
+        - Package Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Packages
+          content:
+            text/html:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    testType:
+                      type: string
+                    count:
+                      type: number
+                  required:
+                    - testType
+                    - count
   /reservation/admin/api/v1/packages:
     post:
       description: Add Package Codes for Orgs
@@ -1492,8 +1614,8 @@ paths:
           schema:
             type: string
           required: true
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
           required: true
@@ -1569,6 +1691,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenerateNextBarCodeResponse'
+  /reservation/admin/api/v1/appointments/acuity/types:
+    get:
+      description: Acuity Appointment Type List
+      tags:
+      - Appointment Management
+      security:
+      - bearerAuthJWT: [ ]
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentTypesResponse'
   /reservation/admin/api/v1/appointments/list/stats:
     get:
       description: Get appointment list
@@ -1577,8 +1713,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -1602,6 +1738,16 @@ paths:
           name: transportRunId
           schema:
             type: string
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: appointmentStatus
           explode: true
@@ -1674,8 +1820,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -1695,6 +1841,12 @@ paths:
           name: testType
           schema:
             type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: searchQuery
           schema:
@@ -1745,10 +1897,10 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
-            type: string
+           type: string
         - in: query
           name: organizationId
           schema:
@@ -1769,6 +1921,9 @@ paths:
             enum:
               - PCR
               - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: result
           schema:
@@ -1936,6 +2091,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/appointments/sync:
+    post:
+      description: Sync Appointments
+      tags:
+        - Test Results Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentsSyncRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
   /reservation/admin/api/v2/appointments/add-labels:
     put:
       description: Add SameDay/NextDay Labesl to Appointments
@@ -1982,8 +2154,8 @@ paths:
           schema:
             type: string
           required: true
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
       responses:
@@ -2310,6 +2482,13 @@ paths:
                   type: string
                 lastName:
                   type: string
+                gender:
+                  type: string
+                  enum:
+                    - Male
+                    - Female
+                    - Other
+                    - Prefer Not to Say
                 phone:
                   type: object
                   additionalProperties: false
@@ -2324,6 +2503,8 @@ paths:
                 address:
                   type: string
                 addressUnit:
+                  type: string
+                postalCode:
                   type: string
                 couponCode:
                   type: string
@@ -2341,9 +2522,11 @@ paths:
                 - slotId
                 - firstName
                 - lastName
+                - gender
                 - dateOfBirth
                 - address
                 - addressUnit
+                - postalCode
                 - couponCode
                 - shareTestResultWithEmployer
                 - readTermsAndConditions
@@ -2750,8 +2933,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -2779,6 +2962,16 @@ paths:
               - Received
               - InProgress
               - ReRunRequired
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
       responses:
         '200':
           description: Successfully Return
@@ -2853,8 +3046,8 @@ paths:
       security:
         - bearerAuthJWT: []
       parameters:
-        - in: query
-          name: labId
+        - in: header
+          name: labid
           schema:
             type: string
         - in: query
@@ -2870,6 +3063,16 @@ paths:
           name: barCode
           schema:
             type: string
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
       responses:
         '200':
           description: Succesfully return stats
@@ -3181,6 +3384,8 @@ paths:
                             - GREY
                         result:
                           type: string
+                        detailsAvailable:
+                          type: boolean
                   status:
                     type: object
                     additionalProperties: false
@@ -3216,11 +3421,17 @@ paths:
                   type: string
                 temperature:
                   type: number
+                pulse:
+                  type: number
+                oxygen:
+                  type: number
                 userId:
                   type: string
               required:
                 - organizationId
                 - temperature
+                - pulse
+                - oxygen
                 - userId
               additionalProperties: false
       responses:
@@ -3275,6 +3486,68 @@ paths:
                             - stop
                         result:
                           type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
+  /reservation/api/v1/pulse-oxygen/{id}:
+    get:
+      description: Get pulse and oxygen details by pulseOxygen ID and organization ID
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Pulse & Oxygen Management
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return pulse and oxygen details
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        pulse:
+                          type: number
+                        oxygen:
+                          type: number
+                        createdAt:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                            - Passed
+                            - Failed
                   status:
                     type: object
                     additionalProperties: false
@@ -3526,3 +3799,16 @@ paths:
                         type: string
                   page:
                     type: number
+    get:
+      description: Get all Associations
+      security:
+        - bearerAuthJWT: [ ]
+      tags:
+          - Associations
+      responses:
+          '200':
+            description: Successfully returned Associations
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AssociationsResponse'

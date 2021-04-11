@@ -5,6 +5,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {AppointmentToTestTypeAssocPostRequest} from '../../../models/appointment-test-association'
 import {AppointmentToTestTypeAssocService} from '../../../services/appointment-to-test-type-association.service'
+import {getUserId} from '../../../../../common/src/utils/auth'
 
 class AppointmentToTestTypeAssociationController implements IControllerBase {
   public router = Router()
@@ -19,6 +20,11 @@ class AppointmentToTestTypeAssociationController implements IControllerBase {
     const opnAdmin = authorizationMiddleware([RequiredUserPermission.OPNAdmin])
 
     this.router.post(`${this.path}/appointment-type-to-test-type-assoc`, opnAdmin, this.associate)
+    this.router.get(
+      `${this.path}/appointment-type-to-test-type-assoc`,
+      opnAdmin,
+      this.getAssociationList,
+    )
   }
 
   /**
@@ -27,9 +33,24 @@ class AppointmentToTestTypeAssociationController implements IControllerBase {
   associate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {appointmentType, testType} = req.body as AppointmentToTestTypeAssocPostRequest
-      const {id} = await this.appointmentToTestTypeAssocService.save({appointmentType, testType})
+      const createdBy = getUserId(res.locals.authenticatedUser)
+      const {id} = await this.appointmentToTestTypeAssocService.save({
+        appointmentType,
+        testType,
+        createdBy,
+      })
 
       res.json(actionSucceed({id}))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getAssociationList = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const associations = await this.appointmentToTestTypeAssocService.getAll()
+
+      res.json(actionSucceed(associations))
     } catch (error) {
       next(error)
     }

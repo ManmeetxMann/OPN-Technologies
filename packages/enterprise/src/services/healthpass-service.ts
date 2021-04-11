@@ -6,6 +6,8 @@ import {safeTimestamp, isPassed} from '../../../common/src/utils/datetime-util'
 import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 
+import {AppoinmentService} from '../../../reservation/src/services/appoinment.service'
+
 import {OrganizationModel} from '../repository/organization.repository'
 import {UserActionsRepository} from '../repository/action-items.repository'
 import {ActionItem} from '../models/action-items'
@@ -15,23 +17,14 @@ import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 import {ResultTypes} from '../../../reservation/src/models/appointment'
 
 import moment from 'moment'
-
-type HealthPass = {
-  expiry: string
-  tests: {
-    id: string
-    date: string
-    type: string
-    status: string
-    style: string
-  }[]
-  status: PassportStatuses
-}
+import {HealthPassType, HealthPass} from '../types/health-pass'
+import {PulseOxygenStatuses} from '../../../reservation/src/models/pulse-oxygen'
 
 export class HealthpassService {
   private dataStore = new DataStore()
   private organizationRepository = new OrganizationModel(this.dataStore)
   private userRepository = new UserModel(this.dataStore)
+  private appointmentService = new AppoinmentService()
 
   private getItems = async (userId: string, orgId: string): Promise<ActionItem> => {
     const itemsRepo = new UserActionsRepository(this.dataStore, userId)
@@ -60,6 +53,7 @@ export class HealthpassService {
       latestTemperature: null,
       scheduledPCRTest: null,
       PCRTestResult: null,
+      latestPulse: null,
     })
     return items
   }
@@ -92,6 +86,9 @@ export class HealthpassService {
     const earliestValid = lastRollover.isSameOrAfter(validDurationAgo)
       ? lastRollover
       : validDurationAgo
+
+    const PCRDuration = parseInt(Config.get('PCR_VALIDITY_HOURS'))
+    const earliestValidPCR = moment(now()).utc().subtract(PCRDuration, 'hours')
     const notStale = (ts) => earliestValid.isSameOrBefore(safeTimestamp(ts))
     if (
       items.latestAttestation?.status === PassportStatuses.Proceed &&
@@ -99,7 +96,7 @@ export class HealthpassService {
     ) {
       tests.push({
         date: safeTimestamp(items.latestAttestation.timestamp).toISOString(),
-        type: 'Attestation',
+        type: HealthPassType.Attestation,
         id: items.latestAttestation.attestationId,
         status: items.latestAttestation.status,
         style: 'GREEN',
@@ -111,7 +108,7 @@ export class HealthpassService {
     ) {
       tests.push({
         date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
-        type: 'Temperature',
+        type: HealthPassType.Temperature,
         id: items.latestTemperature.temperatureId,
         status: items.latestTemperature.status,
         style: 'GREEN',
@@ -119,16 +116,46 @@ export class HealthpassService {
     }
     if (
       items.PCRTestResult?.result === ResultTypes.Negative &&
-      notStale(items.PCRTestResult.timestamp)
+      earliestValidPCR.isSameOrBefore(safeTimestamp(items.PCRTestResult.timestamp))
     ) {
       tests.push({
         date: safeTimestamp(items.PCRTestResult.timestamp).toISOString(),
-        type: 'PCR',
+        type: HealthPassType.PCR,
         id: items.PCRTestResult.testId,
         status: items.PCRTestResult.result,
         style: 'GREEN',
       })
     }
+    if (
+      items.latestPulse?.status === PulseOxygenStatuses.Passed &&
+      notStale(items.latestPulse.timestamp)
+    ) {
+      tests.push({
+        date: safeTimestamp(items.latestPulse.timestamp).toISOString(),
+        type: HealthPassType.PulseOxygenCheck,
+        id: items.latestPulse.pulseId,
+        status: items.latestPulse.status,
+        style: 'GREEN',
+      })
+    }
     return {tests, expiry, status}
+  }
+
+  async getDobFromLastPCR(pass: HealthPass): Promise<string | null> {
+    const testsPCR = pass.tests
+      .filter((test) => test.type === HealthPassType.PCR)
+      .sort((current, next) => {
+        const currentDate = new Date(current.date).getDate()
+        const nextDate = new Date(next.date).getDate()
+        return nextDate - currentDate
+      })
+
+    if (testsPCR[0]) {
+      const testId = testsPCR[0].id
+      const appointment = await this.appointmentService.getAppointmentOnlyDBById(testId)
+      return appointment.dateOfBirth
+    }
+
+    return null
   }
 }

@@ -33,3 +33,16 @@ export const deleteTemperatureByDateTime = async (dateTime: string): Promise<voi
     })
   })
 }
+
+export const deleteAllTemperatureByUserId = async (
+  userId: string,
+  testDataCreator: string,
+): Promise<void> => {
+  const temperatureCollection = database.collection(collectionName)
+  const ref = await temperatureCollection
+    .where('userId', '==', userId)
+    .where('testDataCreator', '==', testDataCreator)
+    .get()
+  const deleteAll = ref.docs.map((doc) => doc.ref.delete())
+  await Promise.all(deleteAll)
+}

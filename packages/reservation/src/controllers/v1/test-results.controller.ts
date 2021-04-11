@@ -10,6 +10,7 @@ import {getUserId} from '../../../../common/src/utils/auth'
 //Service
 import {PCRTestResultsService} from '../../services/pcr-test-results.service'
 import {TestResultsService} from '../../services/test-results.service'
+import {LabService} from '../../services/lab.service'
 //Models
 import {singlePcrTestResultDTO, SingleTestResultsRequest} from '../../models/pcr-test-results'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
@@ -19,6 +20,7 @@ class TestResultsController implements IControllerBase {
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
   private testResultsService = new TestResultsService()
+  public labService = new LabService()
 
   constructor() {
     this.initRoutes()
@@ -39,7 +41,7 @@ class TestResultsController implements IControllerBase {
     try {
       const {organizationid} = req.headers as {organizationid: string}
       const userId = getUserId(res.locals.authenticatedUser)
-      const pcrResults = await this.pcrTestResultsService.getTestResultsByUserId(
+      const pcrResults = await this.pcrTestResultsService.getAllResultsByUserAndChildren(
         userId,
         organizationid,
       )
@@ -60,9 +62,11 @@ class TestResultsController implements IControllerBase {
         pcrTestResult,
       } = await this.pcrTestResultsService.getTestResultAndAppointment(id, userId)
 
+      const lab = await this.labService.findOneById(pcrTestResult.labId)
+
       res.json(
         actionSuccess({
-          ...singlePcrTestResultDTO(pcrTestResult, appointment),
+          ...singlePcrTestResultDTO(pcrTestResult, appointment, lab),
           isDownloadable: this.pcrTestResultsService.isDownloadable(pcrTestResult),
         }),
       )

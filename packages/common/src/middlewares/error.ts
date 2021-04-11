@@ -2,7 +2,7 @@ import {HttpException} from '../exceptions/httpexception'
 import {ResponseStatusCodes} from '../types/response-status'
 import {ResponseWrapper} from '../types/response-wrapper'
 import {ErrorMiddleware, Middleware} from '../types/middleware'
-import {BadRequest} from 'express-openapi-validator'
+import {BadRequest} from 'express-openapi-validator/dist/framework/types'
 
 // express checks if 'next' is in the signature. DO NOT call next
 export const handleErrors: ErrorMiddleware<HttpException | BadRequest> = (err, req, res, next) => {

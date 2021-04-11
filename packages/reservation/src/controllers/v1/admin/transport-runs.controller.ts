@@ -9,7 +9,7 @@ import {TransportRunsService} from '../../../services/transport-runs.service'
 import {LabService} from '../../../services/lab.service'
 import {TransportRunsDTOResponse} from '../../../models/transport-runs'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
-import {getIsClinicUser} from '../../../../../common/src/utils/auth'
+import {getIsClinicUser, getUserId} from '../../../../../common/src/utils/auth'
 
 class AdminTransportRunsController implements IControllerBase {
   public path = '/reservation/admin/api/v1/transport-runs'
@@ -46,6 +46,7 @@ class AdminTransportRunsController implements IControllerBase {
         labId: string
       }
       const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
+      const createdBy = getUserId(res.locals.authenticatedUser)
       const {admin} = res.locals.authenticatedUser
 
       const isAdminForLab = admin.adminForLabIds && admin.adminForLabIds.includes(labId)
@@ -65,6 +66,7 @@ class AdminTransportRunsController implements IControllerBase {
         driverName,
         label,
         labId,
+        createdBy,
       )
 
       res.json(
@@ -79,7 +81,8 @@ class AdminTransportRunsController implements IControllerBase {
 
   listTransportRun: Handler = async (req, res, next): Promise<void> => {
     try {
-      const {transportDate, labId} = req.query as {transportDate: string; labId?: string}
+      const {transportDate} = req.query as {transportDate: string}
+      const labId = req.headers?.labid as string
 
       const transportRuns = await this.transportRunsService.getByDate(transportDate, labId)
 

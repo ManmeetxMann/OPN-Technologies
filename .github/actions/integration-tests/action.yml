@@ -1,0 +1,51 @@
+name: 'Deploy to Google App Engine'
+inputs:
+  node_version:
+    description: 'Node version'
+    required: false
+    default: v12.18.4
+  service_name:
+    description: 'Service Name'
+    required: true
+    default: ""
+
+  
+
+runs:
+  using: 'composite'
+  steps:
+  
+  - name: Deploy Modules
+    run: |
+      echo "Service Name: ${{ inputs.service_name }}"
+      echo "::group::Install npm modules"
+      echo "Inside group"
+      export NVM_DIR=~/.nvm
+      source ~/.nvm/nvm.sh
+      nvm install ${{ inputs.node_version }}
+      nvm use ${{ inputs.node_version }}
+      npm install
+      npm run install-all
+      npm run lint-all
+      echo "::endgroup::"
+    shell: bash
+
+  - name: Define Deployment Variables
+    run: |
+      echo "::group::Activate Service"
+      cat >> service-account.json << EOF
+      ${{ env.infra_dev_service_account }}
+      EOF
+      gcloud auth activate-service-account --key-file=./service-account.json --project=opn-platform-infra-dev
+      rm ./service-account.json
+      echo "::endgroup::"
+      echo "::group::Add Application Environment Variables"
+      echo "Writing Environment Variables to: .env"
+      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/common/.env
+      gcloud secrets versions access latest --secret=SERVICE_ACCOUNT > ./packages/common/service_account.json
+      export GOOGLE_APPLICATION_CREDENTIALS=../../packages/common/service_account.json
+      echo "::endgroup::"
+      echo "::group::Test"
+      npm run test-all
+      echo "::endgroup::"
+    shell: bash

@@ -8,7 +8,7 @@ import {OrganizationConnectionRequest} from '../models/organization-connection-r
 import {UserService} from '../../../common/src/service/user/user-service'
 import {UserService as EnterpriseUserService} from '../services/user-service'
 import {RegistrationService} from '../../../common/src/service/registry/registration-service'
-import {User, UserEdit, UserWithGroup, UserDependant} from '../../../common/src/data/user'
+import {UserEdit, UserWithGroup, UserDependant} from '../../../common/src/data/user'
 import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Organization, OrganizationUsersGroup} from '../models/organization'
 import * as _ from 'lodash'
@@ -84,7 +84,8 @@ class UserController implements IControllerBase {
         lastName,
         base64Photo,
         organizationIds: [organization.id],
-      } as Omit<User, 'id'>)
+        delegates: [],
+      })
 
       // Add user to group
       await this.organizationService.addUserToGroup(organization.id, group.id, user.id)

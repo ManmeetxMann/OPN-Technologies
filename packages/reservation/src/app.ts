@@ -21,11 +21,13 @@ import TemperatureController from './controllers/v1/temperature.controller'
 import AdminHistoryController from './controllers/v1/admin/admin-scan-history.controller'
 import AdminRapidAntigenTestTesultsController from './controllers/v1/admin/rapid-antigen-test-results.controller'
 import AdminAppointmentAvailabilityController from './controllers/v1/admin/appointment-availability.controller'
+import PulseOxygenController from './controllers/v1/pulse-oxygen.controller'
 
 import InternalRapidAntigenResultEmailSendController from './controllers/v1/internal/rapid-antigen-send-result-email.controller'
 import AdminClinicController from './controllers/v1/admin/clinic.controller'
 import AdminTestKitBatchController from './controllers/v1/admin/test-kit-batch.controller'
 import AppointmentToTestTypeAssociationController from './controllers/v1/admin/appointment-to-test-type-association.controller'
+import InternalSyncAppointmentController from './controllers/v1/internal/sync-appoinments.controller'
 
 const PORT = Number(process.env.PORT) || 5008
 
@@ -57,6 +59,8 @@ export const app = new App({
     new AdminAppointmentAvailabilityController(),
     new AdminTestKitBatchController(),
     new AppointmentToTestTypeAssociationController(),
+    new PulseOxygenController(),
+    new InternalSyncAppointmentController(),
   ],
   middleWares: [bodyParser.json(), bodyParser.urlencoded({extended: true}), loggerMiddleware],
 })

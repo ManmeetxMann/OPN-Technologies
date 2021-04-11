@@ -1,27 +1,49 @@
 import request from 'supertest'
 
 import {app as server} from '../../../../src/app'
-import {create, deleteAppointmentByDateTime} from '../../../__seeds__/appointments'
+import {create, deleteAppointmentByTestDataCreator} from '../../../__seeds__/appointments'
 import {deleteAll} from '../../../__seeds__/admin-scan-history'
+import {
+  createPCRTestResult,
+  deletePCRTestResultByTestDataCreator,
+} from '../../../__seeds__/pcr-test-results'
 
 jest.spyOn(global.console, 'error').mockImplementation()
 jest.spyOn(global.console, 'info').mockImplementation()
 jest.mock('../../../../../common/src/middlewares/authorization')
 jest.mock('../../../../../common/src/utils/logging-setup')
+jest.mock('../../../../../common/src/service/google/pub_sub')
 
-const dateForAppointments = '2020-02-05'
+const testDataCreator = __filename.split('/packages/')[1]
+const dateForAppointments = '2019-12-05'
+const dateForAppointmentStr = 'December 05, 2019'
 const dateTimeForAppointment1 = `${dateForAppointments}T07:00:00`
-const aptID1 = 'APT1'
+const deadlineSameDay = `${dateForAppointments}T23:59:00`
+const aptID1 = 'RapidAPT1'
 const organizationId = 'TEST1'
 describe('AdminScanHistoryController', () => {
   beforeAll(async () => {
-    await create({
-      id: aptID1,
-      dateTime: dateTimeForAppointment1,
-      dateOfAppointment: 'February 05, 2020',
-      appointmentStatus: 'InTransit',
-      organizationId,
-    })
+    await deletePCRTestResultByTestDataCreator(testDataCreator)
+    await deleteAppointmentByTestDataCreator(testDataCreator)
+    await create(
+      {
+        id: aptID1,
+        dateTime: dateTimeForAppointment1,
+        dateOfAppointment: dateForAppointmentStr,
+        appointmentStatus: 'InTransit',
+        organizationId,
+        testType: 'RapidAntigen',
+      },
+      testDataCreator,
+    )
+    await createPCRTestResult(
+      {
+        appointmentId: aptID1,
+        dateTime: dateTimeForAppointment1,
+        deadline: deadlineSameDay,
+      },
+      testDataCreator,
+    )
   })
 
   describe('create scan history record', () => {
@@ -29,12 +51,11 @@ describe('AdminScanHistoryController', () => {
       const url = `/reservation/admin/api/v1/admin-scan-history`
       const result = await request(server.app)
         .post(url)
-        .set('authorization', 'bearer 10000')
+        .set('authorization', 'Bearer ClinicUser')
         .set('Content-Type', 'application/json')
         .send({
           barCode: 'BAR1',
           type: 'RapidAntigen',
-          organizationId,
         })
 
       expect(result.status).toBe(200)
@@ -47,12 +68,11 @@ describe('AdminScanHistoryController', () => {
       const url = `/reservation/admin/api/v1/admin-scan-history`
       const result = await request(server.app)
         .post(url)
-        .set('authorization', 'bearer 10000')
+        .set('authorization', 'Bearer ClinicUser')
         .set('Content-Type', 'application/json')
         .send({
           barCode: 'BAD_BAR1',
           type: 'RapidAntigen',
-          organizationId,
         })
 
       expect(result.status).toBe(404)
@@ -63,7 +83,7 @@ describe('AdminScanHistoryController', () => {
       const url = `/reservation/admin/api/v1/admin-scan-history`
       const result = await request(server.app)
         .post(url)
-        .set('authorization', 'bearer 10000')
+        .set('authorization', 'Bearer ClinicUser')
         .set('Content-Type', 'application/json')
         .send({
           barCode: 'BAR1',
@@ -80,7 +100,7 @@ describe('AdminScanHistoryController', () => {
       const url = `/reservation/admin/api/v1/admin-scan-history?type=RapidAntigen`
       const result = await request(server.app)
         .get(url)
-        .set('authorization', 'bearer 10000')
+        .set('authorization', 'Bearer ClinicUser')
         .set('Content-Type', 'application/json')
 
       expect(result.status).toBe(200)
@@ -92,7 +112,8 @@ describe('AdminScanHistoryController', () => {
   })
 
   afterAll(async () => {
-    await deleteAppointmentByDateTime(`${dateForAppointments}T23:59:59`) //End of Day
+    await deletePCRTestResultByTestDataCreator(testDataCreator)
+    await deleteAppointmentByTestDataCreator(testDataCreator)
     deleteAll()
   })
 })

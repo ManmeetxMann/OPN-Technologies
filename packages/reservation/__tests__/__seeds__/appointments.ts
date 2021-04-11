@@ -2,14 +2,18 @@ import {firestore} from 'firebase-admin'
 
 const database = firestore()
 
-export const create = async (dataOverwrite: {
-  id: string
-  dateTime: string
-  dateOfAppointment: string
-  organizationId?: string
-  appointmentStatus?: string
-  labId?: string
-}): Promise<void> => {
+export const create = async (
+  dataOverwrite: {
+    id: string
+    dateTime: string
+    dateOfAppointment: string
+    organizationId?: string
+    appointmentStatus?: string
+    labId?: string
+    testType?: string
+  },
+  testDataCreator: string,
+): Promise<void> => {
   const data = {
     acuityAppointmentId: 111,
     address: 'address',
@@ -39,6 +43,9 @@ export const create = async (dataOverwrite: {
     shareTestResultWithEmployer: true,
     timeOfAppointment: '8:00am',
     labId: dataOverwrite.labId ?? 'DEFAULT',
+    userId: 'TestUser',
+    testType: dataOverwrite.testType ?? 'PCR',
+    testDataCreator,
   }
   data.organizationId = dataOverwrite.organizationId ?? null
   data.appointmentStatus = dataOverwrite.appointmentStatus ?? 'Pending'
@@ -46,10 +53,12 @@ export const create = async (dataOverwrite: {
   //console.log(`savedData.id: ${savedData.id}`)
 }
 
-export const deleteAppointmentByDateTime = async (dateTime: string): Promise<void> => {
+export const deleteAppointmentByTestDataCreator = async (
+  testDataCreator: string,
+): Promise<void> => {
   const appointments_query = database
     .collection('appointments')
-    .where('dateTime', '<=', firestore.Timestamp.fromDate(new Date(dateTime)))
+    .where('testDataCreator', '==', testDataCreator)
   await appointments_query.get().then(function (querySnapshot) {
     querySnapshot.forEach(function (doc) {
       doc.ref.delete()

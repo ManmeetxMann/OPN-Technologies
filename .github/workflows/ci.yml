@@ -6,8 +6,8 @@ on:
       - 'functional-testing/**'
       - "cloud-functions/sms-notification/**"
       - ".github/workflows/ci_cloud_function_sms_notification.yml"
-    branches: [ development, master ]
-
+    branches: 
+      - master
 jobs:
   build:
     runs-on: ubuntu-18.04

@@ -3,7 +3,6 @@ import {Auditable} from '../../../common/src/types/auditable'
 
 export type TestRunsRequest = {
   testRunDate: string
-  labId: string
 }
 
 export type TestRunsPostRequest = {
@@ -23,6 +22,7 @@ export type TestRun = {
   testRunDateTime: firestore.Timestamp
   name: string
   labId: string
+  createdBy: string
 }
 
 type TestRunUi = {

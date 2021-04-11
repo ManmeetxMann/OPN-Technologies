@@ -19,6 +19,8 @@ import {
   AllLocationsModel,
 } from '../repository/organization.repository'
 
+import organizationDbSchema from '../dbschemas/organization.schema'
+
 import * as _ from 'lodash'
 
 const notFoundMessage = (organizationId: string, identifier?: string) =>
@@ -33,20 +35,24 @@ export class OrganizationService {
   private allLocationsRepo = new AllLocationsModel(this.dataStore)
   private organizationKeySequenceRepository = new OrganizationKeySequenceModel(this.dataStore)
 
-  create(organization: Organization): Promise<Organization> {
-    return this.generateKey().then((key) =>
-      this.organizationRepository.add({
-        ...organization,
-        key,
-        type: organization.type ?? OrganizationType.Default,
-        allowDependants: organization.allowDependants ?? false,
-        dailyReminder: {
-          enabled: organization.dailyReminder?.enabled ?? false,
-          enabledOnWeekends: organization.dailyReminder?.enabledOnWeekends ?? false,
-          timeOfDayMillis: organization.dailyReminder?.timeOfDayMillis ?? 0,
-        },
-      }),
-    )
+  async create(organization: Organization): Promise<Organization> {
+    const key = await this.generateKey()
+
+    const organizationData = {
+      ...organization,
+      key,
+      type: organization.type ?? OrganizationType.Default,
+      allowDependants: organization.allowDependants ?? false,
+      dailyReminder: {
+        enabled: organization.dailyReminder?.enabled ?? false,
+        enabledOnWeekends: organization.dailyReminder?.enabledOnWeekends ?? false,
+        timeOfDayMillis: organization.dailyReminder?.timeOfDayMillis ?? 0,
+      },
+    }
+
+    const validDbData = await organizationDbSchema.validateAsync(organizationData)
+
+    return this.organizationRepository.add(validDbData)
   }
 
   async getOrganizations(): Promise<Organization[]> {
@@ -79,7 +85,6 @@ export class OrganizationService {
           zip: parent.zip,
           state: parent.state,
           country: parent.country,
-          questionnaireId: parent.questionnaireId,
           ...location,
           parentLocationId: parentLocationId,
           allowAccess: true,

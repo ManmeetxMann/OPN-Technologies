@@ -1,6 +1,6 @@
 /**
- * Migrate organizations data to organizationsIds in user collection
- */
+Script to cound total users with email and no authuserID
+*/
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
 

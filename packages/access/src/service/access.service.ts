@@ -83,7 +83,7 @@ export class AccessService {
       dependants: {},
     })
     this.incrementPeopleOnPremises(access.locationId, 1)
-    this.accessListener.addEntry(access)
+    this.accessListener.processAccess(access)
     return access
   }
 
@@ -322,7 +322,7 @@ export class AccessService {
       console.error(`Failed to decrement people for access ${access.id}: [${e}]`),
     )
     this.accessListener
-      .addExit(savedAccess, true, [])
+      .processAccess(savedAccess)
       .catch((e) => console.error(`Failed to add exit for access ${access.id}: [${e}]`))
     return savedAccess
   }
@@ -503,8 +503,8 @@ export class AccessService {
       .collection()
       .where(`userId`, '==', userId)
       .where(`locationId`, '==', locationId)
-      .where(`exitAt`, '>', after)
-      .where(`exitAt`, '<', before)
+      .where(`exitAt`, '>=', after)
+      .where(`exitAt`, '<=', before)
       .orderBy('exitAt', 'desc')
       .limit(1)
     const allAccesses = await query.fetch()
@@ -515,8 +515,8 @@ export class AccessService {
     const query = this.accessRepository
       .collection()
       .where(`userId`, '==', userId)
-      .where(`exitAt`, '>', after)
-      .where(`exitAt`, '<', before)
+      .where(`exitAt`, '>=', after)
+      .where(`exitAt`, '<=', before)
       .orderBy('exitAt', 'desc')
       .limit(1)
     const allAccesses = await query.fetch()
@@ -639,7 +639,7 @@ export class AccessService {
     count = 1,
   ): Promise<AccessStatsModel> {
     return this.getTodayStatsForLocation(locationId).then((stats) =>
-      this.accessStatsRepository.increment(stats.id, `${status}Passport`, count),
+      this.accessStatsRepository.increment(stats.id, `${status}Passports`, count),
     )
   }
 

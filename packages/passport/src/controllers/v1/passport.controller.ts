@@ -88,22 +88,7 @@ class PassportController implements IControllerBase {
         }
       })
 
-      let questionnaireId: string
-      // @ts-ignore
-      questionnaireId = organization.questionnaireId
-      if (!questionnaireId) {
-        const allQuestionnaires = new Set(
-          orgLocations.map((org) => org.questionnaireId).filter((notNull) => notNull),
-        )
-        if (!allQuestionnaires.size) {
-          throw new BadRequestException('No questionnaire id found')
-        }
-        if (allQuestionnaires.size > 1) {
-          console.warn(allQuestionnaires)
-          throw new BadRequestException(`Org ${organizationId} has several questionnaire ids`)
-        }
-        questionnaireId = [...allQuestionnaires][0]
-      }
+      const {questionnaireId} = organization
       const answers: AttestationAnswersV1 = req.body.answers
       let passportStatus
       try {
@@ -134,7 +119,7 @@ class PassportController implements IControllerBase {
   get = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const authenticatedUser = res.locals.connectedUser as User
-      const usedId = authenticatedUser.id
+      const userId = authenticatedUser.id
       const {attestationId} = req.params as {
         attestationId: string
       }
@@ -147,7 +132,10 @@ class PassportController implements IControllerBase {
       if (!attestation) {
         throw new BadRequestException("Couldn't find attestation")
       }
-      if (attestation.userId !== usedId) {
+
+      const isParent = await this.userService.isParentForChild(userId, attestation.userId)
+
+      if (attestation.userId !== userId && !isParent) {
         throw new BadRequestException("Attestation doesn't belong to the user")
       }
       if (attestation.organizationId !== organizationid) {
@@ -165,12 +153,12 @@ class PassportController implements IControllerBase {
       }) as AttestationAnswersV1
       const [status, questionnaires] = await Promise.all([
         this.questionnaireService.evaluateAnswers(questionnaireId, mappedAnswers),
-        this.questionnaireService.getQuestionnaires([questionnaireId]),
+        this.questionnaireService.getQuestionnaire(questionnaireId),
       ])
 
       // Merge questions and answers by index
       const answersResults = []
-      const {questions} = questionnaires[0]
+      const {questions} = questionnaires
       Object.keys(questions).forEach((questionKey) => {
         const question = questions[questionKey]
         const answersResult = {

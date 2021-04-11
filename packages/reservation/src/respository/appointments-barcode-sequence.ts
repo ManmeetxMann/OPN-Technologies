@@ -12,12 +12,23 @@ export class AppointmentsBarCodeSequence extends DataModel<AppoinmentBarCodeSequ
 
   public async getNextBarCode(): Promise<null | AppoinmentBarCodeSequenceDBModel> {
     const prefix = Config.get('BARCODE_SEQ_PREFIX') ?? 'TEST'
-    return this.get(prefix)
-      .then((sequence) =>
-        !!sequence
-          ? this.increment(prefix, 'barCodeNumber', 1)
-          : this.add({id: prefix, barCodeNumber: 1000000000}),
-      )
-      .then((barCode) => barCode)
+    const barcodesCollection = this.datastore.firestoreORM.collection({path: this.rootPath})
+    const sequence = barcodesCollection.docRef(prefix)
+
+    let result = null
+    await this.datastore.firestoreORM.runTransaction(async (tx) => {
+      const doc = await tx.get(sequence)
+      const sequenceExists = doc.data()
+      if (sequenceExists) {
+        const newBarcode = sequenceExists.barCodeNumber + 1
+        result = {id: doc.id, barCodeNumber: newBarcode}
+        tx.update(sequence, result)
+      } else {
+        result = {id: prefix, barCodeNumber: 1000000000}
+        tx.set(sequence, result)
+      }
+    })
+
+    return result
   }
 }

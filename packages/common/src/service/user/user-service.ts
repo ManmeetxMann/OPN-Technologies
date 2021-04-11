@@ -3,13 +3,15 @@ import {User, UserDependant, UserFilter, UserModel, LegacyDependant} from '../..
 import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
 import {cleanStringField} from '../../../../common/src/utils/utils'
 import {DataModelFieldMapOperatorType} from '../../../../common/src/data/datamodel.base'
+import UserDbSchema from '../../dbschemas/user.schema'
 
 export class UserService {
   private dataStore = new DataStore()
   private userRepository = new UserModel(this.dataStore)
 
-  create(user: Omit<User, 'id'>): Promise<User> {
-    return this.userRepository.add(this.cleanUserData(user))
+  async create(user: Omit<User, 'id'>): Promise<User> {
+    const validUser = await UserDbSchema.validateAsync(this.cleanUserData(user))
+    return this.userRepository.add(validUser)
   }
 
   async update(user: User): Promise<void> {
@@ -40,7 +42,7 @@ export class UserService {
     const cleanUser = user
     cleanUser.firstName = cleanStringField(user.firstName)
     cleanUser.lastName = cleanStringField(user.lastName)
-    if (cleanUser.email) cleanUser.email = cleanStringField(user.email)
+    if (cleanUser.email) cleanUser.email = cleanStringField(user.email.toLowerCase())
     return cleanUser
   }
 
@@ -56,7 +58,7 @@ export class UserService {
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    const results = await this.userRepository.findWhereEqual('email', email)
+    const results = await this.userRepository.findWhereEqual('email', email.toLowerCase())
     if (results.length > 1) {
       console.warn(`${results.length} users found with email ${email}`)
     }
@@ -141,13 +143,24 @@ export class UserService {
     dependants: (UserDependant | LegacyDependant)[],
     organizationId: string,
   ): Promise<UserDependant[]> {
+    const parent = await this.userRepository.get(userId)
+
+    if (!parent) {
+      throw new ResourceNotFoundException(`ParentId with ${userId} was not found`)
+    }
+
     const dependantsToAdd = dependants.map((dependant) => ({
       firstName: cleanStringField(dependant.firstName),
       lastName: cleanStringField(dependant.lastName),
       delegates: [userId],
-      registrationId: '',
+      registrationId: null,
       base64Photo: '',
       organizationIds: [organizationId],
+      agreeToConductFHHealthAssessment: parent?.agreeToConductFHHealthAssessment ?? false,
+      shareTestResultWithEmployer: parent?.shareTestResultWithEmployer ?? false,
+      readTermsAndConditions: parent?.readTermsAndConditions ?? false,
+      receiveResultsViaEmail: false,
+      receiveNotificationsFromGov: false,
     }))
     return Promise.all(dependantsToAdd.map((dependant) => this.create(dependant)))
   }
@@ -170,5 +183,12 @@ export class UserService {
 
   getAdminsForGroup(groupId: string): Promise<User[]> {
     return this.userRepository.findWhereArrayInMapContains('admin', 'adminForGroupIds', groupId)
+  }
+
+  async isParentForChild(parentId: string, childId: string): Promise<boolean> {
+    const dependants = await this.getAllDependants(parentId)
+    const isParent = dependants.some(({id}) => id == childId)
+
+    return isParent
   }
 }
