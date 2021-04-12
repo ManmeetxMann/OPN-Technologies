@@ -31,7 +31,8 @@ import {
 import {FilterGroupKey, FilterName, statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
-import {validateAnalysis} from '../../../utils/analysis.helper'
+import {validateAnalysis, normalizeAnalysis} from '../../../utils/analysis.helper'
+import {LabService} from '../../../services/lab.service'
 
 class AdminPCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
@@ -39,6 +40,7 @@ class AdminPCRTestResultController implements IControllerBase {
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
   private appoinmentService = new AppoinmentService()
+  public labService = new LabService()
 
   constructor() {
     this.initRoutes()
@@ -170,7 +172,7 @@ class AdminPCRTestResultController implements IControllerBase {
 
       const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend({
         metaData,
-        resultAnalysis,
+        resultAnalysis: normalizeAnalysis(resultAnalysis),
         barCode,
         isSingleResult: true,
         sendUpdatedResults,
@@ -400,6 +402,7 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         appointmentStatus,
         organizationId,
+        testType,
       } = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
@@ -412,6 +415,7 @@ class AdminPCRTestResultController implements IControllerBase {
         appointmentStatus,
         organizationId,
         labId,
+        testType,
       })
 
       res.json(actionSucceed(pcrResults))
@@ -422,7 +426,12 @@ class AdminPCRTestResultController implements IControllerBase {
 
   dueDeadlineStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunId, deadline, barCode} = req.query as PcrTestResultsListByDeadlineRequest
+      const {
+        testRunId,
+        deadline,
+        barCode,
+        testType,
+      } = req.query as PcrTestResultsListByDeadlineRequest
       const labId = req.headers?.labid as string
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
@@ -436,6 +445,7 @@ class AdminPCRTestResultController implements IControllerBase {
         testRunId,
         barCode,
         labId,
+        testType,
       })
 
       const filterGroup = [
@@ -477,7 +487,9 @@ class AdminPCRTestResultController implements IControllerBase {
         )
       }
 
-      res.json(actionSucceed(singlePcrTestResultDTO(pcrTestResult, appointment)))
+      const lab = await this.labService.findOneById(pcrTestResult.labId)
+
+      res.json(actionSucceed(singlePcrTestResultDTO(pcrTestResult, appointment, lab)))
     } catch (error) {
       next(error)
     }

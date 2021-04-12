@@ -23,6 +23,7 @@ import {
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 
 import {Enterprise} from '../adapter/enterprise'
+import {ResultTypes} from '../../../reservation/src/models/appointment'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
   ...passport,
@@ -110,6 +111,7 @@ export class PassportService {
     includesGuardian: boolean,
     organizationId: string,
     type: PassportType,
+    pcrResultType?: ResultTypes,
   ): Promise<{passport: Passport; created: boolean}> {
     const isPCR = type === PassportType.PCR
     const typePriority = PassportTypePriority[type]
@@ -121,7 +123,12 @@ export class PassportService {
       }
     }
     const validFromDate = now()
-    const validUntilDate = this.shortestTime(status as PassportStatuses, validFromDate, isPCR)
+    const validUntilDate = this.shortestTime(
+      status as PassportStatuses,
+      validFromDate,
+      isPCR,
+      pcrResultType,
+    )
 
     const currentPassport = await this.findLatestDirectPassport(
       userId,
@@ -321,12 +328,19 @@ export class PassportService {
     passportStatus: PassportStatuses | TemperatureStatuses,
     validFrom: Date,
     isPCR: boolean,
+    pcrResultType?: ResultTypes,
   ): Date {
     if (
       [PassportStatuses.Stop, PassportStatuses.Caution, TemperatureStatuses.Stop].includes(
         passportStatus,
       )
     ) {
+      if (pcrResultType == ResultTypes.Inconclusive) {
+        return moment(validFrom)
+          .add(Config.get('STOP_PASSPORT_EXPIRY_INCONCLUSIVE_HOURS'), 'hours')
+          .toDate()
+      }
+
       const weeksToAdd = parseInt(Config.get('STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_WEEKS'))
       // TODO: end of day?
       return moment(validFrom).add(weeksToAdd, 'weeks').toDate()

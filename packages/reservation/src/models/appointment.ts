@@ -210,6 +210,7 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   barCode?: string
   appointmentStatus?: AppointmentStatus[]
   labId?: string
+  testType?: TestTypes
 }
 
 //Update to Acuity Service
@@ -456,7 +457,7 @@ export type RescheduleAppointmentDTO = {
   dateTime: string
   organizationId?: string
   userID: string
-  isLabUser: boolean
+  isOpnSuperAdmin: boolean
 }
 
 export type UpdateTransPortRun = {

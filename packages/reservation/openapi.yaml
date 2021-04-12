@@ -924,6 +924,38 @@ components:
               type: string
             dateOfResult:
               type: string
+            resultMetaData:
+              type: object
+              additionalProperties: false
+              properties:
+                notify:
+                  type: boolean
+                resultDate:
+                  type: string
+                action:
+                  type: string
+                  enum:
+                    - SendThisResult
+                    - DoNothing
+                    - ReRunToday
+                    - ReRunTomorrow
+                    - RecollectAsInvalid
+                    - RecollectAsInconclusive
+                    - MarkAsPositive
+                    - MarkAsNegative
+                    - MarkAsPresumptivePositive
+                    - SendPreliminaryPositive
+                autoResult:
+                  type: string
+                  enum:
+                    - PresumptivePositive
+                    - PreliminaryPositive
+                    - Positive
+                    - Negative
+                    - Pending
+                    - Invalid
+                    - Inconclusive
+                    - Indeterminate
           required:
             - email
             - phone
@@ -1291,6 +1323,16 @@ paths:
           name: transportRunId
           schema:
             type: string
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: appointmentStatus
           explode: true
@@ -1729,6 +1771,16 @@ paths:
           schema:
             type: string
         - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
+        - in: query
           name: appointmentStatus
           explode: true
           style: form
@@ -1821,6 +1873,12 @@ paths:
           name: testType
           schema:
             type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: searchQuery
           schema:
@@ -1895,6 +1953,9 @@ paths:
             enum:
               - PCR
               - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: result
           schema:
@@ -2933,6 +2994,16 @@ paths:
               - Received
               - InProgress
               - ReRunRequired
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
       responses:
         '200':
           description: Successfully Return
@@ -3024,6 +3095,16 @@ paths:
           name: barCode
           schema:
             type: string
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
       responses:
         '200':
           description: Succesfully return stats

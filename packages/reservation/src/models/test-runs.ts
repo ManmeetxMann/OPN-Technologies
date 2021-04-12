@@ -22,6 +22,7 @@ export type TestRun = {
   testRunDateTime: firestore.Timestamp
   name: string
   labId: string
+  createdBy: string
 }
 
 type TestRunUi = {

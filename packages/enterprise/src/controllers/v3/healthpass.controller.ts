@@ -15,10 +15,7 @@ import {
   organizationSummaryDTOResponse,
 } from '../../models/organization'
 import {userDTO} from '../../../../common/src/data/user'
-import {PassportStatuses, PassportType} from '../../../../passport/src/models/passport'
-import {TemperatureStatuses} from '../../../../reservation/src/models/temperature'
-import {ResultTypes} from '../../../../reservation/src/models/appointment'
-import {PulseOxygenStatuses} from '../../../../reservation/src/models/pulse-oxygen'
+import {PassportType} from '../../../../passport/src/models/passport'
 
 class RecommendationController implements IControllerBase {
   public router = express.Router()
@@ -102,10 +99,10 @@ class RecommendationController implements IControllerBase {
         const pulse = pass.tests.find(({type}) => type === PassportType.PulseOxygenCheck)
 
         badges = {
-          hasSelfTestBadge: attestation?.status === PassportStatuses.Proceed,
-          hasTempBadge: temperature?.status === TemperatureStatuses.Proceed,
-          hasPCRBadge: PCR?.status === ResultTypes.Negative,
-          hasPulseBadge: pulse?.status === PulseOxygenStatuses.Passed,
+          hasSelfTestBadge: Boolean(attestation?.status),
+          hasTempBadge: Boolean(temperature?.status),
+          hasPCRBadge: Boolean(PCR?.status),
+          hasPulseBadge: Boolean(pulse?.status),
           hasVaccineBadge: false,
         }
       }
