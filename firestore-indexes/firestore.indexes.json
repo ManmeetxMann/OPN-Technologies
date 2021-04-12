@@ -863,11 +863,11 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "userId",
+          "fieldPath": "organizationId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "organizationId",
+          "fieldPath": "userId",
           "order": "ASCENDING"
         },
         {
