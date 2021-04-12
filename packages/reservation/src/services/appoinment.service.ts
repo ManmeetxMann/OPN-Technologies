@@ -61,6 +61,8 @@ import {
   BulkOperationResponse,
   BulkOperationStatus,
 } from '../types/bulk-operation.type'
+import {ReservationPushTypes} from '../types/appointment-push'
+import {DbBatchAppointments} from '../../../common/src/types/push-notification'
 import {PcrResultTestActivityAction} from '../models/pcr-test-results'
 import {AdminScanHistory} from '../models/admin-scan-history'
 import {SyncInProgressTypes} from '../models/sync-progress'
@@ -1069,6 +1071,10 @@ export class AppoinmentService {
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
         barCodeNumber,
+        scheduledPushesToSend: [
+          ReservationPushTypes.before24hours,
+          ReservationPushTypes.before3hours,
+        ],
       },
     })
     return this.createAppointmentFromAcuity(acuityAppointment, {
@@ -1527,5 +1533,43 @@ export class AppoinmentService {
 
   async getAcuityAppointmentTypes(): Promise<AppointmentTypes[]> {
     return this.acuityRepository.getAppointmentTypeList()
+  }
+
+  async getAppointmentsNotNotifiedInPeriod(
+    fromDateTime: moment.Moment,
+    untilDateTime: moment.Moment,
+  ): Promise<AppointmentDBModel[]> {
+    return this.appointmentsRepository.findWhereEqualInMap(
+      [
+        {
+          map: '/',
+          key: 'dateTime',
+          operator: DataModelFieldMapOperatorType.Greater,
+          value: new Date(fromDateTime.toDate()),
+        },
+        {
+          map: '/',
+          key: 'dateTime',
+          operator: DataModelFieldMapOperatorType.Less,
+          value: new Date(untilDateTime.toDate()),
+        },
+        {
+          map: '/',
+          key: 'scheduledPushesToSend',
+          operator: DataModelFieldMapOperatorType.ArrayContainsAny,
+          value: [ReservationPushTypes.before24hours, ReservationPushTypes.before3hours],
+        },
+      ],
+      {
+        key: 'dateTime',
+        direction: 'desc',
+      },
+    )
+  }
+
+  async removeBatchScheduledPushesToSend(
+    batchAppointments: DbBatchAppointments[],
+  ): Promise<unknown[]> {
+    return this.appointmentsRepository.removeBatchScheduledPushesToSend(batchAppointments)
   }
 }

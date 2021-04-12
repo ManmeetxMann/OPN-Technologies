@@ -7,6 +7,7 @@ import {EmailService} from '../../../common/src/service/messaging/email-service'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
+import {ReservationPushTypes} from '../types/appointment-push'
 import {toDateFormat} from '../../../common/src/utils/times'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
@@ -22,6 +23,7 @@ import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-s
 //service
 import {AppoinmentService} from './appoinment.service'
 import {CouponService} from './coupon.service'
+import {ReservationPushService} from './reservation-push.service'
 
 //repository
 import {AppointmentsRepository} from '../respository/appointments-repository'
@@ -96,6 +98,7 @@ export class PCRTestResultsService {
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
   private couponService = new CouponService()
+  private reservationPushService = new ReservationPushService()
   private emailService = new EmailService()
   private userService = new UserService()
   private whiteListedResultsTypes = [
@@ -1044,6 +1047,11 @@ export class PCRTestResultsService {
         },
       ],
     })
+
+    await this.reservationPushService.sendPushByUserId(
+      resultData.userId,
+      ReservationPushTypes.reSample,
+    )
   }
 
   async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
@@ -1107,6 +1115,11 @@ export class PCRTestResultsService {
         },
       ],
     })
+
+    await this.reservationPushService.sendPushByUserId(
+      resultData.userId,
+      ReservationPushTypes.reSample,
+    )
   }
 
   async updateTestResults(
