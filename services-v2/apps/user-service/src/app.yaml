@@ -1,0 +1,4 @@
+runtime: nodejs12
+service: user-service
+
+entrypoint: node ./main.js

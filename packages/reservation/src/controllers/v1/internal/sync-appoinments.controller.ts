@@ -186,7 +186,7 @@ class InternalSyncAppointmentController implements IControllerBase {
       const {barCodeNumber, organizationId} = dataForUpdate
       const barCode = acuityAppointment.barCode || barCodeNumber
       const updatedAppointment = await this.appoinmentService.updateAppointmentFromAcuity(
-        appointmentFromDb.id,
+        appointmentFromDb,
         acuityAppointment,
         {
           appointmentStatus,

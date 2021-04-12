@@ -8,6 +8,7 @@ import {Temperature, TemperatureDBModel} from '../models/temperature'
 import {TemperatureRepository} from '../respository/temperature.repository'
 import {Enterprise} from '../adapter/enterprise'
 import {UserService} from '../../../common/src/service/user/user-service'
+import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 
 export class TemperatureService {
   private dataStore = new DataStore()
@@ -36,6 +37,27 @@ export class TemperatureService {
       .getQueryFindWhereEqual('userId', userId)
       .where('organizationId', '==', organizationId)
       .fetch()
+  }
+
+  async getTemperaturesInRange(
+    userId: string,
+    organizationId: string,
+    from: string,
+    to: string,
+  ): Promise<TemperatureDBModel[]> {
+    return (
+      this.temperatureRepository
+        .collection()
+        //@ts-ignore
+        .where('timestamps.createdAt', '>=', safeTimestamp(from))
+        //@ts-ignore
+        .where('timestamps.createdAt', '<=', safeTimestamp(to))
+        .where('organizationId', '==', organizationId)
+        .where(`userId`, '==', userId)
+        //@ts-ignore
+        .orderBy('timestamps.createdAt', 'desc')
+        .fetch()
+    )
   }
 
   getAll(): Promise<TemperatureDBModel[]> {
