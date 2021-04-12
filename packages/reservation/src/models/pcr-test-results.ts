@@ -443,6 +443,7 @@ export type SinglePcrTestResultUi = {
   travelID: string
   travelIDIssuingCountry: string
   dateOfResult: string
+  resultMetaData: TestResultsMetaData
 }
 
 export const singlePcrTestResultDTO = (
@@ -506,6 +507,7 @@ export const singlePcrTestResultDTO = (
     dateOfResult: pcrTestResult.resultMetaData
       ? formatStringDateRFC822Local(safeTimestamp(pcrTestResult.resultMetaData.resultDate))
       : 'N/A',
+    resultMetaData: pcrTestResult.resultMetaData,
   }
 }
 
