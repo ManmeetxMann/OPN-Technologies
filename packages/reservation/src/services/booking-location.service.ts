@@ -10,12 +10,13 @@ export class BookingLocationService {
   private acuityRepository = new AcuityRepository()
   private packageRepository = new PackageRepository(new DataStore())
 
-  async getBookingLocations(
+  async getAppointmentTypesWithPackages(
     organizationId: string,
     enablePaymentForBooking: boolean,
-  ): Promise<BookingLocations[]> {
+  ): Promise<
+    IterableIterator<{certificate: string; count?: number; appointmentType: AppointmentTypes}>
+  > {
     const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
-    const calendars = await this.acuityRepository.getCalendarList()
     const appointmentTypesWithPackages = new Map<
       string,
       {certificate: string; count?: number; appointmentType: AppointmentTypes}
@@ -58,8 +59,21 @@ export class BookingLocationService {
       })
     }
 
+    return appointmentTypesWithPackages.values()
+  }
+
+  async getBookingLocations(
+    organizationId: string,
+    enablePaymentForBooking: boolean,
+  ): Promise<BookingLocations[]> {
+    const calendars = await this.acuityRepository.getCalendarList()
+    const appointmentTypesWithPackages = await this.getAppointmentTypesWithPackages(
+      organizationId,
+      enablePaymentForBooking,
+    )
+
     const bookingLocations = []
-    Array.from(appointmentTypesWithPackages.values()).map((appointmentTypesWithPackage) => {
+    Array.from(appointmentTypesWithPackages).map((appointmentTypesWithPackage) => {
       const {appointmentType, certificate} = appointmentTypesWithPackage
       appointmentType.calendarIDs.forEach((calendarId) => {
         const calendar = calendars.find(({id}) => id === calendarId)
