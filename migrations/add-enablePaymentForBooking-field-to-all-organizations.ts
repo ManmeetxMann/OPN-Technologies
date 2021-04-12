@@ -1,5 +1,5 @@
 /**
- * add description
+ * This script will add enablePaymentForBooking to every organizations if it doesnt exists
  */
 
 import {initializeApp, credential, firestore} from 'firebase-admin'
@@ -76,6 +76,7 @@ async function updateOrganization(
     }
     if (!isEmpty(updateData)) {
       await result.ref.set({
+        ...result.data(),
         ...updateData,
       })
     }
