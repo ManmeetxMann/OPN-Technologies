@@ -1,8 +1,9 @@
 import {firestore} from 'firebase-admin'
-import {isSameOrBefore} from '../utils/datetime.helper'
+import {isSameOrBefore, makeRegularIsoDate} from '../utils/datetime.helper'
 
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
+import {ReservationPushTypes} from '../types/appointment-push'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
@@ -77,6 +78,7 @@ export type AppointmentDBModel = {
   locationAddress?: string
   testType: TestTypes
   labId?: string
+  scheduledPushesToSend?: ReservationPushTypes[]
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -210,6 +212,7 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   barCode?: string
   appointmentStatus?: AppointmentStatus[]
   labId?: string
+  testType?: TestTypes
 }
 
 //Update to Acuity Service
@@ -397,7 +400,7 @@ export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): Use
   id: appointment.id,
   QRCode: appointment.barCode,
   showQrCode:
-    isSameOrBefore(appointment.dateOfAppointment) &&
+    isSameOrBefore(makeRegularIsoDate(appointment.dateOfAppointment)) &&
     appointment.appointmentStatus !== AppointmentStatus.Canceled,
   firstName: appointment.firstName,
   lastName: appointment.lastName,
@@ -456,7 +459,7 @@ export type RescheduleAppointmentDTO = {
   dateTime: string
   organizationId?: string
   userID: string
-  isLabUser: boolean
+  isOpnSuperAdmin: boolean
 }
 
 export type UpdateTransPortRun = {

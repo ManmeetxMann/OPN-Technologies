@@ -265,7 +265,7 @@ abstract class AcuityAdapter {
     phone: string,
     certificate: string,
     calendarID: number,
-    fields: Record<string, string | boolean>,
+    fields: Record<string, string | boolean | number[]>,
   ): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')

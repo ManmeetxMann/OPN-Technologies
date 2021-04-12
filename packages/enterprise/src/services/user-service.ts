@@ -12,8 +12,9 @@ import {UserGroupRepository} from '../repository/user-group.repository'
 import {AuthUser, UserModel} from '../../../common/src/data/user'
 import {isEmail, titleCase, cleanStringField} from '../../../common/src/utils/utils'
 import {CursoredUsersRequestFilter} from '../types/user-organization-request'
+import {UserServiceInterface} from '../interfaces/user-service-interface'
 
-export class UserService {
+export class UserService implements UserServiceInterface {
   private dataStore = new DataStore()
   private userRepository = new UserRepository(this.dataStore)
   private userOrganizationProfileRepository = new UserOrganizationProfileRepository(this.dataStore)
