@@ -932,6 +932,8 @@ components:
                   type: boolean
                 resultDate:
                   type: string
+                comment:
+                  type: string
                 action:
                   type: string
                   enum:

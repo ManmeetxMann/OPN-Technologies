@@ -229,6 +229,7 @@ export class PCRTestResultsService {
           resultDate: pcrResults.data.resultDate,
           action: pcrResults.data.action,
           autoResult: pcrResults.data.autoResult,
+          comment: pcrResults.data.comment,
         },
         resultAnalysis: pcrResults.data.resultAnalysis,
         barCode: pcrResults.data.barCode,
