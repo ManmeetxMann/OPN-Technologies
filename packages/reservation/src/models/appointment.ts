@@ -1,5 +1,5 @@
 import {firestore} from 'firebase-admin'
-import {isSameOrBefore} from '../utils/datetime.helper'
+import {isSameOrBefore, makeRegularIsoDate} from '../utils/datetime.helper'
 
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
@@ -398,7 +398,7 @@ export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): Use
   id: appointment.id,
   QRCode: appointment.barCode,
   showQrCode:
-    isSameOrBefore(appointment.dateOfAppointment) &&
+    isSameOrBefore(makeRegularIsoDate(appointment.dateOfAppointment)) &&
     appointment.appointmentStatus !== AppointmentStatus.Canceled,
   firstName: appointment.firstName,
   lastName: appointment.lastName,
