@@ -924,6 +924,38 @@ components:
               type: string
             dateOfResult:
               type: string
+            resultMetaData:
+              type: object
+              additionalProperties: false
+              properties:
+                notify:
+                  type: boolean
+                resultDate:
+                  type: string
+                action:
+                  type: string
+                  enum:
+                    - SendThisResult
+                    - DoNothing
+                    - ReRunToday
+                    - ReRunTomorrow
+                    - RecollectAsInvalid
+                    - RecollectAsInconclusive
+                    - MarkAsPositive
+                    - MarkAsNegative
+                    - MarkAsPresumptivePositive
+                    - SendPreliminaryPositive
+                autoResult:
+                  type: string
+                  enum:
+                    - PresumptivePositive
+                    - PreliminaryPositive
+                    - Positive
+                    - Negative
+                    - Pending
+                    - Invalid
+                    - Inconclusive
+                    - Indeterminate
           required:
             - email
             - phone
