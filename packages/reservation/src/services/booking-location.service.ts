@@ -10,7 +10,7 @@ export class BookingLocationService {
   private acuityRepository = new AcuityRepository()
   private packageRepository = new PackageRepository(new DataStore())
 
-  async getAppointmentTypesWithPackages(
+  private async getAppointmentTypesWithPackages(
     organizationId: string,
     enablePaymentForBooking: boolean,
   ): Promise<
