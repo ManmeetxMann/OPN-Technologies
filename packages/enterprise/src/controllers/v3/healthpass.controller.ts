@@ -15,7 +15,7 @@ import {
   organizationSummaryDTOResponse,
 } from '../../models/organization'
 import {userDTO} from '../../../../common/src/data/user'
-import {HealthPassType} from '../../types/health-pass'
+import {PassportType} from '../../../../passport/src/models/passport'
 
 class RecommendationController implements IControllerBase {
   public router = express.Router()
@@ -93,10 +93,10 @@ class RecommendationController implements IControllerBase {
       }
 
       if (pass.tests) {
-        const attestation = pass.tests.find(({type}) => type === HealthPassType.Attestation)
-        const temperature = pass.tests.find(({type}) => type === HealthPassType.Temperature)
-        const PCR = pass.tests.find(({type}) => type === HealthPassType.PCR)
-        const pulse = pass.tests.find(({type}) => type === HealthPassType.PulseOxygenCheck)
+        const attestation = pass.tests.find(({type}) => type === PassportType.Attestation)
+        const temperature = pass.tests.find(({type}) => type === PassportType.Temperature)
+        const PCR = pass.tests.find(({type}) => type === PassportType.PCR)
+        const pulse = pass.tests.find(({type}) => type === PassportType.PulseOxygenCheck)
 
         badges = {
           hasSelfTestBadge: Boolean(attestation?.status),
