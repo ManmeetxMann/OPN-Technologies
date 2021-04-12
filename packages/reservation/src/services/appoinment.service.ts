@@ -610,6 +610,10 @@ export class AppoinmentService {
       ),
       gender: acuityAppointment.gender || Gender.PreferNotToSay,
       postalCode: acuityAppointment.postalCode,
+      scheduledPushesToSend: [
+        ReservationPushTypes.before24hours,
+        ReservationPushTypes.before3hours,
+      ],
     }
   }
 
@@ -1071,10 +1075,6 @@ export class AppoinmentService {
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
         barCodeNumber,
-        scheduledPushesToSend: [
-          ReservationPushTypes.before24hours,
-          ReservationPushTypes.before3hours,
-        ],
       },
     })
     return this.createAppointmentFromAcuity(acuityAppointment, {
