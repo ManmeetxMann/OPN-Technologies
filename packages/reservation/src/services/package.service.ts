@@ -6,6 +6,7 @@ import {AcuityRepository} from '../respository/acuity.repository'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 import {ForbiddenException} from '../../../common/src/exceptions/forbidden-exception'
 import {AppointmentToTestTypeAssocService} from './appointment-to-test-type-association.service'
+import {TestTypes} from '../models/appointment'
 
 export class PackageService {
   private acuityRepository = new AcuityRepository()
@@ -73,13 +74,17 @@ export class PackageService {
     const countsByType: Record<string, number> = {}
 
     Object.entries(currentPackageAcuity.remainingCounts).forEach(([acuityType, count]) => {
-      const testType = acuityTypeToTestType.find(
+      const currentTestType = acuityTypeToTestType.find(
         (testType) => testType.appointmentType === Number(acuityType),
       )
-      if (countsByType[testType.testType]) {
-        countsByType[testType.testType] += count
+
+      const testType =
+        currentTestType && currentTestType.testType ? currentTestType.testType : TestTypes.PCR
+
+      if (countsByType[testType]) {
+        countsByType[testType] += count
       } else {
-        countsByType[testType.testType] = count
+        countsByType[testType] = count
       }
     })
     return Object.entries(countsByType).map(([testType, count]) => ({

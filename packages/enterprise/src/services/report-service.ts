@@ -129,11 +129,14 @@ export class ReportService {
       locationId: access?.locationId,
     }))
 
+    const dailyExposuresCount = await this.getDailyExposures([...allUserIds])
+
     return {
       accesses,
       asOfDateTime: live ? now().toISOString() : null,
       passportsCountByStatus: getPassportsCountPerStatus(accesses),
       hourlyCheckInsCounts: getHourlyCheckInsCounts(accesses),
+      dailyExposuresCount,
     }
   }
 
@@ -567,5 +570,20 @@ export class ReportService {
       }),
     )
     return results.filter((notNull) => notNull)
+  }
+
+  async getDailyExposures(userIds: string[]): Promise<number> {
+    const today = moment(now()).format('YYYY-MM-DD')
+
+    let exposures = 0
+    const exposureCount = userIds.map(async (id) => {
+      const userExposures = await this.attestationService.getExposuresInPeriod(id, today, today)
+
+      return (exposures += userExposures.length)
+    })
+
+    await Promise.all(exposureCount)
+
+    return exposures
   }
 }

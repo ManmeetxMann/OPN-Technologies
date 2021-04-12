@@ -1,6 +1,8 @@
 import admin from 'firebase-admin'
 import * as _ from 'lodash'
 
+import {PushMessages} from '../../types/push-notification'
+
 type Recipient = {
   token: string
   data?: Record<string, string | null | undefined>
@@ -51,4 +53,12 @@ export const sendMessage = (
       }
     }),
   )
+}
+
+export const sendBulkPushByToken = async (
+  pushMessages: PushMessages[],
+): Promise<admin.messaging.BatchResponse> => {
+  const messages: admin.messaging.Message[] = pushMessages
+  const messaging = admin.messaging()
+  return messaging.sendAll(messages)
 }

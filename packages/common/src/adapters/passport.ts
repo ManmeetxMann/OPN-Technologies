@@ -8,7 +8,8 @@ export default class PassportAdapter {
   async createPassport(
     userId: string,
     organizationId: string,
-    status: string,
+    status: string, // PassportStatus
+    type: string, // PassportType
     attestationId: string = null,
   ): Promise<void> {
     const url = `${APIURL}passport/internal/api/v1/passport`
@@ -17,6 +18,7 @@ export default class PassportAdapter {
       userId,
       status,
       attestationId,
+      type,
     })
     const res = await fetch(url, {
       method: 'post',

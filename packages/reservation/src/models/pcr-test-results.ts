@@ -1,4 +1,5 @@
 import {firestore} from 'firebase-admin'
+import moment from 'moment'
 
 import {formatDateRFC822Local, formatStringDateRFC822Local} from '../utils/datetime.helper'
 
@@ -14,6 +15,7 @@ import {groupByChannel} from '../utils/analysis.helper'
 import {PassportStatus, PassportStatuses} from '../../../passport/src/models/passport'
 import {TemperatureStatusesUI} from './temperature'
 import {PulseOxygenStatuses} from './pulse-oxygen'
+import {Lab} from './lab'
 
 const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
 
@@ -267,6 +269,7 @@ export type PcrTestResultsListByDeadlineRequest = {
     | AppointmentStatus.ReRunRequired
   organizationId?: string
   labId?: string
+  testType?: TestTypes
 }
 
 export type SinglePcrTestResultsRequest = {
@@ -275,6 +278,27 @@ export type SinglePcrTestResultsRequest = {
 
 export type SingleTestResultsRequest = {
   id: string
+}
+
+export type TestResultCommentParamRequest = {
+  testResultId: string
+}
+
+export type TestResultReplyCommentParamRequest = {
+  testResultId: string
+  commentId: string
+}
+
+export type TestResultCommentBodyRequest = {
+  comment: string
+  attachmentUrls: string[]
+  assignedTo?: string
+  internal: boolean
+}
+
+export type TestResultReplyCommentBodyRequest = {
+  reply: string
+  attachmentUrls: string[]
 }
 
 export type PcrTestResultsListRequest = {
@@ -432,7 +456,6 @@ export type SinglePcrTestResultUi = {
   labName: string
   testType: string
   equipment: string
-  manufacturer: string
   resultSpecs: Spec[]
   style: TestResultStyle
   testName: string
@@ -441,18 +464,13 @@ export type SinglePcrTestResultUi = {
   travelID: string
   travelIDIssuingCountry: string
   dateOfResult: string
-}
-
-enum LabData {
-  labName = 'FH Health',
-  testType = 'RT-PCR',
-  equipment = 'Allplex 2019-nCoV Assay',
-  manufacturer = 'Seegeene Inc.',
+  resultMetaData: TestResultsMetaData
 }
 
 export const singlePcrTestResultDTO = (
   pcrTestResult: PCRTestResultDBModel,
   appointment: AppointmentDBModel,
+  lab: Omit<Lab, 'id'>,
 ): SinglePcrTestResultUi => {
   let resultSpecs = null
   let resultAnalysis = null
@@ -472,13 +490,18 @@ export const singlePcrTestResultDTO = (
   } else if (pcrTestResult.resultAnalysis) {
     resultAnalysis = groupByChannel(pcrTestResult.resultAnalysis)
   }
+
+  const isBirthDateParsable = moment(appointment.dateOfBirth).isValid()
+
   return {
     email: appointment.email,
     firstName: appointment.firstName,
     lastName: appointment.lastName,
     phone: `${appointment.phone}`,
     ohipCard: appointment.ohipCard || 'N/A',
-    dateOfBirth: appointment.dateOfBirth,
+    dateOfBirth: isBirthDateParsable
+      ? moment(appointment.dateOfBirth).format('LL')
+      : appointment.dateOfBirth,
     address: appointment.address,
     addressUnit: appointment.addressUnit,
     barCode: pcrTestResult.barCode,
@@ -490,10 +513,9 @@ export const singlePcrTestResultDTO = (
     locationName: appointment.locationName || 'N/A',
     swabMethod: appointment.swabMethod || 'N/A',
     deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
-    labName: LabData.labName,
-    testType: LabData.testType,
-    equipment: LabData.equipment,
-    manufacturer: LabData.manufacturer,
+    labName: lab.name,
+    testType: pcrTestResult.testType,
+    equipment: lab.assay,
     resultSpecs: resultSpecs,
     resultAnalysis: resultAnalysis,
     style: resultToStyle(pcrTestResult.result),
@@ -506,7 +528,13 @@ export const singlePcrTestResultDTO = (
     dateOfResult: pcrTestResult.resultMetaData
       ? formatStringDateRFC822Local(safeTimestamp(pcrTestResult.resultMetaData.resultDate))
       : 'N/A',
+    resultMetaData: pcrTestResult.resultMetaData,
   }
+}
+
+export enum AnalyseTypes {
+  POSITIVE = 'POSITIVE',
+  NEGATIVE = 'NEGATIVE',
 }
 
 export type ActivityTracking = {

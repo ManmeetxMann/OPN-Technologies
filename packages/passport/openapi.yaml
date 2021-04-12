@@ -295,6 +295,8 @@ components:
           type: string
         status:
           type: string
+        type:
+          type: string
         attestationId:
           type: string
           nullable: true
@@ -322,107 +324,6 @@ paths:
         '200':
           description: Successfully set
 
-  /user/status/get:
-    post:
-      deprecated: true
-      description: Get user's passport for the organization by statusToken or create a pending one if any. Not including userId is deprecated and will be removed
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                statusToken:
-                  type: string
-                  nullable: true
-                userId:
-                  type: string
-                organizationId:
-                  type: string
-                dependantIds:
-                  type: array
-                  nullable: true
-                  items:
-                    type: string
-                includeGuardian:
-                  type: boolean
-              required:
-                - userId
-                - includeGuardian
-
-      responses:
-        '200':
-          description: Found or successfully created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfPassport'
-
-  /user/status/update:
-    post:
-      deprecated: true
-      description: Solve badge status based on user's questionnaire answers. Not including userId is deprecated and will be removed
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                locationId:
-                  type: string
-                answers:
-                  type: object
-                  additionalProperties: true
-                userId:
-                  type: string
-                questionnaireId:
-                  type: string
-                dependantIds:
-                  type: array
-                  items:
-                    type: string
-                includeGuardian:
-                  type: boolean
-              required:
-                - locationId
-                - answers
-                - userId
-                # - includeGuardian  # HOTFIX: remove it for now for < 1.4 apps
-              example: {locationId: "location-id", answers: { "1":{"1": false},"2":{"1": false},"3":{"1": false},"4":{"1": false, "2": "2020-06-10T05:05:32.217Z"}}, userId: "parentId", dependantIds: ["childOne", "childTwo"]}
-
-      responses:
-        '200':
-          description: Found or successfully created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponseOfPassport'
-
-  /user/testNotify:
-    post:
-      description: Send a notification to the user with the given userId. Used to check connectivity
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                userId:
-                  type: string
-                messageTitle:
-                  type: string
-                messageBody:
-                  type: string
-                link:
-                  type: string
-              required:
-                - userId
-                - messageTitle
-                - messageBody
-              additionalProperties: false
-
-      responses:
-        '200':
-          description: Message sent to at least one token.
-        '404':
-          description: No Registrations with pushToken !== null exist for that user.
 
   /passport/api/v1/attestation:
     post:

@@ -12,12 +12,12 @@ import {OrganizationModel} from '../repository/organization.repository'
 import {UserActionsRepository} from '../repository/action-items.repository'
 import {ActionItem} from '../models/action-items'
 
-import {PassportStatuses} from '../../../passport/src/models/passport'
+import {PassportStatuses, PassportType} from '../../../passport/src/models/passport'
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 import {ResultTypes} from '../../../reservation/src/models/appointment'
 
 import moment from 'moment'
-import {HealthPassType, HealthPass} from '../types/health-pass'
+import {HealthPass} from '../types/health-pass'
 import {PulseOxygenStatuses} from '../../../reservation/src/models/pulse-oxygen'
 
 export class HealthpassService {
@@ -96,7 +96,7 @@ export class HealthpassService {
     ) {
       tests.push({
         date: safeTimestamp(items.latestAttestation.timestamp).toISOString(),
-        type: HealthPassType.Attestation,
+        type: PassportType.Attestation,
         id: items.latestAttestation.attestationId,
         status: items.latestAttestation.status,
         style: 'GREEN',
@@ -108,7 +108,7 @@ export class HealthpassService {
     ) {
       tests.push({
         date: safeTimestamp(items.latestTemperature.timestamp).toISOString(),
-        type: HealthPassType.Temperature,
+        type: PassportType.Temperature,
         id: items.latestTemperature.temperatureId,
         status: items.latestTemperature.status,
         style: 'GREEN',
@@ -120,7 +120,7 @@ export class HealthpassService {
     ) {
       tests.push({
         date: safeTimestamp(items.PCRTestResult.timestamp).toISOString(),
-        type: HealthPassType.PCR,
+        type: PassportType.PCR,
         id: items.PCRTestResult.testId,
         status: items.PCRTestResult.result,
         style: 'GREEN',
@@ -132,7 +132,7 @@ export class HealthpassService {
     ) {
       tests.push({
         date: safeTimestamp(items.latestPulse.timestamp).toISOString(),
-        type: HealthPassType.PulseOxygenCheck,
+        type: PassportType.PulseOxygenCheck,
         id: items.latestPulse.pulseId,
         status: items.latestPulse.status,
         style: 'GREEN',
@@ -143,7 +143,7 @@ export class HealthpassService {
 
   async getDobFromLastPCR(pass: HealthPass): Promise<string | null> {
     const testsPCR = pass.tests
-      .filter((test) => test.type === HealthPassType.PCR)
+      .filter((test) => test.type === PassportType.PCR)
       .sort((current, next) => {
         const currentDate = new Date(current.date).getDate()
         const nextDate = new Date(next.date).getDate()
