@@ -280,6 +280,27 @@ export type SingleTestResultsRequest = {
   id: string
 }
 
+export type TestResultCommentParamRequest = {
+  testResultId: string
+}
+
+export type TestResultReplyCommentParamRequest = {
+  testResultId: string
+  commentId: string
+}
+
+export type TestResultCommentBodyRequest = {
+  comment: string
+  attachmentUrls: string[]
+  assignedTo?: string
+  internal: boolean
+}
+
+export type TestResultReplyCommentBodyRequest = {
+  reply: string
+  attachmentUrls: string[]
+}
+
 export type PcrTestResultsListRequest = {
   organizationId?: string
   barCode?: string

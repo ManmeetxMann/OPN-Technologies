@@ -2913,6 +2913,164 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestResultDetailResponse'
+  /reservation/admin/api/v1/test-results/{testResultId}/comment/{commentId}/reply:
+    post:
+      description: Add reply to comment
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: commentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                reply:
+                  type: string
+                attachmentUrls:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - reply
+                - attachmentUrls
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResultDetailResponse'
+  /reservation/admin/api/v1/test-results/{testResultId}/comment:
+    get:
+      description: Get comments of test results
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        comment:
+                          type: string
+                        attachmentUrls:
+                          type: array
+                          items:
+                            type: string
+                        addedBy:
+                          type: string
+                        authorPictureUrl:
+                          type: string
+                        addedOn:
+                          type: string
+                        replies:
+                          type: array
+                          items:
+                            type: object
+                            additionalProperties: false
+                            properties:
+                              reply:
+                                type: string
+                              attachmentUrls:
+                                type: array
+                                items:
+                                  type: string
+                              addedBy:
+                                type: string
+                              authorPictureUrl:
+                                type: string
+                              addedOn:
+                                type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
+    post:
+      description: Add comment to test results
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                comment:
+                  type: string
+                attachmentUrls:
+                  type: array
+                  items:
+                    type: string
+                assignedTo:
+                  type: string
+                internal:
+                  type: boolean
+              required:
+                - comment
+                - attachmentUrls
+                - internal
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResultDetailResponse'
 
   /reservation/api/v1/test-results/{id}/download:
     get:

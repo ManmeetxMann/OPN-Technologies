@@ -12,7 +12,12 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {getUserId, getIsLabUser, getIsClinicUser} from '../../../../../common/src/utils/auth'
+import {
+  getUserId,
+  getIsLabUser,
+  getIsClinicUser,
+  getUserName,
+} from '../../../../../common/src/utils/auth'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
@@ -27,10 +32,17 @@ import {
   PCRTestResultConfirmRequest,
   singlePcrTestResultDTO,
   SingleTestResultsRequest,
+  TestResultCommentParamRequest,
+  TestResultCommentBodyRequest,
+  TestResultReplyCommentBodyRequest,
+  TestResultReplyCommentParamRequest,
 } from '../../../models/pcr-test-results'
 import {FilterGroupKey, FilterName, statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
+import {CommentService} from '../../../services/comment.service'
 import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
+import {commentsDTO} from '../../../models/comment'
+import {UserService} from '../../../../../enterprise/src/services/user-service'
 import {validateAnalysis, normalizeAnalysis} from '../../../utils/analysis.helper'
 import {LabService} from '../../../services/lab.service'
 
@@ -39,6 +51,7 @@ class AdminPCRTestResultController implements IControllerBase {
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
+  private commentService = new CommentService(new UserService())
   private appoinmentService = new AppoinmentService()
   public labService = new LabService()
 
@@ -106,6 +119,24 @@ class AdminPCRTestResultController implements IControllerBase {
       this.path + '/pcr-test-results/due-deadline/list/stats',
       dueTodayAuth,
       this.dueDeadlineStats,
+    )
+
+    innerRouter.post(
+      this.path + '/test-results/:testResultId/comment',
+      listTestResultsAuth,
+      this.addComment,
+    )
+
+    innerRouter.get(
+      this.path + '/test-results/:testResultId/comment',
+      listTestResultsAuth,
+      this.getComments,
+    )
+
+    innerRouter.post(
+      this.path + '/test-results/:testResultId/comment/:commentId/reply',
+      listTestResultsAuth,
+      this.replyComment,
     )
 
     this.router.use('/', innerRouter)
@@ -490,6 +521,96 @@ class AdminPCRTestResultController implements IControllerBase {
       const lab = await this.labService.findOneById(pcrTestResult.labId)
 
       res.json(actionSucceed(singlePcrTestResultDTO(pcrTestResult, appointment, lab)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getComments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {testResultId} = req.params as TestResultCommentParamRequest
+
+      const commentsWithReplies = await this.commentService.getCommentsDetailed(testResultId)
+
+      res.json(actionSucceed(commentsWithReplies.map(commentsDTO)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  addComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {testResultId} = req.params as TestResultCommentParamRequest
+      const adminId = getUserId(res.locals.authenticatedUser)
+      const fullName = getUserName(res.locals.authenticatedUser)
+
+      const {
+        comment,
+        attachmentUrls,
+        assignedTo,
+        internal = true,
+      } = req.body as TestResultCommentBodyRequest
+
+      const comments = await this.commentService.getCommentsByTestResultId(testResultId)
+
+      if (comments.length >= 20) {
+        throw new BadRequestException(`Comments quantity should be maximum 20`)
+      }
+
+      const newComment = await this.commentService.addComment({
+        testResultId,
+        comment,
+        attachmentUrls: attachmentUrls,
+        assignedTo: assignedTo,
+        internal,
+        addedBy: adminId,
+      })
+
+      res.json(
+        actionSucceed({
+          id: newComment.id,
+          addedBy: fullName,
+          assignedTo,
+          comment,
+          addedOn: newComment.time,
+        }),
+      )
+    } catch (error) {
+      next(error)
+    }
+  }
+  replyComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {testResultId, commentId} = req.params as TestResultReplyCommentParamRequest
+      const adminId = getUserId(res.locals.authenticatedUser)
+      const fullName = getUserName(res.locals.authenticatedUser)
+
+      const {reply, attachmentUrls} = req.body as TestResultReplyCommentBodyRequest
+
+      const comments = await this.commentService.getRepliesByCommentId(commentId)
+
+      if (comments.length >= 50) {
+        throw new BadRequestException(`Comments quantity should be maximum 50`)
+      }
+
+      const newComment = await this.commentService.addComment({
+        testResultId,
+        comment: reply,
+        attachmentUrls: attachmentUrls,
+        internal: false,
+        addedBy: adminId,
+        replyTo: commentId,
+      })
+
+      res.json(
+        actionSucceed({
+          id: newComment.id,
+          reply: newComment.comment,
+          attachmentUrls,
+          addedBy: fullName,
+          addedOn: newComment.time,
+        }),
+      )
     } catch (error) {
       next(error)
     }
