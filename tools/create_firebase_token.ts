@@ -11,35 +11,37 @@ initializeApp({
   credential: credential.cert(serviceAccount),
 })
 
-
-const firstName = "developers"
-const lastName = "fhblab1"
+const firstName = 'developers'
+const lastName = 'fhblab1'
 const email = `${firstName}+${lastName}@fhhealth.ca`
 const password = '1plastic2!'
 
 async function main() {
   const displayName = `${firstName} ${lastName}`
-  let authUID;
+  let authUID
   try {
-      const authUser = await admin.auth().getUserByEmail(email)
-      authUID = authUser.uid
+    const authUser = await admin.auth().getUserByEmail(email)
+    authUID = authUser.uid
   } catch {
-      const authUser = await admin.auth().createUser({email: email, displayName: displayName, password:password})
-      authUID = authUser.uid
-      console.log("Created New User")
+    const authUser = await admin
+      .auth()
+      .createUser({email: email, displayName: displayName, password: password})
+    authUID = authUser.uid
+    console.log('Created New User')
   }
   const cusToken = await admin.auth().createCustomToken(authUID)
   const body = JSON.stringify({
-    'token': cusToken,'returnSecureToken': true
+    token: cusToken,
+    returnSecureToken: true,
   })
-  
+
   const baseUrl = 'https://identitytoolkit.googleapis.com'
   const response = await fetch(`${baseUrl}/v1/accounts:signInWithCustomToken?key=${apiKey}`, {
     method: 'post',
-    headers: {'Content-Type': 'application/json', accept: 'application/json',},
+    headers: {'Content-Type': 'application/json', accept: 'application/json'},
     body,
   })
-  return response  
+  return response
 }
 
 main().then(async (response) => {
