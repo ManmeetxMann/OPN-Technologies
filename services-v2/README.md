@@ -77,7 +77,7 @@ The shared library is importable from `@opn/common`
 Clouds SQL is accessible on local environment for application and DB management tools via cloud SQL proxy when authenticated with CGP CLI.
 1. Install cloud SQL proxy for you OS: [Quick start](https://cloud.google.com/sql/docs/mysql/quickstart-proxy-test)
 1. Launch cloud SQL proxy.
-    ```
+    ```sh
     cloud_sql_proxy -instances=opn-platform-local:northamerica-northeast1:opn-platform-db-server-local:sql-inst=tcp:3306
     ```
 1. MySQL DB should be accessible for local connection from application or DB management tool using host: 127.0.0.1:3306. Login, password and DB name will be in .env file.
@@ -89,7 +89,7 @@ Create local mysql datasource .
 - Run image
 `docker run --name opn-mysql -e MYSQL_ROOT_PASSWORD=password -p 127.0.0.1:3310:3306 -d mysql:latest`
 - Set authentication protocol
-```
+```SQL
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
 flush privileges;
 ```
@@ -107,6 +107,7 @@ npm run start:prod [SERVICE_NAME]
 
 npm run start:dev user-service
 ```
+Open http://localhost:8080/api/doc/, enter login:password from .env SWAGGER_BASIC_AUTH_CREDENTIALS
 
 #### SERVICE_NAME:
 1. user-service

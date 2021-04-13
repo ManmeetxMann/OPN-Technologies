@@ -11,7 +11,7 @@ const MIN_LOGIN_PASS_SIZE = 5
  * TODO:
  * 1. Add ability to disable on prod and/or stage
  */
-export const createSwagger = (app: INestApplication) => {
+export const createSwagger = (app: INestApplication): void => {
   const configService = new ConfigService()
   const authCredentials = configService.get('SWAGGER_BASIC_AUTH_CREDENTIALS')
 
