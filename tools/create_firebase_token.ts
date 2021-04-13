@@ -19,27 +19,47 @@ const password = '1plastic2!'
 
 async function main() {
   const displayName = `${firstName} ${lastName}`
-  let authUID;
+  let authUID
   try {
-      const authUser = await admin.auth().getUserByEmail(email)
-      authUID = authUser.uid
+    const authUser = await admin.auth().getUserByEmail(email)
+    authUID = authUser.uid
   } catch {
-      const authUser = await admin.auth().createUser({email: email, displayName: displayName, password:password})
-      authUID = authUser.uid
-      console.log("Created New User")
+    const authUser = await admin
+      .auth()
+      .createUser({email: email, displayName: displayName, password: password})
+    authUID = authUser.uid
+    console.log('Created Firebase New User')
+
+    const db = admin.firestore()
+    await db.collection('users').add({
+      authUserId: authUID,
+      base64Photo: '',
+      firstName,
+      lastName,
+      email,
+      organizationIds: ['TEST1'],
+      admin: {
+        isOpnSuperAdmin: true,
+      },
+    })
+
+    console.log(
+      'Created dummy firestore user, replace it with a proper one or use existed email to generate a token',
+    )
   }
   const cusToken = await admin.auth().createCustomToken(authUID)
   const body = JSON.stringify({
-    'token': cusToken,'returnSecureToken': true
+    token: cusToken,
+    returnSecureToken: true,
   })
-  
+
   const baseUrl = 'https://identitytoolkit.googleapis.com'
   const response = await fetch(`${baseUrl}/v1/accounts:signInWithCustomToken?key=${apiKey}`, {
     method: 'post',
-    headers: {'Content-Type': 'application/json', accept: 'application/json',},
+    headers: {'Content-Type': 'application/json', accept: 'application/json'},
     body,
   })
-  return response  
+  return response
 }
 
 main().then(async (response) => {
