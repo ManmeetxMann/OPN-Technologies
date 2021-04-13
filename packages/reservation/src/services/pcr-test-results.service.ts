@@ -1,5 +1,5 @@
 import moment from 'moment'
-import {sortBy, union, fromPairs} from 'lodash'
+import {fromPairs, sortBy, union} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -12,9 +12,9 @@ import {toDateFormat} from '../../../common/src/utils/times'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {
+  dateToDateTime,
   formatDateRFC822Local,
   formatStringDateRFC822Local,
-  dateToDateTime,
   makeDeadlineForFilter,
 } from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
@@ -38,11 +38,13 @@ import {
   AppointmentReasons,
   CreateReportForPCRResultsResponse,
   EmailNotficationTypes,
+  getSortOrderByResult,
   PCRResultActions,
   PCRResultActionsAllowedResend,
   PCRResultActionsForConfirmation,
   PCRResultPDFType,
   PcrResultTestActivityAction,
+  PCRSendResultDTO,
   PCRTestResultByDeadlineListDTO,
   PCRTestResultConfirmRequest,
   PCRTestResultDBModel,
@@ -57,8 +59,6 @@ import {
   ResultReportStatus,
   resultToStyle,
   TestResutsDTO,
-  getSortOrderByResult,
-  PCRSendResultDTO,
 } from '../models/pcr-test-results'
 
 import {
@@ -66,9 +66,9 @@ import {
   AppointmentStatus,
   DeadlineLabel,
   Filter,
+  filteredAppointmentStatus,
   ResultTypes,
   TestTypes,
-  filteredAppointmentStatus,
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
@@ -986,6 +986,11 @@ export class PCRTestResultsService {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
+        } else if (
+          resultData.result === ResultTypes.Indeterminate &&
+          resultData.testType === TestTypes.Antibody_All
+        ) {
+          await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Intermediate)
         } else {
           addSuccessLog = false
           LogWarning('sendNotification', 'FailedEmailSent BlockedBySystem', {
