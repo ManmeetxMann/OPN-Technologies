@@ -375,7 +375,6 @@ export const appointmentUiDTOResponse = (
     dateOfBirth: appointment.dateOfBirth,
     transportRunId: appointment.transportRunId,
     deadline: formatDateRFC822Local(appointment.deadline),
-    latestResult: appointment.latestResult,
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
     organizationName: appointment.organizationName,
