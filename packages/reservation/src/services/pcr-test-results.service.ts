@@ -637,6 +637,7 @@ export class PCRTestResultsService {
           resultDate,
           templateId,
           labId,
+          comment: result.comment || '',
           fileName: fileName || null,
         },
         status: ResultReportStatus.RequestReceived,
