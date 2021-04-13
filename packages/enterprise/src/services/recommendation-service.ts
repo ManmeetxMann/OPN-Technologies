@@ -130,6 +130,12 @@ export class RecommendationService {
           isToday ? Recommendations.CheckInPCR : Recommendations.BookingDetailsPCR,
         ]
       }
+      // pending
+      if (appointment?.status === AppointmentStatus.CheckedIn) {
+        const alreadyHappened = moment(now()).isSameOrAfter(safeTimestamp(appointment.date))
+        if (!alreadyHappened)
+          return [Recommendations.CompleteAssessment, Recommendations.CheckInPCR]
+      }
       if (
         !latestTest ||
         !appointment ||
