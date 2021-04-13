@@ -27,6 +27,7 @@ import {AuthGuard} from './guard/auth.guard'
         abortEarly: true,
       },
     }),
+    FirebaseAuthService
   ],
 })
 export class CommonModule {}
