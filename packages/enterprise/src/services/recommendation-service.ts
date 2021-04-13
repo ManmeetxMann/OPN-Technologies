@@ -130,7 +130,7 @@ export class RecommendationService {
           isToday ? Recommendations.CheckInPCR : Recommendations.BookingDetailsPCR,
         ]
       }
-      // pending
+      // checked in, but may still be in the future
       if (appointment?.status === AppointmentStatus.CheckedIn) {
         const alreadyHappened = moment(now()).isSameOrAfter(safeTimestamp(appointment.date))
         if (!alreadyHappened)
