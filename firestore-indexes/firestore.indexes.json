@@ -169,6 +169,20 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "scheduledPushesToSend",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "dateTime",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "appointments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "userId",
           "order": "ASCENDING"
         },
@@ -849,11 +863,11 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "userId",
+          "fieldPath": "organizationId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "organizationId",
+          "fieldPath": "userId",
           "order": "ASCENDING"
         },
         {

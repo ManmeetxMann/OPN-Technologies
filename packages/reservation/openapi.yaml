@@ -932,6 +932,8 @@ components:
                   type: boolean
                 resultDate:
                   type: string
+                comment:
+                  type: string
                 action:
                   type: string
                   enum:
@@ -4002,3 +4004,11 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/AssociationsResponse'
+  /reservation/internal/api/v1/trigger-appointments-push-reminder:
+    post:
+      description: Triggers push notification reminder before appointment   
+      tags:
+        - Cloud Scheduler triggered
+      responses:
+        '200':
+          description: Success
