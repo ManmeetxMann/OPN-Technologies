@@ -4,6 +4,7 @@ import {
   UserOrganizationRepository,
   UserRepository,
 } from '../repository/user.repository'
+import * as PatientRepositories from '../repository/patient.repository'
 import {OrganizationRepository} from '../repository/organization.repository'
 import {LocationRepository} from '../repository/location.repository'
 import {GroupRepository} from '../repository/group.repository'
@@ -11,7 +12,7 @@ import {DefaultDatabaseConfiguration} from '@opn/common/configuration/database.c
 
 export const DatabaseConfiguration = DefaultDatabaseConfiguration('user')
 
-export const RepositoryConfiguration = TypeOrmModule.forFeature([
+const repositories = [
   UserRepository,
   UserOrganizationRepository,
   UserGroupRepository,
@@ -19,4 +20,7 @@ export const RepositoryConfiguration = TypeOrmModule.forFeature([
   OrganizationRepository,
   LocationRepository,
   GroupRepository,
-])
+  ...Object.keys(PatientRepositories).map(key => PatientRepositories[key]),
+]
+
+export const RepositoryConfiguration = TypeOrmModule.forFeature(repositories)

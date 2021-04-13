@@ -10,7 +10,7 @@ import {FirebaseAuthService} from '@opn/common/services/auth/firebase-auth.servi
 
 export class AuthGuard implements CanActivate {
   constructor(
-    @Inject('FirebaseAuthService') private readonly firebaseAuthService: FirebaseAuthService
+    @Inject('FirebaseAuthService') private readonly firebaseAuthService: FirebaseAuthService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
