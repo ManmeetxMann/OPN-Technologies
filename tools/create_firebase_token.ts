@@ -11,9 +11,8 @@ initializeApp({
   credential: credential.cert(serviceAccount),
 })
 
-
-const firstName = "developers"
-const lastName = "fhblab1"
+const firstName = 'developers'
+const lastName = 'fhblab1'
 const email = `${firstName}+${lastName}@fhhealth.ca`
 const password = '1plastic2!'
 
@@ -44,7 +43,7 @@ async function main() {
     })
 
     console.log(
-      'Created dummy firestore user, replace it with a proper one or use existed email to generate a token',
+      `Created dummy firestore user with authUserId:${authUID}, replace it with a proper one or use existed email to generate a token`,
     )
   }
   const cusToken = await admin.auth().createCustomToken(authUID)
