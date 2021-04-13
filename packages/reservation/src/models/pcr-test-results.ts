@@ -121,6 +121,7 @@ export enum TestResultStyle {
   caution = 'YELLOW',
   stop = 'RED',
   proceed = 'GREEN',
+  Pending = 'BLACK',
 }
 
 type PCRResultSpecs = {
