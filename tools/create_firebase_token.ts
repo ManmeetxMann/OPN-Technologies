@@ -13,7 +13,7 @@ initializeApp({
 
 const firstName = 'developers'
 const lastName = 'fhblab1'
-const email = `${firstName}+${lastName}@fhhealth.ca`
+const email = `developers@stayopn.com`
 const password = '1plastic2!'
 
 async function main() {
