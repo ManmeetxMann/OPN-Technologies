@@ -29,7 +29,7 @@ export class PageableRequestFilter {
   @ApiModelPropertyOptional()
   query?: string = null
 
-  static of(page?: number, perPage?: number, query?: string) {
+  static of(page?: number, perPage?: number, query?: string): PageableRequestFilter {
     const filter = new PageableRequestFilter()
 
     if (page) filter.page = page

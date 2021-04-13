@@ -1,6 +1,5 @@
-import {Controller} from '@nestjs/common'
-import {ApiBearerAuth} from '@nestjs/swagger';
-
+import {Controller, UseGuards} from '@nestjs/common'
+import {AuthGuard} from '@opn/common/guard/auth.guard'
 @Controller('/api/v1/users')
-@ApiBearerAuth('JWT')
+@UseGuards(AuthGuard)
 export class PublicV1UserController {}
