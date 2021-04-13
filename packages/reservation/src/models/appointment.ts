@@ -78,7 +78,7 @@ export type AppointmentDBModel = {
   locationAddress?: string
   testType: TestTypes
   labId?: string
-  scheduledPushesToSend?: ReservationPushTypes[]
+  scheduledPushesToSend?: Array<ReservationPushTypes>
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
