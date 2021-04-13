@@ -121,6 +121,7 @@ export enum TestResultStyle {
   caution = 'YELLOW',
   stop = 'RED',
   proceed = 'GREEN',
+  Pending = 'BLACK',
 }
 
 type PCRResultSpecs = {
@@ -513,9 +514,9 @@ export const singlePcrTestResultDTO = (
     locationName: appointment.locationName || 'N/A',
     swabMethod: appointment.swabMethod || 'N/A',
     deadline: formatStringDateRFC822Local(appointment.deadline.toDate()),
-    labName: lab.name,
+    labName: lab?.name,
     testType: pcrTestResult.testType,
-    equipment: lab.assay,
+    equipment: lab?.assay,
     resultSpecs: resultSpecs,
     resultAnalysis: resultAnalysis,
     style: resultToStyle(pcrTestResult.result),
