@@ -328,7 +328,7 @@ export class PCRTestResultsService {
         map: '/',
         key: 'organizationId',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: organizationId,
+        value: organizationId === 'null' ? null : organizationId,
       })
     }
 
@@ -1294,7 +1294,7 @@ export class PCRTestResultsService {
     )
     const pcrResultStatsByOrgIdArr = Object.entries(pcrResultStatsByOrgId).map(
       ([orgId, count]) => ({
-        id: orgId === 'undefined' ? null : orgId,
+        id: orgId === 'undefined' ? 'null' : orgId,
         name: orgId === 'undefined' ? 'None' : organizations[orgId],
         count,
       }),
