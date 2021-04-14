@@ -1,5 +1,6 @@
 import {Column, Entity, Generated, ManyToOne, PrimaryColumn, JoinColumn, Unique} from 'typeorm'
-import {Auditable} from '@opn/common/model'
+// Relative part since imported into v1
+import {Auditable} from '../../../../../libs/common/src/model/auditable'
 import {ApiProperty} from '@nestjs/swagger'
 
 @Entity('patient')

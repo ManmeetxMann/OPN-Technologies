@@ -22,6 +22,11 @@ import {IdentifiersModel} from '../../common/src/data/identifiers'
 import DataStore from '../../common/src/data/datastore'
 import InternalV1Controller from './controllers/v1/internal/internal.controller'
 
+// Init SQL connection and data model
+import {createConnection} from 'typeorm'
+import * as patientEntities from '../../../services-v2/apps/user-service/src/model/patient/patient.entity'
+import {Config} from '../../common/src/utils/config'
+
 const PORT = Number(process.env.PORT) || 5003
 
 const app = new App({
@@ -50,6 +55,29 @@ const app = new App({
   initializers: [new IdentifiersModel(new DataStore())],
 })
 
-app.listen()
+/**
+ * TODO:
+ * 1. When deployed to GCP connect via socket
+ * 2. Move it to wrapper similar to express
+ */
+createConnection({
+  type: 'mysql',
+  host: Config.get('USER_DB_LOCAL_HOST'),
+  port: Number(Config.get('USER_DB_LOCAL_PORT')),
+  username: Config.get('USER_DB_USERNAME'),
+  password: Config.get('USER_DB_PASSWORD'),
+  database: Config.get('USER_DB_NAME'),
+  entities: [patientEntities.Patient],
+  synchronize: false,
+  logging: false,
+})
+  .then(() => {
+    console.log('DB connection established')
+    app.listen()
+  })
+  .catch((error) => {
+    console.error('No connection to SQL database')
+    console.error(error)
+  })
 
 export const init = (): void => app.initialize()
