@@ -1309,6 +1309,10 @@ paths:
           schema:
             type: string
         - in: query
+          name: labId
+          schema:
+            type: string
+        - in: query
           name: barCode
           schema:
             type: string

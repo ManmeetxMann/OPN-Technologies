@@ -249,7 +249,7 @@ export class AppoinmentService {
         map: '/',
         key: 'labId',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: queryParams.labId,
+        value: queryParams.labId === 'null' ? null : queryParams.labId,
       })
     }
     if (queryParams.organizationId) {
@@ -1404,13 +1404,13 @@ export class AppoinmentService {
         count,
       }),
     )
-    const appointmentStatsByLabIdArr = Object.entries(appointmentStatsByLabId).map(
-      ([labId, count]) => ({
-        id: labId === 'undefined' ? null : labId,
+    const appointmentStatsByLabIdArr = Object.entries(appointmentStatsByLabId)
+      .filter(([labId]) => labId !== 'undefined') // @TODO REMOVE THIS FILTER AFTER MIGRATING APPOINTMENTS
+      .map(([labId, count]) => ({
+        id: labId === 'undefined' ? 'null' : labId,
         name: labId === 'undefined' ? 'None' : labs[labId],
         count,
-      }),
-    )
+      }))
     return {
       appointmentStatusArray: appointmentStatsByTypesArr,
       orgIdArray: appointmentStatsByOrgIdArr,
