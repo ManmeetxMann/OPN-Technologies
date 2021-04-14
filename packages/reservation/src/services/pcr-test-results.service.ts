@@ -1,5 +1,5 @@
 import moment from 'moment'
-import {sortBy, union, fromPairs} from 'lodash'
+import {fromPairs, sortBy, union} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -12,9 +12,9 @@ import {toDateFormat} from '../../../common/src/utils/times'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {
+  dateToDateTime,
   formatDateRFC822Local,
   formatStringDateRFC822Local,
-  dateToDateTime,
   makeDeadlineForFilter,
 } from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
@@ -38,11 +38,13 @@ import {
   AppointmentReasons,
   CreateReportForPCRResultsResponse,
   EmailNotficationTypes,
+  getSortOrderByResult,
   PCRResultActions,
   PCRResultActionsAllowedResend,
   PCRResultActionsForConfirmation,
   PCRResultPDFType,
   PcrResultTestActivityAction,
+  PCRSendResultDTO,
   PCRTestResultByDeadlineListDTO,
   PCRTestResultConfirmRequest,
   PCRTestResultDBModel,
@@ -57,8 +59,6 @@ import {
   ResultReportStatus,
   resultToStyle,
   TestResutsDTO,
-  getSortOrderByResult,
-  PCRSendResultDTO,
 } from '../models/pcr-test-results'
 
 import {
@@ -66,9 +66,9 @@ import {
   AppointmentStatus,
   DeadlineLabel,
   Filter,
+  filteredAppointmentStatus,
   ResultTypes,
   TestTypes,
-  filteredAppointmentStatus,
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
@@ -381,12 +381,21 @@ export class PCRTestResultsService {
 
     //Apply for Corporate
     if (testType) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'testType',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: testType,
-      })
+      if (testType === TestTypes.allExceptAntigen) {
+        pcrTestResultsQuery.push({
+          map: '/',
+          key: 'testType',
+          operator: DataModelFieldMapOperatorType.NotEquals,
+          value: TestTypes.RapidAntigen,
+        })
+      } else {
+        pcrTestResultsQuery.push({
+          map: '/',
+          key: 'testType',
+          operator: DataModelFieldMapOperatorType.Equals,
+          value: testType,
+        })
+      }
     }
 
     if (searchQuery) {
@@ -435,10 +444,18 @@ export class PCRTestResultsService {
       ] as PCRTestResultDBModel[]
       pcrResults.sort((a, b) => b.sortOrder - a.sortOrder)
     } else {
-      pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
-        pcrTestResultsQuery,
-        result ? null : {key: 'sortOrder', direction: 'desc'},
-      )
+      if (testType === TestTypes.allExceptAntigen) {
+        pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+          pcrTestResultsQuery,
+          null,
+        )
+        pcrResults.sort((a, b) => b.sortOrder - a.sortOrder)
+      } else {
+        pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+          pcrTestResultsQuery,
+          result ? null : {key: 'sortOrder', direction: 'desc'},
+        )
+      }
     }
 
     const getResultValue = (result: ResultTypes, notify: boolean): ResultTypes => {
