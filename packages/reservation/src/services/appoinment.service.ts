@@ -936,6 +936,16 @@ export class AppoinmentService {
         reason: 'Bad Request',
       })
     }
+    if (!appointment.packageCode) {
+      LogInfo('AppoinmentService:copyAppointment', 'InvalidPackageCode', {
+        appointmentID: appointmentId,
+      })
+      return Promise.resolve({
+        id: appointmentId,
+        status: BulkOperationStatus.Failed,
+        reason: 'Bad Request',
+      })
+    }
     if (organizationId && organizationId !== appointment.organizationId) {
       LogError(
         'AdminAppointmentController:getUserAppointmentHistoryByAppointmentId',
@@ -963,29 +973,43 @@ export class AppoinmentService {
       1,
       1,
     )
-
-    const acuityAppointment = await this.acuityRepository.createAppointment({
-      dateTime,
-      appointmentTypeID: appointment.appointmentTypeID,
-      firstName: appointment.firstName,
-      lastName: appointment.lastName,
-      email: appointment.email,
-      phone: appointment.phone + '',
-      packageCode: packageCode[0].packageCode,
-      calendarID: appointment.calendarID,
-      fields: {
-        dateOfBirth: appointment.dateOfBirth,
-        address: appointment.address,
-        addressUnit: appointment.addressUnit,
-        shareTestResultWithEmployer: appointment.shareTestResultWithEmployer,
-        readTermsAndConditions: appointment.readTermsAndConditions,
-        agreeToConductFHHealthAssessment: appointment.agreeToConductFHHealthAssessment,
-        receiveResultsViaEmail: appointment.receiveResultsViaEmail,
-        receiveNotificationsFromGov: appointment.receiveNotificationsFromGov,
-        barCodeNumber,
-      },
-    })
-    if (!acuityAppointment.id) {
+    let acuityAppointment = null
+    try {
+      acuityAppointment = await this.acuityRepository.createAppointment({
+        dateTime,
+        appointmentTypeID: appointment.appointmentTypeID,
+        firstName: appointment.firstName,
+        lastName: appointment.lastName,
+        email: appointment.email,
+        phone: appointment.phone + '',
+        packageCode: packageCode[0].packageCode,
+        calendarID: appointment.calendarID,
+        fields: {
+          dateOfBirth: appointment.dateOfBirth,
+          address: appointment.address,
+          addressUnit: appointment.addressUnit,
+          shareTestResultWithEmployer: appointment.shareTestResultWithEmployer,
+          readTermsAndConditions: appointment.readTermsAndConditions,
+          agreeToConductFHHealthAssessment: appointment.agreeToConductFHHealthAssessment,
+          receiveResultsViaEmail: appointment.receiveResultsViaEmail,
+          receiveNotificationsFromGov: appointment.receiveNotificationsFromGov,
+          barCodeNumber,
+        },
+      })
+      if (!acuityAppointment.id) {
+        return {
+          id: appointment.id,
+          barCode: appointment.barCode,
+          status: BulkOperationStatus.Failed,
+          reason: 'Failed to Book Appointment',
+        }
+      }
+    } catch (err) {
+      LogError('AdminAppointmentController:copyAppointment', 'FailedToCreateOnAcuity', {
+        appointmentID: appointmentId,
+        appointmentDateTime: dateTime,
+        errorMessage: err,
+      })
       return {
         id: appointment.id,
         barCode: appointment.barCode,
@@ -1020,6 +1044,12 @@ export class AppoinmentService {
         appointmentID: appointmentId,
         appointmentDateTime: dateTime,
       })
+      return {
+        id: appointment.id,
+        barCode: appointment.barCode,
+        status: BulkOperationStatus.Failed,
+        reason: 'Failed to Book Appointment',
+      }
     }
 
     return {

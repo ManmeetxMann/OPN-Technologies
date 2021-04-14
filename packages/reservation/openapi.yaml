@@ -3486,6 +3486,8 @@ paths:
               properties:
                 appointmentIds:
                   type: array
+                  minItems: 1
+                  maxItems: 20
                   items:
                     type: string
                 date:
@@ -3497,6 +3499,7 @@ paths:
                   description: This should be passwed is corporate is logged in
               required:
                 - date
+                - appointmentIds
       responses:
         '200':
           description: Successfully Return
