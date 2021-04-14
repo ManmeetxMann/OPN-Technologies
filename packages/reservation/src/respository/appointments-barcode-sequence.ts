@@ -16,17 +16,23 @@ export class AppointmentsBarCodeSequence extends DataModel<AppoinmentBarCodeSequ
     const sequence = barcodesCollection.docRef(prefix)
 
     let result = null
+    // Create if doesn't exist
     await this.datastore.firestoreORM.runTransaction(async (tx) => {
       const doc = await tx.get(sequence)
       const sequenceExists = doc.data()
-      if (sequenceExists) {
-        const newBarcode = sequenceExists.barCodeNumber + 1
-        result = {id: doc.id, barCodeNumber: newBarcode}
-        tx.update(sequence, result)
-      } else {
+      if (!sequenceExists) {
         result = {id: prefix, barCodeNumber: 1000000000}
         tx.set(sequence, result)
       }
+    })
+
+    // Update
+    await this.datastore.firestoreORM.runTransaction(async (tx) => {
+      const doc = await tx.get(sequence)
+      const sequenceExists = doc.data()
+      const newBarcode = sequenceExists.barCodeNumber + 1
+      result = {id: doc.id, barCodeNumber: newBarcode}
+      tx.update(sequence, result)
     })
 
     return result
