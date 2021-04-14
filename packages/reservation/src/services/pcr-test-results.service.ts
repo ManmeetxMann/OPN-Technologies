@@ -1158,7 +1158,7 @@ export class PCRTestResultsService {
         action: PcrResultTestActivityAction.UpdateFromAppointment,
       })
     }
-     return null
+    return null
   }
 
   async getPCRTestsByBarcode(barCodes: string[]): Promise<PCRTestResultDBModel[]> {
