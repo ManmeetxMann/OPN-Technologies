@@ -160,7 +160,7 @@ class PassportController implements IControllerBase {
       const answersResults = []
       const {questions} = questionnaires
       Object.keys(questions)
-        .sort()
+        .sort((a,b) => Number(a) > Number(b) ? 1 : Number(a) < Number(b) ? -1 : 0)
         .forEach((questionKey) => {
           const question = questions[questionKey]
           const answersResult = {

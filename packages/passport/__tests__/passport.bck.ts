@@ -1,5 +1,9 @@
 import request from 'supertest'
-import {app as server} from '../src/server'
+import jestConfig from '../jest.config'
+import {app as server} from '../src/app'
+
+jestConfig.mock('../../common/test_utils/firebase-admin')
+jestConfig.mock('../../common/test_utils/firestore-simple-admin')
 
 describe('Passport test suite', () => {
   test('Get attestation by ID', async (done) => {
