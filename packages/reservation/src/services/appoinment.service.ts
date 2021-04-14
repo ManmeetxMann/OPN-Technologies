@@ -102,6 +102,16 @@ export class AppoinmentService {
       LogInfo('AppoinmentService:postPubsub', 'PubSubDisabled', {})
       return
     }
+    const attrs = appointment.organizationId
+      ? {
+          userId: appointment.userId,
+          organizationId: appointment.organizationId,
+          actionType: action,
+        }
+      : {
+          userId: appointment.userId,
+          actionType: action,
+        }
     this.pubsub.publish(
       {
         id: appointment.id,
@@ -109,11 +119,7 @@ export class AppoinmentService {
         date: safeTimestamp(appointment.dateTime).toISOString(),
         testType: appointment.testType,
       },
-      {
-        userId: appointment.userId,
-        organizationId: appointment.organizationId,
-        actionType: action,
-      },
+      attrs,
     )
   }
 

@@ -1,6 +1,5 @@
 import {PubSub, Topic} from '@google-cloud/pubsub'
-import {LogInfo} from '../../utils/logging-setup'
-
+import {BadRequestException} from '../../exceptions/bad-request-exception'
 //TODO: Add Encryption or security layer
 export class OPNPubSub {
   private pubSubClient = new PubSub()
@@ -13,21 +12,18 @@ export class OPNPubSub {
   }
 
   async publish(data: unknown, attributes: Record<string, string> = {}): Promise<void> {
-    this.topic.publish(Buffer.from(JSON.stringify(data)), this.stripNonStringAttributes(attributes))
+    this.checkAttributes(attributes)
+    this.topic.publish(Buffer.from(JSON.stringify(data)), attributes)
   }
 
-  private stripNonStringAttributes(attributes: Record<string, unknown>): Record<string, string> {
+  private checkAttributes(attributes: Record<string, unknown>) {
     const keys = Object.keys(attributes)
-    const result: Record<string, string> = {}
     keys.forEach((key: string) => {
       const value = attributes[key]
       if (typeof value !== 'string') {
-        LogInfo(`${this.topicName}PubSub`, 'RemovedAttribute', {key, value})
-      } else {
-        result[key] === value
+        throw new BadRequestException(`{${key}: ${JSON.stringify(value)}} is not a valid attribute`)
       }
     })
-    return result
   }
 
   static async getPublishedData(data: string): Promise<unknown> {

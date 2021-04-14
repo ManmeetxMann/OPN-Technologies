@@ -45,17 +45,17 @@ class RecommendationController implements IControllerBase {
     data: string
     attributes: Record<string, string>
   }): Promise<{
-    userId: string | null
-    organizationId: string | null
-    actionType: string | null
+    userId: string
+    organizationId: string
+    actionType: string
     data: Record<string, unknown>
   }> {
     const {data, attributes} = message
     const payload = await OPNPubSub.getPublishedData(data)
     return {
-      userId: attributes.userId || null,
-      organizationId: attributes.organizationId || null,
-      actionType: attributes.actionType || null,
+      userId: attributes.userId,
+      organizationId: attributes.organizationId,
+      actionType: attributes.actionType,
       data: (payload as unknown) as Record<string, unknown>,
     }
   }
