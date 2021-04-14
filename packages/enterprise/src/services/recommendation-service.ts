@@ -296,9 +296,7 @@ export class RecommendationService {
     let actions: Recommendations[] = []
     if (org.enableTemperatureCheck) {
       actions = this.getRecommendationsTemperature(items)
-    }
-    // TODO: better way to test if org is PCR only?
-    else if (items.PCRTestResult || items.scheduledPCRTest) {
+    } else if (org.enableTesting) {
       actions = this.getRecommendationsPCR(items)
     }
     // Default: attestation only
