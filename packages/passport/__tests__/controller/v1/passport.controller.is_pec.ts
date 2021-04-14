@@ -1,5 +1,5 @@
 import request from 'supertest'
-import {app as server} from '../../../src/app'
+import {app as server} from '../../../src/server'
 
 import {createAttestation, deleteAttestationsById} from '../../__seeds__/attestation'
 import {createOrganization, deleteOrgById} from '../../../../reservation/__tests__/__seeds__/organization'
@@ -37,7 +37,7 @@ describe('Passport test suite', () => {
         ])
     })
 
-    test('Get attestation by ID', async (done) => {
+    test('Get attestation by ID 2', async (done) => {
         const url = `passport/api/v1/attestation/${attestationId}`
         const headers = {
             authorization: `bearer bearer_token`,
