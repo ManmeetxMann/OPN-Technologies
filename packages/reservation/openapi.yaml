@@ -924,6 +924,40 @@ components:
               type: string
             dateOfResult:
               type: string
+            resultMetaData:
+              type: object
+              additionalProperties: false
+              properties:
+                notify:
+                  type: boolean
+                resultDate:
+                  type: string
+                comment:
+                  type: string
+                action:
+                  type: string
+                  enum:
+                    - SendThisResult
+                    - DoNothing
+                    - ReRunToday
+                    - ReRunTomorrow
+                    - RecollectAsInvalid
+                    - RecollectAsInconclusive
+                    - MarkAsPositive
+                    - MarkAsNegative
+                    - MarkAsPresumptivePositive
+                    - SendPreliminaryPositive
+                autoResult:
+                  type: string
+                  enum:
+                    - PresumptivePositive
+                    - PreliminaryPositive
+                    - Positive
+                    - Negative
+                    - Pending
+                    - Invalid
+                    - Inconclusive
+                    - Indeterminate
           required:
             - email
             - phone
@@ -1291,6 +1325,16 @@ paths:
           name: transportRunId
           schema:
             type: string
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: appointmentStatus
           explode: true
@@ -1729,6 +1773,16 @@ paths:
           schema:
             type: string
         - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
+        - in: query
           name: appointmentStatus
           explode: true
           style: form
@@ -1821,6 +1875,12 @@ paths:
           name: testType
           schema:
             type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: searchQuery
           schema:
@@ -1895,6 +1955,9 @@ paths:
             enum:
               - PCR
               - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: result
           schema:
@@ -2852,6 +2915,164 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestResultDetailResponse'
+  /reservation/admin/api/v1/test-results/{testResultId}/comment/{commentId}/reply:
+    post:
+      description: Add reply to comment
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: commentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                reply:
+                  type: string
+                attachmentUrls:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - reply
+                - attachmentUrls
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResultDetailResponse'
+  /reservation/admin/api/v1/test-results/{testResultId}/comment:
+    get:
+      description: Get comments of test results
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        comment:
+                          type: string
+                        attachmentUrls:
+                          type: array
+                          items:
+                            type: string
+                        addedBy:
+                          type: string
+                        authorPictureUrl:
+                          type: string
+                        addedOn:
+                          type: string
+                        replies:
+                          type: array
+                          items:
+                            type: object
+                            additionalProperties: false
+                            properties:
+                              reply:
+                                type: string
+                              attachmentUrls:
+                                type: array
+                                items:
+                                  type: string
+                              addedBy:
+                                type: string
+                              authorPictureUrl:
+                                type: string
+                              addedOn:
+                                type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
+    post:
+      description: Add comment to test results
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                comment:
+                  type: string
+                attachmentUrls:
+                  type: array
+                  items:
+                    type: string
+                assignedTo:
+                  type: string
+                internal:
+                  type: boolean
+              required:
+                - comment
+                - attachmentUrls
+                - internal
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResultDetailResponse'
 
   /reservation/api/v1/test-results/{id}/download:
     get:
@@ -2933,6 +3154,16 @@ paths:
               - Received
               - InProgress
               - ReRunRequired
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
       responses:
         '200':
           description: Successfully Return
@@ -3024,6 +3255,16 @@ paths:
           name: barCode
           schema:
             type: string
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
       responses:
         '200':
           description: Succesfully return stats
@@ -3245,6 +3486,8 @@ paths:
               properties:
                 appointmentIds:
                   type: array
+                  minItems: 1
+                  maxItems: 20
                   items:
                     type: string
                 date:
@@ -3256,6 +3499,7 @@ paths:
                   description: This should be passwed is corporate is logged in
               required:
                 - date
+                - appointmentIds
       responses:
         '200':
           description: Successfully Return
@@ -3763,3 +4007,11 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/AssociationsResponse'
+  /reservation/internal/api/v1/trigger-appointments-push-reminder:
+    post:
+      description: Triggers push notification reminder before appointment   
+      tags:
+        - Cloud Scheduler triggered
+      responses:
+        '200':
+          description: Success

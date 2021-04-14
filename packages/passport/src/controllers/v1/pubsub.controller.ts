@@ -4,7 +4,7 @@ import {Handler, Router} from 'express'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {OPNPubSub} from '../../../../common/src/service/google/pub_sub'
 
-import {PassportStatuses, Passport} from '../../models/passport'
+import {PassportStatuses, Passport, PassportType} from '../../models/passport'
 import {PassportService} from '../../services/passport-service'
 import {AttestationService} from '../../services/attestation-service'
 
@@ -108,20 +108,21 @@ class RecommendationController implements IControllerBase {
   pcrTest: Handler = async (req, res, next): Promise<void> => {
     try {
       const {userId, organizationId, data} = await this.parseMessage(req.body.message)
-      const status = passportStatusByPCR[data.result as ResultTypes]
+      const pcrResultType = data.result as ResultTypes
+      const status = passportStatusByPCR[pcrResultType]
 
       if (status) {
         const includesGuardian = true
-        const isPCR = true
-        const passport = await this.passportService.create(
+        const {passport, created} = await this.passportService.create(
           status,
           userId,
           [],
           includesGuardian,
           organizationId,
-          isPCR,
+          PassportType.PCR,
+          pcrResultType,
         )
-        await this.alertIfNeeded(passport)
+        if (created) await this.alertIfNeeded(passport)
       }
       res.sendStatus(200)
     } catch (error) {

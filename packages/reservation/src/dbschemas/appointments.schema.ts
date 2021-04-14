@@ -69,4 +69,5 @@ export default Joi.object({
       'Antibody_IgM',
     ),
   labId: Joi.string().allow(null),
+  scheduledPushesToSend: Joi.array().items(Joi.number()),
 })

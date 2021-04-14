@@ -6,11 +6,13 @@ import {authorizationMiddleware} from '../../../../common/src/middlewares/author
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
 
 import {BookingLocationService} from '../../services/booking-location.service'
+import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
 
 class BookingLocationController implements IControllerBase {
   public path = '/reservation/api/v1/booking-locations'
   public router = Router()
   private bookingLocationService = new BookingLocationService()
+  private organizationService = new OrganizationService()
 
   constructor() {
     this.initRoutes()
@@ -31,7 +33,12 @@ class BookingLocationController implements IControllerBase {
     try {
       const {organizationId} = req.query as {organizationId: string}
 
-      const results = await this.bookingLocationService.getBookingLocations(organizationId)
+      const {enablePaymentForBooking} = await this.organizationService.findOneById(organizationId)
+
+      const results = await this.bookingLocationService.getBookingLocations(
+        organizationId,
+        enablePaymentForBooking,
+      )
 
       res.json(actionSucceed(results))
     } catch (error) {

@@ -25,4 +25,5 @@ export default Joi.object({
   legacyMode: Joi.boolean().required(),
   enableTesting: Joi.boolean().required(),
   questionnaireId: Joi.string(),
+  enablePaymentForBooking: Joi.boolean().required(),
 })

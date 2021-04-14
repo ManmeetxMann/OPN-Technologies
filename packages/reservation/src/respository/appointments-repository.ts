@@ -11,6 +11,7 @@ import {
   AppointmentStatusHistoryDb,
   UpdateAppointmentActionParams,
 } from '../models/appointment'
+import {DbBatchAppointments} from '../../../common/src/types/push-notification'
 import DBSchema from '../dbschemas/appointments.schema'
 import {LogError, LogWarning} from '../../../common/src/utils/logging-setup'
 import {findDifference} from '../utils/compare-objects'
@@ -187,6 +188,22 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
         errorMessage: err.toString(),
       })
     }
+  }
+
+  async removeBatchScheduledPushesToSend(
+    batchAppointments: DbBatchAppointments[],
+  ): Promise<unknown[]> {
+    const batch = this.datastore.firestoreAdmin.firestore().batch()
+    batchAppointments.forEach((appointment) => {
+      const docRef = this.collection().docRef(appointment.appointmentId)
+      batch.update(docRef, {
+        scheduledPushesToSend: this.datastore.firestoreAdmin.firestore.FieldValue.arrayRemove(
+          appointment.scheduledAppointmentType,
+        ),
+      })
+    })
+
+    return batch.commit()
   }
 }
 

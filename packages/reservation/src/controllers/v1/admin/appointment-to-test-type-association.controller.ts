@@ -5,6 +5,7 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {AppointmentToTestTypeAssocPostRequest} from '../../../models/appointment-test-association'
 import {AppointmentToTestTypeAssocService} from '../../../services/appointment-to-test-type-association.service'
+import {getUserId} from '../../../../../common/src/utils/auth'
 
 class AppointmentToTestTypeAssociationController implements IControllerBase {
   public router = Router()
@@ -32,7 +33,12 @@ class AppointmentToTestTypeAssociationController implements IControllerBase {
   associate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const {appointmentType, testType} = req.body as AppointmentToTestTypeAssocPostRequest
-      const {id} = await this.appointmentToTestTypeAssocService.save({appointmentType, testType})
+      const createdBy = getUserId(res.locals.authenticatedUser)
+      const {id} = await this.appointmentToTestTypeAssocService.save({
+        appointmentType,
+        testType,
+        createdBy,
+      })
 
       res.json(actionSucceed({id}))
     } catch (error) {

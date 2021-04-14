@@ -102,6 +102,18 @@ describe('AdminAppointmentController', () => {
       expect(result.body.data.length).toBe(5)
       done()
     })
+    test('get appointments by dateOfAppointment and filtered by PCR testType', async (done) => {
+      const url = `/reservation/admin/api/v1/appointments?dateOfAppointment=${dateForAppointments}&testType=PCR`
+      const result = await request(server.app).get(url).set('authorization', 'Bearer LabUser')
+
+      const isFilteredByPcr = result.body.data.every(
+        (appoinemtment) => appoinemtment.testType == 'PCR',
+      )
+
+      expect(isFilteredByPcr).toBe(true)
+      expect(result.status).toBe(200)
+      done()
+    })
     test('get appointments by dateOfAppointment and Lab successfully.', async (done) => {
       const url = `/reservation/admin/api/v1/appointments?dateOfAppointment=${dateForAppointments}&labId=${laboratoryId}`
       const result = await request(server.app)

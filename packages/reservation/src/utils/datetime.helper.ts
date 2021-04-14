@@ -55,6 +55,10 @@ export const makeDefaultIsoDate = (date: string, time: string): string => {
   return moment(`${date}T${time}`).tz(timeZone).toISOString()
 }
 
+export const makeRegularIsoDate = (date: string): string => {
+  return new Date(date).toISOString()
+}
+
 export const makeDeadlineForFilter = (date: Date | string): firestore.Timestamp => {
   const utcEndOfDay = makeTimeEndOfTheDayMoment(moment.tz(date, timeZone)).toDate()
   return firestore.Timestamp.fromDate(utcEndOfDay)

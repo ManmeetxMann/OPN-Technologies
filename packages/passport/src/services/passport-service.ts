@@ -11,11 +11,19 @@ import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
 
-import {Passport, PassportModel, PassportStatus, PassportStatuses} from '../models/passport'
+import {
+  Passport,
+  PassportModel,
+  PassportStatus,
+  PassportStatuses,
+  PassportType,
+  PassportTypePriority,
+} from '../models/passport'
 
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 
 import {Enterprise} from '../adapter/enterprise'
+import {ResultTypes} from '../../../reservation/src/models/appointment'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
   ...passport,
@@ -102,8 +110,11 @@ export class PassportService {
     dependantIds: string[],
     includesGuardian: boolean,
     organizationId: string,
-    isPCR = false, // whether or not to use the long duration for PROCEED
-  ): Promise<Passport> {
+    type: PassportType,
+    pcrResultType?: ResultTypes,
+  ): Promise<{passport: Passport; created: boolean}> {
+    const isPCR = type === PassportType.PCR
+    const typePriority = PassportTypePriority[type]
     if (dependantIds.length) {
       const allDependants = (await this.userService.getAllDependants(userId)).map(({id}) => id)
       const invalidIds = dependantIds.filter((depId) => !allDependants.includes(depId))
@@ -111,15 +122,51 @@ export class PassportService {
         throw new Error(`${userId} is not the guardian of ${invalidIds.join(', ')}`)
       }
     }
-
     const validFromDate = now()
-    const validUntilDate = this.shortestTime(status as PassportStatuses, validFromDate, isPCR)
+    const validUntilDate = this.shortestTime(
+      status as PassportStatuses,
+      validFromDate,
+      isPCR,
+      pcrResultType,
+    )
+
+    const currentPassport = await this.findLatestDirectPassport(
+      userId,
+      organizationId,
+    ).then((active) => (active?.validUntil && !isPassed(active.validUntil) ? active : null))
+
+    if (currentPassport) {
+      // need to check if it would be appropriate to overwrite this passport
+      // RULES:
+      // new stop beats existing proceed
+      // high priority existing stop beats low priority existing proceed
+      // long lasting stop beats short lasting stop
+      if (
+        status === PassportStatuses.Proceed &&
+        currentPassport.status !== PassportStatuses.Proceed
+      ) {
+        const currentPriority =
+          (currentPassport.type && PassportTypePriority[currentPassport.type]) ?? 0 // legacy passports have no type and can always be overwritten
+        if (currentPriority > typePriority) {
+          // current passport takes precedence
+          return {passport: currentPassport, created: false}
+        }
+      } else if (
+        status !== PassportStatuses.Proceed &&
+        currentPassport.status !== PassportStatuses.Proceed
+      ) {
+        if (validUntilDate < safeTimestamp(currentPassport.validUntil)) {
+          return {passport: currentPassport, created: false}
+        }
+      }
+    }
 
     return this.identifierRepository
       .getUniqueValue('status')
       .then((statusToken) =>
         this.passportRepository.add({
           status,
+          type,
           statusToken,
           userId,
           organizationId,
@@ -132,7 +179,7 @@ export class PassportService {
       .then(mapDates)
       .then(async (passport) => {
         await this.postPassport(passport)
-        return passport
+        return {passport, created: true}
       })
   }
 
@@ -281,12 +328,19 @@ export class PassportService {
     passportStatus: PassportStatuses | TemperatureStatuses,
     validFrom: Date,
     isPCR: boolean,
+    pcrResultType?: ResultTypes,
   ): Date {
     if (
       [PassportStatuses.Stop, PassportStatuses.Caution, TemperatureStatuses.Stop].includes(
         passportStatus,
       )
     ) {
+      if (pcrResultType == ResultTypes.Inconclusive) {
+        return moment(validFrom)
+          .add(Config.get('STOP_PASSPORT_EXPIRY_INCONCLUSIVE_HOURS'), 'hours')
+          .toDate()
+      }
+
       const weeksToAdd = parseInt(Config.get('STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_WEEKS'))
       // TODO: end of day?
       return moment(validFrom).add(weeksToAdd, 'weeks').toDate()

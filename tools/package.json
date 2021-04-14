@@ -7,11 +7,19 @@
 				"tools:count-total-number-of-users-by-appointments": "ts-node ./count-total-number-of-users-by-appointments",
 				"tools:count-total-number-of-users": "ts-node ./count-total-number-of-users",
 				"tools:get-users-with-email-no-authuserid": "ts-node ./get-users-with-email-no-authuserid",
-				"tool:update-user-emails": "node ./update-user-emails"
+				"tool:update-user-emails": "node ./update-user-emails",
+				"tool:appointments-finance": "ts-node ./appointments-finance",
+				"tool:non-org-packages-details": "ts-node ./non-org-packages-details",
+				"tool:create_firebase_token": "ts-node ./create_firebase_token"
 		},
 		"author": "",
 		"license": "Appropriate",
 		"dependencies": {
-				"ts-node": "^9.1.1"
+				"ts-node": "^9.1.1",
+				"mysql": "^2.18.1",
+				"mysql-async-simple": "^1.0.3"
+		},
+		"devDependencies": {
+				"@types/mysql": "^2.15.18"
 		}
 }

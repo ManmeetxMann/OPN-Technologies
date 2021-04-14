@@ -1,4 +1,4 @@
-import {GroupedSpecs, Spec} from '../models/pcr-test-results'
+import {AnalyseTypes, GroupedSpecs, Spec} from '../models/pcr-test-results'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 
 const groups = [
@@ -59,6 +59,26 @@ const validations = [
     },
   },
 ]
+
+export const normalizeAnalysis = (specs: Spec[]): Spec[] => {
+  return specs.map((spec) => {
+    if (typeof spec.value === 'string') {
+      if (spec.value.toUpperCase() === AnalyseTypes.POSITIVE) {
+        return {
+          label: spec.label,
+          value: '+',
+        }
+      }
+      if (spec.value.toUpperCase() === AnalyseTypes.NEGATIVE) {
+        return {
+          label: spec.label,
+          value: '-',
+        }
+      }
+    }
+    return spec
+  })
+}
 
 export const validateAnalysis = (specs: Spec[]): void => {
   specs.forEach((spec) => {

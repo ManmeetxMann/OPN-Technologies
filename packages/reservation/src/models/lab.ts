@@ -3,4 +3,5 @@ export type Lab = {
   templateId: string
   id: string
   assay: string
+  createdBy: string
 }
