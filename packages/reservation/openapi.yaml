@@ -1079,6 +1079,68 @@ components:
                message:
                    nullable: true
                    type: string
+    AddAppointmentsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        slotId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        gender:
+          type: string
+          enum:
+            - Male
+            - Female
+            - Other
+            - Prefer Not to Say
+        phone:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: number
+            number:
+              type: number
+        dateOfBirth:
+          type: string
+          format: date
+        address:
+          type: string
+        addressUnit:
+          type: string
+        postalCode:
+          type: string
+        couponCode:
+          type: string
+        shareTestResultWithEmployer:
+          type: boolean
+        agreeToConductFHHealthAssessment:
+          type: boolean
+        readTermsAndConditions:
+          type: boolean
+        receiveResultsViaEmail:
+          type: boolean
+        receiveNotificationsFromGov:
+          type: boolean
+      required:
+        - slotId
+        - firstName
+        - lastName
+        - gender
+        - dateOfBirth
+        - address
+        - addressUnit
+        - postalCode
+        - couponCode
+        - shareTestResultWithEmployer
+        - readTermsAndConditions
+        - agreeToConductFHHealthAssessment
+        - receiveResultsViaEmail
+        - receiveNotificationsFromGov
+
 
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -2507,66 +2569,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              additionalProperties: false
-              properties:
-                slotId:
-                  type: string
-                firstName:
-                  type: string
-                lastName:
-                  type: string
-                gender:
-                  type: string
-                  enum:
-                    - Male
-                    - Female
-                    - Other
-                    - Prefer Not to Say
-                phone:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    code:
-                      type: number
-                    number:
-                      type: number
-                dateOfBirth:
-                  type: string
-                  format: date
-                address:
-                  type: string
-                addressUnit:
-                  type: string
-                postalCode:
-                  type: string
-                couponCode:
-                  type: string
-                shareTestResultWithEmployer:
-                  type: boolean
-                agreeToConductFHHealthAssessment:
-                  type: boolean
-                readTermsAndConditions:
-                  type: boolean
-                receiveResultsViaEmail:
-                  type: boolean
-                receiveNotificationsFromGov:
-                  type: boolean
-              required:
-                - slotId
-                - firstName
-                - lastName
-                - gender
-                - dateOfBirth
-                - address
-                - addressUnit
-                - postalCode
-                - couponCode
-                - shareTestResultWithEmployer
-                - readTermsAndConditions
-                - agreeToConductFHHealthAssessment
-                - receiveResultsViaEmail
-                - receiveNotificationsFromGov
+              $ref: '#/components/schemas/AddAppointmentsRequest'
       responses:
         '200':
           description: Successfully Return
@@ -4015,3 +4018,149 @@ paths:
       responses:
         '200':
           description: Success
+  /reservation/api/v1/cart:
+    post:
+      description: Add one or multiple appointments to the cart
+      tags:
+        - Cart and Checkout
+      security:
+        - bearerAuthJWT: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AddAppointmentsRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+    get:
+      description: Get cart and price brake down
+      tags:
+        - Cart and Checkout
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      cartItems:
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            cartItemId:
+                              type: string
+                            label:
+                              type: string
+                            subLabel:
+                              type: string
+                            patientName:
+                              type: string
+                            date:
+                              type: string
+                            price:
+                              type: number
+                          required:
+                            - cartItemId
+                            - label
+                            - subLabel
+                            - price
+                      paymentSummary:
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            uid:
+                              type: string
+                            label:
+                              type: string
+                            amount:
+                              type: string
+                            currency:
+                              type: number
+                          required:
+                            - uid
+                            - label
+                            - amount
+                            - currency
+  /reservation/api/v1/cart/{cartItemId}:
+    put:
+      description: Update item in the cart
+      tags:
+        - Cart and Checkout
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+    delete:
+      description: Delete item in the cart
+      tags:
+        - Cart and Checkout
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/api/v1/cart/ephemeral-keys:
+    post:
+      description: Returns ephemeral key for stripe user
+      tags:
+        - Cart and Checkout
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Success
+  /reservation/api/v1/cart/payment-authorization:
+    post:
+      description: Create a payment authorization for items in the cart
+      tags:
+        - Cart and Checkout
+      security:
+        - bearerAuthJWT: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/cart/remove-expired-items:
+    post:
+      description: Triggers push removing old card items
+      tags:
+        - Cart and Checkout
+        - Cloud Scheduler triggered
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
