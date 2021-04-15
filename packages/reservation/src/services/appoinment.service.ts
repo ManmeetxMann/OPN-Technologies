@@ -875,6 +875,15 @@ export class AppoinmentService {
     return this.acuityRepository.addAppointmentLabelOnAcuity(acuityID, label)
   }
 
+  async addAppointmentBarCodeOnAcuity(
+    acuityID: number,
+    newBarCode: string,
+  ): Promise<AppointmentAcuityResponse> {
+    return await this.updateAppointment(acuityID, {
+      barCodeNumber: newBarCode,
+    })
+  }
+
   async updateAppointmentDB(
     id: string,
     updates: Partial<AppointmentDBModel>,
@@ -1320,15 +1329,6 @@ export class AppoinmentService {
       `regenerateBarCode: AppointmentID: ${appointmentId} OldBarCode: ${appointment.barCode} NewBarCode: ${newBarCode}`,
     )
 
-    const appointmentDataAcuity = await this.updateAppointment(appointment.acuityAppointmentId, {
-      barCodeNumber: newBarCode,
-    })
-    if (appointmentDataAcuity.barCode === newBarCode) {
-      console.log(
-        `regenerateBarCode: AppointmentID: ${appointmentId} AcuityID: ${appointment.acuityAppointmentId} successfully updated`,
-      )
-    }
-
     const updatedAppoinment = await this.appointmentsRepository.updateBarCodeById(
       appointmentId,
       newBarCode,
@@ -1354,6 +1354,22 @@ export class AppoinmentService {
       console.warn(`Not found PCR-test-result with appointmentId: ${appointmentId}`)
     }
 
+    try {
+      await this.cloudTasks.createTask(
+        {
+          acuityID: appointment.acuityAppointmentId,
+          newBarCode,
+        },
+        '/reservation/internal/api/v1/appointments/sync-barcode-to-acuity',
+      )
+    } catch (err) {
+      //Safe To Ignore
+      LogInfo('AppoinmentService:addAppointmentLabel', 'FailedToCreateTaskToSyncBarCode', {
+        acuityID: appointment.acuityAppointmentId,
+        barCode: newBarCode,
+        errorMessage: err,
+      })
+    }
     return updatedAppoinment
   }
 

@@ -34,7 +34,27 @@ class InternalSyncAppointmentController implements IControllerBase {
 
   public initRoutes(): void {
     this.router.post(this.path + '/sync-labels-to-acuity', this.syncLabelsToAcuity)
+    this.router.post(this.path + '/sync-barcode-to-acuity', this.syncBarCodeToAcuity)
     this.router.post(this.path + '/sync-from-acuity', this.syncAppointmentFromAcuityToDB)
+  }
+
+  syncBarCodeToAcuity = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const {acuityID, barCode} = req.body
+    try {
+      LogInfo('AppointmentWebhookController:syncBarCodeToAcuity', 'SyncBarcodeRequested', {
+        acuityID,
+        barCode,
+      })
+
+      await this.appoinmentService.addAppointmentBarCodeOnAcuity(acuityID, barCode)
+
+      res.json(actionSucceed(''))
+    } catch (error) {
+      LogError(`AppointmentWebhookController:syncBarCodeToAcuity`, 'FailedToProcessRequest', {
+        errorMessage: error.toString(),
+      })
+      next(error)
+    }
   }
 
   syncLabelsToAcuity = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -49,7 +69,6 @@ class InternalSyncAppointmentController implements IControllerBase {
 
       res.json(actionSucceed(''))
     } catch (error) {
-      //await this.appoinmentService.removeSyncInProgressForAcuity(id)
       LogError(`AppointmentWebhookController:syncLabelsToAcuity`, 'FailedToProcessRequest', {
         errorMessage: error.toString(),
       })
@@ -197,7 +216,7 @@ class InternalSyncAppointmentController implements IControllerBase {
       }
 
       const {barCodeNumber, organizationId} = dataForUpdate
-      const barCode = acuityAppointment.barCode || barCodeNumber
+      const barCode = appointmentFromDb.barCode || barCodeNumber // Don't take Update Barcode from Acuity
       const updatedAppointment = await this.appoinmentService.updateAppointmentFromAcuity(
         appointmentFromDb,
         acuityAppointment,
