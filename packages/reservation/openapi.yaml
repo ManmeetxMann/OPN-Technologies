@@ -2185,11 +2185,11 @@ paths:
               properties:
                 acuityID:
                   type: number
-                barcode:
+                barCode:
                   type: string
               required:
                 - acuityID
-                - barcode
+                - barCode
       responses:
         '200':
           description: Successfully added
