@@ -16,13 +16,15 @@ import DBSchema from '../dbschemas/appointments.schema'
 import {LogError, LogWarning} from '../../../common/src/utils/logging-setup'
 import {findDifference} from '../utils/compare-objects'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {firebaseAdmin} from '../../../common/src/utils/firebase'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
   readonly zeroSet = []
-
+  private firestore
   constructor(dataStore: DataStore) {
     super(dataStore)
+    this.firestore = firebaseAdmin.firestore()
   }
 
   async getAppointmentById(appointmentId: string): Promise<AppointmentDBModel> {
@@ -42,14 +44,15 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
       appointmentData.acuityAppointmentId,
     )
 
-    await this.datastore.firestoreORM.runTransaction(async (tx) => {
-      const result = await tx.get(query)
+    const firestore = firebaseAdmin.firestore()
+
+    await firestore.runTransaction(async (transaction) => {
+      const result = await transaction.get(query)
       const appointmentExists = result.docs.length
 
       if (!appointmentExists) {
         const newAppointmentRef = appointmentCollection.docRef()
-
-        tx.set(newAppointmentRef, validatedData)
+        await transaction.set(newAppointmentRef, validatedData)
       } else {
         throw new BadRequestException(
           `Appointment with given Acuity id already exists: ${appointmentData.acuityAppointmentId}`,
