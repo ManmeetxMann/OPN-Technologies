@@ -10,7 +10,8 @@
 				"tool:update-user-emails": "node ./update-user-emails",
 				"tool:appointments-finance": "ts-node ./appointments-finance",
 				"tool:non-org-packages-details": "ts-node ./non-org-packages-details",
-				"tool:create_firebase_token": "ts-node ./create_firebase_token"
+				"tool:create_firebase_token": "ts-node ./create_firebase_token",
+				"tool:appointments-check-duplicate-barcode": "ts-node ./appointments-check-duplicate-barcode"
 		},
 		"author": "",
 		"license": "Appropriate",
