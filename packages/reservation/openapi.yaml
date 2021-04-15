@@ -2162,7 +2162,7 @@ paths:
                     - SameDay
                     - NextDay
               required:
-                - appointmentId
+                - acuityID
                 - label
       responses:
         '200':
