@@ -37,6 +37,7 @@ import {
   makeFirestoreTimestamp,
   getTimeFromFirestoreDateTime,
   makeDefaultIsoDate,
+  getFirestoreTimeStampDate,
 } from '../utils/datetime.helper'
 
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
@@ -840,7 +841,10 @@ export class AppoinmentService {
     await Promise.all([
       this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
         appointment.id,
-        {deadline},
+        {
+          deadline,
+          deadlineDate: getFirestoreTimeStampDate(deadline),
+        },
         PcrResultTestActivityAction.UpdateFromAppointment,
         userId,
       ),
