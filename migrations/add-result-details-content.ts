@@ -11,13 +11,13 @@ initializeApp({
 
 console.log(serviceAccount.project_id)
 
-const details = `The result of your test was NEGATIVE. Your results do not detect SARS-CoV-2, the virus that causes coronavirus disease (also called COVID-19), a respiratory illness. A negative test means that the virus was not present in the sample we collected. Your results suggest you were negative at the time of testing.
+const details = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
 
-  Although the possibility is low, a false negative result should be considered if you have had recent exposure to the virus along with symptoms consistent with COVID-19.
-  
-  If you are the patron receiving the test and require further information, please visit the City of Toronto Public Health: https://www.toronto.ca/home/covid-19
-  
-  If you have further questions or concerns, you can contact FH Health at info@fhhealth.ca or (416) 484-0042.`
+  Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+  Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.`
 
 const database = firestore()
 
@@ -36,7 +36,7 @@ async function main() {
 
     if (content.docs[0]) {
       if (content.docs.length > 1) {
-        console.log('More than one entry was found for a "Negative" resultType')
+        console.log(`More than one entry was found for a ${resultType} resultType`)
       }
       return content.docs[0].ref.update({details})
     }
