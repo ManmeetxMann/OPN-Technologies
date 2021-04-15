@@ -112,6 +112,7 @@ export class PCRTestResultsService {
   private pulseOxygenService = new PulseOxygenService()
   private labService = new LabService()
   private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
+  private isAppointmentPushEnable = Config.get('APPOINTMENTS_PUSH_NOTIFY') === 'enabled'
 
   private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
     if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
@@ -1073,10 +1074,12 @@ export class PCRTestResultsService {
       ],
     })
 
-    await this.reservationPushService.sendPushByUserId(
-      resultData.userId,
-      ReservationPushTypes.reSample,
-    )
+    if (this.isAppointmentPushEnable) {
+      await this.reservationPushService.sendPushByUserId(
+        resultData.userId,
+        ReservationPushTypes.ready,
+      )
+    }
   }
 
   async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
@@ -1140,11 +1143,12 @@ export class PCRTestResultsService {
         },
       ],
     })
-
-    await this.reservationPushService.sendPushByUserId(
-      resultData.userId,
-      ReservationPushTypes.reSample,
-    )
+    if (this.isAppointmentPushEnable) {
+      await this.reservationPushService.sendPushByUserId(
+        resultData.userId,
+        ReservationPushTypes.reSample,
+      )
+    }
   }
 
   async updateTestResults(
