@@ -2159,8 +2159,8 @@ paths:
                 label:
                   type: string
                   enum:
-                    - SameDay
-                    - NextDay
+                    - SAMEDAY
+                    - NEXTDAY
               required:
                 - acuityID
                 - label
