@@ -863,10 +863,17 @@ export class AppoinmentService {
       ),
       this.updateAppointmentDB(appointment.id, {deadline}),
     ])
+    await this.createCloudTaskToSyncLabelWithAcuity(appointment.acuityAppointmentId, label)
+  }
+
+  async createCloudTaskToSyncLabelWithAcuity(
+    acuityID: number,
+    label: DeadlineLabel,
+  ): Promise<void> {
     try {
       await this.cloudTasks.createTask(
         {
-          acuityID: appointment.acuityAppointmentId,
+          acuityID,
           label,
         },
         '/reservation/internal/api/v1/appointments/sync-labels-to-acuity',
@@ -874,7 +881,7 @@ export class AppoinmentService {
     } catch (err) {
       //Safe To Ignore
       LogInfo('AppoinmentService:addAppointmentLabel', 'FailedToCreateTaskToSyncLabel', {
-        acuityID: appointment.acuityAppointmentId,
+        acuityID,
         label,
         errorMessage: err,
       })
@@ -906,10 +913,7 @@ export class AppoinmentService {
       AppointmentStatus.ReRunRequired,
       data.userId,
     )
-    await this.acuityRepository.addAppointmentLabelOnAcuity(
-      data.appointment.acuityAppointmentId,
-      data.deadlineLabel,
-    )
+
     await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
       data.appointment.id,
       {deadline},
@@ -921,6 +925,10 @@ export class AppoinmentService {
       appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
     })
+    await this.createCloudTaskToSyncLabelWithAcuity(
+      data.appointment.acuityAppointmentId,
+      data.deadlineLabel,
+    )
     this.postPubsub(saved, 'updated')
     return saved
   }
