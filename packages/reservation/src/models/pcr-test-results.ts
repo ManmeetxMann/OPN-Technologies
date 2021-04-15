@@ -492,7 +492,12 @@ export const singlePcrTestResultDTO = (
     resultAnalysis = groupByChannel(pcrTestResult.resultAnalysis)
   }
 
-  const isBirthDateParsable = moment(appointment.dateOfBirth).isValid()
+  let isBirthDateParsable: boolean
+  try {
+    isBirthDateParsable = moment(appointment.dateOfBirth).isValid()
+  } catch (e) {
+    isBirthDateParsable = false
+  }
 
   return {
     email: appointment.email,
