@@ -1,6 +1,7 @@
-import {Column, Entity, Generated, PrimaryColumn, ManyToOne, JoinColumn} from 'typeorm'
+import {Column, Entity, Generated, PrimaryColumn, JoinColumn, OneToOne} from 'typeorm'
 import {Auditable} from '@opn/common/model'
 import {ApiProperty} from '@nestjs/swagger'
+import {IsBoolean, IsString} from 'class-validator'
 
 import {Patient} from '../patient/patient.entity'
 
@@ -11,9 +12,9 @@ export class PatientTravel extends Auditable {
   @ApiProperty({readOnly: true})
   idPatientTravel: string
 
-  @ManyToOne(
+  @OneToOne(
     () => Patient,
-    organization => organization.idPatient,
+    patient => patient.travel,
   )
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})
@@ -22,10 +23,12 @@ export class PatientTravel extends Auditable {
 
   @Column()
   @ApiProperty()
+  @IsString()
   travelCountry: string
 
   @Column()
   @ApiProperty()
+  @IsString()
   travelPassport: string
 }
 
@@ -36,9 +39,9 @@ export class PatientHealth extends Auditable {
   @ApiProperty({readOnly: true})
   idPatientTravel: string
 
-  @ManyToOne(
+  @OneToOne(
     () => Patient,
-    organization => organization.idPatient,
+    patient => patient.health,
   )
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})
@@ -47,10 +50,12 @@ export class PatientHealth extends Auditable {
 
   @Column()
   @ApiProperty()
+  @IsString()
   healthType: string
 
   @Column()
   @ApiProperty()
+  @IsString()
   healthCard: string
 }
 
@@ -61,9 +66,9 @@ export class PatientDigitalConsent extends Auditable {
   @ApiProperty({readOnly: true})
   idPatientDigitalConsent: string
 
-  @ManyToOne(
+  @OneToOne(
     () => Patient,
-    organization => organization.idPatient,
+    patient => patient.digitalConsent,
   )
   @JoinColumn({name: 'patientId'})
   @Column({nullable: false})
@@ -72,21 +77,26 @@ export class PatientDigitalConsent extends Auditable {
 
   @Column()
   @ApiProperty({nullable: false, default: false})
+  @IsBoolean()
   agreeToConductFHHealthAssessment: boolean
 
   @Column()
   @ApiProperty({nullable: false, default: false})
+  @IsBoolean()
   shareTestResultWithEmployer: boolean
 
   @Column()
   @ApiProperty({nullable: false, default: false})
+  @IsBoolean()
   readTermsAndConditions: boolean
 
   @Column()
   @ApiProperty({nullable: false, default: false})
+  @IsBoolean()
   receiveResultsViaEmail: boolean
 
   @Column()
   @ApiProperty({nullable: false, default: false})
+  @IsBoolean()
   receiveNotificationsFromGov: boolean
 }
