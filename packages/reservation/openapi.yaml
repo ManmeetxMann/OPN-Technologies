@@ -2142,6 +2142,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/appointments//sync-labels-to-acuity:
+    post:
+      description: Sync Labels to Acuity
+      tags:
+        - Test Results Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                acuityID:
+                  type: number
+                label:
+                  type: string
+                  enum:
+                    - SameDay
+                    - NextDay
+              required:
+                - appointmentId
+                - label
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
   /reservation/admin/api/v2/appointments/add-labels:
     put:
       description: Add SameDay/NextDay Labesl to Appointments

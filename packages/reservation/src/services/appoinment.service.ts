@@ -28,6 +28,7 @@ import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.
 import {Config} from '../../../common/src/utils/config'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
+import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 
 import {
   firestoreTimeStampToUTC,
@@ -96,7 +97,7 @@ export class AppoinmentService {
   private packageService = new PackageService()
   private enterpriseAdapter = new Enterprise()
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
-
+  private cloudTasks = new OPNCloudTasks('acuity-appointments-sync')
   private postPubsub(appointment: AppointmentDBModel, action: string): void {
     if (Config.get('APPOINTMENTS_PUB_SUB_NOTIFY') !== 'enabled') {
       LogInfo('AppoinmentService:postPubsub', 'PubSubDisabled', {})
@@ -852,7 +853,6 @@ export class AppoinmentService {
     userId: string,
   ): Promise<void> {
     const deadline = makeDeadline(moment(appointment.dateTime.toDate()).utc(), label)
-    await this.acuityRepository.addAppointmentLabelOnAcuity(appointment.acuityAppointmentId, label)
 
     await Promise.all([
       this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
@@ -863,6 +863,29 @@ export class AppoinmentService {
       ),
       this.updateAppointmentDB(appointment.id, {deadline}),
     ])
+    try {
+      await this.cloudTasks.createTask(
+        {
+          acuityID: appointment.acuityAppointmentId,
+          label,
+        },
+        '/reservation/internal/api/v1/appointments/sync-labels-to-acuity',
+      )
+    } catch (err) {
+      //Safe To Ignore
+      LogInfo('AppoinmentService:addAppointmentLabel', 'FailedToCreateTaskToSyncLabel', {
+        acuityID: appointment.acuityAppointmentId,
+        label,
+        errorMessage: err,
+      })
+    }
+  }
+
+  async addAppointmentLabelOnAcuity(
+    acuityID: number,
+    label: DeadlineLabel,
+  ): Promise<AppointmentAcuityResponse> {
+    return this.acuityRepository.addAppointmentLabelOnAcuity(acuityID, label)
   }
 
   async updateAppointmentDB(
