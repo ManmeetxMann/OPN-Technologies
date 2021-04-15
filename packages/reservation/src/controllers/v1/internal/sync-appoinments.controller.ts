@@ -33,7 +33,28 @@ class InternalSyncAppointmentController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.post(this.path + '/sync', this.syncAppointmentFromAcuityToDB)
+    this.router.post(this.path + '/sync-labels-to-acuity', this.syncLabelsToAcuity)
+    this.router.post(this.path + '/sync-from-acuity', this.syncAppointmentFromAcuityToDB)
+  }
+
+  syncLabelsToAcuity = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const {acuityID, label} = req.body
+    try {
+      LogInfo('AppointmentWebhookController:syncLabelsToAcuity', 'SyncLabelsRequested', {
+        acuityID,
+        label,
+      })
+
+      await this.appoinmentService.addAppointmentLabelOnAcuity(acuityID, label)
+
+      res.json(actionSucceed(''))
+    } catch (error) {
+      //await this.appoinmentService.removeSyncInProgressForAcuity(id)
+      LogError(`AppointmentWebhookController:syncLabelsToAcuity`, 'FailedToProcessRequest', {
+        errorMessage: error.toString(),
+      })
+      next(error)
+    }
   }
 
   syncAppointmentFromAcuityToDB = async (

@@ -28,6 +28,7 @@ import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.
 import {Config} from '../../../common/src/utils/config'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-setup'
+import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
 
 import {
   firestoreTimeStampToUTC,
@@ -96,7 +97,7 @@ export class AppoinmentService {
   private packageService = new PackageService()
   private enterpriseAdapter = new Enterprise()
   private pubsub = new OPNPubSub(Config.get('TEST_APPOINTMENT_TOPIC'))
-
+  private cloudTasks = new OPNCloudTasks('acuity-appointments-sync')
   private postPubsub(appointment: AppointmentDBModel, action: string): void {
     if (Config.get('APPOINTMENTS_PUB_SUB_NOTIFY') !== 'enabled') {
       LogInfo('AppoinmentService:postPubsub', 'PubSubDisabled', {})
@@ -858,7 +859,6 @@ export class AppoinmentService {
     userId: string,
   ): Promise<void> {
     const deadline = makeDeadline(moment(appointment.dateTime.toDate()).utc(), label)
-    await this.acuityRepository.addAppointmentLabelOnAcuity(appointment.acuityAppointmentId, label)
 
     await Promise.all([
       this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
@@ -869,6 +869,36 @@ export class AppoinmentService {
       ),
       this.updateAppointmentDB(appointment.id, {deadline}),
     ])
+    await this.createCloudTaskToSyncLabelWithAcuity(appointment.acuityAppointmentId, label)
+  }
+
+  async createCloudTaskToSyncLabelWithAcuity(
+    acuityID: number,
+    label: DeadlineLabel,
+  ): Promise<void> {
+    try {
+      await this.cloudTasks.createTask(
+        {
+          acuityID,
+          label,
+        },
+        '/reservation/internal/api/v1/appointments/sync-labels-to-acuity',
+      )
+    } catch (err) {
+      //Safe To Ignore
+      LogInfo('AppoinmentService:addAppointmentLabel', 'FailedToCreateTaskToSyncLabel', {
+        acuityID,
+        label,
+        errorMessage: err,
+      })
+    }
+  }
+
+  async addAppointmentLabelOnAcuity(
+    acuityID: number,
+    label: DeadlineLabel,
+  ): Promise<AppointmentAcuityResponse> {
+    return this.acuityRepository.addAppointmentLabelOnAcuity(acuityID, label)
   }
 
   async updateAppointmentDB(
@@ -889,10 +919,7 @@ export class AppoinmentService {
       AppointmentStatus.ReRunRequired,
       data.userId,
     )
-    await this.acuityRepository.addAppointmentLabelOnAcuity(
-      data.appointment.acuityAppointmentId,
-      data.deadlineLabel,
-    )
+
     await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
       data.appointment.id,
       {deadline},
@@ -904,6 +931,10 @@ export class AppoinmentService {
       appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
     })
+    await this.createCloudTaskToSyncLabelWithAcuity(
+      data.appointment.acuityAppointmentId,
+      data.deadlineLabel,
+    )
     this.postPubsub(saved, 'updated')
     return saved
   }

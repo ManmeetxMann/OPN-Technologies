@@ -2125,7 +2125,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-  /reservation/internal/api/v1/appointments/sync:
+  /reservation/internal/api/v1/appointments/sync-from-acuity:
     post:
       description: Sync Appointments
       tags:
@@ -2135,6 +2135,35 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AppointmentsSyncRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/appointments/sync-labels-to-acuity:
+    post:
+      description: Sync Labels to Acuity
+      tags:
+        - Test Results Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                acuityID:
+                  type: number
+                label:
+                  type: string
+                  enum:
+                    - SAMEDAY
+                    - NEXTDAY
+              required:
+                - acuityID
+                - label
       responses:
         '200':
           description: Successfully added
@@ -3487,7 +3516,7 @@ paths:
                 appointmentIds:
                   type: array
                   minItems: 1
-                  maxItems: 20
+                  maxItems: 10
                   items:
                     type: string
                 date:
