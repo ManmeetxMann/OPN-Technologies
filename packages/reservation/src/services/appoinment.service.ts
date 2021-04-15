@@ -526,7 +526,6 @@ export class AppoinmentService {
       couponCode = '',
       userId,
     } = additionalData
-    const barCode = acuityAppointment.barCode || barCodeNumber
     const getNewUserId = async (): Promise<string | null> => {
       if (Config.getInt('FEATURE_CREATE_USER_ON_ENTERPRISE')) {
         const user = await this.enterpriseAdapter.findOrCreateUser({
@@ -553,7 +552,7 @@ export class AppoinmentService {
       acuityAppointmentId: Number(acuityAppointment.id),
       appointmentStatus,
       appointmentTypeID: Number(acuityAppointment.appointmentTypeID),
-      barCode: barCode,
+      barCode: barCodeNumber,
       canceled: acuityAppointment.canceled,
       calendarID: Number(acuityAppointment.calendarID),
       dateOfBirth: acuityAppointment.dateOfBirth,
