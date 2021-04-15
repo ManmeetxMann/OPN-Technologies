@@ -1356,7 +1356,7 @@ export class AppoinmentService {
       await this.cloudTasks.createTask(
         {
           acuityID: appointment.acuityAppointmentId,
-          newBarCode,
+          barCode: newBarCode,
         },
         '/reservation/internal/api/v1/appointments/sync-barcode-to-acuity',
       )
