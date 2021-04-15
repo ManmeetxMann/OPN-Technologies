@@ -2142,7 +2142,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-  /reservation/internal/api/v1/appointments//sync-labels-to-acuity:
+  /reservation/internal/api/v1/appointments/sync-labels-to-acuity:
     post:
       description: Sync Labels to Acuity
       tags:
