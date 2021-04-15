@@ -2024,6 +2024,7 @@ paths:
               - EmergencyRapidAntigen
               - Antibody_All
               - Antibody_IgM
+              - allExceptAntigen
         - in: query
           name: result
           schema:
