@@ -76,13 +76,7 @@ class InternalSyncAppointmentController implements IControllerBase {
         appointmentTypeID,
         action,
       })
-      /*
-      //If there is delay in Acuity Processing then this can will protect in making multiple requests
-      const isSyncInProgress = await this.appoinmentService.isSyncingAlreadyInProgress(acuityID)
-      if (isSyncInProgress) {
-        throw new BadRequestException(`Sync is already in progress`)
-      }
-      */
+
       let acuityAppointment: AppointmentAcuityResponse = null
       try {
         acuityAppointment = await this.appoinmentService.getAppointmentByIdFromAcuity(acuityID)
@@ -134,10 +128,8 @@ class InternalSyncAppointmentController implements IControllerBase {
       } else {
         this.handleCreateAppointment(acuityAppointment, dataForUpdate)
       }
-      await this.appoinmentService.removeSyncInProgressForAcuity(acuityAppointment.id)
       res.json(actionSucceed(''))
     } catch (error) {
-      //await this.appoinmentService.removeSyncInProgressForAcuity(id)
       LogError(
         `AppointmentWebhookController:syncAppointmentFromAcuityToDB`,
         'FailedToProcessRequest',

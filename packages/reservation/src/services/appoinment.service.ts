@@ -89,7 +89,6 @@ export class AppoinmentService {
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
-  private syncProgressRepository = new SyncProgressRepository(this.dataStore)
   private appointmentToTestTypeRepository = new AppointmentToTestTypeRepository(this.dataStore)
   private organizationService = new OrganizationService()
   private userAddressService = new UserAddressService()
@@ -116,25 +115,6 @@ export class AppoinmentService {
         actionType: action,
       },
     )
-  }
-
-  async removeSyncInProgressForAcuity(acuityAppointmentId: number): Promise<void> {
-    this.syncProgressRepository.deleteRecord(
-      SyncInProgressTypes.Acuity,
-      acuityAppointmentId.toString(),
-    )
-  }
-
-  async isSyncingAlreadyInProgress(acuityAppointmentId: number): Promise<boolean> {
-    const inProgress = await this.syncProgressRepository.getByType(
-      SyncInProgressTypes.Acuity,
-      acuityAppointmentId.toString(),
-    )
-    if (!inProgress) {
-      this.syncProgressRepository.save(SyncInProgressTypes.Acuity, acuityAppointmentId.toString())
-      return false
-    }
-    return true
   }
 
   async makeDeadlineRapidMinutes(
