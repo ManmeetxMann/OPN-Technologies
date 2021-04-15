@@ -66,12 +66,10 @@ import {ReservationPushTypes} from '../types/appointment-push'
 import {DbBatchAppointments} from '../../../common/src/types/push-notification'
 import {PcrResultTestActivityAction} from '../models/pcr-test-results'
 import {AdminScanHistory} from '../models/admin-scan-history'
-import {SyncInProgressTypes} from '../models/sync-progress'
 
 //Repository
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AdminScanHistoryRepository} from '../respository/admin-scan-history'
-import {SyncProgressRepository} from '../respository/sync-progress.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
 import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
