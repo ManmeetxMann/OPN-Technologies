@@ -15,11 +15,12 @@ import {PassportService} from '../../../../../passport/src/services/passport-ser
 import {TemperatureService} from '../../../services/temperature.service'
 import {PulseOxygenService} from '../../../services/pulse-oxygen.service'
 
-import {PassportStatuses} from '../../../../../passport/src/models/passport'
+import {PassportStatuses, PassportType} from '../../../../../passport/src/models/passport'
 import {PulseOxygenStatuses} from '../../../../../reservation/src/models/pulse-oxygen'
 import {TemperatureSaveRequest, TemperatureStatuses} from '../../../models/temperature'
 
 import PassportAdapter from '../../../../../common/src/adapters/passport'
+import {getUserId} from '../../../../../common/src/utils/auth'
 
 const temperatureThreshold = Number(Config.get('TEMPERATURE_THRESHOLD'))
 const oxygenThreshold = Number(Config.get('OXYGEN_THRESHOLD'))
@@ -56,6 +57,7 @@ class AdminTemperatureController implements IControllerBase {
         oxygen,
         userId,
       } = req.body as TemperatureSaveRequest
+      const createdBy = getUserId(res.locals.authenticatedUser)
 
       if (!temperatureThreshold) {
         throw new BadRequestException('Temperature Threshold is not specified in config file')
@@ -103,6 +105,7 @@ class AdminTemperatureController implements IControllerBase {
         temperature,
         status: isHighTemperatureStatus ? TemperatureStatuses.Stop : TemperatureStatuses.Proceed,
         userId,
+        createdBy,
       })
 
       await this.pulseOxygenService.savePulseOxygenStatus({
@@ -114,7 +117,12 @@ class AdminTemperatureController implements IControllerBase {
         userId,
       })
 
-      await this.passportAdapter.createPassport(userId, organizationId, temperatureOxygenStatus)
+      await this.passportAdapter.createPassport(
+        userId,
+        organizationId,
+        temperatureOxygenStatus,
+        PassportType.Temperature,
+      )
 
       const response = {
         status: temperatureOxygenStatus,

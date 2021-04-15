@@ -8,7 +8,12 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {isValidDate} from '../../../../../common/src/utils/times'
-import {getIsClinicUser, getIsLabUser, getUserId} from '../../../../../common/src/utils/auth'
+import {
+  getIsClinicUser,
+  getIsLabUser,
+  getIsOpnSuperAdmin,
+  getUserId,
+} from '../../../../../common/src/utils/auth'
 import {LogError} from '../../../../../common/src/utils/logging-setup'
 
 //Services
@@ -140,6 +145,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         searchQuery,
         transportRunId,
+        testType,
       } = req.query as AppointmentByOrganizationRequest
 
       const labId = req.headers?.labid as string
@@ -165,6 +171,7 @@ class AdminAppointmentController implements IControllerBase {
         searchQuery,
         transportRunId,
         labId,
+        testType,
       })
 
       const transportRuns = fromPairs(
@@ -203,6 +210,7 @@ class AdminAppointmentController implements IControllerBase {
         organizationId,
         searchQuery,
         transportRunId,
+        testType,
       } = req.query as AppointmentByOrganizationRequest
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
@@ -226,6 +234,7 @@ class AdminAppointmentController implements IControllerBase {
         searchQuery,
         transportRunId,
         labId,
+        testType,
       })
 
       const filterGroup = [
@@ -259,11 +268,12 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {appointmentId} = req.params as {appointmentId: string}
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isOpnSuperAdmin = getIsOpnSuperAdmin(res.locals.authenticatedUser)
       const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
 
       const appointment = await this.appointmentService.getAppointmentDBByIdWithCancel(
         appointmentId,
-        isLabUser,
+        isOpnSuperAdmin,
       )
       if (!appointment) {
         throw new ResourceNotFoundException(`Appointment "${appointmentId}" not found`)
@@ -282,7 +292,7 @@ class AdminAppointmentController implements IControllerBase {
   cancelAppointment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
-      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isOpnSuperAdmin = getIsOpnSuperAdmin(res.locals.authenticatedUser)
 
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId} = req.query as {organizationId: string}
@@ -290,7 +300,7 @@ class AdminAppointmentController implements IControllerBase {
       await this.appointmentService.cancelAppointment(
         appointmentId,
         adminId,
-        isLabUser,
+        isOpnSuperAdmin,
         organizationId,
       )
 
@@ -490,6 +500,7 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId} = req.query as {organizationId: string}
+      const labId = req.headers?.labid as string
       const appointment = await this.appointmentService.getAppointmentDBById(appointmentId)
       if (organizationId && organizationId !== appointment.organizationId) {
         LogError(
@@ -502,7 +513,13 @@ class AdminAppointmentController implements IControllerBase {
         )
         throw new BadRequestException('Request is not allowed')
       }
-      const userAppointments = await this.appointmentService.getUserAppointments(appointment.userId)
+      if (labId && labId !== appointment.labId) {
+        throw new BadRequestException('Request is not allowed')
+      }
+      const userAppointments = await this.appointmentService.getUserAppointments(
+        appointment.userId,
+        labId,
+      )
       res.json(
         actionSucceed(
           userAppointments.map((userAppointment) => {
@@ -524,13 +541,14 @@ class AdminAppointmentController implements IControllerBase {
     try {
       const userID = getUserId(res.locals.authenticatedUser)
       const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isOpnSuperAdmin = getIsOpnSuperAdmin(res.locals.authenticatedUser)
       const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
       const {appointmentId} = req.params as {appointmentId: string}
       const {organizationId, dateTime} = req.body as {organizationId: string; dateTime: string}
       const updatedAppointment = await this.appointmentService.rescheduleAppointment({
         appointmentId,
         userID,
-        isLabUser,
+        isOpnSuperAdmin,
         organizationId,
         dateTime,
       })

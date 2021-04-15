@@ -3,8 +3,24 @@ import DataModel from '../../../common/src/data/datamodel.base'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {now} from '../../../common/src/utils/times'
 
+export enum PassportType {
+  Attestation = 'Attestation',
+  Temperature = 'Temperature',
+  PCR = 'PCR',
+  PulseOxygenCheck = 'PulseOxygenCheck',
+}
+
+// lower priority proceed passports cannot override higher priority stop passports
+export const PassportTypePriority: Record<PassportType, number> = {
+  [PassportType.Attestation]: 1,
+  [PassportType.Temperature]: 1,
+  [PassportType.PulseOxygenCheck]: 1,
+  [PassportType.PCR]: 2,
+}
+
 export type Passport = {
   id: string
+  type: PassportType
   userId: string
   organizationId: string
   statusToken: string

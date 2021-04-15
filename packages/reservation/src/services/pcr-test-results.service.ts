@@ -7,6 +7,7 @@ import {EmailService} from '../../../common/src/service/messaging/email-service'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
+import {ReservationPushTypes} from '../types/appointment-push'
 import {toDateFormat} from '../../../common/src/utils/times'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
@@ -22,6 +23,7 @@ import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-s
 //service
 import {AppoinmentService} from './appoinment.service'
 import {CouponService} from './coupon.service'
+import {ReservationPushService} from './reservation-push.service'
 
 //repository
 import {AppointmentsRepository} from '../respository/appointments-repository'
@@ -83,7 +85,7 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {PulseOxygenService} from './pulse-oxygen.service'
 
-import {BulkTestResultRequest} from '../models/test-results'
+import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results'
 import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 
@@ -96,6 +98,7 @@ export class PCRTestResultsService {
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
   private couponService = new CouponService()
+  private reservationPushService = new ReservationPushService()
   private emailService = new EmailService()
   private userService = new UserService()
   private whiteListedResultsTypes = [
@@ -223,13 +226,17 @@ export class PCRTestResultsService {
       ResultReportStatus.Processing,
     )
     try {
+      const metaData: TestResultsMetaData = {
+        notify: pcrResults.data.notify,
+        resultDate: pcrResults.data.resultDate,
+        action: pcrResults.data.action,
+        autoResult: pcrResults.data.autoResult,
+      }
+      if (pcrResults.data.comment) {
+        metaData.comment = pcrResults.data.comment
+      }
       const pcrTestResult = await this.handlePCRResultSaveAndSend({
-        metaData: {
-          notify: pcrResults.data.notify,
-          resultDate: pcrResults.data.resultDate,
-          action: pcrResults.data.action,
-          autoResult: pcrResults.data.autoResult,
-        },
+        metaData,
         resultAnalysis: pcrResults.data.resultAnalysis,
         barCode: pcrResults.data.barCode,
         isSingleResult: false,
@@ -321,7 +328,7 @@ export class PCRTestResultsService {
         map: '/',
         key: 'organizationId',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: organizationId,
+        value: organizationId === 'null' ? null : organizationId,
       })
     }
 
@@ -627,14 +634,18 @@ export class PCRTestResultsService {
     const labId = testResultData.labId
     const fileName = testResultData.fileName
     const pcrResults = testResultData.results.map((result) => {
+      const data = {
+        ...result,
+        resultDate,
+        templateId,
+        labId,
+        fileName: fileName || null,
+      }
+      if (result.comment) {
+        data.comment = result.comment
+      }
       return {
-        data: {
-          ...result,
-          resultDate,
-          templateId,
-          labId,
-          fileName: fileName || null,
-        },
+        data,
         status: ResultReportStatus.RequestReceived,
         adminId: adminId,
       }
@@ -813,8 +824,8 @@ export class PCRTestResultsService {
       const pcrResultDataForEmail = {
         adminId,
         labAssay: lab.assay,
-        ...pcrResultDataForDbUpdate,
         ...appointment,
+        ...pcrResultDataForDbUpdate,
       }
       await this.sendNotification(pcrResultDataForEmail, metaData.action)
     } else {
@@ -1044,6 +1055,11 @@ export class PCRTestResultsService {
         },
       ],
     })
+
+    await this.reservationPushService.sendPushByUserId(
+      resultData.userId,
+      ReservationPushTypes.reSample,
+    )
   }
 
   async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
@@ -1107,6 +1123,11 @@ export class PCRTestResultsService {
         },
       ],
     })
+
+    await this.reservationPushService.sendPushByUserId(
+      resultData.userId,
+      ReservationPushTypes.reSample,
+    )
   }
 
   async updateTestResults(
@@ -1273,7 +1294,7 @@ export class PCRTestResultsService {
     )
     const pcrResultStatsByOrgIdArr = Object.entries(pcrResultStatsByOrgId).map(
       ([orgId, count]) => ({
-        id: orgId === 'undefined' ? null : orgId,
+        id: orgId === 'undefined' ? 'null' : orgId,
         name: orgId === 'undefined' ? 'None' : organizations[orgId],
         count,
       }),
@@ -1415,7 +1436,7 @@ export class PCRTestResultsService {
     queryParams: PcrTestResultsListByDeadlineRequest,
   ): Promise<PCRTestResultDBModel[]> {
     const pcrTestResultsQuery = []
-    const {labId, deadline, barCode, testRunId, organizationId} = queryParams
+    const {labId, deadline, barCode, testRunId, organizationId, testType} = queryParams
 
     const equals = (key: string, value) => ({
       map: '/',
@@ -1451,6 +1472,10 @@ export class PCRTestResultsService {
       pcrTestResultsQuery.push(
         equals('organizationId', organizationId === 'null' ? null : organizationId),
       )
+    }
+
+    if (testType) {
+      pcrTestResultsQuery.push(equals('testType', testType))
     }
 
     return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
@@ -1804,6 +1829,7 @@ export class PCRTestResultsService {
         `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${id}`,
       )
     }
+
     if (appointment?.userId !== userId && !isParent) {
       LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
         userId,
