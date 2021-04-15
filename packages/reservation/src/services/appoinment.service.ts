@@ -84,7 +84,7 @@ const timeZone = Config.get('DEFAULT_TIME_ZONE')
 export class AppoinmentService {
   private dataStore = new DataStore()
   private acuityRepository = new AcuityRepository()
-  private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence(this.dataStore)
+  private appointmentsBarCodeSequence = new AppointmentsBarCodeSequence()
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
