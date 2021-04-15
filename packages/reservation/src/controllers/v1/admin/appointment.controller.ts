@@ -146,9 +146,10 @@ class AdminAppointmentController implements IControllerBase {
         searchQuery,
         transportRunId,
         testType,
+        labId: queryLab,
       } = req.query as AppointmentByOrganizationRequest
 
-      const labId = req.headers?.labid as string
+      const labId = (req.headers?.labid as string) || queryLab
 
       if (dateOfAppointment && !isValidDate(dateOfAppointment)) {
         throw new BadRequestException('dateOfAppointment is invalid')
