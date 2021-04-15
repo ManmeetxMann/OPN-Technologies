@@ -66,12 +66,10 @@ import {ReservationPushTypes} from '../types/appointment-push'
 import {DbBatchAppointments} from '../../../common/src/types/push-notification'
 import {PcrResultTestActivityAction} from '../models/pcr-test-results'
 import {AdminScanHistory} from '../models/admin-scan-history'
-import {SyncInProgressTypes} from '../models/sync-progress'
 
 //Repository
 import {AcuityRepository} from '../respository/acuity.repository'
 import {AdminScanHistoryRepository} from '../respository/admin-scan-history'
-import {SyncProgressRepository} from '../respository/sync-progress.repository'
 import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-sequence'
 import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
@@ -89,7 +87,6 @@ export class AppoinmentService {
   private appointmentsRepository = new AppointmentsRepository(this.dataStore)
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
-  private syncProgressRepository = new SyncProgressRepository(this.dataStore)
   private appointmentToTestTypeRepository = new AppointmentToTestTypeRepository(this.dataStore)
   private organizationService = new OrganizationService()
   private userAddressService = new UserAddressService()
@@ -122,25 +119,6 @@ export class AppoinmentService {
       },
       attrs,
     )
-  }
-
-  async removeSyncInProgressForAcuity(acuityAppointmentId: number): Promise<void> {
-    this.syncProgressRepository.deleteRecord(
-      SyncInProgressTypes.Acuity,
-      acuityAppointmentId.toString(),
-    )
-  }
-
-  async isSyncingAlreadyInProgress(acuityAppointmentId: number): Promise<boolean> {
-    const inProgress = await this.syncProgressRepository.getByType(
-      SyncInProgressTypes.Acuity,
-      acuityAppointmentId.toString(),
-    )
-    if (!inProgress) {
-      this.syncProgressRepository.save(SyncInProgressTypes.Acuity, acuityAppointmentId.toString())
-      return false
-    }
-    return true
   }
 
   async makeDeadlineRapidMinutes(
@@ -901,6 +879,15 @@ export class AppoinmentService {
     return this.acuityRepository.addAppointmentLabelOnAcuity(acuityID, label)
   }
 
+  async addAppointmentBarCodeOnAcuity(
+    acuityID: number,
+    newBarCode: string,
+  ): Promise<AppointmentAcuityResponse> {
+    return await this.updateAppointment(acuityID, {
+      barCodeNumber: newBarCode,
+    })
+  }
+
   async updateAppointmentDB(
     id: string,
     updates: Partial<AppointmentDBModel>,
@@ -1346,15 +1333,6 @@ export class AppoinmentService {
       `regenerateBarCode: AppointmentID: ${appointmentId} OldBarCode: ${appointment.barCode} NewBarCode: ${newBarCode}`,
     )
 
-    const appointmentDataAcuity = await this.updateAppointment(appointment.acuityAppointmentId, {
-      barCodeNumber: newBarCode,
-    })
-    if (appointmentDataAcuity.barCode === newBarCode) {
-      console.log(
-        `regenerateBarCode: AppointmentID: ${appointmentId} AcuityID: ${appointment.acuityAppointmentId} successfully updated`,
-      )
-    }
-
     const updatedAppoinment = await this.appointmentsRepository.updateBarCodeById(
       appointmentId,
       newBarCode,
@@ -1380,6 +1358,22 @@ export class AppoinmentService {
       console.warn(`Not found PCR-test-result with appointmentId: ${appointmentId}`)
     }
 
+    try {
+      await this.cloudTasks.createTask(
+        {
+          acuityID: appointment.acuityAppointmentId,
+          barCode: newBarCode,
+        },
+        '/reservation/internal/api/v1/appointments/sync-barcode-to-acuity',
+      )
+    } catch (err) {
+      //Safe To Ignore
+      LogInfo('AppoinmentService:addAppointmentLabel', 'FailedToCreateTaskToSyncBarCode', {
+        acuityID: appointment.acuityAppointmentId,
+        barCode: newBarCode,
+        errorMessage: err,
+      })
+    }
     return updatedAppoinment
   }
 
