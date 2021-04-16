@@ -124,16 +124,20 @@ export class AppoinmentService {
 
   async makeDeadlineRapidMinutes(
     appointment: AppointmentDBModel,
-    pcrTestResultId: string,
+    adminId: string,
   ): Promise<AppointmentDBModel> {
     const updatedAppointment = await this.appointmentsRepository.setDeadlineDate(
       appointment.id,
       makeRapidDeadline(),
     )
-    await this.pcrTestResultsRepository.updateProperty(
-      pcrTestResultId,
-      'deadline',
-      updatedAppointment.deadline,
+    this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+      appointment.id,
+      {
+        deadline:updatedAppointment.deadline,
+        deadlineDate: getFirestoreTimeStampDate(updatedAppointment.deadline),
+      },
+      PcrResultTestActivityAction.UpdateFromAppointment,
+      adminId,
     )
     return updatedAppointment
   }
@@ -912,10 +916,10 @@ export class AppoinmentService {
 
     await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
       data.appointment.id,
-        {
-          deadline,
-          deadlineDate: getFirestoreTimeStampDate(deadline),
-        },
+      {
+        deadline,
+        deadlineDate: getFirestoreTimeStampDate(deadline),
+      },
       PcrResultTestActivityAction.UpdateFromAppointment,
       data.actionBy,
     )
@@ -924,6 +928,7 @@ export class AppoinmentService {
       appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
     })
+
     await this.createCloudTaskToSyncLabelWithAcuity(
       data.appointment.acuityAppointmentId,
       data.deadlineLabel,
@@ -1345,24 +1350,14 @@ export class AppoinmentService {
       userId,
     )
 
-    const pcrTest = await this.pcrTestResultsRepository.findWhereEqual(
-      'appointmentId',
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
       appointmentId,
+      {
+        barCode: newBarCode,
+      },
+      PcrResultTestActivityAction.RegenerateBarcode,
+      userId,
     )
-
-    if (pcrTest.length) {
-      pcrTest.forEach(async (pcrTest) => {
-        await this.pcrTestResultsRepository.updateData({
-          id: pcrTest.id,
-          updates: {barCode: newBarCode},
-          actionBy: userId,
-          action: PcrResultTestActivityAction.RegenerateBarcode,
-        })
-        console.log(`regenerateBarCode: PCRTestID: ${pcrTest.id} New BarCode: ${newBarCode}`)
-      })
-    } else {
-      console.warn(`Not found PCR-test-result with appointmentId: ${appointmentId}`)
-    }
 
     try {
       await this.cloudTasks.createTask(
@@ -1547,6 +1542,8 @@ export class AppoinmentService {
       {
         dateTime: dateTimeData.dateTime,
         deadline: dateTimeData.deadline,
+        deadlineDate: getFirestoreTimeStampDate(dateTimeData.deadline),
+        dateOfAppointment: getFirestoreTimeStampDate(dateTimeData.dateTime),
       },
       PcrResultTestActivityAction.UpdateFromAppointment,
       requestData.userID,
