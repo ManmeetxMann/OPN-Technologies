@@ -1,4 +1,4 @@
-import {DeadlineLabel} from '../models/appointment'
+import {AppointmentDBModel, DeadlineLabel} from '../models/appointment'
 
 export enum BulkOperationStatus {
   Success = 'Success',
@@ -10,6 +10,7 @@ export type BulkOperationResponse = {
   barCode?: string
   status: BulkOperationStatus
   reason?: string
+  updatedData?: AppointmentDBModel
 }
 
 export type BulkData = {
