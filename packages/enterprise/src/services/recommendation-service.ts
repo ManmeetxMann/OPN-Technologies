@@ -130,6 +130,12 @@ export class RecommendationService {
           isToday ? Recommendations.CheckInPCR : Recommendations.BookingDetailsPCR,
         ]
       }
+      // checked in, but may still be in the future
+      if (appointment?.status === AppointmentStatus.CheckedIn) {
+        const alreadyHappened = moment(now()).isSameOrAfter(safeTimestamp(appointment.date))
+        if (!alreadyHappened)
+          return [Recommendations.CompleteAssessment, Recommendations.CheckInPCR]
+      }
       if (
         !latestTest ||
         !appointment ||
@@ -290,9 +296,7 @@ export class RecommendationService {
     let actions: Recommendations[] = []
     if (org.enableTemperatureCheck) {
       actions = this.getRecommendationsTemperature(items)
-    }
-    // TODO: better way to test if org is PCR only?
-    else if (items.PCRTestResult || items.scheduledPCRTest) {
+    } else if (org.enableTesting) {
       actions = this.getRecommendationsPCR(items)
     }
     // Default: attestation only

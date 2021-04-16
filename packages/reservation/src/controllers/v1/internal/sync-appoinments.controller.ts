@@ -33,7 +33,47 @@ class InternalSyncAppointmentController implements IControllerBase {
   }
 
   public initRoutes(): void {
-    this.router.post(this.path + '/sync', this.syncAppointmentFromAcuityToDB)
+    this.router.post(this.path + '/sync-labels-to-acuity', this.syncLabelsToAcuity)
+    this.router.post(this.path + '/sync-barcode-to-acuity', this.syncBarCodeToAcuity)
+    this.router.post(this.path + '/sync-from-acuity', this.syncAppointmentFromAcuityToDB)
+  }
+
+  syncBarCodeToAcuity = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const {acuityID, barCode} = req.body
+    try {
+      LogInfo('AppointmentWebhookController:syncBarCodeToAcuity', 'SyncBarcodeRequested', {
+        acuityID,
+        barCode,
+      })
+
+      await this.appoinmentService.addAppointmentBarCodeOnAcuity(acuityID, barCode)
+
+      res.json(actionSucceed(''))
+    } catch (error) {
+      LogError(`AppointmentWebhookController:syncBarCodeToAcuity`, 'FailedToProcessRequest', {
+        errorMessage: error.toString(),
+      })
+      next(error)
+    }
+  }
+
+  syncLabelsToAcuity = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const {acuityID, label} = req.body
+    try {
+      LogInfo('AppointmentWebhookController:syncLabelsToAcuity', 'SyncLabelsRequested', {
+        acuityID,
+        label,
+      })
+
+      await this.appoinmentService.addAppointmentLabelOnAcuity(acuityID, label)
+
+      res.json(actionSucceed(''))
+    } catch (error) {
+      LogError(`AppointmentWebhookController:syncLabelsToAcuity`, 'FailedToProcessRequest', {
+        errorMessage: error.toString(),
+      })
+      next(error)
+    }
   }
 
   syncAppointmentFromAcuityToDB = async (
@@ -55,13 +95,7 @@ class InternalSyncAppointmentController implements IControllerBase {
         appointmentTypeID,
         action,
       })
-      /*
-      //If there is delay in Acuity Processing then this can will protect in making multiple requests
-      const isSyncInProgress = await this.appoinmentService.isSyncingAlreadyInProgress(acuityID)
-      if (isSyncInProgress) {
-        throw new BadRequestException(`Sync is already in progress`)
-      }
-      */
+
       let acuityAppointment: AppointmentAcuityResponse = null
       try {
         acuityAppointment = await this.appoinmentService.getAppointmentByIdFromAcuity(acuityID)
@@ -113,10 +147,8 @@ class InternalSyncAppointmentController implements IControllerBase {
       } else {
         this.handleCreateAppointment(acuityAppointment, dataForUpdate)
       }
-      await this.appoinmentService.removeSyncInProgressForAcuity(acuityAppointment.id)
       res.json(actionSucceed(''))
     } catch (error) {
-      //await this.appoinmentService.removeSyncInProgressForAcuity(id)
       LogError(
         `AppointmentWebhookController:syncAppointmentFromAcuityToDB`,
         'FailedToProcessRequest',
@@ -184,7 +216,7 @@ class InternalSyncAppointmentController implements IControllerBase {
       }
 
       const {barCodeNumber, organizationId} = dataForUpdate
-      const barCode = acuityAppointment.barCode || barCodeNumber
+      const barCode = appointmentFromDb.barCode || barCodeNumber // Don't take Update Barcode from Acuity
       const updatedAppointment = await this.appoinmentService.updateAppointmentFromAcuity(
         appointmentFromDb,
         acuityAppointment,

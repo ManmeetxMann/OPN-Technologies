@@ -85,7 +85,7 @@ import {AttestationService} from '../../../passport/src/services/attestation-ser
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {PulseOxygenService} from './pulse-oxygen.service'
 
-import {BulkTestResultRequest} from '../models/test-results'
+import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results'
 import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 
@@ -112,6 +112,7 @@ export class PCRTestResultsService {
   private pulseOxygenService = new PulseOxygenService()
   private labService = new LabService()
   private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
+  private isAppointmentPushEnable = Config.get('APPOINTMENTS_PUSH_NOTIFY') === 'enabled'
 
   private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
     if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
@@ -226,14 +227,17 @@ export class PCRTestResultsService {
       ResultReportStatus.Processing,
     )
     try {
+      const metaData: TestResultsMetaData = {
+        notify: pcrResults.data.notify,
+        resultDate: pcrResults.data.resultDate,
+        action: pcrResults.data.action,
+        autoResult: pcrResults.data.autoResult,
+      }
+      if (pcrResults.data.comment) {
+        metaData.comment = pcrResults.data.comment
+      }
       const pcrTestResult = await this.handlePCRResultSaveAndSend({
-        metaData: {
-          notify: pcrResults.data.notify,
-          resultDate: pcrResults.data.resultDate,
-          action: pcrResults.data.action,
-          autoResult: pcrResults.data.autoResult,
-          comment: pcrResults.data.comment,
-        },
+        metaData,
         resultAnalysis: pcrResults.data.resultAnalysis,
         barCode: pcrResults.data.barCode,
         isSingleResult: false,
@@ -325,7 +329,7 @@ export class PCRTestResultsService {
         map: '/',
         key: 'organizationId',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: organizationId,
+        value: organizationId === 'null' ? null : organizationId,
       })
     }
 
@@ -378,12 +382,21 @@ export class PCRTestResultsService {
 
     //Apply for Corporate
     if (testType) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'testType',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: testType,
-      })
+      if (testType === TestTypes.allExceptAntigen) {
+        pcrTestResultsQuery.push({
+          map: '/',
+          key: 'testType',
+          operator: DataModelFieldMapOperatorType.NotEquals,
+          value: TestTypes.RapidAntigen,
+        })
+      } else {
+        pcrTestResultsQuery.push({
+          map: '/',
+          key: 'testType',
+          operator: DataModelFieldMapOperatorType.Equals,
+          value: testType,
+        })
+      }
     }
 
     if (searchQuery) {
@@ -432,10 +445,18 @@ export class PCRTestResultsService {
       ] as PCRTestResultDBModel[]
       pcrResults.sort((a, b) => b.sortOrder - a.sortOrder)
     } else {
-      pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
-        pcrTestResultsQuery,
-        result ? null : {key: 'sortOrder', direction: 'desc'},
-      )
+      if (testType === TestTypes.allExceptAntigen) {
+        pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+          pcrTestResultsQuery,
+          null,
+        )
+        pcrResults.sort((a, b) => b.sortOrder - a.sortOrder)
+      } else {
+        pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+          pcrTestResultsQuery,
+          result ? null : {key: 'sortOrder', direction: 'desc'},
+        )
+      }
     }
 
     const getResultValue = (result: ResultTypes, notify: boolean): ResultTypes => {
@@ -631,14 +652,18 @@ export class PCRTestResultsService {
     const labId = testResultData.labId
     const fileName = testResultData.fileName
     const pcrResults = testResultData.results.map((result) => {
+      const data = {
+        ...result,
+        resultDate,
+        templateId,
+        labId,
+        fileName: fileName || null,
+      }
+      if (result.comment) {
+        data.comment = result.comment
+      }
       return {
-        data: {
-          ...result,
-          resultDate,
-          templateId,
-          labId,
-          fileName: fileName || null,
-        },
+        data,
         status: ResultReportStatus.RequestReceived,
         adminId: adminId,
       }
@@ -1054,10 +1079,12 @@ export class PCRTestResultsService {
       ],
     })
 
-    await this.reservationPushService.sendPushByUserId(
-      resultData.userId,
-      ReservationPushTypes.reSample,
-    )
+    if (this.isAppointmentPushEnable) {
+      await this.reservationPushService.sendPushByUserId(
+        resultData.userId,
+        ReservationPushTypes.ready,
+      )
+    }
   }
 
   async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
@@ -1121,11 +1148,12 @@ export class PCRTestResultsService {
         },
       ],
     })
-
-    await this.reservationPushService.sendPushByUserId(
-      resultData.userId,
-      ReservationPushTypes.reSample,
-    )
+    if (this.isAppointmentPushEnable) {
+      await this.reservationPushService.sendPushByUserId(
+        resultData.userId,
+        ReservationPushTypes.reSample,
+      )
+    }
   }
 
   async updateTestResults(
@@ -1292,7 +1320,7 @@ export class PCRTestResultsService {
     )
     const pcrResultStatsByOrgIdArr = Object.entries(pcrResultStatsByOrgId).map(
       ([orgId, count]) => ({
-        id: orgId === 'undefined' ? null : orgId,
+        id: orgId === 'undefined' ? 'null' : orgId,
         name: orgId === 'undefined' ? 'None' : organizations[orgId],
         count,
       }),
