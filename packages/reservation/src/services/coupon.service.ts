@@ -1,7 +1,6 @@
 import {Config} from '../../../common/src/utils/config'
 import DataStore from '../../../common/src/data/datastore'
 
-import {Coupon} from '../models/coupons'
 import {AcuityRepository} from '../respository/acuity.repository'
 import {CouponRepository} from '../respository/coupon.repository'
 

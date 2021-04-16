@@ -791,29 +791,7 @@ export class AppoinmentService {
       transportRunId: data.transportRunId,
       labId: data.labId ?? null,
     })
-
-    const pcrResults = await this.pcrTestResultsRepository.getPCRResultsByAppointmentId(
-      appointmentId,
-    )
-    if (pcrResults.length === 0) {
-      const linkedBarCodes = await this.getlinkedBarcodes(savedAppointment.packageCode)
-      await this.pcrTestResultsRepository.createNewTestResults({
-        appointment: savedAppointment,
-        adminId: data.userId,
-        linkedBarCodes,
-        reCollectNumber: linkedBarCodes.length + 1,
-        runNumber: 1,
-        previousResult: null,
-        labId: data.labId,
-      })
-    } else {
-      await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
-        appointmentId,
-        {labId: data.labId, appointmentStatus: AppointmentStatus.InTransit},
-        PcrResultTestActivityAction.UpdateFromAppointment,
-        data.userId,
-      )
-    }
+    await this.createOrUpdatePCRResults(savedAppointment)
 
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
@@ -821,6 +799,31 @@ export class AppoinmentService {
       data.userId,
     )
     this.postPubsub(savedAppointment, 'updated')
+  }
+
+  private async createOrUpdatePCRResults(appointment: AppointmentDBModel) {
+    const pcrResults = await this.pcrTestResultsRepository.getPCRResultsByAppointmentId(
+      appointment.id,
+    )
+    if (pcrResults.length === 0) {
+      const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
+      await this.pcrTestResultsRepository.createNewTestResults({
+        appointment: appointment,
+        adminId: appointment.userId,
+        linkedBarCodes,
+        reCollectNumber: linkedBarCodes.length + 1,
+        runNumber: 1,
+        previousResult: null,
+        labId: appointment.labId,
+      })
+    } else {
+      await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+        appointment.id,
+        {labId: appointment.labId, appointmentStatus: AppointmentStatus.InTransit},
+        PcrResultTestActivityAction.UpdateFromAppointment,
+        appointment.userId,
+      )
+    }
   }
 
   private async checkAppointmentStatusOnly(
