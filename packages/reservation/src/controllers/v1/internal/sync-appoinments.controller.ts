@@ -318,6 +318,7 @@ class InternalSyncAppointmentController implements IControllerBase {
     appointment: AppointmentAcuityResponse,
   ): Promise<AcuityUpdateDTO> => {
     const dataForUpdate: AcuityUpdateDTO = {}
+    //TODO: RENAME barCodeNumber to barCode
     if (!appointment.barCode) {
       dataForUpdate['barCodeNumber'] = await this.appoinmentService.getNextBarCodeNumber()
     }
