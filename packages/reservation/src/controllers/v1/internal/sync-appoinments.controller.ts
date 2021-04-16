@@ -164,12 +164,13 @@ class InternalSyncAppointmentController implements IControllerBase {
   ): Promise<void> => {
     try {
       const {barCodeNumber, organizationId} = dataForUpdate
+      const barCode = acuityAppointment.barCode || barCodeNumber
 
       const savedAppointment = await this.appoinmentService.createAppointmentFromAcuity(
         acuityAppointment,
         {
           appointmentStatus: AppointmentStatus.Pending,
-          barCodeNumber,
+          barCodeNumber: barCode,
           latestResult: ResultTypes.Pending,
           organizationId,
         },

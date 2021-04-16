@@ -807,7 +807,7 @@ export class AppoinmentService {
     )
     if (pcrResults.length === 0) {
       const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
-      await this.pcrTestResultsRepository.createNewTestResults({
+      const pcrTest = await this.pcrTestResultsRepository.createNewTestResults({
         appointment: appointment,
         adminId: appointment.userId,
         linkedBarCodes,
@@ -815,6 +815,10 @@ export class AppoinmentService {
         runNumber: 1,
         previousResult: null,
         labId: appointment.labId,
+      })
+      LogInfo('AppoinmentService:createOrUpdatePCRResults', 'SuccessfullyCreatedNewPCRResult', {
+        id: pcrTest.id,
+        appointmentId: appointment.id,
       })
     } else {
       await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
