@@ -15,6 +15,7 @@ import {
   dateToDateTime,
   formatDateRFC822Local,
   formatStringDateRFC822Local,
+  getFirestoreTimeStampDate,
   makeDeadlineForFilter,
 } from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
@@ -1502,51 +1503,6 @@ export class PCRTestResultsService {
     return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
   }
 
-  public getlinkedBarcodes = async (couponCode: string): Promise<string[]> => {
-    let linkedBarcodes = []
-    if (couponCode) {
-      //Get Coupon
-      const coupon = await this.couponService.getByCouponCode(couponCode)
-      if (coupon) {
-        linkedBarcodes.push(coupon.lastBarcode)
-        try {
-          //Get Linked Barcodes for LastBarCode
-          const pcrResult = await this.pcrTestResultsRepository.getReCollectedTestResultByBarCode(
-            coupon.lastBarcode,
-          )
-          if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
-            linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
-          }
-        } catch (error) {
-          console.error(
-            `PCRTestResultsService: Coupon Code: ${couponCode} Last BarCode: ${
-              coupon.lastBarcode
-            }. No Test Results to Link. ${error.toString()}`,
-          )
-        }
-        console.log(
-          `PCRTestResultsService: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`,
-        )
-      } else {
-        console.log(`PCRTestResultsService: ${couponCode} is not coupon.`)
-      }
-    }
-    return linkedBarcodes
-  }
-
-  public async createTestResult(appointment: AppointmentDBModel): Promise<PCRTestResultDBModel> {
-    const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
-
-    return this.pcrTestResultsRepository.createNewTestResults({
-      appointment,
-      adminId: 'WEBHOOK',
-      linkedBarCodes,
-      reCollectNumber: linkedBarCodes.length + 1,
-      runNumber: 1,
-      previousResult: null,
-    })
-  }
-
   async getDueDeadlineStats(
     queryParams: PcrTestResultsListByDeadlineRequest,
   ): Promise<{
@@ -1899,5 +1855,60 @@ export class PCRTestResultsService {
     return tests.sort(
       (a, b) => new Date(b.testDateTime).getTime() - new Date(a.testDateTime).getTime(),
     )
+  }
+
+  async updatePCRResultsFromAcuity(
+    updatedAppointment: AppointmentDBModel,
+    actionBy: string,
+  ): Promise<PCRTestResultDBModel> {
+    try {
+      const pcrTestResult = await this.getWaitingPCRResultByAppointmentId(updatedAppointment.id)
+
+      if (updatedAppointment.appointmentStatus === AppointmentStatus.Canceled) {
+        await this.deleteTestResults(pcrTestResult.id)
+        LogInfo('PCRTestResultsService:updatePCRResultsFromAcuity', 'RemovedResults', {
+          appoinmentID: updatedAppointment.id,
+          pcrResultID: pcrTestResult.id,
+        })
+      } else {
+        const pcrResultDataForDb = {
+          adminId: actionBy,
+          appointmentId: updatedAppointment.id,
+          barCode: updatedAppointment.barCode,
+          displayInResult: true,
+          dateTime: updatedAppointment.dateTime,
+          deadline: updatedAppointment.deadline,
+          firstName: updatedAppointment.firstName,
+          lastName: updatedAppointment.lastName,
+          //linkedBarCodes: linkedBarcodes,
+          organizationId: updatedAppointment.organizationId,
+          deadlineDate: getFirestoreTimeStampDate(updatedAppointment.deadline),
+          dateOfAppointment: getFirestoreTimeStampDate(updatedAppointment.dateTime),
+          //result: ResultTypes.Pending,
+          //runNumber: 1 ,//Start the Run
+          //waitingResult: true,
+          testType: updatedAppointment.testType,
+          userId: updatedAppointment.userId,
+          appointmentStatus: updatedAppointment.appointmentStatus,
+        }
+
+        return await this.pcrTestResultsRepository.updateData({
+          id: pcrTestResult.id,
+          updates: pcrResultDataForDb,
+          action: PcrResultTestActivityAction.UpdateFromAcuity,
+          actionBy: actionBy,
+        })
+      }
+    } catch (error) {
+      LogWarning(
+        'PCRTestResultsService:updatePCRResultsFromAcuity',
+        'FailedToGetWaitingPCRResults',
+        {
+          acuityID: updatedAppointment.acuityAppointmentId,
+          appoinmentID: updatedAppointment.id,
+          errorMessage: error.toString(),
+        },
+      )
+    }
   }
 }

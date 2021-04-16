@@ -26,8 +26,8 @@ describe('Get admin-stats-v2', () => {
               },
             },
           })
-          .post(url,{
-            organizationId: "89BrZwateBqK4PvcBIP0"
+          .post(url, {
+            organizationId: '89BrZwateBqK4PvcBIP0',
           })
           .inspectBody()
           .expect('status', 200);
