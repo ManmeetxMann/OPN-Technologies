@@ -565,6 +565,7 @@ components:
                   - Negative
                   - Invalid
                   - Inconclusive
+                  - Indeterminate
               barCode:
                 type: string
                 minLength: 1
@@ -639,6 +640,7 @@ components:
             - Negative
             - Invalid
             - Inconclusive
+            - Indeterminate
         barCode:
           type: string
           minLength: 1
