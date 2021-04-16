@@ -77,12 +77,10 @@ const companyInfoHeader = (): Content => {
   }
 }
 
-const getFillColorForResultsCell = (result: ResultTypes): string => {
-  if (result === ResultTypes.PresumptivePositive) {
+const getFillColorForResultsCell = (result: string): string => {
+  if (result.toUpperCase() === 'POSITIVE' || result === '+') {
     return '#FF0000'
-  } else if (result === ResultTypes.Positive) {
-    return '#FF0000'
-  } else if (result === ResultTypes.Indeterminate) {
+  } else if (result.toUpperCase() === "INDERMINATE") {
     return '#B7B7B7'
   }
   return '#6AA84F'
@@ -175,7 +173,7 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
         body: [
           [
             {text: 'Type', bold: true},
-            {text: 'Antibody IgA, IgG, IgM Test', bold: true, colSpan: 4},
+            {text: 'Antibody IgG, IgM Test', bold: true, colSpan: 4},
           ],
           [
             {text: 'Antibody Specimen Type', bold: true},
@@ -196,48 +194,33 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
     {
       layout: 'mainTable',
       table: {
-        headerRows: 3,
-        widths: [150, 30, 40, 60, 90],
+        headerRows: 2,
+        widths: [150, 90, 150],
         body: [
           [
-            {text: 'Antibody Cut-off Index Values', bold: true, rowSpan: 3},
-            {text: 'IgA'},
-            {text: resultAnalysis(params.resultAnalysis, 'IgA')?.value},
-            {
-              text: resultAnalysis(params.resultAnalysis, 'IgAResult')?.value,
-              fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'IgAResult')?.value as ResultTypes,
-              ),
-            },
-            {
-              text:
-                'Reference Cut-off Index\n' +
-                '0.8 - < 1.0 = Indeterminate \n' +
-                '≥ 1.0 = Positive\n' +
-                '< 0.8 = Negative',
-              rowSpan: 3,
-            },
-          ],
-          [
-            {},
+            {text: 'Antibody Cut-off Index Values', bold: true, rowSpan: 2},
             {text: 'IgG'},
-            {text: resultAnalysis(params.resultAnalysis, 'IgG')?.value},
             {
               text: resultAnalysis(params.resultAnalysis, 'IgGResult')?.value,
+              bold: true,
               fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as ResultTypes,
+                resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as string,
               ),
+              fontSize: 12,
+              color: '#ffffff'
             },
           ],
           [
             {},
             {text: 'IgM'},
-            {text: resultAnalysis(params.resultAnalysis, 'IgM')?.value},
             {
               text: resultAnalysis(params.resultAnalysis, 'IgMResult')?.value,
+              bold: true,
               fillColor: getFillColorForResultsCell(
-                resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as ResultTypes,
+                resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as string,
               ),
+              fontSize: 12,
+              color: '#ffffff'
             },
           ],
         ],

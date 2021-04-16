@@ -31,6 +31,15 @@ const messageBody = (): Content => {
     },
     {
       text:
+        ' \n\nA negative test result means that SARS-CoV-2 specific antibodies were not present in the specimen above the limit of detection.' +
+        '  However, patients tested early after infection may not have detectable antibodies despite active infection; in addition,' +
+        '  it is not certain that all infected patients will develop a detectable antibody response to SARS-CoV2 infection.' +
+        '  A negative result should not be used to rule out infection. Direct testing of SARS-CoV-2 (PCR testing)' +
+        '  should be performed if acute infection is suspected.',
+      lineHeight: 1.1,
+    },/*KEPT FOR BACKUP. BUSINESS MIGHT WANT IT BACK SOON.Can be removed after April 30
+    {
+      text:
         ' \n\nThe human immune system antibody response has been studied for decades. In general, IgM' +
         ' isotype antibodies develop in 5 to 7 days and  usually remain in circulation for 2 to 4 months.' +
         ' IgG isotype antibodies develop after 10 days and remain in circulation longer. The onset and' +
@@ -81,7 +90,7 @@ const messageBody = (): Content => {
         ' Long, Q et al. (2020). Antibody responses to SARS-CoV-2 in COVID-19 patients: the perspective' +
         ' application of serological tests in clinical  practice. 10.1101/2020.03.18.20038018.',
       lineHeight: 1.1,
-    },
+    },*/
   ]
 
   return {

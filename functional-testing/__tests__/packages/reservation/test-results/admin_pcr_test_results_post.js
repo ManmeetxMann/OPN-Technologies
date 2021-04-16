@@ -31,9 +31,9 @@ describe('PCR TestResultsController', () => {
           .post(
               url,
               {
-                'action': 'ReRunToday',
-                'autoResult': 'Negative',
-                'barCode': 'TEST10000146',
+                'action': 'SendThisResult',
+                'autoResult': 'Inderminate',
+                'barCode': 'TEST10000548',
                 // 'comment': 'AWESOM',
                 'labId': 'k0qbPDqTwqitKUwlGHye',
                 'templateId': 'template2',
@@ -53,15 +53,15 @@ describe('PCR TestResultsController', () => {
                   },
                   {
                     'label': 'IgAResult',
-                    'value': '4',
+                    'value': '',
                   },
                   {
                     'label': 'IgGResult',
-                    'value': '5',
+                    'value': 'Negative',
                   },
                   {
                     'label': 'IgMResult',
-                    'value': '6',
+                    'value': 'Negative',
                   }],
                 'resultDate': todaysDate,
                 'sendUpdatedResults': true,
