@@ -134,7 +134,7 @@ export class AppoinmentService {
       appointment.id,
       makeRapidDeadline(),
     )
-    this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
       appointment.id,
       {
         deadline: updatedAppointment.deadline,
