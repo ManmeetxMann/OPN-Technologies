@@ -64,7 +64,7 @@ class AdminScanHistoryController implements IControllerBase {
           appointment.id,
         )
 
-        await this.appointmentService.makeDeadlineRapidMinutes(appointment, pcrTest.id)
+        await this.appointmentService.makeDeadlineRapidMinutes(appointment, adminId)
         appointment = await this.appointmentService.makeInProgress(appointment.id, null, adminId)
       }
 
