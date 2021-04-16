@@ -1,6 +1,6 @@
 // NestJs
 import {NestFactory} from '@nestjs/core'
-import {Module} from '@nestjs/common'
+import {Module, ValidationPipe} from '@nestjs/common'
 
 import {
   DatabaseConfiguration,
@@ -8,23 +8,31 @@ import {
 } from './configuration/database.configuration'
 
 import {AdminV1UserController} from './controller/admin/v1/user.controller'
+import {PatientController} from './controller/public/v1/patient.controller'
 
 import {UserService} from './service/user/user.service'
 import {OrganizationService} from './service/organization/organization.service'
 import {LocationService} from './service/organization/location.service'
 import {GroupService} from './service/organization/group.service'
+import {PatientService} from './service/patient/patient.service'
 
 import {CommonModule, createSwagger} from '@opn/common'
 
 @Module({
   imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],
-  controllers: [AdminV1UserController],
-  providers: [OrganizationService, LocationService, GroupService, UserService],
+  controllers: [AdminV1UserController, PatientController],
+  providers: [OrganizationService, LocationService, GroupService, UserService, PatientService],
 })
 class App {}
 
 async function bootstrap() {
   const app = await NestFactory.create(App)
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      forbidUnknownValues: true,
+    }),
+  )
 
   createSwagger(app)
 
