@@ -75,6 +75,8 @@ import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-s
 import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 import {AppointmentToTestTypeRepository} from '../respository/appointment-to-test-type-association.repository'
+import {CouponRepository} from '../respository/coupon.repository'
+
 import {AppointmentTypes} from '../models/appointment-types'
 import {PackageService} from './package.service'
 import {firestore} from 'firebase-admin'
@@ -89,6 +91,8 @@ export class AppoinmentService {
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
   private appointmentToTestTypeRepository = new AppointmentToTestTypeRepository(this.dataStore)
+  private couponRepository = new CouponRepository(this.dataStore)
+
   private organizationService = new OrganizationService()
   private userAddressService = new UserAddressService()
   private labService = new LabService()
@@ -782,10 +786,21 @@ export class AppoinmentService {
   }
 
   async addTransportRun(appointmentId: string, data: UpdateTransPortRun): Promise<void> {
-    const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
+    const savedAppointment = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.InTransit,
       transportRunId: data.transportRunId,
       labId: data.labId ?? null,
+    })
+
+    const linkedBarCodes = await this.getlinkedBarcodes(savedAppointment.packageCode)
+
+    await this.pcrTestResultsRepository.createNewTestResults({
+      appointment:savedAppointment,
+      adminId: data.userId,
+      linkedBarCodes,
+      reCollectNumber: linkedBarCodes.length + 1,
+      runNumber: 1,
+      previousResult: null,
     })
 
     await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
@@ -800,7 +815,7 @@ export class AppoinmentService {
       AppointmentStatus.InTransit,
       data.userId,
     )
-    this.postPubsub(saved, 'updated')
+    this.postPubsub(savedAppointment, 'updated')
   }
 
   private async checkAppointmentStatusOnly(
@@ -1635,5 +1650,40 @@ export class AppoinmentService {
     batchAppointments: DbBatchAppointments[],
   ): Promise<unknown[]> {
     return this.appointmentsRepository.removeBatchScheduledPushesToSend(batchAppointments)
+  }
+
+  async getlinkedBarcodes (couponCode: string): Promise<string[]> {
+    let linkedBarcodes = []
+    if (couponCode) {
+      //Get Coupon
+      const coupon = await this.couponRepository.getByCouponCode(couponCode)
+      if (coupon) {
+        linkedBarcodes.push(coupon.lastBarcode)
+        try {
+          //Get Linked Barcodes for LastBarCode
+          const pcrResult = await this.pcrTestResultsRepository.getReCollectedTestResultByBarCode(
+            coupon.lastBarcode,
+          )
+          if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
+            linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
+          }
+        } catch (error) {
+          LogWarning('AppoinmentService:getlinkedBarcodes', 'NoCouponCodeFound', {
+            couponCode,
+            barCode: coupon.lastBarcode,
+            errorMessage: error.toString(),
+          })
+        }
+        LogInfo('AppoinmentService:getlinkedBarcodes', 'NoCouponCodeFound', {
+          couponCode,
+          linkedBarcodes
+        })
+      } else {
+        LogInfo('AppoinmentService:getlinkedBarcodes', 'NoCouponCodeFound', {
+          couponCode
+        })
+      }
+    }
+    return linkedBarcodes
   }
 }

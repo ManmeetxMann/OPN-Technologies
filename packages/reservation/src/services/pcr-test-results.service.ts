@@ -1503,51 +1503,6 @@ export class PCRTestResultsService {
     return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
   }
 
-  public getlinkedBarcodes = async (couponCode: string): Promise<string[]> => {
-    let linkedBarcodes = []
-    if (couponCode) {
-      //Get Coupon
-      const coupon = await this.couponService.getByCouponCode(couponCode)
-      if (coupon) {
-        linkedBarcodes.push(coupon.lastBarcode)
-        try {
-          //Get Linked Barcodes for LastBarCode
-          const pcrResult = await this.pcrTestResultsRepository.getReCollectedTestResultByBarCode(
-            coupon.lastBarcode,
-          )
-          if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
-            linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
-          }
-        } catch (error) {
-          console.error(
-            `PCRTestResultsService: Coupon Code: ${couponCode} Last BarCode: ${
-              coupon.lastBarcode
-            }. No Test Results to Link. ${error.toString()}`,
-          )
-        }
-        console.log(
-          `PCRTestResultsService: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`,
-        )
-      } else {
-        console.log(`PCRTestResultsService: ${couponCode} is not coupon.`)
-      }
-    }
-    return linkedBarcodes
-  }
-
-  public async createTestResult(appointment: AppointmentDBModel): Promise<PCRTestResultDBModel> {
-    const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
-
-    return this.pcrTestResultsRepository.createNewTestResults({
-      appointment,
-      adminId: 'WEBHOOK',
-      linkedBarCodes,
-      reCollectNumber: linkedBarCodes.length + 1,
-      runNumber: 1,
-      previousResult: null,
-    })
-  }
-
   async getDueDeadlineStats(
     queryParams: PcrTestResultsListByDeadlineRequest,
   ): Promise<{
@@ -1915,9 +1870,6 @@ export class PCRTestResultsService {
           pcrResultID: pcrTestResult.id,
         })
       } else {
-        const linkedBarcodes = await this.getlinkedBarcodes(
-          updatedAppointment.packageCode,
-        )
         const pcrResultDataForDb = {
           adminId: actionBy,
           appointmentId: updatedAppointment.id,
@@ -1927,7 +1879,7 @@ export class PCRTestResultsService {
           deadline: updatedAppointment.deadline,
           firstName: updatedAppointment.firstName,
           lastName: updatedAppointment.lastName,
-          linkedBarCodes: linkedBarcodes,
+          //linkedBarCodes: linkedBarcodes,
           organizationId: updatedAppointment.organizationId,
           deadlineDate: getFirestoreTimeStampDate(updatedAppointment.deadline),
           dateOfAppointment: getFirestoreTimeStampDate(updatedAppointment.dateTime),

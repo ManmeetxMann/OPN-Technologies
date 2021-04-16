@@ -9,14 +9,6 @@ export class CouponService {
   private couponRepository = new CouponRepository(new DataStore())
   private acuityRepository = new AcuityRepository()
 
-  async getByCouponCode(couponCode: string): Promise<Coupon> {
-    const result = await this.couponRepository.findWhereEqual('couponCode', couponCode)
-    if (result.length > 1) {
-      console.log(`getByCouponCode: More than 1 result for the couponCode ${couponCode}`)
-    }
-    return result[0]
-  }
-
   async saveCoupon(couponCode: string, organizationId: string, lastBarcode: string): Promise<void> {
     await this.couponRepository.add({
       couponCode,
