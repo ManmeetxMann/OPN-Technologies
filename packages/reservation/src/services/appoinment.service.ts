@@ -912,7 +912,10 @@ export class AppoinmentService {
 
     await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
       data.appointment.id,
-      {deadline},
+        {
+          deadline,
+          deadlineDate: getFirestoreTimeStampDate(deadline),
+        },
       PcrResultTestActivityAction.UpdateFromAppointment,
       data.actionBy,
     )
