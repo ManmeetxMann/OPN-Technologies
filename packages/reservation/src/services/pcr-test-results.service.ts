@@ -1857,11 +1857,12 @@ export class PCRTestResultsService {
     )
   }
 
-  async updatePCRResultsFromAcuity(updatedAppointment: AppointmentDBModel, actionBy: string): Promise<PCRTestResultDBModel>{
+  async updatePCRResultsFromAcuity(
+    updatedAppointment: AppointmentDBModel,
+    actionBy: string,
+  ): Promise<PCRTestResultDBModel> {
     try {
-      const pcrTestResult = await this.getWaitingPCRResultByAppointmentId(
-        updatedAppointment.id,
-      )
+      const pcrTestResult = await this.getWaitingPCRResultByAppointmentId(updatedAppointment.id)
 
       if (updatedAppointment.appointmentStatus === AppointmentStatus.Canceled) {
         await this.deleteTestResults(pcrTestResult.id)
@@ -1892,19 +1893,22 @@ export class PCRTestResultsService {
         }
 
         return await this.pcrTestResultsRepository.updateData({
-          id:pcrTestResult.id,
+          id: pcrTestResult.id,
           updates: pcrResultDataForDb,
           action: PcrResultTestActivityAction.UpdateFromAcuity,
           actionBy: actionBy,
         })
       }
     } catch (error) {
-      LogWarning('PCRTestResultsService:updatePCRResultsFromAcuity', 'FailedToGetWaitingPCRResults', {
-        acuityID: updatedAppointment.acuityAppointmentId,
-        appoinmentID: updatedAppointment.id,
-        errorMessage: error.toString(),
-      })
+      LogWarning(
+        'PCRTestResultsService:updatePCRResultsFromAcuity',
+        'FailedToGetWaitingPCRResults',
+        {
+          acuityID: updatedAppointment.acuityAppointmentId,
+          appoinmentID: updatedAppointment.id,
+          errorMessage: error.toString(),
+        },
+      )
     }
   }
-
 }

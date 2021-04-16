@@ -178,7 +178,6 @@ class InternalSyncAppointmentController implements IControllerBase {
         acuityID: acuityAppointment.id,
         appointmentID: savedAppointment.id,
       })
-
     } catch (e) {
       LogError('CreateAppointmentFromWebhook', 'FailedToCreateAppointment', {
         acuityID: acuityAppointment.id,
@@ -223,14 +222,21 @@ class InternalSyncAppointmentController implements IControllerBase {
         barCode: barCode,
       })
       const noResultEntryStatus = [AppointmentStatus.Pending, AppointmentStatus.CheckedIn]
-      if(!noResultEntryStatus.includes(updatedAppointment.appointmentStatus)){
-        const pcrTestResult = await this.pcrTestResultsService.updatePCRResultsFromAcuity(updatedAppointment, 'WEBHOOK')
-        LogInfo('InternalSyncAppointmentController:handleUpdateAppointment', 'UpdatedPCRResultsSuccessfully', {
-          appointmentID: updatedAppointment.id,
-          pcrResultID: pcrTestResult.id,
-          acuityID: acuityAppointment.id,
-          barCode: barCode,
-        })
+      if (!noResultEntryStatus.includes(updatedAppointment.appointmentStatus)) {
+        const pcrTestResult = await this.pcrTestResultsService.updatePCRResultsFromAcuity(
+          updatedAppointment,
+          'WEBHOOK',
+        )
+        LogInfo(
+          'InternalSyncAppointmentController:handleUpdateAppointment',
+          'UpdatedPCRResultsSuccessfully',
+          {
+            appointmentID: updatedAppointment.id,
+            pcrResultID: pcrTestResult.id,
+            acuityID: acuityAppointment.id,
+            barCode: barCode,
+          },
+        )
       }
     } catch (e) {
       if (acuityAppointment.canceled) {

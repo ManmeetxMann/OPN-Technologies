@@ -137,7 +137,7 @@ export class AppoinmentService {
     this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
       appointment.id,
       {
-        deadline:updatedAppointment.deadline,
+        deadline: updatedAppointment.deadline,
         deadlineDate: getFirestoreTimeStampDate(updatedAppointment.deadline),
       },
       PcrResultTestActivityAction.UpdateFromAppointment,
@@ -792,23 +792,28 @@ export class AppoinmentService {
       labId: data.labId ?? null,
     })
 
-    const linkedBarCodes = await this.getlinkedBarcodes(savedAppointment.packageCode)
-
-    await this.pcrTestResultsRepository.createNewTestResults({
-      appointment:savedAppointment,
-      adminId: data.userId,
-      linkedBarCodes,
-      reCollectNumber: linkedBarCodes.length + 1,
-      runNumber: 1,
-      previousResult: null,
-    })
-
-    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+    const pcrResults = await this.pcrTestResultsRepository.getPCRResultsByAppointmentId(
       appointmentId,
-      {labId: data.labId, appointmentStatus: AppointmentStatus.InTransit},
-      PcrResultTestActivityAction.UpdateFromAppointment,
-      data.userId,
     )
+    if (pcrResults.length === 0) {
+      const linkedBarCodes = await this.getlinkedBarcodes(savedAppointment.packageCode)
+      await this.pcrTestResultsRepository.createNewTestResults({
+        appointment: savedAppointment,
+        adminId: data.userId,
+        linkedBarCodes,
+        reCollectNumber: linkedBarCodes.length + 1,
+        runNumber: 1,
+        previousResult: null,
+        labId: data.labId,
+      })
+    } else {
+      await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+        appointmentId,
+        {labId: data.labId, appointmentStatus: AppointmentStatus.InTransit},
+        PcrResultTestActivityAction.UpdateFromAppointment,
+        data.userId,
+      )
+    }
 
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
@@ -1652,7 +1657,7 @@ export class AppoinmentService {
     return this.appointmentsRepository.removeBatchScheduledPushesToSend(batchAppointments)
   }
 
-  async getlinkedBarcodes (couponCode: string): Promise<string[]> {
+  async getlinkedBarcodes(couponCode: string): Promise<string[]> {
     let linkedBarcodes = []
     if (couponCode) {
       //Get Coupon
@@ -1676,11 +1681,11 @@ export class AppoinmentService {
         }
         LogInfo('AppoinmentService:getlinkedBarcodes', 'NoCouponCodeFound', {
           couponCode,
-          linkedBarcodes
+          linkedBarcodes,
         })
       } else {
         LogInfo('AppoinmentService:getlinkedBarcodes', 'NoCouponCodeFound', {
-          couponCode
+          couponCode,
         })
       }
     }
