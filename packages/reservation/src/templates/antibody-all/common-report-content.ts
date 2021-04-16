@@ -4,7 +4,6 @@ import {TableLayouts, Content} from '../../../../common/src/service/reports/pdf-
 import {Config} from '../../../../common/src/utils/config'
 import {RapidAntigenEmailResultDTO} from '../../models/rapid-antigen-test-results'
 import {Spec} from '../../models/pcr-test-results'
-import {ResultTypes} from '../../models/appointment'
 
 const tableLayouts: TableLayouts = {
   mainTable: {
@@ -80,7 +79,7 @@ const companyInfoHeader = (): Content => {
 const getFillColorForResultsCell = (result: string): string => {
   if (result.toUpperCase() === 'POSITIVE' || result === '+') {
     return '#FF0000'
-  } else if (result.toUpperCase() === "INDERMINATE") {
+  } else if (result.toUpperCase() === 'INDETERMINATE') {
     return '#B7B7B7'
   }
   return '#6AA84F'
@@ -184,6 +183,10 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
             {text: 'Chemiluminescence', colSpan: 4},
           ],
           [
+            {text: 'Test Equipment', bold: true},
+            {text: 'Approved by Health Canada (IO authorization 312782)', colSpan: 4},
+          ],
+          [
             {text: 'Indication', bold: true},
             {text: 'Suspected Exposure to COVID-19', colSpan: 4},
           ],
@@ -207,7 +210,7 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
                 resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as string,
               ),
               fontSize: 12,
-              color: '#ffffff'
+              color: '#ffffff',
             },
           ],
           [
@@ -220,7 +223,7 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
                 resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as string,
               ),
               fontSize: 12,
-              color: '#ffffff'
+              color: '#ffffff',
             },
           ],
         ],

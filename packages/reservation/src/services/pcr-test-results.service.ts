@@ -106,6 +106,7 @@ export class PCRTestResultsService {
     ResultTypes.Negative,
     ResultTypes.Positive,
     ResultTypes.PresumptivePositive,
+    ResultTypes.Indeterminate,
   ]
   private testRunsService = new TestRunsService()
   private attestationService = new AttestationService()
