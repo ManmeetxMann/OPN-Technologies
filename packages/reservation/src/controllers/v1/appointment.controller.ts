@@ -108,13 +108,6 @@ class AppointmentController implements IControllerBase {
         packageCode,
       })
 
-      if (savedAppointment) {
-        const pcrTestResult = await this.pcrTestResultsService.createTestResult(savedAppointment)
-        console.log(
-          `AppointmentWebhookController: CreateAppointment: SuccessCreatePCRResults for AppointmentID: ${savedAppointment.id} PCR Results ID: ${pcrTestResult.id}`,
-        )
-      }
-
       res.json(actionSucceed())
     } catch (error) {
       next(error)
