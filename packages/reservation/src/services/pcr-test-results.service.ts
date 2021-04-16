@@ -1013,7 +1013,8 @@ export class PCRTestResultsService {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
         } else if (
           resultData.result === ResultTypes.Indeterminate &&
-          resultData.testType === TestTypes.Antibody_All
+          (resultData.testType === TestTypes.Antibody_All ||
+            resultData.testType === TestTypes.Antibody_IgM)
         ) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Intermediate)
         } else {
