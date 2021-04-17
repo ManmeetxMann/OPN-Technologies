@@ -791,7 +791,7 @@ export class AppoinmentService {
       transportRunId: data.transportRunId,
       labId: data.labId ?? null,
     })
-    await this.createOrUpdatePCRResults(savedAppointment)
+    await this.createOrUpdatePCRResults(savedAppointment, data.userId)
 
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
@@ -801,7 +801,7 @@ export class AppoinmentService {
     this.postPubsub(savedAppointment, 'updated')
   }
 
-  private async createOrUpdatePCRResults(appointment: AppointmentDBModel) {
+  private async createOrUpdatePCRResults(appointment: AppointmentDBModel, adminId: string) {
     const pcrResults = await this.pcrTestResultsRepository.getPCRResultsByAppointmentId(
       appointment.id,
     )
@@ -809,7 +809,7 @@ export class AppoinmentService {
       const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
       const pcrTest = await this.pcrTestResultsRepository.createNewTestResults({
         appointment: appointment,
-        adminId: appointment.userId,
+        adminId,
         linkedBarCodes,
         reCollectNumber: linkedBarCodes.length + 1,
         runNumber: 1,
