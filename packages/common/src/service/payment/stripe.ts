@@ -9,10 +9,7 @@ export class StripeService {
     return await this.stripe.customers.create()
   }
 
-  async customerEphemeralKeys(customerId): Promise<Stripe.EphemeralKey> {
-    return this.stripe.ephemeralKeys.create(
-      {customer: 'cus_JJ0T3QA6kYrv9M'},
-      {apiVersion: this.apiVersion},
-    )
+  async customerEphemeralKeys(customer: string): Promise<Stripe.EphemeralKey> {
+    return this.stripe.ephemeralKeys.create({customer}, {apiVersion: this.apiVersion})
   }
 }

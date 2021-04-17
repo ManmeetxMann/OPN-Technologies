@@ -83,7 +83,7 @@ class CartController implements IControllerBase {
       const authenticatedUser = res.locals.authenticatedUser as AuthUser
       const organizationId = req.headers.organizationid as string
 
-      this.userCardService.addItems(authenticatedUser, cartItems, organizationId)
+      await this.userCardService.addItems(authenticatedUser, cartItems, organizationId)
       res.json(actionSucceed())
     } catch (error) {
       next(error)
@@ -104,7 +104,7 @@ class CartController implements IControllerBase {
       const authenticatedUser = res.locals.authenticatedUser as AuthUser
       const organizationId = req.headers.organizationid as string
 
-      this.userCardService.deleteItem(authenticatedUser, cartItemId, organizationId)
+      await this.userCardService.deleteItem(authenticatedUser, cartItemId, organizationId)
       res.json(actionSucceed({}))
     } catch (error) {
       next(error)

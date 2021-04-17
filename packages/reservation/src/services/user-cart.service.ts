@@ -81,7 +81,11 @@ export class UserCardService {
     }
   }
 
-  async addItems(authenticatedUser: AuthUser, items: CartRequest[], organizationId: string) {
+  async addItems(
+    authenticatedUser: AuthUser,
+    items: CartRequest[],
+    organizationId: string,
+  ): Promise<void> {
     const userId = getUserId(authenticatedUser)
     const userOrgId = `${userId}_${organizationId}`
     const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
@@ -105,7 +109,11 @@ export class UserCardService {
     await this.userCartRepository.addBatch(userOrgId, cardItemDdModel)
   }
 
-  async deleteItem(authenticatedUser: AuthUser, cartItemId: string, organizationId: string) {
+  async deleteItem(
+    authenticatedUser: AuthUser,
+    cartItemId: string,
+    organizationId: string,
+  ): Promise<void> {
     const userId = getUserId(authenticatedUser)
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
