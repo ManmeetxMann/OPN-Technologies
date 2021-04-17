@@ -801,7 +801,7 @@ export class AppoinmentService {
     this.postPubsub(savedAppointment, 'updated')
   }
 
-  private async createOrUpdatePCRResults(appointment: AppointmentDBModel, adminId: string) {
+  async createOrUpdatePCRResults(appointment: AppointmentDBModel, adminId: string): Promise<void> {
     const pcrResults = await this.pcrTestResultsRepository.getPCRResultsByAppointmentId(
       appointment.id,
     )
