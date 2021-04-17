@@ -4,8 +4,7 @@ import DataModel from '../../../common/src/data/datamodel.base'
 import DataStore from '../../../common/src/data/datastore'
 
 // Models
-import {UserOrganization} from '../../../enterprise/src/models/user'
-import {CartRequest, CardItemDBModel, UserCart} from '../models/cart'
+import {CardItemDBModel, UserCart} from '../models/cart'
 
 /**
  * TODO:
@@ -19,11 +18,11 @@ export class UserCartRepository extends DataModel<UserCart> {
     super(dataStore)
   }
 
-  addBatch(userId: string, items: Omit<CardItemDBModel, 'id'>[]) {
+  async addBatch(userOrgId: string, items: Omit<CardItemDBModel, 'id'>[]): Promise<unknown> {
     const cartCollection = this.datastore.firestoreORM.collection({path: this.rootPath})
     const batch = this.datastore.firestoreAdmin.firestore().batch()
 
-    const userDoc = cartCollection.docRef(userId)
+    const userDoc = cartCollection.docRef(userOrgId)
     const userItems = userDoc.collection('items')
 
     // Add all items
@@ -35,7 +34,7 @@ export class UserCartRepository extends DataModel<UserCart> {
     // Update cart time
     batch.set(userDoc, {updateOn: now()})
 
-    batch.commit()
+    return batch.commit()
   }
 }
 

@@ -3,6 +3,7 @@ import {v4 as uuid} from 'uuid'
 
 // Common
 import DataStore from '../../../common/src/data/datastore'
+import {AuthUser} from '../../../common/src/data/user'
 
 // Provider
 import {AcuityRepository} from '../respository/acuity.repository'
@@ -13,18 +14,27 @@ import {CartRequest, CartResponse, CartItemResponse, CartSummaryResponse} from '
 
 // Utils
 import {decodeAvailableTimeId} from '../utils/base64-converter'
+import {getUserId} from '../../../common/src/utils/auth'
 
+/**
+ * Stores cart items under ${userId}_${organizationId} key in user-cart collection
+ */
 export class UserCardService {
   private dataStore = new DataStore()
   private acuityRepository = new AcuityRepository()
   private userCartRepository = new UserCartRepository(this.dataStore)
-  private paymentTax = 0.13
+
+  private htsTax = 0.13
 
   private buildPaymentSummary(cartItems: CartItemResponse[]): CartSummaryResponse[] {
     const round = (num) => Math.round(num * 100) / 100
     const sum = cartItems.reduce((sum, item) => sum + (item.price || 0), 0)
-    const tax = round(sum * this.paymentTax)
+    const tax = round(sum * this.htsTax)
     const total = sum + tax
+
+    if (total == 0) {
+      return []
+    }
 
     const paymentSummary = [
       {
@@ -35,7 +45,7 @@ export class UserCardService {
       },
       {
         uid: 'tax',
-        label: 'SUBTOTAL',
+        label: `TAX (HST -${this.htsTax * 100}%)`,
         amount: tax,
         currency: 'CAD',
       },
@@ -50,9 +60,10 @@ export class UserCardService {
     return paymentSummary
   }
 
-  async getUserCart(userId: string): Promise<CartResponse> {
-    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userId)
-
+  async getUserCart(authenticatedUser: AuthUser, organizationId: string): Promise<CartResponse> {
+    const userId = getUserId(authenticatedUser)
+    const userOrgId = `${userId}_${organizationId}`
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
     const cartDBItems = await userCartItemRepository.fetchAll()
 
     const cartItems = cartDBItems.map((cartDB) => ({
@@ -70,7 +81,9 @@ export class UserCardService {
     }
   }
 
-  async addItems(userId: string, items: CartRequest[]) {
+  async addItems(authenticatedUser: AuthUser, items: CartRequest[], organizationId: string) {
+    const userId = getUserId(authenticatedUser)
+    const userOrgId = `${userId}_${organizationId}`
     const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
 
     const cardItemDdModel = items.map((item) => {
@@ -89,8 +102,16 @@ export class UserCardService {
       }
     })
 
-    this.userCartRepository.addBatch(userId, cardItemDdModel)
+    await this.userCartRepository.addBatch(userOrgId, cardItemDdModel)
   }
 
-  deleteItem() {}
+  async deleteItem(authenticatedUser: AuthUser, cartItemId: string, organizationId: string) {
+    const userId = getUserId(authenticatedUser)
+    const userOrgId = `${userId}_${organizationId}`
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+
+    const cartItem = await userCartItemRepository.findWhereEqual('cartItemId', cartItemId)
+    const cartId = cartItem[0].id
+    await userCartItemRepository.delete(cartId)
+  }
 }
