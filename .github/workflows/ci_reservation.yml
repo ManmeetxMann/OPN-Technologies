@@ -8,6 +8,7 @@ on:
       - ".github/actions/**"
     branches: 
       - master
+      - testing 
     tags:
       - infra-dev-reservation-*
       - infra-dev-all-*

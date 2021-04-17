@@ -43,7 +43,7 @@ import {CommentService} from '../../../services/comment.service'
 import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
 import {commentsDTO} from '../../../models/comment'
 import {UserService} from '../../../../../enterprise/src/services/user-service'
-import {validateAnalysis, normalizeAnalysis} from '../../../utils/analysis.helper'
+import {validateAnalysis} from '../../../utils/analysis.helper'
 import {LabService} from '../../../services/lab.service'
 
 class AdminPCRTestResultController implements IControllerBase {
@@ -203,7 +203,7 @@ class AdminPCRTestResultController implements IControllerBase {
 
       const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend({
         metaData,
-        resultAnalysis: normalizeAnalysis(resultAnalysis),
+        resultAnalysis: resultAnalysis,
         barCode,
         isSingleResult: true,
         sendUpdatedResults,

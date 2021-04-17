@@ -3,6 +3,7 @@ import {NextFunction, Request, Response, Router} from 'express'
 import IControllerBase from '../../../../../common/src/interfaces/IControllerBase.interface'
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {LogInfo, LogWarning} from '../../../../../common/src/utils/logging-setup'
+import {Config} from '../../../../../common/src/utils/config'
 
 //Services
 import {ReservationPushService} from '../../../services/reservation-push.service'
@@ -11,6 +12,7 @@ class InternalSendAppointmentPushController implements IControllerBase {
   public router = Router()
 
   private ReservationPushService = new ReservationPushService()
+  private isAppointmentPushEnable = Config.get('APPOINTMENTS_PUSH_NOTIFY') === 'enabled'
 
   constructor() {
     this.initRoutes()
@@ -23,10 +25,12 @@ class InternalSendAppointmentPushController implements IControllerBase {
    */
   public initRoutes(): void {
     const innerRouter = Router({mergeParams: true})
-    innerRouter.post(
-      this.path + '/api/v1/trigger-appointments-push-reminder',
-      this.triggerAppointmentsPushReminder,
-    )
+    if (this.isAppointmentPushEnable) {
+      innerRouter.post(
+        this.path + '/api/v1/trigger-appointments-push-reminder',
+        this.triggerAppointmentsPushReminder,
+      )
+    }
     this.router.use('/', innerRouter)
   }
 

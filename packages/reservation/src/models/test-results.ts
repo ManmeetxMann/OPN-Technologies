@@ -24,7 +24,7 @@ export type TestResultsMetaData = {
   resultDate: Date
   action: PCRResultActions
   autoResult: ResultTypes
-  comment: string
+  comment?: string
 }
 
 export type BulkTestResultRequest = {

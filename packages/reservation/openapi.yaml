@@ -565,6 +565,7 @@ components:
                   - Negative
                   - Invalid
                   - Inconclusive
+                  - Indeterminate
               barCode:
                 type: string
                 minLength: 1
@@ -639,6 +640,7 @@ components:
             - Negative
             - Invalid
             - Inconclusive
+            - Indeterminate
         barCode:
           type: string
           minLength: 1
@@ -1371,6 +1373,10 @@ paths:
           schema:
             type: string
         - in: query
+          name: labId
+          schema:
+            type: string
+        - in: query
           name: barCode
           schema:
             type: string
@@ -2020,6 +2026,7 @@ paths:
               - EmergencyRapidAntigen
               - Antibody_All
               - Antibody_IgM
+              - allExceptAntigen
         - in: query
           name: result
           schema:
@@ -2187,16 +2194,71 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-  /reservation/internal/api/v1/appointments/sync:
+  /reservation/internal/api/v1/appointments/sync-from-acuity:
     post:
       description: Sync Appointments
       tags:
-        - Test Results Management
+        - Appointment Management
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/AppointmentsSyncRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/appointments/sync-labels-to-acuity:
+    post:
+      description: Sync Labels to Acuity
+      tags:
+        - Appointment Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                acuityID:
+                  type: number
+                label:
+                  type: string
+                  enum:
+                    - SAMEDAY
+                    - NEXTDAY
+              required:
+                - acuityID
+                - label
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/appointments/sync-barcode-to-acuity:
+    post:
+      description: Sync BarCode to Acuity
+      tags:
+        - Appointment Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                acuityID:
+                  type: number
+                barCode:
+                  type: string
+              required:
+                - acuityID
+                - barCode
       responses:
         '200':
           description: Successfully added
@@ -3490,7 +3552,7 @@ paths:
                 appointmentIds:
                   type: array
                   minItems: 1
-                  maxItems: 20
+                  maxItems: 10
                   items:
                     type: string
                 date:

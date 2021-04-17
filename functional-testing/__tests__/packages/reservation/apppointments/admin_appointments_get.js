@@ -27,7 +27,7 @@ describe('get:admin:appointments', () => {
             request: {
               headers: {
                 'Authorization': `Bearer ${token}`,
-                'labid': labId
+                'labid': labId,
               },
             },
           })
