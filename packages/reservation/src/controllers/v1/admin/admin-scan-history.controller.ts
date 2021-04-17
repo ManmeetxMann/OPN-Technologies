@@ -62,6 +62,7 @@ class AdminScanHistoryController implements IControllerBase {
       if (appointment.appointmentStatus !== AppointmentStatus.Reported) {
         await this.appointmentService.makeDeadlineRapidMinutes(appointment, adminId)
         appointment = await this.appointmentService.makeInProgress(appointment.id, null, adminId)
+        await this.appointmentService.createOrUpdatePCRResults(appointment, adminId)
       }
 
       res.json(
