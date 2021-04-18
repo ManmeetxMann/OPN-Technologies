@@ -75,6 +75,8 @@ import {AppointmentsBarCodeSequence} from '../respository/appointments-barcode-s
 import {AppointmentsRepository} from '../respository/appointments-repository'
 import {PCRTestResultsRepository} from '../respository/pcr-test-results-repository'
 import {AppointmentToTestTypeRepository} from '../respository/appointment-to-test-type-association.repository'
+import {CouponRepository} from '../respository/coupon.repository'
+
 import {AppointmentTypes} from '../models/appointment-types'
 import {PackageService} from './package.service'
 import {firestore} from 'firebase-admin'
@@ -89,6 +91,8 @@ export class AppoinmentService {
   private pcrTestResultsRepository = new PCRTestResultsRepository(this.dataStore)
   private adminScanHistoryRepository = new AdminScanHistoryRepository(this.dataStore)
   private appointmentToTestTypeRepository = new AppointmentToTestTypeRepository(this.dataStore)
+  private couponRepository = new CouponRepository(this.dataStore)
+
   private organizationService = new OrganizationService()
   private userAddressService = new UserAddressService()
   private labService = new LabService()
@@ -124,16 +128,20 @@ export class AppoinmentService {
 
   async makeDeadlineRapidMinutes(
     appointment: AppointmentDBModel,
-    pcrTestResultId: string,
+    adminId: string,
   ): Promise<AppointmentDBModel> {
     const updatedAppointment = await this.appointmentsRepository.setDeadlineDate(
       appointment.id,
       makeRapidDeadline(),
     )
-    await this.pcrTestResultsRepository.updateProperty(
-      pcrTestResultId,
-      'deadline',
-      updatedAppointment.deadline,
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+      appointment.id,
+      {
+        deadline: updatedAppointment.deadline,
+        deadlineDate: getFirestoreTimeStampDate(updatedAppointment.deadline),
+      },
+      PcrResultTestActivityAction.UpdateFromAppointment,
+      adminId,
     )
     return updatedAppointment
   }
@@ -786,31 +794,50 @@ export class AppoinmentService {
     return saved
   }
 
-  async addTransportRun(
-    appointmentId: string,
-    data: UpdateTransPortRun,
-  ): Promise<AppointmentDBModel> {
-    const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
+  async addTransportRun(appointmentId: string, data: UpdateTransPortRun): Promise<AppointmentDBModel> {
+    const savedAppointment = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.InTransit,
       transportRunId: data.transportRunId,
       labId: data.labId ?? null,
     })
-
-    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
-      appointmentId,
-      {labId: data.labId, appointmentStatus: AppointmentStatus.InTransit},
-      PcrResultTestActivityAction.UpdateFromAppointment,
-      data.userId,
-    )
+    await this.createOrUpdatePCRResults(savedAppointment, data.userId)
 
     await this.appointmentsRepository.addStatusHistoryById(
       appointmentId,
       AppointmentStatus.InTransit,
       data.userId,
     )
-    this.postPubsub(saved, 'updated')
+    this.postPubsub(savedAppointment, 'updated')
+    return savedAppointment
+  }
 
-    return saved
+  async createOrUpdatePCRResults(appointment: AppointmentDBModel, adminId: string): Promise<void> {
+    const pcrResults = await this.pcrTestResultsRepository.getPCRResultsByAppointmentId(
+      appointment.id,
+    )
+    if (pcrResults.length === 0) {
+      const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
+      const pcrTest = await this.pcrTestResultsRepository.createNewTestResults({
+        appointment: appointment,
+        adminId,
+        linkedBarCodes,
+        reCollectNumber: linkedBarCodes.length + 1,
+        runNumber: 1,
+        previousResult: null,
+        labId: appointment.labId,
+      })
+      LogInfo('AppoinmentService:createOrUpdatePCRResults', 'SuccessfullyCreatedNewPCRResult', {
+        id: pcrTest.id,
+        appointmentId: appointment.id,
+      })
+    } else {
+      await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
+        appointment.id,
+        {labId: appointment.labId, appointmentStatus: AppointmentStatus.InTransit},
+        PcrResultTestActivityAction.UpdateFromAppointment,
+        appointment.userId,
+      )
+    }
   }
 
   private async checkAppointmentStatusOnly(
@@ -927,7 +954,10 @@ export class AppoinmentService {
 
     await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
       data.appointment.id,
-      {deadline},
+      {
+        deadline,
+        deadlineDate: getFirestoreTimeStampDate(deadline),
+      },
       PcrResultTestActivityAction.UpdateFromAppointment,
       data.actionBy,
     )
@@ -936,6 +966,7 @@ export class AppoinmentService {
       appointmentStatus: AppointmentStatus.ReRunRequired,
       deadline: deadline,
     })
+
     await this.createCloudTaskToSyncLabelWithAcuity(
       data.appointment.acuityAppointmentId,
       data.deadlineLabel,
@@ -1357,24 +1388,14 @@ export class AppoinmentService {
       userId,
     )
 
-    const pcrTest = await this.pcrTestResultsRepository.findWhereEqual(
-      'appointmentId',
+    await this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
       appointmentId,
+      {
+        barCode: newBarCode,
+      },
+      PcrResultTestActivityAction.RegenerateBarcode,
+      userId,
     )
-
-    if (pcrTest.length) {
-      pcrTest.forEach(async (pcrTest) => {
-        await this.pcrTestResultsRepository.updateData({
-          id: pcrTest.id,
-          updates: {barCode: newBarCode},
-          actionBy: userId,
-          action: PcrResultTestActivityAction.RegenerateBarcode,
-        })
-        console.log(`regenerateBarCode: PCRTestID: ${pcrTest.id} New BarCode: ${newBarCode}`)
-      })
-    } else {
-      console.warn(`Not found PCR-test-result with appointmentId: ${appointmentId}`)
-    }
 
     try {
       await this.cloudTasks.createTask(
@@ -1559,6 +1580,8 @@ export class AppoinmentService {
       {
         dateTime: dateTimeData.dateTime,
         deadline: dateTimeData.deadline,
+        deadlineDate: getFirestoreTimeStampDate(dateTimeData.deadline),
+        dateOfAppointment: getFirestoreTimeStampDate(dateTimeData.dateTime),
       },
       PcrResultTestActivityAction.UpdateFromAppointment,
       requestData.userID,
@@ -1650,5 +1673,40 @@ export class AppoinmentService {
     batchAppointments: DbBatchAppointments[],
   ): Promise<unknown[]> {
     return this.appointmentsRepository.removeBatchScheduledPushesToSend(batchAppointments)
+  }
+
+  async getlinkedBarcodes(couponCode: string): Promise<string[]> {
+    let linkedBarcodes = []
+    if (couponCode) {
+      //Get Coupon
+      const coupon = await this.couponRepository.getByCouponCode(couponCode)
+      if (coupon) {
+        linkedBarcodes.push(coupon.lastBarcode)
+        try {
+          //Get Linked Barcodes for LastBarCode
+          const pcrResult = await this.pcrTestResultsRepository.getReCollectedTestResultByBarCode(
+            coupon.lastBarcode,
+          )
+          if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
+            linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
+          }
+        } catch (error) {
+          LogWarning('AppoinmentService:getlinkedBarcodes', 'NoCouponCodeFound', {
+            couponCode,
+            barCode: coupon.lastBarcode,
+            errorMessage: error.toString(),
+          })
+        }
+        LogInfo('AppoinmentService:getlinkedBarcodes', 'NoCouponCodeFound', {
+          couponCode,
+          linkedBarcodes,
+        })
+      } else {
+        LogInfo('AppoinmentService:getlinkedBarcodes', 'NoCouponCodeFound', {
+          couponCode,
+        })
+      }
+    }
+    return linkedBarcodes
   }
 }
