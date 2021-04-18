@@ -794,7 +794,10 @@ export class AppoinmentService {
     return saved
   }
 
-  async addTransportRun(appointmentId: string, data: UpdateTransPortRun): Promise<AppointmentDBModel> {
+  async addTransportRun(
+    appointmentId: string,
+    data: UpdateTransPortRun,
+  ): Promise<AppointmentDBModel> {
     const savedAppointment = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.InTransit,
       transportRunId: data.transportRunId,
