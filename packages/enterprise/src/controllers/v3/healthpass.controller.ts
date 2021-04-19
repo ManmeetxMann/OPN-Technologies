@@ -15,7 +15,6 @@ import {
   organizationSummaryDTOResponse,
 } from '../../models/organization'
 import {userDTO} from '../../../../common/src/data/user'
-import {PassportType} from '../../../../passport/src/models/passport'
 
 class RecommendationController implements IControllerBase {
   public router = express.Router()
@@ -54,12 +53,18 @@ class RecommendationController implements IControllerBase {
             if (!pass.expiry) {
               return null
             }
-            const dateOfBirth = await this.passService.getDobFromLastPCR(pass)
+            const {
+              dateOfBirth,
+              travelID,
+              travelIDIssuingCountry,
+            } = await this.passService.getMetadataFromLastPCR(pass)
             return {
               user: userDTO(user),
               group: organizationGroupDTOResponse(group),
               ...pass,
               dateOfBirth,
+              travelID,
+              travelIDIssuingCountry,
             }
           }),
         )
@@ -82,30 +87,7 @@ class RecommendationController implements IControllerBase {
         authenticatedUser: User
       }
 
-      const pass = await this.passService.getHealthPass(authenticatedUser.id, organizationId)
-
-      let badges = {
-        hasSelfTestBadge: false,
-        hasTempBadge: false,
-        hasPCRBadge: false,
-        hasPulseBadge: false,
-        hasVaccineBadge: false,
-      }
-
-      if (pass.tests) {
-        const attestation = pass.tests.find(({type}) => type === PassportType.Attestation)
-        const temperature = pass.tests.find(({type}) => type === PassportType.Temperature)
-        const PCR = pass.tests.find(({type}) => type === PassportType.PCR)
-        const pulse = pass.tests.find(({type}) => type === PassportType.PulseOxygenCheck)
-
-        badges = {
-          hasSelfTestBadge: Boolean(attestation?.status),
-          hasTempBadge: Boolean(temperature?.status),
-          hasPCRBadge: Boolean(PCR?.status),
-          hasPulseBadge: Boolean(pulse?.status),
-          hasVaccineBadge: false,
-        }
-      }
+      const badges = await this.passService.getBages(authenticatedUser.id, organizationId)
 
       res.json(actionSuccess(badges))
     } catch (error) {

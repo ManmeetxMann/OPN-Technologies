@@ -180,11 +180,11 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
           [
             {text: 'Antibody Specimen Type', bold: true},
             {text: 'Serum', colSpan: 4},
-          ],
+          ] /*This could be added back soon
           [
             {text: 'Methodology', bold: true},
             {text: 'Chemiluminescence', colSpan: 4},
-          ],
+          ],*/,
           [
             {text: 'Indication', bold: true},
             {text: 'Suspected Exposure to COVID-19', colSpan: 4},

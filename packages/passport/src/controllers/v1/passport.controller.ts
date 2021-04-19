@@ -159,17 +159,19 @@ class PassportController implements IControllerBase {
       // Merge questions and answers by index
       const answersResults = []
       const {questions} = questionnaires
-      Object.keys(questions).forEach((questionKey) => {
-        const question = questions[questionKey]
-        const answersResult = {
-          question: question.value,
-        }
-        Object.keys(question.answers).forEach((questionAnswerKey, questionsAnswersIndex) => {
-          const questionAnswer = question.answers[questionAnswerKey]
-          answersResult[questionAnswer] = answers[Number(questionKey) - 1][questionsAnswersIndex]
+      Object.keys(questions)
+        .sort((a, b) => (Number(a) > Number(b) ? 1 : Number(a) < Number(b) ? -1 : 0))
+        .forEach((questionKey) => {
+          const question = questions[questionKey]
+          const answersResult = {
+            question: question.value,
+          }
+          Object.keys(question.answers).forEach((questionAnswerKey, questionsAnswersIndex) => {
+            const questionAnswer = question.answers[questionAnswerKey]
+            answersResult[questionAnswer] = answers[Number(questionKey) - 1][questionsAnswersIndex]
+          })
+          answersResults.push(answersResult)
         })
-        answersResults.push(answersResult)
-      })
 
       // Build and returns result
       const {id, locationId, attestationTime} = attestation

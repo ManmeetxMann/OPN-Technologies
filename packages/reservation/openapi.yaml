@@ -565,6 +565,7 @@ components:
                   - Negative
                   - Invalid
                   - Inconclusive
+                  - Indeterminate
               barCode:
                 type: string
                 minLength: 1
@@ -639,6 +640,7 @@ components:
             - Negative
             - Invalid
             - Inconclusive
+            - Indeterminate
         barCode:
           type: string
           minLength: 1
@@ -1079,6 +1081,68 @@ components:
                message:
                    nullable: true
                    type: string
+    AddAppointmentsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        slotId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        gender:
+          type: string
+          enum:
+            - Male
+            - Female
+            - Other
+            - Prefer Not to Say
+        phone:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: number
+            number:
+              type: number
+        dateOfBirth:
+          type: string
+          format: date
+        address:
+          type: string
+        addressUnit:
+          type: string
+        postalCode:
+          type: string
+        couponCode:
+          type: string
+        shareTestResultWithEmployer:
+          type: boolean
+        agreeToConductFHHealthAssessment:
+          type: boolean
+        readTermsAndConditions:
+          type: boolean
+        receiveResultsViaEmail:
+          type: boolean
+        receiveNotificationsFromGov:
+          type: boolean
+      required:
+        - slotId
+        - firstName
+        - lastName
+        - gender
+        - dateOfBirth
+        - address
+        - addressUnit
+        - postalCode
+        - couponCode
+        - shareTestResultWithEmployer
+        - readTermsAndConditions
+        - agreeToConductFHHealthAssessment
+        - receiveResultsViaEmail
+        - receiveNotificationsFromGov
+
 
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -1306,6 +1370,10 @@ paths:
             type: string
         - in: query
           name: organizationId
+          schema:
+            type: string
+        - in: query
+          name: labId
           schema:
             type: string
         - in: query
@@ -1958,6 +2026,7 @@ paths:
               - EmergencyRapidAntigen
               - Antibody_All
               - Antibody_IgM
+              - allExceptAntigen
         - in: query
           name: result
           schema:
@@ -2125,16 +2194,71 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
-  /reservation/internal/api/v1/appointments/sync:
+  /reservation/internal/api/v1/appointments/sync-from-acuity:
     post:
       description: Sync Appointments
       tags:
-        - Test Results Management
+        - Appointment Management
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/AppointmentsSyncRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/appointments/sync-labels-to-acuity:
+    post:
+      description: Sync Labels to Acuity
+      tags:
+        - Appointment Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                acuityID:
+                  type: number
+                label:
+                  type: string
+                  enum:
+                    - SAMEDAY
+                    - NEXTDAY
+              required:
+                - acuityID
+                - label
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/appointments/sync-barcode-to-acuity:
+    post:
+      description: Sync BarCode to Acuity
+      tags:
+        - Appointment Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                acuityID:
+                  type: number
+                barCode:
+                  type: string
+              required:
+                - acuityID
+                - barCode
       responses:
         '200':
           description: Successfully added
@@ -2507,66 +2631,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              additionalProperties: false
-              properties:
-                slotId:
-                  type: string
-                firstName:
-                  type: string
-                lastName:
-                  type: string
-                gender:
-                  type: string
-                  enum:
-                    - Male
-                    - Female
-                    - Other
-                    - Prefer Not to Say
-                phone:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    code:
-                      type: number
-                    number:
-                      type: number
-                dateOfBirth:
-                  type: string
-                  format: date
-                address:
-                  type: string
-                addressUnit:
-                  type: string
-                postalCode:
-                  type: string
-                couponCode:
-                  type: string
-                shareTestResultWithEmployer:
-                  type: boolean
-                agreeToConductFHHealthAssessment:
-                  type: boolean
-                readTermsAndConditions:
-                  type: boolean
-                receiveResultsViaEmail:
-                  type: boolean
-                receiveNotificationsFromGov:
-                  type: boolean
-              required:
-                - slotId
-                - firstName
-                - lastName
-                - gender
-                - dateOfBirth
-                - address
-                - addressUnit
-                - postalCode
-                - couponCode
-                - shareTestResultWithEmployer
-                - readTermsAndConditions
-                - agreeToConductFHHealthAssessment
-                - receiveResultsViaEmail
-                - receiveNotificationsFromGov
+              $ref: '#/components/schemas/AddAppointmentsRequest'
       responses:
         '200':
           description: Successfully Return
@@ -3486,6 +3551,8 @@ paths:
               properties:
                 appointmentIds:
                   type: array
+                  minItems: 1
+                  maxItems: 10
                   items:
                     type: string
                 date:
@@ -3497,6 +3564,7 @@ paths:
                   description: This should be passwed is corporate is logged in
               required:
                 - date
+                - appointmentIds
       responses:
         '200':
           description: Successfully Return
@@ -4012,3 +4080,189 @@ paths:
       responses:
         '200':
           description: Success
+  /reservation/api/v1/cart:
+    post:
+      description: Add one or multiple appointments to the cart
+      tags:
+        - Cart and Checkout
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationid
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AddAppointmentsRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+    get:
+      description: Get cart and price brake down
+      tags:
+        - Cart and Checkout
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationid
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      cartItems:
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            cartItemId:
+                              type: string
+                            label:
+                              type: string
+                            subLabel:
+                              type: string
+                            patientName:
+                              type: string
+                            date:
+                              type: string
+                            price:
+                              type: number
+                          required:
+                            - cartItemId
+                            - label
+                            - subLabel
+                            - price
+                      paymentSummary:
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            uid:
+                              type: string
+                            label:
+                              type: string
+                            amount:
+                              type: string
+                            currency:
+                              type: number
+                          required:
+                            - uid
+                            - label
+                            - amount
+                            - currency
+  /reservation/api/v1/cart/{cartItemId}:
+    put:
+      description: Update item in the cart
+      tags:
+        - Cart and Checkout
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationid
+          schema:
+            type: string
+        - in: path
+          name: cartItemId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+    delete:
+      description: Delete item in the cart
+      tags:
+        - Cart and Checkout
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationid
+          schema:
+            type: string
+        - in: path
+          name: cartItemId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/api/v1/cart/ephemeral-keys:
+    post:
+      description: Returns ephemeral key for stripe user
+      tags:
+        - Cart and Checkout
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationid
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+  /reservation/api/v1/cart/payment-authorization:
+    post:
+      description: Create a payment authorization for items in the cart
+      tags:
+        - Cart and Checkout
+      security:
+        - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationid
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/cart/remove-expired-items:
+    post:
+      description: Triggers push removing old card items
+      tags:
+        - Cart and Checkout
+        - Cloud Scheduler triggered
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'

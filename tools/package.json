@@ -9,7 +9,8 @@
 				"tools:get-users-with-email-no-authuserid": "ts-node ./get-users-with-email-no-authuserid",
 				"tool:update-user-emails": "node ./update-user-emails",
 				"tool:appointments-finance": "ts-node ./appointments-finance",
-				"tool:non-org-packages-details": "ts-node ./non-org-packages-details"
+				"tool:non-org-packages-details": "ts-node ./non-org-packages-details",
+				"tool:create_firebase_token": "ts-node ./create_firebase_token"
 		},
 		"author": "",
 		"license": "Appropriate",

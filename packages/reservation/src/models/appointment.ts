@@ -78,7 +78,7 @@ export type AppointmentDBModel = {
   locationAddress?: string
   testType: TestTypes
   labId?: string
-  scheduledPushesToSend?: ReservationPushTypes[]
+  scheduledPushesToSend?: Array<ReservationPushTypes>
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -168,6 +168,7 @@ export enum TestTypes {
   Antibody_All = 'Antibody_All',
   Antibody_IgM = 'Antibody_IgM',
   PulseOxygenCheck = 'PulseOxygenCheck',
+  allExceptAntigen = 'allExceptAntigen', // @TODO Remove this after correcting flag
 }
 
 export type PostAdminScanHistoryRequest = {
@@ -375,7 +376,6 @@ export const appointmentUiDTOResponse = (
     dateOfBirth: appointment.dateOfBirth,
     transportRunId: appointment.transportRunId,
     deadline: formatDateRFC822Local(appointment.deadline),
-    latestResult: appointment.latestResult,
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
     organizationName: appointment.organizationName,

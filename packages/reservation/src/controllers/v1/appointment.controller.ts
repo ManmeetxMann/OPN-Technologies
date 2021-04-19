@@ -86,7 +86,7 @@ class AppointmentController implements IControllerBase {
       const authenticatedUser = res.locals.authenticatedUser as AuthUser
       const {organizationId, packageCode} = decodeAvailableTimeId(slotId)
       const userId = getUserId(authenticatedUser)
-      const savedAppointment = await this.appointmentService.createAcuityAppointment({
+      await this.appointmentService.createAcuityAppointment({
         organizationId,
         slotId,
         firstName,
@@ -107,13 +107,6 @@ class AppointmentController implements IControllerBase {
         userId,
         packageCode,
       })
-
-      if (savedAppointment) {
-        const pcrTestResult = await this.pcrTestResultsService.createTestResult(savedAppointment)
-        console.log(
-          `AppointmentWebhookController: CreateAppointment: SuccessCreatePCRResults for AppointmentID: ${savedAppointment.id} PCR Results ID: ${pcrTestResult.id}`,
-        )
-      }
 
       res.json(actionSucceed())
     } catch (error) {
