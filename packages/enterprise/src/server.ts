@@ -26,6 +26,7 @@ import InternalV1Controller from './controllers/v1/internal/internal.controller'
 import {createConnection} from 'typeorm'
 import * as patientEntities from '../../../services-v2/apps/user-service/src/model/patient/patient.entity'
 import {Config} from '../../common/src/utils/config'
+import {GAEService} from '../../common/src/utils/app-engine-environment'
 
 const PORT = Number(process.env.PORT) || 5003
 
@@ -57,17 +58,31 @@ const app = new App({
 
 /**
  * TODO:
- * 1. When deployed to GCP connect via socket
- * 2. Move it to wrapper similar to express
+ * 1. Move it to wrapper similar to express
  */
+let connection = {}
+if (GAEService() !== 'local') {
+  // Connect via socket when deployed to GCP
+  connection = {
+    host: Config.get('HOST'),
+    extra: {
+      socketPath: Config.get('HOST'),
+    },
+  }
+} else {
+  // Connect via TCP when on local with local DB or Cloud SQL with proxy
+  connection = {
+    host: Config.get('USER_DB_LOCAL_HOST'),
+    port: Number(Config.get('USER_DB_LOCAL_PORT')),
+  }
+}
 createConnection({
   type: 'mysql',
-  host: Config.get('USER_DB_LOCAL_HOST'),
-  port: Number(Config.get('USER_DB_LOCAL_PORT')),
+  ...connection,
   username: Config.get('USER_DB_USERNAME'),
   password: Config.get('USER_DB_PASSWORD'),
   database: Config.get('USER_DB_NAME'),
-  entities: [patientEntities.Patient],
+  entities: [patientEntities.Patient, patientEntities.PatientAuth],
   synchronize: false,
   logging: false,
 })

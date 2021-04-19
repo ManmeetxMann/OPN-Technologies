@@ -116,16 +116,22 @@ const create: Handler = async (req, res, next): Promise<void> => {
       active: true,
     })
 
-    await userSyncService.create({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phoneNumber: (user.phone && user.phone.number && `${user.phone.number}`) || '',
-      photoUrl: user.photo,
-      firebaseKey: user.id,
-      patientPublicId: '', // @TODO Remove this field after merging PR related to this field
-      registrationId: user.registrationId || '',
-      dateOfBirth: '',
-    })
+    await userSyncService.create(
+      {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: (user.phone && user.phone.number && `${user.phone.number}`) || '',
+        photoUrl: user.photo,
+        firebaseKey: user.id,
+        patientPublicId: '', // @TODO Remove this field after merging PR related to this field
+        registrationId: user.registrationId || '',
+        dateOfBirth: '',
+      },
+      {
+        authUserId: user.authUserId as string,
+        email: user.email,
+      },
+    )
 
     res.json(actionSucceed(userDTOResponse(user)))
   } catch (error) {

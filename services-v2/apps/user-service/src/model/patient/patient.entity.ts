@@ -45,7 +45,7 @@ export class Patient extends Auditable {
 
   @Column({nullable: false})
   @ApiProperty()
-  consentFileUrl: string
+  consentFileUrl?: string
 }
 
 @Entity('patientAuth')

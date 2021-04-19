@@ -75,16 +75,22 @@ class UserController implements IControllerBase {
           receiveNotificationsFromGov,
         })
 
-        await this.userSyncService.create({
-          firstName: user.firstName,
-          lastName: user.lastName,
-          phoneNumber: '',
-          photoUrl: user.base64Photo ?? null,
-          firebaseKey: user.id,
-          patientPublicId: '',
-          registrationId: user.registrationId || '', // @TODO Remove this field after merging PR related to this field
-          dateOfBirth: '',
-        })
+        await this.userSyncService.create(
+          {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            phoneNumber: '',
+            photoUrl: user.base64Photo ?? null,
+            firebaseKey: user.id,
+            patientPublicId: '',
+            registrationId: user.registrationId || '', // @TODO Remove this field after merging PR related to this field
+            dateOfBirth: '',
+          },
+          {
+            authUserId: user.authUserId as string,
+            email: user.email,
+          },
+        )
 
         // add user in public group
         await this.organizationService.addUserToGroup(publicOrgId, publicGroupId, user.id)
