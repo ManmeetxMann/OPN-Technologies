@@ -190,6 +190,7 @@ export class PCRTestResultsService {
     await this.sendNotification(
       {...newPCRResult, ...appointment, labAssay: lab.assay},
       notificationType,
+      newPCRResult.id,
     )
     return newPCRResult.id
   }
@@ -847,7 +848,7 @@ export class PCRTestResultsService {
         ...appointment,
         ...pcrResultDataForDbUpdate,
       }
-      await this.sendNotification(pcrResultDataForEmail, metaData.action)
+      await this.sendNotification(pcrResultDataForEmail, metaData.action, pcrResultRecorded.id)
     } else {
       console.log(
         `handlePCRResultSaveAndSend: Not Notification is sent for ${barCode}. Notify is off.`,
@@ -971,6 +972,7 @@ export class PCRTestResultsService {
   async sendNotification(
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
+    pcrId: string,
   ): Promise<void> {
     let addSuccessLog = true
     switch (notficationType) {
@@ -1028,7 +1030,7 @@ export class PCRTestResultsService {
           })
         }
         if (addSuccessLog) {
-          this.postPubsub(resultData, 'result')
+          this.postPubsub({...resultData, id: pcrId}, 'result')
         }
       }
     }
