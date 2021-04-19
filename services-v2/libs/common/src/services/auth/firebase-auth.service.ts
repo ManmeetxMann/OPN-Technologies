@@ -2,7 +2,7 @@
 import {Injectable} from '@nestjs/common'
 
 // Services
-import {FirebaseService} from '@opn/common/services/firebase/firebase.service'
+import {FirebaseService} from '@opn-services/common/services/firebase/firebase.service'
 
 interface AuthUser {
   uid: string

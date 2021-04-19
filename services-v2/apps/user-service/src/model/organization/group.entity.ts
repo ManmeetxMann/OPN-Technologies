@@ -1,6 +1,6 @@
 import {Column, Entity, Generated, JoinColumn, ManyToOne, PrimaryColumn} from 'typeorm'
 import {Organization} from './organization.entity'
-import {Auditable} from '@opn/common/model'
+import {Auditable} from '@opn-services/common/model'
 import {ApiProperty} from '@nestjs/swagger'
 
 @Entity('group')

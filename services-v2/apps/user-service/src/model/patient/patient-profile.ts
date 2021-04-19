@@ -1,5 +1,5 @@
 import {Column, Entity, Generated, PrimaryColumn, JoinColumn, OneToOne} from 'typeorm'
-import {Auditable} from '@opn/common/model'
+import {Auditable} from '@opn-services/common/model'
 import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsString} from 'class-validator'
 

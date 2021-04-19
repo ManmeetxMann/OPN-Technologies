@@ -21,9 +21,11 @@
     "build:all": "npm run build:user-service && npm run build:passport-service",
     "build:user-service": "SERVICE=user-service npm run build:service",
     "build:passport-service": "SERVICE=passport-service npm run build:service",
+    "build:cart-service": "SERVICE=cart-service npm run build:service",
     "build:service": "nest build $SERVICE && cp ./package.json ./dist/apps/$SERVICE/ && cp ./.env ./dist/apps/$SERVICE/",
     "deploy:user-service": "gcloud app deploy ./dist/apps/user-service",
-    "deploy:passport-service": "gcloud app deploy ./dist/apps/passport-service"
+    "deploy:passport-service": "gcloud app deploy ./dist/apps/passport-service",
+    "deploy:cart-service": "gcloud app deploy ./dist/apps/cart-service"
   },
   "dependencies": {
     "@nestjs/common": "^7.0.0",
@@ -42,6 +44,7 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^6.5.4",
+    "stripe": "^8.144.0",
     "swagger-ui-express": "^4.1.4",
     "typeorm": "^0.2.26"
   },
@@ -87,8 +90,8 @@
       "<rootDir>/libs/"
     ],
     "moduleNameMapper": {
-      "@opn/common/(.*)": "<rootDir>/libs/common/src/$1",
-      "@opn/common": "<rootDir>/libs/common/src"
+      "@opn-services/common/(.*)": "<rootDir>/libs/common/src/$1",
+      "@opn-services/common": "<rootDir>/libs/common/src"
     }
   }
 }

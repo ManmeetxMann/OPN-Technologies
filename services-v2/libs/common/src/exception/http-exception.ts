@@ -1,4 +1,4 @@
-import {ResponseStatusCodes} from '@opn/common/dto'
+import {ResponseStatusCodes} from '@opn-services/common/dto'
 
 const DEFAULT_ERROR_MSG = "It's not you, it's us... Something went wrong."
 

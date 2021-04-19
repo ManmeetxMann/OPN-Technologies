@@ -10,8 +10,8 @@ import {
   Query,
 } from '@nestjs/common'
 import {ApiTags} from '@nestjs/swagger'
-import {ResponseWrapper} from '@opn/common/dto/response-wrapper'
-import {assignWithoutUndefined, ResponseStatusCodes} from '@opn/common/dto'
+import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
+import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
 import {Patient} from '../../../model/patient/patient.entity'
 import {
   PatientCreateDto,
@@ -20,7 +20,7 @@ import {
   PatientUpdateDto,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
-import {FirebaseAuthService} from '@opn/common/services/auth/firebase-auth.service'
+import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
 
 @ApiTags('Patients')
 @Controller('/api/v1/patient')

@@ -1,6 +1,6 @@
 import {NestFactory} from '@nestjs/core'
 import {Module} from '@nestjs/common'
-import {CommonModule} from '@opn/common'
+import {CommonModule} from '@opn-services/common'
 
 @Module({
   imports: [CommonModule],

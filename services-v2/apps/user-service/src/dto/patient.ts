@@ -1,6 +1,6 @@
 import {ApiProperty, ApiPropertyOptional, PartialType} from '@nestjs/swagger'
 import {ApiModelPropertyOptional} from '@nestjs/swagger/dist/decorators/api-model-property.decorator'
-import {PageableRequestFilter} from '@opn/common/dto'
+import {PageableRequestFilter} from '@opn-services/common/dto'
 import {IsBoolean, IsEmail, IsNotEmpty, IsNumberString, IsString, Length} from 'class-validator'
 import {Patient} from '../model/patient/patient.entity'
 

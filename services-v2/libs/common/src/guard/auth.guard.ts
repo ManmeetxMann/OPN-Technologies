@@ -1,6 +1,6 @@
 import {Inject, CanActivate, ExecutionContext} from '@nestjs/common'
 
-import {FirebaseAuthService} from '@opn/common/services/auth/firebase-auth.service'
+import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
 
 /**
  * TODO:

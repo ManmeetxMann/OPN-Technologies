@@ -45,6 +45,16 @@
         "tsConfigPath": "apps/user-service/tsconfig.app.json",
         "assets": ["app.yaml"]
       }
+    },
+    "cart-service": {
+      "type": "application",
+      "root": "apps/cart-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/cart-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/cart-service/tsconfig.app.json",
+        "assets": ["app.yaml"]
+      }
     }
   }
 }

@@ -2,7 +2,7 @@ import {SwaggerModule} from '@nestjs/swagger'
 import {INestApplication} from '@nestjs/common'
 import {ConfigService} from '@nestjs/config'
 
-import {SwaggerConfiguration} from '@opn/common/configuration/swagger.configuration'
+import {SwaggerConfiguration} from '@opn-services/common/configuration/swagger.configuration'
 import * as basicAuth from 'express-basic-auth'
 
 const MIN_LOGIN_PASS_SIZE = 5

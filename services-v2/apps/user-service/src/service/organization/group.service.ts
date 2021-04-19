@@ -1,11 +1,11 @@
 import {Injectable} from '@nestjs/common'
 import {Organization} from '../../model/organization/organization.entity'
-import {Page} from '@opn/common/dto'
-import {ResourceNotFoundException} from '@opn/common/exception'
+import {Page} from '@opn-services/common/dto'
+import {ResourceNotFoundException} from '@opn-services/common/exception'
 import {GroupRepository} from '../../repository/group.repository'
 import {OrganizationGroup} from '../../model/organization/group.entity'
 import {GroupCreateRequest, GroupFilter, GroupUpdateRequest} from '../../dto/group'
-import {isNotNull, likeIgnoreCase, QueryMatcher} from '@opn/common/model'
+import {isNotNull, likeIgnoreCase, QueryMatcher} from '@opn-services/common/model'
 
 @Injectable()
 export class GroupService {

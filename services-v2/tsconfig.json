@@ -12,12 +12,10 @@
     "baseUrl": "./",
     "incremental": true,
     "paths": {
-      "@opn/common": [
-        "libs/common/src"
-      ],
-      "@opn/common/*": [
-        "libs/common/src/*"
-      ]
+      "@opn-services/common": ["libs/common/src"],
+      "@opn-services/common/*": ["libs/common/src/*"],
+      "@opn-common-v1/*": ["../packages/common/src/*"],
+      "@opn-reservation-v1/*": ["../packages/reservation/src/*"]
     }
   }
 }

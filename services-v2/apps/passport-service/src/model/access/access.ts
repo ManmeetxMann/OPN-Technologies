@@ -1,4 +1,4 @@
-import {Auditable} from '@opn/common/model'
+import {Auditable} from '@opn-services/common/model'
 
 export class Access extends Auditable {
   token: string

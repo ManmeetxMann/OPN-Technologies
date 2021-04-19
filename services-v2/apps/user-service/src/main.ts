@@ -16,7 +16,7 @@ import {LocationService} from './service/organization/location.service'
 import {GroupService} from './service/organization/group.service'
 import {PatientService} from './service/patient/patient.service'
 
-import {CommonModule, createSwagger} from '@opn/common'
+import {CommonModule, createSwagger} from '@opn-services/common'
 
 @Module({
   imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],

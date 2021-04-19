@@ -42,8 +42,7 @@
         "node-fetch": "^2.6.0",
         "pdfmake": "^0.1.68",
         "pug": "^3.0.0",
-        "request": "2.88.2",
-        "stripe": "^8.144.0"
+        "request": "2.88.2"
     },
     "devDependencies": {
         "@types/bunyan": "^1.8.6",

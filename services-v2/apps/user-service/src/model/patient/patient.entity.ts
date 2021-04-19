@@ -8,7 +8,7 @@ import {
   BeforeInsert,
   OneToOne,
 } from 'typeorm'
-import {Auditable} from '@opn/common/model'
+import {Auditable} from '@opn-services/common/model'
 import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsEmail, IsString} from 'class-validator'
 import {PatientDigitalConsent, PatientHealth, PatientTravel} from './patient-profile'
