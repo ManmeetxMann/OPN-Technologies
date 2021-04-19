@@ -14,3 +14,11 @@ export type HealthPass = {
   }[]
   status: PassportStatuses
 }
+
+export type Bages = {
+  hasSelfTestBadge: boolean
+  hasTempBadge: boolean
+  hasPCRBadge: boolean
+  hasPulseBadge: boolean
+  hasVaccineBadge: boolean
+}

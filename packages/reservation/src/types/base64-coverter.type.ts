@@ -6,12 +6,14 @@ export type AvailableTimeIdParams = {
   time: string
   organizationId: string
   packageCode: string
+  calendarName: string
 }
 
 export type BookingLocationIdParams = {
   appointmentTypeId: number
   calendarTimezone: string
   calendarId: number
+  calendarName: string
   organizationId: string
   packageCode: string
 }

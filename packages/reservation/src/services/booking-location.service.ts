@@ -76,6 +76,7 @@ export class BookingLocationService {
         const idBuf = {
           appointmentTypeId: appointmentType.id,
           calendarTimezone: calendar.timezone,
+          calendarName: calendar.name,
           calendarId: calendar.id,
           organizationId,
           packageCode: certificate,

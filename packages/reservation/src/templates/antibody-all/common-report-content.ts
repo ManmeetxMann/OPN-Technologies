@@ -179,10 +179,6 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
             {text: 'Serum', colSpan: 4},
           ],
           [
-            {text: 'Methodology', bold: true},
-            {text: 'Chemiluminescence', colSpan: 4},
-          ],
-          [
             {text: 'Test Equipment', bold: true},
             {text: 'Approved by Health Canada (IO authorization 312782)', colSpan: 4},
           ],

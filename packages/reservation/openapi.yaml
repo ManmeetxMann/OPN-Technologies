@@ -4121,6 +4121,11 @@ paths:
         - Cart and Checkout
       security:
         - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationid
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -4141,6 +4146,11 @@ paths:
         - Cart and Checkout
       security:
         - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationid
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -4203,6 +4213,16 @@ paths:
         - Cart and Checkout
       security:
         - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationid
+          schema:
+            type: string
+        - in: path
+          name: cartItemId
+          schema:
+            type: string
+          required: true
       responses:
         '200':
           description: Success
@@ -4216,6 +4236,16 @@ paths:
         - Cart and Checkout
       security:
         - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationid
+          schema:
+            type: string
+        - in: path
+          name: cartItemId
+          schema:
+            type: string
+          required: true
       responses:
         '200':
           description: Success
@@ -4230,6 +4260,11 @@ paths:
         - Cart and Checkout
       security:
         - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationid
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -4240,6 +4275,11 @@ paths:
         - Cart and Checkout
       security:
         - bearerAuthJWT: []
+      parameters:
+        - in: header
+          name: organizationid
+          schema:
+            type: string
       responses:
         '200':
           description: Success
