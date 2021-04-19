@@ -41,9 +41,6 @@ import moment from 'moment'
 import {CloudTasksClient} from '@google-cloud/tasks'
 import * as _ from 'lodash'
 
-import {getConnection} from 'typeorm'
-import * as patientEntries from '../../../../services-v2/apps/user-service/src//model/patient/patient.entity'
-
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 const actionSucceed = (body?: unknown, userId?: string): ReturnType<typeof rawSucceed> => {
   if (userId && userId === Config.get('USER_OF_INTEREST')) {
@@ -350,11 +347,6 @@ class OrganizationController implements IControllerBase {
 
   getGroupsForAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // REMOVE ME: just a demo for SQL access from v1 controller
-      const patientsRepo = getConnection().getRepository(patientEntries.Patient)
-      const patients = await patientsRepo.find()
-      console.log(patients)
-
       const {organizationId} = req.params
       const groups = await this.getGroups(organizationId)
 
