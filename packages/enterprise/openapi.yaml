@@ -1995,6 +1995,10 @@ components:
                   type: string
                 dateOfBirth:
                   type: string
+                travelID:
+                  type: string
+                travelIDIssuingCountry:
+                  type: string
                 tests:
                   type: array
                   items:
