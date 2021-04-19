@@ -882,7 +882,8 @@ export class AppoinmentService {
   ): Promise<AppointmentDBModel> {
     const deadline = makeDeadline(moment(appointment.dateTime.toDate()).utc(), label)
 
-    const [, updatedAppointment] = await Promise.all([
+    const [updatedAppointment] = await Promise.all([
+      this.updateAppointmentDB(appointment.id, {deadline}),
       this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
         appointment.id,
         {
@@ -892,7 +893,6 @@ export class AppoinmentService {
         PcrResultTestActivityAction.UpdateFromAppointment,
         userId,
       ),
-      this.updateAppointmentDB(appointment.id, {deadline}),
     ])
     await this.createCloudTaskToSyncLabelWithAcuity(appointment.acuityAppointmentId, label)
     return updatedAppointment
