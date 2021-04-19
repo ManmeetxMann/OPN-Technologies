@@ -1239,6 +1239,7 @@ export class AppoinmentService {
       appointmentTypeId,
       calendarTimezone,
       calendarId,
+      calendarName,
       organizationId,
       packageCode,
     } = decodeBookingLocationId(id)
@@ -1255,6 +1256,7 @@ export class AppoinmentService {
         appointmentTypeId,
         calendarTimezone,
         calendarId,
+        calendarName,
         date,
         time,
         organizationId,

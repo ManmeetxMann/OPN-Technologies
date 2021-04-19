@@ -1,22 +1,27 @@
 import {NextFunction, Request, Response, Router} from 'express'
+
+// Common
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {authorizationMiddleware} from '../../../../common/src/middlewares/authorization'
 import {RequiredUserPermission} from '../../../../common/src/types/authorization'
+import {StripeService} from '../../../../common/src/service/payment/stripe'
 import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
-import {safeTimestamp} from '../../../../common/src/utils/datetime-util'
-import {now} from '../../../../common/src/utils/times'
-import {Config} from '../../../../common/src/utils/config'
-import {Stripe} from 'stripe'
+import {AuthUser} from '../../../../common/src/data/user'
 
+// Services
+import {UserCardService} from '../../services/user-cart.service'
+
+// Models
+import {CartRequest} from '../../models/cart'
 /**
  * TODO:
- * 1. Stripe service
  * 2. DB integration
  */
 class CartController implements IControllerBase {
   public router = Router()
   public path = '/reservation/api/v1'
-  private stripe
+  private userCardService = new UserCardService()
+  private stripeService = new StripeService()
 
   constructor() {
     this.initRoutes()
@@ -62,55 +67,11 @@ class CartController implements IControllerBase {
 
   getCart = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const cartItems = [
-        {
-          cartItemId: '0ETNwX9mXw9WHSwkktV3',
-          label: 'Covid-19 PCR Test',
-          subLabel: 'Forest Hill In-Clinic',
-          patientName: 'John Doe',
-          date: safeTimestamp(now()),
-          price: 159.79,
-        },
-        {
-          cartItemId: '1ETNwX9mXw9WHSwkktV3',
-          label: 'Covid-19 PCR Test',
-          subLabel: 'Forest Hill In-Clinic',
-          patientName: 'John Doe',
-          date: safeTimestamp(now()),
-          price: 159.79,
-        },
-      ]
+      const authenticatedUser = res.locals.authenticatedUser as AuthUser
+      const organizationId = req.headers.organizationid as string
+      const userCard = await this.userCardService.getUserCart(authenticatedUser, organizationId)
 
-      const total = 159.79 * 2
-      const tax = 0.13
-
-      const paymentSummary = [
-        {
-          uid: 'subTotal',
-          label: 'SUBTOTAL',
-          amount: total,
-          currency: 'CAD',
-        },
-        {
-          uid: 'tax',
-          label: 'SUBTOTAL',
-          amount: total * tax,
-          currency: 'CAD',
-        },
-        {
-          uid: 'total',
-          label: 'Your Total',
-          amount: total + total * tax,
-          currency: 'CAD',
-        },
-      ]
-
-      res.json(
-        actionSucceed({
-          cartItems,
-          paymentSummary,
-        }),
-      )
+      res.json(actionSucceed(userCard))
     } catch (error) {
       next(error)
     }
@@ -118,15 +79,12 @@ class CartController implements IControllerBase {
 
   addToCart = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      res.json(actionSucceed({}))
-    } catch (error) {
-      next(error)
-    }
-  }
+      const cartItems = req.body as CartRequest[]
+      const authenticatedUser = res.locals.authenticatedUser as AuthUser
+      const organizationId = req.headers.organizationid as string
 
-  updateCart = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      res.json(actionSucceed({}))
+      await this.userCardService.addItems(authenticatedUser, cartItems, organizationId)
+      res.json(actionSucceed())
     } catch (error) {
       next(error)
     }
@@ -142,6 +100,11 @@ class CartController implements IControllerBase {
 
   deleteCartItems = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const cartItemId = req.params.cartItemId as string
+      const authenticatedUser = res.locals.authenticatedUser as AuthUser
+      const organizationId = req.headers.organizationid as string
+
+      await this.userCardService.deleteItem(authenticatedUser, cartItemId, organizationId)
       res.json(actionSucceed({}))
     } catch (error) {
       next(error)
@@ -150,12 +113,8 @@ class CartController implements IControllerBase {
 
   creteEphemeralKeys = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      this.stripe = new Stripe(Config.get('STRIPE_SECRET_KEY'), null)
-
-      const ephemeralKeys = await this.stripe.ephemeralKeys.create(
-        {customer: 'cus_JJ0T3QA6kYrv9M'},
-        {apiVersion: '2020-08-27'},
-      )
+      // const authenticatedUser = res.locals.authenticatedUser as AuthUser
+      const ephemeralKeys = await this.stripeService.customerEphemeralKeys('cus_JJ0T3QA6kYrv9M')
       res.json(ephemeralKeys)
     } catch (error) {
       next(error)
