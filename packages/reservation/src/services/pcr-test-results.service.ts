@@ -1033,6 +1033,11 @@ export class PCRTestResultsService {
       }
     }
 
+    // trigger pub sub to issue Stop passport on inconclusive result
+    if (resultData.result === ResultTypes.Inconclusive) {
+      this.postPubsub(resultData, 'result')
+    }
+
     if (addSuccessLog) {
       LogInfo('sendNotification', 'SuccessfullEmailSent', {
         barCode: resultData.barCode,
