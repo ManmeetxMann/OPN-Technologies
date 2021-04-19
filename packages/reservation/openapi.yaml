@@ -787,13 +787,19 @@ components:
                     type: string
                   deadline:
                     type: string
-                  latestResult:
-                    type: string
                   vialLocation:
                     type: string
-                  testRunId:
-                    type: string
                   labName:
+                    type: string
+                  canCancel:
+                    type: boolean
+                  organizationName:
+                    type: string
+                  email:
+                    type: string
+                  phone:
+                    type: string
+                  testType:
                     type: string
             required:
               - id
