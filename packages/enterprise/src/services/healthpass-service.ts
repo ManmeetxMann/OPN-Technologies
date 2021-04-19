@@ -17,7 +17,7 @@ import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 import {ResultTypes} from '../../../reservation/src/models/appointment'
 
 import moment from 'moment'
-import {HealthPass} from '../types/health-pass'
+import {Bages, HealthPass} from '../types/health-pass'
 import {PulseOxygenStatuses} from '../../../reservation/src/models/pulse-oxygen'
 
 export class HealthpassService {
@@ -170,6 +170,21 @@ export class HealthpassService {
       dateOfBirth: null,
       travelIDIssuingCountry: null,
       travelID: null,
+    }
+  }
+
+  async getBages(userId: string, organizationId: string): Promise<Bages> {
+    const items = await this.getItems(userId, organizationId)
+
+    return {
+      hasSelfTestBadge: Boolean(
+        items?.latestAttestation?.status &&
+          items.latestAttestation.status !== PassportStatuses.Pending,
+      ),
+      hasTempBadge: Boolean(items?.latestTemperature?.status),
+      hasPCRBadge: Boolean(items?.PCRTestResult?.result),
+      hasPulseBadge: Boolean(items?.latestPulse?.status),
+      hasVaccineBadge: false,
     }
   }
 }
