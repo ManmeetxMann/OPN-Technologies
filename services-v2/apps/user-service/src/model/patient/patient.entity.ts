@@ -35,6 +35,10 @@ export class Patient extends Auditable {
   @ApiProperty()
   registrationId: string
 
+  @Column({nullable: true})
+  @ApiProperty()
+  dateOfBirth: string
+
   @Column()
   @ApiProperty()
   photoUrl: string

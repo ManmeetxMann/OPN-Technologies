@@ -1,5 +1,17 @@
 import {Phone} from '../../../common/src/types/phone'
 
+export type NewSyncUser = {
+  phoneNumber: string
+  photoUrl?: string
+  firebaseKey: string
+  patientPublicId: string
+  registrationId: string
+  firstName: string
+  lastName: string
+  photo?: string
+  dateOfBirth?: string
+}
+
 export type NewUser = {
   email: string
   firstName: string

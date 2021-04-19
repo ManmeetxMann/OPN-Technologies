@@ -1,5 +1,5 @@
 import {Column, Entity, Generated, PrimaryColumn} from 'typeorm'
-import {Auditable} from '@opn/common/model'
+import {Auditable} from '../../../../../libs/common/src/model/auditable'
 import {ApiProperty} from '@nestjs/swagger'
 
 @Entity('user')
