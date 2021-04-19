@@ -79,7 +79,7 @@ const companyInfoHeader = (): Content => {
 const getFillColorForResultsCell = (result: string): string => {
   if (result && (result.toUpperCase() === 'POSITIVE' || result === '+')) {
     return '#FF0000'
-  } else if (result && (result.toUpperCase() === 'INDETERMINATE')) {
+  } else if (result && result.toUpperCase() === 'INDETERMINATE') {
     return '#B7B7B7'
   }
   return '#6AA84F'
