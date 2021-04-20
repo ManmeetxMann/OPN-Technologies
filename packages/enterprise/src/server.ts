@@ -26,7 +26,7 @@ import InternalV1Controller from './controllers/v1/internal/internal.controller'
 import {createConnection} from 'typeorm'
 import * as patientEntities from '../../../services-v2/apps/user-service/src/model/patient/patient.entity'
 import {Config} from '../../common/src/utils/config'
-import {GAEService} from '../../common/src/utils/app-engine-environment'
+import {isGAEService} from '../../common/src/utils/app-engine-environment'
 
 const PORT = Number(process.env.PORT) || 5003
 
@@ -61,7 +61,7 @@ const app = new App({
  * 1. Move it to wrapper similar to express
  */
 let connection = {}
-if (GAEService() !== 'local') {
+if (isGAEService()) {
   // Connect via socket when deployed to GCP
   connection = {
     host: Config.get('HOST'),
