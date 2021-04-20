@@ -6,7 +6,8 @@ import {Patient} from '../model/patient/patient.entity'
 
 export class PatientCreateDto {
   idPatient: string
-  firebaseKey: string
+  firebaseKey: string // Firestore ID
+  authUserId: string // Firestore authUserId
   patientPublicId: string
 
   @ApiProperty()

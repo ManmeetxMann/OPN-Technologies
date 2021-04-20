@@ -81,8 +81,11 @@ export class PatientService {
    * @param data
    */
   async createProfile(data: PatientCreateDto): Promise<Patient> {
+    //TODO: For Sync: get firestore id then save firebaseKey
+    data.firebaseKey = 'TempKey' + Math.random().toString(36)
+    data.authUserId = await this.firebaseAuthService.createUser(data.email)
+
     const patient = await this.createPatient(data)
-    data.firebaseKey = patient.firebaseKey
     data.idPatient = patient.idPatient
 
     await Promise.all([
@@ -130,7 +133,7 @@ export class PatientService {
 
   async createPatient(data: PatientCreateDto): Promise<Patient> {
     const entity = new Patient()
-    entity.firebaseKey = await this.firebaseAuthService.createUser(data.email)
+    entity.firebaseKey = data.firebaseKey
     entity.firstName = data.firstName
     entity.lastName = data.lastName
     entity.dateOfBirth = data.dateOfBirth
@@ -141,16 +144,16 @@ export class PatientService {
     return this.patientRepository.save(entity)
   }
 
-  async saveAuth(data: PatientUpdateDto, idPatientAuth?: string): Promise<PatientAuth> {
+  private async saveAuth(data: PatientUpdateDto, idPatientAuth?: string): Promise<PatientAuth> {
     const auth = new PatientAuth()
     auth.idPatientAuth = idPatientAuth
     auth.patientId = data.idPatient
     auth.email = data.email
-    auth.authUserId = data.firebaseKey
+    auth.authUserId = data.authUserId
     return this.patientAuthRepository.save(auth)
   }
 
-  async saveAddress(
+  private async saveAddress(
     data: PatientUpdateDto,
     idPatientAddresses?: string,
   ): Promise<PatientAddresses> {
@@ -166,7 +169,10 @@ export class PatientService {
     return this.patientAddressesRepository.save(address)
   }
 
-  async saveHealth(data: PatientUpdateDto, idPatientTravel?: string): Promise<PatientHealth> {
+  private async saveHealth(
+    data: PatientUpdateDto,
+    idPatientTravel?: string,
+  ): Promise<PatientHealth> {
     const health = new PatientHealth()
     health.idPatientTravel = idPatientTravel
     health.patientId = data.idPatient
@@ -175,7 +181,7 @@ export class PatientService {
     return this.patientHealthRepository.save(health)
   }
 
-  async saveTravel(data: PatientUpdateDto, travelId?: string): Promise<PatientTravel> {
+  private async saveTravel(data: PatientUpdateDto, travelId?: string): Promise<PatientTravel> {
     const travel = new PatientTravel()
     travel.patientId = data.idPatient
     travel.idPatientTravel = travelId
@@ -184,7 +190,7 @@ export class PatientService {
     return this.patientTravelRepository.save(travel)
   }
 
-  async saveConsent(
+  private async saveConsent(
     data: PatientUpdateDto,
     idPatientDigitalConsent?: string,
   ): Promise<PatientDigitalConsent> {
