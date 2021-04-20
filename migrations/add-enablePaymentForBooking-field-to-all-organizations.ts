@@ -4,12 +4,12 @@
 
 import {initializeApp, credential, firestore} from 'firebase-admin'
 import {Config} from '../packages/common/src/utils/config'
-import {isEmpty} from 'lodash'
 
 const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA'))
 initializeApp({
   credential: credential.cert(serviceAccount),
 })
+console.log(serviceAccount.project_id)
 
 const database = firestore()
 
@@ -56,35 +56,45 @@ async function updateOrganizations(): Promise<Result[]> {
     hasMore = !organizationSnapshot.empty
     //hasMore = false
 
+    const promises = []
     for (const organization of organizationSnapshot.docs) {
-      const promises = []
       promises.push(updateOrganization(organization))
-      const result = await promiseAllSettled(promises)
-      results.push(...result)
     }
+    const result = await promiseAllSettled(promises)
+    results.push(...result)
   }
   return results
 }
 
-async function updateOrganization(
-  snapshot: firestore.QueryDocumentSnapshot<firestore.DocumentData>,
-) {
-  const addEnablePaymentForBookingField = async (result) => {
-    const updateData = {}
-    if (!result.data().enablePaymentForBooking) {
-      updateData['enablePaymentForBooking'] = false
-    }
-    if (!isEmpty(updateData)) {
-      await result.ref.set({
-        ...result.data(),
-        ...updateData,
-      })
+async function updateOrganization(result: firestore.QueryDocumentSnapshot<firestore.DocumentData>) {
+  try {
+    const organizationId = result.data().enablePaymentForBooking
+    const enablePaymentForBooking = result.data().enablePaymentForBooking
+    if (!enablePaymentForBooking) {
+      const updateData = {}
+      updateData['enablePaymentForBooking'] = true
+
+      await result.ref.set(
+        {
+          ...updateData,
+          timestamps: {
+            migrations: {
+              enablePaymentForBooking: firestore.FieldValue.serverTimestamp(),
+            },
+          },
+        },
+        {
+          merge: true,
+        },
+      )
+      console.log(`Successfully updated organizationId: ${result.id}`)
+      return 'Updated'
+    } else {
+      console.log(
+        `Already have enablePaymentForBooking: ${enablePaymentForBooking} for organizationId: ${organizationId}`,
+      )
     }
     return
-  }
-
-  try {
-    return addEnablePaymentForBookingField(snapshot)
   } catch (error) {
     console.warn(error)
     throw error
