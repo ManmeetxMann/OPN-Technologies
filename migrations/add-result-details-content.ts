@@ -38,9 +38,10 @@ async function main() {
       if (content.docs.length > 1) {
         console.log(`More than one entry was found for a ${resultType} resultType`)
       }
+      console.log(`Content Updated for resultType: ${resultType}`)
       return content.docs[0].ref.update({details})
     }
-
+    console.log(`Content Added for resultType: ${resultType}`)
     return database.collection('content').add({
       contentType: 'result',
       lang: 'en',
