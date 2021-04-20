@@ -10,6 +10,14 @@ export class CouponRepository extends DataModel<Coupon> {
     super(dataStore)
   }
 
+  async getByCouponCode(couponCode: string): Promise<Coupon> {
+    const result = await this.findWhereEqual('couponCode', couponCode)
+    if (result.length > 1) {
+      console.log(`getByCouponCode: More than 1 result for the couponCode ${couponCode}`)
+    }
+    return result[0]
+  }
+
   public async save(coupon: Omit<Coupon, 'id'>): Promise<void> {
     await this.add(coupon)
   }

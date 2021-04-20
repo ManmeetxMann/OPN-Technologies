@@ -8,10 +8,12 @@ describe('barcode number generation', () => {
       appoinmentService.getNextBarCodeNumber(),
       appoinmentService.getNextBarCodeNumber(),
       appoinmentService.getNextBarCodeNumber(),
+      appoinmentService.getNextBarCodeNumber(),
+      appoinmentService.getNextBarCodeNumber(),
     ])
 
     const uniqueBarcodes = new Set(result)
-    expect(uniqueBarcodes.size).toBe(3)
+    expect(uniqueBarcodes.size).toBe(5)
     done()
   })
 })

@@ -13,6 +13,7 @@ export const createOrganization = async (
     name: string
     enableTemperatureCheck: boolean
     userIdToAdd?: string
+    questionnaireId?: string
   },
   testDataCreator: string,
 ): Promise<void> => {
@@ -39,7 +40,7 @@ export const createOrganization = async (
     enablePulseOxygen: false,
     legacyMode: false,
     enableTesting: true,
-    questionnaireId: '',
+    questionnaireId: dataOverwrite.questionnaireId || '',
     testDataCreator,
   }
 

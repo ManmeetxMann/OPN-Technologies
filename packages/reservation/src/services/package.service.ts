@@ -71,6 +71,15 @@ export class PackageService {
       currentPackageAcuity.appointmentTypeIDs,
     )
 
+    if (!currentPackageAcuity.remainingCounts) {
+      return [
+        {
+          testType: TestTypes.PCR,
+          count: 0,
+        },
+      ]
+    }
+
     const countsByType: Record<string, number> = {}
 
     Object.entries(currentPackageAcuity.remainingCounts).forEach(([acuityType, count]) => {

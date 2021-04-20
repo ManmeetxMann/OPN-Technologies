@@ -1,8 +1,9 @@
 import {TypeOrmModule} from '@nestjs/typeorm'
+import {DynamicModule} from '@nestjs/common'
 import {ConfigModule, ConfigService} from '@nestjs/config'
 import {isRunningOnGCP} from '@opn/common/utils'
 
-export const DefaultDatabaseConfiguration = (service: string) => {
+export const DefaultDatabaseConfiguration = (service: string): DynamicModule => {
   const env = (property: string) => [service, 'DB', property].join('_').toUpperCase()
 
   return TypeOrmModule.forRootAsync({

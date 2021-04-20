@@ -10,14 +10,28 @@ export class BookingLocationService {
   private acuityRepository = new AcuityRepository()
   private packageRepository = new PackageRepository(new DataStore())
 
-  async getBookingLocations(organizationId: string): Promise<BookingLocations[]> {
-    const packages = await this.getPackageListByOrganizationId(organizationId)
-    const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
-    const calendars = await this.acuityRepository.getCalendarList()
+  private getPublicAppointmentTypes(
+    appointmentTypes: AppointmentTypes[],
+  ): {certificate: string; appointmentType: AppointmentTypes}[] {
+    const publicTypes = appointmentTypes.filter((type) => !type.private)
+
+    return publicTypes.map((appointmentType) => ({
+      appointmentType,
+      certificate: '',
+    }))
+  }
+
+  private async getAppointmentTypesWithPackages(
+    organizationId: string,
+    appointmentTypes: AppointmentTypes[],
+  ): Promise<
+    IterableIterator<{certificate: string; count?: number; appointmentType: AppointmentTypes}>
+  > {
     const appointmentTypesWithPackages = new Map<
       string,
-      {certificate: string; count: number; appointmentType: AppointmentTypes}
+      {certificate: string; count?: number; appointmentType: AppointmentTypes}
     >()
+    const packages = await this.getPackageListByOrganizationId(organizationId)
 
     packages.map(({certificate, remainingCounts}) => {
       Object.keys(remainingCounts).map((appointmentTypeId) => {
@@ -41,14 +55,28 @@ export class BookingLocationService {
       })
     })
 
+    return appointmentTypesWithPackages.values()
+  }
+
+  async getBookingLocations(
+    organizationId: string,
+    enablePaymentForBooking: boolean,
+  ): Promise<BookingLocations[]> {
+    const calendars = await this.acuityRepository.getCalendarList()
+    const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
+    const appointmentTypesWithPackages = enablePaymentForBooking
+      ? this.getPublicAppointmentTypes(appointmentTypes)
+      : await this.getAppointmentTypesWithPackages(organizationId, appointmentTypes)
+
     const bookingLocations = []
-    Array.from(appointmentTypesWithPackages.values()).map((appointmentTypesWithPackage) => {
+    Array.from(appointmentTypesWithPackages).map((appointmentTypesWithPackage) => {
       const {appointmentType, certificate} = appointmentTypesWithPackage
       appointmentType.calendarIDs.forEach((calendarId) => {
         const calendar = calendars.find(({id}) => id === calendarId)
         const idBuf = {
           appointmentTypeId: appointmentType.id,
           calendarTimezone: calendar.timezone,
+          calendarName: calendar.name,
           calendarId: calendar.id,
           organizationId,
           packageCode: certificate,
@@ -61,6 +89,7 @@ export class BookingLocationService {
           appointmentTypeName: appointmentType.name,
           name: calendar.name,
           address: calendar.location,
+          price: appointmentType.price,
         })
       })
     })

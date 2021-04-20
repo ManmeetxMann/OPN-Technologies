@@ -17,7 +17,7 @@ import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 import {ResultTypes} from '../../../reservation/src/models/appointment'
 
 import moment from 'moment'
-import {HealthPass} from '../types/health-pass'
+import {Bages, HealthPass} from '../types/health-pass'
 import {PulseOxygenStatuses} from '../../../reservation/src/models/pulse-oxygen'
 
 export class HealthpassService {
@@ -141,21 +141,50 @@ export class HealthpassService {
     return {tests, expiry, status}
   }
 
-  async getDobFromLastPCR(pass: HealthPass): Promise<string | null> {
+  async getMetadataFromLastPCR(
+    pass: HealthPass,
+  ): Promise<{
+    dateOfBirth: string | null
+    travelIDIssuingCountry: string | null
+    travelID: string | null
+  }> {
     const testsPCR = pass.tests
       .filter((test) => test.type === PassportType.PCR)
       .sort((current, next) => {
-        const currentDate = new Date(current.date).getDate()
-        const nextDate = new Date(next.date).getDate()
+        const currentDate = new Date(current.date).valueOf()
+        const nextDate = new Date(next.date).valueOf()
         return nextDate - currentDate
       })
 
     if (testsPCR[0]) {
       const testId = testsPCR[0].id
       const appointment = await this.appointmentService.getAppointmentOnlyDBById(testId)
-      return appointment.dateOfBirth
+      const {dateOfBirth, travelID, travelIDIssuingCountry} = appointment
+      return {
+        dateOfBirth: dateOfBirth || null,
+        travelIDIssuingCountry: travelIDIssuingCountry || null,
+        travelID: travelID || null,
+      }
     }
+    return {
+      dateOfBirth: null,
+      travelIDIssuingCountry: null,
+      travelID: null,
+    }
+  }
 
-    return null
+  async getBages(userId: string, organizationId: string): Promise<Bages> {
+    const items = await this.getItems(userId, organizationId)
+
+    return {
+      hasSelfTestBadge: Boolean(
+        items?.latestAttestation?.status &&
+          items.latestAttestation.status !== PassportStatuses.Pending,
+      ),
+      hasTempBadge: Boolean(items?.latestTemperature?.status),
+      hasPCRBadge: Boolean(items?.PCRTestResult?.result),
+      hasPulseBadge: Boolean(items?.latestPulse?.status),
+      hasVaccineBadge: false,
+    }
   }
 }

@@ -156,7 +156,7 @@ const clientInformation = (params: PCRTestResultEmailDTO, resultDate: string): C
   }
 
   const dataTestDetails = [
-    ['Test', 'RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
+    ['Test', 'NAAT, RT-PCR (Reverse Transcription Polymerase Chain Reaction)'],
     ['Equipment approved by \n Health Canada', params.labAssay],
   ]
 

@@ -30,7 +30,7 @@ describe('PUT:admin:add transport run', () => {
               url,
               {
                 'transportRunId': 'TRA1236-Mar15',
-                'appointmentIds': ['3daig0cwDK51XReWFT55'],
+                'appointmentIds': ['ZTBKiNFZu1TILmT899KF'],
               },
           )
           .expect('status', 200)

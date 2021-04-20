@@ -1,5 +1,3 @@
-npm run start:dev user-service
-
 # OPN - Services
 This project has been bootstrap with [Nest](https://github.com/nestjs/nest), a NodeJs-based framework.
 
@@ -44,17 +42,17 @@ The shared library will handle:
 - Middlewares: logger, authentication, etc...
 - Exceptions
 - Utilities functions
+- Generate swagger page
 
 The shared library is importable from `@opn/common`
-
 
 # Get started
 ###Prerequisites
 1. Install GCP CLI [Quick Start](https://cloud.google.com/sdk/docs/quickstart) 
-1. Get access to dev project, login to CLI and select dev project
+1. Get service account for local project, authorize via google CLI and select dev project
     ```sh
-    gcloud auth login
-    gcloud config set project opn-platform-dev
+    gcloud auth activate-service-account --key-file=opn-platform-local-2397063b295f.json
+    gcloud config set project opn-platform-local
     ```
 1. Install NodeJS >=12.13.0 and NPM ^7.8.0
 
@@ -67,7 +65,7 @@ The shared library is importable from `@opn/common`
     ```sh
     gcloud config get-value project
     ```
-    Should return `opn-platform-dev`
+    Should return `opn-platform-local`
 1. Obtain secrets in .env file for dev project
     ```sh
     gcloud secrets versions access latest --secret=OPN_SERVICES_V2_SECRETS > ./.env
@@ -75,6 +73,15 @@ The shared library is importable from `@opn/common`
 
 ## Configure environment
 
+### Cloud SQL database
+Clouds SQL is accessible on local environment for application and DB management tools via cloud SQL proxy when authenticated with CGP CLI.
+1. Install cloud SQL proxy for you OS: [Quick start](https://cloud.google.com/sql/docs/mysql/quickstart-proxy-test)
+1. Launch cloud SQL proxy.
+    ```sh
+    cloud_sql_proxy -instances=opn-platform-local:northamerica-northeast1:opn-platform-db-server-local:sql-inst=tcp:3306
+    ```
+1. MySQL DB should be accessible for local connection from application or DB management tool using host: 127.0.0.1:3306. Login, password and DB name will be in .env file.
+### OR
 ### Local database
 Create local mysql datasource .
 - Pull Docker image (latest is 8.x)
@@ -82,34 +89,10 @@ Create local mysql datasource .
 - Run image
 `docker run --name opn-mysql -e MYSQL_ROOT_PASSWORD=password -p 127.0.0.1:3310:3306 -d mysql:latest`
 - Set authentication protocol
-```
+```SQL
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
 flush privileges;
 ```
-
-### Cloud SQL database
-Clouds SQL is accessible on local environment for application and DB management tools via cloud SQL proxy when authenticated with CGP CLI.
-1. Install cloud SQL proxy for you OS: [Quick start](https://cloud.google.com/sql/docs/mysql/quickstart-proxy-test)
-1. Launch cloud SQL proxy. **(TODO replace with a dev link)**
-    ```
-    cloud_sql_proxy -instances=opn-platform-infra-dev:northamerica-northeast1:opn-platform-db-server-infra-dev:sql-inst=tcp:3306
-    ```
-1. MySQL DB should be accessible for local connection from application or DB management tool using host: 127.0.0.1:3306. Login, password and DB name will be in .env file.
-
-### Environment variables
-Create a `.env` file in the root folder and add the following:
-
-```.env
-# User service
-USER_DB_HOST='localhost'
-USER_DB_PORT='3310'
-USER_DB_NAME='USER_service'
-USER_DB_USERNAME='USER_service'
-USER_DB_PASSWORD='password'
-USER_DB_AUTO_SYNC_SCHEMA=true
-USER_DB_RUN_MIGRATION=false
-```
-
 ## Running the app
 
 ```sh
@@ -121,7 +104,10 @@ npm run start:dev [SERVICE_NAME]
 
 # production mode
 npm run start:prod [SERVICE_NAME]
+
+npm run start:dev user-service
 ```
+Open http://localhost:8080/api/doc/, enter login:password from .env SWAGGER_BASIC_AUTH_CREDENTIALS
 
 #### SERVICE_NAME:
 1. user-service
