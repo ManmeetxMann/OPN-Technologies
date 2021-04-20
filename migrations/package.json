@@ -37,7 +37,8 @@
 				"migration:pcr-add-lab-id": "ts-node ./pcr-add-lab-id",
 				"migration:add-public-org": "ts-node ./add-public-org",
 				"migration:relocate-questionnaireId-organization": "ts-node ./relocate-questionnaireId-organization",
-				"migration:remove-questionnaireId-organization": "ts-node ./remove-questionnaireId-organization"
+				"migration:remove-questionnaireId-organization": "ts-node ./remove-questionnaireId-organization",
+				"migration:add-content-result-details": "ts-node ./add-result-details-content"
 		},
 		"author": "",
 		"license": "Appropriate",
