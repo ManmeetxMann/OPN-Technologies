@@ -47,6 +47,10 @@ type ResultsForHistory = ResultSpecs & {
   reCollectNumber: string
   result: string
   runNumber: string
+  resultMetaData: {
+    autoResult: string
+    comment: string
+  }
 }
 
 export type TestResultHistoryResponseDTO = {
