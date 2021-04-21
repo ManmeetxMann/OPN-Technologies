@@ -66,7 +66,6 @@ import {ReservationPushTypes} from '../types/appointment-push'
 import {DbBatchAppointments} from '../../../common/src/types/push-notification'
 import {PcrResultTestActivityAction} from '../models/pcr-test-results'
 import {AdminScanHistory} from '../models/admin-scan-history'
-import {CardItemDBModel} from '../../../../services-v2/apps/cart-service/src/model'
 
 //Repository
 import {AcuityRepository} from '../respository/acuity.repository'
@@ -1202,7 +1201,7 @@ export class AppoinmentService {
    * 1. Cart coupon
    */
   async createAcuityAppointmentFromCartItem(
-    cartDdItem: CardItemDBModel,
+    cartDdItem,
     userId: string,
     email: string,
   ): Promise<AppointmentDBModel> {
