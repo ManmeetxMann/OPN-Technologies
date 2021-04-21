@@ -22,7 +22,7 @@
     "build:user-service": "SERVICE=user-service npm run build:service",
     "build:passport-service": "SERVICE=passport-service npm run build:service",
     "build:cart-service": "SERVICE=cart-service npm run build:service",
-    "build:service": "nest build $SERVICE && cp ./package.json ./dist/apps/$SERVICE/ && cp ./.env ./dist/apps/$SERVICE/",
+    "build:service": "nest build $SERVICE && cp ./package.json ./dist/apps/$SERVICE/ && cp ./.env ./dist/apps/$SERVICE/ && cp ./.env ./dist/",
     "deploy:user-service": "gcloud app deploy ./dist/apps/user-service",
     "deploy:passport-service": "gcloud app deploy ./dist/apps/passport-service",
     "deploy:cart-service": "gcloud app deploy ./dist/apps/cart-service"

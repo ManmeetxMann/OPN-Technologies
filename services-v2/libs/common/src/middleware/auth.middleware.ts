@@ -1,4 +1,5 @@
 import {Injectable, NestMiddleware} from '@nestjs/common'
+import {ConfigService} from '@nestjs/config'
 
 import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
 
@@ -16,7 +17,11 @@ import {ForbiddenException, UnauthorizedException} from '../exception'
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
-  constructor(private firebaseAuthService: FirebaseAuthService, private userService: UserService) {}
+  constructor(
+    private firebaseAuthService: FirebaseAuthService,
+    private userService: UserService,
+    private configService: ConfigService,
+  ) {}
 
   private authorizedWithoutOrgId = (admin: AdminProfile, organizationId: string): boolean => {
     //IF OPN Super Admin or LAB User then Allow Access Without ORG ID
@@ -327,6 +332,16 @@ export class AuthMiddleware implements NestMiddleware {
   async use(req, res, next) {
     // Allow Swagger
     if ((req.originalUrl as string).startsWith('/api/doc/')) {
+      const userPass = new Buffer(
+        (req.headers.authorization || '').split(' ')[1] || '',
+        'base64',
+      ).toString()
+
+      const configUserPass = this.configService.get('SWAGGER_BASIC_AUTH_CREDENTIALS')
+      if (userPass != configUserPass) {
+        res.writeHead(401, {'WWW-Authenticate': 'Basic realm="nope"'})
+        res.end('HTTP Error 401 Unauthorized: Access is denied')
+      }
       return next()
     }
 
