@@ -100,6 +100,7 @@ runs:
       echo "::group::Add Application Environment Variables"
       echo "Writing Environment Variables to: .env"
       gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/${{ inputs.service_name }}/dist/common/.env
+      cp ./packages/${{ inputs.service_name }}/dist/common/.env ./packages/${{ inputs.service_name }}/dist/packages/common/.env
       echo "::endgroup::"
       ONLY_VALIDATE_DEPLOYMENT=${{ inputs.only_validate_deployment }}
       if [[ $ONLY_VALIDATE_DEPLOYMENT == 'false' ]]; then
