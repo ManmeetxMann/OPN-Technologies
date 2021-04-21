@@ -7,11 +7,13 @@ import {
   Unique,
   BeforeInsert,
   OneToOne,
+  OneToMany,
 } from 'typeorm'
-import {Auditable} from '@opn-services/common/model'
+import {Auditable} from '../../../../../libs/common/src/model'
 import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsEmail, IsString} from 'class-validator'
 import {PatientDigitalConsent, PatientHealth, PatientTravel} from './patient-profile'
+import {PatientToDelegates} from './patient-relations.entity'
 
 @Entity('patientAuth')
 @Unique(['authUserId', 'email'])
@@ -248,44 +250,56 @@ export class Patient extends Auditable {
   @Column({nullable: true, default: null})
   @ApiProperty()
   @IsString()
-  consentFileUrl: string
+  consentFileUrl?: string
 
   /** Relations */
   @OneToOne(
     () => PatientAuth,
     patientAddress => patientAddress.patientId,
   )
-  auth: PatientAuth
+  auth?: PatientAuth
 
   @OneToOne(
     () => PatientAddresses,
     patientAddress => patientAddress.patientId,
   )
-  addresses: PatientAddresses
+  addresses?: PatientAddresses
 
   @OneToOne(
     () => PatientHealth,
     patientHealth => patientHealth.patientId,
   )
-  health: PatientHealth
+  health?: PatientHealth
 
   @OneToOne(
     () => PatientTravel,
     patientTravel => patientTravel.patientId,
   )
-  travel: PatientTravel
+  travel?: PatientTravel
 
   @OneToOne(
     () => PatientDigitalConsent,
     patientTravel => patientTravel.patientId,
   )
-  digitalConsent: PatientDigitalConsent
+  digitalConsent?: PatientDigitalConsent
 
   @OneToOne(
     () => PatientAdmin,
     patientAdmin => patientAdmin.patientId,
   )
-  admin: PatientAdmin
+  admin?: PatientAdmin
+
+  @OneToMany(
+    () => PatientToDelegates,
+    patientToDelegate => patientToDelegate.delegateId,
+  )
+  dependants: PatientToDelegates[]
+
+  @OneToMany(
+    () => PatientToDelegates,
+    patientToDelegate => patientToDelegate.dependantId,
+  )
+  delegates: PatientToDelegates[]
 
   /** Hooks */
   @BeforeInsert()
