@@ -16,6 +16,7 @@ import {AuthGuard} from '@opn/common/guard/auth.guard'
 import {assignWithoutUndefined, ResponseStatusCodes} from '@opn/common/dto'
 import {Patient} from '../../../model/patient/patient.entity'
 import {
+  DependantCreateDto,
   PatientCreateDto,
   PatientFilter,
   patientProfileDto,
@@ -82,5 +83,21 @@ export class PatientController {
     await this.patientService.updateProfile(id, patientUpdateDto)
 
     return ResponseWrapper.actionSucceed()
+  }
+
+  @Post('/:patientId/dependant')
+  async addDependents(
+    @Param('patientId') delegateId: string,
+    @Body() dependantBody: DependantCreateDto,
+  ): Promise<ResponseWrapper<Patient>> {
+    const delegateExists = await this.patientService.getbyId(delegateId)
+
+    if (!delegateExists) {
+      throw new NotFoundException('Delegate with given id not found')
+    }
+
+    const dependant = await this.patientService.createDependant(delegateId, dependantBody)
+
+    return ResponseWrapper.actionSucceed(dependant)
   }
 }

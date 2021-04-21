@@ -7,11 +7,13 @@ import {
   Unique,
   BeforeInsert,
   OneToOne,
+  OneToMany,
 } from 'typeorm'
 import {Auditable} from '@opn/common/model'
 import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsEmail, IsString} from 'class-validator'
 import {PatientDigitalConsent, PatientHealth, PatientTravel} from './patient-profile'
+import {PatientToDelegates} from './patient-relations.entity'
 
 @Entity('patientAuth')
 @Unique(['authUserId', 'email'])
@@ -286,6 +288,18 @@ export class Patient extends Auditable {
     patientAdmin => patientAdmin.patientId,
   )
   admin: PatientAdmin
+
+  @OneToMany(
+    () => PatientToDelegates,
+    patientToDelegate => patientToDelegate.delegateId,
+  )
+  dependants: PatientToDelegates[]
+
+  @OneToMany(
+    () => PatientToDelegates,
+    patientToDelegate => patientToDelegate.dependantId,
+  )
+  delegates: PatientToDelegates[]
 
   /** Hooks */
   @BeforeInsert()
