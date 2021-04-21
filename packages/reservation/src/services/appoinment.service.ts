@@ -747,17 +747,19 @@ export class AppoinmentService {
         return result
       }
 
+      let updatedData = null
+
       switch (actionType) {
         case AppointmentBulkAction.MakeRecived:
-          await this.makeReceived(appointmentId, data.vialLocation, data.userId)
+          updatedData = await this.makeReceived(appointmentId, data.vialLocation, data.userId)
           break
 
         case AppointmentBulkAction.AddTransportRun:
-          await this.addTransportRun(appointmentId, data as UpdateTransPortRun)
+          updatedData = await this.addTransportRun(appointmentId, data as UpdateTransPortRun)
           break
 
         case AppointmentBulkAction.AddAppointmentLabel:
-          await this.addAppointmentLabel(appointment, data.label, userId)
+          updatedData = await this.addAppointmentLabel(appointment, data.label, userId)
           break
 
         default:
@@ -768,6 +770,7 @@ export class AppoinmentService {
         id: appointmentId,
         barCode: appointment.barCode,
         status: BulkOperationStatus.Success,
+        updatedData,
       }
     } catch (error) {
       console.warn(`[${actionType} bulk update error]: ${error.message}`)
@@ -779,7 +782,11 @@ export class AppoinmentService {
     }
   }
 
-  async makeReceived(appointmentId: string, vialLocation: string, userId: string): Promise<void> {
+  async makeReceived(
+    appointmentId: string,
+    vialLocation: string,
+    userId: string,
+  ): Promise<AppointmentDBModel> {
     await this.appointmentStatusChange(appointmentId, AppointmentStatus.Received, userId)
 
     const saved = await this.appointmentsRepository.updateProperties(appointmentId, {
@@ -787,9 +794,14 @@ export class AppoinmentService {
       vialLocation,
     })
     this.postPubsub(saved, 'updated')
+
+    return saved
   }
 
-  async addTransportRun(appointmentId: string, data: UpdateTransPortRun): Promise<void> {
+  async addTransportRun(
+    appointmentId: string,
+    data: UpdateTransPortRun,
+  ): Promise<AppointmentDBModel> {
     const savedAppointment = await this.appointmentsRepository.updateProperties(appointmentId, {
       appointmentStatus: AppointmentStatus.InTransit,
       transportRunId: data.transportRunId,
@@ -803,6 +815,7 @@ export class AppoinmentService {
       data.userId,
     )
     this.postPubsub(savedAppointment, 'updated')
+    return savedAppointment
   }
 
   async createOrUpdatePCRResults(appointment: AppointmentDBModel, adminId: string): Promise<void> {
@@ -870,10 +883,11 @@ export class AppoinmentService {
     appointment: AppointmentDBModel,
     label: DeadlineLabel,
     userId: string,
-  ): Promise<void> {
+  ): Promise<AppointmentDBModel> {
     const deadline = makeDeadline(moment(appointment.dateTime.toDate()).utc(), label)
 
-    await Promise.all([
+    const [updatedAppointment] = await Promise.all([
+      this.updateAppointmentDB(appointment.id, {deadline}),
       this.pcrTestResultsRepository.updateAllResultsForAppointmentId(
         appointment.id,
         {
@@ -883,9 +897,9 @@ export class AppoinmentService {
         PcrResultTestActivityAction.UpdateFromAppointment,
         userId,
       ),
-      this.updateAppointmentDB(appointment.id, {deadline}),
     ])
     await this.createCloudTaskToSyncLabelWithAcuity(appointment.acuityAppointmentId, label)
+    return updatedAppointment
   }
 
   async createCloudTaskToSyncLabelWithAcuity(

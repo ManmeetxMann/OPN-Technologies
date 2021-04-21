@@ -314,6 +314,8 @@ class AdminAppointmentController implements IControllerBase {
   addTransportRun = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
 
       const {appointmentIds, transportRunId} = req.body as {
         appointmentIds: string[]
@@ -355,7 +357,15 @@ class AdminAppointmentController implements IControllerBase {
         }),
       )
 
-      res.json(actionSuccess([...appointmentsState, ...failed]))
+      res.json(
+        actionSuccess([
+          ...appointmentsState.map((response) => ({
+            ...response,
+            updatedData: appointmentUiDTOResponse(response.updatedData, isLabUser, isClinicUser),
+          })),
+          ...failed,
+        ]),
+      )
     } catch (error) {
       next(error)
     }
@@ -395,6 +405,8 @@ class AdminAppointmentController implements IControllerBase {
   addVialLocation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const adminId = getUserId(res.locals.authenticatedUser)
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
 
       const {appointmentIds, vialLocation} = req.body as {
         appointmentIds: string[]
@@ -423,7 +435,15 @@ class AdminAppointmentController implements IControllerBase {
         }),
       )
 
-      res.json(actionSuccess([...appointmentsState, ...failed]))
+      res.json(
+        actionSuccess([
+          ...appointmentsState.map((response) => ({
+            ...response,
+            updatedData: appointmentUiDTOResponse(response.updatedData, isLabUser, isClinicUser),
+          })),
+          ...failed,
+        ]),
+      )
     } catch (error) {
       next(error)
     }
