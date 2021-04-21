@@ -16,7 +16,13 @@ import {UserOrderRepository} from '../repository/user-order.repository'
 import {CardItemDBModel} from '../model/cart'
 import {CartValidationItemDto} from '../dto'
 
-import {CartAddDto, CartResponseDto, CartSummaryDto, CartItemDto} from '../dto'
+import {
+  CartAddDto,
+  CartResponseDto,
+  CartSummaryDto,
+  CartItemDto,
+  PaymentAuthorizationCartDto,
+} from '../dto'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -75,7 +81,7 @@ export class UserCardService {
     return cartDBItems
   }
 
-  private async validateCart(cartDdItems: CardItemDBModel[]): Promise<CartValidationItemDto[]> {
+  private async validateCart(cartDdItems: CardItemDBModel[]): Promise<PaymentAuthorizationCartDto> {
     // For all items get unique variants of acuity queries
     const acuitySlots = []
     for (const cardDbItem of cartDdItems) {
@@ -155,7 +161,7 @@ export class UserCardService {
       }
     }
 
-    return invalidItems
+    return {items: invalidItems, isValid}
   }
 
   async getUserCart(userId: string, organizationId: string): Promise<CartResponseDto> {
@@ -216,10 +222,11 @@ export class UserCardService {
     organizationId: string,
   ): Promise<{
     cartDdItems: CardItemDBModel[]
-    cardValidation: CartValidationItemDto[]
+    cardValidation: PaymentAuthorizationCartDto
   }> {
     const cartDdItems = await this.fetchUserAllCartItem(userId, organizationId)
     const cardValidation = await this.validateCart(cartDdItems)
+    console.log(cardValidation)
     return {cartDdItems, cardValidation}
   }
 
@@ -248,6 +255,4 @@ export class UserCardService {
 
     return stripeTotal
   }
-
-  createOrder() {}
 }

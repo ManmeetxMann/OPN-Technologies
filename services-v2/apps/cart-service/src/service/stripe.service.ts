@@ -55,7 +55,7 @@ export class StripeService {
           payment_method: paymentMethodId,
           off_session: true,
           confirm: true,
-          capture_method: 'manual'
+          capture_method: 'manual',
         },
         this.commonOptions,
       )

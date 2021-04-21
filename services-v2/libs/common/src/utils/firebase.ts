@@ -36,7 +36,6 @@ class FirebaseManager {
   }
 }
 
-
 class DataStore {
   // Static Constants Properties
   private static readonly rootPath = '/'

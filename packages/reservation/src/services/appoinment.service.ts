@@ -81,6 +81,8 @@ import {AppointmentTypes} from '../models/appointment-types'
 import {PackageService} from './package.service'
 import {firestore} from 'firebase-admin'
 
+// Must to be require otherwise import to V2 fails
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const moment = require('moment')
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')

@@ -40,6 +40,7 @@ export class AuthMiddleware implements NestMiddleware {
     return true
   }
 
+  /* eslint-disable  max-lines-per-function, complexity */
   private isAllowed = (
     connectedUser: User,
     listOfRequiredPermissions: RequiredUserPermission[],
@@ -191,6 +192,7 @@ export class AuthMiddleware implements NestMiddleware {
     return true
   }
 
+  /* eslint-disable complexity */
   private async validateAuth(req, res, next) {
     // TODO: move this logic to the decorator
     const listOfRequiredRoles = [RequiredUserPermission.RegUser]

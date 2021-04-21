@@ -25,11 +25,11 @@ export type UserCartDBModel = {
 }
 
 export type OrderCartItemDBModel = {
-
+  appointmentId: string
 }
 
 export type OrderPaymentDBModel = {
-  intentId: string,
+  intentId: string
   status: string
 }
 
