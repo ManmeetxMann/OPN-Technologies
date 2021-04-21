@@ -26,6 +26,7 @@ interface SelectExecutionStats {
   totalPushTokens: number
   recentUserTokens: number
   pushesToSend: number
+  usersWithoutToken: number
 }
 
 interface SendExecutionStats {
@@ -149,26 +150,32 @@ export class ReservationPushService {
     }))
 
     // Build push tokens on time logic
+    let usersWithoutToken = 0
     const pushMessages: PushMessages[] = []
     appointmentsWithMeta.forEach((appointment) => {
       // Each reminder type
       for (const appointmentPushType in this.messageBeforeHours) {
         const hours = this.messageBeforeHours[appointmentPushType]
         if (this.isMessageToSend(appointment, hours, ReservationPushTypes[appointmentPushType])) {
-          pushMessages.push({
-            token: appointment.pushToken,
-            notification: {
-              title: this.messageTitle[appointmentPushType],
-              body: this.messagesBody[appointmentPushType](
-                appointment.dateTime,
-                appointment.locationName,
-              ),
-            },
-            data: {
-              appointmentId: appointment.id,
-              scheduledAppointmentType: appointmentPushType,
-            },
-          })
+          const token = appointment.pushToken
+          if (token) {
+            pushMessages.push({
+              token,
+              notification: {
+                title: this.messageTitle[appointmentPushType],
+                body: this.messagesBody[appointmentPushType](
+                  appointment.dateTime,
+                  appointment.locationName,
+                ),
+              },
+              data: {
+                appointmentId: appointment.id,
+                scheduledAppointmentType: appointmentPushType,
+              },
+            })
+          } else {
+            usersWithoutToken++
+          }
         }
       }
     })
@@ -179,6 +186,7 @@ export class ReservationPushService {
       totalPushTokens: tokens.length,
       recentUserTokens: Object.keys(recentUserToken).length,
       pushesToSend: pushMessages.length,
+      usersWithoutToken,
     }
 
     return {
@@ -238,17 +246,20 @@ export class ReservationPushService {
   ): Promise<unknown> {
     const tokens = await this.registrationService.findForUserIds([userId])
     const recentUserToken = this.getRecentUsersToken(tokens)
+    const token = recentUserToken[userId]
 
-    const message: PushMessages = {
-      token: recentUserToken[userId],
-      notification: {
-        title: this.messageTitle[messageType],
-        body: this.messagesBody[messageType](null, null),
-      },
-      data,
+    if (token) {
+      const message: PushMessages = {
+        token,
+        notification: {
+          title: this.messageTitle[messageType],
+          body: this.messagesBody[messageType](null, null),
+        },
+        data,
+      }
+      const pushResult = await sendBulkPushByToken([message])
+      return pushResult
     }
-
-    const pushResult = await sendBulkPushByToken([message])
-    return pushResult
+    return null
   }
 }

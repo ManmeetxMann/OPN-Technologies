@@ -60,12 +60,9 @@ class AdminScanHistoryController implements IControllerBase {
 
       await this.appointmentService.addAdminScanHistory(adminId, appointment.id, type)
       if (appointment.appointmentStatus !== AppointmentStatus.Reported) {
-        const pcrTest = await this.pcrTestResultsService.getWaitingPCRResultByAppointmentId(
-          appointment.id,
-        )
-
-        await this.appointmentService.makeDeadlineRapidMinutes(appointment, pcrTest.id)
+        await this.appointmentService.makeDeadlineRapidMinutes(appointment, adminId)
         appointment = await this.appointmentService.makeInProgress(appointment.id, null, adminId)
+        await this.appointmentService.createOrUpdatePCRResults(appointment, adminId)
       }
 
       res.json(

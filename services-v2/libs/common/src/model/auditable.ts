@@ -10,7 +10,7 @@ export abstract class Auditable {
   @ApiProperty()
   updatedAt: Date
 
-  @Column({nullable: false})
+  @Column({nullable: true, default: null})
   @ApiProperty()
   updatedBy: string
 }
