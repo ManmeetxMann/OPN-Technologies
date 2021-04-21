@@ -249,6 +249,10 @@ export const PCRTestResultHistoryResponse = (
   results: pcrTests.results.map((result) => ({
     resultAnalysis: result.resultAnalysis,
     result: result.result,
+    resultMetaData: {
+      autoResult: result.resultMetaData.autoResult,
+      comment: result.resultMetaData.comment,
+    },
     barCode: result.barCode,
     reCollectNumber: result.reCollectNumber ? `S${result.reCollectNumber}` : '',
     runNumber: result.runNumber ? `R${result.runNumber}` : '',
