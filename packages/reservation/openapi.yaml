@@ -761,6 +761,46 @@ components:
                 type: string
               barCode:
                 type: string
+              updatedData:
+                type: object
+                nullable: true
+                properties:
+                  id:
+                    type: number
+                  firstName:
+                    type: string
+                  lastName:
+                    type: string
+                  status:
+                    type: string
+                  barCode:
+                    type: string
+                  location:
+                    type: string
+                  dateTime:
+                    type: string
+                  dateOfBirth:
+                    type: string
+                  transportRunId:
+                    type: string
+                  transportRunLabel:
+                    type: string
+                  deadline:
+                    type: string
+                  vialLocation:
+                    type: string
+                  labName:
+                    type: string
+                  canCancel:
+                    type: boolean
+                  organizationName:
+                    type: string
+                  email:
+                    type: string
+                  phone:
+                    type: string
+                  testType:
+                    type: string
             required:
               - id
               - status
@@ -4074,7 +4114,7 @@ paths:
                   $ref: '#/components/schemas/AssociationsResponse'
   /reservation/internal/api/v1/trigger-appointments-push-reminder:
     post:
-      description: Triggers push notification reminder before appointment   
+      description: Triggers push notification reminder before appointment
       tags:
         - Cloud Scheduler triggered
       responses:
