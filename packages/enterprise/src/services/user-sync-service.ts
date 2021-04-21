@@ -13,7 +13,10 @@ export class UserSyncService implements UserSyncServiceInterface {
   }
 
   async create(
-    source: Omit<Patient, 'idPatient' | 'createdAt' | 'updatedAt' | 'updatedBy'>,
+    source: Omit<
+      Patient,
+      'generatePublicId' | 'idPatient' | 'createdAt' | 'updatedAt' | 'updatedBy'
+    >,
     auth?: Omit<PatientAuth, 'patientId' | 'idPatientAuth'>,
   ): Promise<void> {
     const usersRepositoryV2 = this.returnConnection(patientEntries.Patient)
