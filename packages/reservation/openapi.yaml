@@ -2539,6 +2539,22 @@ paths:
                                       type: string
                               result:
                                 type: string
+                              resultMetaData:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                  autoResult:
+                                    type: string
+                                  comment:
+                                    type: string
+                              barCode:
+                                type: string
+                              reCollectNumber:
+                                type: string
+                              runNumber:
+                                type: string
+                              dateTime:
+                                type: string
                         reason:
                           type: string
                           enum:
