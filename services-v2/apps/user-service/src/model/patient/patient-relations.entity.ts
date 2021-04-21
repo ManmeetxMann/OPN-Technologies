@@ -33,19 +33,19 @@ export class PatientToDelegates {
 
   @ManyToOne(
     () => Patient,
-    organization => organization.idPatient,
+    patient => patient.idPatient,
   )
-  @JoinColumn({name: 'patientId'})
+  @JoinColumn({name: 'delegateId', referencedColumnName: 'idPatient'})
   @Column({nullable: false})
   @ApiProperty({required: true})
-  patientId: string
+  delegateId: string
 
   @ManyToOne(
     () => Patient,
-    organization => organization.idPatient,
+    patient => patient.idPatient,
   )
-  @JoinColumn({name: 'patientId'})
+  @JoinColumn({name: 'dependantId', referencedColumnName: 'idPatient'})
   @Column()
   @ApiProperty()
-  delegates: string
+  dependantId: string
 }

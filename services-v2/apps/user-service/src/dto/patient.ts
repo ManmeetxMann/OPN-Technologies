@@ -1,4 +1,4 @@
-import {ApiProperty, ApiPropertyOptional, PartialType} from '@nestjs/swagger'
+import {ApiProperty, ApiPropertyOptional, OmitType, PartialType} from '@nestjs/swagger'
 import {ApiModelPropertyOptional} from '@nestjs/swagger/dist/decorators/api-model-property.decorator'
 import {PageableRequestFilter} from '@opn/common/dto'
 import {IsBoolean, IsEmail, IsNotEmpty, IsNumberString, IsString, Length} from 'class-validator'
@@ -119,6 +119,8 @@ export class PatientCreateDto {
 export class PatientUpdateDto extends PartialType(PatientCreateDto) {
   patientId?: string
 }
+
+export class DependantCreateDto extends OmitType(PatientCreateDto, ['email'] as const) {}
 
 export class PatientFilter extends PageableRequestFilter {
   @ApiModelPropertyOptional()

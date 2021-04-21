@@ -1,19 +1,26 @@
 import {Injectable} from '@nestjs/common'
 import {Page} from '@opn/common/dto'
 import {Brackets, SelectQueryBuilder} from 'typeorm'
-import {PatientCreateDto, PatientFilter, PatientUpdateDto} from '../../dto/patient'
+import {
+  DependantCreateDto,
+  PatientCreateDto,
+  PatientFilter,
+  PatientUpdateDto,
+} from '../../dto/patient'
 import {
   PatientDigitalConsent,
   PatientHealth,
   PatientTravel,
 } from '../../model/patient/patient-profile'
 import {Patient, PatientAddresses, PatientAuth} from '../../model/patient/patient.entity'
+import {PatientToDelegates} from '../../model/patient/patient-relations.entity'
 import {
   PatientAddressesRepository,
   PatientAuthRepository,
   PatientDigitalConsentRepository,
   PatientHealthRepository,
   PatientRepository,
+  PatientToDelegatesRepository,
   PatientTravelRepository,
 } from '../../repository/patient.repository'
 import {FirebaseAuthService} from '@opn/common/services/auth/firebase-auth.service'
@@ -29,6 +36,7 @@ export class PatientService {
     private patientHealthRepository: PatientHealthRepository,
     private patientTravelRepository: PatientTravelRepository,
     private patientDigitalConsentRepository: PatientDigitalConsentRepository,
+    private patientToDelegatesRepository: PatientToDelegatesRepository,
   ) {}
 
   /**
@@ -131,7 +139,7 @@ export class PatientService {
     ])
   }
 
-  async createPatient(data: PatientCreateDto): Promise<Patient> {
+  async createPatient(data: PatientCreateDto | DependantCreateDto): Promise<Patient> {
     const entity = new Patient()
     entity.firebaseKey = data.firebaseKey
     entity.firstName = data.firstName
@@ -142,6 +150,29 @@ export class PatientService {
     entity.registrationId = data.registrationId
     entity.consentFileUrl = data.consentFileUrl
     return this.patientRepository.save(entity)
+  }
+
+  /**
+   * Create dependant user (child) for delegate (parent)
+   * @param delegateId parentId
+   * @param data child user data
+   */
+  async createDependant(delegateId: string, data: DependantCreateDto): Promise<Patient> {
+    //TODO: For Sync: get firestore id then save firebaseKey
+    data.firebaseKey = 'TempKey' + Math.random().toString(36)
+
+    const dependant = await this.createPatient(data)
+    data.idPatient = dependant.idPatient
+
+    await Promise.all([
+      this.saveAddress(data),
+      this.saveHealth(data),
+      this.saveTravel(data),
+      this.saveConsent(data),
+      this.saveDependantOrDelegate(delegateId, dependant.idPatient),
+    ])
+
+    return dependant
   }
 
   private async saveAuth(data: PatientUpdateDto, idPatientAuth?: string): Promise<PatientAuth> {
@@ -203,5 +234,17 @@ export class PatientService {
     consent.receiveResultsViaEmail = data.receiveResultsViaEmail
     consent.shareTestResultWithEmployer = data.shareTestResultWithEmployer
     return this.patientDigitalConsentRepository.save(consent)
+  }
+
+  private async saveDependantOrDelegate(
+    delegateId: string,
+    dependantId: string,
+    idPatientToDelegates?: string,
+  ) {
+    const patientToDelegates = new PatientToDelegates()
+    patientToDelegates.idPatientToDelegates = idPatientToDelegates
+    patientToDelegates.delegateId = delegateId
+    patientToDelegates.dependantId = dependantId
+    return this.patientToDelegatesRepository.save(patientToDelegates)
   }
 }
