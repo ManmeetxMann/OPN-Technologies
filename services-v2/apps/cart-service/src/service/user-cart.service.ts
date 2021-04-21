@@ -10,21 +10,13 @@ import {v4 as uuidv4} from 'uuid'
 
 // Provider
 import {UserCartRepository, UserCartItemRepository} from '../repository/user-cart.repository'
+import {UserOrderRepository} from '../repository/user-order.repository'
 
 // Models
-import {
-  CartRequestItem,
-  // CartResponse,
-  // CartItemResponse,
-  // CartSummaryResponse,
-  PaymentAuthorizationRequest,
-  CardValidationResponse,
-  InvalidItemResponse,
-  CardItemDBModel,
-  CardValidation,
-} from '../model/cart'
+import {CardItemDBModel} from '../model/cart'
+import {CartValidationItemDto} from '../dto'
 
-import {CartAddDto, CartItemDto, CartResponseDto, CartSummaryDto} from '../dto'
+import {CartAddDto, CartResponseDto, CartSummaryDto, CartItemDto} from '../dto'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -34,14 +26,15 @@ export class UserCardService {
   private dataStore = new DataStore()
   private acuityRepository = new AcuityRepository()
   private userCartRepository = new UserCartRepository(this.dataStore)
+  private userOrderRepository = new UserOrderRepository(this.dataStore)
 
-  private htsTax = 0.13
-  private timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
+  private hstTax = 0.13
+  public timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
 
   private buildPaymentSummary(cartItems: CartItemDto[]): CartSummaryDto[] {
     const round = num => Math.round(num * 100) / 100
     const sum = cartItems.reduce((sum, item) => sum + (item.price || 0), 0)
-    const tax = round(sum * this.htsTax)
+    const tax = round(sum * this.hstTax)
     const total = sum + tax
 
     if (total == 0) {
@@ -57,7 +50,7 @@ export class UserCardService {
       },
       {
         uid: 'tax',
-        label: `TAX (HST -${this.htsTax * 100}%)`,
+        label: `TAX (HST -${this.hstTax * 100}%)`,
         amount: tax,
         currency: 'CAD',
       },
@@ -82,7 +75,7 @@ export class UserCardService {
     return cartDBItems
   }
 
-  private async validateCart(cartDdItems: CardItemDBModel[]): Promise<CardValidation> {
+  private async validateCart(cartDdItems: CardItemDBModel[]): Promise<CartValidationItemDto[]> {
     // For all items get unique variants of acuity queries
     const acuitySlots = []
     for (const cardDbItem of cartDdItems) {
@@ -135,7 +128,7 @@ export class UserCardService {
 
     // Validate if slot time is available
     let isValid = true
-    const invalidItems: InvalidItemResponse[] = []
+    const invalidItems: CartValidationItemDto[] = []
     for (const cardDbItem of cartDdItems) {
       const {appointment, cartItemId} = cardDbItem
       const acuitySlot = acuitySlots.find(
@@ -162,10 +155,7 @@ export class UserCardService {
       }
     }
 
-    return {
-      isValid,
-      invalidItems,
-    }
+    return invalidItems
   }
 
   async getUserCart(userId: string, organizationId: string): Promise<CartResponseDto> {
@@ -226,7 +216,7 @@ export class UserCardService {
     organizationId: string,
   ): Promise<{
     cartDdItems: CardItemDBModel[]
-    cardValidation: CardValidation
+    cardValidation: CartValidationItemDto[]
   }> {
     const cartDdItems = await this.fetchUserAllCartItem(userId, organizationId)
     const cardValidation = await this.validateCart(cartDdItems)
@@ -234,12 +224,30 @@ export class UserCardService {
   }
 
   /**
-   * converts acuity price format to stripe amount in cent
+   * converts acuity price format to Stripe amount in cent
    */
   stripePriceWithTax(acuityPrice: string): number {
     const price = parseFloat(acuityPrice)
-    const tax = price + price * this.htsTax
+    const tax = price + price * this.hstTax
     const total = price + tax
     return total * 100
   }
+
+  /**
+   * Get cart total in stipe format
+   */
+  stripePriceFromCart(cartDdItems: CardItemDBModel[]): number {
+    const round = num => Math.round(num * 100) / 100
+    const sum = cartDdItems.reduce(
+      (sum, item) => sum + (parseFloat(item.appointmentType.price) || 0),
+      0,
+    )
+    const tax = round(sum * this.hstTax)
+    const total = sum + tax
+    const stripeTotal = total * 100
+
+    return stripeTotal
+  }
+
+  createOrder() {}
 }

@@ -1,7 +1,8 @@
 import {Config} from '../../../common/src/utils/config'
 import {DeadlineLabel} from '../models/appointment'
 import {firestore} from 'firebase-admin'
-import moment from 'moment-timezone'
+
+const moment = require('moment-timezone')
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 const rapidDeadlineTime = Config.get('RAPID_ALERGEN_DEADLINE_MIN')

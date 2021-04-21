@@ -186,15 +186,10 @@ export class AuthMiddleware implements NestMiddleware {
     return true
   }
 
-  async use(req, res, next) {
+  private async validateAuth(req, res, next) {
     // TODO: move this logic to the decorator
     const listOfRequiredRoles = [RequiredUserPermission.RegUser]
     const requireOrg = true
-
-    // Allow Swagger
-    if ((req.originalUrl as string).startsWith('/api/doc/')) {
-      return next()
-    }
 
     const bearerHeader = req.headers['authorization']
     if (!bearerHeader) {
@@ -209,11 +204,10 @@ export class AuthMiddleware implements NestMiddleware {
 
     const idToken = bearer[1]
     // Validate
-    // const authService = new AuthService()
     const validatedAuthUser = await this.firebaseAuthService.verifyAuthToken(idToken)
+
     if (!validatedAuthUser) {
-      // res.status(401).json(of(null, ResponseStatusCodes.Unauthorized, 'Invalid access-token'))
-      return false
+      throw new UnauthorizedException('Invalid access-token')
     }
     // return true
     let connectedUser: User
@@ -328,5 +322,18 @@ export class AuthMiddleware implements NestMiddleware {
 
     // Done
     next()
+  }
+
+  async use(req, res, next) {
+    // Allow Swagger
+    if ((req.originalUrl as string).startsWith('/api/doc/')) {
+      return next()
+    }
+
+    try {
+      await this.validateAuth(req, res, next)
+    } catch (error) {
+      next(error)
+    }
   }
 }

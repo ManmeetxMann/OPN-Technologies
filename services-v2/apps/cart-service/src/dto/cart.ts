@@ -1,4 +1,15 @@
-import {IsNotEmpty, IsString, IsNumber, IsBoolean, IsOptional} from 'class-validator'
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsOptional,
+  IsDefined,
+  IsArray,
+  ValidateNested,
+  IsObject,
+} from 'class-validator'
+import {Type} from 'class-transformer'
 
 import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger'
 
@@ -37,10 +48,10 @@ export class CartSummaryDto {
 }
 
 export class CartResponseDto {
-  @ApiProperty()
+  @ApiProperty({type: [CartItemDto]})
   cartItems: CartItemDto[]
 
-  @ApiProperty()
+  @ApiProperty({type: [CartSummaryDto]})
   paymentSummary: CartSummaryDto[]
 }
 
@@ -133,4 +144,76 @@ export class CartAddDto {
   @ApiProperty()
   @IsString()
   userId: string
+}
+
+export class CartAddRequestDto {
+  @ApiProperty({type: [CartAddDto]})
+  @IsDefined()
+  @IsArray()
+  @ValidateNested()
+  @Type(() => CartAddDto)
+  items!: CartAddDto[]
+}
+
+export class PaymentAuthorizationRequestDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  paymentMethodId: string
+}
+
+export class CartValidationItemDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  cartItemId: string
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  message: string
+}
+
+export class PaymentAuthorizationCartDto {
+  @ApiProperty()
+  @IsBoolean()
+  isValid: boolean
+
+  @ApiProperty({nullable: false, type: [CartValidationItemDto]})
+  @IsArray()
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CartAddDto)
+  items!: CartValidationItemDto[]
+}
+
+export class PaymentAuthorizationPaymentDto {
+  @ApiProperty()
+  @IsBoolean()
+  isValid: boolean
+
+  @ApiProperty({nullable: false})
+  @IsOptional()
+  @IsString()
+  id: string
+
+  @ApiProperty()
+  @IsString()
+  status: string
+
+  @ApiProperty({nullable: false})
+  @IsOptional()
+  @IsString()
+  client_secret: string
+}
+
+export class PaymentAuthorizationResponseDto {
+  @ApiProperty()
+  @IsObject()
+  cart: PaymentAuthorizationCartDto
+
+  @ApiProperty()
+  @IsObject()
+  payment: PaymentAuthorizationPaymentDto
 }

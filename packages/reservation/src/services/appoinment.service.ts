@@ -1,4 +1,3 @@
-import moment from 'moment'
 import {flatten, union, fromPairs} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
@@ -81,6 +80,8 @@ import {CouponRepository} from '../respository/coupon.repository'
 import {AppointmentTypes} from '../models/appointment-types'
 import {PackageService} from './package.service'
 import {firestore} from 'firebase-admin'
+
+const moment = require('moment')
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -571,30 +572,30 @@ export class AppoinmentService {
       barCode: barCodeNumber,
       canceled: acuityAppointment.canceled,
       calendarID: Number(acuityAppointment.calendarID),
-        dateOfBirth: acuityAppointment.dateOfBirth,
+      dateOfBirth: acuityAppointment.dateOfBirth,
       dateOfAppointment: dateTimeUpdates.dateOfAppointment ?? appointmentDb.dateOfAppointment,
       dateTime: dateTimeUpdates.dateTime ?? appointmentDb.dateTime,
       deadline: dateTimeUpdates.deadline ?? appointmentDb.deadline,
       timeOfAppointment: dateTimeUpdates.timeOfAppointment ?? appointmentDb.timeOfAppointment,
-        email: acuityAppointment.email,
-        firstName: acuityAppointment.firstName,
-        lastName: acuityAppointment.lastName,
-        organizationId: acuityAppointment.organizationId || organizationId || null,
+      email: acuityAppointment.email,
+      firstName: acuityAppointment.firstName,
+      lastName: acuityAppointment.lastName,
+      organizationId: acuityAppointment.organizationId || organizationId || null,
       packageCode: acuityAppointment.certificate,
-        phone: acuityAppointment.phone,
+      phone: acuityAppointment.phone,
       registeredNursePractitioner: acuityAppointment.registeredNursePractitioner,
       latestResult,
-        address: acuityAppointment.address,
-        addressUnit: acuityAppointment.addressUnit,
-        travelID: acuityAppointment.travelID,
-        travelIDIssuingCountry: acuityAppointment.travelIDIssuingCountry,
-        ohipCard: acuityAppointment.ohipCard ?? '',
+      address: acuityAppointment.address,
+      addressUnit: acuityAppointment.addressUnit,
+      travelID: acuityAppointment.travelID,
+      travelIDIssuingCountry: acuityAppointment.travelIDIssuingCountry,
+      ohipCard: acuityAppointment.ohipCard ?? '',
       swabMethod: acuityAppointment.swabMethod,
-        readTermsAndConditions: acuityAppointment.readTermsAndConditions,
-        receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
-        receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
-        shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
-        agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
+      readTermsAndConditions: acuityAppointment.readTermsAndConditions,
+      receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
+      receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
+      shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
+      agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
       userId: currentUserId,
       locationName: acuityAppointment.calendar,
@@ -602,8 +603,8 @@ export class AppoinmentService {
       testType: await this.appointmentToTestTypeRepository.getTestType(
         acuityAppointment.appointmentTypeID,
       ),
-        gender: acuityAppointment.gender || Gender.PreferNotToSay,
-        postalCode: acuityAppointment.postalCode,
+      gender: acuityAppointment.gender || Gender.PreferNotToSay,
+      postalCode: acuityAppointment.postalCode,
       scheduledPushesToSend: [
         ReservationPushTypes.before24hours,
         ReservationPushTypes.before3hours,
@@ -1223,7 +1224,7 @@ export class AppoinmentService {
       appointmentStatus: AppointmentStatus.Pending,
       latestResult: ResultTypes.Pending,
       organizationId: appointment.organizationId,
-      couponCode: null,
+      couponCode: '',
       userId,
     })
   }
