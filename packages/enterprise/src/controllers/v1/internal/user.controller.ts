@@ -86,7 +86,7 @@ class UserController implements IControllerBase {
             registrationId: user.registrationId || '', // @TODO Remove this field after merging PR related to this field
             dateOfBirth: '',
             dependants: [],
-            delegates: []
+            delegates: [],
           },
           {
             authUserId: user.authUserId as string,
