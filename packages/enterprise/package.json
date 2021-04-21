@@ -3,7 +3,7 @@
     "private": true,
     "version": "0.0.0",
     "scripts": {
-        "start": "node enterprise/src/server.js",
+        "start": "node packages/enterprise/src/server.js",
         "test": "jest",
         "test:coverage": "jest --coverage",
         "dev": "ts-node src/server.ts",
