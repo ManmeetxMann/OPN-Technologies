@@ -18,13 +18,11 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./apps/opn-services/test/jest-e2e.json",
-    "build:all": "npm run build:user-service && npm run build:passport-service",
+    "build:all": "npm run build:user-service && npm run build:cart-service",
     "build:user-service": "SERVICE=user-service npm run build:service",
-    "build:passport-service": "SERVICE=passport-service npm run build:service",
     "build:cart-service": "SERVICE=cart-service npm run build:service",
     "build:service": "nest build $SERVICE && cp ./package.json ./dist/apps/$SERVICE/ && cp ./.env ./dist/apps/$SERVICE/ && cp ./.env ./dist/",
     "deploy:user-service": "gcloud app deploy ./dist/apps/user-service",
-    "deploy:passport-service": "gcloud app deploy ./dist/apps/passport-service",
     "deploy:cart-service": "gcloud app deploy ./dist/apps/cart-service"
   },
   "dependencies": {
