@@ -126,8 +126,8 @@ export class RecommendationService {
           .endOf('day')
           .isSameOrAfter(safeTimestamp(appointment.date))
         return [
-          Recommendations.CompleteAssessment,
           isToday ? Recommendations.CheckInPCR : Recommendations.BookingDetailsPCR,
+          Recommendations.CompleteAssessment,
         ]
       }
       // checked in, but may still be in the future
@@ -151,6 +151,14 @@ export class RecommendationService {
       // stop
       if (
         items.PCRTestResult &&
+        [ResultTypes.Inconclusive, ResultTypes.Indeterminate].includes(items.PCRTestResult.result)
+      ) {
+        // inconcusive test
+        return [Recommendations.BookPCR, Recommendations.BadgeExpiry]
+      }
+
+      if (
+        items.PCRTestResult &&
         [
           ResultTypes.Positive,
           ResultTypes.PreliminaryPositive,
@@ -161,7 +169,7 @@ export class RecommendationService {
         return [Recommendations.BadgeExpiry, Recommendations.ViewPositivePCR]
       }
       // bad attestation
-      return [Recommendations.BadgeExpiry, Recommendations.CompleteAssessment]
+      return [Recommendations.BadgeExpiry, Recommendations.BookPCR]
     }
     if (status == PassportStatuses.Proceed) {
       // proceed
@@ -294,10 +302,10 @@ export class RecommendationService {
     ])
 
     let actions: Recommendations[] = []
-    if (org.enableTemperatureCheck) {
-      actions = this.getRecommendationsTemperature(items)
-    } else if (org.enableTesting) {
+    if (org.enableTesting) {
       actions = this.getRecommendationsPCR(items)
+    } else if (org.enableTemperatureCheck) {
+      actions = this.getRecommendationsTemperature(items)
     }
     // Default: attestation only
     else {
