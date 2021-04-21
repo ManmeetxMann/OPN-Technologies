@@ -115,6 +115,8 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
       patientPublicId: '', // @TODO Remove this field after merging PR related to this field
       registrationId: user.registrationId || '',
       dateOfBirth: '',
+      dependants: [],
+      delegates: [],
     })
 
     await organizationService.addUserToGroup(organizationId, groupId, user.id)

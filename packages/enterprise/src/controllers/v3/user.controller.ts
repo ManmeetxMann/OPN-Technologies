@@ -126,6 +126,8 @@ const create: Handler = async (req, res, next): Promise<void> => {
         patientPublicId: '', // @TODO Remove this field after merging PR related to this field
         registrationId: user.registrationId || '',
         dateOfBirth: '',
+        dependants: [],
+        delegates: [],
       },
       {
         authUserId: user.authUserId as string,
