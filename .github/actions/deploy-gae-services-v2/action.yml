@@ -28,6 +28,11 @@ runs:
       source ~/.nvm/nvm.sh
       nvm install ${{ inputs.node_version }}
       nvm use ${{ inputs.node_version }}
+
+      npm install
+      npm run install-all
+      npm run lint-all
+
       cd services-v2
       npm install
       npm run lint
