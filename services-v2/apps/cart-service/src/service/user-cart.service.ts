@@ -6,7 +6,7 @@ import {decodeAvailableTimeId} from '@opn-reservation-v1/utils/base64-converter'
 
 // Libs
 import * as _ from 'lodash'
-import {v4 as uuid} from 'uuid'
+import {v4 as uuidv4} from 'uuid'
 
 // Provider
 import {UserCartRepository, UserCartItemRepository} from '../repository/user-cart.repository'
@@ -14,15 +14,17 @@ import {UserCartRepository, UserCartItemRepository} from '../repository/user-car
 // Models
 import {
   CartRequestItem,
-  CartResponse,
-  CartItemResponse,
-  CartSummaryResponse,
+  // CartResponse,
+  // CartItemResponse,
+  // CartSummaryResponse,
   PaymentAuthorizationRequest,
   CardValidationResponse,
   InvalidItemResponse,
   CardItemDBModel,
   CardValidation,
 } from '../model/cart'
+
+import {CartAddDto, CartItemDto, CartResponseDto, CartSummaryDto} from '../dto'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -36,7 +38,7 @@ export class UserCardService {
   private htsTax = 0.13
   private timeSlotNotAvailMsg = 'Time Slot Unavailable: Book Another Slot'
 
-  private buildPaymentSummary(cartItems: CartItemResponse[]): CartSummaryResponse[] {
+  private buildPaymentSummary(cartItems: CartItemDto[]): CartSummaryDto[] {
     const round = num => Math.round(num * 100) / 100
     const sum = cartItems.reduce((sum, item) => sum + (item.price || 0), 0)
     const tax = round(sum * this.htsTax)
@@ -166,9 +168,8 @@ export class UserCardService {
     }
   }
 
-  async getUserCart(userId: string, organizationId: string): Promise<CartResponse> {
+  async getUserCart(userId: string, organizationId: string): Promise<CartResponseDto> {
     const cartDBItems = await this.fetchUserAllCartItem(userId, organizationId)
-
     const cartItems = cartDBItems.map(cartDB => ({
       cartItemId: cartDB.cartItemId,
       label: cartDB.appointmentType.name,
@@ -184,7 +185,7 @@ export class UserCardService {
     }
   }
 
-  async addItems(userId: string, items: CartRequestItem[], organizationId: string): Promise<void> {
+  async addItems(userId: string, organizationId: string, items: CartAddDto[]): Promise<void> {
     const userOrgId = `${userId}_${organizationId}`
     const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
 
@@ -194,7 +195,7 @@ export class UserCardService {
         appointmentType => appointmentType.id === appointment.appointmentTypeId,
       )
       return {
-        cartItemId: uuid(),
+        cartItemId: uuidv4(),
         patient: _.omit(item, ['slotId']),
         appointment,
         appointmentType: {

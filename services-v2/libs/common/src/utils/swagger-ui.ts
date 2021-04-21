@@ -3,7 +3,6 @@ import {INestApplication} from '@nestjs/common'
 import {ConfigService} from '@nestjs/config'
 
 import {SwaggerConfiguration} from '@opn-services/common/configuration/swagger.configuration'
-import * as basicAuth from 'express-basic-auth'
 
 const MIN_LOGIN_PASS_SIZE = 5
 
@@ -33,15 +32,7 @@ export const createSwagger = (app: INestApplication): void => {
     return
   }
 
-  app.use(
-    '/api/doc',
-    basicAuth({
-      challenge: true,
-      users: {
-        [login]: password,
-      },
-    }),
-  )
   const document = SwaggerModule.createDocument(app, SwaggerConfiguration)
+
   SwaggerModule.setup('/api/doc', app, document)
 }

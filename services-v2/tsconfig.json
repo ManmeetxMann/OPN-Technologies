@@ -14,6 +14,7 @@
     "paths": {
       "@opn-services/common": ["libs/common/src"],
       "@opn-services/common/*": ["libs/common/src/*"],
+      "@opn-services/cart/*": ["apps/cart-service/src/*"],
       "@opn-common-v1/*": ["../packages/common/src/*"],
       "@opn-reservation-v1/*": ["../packages/reservation/src/*"]
     }

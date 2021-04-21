@@ -67,6 +67,7 @@ import {ReservationPushTypes} from '../types/appointment-push'
 import {DbBatchAppointments} from '../../../common/src/types/push-notification'
 import {PcrResultTestActivityAction} from '../models/pcr-test-results'
 import {AdminScanHistory} from '../models/admin-scan-history'
+import {CardItemDBModel} from '../../../../services-v2/apps/cart-service/src/model'
 
 //Repository
 import {AcuityRepository} from '../respository/acuity.repository'
@@ -570,30 +571,30 @@ export class AppoinmentService {
       barCode: barCodeNumber,
       canceled: acuityAppointment.canceled,
       calendarID: Number(acuityAppointment.calendarID),
-      dateOfBirth: acuityAppointment.dateOfBirth,
+        dateOfBirth: acuityAppointment.dateOfBirth,
       dateOfAppointment: dateTimeUpdates.dateOfAppointment ?? appointmentDb.dateOfAppointment,
       dateTime: dateTimeUpdates.dateTime ?? appointmentDb.dateTime,
       deadline: dateTimeUpdates.deadline ?? appointmentDb.deadline,
       timeOfAppointment: dateTimeUpdates.timeOfAppointment ?? appointmentDb.timeOfAppointment,
-      email: acuityAppointment.email,
-      firstName: acuityAppointment.firstName,
-      lastName: acuityAppointment.lastName,
-      organizationId: acuityAppointment.organizationId || organizationId || null,
+        email: acuityAppointment.email,
+        firstName: acuityAppointment.firstName,
+        lastName: acuityAppointment.lastName,
+        organizationId: acuityAppointment.organizationId || organizationId || null,
       packageCode: acuityAppointment.certificate,
-      phone: acuityAppointment.phone,
+        phone: acuityAppointment.phone,
       registeredNursePractitioner: acuityAppointment.registeredNursePractitioner,
       latestResult,
-      address: acuityAppointment.address,
-      addressUnit: acuityAppointment.addressUnit,
-      travelID: acuityAppointment.travelID,
-      travelIDIssuingCountry: acuityAppointment.travelIDIssuingCountry,
-      ohipCard: acuityAppointment.ohipCard ?? '',
+        address: acuityAppointment.address,
+        addressUnit: acuityAppointment.addressUnit,
+        travelID: acuityAppointment.travelID,
+        travelIDIssuingCountry: acuityAppointment.travelIDIssuingCountry,
+        ohipCard: acuityAppointment.ohipCard ?? '',
       swabMethod: acuityAppointment.swabMethod,
-      readTermsAndConditions: acuityAppointment.readTermsAndConditions,
-      receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
-      receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
-      shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
-      agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
+        readTermsAndConditions: acuityAppointment.readTermsAndConditions,
+        receiveNotificationsFromGov: acuityAppointment.receiveNotificationsFromGov,
+        receiveResultsViaEmail: acuityAppointment.receiveResultsViaEmail,
+        shareTestResultWithEmployer: acuityAppointment.shareTestResultWithEmployer,
+        agreeToConductFHHealthAssessment: acuityAppointment.agreeToConductFHHealthAssessment,
       couponCode,
       userId: currentUserId,
       locationName: acuityAppointment.calendar,
@@ -601,8 +602,8 @@ export class AppoinmentService {
       testType: await this.appointmentToTestTypeRepository.getTestType(
         acuityAppointment.appointmentTypeID,
       ),
-      gender: acuityAppointment.gender || Gender.PreferNotToSay,
-      postalCode: acuityAppointment.postalCode,
+        gender: acuityAppointment.gender || Gender.PreferNotToSay,
+        postalCode: acuityAppointment.postalCode,
       scheduledPushesToSend: [
         ReservationPushTypes.before24hours,
         ReservationPushTypes.before3hours,
@@ -1175,6 +1176,54 @@ export class AppoinmentService {
       latestResult: ResultTypes.Pending,
       organizationId,
       couponCode,
+      userId,
+    })
+  }
+
+  /**
+   * TODO:
+   * 1. Cart coupon
+   */
+  async createAcuityAppointmentFromCartItem(
+    cartDdItem: CardItemDBModel,
+    userId: string,
+    email: string,
+  ): Promise<AppointmentDBModel> {
+    const {appointment, patient} = cartDdItem
+
+    const utcDateTime = moment(appointment.time).utc()
+    const dateTime = utcDateTime.tz(timeZone).format()
+    const barCodeNumber = await this.getNextBarCodeNumber()
+
+    const acuityAppointment = await this.acuityRepository.createAppointment({
+      dateTime,
+      appointmentTypeID: appointment.appointmentTypeId,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      email,
+      phone: `${patient.phone.code}${patient.phone.number}`,
+      packageCode: appointment.packageCode,
+      calendarID: appointment.calendarId,
+      fields: {
+        dateOfBirth: patient.dateOfBirth,
+        gender: patient.gender,
+        address: patient.address,
+        addressUnit: patient.addressUnit,
+        postalCode: patient.postalCode,
+        shareTestResultWithEmployer: patient.shareTestResultWithEmployer,
+        readTermsAndConditions: patient.readTermsAndConditions,
+        agreeToConductFHHealthAssessment: patient.agreeToConductFHHealthAssessment,
+        receiveResultsViaEmail: patient.receiveResultsViaEmail,
+        receiveNotificationsFromGov: patient.receiveNotificationsFromGov,
+        barCodeNumber,
+      },
+    })
+    return this.createAppointmentFromAcuity(acuityAppointment, {
+      barCodeNumber,
+      appointmentStatus: AppointmentStatus.Pending,
+      latestResult: ResultTypes.Pending,
+      organizationId: appointment.organizationId,
+      couponCode: null,
       userId,
     })
   }

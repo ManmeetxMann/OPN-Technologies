@@ -1,13 +1,19 @@
 import {Stripe} from 'stripe'
-import {Config} from '@opn-common-v1/utils/config'
+
+import {ConfigService} from '@nestjs/config'
+import {Injectable} from '@nestjs/common'
+
+// import {Config} from '@opn-common-v1/utils/config'
 
 /**
  * TODO:
  * 1. Logging
- * 2. Nest config
  */
+@Injectable()
 export class StripeService {
-  private stripe = new Stripe(Config.get('STRIPE_SECRET_KEY'), null)
+  constructor(private configService: ConfigService) {}
+
+  private stripe = new Stripe(this.configService.get('STRIPE_SECRET_KEY'), null)
   private commonOptions = {
     apiVersion: '2020-08-27',
   }

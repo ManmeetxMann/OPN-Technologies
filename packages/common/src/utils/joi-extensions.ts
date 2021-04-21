@@ -1,4 +1,4 @@
-import Joi from 'joi'
+import * as Joi from 'joi'
 import {firestore} from 'firebase-admin'
 
 export const FirestoreTimestamp = Joi.extend((joi) => {

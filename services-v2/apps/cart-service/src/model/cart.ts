@@ -4,28 +4,28 @@ import {AvailableTimeIdParams} from '@opn-reservation-v1/types/base64-coverter.t
 import {CreateAppointmentRequest} from '@opn-reservation-v1/models/appointment'
 import {AppointmentTypes} from '@opn-reservation-v1/models/appointment-types'
 
-export type CartRequestItem = CreateAppointmentRequest
+export type CartRequestItem = Omit<CreateAppointmentRequest, 'organizationId' | 'packageCode' | 'userId'>
 
-export type CartItemResponse = {
-  cartItemId: string
-  label: string
-  subLabel: string
-  patientName: string
-  date: string
-  price: number
-}
+// export type CartItemResponse = {
+//   cartItemId: string
+//   label: string
+//   subLabel: string
+//   patientName: string
+//   date: string
+//   price: number
+// }
 
-export type CartSummaryResponse = {
-  uid: string
-  label: string
-  amount: number
-  currency: string
-}
+// export type CartSummaryResponse = {
+//   uid: string
+//   label: string
+//   amount: number
+//   currency: string
+// }
 
-export type CartResponse = {
-  cartItems: CartItemResponse[]
-  paymentSummary: CartSummaryResponse[]
-}
+// export type CartResponse = {
+//   cartItems: CartItemResponse[]
+//   paymentSummary: CartSummaryResponse[]
+// }
 
 export type PaymentAuthorizationRequest = {
   paymentMethodId: string

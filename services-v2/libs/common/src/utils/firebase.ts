@@ -1,19 +1,8 @@
-// NestJs
-import {ConfigService} from '@nestjs/config'
-
-// Libs
 import admin, {ServiceAccount} from 'firebase-admin'
 import {FieldValue} from '@google-cloud/firestore'
 import {FirestoreSimple} from '@firestore-simple/admin'
-
-// Services
 // import {Config} from './config'
 
-const configService = new ConfigService()
-
-/**
- * Singleton
- */
 class FirebaseManager {
   // Properties
   private readonly firestore: admin.firestore.Firestore
@@ -23,11 +12,12 @@ class FirebaseManager {
   constructor() {
     // Needed when called from tests.. to ensure that we initialize it only once
     if (!this.admin.apps.length) {
-      const serviceAccount = JSON.parse(configService.get('FIREBASE_ADMINSDK_SA')) as ServiceAccount
+      const serviceAccount = JSON.parse(Config.get('FIREBASE_ADMINSDK_SA')) as ServiceAccount
       this.admin.initializeApp({
         credential: this.admin.credential.cert(serviceAccount),
       })
     }
+    // this.firestore = this.admin.firestore()
   }
 
   getAdmin(): typeof admin {
@@ -45,6 +35,7 @@ class FirebaseManager {
     return FirebaseManager.__instance
   }
 }
+
 
 class DataStore {
   // Static Constants Properties
