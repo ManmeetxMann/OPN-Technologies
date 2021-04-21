@@ -28,11 +28,7 @@ class App {}
 async function bootstrap() {
   const app = await NestFactory.create(App)
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      forbidUnknownValues: true,
-    }),
-  )
+  app.useGlobalPipes(new ValidationPipe())
 
   createSwagger(app)
 

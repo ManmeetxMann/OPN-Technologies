@@ -8,10 +8,14 @@ import {
   Put,
   NotFoundException,
   Query,
+  UseGuards,
 } from '@nestjs/common'
-import {ApiTags} from '@nestjs/swagger'
+
+import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
+import {AuthGuard} from '@opn-services/common/guard/auth.guard'
 import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
+
 import {Patient} from '../../../model/patient/patient.entity'
 import {
   PatientCreateDto,
@@ -23,8 +27,10 @@ import {PatientService} from '../../../service/patient/patient.service'
 import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
 
 @ApiTags('Patients')
+@ApiBearerAuth('JWT')
 @Controller('/api/v1/patient')
-//TODO: auth & track updatedBy
+@UseGuards(AuthGuard)
+//TODO: track updatedBy
 export class PatientController {
   constructor(
     private patientService: PatientService,
