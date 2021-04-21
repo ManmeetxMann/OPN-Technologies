@@ -1201,6 +1201,7 @@ export class AppoinmentService {
    * 1. Cart coupon
    */
   async createAcuityAppointmentFromCartItem(
+    // eslint-disable-next-line
     cartDdItem,
     userId: string,
     email: string,
