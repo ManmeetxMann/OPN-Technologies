@@ -1,4 +1,3 @@
-import moment from 'moment'
 import {flatten, union, fromPairs} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
@@ -80,6 +79,10 @@ import {CouponRepository} from '../respository/coupon.repository'
 import {AppointmentTypes} from '../models/appointment-types'
 import {PackageService} from './package.service'
 import {firestore} from 'firebase-admin'
+
+// Must to be require otherwise import to V2 fails
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const moment = require('moment')
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -1189,6 +1192,55 @@ export class AppoinmentService {
       latestResult: ResultTypes.Pending,
       organizationId,
       couponCode,
+      userId,
+    })
+  }
+
+  /**
+   * TODO:
+   * 1. Cart coupon
+   */
+  async createAcuityAppointmentFromCartItem(
+    // eslint-disable-next-line
+    cartDdItem,
+    userId: string,
+    email: string,
+  ): Promise<AppointmentDBModel> {
+    const {appointment, patient} = cartDdItem
+
+    const utcDateTime = moment(appointment.time).utc()
+    const dateTime = utcDateTime.tz(timeZone).format()
+    const barCodeNumber = await this.getNextBarCodeNumber()
+
+    const acuityAppointment = await this.acuityRepository.createAppointment({
+      dateTime,
+      appointmentTypeID: appointment.appointmentTypeId,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      email,
+      phone: `${patient.phone.code}${patient.phone.number}`,
+      packageCode: appointment.packageCode,
+      calendarID: appointment.calendarId,
+      fields: {
+        dateOfBirth: patient.dateOfBirth,
+        gender: patient.gender,
+        address: patient.address,
+        addressUnit: patient.addressUnit,
+        postalCode: patient.postalCode,
+        shareTestResultWithEmployer: patient.shareTestResultWithEmployer,
+        readTermsAndConditions: patient.readTermsAndConditions,
+        agreeToConductFHHealthAssessment: patient.agreeToConductFHHealthAssessment,
+        receiveResultsViaEmail: patient.receiveResultsViaEmail,
+        receiveNotificationsFromGov: patient.receiveNotificationsFromGov,
+        barCodeNumber,
+      },
+    })
+    return this.createAppointmentFromAcuity(acuityAppointment, {
+      barCodeNumber,
+      appointmentStatus: AppointmentStatus.Pending,
+      latestResult: ResultTypes.Pending,
+      organizationId: appointment.organizationId,
+      couponCode: '',
       userId,
     })
   }

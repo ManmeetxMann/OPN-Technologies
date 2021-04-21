@@ -10,10 +10,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common'
+
 import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
-import {ResponseWrapper} from '@opn/common/dto/response-wrapper'
-import {AuthGuard} from '@opn/common/guard/auth.guard'
-import {assignWithoutUndefined, ResponseStatusCodes} from '@opn/common/dto'
+import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
+import {AuthGuard} from '@opn-services/common/guard/auth.guard'
+import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
+
 import {Patient} from '../../../model/patient/patient.entity'
 import {
   DependantCreateDto,
@@ -23,7 +25,7 @@ import {
   PatientUpdateDto,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
-import {FirebaseAuthService} from '@opn/common/services/auth/firebase-auth.service'
+import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
 
 @ApiTags('Patients')
 @ApiBearerAuth('JWT')

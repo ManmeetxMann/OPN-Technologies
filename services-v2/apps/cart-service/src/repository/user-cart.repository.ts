@@ -1,16 +1,20 @@
-// Common
-import {now} from '../../../common/src/utils/times'
-import DataModel from '../../../common/src/data/datamodel.base'
-import DataStore from '../../../common/src/data/datastore'
+// Libs
+import {Injectable} from '@nestjs/common'
+
+// V1 common
+import {now} from '@opn-common-v1/utils/times'
+import DataModel from '@opn-common-v1/data/datamodel.base'
+import DataStore from '@opn-common-v1/data/datastore'
 
 // Models
-import {CardItemDBModel, UserCart} from '../models/cart'
+import {CardItemDBModel, UserCartDBModel} from '../model/cart'
 
 /**
  * TODO:
  * 1. Schema validation
  */
-export class UserCartRepository extends DataModel<UserCart> {
+@Injectable()
+export class UserCartRepository extends DataModel<UserCartDBModel> {
   public rootPath = 'user-cart'
   readonly zeroSet = []
 
@@ -26,7 +30,7 @@ export class UserCartRepository extends DataModel<UserCart> {
     const userItems = userDoc.collection('items')
 
     // Add all items
-    items.forEach((item) => {
+    items.forEach(item => {
       const newItem = userItems.doc()
       batch.set(newItem, item)
     })

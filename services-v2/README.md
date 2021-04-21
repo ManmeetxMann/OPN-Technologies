@@ -44,7 +44,7 @@ The shared library will handle:
 - Utilities functions
 - Generate swagger page
 
-The shared library is importable from `@opn/common`
+The shared library is importable from `@opn-services/common`
 
 # Get started
 ###Prerequisites
@@ -106,6 +106,7 @@ npm run start:dev [SERVICE_NAME]
 npm run start:prod [SERVICE_NAME]
 
 npm run start:dev user-service
+npm run start:dev cart-service
 ```
 Open http://localhost:8080/api/doc/, enter login:password from .env SWAGGER_BASIC_AUTH_CREDENTIALS
 

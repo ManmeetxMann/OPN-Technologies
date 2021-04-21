@@ -1,4 +1,4 @@
-import {PageableRequestFilter} from '@opn/common/dto'
+import {PageableRequestFilter} from '@opn-services/common/dto'
 import {
   ApiModelProperty,
   ApiModelPropertyOptional,

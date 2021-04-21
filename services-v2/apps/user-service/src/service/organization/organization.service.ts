@@ -1,8 +1,8 @@
 import {Injectable} from '@nestjs/common'
 import {OrganizationRepository} from '../../repository/organization.repository'
 import {Organization} from '../../model/organization/organization.entity'
-import {Page, PageableRequestFilter} from '@opn/common/dto'
-import {ResourceNotFoundException} from '@opn/common/exception'
+import {Page, PageableRequestFilter} from '@opn-services/common/dto'
+import {ResourceNotFoundException} from '@opn-services/common/exception'
 
 @Injectable()
 export class OrganizationService {

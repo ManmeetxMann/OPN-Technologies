@@ -1,5 +1,5 @@
 /**
- Script to get users with multi ORGs
+ Script to get firebase token
  */
 import fetch from 'node-fetch'
 import admin, {initializeApp, credential} from 'firebase-admin'

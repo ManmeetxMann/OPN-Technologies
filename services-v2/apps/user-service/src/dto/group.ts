@@ -1,4 +1,4 @@
-import {PageableRequestFilter} from '@opn/common/dto'
+import {PageableRequestFilter} from '@opn-services/common/dto'
 import {ApiModelPropertyOptional} from '@nestjs/swagger/dist/decorators/api-model-property.decorator'
 
 export type GroupCreateRequest = GroupUpdateRequest & {

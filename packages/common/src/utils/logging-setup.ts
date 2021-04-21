@@ -1,7 +1,7 @@
 //import * as debugClient from '@google-cloud/debug-agent'
 //debugClient.start({allowExpressions: true})
 import * as traceClient from '@google-cloud/trace-agent'
-import bunyan from 'bunyan'
+import * as bunyan from 'bunyan'
 import {LoggingBunyan} from '@google-cloud/logging-bunyan'
 import {NodeEnV, GAEService} from './app-engine-environment'
 

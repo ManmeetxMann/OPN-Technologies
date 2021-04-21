@@ -1,10 +1,10 @@
 import {Injectable} from '@nestjs/common'
 import {LocationRepository} from '../../repository/location.repository'
 import {OrganizationLocation} from '../../model/organization/location.entity'
-import {Page} from '@opn/common/dto'
-import {ResourceNotFoundException} from '@opn/common/exception'
+import {Page} from '@opn-services/common/dto'
+import {ResourceNotFoundException} from '@opn-services/common/exception'
 import {LocationFilter} from '../../dto/location'
-import {isNotNull, likeIgnoreCase, QueryMatcher} from '@opn/common/model'
+import {isNotNull, likeIgnoreCase, QueryMatcher} from '@opn-services/common/model'
 
 @Injectable()
 export class LocationService {

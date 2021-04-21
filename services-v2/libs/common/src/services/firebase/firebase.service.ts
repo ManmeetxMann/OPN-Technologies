@@ -4,6 +4,7 @@ import {ConfigService} from '@nestjs/config'
 // Libs
 import admin, {ServiceAccount} from 'firebase-admin'
 import {FieldValue} from '@google-cloud/firestore'
+import {FirestoreSimple} from '@firestore-simple/admin'
 
 // Services
 // import {Config} from './config'
@@ -13,11 +14,11 @@ const configService = new ConfigService()
 /**
  * Singleton
  */
-export class FirebaseService {
+class FirebaseManager {
   // Properties
   private readonly firestore: admin.firestore.Firestore
   private readonly admin = admin
-  private static __instance: FirebaseService = null
+  private static __instance: FirebaseManager = null
 
   constructor() {
     // Needed when called from tests.. to ensure that we initialize it only once
@@ -37,12 +38,28 @@ export class FirebaseService {
     return this.getAdmin().firestore.FieldValue.delete()
   }
 
-  static getInstance(): FirebaseService {
-    if (FirebaseService.__instance === null) {
-      FirebaseService.__instance = new FirebaseService()
+  static getInstance(): FirebaseManager {
+    if (FirebaseManager.__instance === null) {
+      FirebaseManager.__instance = new FirebaseManager()
     }
-    return FirebaseService.__instance
+    return FirebaseManager.__instance
   }
 }
 
-export {admin as firebaseAdmin}
+class DataStore {
+  // Static Constants Properties
+  private static readonly rootPath = '/'
+
+  // Properties
+  readonly firestoreORM: FirestoreSimple
+  readonly firestoreAdmin = FirebaseManager.getInstance().getAdmin()
+  private readonly firestore: admin.firestore.Firestore
+
+  constructor() {
+    // Initialize Firestore
+    this.firestore = this.firestoreAdmin.firestore()
+    this.firestoreORM = new FirestoreSimple(this.firestore)
+  }
+}
+
+export {FirebaseManager, DataStore}

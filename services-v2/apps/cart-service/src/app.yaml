@@ -1,4 +1,4 @@
 runtime: nodejs12
-service: passport-service
+service: cart-service
 
 entrypoint: node ./main.js

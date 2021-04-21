@@ -1,8 +1,7 @@
-// NestJs
 import {Injectable} from '@nestjs/common'
 
 // Services
-import {FirebaseService} from '@opn/common/services/firebase/firebase.service'
+import {FirebaseManager} from '@opn-services/common/services/firebase/firebase.service'
 
 interface AuthUser {
   uid: string
@@ -19,7 +18,7 @@ interface AuthUser {
 export class FirebaseAuthService {
   // constructor(configService: ConfigService) {}
 
-  private readonly firebaseAuth = FirebaseService.getInstance()
+  private readonly firebaseAuth = FirebaseManager.getInstance()
     .getAdmin()
     .auth()
 
@@ -95,7 +94,7 @@ export class FirebaseAuthService {
         }
       }
     } catch (error) {
-      console.error(error)
+      return null
     }
     return null
   }

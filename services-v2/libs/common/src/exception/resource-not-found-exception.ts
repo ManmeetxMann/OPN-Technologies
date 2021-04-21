@@ -1,5 +1,5 @@
-import {HttpException} from '@opn/common/exception'
-import {ResponseStatusCodes} from '@opn/common/dto'
+import {HttpException} from '@opn-services/common/exception'
+import {ResponseStatusCodes} from '@opn-services/common/dto'
 
 export class ResourceNotFoundException extends HttpException {
   constructor(message: string) {

@@ -3,7 +3,7 @@ import {ConfigModule} from '@nestjs/config'
 import {Module, Global} from '@nestjs/common'
 
 // Libs
-// import Joi from 'joi'
+// import * as Joi from 'joi'
 
 // Service
 import {CommonService} from './common.service'

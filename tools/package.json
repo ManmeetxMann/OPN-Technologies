@@ -10,14 +10,16 @@
 				"tool:update-user-emails": "node ./update-user-emails",
 				"tool:appointments-finance": "ts-node ./appointments-finance",
 				"tool:non-org-packages-details": "ts-node ./non-org-packages-details",
-				"tool:create_firebase_token": "ts-node ./create_firebase_token"
+				"tool:create-firebase-token": "ts-node ./create-firebase-token",
+				"tool:get-stripe-payment": "ts-node ./get-stripe-payment-id"
 		},
 		"author": "",
 		"license": "Appropriate",
 		"dependencies": {
-				"ts-node": "^9.1.1",
 				"mysql": "^2.18.1",
-				"mysql-async-simple": "^1.0.3"
+				"mysql-async-simple": "^1.0.3",
+				"stripe": "^8.144.0",
+				"ts-node": "^9.1.1"
 		},
 		"devDependencies": {
 				"@types/mysql": "^2.15.18"

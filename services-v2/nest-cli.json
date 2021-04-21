@@ -26,16 +26,6 @@
         "tsConfigPath": "libs/common/tsconfig.lib.json"
       }
     },
-    "passport-service": {
-      "type": "application",
-      "root": "apps/passport-service",
-      "entryFile": "main",
-      "sourceRoot": "apps/passport-service/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/passport-service/tsconfig.app.json",
-        "assets": ["app.yaml"]
-      }
-    },
     "user-service": {
       "type": "application",
       "root": "apps/user-service",
@@ -43,6 +33,16 @@
       "sourceRoot": "apps/user-service/src",
       "compilerOptions": {
         "tsConfigPath": "apps/user-service/tsconfig.app.json",
+        "assets": ["app.yaml"]
+      }
+    },
+    "cart-service": {
+      "type": "application",
+      "root": "apps/cart-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/cart-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/cart-service/tsconfig.app.json",
         "assets": ["app.yaml"]
       }
     }

@@ -1,5 +1,5 @@
 import {Entity, Generated, ManyToOne, PrimaryColumn} from 'typeorm'
-import {Auditable} from '@opn/common/model'
+import {Auditable} from '@opn-services/common/model'
 import {User} from './user.entity'
 import {OrganizationGroup} from '../organization/group.entity'
 

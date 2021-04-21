@@ -8,7 +8,7 @@ import * as PatientRepositories from '../repository/patient.repository'
 import {OrganizationRepository} from '../repository/organization.repository'
 import {LocationRepository} from '../repository/location.repository'
 import {GroupRepository} from '../repository/group.repository'
-import {DefaultDatabaseConfiguration} from '@opn/common/configuration/database.configuration'
+import {DefaultDatabaseConfiguration} from '@opn-services/common/configuration/database.configuration'
 
 export const DatabaseConfiguration = DefaultDatabaseConfiguration('user')
 

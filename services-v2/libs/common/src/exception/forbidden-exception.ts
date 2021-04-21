@@ -1,5 +1,5 @@
-import {ResponseStatusCodes} from '@opn/common/dto'
-import {HttpException} from '@opn/common/exception'
+import {ResponseStatusCodes} from '@opn-services/common/dto'
+import {HttpException} from '@opn-services/common/exception'
 
 export class ForbiddenException extends HttpException {
   constructor(message: string) {

@@ -1,5 +1,5 @@
 import {Injectable} from '@nestjs/common'
-import {Page} from '@opn/common/dto'
+import {Page} from '@opn-services/common/dto'
 import {Brackets, SelectQueryBuilder} from 'typeorm'
 import {
   DependantCreateDto,
@@ -23,7 +23,7 @@ import {
   PatientToDelegatesRepository,
   PatientTravelRepository,
 } from '../../repository/patient.repository'
-import {FirebaseAuthService} from '@opn/common/services/auth/firebase-auth.service'
+import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
 
 @Injectable()
 export class PatientService {

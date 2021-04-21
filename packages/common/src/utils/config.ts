@@ -1,6 +1,6 @@
 // Load up environment vars
-import dotenv from 'dotenv'
-import path from 'path'
+import * as dotenv from 'dotenv'
+import * as path from 'path'
 
 //Settings Common for All Environments
 const applicationSettings: Record<string, string> = {

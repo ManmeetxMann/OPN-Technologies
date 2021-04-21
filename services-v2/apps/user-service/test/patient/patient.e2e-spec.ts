@@ -1,5 +1,5 @@
 import {Test, TestingModule} from '@nestjs/testing'
-import {FirebaseAuthService as FirebaseAuthServiceReal} from '@opn/common/services/auth/firebase-auth.service'
+import {FirebaseAuthService as FirebaseAuthServiceReal} from '@opn-services/common/services/auth/firebase-auth.service'
 import {FirebaseAuthServiceMock} from '../__mocks__/firebase-auth.service.mock'
 import * as request from 'supertest'
 import {App} from '../../src/main'
