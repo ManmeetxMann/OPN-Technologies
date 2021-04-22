@@ -9,4 +9,4 @@ export const resultAdminsDTO = (users: User[]): ResultAdminsResponse[] =>
   users.map((user) => ({
     id: user.id,
     name: `${user.firstName} ${user.lastName}`,
-}))
+  }))

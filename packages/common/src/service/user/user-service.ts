@@ -1,9 +1,12 @@
-import DataStore from "../../data/datastore";
-import { LegacyDependant, User, UserDependant, UserFilter, UserModel } from "../../data/user";
-import { ResourceNotFoundException } from "../../exceptions/resource-not-found-exception";
-import { cleanStringField } from "../../../../common/src/utils/utils";
-import { DataModelFieldMap, DataModelFieldMapOperatorType } from "../../../../common/src/data/datamodel.base";
-import UserDbSchema from "../../dbschemas/user.schema";
+import DataStore from '../../data/datastore'
+import {LegacyDependant, User, UserDependant, UserFilter, UserModel} from '../../data/user'
+import {ResourceNotFoundException} from '../../exceptions/resource-not-found-exception'
+import {cleanStringField} from '../../../../common/src/utils/utils'
+import {
+  DataModelFieldMap,
+  DataModelFieldMapOperatorType,
+} from '../../../../common/src/data/datamodel.base'
+import UserDbSchema from '../../dbschemas/user.schema'
 
 export class UserService {
   private dataStore = new DataStore()
