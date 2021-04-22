@@ -19,14 +19,9 @@
         "initialize": "ts-node -e \"require('./src/server.ts').init()\""
     },
     "dependencies": {
-        "@nestjs/common": "7.6.15",
-        "@nestjs/swagger": "^4.6.0",
-        "class-validator": "^0.13.1",
         "express": "^4.17.1",
-        "mysql": "^2.18.1",
         "nanoid": "^3.1.20",
-        "pug": "^3.0.0",
-        "typeorm": "^0.2.32"
+        "pug": "^3.0.0"
     },
     "devDependencies": {
         "@types/express": "^4.17.6",
