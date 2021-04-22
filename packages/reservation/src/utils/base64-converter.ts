@@ -21,7 +21,13 @@ export const decodeBookingLocationId = (id: string): BookingLocationIdParams => 
     packageCode,
   } = serializedId
 
-  if (!calendarTimezone || !appointmentTypeId || !calendarId || !organizationId || !packageCode) {
+  if (
+    !calendarTimezone ||
+    !appointmentTypeId ||
+    !calendarId ||
+    !organizationId ||
+    (!packageCode && packageCode != '')
+  ) {
     throw new BadRequestException('Invalid Id')
   }
 

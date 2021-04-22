@@ -2992,11 +2992,17 @@ paths:
                           type: string
                         address:
                           type: string
+                        prince:
+                          type: string
+                        currency:
+                          type: string
                       required:
                         - appointmentTypeName
                         - id
                         - name
                         - address
+                        - prince
+                        - currency
                   status:
                     type: object
                     additionalProperties: false
