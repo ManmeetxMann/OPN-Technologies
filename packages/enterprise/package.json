@@ -11,7 +11,7 @@
         "dev:local": "FIRESTORE_EMULATOR_HOST=localhost:8080 PUBSUB_EMULATOR_HOST=localhost:8085 FEATURE_DEBUG_MANUAL_TIMESTAMPS=enabled DEBUG_GUILIBLE_MODE=enabled ts-node src/server.ts",
         "clean": "rimraf -rf ./dist",
         "prepare": "copyfiles ../common/.env dist/packages/common && copyfiles app.yaml dist && copyfiles openapi.yaml dist && copyfiles package.json dist && node ../../tools/package-cleaner.js enterprise start",
-        "add_static_assets": "copyfiles ../common/src/static/fonts/* dist/common/",
+        "add_static_assets": "copyfiles ../common/src/static/fonts/* dist/packages/common/",
         "compile": "tsc -p tsconfig.build.json",
         "build": "npm run clean && npm run prepare && npm run compile && npm run add_static_assets",
         "gcloud_deploy": "gcloud app deploy ./dist --quiet",
@@ -19,14 +19,9 @@
         "initialize": "ts-node -e \"require('./src/server.ts').init()\""
     },
     "dependencies": {
-        "@nestjs/common": "7.6.15",
-        "@nestjs/swagger": "^4.6.0",
-        "class-validator": "^0.13.1",
         "express": "^4.17.1",
-        "mysql": "^2.18.1",
         "nanoid": "^3.1.20",
-        "pug": "^3.0.0",
-        "typeorm": "^0.2.32"
+        "pug": "^3.0.0"
     },
     "devDependencies": {
         "@types/express": "^4.17.6",

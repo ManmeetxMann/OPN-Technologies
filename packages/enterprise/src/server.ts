@@ -24,7 +24,7 @@ import InternalV1Controller from './controllers/v1/internal/internal.controller'
 
 // Init SQL connection and data model
 import {createConnection} from 'typeorm'
-import * as patientEntities from '../../../services-v2/apps/user-service/src/model/patient/patient.entity'
+
 import {Config} from '../../common/src/utils/config'
 import {isGAEService} from '../../common/src/utils/app-engine-environment'
 
@@ -64,25 +64,26 @@ let connection = {}
 if (isGAEService()) {
   // Connect via socket when deployed to GCP
   connection = {
-    host: Config.get('HOST'),
+    host: Config.get('DB_SQL_HOST'),
     extra: {
-      socketPath: Config.get('HOST'),
+      socketPath: Config.get('DB_SQL_HOST'),
     },
   }
 } else {
   // Connect via TCP when on local with local DB or Cloud SQL with proxy
   connection = {
-    host: Config.get('USER_DB_LOCAL_HOST'),
-    port: Number(Config.get('USER_DB_LOCAL_PORT')),
+    host: Config.get('DB_SQL_LOCAL_HOST'),
+    port: Number(Config.get('DB_SQL_LOCAL_PORT')),
   }
 }
+
 createConnection({
-  type: 'mysql',
   ...connection,
-  username: Config.get('USER_DB_USERNAME'),
-  password: Config.get('USER_DB_PASSWORD'),
-  database: Config.get('USER_DB_NAME'),
-  entities: [patientEntities.Patient, patientEntities.PatientAuth],
+  type: 'mysql',
+  database: Config.get('DB_SQL_NAME'),
+  username: Config.get('DB_SQL_USERNAME'),
+  password: Config.get('DB_SQL_PASSWORD'),
+  entities: ['../../../services-v2/apps/user-service/src/model/**/*.ts'],
   synchronize: false,
   logging: false,
 })
