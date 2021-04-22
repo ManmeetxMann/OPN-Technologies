@@ -9,6 +9,7 @@ import {AppointmentTypes} from '../models/appointment-types'
 export class BookingLocationService {
   private acuityRepository = new AcuityRepository()
   private packageRepository = new PackageRepository(new DataStore())
+  private defaultCurrency = 'CAD'
 
   private getPublicAppointmentTypes(
     appointmentTypes: AppointmentTypes[],
@@ -64,6 +65,7 @@ export class BookingLocationService {
   ): Promise<BookingLocations[]> {
     const calendars = await this.acuityRepository.getCalendarList()
     const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
+
     const appointmentTypesWithPackages = enablePaymentForBooking
       ? this.getPublicAppointmentTypes(appointmentTypes)
       : await this.getAppointmentTypesWithPackages(organizationId, appointmentTypes)
@@ -90,6 +92,7 @@ export class BookingLocationService {
           name: calendar.name,
           address: calendar.location,
           price: appointmentType.price,
+          currency: this.defaultCurrency,
         })
       })
     })

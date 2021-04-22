@@ -22,6 +22,7 @@ import {AuthGuard} from './guard/auth.guard'
   exports: [
     CommonService,
     ConfigModule.forRoot({
+      isGlobal: true,
       validationOptions: {
         allowUnknown: false,
         abortEarly: true,

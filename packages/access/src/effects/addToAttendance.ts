@@ -49,7 +49,7 @@ export default class AccessListener {
   }
 
   async processAccess(access: Access): Promise<unknown> {
-    if (access.enteredAt) {
+    if (!access.enteredAt) {
       throw new Error('called processAccess on an access which never entered')
     }
     if (!access.exitAt) {
