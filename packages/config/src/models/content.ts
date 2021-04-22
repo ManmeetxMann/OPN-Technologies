@@ -43,3 +43,8 @@ export enum Lang {
   en = 'en',
   fr = 'fr',
 }
+
+export enum ApplicationName {
+  OPN = 'OPN',
+  FHHealth = 'FHHealth',
+}
