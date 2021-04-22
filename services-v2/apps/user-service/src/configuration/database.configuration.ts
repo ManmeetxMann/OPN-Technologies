@@ -10,7 +10,7 @@ import {LocationRepository} from '../repository/location.repository'
 import {GroupRepository} from '../repository/group.repository'
 import {DefaultDatabaseConfiguration} from '@opn-services/common/configuration/database.configuration'
 
-export const DatabaseConfiguration = DefaultDatabaseConfiguration('user')
+export const DatabaseConfiguration = DefaultDatabaseConfiguration()
 
 const repositories = [
   UserRepository,

@@ -9,7 +9,7 @@
     "prebuild": "rimraf dist",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "cp .env dist/.env && nest start --watch",
+    "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/opn-services/main",
     "lint": "eslint --config ./.eslintrc.js --resolve-plugins-relative-to . \"{src,apps,libs,test}/**/*.ts\" --fix",
