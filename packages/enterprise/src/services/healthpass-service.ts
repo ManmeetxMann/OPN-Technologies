@@ -159,11 +159,13 @@ export class HealthpassService {
     if (testsPCR[0]) {
       const testId = testsPCR[0].id
       const appointment = await this.appointmentService.getAppointmentOnlyDBById(testId)
-      const {dateOfBirth, travelID, travelIDIssuingCountry} = appointment
-      return {
-        dateOfBirth: dateOfBirth || null,
-        travelIDIssuingCountry: travelIDIssuingCountry || null,
-        travelID: travelID || null,
+      if (appointment) {
+        const {dateOfBirth, travelID, travelIDIssuingCountry} = appointment
+        return {
+          dateOfBirth: dateOfBirth || null,
+          travelIDIssuingCountry: travelIDIssuingCountry || null,
+          travelID: travelID || null,
+        }
       }
     }
     return {
