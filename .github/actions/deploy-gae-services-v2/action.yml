@@ -22,12 +22,18 @@ runs:
   - name: Deploy Modules
     run: |
       echo "Service Name: ${{ inputs.service_name }}"
-      echo "::group::Install npm modules"
+      echo "Install npm modules"
       echo "Inside group"
       export NVM_DIR=~/.nvm
       source ~/.nvm/nvm.sh
       nvm install ${{ inputs.node_version }}
       nvm use ${{ inputs.node_version }}
+      echo "::group::Install dependencies and lint v1 services"
+      npm install
+      npm run install-all
+      npm run lint-all
+      echo "::endgroup::"
+      echo "::group::Install dependencies and lint v2 services"
       cd services-v2
       npm install
       npm run lint

@@ -14,27 +14,27 @@ export const DefaultDatabaseConfiguration = (service: string): DynamicModule => 
       if (isRunningOnGCP()) {
         // Connect via socket when deployed to GCP
         connection = {
-          host: configService.get<string>(env('HOST')),
+          host: configService.get<string>(env('DB_SQL_HOST')),
           extra: {
-            socketPath: configService.get<string>(env('HOST')),
+            socketPath: configService.get<string>(env('DB_SQL_HOST')),
           },
         }
       } else {
         // Connect via TCP when on local with local DB or Cloud SQL with proxy
         connection = {
-          host: configService.get<string>(env('LOCAL_HOST')),
-          port: configService.get<number>(env('LOCAL_PORT')),
+          host: configService.get<string>(env('DB_SQL_LOCAL_HOST')),
+          port: configService.get<number>(env('DB_SQL_LOCAL_PORT')),
         }
       }
 
       return {
         ...connection,
         type: 'mysql',
-        database: configService.get(env('NAME')),
-        username: configService.get<string>(env('USERNAME')),
-        password: configService.get<string>(env('PASSWORD')),
-        synchronize: configService.get<boolean>(env('AUTO_SYNC_SCHEMA')),
-        migrationsRun: configService.get<boolean>(env('RUN_MIGRATION')),
+        database: configService.get<string>(env('DB_SQL_NAME')),
+        username: configService.get<string>(env('DB_SQL_USERNAME')),
+        password: configService.get<string>(env('DB_SQL_PASSWORD')),
+        synchronize: configService.get<boolean>(env('DB_SQL_AUTO_SYNC_SCHEMA')),
+        migrationsRun: configService.get<boolean>(env('DB_SQL_RUN_MIGRATION')),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         logging: ['warn', 'error', 'query'],
         autoLoadEntities: true,
