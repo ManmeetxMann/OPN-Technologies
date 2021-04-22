@@ -1,6 +1,6 @@
 // NestJs
 import {NestFactory} from '@nestjs/core'
-import {Module, ValidationPipe} from '@nestjs/common'
+import {MiddlewareConsumer, Module, ValidationPipe} from '@nestjs/common'
 
 import {
   DatabaseConfiguration,
@@ -16,14 +16,18 @@ import {LocationService} from './service/organization/location.service'
 import {GroupService} from './service/organization/group.service'
 import {PatientService} from './service/patient/patient.service'
 
-import {CommonModule, createSwagger} from '@opn-services/common'
+import {AuthMiddleware, CommonModule, createSwagger} from '@opn-services/common'
 
 @Module({
   imports: [CommonModule, DatabaseConfiguration, RepositoryConfiguration],
   controllers: [AdminV1UserController, PatientController],
   providers: [OrganizationService, LocationService, GroupService, UserService, PatientService],
 })
-class App {}
+class App {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(AuthMiddleware).forRoutes(PatientController)
+  }
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(App)

@@ -8,6 +8,8 @@ import {Module, Global} from '@nestjs/common'
 // Service
 import {CommonService} from './common.service'
 import {FirebaseAuthService} from './services/auth/firebase-auth.service'
+
+// Guards
 import {AuthGuard} from './guard/auth.guard'
 
 /**
@@ -28,6 +30,7 @@ import {AuthGuard} from './guard/auth.guard'
       },
     }),
     FirebaseAuthService,
+    AuthGuard,
   ],
 })
 export class CommonModule {}

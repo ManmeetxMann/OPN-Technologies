@@ -22,3 +22,8 @@ export enum RequiredUserPermission {
   GenerateBarCodeAdmin = 'GenerateBarCodeAdmin',
   LookupAdmin = 'LookupAdmin',
 }
+
+export type RolesData = {
+  requiredRoles?: RequiredUserPermission[]
+  requireOrg: boolean
+}
