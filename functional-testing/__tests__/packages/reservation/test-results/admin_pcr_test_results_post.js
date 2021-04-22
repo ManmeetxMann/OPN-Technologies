@@ -32,10 +32,10 @@ describe('PCR TestResultsController', () => {
               url,
               {
                 'action': 'SendThisResult',
-                'autoResult': 'Negative',
-                'barCode': 'TEST10000000055',
+                'autoResult': 'Indeterminate',
+                'barCode': 'TEST10000548',
                 // 'comment': 'AWESOM',
-                'labId': 'CINkotCuHoZSLDN9wYjQ',
+                'labId': 'k0qbPDqTwqitKUwlGHye',
                 'templateId': 'template2',
                 'notify': true,
                 'resultAnalysis': [
@@ -53,15 +53,15 @@ describe('PCR TestResultsController', () => {
                   },
                   {
                     'label': 'IgAResult',
-                    'value': '4',
+                    'value': '',
                   },
                   {
                     'label': 'IgGResult',
-                    'value': '5',
+                    'value': 'Indeterminate',
                   },
                   {
                     'label': 'IgMResult',
-                    'value': '6',
+                    'value': 'Indeterminate',
                   }],
                 'resultDate': todaysDate,
                 'sendUpdatedResults': true,

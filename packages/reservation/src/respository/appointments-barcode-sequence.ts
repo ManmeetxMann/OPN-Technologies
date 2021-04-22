@@ -1,23 +1,36 @@
 import {AppoinmentBarCodeSequenceDBModel} from '../models/appointment'
-import DataModel from '../../../common/src/data/datamodel.base'
-import DataStore from '../../../common/src/data/datastore'
-import {Config} from '../../../common/src/utils/config'
 
-export class AppointmentsBarCodeSequence extends DataModel<AppoinmentBarCodeSequenceDBModel> {
+import {Config} from '../../../common/src/utils/config'
+import {firebaseAdmin} from '../../../common/src/utils/firebase'
+
+export class AppointmentsBarCodeSequence {
   public rootPath = 'appointment-barcode-sequence'
-  readonly zeroSet = []
-  constructor(dataStore: DataStore) {
-    super(dataStore)
+  private firestore
+  constructor() {
+    this.firestore = firebaseAdmin.firestore()
   }
 
+  /**
+   * Use lib firestore directly not firestore-simple for transactions
+   */
   public async getNextBarCode(): Promise<null | AppoinmentBarCodeSequenceDBModel> {
     const prefix = Config.get('BARCODE_SEQ_PREFIX') ?? 'TEST'
-    return this.get(prefix)
-      .then((sequence) =>
-        !!sequence
-          ? this.increment(prefix, 'barCodeNumber', 1)
-          : this.add({id: prefix, barCodeNumber: 1000000000}),
-      )
-      .then((barCode) => barCode)
+    const barcodesDocument = this.firestore.collection(this.rootPath).doc(prefix)
+
+    const newBarCode = await this.firestore.runTransaction(async (transaction) => {
+      const doc = await transaction.get(barcodesDocument)
+      const docData = doc.data()
+      let newBarCode = null
+      if (!docData) {
+        newBarCode = 1000000000
+        await transaction.set(barcodesDocument, {barCodeNumber: newBarCode})
+      } else {
+        newBarCode = docData.barCodeNumber + 1
+        await transaction.update(barcodesDocument, {barCodeNumber: newBarCode})
+      }
+      return newBarCode
+    })
+
+    return {id: prefix, barCodeNumber: newBarCode}
   }
 }

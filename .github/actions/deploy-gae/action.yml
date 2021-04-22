@@ -48,7 +48,7 @@ runs:
       PREPROD_TAG_REF=refs/tags/preprod-
       PROD_TAG_REF=refs/tags/prod-
       echo "::group::Define Deployment Variables"
-      if [[ $GITHUB_REF == 'refs/heads/ci_cd' ]]; then
+      if [[ $GITHUB_REF == 'refs/heads/testing' ]]; then
         echo "Deploy to INFRA"
         echo "PROJECT_ID=opn-platform-infra-dev" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=infra_dev_service_account" >> $GITHUB_ENV
@@ -64,6 +64,7 @@ runs:
         echo "PROJECT_ID=opn-platform-preprod" > $GITHUB_ENV
         echo "ENV_SERVICE_ACCOUNT=preprod_service_account" >> $GITHUB_ENV
         echo "PROMOTE_FLAG=--promote" >> $GITHUB_ENV
+        echo "GAE_VERSION_FLAG=--version=$GAE_VERSION" >> $GITHUB_ENV
       elif [[ "$GITHUB_REF" == *"$PROD_TAG_REF"* ]]; then
         echo "Deploy to PROD"
         echo "PROJECT_ID=opn-platform-ca-prod" > $GITHUB_ENV
@@ -98,7 +99,16 @@ runs:
       echo "::endgroup::"
       echo "::group::Add Application Environment Variables"
       echo "Writing Environment Variables to: .env"
-      gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/${{ inputs.service_name }}/dist/common/.env
+      if [ -d "./packages/${{ inputs.service_name }}/dist/common" ] 
+      then
+          gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/${{ inputs.service_name }}/dist/common/.env
+          echo "Created secret at dist/common/.env" 
+      fi
+      if [ -d "./packages/${{ inputs.service_name }}/dist/packages/common" ] 
+      then
+          gcloud secrets versions access latest --secret=OPN_PLATFORM_CRDENTIALS > ./packages/${{ inputs.service_name }}/dist/packages/common/.env
+          echo "Created secret at dist/packages/common/.env" 
+      fi
       echo "::endgroup::"
       ONLY_VALIDATE_DEPLOYMENT=${{ inputs.only_validate_deployment }}
       if [[ $ONLY_VALIDATE_DEPLOYMENT == 'false' ]]; then

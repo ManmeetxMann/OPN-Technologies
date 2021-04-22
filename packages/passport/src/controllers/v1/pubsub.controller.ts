@@ -4,11 +4,9 @@ import {Handler, Router} from 'express'
 import IControllerBase from '../../../../common/src/interfaces/IControllerBase.interface'
 import {OPNPubSub} from '../../../../common/src/service/google/pub_sub'
 
-import {PassportStatuses, Passport} from '../../models/passport'
+import {PassportStatuses, Passport, PassportType} from '../../models/passport'
 import {PassportService} from '../../services/passport-service'
 import {AttestationService} from '../../services/attestation-service'
-
-import {OrganizationService} from '../../../../enterprise/src/services/organization-service'
 
 import {ResultTypes} from '../../../../reservation/src/models/appointment'
 import {AlertService} from '../../services/alert-service'
@@ -28,7 +26,6 @@ class RecommendationController implements IControllerBase {
   public router = express.Router()
   private passportService = new PassportService()
   private attService = new AttestationService()
-  private orgService = new OrganizationService()
   private alertService = new AlertService()
 
   constructor() {
@@ -111,10 +108,21 @@ class RecommendationController implements IControllerBase {
   pcrTest: Handler = async (req, res, next): Promise<void> => {
     try {
       const {userId, organizationId, data} = await this.parseMessage(req.body.message)
-      const status = passportStatusByPCR[data.status as ResultTypes]
+      const pcrResultType = data.result as ResultTypes
+      const status = passportStatusByPCR[pcrResultType]
+
       if (status) {
-        const passport = await this.passportService.create(status, userId, [], true, organizationId)
-        await this.alertIfNeeded(passport)
+        const includesGuardian = true
+        const {passport, created} = await this.passportService.create(
+          status,
+          userId,
+          [],
+          includesGuardian,
+          organizationId,
+          PassportType.PCR,
+          pcrResultType,
+        )
+        if (created) await this.alertIfNeeded(passport)
       }
       res.sendStatus(200)
     } catch (error) {

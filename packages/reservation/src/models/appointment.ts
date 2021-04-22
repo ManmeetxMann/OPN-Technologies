@@ -1,8 +1,9 @@
 import {firestore} from 'firebase-admin'
-import {isSameOrBefore} from '../utils/datetime.helper'
+import {isSameOrBefore, makeRegularIsoDate} from '../utils/datetime.helper'
 
 import {PageableRequestFilter} from '../../../common/src/types/request'
 import {formatDateRFC822Local} from '../utils/datetime.helper'
+import {ReservationPushTypes} from '../types/appointment-push'
 
 export enum AppointmentStatus {
   Pending = 'Pending',
@@ -77,6 +78,7 @@ export type AppointmentDBModel = {
   locationAddress?: string
   testType: TestTypes
   labId?: string
+  scheduledPushesToSend?: Array<ReservationPushTypes>
 }
 
 //Legacy: Should be removed once Appointment Check is move dto Dashboard
@@ -166,6 +168,7 @@ export enum TestTypes {
   Antibody_All = 'Antibody_All',
   Antibody_IgM = 'Antibody_IgM',
   PulseOxygenCheck = 'PulseOxygenCheck',
+  allExceptAntigen = 'allExceptAntigen', // @TODO Remove this after correcting flag
 }
 
 export type PostAdminScanHistoryRequest = {
@@ -210,6 +213,7 @@ export type AppointmentByOrganizationRequest = PageableRequestFilter & {
   barCode?: string
   appointmentStatus?: AppointmentStatus[]
   labId?: string
+  testType?: TestTypes
 }
 
 //Update to Acuity Service
@@ -316,14 +320,18 @@ export type Filter = {
   count: number
 }
 
-enum FilterGroupKey {
+export enum FilterGroupKey {
   organizationId = 'organizationId',
+  labId = 'labId',
   appointmentStatus = 'appointmentStatus',
+  result = 'result',
 }
 
-enum FilterName {
+export enum FilterName {
   FilterByStatusType = 'Filter By Status Type',
+  FilterByResult = 'Filter By Result',
   FilterByCorporation = 'Filter By Corporation',
+  FilterByLab = 'Filter By Lab',
 }
 
 type FilterGroup = {
@@ -338,30 +346,12 @@ export type appointmentStatsUiDTO = {
 }
 
 export const statsUiDTOResponse = (
-  appointmentStatus: Filter[],
-  orgIdArray: Filter[],
+  filterGroup: FilterGroup[],
   total: number,
-  showOrgFilter = true,
-): appointmentStatsUiDTO => {
-  const filterGroup = [
-    {
-      name: FilterName.FilterByStatusType,
-      key: FilterGroupKey.appointmentStatus,
-      filters: appointmentStatus,
-    },
-  ]
-  if (showOrgFilter) {
-    filterGroup.push({
-      name: FilterName.FilterByCorporation,
-      key: FilterGroupKey.organizationId,
-      filters: orgIdArray,
-    })
-  }
-  return {
-    total,
-    filterGroup,
-  }
-}
+): appointmentStatsUiDTO => ({
+  total,
+  filterGroup,
+})
 
 export const appointmentUiDTOResponse = (
   appointment: AppointmentDBModel & {
@@ -386,7 +376,6 @@ export const appointmentUiDTOResponse = (
     dateOfBirth: appointment.dateOfBirth,
     transportRunId: appointment.transportRunId,
     deadline: formatDateRFC822Local(appointment.deadline),
-    latestResult: appointment.latestResult,
     vialLocation: appointment.vialLocation,
     canCancel: appointment.canCancel,
     organizationName: appointment.organizationName,
@@ -411,7 +400,7 @@ export const userAppointmentDTOResponse = (appointment: AppointmentDBModel): Use
   id: appointment.id,
   QRCode: appointment.barCode,
   showQrCode:
-    isSameOrBefore(appointment.dateOfAppointment) &&
+    isSameOrBefore(makeRegularIsoDate(appointment.dateOfAppointment)) &&
     appointment.appointmentStatus !== AppointmentStatus.Canceled,
   firstName: appointment.firstName,
   lastName: appointment.lastName,
@@ -470,7 +459,7 @@ export type RescheduleAppointmentDTO = {
   dateTime: string
   organizationId?: string
   userID: string
-  isLabUser: boolean
+  isOpnSuperAdmin: boolean
 }
 
 export type UpdateTransPortRun = {

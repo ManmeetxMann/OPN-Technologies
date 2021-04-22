@@ -1,5 +1,6 @@
 import DataModel from './datamodel.base'
 import {Platform} from '../types/platform'
+import {firestore} from 'firebase-admin'
 
 export type Registration = {
   id: string
@@ -7,6 +8,9 @@ export type Registration = {
   osVersion: string
   pushToken?: string
   userIds?: string[]
+  timestamps?: {
+    createdAt: firestore.Timestamp
+  }
 }
 
 export type RegistrationUpdate = {

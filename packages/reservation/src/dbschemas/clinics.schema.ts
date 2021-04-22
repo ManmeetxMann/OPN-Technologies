@@ -1,4 +1,4 @@
-import Joi from 'joi'
+import * as Joi from 'joi'
 
 export default Joi.object({
   name: Joi.string().required(),

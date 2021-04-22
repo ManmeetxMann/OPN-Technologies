@@ -1,5 +1,5 @@
 import moment from 'moment'
-import {sortBy, union, fromPairs} from 'lodash'
+import {fromPairs, sortBy, union} from 'lodash'
 
 import DataStore from '../../../common/src/data/datastore'
 import {Config} from '../../../common/src/utils/config'
@@ -7,13 +7,15 @@ import {EmailService} from '../../../common/src/service/messaging/email-service'
 import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {DataModelFieldMapOperatorType} from '../../../common/src/data/datamodel.base'
+import {ReservationPushTypes} from '../types/appointment-push'
 import {toDateFormat} from '../../../common/src/utils/times'
 import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {safeTimestamp} from '../../../common/src/utils/datetime-util'
 import {
+  dateToDateTime,
   formatDateRFC822Local,
   formatStringDateRFC822Local,
-  dateToDateTime,
+  getFirestoreTimeStampDate,
   makeDeadlineForFilter,
 } from '../utils/datetime.helper'
 import {OPNCloudTasks} from '../../../common/src/service/google/cloud_tasks'
@@ -22,6 +24,7 @@ import {LogError, LogInfo, LogWarning} from '../../../common/src/utils/logging-s
 //service
 import {AppoinmentService} from './appoinment.service'
 import {CouponService} from './coupon.service'
+import {ReservationPushService} from './reservation-push.service'
 
 //repository
 import {AppointmentsRepository} from '../respository/appointments-repository'
@@ -36,11 +39,13 @@ import {
   AppointmentReasons,
   CreateReportForPCRResultsResponse,
   EmailNotficationTypes,
+  getSortOrderByResult,
   PCRResultActions,
   PCRResultActionsAllowedResend,
   PCRResultActionsForConfirmation,
   PCRResultPDFType,
   PcrResultTestActivityAction,
+  PCRSendResultDTO,
   PCRTestResultByDeadlineListDTO,
   PCRTestResultConfirmRequest,
   PCRTestResultDBModel,
@@ -55,8 +60,6 @@ import {
   ResultReportStatus,
   resultToStyle,
   TestResutsDTO,
-  getSortOrderByResult,
-  PCRSendResultDTO,
 } from '../models/pcr-test-results'
 
 import {
@@ -64,9 +67,9 @@ import {
   AppointmentStatus,
   DeadlineLabel,
   Filter,
+  filteredAppointmentStatus,
   ResultTypes,
   TestTypes,
-  filteredAppointmentStatus,
 } from '../models/appointment'
 import {PCRResultPDFContent} from '../templates/pcr-test-results'
 import {ResultAlreadySentException} from '../exceptions/result_already_sent'
@@ -78,11 +81,12 @@ import {mapTemperatureStatusToResultTypes} from '../models/temperature'
 
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
+import {UserService} from '../../../common/src/service/user/user-service'
 import {AttestationService} from '../../../passport/src/services/attestation-service'
 import {PassportStatuses} from '../../../passport/src/models/passport'
 import {PulseOxygenService} from './pulse-oxygen.service'
 
-import {BulkTestResultRequest} from '../models/test-results'
+import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results'
 import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
 
@@ -95,12 +99,14 @@ export class PCRTestResultsService {
   private appointmentService = new AppoinmentService()
   private organizationService = new OrganizationService()
   private couponService = new CouponService()
+  private reservationPushService = new ReservationPushService()
   private emailService = new EmailService()
-  private couponCode: string
+  private userService = new UserService()
   private whiteListedResultsTypes = [
     ResultTypes.Negative,
     ResultTypes.Positive,
     ResultTypes.PresumptivePositive,
+    ResultTypes.Indeterminate,
   ]
   private testRunsService = new TestRunsService()
   private attestationService = new AttestationService()
@@ -108,6 +114,7 @@ export class PCRTestResultsService {
   private pulseOxygenService = new PulseOxygenService()
   private labService = new LabService()
   private pubsub = new OPNPubSub(Config.get('PCR_TEST_TOPIC'))
+  private isAppointmentPushEnable = Config.get('APPOINTMENTS_PUSH_NOTIFY') === 'enabled'
 
   private postPubsub(testResult: PCRTestResultEmailDTO, action: string): void {
     if (Config.get('TEST_RESULT_PUB_SUB_NOTIFY') !== 'enabled') {
@@ -146,6 +153,7 @@ export class PCRTestResultsService {
     const reCollectNumber = 0 //Not Relevant
     let finalResult: ResultTypes = ResultTypes.Indeterminate
     let notificationType = EmailNotficationTypes.Indeterminate
+    let recollected = false
     switch (data.action) {
       case PCRResultActionsForConfirmation.MarkAsNegative: {
         finalResult = ResultTypes.Negative
@@ -155,6 +163,12 @@ export class PCRTestResultsService {
       case PCRResultActionsForConfirmation.MarkAsPositive: {
         finalResult = ResultTypes.Positive
         notificationType = EmailNotficationTypes.MarkAsConfirmedPositive
+        break
+      }
+      case PCRResultActionsForConfirmation.Indeterminate: {
+        finalResult = ResultTypes.Inconclusive
+        notificationType = EmailNotficationTypes.Indeterminate
+        recollected = true
         break
       }
     }
@@ -168,6 +182,7 @@ export class PCRTestResultsService {
       confirmed: true,
       previousResult: latestPCRResult.result,
       labId: latestPCRResult.labId,
+      recollected,
     })
 
     const lab = await this.labService.findOneById(latestPCRResult.labId)
@@ -175,6 +190,7 @@ export class PCRTestResultsService {
     await this.sendNotification(
       {...newPCRResult, ...appointment, labAssay: lab.assay},
       notificationType,
+      newPCRResult.id,
     )
     return newPCRResult.id
   }
@@ -214,13 +230,17 @@ export class PCRTestResultsService {
       ResultReportStatus.Processing,
     )
     try {
+      const metaData: TestResultsMetaData = {
+        notify: pcrResults.data.notify,
+        resultDate: pcrResults.data.resultDate,
+        action: pcrResults.data.action,
+        autoResult: pcrResults.data.autoResult,
+      }
+      if (pcrResults.data.comment) {
+        metaData.comment = pcrResults.data.comment
+      }
       const pcrTestResult = await this.handlePCRResultSaveAndSend({
-        metaData: {
-          notify: pcrResults.data.notify,
-          resultDate: pcrResults.data.resultDate,
-          action: pcrResults.data.action,
-          autoResult: pcrResults.data.autoResult,
-        },
+        metaData,
         resultAnalysis: pcrResults.data.resultAnalysis,
         barCode: pcrResults.data.barCode,
         isSingleResult: false,
@@ -312,7 +332,7 @@ export class PCRTestResultsService {
         map: '/',
         key: 'organizationId',
         operator: DataModelFieldMapOperatorType.Equals,
-        value: organizationId,
+        value: organizationId === 'null' ? null : organizationId,
       })
     }
 
@@ -365,12 +385,21 @@ export class PCRTestResultsService {
 
     //Apply for Corporate
     if (testType) {
-      pcrTestResultsQuery.push({
-        map: '/',
-        key: 'testType',
-        operator: DataModelFieldMapOperatorType.Equals,
-        value: testType,
-      })
+      if (testType === TestTypes.allExceptAntigen) {
+        pcrTestResultsQuery.push({
+          map: '/',
+          key: 'testType',
+          operator: DataModelFieldMapOperatorType.NotEquals,
+          value: TestTypes.RapidAntigen,
+        })
+      } else {
+        pcrTestResultsQuery.push({
+          map: '/',
+          key: 'testType',
+          operator: DataModelFieldMapOperatorType.Equals,
+          value: testType,
+        })
+      }
     }
 
     if (searchQuery) {
@@ -419,10 +448,18 @@ export class PCRTestResultsService {
       ] as PCRTestResultDBModel[]
       pcrResults.sort((a, b) => b.sortOrder - a.sortOrder)
     } else {
-      pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
-        pcrTestResultsQuery,
-        result ? null : {key: 'sortOrder', direction: 'desc'},
-      )
+      if (testType === TestTypes.allExceptAntigen) {
+        pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+          pcrTestResultsQuery,
+          null,
+        )
+        pcrResults.sort((a, b) => b.sortOrder - a.sortOrder)
+      } else {
+        pcrResults = await this.pcrTestResultsRepository.findWhereEqualInMap(
+          pcrTestResultsQuery,
+          result ? null : {key: 'sortOrder', direction: 'desc'},
+        )
+      }
     }
 
     const getResultValue = (result: ResultTypes, notify: boolean): ResultTypes => {
@@ -469,6 +506,7 @@ export class PCRTestResultsService {
           isClinicUser,
         ),
         labName: lab?.name,
+        labId: lab?.id,
       }
     })
   }
@@ -617,14 +655,18 @@ export class PCRTestResultsService {
     const labId = testResultData.labId
     const fileName = testResultData.fileName
     const pcrResults = testResultData.results.map((result) => {
+      const data = {
+        ...result,
+        resultDate,
+        templateId,
+        labId,
+        fileName: fileName || null,
+      }
+      if (result.comment) {
+        data.comment = result.comment
+      }
       return {
-        data: {
-          ...result,
-          resultDate,
-          templateId,
-          labId,
-          fileName: fileName || null,
-        },
+        data,
         status: ResultReportStatus.RequestReceived,
         adminId: adminId,
       }
@@ -663,7 +705,9 @@ export class PCRTestResultsService {
     const pcrTestResults = await this.getPCRResultsByBarCode(barCode)
 
     const waitingPCRTestResult = await this.getWaitingPCRTestResult(pcrTestResults)
-    const isAlreadyReported = appointment.appointmentStatus === AppointmentStatus.Reported
+    const isAlreadyReported =
+      appointment.appointmentStatus === AppointmentStatus.Reported ||
+      appointment.appointmentStatus === AppointmentStatus.ReCollectRequired
     const inProgress = appointment.appointmentStatus === AppointmentStatus.InProgress
     const finalResult = this.getFinalResult(metaData.action, metaData.autoResult, barCode)
 
@@ -749,7 +793,6 @@ export class PCRTestResultsService {
         : waitingPCRTestResult
 
     const actionsForRecollection = [
-      PCRResultActions.RequestReCollect,
       PCRResultActions.RecollectAsInvalid,
       PCRResultActions.RecollectAsInconclusive,
     ]
@@ -802,10 +845,10 @@ export class PCRTestResultsService {
       const pcrResultDataForEmail = {
         adminId,
         labAssay: lab.assay,
-        ...pcrResultDataForDbUpdate,
         ...appointment,
+        ...pcrResultDataForDbUpdate,
       }
-      await this.sendNotification(pcrResultDataForEmail, metaData.action)
+      await this.sendNotification(pcrResultDataForEmail, metaData.action, pcrResultRecorded.id)
     } else {
       console.log(
         `handlePCRResultSaveAndSend: Not Notification is sent for ${barCode}. Notify is off.`,
@@ -842,22 +885,6 @@ export class PCRTestResultsService {
         appointment.id,
         resultData.adminId,
       )
-
-      if (!appointment.organizationId) {
-        //TODO: Move this to Email Function
-        this.couponCode = await this.couponService.createCoupon(appointment.email)
-        await this.couponService.saveCoupon(
-          this.couponCode,
-          appointment.organizationId,
-          resultData.barCode,
-        )
-        LogInfo('handleActions->handledReCollect', 'CouponCodeCreated', {
-          barCode: resultData.barCode,
-          organizationId: appointment.organizationId,
-          appointmentId: appointment.id,
-          appointmentEmail: appointment.email,
-        })
-      }
     }
     switch (resultData.action) {
       case PCRResultActions.SendPreliminaryPositive: {
@@ -914,11 +941,6 @@ export class PCRTestResultsService {
         })
         break
       }
-      case PCRResultActions.RequestReCollect: {
-        //TODO: Remove this after FE updates
-        await handledReCollect()
-        break
-      }
       case PCRResultActions.RecollectAsInvalid: {
         await handledReCollect()
         break
@@ -950,8 +972,8 @@ export class PCRTestResultsService {
   async sendNotification(
     resultData: PCRTestResultEmailDTO,
     notficationType: PCRResultActions | EmailNotficationTypes,
+    pcrId: string,
   ): Promise<void> {
-    this.postPubsub(resultData, 'result')
     let addSuccessLog = true
     switch (notficationType) {
       case PCRResultActions.SendPreliminaryPositive: {
@@ -966,16 +988,15 @@ export class PCRTestResultsService {
         await this.sendEmailNotification(resultData)
         break
       }
-      case PCRResultActions.RequestReCollect: {
-        //TODO Remove This
-        await this.sendReCollectNotification(resultData)
-        break
-      }
       case PCRResultActions.RecollectAsInconclusive: {
         await this.sendReCollectNotification(resultData)
         break
       }
       case PCRResultActions.RecollectAsInvalid: {
+        await this.sendReCollectNotification(resultData)
+        break
+      }
+      case EmailNotficationTypes.Indeterminate: {
         await this.sendReCollectNotification(resultData)
         break
       }
@@ -994,6 +1015,12 @@ export class PCRTestResultsService {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Positive)
         } else if (resultData.result === ResultTypes.PresumptivePositive) {
           await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.PresumptivePositive)
+        } else if (
+          resultData.result === ResultTypes.Indeterminate &&
+          (resultData.testType === TestTypes.Antibody_All ||
+            resultData.testType === TestTypes.Antibody_IgM)
+        ) {
+          await this.sendTestResultsWithAttachment(resultData, PCRResultPDFType.Intermediate)
         } else {
           addSuccessLog = false
           LogWarning('sendNotification', 'FailedEmailSent BlockedBySystem', {
@@ -1002,7 +1029,15 @@ export class PCRTestResultsService {
             resultSent: resultData.result,
           })
         }
+        if (addSuccessLog) {
+          this.postPubsub({...resultData, id: pcrId}, 'result')
+        }
       }
+    }
+
+    // trigger pub sub to issue Stop passport on inconclusive result
+    if (resultData.result === ResultTypes.Inconclusive) {
+      this.postPubsub(resultData, 'result')
     }
 
     if (addSuccessLog) {
@@ -1053,6 +1088,13 @@ export class PCRTestResultsService {
         },
       ],
     })
+
+    if (this.isAppointmentPushEnable) {
+      await this.reservationPushService.sendPushByUserId(
+        resultData.userId,
+        ReservationPushTypes.ready,
+      )
+    }
   }
 
   async sendEmailNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
@@ -1076,26 +1118,37 @@ export class PCRTestResultsService {
 
   async sendReCollectNotification(resultData: PCRTestResultEmailDTO): Promise<void> {
     const getTemplateId = (): number => {
-      if (resultData.result === ResultTypes.Inconclusive) {
+      if (!!resultData.organizationId) {
+        return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
+      } else if (resultData.result === ResultTypes.Inconclusive) {
         return (
           Config.getInt('TEST_RESULT_NO_ORG_INCONCLUSIVE_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 8
         )
-      } else if (!!resultData.organizationId) {
-        return Config.getInt('TEST_RESULT_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 6
       } else {
         return Config.getInt('TEST_RESULT_NO_ORG_COLLECT_NOTIFICATION_TEMPLATE_ID') ?? 5
       }
     }
+    let couponCode = null
+    if (!resultData.organizationId) {
+      couponCode = await this.couponService.createCoupon(resultData.email)
+      await this.couponService.saveCoupon(couponCode, resultData.organizationId, resultData.barCode)
+      LogInfo('sendReCollectNotification', 'CouponCodeCreated', {
+        barCode: resultData.barCode,
+        organizationId: resultData.organizationId,
+        appointmentId: resultData.appointmentId,
+        appointmentEmail: resultData.email,
+      })
+    }
     const appointmentBookingBaseURL = Config.get('ACUITY_CALENDAR_URL')
     const owner = Config.get('ACUITY_SCHEDULER_USERNAME')
-    const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${this.couponCode}`
+    const appointmentBookingLink = `${appointmentBookingBaseURL}?owner=${owner}&certificate=${couponCode}`
     const templateId = getTemplateId()
 
     await this.emailService.send({
       templateId: templateId,
       to: [{email: resultData.email, name: `${resultData.firstName} ${resultData.lastName}`}],
       params: {
-        COUPON_CODE: this.couponCode,
+        COUPON_CODE: couponCode,
         BOOKING_LINK: appointmentBookingLink,
         FIRSTNAME: resultData.firstName,
       },
@@ -1105,6 +1158,12 @@ export class PCRTestResultsService {
         },
       ],
     })
+    if (this.isAppointmentPushEnable) {
+      await this.reservationPushService.sendPushByUserId(
+        resultData.userId,
+        ReservationPushTypes.reSample,
+      )
+    }
   }
 
   async updateTestResults(
@@ -1230,12 +1289,15 @@ export class PCRTestResultsService {
     total: number
     pcrResultStatsByOrgIdArr: Filter[]
     pcrResultStatsByResultArr: Filter[]
+    pcrResultStatsByLabIdArr: Filter[]
   }> {
     const pcrTestResults = await this.getPCRResults(queryParams, isLabUser, isClinicUser)
 
     const pcrResultStatsByResult: Record<ResultTypes, number> = {} as Record<ResultTypes, number>
     const pcrResultStatsByOrgId: Record<string, number> = {}
+    const pcrResultStatsByLabId: Record<string, number> = {}
     const organizations = {}
+    const labs = {}
     let total = 0
 
     pcrTestResults.forEach((pcrTest) => {
@@ -1250,6 +1312,12 @@ export class PCRTestResultsService {
         pcrResultStatsByOrgId[pcrTest.organizationId] = 1
         organizations[pcrTest.organizationId] = pcrTest.organizationName
       }
+      if (pcrResultStatsByLabId[pcrTest.labId]) {
+        ++pcrResultStatsByLabId[pcrTest.labId]
+      } else {
+        pcrResultStatsByLabId[pcrTest.labId] = 1
+        labs[pcrTest.labId] = pcrTest.labName
+      }
       ++total
     })
 
@@ -1262,8 +1330,16 @@ export class PCRTestResultsService {
     )
     const pcrResultStatsByOrgIdArr = Object.entries(pcrResultStatsByOrgId).map(
       ([orgId, count]) => ({
-        id: orgId === 'undefined' ? null : orgId,
+        id: orgId === 'undefined' ? 'null' : orgId,
         name: orgId === 'undefined' ? 'None' : organizations[orgId],
+        count,
+      }),
+    )
+
+    const pcrResultStatsByLabIdArr = Object.entries(pcrResultStatsByLabId).map(
+      ([labId, count]) => ({
+        id: labId === 'undefined' ? null : labId,
+        name: labId === 'undefined' ? 'None' : labs[labId],
         count,
       }),
     )
@@ -1271,6 +1347,7 @@ export class PCRTestResultsService {
     return {
       pcrResultStatsByResultArr,
       pcrResultStatsByOrgIdArr,
+      pcrResultStatsByLabIdArr,
       total,
     }
   }
@@ -1395,7 +1472,7 @@ export class PCRTestResultsService {
     queryParams: PcrTestResultsListByDeadlineRequest,
   ): Promise<PCRTestResultDBModel[]> {
     const pcrTestResultsQuery = []
-    const {labId, deadline, barCode, testRunId, organizationId} = queryParams
+    const {labId, deadline, barCode, testRunId, organizationId, testType} = queryParams
 
     const equals = (key: string, value) => ({
       map: '/',
@@ -1433,52 +1510,11 @@ export class PCRTestResultsService {
       )
     }
 
-    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
-  }
-
-  public getlinkedBarcodes = async (couponCode: string): Promise<string[]> => {
-    let linkedBarcodes = []
-    if (couponCode) {
-      //Get Coupon
-      const coupon = await this.couponService.getByCouponCode(couponCode)
-      if (coupon) {
-        linkedBarcodes.push(coupon.lastBarcode)
-        try {
-          //Get Linked Barcodes for LastBarCode
-          const pcrResult = await this.pcrTestResultsRepository.getReCollectedTestResultByBarCode(
-            coupon.lastBarcode,
-          )
-          if (pcrResult.linkedBarCodes && pcrResult.linkedBarCodes.length) {
-            linkedBarcodes = linkedBarcodes.concat(pcrResult.linkedBarCodes)
-          }
-        } catch (error) {
-          console.error(
-            `PCRTestResultsService: Coupon Code: ${couponCode} Last BarCode: ${
-              coupon.lastBarcode
-            }. No Test Results to Link. ${error.toString()}`,
-          )
-        }
-        console.log(
-          `PCRTestResultsService: ${couponCode} Return linkedBarcodes as ${linkedBarcodes}`,
-        )
-      } else {
-        console.log(`PCRTestResultsService: ${couponCode} is not coupon.`)
-      }
+    if (testType) {
+      pcrTestResultsQuery.push(equals('testType', testType))
     }
-    return linkedBarcodes
-  }
 
-  public async createTestResult(appointment: AppointmentDBModel): Promise<PCRTestResultDBModel> {
-    const linkedBarCodes = await this.getlinkedBarcodes(appointment.packageCode)
-
-    return this.pcrTestResultsRepository.createNewTestResults({
-      appointment,
-      adminId: 'WEBHOOK',
-      linkedBarCodes,
-      reCollectNumber: linkedBarCodes.length + 1,
-      runNumber: 1,
-      previousResult: null,
-    })
+    return this.pcrTestResultsRepository.findWhereEqualInMap(pcrTestResultsQuery)
   }
 
   async getDueDeadlineStats(
@@ -1768,8 +1804,10 @@ export class PCRTestResultsService {
       throw new ResourceNotFoundException(`PCRTestResult with id ${id} not found`)
     }
 
+    const isParent = await this.userService.isParentForChild(userId, pcrTestResult?.userId)
+
     //TODO
-    if (pcrTestResult?.userId !== userId) {
+    if (pcrTestResult?.userId !== userId && !isParent) {
       throw new ResourceNotFoundException(`${id} does not exist`)
     }
 
@@ -1782,7 +1820,8 @@ export class PCRTestResultsService {
         `Appointment with appointmentId ${pcrTestResult.appointmentId} not found, PCR Result id ${id}`,
       )
     }
-    if (appointment?.userId !== userId) {
+
+    if (appointment?.userId !== userId && !isParent) {
       LogWarning('TestResultsController: testResultDetails', 'Unauthorized', {
         userId,
         resultId: id,
@@ -1804,5 +1843,86 @@ export class PCRTestResultsService {
       ResultTypes.PresumptivePositive,
     ]
     return allowedResultTypes.includes(pcrTestResult.result)
+  }
+
+  async getAllResultsByUserAndChildren(
+    userId: string,
+    organizationid: string,
+  ): Promise<TestResutsDTO[]> {
+    const {guardian, dependants} = await this.userService.getUserAndDependants(userId)
+    const guardianTestResults = await this.getTestResultsByUserId(guardian.id, organizationid)
+
+    if (dependants.length) {
+      const pendingResults = dependants.map(({id}) =>
+        this.getTestResultsByUserId(id, organizationid),
+      )
+      const dependantsTestResults = await Promise.all(pendingResults)
+      const childrenTestResults = dependantsTestResults.flat()
+
+      return this.sortTestResultsByDate([...guardianTestResults, ...childrenTestResults])
+    }
+
+    return this.sortTestResultsByDate(guardianTestResults)
+  }
+
+  async sortTestResultsByDate(tests: TestResutsDTO[]): Promise<TestResutsDTO[]> {
+    return tests.sort(
+      (a, b) => new Date(b.testDateTime).getTime() - new Date(a.testDateTime).getTime(),
+    )
+  }
+
+  async updatePCRResultsFromAcuity(
+    updatedAppointment: AppointmentDBModel,
+    actionBy: string,
+  ): Promise<PCRTestResultDBModel> {
+    try {
+      const pcrTestResult = await this.getWaitingPCRResultByAppointmentId(updatedAppointment.id)
+
+      if (updatedAppointment.appointmentStatus === AppointmentStatus.Canceled) {
+        await this.deleteTestResults(pcrTestResult.id)
+        LogInfo('PCRTestResultsService:updatePCRResultsFromAcuity', 'RemovedResults', {
+          appoinmentID: updatedAppointment.id,
+          pcrResultID: pcrTestResult.id,
+        })
+      } else {
+        const pcrResultDataForDb = {
+          adminId: actionBy,
+          appointmentId: updatedAppointment.id,
+          barCode: updatedAppointment.barCode,
+          displayInResult: true,
+          dateTime: updatedAppointment.dateTime,
+          deadline: updatedAppointment.deadline,
+          firstName: updatedAppointment.firstName,
+          lastName: updatedAppointment.lastName,
+          //linkedBarCodes: linkedBarcodes,
+          organizationId: updatedAppointment.organizationId,
+          deadlineDate: getFirestoreTimeStampDate(updatedAppointment.deadline),
+          dateOfAppointment: getFirestoreTimeStampDate(updatedAppointment.dateTime),
+          //result: ResultTypes.Pending,
+          //runNumber: 1 ,//Start the Run
+          //waitingResult: true,
+          testType: updatedAppointment.testType,
+          userId: updatedAppointment.userId,
+          appointmentStatus: updatedAppointment.appointmentStatus,
+        }
+
+        return await this.pcrTestResultsRepository.updateData({
+          id: pcrTestResult.id,
+          updates: pcrResultDataForDb,
+          action: PcrResultTestActivityAction.UpdateFromAcuity,
+          actionBy: actionBy,
+        })
+      }
+    } catch (error) {
+      LogWarning(
+        'PCRTestResultsService:updatePCRResultsFromAcuity',
+        'FailedToGetWaitingPCRResults',
+        {
+          acuityID: updatedAppointment.acuityAppointmentId,
+          appoinmentID: updatedAppointment.id,
+          errorMessage: error.toString(),
+        },
+      )
+    }
   }
 }

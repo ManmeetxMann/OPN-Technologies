@@ -212,4 +212,11 @@ export class UserService {
   getAdminsForGroup(groupId: string): Promise<User[]> {
     return this.userRepository.findWhereArrayInMapContains('admin', 'adminForGroupIds', groupId)
   }
+
+  async isParentForChild(parentId: string, childId: string): Promise<boolean> {
+    const dependants = await this.getAllDependants(parentId)
+    const isParent = dependants.some(({id}) => id == childId)
+
+    return isParent
+  }
 }

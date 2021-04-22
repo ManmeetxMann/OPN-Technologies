@@ -6,14 +6,24 @@ import DataStore from '../../../common/src/data/datastore'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
 import {IdentifiersModel} from '../../../common/src/data/identifiers'
 import {UserService} from '../../../common/src/service/user/user-service'
-import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
-import {now, serverTimestamp} from '../../../common/src/utils/times'
+// import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
+import {now} from '../../../common/src/utils/times'
 import {Config} from '../../../common/src/utils/config'
 import {isPassed, safeTimestamp} from '../../../common/src/utils/datetime-util'
 
-import {Passport, PassportModel, PassportStatus, PassportStatuses} from '../models/passport'
+import {
+  Passport,
+  PassportModel,
+  PassportStatus,
+  PassportStatuses,
+  PassportType,
+  PassportTypePriority,
+} from '../models/passport'
 
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
+
+import {Enterprise} from '../adapter/enterprise'
+import {ResultTypes} from '../../../reservation/src/models/appointment'
 
 const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => ({
   ...passport,
@@ -26,23 +36,25 @@ const mapDates = ({validFrom, validUntil, ...passport}: Passport): Passport => (
 export class PassportService {
   private dataStore = new DataStore()
   private userService = new UserService()
-  private pubsub = new OPNPubSub(Config.get('PASSPORT_TOPIC'))
+  // private pubsub = new OPNPubSub(Config.get('PASSPORT_TOPIC'))
   private passportRepository = new PassportModel(this.dataStore)
   private identifierRepository = new IdentifiersModel(this.dataStore)
+  private enterprise = new Enterprise()
 
-  private postPubsub(passport: Passport) {
-    this.pubsub.publish(
-      {
-        id: passport.id,
-        status: passport.status,
-        expiry: safeTimestamp(passport.validUntil).toISOString(),
-      },
-      {
-        userId: passport.userId,
-        organizationId: passport.organizationId,
-        actionType: 'created',
-      },
-    )
+  private async postPassport(passport: Passport) {
+    await this.enterprise.postPassport(passport)
+    // this.pubsub.publish(
+    //   {
+    //     id: passport.id,
+    //     status: passport.status,
+    //     expiry: safeTimestamp(passport.validUntil).toISOString(),
+    //   },
+    //   {
+    //     userId: passport.userId,
+    //     organizationId: passport.organizationId,
+    //     actionType: 'created',
+    //   },
+    // )
   }
 
   async findTheLatestValidPassports(
@@ -98,7 +110,11 @@ export class PassportService {
     dependantIds: string[],
     includesGuardian: boolean,
     organizationId: string,
-  ): Promise<Passport> {
+    type: PassportType,
+    pcrResultType?: ResultTypes,
+  ): Promise<{passport: Passport; created: boolean}> {
+    const isPCR = type === PassportType.PCR
+    const typePriority = PassportTypePriority[type]
     if (dependantIds.length) {
       const allDependants = (await this.userService.getAllDependants(userId)).map(({id}) => id)
       const invalidIds = dependantIds.filter((depId) => !allDependants.includes(depId))
@@ -106,33 +122,64 @@ export class PassportService {
         throw new Error(`${userId} is not the guardian of ${invalidIds.join(', ')}`)
       }
     }
+    const validFromDate = now()
+    const validUntilDate = this.shortestTime(
+      status as PassportStatuses,
+      validFromDate,
+      isPCR,
+      pcrResultType,
+    )
+
+    const currentPassport = await this.findLatestDirectPassport(
+      userId,
+      organizationId,
+    ).then((active) => (active?.validUntil && !isPassed(active.validUntil) ? active : null))
+
+    if (currentPassport) {
+      // need to check if it would be appropriate to overwrite this passport
+      // RULES:
+      // new stop beats existing proceed
+      // high priority existing stop beats low priority existing proceed
+      // long lasting stop beats short lasting stop
+      if (
+        status === PassportStatuses.Proceed &&
+        currentPassport.status !== PassportStatuses.Proceed
+      ) {
+        const currentPriority =
+          (currentPassport.type && PassportTypePriority[currentPassport.type]) ?? 0 // legacy passports have no type and can always be overwritten
+        if (currentPriority > typePriority) {
+          // current passport takes precedence
+          return {passport: currentPassport, created: false}
+        }
+      } else if (
+        status !== PassportStatuses.Proceed &&
+        currentPassport.status !== PassportStatuses.Proceed
+      ) {
+        if (validUntilDate < safeTimestamp(currentPassport.validUntil)) {
+          return {passport: currentPassport, created: false}
+        }
+      }
+    }
+
     return this.identifierRepository
       .getUniqueValue('status')
       .then((statusToken) =>
         this.passportRepository.add({
           status,
+          type,
           statusToken,
           userId,
           organizationId,
           dependantIds,
-          validFrom: serverTimestamp(),
-          validUntil: null,
+          validFrom: firestore.Timestamp.fromDate(validFromDate),
+          validUntil: firestore.Timestamp.fromDate(validUntilDate),
           includesGuardian,
         }),
       )
-      .then(({status, validFrom, id}) =>
-        this.passportRepository.updateProperty(
-          id,
-          'validUntil',
-          firestore.Timestamp.fromDate(
-            this.shortestTime(status as PassportStatuses, safeTimestamp(validFrom)),
-          ),
-        ),
-      )
       .then(mapDates)
-      .then((passport) => {
-        this.postPubsub(passport)
-        return passport
+      .then(async (passport) => {
+        await this.postPassport(passport)
+        return {passport, created: true}
       })
   }
 
@@ -277,22 +324,41 @@ export class PassportService {
    * Calculates the shortest time to an end of day or elapsed time.
    * Ex: end of day: 3am at night and 12 hours – we'd pick which is closer to now()
    */
-  shortestTime(passportStatus: PassportStatuses | TemperatureStatuses, validFrom: Date): Date {
+  shortestTime(
+    passportStatus: PassportStatuses | TemperatureStatuses,
+    validFrom: Date,
+    isPCR: boolean,
+    pcrResultType?: ResultTypes,
+  ): Date {
     if (
       [PassportStatuses.Stop, PassportStatuses.Caution, TemperatureStatuses.Stop].includes(
         passportStatus,
       )
     ) {
+      if (pcrResultType == ResultTypes.Inconclusive) {
+        return moment(validFrom)
+          .add(Config.get('STOP_PASSPORT_EXPIRY_INCONCLUSIVE_HOURS'), 'hours')
+          .toDate()
+      }
+
       const weeksToAdd = parseInt(Config.get('STOP_PASSPORT_EXPIRY_DURATION_MAX_IN_WEEKS'))
       // TODO: end of day?
       return moment(validFrom).add(weeksToAdd, 'weeks').toDate()
     }
     // valid passes remain until they are this old
-    const expiryDuration = parseInt(Config.get('PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'))
+    const expiryDuration = parseInt(
+      Config.get(isPCR ? 'PASSPORT_EXPIRY_PCR_HOURS' : 'PASSPORT_EXPIRY_DURATION_MAX_IN_HOURS'),
+    )
+    const byDuration = moment(validFrom).add(expiryDuration, 'hours')
+
+    if (isPCR) {
+      // PCR passports don't expire every day
+      return byDuration.toDate()
+    }
+
     // all valid passes expire at this time of day, regardless of age
     const expiryMax = parseInt(Config.get('PASSPORT_EXPIRY_TIME_DAILY_IN_HOURS'))
 
-    const byDuration = moment(validFrom).add(expiryDuration, 'hours')
     const lookAtNextDay = moment(validFrom).hours() < expiryMax ? 0 : 1
     const byMax = moment(validFrom)
       .startOf('day')

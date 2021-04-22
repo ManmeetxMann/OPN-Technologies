@@ -119,7 +119,7 @@ class PassportController implements IControllerBase {
   get = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const authenticatedUser = res.locals.connectedUser as User
-      const usedId = authenticatedUser.id
+      const userId = authenticatedUser.id
       const {attestationId} = req.params as {
         attestationId: string
       }
@@ -132,7 +132,10 @@ class PassportController implements IControllerBase {
       if (!attestation) {
         throw new BadRequestException("Couldn't find attestation")
       }
-      if (attestation.userId !== usedId) {
+
+      const isParent = await this.userService.isParentForChild(userId, attestation.userId)
+
+      if (attestation.userId !== userId && !isParent) {
         throw new BadRequestException("Attestation doesn't belong to the user")
       }
       if (attestation.organizationId !== organizationid) {
@@ -155,18 +158,20 @@ class PassportController implements IControllerBase {
 
       // Merge questions and answers by index
       const answersResults = []
-      const {questions} = questionnaires[0]
-      Object.keys(questions).forEach((questionKey) => {
-        const question = questions[questionKey]
-        const answersResult = {
-          question: question.value,
-        }
-        Object.keys(question.answers).forEach((questionAnswerKey, questionsAnswersIndex) => {
-          const questionAnswer = question.answers[questionAnswerKey]
-          answersResult[questionAnswer] = answers[Number(questionKey) - 1][questionsAnswersIndex]
+      const {questions} = questionnaires
+      Object.keys(questions)
+        .sort((a, b) => (Number(a) > Number(b) ? 1 : Number(a) < Number(b) ? -1 : 0))
+        .forEach((questionKey) => {
+          const question = questions[questionKey]
+          const answersResult = {
+            question: question.value,
+          }
+          Object.keys(question.answers).forEach((questionAnswerKey, questionsAnswersIndex) => {
+            const questionAnswer = question.answers[questionAnswerKey]
+            answersResult[questionAnswer] = answers[Number(questionKey) - 1][questionsAnswersIndex]
+          })
+          answersResults.push(answersResult)
         })
-        answersResults.push(answersResult)
-      })
 
       // Build and returns result
       const {id, locationId, attestationTime} = attestation

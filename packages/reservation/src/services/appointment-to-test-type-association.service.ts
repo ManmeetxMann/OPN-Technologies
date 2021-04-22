@@ -14,6 +14,10 @@ export class AppointmentToTestTypeAssocService {
     return this.appointmentToTestTypeRepository.add(association)
   }
 
+  getAllByTypes(types: number[]): Promise<AppointmentToTestTypeAssociation[]> {
+    return this.appointmentToTestTypeRepository.findWhereIn('appointmentType', types)
+  }
+
   async getAll(): Promise<AppointmentToTestTypeAssociation[]> {
     const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
     const associations = await this.appointmentToTestTypeRepository.fetchAll()

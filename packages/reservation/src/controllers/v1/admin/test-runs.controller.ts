@@ -9,7 +9,7 @@ import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 
 import {TestRunsService} from '../../../services/test-runs.service'
 import {TestRunsRequest, TestRunsPostRequest, testRunDTOResponse} from '../../../models/test-runs'
-import {getIsClinicUser} from '../../../../../common/src/utils/auth'
+import {getIsClinicUser, getUserId} from '../../../../../common/src/utils/auth'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 import {LabService} from '../../../services/lab.service'
 
@@ -68,6 +68,7 @@ class AdminTestRunsController implements IControllerBase {
       }
 
       const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
+      const createdBy = getUserId(res.locals.authenticatedUser)
       const {admin} = res.locals.authenticatedUser
 
       const isAdminForLab = admin.adminForLabIds && admin.adminForLabIds.includes(labId)
@@ -80,7 +81,12 @@ class AdminTestRunsController implements IControllerBase {
         throw new ResourceNotFoundException(`No lab found for this id ${labId}`)
       }
 
-      const testRun = await this.testRunsService.create(new Date(testRunDateTime), name, labId)
+      const testRun = await this.testRunsService.create(
+        new Date(testRunDateTime),
+        name,
+        labId,
+        createdBy,
+      )
 
       res.json(actionSucceed(testRunDTOResponse(testRun)))
     } catch (error) {

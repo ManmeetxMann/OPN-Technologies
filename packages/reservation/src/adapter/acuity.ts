@@ -10,6 +10,7 @@ import {AcuityCouponCodeResponse} from '../models/coupons'
 import {AppointmentTypes} from '../models/appointment-types'
 import {Calendar} from '../models/calendar'
 import {AcuityAvailableSlots} from '../models/acuity'
+import {getDateDefaultHumanReadable} from '../utils/datetime.helper'
 
 const API_USERNAME = Config.get('ACUITY_SCHEDULER_USERNAME')
 const API_PASSWORD = Config.get('ACUITY_SCHEDULER_PASSWORD')
@@ -264,7 +265,7 @@ abstract class AcuityAdapter {
     phone: string,
     certificate: string,
     calendarID: number,
-    fields: Record<string, string | boolean>,
+    fields: Record<string, string | boolean | number[]>,
   ): Promise<AppointmentAcuityResponse> {
     const userPassBuf = Buffer.from(API_USERNAME + ':' + API_PASSWORD)
     const userPassBase64 = userPassBuf.toString('base64')
@@ -298,6 +299,15 @@ abstract class AcuityAdapter {
         acuityStatusCode: result.status_code,
         errorMessage: result.message,
       })
+      if (result.error === 'not_available') {
+        throw new BadRequestException(
+          `${getDateDefaultHumanReadable(datetime)} is not available for appointments`,
+        )
+      } else if (result.error === 'certificate_uses') {
+        throw new BadRequestException(
+          `You organization has no more appointment credits left on account. Please contact your account manager.`,
+        )
+      }
       throw new BadRequestException(result.message)
     }
     LogInfo(`AcuityAdapterCreateAppointment`, 'Success', {

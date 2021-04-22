@@ -1,4 +1,4 @@
-import Joi from 'joi'
+import * as Joi from 'joi'
 import {FirestoreTimestamp} from '../../../common/src/utils/joi-extensions'
 
 export default Joi.object({
@@ -7,4 +7,5 @@ export default Joi.object({
   labId: Joi.string().required(),
   testRunDateTime: FirestoreTimestamp.isValid(),
   name: Joi.string().allow(''),
+  createdBy: Joi.string().required(),
 })

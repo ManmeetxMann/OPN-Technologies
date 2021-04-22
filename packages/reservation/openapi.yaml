@@ -551,7 +551,6 @@ components:
                   - DoNothing
                   - ReRunToday
                   - ReRunTomorrow
-                  - RequestReCollect
                   - RecollectAsInvalid
                   - RecollectAsInconclusive
                   - MarkAsPositive
@@ -566,6 +565,7 @@ components:
                   - Negative
                   - Invalid
                   - Inconclusive
+                  - Indeterminate
               barCode:
                 type: string
                 minLength: 1
@@ -626,7 +626,6 @@ components:
             - SendThisResult
             - ReRunToday
             - ReRunTomorrow
-            - RequestReCollect
             - RecollectAsInvalid
             - RecollectAsInconclusive
             - MarkAsPositive
@@ -641,6 +640,7 @@ components:
             - Negative
             - Invalid
             - Inconclusive
+            - Indeterminate
         barCode:
           type: string
           minLength: 1
@@ -687,6 +687,23 @@ components:
       required:
         - reportTrackerId
         - resultId
+    AppointmentsSyncRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        calendarID:
+          type: string
+        appointmentTypeID:
+          type: string
+        action:
+          type: string
+        acuityID:
+          type: string
+      required:
+        - calendarID
+        - appointmentTypeID
+        - action
+        - acuityID
     ResponseOfTemperature:
       type: object
       additionalProperties: false
@@ -744,6 +761,46 @@ components:
                 type: string
               barCode:
                 type: string
+              updatedData:
+                type: object
+                nullable: true
+                properties:
+                  id:
+                    type: number
+                  firstName:
+                    type: string
+                  lastName:
+                    type: string
+                  status:
+                    type: string
+                  barCode:
+                    type: string
+                  location:
+                    type: string
+                  dateTime:
+                    type: string
+                  dateOfBirth:
+                    type: string
+                  transportRunId:
+                    type: string
+                  transportRunLabel:
+                    type: string
+                  deadline:
+                    type: string
+                  vialLocation:
+                    type: string
+                  labName:
+                    type: string
+                  canCancel:
+                    type: boolean
+                  organizationName:
+                    type: string
+                  email:
+                    type: string
+                  phone:
+                    type: string
+                  testType:
+                    type: string
             required:
               - id
               - status
@@ -909,6 +966,40 @@ components:
               type: string
             dateOfResult:
               type: string
+            resultMetaData:
+              type: object
+              additionalProperties: false
+              properties:
+                notify:
+                  type: boolean
+                resultDate:
+                  type: string
+                comment:
+                  type: string
+                action:
+                  type: string
+                  enum:
+                    - SendThisResult
+                    - DoNothing
+                    - ReRunToday
+                    - ReRunTomorrow
+                    - RecollectAsInvalid
+                    - RecollectAsInconclusive
+                    - MarkAsPositive
+                    - MarkAsNegative
+                    - MarkAsPresumptivePositive
+                    - SendPreliminaryPositive
+                autoResult:
+                  type: string
+                  enum:
+                    - PresumptivePositive
+                    - PreliminaryPositive
+                    - Positive
+                    - Negative
+                    - Pending
+                    - Invalid
+                    - Inconclusive
+                    - Indeterminate
           required:
             - email
             - phone
@@ -1030,6 +1121,68 @@ components:
                message:
                    nullable: true
                    type: string
+    AddAppointmentsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        slotId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        gender:
+          type: string
+          enum:
+            - Male
+            - Female
+            - Other
+            - Prefer Not to Say
+        phone:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: number
+            number:
+              type: number
+        dateOfBirth:
+          type: string
+          format: date
+        address:
+          type: string
+        addressUnit:
+          type: string
+        postalCode:
+          type: string
+        couponCode:
+          type: string
+        shareTestResultWithEmployer:
+          type: boolean
+        agreeToConductFHHealthAssessment:
+          type: boolean
+        readTermsAndConditions:
+          type: boolean
+        receiveResultsViaEmail:
+          type: boolean
+        receiveNotificationsFromGov:
+          type: boolean
+      required:
+        - slotId
+        - firstName
+        - lastName
+        - gender
+        - dateOfBirth
+        - address
+        - addressUnit
+        - postalCode
+        - couponCode
+        - shareTestResultWithEmployer
+        - readTermsAndConditions
+        - agreeToConductFHHealthAssessment
+        - receiveResultsViaEmail
+        - receiveNotificationsFromGov
+
 
 paths:
   /admin/api/v1/send-fax-for-positive:
@@ -1260,6 +1413,10 @@ paths:
           schema:
             type: string
         - in: query
+          name: labId
+          schema:
+            type: string
+        - in: query
           name: barCode
           schema:
             type: string
@@ -1276,6 +1433,16 @@ paths:
           name: transportRunId
           schema:
             type: string
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: appointmentStatus
           explode: true
@@ -1458,6 +1625,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Response'
+  /reservation/admin/api/v1/packages/appointment-credits:
+    get:
+      description: Get packages count by appointments credits
+      tags:
+        - Package Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: header
+          name: organizationId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Packages
+          content:
+            text/html:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    testType:
+                      type: string
+                    count:
+                      type: number
+                  required:
+                    - testType
+                    - count
   /reservation/admin/api/v1/packages:
     post:
       description: Add Package Codes for Orgs
@@ -1683,6 +1881,16 @@ paths:
           schema:
             type: string
         - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
+        - in: query
           name: appointmentStatus
           explode: true
           style: form
@@ -1775,6 +1983,12 @@ paths:
           name: testType
           schema:
             type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
         - in: query
           name: searchQuery
           schema:
@@ -1849,6 +2063,10 @@ paths:
             enum:
               - PCR
               - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
+              - allExceptAntigen
         - in: query
           name: result
           schema:
@@ -2009,6 +2227,78 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ProcessPCRResultsRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/appointments/sync-from-acuity:
+    post:
+      description: Sync Appointments
+      tags:
+        - Appointment Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentsSyncRequest'
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/appointments/sync-labels-to-acuity:
+    post:
+      description: Sync Labels to Acuity
+      tags:
+        - Appointment Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                acuityID:
+                  type: number
+                label:
+                  type: string
+                  enum:
+                    - SAMEDAY
+                    - NEXTDAY
+              required:
+                - acuityID
+                - label
+      responses:
+        '200':
+          description: Successfully added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /reservation/internal/api/v1/appointments/sync-barcode-to-acuity:
+    post:
+      description: Sync BarCode to Acuity
+      tags:
+        - Appointment Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                acuityID:
+                  type: number
+                barCode:
+                  type: string
+              required:
+                - acuityID
+                - barCode
       responses:
         '200':
           description: Successfully added
@@ -2249,6 +2539,22 @@ paths:
                                       type: string
                               result:
                                 type: string
+                              resultMetaData:
+                                type: object
+                                additionalProperties: false
+                                properties:
+                                  autoResult:
+                                    type: string
+                                  comment:
+                                    type: string
+                              barCode:
+                                type: string
+                              reCollectNumber:
+                                type: string
+                              runNumber:
+                                type: string
+                              dateTime:
+                                type: string
                         reason:
                           type: string
                           enum:
@@ -2381,66 +2687,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              additionalProperties: false
-              properties:
-                slotId:
-                  type: string
-                firstName:
-                  type: string
-                lastName:
-                  type: string
-                gender:
-                  type: string
-                  enum:
-                    - Male
-                    - Female
-                    - Other
-                    - Prefer Not to Say
-                phone:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    code:
-                      type: number
-                    number:
-                      type: number
-                dateOfBirth:
-                  type: string
-                  format: date
-                address:
-                  type: string
-                addressUnit:
-                  type: string
-                postalCode:
-                  type: string
-                couponCode:
-                  type: string
-                shareTestResultWithEmployer:
-                  type: boolean
-                agreeToConductFHHealthAssessment:
-                  type: boolean
-                readTermsAndConditions:
-                  type: boolean
-                receiveResultsViaEmail:
-                  type: boolean
-                receiveNotificationsFromGov:
-                  type: boolean
-              required:
-                - slotId
-                - firstName
-                - lastName
-                - gender
-                - dateOfBirth
-                - address
-                - addressUnit
-                - postalCode
-                - couponCode
-                - shareTestResultWithEmployer
-                - readTermsAndConditions
-                - agreeToConductFHHealthAssessment
-                - receiveResultsViaEmail
-                - receiveNotificationsFromGov
+              $ref: '#/components/schemas/AddAppointmentsRequest'
       responses:
         '200':
           description: Successfully Return
@@ -2789,6 +3036,164 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TestResultDetailResponse'
+  /reservation/admin/api/v1/test-results/{testResultId}/comment/{commentId}/reply:
+    post:
+      description: Add reply to comment
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: commentId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                reply:
+                  type: string
+                attachmentUrls:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - reply
+                - attachmentUrls
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResultDetailResponse'
+  /reservation/admin/api/v1/test-results/{testResultId}/comment:
+    get:
+      description: Get comments of test results
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        comment:
+                          type: string
+                        attachmentUrls:
+                          type: array
+                          items:
+                            type: string
+                        addedBy:
+                          type: string
+                        authorPictureUrl:
+                          type: string
+                        addedOn:
+                          type: string
+                        replies:
+                          type: array
+                          items:
+                            type: object
+                            additionalProperties: false
+                            properties:
+                              reply:
+                                type: string
+                              attachmentUrls:
+                                type: array
+                                items:
+                                  type: string
+                              addedBy:
+                                type: string
+                              authorPictureUrl:
+                                type: string
+                              addedOn:
+                                type: string
+                  status:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      code:
+                        type: string
+                        enum:
+                          - succeed
+                          - failed
+                          - validation_error
+                          - internal_server_error
+                          - unauthorized
+                          - access_denied
+                          - resource_not_found
+                      message:
+                        nullable: true
+                        type: string
+                  page:
+                    type: number
+    post:
+      description: Add comment to test results
+      tags:
+        - Test Results Management
+      security:
+        - bearerAuthJWT: [ ]
+      parameters:
+        - in: path
+          name: testResultId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                comment:
+                  type: string
+                attachmentUrls:
+                  type: array
+                  items:
+                    type: string
+                assignedTo:
+                  type: string
+                internal:
+                  type: boolean
+              required:
+                - comment
+                - attachmentUrls
+                - internal
+      responses:
+        '200':
+          description: Successfully Return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResultDetailResponse'
 
   /reservation/api/v1/test-results/{id}/download:
     get:
@@ -2870,6 +3275,16 @@ paths:
               - Received
               - InProgress
               - ReRunRequired
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
       responses:
         '200':
           description: Successfully Return
@@ -2961,6 +3376,16 @@ paths:
           name: barCode
           schema:
             type: string
+        - in: query
+          name: testType
+          schema:
+            type: string
+            enum:
+              - PCR
+              - RapidAntigen
+              - EmergencyRapidAntigen
+              - Antibody_All
+              - Antibody_IgM
       responses:
         '200':
           description: Succesfully return stats
@@ -3182,6 +3607,8 @@ paths:
               properties:
                 appointmentIds:
                   type: array
+                  minItems: 1
+                  maxItems: 10
                   items:
                     type: string
                 date:
@@ -3193,6 +3620,7 @@ paths:
                   description: This should be passwed is corporate is logged in
               required:
                 - date
+                - appointmentIds
       responses:
         '200':
           description: Successfully Return
@@ -3700,3 +4128,11 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/AssociationsResponse'
+  /reservation/internal/api/v1/trigger-appointments-push-reminder:
+    post:
+      description: Triggers push notification reminder before appointment
+      tags:
+        - Cloud Scheduler triggered
+      responses:
+        '200':
+          description: Success

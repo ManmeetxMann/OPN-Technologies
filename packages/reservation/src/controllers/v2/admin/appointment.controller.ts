@@ -4,11 +4,12 @@ import IControllerBase from '../../../../../common/src/interfaces/IControllerBas
 import {actionSucceed} from '../../../../../common/src/utils/response-wrapper'
 import {authorizationMiddleware} from '../../../../../common/src/middlewares/authorization'
 
-import {DeadlineLabel} from '../../../models/appointment'
+import {appointmentUiDTOResponse, DeadlineLabel} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
 import {RequiredUserPermission} from '../../../../../common/src/types/authorization'
 import {AppointmentBulkAction, BulkOperationResponse} from '../../../types/bulk-operation.type'
+import {getIsClinicUser, getIsLabUser} from '../../../../../common/src/utils/auth'
 
 class AdminAppointmentController implements IControllerBase {
   public path = '/reservation/admin/api/v2'
@@ -38,17 +39,27 @@ class AdminAppointmentController implements IControllerBase {
         throw new BadRequestException('Maximum appointments to be part of request is 50')
       }
 
+      const isLabUser = getIsLabUser(res.locals.authenticatedUser)
+      const isClinicUser = getIsClinicUser(res.locals.authenticatedUser)
+
       const appointmentsState: BulkOperationResponse[] = await Promise.all(
         appointmentIds.map(async (appointmentId) => {
           return this.appointmentService.makeBulkAction(
             appointmentId,
-            {label},
+            {label: label.toUpperCase() as DeadlineLabel},
             AppointmentBulkAction.AddAppointmentLabel,
           )
         }),
       )
 
-      res.json(actionSucceed(appointmentsState))
+      res.json(
+        actionSucceed(
+          appointmentsState.map((response) => ({
+            ...response,
+            updatedData: appointmentUiDTOResponse(response.updatedData, isLabUser, isClinicUser),
+          })),
+        ),
+      )
     } catch (error) {
       next(error)
     }

@@ -1,4 +1,4 @@
-import Joi from 'joi'
+import * as Joi from 'joi'
 
 export default Joi.object({
   id: Joi.string(),
@@ -25,4 +25,5 @@ export default Joi.object({
   legacyMode: Joi.boolean().required(),
   enableTesting: Joi.boolean().required(),
   questionnaireId: Joi.string(),
+  enablePaymentForBooking: Joi.boolean().required(),
 })

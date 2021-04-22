@@ -1,6 +1,6 @@
 import {firestore} from 'firebase-admin'
 import DataStore from '../../../common/src/data/datastore'
-import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
+// import {OPNPubSub} from '../../../common/src/service/google/pub_sub'
 import {
   DataModelFieldMapOperatorType,
   DataModelFieldMap,
@@ -10,13 +10,14 @@ import {serverTimestamp} from '../../../common/src/utils/times'
 import PassportAdapter from '../../../common/src/adapters/passport'
 
 import {Attestation, AttestationModel} from '../models/attestation'
-import {PassportStatus, PassportStatuses} from '../models/passport'
+import {PassportStatus, PassportStatuses, PassportType} from '../models/passport'
 import {ExposureResult} from '../types/status-changes-result'
 
 import {TraceModel, TraceRepository} from '../../../access/src/repository/trace.repository'
 import {OrganizationService} from '../../../enterprise/src/services/organization-service'
 
 import moment from 'moment'
+import {Enterprise} from '../adapter/enterprise'
 
 const timeZone = Config.get('DEFAULT_TIME_ZONE')
 
@@ -24,15 +25,31 @@ export class AttestationService {
   private dataStore = new DataStore()
   private attestationRepository = new AttestationModel(this.dataStore)
   private traceRepository = new TraceRepository(this.dataStore)
-  private pubsub = new OPNPubSub(Config.get('ATTESTATION_TOPIC'))
+  // private pubsub = new OPNPubSub(Config.get('ATTESTATION_TOPIC'))
   private adapter = new PassportAdapter()
   private orgService = new OrganizationService()
+  private enterprise = new Enterprise()
 
   private statusFor(status: PassportStatuses, tempRequired: boolean): PassportStatuses {
     if (status === PassportStatuses.Proceed && tempRequired) {
       return PassportStatuses.TemperatureCheckRequired
     }
     return status
+  }
+
+  async postPubsub(att: Attestation): Promise<void> {
+    await this.enterprise.postAttestation(att)
+    // this.pubsub.publish(
+    //   {
+    //     id: att.id,
+    //     status: att.status,
+    //   },
+    //   {
+    //     userId: userId,
+    //     organizationId: att.organizationId,
+    //     actionType: 'created',
+    //   },
+    // )
   }
 
   save(attestation: Attestation): Promise<Attestation> {
@@ -51,23 +68,19 @@ export class AttestationService {
       .then(async (att) => {
         const org = await this.orgService.findOneById(att.organizationId)
         await Promise.all(
-          att.appliesTo.map((userId) => {
-            this.pubsub.publish(
-              {
-                id: att.id,
-                status: att.status,
-              },
-              {
-                userId: userId,
-                organizationId: att.organizationId,
-                actionType: 'created',
-              },
-            )
+          att.appliesTo.map(async (userId) => {
+            await this.postPubsub({...att, userId})
             const passportStatus = this.statusFor(
               att.status as PassportStatuses,
               org.enableTemperatureCheck,
             )
-            return this.adapter.createPassport(userId, att.organizationId, passportStatus, att.id)
+            return this.adapter.createPassport(
+              userId,
+              att.organizationId,
+              passportStatus,
+              PassportType.Attestation,
+              att.id,
+            )
           }),
         )
         return att
@@ -97,14 +110,8 @@ export class AttestationService {
     return attestation
   }
 
-  async getTracesInPeriod(
-    userId: string,
-    from: string,
-    to: string,
-    dependantId: string | null,
-  ): Promise<ExposureResult[]> {
+  async getTracesInPeriod(userId: string, from: string, to: string): Promise<ExposureResult[]> {
     const query = this.traceRepository.collection().where('userId', '==', userId)
-
     if (from) {
       query.where('date', '>=', moment(from).tz(timeZone).format('YYYY-MM-DD'))
     }
@@ -112,41 +119,9 @@ export class AttestationService {
     if (to) {
       query.where('date', '<=', moment(to).tz(timeZone).format('YYYY-MM-DD'))
     }
-
     const allTracesForUserInPeriod = await query.fetch()
 
-    const riskyTraces = allTracesForUserInPeriod.filter((trace) => {
-      // NOTE: some of these checks could theoretically be done in the firestore query
-      // but it would require many more indices than we want to create
-      if (![PassportStatuses.Stop, PassportStatuses.Caution].includes(trace.passportStatus)) {
-        return false
-      }
-      if (dependantId) {
-        if (!trace.dependantIds) {
-          console.warn(`trace ${trace.id} has no dependantIds array`)
-          return true
-        }
-        return trace.dependantIds.includes(dependantId)
-      }
-      if (typeof trace.includesGuardian === 'boolean') {
-        return trace.includesGuardian
-      }
-      // old records do not have an includesGuardian field, we need to guess
-      if (!trace.dependantIds?.length) {
-        // no dependants, must be the guardian
-        return true
-      }
-      if (trace.exposedIds.includes(userId)) {
-        // can't be this user if they were exposed
-        return false
-      }
-      console.warn(
-        `Trace ${trace.id} is ambiguous (it may or may not originate from user ${userId})`,
-      )
-      return true
-    })
-
-    const exposures: ExposureResult[] = riskyTraces.map((trace: TraceModel) => {
+    const exposures: ExposureResult[] = allTracesForUserInPeriod.map((trace: TraceModel) => {
       return {
         userId: userId,
         date: trace.date,

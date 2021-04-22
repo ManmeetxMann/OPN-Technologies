@@ -68,6 +68,7 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     waitingResult?: boolean
     confirmed?: boolean
     previousResult: ResultTypes
+    recollected?: boolean
   }): Promise<PCRTestResultDBModel> {
     //Reset Display for all OLD results
     await this.updateAllResultsForAppointmentId(
@@ -99,14 +100,14 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
       runNumber: data.runNumber,
       reCollectNumber: data.reCollectNumber,
       waitingResult: data.waitingResult ?? true,
-      recollected: false,
+      recollected: data.recollected ?? false,
       deadlineDate: getFirestoreTimeStampDate(data.appointment.deadline),
       dateOfAppointment: getFirestoreTimeStampDate(data.appointment.dateTime),
       testType: data.appointment.testType,
       testKitBatchID: this.getTestBatchId(data.appointment.appointmentTypeID),
       userId: data.appointment.userId,
       sortOrder: getSortOrderByResult(data.result ?? ResultTypes.Pending),
-      labId: data.labId || null,
+      labId: data.labId || null, //TODO: User from Appointment
       templateId: data.templateId || null,
       appointmentStatus: data.appointment.appointmentStatus,
     }
@@ -175,6 +176,18 @@ export class PCRTestResultsRepository extends DataModel<PCRTestResultDBModel> {
     }
 
     return pcrTestResults
+  }
+
+  async getPCRResultsByAppointmentId(appointmentId: string): Promise<PCRTestResultDBModel[]> {
+    const pcrTestResultsQuery = [
+      {
+        map: '/',
+        key: 'appointmentId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: appointmentId,
+      },
+    ]
+    return this.findWhereEqualInMap(pcrTestResultsQuery)
   }
 
   async updateAllResultsForAppointmentId(

@@ -11,16 +11,20 @@ import {
   AppointmentStatusHistoryDb,
   UpdateAppointmentActionParams,
 } from '../models/appointment'
+import {DbBatchAppointments} from '../../../common/src/types/push-notification'
 import DBSchema from '../dbschemas/appointments.schema'
 import {LogError, LogWarning} from '../../../common/src/utils/logging-setup'
 import {findDifference} from '../utils/compare-objects'
+import {BadRequestException} from '../../../common/src/exceptions/bad-request-exception'
+import {firebaseAdmin} from '../../../common/src/utils/firebase'
 
 export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
   public rootPath = 'appointments'
   readonly zeroSet = []
-
+  private firestore
   constructor(dataStore: DataStore) {
     super(dataStore)
+    this.firestore = firebaseAdmin.firestore()
   }
 
   async getAppointmentById(appointmentId: string): Promise<AppointmentDBModel> {
@@ -31,9 +35,37 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
     return this.findWhereIdIn(appointmentsIds)
   }
 
-  public async save(appointments: Omit<AppointmentDBModel, 'id'>): Promise<AppointmentDBModel> {
-    const validatedData = await DBSchema.validateAsync(appointments)
-    return this.add(validatedData)
+  public async save(appointmentData: Omit<AppointmentDBModel, 'id'>): Promise<AppointmentDBModel> {
+    const validatedData = await DBSchema.validateAsync(appointmentData)
+    const appointmentCollection = this.datastore.firestoreORM.collection({path: this.rootPath})
+    const query = appointmentCollection.collectionRef.where(
+      'acuityAppointmentId',
+      '==',
+      appointmentData.acuityAppointmentId,
+    )
+
+    const firestore = firebaseAdmin.firestore()
+
+    await firestore.runTransaction(async (transaction) => {
+      const result = await transaction.get(query)
+      const appointmentExists = result.docs.length
+
+      if (!appointmentExists) {
+        const newAppointmentRef = appointmentCollection.docRef()
+        await transaction.set(newAppointmentRef, validatedData)
+      } else {
+        throw new BadRequestException(
+          `Appointment with given Acuity id already exists: ${appointmentData.acuityAppointmentId}`,
+        )
+      }
+    })
+
+    const [createdAppointment] = await this.findWhereEqual(
+      'acuityAppointmentId',
+      appointmentData.acuityAppointmentId,
+    )
+
+    return createdAppointment
   }
 
   public async updateData(
@@ -159,6 +191,22 @@ export class AppointmentsRepository extends DataModel<AppointmentDBModel> {
         errorMessage: err.toString(),
       })
     }
+  }
+
+  async removeBatchScheduledPushesToSend(
+    batchAppointments: DbBatchAppointments[],
+  ): Promise<unknown[]> {
+    const batch = this.datastore.firestoreAdmin.firestore().batch()
+    batchAppointments.forEach((appointment) => {
+      const docRef = this.collection().docRef(appointment.appointmentId)
+      batch.update(docRef, {
+        scheduledPushesToSend: this.datastore.firestoreAdmin.firestore.FieldValue.arrayRemove(
+          appointment.scheduledAppointmentType,
+        ),
+      })
+    })
+
+    return batch.commit()
   }
 }
 

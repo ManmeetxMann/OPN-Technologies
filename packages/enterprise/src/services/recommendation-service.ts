@@ -14,6 +14,7 @@ import {PassportStatuses, PassportStatus} from '../../../passport/src/models/pas
 import {TemperatureStatuses} from '../../../reservation/src/models/temperature'
 import {ResultTypes, AppointmentStatus} from '../../../reservation/src/models/appointment'
 import moment from 'moment'
+import {AddPulse} from '../types/recommendations'
 
 const tz = Config.get('DEFAULT_TIME_ZONE')
 
@@ -56,6 +57,7 @@ export class RecommendationService {
       latestTemperature: null,
       scheduledPCRTest: null,
       PCRTestResult: null,
+      latestPulse: null,
     })
     return items
   }
@@ -102,8 +104,11 @@ export class RecommendationService {
       return [Recommendations.TempCheckRequired, Recommendations.PassAvailable]
     }
     if (status == PassportStatuses.Proceed) {
-      // proceed
-      return [Recommendations.PassAvailable, Recommendations.ViewNegativeTemp]
+      const recommendations = [Recommendations.PassAvailable]
+      if (items.latestTemperature) {
+        recommendations.push(Recommendations.ViewNegativeTemp)
+      }
+      return recommendations
     }
   }
 
@@ -121,9 +126,15 @@ export class RecommendationService {
           .endOf('day')
           .isSameOrAfter(safeTimestamp(appointment.date))
         return [
-          Recommendations.CompleteAssessment,
           isToday ? Recommendations.CheckInPCR : Recommendations.BookingDetailsPCR,
+          Recommendations.CompleteAssessment,
         ]
+      }
+      // checked in, but may still be in the future
+      if (appointment?.status === AppointmentStatus.CheckedIn) {
+        const alreadyHappened = moment(now()).isSameOrAfter(safeTimestamp(appointment.date))
+        if (!alreadyHappened)
+          return [Recommendations.CompleteAssessment, Recommendations.CheckInPCR]
       }
       if (
         !latestTest ||
@@ -140,6 +151,14 @@ export class RecommendationService {
       // stop
       if (
         items.PCRTestResult &&
+        [ResultTypes.Inconclusive, ResultTypes.Indeterminate].includes(items.PCRTestResult.result)
+      ) {
+        // inconcusive test
+        return [Recommendations.BookPCR, Recommendations.BadgeExpiry]
+      }
+
+      if (
+        items.PCRTestResult &&
         [
           ResultTypes.Positive,
           ResultTypes.PreliminaryPositive,
@@ -150,7 +169,7 @@ export class RecommendationService {
         return [Recommendations.BadgeExpiry, Recommendations.ViewPositivePCR]
       }
       // bad attestation
-      return [Recommendations.BadgeExpiry, Recommendations.CompleteAssessment]
+      return [Recommendations.BadgeExpiry, Recommendations.BookPCR]
     }
     if (status == PassportStatuses.Proceed) {
       // proceed
@@ -234,7 +253,7 @@ export class RecommendationService {
         break
       }
       case Recommendations.TempCheckRequired: {
-        title = 'Complete a Temperature Check'
+        title = 'Complete a Pulse/Temp Check'
         body = 'Verify your badge with a check'
         break
       }
@@ -283,12 +302,10 @@ export class RecommendationService {
     ])
 
     let actions: Recommendations[] = []
-    if (org.enableTemperatureCheck) {
-      actions = this.getRecommendationsTemperature(items)
-    }
-    // TODO: better way to test if org is PCR only?
-    else if (items.PCRTestResult || items.scheduledPCRTest) {
+    if (org.enableTesting) {
       actions = this.getRecommendationsPCR(items)
+    } else if (org.enableTemperatureCheck) {
+      actions = this.getRecommendationsTemperature(items)
     }
     // Default: attestation only
     else {
@@ -381,6 +398,25 @@ export class RecommendationService {
     await repo.updateProperty(organizationId, 'PCRTestResult', {
       testId,
       result,
+      timestamp: serverTimestamp(),
+    })
+  }
+  async addPulse({
+    userId,
+    organizationId,
+    pulseId,
+    pulse,
+    oxygen,
+    status,
+  }: AddPulse): Promise<void> {
+    // make sure the user has items
+    await this.getItems(userId, organizationId)
+    const repo = new UserActionsRepository(this.dataStore, userId)
+    await repo.updateProperty(organizationId, 'latestPulse', {
+      pulseId,
+      pulse,
+      oxygen,
+      status,
       timestamp: serverTimestamp(),
     })
   }

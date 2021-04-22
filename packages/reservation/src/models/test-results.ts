@@ -8,6 +8,7 @@ export type TestResultSpecsForSending = {
   notify: boolean
   resultDate: Date
   resultAnalysis: Spec[]
+  comment: string
 }
 
 export type TestResultRequestData = TestResultSpecsForSending & {
@@ -23,6 +24,7 @@ export type TestResultsMetaData = {
   resultDate: Date
   action: PCRResultActions
   autoResult: ResultTypes
+  comment?: string
 }
 
 export type BulkTestResultRequest = {
@@ -45,6 +47,10 @@ type ResultsForHistory = ResultSpecs & {
   reCollectNumber: string
   result: string
   runNumber: string
+  resultMetaData: {
+    autoResult: string
+    comment: string
+  }
 }
 
 export type TestResultHistoryResponseDTO = {

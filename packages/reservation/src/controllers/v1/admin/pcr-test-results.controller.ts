@@ -12,7 +12,12 @@ import {RequiredUserPermission} from '../../../../../common/src/types/authorizat
 import {now} from '../../../../../common/src/utils/times'
 import {Config} from '../../../../../common/src/utils/config'
 import {BadRequestException} from '../../../../../common/src/exceptions/bad-request-exception'
-import {getUserId, getIsLabUser, getIsClinicUser} from '../../../../../common/src/utils/auth'
+import {
+  getUserId,
+  getIsLabUser,
+  getIsClinicUser,
+  getUserName,
+} from '../../../../../common/src/utils/auth'
 import {ResourceNotFoundException} from '../../../../../common/src/exceptions/resource-not-found-exception'
 
 import {PCRTestResultsService} from '../../../services/pcr-test-results.service'
@@ -27,18 +32,28 @@ import {
   PCRTestResultConfirmRequest,
   singlePcrTestResultDTO,
   SingleTestResultsRequest,
+  TestResultCommentParamRequest,
+  TestResultCommentBodyRequest,
+  TestResultReplyCommentBodyRequest,
+  TestResultReplyCommentParamRequest,
 } from '../../../models/pcr-test-results'
-import {statsUiDTOResponse} from '../../../models/appointment'
+import {FilterGroupKey, FilterName, statsUiDTOResponse} from '../../../models/appointment'
 import {AppoinmentService} from '../../../services/appoinment.service'
+import {CommentService} from '../../../services/comment.service'
 import {BulkTestResultRequest, TestResultRequestData} from '../../../models/test-results'
+import {commentsDTO} from '../../../models/comment'
+import {UserService} from '../../../../../enterprise/src/services/user-service'
 import {validateAnalysis} from '../../../utils/analysis.helper'
+import {LabService} from '../../../services/lab.service'
 
 class AdminPCRTestResultController implements IControllerBase {
   public path = '/reservation/admin/api/v1'
   public router = Router()
   private pcrTestResultsService = new PCRTestResultsService()
   private testRunService = new TestRunsService()
+  private commentService = new CommentService(new UserService())
   private appoinmentService = new AppoinmentService()
+  public labService = new LabService()
 
   constructor() {
     this.initRoutes()
@@ -106,6 +121,24 @@ class AdminPCRTestResultController implements IControllerBase {
       this.dueDeadlineStats,
     )
 
+    innerRouter.post(
+      this.path + '/test-results/:testResultId/comment',
+      listTestResultsAuth,
+      this.addComment,
+    )
+
+    innerRouter.get(
+      this.path + '/test-results/:testResultId/comment',
+      listTestResultsAuth,
+      this.getComments,
+    )
+
+    innerRouter.post(
+      this.path + '/test-results/:testResultId/comment/:commentId/reply',
+      listTestResultsAuth,
+      this.replyComment,
+    )
+
     this.router.use('/', innerRouter)
   }
 
@@ -170,7 +203,7 @@ class AdminPCRTestResultController implements IControllerBase {
 
       const pcrResultRecorded = await this.pcrTestResultsService.handlePCRResultSaveAndSend({
         metaData,
-        resultAnalysis,
+        resultAnalysis: resultAnalysis,
         barCode,
         isSingleResult: true,
         sendUpdatedResults,
@@ -290,6 +323,7 @@ class AdminPCRTestResultController implements IControllerBase {
       const {
         pcrResultStatsByResultArr,
         pcrResultStatsByOrgIdArr,
+        pcrResultStatsByLabIdArr,
         total,
       } = await this.pcrTestResultsService.getPCRResultsStats(
         {
@@ -305,16 +339,31 @@ class AdminPCRTestResultController implements IControllerBase {
         isClinicUser,
       )
 
-      res.json(
-        actionSucceed(
-          statsUiDTOResponse(
-            pcrResultStatsByResultArr,
-            pcrResultStatsByOrgIdArr,
-            total,
-            !organizationId,
-          ),
-        ),
-      )
+      const filterGroup = [
+        {
+          name: FilterName.FilterByResult,
+          key: FilterGroupKey.result,
+          filters: pcrResultStatsByResultArr,
+        },
+      ]
+
+      if (!organizationId) {
+        filterGroup.push({
+          name: FilterName.FilterByCorporation,
+          key: FilterGroupKey.organizationId,
+          filters: pcrResultStatsByOrgIdArr,
+        })
+      }
+
+      if (isClinicUser && pcrResultStatsByLabIdArr.length) {
+        filterGroup.push({
+          name: FilterName.FilterByLab,
+          key: FilterGroupKey.labId,
+          filters: pcrResultStatsByLabIdArr,
+        })
+      }
+
+      res.json(actionSucceed(statsUiDTOResponse(filterGroup, total)))
     } catch (error) {
       next(error)
     }
@@ -384,6 +433,7 @@ class AdminPCRTestResultController implements IControllerBase {
         barCode,
         appointmentStatus,
         organizationId,
+        testType,
       } = req.query as PcrTestResultsListByDeadlineRequest
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
@@ -396,6 +446,7 @@ class AdminPCRTestResultController implements IControllerBase {
         appointmentStatus,
         organizationId,
         labId,
+        testType,
       })
 
       res.json(actionSucceed(pcrResults))
@@ -406,7 +457,12 @@ class AdminPCRTestResultController implements IControllerBase {
 
   dueDeadlineStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const {testRunId, deadline, barCode} = req.query as PcrTestResultsListByDeadlineRequest
+      const {
+        testRunId,
+        deadline,
+        barCode,
+        testType,
+      } = req.query as PcrTestResultsListByDeadlineRequest
       const labId = req.headers?.labid as string
       if (!testRunId && !deadline && !barCode) {
         throw new BadRequestException('"testRunId" or "deadline" or "barCode" is required')
@@ -420,13 +476,23 @@ class AdminPCRTestResultController implements IControllerBase {
         testRunId,
         barCode,
         labId,
+        testType,
       })
 
-      res.json(
-        actionSucceed(
-          statsUiDTOResponse(pcrResultStatsByResultArr, pcrResultStatsByOrgIdArr, total),
-        ),
-      )
+      const filterGroup = [
+        {
+          name: FilterName.FilterByStatusType,
+          key: FilterGroupKey.appointmentStatus,
+          filters: pcrResultStatsByResultArr,
+        },
+        {
+          name: FilterName.FilterByCorporation,
+          key: FilterGroupKey.organizationId,
+          filters: pcrResultStatsByOrgIdArr,
+        },
+      ]
+
+      res.json(actionSucceed(statsUiDTOResponse(filterGroup, total)))
     } catch (error) {
       next(error)
     }
@@ -452,7 +518,99 @@ class AdminPCRTestResultController implements IControllerBase {
         )
       }
 
-      res.json(actionSucceed(singlePcrTestResultDTO(pcrTestResult, appointment)))
+      const lab = await this.labService.findOneById(pcrTestResult.labId)
+
+      res.json(actionSucceed(singlePcrTestResultDTO(pcrTestResult, appointment, lab)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  getComments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {testResultId} = req.params as TestResultCommentParamRequest
+
+      const commentsWithReplies = await this.commentService.getCommentsDetailed(testResultId)
+
+      res.json(actionSucceed(commentsWithReplies.map(commentsDTO)))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  addComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {testResultId} = req.params as TestResultCommentParamRequest
+      const adminId = getUserId(res.locals.authenticatedUser)
+      const fullName = getUserName(res.locals.authenticatedUser)
+
+      const {
+        comment,
+        attachmentUrls,
+        assignedTo,
+        internal = true,
+      } = req.body as TestResultCommentBodyRequest
+
+      const comments = await this.commentService.getCommentsByTestResultId(testResultId)
+
+      if (comments.length >= 20) {
+        throw new BadRequestException(`Comments quantity should be maximum 20`)
+      }
+
+      const newComment = await this.commentService.addComment({
+        testResultId,
+        comment,
+        attachmentUrls: attachmentUrls,
+        assignedTo: assignedTo,
+        internal,
+        addedBy: adminId,
+      })
+
+      res.json(
+        actionSucceed({
+          id: newComment.id,
+          addedBy: fullName,
+          assignedTo,
+          comment,
+          addedOn: newComment.time,
+        }),
+      )
+    } catch (error) {
+      next(error)
+    }
+  }
+  replyComment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const {testResultId, commentId} = req.params as TestResultReplyCommentParamRequest
+      const adminId = getUserId(res.locals.authenticatedUser)
+      const fullName = getUserName(res.locals.authenticatedUser)
+
+      const {reply, attachmentUrls} = req.body as TestResultReplyCommentBodyRequest
+
+      const comments = await this.commentService.getRepliesByCommentId(commentId)
+
+      if (comments.length >= 50) {
+        throw new BadRequestException(`Comments quantity should be maximum 50`)
+      }
+
+      const newComment = await this.commentService.addComment({
+        testResultId,
+        comment: reply,
+        attachmentUrls: attachmentUrls,
+        internal: false,
+        addedBy: adminId,
+        replyTo: commentId,
+      })
+
+      res.json(
+        actionSucceed({
+          id: newComment.id,
+          reply: newComment.comment,
+          attachmentUrls,
+          addedBy: fullName,
+          addedOn: newComment.time,
+        }),
+      )
     } catch (error) {
       next(error)
     }
