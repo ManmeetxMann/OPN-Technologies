@@ -1274,20 +1274,20 @@ components:
           type: string
           enum:
             [
-              StatusInfo
-              PassAvailable
-              CompleteAssessment
-              UpdateAssessment
-              BadgeExpiry
-              TempCheckRequired
-              ViewNegativeTemp
-              ViewPositiveTemp
-              BookPCR
-              BookingDetailsPCR
-              CheckInPCR
-              ResultReadiness
-              ViewNegativePCR
-              ViewPositivePCR
+                StatusInfo
+                  PassAvailable
+                  CompleteAssessment
+                  UpdateAssessment
+                  BadgeExpiry
+                  TempCheckRequired
+                  ViewNegativeTemp
+                  ViewPositiveTemp
+                  BookPCR
+                  BookingDetailsPCR
+                  CheckInPCR
+                  ResultReadiness
+                  ViewNegativePCR
+                  ViewPositivePCR
             ]
           nullable: false
 
@@ -1882,6 +1882,42 @@ components:
             message:
               nullable: true
               type: string
+
+    ResponseOfResultAdmins:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+        status:
+          type: object
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+              enum:
+                [
+                    succeed,
+                    failed,
+                    validation_error,
+                    internal_server_error,
+                    unauthorized,
+                    access_denied,
+                    resource_not_found,
+                ]
+            message:
+              nullable: true
+              type: string
+        page:
+          type: number
 
     ResponseOfUsersByOrganization:
       type: object
@@ -3382,6 +3418,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
 
+  /enterprise/api/v1/users/result-admins:
+    get:
+      summary: Get result admins
+      description: Get result admins for comments
+      security:
+        - bearerAuthJWT: []
+      tags:
+        - Threads
+      responses:
+        '200':
+          description: Successfully returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseOfResultAdmins'
+
   /enterprise/api/v3/users:
     post:
       summary: Account Registration
@@ -3993,7 +4045,7 @@ paths:
       tags:
         - Account Management
       parameters:
-        - in: query
+        - in: path
           name: dependentId
           schema:
             type: string
