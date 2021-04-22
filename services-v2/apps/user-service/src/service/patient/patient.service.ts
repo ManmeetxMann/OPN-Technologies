@@ -24,6 +24,9 @@ import {
   PatientTravelRepository,
 } from '../../repository/patient.repository'
 import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
+import {UserRepository} from '../../../../../../packages/enterprise/src/repository/user.repository'
+import DataStore from '../../../../../../packages/common/src/data/datastore'
+import {AuthUser} from '../../../../../../packages/common/src/data/user'
 
 @Injectable()
 export class PatientService {
@@ -38,6 +41,9 @@ export class PatientService {
     private patientDigitalConsentRepository: PatientDigitalConsentRepository,
     private patientToDelegatesRepository: PatientToDelegatesRepository,
   ) {}
+
+  private dataStore = new DataStore()
+  private userRepository = new UserRepository(this.dataStore)
 
   /**
    * Get patient record by id
@@ -90,8 +96,24 @@ export class PatientService {
    */
   async createProfile(data: PatientCreateDto): Promise<Patient> {
     //TODO: For Sync: get firestore id then save firebaseKey
-    data.firebaseKey = 'TempKey' + Math.random().toString(36)
     data.authUserId = await this.firebaseAuthService.createUser(data.email)
+
+    const firebaseUser = await this.userRepository.add({
+      email: data.email,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      registrationId: data.registrationId,
+      photo: data.photoUrl,
+      phone: {
+        diallingCode: 0,
+        number: Number(data.phoneNumber),
+      },
+      authUserId: data.authUserId,
+      active: false,
+      organizationIds: [],
+    } as AuthUser)
+
+    data.firebaseKey = firebaseUser.id
 
     const patient = await this.createPatient(data)
     data.idPatient = patient.idPatient
@@ -127,8 +149,20 @@ export class PatientService {
     if (data.email && auth?.email !== data.email) {
       this.firebaseAuthService.updateUser(patient.firebaseKey, data.email)
       auth.email = data.email
-      await this.patientAddressesRepository.save(auth)
+      await this.patientAuthRepository.save(auth)
     }
+
+    await this.userRepository.updateProperties(patient.firebaseKey, {
+      email: data.email,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      registrationId: data.registrationId,
+      photo: data.photoUrl,
+      phone: {
+        diallingCode: 0,
+        number: Number(data.phoneNumber),
+      },
+    })
 
     await Promise.all([
       this.patientRepository.save(patient),
