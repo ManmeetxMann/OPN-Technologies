@@ -1,5 +1,5 @@
 import {Controller, Get, Param, Query, UseGuards} from '@nestjs/common'
-import {AuthGuard} from '@opn-services/common/guard/auth.guard'
+import {AuthGuard} from '@opn-services/common/guard'
 
 import {
   assignWithoutUndefined,
