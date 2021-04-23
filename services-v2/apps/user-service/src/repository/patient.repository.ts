@@ -1,6 +1,6 @@
 import {EntityRepository, Repository} from 'typeorm'
 import * as patient from '../model/patient/patient.entity'
-import * as patientProfile from '../model/patient/patient-profile'
+import * as patientProfile from '../model/patient/patient-profile.entity'
 import * as patientRelations from '../model/patient/patient-relations.entity'
 
 /**

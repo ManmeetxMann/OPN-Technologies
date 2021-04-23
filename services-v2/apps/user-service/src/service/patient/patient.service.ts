@@ -11,7 +11,7 @@ import {
   PatientDigitalConsent,
   PatientHealth,
   PatientTravel,
-} from '../../model/patient/patient-profile'
+} from '../../model/patient/patient-profile.entity'
 import {Patient, PatientAddresses, PatientAuth} from '../../model/patient/patient.entity'
 import {PatientToDelegates} from '../../model/patient/patient-relations.entity'
 import {
