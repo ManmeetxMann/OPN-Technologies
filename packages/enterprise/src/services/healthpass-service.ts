@@ -86,7 +86,7 @@ export class HealthpassService {
       PassportStatuses.Proceed,
       PassportStatuses.TemperatureCheckRequired,
     ].includes(status)
-    if (!validStatus || isPassed(safeTimestamp(items.latestPassport?.expiry))) {
+    if (!validStatus || isPassed(safeTimestamp(items.latestPassport.expiry))) {
       return {
         expiry: null,
         tests,
