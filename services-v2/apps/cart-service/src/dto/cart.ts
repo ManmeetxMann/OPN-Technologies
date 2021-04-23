@@ -213,7 +213,14 @@ export class PaymentAuthorizationResponseDto {
   @IsObject()
   cart: PaymentAuthorizationCartDto
 
-  @ApiProperty()
+  @ApiProperty({nullable: true})
+  @IsOptional()
   @IsObject()
   payment: PaymentAuthorizationPaymentDto
+}
+
+export class CheckoutResponseDto {
+  @ApiProperty()
+  @IsObject()
+  cart: PaymentAuthorizationCartDto
 }

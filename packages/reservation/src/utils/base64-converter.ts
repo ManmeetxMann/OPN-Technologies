@@ -63,7 +63,7 @@ export const decodeAvailableTimeId = (id: string): AvailableTimeIdParams => {
     !appointmentTypeId ||
     !calendarId ||
     !organizationId ||
-    !packageCode
+    (!packageCode && packageCode != '')
   ) {
     throw new BadRequestException('Invalid Id')
   }
