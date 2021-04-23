@@ -5,5 +5,5 @@ import {createParamDecorator, ExecutionContext} from '@nestjs/common'
  */
 export const AuthUserDecorator = createParamDecorator((_, ctx: ExecutionContext) => {
   const request = ctx.switchToHttp().getRequest()
-  return request.raw.locals?.authUser
+  return request.locals?.authUser
 })

@@ -17,7 +17,7 @@ import {AuthGuard} from '@opn-services/common/guard'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {Roles} from '@opn-services/common/decorator'
 import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
-
+import {AuthUserDecorator} from '@opn-services/common/decorator'
 import {Patient} from '../../../model/patient/patient.entity'
 import {
   DependantCreateDto,
@@ -28,6 +28,7 @@ import {
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
+import {LogInfo} from '@opn-services/common/utils/logging'
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -79,6 +80,7 @@ export class PatientController {
   @Put('/:patientId')
   @Roles([RequiredUserPermission.RegUser])
   async update(
+    @AuthUserDecorator() authUser,
     @Param('patientId') id: string,
     @Body() patientUpdateDto: PatientUpdateDto,
   ): Promise<ResponseWrapper> {
@@ -87,8 +89,13 @@ export class PatientController {
     if (!patientExists) {
       throw new NotFoundException('User with given id not found')
     }
+    const newUser = await this.patientService.updateProfile(id, patientUpdateDto)
 
-    await this.patientService.updateProfile(id, patientUpdateDto)
+    LogInfo('update', 'updateProfile', {
+      oldUser: patientExists,
+      newUser: newUser,
+      updatedBy: authUser.id,
+    })
 
     return ResponseWrapper.actionSucceed()
   }
