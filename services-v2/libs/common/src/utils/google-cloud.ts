@@ -7,10 +7,10 @@ export const isRunningOnGCP = (): boolean => {
   return isRunningOnGCP
 }
 
-export const NodeEnv = (): string => process.env.NODE_ENV
+export const NodeEnv = (): string => configService.get('NODE_ENV')
 
 //Only avaiable on Google App ENgine
-export const GAEService = (): string => process.env.GAE_SERVICE ?? 'local'
+export const GAEService = (): string => configService.get('GAE_SERVICE') ?? 'local'
 
 //Only avaiable on Google App ENgine
-export const GAEProjectID = (): string => process.env.GOOGLE_CLOUD_PROJECT ?? 'local'
+export const GAEProjectID = (): string => configService.get('GOOGLE_CLOUD_PROJECT') ?? 'local'
