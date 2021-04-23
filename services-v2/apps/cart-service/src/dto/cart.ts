@@ -110,11 +110,6 @@ export class CartAddDto {
   postalCode: string
 
   @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  couponCode: string
-
-  @ApiProperty()
   @IsBoolean()
   @IsNotEmpty()
   shareTestResultWithEmployer: boolean
