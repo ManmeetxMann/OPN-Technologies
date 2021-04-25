@@ -13,19 +13,23 @@ import {UserCardService} from '@opn-services/cart/service/user-cart.service'
 import {StripeService} from '@opn-services/cart/service/stripe.service'
 
 // Controllers
+import {CartController as InternalCartController} from './controller/internal/v1/cart.controller'
 import {CartController} from './controller/public/v1/cart.controller'
 
 @Module({
   imports: [CommonModule, StripeService, AppoinmentService, UserService],
-  controllers: [CartController],
+  controllers: [CartController, InternalCartController],
   providers: [UserCardService, StripeService, AppoinmentService, UserService],
 })
 class App {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).forRoutes({
-      path: '*',
-      method: RequestMethod.ALL,
-    })
+    consumer
+      .apply(AuthMiddleware)
+      .exclude({path: '/internal/api/v1/cart/remove-expired-items', method: RequestMethod.POST})
+      .forRoutes({
+        path: '*',
+        method: RequestMethod.ALL,
+      })
   }
 }
 

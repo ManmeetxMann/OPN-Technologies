@@ -23,6 +23,8 @@ import {
   CartItemDto,
   PaymentAuthorizationCartDto,
 } from '../dto'
+import {firestoreTimeStampToUTC} from '@opn-reservation-v1/utils/datetime.helper'
+import * as moment from 'moment'
 
 /**
  * Stores cart items under ${userId}_${organizationId} key in user-cart collection
@@ -162,6 +164,23 @@ export class UserCardService {
     }
 
     return {items: invalidItems, isValid}
+  }
+
+  async cleanupUserCart(): Promise<void> {
+    let iteration = 1
+    let done = false
+    while (!done) {
+      const userCarts = await this.userCartRepository.fetchAllWithPagination(iteration, 2)
+      for (const userCart of userCarts) {
+        const updatedDateMoment = firestoreTimeStampToUTC(userCart.updateOn).add('24', 'hours')
+        const expirationDateMoment = moment().utc()
+        if (expirationDateMoment.isBefore(updatedDateMoment)) {
+          await this.userCartRepository.delete(userCart.id)
+        }
+      }
+      done = userCarts.length === 0
+      iteration++
+    }
   }
 
   async getUserCart(userId: string, organizationId: string): Promise<CartResponseDto> {
