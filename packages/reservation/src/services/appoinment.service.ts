@@ -1584,6 +1584,7 @@ export class AppoinmentService {
     appointmentId: string,
     isOpnSuperAdmin: boolean,
     organizationId?: string,
+    isClinicUser: boolean,
   ): Promise<AppointmentDBModel> {
     const appointmentFromDB = await this.appointmentsRepository.get(appointmentId)
     if (!appointmentFromDB) {
@@ -1608,7 +1609,7 @@ export class AppoinmentService {
       )
     }
 
-    if (organizationId && appointmentFromDB.organizationId !== organizationId) {
+    if (!isClinicUser && (organizationId && appointmentFromDB.organizationId !== organizationId)) {
       LogWarning('AppoinmentService: rescheduleAppointment', 'Incorrect Organization ID', {
         appointmentId,
         isOpnSuperAdmin,
@@ -1620,11 +1621,12 @@ export class AppoinmentService {
   }
 
   async rescheduleAppointment(requestData: RescheduleAppointmentDTO): Promise<AppointmentDBModel> {
-    const {appointmentId, isOpnSuperAdmin, organizationId} = requestData
+    const {appointmentId, isOpnSuperAdmin, organizationId, isClinicUser} = requestData
     const appointmentFromDB = await this.getAppointmentValidatedForUpdate(
       appointmentId,
       isOpnSuperAdmin,
       organizationId,
+      isClinicUser,
     )
     const acuityAppointment = await this.acuityRepository.rescheduleAppoinmentOnAcuity(
       appointmentFromDB.acuityAppointmentId,

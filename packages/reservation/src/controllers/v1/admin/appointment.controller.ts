@@ -572,6 +572,7 @@ class AdminAppointmentController implements IControllerBase {
         isOpnSuperAdmin,
         organizationId,
         dateTime,
+        isClinicUser
       })
       res.json(actionSucceed(appointmentUiDTOResponse(updatedAppointment, isLabUser, isClinicUser)))
     } catch (error) {
