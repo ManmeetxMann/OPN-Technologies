@@ -179,7 +179,7 @@ export class UserCardService {
       label: cartDB.appointmentType.name,
       subLabel: cartDB.appointment.calendarName,
       patientName: `${cartDB.patient.lastName} ${cartDB.patient.lastName}`,
-      date: cartDB.appointment.date,
+      date: cartDB.appointment.time,
       price: parseFloat(cartDB.appointmentType.price),
     }))
 
