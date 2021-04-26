@@ -11,10 +11,16 @@ export type TestResultSpecsForSending = {
   comment: string
 }
 
+export enum TemplateTypes {
+  pcr1 = 'PCR-1',
+  pcr2 = 'PCR-2',
+  antiBody = 'Anti-Body',
+}
+
 export type TestResultRequestData = TestResultSpecsForSending & {
   barCode: string
   sendUpdatedResults?: boolean
-  templateId: string
+  templateId: TemplateTypes
   labId: string
   fileName?: string
 }
