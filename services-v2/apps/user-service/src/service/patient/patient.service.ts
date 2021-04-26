@@ -281,4 +281,15 @@ export class PatientService {
     patientToDelegates.dependantId = dependantId
     return this.patientToDelegatesRepository.save(patientToDelegates)
   }
+
+  /**
+   * Validate ownership on patientId sent by client
+   */
+  async isResourceOwner(patientId: string, authUserId: string): Promise<boolean> {
+    const patient = await this.patientRepository.findOne(patientId, {
+      relations: ['auth'],
+    })
+
+    return patient.auth.authUserId === authUserId
+  }
 }
