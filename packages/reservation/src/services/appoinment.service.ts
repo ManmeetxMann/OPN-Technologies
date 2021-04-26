@@ -1609,7 +1609,7 @@ export class AppoinmentService {
       )
     }
 
-    if (!isClinicUser && (organizationId && appointmentFromDB.organizationId !== organizationId)) {
+    if (!isClinicUser && organizationId && appointmentFromDB.organizationId !== organizationId) {
       LogWarning('AppoinmentService: rescheduleAppointment', 'Incorrect Organization ID', {
         appointmentId,
         isOpnSuperAdmin,
