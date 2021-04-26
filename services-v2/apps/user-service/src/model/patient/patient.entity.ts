@@ -252,6 +252,10 @@ export class Patient extends Auditable {
   @IsString()
   consentFileUrl?: string
 
+  @Column({type: 'timestamp', nullable: true, default: null})
+  @ApiProperty()
+  lastAppointment?: Date
+
   /** Relations */
   @OneToOne(
     () => PatientAuth,

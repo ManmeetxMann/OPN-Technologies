@@ -144,7 +144,7 @@ export const patientProfileDto = (patient: Patient): PatientUpdateDto => ({
   healthCardNumber: patient.health?.healthCard,
   healthCardType: patient.health?.healthType,
   travelCountry: patient.travel?.travelCountry,
-  travelPassport: patient.travel.travelPassport,
+  travelPassport: patient.travel?.travelPassport,
   consentFileUrl: patient.consentFileUrl,
   agreeToConductFHHealthAssessment: patient.digitalConsent.agreeToConductFHHealthAssessment,
   shareTestResultWithEmployer: patient.digitalConsent.shareTestResultWithEmployer,

@@ -1,9 +1,4 @@
 import {TypeOrmModule} from '@nestjs/typeorm'
-import {
-  UserGroupRepository,
-  UserOrganizationRepository,
-  UserRepository,
-} from '../repository/user.repository'
 import * as PatientRepositories from '../repository/patient.repository'
 import {OrganizationRepository} from '../repository/organization.repository'
 import {LocationRepository} from '../repository/location.repository'
@@ -13,10 +8,6 @@ import {DefaultDatabaseConfiguration} from '@opn-services/common/configuration/d
 export const DatabaseConfiguration = DefaultDatabaseConfiguration()
 
 const repositories = [
-  UserRepository,
-  UserOrganizationRepository,
-  UserGroupRepository,
-
   OrganizationRepository,
   LocationRepository,
   GroupRepository,
