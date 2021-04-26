@@ -10,8 +10,8 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common'
-
 import {ApiBearerAuth, ApiTags} from '@nestjs/swagger'
+
 import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
@@ -30,19 +30,18 @@ import {PatientService} from '../../../service/patient/patient.service'
 import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
 import {LogInfo} from '@opn-services/common/utils/logging'
 
-@ApiTags('Patients')
+@ApiTags('Patients - Admin')
 @ApiBearerAuth()
-@Controller('/api/v1/patient')
+@Controller('/api/v1/admin/patients')
 @UseGuards(AuthGuard)
-//TODO: track updatedBy
-export class PatientController {
+export class AdminPatientController {
   constructor(
     private patientService: PatientService,
     private firebaseAuthService: FirebaseAuthService,
   ) {}
 
   @Get()
-  @Roles([RequiredUserPermission.RegUser])
+  @Roles([RequiredUserPermission.OPNAdmin])
   async getAll(@Query() filter: PatientFilter): Promise<ResponseWrapper<Patient[]>> {
     const {data, page, totalItems, totalPages} = await this.patientService.getAll(
       assignWithoutUndefined(filter, new PatientFilter()),
@@ -52,7 +51,7 @@ export class PatientController {
   }
 
   @Get('/:patientId')
-  @Roles([RequiredUserPermission.RegUser])
+  @Roles([RequiredUserPermission.OPNAdmin])
   async getById(@Param('patientId') id: string): Promise<ResponseWrapper<PatientUpdateDto>> {
     const patient = await this.patientService.getProfilebyId(id)
 
@@ -64,7 +63,7 @@ export class PatientController {
   }
 
   @Post()
-  @Roles([RequiredUserPermission.RegUser])
+  @Roles([RequiredUserPermission.OPNAdmin])
   async add(@Body() patientDto: PatientCreateDto): Promise<ResponseWrapper<Patient>> {
     const patientExists = await this.firebaseAuthService.getUserByEmail(patientDto.email)
 
@@ -78,7 +77,7 @@ export class PatientController {
   }
 
   @Put('/:patientId')
-  @Roles([RequiredUserPermission.RegUser])
+  @Roles([RequiredUserPermission.OPNAdmin])
   async update(
     @AuthUserDecorator() authUser,
     @Param('patientId') id: string,
@@ -101,7 +100,7 @@ export class PatientController {
   }
 
   @Post('/:patientId/dependant')
-  @Roles([RequiredUserPermission.RegUser])
+  @Roles([RequiredUserPermission.OPNAdmin])
   async addDependents(
     @Param('patientId') delegateId: string,
     @Body() dependantBody: DependantCreateDto,

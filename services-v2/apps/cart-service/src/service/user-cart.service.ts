@@ -1,4 +1,6 @@
 import {Injectable} from '@nestjs/common'
+import {Stripe} from 'stripe'
+
 // V1 Common
 import DataStore from '@opn-common-v1/data/datastore'
 import {AcuityRepository} from '@opn-reservation-v1/respository/acuity.repository'
@@ -13,7 +15,7 @@ import {UserCartRepository, UserCartItemRepository} from '../repository/user-car
 import {UserOrderRepository} from '../repository/user-order.repository'
 
 // Models
-import {CardItemDBModel} from '../model/cart'
+import {CardItemDBModel, CartItemStatus, OrderStatusDBModel} from '../model/cart'
 import {CartValidationItemDto} from '../dto'
 
 import {
@@ -164,6 +166,12 @@ export class UserCardService {
     return {items: invalidItems, isValid}
   }
 
+  async cartItemsCount(userId: string, organizationId: string): Promise<number> {
+    const userOrgId = `${userId}_${organizationId}`
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+    return userCartItemRepository.count()
+  }
+
   async getUserCart(userId: string, organizationId: string): Promise<CartResponseDto> {
     const cartDBItems = await this.fetchUserAllCartItem(userId, organizationId)
     const cartItems = cartDBItems.map(cartDB => ({
@@ -171,7 +179,7 @@ export class UserCardService {
       label: cartDB.appointmentType.name,
       subLabel: cartDB.appointment.calendarName,
       patientName: `${cartDB.patient.lastName} ${cartDB.patient.lastName}`,
-      date: cartDB.appointment.date,
+      date: new Date(cartDB.appointment.time).toISOString(),
       price: parseFloat(cartDB.appointmentType.price),
     }))
 
@@ -204,13 +212,46 @@ export class UserCardService {
     await this.userCartRepository.addBatch(userOrgId, cardItemDdModel)
   }
 
-  async deleteItem(userId: string, cartItemId: string, organizationId: string): Promise<void> {
+  async saveOrderInformation(
+    appointmentCreateStatuses: CartItemStatus[],
+    paymentIntent: Stripe.PaymentIntent,
+  ) {
+    await this.userOrderRepository.add({
+      status: OrderStatusDBModel.InProgress,
+      cartItems: appointmentCreateStatuses,
+      payment: {
+        ..._.pick(paymentIntent, [
+          'id',
+          'amount',
+          'amount_capturable',
+          'amount_received',
+          'customer',
+          'payment_method_types',
+          'status',
+        ]),
+        charges: {
+          data: paymentIntent.charges.data.map(charge =>
+            _.pick(charge, ['amount', 'amount_captured', 'amount_refunded', 'created', 'status']),
+          ),
+        },
+      },
+    })
+  }
+
+  async deleteCartItem(userId: string, cartItemId: string, organizationId: string): Promise<void> {
     const userOrgId = `${userId}_${organizationId}`
     const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
 
     const cartItem = await userCartItemRepository.findWhereEqual('cartItemId', cartItemId)
     const cartId = cartItem[0].id
     await userCartItemRepository.delete(cartId)
+  }
+
+  async deleteAllCartItems(userId: string, organizationId: string) {
+    const userOrgId = `${userId}_${organizationId}`
+    const userCartItemRepository = new UserCartItemRepository(this.dataStore, userOrgId)
+
+    await userCartItemRepository.deleteCollection()
   }
 
   /**
@@ -251,7 +292,7 @@ export class UserCardService {
     )
     const tax = round(sum * this.hstTax)
     const total = sum + tax
-    const stripeTotal = total * 100
+    const stripeTotal = round(total * 100)
 
     return stripeTotal
   }
