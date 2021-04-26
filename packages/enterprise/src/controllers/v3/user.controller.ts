@@ -29,6 +29,8 @@ import {uniq, flatten} from 'lodash'
 import {BadRequestException} from '../../../../common/src/exceptions/bad-request-exception'
 import {AuthShortCodeService} from '../../services/auth-short-code-service'
 import moment from 'moment'
+import {LogInfo} from '../../../../common/src/utils/logging-setup'
+import {getUserId} from '../../../../common/src/utils/auth'
 
 const authService = new AuthService()
 const adminApprovalService = new AdminApprovalService()
@@ -135,6 +137,11 @@ const create: Handler = async (req, res, next): Promise<void> => {
       },
     )
 
+    LogInfo('create', 'createUser', {
+      newUser: user,
+      createdBy: 'API',
+    })
+
     res.json(actionSucceed(userDTOResponse(user)))
   } catch (error) {
     next(error)
@@ -227,9 +234,16 @@ const update: Handler = async (req, res, next): Promise<void> => {
   try {
     const authenticatedUser = res.locals.authenticatedUser as AuthUser
     const source = req.body as UpdateUserRequest
+    const oldUser = await userService.getById(authenticatedUser.id)
     const updatedUser = await userService.update(authenticatedUser.id, source)
 
     await userSyncService.update(updatedUser.id, source)
+
+    LogInfo('updateUser', 'updateUser', {
+      oldUser,
+      updatedUser,
+      updatedBy: getUserId(res.locals.authenticatedUser),
+    })
 
     res.json(actionSucceed(userDTOResponse(updatedUser)))
   } catch (error) {
