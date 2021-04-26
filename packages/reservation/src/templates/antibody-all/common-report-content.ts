@@ -85,6 +85,13 @@ const getFillColorForResultsCell = (result: string): string => {
   return '#6AA84F'
 }
 
+const getColorForResultsCell = (result: string): string => {
+  if (result && result.toUpperCase() === 'INDETERMINATE') {
+    return '#000000'
+  }
+  return '#FFFFFF'
+}
+
 const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: string): Content => {
   const requisitionDoctor = Config.get('TEST_RESULT_REQ_DOCTOR')
   const dataPersonal = [
@@ -168,7 +175,7 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
       layout: 'mainTable',
       table: {
         headerRows: 1,
-        widths: [150, 30, 50, 50, 90],
+        widths: [140, 40, 50, 50, 90],
         body: [
           [
             {text: 'Type', bold: true},
@@ -179,9 +186,13 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
             {text: 'Serum', colSpan: 4},
           ],
           [
+            {text: 'Methodology', bold: true},
+            {text: 'Chemiluminescence', colSpan: 4},
+          ],
+          /*[
             {text: 'Test Equipment', bold: true},
             {text: 'Approved by Health Canada (IO authorization 312782)', colSpan: 4},
-          ],
+          ],*/
           [
             {text: 'Indication', bold: true},
             {text: 'Suspected Exposure to COVID-19', colSpan: 4},
@@ -194,32 +205,42 @@ const clientInformation = (params: RapidAntigenEmailResultDTO, resultDate: strin
       layout: 'mainTable',
       table: {
         headerRows: 2,
-        widths: [150, 90, 150],
+        widths: [140, 25, 30, 70, 105],
         body: [
           [
             {text: 'Antibody Cut-off Index Values', bold: true, rowSpan: 2},
             {text: 'IgG'},
+            {text: resultAnalysis(params.resultAnalysis, 'IgG')?.value},
             {
               text: resultAnalysis(params.resultAnalysis, 'IgGResult')?.value,
-              bold: true,
               fillColor: getFillColorForResultsCell(
                 resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as string,
               ),
-              fontSize: 12,
-              color: '#ffffff',
+              color: getColorForResultsCell(
+                resultAnalysis(params.resultAnalysis, 'IgGResult')?.value as string,
+              ),
+            },
+            {
+              text:
+                'Reference Cut-off Index\n' +
+                '0.8 - < 1.0 = Indeterminate \n' +
+                '≥ 1.0 = Positive\n' +
+                '< 0.8 = Negative',
+              rowSpan: 2,
             },
           ],
           [
             {},
             {text: 'IgM'},
+            {text: resultAnalysis(params.resultAnalysis, 'IgM')?.value},
             {
               text: resultAnalysis(params.resultAnalysis, 'IgMResult')?.value,
-              bold: true,
               fillColor: getFillColorForResultsCell(
                 resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as string,
               ),
-              fontSize: 12,
-              color: '#ffffff',
+              color: getColorForResultsCell(
+                resultAnalysis(params.resultAnalysis, 'IgMResult')?.value as string,
+              ),
             },
           ],
         ],
