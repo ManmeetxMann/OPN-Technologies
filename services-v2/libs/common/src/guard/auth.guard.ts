@@ -33,39 +33,34 @@ export class AuthGuard implements CanActivate {
 
     if (requireOrg) {
       if (!organizationId) {
-        if (this.authorizedWithoutOrgId(admin, organizationId)) {
+        if (!this.authorizedWithoutOrgId(admin, organizationId)) {
           console.warn(`${user.id} did not provide an organizationId`)
-
           throw new ForbiddenException(`Organization ID not provided`)
         }
       } else if (gotAdminAuth) {
         // user authenticated as an admin, needs to be valid
         if (!this.isAllowed(user, requiredRoles, labId)) {
           console.warn(`${organizationId} is not accesible to ${user.id}`)
-          // Forbidden
           throw new ForbiddenException(`Organization ID ${organizationId} is not accesible`)
         }
-      }
-    } else {
-      if (!seekRegularAuth) {
-        // not an admin but admin required
-        console.warn(`${organizationId} is not admin-accesible to ${user.id}`)
+      } else {
+        if (!seekRegularAuth) {
+          // not an admin but admin required
+          console.warn(`${organizationId} is not admin-accesible to ${user.id}`)
+          throw new ForbiddenException(`Organization ID ${organizationId} is not accesible`)
+        }
 
-        throw new ForbiddenException(`Organization ID ${organizationId} is not accesible`)
-      }
-
-      // just need to be a member of the organization
-      if (!(user.organizationIds ?? []).includes(organizationId)) {
-        console.warn(`${organizationId} is not connected to ${user.id}`)
-
-        throw new ForbiddenException(`Organization ID ${organizationId} is not accesible`)
+        // just need to be a member of the organization
+        if (!(user.organizationIds ?? []).includes(organizationId)) {
+          console.warn(`${organizationId} is not connected to ${user.id}`)
+          throw new ForbiddenException(`Organization ID ${organizationId} is not accesible`)
+        }
       }
     }
 
     // this check is only required for admins
     if (gotAdminAuth && !this.isAllowed(user, requiredRoles, labId)) {
       console.warn(`Admin user ${user.id} is not allowed for ${requiredRoles}`)
-      // Forbidden
       throw new ForbiddenException(`Required Permissions are missing`)
     }
 
