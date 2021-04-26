@@ -67,8 +67,8 @@ export class BookingLocationService {
     const appointmentTypes = await this.acuityRepository.getAppointmentTypeList()
 
     const appointmentTypesWithPackages = enablePaymentForBooking
-      ? this.getPublicAppointmentTypes(appointmentTypes)
-      : await this.getAppointmentTypesWithPackages(organizationId, appointmentTypes)
+      ? await this.getAppointmentTypesWithPackages(organizationId, appointmentTypes)
+      : this.getPublicAppointmentTypes(appointmentTypes)
 
     const bookingLocations = []
     Array.from(appointmentTypesWithPackages).map((appointmentTypesWithPackage) => {

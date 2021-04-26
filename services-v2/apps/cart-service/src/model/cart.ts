@@ -4,7 +4,7 @@ import {AppointmentTypes} from '@opn-reservation-v1/models/appointment-types'
 
 export type CartRequestItem = Omit<
   CreateAppointmentRequest,
-  'organizationId' | 'packageCode' | 'userId'
+  'userId'
 >
 
 export type PaymentAuthorizationRequest = {
