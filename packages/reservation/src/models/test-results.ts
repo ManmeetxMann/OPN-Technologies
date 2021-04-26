@@ -37,7 +37,7 @@ export type BulkTestResultRequest = {
   reportTrackerId?: string
   results: TestResultRequestData[]
   resultDate: Date
-  templateId: string
+  templateId: TemplateTypes
   labId: string
   fileName?: string
 }
