@@ -288,6 +288,15 @@ export class AppoinmentService {
       })
     }
 
+    if (queryParams.userId) {
+      conditions.push({
+        map: '/',
+        key: 'userId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: queryParams.userId,
+      })
+    }
+
     if (queryParams.searchQuery) {
       const fullName = queryParams.searchQuery.split(' ')
       const searchPromises = []

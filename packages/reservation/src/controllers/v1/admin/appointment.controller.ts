@@ -147,6 +147,7 @@ class AdminAppointmentController implements IControllerBase {
         transportRunId,
         testType,
         labId: queryLab,
+        userId,
       } = req.query as AppointmentByOrganizationRequest
 
       const labId = (req.headers?.labid as string) || queryLab
@@ -173,6 +174,7 @@ class AdminAppointmentController implements IControllerBase {
         transportRunId,
         labId,
         testType,
+        userId,
       })
 
       const transportRuns = fromPairs(
