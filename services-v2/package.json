@@ -23,7 +23,8 @@
     "build:cart-service": "SERVICE=cart-service npm run build:service",
     "build:service": "nest build $SERVICE && cp ./package.json ./dist/apps/$SERVICE/ && cp ./.env ./dist/apps/$SERVICE/ && cp ./.env ./dist/",
     "deploy:user-service": "gcloud app deploy ./dist/apps/user-service",
-    "deploy:cart-service": "gcloud app deploy ./dist/apps/cart-service"
+    "deploy:cart-service": "gcloud app deploy ./dist/apps/cart-service",
+    "migration:migrate-users-to-mysql": "ts-node --transpile-only ./node_modules/typeorm/cli.js migration:run"
   },
   "dependencies": {
     "@firestore-simple/admin": "^7.0.6",

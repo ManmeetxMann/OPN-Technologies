@@ -12,7 +12,7 @@ import {
 import {Auditable} from '../../../../../libs/common/src/model'
 import {ApiProperty} from '@nestjs/swagger'
 import {IsBoolean, IsEmail, IsString} from 'class-validator'
-import {PatientDigitalConsent, PatientHealth, PatientTravel} from './patient-profile'
+import {PatientDigitalConsent, PatientHealth, PatientTravel} from './patient-profile.entity'
 import {PatientToDelegates} from './patient-relations.entity'
 
 @Entity('patientAuth')
@@ -99,7 +99,7 @@ export class PatientAdmin {
   @Column()
   @ApiProperty({nullable: false, default: false})
   @IsBoolean()
-  isOpnSuperAdmin: boolean
+  isOpnSuperAdmin?: boolean
 
   @Column()
   @ApiProperty({nullable: false, default: false})
@@ -211,7 +211,7 @@ export class Patient extends Auditable {
 
   @Column({nullable: false})
   @ApiProperty({required: true})
-  patientPublicId: string
+  patientPublicId?: string
 
   @Column({nullable: false})
   @ApiProperty({required: true})
@@ -227,25 +227,25 @@ export class Patient extends Auditable {
   @IsString()
   lastName: string
 
-  @Column()
+  @Column({nullable: true})
   @ApiProperty()
   @IsString()
-  dateOfBirth: string
+  dateOfBirth?: string
 
-  @Column()
+  @Column({nullable: true})
   @ApiProperty()
   @IsString()
-  phoneNumber: string
+  phoneNumber?: string
 
   @Column({nullable: false})
   @ApiProperty()
   @IsString()
-  registrationId: string
+  registrationId?: string
 
   @Column()
   @ApiProperty()
   @IsString()
-  photoUrl: string
+  photoUrl?: string
 
   @Column({nullable: true, default: null})
   @ApiProperty()
