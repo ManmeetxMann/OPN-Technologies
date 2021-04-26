@@ -8,14 +8,11 @@ import {actionSucceed} from '../../../../common/src/utils/response-wrapper'
 import {getUserId} from '../../../../common/src/utils/auth'
 import {AuthUser} from '../../../../common/src/data/user'
 import {ResourceNotFoundException} from '../../../../common/src/exceptions/resource-not-found-exception'
-import {decodeAvailableTimeId} from '../../utils/base64-converter'
-import {PCRTestResultsService} from '../../services/pcr-test-results.service'
 
 class AppointmentController implements IControllerBase {
   public path = '/reservation'
   public router = Router()
   private appointmentService = new AppoinmentService()
-  private pcrTestResultsService = new PCRTestResultsService()
 
   constructor() {
     this.initRoutes()
@@ -84,10 +81,8 @@ class AppointmentController implements IControllerBase {
         receiveNotificationsFromGov,
       } = req.body as CreateAppointmentRequest
       const authenticatedUser = res.locals.authenticatedUser as AuthUser
-      const {organizationId, packageCode} = decodeAvailableTimeId(slotId)
       const userId = getUserId(authenticatedUser)
       await this.appointmentService.createAcuityAppointment({
-        organizationId,
         slotId,
         firstName,
         lastName,
@@ -105,7 +100,6 @@ class AppointmentController implements IControllerBase {
         receiveResultsViaEmail,
         receiveNotificationsFromGov,
         userId,
-        packageCode,
       })
 
       res.json(actionSucceed())

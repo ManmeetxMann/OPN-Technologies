@@ -200,9 +200,7 @@ export type CreateAppointmentRequest = {
   agreeToConductFHHealthAssessment: boolean
   receiveResultsViaEmail: boolean
   receiveNotificationsFromGov: boolean
-  organizationId: string
   userId: string
-  packageCode: string
 }
 
 export type AppointmentByOrganizationRequest = PageableRequestFilter & {
