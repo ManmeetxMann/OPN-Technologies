@@ -17,7 +17,7 @@ export class AuthGuard implements CanActivate {
 
     const req = context.switchToHttp().getRequest()
 
-    await this.validateRoles(req.locals.authUser, rolesData)
+    await this.validateRoles(req.raw.locals.authUser, rolesData)
 
     return true
   }
