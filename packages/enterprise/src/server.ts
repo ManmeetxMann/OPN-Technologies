@@ -25,7 +25,7 @@ import InternalV1Controller from './controllers/v1/internal/internal.controller'
 
 // Init SQL connection and data model
 import {createConnection} from 'typeorm'
-
+import {join} from 'path'
 import {Config} from '../../common/src/utils/config'
 import {isGAEService} from '../../common/src/utils/app-engine-environment'
 
@@ -85,7 +85,7 @@ createConnection({
   database: Config.get('DB_SQL_NAME'),
   username: Config.get('DB_SQL_USERNAME'),
   password: Config.get('DB_SQL_PASSWORD'),
-  entities: ['../../../services-v2/apps/user-service/src/model/**/*.ts'],
+  entities: [join(__dirname, '../../../services-v2/apps/user-service/src/model/**/*.ts')],
   synchronize: false,
   logging: false,
 })
