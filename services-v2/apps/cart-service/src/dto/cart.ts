@@ -110,11 +110,6 @@ export class CartAddDto {
   postalCode: string
 
   @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  couponCode: string
-
-  @ApiProperty()
   @IsBoolean()
   @IsNotEmpty()
   shareTestResultWithEmployer: boolean
@@ -213,7 +208,14 @@ export class PaymentAuthorizationResponseDto {
   @IsObject()
   cart: PaymentAuthorizationCartDto
 
-  @ApiProperty()
+  @ApiProperty({nullable: true})
+  @IsOptional()
   @IsObject()
   payment: PaymentAuthorizationPaymentDto
+}
+
+export class CheckoutResponseDto {
+  @ApiProperty()
+  @IsObject()
+  cart: PaymentAuthorizationCartDto
 }

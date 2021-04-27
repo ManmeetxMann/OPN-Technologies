@@ -1155,11 +1155,15 @@ export class AppoinmentService {
     agreeToConductFHHealthAssessment,
     receiveResultsViaEmail,
     receiveNotificationsFromGov,
-    organizationId,
     userId,
-    packageCode,
   }: CreateAppointmentRequest & {email: string}): Promise<AppointmentDBModel> {
-    const {time, appointmentTypeId, calendarId} = decodeAvailableTimeId(slotId)
+    const {
+      time,
+      appointmentTypeId,
+      calendarId,
+      packageCode,
+      organizationId,
+    } = decodeAvailableTimeId(slotId)
     const utcDateTime = moment(time).utc()
     const dateTime = utcDateTime.tz(timeZone).format()
     const barCodeNumber = await this.getNextBarCodeNumber()

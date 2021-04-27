@@ -1,6 +1,6 @@
 import {Column, Entity, Generated, PrimaryColumn} from 'typeorm'
 import {ApiProperty} from '@nestjs/swagger'
-import {Auditable} from '@opn-services/common/model'
+import {Auditable} from '../../../../../libs/common/src/model'
 
 @Entity('organization')
 export class Organization extends Auditable {
