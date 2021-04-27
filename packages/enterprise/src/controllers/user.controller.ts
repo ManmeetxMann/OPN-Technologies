@@ -13,7 +13,7 @@ import {actionSucceed} from '../../../common/src/utils/response-wrapper'
 import {Organization, OrganizationUsersGroup} from '../models/organization'
 import * as _ from 'lodash'
 import {ResourceNotFoundException} from '../../../common/src/exceptions/resource-not-found-exception'
-import {AuthService} from '../../../common/src/service/auth/auth-service'
+import {AuthService, SignInProvides} from '../../../common/src/service/auth/auth-service'
 import {AdminApprovalService} from '../../../common/src/service/user/admin-service'
 import {UnauthorizedException} from '../../../common/src/exceptions/unauthorized-exception'
 import {ResourceAlreadyExistsException} from '../../../common/src/exceptions/resource-already-exists-exception'
@@ -61,13 +61,17 @@ class UserController implements IControllerBase {
       const group = await this.organizationService.getGroup(organization.id, groupId)
 
       const authUser = !!idToken ? await this.authService.verifyAuthToken(idToken) : null
-      if (idToken && (!authUser || !authUser.email)) {
+
+      if (idToken && (!authUser || (!authUser.email && !authUser.phoneNumber))) {
         throw new UnauthorizedException(`Cannot verify id-token`)
       }
 
       if (authUser) {
         // check if auth user is already there
-        const usersByEmail = await this.enterpriseUserService.getByEmail(authUser.email)
+        const usersByEmail =
+          authUser.signInProvider === SignInProvides.password
+            ? await this.enterpriseUserService.getByEmail(authUser.email)
+            : await this.enterpriseUserService.getByPhoneNumber(authUser.phoneNumber)
         if (usersByEmail) {
           console.log(`DuplicateEmailConnect: ${authUser.email}`)
           throw new ResourceAlreadyExistsException(authUser.email)
@@ -78,6 +82,7 @@ class UserController implements IControllerBase {
       // registrationId might be undefined, since this could be the old version
       const user = await this.userService.create({
         email: authUser?.email ?? null,
+        phoneNumber: authUser?.phoneNumber ?? null,
         authUserId: authUser?.uid ?? null,
         registrationId: registrationId ?? null,
         firstName,

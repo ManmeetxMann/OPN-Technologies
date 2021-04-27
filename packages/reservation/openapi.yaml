@@ -1434,6 +1434,10 @@ paths:
           schema:
             type: string
         - in: query
+          name: userId
+          schema:
+            type: string
+        - in: query
           name: testType
           schema:
             type: string
@@ -2054,6 +2058,10 @@ paths:
             format: date
         - in: query
           name: barCode
+          schema:
+            type: string
+        - in: query
+          name: userId
           schema:
             type: string
         - in: query
