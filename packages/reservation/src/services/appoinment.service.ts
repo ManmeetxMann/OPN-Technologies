@@ -1583,8 +1583,8 @@ export class AppoinmentService {
   async getAppointmentValidatedForUpdate(
     appointmentId: string,
     isOpnSuperAdmin: boolean,
-    organizationId?: string,
     isClinicUser: boolean,
+    organizationId?: string,
   ): Promise<AppointmentDBModel> {
     const appointmentFromDB = await this.appointmentsRepository.get(appointmentId)
     if (!appointmentFromDB) {
@@ -1625,8 +1625,8 @@ export class AppoinmentService {
     const appointmentFromDB = await this.getAppointmentValidatedForUpdate(
       appointmentId,
       isOpnSuperAdmin,
-      organizationId,
       isClinicUser,
+      organizationId,
     )
     const acuityAppointment = await this.acuityRepository.rescheduleAppoinmentOnAcuity(
       appointmentFromDB.acuityAppointmentId,
