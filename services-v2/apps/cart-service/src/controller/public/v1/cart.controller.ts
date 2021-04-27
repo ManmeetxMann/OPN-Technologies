@@ -82,9 +82,9 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
-  async creteEphemeralKeys(): Promise<ResponseWrapper<unknown>> {
+  async creteEphemeralKeys(): Promise<unknown> {
     const ephemeralKeys = await this.stripeService.customerEphemeralKeys('cus_JJ0T3QA6kYrv9M')
-    return ResponseWrapper.actionSucceed(ephemeralKeys)
+    return ephemeralKeys
   }
 
   @Post('/payment-authorization')
