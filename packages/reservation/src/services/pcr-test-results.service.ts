@@ -310,6 +310,7 @@ export class PCRTestResultsService {
       date,
       searchQuery,
       labId,
+      userId,
     }: PcrTestResultsListRequest,
     isLabUser: boolean,
     isClinicUser: boolean,
@@ -380,6 +381,15 @@ export class PCRTestResultsService {
         key: 'result',
         operator: DataModelFieldMapOperatorType.Equals,
         value: result,
+      })
+    }
+
+    if (userId) {
+      pcrTestResultsQuery.push({
+        map: '/',
+        key: 'userId',
+        operator: DataModelFieldMapOperatorType.Equals,
+        value: userId,
       })
     }
 
