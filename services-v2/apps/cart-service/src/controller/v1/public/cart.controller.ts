@@ -141,7 +141,7 @@ export class CartController {
     }
     if (!cart.cardValidation.isValid) {
       console.log('Cart not valid')
-      result.cart.items = cart.cardValidation
+      result.cart = cart.cardValidation
       return ResponseWrapper.actionSucceed(result)
     }
     result.cart.isValid = true
@@ -236,7 +236,7 @@ export class CartController {
     }
     if (!cart.cardValidation.isValid) {
       console.log('Cart not valid')
-      result.cart.items = cart.cardValidation
+      result.cart = cart.cardValidation
       return ResponseWrapper.actionSucceed(result)
     }
 
