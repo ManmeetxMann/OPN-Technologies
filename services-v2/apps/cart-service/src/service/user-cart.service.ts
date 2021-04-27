@@ -267,7 +267,6 @@ export class UserCardService {
   }> {
     const cartDdItems = await this.fetchUserAllCartItem(userId, organizationId)
     const cardValidation = await this.validateCart(cartDdItems)
-    console.log(cardValidation)
     return {cartDdItems, cardValidation}
   }
 
