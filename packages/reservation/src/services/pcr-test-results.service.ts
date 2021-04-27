@@ -89,6 +89,7 @@ import {PulseOxygenService} from './pulse-oxygen.service'
 import {BulkTestResultRequest, TestResultsMetaData} from '../models/test-results'
 import {AntibodyAllPDFContent} from '../templates/antibody-all'
 import {AntibodyIgmPDFContent} from '../templates/antibody-igm'
+import {normalizeAnalysis} from '../utils/analysis.helper'
 
 export class PCRTestResultsService {
   private datastore = new DataStore()
@@ -799,7 +800,8 @@ export class PCRTestResultsService {
     //Add Test Results to Waiting Result
     const pcrResultDataForDbUpdate = {
       resultMetaData: metaData,
-      resultAnalysis,
+      resultAnalysis:
+        testResult.testType === TestTypes.PCR ? normalizeAnalysis(resultAnalysis) : resultAnalysis,
       barCode,
       deadline: appointment.deadline, //TODO: Remove
       result: finalResult,
