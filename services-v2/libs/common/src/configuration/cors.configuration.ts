@@ -9,14 +9,14 @@ const getOriginsByEnv = () => {
 
   switch (env) {
     case 'ca-prod':
-      return configService.get('DASHBOARD_PROD')
+      return configService.get('DASHBOARD_URL')
     case 'preprod':
-      return configService.get('DASHBOARD_PREPROD')
+      return configService.get('DASHBOARD_URL')
     case 'local':
       return '*'
     default:
       // default config for dev/infra envs
-      return [configService.get('DASHBOARD_DEV')]
+      return '*'
   }
 }
 
