@@ -29,11 +29,11 @@ const messageBody = (): Content => {
       bold: true,
       decoration: 'underline',
     },
-    {
+    /*{
       text:
         ' \n\nA positive test result indicates that antibodies to SARS-CoV-2 were detected, and the individual has potentially been exposed to SARS-CoV-2.',
       lineHeight: 1.1,
-    } /*KEPT FOR BACKUP. BUSINESS MIGHT WANT IT BACK SOON.Can be removed after April 30
+    }*/
     {
       text:
         ' \n\nThe human immune system antibody response has been studied for decades. In general, IgM' +
@@ -86,7 +86,7 @@ const messageBody = (): Content => {
         ' Long, Q et al. (2020). Antibody responses to SARS-CoV-2 in COVID-19 patients: the perspective' +
         ' application of serological tests in clinical  practice. 10.1101/2020.03.18.20038018.',
       lineHeight: 1.1,
-    },*/,
+    },
   ]
 
   return {

@@ -314,6 +314,7 @@ export type PcrTestResultsListRequest = {
   testType?: TestTypes
   searchQuery?: string
   labId?: string
+  userId?: string
 }
 
 export type PCRTestResultListDTO = {
