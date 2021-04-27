@@ -3,7 +3,7 @@ import {AvailableTimeIdParams} from '@opn-reservation-v1/types/base64-coverter.t
 import {CreateAppointmentRequest} from '@opn-reservation-v1/models/appointment'
 import {AppointmentTypes} from '@opn-reservation-v1/models/appointment-types'
 
-export type CartRequestItem = Omit<CreateAppointmentRequest, 'userId'>
+export type CartRequestItem = Omit<CreateAppointmentRequest, 'userId'> & {email: string}
 
 export type PaymentAuthorizationRequest = {
   paymentMethodId: string

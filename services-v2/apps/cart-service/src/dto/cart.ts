@@ -83,6 +83,11 @@ export class CartAddDto {
 
   @ApiProperty()
   @IsString()
+  @IsOptional()
+  email: string
+
+  @ApiProperty()
+  @IsString()
   @IsNotEmpty()
   gender: string
 

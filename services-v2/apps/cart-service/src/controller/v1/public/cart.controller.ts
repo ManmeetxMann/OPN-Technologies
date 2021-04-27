@@ -270,7 +270,7 @@ export class CartController {
   async createBulkAppointment(
     cartDdItems: CardItemDBModel[],
     userId: string,
-    userEmail: string,
+    userEmailAuthToken: string,
   ): Promise<CartItemStatus[]> {
     const appointmentCreateStatuses = await Promise.all(
       cartDdItems.map(async cartDdItem => {
@@ -278,7 +278,7 @@ export class CartController {
           const newAppointment = await this.appoinmentService.createAcuityAppointmentFromCartItem(
             cartDdItem,
             userId,
-            userEmail,
+            cartDdItem.patient.email || userEmailAuthToken,
           )
           return {
             cartItemId: cartDdItem.cartItemId,
