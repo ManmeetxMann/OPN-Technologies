@@ -1,5 +1,13 @@
 import {Phone} from '../../../common/src/types/phone'
 
+export enum UserLogsEvents {
+  findOrCreateUser = 'findOrCreateUser',
+  createUser = 'createUser',
+  updateUser = 'updateUser',
+  create = 'create',
+  update = 'update',
+}
+
 export type NewUser = {
   email: string
   firstName: string

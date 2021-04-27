@@ -85,7 +85,7 @@ export class CartController {
   @ApiHeader({
     name: 'organizationid',
   })
-  async creteEphemeralKeys(@AuthUserDecorator() authUser): Promise<ResponseWrapper<unknown>> {
+  async creteEphemeralKeys(@AuthUserDecorator() authUser): Promise<unknown> {
     let stripeCustomerId = authUser.stripeCustomerId
 
     // Create stripe customer and safe in user document
@@ -98,7 +98,7 @@ export class CartController {
     // Create wallet ephemeral keys
     const ephemeralKeys = await this.stripeService.customerEphemeralKeys(stripeCustomerId)
 
-    return ResponseWrapper.actionSucceed(ephemeralKeys)
+    return ephemeralKeys
   }
 
   @Post('/payment-authorization')
