@@ -1,7 +1,7 @@
 import {AvailableTimeIdParams} from '@opn-reservation-v1/types/base64-coverter.type'
 import {CreateAppointmentRequest} from '@opn-reservation-v1/models/appointment'
 import {AppointmentTypes} from '@opn-reservation-v1/models/appointment-types'
-import { firestore } from 'firebase-admin'
+import {firestore} from 'firebase-admin'
 
 export type CartRequestItem = Omit<
   CreateAppointmentRequest,
