@@ -5,7 +5,7 @@ import {ResourceNotFoundException} from '@opn-services/common/exception'
 import {GroupRepository} from '../../repository/group.repository'
 import {OrganizationGroup} from '../../model/organization/group.entity'
 import {GroupCreateRequest, GroupFilter, GroupUpdateRequest} from '../../dto/group'
-import {isNotNull, likeIgnoreCase, QueryMatcher} from '@opn-services/common/model'
+import {QueryMatcher, isNotNull, likeIgnoreCase} from '@opn-services/common/model'
 
 @Injectable()
 export class GroupService {

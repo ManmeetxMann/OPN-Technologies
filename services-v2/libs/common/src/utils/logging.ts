@@ -3,7 +3,7 @@
 import * as traceClient from '@google-cloud/trace-agent'
 import * as bunyan from 'bunyan'
 import {LoggingBunyan} from '@google-cloud/logging-bunyan'
-import {NodeEnv, GAEService} from './google-cloud'
+import {GAEService, NodeEnv} from './google-cloud'
 
 // Creates a Bunyan Cloud Logging client
 const loggingBunyan = new LoggingBunyan()

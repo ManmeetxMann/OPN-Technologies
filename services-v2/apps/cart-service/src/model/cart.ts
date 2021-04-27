@@ -3,10 +3,7 @@ import {AvailableTimeIdParams} from '@opn-reservation-v1/types/base64-coverter.t
 import {CreateAppointmentRequest} from '@opn-reservation-v1/models/appointment'
 import {AppointmentTypes} from '@opn-reservation-v1/models/appointment-types'
 
-export type CartRequestItem = Omit<
-  CreateAppointmentRequest,
-  'userId'
->
+export type CartRequestItem = Omit<CreateAppointmentRequest, 'userId'>
 
 export type PaymentAuthorizationRequest = {
   paymentMethodId: string
@@ -30,14 +27,8 @@ export type OrderPaymentDBModel = {
   status: string
 }
 
-export enum OrderStatusDBModel {
-  InProgress = 'InProgress',
-  SuccessfullyComplete = 'SuccessfullyComplete',
-}
-
 export type OrderDBModel = {
   id: string
-  status: string
   cartItems: CartItemStatus[]
   payment: Partial<Stripe.PaymentIntent>
 }
@@ -46,4 +37,10 @@ export type CartItemStatus = {
   cartItemId: string
   appointmentId?: string
   isSuccess: boolean
+}
+
+export type AcuityDBModel = {
+  id: string
+  price: string
+  name: string
 }

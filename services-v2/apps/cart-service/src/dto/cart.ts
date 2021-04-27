@@ -1,13 +1,13 @@
 import {
-  IsNotEmpty,
-  IsString,
-  IsNumber,
-  IsBoolean,
-  IsOptional,
-  IsDefined,
   IsArray,
-  ValidateNested,
+  IsBoolean,
+  IsDefined,
+  IsNotEmpty,
+  IsNumber,
   IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
 } from 'class-validator'
 import {Type} from 'class-transformer'
 

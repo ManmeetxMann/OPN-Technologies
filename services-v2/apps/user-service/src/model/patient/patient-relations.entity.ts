@@ -1,4 +1,4 @@
-import {Column, Entity, Generated, PrimaryColumn, ManyToOne, JoinColumn} from 'typeorm'
+import {Column, Entity, Generated, JoinColumn, ManyToOne, PrimaryColumn} from 'typeorm'
 import {ApiProperty} from '@nestjs/swagger'
 
 import {Patient} from '../patient/patient.entity'

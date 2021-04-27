@@ -3,10 +3,10 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Post,
   Put,
-  NotFoundException,
   Query,
   UseGuards,
 } from '@nestjs/common'
@@ -16,7 +16,7 @@ import {ResponseWrapper} from '@opn-services/common/dto/response-wrapper'
 import {AuthGuard} from '@opn-services/common/guard'
 import {RequiredUserPermission} from '@opn-services/common/types/authorization'
 import {Roles} from '@opn-services/common/decorator'
-import {assignWithoutUndefined, ResponseStatusCodes} from '@opn-services/common/dto'
+import {ResponseStatusCodes, assignWithoutUndefined} from '@opn-services/common/dto'
 import {FirebaseAuthService} from '@opn-services/common/services/auth/firebase-auth.service'
 
 import {Patient} from '../../../model/patient/patient.entity'
@@ -24,8 +24,8 @@ import {
   DependantCreateDto,
   PatientCreateDto,
   PatientFilter,
-  patientProfileDto,
   PatientUpdateDto,
+  patientProfileDto,
 } from '../../../dto/patient'
 import {PatientService} from '../../../service/patient/patient.service'
 
