@@ -17,6 +17,7 @@ import {AuthUser} from '../../../../common/src/data/user'
 import {UserSyncService} from '../../services/user-sync-service'
 import {LogInfo} from '../../../../common/src/utils/logging-setup'
 import {getUserId} from '../../../../common/src/utils/auth'
+import {UserLogsEvents as events} from '../../types/new-user'
 
 const userService = new UserService()
 const organizationService = new OrganizationService()
@@ -121,7 +122,7 @@ const createUser: Handler = async (req, res, next): Promise<void> => {
       delegates: [],
     })
 
-    LogInfo('createUser', 'createUser', {
+    LogInfo(events.createUser, events.createUser, {
       newUser: user,
       createdBy: getUserId(res.locals.authenticatedUser),
     })
@@ -149,7 +150,7 @@ const updateUser: Handler = async (req, res, next): Promise<void> => {
     const updatedUser = await userService.updateByAdmin(userId, source)
 
     await userSyncService.updateByAdmin(updatedUser.id, source)
-    LogInfo('updateUser', 'updateUser', {
+    LogInfo(events.updateUser, events.updateUser, {
       oldUser,
       updatedUser,
       updatedBy: getUserId(res.locals.authenticatedUser),

@@ -31,6 +31,7 @@ import {AuthShortCodeService} from '../../services/auth-short-code-service'
 import moment from 'moment'
 import {LogInfo} from '../../../../common/src/utils/logging-setup'
 import {getUserId} from '../../../../common/src/utils/auth'
+import {UserLogsEvents as events} from '../../types/new-user'
 
 const authService = new AuthService()
 const adminApprovalService = new AdminApprovalService()
@@ -137,7 +138,7 @@ const create: Handler = async (req, res, next): Promise<void> => {
       },
     )
 
-    LogInfo('create', 'createUser', {
+    LogInfo(events.create, events.createUser, {
       newUser: user,
       createdBy: 'API',
     })
@@ -239,7 +240,7 @@ const update: Handler = async (req, res, next): Promise<void> => {
 
     await userSyncService.update(updatedUser.id, source)
 
-    LogInfo('updateUser', 'updateUser', {
+    LogInfo(events.update, events.updateUser, {
       oldUser,
       updatedUser,
       updatedBy: getUserId(res.locals.authenticatedUser),
