@@ -559,6 +559,28 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sortOrder",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pcr-test-results",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "deadlineDate",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "displayInResult",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "labId",
           "order": "ASCENDING"
         },
