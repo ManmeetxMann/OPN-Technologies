@@ -1403,6 +1403,7 @@ paths:
               - EmergencyRapidAntigen
               - Antibody_All
               - Antibody_IgM
+              - ExpressPCR
         - in: query
           name: appointmentStatus
           explode: true
@@ -1850,6 +1851,7 @@ paths:
               - EmergencyRapidAntigen
               - Antibody_All
               - Antibody_IgM
+              - ExpressPCR
         - in: query
           name: appointmentStatus
           explode: true
@@ -1949,6 +1951,7 @@ paths:
               - EmergencyRapidAntigen
               - Antibody_All
               - Antibody_IgM
+              - ExpressPCR
         - in: query
           name: searchQuery
           schema:
@@ -2027,6 +2030,7 @@ paths:
               - Antibody_All
               - Antibody_IgM
               - allExceptAntigen
+              - ExpressPCR
         - in: query
           name: result
           schema:
@@ -3229,6 +3233,7 @@ paths:
               - EmergencyRapidAntigen
               - Antibody_All
               - Antibody_IgM
+              - ExpressPCR
       responses:
         '200':
           description: Successfully Return
@@ -3330,6 +3335,7 @@ paths:
               - EmergencyRapidAntigen
               - Antibody_All
               - Antibody_IgM
+              - ExpressPCR
       responses:
         '200':
           description: Succesfully return stats
