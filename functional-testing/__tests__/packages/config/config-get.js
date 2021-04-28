@@ -22,7 +22,7 @@ describe('Get content-result-get', () => {
             request: {
               headers: {
                 Authorization: `Bearer ${token}`,
-                application_name:"FHHealth"
+                "application-name":"FHHealth"
               },
             },
           })
