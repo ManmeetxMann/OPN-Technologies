@@ -32,7 +32,7 @@ describe('post:appointments', () => {
           .post(
               url,
               {
-                'slotId': 'XXXX',
+                'slotId': 'eyJhcHBvaW50bWVudFR5cGVJZCI6MTk3ODI0MDUsImNhbGVuZGFyVGltZXpvbmUiOiJBbWVyaWNhL1Rvcm9udG8iLCJjYWxlbmRhcklkIjo0NzY0Nzk1LCJjYWxlbmRhck5hbWUiOiJNaWx0b24gQXJlYSBDbGluaWMiLCJkYXRlIjoiMjAyMS0wNC0yOCIsInRpbWUiOiIyMDIxLTA0LTI4VDE2OjMwOjAwLTA0MDAiLCJvcmdhbml6YXRpb25JZCI6IjVEVjRLWVhKMm1ORHdwbmJucDRWIiwicGFja2FnZUNvZGUiOiIxN0M1RTRCNyJ9',
                 'firstName': 'HSG',
                 'lastName': 'Feb 1 11PM',
                 'email': 'harpreet@stayopn.com',
@@ -43,8 +43,8 @@ describe('post:appointments', () => {
                 'dateOfBirth': '2021-01-27',
                 'address': 'string',
                 'addressUnit': 'string',
-                'addressForTesting': 'string',
-                'additionalAddressNotes': 'string',
+                'gender': 'Male',
+                'postalCode': 'string',
                 'couponCode': 'string',
                 'shareTestResultWithEmployer': true,
                 'agreeToConductFHHealthAssessment': true,
