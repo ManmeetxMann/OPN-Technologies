@@ -22,7 +22,7 @@ describe('create:user', () => {
     const displayName = `${testProfile.get().firstName} ${testProfile.get().lastName}`;
     const email = testProfile.get().email;
 
-    return helpersCommon.getAuthTokenByPhone(frisby, '+16478663098', displayName).then(function(token) {
+    return helpersCommon.getAuthTokenByPhone(frisby, email, displayName).then(function(token) {
       const url = `${enterpriseServiceUrl}/user/connect/v2/add`;
       return frisby
           .post(

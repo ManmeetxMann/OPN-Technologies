@@ -21,8 +21,7 @@ describe('Get content-result-get', () => {
           .setup({
             request: {
               headers: {
-                Authorization: `Bearer ${token}`,
-                "application-name":"FHHealth"
+                Authorization: `Bearer ${token}`
               },
             },
           })
