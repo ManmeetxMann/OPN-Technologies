@@ -194,7 +194,7 @@ export class CartController {
     // Capture payment intent
     const paymentIntentCapture = await this.stripeService.capturePaymentIntent(paymentIntent.id)
     result.payment = {
-      isValid: this.stripeService.isPaymentIntentCaptureSuccess(paymentIntent),
+      isValid: this.stripeService.isPaymentIntentCaptureSuccess(paymentIntentCapture),
       id: paymentIntentCapture.id,
       status: paymentIntentCapture.status,
       client_secret: paymentIntentCapture.client_secret,
