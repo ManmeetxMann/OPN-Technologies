@@ -19,7 +19,7 @@ class UserController implements IControllerBase {
 
   config = (req: Request, res: Response): void => {
     const applicationName: ApplicationName =
-      (req.header('application_name') as ApplicationName) ?? ApplicationName.OPN
+      (req.header('application-name') as ApplicationName) ?? ApplicationName.OPN
     let response
     if (applicationName === ApplicationName.FHHealth) {
       response = {
