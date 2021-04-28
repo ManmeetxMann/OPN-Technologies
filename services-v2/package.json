@@ -101,7 +101,9 @@
     ],
     "moduleNameMapper": {
       "@opn-services/common/(.*)": "<rootDir>/libs/common/src/$1",
-      "@opn-services/common": "<rootDir>/libs/common/src"
+      "@opn-services/common": "<rootDir>/libs/common/src",
+      "@opn-common-v1/(.*)": "<rootDir>/../packages/common/src/$1",
+      "@opn-common-v1": "<rootDir>/../packages/common/src"
     }
   }
 }
